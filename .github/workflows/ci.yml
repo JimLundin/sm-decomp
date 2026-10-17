@@ -1,241 +1,27 @@
-name: Rust checks
+name: CI
 
 on:
-  # Translation batches are dispatched deliberately after source review.
-  workflow_dispatch:
+  push:
+  pull_request:
 
 permissions:
   contents: read
 
 jobs:
-  windows-dll:
-    name: Production Rust DLL bridge
-    runs-on: windows-latest
-    timeout-minutes: 15
+  build:
+    # No ROM is available here, so CI only proves the game builds and is
+    # formatted. The verify run against the original ROM happens locally.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Install the project toolchain
+      - name: Install SDL2
+        run: sudo apt-get update && sudo apt-get install -y libsdl2-dev
+      - name: Install the pinned toolchain
         run: rustup show
-      - name: Restore Windows DLL dependency cache
-        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
-        with:
-          workspaces: "restart -> target"
-          key: ${{ runner.os }}-windows-dll-${{ hashFiles('rust-toolchain.toml', 'restart/Cargo.lock') }}
-          cache-bin: "false"
-          cache-workspace-crates: "false"
-          cache-on-failure: "true"
-          save-if: ${{ github.event_name == 'push' }}
-      - name: Fetch locked restart dependencies
-        run: cargo fetch --manifest-path restart/Cargo.toml --locked
-      - name: Check bridge and shared worker formatting
-        run: cargo fmt --manifest-path restart/Cargo.toml -p sm-restart -p sm-restart-dll-host --check
-      - name: Check bridge and worker targets
-        run: cargo clippy --manifest-path restart/Cargo.toml -p sm-restart -p sm-restart-dll-host --all-targets --all-features --locked --offline --jobs 1 -- -D warnings
-      - name: Execute shared worker tests
-        run: 'cargo test --manifest-path restart/Cargo.toml -p sm-restart --lib runtime_cli::tests:: --all-features --locked --offline --jobs 1'
-      - name: Execute moved Rio observation and capture tests
-        run: cargo test --manifest-path restart/Cargo.toml -p sm-restart --lib rio_ --all-features --locked --offline --jobs 1
-      - name: Test complete replay trace integration
-        run: 'cargo test --manifest-path restart/Cargo.toml -p sm-restart --lib replay_trace:: --all-features --locked --offline --jobs 1'
-      - name: Test complete trace protocol controls
-        run: cargo test --manifest-path restart/Cargo.toml -p sm-trace --locked --offline --jobs 1
-      - name: Test shared private assertion failure control
-        run: 'cargo test --manifest-path restart/Cargo.toml -p sm-restart --lib private_checks:: --all-features --locked --offline --jobs 1'
-      - name: Build the production DLL
-        run: cargo build --manifest-path restart/Cargo.toml -p sm-restart-dll-host --features private-checks --locked --offline --jobs 1
-      - name: Retain DLL and exact source
-        uses: actions/upload-artifact@v4
-        with:
-          name: production-rust-dll
-          path: |
-            restart/target/debug/sm_restart_dll_host.dll
-            restart/dll-host
-            restart/src
-            restart/*/src
-            restart/*/Cargo.toml
-            restart/Cargo.toml
-            restart/Cargo.lock
-            rust-toolchain.toml
-            .github/workflows/ci.yml
-          if-no-files-found: error
-
-  native-prepare:
-    name: Production native preparation
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install the project toolchain
-        run: rustup show
-      - name: Fetch the pinned recovered C archive
-        run: cargo run --manifest-path tools/bootstrap/Cargo.toml --locked --jobs 1 -- prepare-snesrev
-      - name: Fetch locked restart dependencies
-        run: cargo fetch --manifest-path restart/Cargo.toml --locked
-      - name: Build the public runtime
-        run: cargo build --manifest-path restart/Cargo.toml --bin sm-restart --locked --offline --jobs 1
-      - name: Exercise production preparation and authenticated reuse
-        run: cargo run --manifest-path restart/Cargo.toml -p sm-native-host --example prepare-control --locked --offline --jobs 1 -- deps/downloads/snesrev-sm.tar.gz restart/out/ci-native-prepare restart/target/debug/sm-restart
-      - name: Reject corrupted prepared library and retained source
-        env:
-          SM_NATIVE_ARCHIVE: ${{ github.workspace }}/deps/downloads/snesrev-sm.tar.gz
-          SM_NATIVE_PREPARED_ROOT: ${{ github.workspace }}/restart/out/ci-native-prepare
-        run: cargo test --manifest-path restart/Cargo.toml -p sm-native-host --test prepared_integrity --locked --offline --jobs 1 -- --ignored
-      - name: Retain preparation evidence
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: production-native-prepare
-          path: restart/out/ci-native-prepare
-          if-no-files-found: warn
-
-  focused-rio:
-    name: Focused Rio gameplay (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install the project toolchain
-        run: rustup show
-      - name: Fetch locked dependencies
-        run: cargo fetch --manifest-path restart/Cargo.toml --locked
-      - name: Install authenticated just 1.59.0
-        shell: pwsh
-        run: |
-          $toolDirectory = Join-Path $env:RUNNER_TEMP 'sm-decomp-restart-just-1.59.0'
-          New-Item -ItemType Directory -Path $toolDirectory -ErrorAction Stop | Out-Null
-          if ($IsWindows) {
-            $asset = 'just-1.59.0-x86_64-pc-windows-msvc.zip'
-            $expectedHash = '9c5463e2d0974e31bee71346aa5cbf19167de1585a4abc1bae7b3b04604ea9c0'
-            $expectedSize = 2292448
-            $binaryName = 'just.exe'
-          } else {
-            $asset = 'just-1.59.0-x86_64-unknown-linux-musl.tar.gz'
-            $expectedHash = '409044617b6f06517c1035e55ca38c8c856ff8b650e41bc2aa1ef82d5903a23e'
-            $expectedSize = 2572537
-            $binaryName = 'just'
-          }
-          $archive = Join-Path $toolDirectory $asset
-          Invoke-WebRequest -Uri ('https://github.com/casey/just/releases/download/1.59.0/' + $asset) -OutFile $archive
-          if ((Get-Item -LiteralPath $archive).Length -ne $expectedSize -or (Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expectedHash) {
-            throw 'just release archive identity mismatch'
-          }
-          $binary = Join-Path $toolDirectory $binaryName
-          if ($IsWindows) {
-            $zip = [System.IO.Compression.ZipFile]::OpenRead($archive)
-            try {
-              $entries = @($zip.Entries | Where-Object FullName -eq 'just.exe')
-              if ($entries.Count -ne 1 -or $entries[0].Length -ne 5922304) { throw 'unexpected just executable entry' }
-              [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entries[0], $binary)
-            } finally { $zip.Dispose() }
-          } else {
-            & tar -xzf $archive -C $toolDirectory just
-            if ($LASTEXITCODE -ne 0) { throw 'just extraction failed' }
-          }
-          Get-FileHash -LiteralPath $archive, $binary -Algorithm SHA256 | Format-List
-          & $binary --version
-          if ($LASTEXITCODE -ne 0) { throw 'just version failed' }
-          Get-Command sh -ErrorAction Stop | Select-Object Source
-      - name: Execute focused recipe through just
-        shell: pwsh
-        run: |
-          $binaryName = if ($IsWindows) { 'just.exe' } else { 'just' }
-          $binary = Join-Path (Join-Path $env:RUNNER_TEMP 'sm-decomp-restart-just-1.59.0') $binaryName
-          & $binary --justfile justfile restart-focused sm-rio
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Remove temporary just inputs
-        if: always()
-        shell: pwsh
-        run: |
-          $temporaryRoot = [System.IO.Path]::GetFullPath($env:RUNNER_TEMP)
-          $toolDirectory = [System.IO.Path]::GetFullPath((Join-Path $temporaryRoot 'sm-decomp-restart-just-1.59.0'))
-          if (-not $toolDirectory.StartsWith($temporaryRoot + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) {
-            throw 'just cleanup target escapes runner temporary directory'
-          }
-          if (Test-Path -LiteralPath $toolDirectory) { Remove-Item -LiteralPath $toolDirectory -Recurse -Force }
-          if (Test-Path -LiteralPath $toolDirectory) { throw 'just temporary inputs remain after cleanup' }
-          Write-Output 'just temporary inputs removed'
-
-  standalone:
-    name: Standalone checks (${{ matrix.manifest }}, ${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            manifest: restart/native-host/rio-checks/Cargo.toml
-          - os: windows-latest
-            manifest: restart/native-host/rio-checks/Cargo.toml
-          - os: ubuntu-latest
-            manifest: restart/rio-verify/Cargo.toml
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install the project toolchain
-        run: rustup show
-      - name: Fetch locked dependencies
-        run: cargo fetch --manifest-path ${{ matrix.manifest }} --locked
-      - name: Check formatting
-        run: cargo fmt --manifest-path ${{ matrix.manifest }} --all --check
-      - name: Clippy
-        run: cargo clippy --manifest-path ${{ matrix.manifest }} --all-targets --all-features --locked --offline --jobs 1 -- -D warnings
-      - name: Test without private inputs
-        run: cargo test --manifest-path ${{ matrix.manifest }} --all-features --locked --offline --jobs 1
-
-  restart:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: restart
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install the project toolchain
-        run: rustup show
-      # Rebuild workspace source and execute every gate; reuse dependencies only.
-      - name: Restore restart dependency cache
-        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
-        with:
-          workspaces: "restart -> target"
-          key: ${{ runner.os }}-restart-${{ hashFiles('rust-toolchain.toml', 'restart/Cargo.lock') }}
-          cache-bin: "false"
-          cache-workspace-crates: "false"
-          cache-on-failure: "true"
-          save-if: ${{ github.event_name == 'push' }}
-      - name: Fetch locked dependencies
-        run: cargo fetch --locked
-      - name: Check formatting
-        run: cargo fmt --all --check
-      - name: Clippy including fixtures and examples
-        run: cargo clippy --workspace --all-targets --all-features --locked --offline --jobs 1 -- -D warnings
-      - name: Test Rio capture before full workspace prerequisites
-        run: cargo test -p sm-restart --lib rio_ --all-features --locked --offline --jobs 1
-      - name: Test workspace targets
-        run: cargo test --workspace --all-targets --all-features --locked --offline --jobs 1 --no-fail-fast
-      - name: Test documentation examples
-        run: cargo test --workspace --doc --all-features --locked --offline --jobs 1
-
-  check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install the project toolchain
-        run: rustup show
-      - name: Prepare pinned hardware source and timing patch
-        run: cargo run --manifest-path tools/bootstrap/Cargo.toml --locked -- prepare-rustysnes
-      - name: Fetch locked dependencies
-        run: cargo fetch --locked
-      - name: Check Rust bootstrap
-        run: |
-          cargo fmt --manifest-path tools/bootstrap/Cargo.toml -- --check
-          cargo clippy --manifest-path tools/bootstrap/Cargo.toml --all-targets --locked --offline -- -D warnings
-          cargo test --manifest-path tools/bootstrap/Cargo.toml --locked --offline
-      - name: Check formatting
-        run: cargo fmt --all --check
-      - name: Clippy
-        run: cargo clippy --workspace --all-targets --locked --offline -- -D warnings
-      - name: Test without ROM or generated inputs
-        run: cargo test --workspace --locked --offline
-      - name: Test clocked APU timing
-        run: cargo run --manifest-path tools/bootstrap/Cargo.toml --locked --offline -- hardware-check
+      - uses: Swatinem/rust-cache@v2
+      - name: Format
+        run: cargo fmt --check
+      - name: Build
+        run: cargo build --release --locked
+      - name: Progress
+        run: sh tools/progress.sh

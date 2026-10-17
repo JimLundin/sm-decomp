@@ -1,0 +1,17 @@
+[package]
+name = "sm"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+description = "Super Metroid in Rust, with the original ROM as a per-frame differential oracle"
+autobins = false
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "sm"
+path = "src/main.rs"
+
+[dependencies]

@@ -1,0 +1,16137 @@
+extern "C" {
+    fn __assert_fail(
+        __assertion: *const ::core::ffi::c_char,
+        __file: *const ::core::ffi::c_char,
+        __line: ::core::ffi::c_uint,
+        __function: *const ::core::ffi::c_char,
+    ) -> !;
+    fn memcpy(
+        __dest: *mut ::core::ffi::c_void,
+        __src: *const ::core::ffi::c_void,
+        __n: size_t,
+    ) -> *mut ::core::ffi::c_void;
+    fn memset(
+        __s: *mut ::core::ffi::c_void,
+        __c: ::core::ffi::c_int,
+        __n: size_t,
+    ) -> *mut ::core::ffi::c_void;
+    static mut g_ram: [uint8; 131072];
+    static mut g_rom: *const uint8;
+    fn Unreachable() -> bool;
+    fn RomPtr(addr: uint32_t) -> *const uint8;
+    fn WriteReg(reg: uint16, value: uint8);
+    fn WriteRegWord(reg: uint16, value: uint16);
+    fn Mult8x8(a: uint8, b: uint8) -> uint16;
+    fn SnesDivide(a: uint16, b: uint8) -> uint16;
+    static kSinCosTable8bit_Sext: [int16; 320];
+    fn CheckEventHappened(a: uint16) -> uint16;
+    fn HasQueuedMusic() -> uint8;
+    fn ClearOamExt();
+    fn CopySuperMetroidString();
+    fn DecompressToMem(src: uint32, decompress_dst: *mut uint8);
+    fn DisableIrqInterrupts();
+    fn EnableNMI();
+    fn HandleFadeIn();
+    fn ClearUnusedOam();
+    fn HandleFadeOut();
+    fn QueueMode7Transfers(db: uint8, k: uint16);
+    fn QueueMusic_Delayed8(a: uint16);
+    fn QueueMusic_DelayedY(a: uint16, j: uint16);
+    fn QueueSfx1_Max15(a: uint16);
+    fn QueueSfx2_Max6(a: uint16);
+    fn QueueSfx3_Max6(a: uint16);
+    fn SetupDmaTransfer(p: *const ::core::ffi::c_void);
+    fn WaitForNMI_Async() -> CoroutineRet;
+    fn memset7E(k: *mut uint16, a: uint16, j: uint16);
+    fn DrawSpritemap(db: uint8, j: uint16, x_r20: uint16, y_r18: uint16, chr_r22: uint16);
+    fn DrawSpritemapOffScreen(j: uint16, x_r20: uint16, y_r18: uint16, chr_r22: uint16);
+    fn SaveToSram(a: uint16);
+    fn CinematicFunction_Intro_Func133();
+    fn DisableHdmaObjects();
+    fn EnableHdmaObjects();
+    fn SpawnIntroCutsceneCrossfadeHdma();
+    fn SpawnPowerBombExplosion();
+    fn SpawnTitleScreenGradientObjs();
+    fn WaitUntilEndOfVblankAndClearHdma();
+    fn ClearPaletteFXObjects();
+    fn DisablePaletteFx();
+    fn EnablePaletteFx();
+    fn PaletteFxHandler();
+    fn SpawnPalfxObject(j: uint16);
+    fn DrawSamusAndProjectiles();
+    fn HandleControllerInputForGamePhysics();
+    fn HandleSamusMovementAndPause();
+    fn KillProjectile(k: uint16);
+    fn UpdateBeamTilesAndPalette();
+    fn EnableDemoInput();
+    fn LoadDemoInputObject(a: uint16, j: uint16);
+    fn ResetDemoData();
+    fn SamusFunc_F433();
+    fn Samus_Initialize();
+    fn Samus_SetAnimationFrameIfPoseChanged();
+    fn DrawPlayerExplosions2();
+}
+pub type __int8_t = i8;
+pub type __uint8_t = u8;
+pub type __int16_t = i16;
+pub type __uint16_t = u16;
+pub type __int32_t = i32;
+pub type __uint32_t = u32;
+pub type int8_t = __int8_t;
+pub type int16_t = __int16_t;
+pub type int32_t = __int32_t;
+pub type uint8_t = __uint8_t;
+pub type uint16_t = __uint16_t;
+pub type uint32_t = __uint32_t;
+pub type size_t = usize;
+pub type uint8 = uint8_t;
+pub type int8 = int8_t;
+pub type uint16 = uint16_t;
+pub type int16 = int16_t;
+pub type uint32 = uint32_t;
+pub type int32 = int32_t;
+pub type VoidP = uint16;
+pub type CoroutineRet = uint8_t;
+#[derive(Copy, Clone)]
+#[repr(C, packed)]
+pub struct LongPtr {
+    pub addr: VoidP,
+    pub bank: uint8,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct Point16U {
+    pub x: uint16,
+    pub y: uint16,
+}
+pub type Func_V = unsafe extern "C" fn() -> ();
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct OamEnt {
+    pub xcoord: uint8,
+    pub ycoord: uint8,
+    pub charnum: uint8,
+    pub flags: uint8,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct VramWriteEntry {
+    pub size: uint16,
+    pub src: LongPtr,
+    pub vram_dst: uint16,
+}
+pub type SnesRegs = ::core::ffi::c_uint;
+pub const MIRR7: SnesRegs = 17279;
+pub const UNUSED7: SnesRegs = 17275;
+pub const NTRL7: SnesRegs = 17274;
+pub const A2A7H: SnesRegs = 17273;
+pub const A2A7L: SnesRegs = 17272;
+pub const DAS70: SnesRegs = 17271;
+pub const DAS7H: SnesRegs = 17270;
+pub const DAS7L: SnesRegs = 17269;
+pub const A1B7: SnesRegs = 17268;
+pub const A1T7H: SnesRegs = 17267;
+pub const A1T7L: SnesRegs = 17266;
+pub const BBAD7: SnesRegs = 17265;
+pub const DMAP7: SnesRegs = 17264;
+pub const MIRR6: SnesRegs = 17263;
+pub const UNUSED6: SnesRegs = 17259;
+pub const NTRL6: SnesRegs = 17258;
+pub const A2A6H: SnesRegs = 17257;
+pub const A2A6L: SnesRegs = 17256;
+pub const DAS60: SnesRegs = 17255;
+pub const DAS6H: SnesRegs = 17254;
+pub const DAS6L: SnesRegs = 17253;
+pub const A1B6: SnesRegs = 17252;
+pub const A1T6H: SnesRegs = 17251;
+pub const A1T6L: SnesRegs = 17250;
+pub const BBAD6: SnesRegs = 17249;
+pub const DMAP6: SnesRegs = 17248;
+pub const MIRR5: SnesRegs = 17247;
+pub const UNUSED5: SnesRegs = 17243;
+pub const NTRL5: SnesRegs = 17242;
+pub const A2A5H: SnesRegs = 17241;
+pub const A2A5L: SnesRegs = 17240;
+pub const DAS50: SnesRegs = 17239;
+pub const DAS5H: SnesRegs = 17238;
+pub const DAS5L: SnesRegs = 17237;
+pub const A1B5: SnesRegs = 17236;
+pub const A1T5H: SnesRegs = 17235;
+pub const A1T5L: SnesRegs = 17234;
+pub const BBAD5: SnesRegs = 17233;
+pub const DMAP5: SnesRegs = 17232;
+pub const MIRR4: SnesRegs = 17231;
+pub const UNUSED4: SnesRegs = 17227;
+pub const NTRL4: SnesRegs = 17226;
+pub const A2A4H: SnesRegs = 17225;
+pub const A2A4L: SnesRegs = 17224;
+pub const DAS40: SnesRegs = 17223;
+pub const DAS4H: SnesRegs = 17222;
+pub const DAS4L: SnesRegs = 17221;
+pub const A1B4: SnesRegs = 17220;
+pub const A1T4H: SnesRegs = 17219;
+pub const A1T4L: SnesRegs = 17218;
+pub const BBAD4: SnesRegs = 17217;
+pub const DMAP4: SnesRegs = 17216;
+pub const MIRR3: SnesRegs = 17215;
+pub const UNUSED3: SnesRegs = 17211;
+pub const NTRL3: SnesRegs = 17210;
+pub const A2A3H: SnesRegs = 17209;
+pub const A2A3L: SnesRegs = 17208;
+pub const DAS30: SnesRegs = 17207;
+pub const DAS3H: SnesRegs = 17206;
+pub const DAS3L: SnesRegs = 17205;
+pub const A1B3: SnesRegs = 17204;
+pub const A1T3H: SnesRegs = 17203;
+pub const A1T3L: SnesRegs = 17202;
+pub const BBAD3: SnesRegs = 17201;
+pub const DMAP3: SnesRegs = 17200;
+pub const MIRR2: SnesRegs = 17199;
+pub const UNUSED2: SnesRegs = 17195;
+pub const NTRL2: SnesRegs = 17194;
+pub const A2A2H: SnesRegs = 17193;
+pub const A2A2L: SnesRegs = 17192;
+pub const DAS20: SnesRegs = 17191;
+pub const DAS2H: SnesRegs = 17190;
+pub const DAS2L: SnesRegs = 17189;
+pub const A1B2: SnesRegs = 17188;
+pub const A1T2H: SnesRegs = 17187;
+pub const A1T2L: SnesRegs = 17186;
+pub const BBAD2: SnesRegs = 17185;
+pub const DMAP2: SnesRegs = 17184;
+pub const MIRR1: SnesRegs = 17183;
+pub const UNUSED1: SnesRegs = 17179;
+pub const NTRL1: SnesRegs = 17178;
+pub const A2A1H: SnesRegs = 17177;
+pub const A2A1L: SnesRegs = 17176;
+pub const DAS10: SnesRegs = 17175;
+pub const DAS1H: SnesRegs = 17174;
+pub const DAS1L: SnesRegs = 17173;
+pub const A1B1: SnesRegs = 17172;
+pub const A1T1H: SnesRegs = 17171;
+pub const A1T1L: SnesRegs = 17170;
+pub const BBAD1: SnesRegs = 17169;
+pub const DMAP1: SnesRegs = 17168;
+pub const MIRR0: SnesRegs = 17167;
+pub const UNUSED0: SnesRegs = 17163;
+pub const NTRL0: SnesRegs = 17162;
+pub const A2A0H: SnesRegs = 17161;
+pub const A2A0L: SnesRegs = 17160;
+pub const DAS00: SnesRegs = 17159;
+pub const DAS0H: SnesRegs = 17158;
+pub const DAS0L: SnesRegs = 17157;
+pub const A1B0: SnesRegs = 17156;
+pub const A1T0H: SnesRegs = 17155;
+pub const A1T0L: SnesRegs = 17154;
+pub const BBAD0: SnesRegs = 17153;
+pub const DMAP0: SnesRegs = 17152;
+pub const JOY4H: SnesRegs = 16927;
+pub const JOY4L: SnesRegs = 16926;
+pub const JOY3H: SnesRegs = 16925;
+pub const JOY3L: SnesRegs = 16924;
+pub const JOY2H: SnesRegs = 16923;
+pub const JOY2L: SnesRegs = 16922;
+pub const JOY1H: SnesRegs = 16921;
+pub const JOY1L: SnesRegs = 16920;
+pub const RDMPYH: SnesRegs = 16919;
+pub const RDMPYL: SnesRegs = 16918;
+pub const RDDIVH: SnesRegs = 16917;
+pub const RDDIVL: SnesRegs = 16916;
+pub const RDIO: SnesRegs = 16915;
+pub const HVBJOY: SnesRegs = 16914;
+pub const TIMEUP: SnesRegs = 16913;
+pub const RDNMI: SnesRegs = 16912;
+pub const MEMSEL: SnesRegs = 16909;
+pub const HDMAEN: SnesRegs = 16908;
+pub const MDMAEN: SnesRegs = 16907;
+pub const VTIMEH: SnesRegs = 16906;
+pub const VTIMEL: SnesRegs = 16905;
+pub const HTIMEH: SnesRegs = 16904;
+pub const HTIMEL: SnesRegs = 16903;
+pub const WRDIVB: SnesRegs = 16902;
+pub const WRDIVH: SnesRegs = 16901;
+pub const WRDIVL: SnesRegs = 16900;
+pub const WRMPYB: SnesRegs = 16899;
+pub const WRMPYA: SnesRegs = 16898;
+pub const WRIO: SnesRegs = 16897;
+pub const NMITIMEN: SnesRegs = 16896;
+pub const JOYB: SnesRegs = 16407;
+pub const JOYA: SnesRegs = 16406;
+pub const WMADDH: SnesRegs = 8579;
+pub const WMADDM: SnesRegs = 8578;
+pub const WMADDL: SnesRegs = 8577;
+pub const WMDATA: SnesRegs = 8576;
+pub const APUI03: SnesRegs = 8515;
+pub const APUI02: SnesRegs = 8514;
+pub const APUI01: SnesRegs = 8513;
+pub const APUI00: SnesRegs = 8512;
+pub const STAT78: SnesRegs = 8511;
+pub const STAT77: SnesRegs = 8510;
+pub const OPVCT: SnesRegs = 8509;
+pub const OPHCT: SnesRegs = 8508;
+pub const RDCGRAM: SnesRegs = 8507;
+pub const RDVRAMH: SnesRegs = 8506;
+pub const RDVRAML: SnesRegs = 8505;
+pub const RDOAM: SnesRegs = 8504;
+pub const SLHV: SnesRegs = 8503;
+pub const MPYH: SnesRegs = 8502;
+pub const MPYM: SnesRegs = 8501;
+pub const MPYL: SnesRegs = 8500;
+pub const SETINI: SnesRegs = 8499;
+pub const COLDATA: SnesRegs = 8498;
+pub const CGADSUB: SnesRegs = 8497;
+pub const CGWSEL: SnesRegs = 8496;
+pub const TSW: SnesRegs = 8495;
+pub const TMW: SnesRegs = 8494;
+pub const TS: SnesRegs = 8493;
+pub const TM: SnesRegs = 8492;
+pub const WOBJLOG: SnesRegs = 8491;
+pub const WBGLOG: SnesRegs = 8490;
+pub const WH3: SnesRegs = 8489;
+pub const WH2: SnesRegs = 8488;
+pub const WH1: SnesRegs = 8487;
+pub const WH0: SnesRegs = 8486;
+pub const WOBJSEL: SnesRegs = 8485;
+pub const W34SEL: SnesRegs = 8484;
+pub const W12SEL: SnesRegs = 8483;
+pub const CGDATA: SnesRegs = 8482;
+pub const CGADD: SnesRegs = 8481;
+pub const M7Y: SnesRegs = 8480;
+pub const M7X: SnesRegs = 8479;
+pub const M7D: SnesRegs = 8478;
+pub const M7C: SnesRegs = 8477;
+pub const M7B: SnesRegs = 8476;
+pub const M7A: SnesRegs = 8475;
+pub const M7SEL: SnesRegs = 8474;
+pub const VMDATAH: SnesRegs = 8473;
+pub const VMDATAL: SnesRegs = 8472;
+pub const VMADDH: SnesRegs = 8471;
+pub const VMADDL: SnesRegs = 8470;
+pub const VMAIN: SnesRegs = 8469;
+pub const BG4VOFS: SnesRegs = 8468;
+pub const BG4HOFS: SnesRegs = 8467;
+pub const BG3VOFS: SnesRegs = 8466;
+pub const BG3HOFS: SnesRegs = 8465;
+pub const BG2VOFS: SnesRegs = 8464;
+pub const BG2HOFS: SnesRegs = 8463;
+pub const BG1VOFS: SnesRegs = 8462;
+pub const BG1HOFS: SnesRegs = 8461;
+pub const BG34NBA: SnesRegs = 8460;
+pub const BG12NBA: SnesRegs = 8459;
+pub const BG4SC: SnesRegs = 8458;
+pub const BG3SC: SnesRegs = 8457;
+pub const BG2SC: SnesRegs = 8456;
+pub const BG1SC: SnesRegs = 8455;
+pub const MOSAIC: SnesRegs = 8454;
+pub const BGMODE: SnesRegs = 8453;
+pub const OAMDATA: SnesRegs = 8452;
+pub const OAMADDH: SnesRegs = 8451;
+pub const OAMADDL: SnesRegs = 8450;
+pub const OBSEL: SnesRegs = 8449;
+pub const INIDISP: SnesRegs = 8448;
+#[derive(Copy, Clone)]
+#[repr(C, packed)]
+pub struct Mode7ObjectDef {
+    pub field_0: VoidP,
+    pub field_2: VoidP,
+    pub field_4: VoidP,
+}
+pub type SamusPose = ::core::ffi::c_uint;
+pub const kPose_FC_FaceL_StandTrans_AimDL: SamusPose = 252;
+pub const kPose_FB_FaceR_StandTrans_AimDR: SamusPose = 251;
+pub const kPose_FA_FaceL_StandTrans_AimUL: SamusPose = 250;
+pub const kPose_F9_FaceR_StandTrans_AimUR: SamusPose = 249;
+pub const kPose_F8_FaceL_StandTrans_AimU: SamusPose = 248;
+pub const kPose_F7_FaceR_StandTrans_AimU: SamusPose = 247;
+pub const kPose_F6_FaceL_CrouchTrans_AimDL: SamusPose = 246;
+pub const kPose_F5_FaceR_CrouchTrans_AimDR: SamusPose = 245;
+pub const kPose_F4_FaceL_CrouchTrans_AimUL: SamusPose = 244;
+pub const kPose_F3_FaceR_CrouchTrans_AimUR: SamusPose = 243;
+pub const kPose_F2_FaceL_CrouchTrans_AimU: SamusPose = 242;
+pub const kPose_F1_FaceR_CrouchTrans_AimU: SamusPose = 241;
+pub const kPose_F0_FaceR_Draygon_Move: SamusPose = 240;
+pub const kPose_EF_FaceR_Draygon_NoMove_AimDR: SamusPose = 239;
+pub const kPose_EE_FaceR_Draygon_Fire: SamusPose = 238;
+pub const kPose_ED_FaceR_Draygon_NoMove_AimUR: SamusPose = 237;
+pub const kPose_EC_FaceR_Draygon_NoMove_NoAim: SamusPose = 236;
+pub const kPose_EB_FaceL_Drained_Stand: SamusPose = 235;
+pub const kPose_EA_FaceR_Drained_Stand: SamusPose = 234;
+pub const kPose_E9_FaceL_Drained_CrouchFalling: SamusPose = 233;
+pub const kPose_E8_FaceR_Drained_CrouchFalling: SamusPose = 232;
+pub const kPose_E7_FaceL_LandJump_Fire: SamusPose = 231;
+pub const kPose_E6_FaceR_LandJump_Fire: SamusPose = 230;
+pub const kPose_E5_FaceL_LandJump_AimDL: SamusPose = 229;
+pub const kPose_E4_FaceR_LandJump_AimDR: SamusPose = 228;
+pub const kPose_E3_FaceL_LandJump_AimUL: SamusPose = 227;
+pub const kPose_E2_FaceR_LandJump_AimUR: SamusPose = 226;
+pub const kPose_E1_FaceL_LandJump_AimU: SamusPose = 225;
+pub const kPose_E0_FaceR_LandJump_AimU: SamusPose = 224;
+pub const kPose_DB: SamusPose = 219;
+pub const kPose_DA_FaceL_Xray_Crouch: SamusPose = 218;
+pub const kPose_D9_FaceR_Xray_Crouch: SamusPose = 217;
+pub const kPose_D8_FaceL_CrystalFlashEnd: SamusPose = 216;
+pub const kPose_D7_FaceR_CrystalFlashEnd: SamusPose = 215;
+pub const kPose_D6_FaceL_Xray_Stand: SamusPose = 214;
+pub const kPose_D5_FaceR_Xray_Stand: SamusPose = 213;
+pub const kPose_D4_FaceL_CrystalFlash: SamusPose = 212;
+pub const kPose_D3_FaceR_CrystalFlash: SamusPose = 211;
+pub const kPose_D2_FaceL_Ranintowall_AimDL: SamusPose = 210;
+pub const kPose_D1_FaceR_Ranintowall_AimDR: SamusPose = 209;
+pub const kPose_D0_FaceL_Ranintowall_AimUL: SamusPose = 208;
+pub const kPose_CF_FaceR_Ranintowall_AimUR: SamusPose = 207;
+pub const kPose_CE_FaceL_Shinespark_Diag: SamusPose = 206;
+pub const kPose_CD_FaceR_Shinespark_Diag: SamusPose = 205;
+pub const kPose_CC_FaceL_Shinespark_Vert: SamusPose = 204;
+pub const kPose_CB_FaceR_Shinespark_Vert: SamusPose = 203;
+pub const kPose_CA_FaceL_Shinespark_Horiz: SamusPose = 202;
+pub const kPose_C9_FaceR_Shinespark_Horiz: SamusPose = 201;
+pub const kPose_C8_FaceL_ShinesparkWindup_Vert: SamusPose = 200;
+pub const kPose_C7_FaceR_ShinesparkWindup_Vert: SamusPose = 199;
+pub const kPose_C4_FaceL_Moonwalk_TurnjumpR_AimDL: SamusPose = 196;
+pub const kPose_C3_FaceR_Moonwalk_TurnjumpL_AimDR: SamusPose = 195;
+pub const kPose_C2_FaceL_Moonwalk_TurnjumpR_AimUL: SamusPose = 194;
+pub const kPose_C1_FaceR_Moonwalk_TurnjumpL_AimUR: SamusPose = 193;
+pub const kPose_C0_FaceL_Moonwalk_TurnjumpR: SamusPose = 192;
+pub const kPose_BF_FaceR_Moonwalk_TurnjumpL: SamusPose = 191;
+pub const kPose_BE_FaceL_Draygon_Move: SamusPose = 190;
+pub const kPose_BD_FaceL_Draygon_NoMove_AimDL: SamusPose = 189;
+pub const kPose_BC_FaceL_Draygon_Fire: SamusPose = 188;
+pub const kPose_BB_FaceL_Draygon_NoMove_AimUL: SamusPose = 187;
+pub const kPose_BA_FaceL_Draygon_NoMove_NoAim: SamusPose = 186;
+pub const kPose_B9_FaceR_GrappleWalljumpPose: SamusPose = 185;
+pub const kPose_B8_FaceL_GrappleWalljumpPose: SamusPose = 184;
+pub const kPose_B7_FaceL_Grappling_Crouch_AimDL: SamusPose = 183;
+pub const kPose_B6_FaceR_Grappling_Crouch_AimDR: SamusPose = 182;
+pub const kPose_B5_FaceL_Grappling_Crouch: SamusPose = 181;
+pub const kPose_B4_FaceR_Grappling_Crouch: SamusPose = 180;
+pub const kPose_B3_FaceL_Grapple_Air: SamusPose = 179;
+pub const kPose_B2_FaceR_Grapple_Air: SamusPose = 178;
+pub const kPose_AB_FaceL_Grappling_AimDL: SamusPose = 171;
+pub const kPose_AA_FaceR_Grappling_AimDR: SamusPose = 170;
+pub const kPose_A9_FaceL_Grappling: SamusPose = 169;
+pub const kPose_A8_FaceR_Grappling: SamusPose = 168;
+pub const kPose_A7_FaceL_LandSpinJump: SamusPose = 167;
+pub const kPose_A6_FaceR_LandSpinJump: SamusPose = 166;
+pub const kPose_A5_FaceL_LandJump: SamusPose = 165;
+pub const kPose_A4_FaceR_LandJump: SamusPose = 164;
+pub const kPose_A3_FaceL_Turn_Crouch_AimUL: SamusPose = 163;
+pub const kPose_A2_FaceR_Turn_Crouch_AimUR: SamusPose = 162;
+pub const kPose_A1_FaceL_Turn_Fall_AimUL: SamusPose = 161;
+pub const kPose_A0_FaceR_Turn_Fall_AimUR: SamusPose = 160;
+pub const kPose_9F_FaceL_Turn_Air_AimUL: SamusPose = 159;
+pub const kPose_9E_FaceR_Turn_Air_AimUR: SamusPose = 158;
+pub const kPose_9D_FaceL_Turn_Stand_AimUL: SamusPose = 157;
+pub const kPose_9C_FaceR_Turn_Stand_AimUR: SamusPose = 156;
+pub const kPose_9B_FaceF_VariaGravitySuit: SamusPose = 155;
+pub const kPose_9A_FaceL_Turn_Crouch_AimDDL: SamusPose = 154;
+pub const kPose_99_FaceR_Turn_Crouch_AimDDR: SamusPose = 153;
+pub const kPose_98_FaceL_Turn_Crouch_AimU: SamusPose = 152;
+pub const kPose_97_FaceR_Turn_Crouch_AimU: SamusPose = 151;
+pub const kPose_96_FaceL_Turn_Fall_AimDDL: SamusPose = 150;
+pub const kPose_95_FaceR_Turn_Fall_AimDDR: SamusPose = 149;
+pub const kPose_94_FaceL_Turn_Fall_AimU: SamusPose = 148;
+pub const kPose_93_FaceR_Turn_Fall_AimU: SamusPose = 147;
+pub const kPose_92_FaceL_Turn_Air_AimDDL: SamusPose = 146;
+pub const kPose_91_FaceR_Turn_Air_AimDDR: SamusPose = 145;
+pub const kPose_90_FaceL_Turn_Air_AimU: SamusPose = 144;
+pub const kPose_8F_FaceR_Turn_Air_AimU: SamusPose = 143;
+pub const kPose_8E_FaceL_Turn_Stand_AimDL: SamusPose = 142;
+pub const kPose_8D_FaceR_Turn_Stand_AimDR: SamusPose = 141;
+pub const kPose_8C_FaceL_Turn_Stand_AimU: SamusPose = 140;
+pub const kPose_8B_FaceR_Turn_Stand_AimU: SamusPose = 139;
+pub const kPose_8A_FaceL_Ranintowall: SamusPose = 138;
+pub const kPose_89_FaceR_Ranintowall: SamusPose = 137;
+pub const kPose_88_FaceL_Turn_Fall: SamusPose = 136;
+pub const kPose_87_FaceR_Turn_Fall: SamusPose = 135;
+pub const kPose_86_FaceL_Crouch_AimU: SamusPose = 134;
+pub const kPose_85_FaceR_Crouch_AimU: SamusPose = 133;
+pub const kPose_84_FaceL_Walljump: SamusPose = 132;
+pub const kPose_83_FaceR_Walljump: SamusPose = 131;
+pub const kPose_82_FaceL_Screwattack: SamusPose = 130;
+pub const kPose_81_FaceR_Screwattack: SamusPose = 129;
+pub const kPose_80_FaceL_Springball_Air: SamusPose = 128;
+pub const kPose_7F_FaceR_Springball_Air: SamusPose = 127;
+pub const kPose_7E_FaceL_Springball_Fall: SamusPose = 126;
+pub const kPose_7D_FaceR_Springball_Fall: SamusPose = 125;
+pub const kPose_7C_MoveL_Springball_Ground: SamusPose = 124;
+pub const kPose_7B_MoveR_Springball_Ground: SamusPose = 123;
+pub const kPose_7A_FaceL_Springball_Ground: SamusPose = 122;
+pub const kPose_79_FaceR_Springball_Ground: SamusPose = 121;
+pub const kPose_78_FaceR_Moonwalk_AimDR: SamusPose = 120;
+pub const kPose_77_FaceL_Moonwalk_AimDL: SamusPose = 119;
+pub const kPose_76_FaceR_Moonwalk_AimUR: SamusPose = 118;
+pub const kPose_75_FaceL_Moonwalk_AimUL: SamusPose = 117;
+pub const kPose_74_FaceL_Crouch_AimDL: SamusPose = 116;
+pub const kPose_73_FaceR_Crouch_AimDR: SamusPose = 115;
+pub const kPose_72_FaceL_Crouch_AimUL: SamusPose = 114;
+pub const kPose_71_FaceR_Crouch_AimUR: SamusPose = 113;
+pub const kPose_70_FaceL_Fall_AimDL: SamusPose = 112;
+pub const kPose_6F_FaceR_Fall_AimDR: SamusPose = 111;
+pub const kPose_6E_FaceL_Fall_AimUL: SamusPose = 110;
+pub const kPose_6D_FaceR_Fall_AimUR: SamusPose = 109;
+pub const kPose_6C_FaceL_Jump_AimDL: SamusPose = 108;
+pub const kPose_6B_FaceR_Jump_AimDR: SamusPose = 107;
+pub const kPose_6A_FaceL_Jump_AimUL: SamusPose = 106;
+pub const kPose_69_FaceR_Jump_AimUR: SamusPose = 105;
+pub const kPose_68_FaceL_Fall_Gun: SamusPose = 104;
+pub const kPose_67_FaceR_Fall_Gun: SamusPose = 103;
+pub const kPose_5B: SamusPose = 91;
+pub const kPose_5A_FaceL_Jumptrans_AimDL: SamusPose = 90;
+pub const kPose_59_FaceR_Jumptrans_AimDR: SamusPose = 89;
+pub const kPose_58_FaceL_Jumptrans_AimUL: SamusPose = 88;
+pub const kPose_57_FaceR_Jumptrans_AimUR: SamusPose = 87;
+pub const kPose_56_FaceL_Jumptrans_AimU: SamusPose = 86;
+pub const kPose_55_FaceR_Jumptrans_AimU: SamusPose = 85;
+pub const kPose_54_FaceL_Knockback: SamusPose = 84;
+pub const kPose_53_FaceR_Knockback: SamusPose = 83;
+pub const kPose_52_FaceL_Jump_NoAim_MoveF: SamusPose = 82;
+pub const kPose_51_FaceR_Jump_NoAim_MoveF: SamusPose = 81;
+pub const kPose_50_FaceR_Dmgboost: SamusPose = 80;
+pub const kPose_4F_FaceL_Dmgboost: SamusPose = 79;
+pub const kPose_4E_FaceL_Jump_NoAim_NoMove_NoGun: SamusPose = 78;
+pub const kPose_4D_FaceR_Jump_NoAim_NoMove_NoGun: SamusPose = 77;
+pub const kPose_4C_FaceL_Jumptrans: SamusPose = 76;
+pub const kPose_4B_FaceR_Jumptrans: SamusPose = 75;
+pub const kPose_4A_FaceR_Moonwalk: SamusPose = 74;
+pub const kPose_49_FaceL_Moonwalk: SamusPose = 73;
+pub const kPose_44_FaceL_Turn_Crouch: SamusPose = 68;
+pub const kPose_43_FaceR_Turn_Crouch: SamusPose = 67;
+pub const kPose_41_FaceL_Morphball_Ground: SamusPose = 65;
+pub const kPose_3E_FaceL_UnmorphTrans: SamusPose = 62;
+pub const kPose_3D_FaceR_UnmorphTrans: SamusPose = 61;
+pub const kPose_3C_FaceL_StandTrans: SamusPose = 60;
+pub const kPose_3B_FaceR_StandTrans: SamusPose = 59;
+pub const kPose_38_FaceL_MorphTrans: SamusPose = 56;
+pub const kPose_37_FaceR_MorphTrans: SamusPose = 55;
+pub const kPose_36_FaceL_CrouchTrans: SamusPose = 54;
+pub const kPose_35_FaceR_CrouchTrans: SamusPose = 53;
+pub const kPose_32_FaceL_Morphball_Air: SamusPose = 50;
+pub const kPose_31_FaceR_Morphball_Air: SamusPose = 49;
+pub const kPose_30_FaceL_Turn_Jump: SamusPose = 48;
+pub const kPose_2F_FaceR_Turn_Jump: SamusPose = 47;
+pub const kPose_2E_FaceL_Fall_AimD: SamusPose = 46;
+pub const kPose_2D_FaceR_Fall_AimD: SamusPose = 45;
+pub const kPose_2C_FaceL_Fall_AimU: SamusPose = 44;
+pub const kPose_2B_FaceR_Fall_AimU: SamusPose = 43;
+pub const kPose_2A_FaceL_Fall: SamusPose = 42;
+pub const kPose_29_FaceR_Fall: SamusPose = 41;
+pub const kPose_28_FaceL_Crouch: SamusPose = 40;
+pub const kPose_27_FaceR_Crouch: SamusPose = 39;
+pub const kPose_26_FaceL_Turn_Stand: SamusPose = 38;
+pub const kPose_25_FaceR_Turn_Stand: SamusPose = 37;
+pub const kPose_1F_MoveL_Morphball_Ground: SamusPose = 31;
+pub const kPose_1E_MoveR_Morphball_Ground: SamusPose = 30;
+pub const kPose_1D_FaceR_Morphball_Ground: SamusPose = 29;
+pub const kPose_1C_FaceL_SpaceJump: SamusPose = 28;
+pub const kPose_1B_FaceR_SpaceJump: SamusPose = 27;
+pub const kPose_1A_FaceL_SpinJump: SamusPose = 26;
+pub const kPose_19_FaceR_SpinJump: SamusPose = 25;
+pub const kPose_18_FaceL_Jump_AimD: SamusPose = 24;
+pub const kPose_17_FaceR_Jump_AimD: SamusPose = 23;
+pub const kPose_16_FaceL_Jump_AimU: SamusPose = 22;
+pub const kPose_15_FaceR_Jump_AimU: SamusPose = 21;
+pub const kPose_14_FaceL_Jump_NoAim_NoMove_Gun: SamusPose = 20;
+pub const kPose_13_FaceR_Jump_NoAim_NoMove_Gun: SamusPose = 19;
+pub const kPose_12_MoveL_AimDL: SamusPose = 18;
+pub const kPose_11_MoveR_AimDR: SamusPose = 17;
+pub const kPose_10_MoveL_AimUL: SamusPose = 16;
+pub const kPose_0F_MoveR_AimUR: SamusPose = 15;
+pub const kPose_0C_MoveL_Gun: SamusPose = 12;
+pub const kPose_0B_MoveR_Gun: SamusPose = 11;
+pub const kPose_0A_MoveL_NoAim: SamusPose = 10;
+pub const kPose_09_MoveR_NoAim: SamusPose = 9;
+pub const kPose_08_FaceL_AimDL: SamusPose = 8;
+pub const kPose_07_FaceR_AimDR: SamusPose = 7;
+pub const kPose_06_FaceL_AimUL: SamusPose = 6;
+pub const kPose_05_FaceR_AimUR: SamusPose = 5;
+pub const kPose_04_FaceL_AimU: SamusPose = 4;
+pub const kPose_03_FaceR_AimU: SamusPose = 3;
+pub const kPose_02_FaceL_Normal: SamusPose = 2;
+pub const kPose_01_FaceR_Normal: SamusPose = 1;
+pub const kPose_00_FaceF_Powersuit: SamusPose = 0;
+#[derive(Copy, Clone)]
+#[repr(C, packed)]
+pub struct Mode7VramWriteQueue {
+    pub field_0: uint8,
+    pub field_1: uint16,
+    pub gap3: [uint8; 2],
+    pub field_5: uint16,
+}
+pub type GameState = ::core::ffi::c_uint;
+pub const kGameState_44_TransitionFromDemo: GameState = 44;
+pub const kGameState_43_TransitionFromDemo: GameState = 43;
+pub const kGameState_42_PlayingDemo: GameState = 42;
+pub const kGameState_41_TransitionToDemo: GameState = 41;
+pub const kGameState_40_TransitionToDemo: GameState = 40;
+pub const kGameState_39_EndingAndCredits: GameState = 39;
+pub const kGameState_38_SamusEscapesFromZebes: GameState = 38;
+pub const kGameState_37_CeresGoesBoomWithSamus: GameState = 37;
+pub const kGameState_36_WhitingOutFromTimeUp: GameState = 36;
+pub const kGameState_35_TimeUp: GameState = 35;
+pub const kGameState_34_CeresGoesBoom: GameState = 34;
+pub const kGameState_33_BlackoutFromCeres: GameState = 33;
+pub const kGameState_32_MadeItToCeresElevator: GameState = 32;
+pub const kGameState_31_SetUpNewGame: GameState = 31;
+pub const kGameState_30_IntroCinematic: GameState = 30;
+pub const kGameState_29_DebugGameOverMenu: GameState = 29;
+pub const kGameState_28_Unused: GameState = 28;
+pub const kGameState_27_ReserveTanksAuto: GameState = 27;
+pub const kGameState_26_GameOverMenu: GameState = 26;
+pub const kGameState_25_SamusNoHealth: GameState = 25;
+pub const kGameState_24_SamusNoHealth: GameState = 24;
+pub const kGameState_23_SamusNoHealth: GameState = 23;
+pub const kGameState_22_SamusNoHealth: GameState = 22;
+pub const kGameState_21_SamusNoHealth: GameState = 21;
+pub const kGameState_20_SamusNoHealth: GameState = 20;
+pub const kGameState_19_SamusNoHealth: GameState = 19;
+pub const kGameState_18_Unpausing: GameState = 18;
+pub const kGameState_17_Unpausing: GameState = 17;
+pub const kGameState_16_Unpausing: GameState = 16;
+pub const kGameState_15_Paused: GameState = 15;
+pub const kGameState_14_Paused: GameState = 14;
+pub const kGameState_13_Pausing: GameState = 13;
+pub const kGameState_12_Pausing: GameState = 12;
+pub const kGameState_11_LoadingNextRoom: GameState = 11;
+pub const kGameState_10_LoadingNextRoom: GameState = 10;
+pub const kGameState_9_HitDoorBlock: GameState = 9;
+pub const kGameState_8_MainGameplay: GameState = 8;
+pub const kGameState_7_MainGameplayFadeIn: GameState = 7;
+pub const kGameState_6_LoadingGameData: GameState = 6;
+pub const kGameState_5_FileSelectMap: GameState = 5;
+pub const kGameState_4_FileSelectMenus: GameState = 4;
+pub const kGameState_3_Unused: GameState = 3;
+pub const kGameState_2_GameOptionsMenu: GameState = 2;
+pub const kGameState_1_OpeningCinematic: GameState = 1;
+pub const kGameState_0_Reset: GameState = 0;
+pub type Buttons = ::core::ffi::c_uint;
+pub const kButton_B: Buttons = 32768;
+pub const kButton_Y: Buttons = 16384;
+pub const kButton_Select: Buttons = 8192;
+pub const kButton_Start: Buttons = 4096;
+pub const kButton_Up: Buttons = 2048;
+pub const kButton_Down: Buttons = 1024;
+pub const kButton_Left: Buttons = 512;
+pub const kButton_Right: Buttons = 256;
+pub const kButton_A: Buttons = 128;
+pub const kButton_X: Buttons = 64;
+pub const kButton_L: Buttons = 32;
+pub const kButton_R: Buttons = 16;
+#[derive(Copy, Clone)]
+#[repr(C, packed)]
+pub struct StartDmaCopy {
+    pub chan: uint8,
+    pub dmap: uint8,
+    pub bbad: uint8,
+    pub a1: LongPtr,
+    pub das: VoidP,
+}
+#[derive(Copy, Clone)]
+#[repr(C, packed)]
+pub struct Ram3000_MsgBox {
+    pub pad: [uint8; 188],
+    pub msg_box_anim_y_radius_neg: [uint16; 30],
+    pub msg_box_anim_y_radius: [uint16; 30],
+    pub field_134: [uint8; 204],
+    pub tilemap: [uint16; 192],
+    pub indirect_hdma: [uint8; 7],
+    pub field_387: [uint8; 99],
+    pub backup_of_enabled_hdma_channels: uint8,
+    pub backup_of_bg3_tilemap_and_size: uint16,
+}
+#[derive(Copy, Clone)]
+#[repr(C, packed)]
+pub struct Ram3000_Misc {
+    pub field_0: [uint8; 472],
+    pub pause_screen_samus_witeframe_tilemap: [uint16; 264],
+    pub field_3E8: [uint8; 24],
+}
+#[derive(Copy, Clone)]
+#[repr(C, packed)]
+pub struct Ram3000_Menu {
+    pub field_0: [uint8; 768],
+    pub palette_backup_in_menu: [uint16; 256],
+    pub backup_of_io_registers_in_gameover: [uint8; 54],
+    pub field_536: [uint8; 202],
+    pub menu_tilemap: [uint8; 512],
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub union Ram3800 {
+    pub cinematic_bg_tilemap: [uint16; 1024],
+    pub equipment_screen_bg1_tilemap: [uint16; 1024],
+    pub debug_game_over_tilemap: [uint16; 1024],
+    pub cleared_message_box_bg3_tilemap: [uint16; 1024],
+}
+#[derive(Copy, Clone)]
+#[repr(C, packed)]
+pub struct Ram4000_Backups {
+    pub field_0: [uint8; 256],
+    pub backup_of_vram_0x5880_msgbox: [uint16; 896],
+    pub field_800: [uint8; 2048],
+    pub backup_of_0x3e00_in_kraid_pause: [uint8; 1024],
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub union Ram4000 {
+    pub xray_tilemaps: [uint16; 6144],
+    pub bg2_tilemap: [uint16; 2048],
+    pub decomp_buffer_kraid: [uint16; 1024],
+    pub bg2_room_select_map_tilemap: [uint16; 1024],
+    pub intro_japanese_text_tiles: [uint16; 768],
+    pub backups: Ram4000_Backups,
+}
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub union Ram3000 {
+    pub pause_menu_map_tilemap: [uint16; 1024],
+    pub cinematic_bg_tilemap: [uint16; 1024],
+    pub msgbox: Ram3000_MsgBox,
+    pub msgbox_y_scroll_hdma: [uint8; 240],
+    pub misc: Ram3000_Misc,
+    pub menu: Ram3000_Menu,
+}
+pub type Consts_60 = ::core::ffi::c_uint;
+pub const addr_unk_606300: Consts_60 = 25344;
+pub const addr_unk_6061F0: Consts_60 = 25072;
+pub const addr_unk_605BE0: Consts_60 = 23520;
+pub const addr_unk_6059A0: Consts_60 = 22944;
+pub const addr_unk_605880: Consts_60 = 22656;
+pub const addr_unk_605820: Consts_60 = 22560;
+pub const addr_unk_605800: Consts_60 = 22528;
+pub const addr_unk_605400: Consts_60 = 21504;
+pub const addr_unk_6053E0: Consts_60 = 21472;
+pub const addr_unk_605000: Consts_60 = 20480;
+pub const addr_unk_604C00: Consts_60 = 19456;
+pub const addr_unk_604800: Consts_60 = 18432;
+pub type Consts_8B = ::core::ffi::c_uint;
+pub const addr_kCinematicBgObjectDef_8BF74E: Consts_8B = 63310;
+pub const addr_kCinematicBgObjectDef_8BF748: Consts_8B = 63304;
+pub const addr_stru_8BF6F8: Consts_8B = 63224;
+pub const addr_kCinematicSpriteObjectDef_8BEF93: Consts_8B = 61331;
+pub const addr_kCinematicSpriteObjectDef_8BEF8D: Consts_8B = 61325;
+pub const addr_kCinematicSpriteObjectDef_8BEF87: Consts_8B = 61319;
+pub const addr_kCinematicSpriteObjectDef_8BEF81: Consts_8B = 61313;
+pub const addr_kCinematicSpriteObjectDef_8BEF7B: Consts_8B = 61307;
+pub const addr_kCinematicSpriteObjectDef_8BEF75: Consts_8B = 61301;
+pub const addr_kCinematicSpriteObjectDef_8BEF6F: Consts_8B = 61295;
+pub const addr_kCinematicSpriteObjectDef_8BEF69: Consts_8B = 61289;
+pub const addr_kCinematicSpriteObjectDef_8BEF63: Consts_8B = 61283;
+pub const addr_kCinematicSpriteObjectDef_8BEF5D: Consts_8B = 61277;
+pub const addr_kCinematicSpriteObjectDef_8BEF57: Consts_8B = 61271;
+pub const addr_kCinematicSpriteObjectDef_8BEF51: Consts_8B = 61265;
+pub const addr_kCinematicSpriteObjectDef_8BEF4B: Consts_8B = 61259;
+pub const addr_kCinematicSpriteObjectDef_8BEF45: Consts_8B = 61253;
+pub const addr_kCinematicSpriteObjectDef_8BEF3F: Consts_8B = 61247;
+pub const addr_kCinematicSpriteObjectDef_8BEF39: Consts_8B = 61241;
+pub const addr_kCinematicSpriteObjectDef_8BEF33: Consts_8B = 61235;
+pub const addr_kCinematicSpriteObjectDef_8BEF2D: Consts_8B = 61229;
+pub const addr_kCinematicSpriteObjectDef_8BEF27: Consts_8B = 61223;
+pub const addr_kCinematicSpriteObjectDef_8BEF1B: Consts_8B = 61211;
+pub const addr_kCinematicSpriteObjectDef_8BEF15: Consts_8B = 61205;
+pub const addr_kCinematicSpriteObjectDef_8BEF0F: Consts_8B = 61199;
+pub const addr_kCinematicSpriteObjectDef_8BEF09: Consts_8B = 61193;
+pub const addr_kCinematicSpriteObjectDef_8BEF03: Consts_8B = 61187;
+pub const addr_kCinematicSpriteObjectDef_8BEEFD: Consts_8B = 61181;
+pub const addr_kCinematicSpriteObjectDef_8BEEF7: Consts_8B = 61175;
+pub const addr_kCinematicSpriteObjectDef_8BEEF1: Consts_8B = 61169;
+pub const addr_kCinematicSpriteObjectDef_8BEEEB: Consts_8B = 61163;
+pub const addr_kCinematicSpriteObjectDef_8BEEE5: Consts_8B = 61157;
+pub const addr_kCinematicSpriteObjectDef_8BEEDF: Consts_8B = 61151;
+pub const addr_kCinematicSpriteObjectDef_8BEED9: Consts_8B = 61145;
+pub const addr_kCinematicSpriteObjectDef_8BEED3: Consts_8B = 61139;
+pub const addr_kCinematicSpriteObjectDef_8BEECD: Consts_8B = 61133;
+pub const addr_kCinematicSpriteObjectDef_8BEEC7: Consts_8B = 61127;
+pub const addr_kCinematicSpriteObjectDef_8BEEC1: Consts_8B = 61121;
+pub const addr_kCinematicSpriteObjectDef_8BEEBB: Consts_8B = 61115;
+pub const addr_kCinematicSpriteObjectDef_8BEEB5: Consts_8B = 61109;
+pub const addr_kCinematicSpriteObjectDef_8BEEAF: Consts_8B = 61103;
+pub const addr_kCinematicSpriteObjectDef_8BEEA9: Consts_8B = 61097;
+pub const addr_kCinematicSpriteObjectDef_8BEEA3: Consts_8B = 61091;
+pub const addr_kCinematicSpriteObjectDef_8BEE9D: Consts_8B = 61085;
+pub const addr_off_8BEE9B: Consts_8B = 61083;
+pub const addr_word_8BED9D: Consts_8B = 60829;
+pub const addr_word_8BED95: Consts_8B = 60821;
+pub const addr_loc_8BE1B4: Consts_8B = 57780;
+pub const addr_kMode7ObjectDef_8BD437: Consts_8B = 54327;
+pub const addr_kMode7ObjectDef_8BD431: Consts_8B = 54321;
+pub const addr_kMode7ObjectDef_8BD42B: Consts_8B = 54315;
+pub const addr_kMode7ObjectDef_8BD425: Consts_8B = 54309;
+pub const addr_kMode7ObjectDef_8BD41F: Consts_8B = 54303;
+pub const addr_kMode7ObjectDef_8BD419: Consts_8B = 54297;
+pub const addr_kMode7ObjectDef_8BD413: Consts_8B = 54291;
+pub const addr_kMode7ObjectDef_8BD40D: Consts_8B = 54285;
+pub const addr_kMode7ObjectDef_8BD407: Consts_8B = 54279;
+pub const addr_kMode7ObjectDef_8BD401: Consts_8B = 54273;
+pub const addr_off_8BD3E7: Consts_8B = 54247;
+pub const addr_word_8BD389: Consts_8B = 54153;
+pub const addr_word_8BD371: Consts_8B = 54129;
+pub const addr_word_8BD30D: Consts_8B = 54029;
+pub const addr_word_8BD2D5: Consts_8B = 53973;
+pub const addr_word_8BD2A5: Consts_8B = 53925;
+pub const addr_word_8BD259: Consts_8B = 53849;
+pub const addr_word_8BD215: Consts_8B = 53781;
+pub const addr_word_8BD1B9: Consts_8B = 53689;
+pub const addr_word_8BD15D: Consts_8B = 53597;
+pub const addr_word_8BD0F9: Consts_8B = 53497;
+pub const addr_word_8BD0E1: Consts_8B = 53473;
+pub const addr_word_8BD085: Consts_8B = 53381;
+pub const addr_word_8BD055: Consts_8B = 53333;
+pub const addr_word_8BCFFD: Consts_8B = 53245;
+pub const addr_word_8BCFBD: Consts_8B = 53181;
+pub const addr_word_8BCF75: Consts_8B = 53109;
+pub const addr_kCinematicBgObjectDef_8BCF69: Consts_8B = 53097;
+pub const addr_kCinematicBgObjectDef_8BCF63: Consts_8B = 53091;
+pub const addr_kCinematicBgObjectDef_8BCF5D: Consts_8B = 53085;
+pub const addr_kCinematicBgObjectDef_8BCF57: Consts_8B = 53079;
+pub const addr_kCinematicBgObjectDef_8BCF51: Consts_8B = 53073;
+pub const addr_kCinematicBgObjectDef_8BCF4B: Consts_8B = 53067;
+pub const addr_kCinematicBgObjectDef_8BCF45: Consts_8B = 53061;
+pub const addr_kCinematicBgObjectDef_8BCF3F: Consts_8B = 53055;
+pub const addr_kCinematicSpriteObjectDef_8BCF39: Consts_8B = 53049;
+pub const addr_kCinematicSpriteObjectDef_8BCF33: Consts_8B = 53043;
+pub const addr_kCinematicSpriteObjectDef_8BCF2D: Consts_8B = 53037;
+pub const addr_kCinematicSpriteObjectDef_8BCF27: Consts_8B = 53031;
+pub const addr_kCinematicSpriteObjectDef_8BCF21: Consts_8B = 53025;
+pub const addr_kCinematicSpriteObjectDef_8BCF1B: Consts_8B = 53019;
+pub const addr_kCinematicSpriteObjectDef_8BCF15: Consts_8B = 53013;
+pub const addr_kCinematicSpriteObjectDef_8BCF0F: Consts_8B = 53007;
+pub const addr_kCinematicSpriteObjectDef_8BCF09: Consts_8B = 53001;
+pub const addr_kCinematicSpriteObjectDef_8BCF03: Consts_8B = 52995;
+pub const addr_kCinematicSpriteObjectDef_8BCEFD: Consts_8B = 52989;
+pub const addr_kCinematicSpriteObjectDef_8BCEF7: Consts_8B = 52983;
+pub const addr_kCinematicSpriteObjectDef_8BCEF1: Consts_8B = 52977;
+pub const addr_kCinematicSpriteObjectDef_8BCEEB: Consts_8B = 52971;
+pub const addr_kCinematicSpriteObjectDef_8BCEE5: Consts_8B = 52965;
+pub const addr_kCinematicSpriteObjectDef_8BCEDF: Consts_8B = 52959;
+pub const addr_kCinematicSpriteObjectDef_8BCED9: Consts_8B = 52953;
+pub const addr_kCinematicSpriteObjectDef_8BCED3: Consts_8B = 52947;
+pub const addr_kCinematicSpriteObjectDef_8BCECD: Consts_8B = 52941;
+pub const addr_kCinematicSpriteObjectDef_8BCEC7: Consts_8B = 52935;
+pub const addr_kCinematicSpriteObjectDef_8BCEC1: Consts_8B = 52929;
+pub const addr_kCinematicSpriteObjectDef_8BCEBB: Consts_8B = 52923;
+pub const addr_kCinematicSpriteObjectDef_8BCEB5: Consts_8B = 52917;
+pub const addr_kCinematicSpriteObjectDef_8BCEAF: Consts_8B = 52911;
+pub const addr_kCinematicSpriteObjectDef_8BCEA3: Consts_8B = 52899;
+pub const addr_kCinematicSpriteObjectDef_8BCE91: Consts_8B = 52881;
+pub const addr_kCinematicSpriteObjectDef_8BCE8B: Consts_8B = 52875;
+pub const addr_kCinematicSpriteObjectDef_8BCE85: Consts_8B = 52869;
+pub const addr_kCinematicSpriteObjectDef_8BCE7F: Consts_8B = 52863;
+pub const addr_kCinematicSpriteObjectDef_8BCE79: Consts_8B = 52857;
+pub const addr_kCinematicSpriteObjectDef_8BCE73: Consts_8B = 52851;
+pub const addr_kCinematicSpriteObjectDef_8BCE6D: Consts_8B = 52845;
+pub const addr_kCinematicSpriteObjectDef_8BCE67: Consts_8B = 52839;
+pub const addr_kCinematicSpriteObjectDef_8BCE61: Consts_8B = 52833;
+pub const addr_kCinematicSpriteObjectDef_8BCE5B: Consts_8B = 52827;
+pub const addr_kCinematicSpriteObjectDef_8BCE55: Consts_8B = 52821;
+pub const addr_off_8BCE53: Consts_8B = 52819;
+pub const addr_word_8BCD71: Consts_8B = 52593;
+pub const addr_word_8BCC23: Consts_8B = 52259;
+pub const addr_unk_8BCC03: Consts_8B = 52227;
+pub const addr_word_8BCBFB: Consts_8B = 52219;
+pub const addr_word_8BCB3B: Consts_8B = 52027;
+pub const addr_off_8BCB19: Consts_8B = 51993;
+pub const addr_kCinematicFunction_Intro_Func76_M7_2: Consts_8B = 50170;
+pub const addr_kCinematicFunction_Intro_Func76_M7_1: Consts_8B = 50160;
+pub const addr_kCinematicFunction_Intro_Func76_M7_0: Consts_8B = 50150;
+pub const addr_kCinematicFunction_Intro_Func56_M7: Consts_8B = 48756;
+pub const addr_kMode7ObjBabyMetroidInTitle: Consts_8B = 41813;
+pub const addr_kCinematicSpriteObjectDef_8BA125: Consts_8B = 41253;
+pub const addr_kCinematicSpriteObjectDef_8BA119: Consts_8B = 41241;
+pub const addr_kCinematicSpriteObjectDef_8BA113: Consts_8B = 41235;
+pub const addr_kCinematicSpriteObjectDef_8BA107: Consts_8B = 41223;
+pub const addr_kCinematicSpriteObjectDef_8BA101: Consts_8B = 41217;
+pub const addr_kCinematicSpriteObjectDef_8BA0FB: Consts_8B = 41211;
+pub const addr_kCinematicSpriteObjectDef_8BA0F5: Consts_8B = 41205;
+pub const addr_kCinematicSpriteObjectDef_8BA0EF: Consts_8B = 41199;
+pub type Consts_8C = ::core::ffi::c_uint;
+pub const addr_kSpriteMap_NintendoLogo: Consts_8C = 32955;
+pub type Consts_8D = ::core::ffi::c_uint;
+pub const addr_kPalfx_FFD5: Consts_8D = 65493;
+pub const addr_kPalfx_FFD1: Consts_8D = 65489;
+pub const addr_kPalfx_FFCD: Consts_8D = 65485;
+pub const addr_kPalfx_FFC9: Consts_8D = 65481;
+pub const addr_stru_8DF75D: Consts_8D = 63325;
+pub const addr_stru_8DF759: Consts_8D = 63321;
+pub const addr_word_8DEC76: Consts_8D = 60534;
+pub const addr_word_8DEB43: Consts_8D = 60227;
+pub const addr_off_8DE8B6: Consts_8D = 59574;
+pub const addr_off_8DE68A: Consts_8D = 59018;
+pub const addr_kPalfxInstrList_E45E: Consts_8D = 58462;
+pub const addr_off_8DE420: Consts_8D = 58400;
+pub const addr_off_8DE400: Consts_8D = 58368;
+pub const addr_off_8DE3E0: Consts_8D = 58336;
+pub const addr_kPalfx_E200: Consts_8D = 57856;
+pub const addr_stru_8DE1FC: Consts_8D = 57852;
+pub const addr_stru_8DE1F8: Consts_8D = 57848;
+pub const addr_stru_8DE1F4: Consts_8D = 57844;
+pub const addr_stru_8DE1F0: Consts_8D = 57840;
+pub const addr_kPalfx_E1E8: Consts_8D = 57832;
+pub const addr_kPalfx_E1E4: Consts_8D = 57828;
+pub const addr_kPalfx_E1E0: Consts_8D = 57824;
+pub const addr_kPalfx_E1DC: Consts_8D = 57820;
+pub const addr_kPalfx_E1D8: Consts_8D = 57816;
+pub const addr_kPalfx_E1D4: Consts_8D = 57812;
+pub const addr_kPalfx_E1D0: Consts_8D = 57808;
+pub const addr_kPalfx_E1CC: Consts_8D = 57804;
+pub const addr_kPalfx_E1C8: Consts_8D = 57800;
+pub const addr_kPalfx_E1C4: Consts_8D = 57796;
+pub const addr_stru_8DE1C0: Consts_8D = 57792;
+pub const addr_kPalfx_E1BC: Consts_8D = 57788;
+pub const addr_kPalfx_E1B8: Consts_8D = 57784;
+pub const addr_kPalfx_E1B0: Consts_8D = 57776;
+pub const addr_kPalfx_E1AC: Consts_8D = 57772;
+pub const addr_kPalfx_E1A8: Consts_8D = 57768;
+pub const addr_kPalfx_E1A4: Consts_8D = 57764;
+pub const addr_kPalfx_E1A0: Consts_8D = 57760;
+pub const addr_kPalfx_E19C: Consts_8D = 57756;
+pub const addr_kPalfx_E198: Consts_8D = 57752;
+pub const addr_kPalfx_E194: Consts_8D = 57748;
+pub const addr_off_8DE192: Consts_8D = 57746;
+pub const addr_locret_8DC5E3: Consts_8D = 50659;
+pub type Consts_91 = ::core::ffi::c_uint;
+pub const addr_stru_919346: Consts_91 = 37702;
+pub const addr_stru_918784: Consts_91 = 34692;
+pub const addr_stru_91877E: Consts_91 = 34686;
+pub const addr_kDemoInstrs_LeaveDemo: Consts_91 = 34678;
+pub const addr_off_91864B: Consts_91 = 34379;
+pub const kCoroutineNone: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+#[inline]
+unsafe extern "C" fn __CFADD__uint16(mut x: uint16, mut y: uint16) -> bool {
+    return x as ::core::ffi::c_int
+        > (x as ::core::ffi::c_int + y as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int;
+}
+#[inline]
+unsafe extern "C" fn RomPtr_RAM(mut addr: uint16_t) -> *mut uint8 {
+    '_c2rust_label: {
+        if (addr as ::core::ffi::c_int) < 0x2000 as ::core::ffi::c_int {
+        } else {
+            __assert_fail(
+                b"addr < 0x2000\0" as *const u8 as *const ::core::ffi::c_char,
+                b"src/sm_rtl.h\0" as *const u8 as *const ::core::ffi::c_char,
+                51 as ::core::ffi::c_uint,
+                b"uint8 *RomPtr_RAM(uint16_t)\0" as *const u8 as *const ::core::ffi::c_char,
+            );
+        }
+    };
+    return (&raw mut g_ram as *mut uint8).offset(addr as ::core::ffi::c_int as isize);
+}
+#[inline]
+unsafe extern "C" fn RomPtr_8B(mut addr: uint16_t) -> *const uint8 {
+    return RomPtr((0x8b0000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
+}
+#[inline]
+unsafe extern "C" fn RomPtr_8C(mut addr: uint16_t) -> *const uint8 {
+    return RomPtr((0x8c0000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
+}
+#[inline]
+unsafe extern "C" fn gOamEnt(mut v: ::core::ffi::c_int) -> *mut OamEnt {
+    return (&raw mut g_ram as *mut uint8).offset((0x370 as ::core::ffi::c_int + v) as isize)
+        as *mut uint8 as *mut OamEnt;
+}
+#[inline]
+unsafe extern "C" fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
+    return (&raw mut g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
+        as *mut uint8 as *mut VramWriteEntry;
+}
+#[inline]
+unsafe extern "C" fn get_Mode7ObjectDef(mut a: uint16) -> *mut Mode7ObjectDef {
+    return RomPtr((0x8b0000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
+        as *mut Mode7ObjectDef;
+}
+pub const fnProcessCinematicBgObject_Nothing: uint32 = 9144393 as uint32;
+pub const fnProcessCinematicBgObject_DrawChar: uint32 = 9144397 as uint32;
+pub const fnProcessCinematicBgObject_DrawToTextTilemap: uint32 = 9144503 as uint32;
+pub const fnProcessCinematicBgObject_DrawToBgTilemap: uint32 = 9144573 as uint32;
+pub const fnProcessCinematicBgObject_Unk1: uint32 = 9144683 as uint32;
+pub const fnProcessCinematicBgObject_Unk2: uint32 = 9144783 as uint32;
+pub const fnCinematicFunction_nullsub_116: ::core::ffi::c_int = 0x8b93d9 as ::core::ffi::c_int;
+pub const fnCinematicSprInstr_Delete: uint32 = 9147448 as uint32;
+pub const fnCinematicSprInstr_Sleep: uint32 = 9147458 as uint32;
+pub const fnCinematicSprInstr_SetPreInstr: uint32 = 9147468 as uint32;
+pub const fnCinematicSprInstr_ClearPreInstr: uint32 = 9147479 as uint32;
+pub const fnCinematicFunction_nullsub_298: ::core::ffi::c_int = 0x8b945f as ::core::ffi::c_int;
+pub const fnCinematicSprInstr_GotoRel: uint32 = 9147554 as uint32;
+pub const fnCinematicSprInstr_Goto: uint32 = 9147580 as uint32;
+pub const fnCinematicSprInstr_DecTimerGoto: uint32 = 9147587 as uint32;
+pub const fnCinematicSprInstr_DecTimerGotoRel: uint32 = 9147597 as uint32;
+pub const fnCinematicSprInstr_SetTimer: uint32 = 9147606 as uint32;
+pub const fnMode7Instr_Delete: uint32 = 9147755 as uint32;
+pub const fnMode7Instr_SetPreInstr: uint32 = 9147762 as uint32;
+pub const fnMode7Instr_ClearPreInstr: uint32 = 9147773 as uint32;
+pub const fnMode7Instr_Goto: uint32 = 9147782 as uint32;
+pub const fnMode7Instr_DecTimerAndGoto: uint32 = 9147789 as uint32;
+pub const fnMode7Instr_SetTimer: uint32 = 9147799 as uint32;
+pub const fnCinematicBgInstr_Delete: uint32 = 9148056 as uint32;
+pub const fnCinematicBgInstr_Goto: uint32 = 9148190 as uint32;
+pub const fnIntroObject_Delete: uint32 = 9148926 as uint32;
+pub const fnIntroObject_Goto: uint32 = 9148934 as uint32;
+pub const fnIntroObject_DecTimerGoto: uint32 = 9148941 as uint32;
+pub const fnIntroObject_SetTimer: uint32 = 9148951 as uint32;
+pub const fnCinematicFunctionNone: ::core::ffi::c_int = 0x8b9a47 as ::core::ffi::c_int;
+pub const fnCinematicSpriteInit_7: uint32 = 9149210 as uint32;
+pub const fnCinematicSpriteInit_8: uint32 = 9149229 as uint32;
+pub const fnCinematicSpriteInit_9: uint32 = 9149248 as uint32;
+pub const fnCinematicFunctionOpening: ::core::ffi::c_int = 0x8b9b68 as ::core::ffi::c_int;
+pub const fnCinematicSpriteInit_0: uint32 = 9149628 as uint32;
+pub const fnsub_8B9CCF: uint32 = 9149647 as uint32;
+pub const fnCinematicSprInstr_9CE1: uint32 = 9149665 as uint32;
+pub const fnCinematicFunc_Func2: ::core::ffi::c_int = 0x8b9d17 as ::core::ffi::c_int;
+pub const fnCinematicSpriteInit_1: uint32 = 9149770 as uint32;
+pub const fnCinematicSprInstr_9D5D: uint32 = 9149789 as uint32;
+pub const fnCinematicFunc_Func4: ::core::ffi::c_int = 0x8b9d90 as ::core::ffi::c_int;
+pub const fnCinematicSpriteInit_2: uint32 = 9149891 as uint32;
+pub const fnCinematicSprInstr_9DD6: uint32 = 9149910 as uint32;
+pub const fnCinematicFunc_Func5: ::core::ffi::c_int = 0x8b9e12 as ::core::ffi::c_int;
+pub const fnCinematicSpriteInit_3: uint32 = 9150021 as uint32;
+pub const fnCinematicSprInstr_Func8: uint32 = 9150040 as uint32;
+pub const fnCinematicFunc_Func7: ::core::ffi::c_int = 0x8b9e8b as ::core::ffi::c_int;
+pub const fnCinematicSpriteInit_4: uint32 = 9150131 as uint32;
+pub const fnCinematicSprInstr_Func9: uint32 = 9150157 as uint32;
+pub const fnCinematicSpriteInit_5: uint32 = 9150166 as uint32;
+pub const fnCinematicSprInstr_sub_8B9EF0: uint32 = 9150192 as uint32;
+pub const fnCinematicSpriteInit_6: uint32 = 9150207 as uint32;
+pub const fnCinematicSprInstr_9F19: uint32 = 9150233 as uint32;
+pub const fnnullsub_117: ::core::ffi::c_int = 0x8b9f28 as ::core::ffi::c_int;
+pub const fnCinematicFunc_Func1: ::core::ffi::c_int = 0x8b9f29 as ::core::ffi::c_int;
+pub const fnCinematicFunc_Func10: ::core::ffi::c_int = 0x8b9f52 as ::core::ffi::c_int;
+pub const fnCinematicFunc_Func9: ::core::ffi::c_int = 0x8b9fae as ::core::ffi::c_int;
+pub const fnPlayBabyMetroidCry1: uint32 = 9151067 as uint32;
+pub const fnPlayBabyMetroidCry2: uint32 = 9151075 as uint32;
+pub const fnPlayBabyMetroidCry3: uint32 = 9151083 as uint32;
+pub const fnCinematicSetPal1: uint32 = 9151091 as uint32;
+pub const fnCinematicSetPal2: uint32 = 9151108 as uint32;
+pub const fnCinematicSetPal3: uint32 = 9151125 as uint32;
+pub const fnCinematicSetPal4: uint32 = 9151142 as uint32;
+pub const fnnullsub_120: ::core::ffi::c_int = 0x8ba38f as ::core::ffi::c_int;
+pub const fnnullsub_121: ::core::ffi::c_int = 0x8ba390 as ::core::ffi::c_int;
+pub const fnCinematicFunc_Nothing: ::core::ffi::c_int = 0x8ba391 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Initial: uint32 = 9151381 as uint32;
+pub const fnCinematicFunction_Intro_FadeIn: ::core::ffi::c_int = 0x8ba5a7 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_DrawInitJpn: ::core::ffi::c_int =
+    0x8ba5bd as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_LastMetroidCaptivity: ::core::ffi::c_int =
+    0x8ba5f8 as ::core::ffi::c_int;
+pub const fnCinematicFunc_Intro_QueueGalaxyIsAtPeace: ::core::ffi::c_int =
+    0x8ba613 as ::core::ffi::c_int;
+pub const fnCinematicFunc_Intro_WaitForQueueWait4secs: ::core::ffi::c_int =
+    0x8ba639 as ::core::ffi::c_int;
+pub const fnCinematicFunc_Intro_FadeOut: ::core::ffi::c_int = 0x8ba64c as ::core::ffi::c_int;
+pub const fnCinematicFunc_Intro_WaitForFadeOut: ::core::ffi::c_int = 0x8ba663 as ::core::ffi::c_int;
+pub const fnCinematicFunc_Intro_SetupTextPage2: ::core::ffi::c_int = 0x8ba66f as ::core::ffi::c_int;
+pub const fnCinematicFunc_Intro_WaitFadeinShowText: ::core::ffi::c_int =
+    0x8ba82b as ::core::ffi::c_int;
+pub const fnCinematicFunc_Intro_WaitForFadeinSleep: ::core::ffi::c_int =
+    0x8ba84a as ::core::ffi::c_int;
+pub const fnSetSomeStuffForSpriteObject_2: uint32 = 9152705 as uint32;
+pub const fnnullsub_122: uint32 = 9152724 as uint32;
+pub const fnSetSomeStuffForSpriteObject_3: uint32 = 9152725 as uint32;
+pub const fnSetSomeStuffForSpriteObject_4_MetroidEgg: uint32 = 9152744 as uint32;
+pub const fnCinematicSprPreInstr_A903: uint32 = 9152771 as uint32;
+pub const fnCinematicSprInstr_SpawnMetroidEggParticles: uint32 = 9152792 as uint32;
+pub const fnSetSomeStuffForSpriteObject_6: uint32 = 9152856 as uint32;
+pub const fnSetSomeStuffForSpriteObject_7: uint32 = 9152916 as uint32;
+pub const fnSetSomeStuffForSpriteObject_8: uint32 = 9153178 as uint32;
+pub const fnSetSomeStuffForSpriteObject_9: uint32 = 9153203 as uint32;
+pub const fnSetSomeStuffForSpriteObject_10: uint32 = 9153877 as uint32;
+pub const fnSetSomeStuffForSpriteObject_11: uint32 = 9153896 as uint32;
+pub const fnSetSomeStuffForSpriteObject_12: uint32 = 9153939 as uint32;
+pub const fnSetSomeStuffForSpriteObject_13: uint32 = 9153958 as uint32;
+pub const fnCinematicBgInstr_SetSomeStuffForSpriteObject_14: uint32 = 9154004 as uint32;
+pub const fnSetSomeStuffForSpriteObject_17: uint32 = 9154055 as uint32;
+pub const fnSetSomeStuffForSpriteObject_18: uint32 = 9154074 as uint32;
+pub const fnCinematicBgInstr_HandleCreateJpnText_Page1: uint32 = 9154115 as uint32;
+pub const fnCinematicBgInstr_SpawnMarkerWaitInput_Page1: uint32 = 9154139 as uint32;
+pub const fnCinematicBgInstr_HandleCreateJpnText_Page2: uint32 = 9154169 as uint32;
+pub const fnCinematicBgInstr_SpawnMarkerWaitInput_Page2: uint32 = 9154193 as uint32;
+pub const fnCinematicFunction_Intro_WaitInputSetupMotherBrainFight: ::core::ffi::c_int =
+    0x8baeb8 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_WaitInputSetupBabyMetroid: ::core::ffi::c_int =
+    0x8baf6c as ::core::ffi::c_int;
+pub const fnCinematicBgInstr_HandleCreateJpnText_Page3: uint32 = 9154676 as uint32;
+pub const fnCinematicBgInstr_SpawnMarkerWaitInput_Page3: uint32 = 9154700 as uint32;
+pub const fnCinematicBgInstr_HandleCreateJpnText_Page4: uint32 = 9154739 as uint32;
+pub const fnCinematicBgInstr_SpawnMarkerWaitInput_Page4: uint32 = 9154763 as uint32;
+pub const fnCinematicFunction_Intro_Func11: ::core::ffi::c_int = 0x8bb0f2 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func12: ::core::ffi::c_int = 0x8bb123 as ::core::ffi::c_int;
+pub const fnCinematicBgInstr_HandleCreateJpnText_Page5: uint32 = 9154971 as uint32;
+pub const fnCinematicBgInstr_SpawnMarkerWaitInput_Page5: uint32 = 9154995 as uint32;
+pub const fnCinematicFunction_Intro_Func15: ::core::ffi::c_int = 0x8bb1da as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func15b: ::core::ffi::c_int = 0x8bb207 as ::core::ffi::c_int;
+pub const fnCinematicBgInstr_Func16: uint32 = 9155112 as uint32;
+pub const fnCinematicBgInstr_Func17: uint32 = 9155136 as uint32;
+pub const fnCinematicFunction_Intro_XfadeGameplayFade: ::core::ffi::c_int =
+    0x8bb250 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_XfadeScientistFade: ::core::ffi::c_int =
+    0x8bb2d2 as ::core::ffi::c_int;
+pub const fnCinematicSprInstr_StartIntroPage2: uint32 = 9155382 as uint32;
+pub const fnCinematicSprInstr_StartIntroPage3: uint32 = 9155390 as uint32;
+pub const fnCinematicSprInstr_StartIntroPage4: uint32 = 9155398 as uint32;
+pub const fnCinematicSprInstr_StartIntroPage5: uint32 = 9155406 as uint32;
+pub const fnCinematicFunction_Intro_Page2: ::core::ffi::c_int = 0x8bb35f as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Page3: ::core::ffi::c_int = 0x8bb370 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Page4: ::core::ffi::c_int = 0x8bb381 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Page5: ::core::ffi::c_int = 0x8bb392 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Fadestuff: ::core::ffi::c_int = 0x8bb3f4 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Fadestuff2: ::core::ffi::c_int = 0x8bb458 as ::core::ffi::c_int;
+pub const fnCinematicBgPreInstr_SamusBlink: uint32 = 9155772 as uint32;
+pub const fnsub_8BB51E: uint32 = 9155870 as uint32;
+pub const fnEnableCinematicBgTilemapUpdates__0: uint32 = 9155919 as uint32;
+pub const fnCinematicFunction_Intro_Func21: uint32 = 9155924 as uint32;
+pub const fnCinematicFunction_Intro_Func22: uint32 = 9155973 as uint32;
+pub const fnCinematicFunction_Intro_ThenWaitInputSetupBabyMetroid: uint32 = 9156024 as uint32;
+pub const fnCinematicFunction_Intro_Func23: uint32 = 9156035 as uint32;
+pub const fnCinematicFunction_Intro_Func24: uint32 = 9156078 as uint32;
+pub const fnCinematicFunction_Intro_Func25: uint32 = 9156123 as uint32;
+pub const fnCinematicFunction_Intro_Func26: uint32 = 9156134 as uint32;
+pub const fnCinematicFunction_Intro_Func27: uint32 = 9156183 as uint32;
+pub const fnCinematicFunction_Intro_Func28: uint32 = 9156234 as uint32;
+pub const fnCinematicFunction_Intro_Func29: uint32 = 9156245 as uint32;
+pub const fnCinematicFunction_Intro_Func30: uint32 = 9156288 as uint32;
+pub const fnCinematicFunction_Intro_Func31: uint32 = 9156333 as uint32;
+pub const fnCinematicFunction_Intro_Func32: uint32 = 9156344 as uint32;
+pub const fnEnableCinematicBgTilemapUpdates__: uint32 = 9156363 as uint32;
+pub const fnCinematicFunction_Intro_Func34: ::core::ffi::c_int = 0x8bb72f as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func35: uint32 = 9156467 as uint32;
+pub const fnCinematicFunction_Intro_Func36: uint32 = 9156486 as uint32;
+pub const fnCinematicFunction_Intro_Func39: ::core::ffi::c_int = 0x8bb80f as ::core::ffi::c_int;
+pub const fnCinematicSprPreInstr_B82E: uint32 = 9156654 as uint32;
+pub const fnCinematicFunction_Intro_Func42: uint32 = 9156758 as uint32;
+pub const fnCinematicSprInstr_Func43: uint32 = 9156805 as uint32;
+pub const fnCinematicFunction_Intro_Func44: ::core::ffi::c_int = 0x8bb8d8 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func45: ::core::ffi::c_int = 0x8bb93b as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func46: uint32 = 9157005 as uint32;
+pub const fnCinematicFunction_Intro_Func47: uint32 = 9157076 as uint32;
+pub const fnCinematicFunction_Intro_Func48: uint32 = 9157135 as uint32;
+pub const fnCinematicSprInstr_SpawnIntroRinkas01: uint32 = 9157153 as uint32;
+pub const fnCinematicSprInstr_SpawnIntroRinkas23: uint32 = 9157174 as uint32;
+pub const fnCinematicFunction_Intro_Func49: uint32 = 9157195 as uint32;
+pub const fnCinematicFunction_Intro_Func50: uint32 = 9157214 as uint32;
+pub const fnCinematicFunction_Intro_Func51: ::core::ffi::c_int = 0x8bba73 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func52: ::core::ffi::c_int = 0x8bbb0d as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func53: ::core::ffi::c_int = 0x8bbb24 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func54: ::core::ffi::c_int = 0x8bbca0 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func55: ::core::ffi::c_int = 0x8bbde4 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func56: ::core::ffi::c_int = 0x8bbdf9 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func57: uint32 = 9158270 as uint32;
+pub const fnCinematicFunction_Intro_Func58: uint32 = 9158325 as uint32;
+pub const fnCinematicFunction_Intro_Func59: uint32 = 9158434 as uint32;
+pub const fnCinematicFunction_Intro_Func60: uint32 = 9158453 as uint32;
+pub const fnCinematicFunction_Intro_Func61: uint32 = 9158476 as uint32;
+pub const fnCinematicFunction_Intro_Func62: uint32 = 9158495 as uint32;
+pub const fnCinematicFunction_Intro_Func63: uint32 = 9158518 as uint32;
+pub const fnCinematicFunction_Intro_Func64: uint32 = 9158537 as uint32;
+pub const fnCinematicFunction_Intro_Func65: uint32 = 9158560 as uint32;
+pub const fnCinematicFunction_Intro_Func66: ::core::ffi::c_int = 0x8bbfc6 as ::core::ffi::c_int;
+pub const fnCinematicSprPreInstr_nullsub_300: ::core::ffi::c_int = 0x8bbfd9 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func67: ::core::ffi::c_int = 0x8bbfda as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func68: uint32 = 9158787 as uint32;
+pub const fnCinematicCommonInstr_Func69: uint32 = 9158806 as uint32;
+pub const fnCinematicCommonInstr_Func70: uint32 = 9158818 as uint32;
+pub const fnCinematicFunction_Intro_Func71: uint32 = 9158834 as uint32;
+pub const fnCinematicFunction_Intro_Func72: ::core::ffi::c_int = 0x8bc0c5 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func73: ::core::ffi::c_int = 0x8bc100 as ::core::ffi::c_int;
+pub const fnCinematicFunctionBlackoutFromCeres: uint32 = 9158939 as uint32;
+pub const fnCinematicFunction_Intro_Func74: ::core::ffi::c_int = 0x8bc2e4 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func75: ::core::ffi::c_int = 0x8bc2f1 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func76: ::core::ffi::c_int = 0x8bc345 as ::core::ffi::c_int;
+pub const fnCinematicSprInstr_SpawnCeresExplosions1: uint32 = 9159684 as uint32;
+pub const fnCinematicFunction_Intro_Func78: uint32 = 9159732 as uint32;
+pub const fnCinematicSprPreInstr_C489: uint32 = 9159817 as uint32;
+pub const fnCinematicFunction_Intro_Func80: uint32 = 9159865 as uint32;
+pub const fnCinematicSprInstr_SpawnCeresExplosions3: uint32 = 9159948 as uint32;
+pub const fnCinematicFunction_Intro_Func81: uint32 = 9159987 as uint32;
+pub const fnCinematicFunction_Intro_Func82: uint32 = 9160066 as uint32;
+pub const fnCinematicFunction_Intro_Func83: uint32 = 9160105 as uint32;
+pub const fnCinematicFunction_Intro_Func77: ::core::ffi::c_int = 0x8bc5ca as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func84: ::core::ffi::c_int = 0x8bc610 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func85: ::core::ffi::c_int = 0x8bc627 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func86: ::core::ffi::c_int = 0x8bc699 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func87: ::core::ffi::c_int = 0x8bc79c as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func88: ::core::ffi::c_int = 0x8bc7ca as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func89: uint32 = 9160763 as uint32;
+pub const fnCinematicFunction_Intro_Func90: uint32 = 9160782 as uint32;
+pub const fnCinematicFunction_Intro_Func91: ::core::ffi::c_int = 0x8bc85d as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func92: uint32 = 9160855 as uint32;
+pub const fnCinematicFunction_Intro_Func93: uint32 = 9160874 as uint32;
+pub const fnCinematicFunction_Intro_Func94: ::core::ffi::c_int = 0x8bc8b9 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func96: uint32 = 9160953 as uint32;
+pub const fnCinematicFunction_Intro_Func97: ::core::ffi::c_int = 0x8bc908 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func98: uint32 = 9161026 as uint32;
+pub const fnCinematicFunction_Intro_Func99: uint32 = 9161046 as uint32;
+pub const fnCinematicFunction_Intro_Func100: uint32 = 9161066 as uint32;
+pub const fnCinematicFunction_Intro_Func101: uint32 = 9161086 as uint32;
+pub const fnCinematicFunction_Intro_Func102: uint32 = 9161106 as uint32;
+pub const fnCinematicSprInstr_C9A5: uint32 = 9161125 as uint32;
+pub const fnCinematicSprInstr_C9AF: uint32 = 9161135 as uint32;
+pub const fnCinematicSprInstr_C9BD: uint32 = 9161149 as uint32;
+pub const fnCinematicSprInstr_C9C7: uint32 = 9161159 as uint32;
+pub const fnCinematicFunction_Intro_Func104: uint32 = 9161190 as uint32;
+pub const fnCinematicFunction_Intro_Func105: ::core::ffi::c_int = 0x8bc9f9 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func106: ::core::ffi::c_int = 0x8bca36 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func107: ::core::ffi::c_int = 0x8bca85 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func108: ::core::ffi::c_int = 0x8bcad0 as ::core::ffi::c_int;
+pub const fnnullsub_124: ::core::ffi::c_int = 0x8bcade as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func95: ::core::ffi::c_int = 0x8bcadf as ::core::ffi::c_int;
+pub const fnCinematicFunctionEscapeFromCebes: uint32 = 9163904 as uint32;
+pub const fnCinematicFunction_Intro_Func109: ::core::ffi::c_int = 0x8bd6d7 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func110: ::core::ffi::c_int = 0x8bd6f2 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func111: ::core::ffi::c_int = 0x8bd701 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func112: ::core::ffi::c_int = 0x8bd731 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func113: ::core::ffi::c_int = 0x8bd7f8 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func114: ::core::ffi::c_int = 0x8bd807 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func115: ::core::ffi::c_int = 0x8bd837 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func116: ::core::ffi::c_int = 0x8bda02 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func117: ::core::ffi::c_int = 0x8bda1a as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func118: ::core::ffi::c_int = 0x8bdad3 as ::core::ffi::c_int;
+pub const fnnullsub_125: ::core::ffi::c_int = 0x8bdb9d as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func119: ::core::ffi::c_int = 0x8bdb9e as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func120: ::core::ffi::c_int = 0x8bdbc4 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func121: ::core::ffi::c_int = 0x8bdca5 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func123: ::core::ffi::c_int = 0x8bdd42 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func124: ::core::ffi::c_int = 0x8bddcd as ::core::ffi::c_int;
+pub const fnnullsub_126: ::core::ffi::c_int = 0x8bde63 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func125: ::core::ffi::c_int = 0x8bde64 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func126: ::core::ffi::c_int = 0x8bde80 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func129: ::core::ffi::c_int = 0x8be0f4 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func130: ::core::ffi::c_int = 0x8be110 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func131: ::core::ffi::c_int = 0x8be158 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func132: ::core::ffi::c_int = 0x8be190 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func134: ::core::ffi::c_int = 0x8be1d2 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func136: ::core::ffi::c_int = 0x8be265 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func135: ::core::ffi::c_int = 0x8be293 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func137: ::core::ffi::c_int = 0x8be2dd as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func138: ::core::ffi::c_int = 0x8be314 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func145: ::core::ffi::c_int = 0x8be342 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func139: ::core::ffi::c_int = 0x8be3ae as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func141: ::core::ffi::c_int = 0x8be48a as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func143: ::core::ffi::c_int = 0x8be504 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func144: ::core::ffi::c_int = 0x8be58a as ::core::ffi::c_int;
+pub const fnCalcItemPercentageCount: uint32 = 9168423 as uint32;
+pub const fnCinematicFunction_Intro_Func146: uint32 = 9168745 as uint32;
+pub const fnCinematicFunction_Intro_Func147: uint32 = 9168768 as uint32;
+pub const fnCinematicFunction_Intro_Func148: ::core::ffi::c_int = 0x8be797 as ::core::ffi::c_int;
+pub const fnnullsub_127: ::core::ffi::c_int = 0x8be7ba as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func150: uint32 = 9170841 as uint32;
+pub const fnCinematicFunction_Intro_Func151: uint32 = 9170866 as uint32;
+pub const fnCinematicFunction_Intro_Func152: uint32 = 9170922 as uint32;
+pub const fnCinematicFunction_Intro_Func153: uint32 = 9170941 as uint32;
+pub const fnCinematicFunction_Intro_Func154: uint32 = 9170949 as uint32;
+pub const fnCinematicFunction_Intro_Func155: uint32 = 9170968 as uint32;
+pub const fnCinematicFunction_Intro_Func156: uint32 = 9170987 as uint32;
+pub const fnCinematicFunction_Intro_Func157: uint32 = 9171006 as uint32;
+pub const fnCinematicFunction_Intro_Func159: uint32 = 9171038 as uint32;
+pub const fnCinematicFunction_Intro_Func161: uint32 = 9171053 as uint32;
+pub const fnCinematicFunction_Intro_Func162: uint32 = 9171068 as uint32;
+pub const fnCinematicFunction_Intro_Func163: uint32 = 9171077 as uint32;
+pub const fnCinematicFunction_Intro_Func164: uint32 = 9171092 as uint32;
+pub const fnCinematicFunction_Intro_Func165: uint32 = 9171122 as uint32;
+pub const fnCinematicFunction_Intro_Func166: uint32 = 9171169 as uint32;
+pub const fnCinematicFunction_Intro_Func167: uint32 = 9171177 as uint32;
+pub const fnCinematicFunction_Intro_Func168: uint32 = 9171185 as uint32;
+pub const fnCinematicFunction_Intro_Func169: uint32 = 9171193 as uint32;
+pub const fnCinematicFunction_Intro_Func170: uint32 = 9171230 as uint32;
+pub const fnCinematicFunction_Intro_Func171: uint32 = 9171267 as uint32;
+pub const fnCinematicFunction_Intro_Func172: uint32 = 9171286 as uint32;
+pub const fnCinematicFunction_Intro_Func173: uint32 = 9171305 as uint32;
+pub const fnCinematicFunction_Intro_Func174: uint32 = 9171324 as uint32;
+pub const fnCinematicFunction_Intro_Func175: uint32 = 9171343 as uint32;
+pub const fnCinematicFunction_Intro_Func176: uint32 = 9171368 as uint32;
+pub const fnCinematicFunction_Intro_Func177: uint32 = 9171393 as uint32;
+pub const fnCinematicFunction_Intro_Func178: uint32 = 9171412 as uint32;
+pub const fnCinematicFunction_Intro_Func179: uint32 = 9171431 as uint32;
+pub const fnCinematicFunction_Intro_Func180: uint32 = 9171495 as uint32;
+pub const fnCinematicSprInstr_Func181: uint32 = 9171550 as uint32;
+pub const fnCinematicSprInstr_Func182: uint32 = 9171588 as uint32;
+pub const fnCinematicSprInstr_Func183: uint32 = 9171605 as uint32;
+pub const fnCinematicFunction_Intro_Func184: uint32 = 9171621 as uint32;
+pub const fnCinematicSprInstr_Func185: uint32 = 9171639 as uint32;
+pub const fnCinematicSprInstr_Func186: uint32 = 9171706 as uint32;
+pub const fnCinematicSprInstr_Func187: uint32 = 9171755 as uint32;
+pub const fnCinematicSprPreInstr_F35A: uint32 = 9171802 as uint32;
+pub const fnCinematicFunction_Intro_Func189: ::core::ffi::c_int = 0x8bf375 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func189b: uint32 = 9171867 as uint32;
+pub const fnCinematicSprInstr_Func190: uint32 = 9171888 as uint32;
+pub const fnCinematicFunction_Intro_Func191: uint32 = 9171897 as uint32;
+pub const fnCinematicSprInstr_Func192: uint32 = 9171918 as uint32;
+pub const fnCinematicSprInstr_Func193: uint32 = 9171995 as uint32;
+pub const fnCinematicSprInstr_Func194: uint32 = 9172004 as uint32;
+pub const fnCinematicSprInstr_Func195: uint32 = 9172013 as uint32;
+pub const fnCinematicSprInstr_Func196: uint32 = 9172022 as uint32;
+pub const fnCinematicSprInstr_Func197: uint32 = 9172031 as uint32;
+pub const fnCinematicSprInstr_Func198: uint32 = 9172040 as uint32;
+pub const fnCinematicFunction_Intro_Func199: uint32 = 9172053 as uint32;
+pub const fnCinematicFunction_Intro_Func200: ::core::ffi::c_int = 0x8bf464 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func201: uint32 = 9172088 as uint32;
+pub const fnCinematicFunction_Intro_Func202: ::core::ffi::c_int = 0x8bf487 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func203: uint32 = 9172123 as uint32;
+pub const fnCinematicFunction_Intro_Func204: ::core::ffi::c_int = 0x8bf4aa as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func205: uint32 = 9172177 as uint32;
+pub const fnCinematicFunction_Intro_Func206: ::core::ffi::c_int = 0x8bf4e0 as ::core::ffi::c_int;
+pub const fnCinematicFunction_Intro_Func207: uint32 = 9172231 as uint32;
+pub const fnnullsub_128: uint32 = 9172252 as uint32;
+pub const fnCinematicSprInstr_Func208: uint32 = 9172253 as uint32;
+pub const fnCinematicSprPreInstr_F528: uint32 = 9172264 as uint32;
+pub const fnCinematicSprInstr_Func211: uint32 = 9172308 as uint32;
+pub const fnCinematicSprPreInstr_F57F: uint32 = 9172351 as uint32;
+pub const fnCinematicSprInstr_Func213: uint32 = 9172375 as uint32;
+pub const fnCinematicSprInstr_Func214: uint32 = 9172410 as uint32;
+pub const fnCinematicFunction_Intro_Func215: ::core::ffi::c_int = 0x8bf5dd as ::core::ffi::c_int;
+pub const fnCinematicSprInstr_Func217: uint32 = 9172484 as uint32;
+pub const fnCinematicSprInstr_Func218: uint32 = 9172561 as uint32;
+pub const fnCinematicFunction_Intro_Func219: uint32 = 9172734 as uint32;
+pub const fnSamus_FrameHandlerAlfa_Func12: ::core::ffi::c_int = 0x90e6c9 as ::core::ffi::c_int;
+pub const fnSamus_Func15: ::core::ffi::c_int = 0x90e833 as ::core::ffi::c_int;
+pub const fnSamusDrawHandler_Default: ::core::ffi::c_int = 0x90eb52 as ::core::ffi::c_int;
+pub const fnlocret_8B9585: ::core::ffi::c_int = 0x8b9585 as ::core::ffi::c_int;
+#[inline]
+unsafe extern "C" fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
+    let mut t: uint32 = ((*lo as ::core::ffi::c_int
+        + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
+        as uint32)
+        .wrapping_add(v);
+    *lo = t as uint16;
+    *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn SetupPpuForTitleSequence() {
+    WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 0x80 as uint8;
+    WriteReg(OBSEL as ::core::ffi::c_int as uint16, 3 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x52 as ::core::ffi::c_int as isize) = 3 as uint8;
+    WriteReg(BGMODE as ::core::ffi::c_int as uint16, 7 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize) = 7 as uint8;
+    WriteReg(M7SEL as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5f as ::core::ffi::c_int as isize) = 0x80 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG1SC as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG2SC as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5a as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG3SC as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5c as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG4SC as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG12NBA as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5e as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG34NBA as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(TM as ::core::ffi::c_int as uint16, 0x10 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 16 as uint8;
+    WriteReg(TS as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(TMW as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x6c as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(CGWSEL as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x6e as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(CGADSUB as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(COLDATA as ::core::ffi::c_int as uint16, 0xe0 as uint8);
+    WriteReg(SETINI as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x77 as ::core::ffi::c_int as isize) = 0 as uint8;
+    memset(
+        (&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
+            as *mut ::core::ffi::c_void,
+        0 as ::core::ffi::c_int,
+        0x7fe as size_t,
+    );
+    *((&raw mut g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x729 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x72b as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x72d as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x72f as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x731 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x73d as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x73f as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x741 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x743 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x745 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x751 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x753 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x757 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x759 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x9d6 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x9d8 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) = 256 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1999 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x199b as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x199d as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x199f as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn SetupPpu_Intro() {
+    WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 0x80 as uint8;
+    WriteReg(OBSEL as ::core::ffi::c_int as uint16, 3 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x52 as ::core::ffi::c_int as isize) = 3 as uint8;
+    WriteReg(BGMODE as ::core::ffi::c_int as uint16, 9 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize) = 9 as uint8;
+    WriteReg(M7SEL as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5f as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize) = 80 as uint8;
+    WriteReg(BG1SC as ::core::ffi::c_int as uint16, 0x50 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize) = 72 as uint8;
+    WriteReg(BG2SC as ::core::ffi::c_int as uint16, 0x48 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5a as ::core::ffi::c_int as isize) = 76 as uint8;
+    WriteReg(BG3SC as ::core::ffi::c_int as uint16, 0x4c as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5c as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG4SC as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG12NBA as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5e as ::core::ffi::c_int as isize) = 4 as uint8;
+    WriteReg(BG34NBA as ::core::ffi::c_int as uint16, 4 as uint8);
+    WriteReg(TM as ::core::ffi::c_int as uint16, 4 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 4 as uint8;
+    WriteReg(TS as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(TMW as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x6c as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(CGWSEL as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x6e as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(CGADSUB as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(COLDATA as ::core::ffi::c_int as uint16, 0xe0 as uint8);
+    WriteReg(SETINI as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x77 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(0 as ::core::ffi::c_int as isize) = 32 as uint8;
+    *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(1 as ::core::ffi::c_int as isize) = 64 as uint8;
+    *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(2 as ::core::ffi::c_int as isize) = 0x80 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x57 as ::core::ffi::c_int as isize) = 0 as uint8;
+    memset7E(
+        (&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize) as *mut uint16,
+        0x2f as uint16,
+        0x7fe as uint16,
+    );
+    *((&raw mut g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) = 256 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1999 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x199b as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x199d as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x199f as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1982 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xb5 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xb9 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xbb as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn SetupPpu_3_Mode7() {
+    WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 0x80 as uint8;
+    WriteReg(OBSEL as ::core::ffi::c_int as uint16, 3 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x52 as ::core::ffi::c_int as isize) = 3 as uint8;
+    WriteReg(BGMODE as ::core::ffi::c_int as uint16, 7 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize) = 7 as uint8;
+    WriteReg(M7SEL as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5f as ::core::ffi::c_int as isize) = 0x80 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG1SC as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG2SC as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5a as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG3SC as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5c as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG4SC as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG12NBA as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5e as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG34NBA as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(TM as ::core::ffi::c_int as uint16, 0x11 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 17 as uint8;
+    WriteReg(TS as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(TMW as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x6c as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(CGWSEL as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x6e as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(CGADSUB as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(COLDATA as ::core::ffi::c_int as uint16, 0xe0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(0 as ::core::ffi::c_int as isize) = 32 as uint8;
+    *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(1 as ::core::ffi::c_int as isize) = 64 as uint8;
+    *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(2 as ::core::ffi::c_int as isize) = 0x80 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x57 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *((&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1999 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x199b as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x199d as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x199f as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1982 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn SetupPpu_4_Mode1() {
+    WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 0x80 as uint8;
+    WriteReg(OBSEL as ::core::ffi::c_int as uint16, 3 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x52 as ::core::ffi::c_int as isize) = 3 as uint8;
+    WriteReg(BGMODE as ::core::ffi::c_int as uint16, 1 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize) = 1 as uint8;
+    WriteReg(M7SEL as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5f as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize) = 92 as uint8;
+    WriteReg(BG1SC as ::core::ffi::c_int as uint16, 0x5c as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG2SC as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5a as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG3SC as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5c as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG4SC as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize) = 6 as uint8;
+    WriteReg(BG12NBA as ::core::ffi::c_int as uint16, 6 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5e as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG34NBA as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(TM as ::core::ffi::c_int as uint16, 0x11 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 17 as uint8;
+    WriteReg(TS as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x60 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x61 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x62 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6c as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6d as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *((&raw mut g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn SetupPpu_5_Mode7() {
+    WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 0x80 as uint8;
+    WriteReg(OBSEL as ::core::ffi::c_int as uint16, 0xa3 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x52 as ::core::ffi::c_int as isize) =
+        -(93 as ::core::ffi::c_int) as uint8;
+    WriteReg(BGMODE as ::core::ffi::c_int as uint16, 7 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize) = 7 as uint8;
+    WriteReg(M7SEL as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5f as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG1SC as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG2SC as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5a as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG3SC as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5c as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG4SC as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG12NBA as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5e as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG34NBA as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(TM as ::core::ffi::c_int as uint16, 0x11 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 17 as uint8;
+    WriteReg(TS as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(TMW as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x6c as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(CGWSEL as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x6e as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(CGADSUB as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(COLDATA as ::core::ffi::c_int as uint16, 0xe0 as uint8);
+    WriteReg(SETINI as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x77 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(0 as ::core::ffi::c_int as isize) = 32 as uint8;
+    *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(1 as ::core::ffi::c_int as isize) = 64 as uint8;
+    *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(2 as ::core::ffi::c_int as isize) = 0x80 as uint8;
+    *((&raw mut g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) = 256 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1999 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x199b as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x199d as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x199f as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn SetupPpu_6_Mode1() {
+    WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 0x80 as uint8;
+    WriteReg(OBSEL as ::core::ffi::c_int as uint16, 2 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x52 as ::core::ffi::c_int as isize) = 2 as uint8;
+    WriteReg(BGMODE as ::core::ffi::c_int as uint16, 1 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize) = 1 as uint8;
+    WriteReg(M7SEL as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5f as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize) = 112 as uint8;
+    WriteReg(BG1SC as ::core::ffi::c_int as uint16, 0x70 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize) = 120 as uint8;
+    WriteReg(BG2SC as ::core::ffi::c_int as uint16, 0x78 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5a as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG3SC as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5c as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG4SC as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize) = 68 as uint8;
+    WriteReg(BG12NBA as ::core::ffi::c_int as uint16, 0x44 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5e as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG34NBA as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(TM as ::core::ffi::c_int as uint16, 0x10 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 16 as uint8;
+    WriteReg(TS as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(TMW as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x6c as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(CGWSEL as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x6e as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(CGADSUB as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(COLDATA as ::core::ffi::c_int as uint16, 0xe0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(0 as ::core::ffi::c_int as isize) = 32 as uint8;
+    *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(1 as ::core::ffi::c_int as isize) = 64 as uint8;
+    *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(2 as ::core::ffi::c_int as isize) = 0x80 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x57 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *((&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1999 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x199b as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x199d as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x199f as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1982 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xb5 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn SetupPpu_7_Mode1() {
+    WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 0x80 as uint8;
+    WriteReg(OBSEL as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x52 as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BGMODE as ::core::ffi::c_int as uint16, 1 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize) = 1 as uint8;
+    WriteReg(M7SEL as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5f as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize) = 72 as uint8;
+    WriteReg(BG1SC as ::core::ffi::c_int as uint16, 0x48 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize) = 76 as uint8;
+    WriteReg(BG2SC as ::core::ffi::c_int as uint16, 0x4c as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5a as ::core::ffi::c_int as isize) = 36 as uint8;
+    WriteReg(BG3SC as ::core::ffi::c_int as uint16, 0x24 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5c as ::core::ffi::c_int as isize) = 0 as uint8;
+    WriteReg(BG4SC as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize) = 84 as uint8;
+    WriteReg(BG12NBA as ::core::ffi::c_int as uint16, 0x54 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x5e as ::core::ffi::c_int as isize) = 2 as uint8;
+    WriteReg(BG34NBA as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(TM as ::core::ffi::c_int as uint16, 1 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 1 as uint8;
+    WriteReg(TS as ::core::ffi::c_int as uint16, 0 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x60 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x61 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x62 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6c as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6d as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(0 as ::core::ffi::c_int as isize) = 32 as uint8;
+    *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(1 as ::core::ffi::c_int as isize) = 64 as uint8;
+    *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(2 as ::core::ffi::c_int as isize) = 0x80 as uint8;
+    *((&raw mut g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    WriteRegWord(M7A as ::core::ffi::c_int as uint16, 0x100 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x78 as ::core::ffi::c_int as isize) as *mut uint16) =
+        256 as uint16;
+    WriteRegWord(M7B as ::core::ffi::c_int as uint16, 0 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x7a as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    WriteRegWord(M7C as ::core::ffi::c_int as uint16, 0 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x7c as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    WriteRegWord(M7D as ::core::ffi::c_int as uint16, 0x100 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x7e as ::core::ffi::c_int as isize) as *mut uint16) =
+        256 as uint16;
+    WriteRegWord(M7X as ::core::ffi::c_int as uint16, 0x80 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x80 as ::core::ffi::c_int as isize) as *mut uint16) =
+        128 as uint16;
+    WriteRegWord(M7Y as ::core::ffi::c_int as uint16, 0x80 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x82 as ::core::ffi::c_int as isize) as *mut uint16) =
+        128 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) = 1 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xb5 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn HandleMode7TransformationNoRotation() {
+    *((&raw mut g_ram as *mut uint8).offset(0x78 as ::core::ffi::c_int as isize) as *mut uint16) =
+        *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+            as *mut uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x7e as ::core::ffi::c_int as isize) as *mut uint16) =
+        *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+            as *mut uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x7a as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x7c as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize) as *mut uint16) =
+        *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize) as *mut uint16) =
+        *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+}
+unsafe extern "C" fn Smult16x16(mut r38: uint16, mut r40: uint16) -> uint32 {
+    let mut t: uint32 =
+        (r38 as int16 as ::core::ffi::c_int * r40 as int16 as ::core::ffi::c_int) as uint32;
+    return t;
+}
+#[no_mangle]
+pub unsafe extern "C" fn HandleMode7TransformationMatrix() {
+    let ref mut fresh152 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x78 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh152 = (Smult16x16(
+        kSinCosTable8bit_Sext[((*((&raw mut g_ram as *mut uint8)
+            .offset(0x198d as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            + 64 as ::core::ffi::c_int) as uint8
+            as ::core::ffi::c_int
+            + 64 as ::core::ffi::c_int) as usize] as uint16,
+        *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+            as *mut uint16),
+    ) >> 8 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x7e as ::core::ffi::c_int as isize) as *mut uint16) =
+        *fresh152;
+    let mut v1: uint16 = (Smult16x16(
+        kSinCosTable8bit_Sext[(*((&raw mut g_ram as *mut uint8)
+            .offset(0x198d as ::core::ffi::c_int as isize)
+            as *mut uint16) as uint8 as ::core::ffi::c_int
+            + 64 as ::core::ffi::c_int) as usize] as uint16,
+        *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+            as *mut uint16),
+    ) >> 8 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x7a as ::core::ffi::c_int as isize) as *mut uint16) =
+        v1;
+    *((&raw mut g_ram as *mut uint8).offset(0x7c as ::core::ffi::c_int as isize) as *mut uint16) =
+        -(v1 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize) as *mut uint16) =
+        *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize) as *mut uint16) =
+        *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+}
+#[no_mangle]
+pub unsafe extern "C" fn SetPpuBackdropSomeColor() {
+    *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) =
+        -(127 as ::core::ffi::c_int) as uint8;
+    *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(0 as ::core::ffi::c_int as isize) = 56 as uint8;
+    *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(1 as ::core::ffi::c_int as isize) = 88 as uint8;
+    *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(2 as ::core::ffi::c_int as isize) = 0x80 as uint8;
+}
+#[no_mangle]
+pub unsafe extern "C" fn SetPpuBackdropBlack() {
+    *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(0 as ::core::ffi::c_int as isize) = 32 as uint8;
+    *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(1 as ::core::ffi::c_int as isize) = 64 as uint8;
+    *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(2 as ::core::ffi::c_int as isize) = 0x80 as uint8;
+}
+#[no_mangle]
+pub unsafe extern "C" fn UpdateCinematicBgTilemap() {
+    if *(&raw mut g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize)
+        as ::core::ffi::c_int
+        != 7 as ::core::ffi::c_int
+    {
+        let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x330 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        (*gVramWriteEntry(
+            *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
+                as *mut uint16) as ::core::ffi::c_int,
+        ))
+        .size = 1920 as uint16;
+        v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        (*gVramWriteEntry(v0 as ::core::ffi::c_int)).size = 12288 as uint16;
+        v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        let fresh157 = v0;
+        v0 = v0.wrapping_add(1);
+        *(&raw mut (*(gVramWriteEntry
+            as unsafe extern "C" fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
+            fresh157 as ::core::ffi::c_int,
+        ))
+        .size as *mut uint8)
+            .offset(0 as ::core::ffi::c_int as isize) = 126 as uint8;
+        (*gVramWriteEntry(v0 as ::core::ffi::c_int)).size = *((&raw mut g_ram as *mut uint8)
+            .offset(0x19f5 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
+            as *mut uint16) = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn UpdateSamusEyesTilemap() {
+    if *(&raw mut g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize)
+        as ::core::ffi::c_int
+        != 7 as ::core::ffi::c_int
+    {
+        let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x330 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        (*gVramWriteEntry(
+            *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
+                as *mut uint16) as ::core::ffi::c_int,
+        ))
+        .size = 128 as uint16;
+        v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        (*gVramWriteEntry(v0 as ::core::ffi::c_int)).size =
+            (((&raw mut g_ram as *mut uint8).offset(0x3800 as ::core::ffi::c_int as isize)
+                as *mut Ram3800 as *mut uint8)
+                .offset_from(&raw mut g_ram as *mut uint8) as ::core::ffi::c_long
+                + 832 as ::core::ffi::c_long) as uint16;
+        v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        let fresh156 = v0;
+        v0 = v0.wrapping_add(1);
+        *(&raw mut (*(gVramWriteEntry
+            as unsafe extern "C" fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
+            fresh156 as ::core::ffi::c_int,
+        ))
+        .size as *mut uint8)
+            .offset(0 as ::core::ffi::c_int as isize) = 126 as uint8;
+        (*gVramWriteEntry(v0 as ::core::ffi::c_int)).size = 18848 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
+            as *mut uint16) = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicUpdateSomeBg() {
+    if *(&raw mut g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize)
+        as ::core::ffi::c_int
+        != 7 as ::core::ffi::c_int
+    {
+        let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x330 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        (*gVramWriteEntry(
+            *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
+                as *mut uint16) as ::core::ffi::c_int,
+        ))
+        .size = 2048 as uint16;
+        v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        (*gVramWriteEntry(v0 as ::core::ffi::c_int)).size =
+            ((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
+                as *mut Ram3000 as *mut uint8)
+                .offset_from(&raw mut g_ram as *mut uint8) as ::core::ffi::c_long
+                as uint16;
+        v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        let fresh4 = v0;
+        v0 = v0.wrapping_add(1);
+        *(&raw mut (*(gVramWriteEntry
+            as unsafe extern "C" fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
+            fresh4 as ::core::ffi::c_int,
+        ))
+        .size as *mut uint8)
+            .offset(0 as ::core::ffi::c_int as isize) = 126 as uint8;
+        (*gVramWriteEntry(v0 as ::core::ffi::c_int)).size = *((&raw mut g_ram as *mut uint8)
+            .offset(0x19f5 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
+            as *mut uint16) = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CallProcessCinematicBgObject(
+    mut ea: uint32,
+    mut k: uint16,
+    mut j: uint16,
+    mut r18: uint16,
+) {
+    match ea {
+        9144393 => {
+            ProcessCinematicBgObject_Nothing(k, j, r18);
+            return;
+        }
+        9144397 => {
+            ProcessCinematicBgObject_DrawChar(k, j, r18);
+            return;
+        }
+        9144503 => {
+            ProcessCinematicBgObject_DrawToTextTilemap(k, j, r18);
+            return;
+        }
+        9144573 => {
+            ProcessCinematicBgObject_DrawToBgTilemap(k, j, r18);
+            return;
+        }
+        9144683 => {
+            ProcessCinematicBgObject_Unk1(k, j, r18);
+            return;
+        }
+        9144783 => {
+            ProcessCinematicBgObject_Unk2(k, j, r18);
+            return;
+        }
+        _ => {
+            Unreachable();
+        }
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn ProcessCinematicBgObject(mut v0: uint16, mut r18: uint16) {
+    let mut j: uint16 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x19b5 as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+    CallProcessCinematicBgObject(
+        (*(RomPtr_8C(j as uint16_t) as *mut uint16) as ::core::ffi::c_int
+            | 0x8b0000 as ::core::ffi::c_int) as uint32,
+        v0,
+        j,
+        r18,
+    );
+}
+#[no_mangle]
+pub unsafe extern "C" fn ProcessCinematicBgObject_DrawChar(
+    mut k: uint16,
+    mut j: uint16,
+    mut r18: uint16,
+) {
+    let mut v3: int16 = 0;
+    *((&raw mut g_ram as *mut uint8).offset(0x1ba1 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (*((&raw mut g_ram as *mut uint8)
+        .offset(0x1ba1 as ::core::ffi::c_int as isize) as *mut uint16)
+        as ::core::ffi::c_int
+        == 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
+    SpawnTextGlowObject(j, r18);
+    let mut v2: *const uint8 = RomPtr_8C(
+        *((&raw mut g_ram as *mut uint8).offset(0x19cd as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
+            as uint16_t,
+    );
+    if (*(v2 as *mut int16).offset(3 as ::core::ffi::c_int as isize) as ::core::ffi::c_int)
+        < 0 as ::core::ffi::c_int
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(15 as ::core::ffi::c_int as isize) = 8 as uint16;
+        v3 = (8 as ::core::ffi::c_int
+            * (*v2.offset(3 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+                + 2 as ::core::ffi::c_int)) as int16;
+    } else {
+        *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(15 as ::core::ffi::c_int as isize) = (8 as ::core::ffi::c_int
+            * *v2.offset(8 as ::core::ffi::c_int as isize) as ::core::ffi::c_int)
+            as uint16;
+        v3 = (8 as ::core::ffi::c_int
+            * *v2.offset(9 as ::core::ffi::c_int as isize) as ::core::ffi::c_int)
+            as int16;
+    }
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(15 as ::core::ffi::c_int as isize) =
+        (v3 as ::core::ffi::c_int - 8 as ::core::ffi::c_int) as uint16;
+    if *(v2.offset(4 as ::core::ffi::c_int as isize) as *mut uint16) as ::core::ffi::c_int
+        != 0xd67d as ::core::ffi::c_int
+        && *((&raw mut g_ram as *mut uint8).offset(0x1ba1 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            != 0
+    {
+        QueueSfx3_Max6(0xd as uint16);
+    }
+    ProcessCinematicBgObject_DrawToTextTilemap(0x1e as uint16, j, r18);
+}
+#[no_mangle]
+pub unsafe extern "C" fn ProcessCinematicBgObject_DrawToTextTilemap(
+    mut k: uint16,
+    mut j: uint16,
+    mut r18: uint16,
+) {
+    let mut jorg: uint16 = j;
+    let mut offs: uint16 = CinematicGetTilemapOffsetForTile(r18);
+    let mut r22: uint16 = offs;
+    let mut v3: *const uint8 = RomPtr_8C(j as uint16_t);
+    let mut m: uint16 = *v3.offset(2 as ::core::ffi::c_int as isize) as uint16;
+    let mut morg: uint16 = m;
+    let mut n: uint16 = *v3.offset(3 as ::core::ffi::c_int as isize) as uint16;
+    loop {
+        loop {
+            *((&raw mut (*((&raw mut g_ram as *mut uint8)
+                .offset(0x3000 as ::core::ffi::c_int as isize)
+                as *mut Ram3000))
+                .pause_menu_map_tilemap as *mut uint16 as *mut uint8)
+                .offset(offs as ::core::ffi::c_int as isize) as *mut uint16) =
+                *(RomPtr_8C(j as uint16_t) as *mut uint16).offset(2 as ::core::ffi::c_int as isize);
+            j = (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+            offs = (offs as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+            m = m.wrapping_sub(1);
+            if !(m != 0) {
+                break;
+            }
+        }
+        m = morg;
+        n = n.wrapping_sub(1);
+        if n == 0 {
+            break;
+        }
+        r22 = (r22 as ::core::ffi::c_int + 64 as ::core::ffi::c_int) as uint16;
+        offs = r22;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn ProcessCinematicBgObject_Nothing(
+    mut k: uint16,
+    mut j: uint16,
+    mut r18: uint16,
+) {
+}
+#[no_mangle]
+pub unsafe extern "C" fn ProcessCinematicBgObject_DrawToBgTilemap(
+    mut k: uint16,
+    mut j: uint16,
+    mut r18: uint16,
+) {
+    let mut jorg: uint16 = j;
+    let mut offs: uint16 = CinematicGetTilemapOffsetForTile(r18);
+    let mut r22: uint16 = offs;
+    let mut v3: *const uint8 = RomPtr_8C(j as uint16_t);
+    let mut m: uint16 = *v3.offset(2 as ::core::ffi::c_int as isize) as uint16;
+    let mut morg: uint16 = m;
+    let mut n: ::core::ffi::c_int =
+        *v3.offset(3 as ::core::ffi::c_int as isize) as ::core::ffi::c_int;
+    loop {
+        loop {
+            *((&raw mut (*((&raw mut g_ram as *mut uint8)
+                .offset(0x3800 as ::core::ffi::c_int as isize)
+                as *mut Ram3800))
+                .cinematic_bg_tilemap as *mut uint16 as *mut uint8)
+                .offset(offs as ::core::ffi::c_int as isize) as *mut uint16) =
+                *(RomPtr_8C(j as uint16_t) as *mut uint16).offset(2 as ::core::ffi::c_int as isize);
+            j = (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+            offs = (offs as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+            m = m.wrapping_sub(1);
+            if !(m != 0) {
+                break;
+            }
+        }
+        m = morg;
+        n -= 1;
+        if n == 0 {
+            break;
+        }
+        r22 = (r22 as ::core::ffi::c_int + 64 as ::core::ffi::c_int) as uint16;
+        offs = r22;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicGetTilemapOffsetForTile(mut r18: uint16) -> uint16 {
+    return (2 as ::core::ffi::c_int * r18 as uint8 as ::core::ffi::c_int
+        + *(&raw mut r18 as *mut uint8).offset(
+            (::core::mem::size_of::<uint16>() as usize)
+                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                .wrapping_sub(1 as usize) as isize,
+        ) as ::core::ffi::c_int
+            * 0x40 as ::core::ffi::c_int) as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn ProcessCinematicBgObject_Unk1(
+    mut k: uint16,
+    mut j: uint16,
+    mut r18: uint16,
+) {
+    let mut r22: uint16 = Mult0x80Add(r18);
+    let mut v2: *const uint8 = RomPtr_8C(j as uint16_t);
+    let mut r18x: uint16 = *v2.offset(2 as ::core::ffi::c_int as isize) as uint16;
+    let mut n: uint16 = *v2.offset(3 as ::core::ffi::c_int as isize) as uint16;
+    let mut v3: uint16 = (j as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
+    let mut v4: uint16 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x334 as ::core::ffi::c_int as isize) as *mut uint16);
+    loop {
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x2d0 as ::core::ffi::c_int as isize)
+            as *mut Mode7VramWriteQueue)
+            .offset(0 as ::core::ffi::c_int as isize))
+        .field_0)
+            .offset(v4 as ::core::ffi::c_int as isize) as *mut uint16) = 128 as uint16;
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x2d0 as ::core::ffi::c_int as isize)
+            as *mut Mode7VramWriteQueue)
+            .offset(0 as ::core::ffi::c_int as isize))
+        .field_1 as *mut uint8)
+            .offset(v4 as ::core::ffi::c_int as isize) as *mut uint16) = v3;
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x2d0 as ::core::ffi::c_int as isize)
+            as *mut Mode7VramWriteQueue)
+            .offset(0 as ::core::ffi::c_int as isize))
+        .gap3 as *mut uint8)
+            .offset(v4 as isize) as *mut uint8 as *mut uint16) = 139 as uint16;
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x2d0 as ::core::ffi::c_int as isize)
+            as *mut Mode7VramWriteQueue)
+            .offset(0 as ::core::ffi::c_int as isize))
+        .gap3 as *mut uint8)
+            .offset((v4 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize)
+            as *mut uint8 as *mut uint16) = r18x;
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x2d0 as ::core::ffi::c_int as isize)
+            as *mut Mode7VramWriteQueue)
+            .offset(0 as ::core::ffi::c_int as isize))
+        .gap3 as *mut uint8)
+            .offset((v4 as ::core::ffi::c_int + 3 as ::core::ffi::c_int) as isize)
+            as *mut uint8 as *mut uint16) = r22;
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x2d0 as ::core::ffi::c_int as isize)
+            as *mut Mode7VramWriteQueue)
+            .offset(1 as ::core::ffi::c_int as isize))
+        .field_1 as *mut uint8)
+            .offset(v4 as ::core::ffi::c_int as isize) as *mut uint16) = 0 as uint16;
+        v4 = (v4 as ::core::ffi::c_int + 9 as ::core::ffi::c_int) as uint16;
+        v3 = (v3 as ::core::ffi::c_int + r18x as ::core::ffi::c_int) as uint16;
+        r22 = (r22 as ::core::ffi::c_int + 128 as ::core::ffi::c_int) as uint16;
+        n = n.wrapping_sub(1);
+        if !(n != 0) {
+            break;
+        }
+    }
+    *((&raw mut g_ram as *mut uint8).offset(0x334 as ::core::ffi::c_int as isize) as *mut uint16) =
+        v4;
+}
+#[no_mangle]
+pub unsafe extern "C" fn ProcessCinematicBgObject_Unk2(
+    mut k: uint16,
+    mut j: uint16,
+    mut r18: uint16,
+) {
+    let mut r22: uint16 = Mult0x80Add(r18);
+    let mut v2: *const uint8 = RomPtr_8C(j as uint16_t);
+    let mut n: ::core::ffi::c_int =
+        *v2.offset(2 as ::core::ffi::c_int as isize) as ::core::ffi::c_int;
+    let mut r20: uint16 = *v2.offset(3 as ::core::ffi::c_int as isize) as uint16;
+    let mut v3: uint16 = (j as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
+    let mut v4: uint16 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x334 as ::core::ffi::c_int as isize) as *mut uint16);
+    loop {
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x2d0 as ::core::ffi::c_int as isize)
+            as *mut Mode7VramWriteQueue)
+            .offset(0 as ::core::ffi::c_int as isize))
+        .field_0)
+            .offset(v4 as ::core::ffi::c_int as isize) as *mut uint16) = 128 as uint16;
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x2d0 as ::core::ffi::c_int as isize)
+            as *mut Mode7VramWriteQueue)
+            .offset(0 as ::core::ffi::c_int as isize))
+        .field_1 as *mut uint8)
+            .offset(v4 as ::core::ffi::c_int as isize) as *mut uint16) = v3;
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x2d0 as ::core::ffi::c_int as isize)
+            as *mut Mode7VramWriteQueue)
+            .offset(0 as ::core::ffi::c_int as isize))
+        .gap3 as *mut uint8)
+            .offset(v4 as isize) as *mut uint8 as *mut uint16) = 139 as uint16;
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x2d0 as ::core::ffi::c_int as isize)
+            as *mut Mode7VramWriteQueue)
+            .offset(0 as ::core::ffi::c_int as isize))
+        .gap3 as *mut uint8)
+            .offset((v4 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize)
+            as *mut uint8 as *mut uint16) = r20;
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x2d0 as ::core::ffi::c_int as isize)
+            as *mut Mode7VramWriteQueue)
+            .offset(0 as ::core::ffi::c_int as isize))
+        .gap3 as *mut uint8)
+            .offset((v4 as ::core::ffi::c_int + 3 as ::core::ffi::c_int) as isize)
+            as *mut uint8 as *mut uint16) = r22;
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x2d0 as ::core::ffi::c_int as isize)
+            as *mut Mode7VramWriteQueue)
+            .offset(1 as ::core::ffi::c_int as isize))
+        .field_1 as *mut uint8)
+            .offset(v4 as ::core::ffi::c_int as isize) as *mut uint16) = 2 as uint16;
+        v4 = (v4 as ::core::ffi::c_int + 9 as ::core::ffi::c_int) as uint16;
+        v3 = (v3 as ::core::ffi::c_int + r20 as ::core::ffi::c_int) as uint16;
+        r22 = r22.wrapping_add(1);
+        n -= 1;
+        if !(n != 0) {
+            break;
+        }
+    }
+    *((&raw mut g_ram as *mut uint8).offset(0x334 as ::core::ffi::c_int as isize) as *mut uint16) =
+        v4;
+}
+#[no_mangle]
+pub unsafe extern "C" fn Mult0x80Add(mut r18: uint16) -> uint16 {
+    return (r18 as uint8 as ::core::ffi::c_int
+        + 0x80 as ::core::ffi::c_int
+            * *(&raw mut r18 as *mut uint8).offset(
+                (::core::mem::size_of::<uint16>() as usize)
+                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                    .wrapping_sub(1 as usize) as isize,
+            ) as ::core::ffi::c_int) as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn Samus_CalcPos_Mode7() {
+    let mut r34: uint16 = (*((&raw mut g_ram as *mut uint8)
+        .offset(0xaf6 as ::core::ffi::c_int as isize) as *mut uint16)
+        as ::core::ffi::c_int
+        - *((&raw mut g_ram as *mut uint8).offset(0x80 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int) as uint16;
+    let mut r36: uint16 = (*((&raw mut g_ram as *mut uint8)
+        .offset(0x82 as ::core::ffi::c_int as isize) as *mut uint16)
+        as ::core::ffi::c_int
+        - *((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int) as uint16;
+    let mut r26: uint16 = (Smult16x16(
+        (*((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            - *((&raw mut g_ram as *mut uint8).offset(0x80 as ::core::ffi::c_int as isize)
+                as *mut uint16) as ::core::ffi::c_int) as uint16,
+        *((&raw mut g_ram as *mut uint8).offset(0x78 as ::core::ffi::c_int as isize)
+            as *mut uint16),
+    ) >> 8 as ::core::ffi::c_int) as uint16;
+    r26 = (r26 as uint32).wrapping_add(
+        Smult16x16(
+            *((&raw mut g_ram as *mut uint8).offset(0x7a as ::core::ffi::c_int as isize)
+                as *mut uint16),
+            r36,
+        ) >> 8 as ::core::ffi::c_int,
+    ) as uint16 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize) as *mut uint16) =
+        (r26 as ::core::ffi::c_int
+            + *((&raw mut g_ram as *mut uint8).offset(0x80 as ::core::ffi::c_int as isize)
+                as *mut uint16) as ::core::ffi::c_int) as uint16;
+    r26 = (Smult16x16(
+        *((&raw mut g_ram as *mut uint8).offset(0x7c as ::core::ffi::c_int as isize)
+            as *mut uint16),
+        r34,
+    ) >> 8 as ::core::ffi::c_int) as uint16;
+    r26 = (r26 as uint32).wrapping_add(
+        Smult16x16(
+            *((&raw mut g_ram as *mut uint8).offset(0x78 as ::core::ffi::c_int as isize)
+                as *mut uint16),
+            r36,
+        ) >> 8 as ::core::ffi::c_int,
+    ) as uint16 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize) as *mut uint16) =
+        (*((&raw mut g_ram as *mut uint8).offset(0x82 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            - r26 as ::core::ffi::c_int) as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CalcExplosion_Mode7(mut k: uint16) -> Point16U {
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let mut r34: uint16 = (*((&raw mut g_ram as *mut uint8)
+        .offset(0xb64 as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset(v1 as isize) as ::core::ffi::c_int
+        - *((&raw mut g_ram as *mut uint8).offset(0x80 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int) as uint16;
+    let mut r36: uint16 = (*((&raw mut g_ram as *mut uint8)
+        .offset(0x82 as ::core::ffi::c_int as isize) as *mut uint16)
+        as ::core::ffi::c_int
+        - *((&raw mut g_ram as *mut uint8).offset(0xb78 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as ::core::ffi::c_int) as uint16;
+    let mut r26: uint16 = (Smult16x16(
+        r34,
+        *((&raw mut g_ram as *mut uint8).offset(0x78 as ::core::ffi::c_int as isize)
+            as *mut uint16),
+    ) >> 8 as ::core::ffi::c_int) as uint16;
+    r26 = (r26 as uint32).wrapping_add(
+        Smult16x16(
+            *((&raw mut g_ram as *mut uint8).offset(0x7a as ::core::ffi::c_int as isize)
+                as *mut uint16),
+            r36,
+        ) >> 8 as ::core::ffi::c_int,
+    ) as uint16 as uint16;
+    let mut r20: uint16 = (r26 as ::core::ffi::c_int
+        + *((&raw mut g_ram as *mut uint8).offset(0x80 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+        - *((&raw mut g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int) as uint16;
+    r26 = (Smult16x16(
+        *((&raw mut g_ram as *mut uint8).offset(0x7c as ::core::ffi::c_int as isize)
+            as *mut uint16),
+        r34,
+    ) >> 8 as ::core::ffi::c_int) as uint16;
+    r26 = (r26 as uint32).wrapping_add(
+        Smult16x16(
+            *((&raw mut g_ram as *mut uint8).offset(0x78 as ::core::ffi::c_int as isize)
+                as *mut uint16),
+            r36,
+        ) >> 8 as ::core::ffi::c_int,
+    ) as uint16 as uint16;
+    let mut r18: uint16 = (*((&raw mut g_ram as *mut uint8)
+        .offset(0x82 as ::core::ffi::c_int as isize) as *mut uint16)
+        as ::core::ffi::c_int
+        - r26 as ::core::ffi::c_int
+        - *((&raw mut g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int) as uint16;
+    return Point16U { x: r20, y: r18 };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CalcCeresSteamPos_Mode7(mut pt: Point16U) -> Point16U {
+    let mut r34: uint16 = (pt.x as ::core::ffi::c_int
+        - *((&raw mut g_ram as *mut uint8).offset(0x80 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int) as uint16;
+    let mut r36: uint16 = (*((&raw mut g_ram as *mut uint8)
+        .offset(0x82 as ::core::ffi::c_int as isize) as *mut uint16)
+        as ::core::ffi::c_int
+        - pt.y as ::core::ffi::c_int) as uint16;
+    let mut r26: uint16 = (Smult16x16(
+        (pt.x as ::core::ffi::c_int
+            - *((&raw mut g_ram as *mut uint8).offset(0x80 as ::core::ffi::c_int as isize)
+                as *mut uint16) as ::core::ffi::c_int) as uint16,
+        *((&raw mut g_ram as *mut uint8).offset(0x78 as ::core::ffi::c_int as isize)
+            as *mut uint16),
+    ) >> 8 as ::core::ffi::c_int) as uint16;
+    r26 = (r26 as uint32).wrapping_add(
+        Smult16x16(
+            *((&raw mut g_ram as *mut uint8).offset(0x7a as ::core::ffi::c_int as isize)
+                as *mut uint16),
+            r36,
+        ) >> 8 as ::core::ffi::c_int,
+    ) as uint16 as uint16;
+    pt.x = (r26 as ::core::ffi::c_int
+        + *((&raw mut g_ram as *mut uint8).offset(0x80 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int) as uint16;
+    r26 = (Smult16x16(
+        *((&raw mut g_ram as *mut uint8).offset(0x7c as ::core::ffi::c_int as isize)
+            as *mut uint16),
+        r34,
+    ) >> 8 as ::core::ffi::c_int) as uint16;
+    r26 = (r26 as uint32).wrapping_add(
+        Smult16x16(
+            *((&raw mut g_ram as *mut uint8).offset(0x78 as ::core::ffi::c_int as isize)
+                as *mut uint16),
+            r36,
+        ) >> 8 as ::core::ffi::c_int,
+    ) as uint16 as uint16;
+    pt.y = (*((&raw mut g_ram as *mut uint8).offset(0x82 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - r26 as ::core::ffi::c_int) as uint16;
+    return pt;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CopyPalettesToFadingPalettes() {
+    let mut v0: ::core::ffi::c_int = 256 as ::core::ffi::c_int;
+    let mut v1: uint16 = 0 as uint16;
+    loop {
+        *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(
+                ((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 256 as ::core::ffi::c_int)
+                    as isize,
+            ) = *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+        v1 = (v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        v0 -= 1;
+        if !(v0 != 0) {
+            break;
+        }
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn DecomposePaletteDataForFading() {
+    let mut v0: uint16 = 0 as uint16;
+    let mut v1: ::core::ffi::c_int = 256 as ::core::ffi::c_int;
+    loop {
+        let mut v2: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        let mut r18: uint16 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x2000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v2 + 256 as ::core::ffi::c_int) as isize);
+        let mut v3: ::core::ffi::c_int = r18 as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v2 + 512 as ::core::ffi::c_int) as isize) =
+            (v3 << 8 as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v2 + 1280 as ::core::ffi::c_int) as isize) =
+            (v3 << 3 as ::core::ffi::c_int) as uint16;
+        let mut v4: ::core::ffi::c_int =
+            (r18 as ::core::ffi::c_int & 0x3e0 as ::core::ffi::c_int) >> 5 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v2 + 768 as ::core::ffi::c_int) as isize) =
+            (v4 << 8 as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v2 + 1536 as ::core::ffi::c_int) as isize) =
+            (v4 << 3 as ::core::ffi::c_int) as uint16;
+        let mut v6: ::core::ffi::c_int =
+            (r18 as ::core::ffi::c_int & 0x7c00 as ::core::ffi::c_int) >> 10 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v2 + 1024 as ::core::ffi::c_int) as isize) =
+            (v6 << 8 as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v2 + 1792 as ::core::ffi::c_int) as isize) =
+            (v6 << 3 as ::core::ffi::c_int) as uint16;
+        v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        v1 -= 1;
+        if !(v1 != 0) {
+            break;
+        }
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn ClearYColorsFromIndexX(mut k: uint16, mut j: uint16) {
+    loop {
+        let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v2 + 256 as ::core::ffi::c_int) as isize) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v2 + 512 as ::core::ffi::c_int) as isize) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v2 + 768 as ::core::ffi::c_int) as isize) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v2 + 1024 as ::core::ffi::c_int) as isize) = 0 as uint16;
+        k = (k as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        j = j.wrapping_sub(1);
+        if !(j != 0) {
+            break;
+        }
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn FadeOutYColorsFromIndexX(mut k: uint16, mut j: uint16) {
+    loop {
+        let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        let ref mut fresh16 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x2000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v2 + 512 as ::core::ffi::c_int) as isize);
+        *fresh16 = (*fresh16 as ::core::ffi::c_int
+            - *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset((v2 + 1280 as ::core::ffi::c_int) as isize)
+                as ::core::ffi::c_int) as uint16;
+        let ref mut fresh17 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x2000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v2 + 768 as ::core::ffi::c_int) as isize);
+        *fresh17 = (*fresh17 as ::core::ffi::c_int
+            - *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset((v2 + 1536 as ::core::ffi::c_int) as isize)
+                as ::core::ffi::c_int) as uint16;
+        let ref mut fresh18 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x2000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v2 + 1024 as ::core::ffi::c_int) as isize);
+        *fresh18 = (*fresh18 as ::core::ffi::c_int
+            - *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset((v2 + 1792 as ::core::ffi::c_int) as isize)
+                as ::core::ffi::c_int) as uint16;
+        k = (k as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        j = j.wrapping_sub(1);
+        if !(j != 0) {
+            break;
+        }
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn FadeInYColorsFromIndexX(mut k: uint16, mut j: uint16) {
+    loop {
+        let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v2 + 512 as ::core::ffi::c_int) as isize) =
+            (*((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset((v2 + 1280 as ::core::ffi::c_int) as isize)
+                as ::core::ffi::c_int
+                + *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+                    as *mut uint16)
+                    .offset((v2 + 512 as ::core::ffi::c_int) as isize)
+                    as ::core::ffi::c_int
+                & 0x1fff as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v2 + 768 as ::core::ffi::c_int) as isize) =
+            (*((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset((v2 + 1536 as ::core::ffi::c_int) as isize)
+                as ::core::ffi::c_int
+                + *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+                    as *mut uint16)
+                    .offset((v2 + 768 as ::core::ffi::c_int) as isize)
+                    as ::core::ffi::c_int
+                & 0x1fff as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v2 + 1024 as ::core::ffi::c_int) as isize) =
+            (*((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset((v2 + 1792 as ::core::ffi::c_int) as isize)
+                as ::core::ffi::c_int
+                + *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+                    as *mut uint16)
+                    .offset((v2 + 1024 as ::core::ffi::c_int) as isize)
+                    as ::core::ffi::c_int
+                & 0x1fff as ::core::ffi::c_int) as uint16;
+        k = (k as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        j = j.wrapping_sub(1);
+        if !(j != 0) {
+            break;
+        }
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn ComposeFadingPalettes() {
+    let mut v0: uint16 = 0 as uint16;
+    let mut v1: ::core::ffi::c_int = 256 as ::core::ffi::c_int;
+    loop {
+        let mut v2: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        let mut r18: ::core::ffi::c_int = *(((&raw mut g_ram as *mut uint8)
+            .offset(0x2000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v2 + 512 as ::core::ffi::c_int) as isize)
+            as *mut uint16 as *mut uint8)
+            .offset(
+                (::core::mem::size_of::<uint16>() as usize)
+                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                    .wrapping_sub(1 as usize) as isize,
+            ) as ::core::ffi::c_int
+            & 0x1f as ::core::ffi::c_int;
+        r18 |= *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v2 + 768 as ::core::ffi::c_int) as isize) as ::core::ffi::c_int
+            >> 3 as ::core::ffi::c_int
+            & 0x3e0 as ::core::ffi::c_int;
+        let mut v3: uint16 = (r18
+            | (*((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset((v2 + 1024 as ::core::ffi::c_int) as isize)
+                as ::core::ffi::c_int)
+                << 2 as ::core::ffi::c_int
+                & 0x7c00 as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v2 as isize) = v3;
+        *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v2 as isize) = v3;
+        v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        v1 -= 1;
+        if !(v1 != 0) {
+            break;
+        }
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func20(mut j: uint16) {
+    let mut tt: *mut uint16 = RomPtr_8B(j as uint16_t) as *mut uint16;
+    let mut v2: uint16 = *tt.offset(0 as ::core::ffi::c_int as isize);
+    let mut r18: ::core::ffi::c_int =
+        *tt.offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int;
+    let mut dst: *mut uint16 = &raw mut (*((&raw mut g_ram as *mut uint8)
+        .offset(0x4000 as ::core::ffi::c_int as isize)
+        as *mut Ram4000))
+        .intro_japanese_text_tiles as *mut uint16;
+    loop {
+        memcpy(
+            dst.offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
+                as *mut ::core::ffi::c_void,
+            (&raw mut g_ram as *mut uint8).offset(
+                (*tt.offset(2 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+                    + 0x1a000 as ::core::ffi::c_int) as isize,
+            ) as *mut uint8 as *mut uint16 as *const ::core::ffi::c_void,
+            16 as size_t,
+        );
+        memcpy(
+            dst.offset(
+                (v2 as ::core::ffi::c_int + 768 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
+                    as isize,
+            ) as *mut ::core::ffi::c_void,
+            (&raw mut g_ram as *mut uint8).offset(
+                (*tt.offset(3 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+                    + 0x1a000 as ::core::ffi::c_int) as isize,
+            ) as *mut uint8 as *mut uint16 as *const ::core::ffi::c_void,
+            16 as size_t,
+        );
+        v2 = (v2 as ::core::ffi::c_int + 16 as ::core::ffi::c_int) as uint16;
+        tt = tt.offset(2 as ::core::ffi::c_int as isize);
+        r18 -= 1;
+        if !(r18 != 0) {
+            break;
+        }
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn TransferJapaneseTextTilesToVram() {
+    let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
+    (*gVramWriteEntry(
+        *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int,
+    ))
+    .size = 1536 as uint16;
+    v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+    (*gVramWriteEntry(v0 as ::core::ffi::c_int)).size = 0x4000 as uint16;
+    v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+    let fresh21 = v0;
+    v0 = v0.wrapping_add(1);
+    *(&raw mut (*(gVramWriteEntry
+        as unsafe extern "C" fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
+        fresh21 as ::core::ffi::c_int,
+    ))
+    .size as *mut uint8)
+        .offset(0 as ::core::ffi::c_int as isize) = 126 as uint8;
+    (*gVramWriteEntry(v0 as ::core::ffi::c_int)).size = 16768 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16) =
+        (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn HandleSamusDuringIntro() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a57 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        != 0
+    {
+        HandleControllerInputForGamePhysics();
+        HandleSamusMovementAndPause();
+        if *((&raw mut g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            != 0
+        {
+            let ref mut fresh160 = *((&raw mut g_ram as *mut uint8)
+                .offset(0x18a8 as ::core::ffi::c_int as isize)
+                as *mut uint16);
+            *fresh160 = (*fresh160).wrapping_sub(1);
+        }
+        if *((&raw mut g_ram as *mut uint8).offset(0x18aa as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            != 0
+        {
+            let ref mut fresh161 = *((&raw mut g_ram as *mut uint8)
+                .offset(0x18aa as ::core::ffi::c_int as isize)
+                as *mut uint16);
+            *fresh161 = (*fresh161).wrapping_sub(1);
+        }
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn DrawIntroSprites() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a57 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        != 0
+    {
+        if *((&raw mut g_ram as *mut uint8).offset(0x1a57 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            & 0x8000 as ::core::ffi::c_int
+            != 0 as ::core::ffi::c_int
+        {
+            DrawSamusAndProjectiles();
+            DrawPlayerExplosions2();
+            DrawCinematicSpriteObjects_Intro();
+        } else {
+            DrawCinematicSpriteObjects_Intro();
+            DrawSamusAndProjectiles();
+            DrawPlayerExplosions2();
+        }
+    } else {
+        DrawCinematicSpriteObjects_Intro();
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CalcSinMult(mut k: uint16, mut r24: uint16) -> uint16 {
+    let mut r18: uint16 = (Mult8x8(
+        *((&raw const kSinCosTable8bit_Sext as *const int16)
+            .offset(64 as ::core::ffi::c_int as isize) as *const int16 as *mut uint8)
+            .offset(k as ::core::ffi::c_int as isize),
+        r24 as uint8,
+    ) as ::core::ffi::c_int
+        >> 8 as ::core::ffi::c_int) as uint16;
+    return (r18 as ::core::ffi::c_int
+        + *((&raw const kSinCosTable8bit_Sext as *const int16)
+            .offset(64 as ::core::ffi::c_int as isize) as *const int16 as *mut uint8)
+            .offset(k as ::core::ffi::c_int as isize)
+            .offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+            * r24 as uint8 as ::core::ffi::c_int) as uint16;
+}
+static mut kMoveUnusedSpritesMasks: [uint16; 8] = [
+    0x5555 as ::core::ffi::c_int as uint16,
+    0x5554 as ::core::ffi::c_int as uint16,
+    0x5550 as ::core::ffi::c_int as uint16,
+    0x5540 as ::core::ffi::c_int as uint16,
+    0x5500 as ::core::ffi::c_int as uint16,
+    0x5400 as ::core::ffi::c_int as uint16,
+    0x5000 as ::core::ffi::c_int as uint16,
+    0x4000 as ::core::ffi::c_int as uint16,
+];
+#[no_mangle]
+pub unsafe extern "C" fn MoveUnusedSpritesOffScreen() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize) as *mut uint16)
+        as ::core::ffi::c_int
+        >= 0x200 as ::core::ffi::c_int
+    {
+        return;
+    }
+    let mut j: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
+        .offset(0x590 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        >> 2 as ::core::ffi::c_int;
+    let mut i: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
+        .offset(0x590 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        >> 5 as ::core::ffi::c_int;
+    let fresh11 = i;
+    i = i + 1;
+    let ref mut fresh12 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x570 as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset(fresh11 as isize);
+    *fresh12 = (*fresh12 as ::core::ffi::c_int
+        | kMoveUnusedSpritesMasks[(j & 7 as ::core::ffi::c_int) as usize] as ::core::ffi::c_int)
+        as uint16;
+    while i < 16 as ::core::ffi::c_int {
+        *((&raw mut g_ram as *mut uint8).offset(0x570 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(i as isize) = 0x5555 as uint16;
+        i += 1;
+    }
+    let mut i_0: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
+        .offset(0x590 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        >> 2 as ::core::ffi::c_int;
+    while i_0 < 0x80 as ::core::ffi::c_int {
+        *(&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x370 as ::core::ffi::c_int as isize)
+            as *mut OamEnt)
+            .offset(i_0 as isize))
+        .xcoord as *mut uint16) = 0x80 as uint16;
+        i_0 += 1;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn AdvanceFastScreenFadeOut() -> uint8 {
+    if *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
+        as ::core::ffi::c_int
+        & 0xf as ::core::ffi::c_int
+        != 0 as ::core::ffi::c_int
+    {
+        if ((*(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
+            as ::core::ffi::c_int
+            & 0xf as ::core::ffi::c_int)
+            - *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
+                as *mut uint16) as ::core::ffi::c_int) as int8 as ::core::ffi::c_int
+            > 0 as ::core::ffi::c_int
+        {
+            *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) =
+                ((*(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
+                    as ::core::ffi::c_int
+                    & 0xf as ::core::ffi::c_int)
+                    - *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
+                        as *mut uint16) as ::core::ffi::c_int) as uint8;
+            return 0 as uint8;
+        }
+        *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 0x80 as uint8;
+    }
+    return 1 as uint8;
+}
+#[no_mangle]
+pub unsafe extern "C" fn AdvanceSlowScreenFadeOut() -> uint8 {
+    let mut v0: bool = ((*((&raw mut g_ram as *mut uint8)
+        .offset(0x723 as ::core::ffi::c_int as isize) as *mut uint16)
+        as ::core::ffi::c_int
+        - 1 as ::core::ffi::c_int) as int8 as ::core::ffi::c_int)
+        < 0 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize) as *mut uint16
+        as *mut uint8)
+        .offset(0 as ::core::ffi::c_int as isize) = (*((&raw mut g_ram as *mut uint8)
+        .offset(0x723 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - 1 as ::core::ffi::c_int) as uint8;
+    if *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize) as *mut uint16)
+        as uint8 as ::core::ffi::c_int
+        != 0
+        && !v0
+    {
+        return 0 as uint8;
+    }
+    if *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
+        as ::core::ffi::c_int
+        & 0xf as ::core::ffi::c_int
+        != 0 as ::core::ffi::c_int
+    {
+        if *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
+            as ::core::ffi::c_int
+            & 0xf as ::core::ffi::c_int
+            != 1 as ::core::ffi::c_int
+        {
+            *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) =
+                ((*(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
+                    as ::core::ffi::c_int
+                    & 0xf as ::core::ffi::c_int)
+                    - 1 as ::core::ffi::c_int) as uint8;
+            *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
+                as *mut uint16 as *mut uint8)
+                .offset(0 as ::core::ffi::c_int as isize) =
+                *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
+                    as *mut uint16) as uint8;
+            return 0 as uint8;
+        }
+        *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 0x80 as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
+            as *mut uint16 as *mut uint8)
+            .offset(0 as ::core::ffi::c_int as isize) = 0 as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
+            as *mut uint16 as *mut uint8)
+            .offset(0 as ::core::ffi::c_int as isize) = 0 as uint8;
+    }
+    return 1 as uint8;
+}
+#[no_mangle]
+pub unsafe extern "C" fn AdvanceFastScreenFadeIn() -> uint8 {
+    if (*((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        + *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
+            as ::core::ffi::c_int
+        & 0x1f as ::core::ffi::c_int)
+        - 15 as ::core::ffi::c_int
+        & 0x80 as ::core::ffi::c_int
+        != 0
+    {
+        *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) =
+            (*((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
+                as *mut uint16) as ::core::ffi::c_int
+                + *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
+                    as ::core::ffi::c_int
+                & 0x1f as ::core::ffi::c_int) as uint8;
+        return 0 as uint8;
+    } else {
+        *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 15 as uint8;
+        return 1 as uint8;
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn AdvanceSlowScreenFadeIn() -> uint8 {
+    let mut v0: bool = ((*((&raw mut g_ram as *mut uint8)
+        .offset(0x723 as ::core::ffi::c_int as isize) as *mut uint16)
+        as ::core::ffi::c_int
+        - 1 as ::core::ffi::c_int) as int8 as ::core::ffi::c_int)
+        < 0 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize) as *mut uint16
+        as *mut uint8)
+        .offset(0 as ::core::ffi::c_int as isize) = (*((&raw mut g_ram as *mut uint8)
+        .offset(0x723 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - 1 as ::core::ffi::c_int) as uint8;
+    if *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize) as *mut uint16)
+        as uint8 as ::core::ffi::c_int
+        != 0
+        && !v0
+    {
+        return 0 as uint8;
+    }
+    if (*(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
+        as ::core::ffi::c_int
+        + 1 as ::core::ffi::c_int
+        & 0x1f as ::core::ffi::c_int)
+        - 15 as ::core::ffi::c_int
+        & 0x80 as ::core::ffi::c_int
+        != 0
+    {
+        *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) =
+            (*(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
+                as ::core::ffi::c_int
+                + 1 as ::core::ffi::c_int
+                & 0x1f as ::core::ffi::c_int) as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
+            as *mut uint16 as *mut uint8)
+            .offset(0 as ::core::ffi::c_int as isize) = *((&raw mut g_ram as *mut uint8)
+            .offset(0x725 as ::core::ffi::c_int as isize) as *mut uint16) as uint8;
+        return 0 as uint8;
+    }
+    *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 15 as uint8;
+    *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize) as *mut uint16
+        as *mut uint8)
+        .offset(0 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize) as *mut uint16
+        as *mut uint8)
+        .offset(0 as ::core::ffi::c_int as isize) = 0 as uint8;
+    return 1 as uint8;
+}
+#[no_mangle]
+pub unsafe extern "C" fn InitializeIoDisplayLogo_Async() -> CoroutineRet {
+    let mut _state_variable_: *mut uint8 =
+        (&raw mut g_ram as *mut uint8).offset(0x612 as ::core::ffi::c_int as isize);
+    's_645: {
+        let mut current_block_182: u64;
+        match *_state_variable_ as ::core::ffi::c_int {
+            0 => {
+                WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x8f as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) =
+                    0x8f as uint8;
+                *((&raw mut g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize)
+                    as *mut uint16) = 0 as uint16;
+                ClearOamExt();
+                ClearUnusedOam();
+                *((&raw mut g_ram as *mut uint8).offset(0x71d as ::core::ffi::c_int as isize)
+                    as *mut uint16) = 0 as uint16;
+                *((&raw mut g_ram as *mut uint8).offset(0x71f as ::core::ffi::c_int as isize)
+                    as *mut uint16) = 0 as uint16;
+                *((&raw mut g_ram as *mut uint8).offset(0x721 as ::core::ffi::c_int as isize)
+                    as *mut uint16) = 0 as uint16;
+                WriteReg(NMITIMEN as ::core::ffi::c_int as uint16, 1 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x84 as ::core::ffi::c_int as isize) =
+                    1 as uint8;
+                WriteReg(WRIO as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(WRMPYA as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(WRMPYB as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(WRDIVL as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(WRDIVH as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(WRDIVB as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(HTIMEL as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(HTIMEH as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(VTIMEL as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(VTIMEH as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(HDMAEN as ::core::ffi::c_int as uint16, 0 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x85 as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                WriteReg(MEMSEL as ::core::ffi::c_int as uint16, 1 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x86 as ::core::ffi::c_int as isize) =
+                    1 as uint8;
+                WriteReg(OBSEL as ::core::ffi::c_int as uint16, 3 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x52 as ::core::ffi::c_int as isize) =
+                    3 as uint8;
+                WriteReg(OAMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+                *((&raw mut g_ram as *mut uint8).offset(0x53 as ::core::ffi::c_int as isize)
+                    as *mut uint16 as *mut uint8)
+                    .offset(0 as ::core::ffi::c_int as isize) = 0 as uint8;
+                WriteReg(OAMADDH as ::core::ffi::c_int as uint16, 0x80 as uint8);
+                *((&raw mut g_ram as *mut uint8).offset(0x53 as ::core::ffi::c_int as isize)
+                    as *mut uint16 as *mut uint8)
+                    .offset(
+                        (::core::mem::size_of::<uint16>() as usize)
+                            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                            .wrapping_sub(1 as usize) as isize,
+                    ) = 0x80 as uint8;
+                WriteReg(OAMDATA as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(OAMDATA as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(BGMODE as ::core::ffi::c_int as uint16, 1 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize) =
+                    1 as uint8;
+                WriteReg(MOSAIC as ::core::ffi::c_int as uint16, 0 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x57 as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                WriteReg(BG1SC as ::core::ffi::c_int as uint16, 0 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                WriteReg(BG2SC as ::core::ffi::c_int as uint16, 0 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                WriteReg(BG3SC as ::core::ffi::c_int as uint16, 0 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x5a as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                WriteReg(BG4SC as ::core::ffi::c_int as uint16, 0 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x5c as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                WriteReg(BG12NBA as ::core::ffi::c_int as uint16, 0 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                WriteReg(BG34NBA as ::core::ffi::c_int as uint16, 0 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x5e as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                WriteReg(BG1HOFS as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(BG1HOFS as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(BG1VOFS as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(BG1VOFS as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(BG2HOFS as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(BG2HOFS as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(BG2VOFS as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(BG2VOFS as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(BG3HOFS as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(BG3HOFS as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(BG3VOFS as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(BG3VOFS as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(BG4HOFS as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(BG4HOFS as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(BG4VOFS as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(BG4VOFS as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(M7SEL as ::core::ffi::c_int as uint16, 0 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x5f as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                WriteReg(M7A as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(M7B as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(M7C as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(M7D as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(M7X as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(M7Y as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(W12SEL as ::core::ffi::c_int as uint16, 0 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x60 as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                WriteReg(W34SEL as ::core::ffi::c_int as uint16, 0 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x61 as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                WriteReg(WOBJSEL as ::core::ffi::c_int as uint16, 0 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x62 as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                WriteReg(WH0 as ::core::ffi::c_int as uint16, 0 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x63 as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                WriteReg(WH1 as ::core::ffi::c_int as uint16, 0 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x64 as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                WriteReg(WH2 as ::core::ffi::c_int as uint16, 0 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x65 as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                WriteReg(WH3 as ::core::ffi::c_int as uint16, 0 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x66 as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                WriteReg(WBGLOG as ::core::ffi::c_int as uint16, 0 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x67 as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                WriteReg(WOBJLOG as ::core::ffi::c_int as uint16, 0 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x68 as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                WriteReg(TM as ::core::ffi::c_int as uint16, 0x10 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) =
+                    16 as uint8;
+                WriteReg(TMW as ::core::ffi::c_int as uint16, 0 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x6c as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                WriteReg(TS as ::core::ffi::c_int as uint16, 0 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                WriteReg(TSW as ::core::ffi::c_int as uint16, 0 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x6d as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                WriteReg(CGWSEL as ::core::ffi::c_int as uint16, 0 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x6e as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                WriteReg(CGADSUB as ::core::ffi::c_int as uint16, 0 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                WriteReg(COLDATA as ::core::ffi::c_int as uint16, 0xe0 as uint8);
+                *(&raw mut g_ram as *mut uint8)
+                    .offset(0x74 as ::core::ffi::c_int as isize)
+                    .offset(0 as ::core::ffi::c_int as isize) = 32 as uint8;
+                *(&raw mut g_ram as *mut uint8)
+                    .offset(0x74 as ::core::ffi::c_int as isize)
+                    .offset(1 as ::core::ffi::c_int as isize) = 64 as uint8;
+                *(&raw mut g_ram as *mut uint8)
+                    .offset(0x74 as ::core::ffi::c_int as isize)
+                    .offset(2 as ::core::ffi::c_int as isize) = 0x80 as uint8;
+                WriteReg(SETINI as ::core::ffi::c_int as uint16, 0 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x77 as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                DecompressToMem(
+                    0x9580d8 as uint32,
+                    (&raw mut g_ram as *mut uint8).offset(0x15000 as ::core::ffi::c_int as isize),
+                );
+                WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+                WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8);
+                WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+                static mut unk_8B92B9: StartDmaCopy = StartDmaCopy {
+                    chan: 1 as uint8,
+                    dmap: 1 as uint8,
+                    bbad: 0x18 as uint8,
+                    a1: LongPtr {
+                        addr: (0x7f5000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int)
+                            as VoidP,
+                        bank: (0x7f5000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+                    },
+                    das: 0x4000 as VoidP,
+                };
+                SetupDmaTransfer(&raw const unk_8B92B9 as *const ::core::ffi::c_void);
+                WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+                *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) =
+                    0x80 as uint8;
+                let mut v0: uint16 = 0 as uint16;
+                loop {
+                    *((&raw mut g_ram as *mut uint8)
+                        .offset(0xc000 as ::core::ffi::c_int as isize) as *mut uint16)
+                        .offset(
+                            (v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
+                                as isize,
+                        ) = *(g_rom
+                        .offset(
+                            (((0x8ce1e9 as ::core::ffi::c_int
+                                >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
+                                | 0x8ce1e9 as ::core::ffi::c_int
+                                    & 0x7fff as ::core::ffi::c_int)
+                                & 0x3fffff as ::core::ffi::c_int) as isize,
+                        ) as *const uint8 as *mut uint16)
+                        .offset(
+                            (v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
+                                as isize,
+                        );
+                    v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+                    if !(((v0 as ::core::ffi::c_int - 512 as ::core::ffi::c_int) as int16
+                        as ::core::ffi::c_int)
+                        < 0 as ::core::ffi::c_int)
+                    {
+                        break;
+                    }
+                }
+                EnableNMI();
+                *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
+                    as *mut uint16) = 1 as uint16;
+                *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
+                    as *mut uint16) = 1 as uint16;
+                current_block_182 = 17485376261910781866;
+            }
+            1 => {
+                current_block_182 = 3156160545233843657;
+            }
+            2 => {
+                current_block_182 = 6110428972393212497;
+            }
+            3 => {
+                current_block_182 = 2371591747199196472;
+            }
+            4 => {
+                current_block_182 = 17628988452808763652;
+            }
+            5 => {
+                current_block_182 = 17952583510507278934;
+            }
+            6 => {
+                current_block_182 = 2484129932066553195;
+            }
+            _ => {
+                current_block_182 = 2222055338596505704;
+            }
+        }
+        loop {
+            match current_block_182 {
+                2222055338596505704 => {
+                    break 's_645;
+                }
+                17628988452808763652 => {
+                    let mut _coret__2: uint8 = WaitForNMI_Async() as uint8;
+                    if _coret__2 != 0 {
+                        *_state_variable_ = 4 as uint8;
+                        return _coret__2 as CoroutineRet;
+                    }
+                    *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
+                        as *mut uint16) = 1 as uint16;
+                    *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
+                        as *mut uint16) = 1 as uint16;
+                    current_block_182 = 7019009297990327870;
+                }
+                6110428972393212497 => {
+                    let mut _coret__0: uint8 = WaitForNMI_Async() as uint8;
+                    if _coret__0 != 0 {
+                        *_state_variable_ = 2 as uint8;
+                        return _coret__0 as CoroutineRet;
+                    }
+                    *((&raw mut g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
+                        as *mut uint16) = 120 as uint16;
+                    current_block_182 = 18425699056680496821;
+                }
+                17485376261910781866 => {
+                    ClearOamExt();
+                    *((&raw mut g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize)
+                        as *mut uint16) = 0 as uint16;
+                    AddNintentoLogoToOam();
+                    if AdvanceFastScreenFadeIn() as ::core::ffi::c_int & 1 as ::core::ffi::c_int
+                        != 0
+                    {
+                        ClearUnusedOam();
+                        current_block_182 = 6110428972393212497;
+                        continue;
+                    } else {
+                        ClearUnusedOam();
+                        current_block_182 = 3156160545233843657;
+                        continue;
+                    }
+                }
+                3156160545233843657 => {
+                    let mut _coret_: uint8 = WaitForNMI_Async() as uint8;
+                    if _coret_ != 0 {
+                        *_state_variable_ = 1 as uint8;
+                        return _coret_ as CoroutineRet;
+                    }
+                    current_block_182 = 17485376261910781866;
+                    continue;
+                }
+                2371591747199196472 => {
+                    let mut _coret__1: uint8 = WaitForNMI_Async() as uint8;
+                    if _coret__1 != 0 {
+                        *_state_variable_ = 3 as uint8;
+                        return _coret__1 as CoroutineRet;
+                    }
+                    current_block_182 = 18425699056680496821;
+                }
+                17952583510507278934 => {
+                    let mut _coret__3: uint8 = WaitForNMI_Async() as uint8;
+                    if _coret__3 != 0 {
+                        *_state_variable_ = 5 as uint8;
+                        return _coret__3 as CoroutineRet;
+                    }
+                    current_block_182 = 7019009297990327870;
+                }
+                _ => {
+                    let mut _coret__4: uint8 = WaitForNMI_Async() as uint8;
+                    if _coret__4 != 0 {
+                        *_state_variable_ = 6 as uint8;
+                        return _coret__4 as CoroutineRet;
+                    }
+                    WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x8f as uint8);
+                    *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) =
+                        0x8f as uint8;
+                    current_block_182 = 2222055338596505704;
+                    continue;
+                }
+            }
+            match current_block_182 {
+                18425699056680496821 => {
+                    ClearOamExt();
+                    *((&raw mut g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize)
+                        as *mut uint16) = 0 as uint16;
+                    AddNintentoLogoToOam();
+                    let ref mut fresh168 = *((&raw mut g_ram as *mut uint8)
+                        .offset(0xde2 as ::core::ffi::c_int as isize)
+                        as *mut uint16);
+                    *fresh168 = (*fresh168).wrapping_sub(1);
+                    if *fresh168 == 0 {
+                        ClearUnusedOam();
+                        current_block_182 = 17628988452808763652;
+                    } else {
+                        ClearUnusedOam();
+                        current_block_182 = 2371591747199196472;
+                    }
+                }
+                _ => {
+                    ClearOamExt();
+                    *((&raw mut g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize)
+                        as *mut uint16) = 0 as uint16;
+                    AddNintentoLogoToOam();
+                    if AdvanceFastScreenFadeOut() as ::core::ffi::c_int & 1 as ::core::ffi::c_int
+                        != 0
+                    {
+                        ClearUnusedOam();
+                        current_block_182 = 2484129932066553195;
+                    } else {
+                        ClearUnusedOam();
+                        current_block_182 = 17952583510507278934;
+                    }
+                }
+            }
+        }
+    }
+    *_state_variable_ = 0 as uint8;
+    return 0 as CoroutineRet;
+}
+#[no_mangle]
+pub unsafe extern "C" fn AddNintentoLogoToOam() {
+    DrawSpritemap(
+        0x8c as uint8,
+        addr_kSpriteMap_NintendoLogo as ::core::ffi::c_int as uint16,
+        128 as uint16,
+        112 as uint16,
+        0 as uint16,
+    );
+}
+#[no_mangle]
+pub unsafe extern "C" fn SpawnCinematicSpriteObject(mut j: uint16, mut a: uint16) -> uint8 {
+    *((&raw mut g_ram as *mut uint8).offset(0x1b9d as ::core::ffi::c_int as isize)
+        as *mut uint16) = a;
+    let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
+    while i >= 0 as ::core::ffi::c_int {
+        if *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((i >> 1 as ::core::ffi::c_int) as isize)
+            == 0
+        {
+            return SpawnCimenaticSpriteObjectInner(j, i as uint16);
+        }
+        i -= 2 as ::core::ffi::c_int;
+    }
+    return 1 as uint8;
+}
+#[no_mangle]
+pub unsafe extern "C" fn SpawnCinematicSpriteObjectToR18(mut j: uint16, mut r18: uint16) -> uint8 {
+    *((&raw mut g_ram as *mut uint8).offset(0x1b9d as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    return SpawnCimenaticSpriteObjectInner(j, r18);
+}
+#[no_mangle]
+pub unsafe extern "C" fn SpawnCimenaticSpriteObjectInner(mut k: uint16, mut j: uint16) -> uint8 {
+    let mut v2: *const uint8 = RomPtr_8B(k as uint16_t);
+    let mut v3: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v3 as isize) = *(v2.offset(2 as ::core::ffi::c_int as isize) as *mut uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v3 as isize) = *(v2.offset(4 as ::core::ffi::c_int as isize) as *mut uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v3 as isize) = 1 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a5d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v3 as isize) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v3 as isize) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1add as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v3 as isize) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v3 as isize) = 0 as uint16;
+    CallCinematicSpriteObjectSetup(
+        (*(v2 as *mut uint16) as ::core::ffi::c_int | 0x8b0000 as ::core::ffi::c_int) as uint32,
+        j,
+    );
+    return 0 as uint8;
+}
+#[no_mangle]
+pub unsafe extern "C" fn ClearCinematicSprites() {
+    let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
+    while i >= 0 as ::core::ffi::c_int {
+        let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 0 as uint16;
+        i -= 2 as ::core::ffi::c_int;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn HandleCinematicSprites() {
+    let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
+    while i >= 0 as ::core::ffi::c_int {
+        *((&raw mut g_ram as *mut uint8).offset(0x1a59 as ::core::ffi::c_int as isize)
+            as *mut uint16) = i as uint16;
+        if *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((i >> 1 as ::core::ffi::c_int) as isize)
+            != 0
+        {
+            ProcessCinematicSpriteInstructionList(i as uint16);
+            i = *((&raw mut g_ram as *mut uint8).offset(0x1a59 as ::core::ffi::c_int as isize)
+                as *mut uint16) as ::core::ffi::c_int;
+        }
+        i -= 2 as ::core::ffi::c_int;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn ProcessCinematicSpriteInstructionList(mut k: uint16) {
+    CallCinematicSprPreInstr(
+        (*((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
+            as ::core::ffi::c_int
+            | 0x8b0000 as ::core::ffi::c_int) as uint32,
+        k,
+    );
+    let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a59 as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v2: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a59 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        >> 1 as ::core::ffi::c_int;
+    let ref mut fresh22 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1b5d as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset(v2 as isize);
+    let fresh23 = *fresh22;
+    *fresh22 = (*fresh22).wrapping_sub(1);
+    if fresh23 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
+        let mut v4: uint16 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v2 as isize);
+        let mut v6: uint16 = 0;
+        loop {
+            let mut v5: *const uint16 = RomPtr_8B(v4 as uint16_t) as *const uint16;
+            v6 = *v5;
+            if *v5 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+                break;
+            }
+            v4 = CallCinematicSprInstr(
+                (v6 as ::core::ffi::c_int | 0x8b0000 as ::core::ffi::c_int) as uint32,
+                v1,
+                (v4 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16,
+            );
+            if v4 == 0 {
+                return;
+            }
+        }
+        let mut v7: ::core::ffi::c_int = v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v7 as isize) = v6;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v7 as isize) =
+            *(RomPtr_8B(v4 as uint16_t) as *mut uint16).offset(1 as ::core::ffi::c_int as isize);
+        *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v7 as isize) = (v4 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_Delete(mut k: uint16, mut j: uint16) -> uint16 {
+    let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a5d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = 0 as uint16;
+    return 0 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_Sleep(mut k: uint16, mut j: uint16) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+        (j as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
+    return 0 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_SetPreInstr(mut k: uint16, mut j: uint16) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+        *(RomPtr_8B(j as uint16_t) as *mut uint16);
+    return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_ClearPreInstr(mut k: uint16, mut j: uint16) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+        (0x8b945f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_GotoRel(mut k: uint16, mut j: uint16) -> uint16 {
+    return (j as ::core::ffi::c_int + *RomPtr_8B(j as uint16_t) as int8 as ::core::ffi::c_int)
+        as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_Goto(mut k: uint16, mut j: uint16) -> uint16 {
+    return *(RomPtr_8B(j as uint16_t) as *mut uint16);
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_DecTimerGoto(mut k: uint16, mut j: uint16) -> uint16 {
+    let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let ref mut fresh26 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1b7d as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset(v2 as isize);
+    let fresh27 = *fresh26;
+    *fresh26 = (*fresh26).wrapping_sub(1);
+    if fresh27 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
+        return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+    } else {
+        return CinematicSprInstr_Goto(k, j);
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_DecTimerGotoRel(mut k: uint16, mut j: uint16) -> uint16 {
+    let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let ref mut fresh24 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1b7d as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset(v2 as isize);
+    let fresh25 = *fresh24;
+    *fresh24 = (*fresh24).wrapping_sub(1);
+    if fresh25 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
+        return (j as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16;
+    } else {
+        return CinematicSprInstr_GotoRel(k, j);
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_SetTimer(mut k: uint16, mut j: uint16) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+        *(RomPtr_8B(j as uint16_t) as *mut uint16);
+    return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn sub_8B94E1() {}
+#[no_mangle]
+pub unsafe extern "C" fn SpawnMode7Object(mut j: uint16, mut a: uint16) -> uint8 {
+    let mut Mode7ObjectDef: *mut Mode7ObjectDef = ::core::ptr::null_mut::<Mode7ObjectDef>();
+    *((&raw mut g_ram as *mut uint8).offset(0x19b3 as ::core::ffi::c_int as isize)
+        as *mut uint16) = a;
+    let mut v3: uint16 = 2 as uint16;
+    while *((&raw mut g_ram as *mut uint8).offset(0x19a1 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
+        != 0
+    {
+        v3 = (v3 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
+        if v3 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
+            return 1 as uint8;
+        }
+    }
+    Mode7ObjectDef = get_Mode7ObjectDef(j);
+    let mut v6: ::core::ffi::c_int = v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x19a5 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v6 as isize) = (*Mode7ObjectDef).field_2 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x19a1 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v6 as isize) = (*Mode7ObjectDef).field_4 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x19a9 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v6 as isize) = 1 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x19ad as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v6 as isize) = 0 as uint16;
+    CallCinematicSpriteInit(
+        ((*Mode7ObjectDef).field_0 as ::core::ffi::c_int | 0x8b0000 as ::core::ffi::c_int)
+            as uint32,
+        v6 as uint16,
+    );
+    return 0 as uint8;
+}
+#[no_mangle]
+pub unsafe extern "C" fn HandleMode7Objects() {
+    let mut i: ::core::ffi::c_int = 2 as ::core::ffi::c_int;
+    while i >= 0 as ::core::ffi::c_int {
+        *((&raw mut g_ram as *mut uint8).offset(0x19b1 as ::core::ffi::c_int as isize)
+            as *mut uint16) = i as uint16;
+        if *((&raw mut g_ram as *mut uint8).offset(0x19a1 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((i >> 1 as ::core::ffi::c_int) as isize)
+            != 0
+        {
+            ProcessMode7ObjectInstructions(i as uint16);
+            i = *((&raw mut g_ram as *mut uint8).offset(0x19b1 as ::core::ffi::c_int as isize)
+                as *mut uint16) as ::core::ffi::c_int;
+        }
+        i -= 2 as ::core::ffi::c_int;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn ProcessMode7ObjectInstructions(mut k: uint16) {
+    CallMode7PreInstr(
+        (*((&raw mut g_ram as *mut uint8).offset(0x19a5 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
+            as ::core::ffi::c_int
+            | 0x8b0000 as ::core::ffi::c_int) as uint32,
+        k,
+    );
+    let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x19b1 as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v2: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
+        .offset(0x19b1 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        >> 1 as ::core::ffi::c_int;
+    let ref mut fresh19 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x19a9 as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset(v2 as isize);
+    let fresh20 = *fresh19;
+    *fresh19 = (*fresh19).wrapping_sub(1);
+    if fresh20 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
+        let mut v4: uint16 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x19a1 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v2 as isize);
+        let mut v6: uint16 = 0;
+        loop {
+            let mut v5: *const uint16 = RomPtr_8B(v4 as uint16_t) as *const uint16;
+            v6 = *v5;
+            if *v5 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+                break;
+            }
+            v4 = CallMode7Instr(
+                (v6 as ::core::ffi::c_int | 0x8b0000 as ::core::ffi::c_int) as uint32,
+                v1,
+                (v4 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16,
+            );
+            if v4 == 0 {
+                return;
+            }
+        }
+        *((&raw mut g_ram as *mut uint8).offset(0x19a9 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = v6;
+        let mut v7: *const uint8 = RomPtr_8B(v4 as uint16_t);
+        QueueMode7Transfers(
+            0x8b as uint8,
+            *(v7.offset(2 as ::core::ffi::c_int as isize) as *mut uint16),
+        );
+        *((&raw mut g_ram as *mut uint8).offset(0x19a1 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+            (v4 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn Mode7Instr_Delete(mut k: uint16, mut j: uint16) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x19a1 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
+    return 0 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn Mode7Instr_SetPreInstr(mut k: uint16, mut j: uint16) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x19a5 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+        *(RomPtr_8B(j as uint16_t) as *mut uint16);
+    return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn Mode7Instr_ClearPreInstr(mut k: uint16, mut j: uint16) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x19a5 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+        (0x8b9585 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn Mode7Instr_Goto(mut k: uint16, mut j: uint16) -> uint16 {
+    return *(RomPtr_8B(j as uint16_t) as *mut uint16);
+}
+#[no_mangle]
+pub unsafe extern "C" fn Mode7Instr_DecTimerAndGoto(mut k: uint16, mut j: uint16) -> uint16 {
+    let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let ref mut fresh0 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x19ad as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset(v2 as isize);
+    let fresh1 = *fresh0;
+    *fresh0 = (*fresh0).wrapping_sub(1);
+    if fresh1 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
+        return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+    } else {
+        return Mode7Instr_Goto(k, j);
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn Mode7Instr_SetTimer(mut k: uint16, mut j: uint16) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x19ad as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+        *(RomPtr_8B(j as uint16_t) as *mut uint16);
+    return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn EnableCinematicBgObjects() {
+    let ref mut fresh13 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x19f1 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh13 = (*fresh13 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn DisableCinematicBgObjects() {
+    let ref mut fresh9 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x19f1 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh9 = (*fresh9 as ::core::ffi::c_int & !(0x8000 as ::core::ffi::c_int)) as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn EnableCinematicBgTilemapUpdates() {
+    let ref mut fresh14 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x19f3 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh14 = (*fresh14 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn DisableCinematicBgTilemapUpdates() {
+    let ref mut fresh10 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x19f3 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh10 = (*fresh10 as ::core::ffi::c_int & !(0x8000 as ::core::ffi::c_int)) as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn ClearCinematicBgObjects(mut a: uint16) {
+    let mut j: uint16 = 0;
+    let mut i: ::core::ffi::c_int = 2046 as ::core::ffi::c_int;
+    while i >= 0 as ::core::ffi::c_int {
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
+            as *mut Ram3000))
+            .pause_menu_map_tilemap as *mut uint16 as *mut uint8)
+            .offset(i as uint16 as ::core::ffi::c_int as isize) as *mut uint16) = a;
+        i -= 2 as ::core::ffi::c_int;
+    }
+    j = 6 as uint16;
+    while j as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+        let mut v3: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x19b5 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v3 as isize) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x19cd as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v3 as isize) = 0 as uint16;
+        j = (j as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
+    }
+    *((&raw mut g_ram as *mut uint8).offset(0x1ba1 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CallCinematicBgObjectSetup(mut ea: uint32, mut j: uint16) {
+    match ea {
+        9147353 => return,
+        _ => {
+            Unreachable();
+        }
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn SpawnCinematicBgObject(mut j: uint16, mut a: uint16) -> uint8 {
+    *((&raw mut g_ram as *mut uint8).offset(0x19f5 as ::core::ffi::c_int as isize)
+        as *mut uint16) = a;
+    let mut v3: uint16 = 6 as uint16;
+    while *((&raw mut g_ram as *mut uint8).offset(0x19cd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
+        != 0
+    {
+        v3 = (v3 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
+        if v3 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
+            return 1 as uint8;
+        }
+    }
+    let mut v5: *const uint8 = RomPtr_8B(j as uint16_t);
+    let mut v6: ::core::ffi::c_int = v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x19d5 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v6 as isize) = *(v5.offset(2 as ::core::ffi::c_int as isize) as *mut uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x19cd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v6 as isize) = *(v5.offset(4 as ::core::ffi::c_int as isize) as *mut uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x19dd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v6 as isize) = 1 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x19b5 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v6 as isize) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x19e5 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v6 as isize) = 0 as uint16;
+    CallCinematicBgObjectSetup(
+        (*(v5 as *mut uint16) as ::core::ffi::c_int | 0x8b0000 as ::core::ffi::c_int) as uint32,
+        v3,
+    );
+    return 0 as uint8;
+}
+#[no_mangle]
+pub unsafe extern "C" fn HandleCinematicBgObjects() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x19f1 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0 as ::core::ffi::c_int
+    {
+        let mut i: ::core::ffi::c_int = 6 as ::core::ffi::c_int;
+        while i >= 0 as ::core::ffi::c_int {
+            *((&raw mut g_ram as *mut uint8).offset(0x19ed as ::core::ffi::c_int as isize)
+                as *mut uint16) = i as uint16;
+            if *((&raw mut g_ram as *mut uint8).offset(0x19cd as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset((i >> 1 as ::core::ffi::c_int) as isize)
+                != 0
+            {
+                ProcessCinematicBgObjectsInstrs(i as uint16);
+                i = *((&raw mut g_ram as *mut uint8).offset(0x19ed as ::core::ffi::c_int as isize)
+                    as *mut uint16) as ::core::ffi::c_int;
+            }
+            i -= 2 as ::core::ffi::c_int;
+        }
+        if *((&raw mut g_ram as *mut uint8).offset(0x19f3 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            & 0x8000 as ::core::ffi::c_int
+            != 0 as ::core::ffi::c_int
+        {
+            UpdateCinematicBgTilemap();
+        }
+        UpdateSamusEyesTilemap();
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn ProcessCinematicBgObjectsInstrs(mut k: uint16) {
+    CallCinematicBgPreInstr(
+        (*((&raw mut g_ram as *mut uint8).offset(0x19d5 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
+            as ::core::ffi::c_int
+            | 0x8b0000 as ::core::ffi::c_int) as uint32,
+        k,
+    );
+    let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x19ed as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v2: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
+        .offset(0x19ed as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        >> 1 as ::core::ffi::c_int;
+    let ref mut fresh158 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x19dd as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset(v2 as isize);
+    let fresh159 = *fresh158;
+    *fresh158 = (*fresh158).wrapping_sub(1);
+    if fresh159 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
+        let mut v4: uint16 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x19cd as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v2 as isize);
+        let mut v6: uint16 = 0;
+        loop {
+            let mut v5: *const uint16 = RomPtr_8C(v4 as uint16_t) as *const uint16;
+            v6 = *v5;
+            if *v5 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+                break;
+            }
+            v4 = CallCinematicBgInstr(
+                (v6 as ::core::ffi::c_int | 0x8b0000 as ::core::ffi::c_int) as uint32,
+                v1,
+                (v4 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16,
+            );
+            if v4 == 0 {
+                return;
+            }
+        }
+        let mut v7: ::core::ffi::c_int = v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x19dd as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v7 as isize) = v6;
+        let mut v8: *const uint8 = RomPtr_8C(v4 as uint16_t);
+        *((&raw mut g_ram as *mut uint8).offset(0x19b5 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v7 as isize) = *(v8.offset(4 as ::core::ffi::c_int as isize) as *mut uint16);
+        ProcessCinematicBgObject(
+            v1,
+            *(v8.offset(2 as ::core::ffi::c_int as isize) as *mut uint16),
+        );
+        *((&raw mut g_ram as *mut uint8).offset(0x19cd as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v7 as isize) = (v4 as ::core::ffi::c_int + 6 as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicBgInstr_Delete(mut k: uint16, mut j: uint16) -> uint16 {
+    let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x19b5 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x19cd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = 0 as uint16;
+    return 0 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicBgInstr_Goto(mut k: uint16, mut j: uint16) -> uint16 {
+    return *(RomPtr_8C(j as uint16_t) as *mut uint16);
+}
+#[no_mangle]
+pub unsafe extern "C" fn sub_8B9743() {}
+#[no_mangle]
+pub unsafe extern "C" fn DrawCinematicSpriteObjects_Intro() {
+    let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
+    while i >= 0 as ::core::ffi::c_int {
+        let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
+        if *((&raw mut g_ram as *mut uint8).offset(0x1a5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize)
+            != 0
+        {
+            let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
+                .offset(0x1a5d as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(v1 as isize);
+            let mut chr: uint16 = *((&raw mut g_ram as *mut uint8)
+                .offset(0x1abd as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(v1 as isize);
+            let mut x: uint16 =
+                (*((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+                    as *mut uint16)
+                    .offset(v1 as isize) as ::core::ffi::c_int
+                    - *((&raw mut g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
+                        as *mut uint16) as ::core::ffi::c_int) as uint16;
+            let mut y: uint16 =
+                (*((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+                    as *mut uint16)
+                    .offset(v1 as isize) as ::core::ffi::c_int
+                    - *((&raw mut g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize)
+                        as *mut uint16) as ::core::ffi::c_int) as uint16;
+            if y as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
+                if ((y as ::core::ffi::c_int + 128 as ::core::ffi::c_int) as uint16
+                    as ::core::ffi::c_int)
+                    < 0x1ff as ::core::ffi::c_int
+                {
+                    DrawSpritemapOffScreen(v2, x, y, chr);
+                }
+            } else if ((y as ::core::ffi::c_int + 128 as ::core::ffi::c_int) as uint16
+                as ::core::ffi::c_int)
+                < 0x1ff as ::core::ffi::c_int
+            {
+                DrawSpritemap(0x8c as uint8, v2, x, y, chr);
+            }
+        }
+        i -= 2 as ::core::ffi::c_int;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn DrawCinematicSpriteObjects_Ending() {
+    let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
+    while i >= 0 as ::core::ffi::c_int {
+        let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
+        if *((&raw mut g_ram as *mut uint8).offset(0x1a5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize)
+            != 0
+        {
+            let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
+                .offset(0x1a5d as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(v1 as isize);
+            let mut chr: uint16 = *((&raw mut g_ram as *mut uint8)
+                .offset(0x1abd as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(v1 as isize);
+            let mut x: uint16 =
+                (*((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+                    as *mut uint16)
+                    .offset(v1 as isize) as ::core::ffi::c_int
+                    - *((&raw mut g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
+                        as *mut uint16) as ::core::ffi::c_int) as uint16;
+            let mut y: uint16 =
+                (*((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+                    as *mut uint16)
+                    .offset(v1 as isize) as ::core::ffi::c_int
+                    - *((&raw mut g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize)
+                        as *mut uint16) as ::core::ffi::c_int) as uint16;
+            if y as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
+                if ((y as ::core::ffi::c_int + 128 as ::core::ffi::c_int) as uint16
+                    as ::core::ffi::c_int)
+                    < 0x1ff as ::core::ffi::c_int
+                {
+                    DrawSpritemapOffScreen(v2, x, y, chr);
+                }
+            } else if ((y as ::core::ffi::c_int + 128 as ::core::ffi::c_int) as uint16
+                as ::core::ffi::c_int)
+                < 0x1ff as ::core::ffi::c_int
+            {
+                DrawSpritemap(0x8c as uint8, v2, x, y, chr);
+            }
+        }
+        i -= 2 as ::core::ffi::c_int;
+    }
+    if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - (0x8bda02 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int)
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        MoveUnusedSpritesOffScreen();
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn SpawnTextGlowObject(mut j: uint16, mut r18: uint16) {
+    let mut v1: uint16 = 14 as uint16;
+    while *(((&raw mut g_ram as *mut uint8).offset(0x19f7 as ::core::ffi::c_int as isize)
+        as *mut uint16 as *mut uint8)
+        .offset(v1 as ::core::ffi::c_int as isize) as *mut uint16)
+        != 0
+    {
+        v1 = (v1 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
+        if v1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
+            return;
+        }
+    }
+    *(((&raw mut g_ram as *mut uint8).offset(0x19f7 as ::core::ffi::c_int as isize) as *mut uint16
+        as *mut uint8)
+        .offset(v1 as ::core::ffi::c_int as isize) as *mut uint16) = j;
+    let mut v2: ::core::ffi::c_int = v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a03 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((v2 + 2 as ::core::ffi::c_int) as isize) = 1 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a03 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((v2 + 10 as ::core::ffi::c_int) as isize) = r18 as uint8 as uint16;
+    *(((&raw mut g_ram as *mut uint8).offset(0x1a27 as ::core::ffi::c_int as isize) as *mut uint16
+        as *mut uint8)
+        .offset(v1 as ::core::ffi::c_int as isize) as *mut uint16) = *(&raw mut r18 as *mut uint8)
+        .offset(
+            (::core::mem::size_of::<uint16>() as usize)
+                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                .wrapping_sub(1 as usize) as isize,
+        ) as uint16;
+    *(((&raw mut g_ram as *mut uint8).offset(0x1a37 as ::core::ffi::c_int as isize) as *mut uint16
+        as *mut uint8)
+        .offset(v1 as ::core::ffi::c_int as isize) as *mut uint16) = 0 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn HandleTextGlowObjects() {
+    let mut i: ::core::ffi::c_int = 14 as ::core::ffi::c_int;
+    while i >= 0 as ::core::ffi::c_int {
+        *((&raw mut g_ram as *mut uint8).offset(0x1a47 as ::core::ffi::c_int as isize)
+            as *mut uint16) = i as uint16;
+        if *(((&raw mut g_ram as *mut uint8).offset(0x19f7 as ::core::ffi::c_int as isize)
+            as *mut uint16 as *mut uint8)
+            .offset(i as uint16 as ::core::ffi::c_int as isize) as *mut uint16)
+            != 0
+        {
+            ProcessTextGlowObject();
+            i = *((&raw mut g_ram as *mut uint8).offset(0x1a47 as ::core::ffi::c_int as isize)
+                as *mut uint16) as ::core::ffi::c_int;
+        }
+        i -= 2 as ::core::ffi::c_int;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn ProcessTextGlowObject() {
+    let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a47 as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v1: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a47 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        >> 1 as ::core::ffi::c_int;
+    let ref mut fresh153 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a03 as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset((v1 + 2 as ::core::ffi::c_int) as isize);
+    let fresh154 = *fresh153;
+    *fresh153 = (*fresh153).wrapping_sub(1);
+    if fresh154 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
+        let mut R28: uint16 =
+            *(((&raw mut g_ram as *mut uint8).offset(0x1a37 as ::core::ffi::c_int as isize)
+                as *mut uint16 as *mut uint8)
+                .offset(v0 as ::core::ffi::c_int as isize) as *mut uint16);
+        let mut v3: uint16 =
+            *(((&raw mut g_ram as *mut uint8).offset(0x19f7 as ::core::ffi::c_int as isize)
+                as *mut uint16 as *mut uint8)
+                .offset(v0 as ::core::ffi::c_int as isize) as *mut uint16);
+        let mut r22: uint16 = (2 as ::core::ffi::c_int
+            * *(((&raw mut g_ram as *mut uint8).offset(0x1a03 as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset((v1 + 10 as ::core::ffi::c_int) as isize) as *mut uint16
+                as *mut uint8)
+                .offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+            + Mult8x8(
+                *((&raw mut g_ram as *mut uint8).offset(0x1a27 as ::core::ffi::c_int as isize)
+                    as *mut uint16 as *mut uint8)
+                    .offset(v0 as ::core::ffi::c_int as isize),
+                0x40 as uint8,
+            ) as ::core::ffi::c_int) as uint16;
+        let mut v4: uint16 = r22;
+        let mut v5: *const uint8 = RomPtr_8C(v3 as uint16_t);
+        let mut n: ::core::ffi::c_int =
+            *v5.offset(2 as ::core::ffi::c_int as isize) as ::core::ffi::c_int;
+        let mut norg: ::core::ffi::c_int = n;
+        let mut m: ::core::ffi::c_int =
+            *v5.offset(3 as ::core::ffi::c_int as isize) as ::core::ffi::c_int;
+        loop {
+            loop {
+                *((&raw mut (*((&raw mut g_ram as *mut uint8)
+                    .offset(0x3000 as ::core::ffi::c_int as isize)
+                    as *mut Ram3000))
+                    .pause_menu_map_tilemap as *mut uint16 as *mut uint8)
+                    .offset(v4 as ::core::ffi::c_int as isize) as *mut uint16) =
+                    (R28 as ::core::ffi::c_int
+                        | *((&raw mut (*((&raw mut g_ram as *mut uint8)
+                            .offset(0x3000 as ::core::ffi::c_int as isize)
+                            as *mut Ram3000))
+                            .pause_menu_map_tilemap as *mut uint16
+                            as *mut uint8)
+                            .offset(v4 as ::core::ffi::c_int as isize)
+                            as *mut uint16) as ::core::ffi::c_int
+                            & 0xe3ff as ::core::ffi::c_int) as uint16;
+                v3 = (v3 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+                v4 = (v4 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+                n -= 1;
+                if !(n != 0) {
+                    break;
+                }
+            }
+            n = norg;
+            m -= 1;
+            if m == 0 {
+                break;
+            }
+            r22 = (r22 as ::core::ffi::c_int + 64 as ::core::ffi::c_int) as uint16;
+            v4 = r22;
+        }
+        let mut v6: uint16 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x1a47 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        if *(((&raw mut g_ram as *mut uint8).offset(0x1a37 as ::core::ffi::c_int as isize)
+            as *mut uint16 as *mut uint8)
+            .offset(
+                *((&raw mut g_ram as *mut uint8).offset(0x1a47 as ::core::ffi::c_int as isize)
+                    as *mut uint16) as ::core::ffi::c_int as isize,
+            ) as *mut uint16) as ::core::ffi::c_int
+            == 3072 as ::core::ffi::c_int
+        {
+            *(((&raw mut g_ram as *mut uint8).offset(0x19f7 as ::core::ffi::c_int as isize)
+                as *mut uint16 as *mut uint8)
+                .offset(
+                    *((&raw mut g_ram as *mut uint8).offset(0x1a47 as ::core::ffi::c_int as isize)
+                        as *mut uint16) as ::core::ffi::c_int as isize,
+                ) as *mut uint16) = 0 as uint16;
+        } else {
+            let ref mut fresh155 = *(((&raw mut g_ram as *mut uint8)
+                .offset(0x1a37 as ::core::ffi::c_int as isize)
+                as *mut uint16 as *mut uint8)
+                .offset(
+                    *((&raw mut g_ram as *mut uint8).offset(0x1a47 as ::core::ffi::c_int as isize)
+                        as *mut uint16) as ::core::ffi::c_int as isize,
+                ) as *mut uint16);
+            *fresh155 = (*fresh155 as ::core::ffi::c_int + 1024 as ::core::ffi::c_int) as uint16;
+            *((&raw mut g_ram as *mut uint8).offset(0x1a03 as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(
+                    ((v6 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
+                        + 2 as ::core::ffi::c_int) as isize,
+                ) = 5 as uint16;
+        }
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn EnableTextGlowObjects_() {
+    let ref mut fresh15 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x19ff as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh15 = (*fresh15 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn DisableTextGlowObjects_() {
+    let ref mut fresh7 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x19ff as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh7 = (*fresh7 as ::core::ffi::c_int & !(0x8000 as ::core::ffi::c_int)) as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func128(mut a: uint16) {
+    let mut i: ::core::ffi::c_int = 2046 as ::core::ffi::c_int;
+    while i >= 0 as ::core::ffi::c_int {
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
+            as *mut Ram3000))
+            .pause_menu_map_tilemap as *mut uint16 as *mut uint8)
+            .offset(i as uint16 as ::core::ffi::c_int as isize) as *mut uint16) = a;
+        i -= 2 as ::core::ffi::c_int;
+    }
+    *((&raw mut g_ram as *mut uint8).offset(0x1a01 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x19f7 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x19f9 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x19fb as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x19fd as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x19f5 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 18432 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a03 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(0 as ::core::ffi::c_int as isize) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CreditsObject_Init(mut j: uint16) {
+    let mut v1: *const uint8 = RomPtr_8B(j as uint16_t);
+    *((&raw mut g_ram as *mut uint8).offset(0x19fd as ::core::ffi::c_int as isize)
+        as *mut uint16) = *(v1.offset(2 as ::core::ffi::c_int as isize) as *mut uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x19f7 as ::core::ffi::c_int as isize)
+        as *mut uint16) = *(v1.offset(4 as ::core::ffi::c_int as isize) as *mut uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x19f9 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 1 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x19fb as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    CallCreditsObjectFunc(
+        (*(v1 as *mut uint16) as ::core::ffi::c_int | 0x8b0000 as ::core::ffi::c_int) as uint32,
+        0 as uint16,
+    );
+}
+#[no_mangle]
+pub unsafe extern "C" fn CreditsObject_Process() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x19ff as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0 as ::core::ffi::c_int
+    {
+        if *((&raw mut g_ram as *mut uint8).offset(0x19f7 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            != 0
+        {
+            CreditsObject_ProcessOne();
+        }
+        CinematicUpdateSomeBg();
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CreditsObject_ProcessOne() {
+    let mut i: ::core::ffi::c_int = 0;
+    CallCreditsObjectFunc(
+        (*((&raw mut g_ram as *mut uint8).offset(0x19fd as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            | 0x8b0000 as ::core::ffi::c_int) as uint32,
+        0 as uint16,
+    );
+    AddToHiLo(
+        (&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize) as *mut uint16,
+        (&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize) as *mut uint16,
+        0x8000 as uint32,
+    );
+    if *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - *((&raw mut g_ram as *mut uint8).offset(0x1a03 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+        - 8 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        == 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1a03 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(0 as ::core::ffi::c_int as isize) = *((&raw mut g_ram as *mut uint8)
+            .offset(0x1997 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        i = *((&raw mut g_ram as *mut uint8).offset(0x19f7 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int;
+        loop {
+            let mut v2: *const uint16 = RomPtr_8C(i as uint16_t) as *const uint16;
+            let mut v3: uint16 = *v2;
+            if *v2 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+                break;
+            }
+            i = CallIntroObjectInstr(
+                (v3 as ::core::ffi::c_int | 0x8b0000 as ::core::ffi::c_int) as uint32,
+                0 as uint16,
+                (i + 2 as ::core::ffi::c_int) as uint16,
+            ) as ::core::ffi::c_int;
+            if i == 0 {
+                return;
+            }
+        }
+        CreditsObject_Func1(i as uint16);
+        *((&raw mut g_ram as *mut uint8).offset(0x1a01 as ::core::ffi::c_int as isize)
+            as *mut uint16) = (*((&raw mut g_ram as *mut uint8)
+            .offset(0x1a01 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            + 1 as ::core::ffi::c_int
+            & 0x1f as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x19f7 as ::core::ffi::c_int as isize)
+            as *mut uint16) = (i + 4 as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CreditsObject_Func1(mut j: uint16) {
+    let mut RegWord: uint16 = Mult8x8(
+        *((&raw mut g_ram as *mut uint8).offset(0x1a01 as ::core::ffi::c_int as isize)
+            as *mut uint16) as uint8,
+        0x40 as uint8,
+    );
+    let mut n: ::core::ffi::c_int = 31 as ::core::ffi::c_int;
+    let mut src: *const uint16 = (&raw mut g_ram as *mut uint8)
+        .offset(0x10000 as ::core::ffi::c_int as isize)
+        .offset(
+            *(RomPtr_8C(j as uint16_t) as *mut uint16).offset(1 as ::core::ffi::c_int as isize)
+                as ::core::ffi::c_int as isize,
+        ) as *const uint16;
+    loop {
+        let fresh6 = src;
+        src = src.offset(1);
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
+            as *mut Ram3000))
+            .pause_menu_map_tilemap as *mut uint16 as *mut uint8)
+            .offset(RegWord as ::core::ffi::c_int as isize) as *mut uint16) = *fresh6;
+        RegWord = (RegWord as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        n -= 1;
+        if !(n >= 0 as ::core::ffi::c_int) {
+            break;
+        }
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn IntroObject_Delete(mut k: uint16, mut j: uint16) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x19f7 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    return 0 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn IntroObject_Goto(mut k: uint16, mut j: uint16) -> uint16 {
+    return *(RomPtr_8C(j as uint16_t) as *mut uint16);
+}
+#[no_mangle]
+pub unsafe extern "C" fn IntroObject_DecTimerGoto(mut k: uint16, mut j: uint16) -> uint16 {
+    let ref mut fresh8 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x19fb as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh8 = (*fresh8).wrapping_sub(1);
+    if *fresh8 != 0 {
+        return IntroObject_Goto(k, j);
+    } else {
+        return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn IntroObject_SetTimer(mut k: uint16, mut j: uint16) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x19fb as ::core::ffi::c_int as isize)
+        as *mut uint16) = *(RomPtr_8C(j as uint16_t) as *mut uint16);
+    return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn GameState_1_OpeningCinematic_() -> CoroutineRet {
+    CallCinematicFunction(
+        (*((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            | 0x8b0000 as ::core::ffi::c_int) as uint32,
+    );
+    HandleCinematicSprites();
+    HandleMode7Objects();
+    PaletteFxHandler();
+    DrawCinematicSpriteObjects_Intro();
+    MaybeSkipCinematics();
+    HandleCinematicsTransitions();
+    HandleMode7TransformationNoRotation();
+    return kCoroutineNone as CoroutineRet;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunctionNone() {}
+#[no_mangle]
+pub unsafe extern "C" fn MaybeSkipCinematics() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        + 0x60d8 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+        && *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            & (kButton_B as ::core::ffi::c_int
+                | kButton_Start as ::core::ffi::c_int
+                | kButton_A as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
+            != 0 as ::core::ffi::c_int
+        && *((&raw mut g_ram as *mut uint8).offset(0x1a53 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            == 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1a53 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 2 as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn HandleCinematicsTransitions_1() {
+    if AdvanceFastScreenFadeOut() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
+        *((&raw mut g_ram as *mut uint8).offset(0x1a53 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 2 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8b9f28 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        QueueMusic_Delayed8(6 as uint16);
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn HandleCinematicsTransitions_2() {
+    ClearCinematicSprites();
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BA119 as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BA125 as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize) as *mut uint16) =
+        2 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) = 256 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x199b as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1999 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x199f as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x199d as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a53 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 3 as uint16;
+    let mut v2: uint16 = 256 as uint16;
+    loop {
+        *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+            *(g_rom.offset(
+                (((0x8ce1e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                    << 15 as ::core::ffi::c_int
+                    | 0x8ce1e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                    & 0x3fffff as ::core::ffi::c_int) as isize,
+            ) as *const uint8 as *mut uint16)
+                .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+        v2 = (v2 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        if !(((v2 as ::core::ffi::c_int - 512 as ::core::ffi::c_int) as int16
+            as ::core::ffi::c_int)
+            < 0 as ::core::ffi::c_int)
+        {
+            break;
+        }
+    }
+    *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(201 as ::core::ffi::c_int as isize) = 0x7fff as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(202 as ::core::ffi::c_int as isize) = 32128 as uint16;
+    ClearPaletteFXObjects();
+    SpawnPalfxObject(addr_kPalfx_E1A0 as ::core::ffi::c_int as uint16);
+    SpawnPalfxObject(addr_kPalfx_E1A4 as ::core::ffi::c_int as uint16);
+    SetPpuBackdropBlack();
+    *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 17 as uint8;
+    SpawnTitleScreenGradientObjs();
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSpriteInit_7(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 128 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 48 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 1024 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSpriteInit_8(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 128 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 81 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 0 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSpriteInit_9(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 128 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 196 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 2048 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn HandleCinematicsTransitions_3() {
+    if AdvanceFastScreenFadeIn() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
+        *((&raw mut g_ram as *mut uint8).offset(0x1a53 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f53 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 900 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8b9f29 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+static mut off_8B9A7B: [Option<Func_V>; 4] = unsafe {
+    [
+        None,
+        Some(HandleCinematicsTransitions_1 as unsafe extern "C" fn() -> ()),
+        Some(HandleCinematicsTransitions_2 as unsafe extern "C" fn() -> ()),
+        Some(HandleCinematicsTransitions_3 as unsafe extern "C" fn() -> ()),
+    ]
+};
+#[no_mangle]
+pub unsafe extern "C" fn HandleCinematicsTransitions() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a53 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        != 0
+    {
+        off_8B9A7B[*((&raw mut g_ram as *mut uint8).offset(0x1a53 as ::core::ffi::c_int as isize)
+            as *mut uint16) as usize]
+            .expect("non-null function pointer")();
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunctionOpening() {
+    LoadTitleSequenceGraphics();
+    QueueMusic_Delayed8(0xff03 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8b9a47 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BA0EF as ::core::ffi::c_int as uint16,
+        (0x8b9a47 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16,
+    );
+    QueueMusic_Delayed8(5 as uint16);
+}
+#[no_mangle]
+pub unsafe extern "C" fn LoadTitleSequenceGraphics() {
+    let mut v1: int16 = 0;
+    SetupPpuForTitleSequence();
+    *((&raw mut g_ram as *mut uint8).offset(0xab as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xa7 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    let mut v0: uint16 = 0 as uint16;
+    loop {
+        *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+            *(g_rom.offset(
+                (((0x8ce1e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                    << 15 as ::core::ffi::c_int
+                    | 0x8ce1e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                    & 0x3fffff as ::core::ffi::c_int) as isize,
+            ) as *const uint8 as *mut uint16)
+                .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+        v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        if !(((v0 as ::core::ffi::c_int - 512 as ::core::ffi::c_int) as int16
+            as ::core::ffi::c_int)
+            < 0 as ::core::ffi::c_int)
+        {
+            break;
+        }
+    }
+    DecompressToMem(
+        0x94e000 as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x10000 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x96fc04 as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x14000 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x9580d8 as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x15000 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x95a5e1 as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x19000 as ::core::ffi::c_int as isize),
+    );
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8B9BFF: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 0 as uint8,
+        bbad: 0x19 as uint8,
+        a1: LongPtr {
+            addr: (0x7f0000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7f0000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x4000 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8B9BFF as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
+    v1 = 0x4000 as int16;
+    loop {
+        WriteReg(VMDATAL as ::core::ffi::c_int as uint16, 0xff as uint8);
+        v1 -= 1;
+        if !(v1 != 0) {
+            break;
+        }
+    }
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8);
+    static mut unk_8B9C37: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 0 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7f4000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7f4000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x1000 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8B9C37 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8B9C57: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7f5000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7f5000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x4000 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8B9C57 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteRegWord(M7A as ::core::ffi::c_int as uint16, 0x100 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x78 as ::core::ffi::c_int as isize) as *mut uint16) =
+        256 as uint16;
+    WriteRegWord(M7B as ::core::ffi::c_int as uint16, 0 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x7a as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    WriteRegWord(M7C as ::core::ffi::c_int as uint16, 0 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x7c as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    WriteRegWord(M7D as ::core::ffi::c_int as uint16, 0x100 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x7e as ::core::ffi::c_int as isize) as *mut uint16) =
+        256 as uint16;
+    WriteRegWord(M7X as ::core::ffi::c_int as uint16, 0x80 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x80 as ::core::ffi::c_int as isize) as *mut uint16) =
+        128 as uint16;
+    WriteRegWord(M7Y as ::core::ffi::c_int as uint16, 0x80 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x82 as ::core::ffi::c_int as isize) as *mut uint16) =
+        128 as uint16;
+    EnableNMI();
+    *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize) as *mut uint16) =
+        1 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize) as *mut uint16) =
+        1 as uint16;
+    EnableHdmaObjects();
+    EnablePaletteFx();
+    *((&raw mut g_ram as *mut uint8).offset(0x1982 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    SpawnPalfxObject(addr_kPalfx_E1A0 as ::core::ffi::c_int as uint16);
+    SpawnPalfxObject(addr_kPalfx_E1A4 as ::core::ffi::c_int as uint16);
+    let mut v2: uint16 = 0 as uint16;
+    SpawnMode7Object(
+        addr_kMode7ObjBabyMetroidInTitle as ::core::ffi::c_int as uint16,
+        v2,
+    );
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSpriteInit_0(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 129 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 112 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 512 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn sub_8B9CCF(mut k: uint16) {
+    *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 15 as uint8;
+    *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+        (0x8b93d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn sub_8B9CDE() {}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_9CE1(mut k: uint16, mut j: uint16) -> uint16 {
+    *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 17 as uint8;
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8b9d17 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) = 72 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 315 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 225 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x199b as ::core::ffi::c_int as isize)
+        as *mut uint16) = -(2 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1999 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0x8000 as uint16;
+    SetPpuBackdropSomeColor();
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunc_Func2() {
+    AddToHiLo(
+        (&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize) as *mut uint16,
+        (&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize) as *mut uint16,
+        (*((&raw mut g_ram as *mut uint8).offset(0x199b as ::core::ffi::c_int as isize)
+            as *mut uint16) as uint32)
+            << 16 as ::core::ffi::c_int
+            | *((&raw mut g_ram as *mut uint8).offset(0x1999 as ::core::ffi::c_int as isize)
+                as *mut uint16) as uint32,
+    );
+    if *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        + 7 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 16 as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8b9a47 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BA0F5 as ::core::ffi::c_int as uint16,
+            (0x8b9a47 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16,
+        );
+        SetPpuBackdropBlack();
+    }
+    MaybeSkipCinematics();
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSpriteInit_1(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 129 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 112 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 512 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_9D5D(mut k: uint16, mut j: uint16) -> uint16 {
+    *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 17 as uint8;
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8b9d90 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) = 96 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 44 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+        as *mut uint16) = -(155 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x199b as ::core::ffi::c_int as isize)
+        as *mut uint16) = -(2 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1999 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0x8000 as uint16;
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunc_Func4() {
+    AddToHiLo(
+        (&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize) as *mut uint16,
+        (&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize) as *mut uint16,
+        (*((&raw mut g_ram as *mut uint8).offset(0x199b as ::core::ffi::c_int as isize)
+            as *mut uint16) as uint32)
+            << 16 as ::core::ffi::c_int
+            | *((&raw mut g_ram as *mut uint8).offset(0x1999 as ::core::ffi::c_int as isize)
+                as *mut uint16) as uint32,
+    );
+    if *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        + 176 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 16 as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8b9a47 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BA0FB as ::core::ffi::c_int as uint16,
+            (0x8b9a47 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16,
+        );
+        SetPpuBackdropBlack();
+    }
+    MaybeSkipCinematics();
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSpriteInit_2(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 129 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 112 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 512 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_9DD6(mut k: uint16, mut j: uint16) -> uint16 {
+    *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 17 as uint8;
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8b9e12 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) = 96 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+        as *mut uint16) = -(177 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+        as *mut uint16) = -(160 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x199b as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1999 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x199f as ::core::ffi::c_int as isize)
+        as *mut uint16) = 1 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x199d as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0x8000 as uint16;
+    SetPpuBackdropSomeColor();
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunc_Func5() {
+    AddToHiLo(
+        (&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize) as *mut uint16,
+        (&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize) as *mut uint16,
+        (*((&raw mut g_ram as *mut uint8).offset(0x199f as ::core::ffi::c_int as isize)
+            as *mut uint16) as uint32)
+            << 16 as ::core::ffi::c_int
+            | *((&raw mut g_ram as *mut uint8).offset(0x199d as ::core::ffi::c_int as isize)
+                as *mut uint16) as uint32,
+    );
+    if *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - 163 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        == 0
+    {
+        *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 16 as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8b9a47 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BA101 as ::core::ffi::c_int as uint16,
+            (0x8b9a47 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16,
+        );
+        SetPpuBackdropBlack();
+    }
+    MaybeSkipCinematics();
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSpriteInit_3(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 129 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 112 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 512 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_Func8(mut k: uint16, mut j: uint16) -> uint16 {
+    *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 17 as uint8;
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8b9e8b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) = 67 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x199b as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1999 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x199f as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x199d as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    SpawnTitleScreenGradientObjs();
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunc_Func7() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize) as *mut uint16)
+        as ::core::ffi::c_int
+        & 1 as ::core::ffi::c_int
+        == 0 as ::core::ffi::c_int
+    {
+        if *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            - 256 as ::core::ffi::c_int
+            & 0x8000 as ::core::ffi::c_int
+            != 0
+        {
+            let ref mut fresh149 = *((&raw mut g_ram as *mut uint8)
+                .offset(0x198f as ::core::ffi::c_int as isize)
+                as *mut uint16);
+            *fresh149 = (*fresh149).wrapping_add(1);
+        } else {
+            *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+                as *mut uint16) = 256 as uint16;
+            *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+                as *mut uint16) =
+                (0x8b9f28 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+            SpawnCinematicSpriteObject(
+                addr_kCinematicSpriteObjectDef_8BA107 as ::core::ffi::c_int as uint16,
+                (0x8b9f28 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16,
+            );
+        }
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSpriteInit_4(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 128 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 48 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 1024 as uint16;
+    SpawnPalfxObject(addr_kPalfx_E194 as ::core::ffi::c_int as uint16);
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_Func9(mut k: uint16, mut j: uint16) -> uint16 {
+    let mut v0: uint16 = 0x9ecd as uint16;
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BA113 as ::core::ffi::c_int as uint16,
+        v0,
+    );
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSpriteInit_5(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 128 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 81 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 512 as uint16;
+    SpawnPalfxObject(addr_kPalfx_E198 as ::core::ffi::c_int as uint16);
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_sub_8B9EF0(mut k: uint16, mut j: uint16) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BA113 as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSpriteInit_6(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 128 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 196 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 2048 as uint16;
+    SpawnPalfxObject(addr_kPalfx_E19C as ::core::ffi::c_int as uint16);
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_9F19(mut k: uint16, mut j: uint16) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x1f53 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 900 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8b9f29 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunc_Func1() {
+    let mut current_block: u64;
+    let ref mut fresh148 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1f53 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh148 = (*fresh148).wrapping_sub(1);
+    let mut v0: bool =
+        *fresh148 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1f53 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        == 0
+        || v0 as ::core::ffi::c_int != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8b9fae as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        current_block = 5176254373955358112;
+    } else if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        & (kButton_B as ::core::ffi::c_int
+            | kButton_Start as ::core::ffi::c_int
+            | kButton_A as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
+        != 0 as ::core::ffi::c_int
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8b9f52 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        current_block = 5176254373955358112;
+    } else {
+        current_block = 4906268039856690917;
+    }
+    match current_block {
+        5176254373955358112 => {
+            *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
+                as *mut uint16) = 2 as uint16;
+            *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
+                as *mut uint16) = 2 as uint16;
+        }
+        _ => {}
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunc_Func10() {
+    let mut j: uint16 = 0;
+    if AdvanceSlowScreenFadeOut() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
+        EnableNMI();
+        *(&raw mut g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize) = 1 as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xb5 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xb9 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xbb as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8b9b68 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        DisablePaletteFx();
+        ClearPaletteFXObjects();
+        let mut i: ::core::ffi::c_int = 656 as ::core::ffi::c_int;
+        while i >= 0 as ::core::ffi::c_int {
+            *(((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+                as *mut uint16 as *mut uint8)
+                .offset(i as uint16 as ::core::ffi::c_int as isize) as *mut uint16) = 0 as uint16;
+            i -= 2 as ::core::ffi::c_int;
+        }
+        j = 510 as uint16;
+        while j as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+            *((&raw mut g_ram as *mut uint8).offset(0x9800 as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+                0 as uint16;
+            j = (j as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
+        }
+        *((&raw mut g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 4 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunc_Func9() {
+    let mut j: uint16 = 0;
+    if AdvanceSlowScreenFadeOut() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
+        EnableNMI();
+        *(&raw mut g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize) = 1 as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xb5 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xb9 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xbb as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8b9b68 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        DisablePaletteFx();
+        ClearPaletteFXObjects();
+        let mut i: ::core::ffi::c_int = 656 as ::core::ffi::c_int;
+        while i >= 0 as ::core::ffi::c_int {
+            *(((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+                as *mut uint16 as *mut uint8)
+                .offset(i as uint16 as ::core::ffi::c_int as isize) as *mut uint16) = 0 as uint16;
+            i -= 2 as ::core::ffi::c_int;
+        }
+        j = 510 as uint16;
+        while j as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+            *((&raw mut g_ram as *mut uint8).offset(0x9800 as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+                0 as uint16;
+            j = (j as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
+        }
+        *((&raw mut g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 40 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f57 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn ConfigureTitleSequenceGradientHDMA() {
+    let mut v0: uint16 = *(g_rom.offset(
+        (((0x8cbc5d as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
+            | 0x8cbc5d as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+            & 0x3fffff as ::core::ffi::c_int) as isize,
+    ) as *const uint8 as *mut uint16)
+        .offset(
+            ((*((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+                as *mut uint16) as ::core::ffi::c_int
+                & 0xf0 as ::core::ffi::c_int)
+                >> 4 as ::core::ffi::c_int) as isize,
+        );
+    let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+    loop {
+        let mut v2: uint16 = *(RomPtr_8C(v0 as uint16_t) as *mut uint16);
+        *((&raw mut g_ram as *mut uint8).offset(0x9800 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((i >> 1 as ::core::ffi::c_int) as isize) = v2;
+        if v2 == 0 {
+            break;
+        }
+        v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        i += 2 as ::core::ffi::c_int;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn PlayBabyMetroidCry1(mut k: uint16, mut j: uint16) -> uint16 {
+    QueueSfx3_Max6(0x23 as uint16);
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn PlayBabyMetroidCry2(mut k: uint16, mut j: uint16) -> uint16 {
+    QueueSfx3_Max6(0x26 as uint16);
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn PlayBabyMetroidCry3(mut k: uint16, mut j: uint16) -> uint16 {
+    QueueSfx3_Max6(0x27 as uint16);
+    return j;
+}
+static mut kCinematicPal1: [uint16; 16] = [
+    0x1000 as ::core::ffi::c_int as uint16,
+    0x6bf5 as ::core::ffi::c_int as uint16,
+    0x2e41 as ::core::ffi::c_int as uint16,
+    0x2da1 as ::core::ffi::c_int as uint16,
+    0x2d01 as ::core::ffi::c_int as uint16,
+    0x5e5f as ::core::ffi::c_int as uint16,
+    0x183f as ::core::ffi::c_int as uint16,
+    0x1014 as ::core::ffi::c_int as uint16,
+    0x80a as ::core::ffi::c_int as uint16,
+    0x404 as ::core::ffi::c_int as uint16,
+    0x4f9f as ::core::ffi::c_int as uint16,
+    0x3ed8 as ::core::ffi::c_int as uint16,
+    0x2e12 as ::core::ffi::c_int as uint16,
+    0x6f70 as ::core::ffi::c_int as uint16,
+    0x7fff as ::core::ffi::c_int as uint16,
+    0x5ee0 as ::core::ffi::c_int as uint16,
+];
+static mut kCinematicPal2: [uint16; 16] = [
+    0x3800 as ::core::ffi::c_int as uint16,
+    0x6bf5 as ::core::ffi::c_int as uint16,
+    0x6e1 as ::core::ffi::c_int as uint16,
+    0x641 as ::core::ffi::c_int as uint16,
+    0x5a1 as ::core::ffi::c_int as uint16,
+    0x5e5f as ::core::ffi::c_int as uint16,
+    0x183f as ::core::ffi::c_int as uint16,
+    0x1014 as ::core::ffi::c_int as uint16,
+    0x80a as ::core::ffi::c_int as uint16,
+    0x404 as ::core::ffi::c_int as uint16,
+    0x4f9f as ::core::ffi::c_int as uint16,
+    0x3ed8 as ::core::ffi::c_int as uint16,
+    0x2e12 as ::core::ffi::c_int as uint16,
+    0x6f70 as ::core::ffi::c_int as uint16,
+    0x7fff as ::core::ffi::c_int as uint16,
+    0x5ee0 as ::core::ffi::c_int as uint16,
+];
+static mut kCinematicPal3: [uint16; 16] = [
+    0x3800 as ::core::ffi::c_int as uint16,
+    0x77f8 as ::core::ffi::c_int as uint16,
+    0x1344 as ::core::ffi::c_int as uint16,
+    0x12a4 as ::core::ffi::c_int as uint16,
+    0x1204 as ::core::ffi::c_int as uint16,
+    0x6abf as ::core::ffi::c_int as uint16,
+    0x249f as ::core::ffi::c_int as uint16,
+    0x1c77 as ::core::ffi::c_int as uint16,
+    0x146d as ::core::ffi::c_int as uint16,
+    0x1067 as ::core::ffi::c_int as uint16,
+    0x5bff as ::core::ffi::c_int as uint16,
+    0x4b38 as ::core::ffi::c_int as uint16,
+    0x3a72 as ::core::ffi::c_int as uint16,
+    0x7bd3 as ::core::ffi::c_int as uint16,
+    0x7fff as ::core::ffi::c_int as uint16,
+    0x6b43 as ::core::ffi::c_int as uint16,
+];
+static mut kCinematicPal4: [uint16; 16] = [
+    0x3800 as ::core::ffi::c_int as uint16,
+    0x7ffb as ::core::ffi::c_int as uint16,
+    0x1fa7 as ::core::ffi::c_int as uint16,
+    0x1f07 as ::core::ffi::c_int as uint16,
+    0x1e67 as ::core::ffi::c_int as uint16,
+    0x771f as ::core::ffi::c_int as uint16,
+    0x30ff as ::core::ffi::c_int as uint16,
+    0x28da as ::core::ffi::c_int as uint16,
+    0x20d0 as ::core::ffi::c_int as uint16,
+    0x1cca as ::core::ffi::c_int as uint16,
+    0x67ff as ::core::ffi::c_int as uint16,
+    0x579b as ::core::ffi::c_int as uint16,
+    0x46d5 as ::core::ffi::c_int as uint16,
+    0x7bd6 as ::core::ffi::c_int as uint16,
+    0x7fff as ::core::ffi::c_int as uint16,
+    0x77a6 as ::core::ffi::c_int as uint16,
+];
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSetPal1(mut k: uint16, mut j: uint16) -> uint16 {
+    let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
+    while i >= 0 as ::core::ffi::c_int {
+        *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(((i >> 1 as ::core::ffi::c_int) + 48 as ::core::ffi::c_int) as isize) =
+            kCinematicPal1[(i >> 1 as ::core::ffi::c_int) as usize];
+        i -= 2 as ::core::ffi::c_int;
+    }
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSetPal2(mut k: uint16, mut j: uint16) -> uint16 {
+    let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
+    while i >= 0 as ::core::ffi::c_int {
+        *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(((i >> 1 as ::core::ffi::c_int) + 48 as ::core::ffi::c_int) as isize) =
+            kCinematicPal2[(i >> 1 as ::core::ffi::c_int) as usize];
+        i -= 2 as ::core::ffi::c_int;
+    }
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSetPal3(mut k: uint16, mut j: uint16) -> uint16 {
+    let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
+    while i >= 0 as ::core::ffi::c_int {
+        *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(((i >> 1 as ::core::ffi::c_int) + 48 as ::core::ffi::c_int) as isize) =
+            kCinematicPal3[(i >> 1 as ::core::ffi::c_int) as usize];
+        i -= 2 as ::core::ffi::c_int;
+    }
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSetPal4(mut k: uint16, mut j: uint16) -> uint16 {
+    let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
+    while i >= 0 as ::core::ffi::c_int {
+        *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(((i >> 1 as ::core::ffi::c_int) + 48 as ::core::ffi::c_int) as isize) =
+            kCinematicPal4[(i >> 1 as ::core::ffi::c_int) as usize];
+        i -= 2 as ::core::ffi::c_int;
+    }
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn GameState_37_CeresGoesBoomWithSamus_() -> CoroutineRet {
+    CallCinematicFunction(
+        (*((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            | 0x8b0000 as ::core::ffi::c_int) as uint32,
+    );
+    if *((&raw mut g_ram as *mut uint8).offset(0x1b9f as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        == 0 as ::core::ffi::c_int
+    {
+        let ref mut fresh150 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x1b9f as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *fresh150 = (*fresh150).wrapping_add(1);
+    }
+    let ref mut fresh151 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a51 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh151 = (*fresh151).wrapping_add(1);
+    HandleSamusDuringIntro();
+    HandleCinematicSprites();
+    HandleMode7Objects();
+    HandleCinematicBgObjects();
+    HandleTextGlowObjects();
+    PaletteFxHandler();
+    DrawIntroSprites();
+    HandleMode7TransformationMatrix();
+    return kCoroutineNone as CoroutineRet;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunc_Nothing() {}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Initial() {
+    let mut j: uint16 = 0;
+    let mut k: uint16 = 0;
+    SetupPpu_Intro();
+    *((&raw mut g_ram as *mut uint8).offset(0xab as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xa7 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize) as *mut uint16) =
+        16 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x7a7 as ::core::ffi::c_int as isize) as *mut uint16) =
+        16 as uint16;
+    Samus_Initialize();
+    UpdateBeamTilesAndPalette();
+    *((&raw mut g_ram as *mut uint8).offset(0x9c8 as ::core::ffi::c_int as isize) as *mut uint16) =
+        900 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x9c6 as ::core::ffi::c_int as isize) as *mut uint16) =
+        900 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a57 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xa5c as ::core::ffi::c_int as isize) as *mut uint16) =
+        (0x90eb52 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    ResetButtonAssignmentsToDefault();
+    *((&raw mut g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x18aa as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    let mut i: ::core::ffi::c_int = 656 as ::core::ffi::c_int;
+    while i >= 0 as ::core::ffi::c_int {
+        *(((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+            as *mut uint16 as *mut uint8)
+            .offset(i as uint16 as ::core::ffi::c_int as isize) as *mut uint16) = 0 as uint16;
+        i -= 2 as ::core::ffi::c_int;
+    }
+    let mut v1: uint16 = 0 as uint16;
+    loop {
+        *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+            *(g_rom.offset(
+                (((0x8ce3e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                    << 15 as ::core::ffi::c_int
+                    | 0x8ce3e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                    & 0x3fffff as ::core::ffi::c_int) as isize,
+            ) as *const uint8 as *mut uint16)
+                .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+        v1 = (v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        if !(((v1 as ::core::ffi::c_int - 512 as ::core::ffi::c_int) as int16
+            as ::core::ffi::c_int)
+            < 0 as ::core::ffi::c_int)
+        {
+            break;
+        }
+    }
+    DecompressToMem(
+        0x95f90e as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x10000 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x95d089 as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x18000 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x9788cc as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x19000 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x96ff14 as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x19800 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x95e4c2 as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x1b800 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x978d12 as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x1e000 as ::core::ffi::c_int as isize),
+    );
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BA469: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7f0000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7f0000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x8000 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BA469 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x40 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BA489: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7f8000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7f8000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x900 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BA489 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x48 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BA4A9: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7f9000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7f9000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x800 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BA4A9 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x4c as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BA4C9: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7fe000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7fe000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x800 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BA4C9 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x50 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BA4E9: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7f9800 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7f9800 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x2000 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BA4E9 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BA509: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x9ad200 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x9ad200 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x2000 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BA509 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x6e as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BA529: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7fb800 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7fb800 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x2400 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BA529 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    DecompressToMem(
+        0x95d713 as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x1a000 as ::core::ffi::c_int as isize),
+    );
+    EnableNMI();
+    *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize) as *mut uint16) =
+        3 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize) as *mut uint16) =
+        3 as uint16;
+    EnableHdmaObjects();
+    ClearPaletteFXObjects();
+    EnablePaletteFx();
+    *((&raw mut g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1ba3 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    j = 1023 as uint16;
+    while j as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+        (*((&raw mut g_ram as *mut uint8).offset(0x3800 as ::core::ffi::c_int as isize)
+            as *mut Ram3800))
+            .cinematic_bg_tilemap[j as usize] = *((&raw mut g_ram as *mut uint8)
+            .offset(0x16402 as ::core::ffi::c_int as isize)
+            .offset(
+                (j as ::core::ffi::c_int * 2 as ::core::ffi::c_int + 11262 as ::core::ffi::c_int)
+                    as isize,
+            ) as *mut uint8 as *mut uint16);
+        j = j.wrapping_sub(1);
+    }
+    k = 127 as uint16;
+    while k as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+        (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
+            as *mut Ram3000))
+            .pause_menu_map_tilemap[k as usize] = *((g_rom.offset(
+            (((0x8cd81b as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                << 15 as ::core::ffi::c_int
+                | 0x8cd81b as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                & 0x3fffff as ::core::ffi::c_int) as isize,
+        ) as *const uint8 as *mut uint16
+            as *mut uint8)
+            .offset((k as ::core::ffi::c_int * 2 as ::core::ffi::c_int) as isize)
+            as *mut uint16);
+        k = k.wrapping_sub(1);
+    }
+    *((&raw mut g_ram as *mut uint8).offset(0x1b9f as ::core::ffi::c_int as isize)
+        as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8ba5a7 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    QueueMusic_Delayed8(0 as uint16);
+    QueueMusic_Delayed8(0xff3f as uint16);
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_FadeIn() {
+    if HasQueuedMusic() as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8ba5bd as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 2 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 2 as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_DrawInitJpn() {
+    if AdvanceSlowScreenFadeIn() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8ba5f8 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 60 as uint16;
+        if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            != 0
+        {
+            let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
+                .offset(0x330 as ::core::ffi::c_int as isize)
+                as *mut uint16);
+            (*gVramWriteEntry(
+                *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
+                    as *mut uint16) as ::core::ffi::c_int,
+            ))
+            .size = 256 as uint16;
+            v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+            (*gVramWriteEntry(v0 as ::core::ffi::c_int)).size = 12288 as uint16;
+            v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+            let fresh146 = v0;
+            v0 = v0.wrapping_add(1);
+            *(&raw mut (*(gVramWriteEntry
+                as unsafe extern "C" fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
+                fresh146 as ::core::ffi::c_int,
+            ))
+            .size as *mut uint8)
+                .offset(0 as ::core::ffi::c_int as isize) = 126 as uint8;
+            (*gVramWriteEntry(v0 as ::core::ffi::c_int)).size = 20192 as uint16;
+            *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
+                as *mut uint16) = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        }
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_LastMetroidCaptivity() {
+    let ref mut fresh145 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh145 = (*fresh145).wrapping_sub(1);
+    let mut v0: bool =
+        *fresh145 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        == 0
+        || v0 as ::core::ffi::c_int != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8ba613 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 200 as uint16;
+        QueueMusic_Delayed8(5 as uint16);
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunc_Intro_QueueGalaxyIsAtPeace() {
+    let ref mut fresh143 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh143 = (*fresh143).wrapping_sub(1);
+    let mut v0: bool =
+        *fresh143 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        == 0
+        || v0 as ::core::ffi::c_int != 0
+    {
+        QueueMusic_Delayed8(0 as uint16);
+        QueueMusic_Delayed8(0xff42 as uint16);
+        QueueMusic_DelayedY(5 as uint16, 0xe as uint16);
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8ba639 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunc_Intro_WaitForQueueWait4secs() {
+    if HasQueuedMusic() as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8ba64c as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 240 as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunc_Intro_FadeOut() {
+    let ref mut fresh141 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh141 = (*fresh141).wrapping_sub(1);
+    let mut v0: bool =
+        *fresh141 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        == 0
+        || v0 as ::core::ffi::c_int != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8ba663 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 2 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 2 as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunc_Intro_WaitForFadeOut() {
+    if AdvanceSlowScreenFadeOut() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8ba66f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunc_Intro_SetupTextPage2() {
+    ClearJapaneseTextTiles();
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x41 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BA689: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7e4000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7e4000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x600 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BA689 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(TM as ::core::ffi::c_int as uint16, 0x16 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 22 as uint8;
+    ClearCinematicBgObjects(0x2f as uint16);
+    EnableCinematicBgObjects();
+    EnableCinematicBgTilemapUpdates();
+    *((&raw mut g_ram as *mut uint8).offset(0x19f5 as ::core::ffi::c_int as isize)
+        as *mut uint16) = addr_unk_604C00 as ::core::ffi::c_int as uint16;
+    let mut i: ::core::ffi::c_int = 127 as ::core::ffi::c_int;
+    while i >= 0 as ::core::ffi::c_int {
+        (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
+            as *mut Ram3000))
+            .pause_menu_map_tilemap[i as usize] = 15401 as uint16;
+        (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
+            as *mut Ram3000))
+            .pause_menu_map_tilemap[(i + 896 as ::core::ffi::c_int) as usize] = 15401 as uint16;
+        i -= 1;
+    }
+    let mut v1: uint16 = 768 as uint16;
+    let mut v2: uint16 = 0 as uint16;
+    loop {
+        (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
+            as *mut Ram3000))
+            .pause_menu_map_tilemap[v1 as usize] = *(g_rom.offset(
+            (((0x8ba72b as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                << 15 as ::core::ffi::c_int
+                | 0x8ba72b as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                & 0x3fffff as ::core::ffi::c_int) as isize,
+        ) as *const uint8 as *mut uint16)
+            .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+        v2 = (v2 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        v1 = v1.wrapping_add(1);
+        if !(((v1 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 1792 as ::core::ffi::c_int)
+            as int16 as ::core::ffi::c_int)
+            < 0 as ::core::ffi::c_int)
+        {
+            break;
+        }
+    }
+    *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
+        as *mut Ram3000))
+        .menu
+        .menu_tilemap as *mut uint8)
+        .offset(286 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint32) =
+        472456233 as uint32;
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BCE6D as ::core::ffi::c_int as uint16,
+        0x1c29 as uint16,
+    );
+    *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 127 as uint16;
+    SpawnCinematicBgObject(
+        addr_kCinematicBgObjectDef_8BCF63 as ::core::ffi::c_int as uint16,
+        0x4c00 as uint16,
+    );
+    *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 8 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize) as *mut uint16) =
+        8 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xbb as ::core::ffi::c_int as isize) as *mut uint16) =
+        8 as uint16;
+    ClearEnglishTextTilemap();
+    SetSomeStuffForSpriteObject_16();
+    QueueMusic_Delayed8(0 as uint16);
+    QueueMusic_Delayed8(0xff36 as uint16);
+    QueueMusic_DelayedY(5 as uint16, 0xe as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8ba82b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunc_Intro_WaitFadeinShowText() {
+    if HasQueuedMusic() as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8ba84a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 2 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 2 as uint16;
+        SpawnCinematicBgObject(
+            addr_kCinematicBgObjectDef_8BCF3F as ::core::ffi::c_int as uint16,
+            0x4c00 as uint16,
+        );
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunc_Intro_WaitForFadeinSleep() {
+    if AdvanceSlowScreenFadeIn() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8ba391 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn ClearEnglishTextTilemap() {
+    let mut v0: uint16 = 128 as uint16;
+    loop {
+        let fresh5 = v0;
+        v0 = v0.wrapping_add(1);
+        (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
+            as *mut Ram3000))
+            .pause_menu_map_tilemap[fresh5 as usize] = 47 as uint16;
+        if !(((v0 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 1536 as ::core::ffi::c_int)
+            as int16 as ::core::ffi::c_int)
+            < 0 as ::core::ffi::c_int)
+        {
+            break;
+        }
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn ClearJapaneseTextTiles() {
+    let mut v0: uint16 = 0 as uint16;
+    loop {
+        (*((&raw mut g_ram as *mut uint8).offset(0x4000 as ::core::ffi::c_int as isize)
+            as *mut Ram4000))
+            .xray_tilemaps[v0 as usize] = *((&raw mut g_ram as *mut uint8)
+            .offset(0x16402 as ::core::ffi::c_int as isize)
+            .offset(7822 as ::core::ffi::c_int as isize)
+            as *mut uint8 as *mut uint16);
+        (*((&raw mut g_ram as *mut uint8).offset(0x4000 as ::core::ffi::c_int as isize)
+            as *mut Ram4000))
+            .xray_tilemaps[(v0 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as usize] =
+            *((&raw mut g_ram as *mut uint8)
+                .offset(0x16402 as ::core::ffi::c_int as isize)
+                .offset(7824 as ::core::ffi::c_int as isize) as *mut uint8
+                as *mut uint16);
+        (*((&raw mut g_ram as *mut uint8).offset(0x4000 as ::core::ffi::c_int as isize)
+            as *mut Ram4000))
+            .xray_tilemaps[(v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as usize] =
+            *((&raw mut g_ram as *mut uint8)
+                .offset(0x16402 as ::core::ffi::c_int as isize)
+                .offset(7826 as ::core::ffi::c_int as isize) as *mut uint8
+                as *mut uint16);
+        (*((&raw mut g_ram as *mut uint8).offset(0x4000 as ::core::ffi::c_int as isize)
+            as *mut Ram4000))
+            .xray_tilemaps[(v0 as ::core::ffi::c_int + 3 as ::core::ffi::c_int) as usize] =
+            *((&raw mut g_ram as *mut uint8)
+                .offset(0x16402 as ::core::ffi::c_int as isize)
+                .offset(7828 as ::core::ffi::c_int as isize) as *mut uint8
+                as *mut uint16);
+        (*((&raw mut g_ram as *mut uint8).offset(0x4000 as ::core::ffi::c_int as isize)
+            as *mut Ram4000))
+            .xray_tilemaps[(v0 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as usize] =
+            *((&raw mut g_ram as *mut uint8)
+                .offset(0x16402 as ::core::ffi::c_int as isize)
+                .offset(7830 as ::core::ffi::c_int as isize) as *mut uint8
+                as *mut uint16);
+        (*((&raw mut g_ram as *mut uint8).offset(0x4000 as ::core::ffi::c_int as isize)
+            as *mut Ram4000))
+            .xray_tilemaps[(v0 as ::core::ffi::c_int + 5 as ::core::ffi::c_int) as usize] =
+            *((&raw mut g_ram as *mut uint8)
+                .offset(0x16402 as ::core::ffi::c_int as isize)
+                .offset(7832 as ::core::ffi::c_int as isize) as *mut uint8
+                as *mut uint16);
+        (*((&raw mut g_ram as *mut uint8).offset(0x4000 as ::core::ffi::c_int as isize)
+            as *mut Ram4000))
+            .xray_tilemaps[(v0 as ::core::ffi::c_int + 6 as ::core::ffi::c_int) as usize] =
+            *((&raw mut g_ram as *mut uint8)
+                .offset(0x16402 as ::core::ffi::c_int as isize)
+                .offset(7834 as ::core::ffi::c_int as isize) as *mut uint8
+                as *mut uint16);
+        (*((&raw mut g_ram as *mut uint8).offset(0x4000 as ::core::ffi::c_int as isize)
+            as *mut Ram4000))
+            .xray_tilemaps[(v0 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as usize] =
+            *((&raw mut g_ram as *mut uint8)
+                .offset(0x16402 as ::core::ffi::c_int as isize)
+                .offset(7836 as ::core::ffi::c_int as isize) as *mut uint8
+                as *mut uint16);
+        v0 = (v0 as ::core::ffi::c_int + 8 as ::core::ffi::c_int) as uint16;
+        if !(((v0 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 1536 as ::core::ffi::c_int)
+            as int16 as ::core::ffi::c_int)
+            < 0 as ::core::ffi::c_int)
+        {
+            break;
+        }
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn SetSomeStuffForSpriteObject_2(mut v0: uint16) {
+    let mut v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 8 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 24 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 3072 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn SetSomeStuffForSpriteObject_3(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 112 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 155 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 3584 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn SetSomeStuffForSpriteObject_4_MetroidEgg(mut k: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize) as *mut uint16)
+        as ::core::ffi::c_int
+        - 169 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = addr_word_8BCB3B as ::core::ffi::c_int as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) =
+            (0x8b93d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprPreInstr_A903(mut k: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        == 0
+    {
+        let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = addr_off_8BCE53 as ::core::ffi::c_int as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a57 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_SpawnMetroidEggParticles(
+    mut k: uint16,
+    mut j: uint16,
+) -> uint16 {
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BCECD as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BCED3 as ::core::ffi::c_int as uint16,
+        1 as uint16,
+    );
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BCED9 as ::core::ffi::c_int as uint16,
+        2 as uint16,
+    );
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BCEDF as ::core::ffi::c_int as uint16,
+        3 as uint16,
+    );
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BCEE5 as ::core::ffi::c_int as uint16,
+        4 as uint16,
+    );
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BCEEB as ::core::ffi::c_int as uint16,
+        5 as uint16,
+    );
+    QueueSfx2_Max6(0xb as uint16);
+    return j;
+}
+static mut kSetSomeStuffForSpriteObject_6_Tab: [int16; 12] = [
+    0x5c as ::core::ffi::c_int as int16,
+    0x58 as ::core::ffi::c_int as int16,
+    0x63 as ::core::ffi::c_int as int16,
+    0x58 as ::core::ffi::c_int as int16,
+    0x59 as ::core::ffi::c_int as int16,
+    0x5d as ::core::ffi::c_int as int16,
+    0x60 as ::core::ffi::c_int as int16,
+    0x5b as ::core::ffi::c_int as int16,
+    0x66 as ::core::ffi::c_int as int16,
+    0x5e as ::core::ffi::c_int as int16,
+    0x63 as ::core::ffi::c_int as int16,
+    0x60 as ::core::ffi::c_int as int16,
+];
+#[no_mangle]
+pub unsafe extern "C" fn SetSomeStuffForSpriteObject_6(mut j: uint16) {
+    let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1b9d as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1b9d as ::core::ffi::c_int as isize)
+        as *mut uint16);
+    let mut v3: ::core::ffi::c_int = (4 as ::core::ffi::c_int * v1 as ::core::ffi::c_int) as uint16
+        as ::core::ffi::c_int
+        >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = (kSetSomeStuffForSpriteObject_6_Tab[v3 as usize]
+        as ::core::ffi::c_int
+        + 16 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = (kSetSomeStuffForSpriteObject_6_Tab
+        [(v3 + 1 as ::core::ffi::c_int) as usize]
+        as ::core::ffi::c_int
+        + 59 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = 3584 as uint16;
+}
+static mut kSetSomeStuffForSpriteObject_7_Tab0: [int16; 12] = [
+    -(1 as ::core::ffi::c_int) as int16,
+    0x4000 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    0x4000 as ::core::ffi::c_int as int16,
+    -(1 as ::core::ffi::c_int) as int16,
+    -(0x8000 as ::core::ffi::c_int) as int16,
+    -(1 as ::core::ffi::c_int) as int16,
+    0x2000 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    -(0x8000 as ::core::ffi::c_int) as int16,
+    0 as ::core::ffi::c_int as int16,
+    0x2000 as ::core::ffi::c_int as int16,
+];
+static mut kSetSomeStuffForSpriteObject_7_Tab1: [uint16; 82] = [
+    0xfffe as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    0xfffe as ::core::ffi::c_int as uint16,
+    0xc000 as ::core::ffi::c_int as uint16,
+    0xfffe as ::core::ffi::c_int as uint16,
+    0xa000 as ::core::ffi::c_int as uint16,
+    0xfffe as ::core::ffi::c_int as uint16,
+    0x8000 as ::core::ffi::c_int as uint16,
+    0xfffe as ::core::ffi::c_int as uint16,
+    0x6000 as ::core::ffi::c_int as uint16,
+    0xfffe as ::core::ffi::c_int as uint16,
+    0x4000 as ::core::ffi::c_int as uint16,
+    0xfffe as ::core::ffi::c_int as uint16,
+    0x2000 as ::core::ffi::c_int as uint16,
+    0xffff as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    0xffff as ::core::ffi::c_int as uint16,
+    0xc000 as ::core::ffi::c_int as uint16,
+    0xffff as ::core::ffi::c_int as uint16,
+    0xa000 as ::core::ffi::c_int as uint16,
+    0xffff as ::core::ffi::c_int as uint16,
+    0x8000 as ::core::ffi::c_int as uint16,
+    0xffff as ::core::ffi::c_int as uint16,
+    0x6000 as ::core::ffi::c_int as uint16,
+    0xffff as ::core::ffi::c_int as uint16,
+    0x4000 as ::core::ffi::c_int as uint16,
+    0xffff as ::core::ffi::c_int as uint16,
+    0x2000 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    0x2000 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    0x4000 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    0x6000 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    0x8000 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    0xa000 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    0xc000 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    0xe000 as ::core::ffi::c_int as uint16,
+    1 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    1 as ::core::ffi::c_int as uint16,
+    0x2000 as ::core::ffi::c_int as uint16,
+    1 as ::core::ffi::c_int as uint16,
+    0x4000 as ::core::ffi::c_int as uint16,
+    1 as ::core::ffi::c_int as uint16,
+    0x6000 as ::core::ffi::c_int as uint16,
+    1 as ::core::ffi::c_int as uint16,
+    0x8000 as ::core::ffi::c_int as uint16,
+    1 as ::core::ffi::c_int as uint16,
+    0xa000 as ::core::ffi::c_int as uint16,
+    1 as ::core::ffi::c_int as uint16,
+    0xc000 as ::core::ffi::c_int as uint16,
+    1 as ::core::ffi::c_int as uint16,
+    0xe000 as ::core::ffi::c_int as uint16,
+    2 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    2 as ::core::ffi::c_int as uint16,
+    0x2000 as ::core::ffi::c_int as uint16,
+    2 as ::core::ffi::c_int as uint16,
+    0x4000 as ::core::ffi::c_int as uint16,
+    2 as ::core::ffi::c_int as uint16,
+    0x6000 as ::core::ffi::c_int as uint16,
+    2 as ::core::ffi::c_int as uint16,
+    0x8000 as ::core::ffi::c_int as uint16,
+    2 as ::core::ffi::c_int as uint16,
+    0xa000 as ::core::ffi::c_int as uint16,
+    2 as ::core::ffi::c_int as uint16,
+    0xc000 as ::core::ffi::c_int as uint16,
+    2 as ::core::ffi::c_int as uint16,
+    0xe000 as ::core::ffi::c_int as uint16,
+    0x9dad as ::core::ffi::c_int as uint16,
+    0x991b as ::core::ffi::c_int as uint16,
+    0x1b7d as ::core::ffi::c_int as uint16,
+    0x97ad as ::core::ffi::c_int as uint16,
+    0x991a as ::core::ffi::c_int as uint16,
+    0x1a7d as ::core::ffi::c_int as uint16,
+];
+#[no_mangle]
+pub unsafe extern "C" fn SetSomeStuffForSpriteObject_7(mut k: uint16) {
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let mut v3: ::core::ffi::c_int = 2 as ::core::ffi::c_int
+        * *(((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16 as *mut uint8)
+            .offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int;
+    '_c2rust_label: {
+        if (v3 + 1 as ::core::ffi::c_int) < 12 as ::core::ffi::c_int {
+        } else {
+            __assert_fail(
+                b"v3 + 1 < 12\0" as *const u8 as *const ::core::ffi::c_char,
+                b"src/sm_8b.c\0" as *const u8 as *const ::core::ffi::c_char,
+                2389 as ::core::ffi::c_uint,
+                b"void SetSomeStuffForSpriteObject_7(uint16)\0" as *const u8
+                    as *const ::core::ffi::c_char,
+            );
+        }
+    };
+    AddToHiLo(
+        ((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut g_ram as *mut uint8).offset(0x1add as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        (kSetSomeStuffForSpriteObject_7_Tab0[v3 as usize] as uint32) << 16 as ::core::ffi::c_int
+            | kSetSomeStuffForSpriteObject_7_Tab0[(v3 + 1 as ::core::ffi::c_int) as usize] as uint16
+                as uint32,
+    );
+    let mut v6: ::core::ffi::c_int = 2 as ::core::ffi::c_int
+        * *(((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16 as *mut uint8)
+            .offset(
+                (::core::mem::size_of::<uint16>() as usize)
+                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                    .wrapping_sub(1 as usize) as isize,
+            ) as ::core::ffi::c_int;
+    '_c2rust_label_0: {
+        if (v6 + 1 as ::core::ffi::c_int) < 82 as ::core::ffi::c_int {
+        } else {
+            __assert_fail(
+                b"v6 + 1 < 82\0" as *const u8 as *const ::core::ffi::c_char,
+                b"src/sm_8b.c\0" as *const u8 as *const ::core::ffi::c_char,
+                2392 as ::core::ffi::c_uint,
+                b"void SetSomeStuffForSpriteObject_7(uint16)\0" as *const u8
+                    as *const ::core::ffi::c_char,
+            );
+        }
+    };
+    AddToHiLo(
+        ((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        (kSetSomeStuffForSpriteObject_7_Tab1[v6 as usize] as uint32) << 16 as ::core::ffi::c_int
+            | kSetSomeStuffForSpriteObject_7_Tab1[(v6 + 1 as ::core::ffi::c_int) as usize]
+                as uint32,
+    );
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) as ::core::ffi::c_int
+        - 168 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        let ref mut fresh66 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x1b7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize);
+        *fresh66 = (*fresh66 as ::core::ffi::c_int + 256 as ::core::ffi::c_int) as uint16;
+    } else {
+        *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = addr_off_8BCE53 as ::core::ffi::c_int as uint16;
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn SetSomeStuffForSpriteObject_8(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1b9d as ::core::ffi::c_int as isize)
+        as *mut uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(13 as ::core::ffi::c_int as isize);
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(13 as ::core::ffi::c_int as isize);
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 3584 as uint16;
+}
+static mut kSetSomeStuffForSpriteObject_9_Tab0: [int16; 10] = [
+    -(1 as ::core::ffi::c_int) as int16,
+    0 as ::core::ffi::c_int as int16,
+    -(1 as ::core::ffi::c_int) as int16,
+    -(0x8000 as ::core::ffi::c_int) as int16,
+    1 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    -(0x8000 as ::core::ffi::c_int) as int16,
+    -(1 as ::core::ffi::c_int) as int16,
+    -(0x8000 as ::core::ffi::c_int) as int16,
+];
+static mut kSetSomeStuffForSpriteObject_9_Tab2: [int16; 124] = [
+    -(2 as ::core::ffi::c_int) as int16,
+    0 as ::core::ffi::c_int as int16,
+    -(2 as ::core::ffi::c_int) as int16,
+    -(0x4000 as ::core::ffi::c_int) as int16,
+    -(2 as ::core::ffi::c_int) as int16,
+    -(0x6000 as ::core::ffi::c_int) as int16,
+    -(2 as ::core::ffi::c_int) as int16,
+    -(0x8000 as ::core::ffi::c_int) as int16,
+    -(2 as ::core::ffi::c_int) as int16,
+    0x6000 as ::core::ffi::c_int as int16,
+    -(2 as ::core::ffi::c_int) as int16,
+    0x4000 as ::core::ffi::c_int as int16,
+    -(2 as ::core::ffi::c_int) as int16,
+    0x2000 as ::core::ffi::c_int as int16,
+    -(1 as ::core::ffi::c_int) as int16,
+    0 as ::core::ffi::c_int as int16,
+    -(1 as ::core::ffi::c_int) as int16,
+    -(0x4000 as ::core::ffi::c_int) as int16,
+    -(1 as ::core::ffi::c_int) as int16,
+    -(0x6000 as ::core::ffi::c_int) as int16,
+    -(1 as ::core::ffi::c_int) as int16,
+    -(0x8000 as ::core::ffi::c_int) as int16,
+    -(1 as ::core::ffi::c_int) as int16,
+    0x6000 as ::core::ffi::c_int as int16,
+    -(1 as ::core::ffi::c_int) as int16,
+    0x4000 as ::core::ffi::c_int as int16,
+    -(1 as ::core::ffi::c_int) as int16,
+    0x2000 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    0x2000 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    0x4000 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    0x6000 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    -(0x8000 as ::core::ffi::c_int) as int16,
+    0 as ::core::ffi::c_int as int16,
+    -(0x6000 as ::core::ffi::c_int) as int16,
+    0 as ::core::ffi::c_int as int16,
+    -(0x4000 as ::core::ffi::c_int) as int16,
+    0 as ::core::ffi::c_int as int16,
+    -(0x2000 as ::core::ffi::c_int) as int16,
+    1 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    1 as ::core::ffi::c_int as int16,
+    0x2000 as ::core::ffi::c_int as int16,
+    1 as ::core::ffi::c_int as int16,
+    0x4000 as ::core::ffi::c_int as int16,
+    1 as ::core::ffi::c_int as int16,
+    0x6000 as ::core::ffi::c_int as int16,
+    1 as ::core::ffi::c_int as int16,
+    -(0x8000 as ::core::ffi::c_int) as int16,
+    1 as ::core::ffi::c_int as int16,
+    -(0x6000 as ::core::ffi::c_int) as int16,
+    1 as ::core::ffi::c_int as int16,
+    -(0x4000 as ::core::ffi::c_int) as int16,
+    1 as ::core::ffi::c_int as int16,
+    -(0x2000 as ::core::ffi::c_int) as int16,
+    2 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    2 as ::core::ffi::c_int as int16,
+    0x2000 as ::core::ffi::c_int as int16,
+    2 as ::core::ffi::c_int as int16,
+    0x4000 as ::core::ffi::c_int as int16,
+    2 as ::core::ffi::c_int as int16,
+    0x6000 as ::core::ffi::c_int as int16,
+    2 as ::core::ffi::c_int as int16,
+    -(0x8000 as ::core::ffi::c_int) as int16,
+    2 as ::core::ffi::c_int as int16,
+    -(0x6000 as ::core::ffi::c_int) as int16,
+    2 as ::core::ffi::c_int as int16,
+    -(0x4000 as ::core::ffi::c_int) as int16,
+    2 as ::core::ffi::c_int as int16,
+    -(0x2000 as ::core::ffi::c_int) as int16,
+    3 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    3 as ::core::ffi::c_int as int16,
+    0x2000 as ::core::ffi::c_int as int16,
+    3 as ::core::ffi::c_int as int16,
+    0x4000 as ::core::ffi::c_int as int16,
+    3 as ::core::ffi::c_int as int16,
+    0x6000 as ::core::ffi::c_int as int16,
+    3 as ::core::ffi::c_int as int16,
+    -(0x8000 as ::core::ffi::c_int) as int16,
+    3 as ::core::ffi::c_int as int16,
+    -(0x6000 as ::core::ffi::c_int) as int16,
+    3 as ::core::ffi::c_int as int16,
+    -(0x4000 as ::core::ffi::c_int) as int16,
+    3 as ::core::ffi::c_int as int16,
+    -(0x2000 as ::core::ffi::c_int) as int16,
+    4 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    4 as ::core::ffi::c_int as int16,
+    0x2000 as ::core::ffi::c_int as int16,
+    4 as ::core::ffi::c_int as int16,
+    0x4000 as ::core::ffi::c_int as int16,
+    4 as ::core::ffi::c_int as int16,
+    0x6000 as ::core::ffi::c_int as int16,
+    4 as ::core::ffi::c_int as int16,
+    -(0x8000 as ::core::ffi::c_int) as int16,
+    4 as ::core::ffi::c_int as int16,
+    -(0x6000 as ::core::ffi::c_int) as int16,
+    4 as ::core::ffi::c_int as int16,
+    -(0x4000 as ::core::ffi::c_int) as int16,
+    4 as ::core::ffi::c_int as int16,
+    -(0x2000 as ::core::ffi::c_int) as int16,
+    5 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    5 as ::core::ffi::c_int as int16,
+    0x2000 as ::core::ffi::c_int as int16,
+    5 as ::core::ffi::c_int as int16,
+    0x4000 as ::core::ffi::c_int as int16,
+    5 as ::core::ffi::c_int as int16,
+    0x6000 as ::core::ffi::c_int as int16,
+    5 as ::core::ffi::c_int as int16,
+    -(0x8000 as ::core::ffi::c_int) as int16,
+    5 as ::core::ffi::c_int as int16,
+    -(0x6000 as ::core::ffi::c_int) as int16,
+    5 as ::core::ffi::c_int as int16,
+    -(0x4000 as ::core::ffi::c_int) as int16,
+    5 as ::core::ffi::c_int as int16,
+    -(0x2000 as ::core::ffi::c_int) as int16,
+];
+static mut kSetSomeStuffForSpriteObject_9_Tab1: [int16; 138] = [
+    -(3 as ::core::ffi::c_int) as int16,
+    0 as ::core::ffi::c_int as int16,
+    -(3 as ::core::ffi::c_int) as int16,
+    -(0x4000 as ::core::ffi::c_int) as int16,
+    -(3 as ::core::ffi::c_int) as int16,
+    -(0x6000 as ::core::ffi::c_int) as int16,
+    -(3 as ::core::ffi::c_int) as int16,
+    -(0x8000 as ::core::ffi::c_int) as int16,
+    -(3 as ::core::ffi::c_int) as int16,
+    0x6000 as ::core::ffi::c_int as int16,
+    -(3 as ::core::ffi::c_int) as int16,
+    0x4000 as ::core::ffi::c_int as int16,
+    -(3 as ::core::ffi::c_int) as int16,
+    0x2000 as ::core::ffi::c_int as int16,
+    -(2 as ::core::ffi::c_int) as int16,
+    0 as ::core::ffi::c_int as int16,
+    -(2 as ::core::ffi::c_int) as int16,
+    -(0x4000 as ::core::ffi::c_int) as int16,
+    -(2 as ::core::ffi::c_int) as int16,
+    -(0x6000 as ::core::ffi::c_int) as int16,
+    -(2 as ::core::ffi::c_int) as int16,
+    -(0x8000 as ::core::ffi::c_int) as int16,
+    -(2 as ::core::ffi::c_int) as int16,
+    0x6000 as ::core::ffi::c_int as int16,
+    -(2 as ::core::ffi::c_int) as int16,
+    0x4000 as ::core::ffi::c_int as int16,
+    -(2 as ::core::ffi::c_int) as int16,
+    0x2000 as ::core::ffi::c_int as int16,
+    -(1 as ::core::ffi::c_int) as int16,
+    0 as ::core::ffi::c_int as int16,
+    -(1 as ::core::ffi::c_int) as int16,
+    -(0x4000 as ::core::ffi::c_int) as int16,
+    -(1 as ::core::ffi::c_int) as int16,
+    -(0x6000 as ::core::ffi::c_int) as int16,
+    -(1 as ::core::ffi::c_int) as int16,
+    -(0x8000 as ::core::ffi::c_int) as int16,
+    -(1 as ::core::ffi::c_int) as int16,
+    0x6000 as ::core::ffi::c_int as int16,
+    -(1 as ::core::ffi::c_int) as int16,
+    0x4000 as ::core::ffi::c_int as int16,
+    -(1 as ::core::ffi::c_int) as int16,
+    0x2000 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    0x2000 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    0x4000 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    0x6000 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    -(0x8000 as ::core::ffi::c_int) as int16,
+    0 as ::core::ffi::c_int as int16,
+    -(0x6000 as ::core::ffi::c_int) as int16,
+    0 as ::core::ffi::c_int as int16,
+    -(0x4000 as ::core::ffi::c_int) as int16,
+    0 as ::core::ffi::c_int as int16,
+    -(0x2000 as ::core::ffi::c_int) as int16,
+    1 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    1 as ::core::ffi::c_int as int16,
+    0x2000 as ::core::ffi::c_int as int16,
+    1 as ::core::ffi::c_int as int16,
+    0x4000 as ::core::ffi::c_int as int16,
+    1 as ::core::ffi::c_int as int16,
+    0x6000 as ::core::ffi::c_int as int16,
+    1 as ::core::ffi::c_int as int16,
+    -(0x8000 as ::core::ffi::c_int) as int16,
+    1 as ::core::ffi::c_int as int16,
+    -(0x6000 as ::core::ffi::c_int) as int16,
+    1 as ::core::ffi::c_int as int16,
+    -(0x4000 as ::core::ffi::c_int) as int16,
+    1 as ::core::ffi::c_int as int16,
+    -(0x2000 as ::core::ffi::c_int) as int16,
+    2 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    2 as ::core::ffi::c_int as int16,
+    0x2000 as ::core::ffi::c_int as int16,
+    2 as ::core::ffi::c_int as int16,
+    0x4000 as ::core::ffi::c_int as int16,
+    2 as ::core::ffi::c_int as int16,
+    0x6000 as ::core::ffi::c_int as int16,
+    2 as ::core::ffi::c_int as int16,
+    -(0x8000 as ::core::ffi::c_int) as int16,
+    2 as ::core::ffi::c_int as int16,
+    -(0x6000 as ::core::ffi::c_int) as int16,
+    2 as ::core::ffi::c_int as int16,
+    -(0x4000 as ::core::ffi::c_int) as int16,
+    2 as ::core::ffi::c_int as int16,
+    -(0x2000 as ::core::ffi::c_int) as int16,
+    3 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    3 as ::core::ffi::c_int as int16,
+    0x2000 as ::core::ffi::c_int as int16,
+    3 as ::core::ffi::c_int as int16,
+    0x4000 as ::core::ffi::c_int as int16,
+    3 as ::core::ffi::c_int as int16,
+    0x6000 as ::core::ffi::c_int as int16,
+    3 as ::core::ffi::c_int as int16,
+    -(0x8000 as ::core::ffi::c_int) as int16,
+    3 as ::core::ffi::c_int as int16,
+    -(0x6000 as ::core::ffi::c_int) as int16,
+    3 as ::core::ffi::c_int as int16,
+    -(0x4000 as ::core::ffi::c_int) as int16,
+    3 as ::core::ffi::c_int as int16,
+    -(0x2000 as ::core::ffi::c_int) as int16,
+    4 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    4 as ::core::ffi::c_int as int16,
+    0x2000 as ::core::ffi::c_int as int16,
+    4 as ::core::ffi::c_int as int16,
+    0x4000 as ::core::ffi::c_int as int16,
+    4 as ::core::ffi::c_int as int16,
+    0x6000 as ::core::ffi::c_int as int16,
+    4 as ::core::ffi::c_int as int16,
+    -(0x8000 as ::core::ffi::c_int) as int16,
+    4 as ::core::ffi::c_int as int16,
+    -(0x6000 as ::core::ffi::c_int) as int16,
+    4 as ::core::ffi::c_int as int16,
+    -(0x4000 as ::core::ffi::c_int) as int16,
+    4 as ::core::ffi::c_int as int16,
+    -(0x2000 as ::core::ffi::c_int) as int16,
+    5 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    5 as ::core::ffi::c_int as int16,
+    0x2000 as ::core::ffi::c_int as int16,
+    5 as ::core::ffi::c_int as int16,
+    0x4000 as ::core::ffi::c_int as int16,
+    5 as ::core::ffi::c_int as int16,
+    0x6000 as ::core::ffi::c_int as int16,
+    5 as ::core::ffi::c_int as int16,
+    -(0x8000 as ::core::ffi::c_int) as int16,
+    5 as ::core::ffi::c_int as int16,
+    -(0x6000 as ::core::ffi::c_int) as int16,
+    5 as ::core::ffi::c_int as int16,
+    -(0x4000 as ::core::ffi::c_int) as int16,
+    5 as ::core::ffi::c_int as int16,
+    -(0x2000 as ::core::ffi::c_int) as int16,
+];
+#[no_mangle]
+pub unsafe extern "C" fn SetSomeStuffForSpriteObject_9(mut k: uint16) {
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let mut v3: ::core::ffi::c_int = 2 as ::core::ffi::c_int
+        * *(((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16 as *mut uint8)
+            .offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int;
+    '_c2rust_label: {
+        if (v3 + 1 as ::core::ffi::c_int) < 10 as ::core::ffi::c_int {
+        } else {
+            __assert_fail(
+                b"v3 + 1 < 10\0" as *const u8 as *const ::core::ffi::c_char,
+                b"src/sm_8b.c\0" as *const u8 as *const ::core::ffi::c_char,
+                2442 as ::core::ffi::c_uint,
+                b"void SetSomeStuffForSpriteObject_9(uint16)\0" as *const u8
+                    as *const ::core::ffi::c_char,
+            );
+        }
+    };
+    AddToHiLo(
+        ((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut g_ram as *mut uint8).offset(0x1add as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        (kSetSomeStuffForSpriteObject_9_Tab0[v3 as usize] as uint32) << 16 as ::core::ffi::c_int
+            | kSetSomeStuffForSpriteObject_9_Tab0[(v3 + 1 as ::core::ffi::c_int) as usize] as uint16
+                as uint32,
+    );
+    if *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) as ::core::ffi::c_int
+        & 1 as ::core::ffi::c_int
+        != 0 as ::core::ffi::c_int
+    {
+        let mut v12: ::core::ffi::c_int = 2 as ::core::ffi::c_int
+            * *(((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(v1 as isize) as *mut uint16 as *mut uint8)
+                .offset(
+                    (::core::mem::size_of::<uint16>() as usize)
+                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                        .wrapping_sub(1 as usize) as isize,
+                ) as ::core::ffi::c_int;
+        '_c2rust_label_0: {
+            if (v12 + 1 as ::core::ffi::c_int) < 124 as ::core::ffi::c_int {
+            } else {
+                __assert_fail(
+                    b"v12 + 1 < 124\0" as *const u8 as *const ::core::ffi::c_char,
+                    b"src/sm_8b.c\0" as *const u8 as *const ::core::ffi::c_char,
+                    2446 as ::core::ffi::c_uint,
+                    b"void SetSomeStuffForSpriteObject_9(uint16)\0" as *const u8
+                        as *const ::core::ffi::c_char,
+                );
+            }
+        };
+        AddToHiLo(
+            ((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(v1 as isize) as *mut uint16,
+            ((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(v1 as isize) as *mut uint16,
+            (kSetSomeStuffForSpriteObject_9_Tab2[v12 as usize] as uint32)
+                << 16 as ::core::ffi::c_int
+                | kSetSomeStuffForSpriteObject_9_Tab2[(v12 + 1 as ::core::ffi::c_int) as usize]
+                    as uint16 as uint32,
+        );
+    } else {
+        let mut v6: ::core::ffi::c_int = 2 as ::core::ffi::c_int
+            * *(((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(v1 as isize) as *mut uint16 as *mut uint8)
+                .offset(
+                    (::core::mem::size_of::<uint16>() as usize)
+                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                        .wrapping_sub(1 as usize) as isize,
+                ) as ::core::ffi::c_int;
+        '_c2rust_label_1: {
+            if (v6 + 1 as ::core::ffi::c_int) < 138 as ::core::ffi::c_int {
+            } else {
+                __assert_fail(
+                    b"v6 + 1 < 138\0" as *const u8 as *const ::core::ffi::c_char,
+                    b"src/sm_8b.c\0" as *const u8 as *const ::core::ffi::c_char,
+                    2450 as ::core::ffi::c_uint,
+                    b"void SetSomeStuffForSpriteObject_9(uint16)\0" as *const u8
+                        as *const ::core::ffi::c_char,
+                );
+            }
+        };
+        AddToHiLo(
+            ((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(v1 as isize) as *mut uint16,
+            ((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(v1 as isize) as *mut uint16,
+            (kSetSomeStuffForSpriteObject_9_Tab1[v6 as usize] as uint32)
+                << 16 as ::core::ffi::c_int
+                | kSetSomeStuffForSpriteObject_9_Tab1[(v6 + 1 as ::core::ffi::c_int) as usize]
+                    as uint16 as uint32,
+        );
+    }
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) as ::core::ffi::c_int
+        - 168 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        == 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = addr_word_8BCD71 as ::core::ffi::c_int as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) =
+            (0x8b93d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    } else {
+        let ref mut fresh65 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x1b7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize);
+        *fresh65 = (*fresh65 as ::core::ffi::c_int + 256 as ::core::ffi::c_int) as uint16;
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn SetSomeStuffForSpriteObject_10(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 84 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 139 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 3072 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn SetSomeStuffForSpriteObject_11(mut k: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        != 0
+    {
+        if *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            & 3 as ::core::ffi::c_int
+            == 0 as ::core::ffi::c_int
+        {
+            if *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                != 0
+            {
+                let ref mut fresh63 = *((&raw mut g_ram as *mut uint8)
+                    .offset(0x1993 as ::core::ffi::c_int as isize)
+                    as *mut uint16);
+                *fresh63 = (*fresh63).wrapping_sub(1);
+                let ref mut fresh64 = *((&raw mut g_ram as *mut uint8)
+                    .offset(0x1a7d as ::core::ffi::c_int as isize)
+                    as *mut uint16)
+                    .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+                *fresh64 = (*fresh64).wrapping_add(1);
+            }
+        }
+    } else {
+        let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = addr_off_8BCE53 as ::core::ffi::c_int as uint16;
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn SetSomeStuffForSpriteObject_12(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 112 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 111 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 3072 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn SetSomeStuffForSpriteObject_13(mut k: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        != 0
+    {
+        if *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            & 3 as ::core::ffi::c_int
+            == 0 as ::core::ffi::c_int
+        {
+            if *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+                as *mut uint16) as ::core::ffi::c_int
+                - 8 as ::core::ffi::c_int
+                & 0x8000 as ::core::ffi::c_int
+                != 0
+            {
+                let ref mut fresh61 = *((&raw mut g_ram as *mut uint8)
+                    .offset(0x1997 as ::core::ffi::c_int as isize)
+                    as *mut uint16);
+                *fresh61 = (*fresh61).wrapping_add(1);
+                let ref mut fresh62 = *((&raw mut g_ram as *mut uint8)
+                    .offset(0x1a9d as ::core::ffi::c_int as isize)
+                    as *mut uint16)
+                    .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+                *fresh62 = (*fresh62).wrapping_sub(1);
+            }
+        }
+    } else {
+        let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = addr_off_8BCE53 as ::core::ffi::c_int as uint16;
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicBgInstr_SetSomeStuffForSpriteObject_14(
+    mut k: uint16,
+    mut j: uint16,
+) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(15 as ::core::ffi::c_int as isize) =
+        addr_unk_8BCC03 as ::core::ffi::c_int as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(15 as ::core::ffi::c_int as isize) = 1 as uint16;
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn SetSomeStuffForSpriteObject_15() {
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(15 as ::core::ffi::c_int as isize) = 8 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(15 as ::core::ffi::c_int as isize) = 248 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn SetSomeStuffForSpriteObject_16() {
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(15 as ::core::ffi::c_int as isize) = 8 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(15 as ::core::ffi::c_int as isize) = 24 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(15 as ::core::ffi::c_int as isize) =
+        addr_word_8BCBFB as ::core::ffi::c_int as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(15 as ::core::ffi::c_int as isize) = 1 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn SetSomeStuffForSpriteObject_17(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 128 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 216 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 3072 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn SetSomeStuffForSpriteObject_18(mut k: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1ba3 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        == 59 as ::core::ffi::c_int
+    {
+        let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = addr_word_8BCC23 as ::core::ffi::c_int as uint16;
+    }
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        == 127 as ::core::ffi::c_int
+    {
+        let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v2 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v2 as isize) = addr_off_8BCE53 as ::core::ffi::c_int as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicBgInstr_HandleCreateJpnText_Page1(
+    mut k: uint16,
+    mut j: uint16,
+) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x1ba1 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
+        != 0
+    {
+        SpawnMode7Object(
+            addr_kMode7ObjectDef_8BD401 as ::core::ffi::c_int as uint16,
+            *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize)
+                as *mut uint16),
+        );
+    }
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicBgInstr_SpawnMarkerWaitInput_Page1(
+    mut k: uint16,
+    mut j: uint16,
+) -> uint16 {
+    j = CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j);
+    if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
+        != 0
+    {
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BCE73 as ::core::ffi::c_int as uint16,
+            *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize)
+                as *mut uint16),
+        );
+    }
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8baeb8 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicBgInstr_HandleCreateJpnText_Page2(
+    mut k: uint16,
+    mut j: uint16,
+) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x1ba1 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
+        != 0
+    {
+        SpawnMode7Object(
+            addr_kMode7ObjectDef_8BD407 as ::core::ffi::c_int as uint16,
+            *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize)
+                as *mut uint16),
+        );
+    }
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicBgInstr_SpawnMarkerWaitInput_Page2(
+    mut k: uint16,
+    mut j: uint16,
+) -> uint16 {
+    j = CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j);
+    if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
+        != 0
+    {
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BCE73 as ::core::ffi::c_int as uint16,
+            *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize)
+                as *mut uint16),
+        );
+        SpawnMode7Object(
+            addr_kMode7ObjectDef_8BD40D as ::core::ffi::c_int as uint16,
+            0 as uint16,
+        );
+    } else {
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8baf6c as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_WaitInputSetupMotherBrainFight() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1ba3 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        != 0
+    {
+        let ref mut fresh139 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x1ba3 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *fresh139 = (*fresh139).wrapping_sub(1);
+    } else if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        != 0
+    {
+        *(&raw mut g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize) = 80 as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
+            as *mut uint16) = kPose_02_FaceL_Normal as ::core::ffi::c_int as uint16;
+        SamusFunc_F433();
+        Samus_SetAnimationFrameIfPoseChanged();
+        *((&raw mut g_ram as *mut uint8).offset(0xa24 as ::core::ffi::c_int as isize)
+            as *mut uint16) = *((&raw mut g_ram as *mut uint8)
+            .offset(0xa20 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *((&raw mut g_ram as *mut uint8).offset(0xa26 as ::core::ffi::c_int as isize)
+            as *mut uint16) = *((&raw mut g_ram as *mut uint8)
+            .offset(0xa22 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *((&raw mut g_ram as *mut uint8).offset(0xa20 as ::core::ffi::c_int as isize)
+            as *mut uint16) = *((&raw mut g_ram as *mut uint8)
+            .offset(0xa1c as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *((&raw mut g_ram as *mut uint8).offset(0xa22 as ::core::ffi::c_int as isize)
+            as *mut uint16) = *((&raw mut g_ram as *mut uint8)
+            .offset(0xa1e as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 155 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xb10 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 155 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
+            as *mut uint16) = 115 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xb14 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 115 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
+            as *mut uint16) = 127 as uint16;
+        SpawnCinematicSpriteObjectToR18(
+            addr_kCinematicSpriteObjectDef_8BCE55 as ::core::ffi::c_int as uint16,
+            0 as uint16,
+        );
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BCF27 as ::core::ffi::c_int as uint16,
+            0 as uint16,
+        );
+        let mut v1: uint16 = 0 as uint16;
+        loop {
+            *((&raw mut g_ram as *mut uint8).offset(0x10002 as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+                *(g_rom.offset(
+                    (((0x8cbec3 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                        << 15 as ::core::ffi::c_int
+                        | 0x8cbec3 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                        & 0x3fffff as ::core::ffi::c_int) as isize,
+                ) as *const uint8 as *mut uint16)
+                    .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+            v1 = (v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+            if !(((v1 as ::core::ffi::c_int - 448 as ::core::ffi::c_int) as int16
+                as ::core::ffi::c_int)
+                < 0 as ::core::ffi::c_int)
+            {
+                break;
+            }
+        }
+        let mut v2: uint16 = 0 as uint16;
+        loop {
+            *((&raw mut g_ram as *mut uint8)
+                .offset(0x16402 as ::core::ffi::c_int as isize)
+                .offset(v2 as isize) as *mut uint8 as *mut uint16) = 0 as uint16;
+            v2 = (v2 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+            if !(((v2 as ::core::ffi::c_int - 512 as ::core::ffi::c_int) as int16
+                as ::core::ffi::c_int)
+                < 0 as ::core::ffi::c_int)
+            {
+                break;
+            }
+        }
+        *((&raw mut g_ram as *mut uint8).offset(0x9d2 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xa42 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x90e6c9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xa44 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x90e833 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        ResetDemoData();
+        EnableDemoInput();
+        LoadDemoInputObject(
+            0 as uint16,
+            addr_stru_918784 as ::core::ffi::c_int as uint16,
+        );
+        *((&raw mut g_ram as *mut uint8).offset(0x1a57 as ::core::ffi::c_int as isize)
+            as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
+        CinematicFunction_Intro_SetupTransitionToGameplay();
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_WaitInputSetupBabyMetroid() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1ba3 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        != 0
+    {
+        let ref mut fresh138 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x1ba3 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *fresh138 = (*fresh138).wrapping_sub(1);
+    } else if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        != 0
+    {
+        *(&raw mut g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize) = 84 as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 32 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x7a7 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 16 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
+            as *mut uint16) = kPose_02_FaceL_Normal as ::core::ffi::c_int as uint16;
+        SamusFunc_F433();
+        Samus_SetAnimationFrameIfPoseChanged();
+        *((&raw mut g_ram as *mut uint8).offset(0xa24 as ::core::ffi::c_int as isize)
+            as *mut uint16) = *((&raw mut g_ram as *mut uint8)
+            .offset(0xa20 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *((&raw mut g_ram as *mut uint8).offset(0xa26 as ::core::ffi::c_int as isize)
+            as *mut uint16) = *((&raw mut g_ram as *mut uint8)
+            .offset(0xa22 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *((&raw mut g_ram as *mut uint8).offset(0xa20 as ::core::ffi::c_int as isize)
+            as *mut uint16) = *((&raw mut g_ram as *mut uint8)
+            .offset(0xa1c as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *((&raw mut g_ram as *mut uint8).offset(0xa22 as ::core::ffi::c_int as isize)
+            as *mut uint16) = *((&raw mut g_ram as *mut uint8)
+            .offset(0xa1e as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 376 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xb10 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 376 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
+            as *mut uint16) = 147 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xb14 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 147 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
+            as *mut uint16) = 127 as uint16;
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BCE5B as ::core::ffi::c_int as uint16,
+            0x7f as uint16,
+        );
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BCE79 as ::core::ffi::c_int as uint16,
+            0 as uint16,
+        );
+        *((&raw mut g_ram as *mut uint8).offset(0x1b9f as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        let mut v1: uint16 = 0 as uint16;
+        loop {
+            *((&raw mut g_ram as *mut uint8).offset(0x10002 as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+                *(g_rom.offset(
+                    (((0x8cc083 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                        << 15 as ::core::ffi::c_int
+                        | 0x8cc083 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                        & 0x3fffff as ::core::ffi::c_int) as isize,
+                ) as *const uint8 as *mut uint16)
+                    .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+            v1 = (v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+            if !(((v1 as ::core::ffi::c_int - 768 as ::core::ffi::c_int) as int16
+                as ::core::ffi::c_int)
+                < 0 as ::core::ffi::c_int)
+            {
+                break;
+            }
+        }
+        *((&raw mut g_ram as *mut uint8).offset(0x9d2 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xa42 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x90e6c9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xa44 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x90e833 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        ResetDemoData();
+        EnableDemoInput();
+        LoadDemoInputObject(
+            0 as uint16,
+            addr_stru_91877E as ::core::ffi::c_int as uint16,
+        );
+        *((&raw mut g_ram as *mut uint8).offset(0x1a57 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 1 as uint16;
+        CinematicFunction_Intro_SetupTransitionToGameplay();
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_SetupTransitionToGameplay() {
+    *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 6 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 17 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 2 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 0 as uint8;
+    SpawnIntroCutsceneCrossfadeHdma();
+    SetSomeStuffForSpriteObject_15();
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8bb250 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    let mut v0: uint16 = 0 as uint16;
+    loop {
+        *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(
+                ((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 256 as ::core::ffi::c_int)
+                    as isize,
+            ) = *(g_rom.offset(
+            (((0x8ce3e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                << 15 as ::core::ffi::c_int
+                | 0x8ce3e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                & 0x3fffff as ::core::ffi::c_int) as isize,
+        ) as *const uint8 as *mut uint16)
+            .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+        v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        if !(((v0 as ::core::ffi::c_int - 512 as ::core::ffi::c_int) as int16
+            as ::core::ffi::c_int)
+            < 0 as ::core::ffi::c_int)
+        {
+            break;
+        }
+    }
+    DecomposePaletteDataForFading();
+    ClearYColorsFromIndexX(0x28 as uint16, 3 as uint16);
+    ClearYColorsFromIndexX(0xe0 as uint16, 0x10 as uint16);
+    ClearYColorsFromIndexX(0x180 as uint16, 0x20 as uint16);
+    ClearYColorsFromIndexX(0x1e0 as uint16, 0x10 as uint16);
+    ComposeFadingPalettes();
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicBgInstr_HandleCreateJpnText_Page3(
+    mut k: uint16,
+    mut j: uint16,
+) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x1ba1 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
+        != 0
+    {
+        SpawnMode7Object(
+            addr_kMode7ObjectDef_8BD413 as ::core::ffi::c_int as uint16,
+            *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize)
+                as *mut uint16),
+        );
+    }
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicBgInstr_SpawnMarkerWaitInput_Page3(
+    mut k: uint16,
+    mut j: uint16,
+) -> uint16 {
+    j = CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j);
+    if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
+        != 0
+    {
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BCE73 as ::core::ffi::c_int as uint16,
+            *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize)
+                as *mut uint16),
+        );
+        SpawnMode7Object(
+            addr_kMode7ObjectDef_8BD419 as ::core::ffi::c_int as uint16,
+            0 as uint16,
+        );
+    } else {
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bb0f2 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicBgInstr_HandleCreateJpnText_Page4(
+    mut k: uint16,
+    mut j: uint16,
+) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x1ba1 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
+        != 0
+    {
+        SpawnMode7Object(
+            addr_kMode7ObjectDef_8BD41F as ::core::ffi::c_int as uint16,
+            *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize)
+                as *mut uint16),
+        );
+    }
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicBgInstr_SpawnMarkerWaitInput_Page4(
+    mut k: uint16,
+    mut j: uint16,
+) -> uint16 {
+    j = CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j);
+    if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
+        != 0
+    {
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BCE73 as ::core::ffi::c_int as uint16,
+            *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize)
+                as *mut uint16),
+        );
+        SpawnMode7Object(
+            addr_kMode7ObjectDef_8BD425 as ::core::ffi::c_int as uint16,
+            0 as uint16,
+        );
+    } else {
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bb123 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func11() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1ba3 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        != 0
+    {
+        let ref mut fresh137 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x1ba3 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *fresh137 = (*fresh137).wrapping_sub(1);
+    } else if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        != 0
+    {
+        *(&raw mut g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize) = 88 as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 32 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 8 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
+            as *mut uint16) = 127 as uint16;
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BCE61 as ::core::ffi::c_int as uint16,
+            0x7f as uint16,
+        );
+        CinematicFunction_Intro_Func13();
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func12() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1ba3 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        != 0
+    {
+        let ref mut fresh136 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x1ba3 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *fresh136 = (*fresh136).wrapping_sub(1);
+    } else if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        != 0
+    {
+        *(&raw mut g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize) = 92 as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+            as *mut uint16) = -(24 as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
+            as *mut uint16) = 127 as uint16;
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BCE67 as ::core::ffi::c_int as uint16,
+            0x7f as uint16,
+        );
+        CinematicFunction_Intro_Func13();
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func13() {
+    *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 6 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 17 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 2 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 0 as uint8;
+    SpawnIntroCutsceneCrossfadeHdma();
+    SetSomeStuffForSpriteObject_15();
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8bb2d2 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    let mut v0: uint16 = 0 as uint16;
+    loop {
+        *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(
+                ((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 256 as ::core::ffi::c_int)
+                    as isize,
+            ) = *(g_rom.offset(
+            (((0x8ce3e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                << 15 as ::core::ffi::c_int
+                | 0x8ce3e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                & 0x3fffff as ::core::ffi::c_int) as isize,
+        ) as *const uint8 as *mut uint16)
+            .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+        v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        if !(((v0 as ::core::ffi::c_int - 512 as ::core::ffi::c_int) as int16
+            as ::core::ffi::c_int)
+            < 0 as ::core::ffi::c_int)
+        {
+            break;
+        }
+    }
+    DecomposePaletteDataForFading();
+    ClearYColorsFromIndexX(0x40 as uint16, 0x10 as uint16);
+    ClearYColorsFromIndexX(0x1c0 as uint16, 9 as uint16);
+    ComposeFadingPalettes();
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicBgInstr_HandleCreateJpnText_Page5(
+    mut k: uint16,
+    mut j: uint16,
+) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x1ba1 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
+        != 0
+    {
+        SpawnMode7Object(
+            addr_kMode7ObjectDef_8BD42B as ::core::ffi::c_int as uint16,
+            *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize)
+                as *mut uint16),
+        );
+    }
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicBgInstr_SpawnMarkerWaitInput_Page5(
+    mut k: uint16,
+    mut j: uint16,
+) -> uint16 {
+    j = CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j);
+    if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
+        != 0
+    {
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BCE73 as ::core::ffi::c_int as uint16,
+            *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize)
+                as *mut uint16),
+        );
+        SpawnMode7Object(
+            addr_kMode7ObjectDef_8BD431 as ::core::ffi::c_int as uint16,
+            0 as uint16,
+        );
+    } else {
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bb1da as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func15b() {
+    EnableCinematicBgTilemapUpdates();
+    ClearEnglishTextTilemap();
+    SpawnCinematicBgObject(
+        addr_kCinematicBgObjectDef_8BCF5D as ::core::ffi::c_int as uint16,
+        0x4c00 as uint16,
+    );
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8ba390 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    SetSomeStuffForSpriteObject_16();
+    QueueMusic_Delayed8(0 as uint16);
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func15() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1ba3 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        != 0
+    {
+        let ref mut fresh135 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x1ba3 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *fresh135 = (*fresh135).wrapping_sub(1);
+    } else if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
+            as *mut uint16) = 127 as uint16;
+        if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            != 0
+        {
+            *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+                as *mut uint16) =
+                (0x8bb207 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+            DisableCinematicBgTilemapUpdates();
+            ClearJapaneseTextTiles();
+            TransferJapaneseTextTilesToVram();
+        } else {
+            CinematicFunction_Intro_Func15b();
+        }
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicBgInstr_Func16(mut k: uint16, mut j: uint16) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x1ba1 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
+        != 0
+    {
+        SpawnMode7Object(
+            addr_kMode7ObjectDef_8BD437 as ::core::ffi::c_int as uint16,
+            *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize)
+                as *mut uint16),
+        );
+    }
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicBgInstr_Func17(mut k: uint16, mut j: uint16) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8bb72f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize) as *mut uint16) =
+        1 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize) as *mut uint16) =
+        1 as uint16;
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_XfadeGameplayFade() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        & 3 as ::core::ffi::c_int
+        == 0 as ::core::ffi::c_int
+    {
+        FadeOutYColorsFromIndexX(0 as uint16, 0x14 as uint16);
+        FadeOutYColorsFromIndexX(0x60 as uint16, 0x10 as uint16);
+        FadeOutYColorsFromIndexX(0x1d2 as uint16, 6 as uint16);
+        FadeInYColorsFromIndexX(0x28 as uint16, 3 as uint16);
+        FadeInYColorsFromIndexX(0xe0 as uint16, 0x10 as uint16);
+        FadeInYColorsFromIndexX(0x180 as uint16, 0x20 as uint16);
+        FadeInYColorsFromIndexX(0x1e0 as uint16, 0x10 as uint16);
+        ComposeFadingPalettes();
+    }
+    let ref mut fresh133 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh133 = (*fresh133).wrapping_sub(1);
+    if *fresh133 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
+        *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 21 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 0 as uint8;
+        let mut v0: uint16 = 128 as uint16;
+        loop {
+            let fresh134 = v0;
+            v0 = v0.wrapping_add(1);
+            (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
+                as *mut Ram3000))
+                .pause_menu_map_tilemap[fresh134 as usize] = 47 as uint16;
+            if !(((v0 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 1536 as ::core::ffi::c_int)
+                as int16 as ::core::ffi::c_int)
+                < 0 as ::core::ffi::c_int)
+            {
+                break;
+            }
+        }
+        ClearJapaneseTextTiles();
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8ba391 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        if *((&raw mut g_ram as *mut uint8).offset(0x1a57 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            & 0x8000 as ::core::ffi::c_int
+            != 0 as ::core::ffi::c_int
+        {
+            SpawnPalfxObject(addr_kPalfx_E1BC as ::core::ffi::c_int as uint16);
+        }
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_XfadeScientistFade() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        & 3 as ::core::ffi::c_int
+        == 0 as ::core::ffi::c_int
+    {
+        FadeOutYColorsFromIndexX(0 as uint16, 0x14 as uint16);
+        FadeOutYColorsFromIndexX(0x60 as uint16, 0x10 as uint16);
+        FadeOutYColorsFromIndexX(0x1d2 as uint16, 6 as uint16);
+        FadeInYColorsFromIndexX(0x40 as uint16, 0x10 as uint16);
+        FadeInYColorsFromIndexX(0x1c0 as uint16, 9 as uint16);
+        ComposeFadingPalettes();
+    }
+    let ref mut fresh131 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh131 = (*fresh131).wrapping_sub(1);
+    if *fresh131 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
+        *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 21 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 0 as uint8;
+        let mut v0: uint16 = 128 as uint16;
+        loop {
+            let fresh132 = v0;
+            v0 = v0.wrapping_add(1);
+            (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
+                as *mut Ram3000))
+                .pause_menu_map_tilemap[fresh132 as usize] = 47 as uint16;
+            if !(((v0 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 1536 as ::core::ffi::c_int)
+                as int16 as ::core::ffi::c_int)
+                < 0 as ::core::ffi::c_int)
+            {
+                break;
+            }
+        }
+        ClearJapaneseTextTiles();
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8ba391 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_StartIntroPage2(mut k: uint16, mut j: uint16) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8bb35f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    Instr_StartIntroPage_Common();
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_StartIntroPage3(mut k: uint16, mut j: uint16) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8bb370 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    Instr_StartIntroPage_Common();
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_StartIntroPage4(mut k: uint16, mut j: uint16) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8bb381 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    Instr_StartIntroPage_Common();
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_StartIntroPage5(mut k: uint16, mut j: uint16) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8bb392 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    Instr_StartIntroPage_Common();
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn Instr_StartIntroPage_Common() {
+    DisableCinematicBgTilemapUpdates();
+    ClearJapaneseTextTiles();
+    TransferJapaneseTextTilesToVram();
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_SetupStuff() {
+    *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 6 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 17 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 2 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 0 as uint8;
+    let mut v0: uint16 = 0 as uint16;
+    loop {
+        *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(
+                ((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 256 as ::core::ffi::c_int)
+                    as isize,
+            ) = *(g_rom.offset(
+            (((0x8ce3e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                << 15 as ::core::ffi::c_int
+                | 0x8ce3e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                & 0x3fffff as ::core::ffi::c_int) as isize,
+        ) as *const uint8 as *mut uint16)
+            .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+        v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        if !(((v0 as ::core::ffi::c_int - 512 as ::core::ffi::c_int) as int16
+            as ::core::ffi::c_int)
+            < 0 as ::core::ffi::c_int)
+        {
+            break;
+        }
+    }
+    DecomposePaletteDataForFading();
+    ClearYColorsFromIndexX(0 as uint16, 0x10 as uint16);
+    ClearYColorsFromIndexX(0x60 as uint16, 0x10 as uint16);
+    ClearYColorsFromIndexX(0x1d2 as uint16, 6 as uint16);
+    ComposeFadingPalettes();
+    *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 127 as uint16;
+    EnableCinematicBgTilemapUpdates();
+    SetSomeStuffForSpriteObject_16();
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Page2() {
+    SpawnCinematicBgObject(
+        addr_kCinematicBgObjectDef_8BCF45 as ::core::ffi::c_int as uint16,
+        0x4c00 as uint16,
+    );
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8bb3f4 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    CinematicFunction_Intro_SetupStuff();
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Page3() {
+    SpawnCinematicBgObject(
+        addr_kCinematicBgObjectDef_8BCF4B as ::core::ffi::c_int as uint16,
+        0x4c00 as uint16,
+    );
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8bb3f4 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    CinematicFunction_Intro_SetupStuff();
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Page4() {
+    SpawnCinematicBgObject(
+        addr_kCinematicBgObjectDef_8BCF51 as ::core::ffi::c_int as uint16,
+        0x4c00 as uint16,
+    );
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8bb458 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    CinematicFunction_Intro_SetupStuff();
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Page5() {
+    SpawnCinematicBgObject(
+        addr_kCinematicBgObjectDef_8BCF57 as ::core::ffi::c_int as uint16,
+        0x4c00 as uint16,
+    );
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8bb458 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    CinematicFunction_Intro_SetupStuff();
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Fadestuff() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        & 3 as ::core::ffi::c_int
+        == 0 as ::core::ffi::c_int
+    {
+        FadeInYColorsFromIndexX(0 as uint16, 0x10 as uint16);
+        FadeInYColorsFromIndexX(0x60 as uint16, 0x10 as uint16);
+        FadeInYColorsFromIndexX(0x1d2 as uint16, 6 as uint16);
+        FadeOutYColorsFromIndexX(0x28 as uint16, 3 as uint16);
+        FadeOutYColorsFromIndexX(0xe0 as uint16, 0x10 as uint16);
+        FadeOutYColorsFromIndexX(0x180 as uint16, 0x20 as uint16);
+        FadeOutYColorsFromIndexX(0x1e0 as uint16, 0x10 as uint16);
+        ComposeFadingPalettes();
+    }
+    let ref mut fresh130 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a4b as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh130 = (*fresh130).wrapping_sub(1);
+    if *fresh130 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
+        *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 22 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 0 as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8ba391 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Fadestuff2() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        & 3 as ::core::ffi::c_int
+        == 0 as ::core::ffi::c_int
+    {
+        FadeInYColorsFromIndexX(0 as uint16, 0x10 as uint16);
+        FadeInYColorsFromIndexX(0x60 as uint16, 0x10 as uint16);
+        FadeInYColorsFromIndexX(0x1d2 as uint16, 6 as uint16);
+        FadeOutYColorsFromIndexX(0x40 as uint16, 0x10 as uint16);
+        FadeOutYColorsFromIndexX(0x1c0 as uint16, 9 as uint16);
+        ComposeFadingPalettes();
+    }
+    let ref mut fresh129 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a4b as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh129 = (*fresh129).wrapping_sub(1);
+    if *fresh129 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
+        *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 22 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 0 as uint8;
+        let mut v0: uint16 = 0 as uint16;
+        loop {
+            *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(
+                    ((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
+                        + 224 as ::core::ffi::c_int) as isize,
+                ) = *(g_rom.offset(
+                (((0x8ce3e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                    << 15 as ::core::ffi::c_int
+                    | 0x8ce3e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                    & 0x3fffff as ::core::ffi::c_int) as isize,
+            ) as *const uint8 as *mut uint16)
+                .offset(
+                    ((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
+                        + 224 as ::core::ffi::c_int) as isize,
+                );
+            v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+            if !(((v0 as ::core::ffi::c_int - 14 as ::core::ffi::c_int) as int16
+                as ::core::ffi::c_int)
+                < 0 as ::core::ffi::c_int)
+            {
+                break;
+            }
+        }
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8ba391 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicBgPreInstr_SamusBlink(mut k: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        == 0x8bb207 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
+        || *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            == 0x8ba390 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
+    {
+        let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x19cd as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = -(10733 as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x19dd as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x19d5 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) =
+            (0x8b93d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CallCreditsObjectFunc(mut ea: uint32, mut k: uint16) {
+    match ea {
+        9147353 => return,
+        9155772 => {
+            CinematicBgPreInstr_SamusBlink(k);
+            return;
+        }
+        _ => {
+            Unreachable();
+        }
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func19(mut k: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(15 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+        + 0x33fd as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        == 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x19dd as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 1 as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func18() {
+    DisableCinematicBgTilemapUpdates();
+    *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(17 as ::core::ffi::c_int as isize) = *(g_rom.offset(
+        (((0x8ce3e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
+            | 0x8ce3e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+            & 0x3fffff as ::core::ffi::c_int) as isize,
+    ) as *const uint8 as *mut uint16)
+        .offset(17 as ::core::ffi::c_int as isize);
+    *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(18 as ::core::ffi::c_int as isize) = *(g_rom.offset(
+        (((0x8ce3e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
+            | 0x8ce3e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+            & 0x3fffff as ::core::ffi::c_int) as isize,
+    ) as *const uint8 as *mut uint16)
+        .offset(18 as ::core::ffi::c_int as isize);
+    *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(19 as ::core::ffi::c_int as isize) = *(g_rom.offset(
+        (((0x8ce3e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
+            | 0x8ce3e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+            & 0x3fffff as ::core::ffi::c_int) as isize,
+    ) as *const uint8 as *mut uint16)
+        .offset(19 as ::core::ffi::c_int as isize);
+    CinematicFunction_Intro_Func20(addr_word_8BD389 as ::core::ffi::c_int as uint16);
+    CinematicFunction_Intro_Func20(addr_word_8BD389 as ::core::ffi::c_int as uint16);
+    TransferJapaneseTextTilesToVram();
+}
+#[no_mangle]
+pub unsafe extern "C" fn sub_8BB51E(mut k: uint16, mut j: uint16) -> uint16 {
+    DisableCinematicBgTilemapUpdates();
+    *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(17 as ::core::ffi::c_int as isize) = *(g_rom.offset(
+        (((0x8ce3e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
+            | 0x8ce3e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+            & 0x3fffff as ::core::ffi::c_int) as isize,
+    ) as *const uint8 as *mut uint16)
+        .offset(17 as ::core::ffi::c_int as isize);
+    *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(18 as ::core::ffi::c_int as isize) = *(g_rom.offset(
+        (((0x8ce3e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
+            | 0x8ce3e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+            & 0x3fffff as ::core::ffi::c_int) as isize,
+    ) as *const uint8 as *mut uint16)
+        .offset(18 as ::core::ffi::c_int as isize);
+    *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(19 as ::core::ffi::c_int as isize) = *(g_rom.offset(
+        (((0x8ce3e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
+            | 0x8ce3e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+            & 0x3fffff as ::core::ffi::c_int) as isize,
+    ) as *const uint8 as *mut uint16)
+        .offset(19 as ::core::ffi::c_int as isize);
+    ClearJapaneseTextTiles();
+    CinematicFunction_Intro_Func20(addr_word_8BCF75 as ::core::ffi::c_int as uint16);
+    CinematicFunction_Intro_Func20(addr_word_8BCFBD as ::core::ffi::c_int as uint16);
+    TransferJapaneseTextTilesToVram();
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn EnableCinematicBgTilemapUpdates__0(
+    mut k: uint16,
+    mut j: uint16,
+) -> uint16 {
+    EnableCinematicBgTilemapUpdates();
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func21(mut k: uint16, mut j: uint16) -> uint16 {
+    DisableCinematicBgTilemapUpdates();
+    *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(17 as ::core::ffi::c_int as isize) = *(g_rom.offset(
+        (((0x8ce3e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
+            | 0x8ce3e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+            & 0x3fffff as ::core::ffi::c_int) as isize,
+    ) as *const uint8 as *mut uint16)
+        .offset(17 as ::core::ffi::c_int as isize);
+    *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(18 as ::core::ffi::c_int as isize) = *(g_rom.offset(
+        (((0x8ce3e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
+            | 0x8ce3e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+            & 0x3fffff as ::core::ffi::c_int) as isize,
+    ) as *const uint8 as *mut uint16)
+        .offset(18 as ::core::ffi::c_int as isize);
+    *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(19 as ::core::ffi::c_int as isize) = *(g_rom.offset(
+        (((0x8ce3e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
+            | 0x8ce3e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+            & 0x3fffff as ::core::ffi::c_int) as isize,
+    ) as *const uint8 as *mut uint16)
+        .offset(19 as ::core::ffi::c_int as isize);
+    ClearJapaneseTextTiles();
+    CinematicFunction_Intro_Func20(addr_word_8BCFFD as ::core::ffi::c_int as uint16);
+    CinematicFunction_Intro_Func20(addr_word_8BD055 as ::core::ffi::c_int as uint16);
+    TransferJapaneseTextTilesToVram();
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func22(mut k: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize) as *mut uint16)
+        != 0
+    {
+        let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x19a1 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = -(11355 as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x19a9 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x19a5 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) =
+            (0x8b93d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        DisableCinematicBgTilemapUpdates();
+        ClearJapaneseTextTiles();
+        CinematicFunction_Intro_Func20(addr_word_8BD085 as ::core::ffi::c_int as uint16);
+        CinematicFunction_Intro_Func20(addr_word_8BD0E1 as ::core::ffi::c_int as uint16);
+        TransferJapaneseTextTilesToVram();
+        *((&raw mut g_ram as *mut uint8).offset(0x1ba3 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 60 as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_ThenWaitInputSetupBabyMetroid(
+    mut k: uint16,
+    mut j: uint16,
+) -> uint16 {
+    EnableCinematicBgTilemapUpdates();
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8baf6c as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func23(mut k: uint16, mut j: uint16) -> uint16 {
+    DisableCinematicBgTilemapUpdates();
+    *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(17 as ::core::ffi::c_int as isize) = *(g_rom.offset(
+        (((0x8ce3e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
+            | 0x8ce3e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+            & 0x3fffff as ::core::ffi::c_int) as isize,
+    ) as *const uint8 as *mut uint16)
+        .offset(17 as ::core::ffi::c_int as isize);
+    *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(18 as ::core::ffi::c_int as isize) = *(g_rom.offset(
+        (((0x8ce3e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
+            | 0x8ce3e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+            & 0x3fffff as ::core::ffi::c_int) as isize,
+    ) as *const uint8 as *mut uint16)
+        .offset(18 as ::core::ffi::c_int as isize);
+    *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(19 as ::core::ffi::c_int as isize) = *(g_rom.offset(
+        (((0x8ce3e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
+            | 0x8ce3e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+            & 0x3fffff as ::core::ffi::c_int) as isize,
+    ) as *const uint8 as *mut uint16)
+        .offset(19 as ::core::ffi::c_int as isize);
+    ClearJapaneseTextTiles();
+    CinematicFunction_Intro_Func20(addr_word_8BD0F9 as ::core::ffi::c_int as uint16);
+    TransferJapaneseTextTilesToVram();
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func24(mut k: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize) as *mut uint16)
+        != 0
+    {
+        let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x19a1 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = -(11333 as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x19a9 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x19a5 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) =
+            (0x8b93d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        DisableCinematicBgTilemapUpdates();
+        ClearJapaneseTextTiles();
+        CinematicFunction_Intro_Func20(addr_word_8BD15D as ::core::ffi::c_int as uint16);
+        TransferJapaneseTextTilesToVram();
+        *((&raw mut g_ram as *mut uint8).offset(0x1ba3 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 60 as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func25(mut k: uint16, mut j: uint16) -> uint16 {
+    EnableCinematicBgTilemapUpdates();
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8bb0f2 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func26(mut k: uint16, mut j: uint16) -> uint16 {
+    DisableCinematicBgTilemapUpdates();
+    *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(17 as ::core::ffi::c_int as isize) = *(g_rom.offset(
+        (((0x8ce3e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
+            | 0x8ce3e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+            & 0x3fffff as ::core::ffi::c_int) as isize,
+    ) as *const uint8 as *mut uint16)
+        .offset(17 as ::core::ffi::c_int as isize);
+    *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(18 as ::core::ffi::c_int as isize) = *(g_rom.offset(
+        (((0x8ce3e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
+            | 0x8ce3e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+            & 0x3fffff as ::core::ffi::c_int) as isize,
+    ) as *const uint8 as *mut uint16)
+        .offset(18 as ::core::ffi::c_int as isize);
+    *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(19 as ::core::ffi::c_int as isize) = *(g_rom.offset(
+        (((0x8ce3e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
+            | 0x8ce3e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+            & 0x3fffff as ::core::ffi::c_int) as isize,
+    ) as *const uint8 as *mut uint16)
+        .offset(19 as ::core::ffi::c_int as isize);
+    ClearJapaneseTextTiles();
+    CinematicFunction_Intro_Func20(addr_word_8BD1B9 as ::core::ffi::c_int as uint16);
+    CinematicFunction_Intro_Func20(addr_word_8BD215 as ::core::ffi::c_int as uint16);
+    TransferJapaneseTextTilesToVram();
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func27(mut k: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize) as *mut uint16)
+        != 0
+    {
+        let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x19a1 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = -(11311 as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x19a9 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x19a5 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) =
+            (0x8b93d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        DisableCinematicBgTilemapUpdates();
+        ClearJapaneseTextTiles();
+        CinematicFunction_Intro_Func20(addr_word_8BD259 as ::core::ffi::c_int as uint16);
+        CinematicFunction_Intro_Func20(addr_word_8BD2A5 as ::core::ffi::c_int as uint16);
+        TransferJapaneseTextTilesToVram();
+        *((&raw mut g_ram as *mut uint8).offset(0x1ba3 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 60 as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func28(mut k: uint16, mut j: uint16) -> uint16 {
+    EnableCinematicBgTilemapUpdates();
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8bb123 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func29(mut k: uint16, mut j: uint16) -> uint16 {
+    DisableCinematicBgTilemapUpdates();
+    *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(17 as ::core::ffi::c_int as isize) = *(g_rom.offset(
+        (((0x8ce3e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
+            | 0x8ce3e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+            & 0x3fffff as ::core::ffi::c_int) as isize,
+    ) as *const uint8 as *mut uint16)
+        .offset(17 as ::core::ffi::c_int as isize);
+    *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(18 as ::core::ffi::c_int as isize) = *(g_rom.offset(
+        (((0x8ce3e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
+            | 0x8ce3e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+            & 0x3fffff as ::core::ffi::c_int) as isize,
+    ) as *const uint8 as *mut uint16)
+        .offset(18 as ::core::ffi::c_int as isize);
+    *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(19 as ::core::ffi::c_int as isize) = *(g_rom.offset(
+        (((0x8ce3e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
+            | 0x8ce3e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+            & 0x3fffff as ::core::ffi::c_int) as isize,
+    ) as *const uint8 as *mut uint16)
+        .offset(19 as ::core::ffi::c_int as isize);
+    ClearJapaneseTextTiles();
+    CinematicFunction_Intro_Func20(addr_word_8BD2D5 as ::core::ffi::c_int as uint16);
+    TransferJapaneseTextTilesToVram();
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func30(mut k: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize) as *mut uint16)
+        != 0
+    {
+        let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x19a1 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = addr_off_8BD3E7 as ::core::ffi::c_int as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x19a9 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x19a5 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) =
+            (0x8b93d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        DisableCinematicBgTilemapUpdates();
+        ClearJapaneseTextTiles();
+        CinematicFunction_Intro_Func20(addr_word_8BD30D as ::core::ffi::c_int as uint16);
+        TransferJapaneseTextTilesToVram();
+        *((&raw mut g_ram as *mut uint8).offset(0x1ba3 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 60 as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func31(mut k: uint16, mut j: uint16) -> uint16 {
+    EnableCinematicBgTilemapUpdates();
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8bb1da as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func32(mut k: uint16, mut j: uint16) -> uint16 {
+    DisableCinematicBgTilemapUpdates();
+    ClearJapaneseTextTiles();
+    CinematicFunction_Intro_Func20(addr_word_8BD371 as ::core::ffi::c_int as uint16);
+    TransferJapaneseTextTilesToVram();
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn EnableCinematicBgTilemapUpdates__(mut k: uint16, mut j: uint16) -> uint16 {
+    EnableCinematicBgTilemapUpdates();
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func33() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize) as *mut uint16)
+        as ::core::ffi::c_int
+        & 1 as ::core::ffi::c_int
+        != 0 as ::core::ffi::c_int
+    {
+        let ref mut fresh169 =
+            *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize);
+        *fresh169 = (*fresh169 as ::core::ffi::c_int & !(2 as ::core::ffi::c_int)) as uint8;
+    } else {
+        let ref mut fresh170 =
+            *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize);
+        *fresh170 = (*fresh170 as ::core::ffi::c_int | 2 as ::core::ffi::c_int) as uint8;
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func34() {
+    HandleFadeOut();
+    if *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
+        as ::core::ffi::c_int
+        == 0x80 as ::core::ffi::c_int
+    {
+        EnableNMI();
+        *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xb5 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xb9 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xbb as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        let mut i: ::core::ffi::c_int = 656 as ::core::ffi::c_int;
+        while i >= 0 as ::core::ffi::c_int {
+            *(((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+                as *mut uint16 as *mut uint8)
+                .offset(i as uint16 as ::core::ffi::c_int as isize) as *mut uint16) = 0 as uint16;
+            i -= 2 as ::core::ffi::c_int;
+        }
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bbca0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        RevertButtonConfig();
+        *((&raw mut g_ram as *mut uint8).offset(0x9c8 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x9c6 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func35(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 56 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 111 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 3584 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func36(mut k: uint16) {
+    CinematicFunction_Intro_Func37(k);
+    let mut v1: uint16 = 8 as uint16;
+    while *((&raw mut g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
+        as ::core::ffi::c_int
+        & 0xfff as ::core::ffi::c_int
+        != 256 as ::core::ffi::c_int
+    {
+        v1 = (v1 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
+        if v1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
+            return;
+        }
+    }
+    if *((&raw mut g_ram as *mut uint8).offset(0xb64 as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
+        as ::core::ffi::c_int
+        - 84 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        KillProjectile(v1);
+        let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x1add as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v2 as isize) = 8 as uint16;
+        let mut v3: uint16 = (*((&raw mut g_ram as *mut uint8)
+            .offset(0x1b7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v2 as isize) as ::core::ffi::c_int
+            + 1 as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v2 as isize) = v3;
+        if v3 as ::core::ffi::c_int == 4 as ::core::ffi::c_int {
+            *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(v2 as isize) = 0 as uint16;
+            *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(v2 as isize) =
+                (0x8bb80f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+            SpawnCinematicSpriteObject(
+                addr_kCinematicSpriteObjectDef_8BCF1B as ::core::ffi::c_int as uint16,
+                0 as uint16,
+            );
+            SpawnCinematicSpriteObject(
+                addr_kCinematicSpriteObjectDef_8BCF1B as ::core::ffi::c_int as uint16,
+                1 as uint16,
+            );
+            SpawnCinematicSpriteObject(
+                addr_kCinematicSpriteObjectDef_8BCF1B as ::core::ffi::c_int as uint16,
+                2 as uint16,
+            );
+            SpawnCinematicSpriteObject(
+                addr_kCinematicSpriteObjectDef_8BCF15 as ::core::ffi::c_int as uint16,
+                0 as uint16,
+            );
+            SpawnCinematicSpriteObject(
+                addr_kCinematicSpriteObjectDef_8BCF15 as ::core::ffi::c_int as uint16,
+                1 as uint16,
+            );
+            SpawnCinematicSpriteObject(
+                addr_kCinematicSpriteObjectDef_8BCF15 as ::core::ffi::c_int as uint16,
+                2 as uint16,
+            );
+            SpawnCinematicSpriteObject(
+                addr_kCinematicSpriteObjectDef_8BCF15 as ::core::ffi::c_int as uint16,
+                3 as uint16,
+            );
+            SpawnCinematicSpriteObject(
+                addr_kCinematicSpriteObjectDef_8BCF15 as ::core::ffi::c_int as uint16,
+                4 as uint16,
+            );
+        }
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func39(mut k: uint16) {
+    CinematicFunction_Intro_Func37(k);
+    CinematicFunction_Intro_Func40();
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let mut v2: uint16 = (*((&raw mut g_ram as *mut uint8)
+        .offset(0x1b7d as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset(v1 as isize) as ::core::ffi::c_int
+        + 1 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = v2;
+    if v2 as ::core::ffi::c_int - 128 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
+        *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = addr_off_8BCB19 as ::core::ffi::c_int as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprPreInstr_B82E(mut k: uint16) {
+    CinematicFunction_Intro_Func40();
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        == 0
+    {
+        let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = addr_off_8BCE53 as ::core::ffi::c_int as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a57 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func37(mut k: uint16) {
+    let mut j: uint16 = 0;
+    let mut v3: uint16 = 0;
+    let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1add as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+    if v1 != 0 {
+        if v1 as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
+            let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
+            while i >= 0 as ::core::ffi::c_int {
+                *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+                    as *mut uint16)
+                    .offset(
+                        ((i >> 1 as ::core::ffi::c_int) + 240 as ::core::ffi::c_int) as isize,
+                    ) = *(g_rom.offset(
+                    (((0x8ce3e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                        << 15 as ::core::ffi::c_int
+                        | 0x8ce3e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                        & 0x3fffff as ::core::ffi::c_int) as isize,
+                ) as *const uint8 as *mut uint16)
+                    .offset(((i >> 1 as ::core::ffi::c_int) + 240 as ::core::ffi::c_int) as isize);
+                i -= 2 as ::core::ffi::c_int;
+            }
+            v3 = k;
+        } else {
+            j = 30 as uint16;
+            while j as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int
+            {
+                *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+                    as *mut uint16)
+                    .offset(
+                        ((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
+                            + 240 as ::core::ffi::c_int) as isize,
+                    ) = 0x7fff as uint16;
+                j = (j as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
+            }
+            v3 = k;
+        }
+        let ref mut fresh60 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x1add as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+        *fresh60 = (*fresh60).wrapping_sub(1);
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func40() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a51 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        & 1 as ::core::ffi::c_int
+        != 0 as ::core::ffi::c_int
+    {
+        let ref mut fresh58 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x1997 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *fresh58 = (*fresh58 as ::core::ffi::c_int - 4 as ::core::ffi::c_int) as uint16;
+    } else {
+        let ref mut fresh59 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x1997 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *fresh59 = (*fresh59 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
+    };
+}
+static mut kCinematicFunction_Intro_Func42_Tab0: [uint16; 4] = [
+    0x70 as ::core::ffi::c_int as uint16,
+    0xc0 as ::core::ffi::c_int as uint16,
+    0x80 as ::core::ffi::c_int as uint16,
+    0xe8 as ::core::ffi::c_int as uint16,
+];
+static mut kCinematicFunction_Intro_Func42_Tab1: [uint16; 4] = [
+    0x50 as ::core::ffi::c_int as uint16,
+    0x40 as ::core::ffi::c_int as uint16,
+    0x38 as ::core::ffi::c_int as uint16,
+    0x58 as ::core::ffi::c_int as uint16,
+];
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func42(mut j: uint16) {
+    let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1b9d as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1b9d as ::core::ffi::c_int as isize)
+        as *mut uint16);
+    let mut v3: ::core::ffi::c_int = v1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = kCinematicFunction_Intro_Func42_Tab0[v3 as usize];
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = (kCinematicFunction_Intro_Func42_Tab1[v3 as usize]
+        as ::core::ffi::c_int
+        - 8 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = 3584 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_Func43(mut k: uint16, mut j: uint16) -> uint16 {
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize)
+        != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) =
+            (0x8bb93b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    } else {
+        *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) =
+            (0x8bb8d8 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func44(mut k: uint16) {
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    AddToHiLo(
+        ((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut g_ram as *mut uint8).offset(0x1add as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        0x8000 as uint32,
+    );
+    AddToHiLo(
+        ((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        0x8000 as uint32,
+    );
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) as ::core::ffi::c_int
+        + 8 as ::core::ffi::c_int
+        - (*((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            - 5 as ::core::ffi::c_int)
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        if *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+            != 0x8bb80f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
+        {
+            return;
+        }
+    } else {
+        *((&raw mut g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 11 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x18aa as ::core::ffi::c_int as isize)
+            as *mut uint16) = 11 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xa54 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 1 as uint16;
+    }
+    *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 1 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = addr_off_8BCE53 as ::core::ffi::c_int as uint16;
+}
+static mut kCinematicFunction_Intro_Func45_Tab0: [uint16; 4] = [
+    0 as ::core::ffi::c_int as uint16,
+    0xffff as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    0xffff as ::core::ffi::c_int as uint16,
+];
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func45(mut k: uint16) {
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let mut v2: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1b7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) as ::core::ffi::c_int;
+    AddToHiLo(
+        ((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut g_ram as *mut uint8).offset(0x1add as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        (kCinematicFunction_Intro_Func45_Tab0[v2 as usize] as uint32) << 16 as ::core::ffi::c_int
+            | 0x8000 as ::core::ffi::c_int as uint16 as uint32,
+    );
+    AddToHiLo(
+        ((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        0x8000 as uint32,
+    );
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) as ::core::ffi::c_int
+        - 16 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+        || *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as ::core::ffi::c_int
+            - 208 as ::core::ffi::c_int
+            & 0x8000 as ::core::ffi::c_int
+            == 0
+        || *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+            == 0x8bb80f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = addr_off_8BCE53 as ::core::ffi::c_int as uint16;
+    }
+}
+static mut kCinematicFunction_Intro_Func46_Tab0: [uint16; 5] = [
+    0 as ::core::ffi::c_int as uint16,
+    0x10 as ::core::ffi::c_int as uint16,
+    0xfff0 as ::core::ffi::c_int as uint16,
+    0xfff8 as ::core::ffi::c_int as uint16,
+    8 as ::core::ffi::c_int as uint16,
+];
+static mut kCinematicFunction_Intro_Func46_Tab1: [uint16; 5] = [
+    0 as ::core::ffi::c_int as uint16,
+    0xfff0 as ::core::ffi::c_int as uint16,
+    8 as ::core::ffi::c_int as uint16,
+    0xfff0 as ::core::ffi::c_int as uint16,
+    8 as ::core::ffi::c_int as uint16,
+];
+static mut kCinematicFunction_Intro_Func46_Tab2: [uint16; 5] = [
+    1 as ::core::ffi::c_int as uint16,
+    0x10 as ::core::ffi::c_int as uint16,
+    0x20 as ::core::ffi::c_int as uint16,
+    0x30 as ::core::ffi::c_int as uint16,
+    0x40 as ::core::ffi::c_int as uint16,
+];
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func46(mut j: uint16) {
+    let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1b9d as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1b9d as ::core::ffi::c_int as isize)
+        as *mut uint16);
+    let mut v3: ::core::ffi::c_int = v1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = (kCinematicFunction_Intro_Func46_Tab0[v3 as usize]
+        as ::core::ffi::c_int
+        + 56 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = (kCinematicFunction_Intro_Func46_Tab1[v3 as usize]
+        as ::core::ffi::c_int
+        + 111 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = kCinematicFunction_Intro_Func46_Tab2[v3 as usize];
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = 2560 as uint16;
+}
+static mut kCinematicFunction_Intro_Func47_Tab0: [uint16; 3] = [
+    0x10 as ::core::ffi::c_int as uint16,
+    0xfff0 as ::core::ffi::c_int as uint16,
+    0xfff0 as ::core::ffi::c_int as uint16,
+];
+static mut kCinematicFunction_Intro_Func47_Tab1: [uint16; 3] = [
+    0 as ::core::ffi::c_int as uint16,
+    4 as ::core::ffi::c_int as uint16,
+    0xfff8 as ::core::ffi::c_int as uint16,
+];
+static mut kCinematicFunction_Intro_Func47_Tab2: [uint16; 3] = [
+    1 as ::core::ffi::c_int as uint16,
+    8 as ::core::ffi::c_int as uint16,
+    0x10 as ::core::ffi::c_int as uint16,
+];
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func47(mut j: uint16) {
+    let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1b9d as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1b9d as ::core::ffi::c_int as isize)
+        as *mut uint16);
+    let mut v3: ::core::ffi::c_int = v1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = (kCinematicFunction_Intro_Func47_Tab0[v3 as usize]
+        as ::core::ffi::c_int
+        + 56 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = (kCinematicFunction_Intro_Func47_Tab1[v3 as usize]
+        as ::core::ffi::c_int
+        + 111 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = kCinematicFunction_Intro_Func47_Tab2[v3 as usize];
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = 2560 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func48(mut k: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        == 0
+    {
+        let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = addr_off_8BCE53 as ::core::ffi::c_int as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_SpawnIntroRinkas01(
+    mut k: uint16,
+    mut j: uint16,
+) -> uint16 {
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BCF21 as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BCF21 as ::core::ffi::c_int as uint16,
+        1 as uint16,
+    );
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_SpawnIntroRinkas23(
+    mut k: uint16,
+    mut j: uint16,
+) -> uint16 {
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BCF21 as ::core::ffi::c_int as uint16,
+        2 as uint16,
+    );
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BCF21 as ::core::ffi::c_int as uint16,
+        3 as uint16,
+    );
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func49(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 112 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 155 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 3584 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func50(mut k: uint16) {
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((v1 + 1 as ::core::ffi::c_int) as isize) as ::core::ffi::c_int
+        + 0x3487 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        == 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) =
+            (0x8bba73 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a4f as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func51(mut k: uint16) {
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) as ::core::ffi::c_int
+        == 145 as ::core::ffi::c_int
+    {
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BCEF1 as ::core::ffi::c_int as uint16,
+            0 as uint16,
+        );
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BCEF1 as ::core::ffi::c_int as uint16,
+            1 as uint16,
+        );
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BCEF1 as ::core::ffi::c_int as uint16,
+            2 as uint16,
+        );
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BCEF1 as ::core::ffi::c_int as uint16,
+            3 as uint16,
+        );
+        QueueSfx3_Max6(0x23 as uint16);
+    }
+    if ((*((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - 32 as ::core::ffi::c_int
+        - *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
+        < 0 as ::core::ffi::c_int
+    {
+        if *((&raw mut g_ram as *mut uint8).offset(0x1a4f as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            + 543 as ::core::ffi::c_int
+            & 0x8000 as ::core::ffi::c_int
+            == 0
+        {
+            let ref mut fresh56 = *((&raw mut g_ram as *mut uint8)
+                .offset(0x1a4f as ::core::ffi::c_int as isize)
+                as *mut uint16);
+            *fresh56 = (*fresh56 as ::core::ffi::c_int - 32 as ::core::ffi::c_int) as uint16;
+        }
+    } else if *((&raw mut g_ram as *mut uint8).offset(0x1a4f as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - 544 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        let ref mut fresh57 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x1a4f as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *fresh57 = (*fresh57 as ::core::ffi::c_int + 32 as ::core::ffi::c_int) as uint16;
+    }
+    AddToHiLo(
+        ((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        ((*((&raw mut g_ram as *mut uint8).offset(0x1a4f as ::core::ffi::c_int as isize)
+            as *mut uint16) as int16 as ::core::ffi::c_int)
+            << 8 as ::core::ffi::c_int) as uint32,
+    );
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a4f as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        == 0 as ::core::ffi::c_int
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize)
+            as *mut uint16) = 128 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) =
+            (0x8bbb0d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func52(mut k: uint16) {
+    let ref mut fresh55 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a4d as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh55 = (*fresh55).wrapping_sub(1);
+    let mut v1: bool =
+        *fresh55 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        == 0
+        || v1 as ::core::ffi::c_int != 0
+    {
+        let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v2 as isize) =
+            (0x8bbb24 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a4f as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v2 as isize) = 0 as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func53(mut k: uint16) {
+    let mut kh: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        != 0
+    {
+        if *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(kh as isize) as ::core::ffi::c_int
+            - 128 as ::core::ffi::c_int
+            & 0x8000 as ::core::ffi::c_int
+            != 0
+        {
+            let mut v3: uint16 = (*((&raw mut g_ram as *mut uint8)
+                .offset(0x1b7d as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(kh as isize) as ::core::ffi::c_int
+                + 1 as ::core::ffi::c_int) as uint16;
+            *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(kh as isize) = v3;
+            if v3 as ::core::ffi::c_int & 0x3f as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+                QueueSfx3_Max6(0x23 as uint16);
+            }
+        }
+        if ((*((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            - *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(kh as isize) as ::core::ffi::c_int) as int16
+            as ::core::ffi::c_int)
+            < 0 as ::core::ffi::c_int
+        {
+            if *((&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize)
+                as *mut uint16) as ::core::ffi::c_int
+                + 639 as ::core::ffi::c_int
+                & 0x8000 as ::core::ffi::c_int
+                == 0
+            {
+                let ref mut fresh50 = *((&raw mut g_ram as *mut uint8)
+                    .offset(0x1a4d as ::core::ffi::c_int as isize)
+                    as *mut uint16);
+                *fresh50 = (*fresh50 as ::core::ffi::c_int - 32 as ::core::ffi::c_int) as uint16;
+            }
+        } else if *((&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            - 640 as ::core::ffi::c_int
+            & 0x8000 as ::core::ffi::c_int
+            != 0
+        {
+            let ref mut fresh51 = *((&raw mut g_ram as *mut uint8)
+                .offset(0x1a4d as ::core::ffi::c_int as isize)
+                as *mut uint16);
+            *fresh51 = (*fresh51 as ::core::ffi::c_int + 32 as ::core::ffi::c_int) as uint16;
+        }
+        *((&raw mut g_ram as *mut uint8).offset(0x1a57 as ::core::ffi::c_int as isize)
+            as *mut uint16) = (if *((&raw mut g_ram as *mut uint8)
+            .offset(0x1a4d as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            & 0x8000 as ::core::ffi::c_int
+            != 0
+        {
+            1 as ::core::ffi::c_int
+        } else {
+            -(1 as ::core::ffi::c_int)
+        }) as uint16;
+        AddToHiLo(
+            ((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(kh as isize) as *mut uint16,
+            ((&raw mut g_ram as *mut uint8).offset(0x1add as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(kh as isize) as *mut uint16,
+            ((*((&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize)
+                as *mut uint16) as int16 as ::core::ffi::c_int)
+                << 8 as ::core::ffi::c_int) as uint32,
+        );
+        if ((*((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            - 8 as ::core::ffi::c_int
+            - *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(kh as isize) as ::core::ffi::c_int) as int16
+            as ::core::ffi::c_int)
+            < 0 as ::core::ffi::c_int
+        {
+            if *((&raw mut g_ram as *mut uint8).offset(0x1a4f as ::core::ffi::c_int as isize)
+                as *mut uint16) as ::core::ffi::c_int
+                + 543 as ::core::ffi::c_int
+                & 0x8000 as ::core::ffi::c_int
+                == 0
+            {
+                let ref mut fresh52 = *((&raw mut g_ram as *mut uint8)
+                    .offset(0x1a4f as ::core::ffi::c_int as isize)
+                    as *mut uint16);
+                *fresh52 = (*fresh52 as ::core::ffi::c_int - 32 as ::core::ffi::c_int) as uint16;
+            }
+        } else if *((&raw mut g_ram as *mut uint8).offset(0x1a4f as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            - 544 as ::core::ffi::c_int
+            & 0x8000 as ::core::ffi::c_int
+            != 0
+        {
+            let ref mut fresh53 = *((&raw mut g_ram as *mut uint8)
+                .offset(0x1a4f as ::core::ffi::c_int as isize)
+                as *mut uint16);
+            *fresh53 = (*fresh53 as ::core::ffi::c_int + 32 as ::core::ffi::c_int) as uint16;
+        }
+        AddToHiLo(
+            ((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(kh as isize) as *mut uint16,
+            ((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(kh as isize) as *mut uint16,
+            ((*((&raw mut g_ram as *mut uint8).offset(0x1a4f as ::core::ffi::c_int as isize)
+                as *mut uint16) as int16 as ::core::ffi::c_int)
+                << 8 as ::core::ffi::c_int) as uint32,
+        );
+    } else {
+        *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(kh as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(kh as isize) = addr_off_8BCE53 as ::core::ffi::c_int as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a57 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn ResetButtonAssignmentsToDefault() {
+    *((&raw mut g_ram as *mut uint8).offset(0xd82 as ::core::ffi::c_int as isize) as *mut uint16) =
+        *((&raw mut g_ram as *mut uint8).offset(0x9b2 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0xd84 as ::core::ffi::c_int as isize) as *mut uint16) =
+        *((&raw mut g_ram as *mut uint8).offset(0x9b4 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0xd86 as ::core::ffi::c_int as isize) as *mut uint16) =
+        *((&raw mut g_ram as *mut uint8).offset(0x9b6 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0xd88 as ::core::ffi::c_int as isize) as *mut uint16) =
+        *((&raw mut g_ram as *mut uint8).offset(0x9b8 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0xd8a as ::core::ffi::c_int as isize) as *mut uint16) =
+        *((&raw mut g_ram as *mut uint8).offset(0x9ba as ::core::ffi::c_int as isize)
+            as *mut uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0xd8c as ::core::ffi::c_int as isize) as *mut uint16) =
+        *((&raw mut g_ram as *mut uint8).offset(0x9bc as ::core::ffi::c_int as isize)
+            as *mut uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0xd8e as ::core::ffi::c_int as isize) as *mut uint16) =
+        *((&raw mut g_ram as *mut uint8).offset(0x9be as ::core::ffi::c_int as isize)
+            as *mut uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x9aa as ::core::ffi::c_int as isize) as *mut uint16) =
+        kButton_Up as ::core::ffi::c_int as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x9ac as ::core::ffi::c_int as isize) as *mut uint16) =
+        kButton_Down as ::core::ffi::c_int as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x9ae as ::core::ffi::c_int as isize) as *mut uint16) =
+        kButton_Left as ::core::ffi::c_int as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x9b0 as ::core::ffi::c_int as isize) as *mut uint16) =
+        kButton_Right as ::core::ffi::c_int as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x9b2 as ::core::ffi::c_int as isize) as *mut uint16) =
+        kButton_X as ::core::ffi::c_int as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x9b4 as ::core::ffi::c_int as isize) as *mut uint16) =
+        kButton_A as ::core::ffi::c_int as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x9b6 as ::core::ffi::c_int as isize) as *mut uint16) =
+        kButton_B as ::core::ffi::c_int as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x9b8 as ::core::ffi::c_int as isize) as *mut uint16) =
+        kButton_Y as ::core::ffi::c_int as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x9ba as ::core::ffi::c_int as isize) as *mut uint16) =
+        kButton_Select as ::core::ffi::c_int as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x9bc as ::core::ffi::c_int as isize) as *mut uint16) =
+        kButton_L as ::core::ffi::c_int as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x9be as ::core::ffi::c_int as isize) as *mut uint16) =
+        kButton_R as ::core::ffi::c_int as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn RevertButtonConfig() {
+    *((&raw mut g_ram as *mut uint8).offset(0x9b2 as ::core::ffi::c_int as isize) as *mut uint16) =
+        *((&raw mut g_ram as *mut uint8).offset(0xd82 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x9b4 as ::core::ffi::c_int as isize) as *mut uint16) =
+        *((&raw mut g_ram as *mut uint8).offset(0xd84 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x9b6 as ::core::ffi::c_int as isize) as *mut uint16) =
+        *((&raw mut g_ram as *mut uint8).offset(0xd86 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x9b8 as ::core::ffi::c_int as isize) as *mut uint16) =
+        *((&raw mut g_ram as *mut uint8).offset(0xd88 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x9ba as ::core::ffi::c_int as isize) as *mut uint16) =
+        *((&raw mut g_ram as *mut uint8).offset(0xd8a as ::core::ffi::c_int as isize)
+            as *mut uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x9bc as ::core::ffi::c_int as isize) as *mut uint16) =
+        *((&raw mut g_ram as *mut uint8).offset(0xd8c as ::core::ffi::c_int as isize)
+            as *mut uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x9be as ::core::ffi::c_int as isize) as *mut uint16) =
+        *((&raw mut g_ram as *mut uint8).offset(0xd8e as ::core::ffi::c_int as isize)
+            as *mut uint16);
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func54() {
+    let mut v1: int16 = 0;
+    SetupPpu_3_Mode7();
+    ClearCinematicSprites();
+    *((&raw mut g_ram as *mut uint8).offset(0xab as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xa7 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    let mut v0: uint16 = 0 as uint16;
+    loop {
+        *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+            *(g_rom.offset(
+                (((0x8ce5e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                    << 15 as ::core::ffi::c_int
+                    | 0x8ce5e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                    & 0x3fffff as ::core::ffi::c_int) as isize,
+            ) as *const uint8 as *mut uint16)
+                .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+        v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        if !(((v0 as ::core::ffi::c_int - 512 as ::core::ffi::c_int) as int16
+            as ::core::ffi::c_int)
+            < 0 as ::core::ffi::c_int)
+        {
+            break;
+        }
+    }
+    DecompressToMem(
+        0x95a82f as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x10000 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x96fe69 as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x14000 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x96d10a as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x15000 as ::core::ffi::c_int as isize),
+    );
+    WriteRegWord(VMADDL as ::core::ffi::c_int as uint16, 0 as uint16);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BBD04: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 0 as uint8,
+        bbad: 0x19 as uint8,
+        a1: LongPtr {
+            addr: (0x7f0000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7f0000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x4000 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BBD04 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteRegWord(VMADDL as ::core::ffi::c_int as uint16, 0 as uint16);
+    v1 = 0x4000 as int16;
+    loop {
+        WriteReg(VMDATAL as ::core::ffi::c_int as uint16, 0x8c as uint8);
+        v1 -= 1;
+        if !(v1 != 0) {
+            break;
+        }
+    }
+    WriteRegWord(VMADDL as ::core::ffi::c_int as uint16, 0 as uint16);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8);
+    static mut unk_8BBD3C: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 0 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7f4000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7f4000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x300 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BBD3C as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteRegWord(VMADDL as ::core::ffi::c_int as uint16, 0x6000 as uint16);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BBD5C: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7f5000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7f5000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x4000 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BBD5C as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteRegWord(M7A as ::core::ffi::c_int as uint16, 0x100 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x78 as ::core::ffi::c_int as isize) as *mut uint16) =
+        256 as uint16;
+    WriteRegWord(M7B as ::core::ffi::c_int as uint16, 0 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x7a as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    WriteRegWord(M7C as ::core::ffi::c_int as uint16, 0 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x7c as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    WriteRegWord(M7D as ::core::ffi::c_int as uint16, 0x100 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x7e as ::core::ffi::c_int as isize) as *mut uint16) =
+        256 as uint16;
+    WriteRegWord(M7X as ::core::ffi::c_int as uint16, 0x38 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x80 as ::core::ffi::c_int as isize) as *mut uint16) =
+        56 as uint16;
+    WriteRegWord(M7Y as ::core::ffi::c_int as uint16, 0x18 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x82 as ::core::ffi::c_int as isize) as *mut uint16) =
+        24 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+        as *mut uint16) = -(72 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+        as *mut uint16) = -(104 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+        as *mut uint16) = 224 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) = 512 as uint16;
+    ClearPaletteFXObjects();
+    EnablePaletteFx();
+    ClearCinematicBgObjects(0 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x19f5 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 23552 as uint16;
+    EnableNMI();
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BCF0F as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8bbde4 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    QueueMusic_Delayed8(0xff2d as uint16);
+    QueueMusic_DelayedY(5 as uint16, 0xe as uint16);
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func55() {
+    if HasQueuedMusic() as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
+        *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 15 as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bbdf9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func56() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - 32 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 49 as uint8;
+        *(&raw mut g_ram as *mut uint8)
+            .offset(0x74 as ::core::ffi::c_int as isize)
+            .offset(0 as ::core::ffi::c_int as isize) = 63 as uint8;
+        *(&raw mut g_ram as *mut uint8)
+            .offset(0x74 as ::core::ffi::c_int as isize)
+            .offset(1 as ::core::ffi::c_int as isize) = 95 as uint8;
+        *(&raw mut g_ram as *mut uint8)
+            .offset(0x74 as ::core::ffi::c_int as isize)
+            .offset(2 as ::core::ffi::c_int as isize) = -(97 as ::core::ffi::c_int) as uint8;
+        ClearCinematicSprites();
+        QueueMode7Transfers(
+            0x8b as uint8,
+            addr_kCinematicFunction_Intro_Func56_M7 as ::core::ffi::c_int as uint16,
+        );
+        *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+            as *mut uint16) = -(32 as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+            as *mut uint16) = -(128 as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+            as *mut uint16) = 32 as uint16;
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BCF39 as ::core::ffi::c_int as uint16,
+            0 as uint16,
+        );
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BCE85 as ::core::ffi::c_int as uint16,
+            0 as uint16,
+        );
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BCE8B as ::core::ffi::c_int as uint16,
+            0 as uint16,
+        );
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BCE91 as ::core::ffi::c_int as uint16,
+            1 as uint16,
+        );
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BCF0F as ::core::ffi::c_int as uint16,
+            1 as uint16,
+        );
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bbfda as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        SpawnPalfxObject(addr_kPalfx_E1A8 as ::core::ffi::c_int as uint16);
+        SpawnPalfxObject(addr_kPalfx_E1AC as ::core::ffi::c_int as uint16);
+    } else {
+        let ref mut fresh128 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x198f as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *fresh128 = (*fresh128 as ::core::ffi::c_int - 16 as ::core::ffi::c_int) as uint16;
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func57(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1b9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) =
+            (0x8bbfc6 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = -(32 as ::core::ffi::c_int) as uint16;
+    } else {
+        *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = -(1024 as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 112 as uint16;
+    }
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 87 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 2048 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func58(mut k: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        == 0x8bbdf9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
+    {
+        let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        let ref mut fresh49 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x1b7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize);
+        *fresh49 = (*fresh49 as ::core::ffi::c_int + 128 as ::core::ffi::c_int) as uint16;
+        let mut d: int32 = (*((&raw mut g_ram as *mut uint8)
+            .offset(0x1b7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as int16 as int32)
+            << 8 as ::core::ffi::c_int;
+        AddToHiLo(
+            ((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(v1 as isize) as *mut uint16,
+            ((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(v1 as isize) as *mut uint16,
+            d as uint32,
+        );
+        AddToHiLo(
+            ((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(v1 as isize) as *mut uint16,
+            ((&raw mut g_ram as *mut uint8).offset(0x1add as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(v1 as isize) as *mut uint16,
+            d as uint32,
+        );
+        AddToHiLo(
+            (&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+                as *mut uint16,
+            (&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize)
+                as *mut uint16,
+            d as uint32,
+        );
+        AddToHiLo(
+            (&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+                as *mut uint16,
+            (&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize)
+                as *mut uint16,
+            d as uint32,
+        );
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func59(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 80 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 159 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 2048 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func60(mut k: uint16) {
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    AddToHiLo(
+        ((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut g_ram as *mut uint8).offset(0x1add as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        0x4000 as uint32,
+    );
+    let ref mut fresh48 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a7d as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset(v1 as isize);
+    *fresh48 = (*fresh48 as ::core::ffi::c_int & 0x1ff as ::core::ffi::c_int) as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func61(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 116 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 160 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 3072 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func62(mut k: uint16) {
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    AddToHiLo(
+        ((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut g_ram as *mut uint8).offset(0x1add as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        4096 as uint32,
+    );
+    let ref mut fresh47 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a7d as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset(v1 as isize);
+    *fresh47 = (*fresh47 as ::core::ffi::c_int & 0x1ff as ::core::ffi::c_int) as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func63(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 128 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 96 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 2048 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func64(mut k: uint16) {
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    AddToHiLo(
+        ((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut g_ram as *mut uint8).offset(0x1add as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        2048 as uint32,
+    );
+    let ref mut fresh46 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a7d as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset(v1 as isize);
+    *fresh46 = (*fresh46 as ::core::ffi::c_int & 0x1ff as ::core::ffi::c_int) as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func65(mut j: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1b9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 224 as uint16;
+    } else {
+        let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 112 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) =
+            (0x8bbfd9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+    let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = 87 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = 2048 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func66(mut k: uint16) {
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    AddToHiLo(
+        ((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut g_ram as *mut uint8).offset(0x1add as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        -(0x2000 as ::core::ffi::c_int) as uint32,
+    );
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func67() {
+    let ref mut fresh123 = *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(0 as ::core::ffi::c_int as isize);
+    *fresh123 = (*fresh123).wrapping_sub(1);
+    if *fresh123 as ::core::ffi::c_int - 32 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0
+    {
+        *(&raw mut g_ram as *mut uint8)
+            .offset(0x74 as ::core::ffi::c_int as isize)
+            .offset(0 as ::core::ffi::c_int as isize) = 32 as uint8;
+    }
+    let ref mut fresh124 = *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(1 as ::core::ffi::c_int as isize);
+    *fresh124 = (*fresh124).wrapping_sub(1);
+    if *fresh124 as ::core::ffi::c_int - 64 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0
+    {
+        *(&raw mut g_ram as *mut uint8)
+            .offset(0x74 as ::core::ffi::c_int as isize)
+            .offset(1 as ::core::ffi::c_int as isize) = 64 as uint8;
+    }
+    let ref mut fresh125 = *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(2 as ::core::ffi::c_int as isize);
+    *fresh125 = (*fresh125).wrapping_sub(1);
+    if *fresh125 as ::core::ffi::c_int + 0x80 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
+        != 0
+    {
+        *(&raw mut g_ram as *mut uint8)
+            .offset(0x74 as ::core::ffi::c_int as isize)
+            .offset(2 as ::core::ffi::c_int as isize) = 0x80 as uint8;
+    }
+    AddToHiLo(
+        (&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize) as *mut uint16,
+        (&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize) as *mut uint16,
+        -(0x2000 as ::core::ffi::c_int) as uint32,
+    );
+    if *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - 3072 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        let ref mut fresh126 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x198f as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *fresh126 = (*fresh126 as ::core::ffi::c_int + 16 as ::core::ffi::c_int) as uint16;
+    } else if *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - 0x2000 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        let ref mut fresh127 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x198f as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *fresh127 = (*fresh127 as ::core::ffi::c_int + 32 as ::core::ffi::c_int) as uint16;
+    } else {
+        *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 17 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize) = 1 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x5f as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize) = 92 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize) = 6 as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+            as *mut uint16) = 256 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        EnableCinematicBgObjects();
+        EnableCinematicBgTilemapUpdates();
+        SpawnCinematicBgObject(
+            addr_kCinematicBgObjectDef_8BCF69 as ::core::ffi::c_int as uint16,
+            0x5c00 as uint16,
+        );
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8ba38f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func68(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 124 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 186 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 0 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicCommonInstr_Func69(mut k: uint16, mut j: uint16) -> uint16 {
+    if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
+        == 0
+    {
+        j = (j as ::core::ffi::c_int + 6 as ::core::ffi::c_int) as uint16;
+    }
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicCommonInstr_Func70(mut k: uint16, mut j: uint16) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8bc0c5 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize) as *mut uint16) =
+        1 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize) as *mut uint16) =
+        1 as uint16;
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func71(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 124 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 204 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 0 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func72() {
+    HandleFadeOut();
+    if *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
+        as ::core::ffi::c_int
+        == 0x80 as ::core::ffi::c_int
+    {
+        EnableNMI();
+        *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xb5 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xb9 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xbb as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        let mut i: ::core::ffi::c_int = 656 as ::core::ffi::c_int;
+        while i >= 0 as ::core::ffi::c_int {
+            *(((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+                as *mut uint16 as *mut uint8)
+                .offset(i as uint16 as ::core::ffi::c_int as isize) as *mut uint16) = 0 as uint16;
+            i -= 2 as ::core::ffi::c_int;
+        }
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bc100 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func73() {
+    *((&raw mut g_ram as *mut uint8).offset(0xd914 as ::core::ffi::c_int as isize)
+        as *mut uint16) = kGameState_31_SetUpNewGame as ::core::ffi::c_int as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize) as *mut uint16) =
+        kGameState_31_SetUpNewGame as ::core::ffi::c_int as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize) as *mut uint16) =
+        6 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x78b as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    SaveToSram(
+        *((&raw mut g_ram as *mut uint8).offset(0x952 as ::core::ffi::c_int as isize)
+            as *mut uint16),
+    );
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunctionBlackoutFromCeres() {
+    let mut j: int16 = 0;
+    let mut v3: int16 = 0;
+    SetupPpu_3_Mode7();
+    j = 656 as int16;
+    while j as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
+        *(((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+            as *mut uint16 as *mut uint8)
+            .offset(j as uint16 as ::core::ffi::c_int as isize) as *mut uint16) = 0 as uint16;
+        j = (j as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as int16;
+    }
+    *((&raw mut g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    let mut v2: uint16 = 0 as uint16;
+    loop {
+        *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+            *(g_rom.offset(
+                (((0x8ce5e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                    << 15 as ::core::ffi::c_int
+                    | 0x8ce5e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                    & 0x3fffff as ::core::ffi::c_int) as isize,
+            ) as *const uint8 as *mut uint16)
+                .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+        v2 = (v2 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        if !(((v2 as ::core::ffi::c_int - 512 as ::core::ffi::c_int) as int16
+            as ::core::ffi::c_int)
+            < 0 as ::core::ffi::c_int)
+        {
+            break;
+        }
+    }
+    DecompressToMem(
+        0x95a82f as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x10000 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x96fe69 as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x14000 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x96d10a as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x15000 as ::core::ffi::c_int as isize),
+    );
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BC19C: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 0 as uint8,
+        bbad: 0x19 as uint8,
+        a1: LongPtr {
+            addr: (0x7f0000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7f0000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x4000 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BC19C as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
+    v3 = 0x4000 as int16;
+    loop {
+        WriteReg(VMDATAL as ::core::ffi::c_int as uint16, 0x8c as uint8);
+        v3 -= 1;
+        if !(v3 != 0) {
+            break;
+        }
+    }
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8);
+    static mut unk_8BC1D4: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 0 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7f4600 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7f4600 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x600 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BC1D4 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BC1F4: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7f5000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7f5000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x4000 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BC1F4 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BC214: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x9ad200 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x9ad200 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x1a00 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BC214 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteRegWord(M7A as ::core::ffi::c_int as uint16, 0x100 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x78 as ::core::ffi::c_int as isize) as *mut uint16) =
+        256 as uint16;
+    WriteRegWord(M7B as ::core::ffi::c_int as uint16, 0 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x7a as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    WriteRegWord(M7C as ::core::ffi::c_int as uint16, 0 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x7c as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    WriteRegWord(M7D as ::core::ffi::c_int as uint16, 0x100 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x7e as ::core::ffi::c_int as isize) as *mut uint16) =
+        256 as uint16;
+    WriteRegWord(M7X as ::core::ffi::c_int as uint16, 0x34 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x80 as ::core::ffi::c_int as isize) as *mut uint16) =
+        52 as uint16;
+    WriteRegWord(M7Y as ::core::ffi::c_int as uint16, 0x30 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x82 as ::core::ffi::c_int as isize) as *mut uint16) =
+        48 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+        as *mut uint16) = -(44 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+        as *mut uint16) = -(112 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) = 256 as uint16;
+    DisableHdmaObjects();
+    WaitUntilEndOfVblankAndClearHdma();
+    ClearPaletteFXObjects();
+    EnablePaletteFx();
+    ClearCinematicBgObjects(0x2f as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x19f5 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BCE7F as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    SpawnCinematicSpriteObjectToR18(
+        addr_kCinematicSpriteObjectDef_8BCE8B as ::core::ffi::c_int as uint16,
+        2 as uint16,
+    );
+    SpawnCinematicSpriteObjectToR18(
+        addr_kCinematicSpriteObjectDef_8BCE91 as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BCF33 as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    SpawnPalfxObject(addr_kPalfx_E1B8 as ::core::ffi::c_int as uint16);
+    EnableNMI();
+    *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize) as *mut uint16) =
+        1 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize) as *mut uint16) =
+        1 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8bc2e4 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    QueueMusic_Delayed8(0 as uint16);
+    QueueMusic_Delayed8(0xff2d as uint16);
+    if *((&raw mut g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize) as *mut uint16)
+        as ::core::ffi::c_int
+        == kGameState_37_CeresGoesBoomWithSamus as ::core::ffi::c_int
+    {
+        QueueMusic_DelayedY(8 as uint16, 0xe as uint16);
+    } else {
+        QueueMusic_DelayedY(7 as uint16, 0xe as uint16);
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func74() {
+    if HasQueuedMusic() as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bc2f1 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func75() {
+    AddToHiLo(
+        (&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize) as *mut uint16,
+        (&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize) as *mut uint16,
+        4096 as uint32,
+    );
+    AddToHiLo(
+        (&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize) as *mut uint16,
+        (&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize) as *mut uint16,
+        -(0x4000 as ::core::ffi::c_int) as uint32,
+    );
+    let ref mut fresh122 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x198f as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh122 = (*fresh122).wrapping_add(1);
+    HandleFadeIn();
+    if *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
+        as ::core::ffi::c_int
+        == 15 as ::core::ffi::c_int
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bc345 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func76() {
+    AddToHiLo(
+        (&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize) as *mut uint16,
+        (&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize) as *mut uint16,
+        4096 as uint32,
+    );
+    AddToHiLo(
+        (&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize) as *mut uint16,
+        (&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize) as *mut uint16,
+        -(0x4000 as ::core::ffi::c_int) as uint32,
+    );
+    if *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - 640 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        let ref mut fresh121 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x198f as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *fresh121 = (*fresh121).wrapping_add(1);
+    } else {
+        *((&raw mut g_ram as *mut uint8).offset(0xce2 as ::core::ffi::c_int as isize)
+            as *mut uint16) = (*((&raw mut g_ram as *mut uint8)
+            .offset(0x80 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            - *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+                as *mut uint16) as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xce4 as ::core::ffi::c_int as isize)
+            as *mut uint16) = (*((&raw mut g_ram as *mut uint8)
+            .offset(0x82 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            - *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+                as *mut uint16) as ::core::ffi::c_int) as uint16;
+        EnableHdmaObjects();
+        SpawnPowerBombExplosion();
+        *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 16 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 55 as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+            as *mut uint16) = 768 as uint16;
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BCF2D as ::core::ffi::c_int as uint16,
+            0 as uint16,
+        );
+        if *((&raw mut g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            == 37 as ::core::ffi::c_int
+        {
+            QueueMode7Transfers(
+                0x8b as uint8,
+                addr_kCinematicFunction_Intro_Func76_M7_2 as ::core::ffi::c_int as uint16,
+            );
+        } else {
+            QueueMode7Transfers(
+                0x8b as uint8,
+                addr_kCinematicFunction_Intro_Func76_M7_0 as ::core::ffi::c_int as uint16,
+            );
+        }
+        QueueMode7Transfers(
+            0x8b as uint8,
+            addr_kCinematicFunction_Intro_Func76_M7_1 as ::core::ffi::c_int as uint16,
+        );
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bc5ca as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_SpawnCeresExplosions1(
+    mut k: uint16,
+    mut j: uint16,
+) -> uint16 {
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BCEBB as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BCEBB as ::core::ffi::c_int as uint16,
+        1 as uint16,
+    );
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BCEBB as ::core::ffi::c_int as uint16,
+        2 as uint16,
+    );
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BCEBB as ::core::ffi::c_int as uint16,
+        3 as uint16,
+    );
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BCEBB as ::core::ffi::c_int as uint16,
+        4 as uint16,
+    );
+    return j;
+}
+static mut kCinematicFunction_Intro_Func78_Tab0: [uint16; 5] = [
+    1 as ::core::ffi::c_int as uint16,
+    16 as ::core::ffi::c_int as uint16,
+    32 as ::core::ffi::c_int as uint16,
+    48 as ::core::ffi::c_int as uint16,
+    64 as ::core::ffi::c_int as uint16,
+];
+static mut kCinematicFunction_Intro_Func78_Tab1: [int16; 5] = [
+    16 as ::core::ffi::c_int as int16,
+    -(16 as ::core::ffi::c_int) as int16,
+    16 as ::core::ffi::c_int as int16,
+    -(16 as ::core::ffi::c_int) as int16,
+    0 as ::core::ffi::c_int as int16,
+];
+static mut kCinematicFunction_Intro_Func78_Tab2: [int16; 5] = [
+    -(16 as ::core::ffi::c_int) as int16,
+    16 as ::core::ffi::c_int as int16,
+    16 as ::core::ffi::c_int as int16,
+    -(16 as ::core::ffi::c_int) as int16,
+    0 as ::core::ffi::c_int as int16,
+];
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func78(mut j: uint16) {
+    let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1b9d as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1b9d as ::core::ffi::c_int as isize)
+        as *mut uint16);
+    let mut v3: ::core::ffi::c_int = v1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = kCinematicFunction_Intro_Func78_Tab0[v3 as usize];
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = (kCinematicFunction_Intro_Func78_Tab1[v3 as usize]
+        as ::core::ffi::c_int
+        + *((&raw mut g_ram as *mut uint8).offset(0x80 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+        - *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = (kCinematicFunction_Intro_Func78_Tab2[v3 as usize]
+        as ::core::ffi::c_int
+        + *((&raw mut g_ram as *mut uint8).offset(0x82 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+        - *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = 2560 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprPreInstr_C489(mut k: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        == 0x8bc5ca as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+            (0x8b93d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    } else {
+        let ref mut fresh45 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x1a49 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *fresh45 = (*fresh45).wrapping_sub(1);
+        let mut v1: bool = *fresh45 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
+            != 0 as ::core::ffi::c_int;
+        if *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            == 0
+            || v1 as ::core::ffi::c_int != 0
+        {
+            SpawnCinematicSpriteObject(
+                addr_kCinematicSpriteObjectDef_8BCEC1 as ::core::ffi::c_int as uint16,
+                *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
+                    as *mut uint16),
+            );
+            *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+                as *mut uint16) = 12 as uint16;
+            *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
+                as *mut uint16) = (*((&raw mut g_ram as *mut uint8)
+                .offset(0x1a4b as ::core::ffi::c_int as isize)
+                as *mut uint16) as ::core::ffi::c_int
+                + 1 as ::core::ffi::c_int
+                & 7 as ::core::ffi::c_int) as uint16;
+        }
+    };
+}
+static mut g_word_8BC4EB: [int16; 16] = [
+    14 as ::core::ffi::c_int as int16,
+    -(8 as ::core::ffi::c_int) as int16,
+    8 as ::core::ffi::c_int as int16,
+    12 as ::core::ffi::c_int as int16,
+    -(16 as ::core::ffi::c_int) as int16,
+    12 as ::core::ffi::c_int as int16,
+    -(8 as ::core::ffi::c_int) as int16,
+    -(14 as ::core::ffi::c_int) as int16,
+    0 as ::core::ffi::c_int as int16,
+    0 as ::core::ffi::c_int as int16,
+    16 as ::core::ffi::c_int as int16,
+    14 as ::core::ffi::c_int as int16,
+    -(12 as ::core::ffi::c_int) as int16,
+    4 as ::core::ffi::c_int as int16,
+    -(8 as ::core::ffi::c_int) as int16,
+    -(16 as ::core::ffi::c_int) as int16,
+];
+static mut kCinematicFunction_Intro_Func81_Tab0: [int16; 4] = [
+    1 as ::core::ffi::c_int as int16,
+    4 as ::core::ffi::c_int as int16,
+    8 as ::core::ffi::c_int as int16,
+    16 as ::core::ffi::c_int as int16,
+];
+static mut kCinematicFunction_Intro_Func81_Tab1: [int16; 4] = [
+    8 as ::core::ffi::c_int as int16,
+    12 as ::core::ffi::c_int as int16,
+    -(8 as ::core::ffi::c_int) as int16,
+    -(12 as ::core::ffi::c_int) as int16,
+];
+static mut kCinematicFunction_Intro_Func81_Tab2: [int16; 4] = [
+    -(4 as ::core::ffi::c_int) as int16,
+    8 as ::core::ffi::c_int as int16,
+    -(10 as ::core::ffi::c_int) as int16,
+    12 as ::core::ffi::c_int as int16,
+];
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func80(mut j: uint16) {
+    let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1b9d as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1b9d as ::core::ffi::c_int as isize)
+        as *mut uint16);
+    let mut v3: ::core::ffi::c_int = 2 as ::core::ffi::c_int * v1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = (g_word_8BC4EB[v3 as usize] as ::core::ffi::c_int
+        + *((&raw mut g_ram as *mut uint8).offset(0x80 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+        - *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = (g_word_8BC4EB[(v3 + 1 as ::core::ffi::c_int) as usize]
+        as ::core::ffi::c_int
+        + *((&raw mut g_ram as *mut uint8).offset(0x82 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+        - *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = 2560 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_SpawnCeresExplosions3(
+    mut k: uint16,
+    mut j: uint16,
+) -> uint16 {
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BCEC7 as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BCEC7 as ::core::ffi::c_int as uint16,
+        1 as uint16,
+    );
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BCEC7 as ::core::ffi::c_int as uint16,
+        2 as uint16,
+    );
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BCEC7 as ::core::ffi::c_int as uint16,
+        3 as uint16,
+    );
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func81(mut j: uint16) {
+    let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1b9d as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1b9d as ::core::ffi::c_int as isize)
+        as *mut uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = kCinematicFunction_Intro_Func81_Tab0[v1 as usize] as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = (kCinematicFunction_Intro_Func81_Tab1[v1 as usize]
+        as ::core::ffi::c_int
+        + *((&raw mut g_ram as *mut uint8).offset(0x80 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+        - *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = (kCinematicFunction_Intro_Func81_Tab2[v1 as usize]
+        as ::core::ffi::c_int
+        + *((&raw mut g_ram as *mut uint8).offset(0x82 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+        - *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v2 as isize) = 2560 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func82(mut k: uint16) {
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    AddToHiLo(
+        ((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        -(4096 as ::core::ffi::c_int) as uint32,
+    );
+    AddToHiLo(
+        ((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut g_ram as *mut uint8).offset(0x1add as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        0x4000 as uint32,
+    );
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func83(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = (*((&raw mut g_ram as *mut uint8)
+        .offset(0x80 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = (*((&raw mut g_ram as *mut uint8)
+        .offset(0x82 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 2560 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func77() {
+    *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 16 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 55 as uint8;
+    let ref mut fresh119 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1993 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh119 = (*fresh119 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+        as *mut uint16) = (*((&raw mut g_ram as *mut uint8)
+        .offset(0x198d as ::core::ffi::c_int as isize) as *mut uint16)
+        as ::core::ffi::c_int
+        - 1 as ::core::ffi::c_int) as uint8 as uint16;
+    if *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - 16 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bc610 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 192 as uint16;
+    } else {
+        let ref mut fresh120 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x198f as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *fresh120 = (*fresh120 as ::core::ffi::c_int - 16 as ::core::ffi::c_int) as uint16;
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func84() {
+    let ref mut fresh118 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh118 = (*fresh118).wrapping_sub(1);
+    let mut v0: bool =
+        *fresh118 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        == 0
+        || v0 as ::core::ffi::c_int != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bc627 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func85() {
+    HandleFadeOut();
+    if *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
+        as ::core::ffi::c_int
+        == 0x80 as ::core::ffi::c_int
+    {
+        EnableNMI();
+        *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        if *((&raw mut g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            == kGameState_37_CeresGoesBoomWithSamus as ::core::ffi::c_int
+        {
+            QueueMusic_Delayed8(0 as uint16);
+            *((&raw mut g_ram as *mut uint8).offset(0x9d2 as ::core::ffi::c_int as isize)
+                as *mut uint16) = 0 as uint16;
+            *((&raw mut g_ram as *mut uint8).offset(0xa04 as ::core::ffi::c_int as isize)
+                as *mut uint16) = 0 as uint16;
+            *((&raw mut g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
+                as *mut uint16) = 0 as uint16;
+            *((&raw mut g_ram as *mut uint8).offset(0x18aa as ::core::ffi::c_int as isize)
+                as *mut uint16) = 0 as uint16;
+            WaitUntilEndOfVblankAndClearHdma();
+            DisableIrqInterrupts();
+            *((&raw mut g_ram as *mut uint8).offset(0x1982 as ::core::ffi::c_int as isize)
+                as *mut uint16) = 0 as uint16;
+            *(&raw mut g_ram as *mut uint8).offset(0x6e as ::core::ffi::c_int as isize) =
+                0 as uint8;
+            *(&raw mut g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) =
+                0 as uint8;
+            *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) =
+                16 as uint8;
+            *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) =
+                0 as uint8;
+            *(&raw mut g_ram as *mut uint8).offset(0x6c as ::core::ffi::c_int as isize) =
+                0 as uint8;
+            *(&raw mut g_ram as *mut uint8).offset(0x6d as ::core::ffi::c_int as isize) =
+                0 as uint8;
+            *(&raw mut g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize) =
+                9 as uint8;
+            *((&raw mut g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
+                as *mut uint16) = 0 as uint16;
+            *((&raw mut g_ram as *mut uint8).offset(0x727 as ::core::ffi::c_int as isize)
+                as *mut uint16) = 0 as uint16;
+            let mut i: ::core::ffi::c_int = 254 as ::core::ffi::c_int;
+            while i >= 0 as ::core::ffi::c_int {
+                *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+                    as *mut uint16)
+                    .offset(((i >> 1 as ::core::ffi::c_int) + 8 as ::core::ffi::c_int) as isize) =
+                    0 as uint16;
+                i -= 2 as ::core::ffi::c_int;
+            }
+            *((&raw mut g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
+                as *mut uint16) = kGameState_25_SamusNoHealth as ::core::ffi::c_int as uint16;
+        } else {
+            *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+                as *mut uint16) =
+                (0x8bc699 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        }
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func86() {
+    SetupPpu_4_Mode1();
+    let mut i: ::core::ffi::c_int = 656 as ::core::ffi::c_int;
+    while i >= 0 as ::core::ffi::c_int {
+        *(((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+            as *mut uint16 as *mut uint8)
+            .offset(i as uint16 as ::core::ffi::c_int as isize) as *mut uint16) = 0 as uint16;
+        i -= 2 as ::core::ffi::c_int;
+    }
+    DecompressToMem(
+        0x978adb as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x19000 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x96ec76 as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x15000 as ::core::ffi::c_int as isize),
+    );
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8);
+    static mut unk_8BC6E4: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 0 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7f4300 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7f4300 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x300 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BC6E4 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x5c as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BC704: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7f9000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7f9000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x800 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BC704 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BC724: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7f5000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7f5000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x4000 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BC724 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteRegWord(M7A as ::core::ffi::c_int as uint16, 0x100 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x78 as ::core::ffi::c_int as isize) as *mut uint16) =
+        256 as uint16;
+    WriteRegWord(M7B as ::core::ffi::c_int as uint16, 0 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x7a as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    WriteRegWord(M7C as ::core::ffi::c_int as uint16, 0 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x7c as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    WriteRegWord(M7D as ::core::ffi::c_int as uint16, 0x100 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x7e as ::core::ffi::c_int as isize) as *mut uint16) =
+        256 as uint16;
+    WriteRegWord(M7X as ::core::ffi::c_int as uint16, 0x38 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x80 as ::core::ffi::c_int as isize) as *mut uint16) =
+        56 as uint16;
+    WriteRegWord(M7Y as ::core::ffi::c_int as uint16, 0x18 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x82 as ::core::ffi::c_int as isize) as *mut uint16) =
+        24 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) = 256 as uint16;
+    DisableHdmaObjects();
+    WaitUntilEndOfVblankAndClearHdma();
+    ClearPaletteFXObjects();
+    EnablePaletteFx();
+    *(&raw mut g_ram as *mut uint8).offset(0x57 as ::core::ffi::c_int as isize) =
+        -(127 as ::core::ffi::c_int) as uint8;
+    SpawnPalfxObject(addr_kPalfx_E1A8 as ::core::ffi::c_int as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8bc79c as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    EnableNMI();
+    *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize) as *mut uint16) =
+        1 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize) as *mut uint16) =
+        1 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func87() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a51 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        & 3 as ::core::ffi::c_int
+        == 0 as ::core::ffi::c_int
+    {
+        let ref mut fresh116 =
+            *(&raw mut g_ram as *mut uint8).offset(0x57 as ::core::ffi::c_int as isize);
+        *fresh116 = (*fresh116 as ::core::ffi::c_int - 16 as ::core::ffi::c_int) as uint8;
+    }
+    HandleFadeIn();
+    if *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
+        as ::core::ffi::c_int
+        == 15 as ::core::ffi::c_int
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bc7ca as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func88() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a51 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        & 3 as ::core::ffi::c_int
+        == 0 as ::core::ffi::c_int
+    {
+        let ref mut fresh115 =
+            *(&raw mut g_ram as *mut uint8).offset(0x57 as ::core::ffi::c_int as isize);
+        *fresh115 = (*fresh115 as ::core::ffi::c_int - 16 as ::core::ffi::c_int) as uint8;
+        if *(&raw mut g_ram as *mut uint8).offset(0x57 as ::core::ffi::c_int as isize)
+            as ::core::ffi::c_int
+            & 0xf0 as ::core::ffi::c_int
+            == 0 as ::core::ffi::c_int
+        {
+            *(&raw mut g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize) =
+                7 as uint8;
+            *(&raw mut g_ram as *mut uint8).offset(0x5f as ::core::ffi::c_int as isize) =
+                0x80 as uint8;
+            *(&raw mut g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize) =
+                0 as uint8;
+            *(&raw mut g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize) =
+                0 as uint8;
+            *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) =
+                17 as uint8;
+            *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+                as *mut uint16) = 128 as uint16;
+            *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+                as *mut uint16) = -(104 as ::core::ffi::c_int) as uint16;
+            *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+                as *mut uint16) = 32 as uint16;
+            *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+                as *mut uint16) = 256 as uint16;
+            SpawnCinematicSpriteObject(
+                addr_kCinematicSpriteObjectDef_8BCEA3 as ::core::ffi::c_int as uint16,
+                0 as uint16,
+            );
+            SpawnCinematicSpriteObject(
+                addr_kCinematicSpriteObjectDef_8BCEF7 as ::core::ffi::c_int as uint16,
+                0 as uint16,
+            );
+            SpawnCinematicSpriteObject(
+                addr_kCinematicSpriteObjectDef_8BCEFD as ::core::ffi::c_int as uint16,
+                0 as uint16,
+            );
+            SpawnCinematicSpriteObject(
+                addr_kCinematicSpriteObjectDef_8BCF03 as ::core::ffi::c_int as uint16,
+                0 as uint16,
+            );
+            SpawnCinematicSpriteObject(
+                addr_kCinematicSpriteObjectDef_8BCF09 as ::core::ffi::c_int as uint16,
+                0 as uint16,
+            );
+            SpawnCinematicSpriteObject(
+                addr_kCinematicSpriteObjectDef_8BCEAF as ::core::ffi::c_int as uint16,
+                0 as uint16,
+            );
+            *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+                as *mut uint16) =
+                (0x8ba38f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        }
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func89(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 136 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 111 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 3584 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func90(mut k: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        == 0x8bcade as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+            (0x8bc85d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func91(mut k: uint16) {
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let ref mut fresh43 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1b7d as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset(v1 as isize);
+    *fresh43 = (*fresh43 as ::core::ffi::c_int + 64 as ::core::ffi::c_int) as uint16;
+    AddToHiLo(
+        ((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        -((*((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as int16 as ::core::ffi::c_int)
+            << 8 as ::core::ffi::c_int) as uint32,
+    );
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) as ::core::ffi::c_int
+        + 128 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = addr_off_8BCE53 as ::core::ffi::c_int as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func92(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 128 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 127 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 2048 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func93(mut k: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        == 0x8bcade as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+            (0x8bc8b9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func94(mut k: uint16) {
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let ref mut fresh42 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1b7d as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset(v1 as isize);
+    *fresh42 = (*fresh42 as ::core::ffi::c_int + 32 as ::core::ffi::c_int) as uint16;
+    AddToHiLo(
+        ((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        -((*((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as int16 as ::core::ffi::c_int)
+            << 8 as ::core::ffi::c_int) as uint32,
+    );
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) as ::core::ffi::c_int
+        + 128 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = addr_off_8BCE53 as ::core::ffi::c_int as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bcadf as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func96(mut k: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        == 0x8bcade as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+            (0x8bc908 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func97(mut k: uint16) {
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let ref mut fresh41 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1b7d as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset(v1 as isize);
+    *fresh41 = (*fresh41 as ::core::ffi::c_int + 32 as ::core::ffi::c_int) as uint16;
+    AddToHiLo(
+        ((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        -((*((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as int16 as ::core::ffi::c_int)
+            << 8 as ::core::ffi::c_int) as uint32,
+    );
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) as ::core::ffi::c_int
+        + 128 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = addr_off_8BCE53 as ::core::ffi::c_int as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func98(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 48 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 47 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 2048 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func99(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 208 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 47 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 2048 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func100(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 48 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 207 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 2048 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func101(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 208 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 207 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 2048 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func102(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 128 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 186 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 0 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_C9A5(mut k: uint16, mut j: uint16) -> uint16 {
+    SpawnPalfxObject(addr_kPalfx_E1B0 as ::core::ffi::c_int as uint16);
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_C9AF(mut k: uint16, mut j: uint16) -> uint16 {
+    if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
+        != 0
+    {
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BCEB5 as ::core::ffi::c_int as uint16,
+            *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize)
+                as *mut uint16),
+        );
+    }
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_C9BD(mut k: uint16, mut j: uint16) -> uint16 {
+    SpawnPalfxObject(addr_loc_8BE1B4 as ::core::ffi::c_int as uint16);
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_C9C7(mut k: uint16, mut j: uint16) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 62 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+        as *mut uint16) = -(112 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+        as *mut uint16) = 32 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) = 16 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8bc9f9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func104(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 128 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 204 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 0 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func105() {
+    AddToHiLo(
+        (&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize) as *mut uint16,
+        (&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize) as *mut uint16,
+        0x2000 as uint32,
+    );
+    AddToHiLo(
+        (&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize) as *mut uint16,
+        (&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize) as *mut uint16,
+        -(0x8000 as ::core::ffi::c_int) as uint32,
+    );
+    if *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - 1152 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        let ref mut fresh114 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x198f as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *fresh114 = (*fresh114 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
+    } else {
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bca36 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func106() {
+    AddToHiLo(
+        (&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize) as *mut uint16,
+        (&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize) as *mut uint16,
+        0x2000 as uint32,
+    );
+    AddToHiLo(
+        (&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize) as *mut uint16,
+        (&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize) as *mut uint16,
+        -(0x8000 as ::core::ffi::c_int) as uint32,
+    );
+    if *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        + 128 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bca85 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    } else {
+        let ref mut fresh113 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x198f as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *fresh113 = (*fresh113 as ::core::ffi::c_int + 16 as ::core::ffi::c_int) as uint16;
+        if *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            != 224 as ::core::ffi::c_int
+        {
+            *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+                as *mut uint16) = (*((&raw mut g_ram as *mut uint8)
+                .offset(0x198d as ::core::ffi::c_int as isize)
+                as *mut uint16) as ::core::ffi::c_int
+                - 1 as ::core::ffi::c_int) as uint8 as uint16;
+        }
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func107() {
+    AddToHiLo(
+        (&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize) as *mut uint16,
+        (&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize) as *mut uint16,
+        0x2000 as uint32,
+    );
+    AddToHiLo(
+        (&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize) as *mut uint16,
+        (&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize) as *mut uint16,
+        0x2000 as uint32,
+    );
+    if *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - 0x2000 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        let ref mut fresh112 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x198f as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *fresh112 = (*fresh112 as ::core::ffi::c_int + 32 as ::core::ffi::c_int) as uint16;
+    } else {
+        *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 16 as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bcad0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 64 as uint16;
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func108() {
+    let ref mut fresh111 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh111 = (*fresh111).wrapping_sub(1);
+    let mut v0: bool =
+        *fresh111 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        == 0
+        || v0 as ::core::ffi::c_int != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bcade as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func95() {
+    *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 0x80 as uint8;
+    let mut i: ::core::ffi::c_int = 656 as ::core::ffi::c_int;
+    while i >= 0 as ::core::ffi::c_int {
+        *(((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+            as *mut uint16 as *mut uint8)
+            .offset(i as uint16 as ::core::ffi::c_int as isize) as *mut uint16) = 0 as uint16;
+        i -= 2 as ::core::ffi::c_int;
+    }
+    *((&raw mut g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize) as *mut uint16) =
+        kGameState_6_LoadingGameData as ::core::ffi::c_int as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize) as *mut uint16) =
+        *((&raw mut g_ram as *mut uint8).offset(0x9c4 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+}
+#[no_mangle]
+pub unsafe extern "C" fn GameState_39_EndingAndCredits_() -> CoroutineRet {
+    CallCinematicFunction(
+        (*((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            | 0x8b0000 as ::core::ffi::c_int) as uint32,
+    );
+    if *((&raw mut g_ram as *mut uint8).offset(0x1b9f as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        == 0 as ::core::ffi::c_int
+    {
+        let ref mut fresh162 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x1b9f as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *fresh162 = (*fresh162).wrapping_add(1);
+    }
+    let ref mut fresh163 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a51 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh163 = (*fresh163).wrapping_add(1);
+    HandleCinematicSprites();
+    MaybeHandleCinematicBgObjects();
+    CreditsObject_Process();
+    PaletteFxHandler();
+    DrawCinematicSpriteObjects_Ending();
+    CinematicFunction_Intro_Func149();
+    HandleMode7TransformationMatrix();
+    return kCoroutineNone as CoroutineRet;
+}
+#[no_mangle]
+pub unsafe extern "C" fn MaybeHandleCinematicBgObjects() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        + 0x1afc as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        == 0
+    {
+        HandleCinematicBgObjects();
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunctionEscapeFromCebes() {
+    let mut j: int16 = 0;
+    *((&raw mut g_ram as *mut uint8).offset(0xab as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xa7 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    SetupPpu_5_Mode7();
+    j = 656 as int16;
+    while j as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
+        *(((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+            as *mut uint16 as *mut uint8)
+            .offset(j as uint16 as ::core::ffi::c_int as isize) as *mut uint16) = 0 as uint16;
+        j = (j as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as int16;
+    }
+    let mut v2: uint16 = 0 as uint16;
+    loop {
+        *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+            *(g_rom.offset(
+                (((0x8cede9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                    << 15 as ::core::ffi::c_int
+                    | 0x8cede9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                    & 0x3fffff as ::core::ffi::c_int) as isize,
+            ) as *const uint8 as *mut uint16)
+                .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+        v2 = (v2 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        if !(((v2 as ::core::ffi::c_int - 512 as ::core::ffi::c_int) as int16
+            as ::core::ffi::c_int)
+            < 0 as ::core::ffi::c_int)
+        {
+            break;
+        }
+    }
+    DecompressToMem(
+        0x98bcd6 as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x10000 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x99a56f as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x14000 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x99d17e as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x18000 as ::core::ffi::c_int as isize),
+    );
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BD4FC: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7f8000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7f8000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x4000 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BD4FC as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x20 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BD51C: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7f8000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7f8000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x4000 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BD51C as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BD53C: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7f4000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7f4000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x4000 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BD53C as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BD55C: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 0 as uint8,
+        bbad: 0x19 as uint8,
+        a1: LongPtr {
+            addr: (0x7f0000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7f0000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x4000 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BD55C as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    DecompressToMem(
+        0x988304 as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x18000 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x95a82f as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x10000 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x96fe69 as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x14000 as ::core::ffi::c_int as isize),
+    );
+    let mut v3: uint16 = 768 as uint16;
+    loop {
+        *(((&raw mut g_ram as *mut uint8).offset(0x14000 as ::core::ffi::c_int as isize)
+            as *mut uint8)
+            .offset(v3 as ::core::ffi::c_int as isize) as *mut uint16) = 0x8c8c as uint16;
+        v3 = (v3 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        if !(((v3 as ::core::ffi::c_int - 0x4000 as ::core::ffi::c_int) as int16
+            as ::core::ffi::c_int)
+            < 0 as ::core::ffi::c_int)
+        {
+            break;
+        }
+    }
+    DecompressToMem(
+        0x98b5c1 as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x1e000 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x98b857 as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x1e800 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x98baed as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x1f000 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x98bccd as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x1f800 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x97e7de as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0xa000 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x99d65b as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x99d932 as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x6000 as ::core::ffi::c_int as isize),
+    );
+    WriteRegWord(M7A as ::core::ffi::c_int as uint16, 0x100 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x78 as ::core::ffi::c_int as isize) as *mut uint16) =
+        256 as uint16;
+    WriteRegWord(M7B as ::core::ffi::c_int as uint16, 0 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x7a as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    WriteRegWord(M7C as ::core::ffi::c_int as uint16, 0 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x7c as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    WriteRegWord(M7D as ::core::ffi::c_int as uint16, 0x100 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x7e as ::core::ffi::c_int as isize) as *mut uint16) =
+        256 as uint16;
+    WriteRegWord(M7X as ::core::ffi::c_int as uint16, 0x80 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x80 as ::core::ffi::c_int as isize) as *mut uint16) =
+        128 as uint16;
+    WriteRegWord(M7Y as ::core::ffi::c_int as uint16, 0x80 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x82 as ::core::ffi::c_int as isize) as *mut uint16) =
+        128 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+        as *mut uint16) = 32 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) = 64 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    ClearPaletteFXObjects();
+    EnablePaletteFx();
+    EnableNMI();
+    *((&raw mut g_ram as *mut uint8).offset(0x1a03 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(1 as ::core::ffi::c_int as isize) = 0 as uint16;
+    *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 17 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 1 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 2 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 17 as uint8;
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BEEEB as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BEEF1 as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BEEEB as ::core::ffi::c_int as uint16,
+        1 as uint16,
+    );
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BEEF1 as ::core::ffi::c_int as uint16,
+        1 as uint16,
+    );
+    *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize) as *mut uint16) =
+        2 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8bd6d7 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    QueueMusic_Delayed8(0 as uint16);
+    QueueMusic_Delayed8(0xff33 as uint16);
+    QueueMusic_DelayedY(5 as uint16, 0xe as uint16);
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func109() {
+    if HasQueuedMusic() as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
+        SpawnPalfxObject(addr_kPalfx_E1D8 as ::core::ffi::c_int as uint16);
+        SpawnPalfxObject(addr_kPalfx_E1DC as ::core::ffi::c_int as uint16);
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bd6f2 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func110() {
+    CinematicFunction_Intro_Func111();
+    if AdvanceFastScreenFadeIn() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bd701 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func111() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a51 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        & 1 as ::core::ffi::c_int
+        == 0 as ::core::ffi::c_int
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+            as *mut uint16) = (*((&raw mut g_ram as *mut uint8)
+            .offset(0x198d as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            - 1 as ::core::ffi::c_int) as uint8 as uint16;
+    }
+    let ref mut fresh109 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x198f as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh109 = (*fresh109 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+    if *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - 384 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        == 0
+    {
+        if AdvanceFastScreenFadeOut() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
+            *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+                as *mut uint16) =
+                (0x8bd731 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        }
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func112() {
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BD746: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7e2000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7e2000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x4000 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BD746 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x20 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BD766: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7e2000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7e2000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x4000 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BD766 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    DecompressToMem(
+        0x98ed4f as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize),
+    );
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BD79B: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 0 as uint8,
+        bbad: 0x19 as uint8,
+        a1: LongPtr {
+            addr: (0x7e2000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7e2000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x4000 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BD79B as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    ClearPaletteFXObjects();
+    ClearCinematicSprites();
+    SpawnPalfxObject(addr_kPalfx_E1E0 as ::core::ffi::c_int as uint16);
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BEED3 as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BEED9 as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BEEDF as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BEEE5 as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+        as *mut uint16) = 32 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) = 64 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8bd7f8 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func114() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a51 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        & 1 as ::core::ffi::c_int
+        == 0 as ::core::ffi::c_int
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+            as *mut uint16) = (*((&raw mut g_ram as *mut uint8)
+            .offset(0x198d as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            - 1 as ::core::ffi::c_int) as uint8 as uint16;
+    }
+    let ref mut fresh108 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x198f as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh108 = (*fresh108 as ::core::ffi::c_int + 3 as ::core::ffi::c_int) as uint16;
+    if *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - 384 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        == 0
+    {
+        if AdvanceFastScreenFadeOut() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
+            *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+                as *mut uint16) =
+                (0x8bd837 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        }
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func113() {
+    CinematicFunction_Intro_Func114();
+    if AdvanceFastScreenFadeIn() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bd807 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func115() {
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BD84C: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7e6000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7e6000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x4000 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BD84C as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x20 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BD86C: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7e6000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7e6000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x4000 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BD86C as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    DecompressToMem(
+        0x999101 as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x6000 as ::core::ffi::c_int as isize),
+    );
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BD8A1: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 0 as uint8,
+        bbad: 0x19 as uint8,
+        a1: LongPtr {
+            addr: (0x7e6000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7e6000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x4000 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BD8A1 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x40 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BD8C1: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7f8000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7f8000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x6000 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BD8C1 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x70 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BD8E1: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7fe000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7fe000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x800 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BD8E1 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x74 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BD901: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7fe800 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7fe800 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x800 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BD901 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x78 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BD921: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7ff000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7ff000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x800 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BD921 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x7c as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BD941: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7ff800 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7ff800 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x800 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BD941 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x50 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BD961: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7ea000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7ea000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x1000 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BD961 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    *(&raw mut g_ram as *mut uint8).offset(0x52 as ::core::ffi::c_int as isize) = 2 as uint8;
+    ClearPaletteFXObjects();
+    ClearCinematicSprites();
+    let mut v0: uint16 = 256 as uint16;
+    loop {
+        let mut v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        let mut v2: uint16 = *(g_rom.offset(
+            (((0x8cebe9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                << 15 as ::core::ffi::c_int
+                | 0x8cebe9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                & 0x3fffff as ::core::ffi::c_int) as isize,
+        ) as *const uint8 as *mut uint16)
+            .offset(v1 as isize);
+        *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = v2;
+        v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        if !(((v0 as ::core::ffi::c_int - 512 as ::core::ffi::c_int) as int16
+            as ::core::ffi::c_int)
+            < 0 as ::core::ffi::c_int)
+        {
+            break;
+        }
+    }
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BEE9D as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BEEAF as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BEEA3 as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BEEA9 as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) = 64 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x78 as ::core::ffi::c_int as isize) as *mut uint16) =
+        256 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x7a as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x7c as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x7e as ::core::ffi::c_int as isize) as *mut uint16) =
+        256 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x80 as ::core::ffi::c_int as isize) as *mut uint16) =
+        128 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x82 as ::core::ffi::c_int as isize) as *mut uint16) =
+        128 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 1 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 16 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 2 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 33 as uint8;
+    CopyPalettesToFadingPalettes();
+    DecomposePaletteDataForFading();
+    ClearYColorsFromIndexX(0x1a0 as uint16, 0x10 as uint16);
+    ClearYColorsFromIndexX(0x1e0 as uint16, 0x10 as uint16);
+    ComposeFadingPalettes();
+    *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 63 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8bda02 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func116() {
+    CinematicFunction_Intro_Func117();
+    if AdvanceFastScreenFadeIn() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
+        *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 2 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 2 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bda1a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func117() {
+    let ref mut fresh106 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x198f as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh106 = (*fresh106 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        & 1 as ::core::ffi::c_int
+        == 0 as ::core::ffi::c_int
+    {
+        FadeOutYColorsFromIndexX(0xe0 as uint16, 0x10 as uint16);
+        FadeInYColorsFromIndexX(0x1a0 as uint16, 0x10 as uint16);
+        FadeInYColorsFromIndexX(0x1e0 as uint16, 0x10 as uint16);
+        ComposeFadingPalettes();
+    }
+    let ref mut fresh107 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh107 = (*fresh107).wrapping_sub(1);
+    if *fresh107 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
+        let mut v0: uint16 = 0 as uint16;
+        loop {
+            *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+                *(g_rom.offset(
+                    (((0x8cebe9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                        << 15 as ::core::ffi::c_int
+                        | 0x8cebe9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                        & 0x3fffff as ::core::ffi::c_int) as isize,
+                ) as *const uint8 as *mut uint16)
+                    .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+            v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+            if !(((v0 as ::core::ffi::c_int - 256 as ::core::ffi::c_int) as int16
+                as ::core::ffi::c_int)
+                < 0 as ::core::ffi::c_int)
+            {
+                break;
+            }
+        }
+        *(&raw mut g_ram as *mut uint8).offset(0x5f as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize) = 112 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize) = 120 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x5a as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x5c as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize) = 68 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x5e as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 16 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6c as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6d as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6e as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 0 as uint8;
+        WriteReg(COLDATA as ::core::ffi::c_int as uint16, 0xe0 as uint8);
+        *(&raw mut g_ram as *mut uint8)
+            .offset(0x74 as ::core::ffi::c_int as isize)
+            .offset(0 as ::core::ffi::c_int as isize) = 32 as uint8;
+        *(&raw mut g_ram as *mut uint8)
+            .offset(0x74 as ::core::ffi::c_int as isize)
+            .offset(1 as ::core::ffi::c_int as isize) = 64 as uint8;
+        *(&raw mut g_ram as *mut uint8)
+            .offset(0x74 as ::core::ffi::c_int as isize)
+            .offset(2 as ::core::ffi::c_int as isize) = 0x80 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x57 as ::core::ffi::c_int as isize) = 0 as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1999 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x199b as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x199d as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x199f as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1982 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xb5 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 2 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bdad3 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+    }
+}
+static mut kCinematicFunction_Intro_Func118_Tab0: [uint16; 16] = [
+    0 as ::core::ffi::c_int as uint16,
+    0x800 as ::core::ffi::c_int as uint16,
+    0x1000 as ::core::ffi::c_int as uint16,
+    0x1800 as ::core::ffi::c_int as uint16,
+    0x2000 as ::core::ffi::c_int as uint16,
+    0x2800 as ::core::ffi::c_int as uint16,
+    0x3000 as ::core::ffi::c_int as uint16,
+    0x3800 as ::core::ffi::c_int as uint16,
+    0x4000 as ::core::ffi::c_int as uint16,
+    0x4800 as ::core::ffi::c_int as uint16,
+    0x5000 as ::core::ffi::c_int as uint16,
+    0x5800 as ::core::ffi::c_int as uint16,
+    0x6000 as ::core::ffi::c_int as uint16,
+    0x6800 as ::core::ffi::c_int as uint16,
+    0x7000 as ::core::ffi::c_int as uint16,
+    0x7800 as ::core::ffi::c_int as uint16,
+];
+static mut kCinematicFunction_Intro_Func118_Tab1: [uint16; 16] = [
+    0 as ::core::ffi::c_int as uint16,
+    0x800 as ::core::ffi::c_int as uint16,
+    0x1000 as ::core::ffi::c_int as uint16,
+    0x1800 as ::core::ffi::c_int as uint16,
+    0x2000 as ::core::ffi::c_int as uint16,
+    0x2800 as ::core::ffi::c_int as uint16,
+    0x3000 as ::core::ffi::c_int as uint16,
+    0x3800 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    0x800 as ::core::ffi::c_int as uint16,
+    0x1000 as ::core::ffi::c_int as uint16,
+    0x1800 as ::core::ffi::c_int as uint16,
+    0x2000 as ::core::ffi::c_int as uint16,
+    0x2800 as ::core::ffi::c_int as uint16,
+    0x3000 as ::core::ffi::c_int as uint16,
+    0x3800 as ::core::ffi::c_int as uint16,
+];
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func118() {
+    let mut v2: ::core::ffi::c_uint = 0;
+    let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
+    let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x334 as ::core::ffi::c_int as isize) as *mut uint16);
+    v2 = *((&raw mut g_ram as *mut uint8).offset(0x334 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_uint;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - 8 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x2d0 as ::core::ffi::c_int as isize)
+            as *mut Mode7VramWriteQueue)
+            .offset(0 as ::core::ffi::c_int as isize))
+        .field_0)
+            .offset(
+                *((&raw mut g_ram as *mut uint8).offset(0x334 as ::core::ffi::c_int as isize)
+                    as *mut uint16) as ::core::ffi::c_int as isize,
+            ) as *mut uint16) = 192 as uint16;
+        let mut v3: ::core::ffi::c_int = v0 as ::core::ffi::c_int;
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x2d0 as ::core::ffi::c_int as isize)
+            as *mut Mode7VramWriteQueue)
+            .offset(0 as ::core::ffi::c_int as isize))
+        .field_1 as *mut uint8)
+            .offset(v2 as isize) as *mut uint16) =
+            kCinematicFunction_Intro_Func118_Tab0[v3 as usize];
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x2d0 as ::core::ffi::c_int as isize)
+            as *mut Mode7VramWriteQueue)
+            .offset(0 as ::core::ffi::c_int as isize))
+        .gap3 as *mut uint8)
+            .offset(v1 as isize) as *mut uint8 as *mut uint16) = 127 as uint16;
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x2d0 as ::core::ffi::c_int as isize)
+            as *mut Mode7VramWriteQueue)
+            .offset(0 as ::core::ffi::c_int as isize))
+        .gap3 as *mut uint8)
+            .offset((v1 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize)
+            as *mut uint8 as *mut uint16) = 2048 as uint16;
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x2d0 as ::core::ffi::c_int as isize)
+            as *mut Mode7VramWriteQueue)
+            .offset(0 as ::core::ffi::c_int as isize))
+        .gap3 as *mut uint8)
+            .offset((v1 as ::core::ffi::c_int + 3 as ::core::ffi::c_int) as isize)
+            as *mut uint8 as *mut uint16) = kCinematicFunction_Intro_Func118_Tab1[v3 as usize];
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x2d0 as ::core::ffi::c_int as isize)
+            as *mut Mode7VramWriteQueue)
+            .offset(1 as ::core::ffi::c_int as isize))
+        .field_1 as *mut uint8)
+            .offset(v1 as ::core::ffi::c_int as isize) as *mut uint16) = 128 as uint16;
+    } else {
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x2d0 as ::core::ffi::c_int as isize)
+            as *mut Mode7VramWriteQueue)
+            .offset(0 as ::core::ffi::c_int as isize))
+        .field_0)
+            .offset(
+                *((&raw mut g_ram as *mut uint8).offset(0x334 as ::core::ffi::c_int as isize)
+                    as *mut uint16) as ::core::ffi::c_int as isize,
+            ) as *mut uint16) = 128 as uint16;
+        let mut v4: ::core::ffi::c_int = v0 as ::core::ffi::c_int;
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x2d0 as ::core::ffi::c_int as isize)
+            as *mut Mode7VramWriteQueue)
+            .offset(0 as ::core::ffi::c_int as isize))
+        .field_1 as *mut uint8)
+            .offset(v2 as isize) as *mut uint16) =
+            kCinematicFunction_Intro_Func118_Tab0[v4 as usize];
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x2d0 as ::core::ffi::c_int as isize)
+            as *mut Mode7VramWriteQueue)
+            .offset(0 as ::core::ffi::c_int as isize))
+        .gap3 as *mut uint8)
+            .offset(v1 as isize) as *mut uint8 as *mut uint16) = 127 as uint16;
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x2d0 as ::core::ffi::c_int as isize)
+            as *mut Mode7VramWriteQueue)
+            .offset(0 as ::core::ffi::c_int as isize))
+        .gap3 as *mut uint8)
+            .offset((v1 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize)
+            as *mut uint8 as *mut uint16) = 2048 as uint16;
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x2d0 as ::core::ffi::c_int as isize)
+            as *mut Mode7VramWriteQueue)
+            .offset(0 as ::core::ffi::c_int as isize))
+        .gap3 as *mut uint8)
+            .offset((v1 as ::core::ffi::c_int + 3 as ::core::ffi::c_int) as isize)
+            as *mut uint8 as *mut uint16) = kCinematicFunction_Intro_Func118_Tab1[v4 as usize];
+        *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x2d0 as ::core::ffi::c_int as isize)
+            as *mut Mode7VramWriteQueue)
+            .offset(1 as ::core::ffi::c_int as isize))
+        .field_1 as *mut uint8)
+            .offset(v1 as ::core::ffi::c_int as isize) as *mut uint16) = 0 as uint16;
+    }
+    *((&raw mut g_ram as *mut uint8).offset(0x334 as ::core::ffi::c_int as isize) as *mut uint16) =
+        (v1 as ::core::ffi::c_int + 9 as ::core::ffi::c_int) as uint16;
+    let ref mut fresh105 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh105 = (*fresh105).wrapping_add(1);
+    if *fresh105 as ::core::ffi::c_int - 16 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
+        == 0
+    {
+        *(&raw mut g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize) = 1 as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bdb9d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func119() {
+    let ref mut fresh104 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh104 = (*fresh104).wrapping_sub(1);
+    let mut v0: bool =
+        *fresh104 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        == 0
+        || v0 as ::core::ffi::c_int != 0
+    {
+        QueueMusic_Delayed8(0 as uint16);
+        QueueMusic_Delayed8(0xff3c as uint16);
+        QueueMusic_DelayedY(5 as uint16, 0xe as uint16);
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bdbc4 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func120() {
+    if HasQueuedMusic() as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
+        *(&raw mut g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize) = 7 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x5f as ::core::ffi::c_int as isize) = 0x80 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 17 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 48 as uint8;
+        *(&raw mut g_ram as *mut uint8)
+            .offset(0x74 as ::core::ffi::c_int as isize)
+            .offset(0 as ::core::ffi::c_int as isize) = 63 as uint8;
+        *(&raw mut g_ram as *mut uint8)
+            .offset(0x74 as ::core::ffi::c_int as isize)
+            .offset(1 as ::core::ffi::c_int as isize) = 95 as uint8;
+        *(&raw mut g_ram as *mut uint8)
+            .offset(0x74 as ::core::ffi::c_int as isize)
+            .offset(2 as ::core::ffi::c_int as isize) = -(97 as ::core::ffi::c_int) as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize) = 0 as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(0 as ::core::ffi::c_int as isize) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(16 as ::core::ffi::c_int as isize) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(128 as ::core::ffi::c_int as isize) = 0 as uint16;
+        SpawnPalfxObject(addr_kPalfx_E1D4 as ::core::ffi::c_int as uint16);
+        SpawnPalfxObject(addr_kPalfx_E1E4 as ::core::ffi::c_int as uint16);
+        *((&raw mut g_ram as *mut uint8).offset(0x80 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 56 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x82 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 24 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+            as *mut uint16) = -(72 as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+            as *mut uint16) = -(104 as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+            as *mut uint16) = 3072 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+            as *mut uint16) = -(112 as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
+            as *mut uint16) = 192 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bdca5 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func122() {
+    let ref mut fresh96 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh96 = (*fresh96).wrapping_sub(1);
+    let mut v0: bool =
+        *fresh96 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        == 0
+        || v0 as ::core::ffi::c_int != 0
+    {
+        let ref mut fresh97 = *(&raw mut g_ram as *mut uint8)
+            .offset(0x74 as ::core::ffi::c_int as isize)
+            .offset(0 as ::core::ffi::c_int as isize);
+        *fresh97 = (*fresh97).wrapping_sub(1);
+        if *fresh97 as ::core::ffi::c_int - 32 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
+            != 0
+        {
+            *(&raw mut g_ram as *mut uint8)
+                .offset(0x74 as ::core::ffi::c_int as isize)
+                .offset(0 as ::core::ffi::c_int as isize) = 32 as uint8;
+        }
+        let ref mut fresh98 = *(&raw mut g_ram as *mut uint8)
+            .offset(0x74 as ::core::ffi::c_int as isize)
+            .offset(1 as ::core::ffi::c_int as isize);
+        *fresh98 = (*fresh98).wrapping_sub(1);
+        if *fresh98 as ::core::ffi::c_int - 64 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
+            != 0
+        {
+            *(&raw mut g_ram as *mut uint8)
+                .offset(0x74 as ::core::ffi::c_int as isize)
+                .offset(1 as ::core::ffi::c_int as isize) = 64 as uint8;
+        }
+        let ref mut fresh99 = *(&raw mut g_ram as *mut uint8)
+            .offset(0x74 as ::core::ffi::c_int as isize)
+            .offset(2 as ::core::ffi::c_int as isize);
+        *fresh99 = (*fresh99).wrapping_sub(1);
+        if *fresh99 as ::core::ffi::c_int + 0x80 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
+            != 0
+        {
+            *(&raw mut g_ram as *mut uint8)
+                .offset(0x74 as ::core::ffi::c_int as isize)
+                .offset(2 as ::core::ffi::c_int as isize) = 0x80 as uint8;
+        }
+        if *(&raw mut g_ram as *mut uint8)
+            .offset(0x74 as ::core::ffi::c_int as isize)
+            .offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+            == 32 as ::core::ffi::c_int
+            && *(&raw mut g_ram as *mut uint8)
+                .offset(0x74 as ::core::ffi::c_int as isize)
+                .offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+                == 64 as ::core::ffi::c_int
+            && *(&raw mut g_ram as *mut uint8)
+                .offset(0x74 as ::core::ffi::c_int as isize)
+                .offset(2 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+                == 0x80 as ::core::ffi::c_int
+        {
+            *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) =
+                0 as uint8;
+            *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) =
+                0 as uint8;
+        }
+        *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 8 as uint16;
+    }
+}
+static mut kCinematicFunction_Intro_Func121_Tab0: [uint16; 32] = [
+    0 as ::core::ffi::c_int as uint16,
+    0x8000 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    0x8000 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    0x8000 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    0x8000 as ::core::ffi::c_int as uint16,
+    0xffff as ::core::ffi::c_int as uint16,
+    0x8000 as ::core::ffi::c_int as uint16,
+    0xffff as ::core::ffi::c_int as uint16,
+    0x8000 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    0x8000 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    0x8000 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    0x8000 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    0x8000 as ::core::ffi::c_int as uint16,
+    0xffff as ::core::ffi::c_int as uint16,
+    0x8000 as ::core::ffi::c_int as uint16,
+    0xffff as ::core::ffi::c_int as uint16,
+    0x8000 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    0x8000 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    0x8000 as ::core::ffi::c_int as uint16,
+    0xffff as ::core::ffi::c_int as uint16,
+    0x8000 as ::core::ffi::c_int as uint16,
+    0xffff as ::core::ffi::c_int as uint16,
+    0x8000 as ::core::ffi::c_int as uint16,
+];
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func121() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        != 0
+    {
+        let ref mut fresh101 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x1a4b as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *fresh101 = (*fresh101).wrapping_sub(1);
+    } else {
+        CinematicFunction_Intro_Func122();
+    }
+    *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+        as *mut uint16) = (*((&raw mut g_ram as *mut uint8)
+        .offset(0x198d as ::core::ffi::c_int as isize) as *mut uint16)
+        as ::core::ffi::c_int
+        - 4 as ::core::ffi::c_int) as uint8 as uint16;
+    let mut v0: ::core::ffi::c_int = 2 as ::core::ffi::c_int
+        * *((&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int;
+    AddToHiLo(
+        (&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize) as *mut uint16,
+        (&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize) as *mut uint16,
+        (kCinematicFunction_Intro_Func121_Tab0[v0 as usize] as uint32) << 16 as ::core::ffi::c_int
+            | kCinematicFunction_Intro_Func121_Tab0[(v0 + 1 as ::core::ffi::c_int) as usize]
+                as uint32,
+    );
+    *((&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize)
+        as *mut uint16) = (*((&raw mut g_ram as *mut uint8)
+        .offset(0x1a4d as ::core::ffi::c_int as isize) as *mut uint16)
+        as ::core::ffi::c_int
+        + 1 as ::core::ffi::c_int
+        & 0xf as ::core::ffi::c_int) as uint16;
+    let ref mut fresh102 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x198f as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh102 = (*fresh102 as ::core::ffi::c_int - 8 as ::core::ffi::c_int) as uint16;
+    if *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - 1456 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
+            as *mut uint16) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bdd42 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+static mut kCinematicFunction_Intro_Func123_Tab0: [uint16; 16] = [
+    1 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    1 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    1 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    0xffff as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    0xffff as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    1 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    1 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    0xffff as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+];
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func123() {
+    CinematicFunction_Intro_Func122();
+    if *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        != 224 as ::core::ffi::c_int
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+            as *mut uint16) = (*((&raw mut g_ram as *mut uint8)
+            .offset(0x198d as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            - 1 as ::core::ffi::c_int) as uint8 as uint16;
+    }
+    let mut v0: ::core::ffi::c_int = 2 as ::core::ffi::c_int
+        * *((&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int;
+    AddToHiLo(
+        (&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize) as *mut uint16,
+        (&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize) as *mut uint16,
+        (kCinematicFunction_Intro_Func123_Tab0[v0 as usize] as uint32) << 16 as ::core::ffi::c_int
+            | kCinematicFunction_Intro_Func123_Tab0[(v0 + 1 as ::core::ffi::c_int) as usize]
+                as uint32,
+    );
+    *((&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize)
+        as *mut uint16) = (*((&raw mut g_ram as *mut uint8)
+        .offset(0x1a4d as ::core::ffi::c_int as isize) as *mut uint16)
+        as ::core::ffi::c_int
+        + 1 as ::core::ffi::c_int
+        & 7 as ::core::ffi::c_int) as uint16;
+    let ref mut fresh100 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x198f as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh100 = (*fresh100 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
+    if *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - 1184 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bddcd as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0x8000 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        if CheckEventHappened(0xf as uint16) != 0 {
+            SpawnCinematicSpriteObjectToR18(0xef21 as uint16, 4 as uint16);
+        }
+    }
+}
+static mut g_word_8BDE43: [uint16; 16] = [
+    0 as ::core::ffi::c_int as uint16,
+    0x6f7b as ::core::ffi::c_int as uint16,
+    0x4a52 as ::core::ffi::c_int as uint16,
+    0x1ce7 as ::core::ffi::c_int as uint16,
+    0 as ::core::ffi::c_int as uint16,
+    0x5ad6 as ::core::ffi::c_int as uint16,
+    0x4a52 as ::core::ffi::c_int as uint16,
+    0x35ad as ::core::ffi::c_int as uint16,
+    0x2529 as ::core::ffi::c_int as uint16,
+    0x7fff as ::core::ffi::c_int as uint16,
+    0x56b5 as ::core::ffi::c_int as uint16,
+    0x294a as ::core::ffi::c_int as uint16,
+    0x4210 as ::core::ffi::c_int as uint16,
+    0x2d6b as ::core::ffi::c_int as uint16,
+    0x18c6 as ::core::ffi::c_int as uint16,
+    0x7fff as ::core::ffi::c_int as uint16,
+];
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func124() {
+    CinematicFunction_Intro_Func122();
+    AddToHiLo(
+        (&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize) as *mut uint16,
+        (&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize) as *mut uint16,
+        -(256 as ::core::ffi::c_int) as uint32,
+    );
+    AddToHiLo(
+        (&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize) as *mut uint16,
+        (&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize) as *mut uint16,
+        (*((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
+            as *mut uint16) as uint32)
+            << 16 as ::core::ffi::c_int
+            | *((&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize)
+                as *mut uint16) as uint32,
+    );
+    if *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - 384 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+        && *((&raw mut g_ram as *mut uint8).offset(0x1a51 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            & 3 as ::core::ffi::c_int
+            == 0 as ::core::ffi::c_int
+        && *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            != 16 as ::core::ffi::c_int
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+            as *mut uint16) = (*((&raw mut g_ram as *mut uint8)
+            .offset(0x198d as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            + 2 as ::core::ffi::c_int) as uint8 as uint16;
+    }
+    if *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - 32 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BEEC7 as ::core::ffi::c_int as uint16,
+            *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+                as *mut uint16),
+        );
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bde63 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
+        while i >= 0 as ::core::ffi::c_int {
+            *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(((i >> 1 as ::core::ffi::c_int) + 80 as ::core::ffi::c_int) as isize) =
+                g_word_8BDE43[(i >> 1 as ::core::ffi::c_int) as usize];
+            i -= 2 as ::core::ffi::c_int;
+        }
+    } else {
+        let ref mut fresh94 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x198f as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *fresh94 = (*fresh94 as ::core::ffi::c_int - 4 as ::core::ffi::c_int) as uint16;
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func125() {
+    *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize) as *mut uint16) =
+        1 as uint16;
+    if AdvanceFastScreenFadeOut() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
+        EnableNMI();
+        *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bde80 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func126() {
+    SetupPpu_7_Mode1();
+    ClearCinematicSprites();
+    ClearPaletteFXObjects();
+    let mut v0: uint16 = 0 as uint16;
+    loop {
+        *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+            *(g_rom.offset(
+                (((0x8ce9e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                    << 15 as ::core::ffi::c_int
+                    | 0x8ce9e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                    & 0x3fffff as ::core::ffi::c_int) as isize,
+            ) as *const uint8 as *mut uint16)
+                .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+        v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        if !(((v0 as ::core::ffi::c_int - 256 as ::core::ffi::c_int) as int16
+            as ::core::ffi::c_int)
+            < 0 as ::core::ffi::c_int)
+        {
+            break;
+        }
+    }
+    DecompressToMem(
+        0x979803 as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x10000 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x97b957 as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x97d7fc as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x6000 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x97e7de as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x1c000 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x9796f4 as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x1e000 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x97f987 as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x14000 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x99da9f as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x1e800 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x99dab1 as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x1f000 as ::core::ffi::c_int as isize),
+    );
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x20 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BDF39: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7fe800 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7fe800 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x100 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BDF39 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x24 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BDF59: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7ff000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7ff000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x800 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BDF59 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x40 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BDF79: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7fc000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7fc000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x1000 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BDF79 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BDF99: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7e6000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7e6000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x4000 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BDF99 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x50 as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BDFB9: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7f0000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7f0000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x2000 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BDFB9 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+    WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x4c as uint8);
+    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+    static mut unk_8BDFD9: StartDmaCopy = StartDmaCopy {
+        chan: 1 as uint8,
+        dmap: 1 as uint8,
+        bbad: 0x18 as uint8,
+        a1: LongPtr {
+            addr: (0x7fe000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+            bank: (0x7fe000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+        },
+        das: 0x800 as VoidP,
+    };
+    SetupDmaTransfer(&raw const unk_8BDFD9 as *const ::core::ffi::c_void);
+    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    DecompressToMem(
+        0x99e089 as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x6000 as ::core::ffi::c_int as isize),
+    );
+    DecompressToMem(
+        0x99ecc4 as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x8000 as ::core::ffi::c_int as isize),
+    );
+    if *((&raw mut g_ram as *mut uint8).offset(0x9e0 as ::core::ffi::c_int as isize) as *mut uint16)
+        as ::core::ffi::c_int
+        - 3 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+        WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
+        WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+        static mut unk_8BE027: StartDmaCopy = StartDmaCopy {
+            chan: 1 as uint8,
+            dmap: 1 as uint8,
+            bbad: 0x18 as uint8,
+            a1: LongPtr {
+                addr: (0x7e2000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+                bank: (0x7e2000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+            },
+            das: 0x4000 as VoidP,
+        };
+        SetupDmaTransfer(&raw const unk_8BE027 as *const ::core::ffi::c_void);
+        WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    } else {
+        WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
+        WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
+        WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
+        static mut unk_8BE04B: StartDmaCopy = StartDmaCopy {
+            chan: 1 as uint8,
+            dmap: 1 as uint8,
+            bbad: 0x18 as uint8,
+            a1: LongPtr {
+                addr: (0x7f0000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as VoidP,
+                bank: (0x7f0000 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) as uint8,
+            },
+            das: 0x4000 as VoidP,
+        };
+        SetupDmaTransfer(&raw const unk_8BE04B as *const ::core::ffi::c_void);
+        WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
+    }
+    WriteRegWord(M7A as ::core::ffi::c_int as uint16, 0x100 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x78 as ::core::ffi::c_int as isize) as *mut uint16) =
+        256 as uint16;
+    WriteRegWord(M7B as ::core::ffi::c_int as uint16, 0 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x7a as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    WriteRegWord(M7C as ::core::ffi::c_int as uint16, 0 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x7c as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    WriteRegWord(M7D as ::core::ffi::c_int as uint16, 0x100 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x7e as ::core::ffi::c_int as isize) as *mut uint16) =
+        256 as uint16;
+    WriteRegWord(M7X as ::core::ffi::c_int as uint16, 0x68 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x80 as ::core::ffi::c_int as isize) as *mut uint16) =
+        104 as uint16;
+    WriteRegWord(M7Y as ::core::ffi::c_int as uint16, 0x70 as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x82 as ::core::ffi::c_int as isize) as *mut uint16) =
+        112 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+        as *mut uint16) = -(8 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+        as *mut uint16) = -(24 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) = 2304 as uint16;
+    EnableNMI();
+    *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 15 as uint8;
+    *((&raw mut g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    EnableHdmaObjects();
+    let mut i: ::core::ffi::c_int = 510 as ::core::ffi::c_int;
+    while i >= 0 as ::core::ffi::c_int {
+        *((&raw mut g_ram as *mut uint8).offset(0x9800 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((i >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
+        i -= 2 as ::core::ffi::c_int;
+    }
+    CinematicFunction_Intro_Func127();
+    DecompressToMem(
+        0x97eeff as uint32,
+        (&raw mut g_ram as *mut uint8).offset(0x10000 as ::core::ffi::c_int as isize),
+    );
+    ClearCinematicBgObjects(0x7f as uint16);
+    CinematicFunction_Intro_Func128(0x7f as uint16);
+    EnableTextGlowObjects_();
+    *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize) as *mut uint16) =
+        3 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize) as *mut uint16) =
+        3 as uint16;
+    CreditsObject_Init(addr_stru_8BF6F8 as ::core::ffi::c_int as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8bdb9d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func129() {
+    let ref mut fresh92 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh92 = (*fresh92).wrapping_sub(1);
+    let mut v0: bool =
+        *fresh92 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        == 0
+        || v0 as ::core::ffi::c_int != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8be110 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 120 as uint16;
+        *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 16 as uint8;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func130() {
+    HandleFadeIn();
+    if *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
+        as ::core::ffi::c_int
+        == 15 as ::core::ffi::c_int
+    {
+        *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 2 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 16 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 2 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 34 as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        CopyPalettesToFadingPalettes();
+        DecomposePaletteDataForFading();
+        ClearYColorsFromIndexX(0x40 as uint16, 0x10 as uint16);
+        ComposeFadingPalettes();
+        *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 32 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8be158 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func131() {
+    FadeInYColorsFromIndexX(0x40 as uint16, 0x10 as uint16);
+    ComposeFadingPalettes();
+    let ref mut fresh90 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh90 = (*fresh90).wrapping_sub(1);
+    let mut v0: bool =
+        *fresh90 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        == 0
+        || v0 as ::core::ffi::c_int != 0
+    {
+        *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 18 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 4 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 2 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 2 as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 180 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8be190 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        CinematicFunction_Intro_Func133();
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func132() {
+    let ref mut fresh86 = *((&raw mut g_ram as *mut uint8)
+        .offset(0xbb as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh86 = (*fresh86 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+    let ref mut fresh88 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh88 = (*fresh88).wrapping_sub(1);
+    let mut v0: bool =
+        *fresh88 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        == 0
+        || v0 as ::core::ffi::c_int != 0
+    {
+        let mut v1: uint16 = 0 as uint16;
+        loop {
+            (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
+                as *mut Ram3000))
+                .pause_menu_map_tilemap
+                [(v1 as ::core::ffi::c_int + 288 as ::core::ffi::c_int) as usize] =
+                *(g_rom.offset(
+                    (((0x8cdc9b as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                        << 15 as ::core::ffi::c_int
+                        | 0x8cdc9b as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                        & 0x3fffff as ::core::ffi::c_int) as isize,
+                ) as *const uint8 as *mut uint16)
+                    .offset(v1 as isize);
+            v1 = v1.wrapping_add(1);
+            if !(((v1 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 576 as ::core::ffi::c_int)
+                as int16 as ::core::ffi::c_int)
+                < 0 as ::core::ffi::c_int)
+            {
+                break;
+            }
+        }
+        CinematicUpdateSomeBg();
+        *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 1 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 0 as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 180 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8be1d2 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0xd9c as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func134() {
+    let ref mut fresh85 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh85 = (*fresh85).wrapping_sub(1);
+    if *fresh85 == 0 {
+        *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 127 as uint16;
+        if *((&raw mut g_ram as *mut uint8).offset(0x9e0 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            - 3 as ::core::ffi::c_int
+            & 0x8000 as ::core::ffi::c_int
+            != 0
+        {
+            CopyPalettesToFadingPalettes();
+            DecomposePaletteDataForFading();
+            SpawnCinematicSpriteObject(
+                addr_kCinematicSpriteObjectDef_8BEF27 as ::core::ffi::c_int as uint16,
+                0 as uint16,
+            );
+            SpawnCinematicSpriteObject(
+                addr_kCinematicSpriteObjectDef_8BEF2D as ::core::ffi::c_int as uint16,
+                0 as uint16,
+            );
+        } else {
+            if *((&raw mut g_ram as *mut uint8).offset(0x9e0 as ::core::ffi::c_int as isize)
+                as *mut uint16) as ::core::ffi::c_int
+                - 10 as ::core::ffi::c_int
+                & 0x8000 as ::core::ffi::c_int
+                == 0
+            {
+                SpawnCinematicSpriteObject(
+                    addr_kCinematicSpriteObjectDef_8BEF4B as ::core::ffi::c_int as uint16,
+                    0 as uint16,
+                );
+                SpawnCinematicSpriteObject(
+                    addr_kCinematicSpriteObjectDef_8BEF45 as ::core::ffi::c_int as uint16,
+                    0 as uint16,
+                );
+                *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+                    as *mut uint16) =
+                    (0x8be293 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+                *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) =
+                    16 as uint8;
+                *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) =
+                    0 as uint8;
+                return;
+            }
+            CopyPalettesToFadingPalettes();
+            DecomposePaletteDataForFading();
+            SpawnCinematicSpriteObject(
+                addr_kCinematicSpriteObjectDef_8BEF51 as ::core::ffi::c_int as uint16,
+                0 as uint16,
+            );
+            SpawnCinematicSpriteObject(
+                addr_kCinematicSpriteObjectDef_8BEF45 as ::core::ffi::c_int as uint16,
+                0 as uint16,
+            );
+            ClearYColorsFromIndexX(0x1c0 as uint16, 0x10 as uint16);
+        }
+        ClearYColorsFromIndexX(0x1a0 as uint16, 0x10 as uint16);
+        ComposeFadingPalettes();
+        *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 2 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 16 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 2 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 34 as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8be265 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func136() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        & 3 as ::core::ffi::c_int
+        != 0 as ::core::ffi::c_int
+    {
+        CinematicFunction_Intro_Func135();
+    } else {
+        FadeOutYColorsFromIndexX(0x40 as uint16, 0x10 as uint16);
+        if *((&raw mut g_ram as *mut uint8).offset(0x9e0 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            - 3 as ::core::ffi::c_int
+            & 0x8000 as ::core::ffi::c_int
+            == 0
+        {
+            FadeInYColorsFromIndexX(0x1c0 as uint16, 0x10 as uint16);
+        }
+        FadeInYColorsFromIndexX(0x1a0 as uint16, 0x10 as uint16);
+        ComposeFadingPalettes();
+        CinematicFunction_Intro_Func135();
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func135() {
+    let ref mut fresh84 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh84 = (*fresh84).wrapping_sub(1);
+    if *fresh84 as ::core::ffi::c_int - 65 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0
+    {
+        let mut i: ::core::ffi::c_int = 574 as ::core::ffi::c_int;
+        while i >= 0 as ::core::ffi::c_int {
+            *(((&raw mut (*((&raw mut g_ram as *mut uint8)
+                .offset(0x3000 as ::core::ffi::c_int as isize)
+                as *mut Ram3000))
+                .pause_menu_map_tilemap as *mut uint16)
+                .offset(288 as ::core::ffi::c_int as isize) as *mut uint16
+                as *mut uint8)
+                .offset(i as uint16 as ::core::ffi::c_int as isize) as *mut uint16) = 127 as uint16;
+            i -= 2 as ::core::ffi::c_int;
+        }
+        let mut v1: uint16 = 0 as uint16;
+        loop {
+            (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
+                as *mut Ram3000))
+                .pause_menu_map_tilemap
+                [(v1 as ::core::ffi::c_int + 384 as ::core::ffi::c_int) as usize] =
+                *(g_rom.offset(
+                    (((0x8cdedb as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                        << 15 as ::core::ffi::c_int
+                        | 0x8cdedb as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                        & 0x3fffff as ::core::ffi::c_int) as isize,
+                ) as *const uint8 as *mut uint16)
+                    .offset(v1 as isize);
+            v1 = v1.wrapping_add(1);
+            if !(((v1 as ::core::ffi::c_int * 2 as ::core::ffi::c_int - 128 as ::core::ffi::c_int)
+                as int16 as ::core::ffi::c_int)
+                < 0 as ::core::ffi::c_int)
+            {
+                break;
+            }
+        }
+        CinematicUpdateSomeBg();
+        *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 1 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 0 as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
+            as *mut uint16) = 180 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8be2dd as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func137() {
+    let ref mut fresh83 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a4b as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh83 = (*fresh83).wrapping_sub(1);
+    let mut v0: bool =
+        *fresh83 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        == 0
+        || v0 as ::core::ffi::c_int != 0
+    {
+        if *((&raw mut g_ram as *mut uint8).offset(0x9e0 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            - 3 as ::core::ffi::c_int
+            & 0x8000 as ::core::ffi::c_int
+            != 0
+            || *((&raw mut g_ram as *mut uint8).offset(0x9e0 as ::core::ffi::c_int as isize)
+                as *mut uint16) as ::core::ffi::c_int
+                - 10 as ::core::ffi::c_int
+                & 0x8000 as ::core::ffi::c_int
+                != 0
+        {
+            *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) =
+                2 as uint8;
+            *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) =
+                16 as uint8;
+            *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) =
+                2 as uint8;
+            *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) =
+                34 as uint8;
+            *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+                as *mut uint16) =
+                (0x8be314 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        } else {
+            *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+                as *mut uint16) =
+                (0x8be342 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        }
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func138() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        & 3 as ::core::ffi::c_int
+        != 0 as ::core::ffi::c_int
+    {
+        CinematicFunction_Intro_Func145();
+    } else {
+        FadeOutYColorsFromIndexX(0x40 as uint16, 0x10 as uint16);
+        if *((&raw mut g_ram as *mut uint8).offset(0x9e0 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            - 3 as ::core::ffi::c_int
+            & 0x8000 as ::core::ffi::c_int
+            == 0
+        {
+            FadeInYColorsFromIndexX(0x1c0 as uint16, 0x10 as uint16);
+        }
+        FadeInYColorsFromIndexX(0x1a0 as uint16, 0x10 as uint16);
+        ComposeFadingPalettes();
+        CinematicFunction_Intro_Func145();
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func145() {
+    let ref mut fresh81 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh81 = (*fresh81).wrapping_sub(1);
+    if *fresh81 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
+        *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 16 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize) = 7 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x5f as ::core::ffi::c_int as isize) = 0x80 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize) = 0 as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8bdb9d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        if *((&raw mut g_ram as *mut uint8).offset(0x9e0 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            - 3 as ::core::ffi::c_int
+            & 0x8000 as ::core::ffi::c_int
+            != 0
+        {
+            SpawnCinematicSpriteObject(
+                addr_kCinematicSpriteObjectDef_8BEF33 as ::core::ffi::c_int as uint16,
+                0 as uint16,
+            );
+            SpawnCinematicSpriteObject(
+                addr_kCinematicSpriteObjectDef_8BEF39 as ::core::ffi::c_int as uint16,
+                0 as uint16,
+            );
+        } else {
+            if *((&raw mut g_ram as *mut uint8).offset(0x9e0 as ::core::ffi::c_int as isize)
+                as *mut uint16) as ::core::ffi::c_int
+                - 10 as ::core::ffi::c_int
+                & 0x8000 as ::core::ffi::c_int
+                != 0
+            {
+                SpawnCinematicSpriteObject(
+                    addr_kCinematicSpriteObjectDef_8BEF69 as ::core::ffi::c_int as uint16,
+                    0 as uint16,
+                );
+            } else {
+                SpawnCinematicSpriteObject(
+                    addr_kCinematicSpriteObjectDef_8BEF63 as ::core::ffi::c_int as uint16,
+                    0 as uint16,
+                );
+            }
+            SpawnCinematicSpriteObject(
+                addr_kCinematicSpriteObjectDef_8BEF5D as ::core::ffi::c_int as uint16,
+                0 as uint16,
+            );
+            SpawnCinematicSpriteObject(
+                addr_kCinematicSpriteObjectDef_8BEF57 as ::core::ffi::c_int as uint16,
+                0 as uint16,
+            );
+        }
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func140() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a4f as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        != 0
+    {
+        let ref mut fresh77 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x1a4f as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *fresh77 = (*fresh77).wrapping_sub(1);
+        FadeOutYColorsFromIndexX(0x1e0 as uint16, 0x10 as uint16);
+        ComposeFadingPalettes();
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func139() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        != 0
+    {
+        let ref mut fresh78 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x1a4d as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *fresh78 = (*fresh78).wrapping_sub(1);
+        FadeOutYColorsFromIndexX(0x180 as uint16, 0x10 as uint16);
+        if *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            != 0
+        {
+            ComposeFadingPalettes();
+        }
+    }
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        != 0
+    {
+        let ref mut fresh79 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x1a49 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *fresh79 = (*fresh79).wrapping_sub(1);
+    } else {
+        CinematicFunction_Intro_Func140();
+    }
+    *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
+        as *mut uint16) = (*((&raw mut g_ram as *mut uint8)
+        .offset(0x198d as ::core::ffi::c_int as isize) as *mut uint16)
+        as ::core::ffi::c_int
+        - 8 as ::core::ffi::c_int) as uint8 as uint16;
+    let ref mut fresh80 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x198f as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh80 = (*fresh80 as ::core::ffi::c_int - 64 as ::core::ffi::c_int) as uint16;
+    if *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - 24 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+            as *mut uint16) = 24 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8be48a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 180 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func142() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a4f as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        == 0
+    {
+        if *((&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int
+            - 6 as ::core::ffi::c_int
+            & 0x8000 as ::core::ffi::c_int
+            != 0
+        {
+            let mut v0: uint16 = (4 as ::core::ffi::c_int
+                * *((&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize)
+                    as *mut uint16) as ::core::ffi::c_int)
+                as uint16;
+            let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
+                .offset(0x330 as ::core::ffi::c_int as isize)
+                as *mut uint16);
+            let mut v2: ::core::ffi::c_int = 8 as ::core::ffi::c_int
+                * *((&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize)
+                    as *mut uint16) as ::core::ffi::c_int
+                >> 1 as ::core::ffi::c_int;
+            (*gVramWriteEntry(
+                *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
+                    as *mut uint16) as ::core::ffi::c_int,
+            ))
+            .size = *(g_rom.offset(
+                (((0x8be45a as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                    << 15 as ::core::ffi::c_int
+                    | 0x8be45a as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                    & 0x3fffff as ::core::ffi::c_int) as isize,
+            ) as *const uint8 as *mut uint16)
+                .offset(v2 as isize);
+            v1 = (v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+            (*gVramWriteEntry(v1 as ::core::ffi::c_int)).size = *(g_rom.offset(
+                (((0x8be45a as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                    << 15 as ::core::ffi::c_int
+                    | 0x8be45a as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                    & 0x3fffff as ::core::ffi::c_int) as isize,
+            ) as *const uint8
+                as *mut uint16)
+                .offset((v2 + 1 as ::core::ffi::c_int) as isize);
+            v1 = (v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+            let fresh75 = v1;
+            v1 = v1.wrapping_add(1);
+            *(&raw mut (*(gVramWriteEntry
+                as unsafe extern "C" fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
+                fresh75 as ::core::ffi::c_int,
+            ))
+            .size as *mut uint8)
+                .offset(0 as ::core::ffi::c_int as isize) = *(g_rom.offset(
+                (((0x8be45a as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                    << 15 as ::core::ffi::c_int
+                    | 0x8be45a as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                    & 0x3fffff as ::core::ffi::c_int) as isize,
+            ) as *const uint8
+                as *mut uint16)
+                .offset((v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as isize)
+                as uint8;
+            (*gVramWriteEntry(v1 as ::core::ffi::c_int)).size = *(g_rom.offset(
+                (((0x8be45a as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                    << 15 as ::core::ffi::c_int
+                    | 0x8be45a as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                    & 0x3fffff as ::core::ffi::c_int) as isize,
+            ) as *const uint8
+                as *mut uint16)
+                .offset((v2 + 3 as ::core::ffi::c_int) as isize);
+            *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
+                as *mut uint16) = (v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+            let ref mut fresh76 = *((&raw mut g_ram as *mut uint8)
+                .offset(0x1a4d as ::core::ffi::c_int as isize)
+                as *mut uint16);
+            *fresh76 = (*fresh76).wrapping_add(1);
+        }
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func141() {
+    CinematicFunction_Intro_Func140();
+    CinematicFunction_Intro_Func142();
+    let ref mut fresh74 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh74 = (*fresh74).wrapping_sub(1);
+    if *fresh74 == 0 {
+        *(&raw mut g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize) = 1 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 17 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 49 as uint8;
+        *(&raw mut g_ram as *mut uint8)
+            .offset(0x74 as ::core::ffi::c_int as isize)
+            .offset(0 as ::core::ffi::c_int as isize) = 63 as uint8;
+        *(&raw mut g_ram as *mut uint8)
+            .offset(0x74 as ::core::ffi::c_int as isize)
+            .offset(1 as ::core::ffi::c_int as isize) = 95 as uint8;
+        *(&raw mut g_ram as *mut uint8)
+            .offset(0x74 as ::core::ffi::c_int as isize)
+            .offset(2 as ::core::ffi::c_int as isize) = -(97 as ::core::ffi::c_int) as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x5f as ::core::ffi::c_int as isize) = 0 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize) = 78 as uint8;
+        *(&raw mut g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize) = 84 as uint8;
+        let mut v0: uint16 = 384 as uint16;
+        loop {
+            *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+                *(g_rom.offset(
+                    (((0x8ce7e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                        << 15 as ::core::ffi::c_int
+                        | 0x8ce7e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                        & 0x3fffff as ::core::ffi::c_int) as isize,
+                ) as *const uint8 as *mut uint16)
+                    .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+            v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+            if !(((v0 as ::core::ffi::c_int - 416 as ::core::ffi::c_int) as int16
+                as ::core::ffi::c_int)
+                < 0 as ::core::ffi::c_int)
+            {
+                break;
+            }
+        }
+        *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 0 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8be504 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 32 as uint16;
+        EnableCinematicBgObjects();
+        EnableCinematicBgTilemapUpdates();
+        *((&raw mut g_ram as *mut uint8).offset(0x19f5 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 19456 as uint16;
+        let mut i: ::core::ffi::c_int = 126 as ::core::ffi::c_int;
+        while i >= 0 as ::core::ffi::c_int {
+            *(((&raw mut (*((&raw mut g_ram as *mut uint8)
+                .offset(0x3000 as ::core::ffi::c_int as isize)
+                as *mut Ram3000))
+                .pause_menu_map_tilemap as *mut uint16)
+                .offset(384 as ::core::ffi::c_int as isize) as *mut uint16
+                as *mut uint8)
+                .offset(i as uint16 as ::core::ffi::c_int as isize) as *mut uint16) = 127 as uint16;
+            i -= 2 as ::core::ffi::c_int;
+        }
+        CinematicUpdateSomeBg();
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func143() {
+    let mut j: uint16 = 0;
+    let ref mut fresh69 = *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(0 as ::core::ffi::c_int as isize);
+    *fresh69 = (*fresh69).wrapping_sub(1);
+    if *fresh69 as ::core::ffi::c_int - 32 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0 {
+        *(&raw mut g_ram as *mut uint8)
+            .offset(0x74 as ::core::ffi::c_int as isize)
+            .offset(0 as ::core::ffi::c_int as isize) = 32 as uint8;
+    }
+    let ref mut fresh70 = *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(1 as ::core::ffi::c_int as isize);
+    *fresh70 = (*fresh70).wrapping_sub(1);
+    if *fresh70 as ::core::ffi::c_int - 64 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0 {
+        *(&raw mut g_ram as *mut uint8)
+            .offset(0x74 as ::core::ffi::c_int as isize)
+            .offset(1 as ::core::ffi::c_int as isize) = 64 as uint8;
+    }
+    let ref mut fresh71 = *(&raw mut g_ram as *mut uint8)
+        .offset(0x74 as ::core::ffi::c_int as isize)
+        .offset(2 as ::core::ffi::c_int as isize);
+    *fresh71 = (*fresh71).wrapping_sub(1);
+    if *fresh71 as ::core::ffi::c_int + 0x80 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0
+    {
+        *(&raw mut g_ram as *mut uint8)
+            .offset(0x74 as ::core::ffi::c_int as isize)
+            .offset(2 as ::core::ffi::c_int as isize) = 0x80 as uint8;
+    }
+    let ref mut fresh73 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh73 = (*fresh73).wrapping_sub(1);
+    let mut v0: bool =
+        *fresh73 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        == 0
+        || v0 as ::core::ffi::c_int != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8be7ba as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x19f5 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 20480 as uint16;
+        CinematicUpdateSomeBg();
+        *((&raw mut g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 256 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize)
+            as *mut uint16) = 256 as uint16;
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BEF81 as ::core::ffi::c_int as uint16,
+            0 as uint16,
+        );
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BEF87 as ::core::ffi::c_int as uint16,
+            0 as uint16,
+        );
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BEF8D as ::core::ffi::c_int as uint16,
+            0 as uint16,
+        );
+        SpawnCinematicSpriteObject(
+            addr_kCinematicSpriteObjectDef_8BEF93 as ::core::ffi::c_int as uint16,
+            0 as uint16,
+        );
+        let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
+        while i >= 0 as ::core::ffi::c_int {
+            *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(((i >> 1 as ::core::ffi::c_int) + 16 as ::core::ffi::c_int) as isize) =
+                0 as uint16;
+            i -= 2 as ::core::ffi::c_int;
+        }
+        j = 30 as uint16;
+        while j as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+            *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(
+                    ((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
+                        + 240 as ::core::ffi::c_int) as isize,
+                ) = *(g_rom.offset(
+                (((0x8cefe9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                    << 15 as ::core::ffi::c_int
+                    | 0x8cefe9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                    & 0x3fffff as ::core::ffi::c_int) as isize,
+            ) as *const uint8 as *mut uint16)
+                .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+            j = (j as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
+        }
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func144() {
+    let mut j: uint16 = 0;
+    let mut v0: ::core::ffi::c_int = (4 as ::core::ffi::c_int
+        * *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+            as *mut uint16) as ::core::ffi::c_int) as uint16
+        as ::core::ffi::c_int
+        >> 1 as ::core::ffi::c_int;
+    let mut v5: uint16 = *(g_rom.offset(
+        (((0x8be5e7 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
+            | 0x8be5e7 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+            & 0x3fffff as ::core::ffi::c_int) as isize,
+    ) as *const uint8 as *mut uint16)
+        .offset((v0 + 1 as ::core::ffi::c_int) as isize);
+    let mut v1: uint16 = *(g_rom.offset(
+        (((0x8be5e7 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
+            | 0x8be5e7 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+            & 0x3fffff as ::core::ffi::c_int) as isize,
+    ) as *const uint8 as *mut uint16)
+        .offset(v0 as isize);
+    let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
+    while i >= 0 as ::core::ffi::c_int {
+        *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(((i >> 1 as ::core::ffi::c_int) + 16 as ::core::ffi::c_int) as isize) =
+            *(RomPtr_8C(v1 as uint16_t) as *mut uint16);
+        v1 = (v1 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
+        i -= 2 as ::core::ffi::c_int;
+    }
+    let mut v3: uint16 = v5;
+    j = 30 as uint16;
+    while j as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+        *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(
+                ((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 240 as ::core::ffi::c_int)
+                    as isize,
+            ) = *(RomPtr_8C(v3 as uint16_t) as *mut uint16);
+        v3 = (v3 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
+        j = (j as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
+    }
+    let ref mut fresh68 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh68 = (*fresh68).wrapping_add(1);
+    if *fresh68 as ::core::ffi::c_int - 16 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8be7ba as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        ClearCinematicSprites();
+        SpawnCinematicBgObject(
+            addr_kCinematicBgObjectDef_8BF74E as ::core::ffi::c_int as uint16,
+            0x4c00 as uint16,
+        );
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CalcItemPercentageCount(mut k: uint16, mut instrp: uint16) -> uint16 {
+    let mut current_block: u64;
+    let mut j: uint16 = 0;
+    let mut v0: uint16 = 4 as uint16;
+    let mut r18: uint16 = 0 as uint16;
+    loop {
+        let mut v1: *const uint16 = RomPtr_RAM(
+            *(g_rom.offset(
+                (((0x8be70d as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                    << 15 as ::core::ffi::c_int
+                    | 0x8be70d as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                    & 0x3fffff as ::core::ffi::c_int) as isize,
+            ) as *const uint8 as *mut uint16)
+                .offset(v0 as isize) as uint16_t,
+        ) as *const uint16;
+        r18 = (r18 as ::core::ffi::c_int
+            + SnesDivide(
+                *v1,
+                *(g_rom.offset(
+                    (((0x8be717 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                        << 15 as ::core::ffi::c_int
+                        | 0x8be717 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                        & 0x3fffff as ::core::ffi::c_int) as isize,
+                ) as *const uint8 as *mut uint16)
+                    .offset(v0 as isize) as uint8,
+            ) as ::core::ffi::c_int) as uint16;
+        v0 = v0.wrapping_sub(1);
+        if !(v0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int) {
+            break;
+        }
+    }
+    let mut i: ::core::ffi::c_int = 20 as ::core::ffi::c_int;
+    while i >= 0 as ::core::ffi::c_int {
+        if *(g_rom.offset(
+            (((0x8be721 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                << 15 as ::core::ffi::c_int
+                | 0x8be721 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                & 0x3fffff as ::core::ffi::c_int) as isize,
+        ) as *const uint8 as *mut uint16)
+            .offset((i >> 1 as ::core::ffi::c_int) as isize) as ::core::ffi::c_int
+            & *((&raw mut g_ram as *mut uint8).offset(0x9a4 as ::core::ffi::c_int as isize)
+                as *mut uint16) as ::core::ffi::c_int
+            != 0 as ::core::ffi::c_int
+        {
+            r18 = r18.wrapping_add(1);
+        }
+        i -= 2 as ::core::ffi::c_int;
+    }
+    j = 8 as uint16;
+    while j as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+        if *(g_rom.offset(
+            (((0x8be737 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                << 15 as ::core::ffi::c_int
+                | 0x8be737 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                & 0x3fffff as ::core::ffi::c_int) as isize,
+        ) as *const uint8 as *mut uint16)
+            .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
+            as ::core::ffi::c_int
+            & *((&raw mut g_ram as *mut uint8).offset(0x9a8 as ::core::ffi::c_int as isize)
+                as *mut uint16) as ::core::ffi::c_int
+            != 0 as ::core::ffi::c_int
+        {
+            r18 = r18.wrapping_add(1);
+        }
+        j = (j as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
+    }
+    let mut RegWord: uint16 = (r18 as ::core::ffi::c_int / 10 as ::core::ffi::c_int) as uint16;
+    let mut r22: uint16 = (r18 as ::core::ffi::c_int % 10 as ::core::ffi::c_int) as uint16;
+    r18 = (RegWord as ::core::ffi::c_int / 10 as ::core::ffi::c_int) as uint16;
+    let mut r20: uint16 = (RegWord as ::core::ffi::c_int % 10 as ::core::ffi::c_int) as uint16;
+    if r18 != 0 {
+        let mut v5: ::core::ffi::c_int = (4 as ::core::ffi::c_int * r18 as ::core::ffi::c_int)
+            as uint16 as ::core::ffi::c_int
+            >> 1 as ::core::ffi::c_int;
+        (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
+            as *mut Ram3000))
+            .pause_menu_map_tilemap[462 as ::core::ffi::c_int as usize] =
+            *(g_rom.offset(
+                (((0x8be741 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                    << 15 as ::core::ffi::c_int
+                    | 0x8be741 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                    & 0x3fffff as ::core::ffi::c_int) as isize,
+            ) as *const uint8 as *mut uint16)
+                .offset(v5 as isize);
+        (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
+            as *mut Ram3000))
+            .pause_menu_map_tilemap[494 as ::core::ffi::c_int as usize] =
+            *(g_rom.offset(
+                (((0x8be741 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                    << 15 as ::core::ffi::c_int
+                    | 0x8be741 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                    & 0x3fffff as ::core::ffi::c_int) as isize,
+            ) as *const uint8 as *mut uint16)
+                .offset((v5 + 1 as ::core::ffi::c_int) as isize);
+    }
+    let mut v6: uint16 = r20;
+    if r20 != 0 {
+        current_block = 18317007320854588510;
+    } else if r18 != 0 {
+        v6 = r20;
+        current_block = 18317007320854588510;
+    } else {
+        current_block = 2719512138335094285;
+    }
+    match current_block {
+        18317007320854588510 => {
+            let mut v7: ::core::ffi::c_int = (4 as ::core::ffi::c_int * v6 as ::core::ffi::c_int)
+                as uint16 as ::core::ffi::c_int
+                >> 1 as ::core::ffi::c_int;
+            (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
+                as *mut Ram3000))
+                .pause_menu_map_tilemap[463 as ::core::ffi::c_int as usize] =
+                *(g_rom.offset(
+                    (((0x8be741 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                        << 15 as ::core::ffi::c_int
+                        | 0x8be741 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                        & 0x3fffff as ::core::ffi::c_int) as isize,
+                ) as *const uint8 as *mut uint16)
+                    .offset(v7 as isize);
+            (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
+                as *mut Ram3000))
+                .pause_menu_map_tilemap[495 as ::core::ffi::c_int as usize] =
+                *(g_rom.offset(
+                    (((0x8be741 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                        << 15 as ::core::ffi::c_int
+                        | 0x8be741 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                        & 0x3fffff as ::core::ffi::c_int) as isize,
+                ) as *const uint8 as *mut uint16)
+                    .offset((v7 + 1 as ::core::ffi::c_int) as isize);
+        }
+        _ => {}
+    }
+    let mut v8: ::core::ffi::c_int = (4 as ::core::ffi::c_int * r22 as ::core::ffi::c_int) as uint16
+        as ::core::ffi::c_int
+        >> 1 as ::core::ffi::c_int;
+    (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
+        as *mut Ram3000))
+        .pause_menu_map_tilemap[464 as ::core::ffi::c_int as usize] = *(g_rom.offset(
+        (((0x8be741 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
+            | 0x8be741 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+            & 0x3fffff as ::core::ffi::c_int) as isize,
+    ) as *const uint8
+        as *mut uint16)
+        .offset(v8 as isize);
+    (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
+        as *mut Ram3000))
+        .pause_menu_map_tilemap[496 as ::core::ffi::c_int as usize] = *(g_rom.offset(
+        (((0x8be741 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
+            | 0x8be741 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+            & 0x3fffff as ::core::ffi::c_int) as isize,
+    ) as *const uint8
+        as *mut uint16)
+        .offset((v8 + 1 as ::core::ffi::c_int) as isize);
+    (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
+        as *mut Ram3000))
+        .pause_menu_map_tilemap[465 as ::core::ffi::c_int as usize] = 14442 as uint16;
+    (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
+        as *mut Ram3000))
+        .pause_menu_map_tilemap[497 as ::core::ffi::c_int as usize] = 14458 as uint16;
+    return instrp;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func146(mut k: uint16, mut j: uint16) -> uint16 {
+    if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
+        != 0
+    {
+        let mut i: ::core::ffi::c_int = 63 as ::core::ffi::c_int;
+        while i >= 0 as ::core::ffi::c_int {
+            (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
+                as *mut Ram3000))
+                .pause_menu_map_tilemap[(i + 736 as ::core::ffi::c_int) as usize] =
+                *(g_rom.offset(
+                    (((0x8cdf5b as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                        << 15 as ::core::ffi::c_int
+                        | 0x8cdf5b as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                        & 0x3fffff as ::core::ffi::c_int) as isize,
+                ) as *const uint8 as *mut uint16)
+                    .offset(i as isize);
+            i -= 1;
+        }
+    }
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func147(mut k: uint16, mut j: uint16) -> uint16 {
+    let mut i: ::core::ffi::c_int = 126 as ::core::ffi::c_int;
+    while i >= 0 as ::core::ffi::c_int {
+        *(((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
+            as *mut Ram3000))
+            .pause_menu_map_tilemap as *mut uint16)
+            .offset(736 as ::core::ffi::c_int as isize) as *mut uint16 as *mut uint8)
+            .offset(i as uint16 as ::core::ffi::c_int as isize) as *mut uint16) = 127 as uint16;
+        i -= 2 as ::core::ffi::c_int;
+    }
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8be797 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func148() {
+    let ref mut fresh67 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1997 as ::core::ffi::c_int as isize) as *mut uint16);
+    *fresh67 = (*fresh67 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        + 79 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        SpawnCinematicBgObject(
+            addr_kCinematicBgObjectDef_8BF748 as ::core::ffi::c_int as uint16,
+            0x4c00 as uint16,
+        );
+        *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+            as *mut uint16) =
+            (0x8be7ba as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        CopySuperMetroidString();
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func127() {
+    let mut v1: int16 = 0;
+    let mut v4: int16 = 0;
+    let mut v0: uint16 = (&raw mut g_ram as *mut uint8)
+        .offset(0xe0c as ::core::ffi::c_int as isize)
+        .offset_from(&raw mut g_ram as *mut uint8) as ::core::ffi::c_long
+        as uint16;
+    v1 = 0 as int16;
+    loop {
+        v4 = v1;
+        let mut v2: *mut uint8 = RomPtr_RAM(v0 as uint16_t);
+        *(v2 as *mut uint16) = v1 as uint16;
+        *(v2 as *mut uint16).offset(6 as ::core::ffi::c_int as isize) = 0 as uint16;
+        *(v2 as *mut uint16).offset(7 as ::core::ffi::c_int as isize) = 0 as uint16;
+        let mut v3: uint16 = *(g_rom.offset(
+            (((0x8be9cf as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                << 15 as ::core::ffi::c_int
+                | 0x8be9cf as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                & 0x3fffff as ::core::ffi::c_int) as isize,
+        ) as *const uint8 as *mut uint16)
+            .offset(
+                ((8 as ::core::ffi::c_int * v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
+                    + 3 as ::core::ffi::c_int) as isize,
+            );
+        if v3 != 0 {
+            *(v2 as *mut uint16).offset(5 as ::core::ffi::c_int as isize) = v3;
+            let ref mut fresh93 = *(v2 as *mut uint16);
+            *fresh93 = (*fresh93 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
+        } else {
+            *(v2 as *mut uint16).offset(5 as ::core::ffi::c_int as isize) = 32 as uint16;
+        }
+        *(v2 as *mut uint16).offset(1 as ::core::ffi::c_int as isize) = 128 as uint16;
+        *(v2 as *mut uint16).offset(3 as ::core::ffi::c_int as isize) = 128 as uint16;
+        *(v2 as *mut uint16).offset(2 as ::core::ffi::c_int as isize) = 0 as uint16;
+        *(v2 as *mut uint16).offset(4 as ::core::ffi::c_int as isize) = 0 as uint16;
+        v0 = (v0 as ::core::ffi::c_int + 16 as ::core::ffi::c_int) as uint16;
+        v1 += 1;
+        if !(((v4 as ::core::ffi::c_int - 39 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
+            < 0 as ::core::ffi::c_int)
+        {
+            break;
+        }
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func149() {
+    let mut v2: int16 = 0;
+    let mut v5: int16 = 0;
+    let mut v8: int16 = 0;
+    let mut v12: int16 = 0;
+    let mut v17: int16 = 0;
+    let mut v18: *mut OamEnt = ::core::ptr::null_mut::<OamEnt>();
+    let mut v19: int16 = 0;
+    let mut v20: int16 = 0;
+    let mut v22: int16 = 0;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a03 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(1 as ::core::ffi::c_int as isize)
+        != 0
+    {
+        let mut n: ::core::ffi::c_int = 40 as ::core::ffi::c_int;
+        let mut v0: uint16 = 0xe0c as uint16;
+        loop {
+            let mut v3: *mut uint8 = RomPtr_RAM(v0 as uint16_t);
+            if (*(v3 as *mut int16) as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
+                let mut v1: *mut uint8 = v3;
+                v2 = (*(v1.offset(10 as ::core::ffi::c_int as isize) as *mut uint16)
+                    as ::core::ffi::c_int
+                    - 1 as ::core::ffi::c_int) as int16;
+                *(v1 as *mut uint16).offset(5 as ::core::ffi::c_int as isize) = v2 as uint16;
+                if (v2 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
+                    *(v1 as *mut uint16).offset(5 as ::core::ffi::c_int as isize) = 32 as uint16;
+                    *(v1 as *mut uint16) = *v1 as uint16;
+                }
+            } else {
+                let mut v4: ::core::ffi::c_int = 8 as ::core::ffi::c_int
+                    * *(v3 as *mut uint16) as uint8 as ::core::ffi::c_int
+                    >> 1 as ::core::ffi::c_int;
+                if (*(v3 as *mut uint16) as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int)
+                    - 1024 as ::core::ffi::c_int
+                    & 0x8000 as ::core::ffi::c_int
+                    != 0
+                {
+                    let ref mut fresh164 =
+                        *(v3 as *mut uint16).offset(6 as ::core::ffi::c_int as isize);
+                    *fresh164 = (*fresh164 as ::core::ffi::c_int
+                        + *(g_rom.offset(
+                            (((0x8be9cf as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                                << 15 as ::core::ffi::c_int
+                                | 0x8be9cf as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                                & 0x3fffff as ::core::ffi::c_int)
+                                as isize,
+                        ) as *const uint8 as *mut uint16)
+                            .offset(v4 as isize) as ::core::ffi::c_int)
+                        as uint16;
+                    v5 = *(v3.offset(14 as ::core::ffi::c_int as isize) as *mut uint16) as int16;
+                } else {
+                    let ref mut fresh165 =
+                        *(v3 as *mut uint16).offset(6 as ::core::ffi::c_int as isize);
+                    *fresh165 = (*fresh165 as ::core::ffi::c_int
+                        + (*(g_rom.offset(
+                            (((0x8be9cf as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                                << 15 as ::core::ffi::c_int
+                                | 0x8be9cf as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                                & 0x3fffff as ::core::ffi::c_int)
+                                as isize,
+                        ) as *const uint8 as *mut uint16)
+                            .offset(v4 as isize) as ::core::ffi::c_int
+                            + *(g_rom.offset(
+                                (((0x8be9cf as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                                    << 15 as ::core::ffi::c_int
+                                    | 0x8be9cf as ::core::ffi::c_int
+                                        & 0x7fff as ::core::ffi::c_int)
+                                    & 0x3fffff as ::core::ffi::c_int)
+                                    as isize,
+                            ) as *const uint8 as *mut uint16)
+                                .offset(v4 as isize)
+                                as ::core::ffi::c_int)) as uint16;
+                    v5 = (*(g_rom.offset(
+                        (((0x8be9cf as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                            << 15 as ::core::ffi::c_int
+                            | 0x8be9cf as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                            & 0x3fffff as ::core::ffi::c_int) as isize,
+                    ) as *const uint8 as *mut uint16)
+                        .offset((v4 + 1 as ::core::ffi::c_int) as isize)
+                        as ::core::ffi::c_int
+                        + *(v3 as *mut uint16).offset(7 as ::core::ffi::c_int as isize)
+                            as ::core::ffi::c_int) as int16;
+                }
+                *(v3 as *mut uint16).offset(7 as ::core::ffi::c_int as isize) =
+                    (*(g_rom.offset(
+                        (((0x8be9cf as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                            << 15 as ::core::ffi::c_int
+                            | 0x8be9cf as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                            & 0x3fffff as ::core::ffi::c_int) as isize,
+                    ) as *const uint8 as *mut uint16)
+                        .offset((v4 + 1 as ::core::ffi::c_int) as isize)
+                        as ::core::ffi::c_int
+                        + v5 as ::core::ffi::c_int) as uint16;
+                let mut v23: uint16 =
+                    *(v3.offset(12 as ::core::ffi::c_int as isize) as *mut uint16);
+                let mut r18: uint16 = *(&raw mut v23 as *mut uint8).offset(
+                    (::core::mem::size_of::<uint16>() as usize)
+                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                        .wrapping_sub(1 as usize) as isize,
+                ) as int8 as uint16;
+                let mut r20: uint16 = ((v23 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
+                    & 0xff00 as ::core::ffi::c_int) as uint16;
+                v8 = *(v3.offset(4 as ::core::ffi::c_int as isize) as *mut uint16) as int16;
+                let mut v9: bool = __CFADD__uint16(r20, v8 as uint16);
+                *(v3 as *mut uint16).offset(2 as ::core::ffi::c_int as isize) =
+                    (r20 as ::core::ffi::c_int + v8 as ::core::ffi::c_int) as uint16;
+                let ref mut fresh166 =
+                    *(v3 as *mut uint16).offset(1 as ::core::ffi::c_int as isize);
+                *fresh166 = (*fresh166 as ::core::ffi::c_int
+                    + (r18 as ::core::ffi::c_int + v9 as ::core::ffi::c_int))
+                    as uint16;
+                let mut v24: uint16 =
+                    *(v3.offset(14 as ::core::ffi::c_int as isize) as *mut uint16);
+                r18 = *(&raw mut v24 as *mut uint8).offset(
+                    (::core::mem::size_of::<uint16>() as usize)
+                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
+                        .wrapping_sub(1 as usize) as isize,
+                ) as int8 as uint16;
+                r20 = ((v24 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
+                    & 0xff00 as ::core::ffi::c_int) as uint16;
+                v12 = *(v3.offset(8 as ::core::ffi::c_int as isize) as *mut uint16) as int16;
+                v9 = __CFADD__uint16(r20, v12 as uint16);
+                *(v3 as *mut uint16).offset(4 as ::core::ffi::c_int as isize) =
+                    (r20 as ::core::ffi::c_int + v12 as ::core::ffi::c_int) as uint16;
+                let ref mut fresh167 =
+                    *(v3 as *mut uint16).offset(3 as ::core::ffi::c_int as isize);
+                *fresh167 = (*fresh167 as ::core::ffi::c_int
+                    + (r18 as ::core::ffi::c_int + v9 as ::core::ffi::c_int))
+                    as uint16;
+            }
+            v0 = (v0 as ::core::ffi::c_int + 16 as ::core::ffi::c_int) as uint16;
+            n -= 1;
+            if !(n != 0) {
+                break;
+            }
+        }
+        let mut n2: ::core::ffi::c_int = 40 as ::core::ffi::c_int;
+        let mut v13: uint16 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x590 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        let mut v14: uint16 = 3596 as uint16;
+        loop {
+            let mut v15: *mut uint8 = RomPtr_RAM(v14 as uint16_t);
+            let mut v16: *mut uint8 = v15;
+            if *(v15 as *mut int16) as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
+                v17 = *(v15.offset(2 as ::core::ffi::c_int as isize) as *mut uint16) as int16;
+                if *v15.offset(3 as ::core::ffi::c_int as isize) as ::core::ffi::c_int != 0
+                    || v17 as ::core::ffi::c_int - 4 as ::core::ffi::c_int
+                        & 0xff00 as ::core::ffi::c_int
+                        != 0 as ::core::ffi::c_int
+                    || {
+                        v18 = gOamEnt(v13 as ::core::ffi::c_int);
+                        *(&raw mut (*v18).xcoord as *mut uint16) =
+                            (v17 as ::core::ffi::c_int - 4 as ::core::ffi::c_int) as uint16;
+                        v19 =
+                            *(v16.offset(6 as ::core::ffi::c_int as isize) as *mut uint16) as int16;
+                        *v16.offset(7 as ::core::ffi::c_int as isize) as ::core::ffi::c_int != 0
+                    }
+                    || v19 as ::core::ffi::c_int - 4 as ::core::ffi::c_int
+                        & 0xff00 as ::core::ffi::c_int
+                        != 0 as ::core::ffi::c_int
+                {
+                    let mut v21: *mut uint8 = v15;
+                    *(v21 as *mut uint16).offset(5 as ::core::ffi::c_int as isize) = 32 as uint16;
+                    *(v21 as *mut uint16).offset(1 as ::core::ffi::c_int as isize) = 128 as uint16;
+                    *(v21 as *mut uint16).offset(3 as ::core::ffi::c_int as isize) = 128 as uint16;
+                    *(v21 as *mut uint16).offset(2 as ::core::ffi::c_int as isize) = 0 as uint16;
+                    *(v21 as *mut uint16).offset(4 as ::core::ffi::c_int as isize) = 0 as uint16;
+                    *(v21 as *mut uint16).offset(6 as ::core::ffi::c_int as isize) = 0 as uint16;
+                    *(v21 as *mut uint16).offset(7 as ::core::ffi::c_int as isize) = 0 as uint16;
+                    *(v21 as *mut uint16) = *v21 as uint16;
+                } else {
+                    *(&raw mut (*v18).ycoord as *mut uint16) =
+                        (v19 as ::core::ffi::c_int - 4 as ::core::ffi::c_int) as uint16;
+                    v20 = (*(v16.offset(10 as ::core::ffi::c_int as isize) as *mut uint16)
+                        as ::core::ffi::c_int
+                        - 1 as ::core::ffi::c_int) as int16;
+                    *(v16 as *mut uint16).offset(5 as ::core::ffi::c_int as isize) = v20 as uint16;
+                    if v20 as ::core::ffi::c_int <= 0 as ::core::ffi::c_int {
+                        v22 = *(v16 as *mut uint16) as int16;
+                        *(v16 as *mut uint16).offset(5 as ::core::ffi::c_int as isize) =
+                            *(g_rom.offset(
+                                (((0x8be9cf as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                                    << 15 as ::core::ffi::c_int
+                                    | 0x8be9cf as ::core::ffi::c_int
+                                        & 0x7fff as ::core::ffi::c_int)
+                                    & 0x3fffff as ::core::ffi::c_int)
+                                    as isize,
+                            ) as *const uint8 as *mut uint16)
+                                .offset(
+                                    ((8 as ::core::ffi::c_int
+                                        * *(v16 as *mut uint16) as uint8 as ::core::ffi::c_int
+                                        >> 1 as ::core::ffi::c_int)
+                                        + 2 as ::core::ffi::c_int)
+                                        as isize,
+                                );
+                        *(v16 as *mut uint16) =
+                            (v22 as ::core::ffi::c_int + 512 as ::core::ffi::c_int) as uint16;
+                    }
+                    if *v16.offset(1 as ::core::ffi::c_int as isize) != 0 {
+                        *(&raw mut (*(gOamEnt
+                            as unsafe extern "C" fn(::core::ffi::c_int) -> *mut OamEnt)(
+                            v13 as ::core::ffi::c_int,
+                        ))
+                        .charnum as *mut uint16) = *(g_rom.offset(
+                            (((0x8be9a7 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                                << 15 as ::core::ffi::c_int
+                                | 0x8be9a7 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                                & 0x3fffff as ::core::ffi::c_int)
+                                as isize,
+                        ) as *const uint8
+                            as *mut uint16)
+                            .offset(
+                                (((*(v16 as *mut uint16) as ::core::ffi::c_int
+                                    & 0xff00 as ::core::ffi::c_int)
+                                    >> 8 as ::core::ffi::c_int)
+                                    as uint16
+                                    as ::core::ffi::c_int
+                                    >> 1 as ::core::ffi::c_int)
+                                    as isize,
+                            );
+                        v13 = (v13 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
+                    }
+                }
+            }
+            v14 = (v14 as ::core::ffi::c_int + 16 as ::core::ffi::c_int) as uint16;
+            n2 -= 1;
+            if !(n2 != 0) {
+                break;
+            }
+        }
+        *((&raw mut g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize)
+            as *mut uint16) = v13;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func150(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 128 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 128 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 3584 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 260 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func151(mut k: uint16) {
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    AddToHiLo(
+        ((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        128 as uint32,
+    );
+    *((&raw mut g_ram as *mut uint8).offset(0x1add as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1add as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize);
+    let ref mut fresh40 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a7d as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset(v1 as isize);
+    *fresh40 = (*fresh40).wrapping_add(1);
+    if *fresh40 as ::core::ffi::c_int - 272 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
+        == 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = addr_off_8BEE9B as ::core::ffi::c_int as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func152(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 128 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 128 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 3584 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func153(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = -(128 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 128 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 3584 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func154(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 128 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 128 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 2560 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func155(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 128 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 128 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 3072 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func156(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 128 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 96 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 1024 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func157(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 128 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 160 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 512 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func158(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 160 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 0 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func159(mut j: uint16) {
+    CinematicFunction_Intro_Func160(
+        j,
+        *((&raw mut g_ram as *mut uint8).offset(0xdec as ::core::ffi::c_int as isize)
+            as *mut uint16),
+    );
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 156 as uint16;
+    CinematicFunction_Intro_Func158(j);
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func161(mut j: uint16) {
+    CinematicFunction_Intro_Func160(
+        j,
+        *((&raw mut g_ram as *mut uint8).offset(0xdee as ::core::ffi::c_int as isize)
+            as *mut uint16),
+    );
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 164 as uint16;
+    CinematicFunction_Intro_Func158(j);
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func162(mut j: uint16) {
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 172 as uint16;
+    CinematicFunction_Intro_Func158(j);
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func163(mut j: uint16) {
+    CinematicFunction_Intro_Func160(
+        j,
+        *((&raw mut g_ram as *mut uint8).offset(0xdf0 as ::core::ffi::c_int as isize)
+            as *mut uint16),
+    );
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 180 as uint16;
+    CinematicFunction_Intro_Func158(j);
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func164(mut j: uint16) {
+    CinematicFunction_Intro_Func160(
+        j,
+        *((&raw mut g_ram as *mut uint8).offset(0xdf2 as ::core::ffi::c_int as isize)
+            as *mut uint16),
+    );
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 188 as uint16;
+    CinematicFunction_Intro_Func158(j);
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func160(mut j: uint16, mut a: uint16) {
+    let ref mut fresh3 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1b1d as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+    *fresh3 = (*fresh3 as ::core::ffi::c_int + 8 as ::core::ffi::c_int * a as ::core::ffi::c_int)
+        as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func165(mut j: uint16) {
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+        -(96 as ::core::ffi::c_int) as uint16;
+    CinematicFunction_F0B8(j);
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_F0B8(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1b9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 384 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 2560 as uint16;
+        let ref mut fresh2 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize);
+        *fresh2 = (*fresh2 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
+    } else {
+        *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 128 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 2560 as uint16;
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func166(mut j: uint16) {
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+        -(32 as ::core::ffi::c_int) as uint16;
+    CinematicFunction_F0B8(j);
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func167(mut j: uint16) {
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 288 as uint16;
+    CinematicFunction_F0B8(j);
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func168(mut j: uint16) {
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 352 as uint16;
+    CinematicFunction_F0B8(j);
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func169(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 320 as uint16;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1b9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 448 as uint16;
+    } else {
+        *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 192 as uint16;
+    }
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 2560 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func170(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = -(64 as ::core::ffi::c_int) as uint16;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1b9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = -(192 as ::core::ffi::c_int) as uint16;
+    } else {
+        *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 64 as uint16;
+    }
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 2560 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func171(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 120 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 136 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 2560 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func172(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 120 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 152 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 3072 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func173(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 124 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 108 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 3072 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func174(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 121 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 107 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 2560 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func175(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 530 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 231 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 3584 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 8 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func176(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 246 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 519 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 3584 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 8 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func177(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 385 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 366 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 3584 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func178(mut j: uint16) {
+    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 391 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 384 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = 3584 as uint16;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func179(mut k: uint16) {
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let ref mut fresh38 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a9d as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset(v1 as isize);
+    *fresh38 = (*fresh38 as ::core::ffi::c_int
+        + *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as ::core::ffi::c_int) as uint16;
+    let mut v2: uint16 = (*((&raw mut g_ram as *mut uint8)
+        .offset(0x1a7d as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset(v1 as isize) as ::core::ffi::c_int
+        - *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = v2;
+    if v2 as ::core::ffi::c_int - 395 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
+        *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 394 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 367 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) =
+            (0x8b93d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        SpawnPalfxObject(addr_kPalfx_E200 as ::core::ffi::c_int as uint16);
+    } else {
+        let ref mut fresh39 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x1b7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize);
+        *fresh39 = (*fresh39 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func180(mut k: uint16) {
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let ref mut fresh36 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a9d as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset(v1 as isize);
+    *fresh36 = (*fresh36 as ::core::ffi::c_int
+        - *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as ::core::ffi::c_int) as uint16;
+    let mut v2: uint16 = (*((&raw mut g_ram as *mut uint8)
+        .offset(0x1b7d as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset(v1 as isize) as ::core::ffi::c_int
+        + *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = v2;
+    if v2 as ::core::ffi::c_int - 382 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
+        let ref mut fresh37 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x1b7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize);
+        *fresh37 = (*fresh37 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+    } else {
+        *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 382 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 383 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) =
+            (0x8b93d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_Func181(mut k: uint16, mut j: uint16) -> uint16 {
+    *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 3 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 16 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 2 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 34 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize) = 100 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize) = 84 as uint8;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8be58a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_Func182(mut k: uint16, mut j: uint16) -> uint16 {
+    SpawnPalfxObject(addr_kPalfx_E1C4 as ::core::ffi::c_int as uint16);
+    *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(254 as ::core::ffi::c_int as isize) = 1 as uint16;
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_Func183(mut k: uint16, mut j: uint16) -> uint16 {
+    let mut v0: uint16 = 0 as uint16;
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BEEB5 as ::core::ffi::c_int as uint16,
+        v0,
+    );
+    *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(0 as ::core::ffi::c_int as isize) = 0x7fff as uint16;
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func184(mut j: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(15 as ::core::ffi::c_int as isize)
+        == 0
+    {
+        let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v2 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v2 as isize) = addr_off_8BEE9B as ::core::ffi::c_int as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_Func185(mut k: uint16, mut j: uint16) -> uint16 {
+    let mut v0: uint16 = 0;
+    *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 17 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 2 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 2 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 17 as uint8;
+    *(&raw mut v0 as *mut uint8).offset(0 as ::core::ffi::c_int as isize) = 124 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize) = 124 as uint8;
+    SpawnCinematicSpriteObjectToR18(
+        addr_kCinematicSpriteObjectDef_8BEEBB as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    SpawnCinematicSpriteObjectToR18(
+        addr_kCinematicSpriteObjectDef_8BEEF7 as ::core::ffi::c_int as uint16,
+        2 as uint16,
+    );
+    SpawnPalfxObject(addr_kPalfx_E1C8 as ::core::ffi::c_int as uint16);
+    SpawnPalfxObject(addr_kPalfx_E1D0 as ::core::ffi::c_int as uint16);
+    SpawnPalfxObject(addr_kPalfx_E1E8 as ::core::ffi::c_int as uint16);
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_Func186(mut k: uint16, mut j: uint16) -> uint16 {
+    *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 3 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 18 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 2 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 51 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize) = 116 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize) = 120 as uint8;
+    SpawnPalfxObject(addr_kPalfx_E1CC as ::core::ffi::c_int as uint16);
+    SpawnCinematicSpriteObjectToR18(
+        addr_kCinematicSpriteObjectDef_8BEEC1 as ::core::ffi::c_int as uint16,
+        6 as uint16,
+    );
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_Func187(mut k: uint16, mut j: uint16) -> uint16 {
+    *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 0 as uint8;
+    *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(0 as ::core::ffi::c_int as isize) = 0x7fff as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(128 as ::core::ffi::c_int as isize) = 0x7fff as uint16;
+    let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
+    while i >= 0 as ::core::ffi::c_int {
+        *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(((i >> 1 as ::core::ffi::c_int) + 16 as ::core::ffi::c_int) as isize) =
+            0x7fff as uint16;
+        i -= 2 as ::core::ffi::c_int;
+    }
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8bdb9e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 120 as uint16;
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprPreInstr_F35A(mut k: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        == 0x8bdca5 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
+    {
+        let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) =
+            (0x8bf375 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 0x4000 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 0 as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func189(mut k: uint16) {
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    AddToHiLo(
+        ((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        -(32 as ::core::ffi::c_int) as uint32,
+    );
+    AddToHiLo(
+        ((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut g_ram as *mut uint8).offset(0x1add as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        (*((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as uint32)
+            << 16 as ::core::ffi::c_int
+            | *((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
+                as *mut uint16)
+                .offset(v1 as isize) as uint32,
+    );
+    CinematicFunction_Intro_Func189b(k);
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func189b(mut k: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        == 0x8bde63 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
+    {
+        let mut v5: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v5 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v5 as isize) = addr_off_8BEE9B as ::core::ffi::c_int as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_Func190(mut k: uint16, mut j: uint16) -> uint16 {
+    let mut v0: uint16 = 0 as uint16;
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BEECD as ::core::ffi::c_int as uint16,
+        v0,
+    );
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func191(mut k: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        == 0x8bde80 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
+    {
+        let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = addr_off_8BEE9B as ::core::ffi::c_int as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_Func192(mut k: uint16, mut j: uint16) -> uint16 {
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BEEFD as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    let mut hours1: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
+        .offset(0x9e0 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        / 10 as ::core::ffi::c_int;
+    let mut hours2: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
+        .offset(0x9e0 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        % 10 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0xdec as ::core::ffi::c_int as isize) as *mut uint16) =
+        hours1 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xdee as ::core::ffi::c_int as isize) as *mut uint16) =
+        hours2 as uint16;
+    let mut min1: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
+        .offset(0x9de as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        / 10 as ::core::ffi::c_int;
+    let mut min2: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
+        .offset(0x9de as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        % 10 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0xdf0 as ::core::ffi::c_int as isize) as *mut uint16) =
+        min1 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xdf2 as ::core::ffi::c_int as isize) as *mut uint16) =
+        min2 as uint16;
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_Func193(mut k: uint16, mut j: uint16) -> uint16 {
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BEF03 as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_Func194(mut k: uint16, mut j: uint16) -> uint16 {
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BEF09 as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_Func195(mut k: uint16, mut j: uint16) -> uint16 {
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BEF0F as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_Func196(mut k: uint16, mut j: uint16) -> uint16 {
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BEF15 as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_Func197(mut k: uint16, mut j: uint16) -> uint16 {
+    SpawnCinematicSpriteObject(
+        addr_kCinematicSpriteObjectDef_8BEF1B as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_Func198(mut k: uint16, mut j: uint16) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8bde64 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func199(mut k: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - 176 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+            (0x8bf464 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func200(mut k: uint16) {
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1afd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize);
+    let ref mut fresh35 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a9d as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset(v1 as isize);
+    *fresh35 = (*fresh35).wrapping_add(1);
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func201(mut k: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - 176 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+            (0x8bf487 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func202(mut k: uint16) {
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1afd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize);
+    let ref mut fresh34 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a9d as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset(v1 as isize);
+    *fresh34 = (*fresh34).wrapping_sub(1);
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func203(mut k: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - 96 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        == 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+            (0x8bf4aa as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func204(mut k: uint16) {
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1afd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize);
+    let ref mut fresh32 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a9d as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset(v1 as isize);
+    *fresh32 = (*fresh32 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1add as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1add as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize);
+    let ref mut fresh33 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a7d as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset(v1 as isize);
+    *fresh33 = (*fresh33).wrapping_sub(1);
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func205(mut k: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - 96 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        == 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+            (0x8bf4e0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func206(mut k: uint16) {
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    *((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1afd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize);
+    let ref mut fresh30 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a9d as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset(v1 as isize);
+    *fresh30 = (*fresh30 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1add as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1add as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize);
+    let ref mut fresh31 = *((&raw mut g_ram as *mut uint8)
+        .offset(0x1a7d as ::core::ffi::c_int as isize) as *mut uint16)
+        .offset(v1 as isize);
+    *fresh31 = (*fresh31).wrapping_add(1);
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func207(mut k: uint16) {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        == 0x8bdb9d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
+    {
+        let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = addr_off_8BEE9B as ::core::ffi::c_int as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_Func208(mut k: uint16, mut j: uint16) -> uint16 {
+    SpawnCinematicSpriteObjectToR18(
+        addr_kCinematicSpriteObjectDef_8BEF3F as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprPreInstr_F528(mut k: uint16) {
+    CinematicFunction_Intro_Func210_EndingSamusFall(k);
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) as ::core::ffi::c_int
+        + 80 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        *(&raw mut g_ram as *mut uint8).offset(0x52 as ::core::ffi::c_int as isize) = 3 as uint8;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = addr_word_8BED95 as ::core::ffi::c_int as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) =
+            (0x8bf5dd as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 3072 as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_Func211(mut k: uint16, mut j: uint16) -> uint16 {
+    if *((&raw mut g_ram as *mut uint8).offset(0x9e0 as ::core::ffi::c_int as isize) as *mut uint16)
+        as ::core::ffi::c_int
+        - 10 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        SpawnCinematicSpriteObjectToR18(
+            addr_kCinematicSpriteObjectDef_8BEF7B as ::core::ffi::c_int as uint16,
+            2 as uint16,
+        );
+    } else {
+        SpawnCinematicSpriteObjectToR18(
+            addr_kCinematicSpriteObjectDef_8BEF75 as ::core::ffi::c_int as uint16,
+            2 as uint16,
+        );
+    }
+    SpawnCinematicSpriteObjectToR18(
+        addr_kCinematicSpriteObjectDef_8BEF6F as ::core::ffi::c_int as uint16,
+        0 as uint16,
+    );
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprPreInstr_F57F(mut k: uint16) {
+    CinematicFunction_Intro_Func210_EndingSamusFall(k);
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) as ::core::ffi::c_int
+        + 80 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = addr_off_8BEE9B as ::core::ffi::c_int as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_Func213(mut k: uint16, mut j: uint16) -> uint16 {
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    if *((&raw mut g_ram as *mut uint8).offset(0x9e0 as ::core::ffi::c_int as isize) as *mut uint16)
+        as ::core::ffi::c_int
+        - 10 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v1 + 1 as ::core::ffi::c_int) as isize) = 120 as uint16;
+    } else {
+        *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v1 + 1 as ::core::ffi::c_int) as isize) = 118 as uint16;
+    }
+    *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((v1 + 1 as ::core::ffi::c_int) as isize) = 120 as uint16;
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_Func214(mut k: uint16, mut j: uint16) -> uint16 {
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    if *((&raw mut g_ram as *mut uint8).offset(0x9e0 as ::core::ffi::c_int as isize) as *mut uint16)
+        as ::core::ffi::c_int
+        - 10 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v1 + 1 as ::core::ffi::c_int) as isize) = 121 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v1 + 1 as ::core::ffi::c_int) as isize) = 116 as uint16;
+    } else {
+        *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v1 + 1 as ::core::ffi::c_int) as isize) = 120 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v1 + 1 as ::core::ffi::c_int) as isize) = 114 as uint16;
+    }
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func215(mut k: uint16) {
+    CinematicFunction_Intro_Func216();
+    CinematicFunction_Intro_Func210_EndingSamusFall(k);
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(v1 as isize) as ::core::ffi::c_int
+        - 136 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        == 0
+    {
+        *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 136 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b5d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = 1 as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) = addr_word_8BED9D as ::core::ffi::c_int as uint16;
+        *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) =
+            (0x8b93d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_Func217(mut k: uint16, mut j: uint16) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 3584 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8be3ae as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 17 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 16 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 2 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) =
+        -(127 as ::core::ffi::c_int) as uint8;
+    *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
+        as *mut uint16) = -(4 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+        as *mut uint16) = -(8 as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 16 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize)
+        as *mut uint16) = 32 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a4f as ::core::ffi::c_int as isize)
+        as *mut uint16) = 32 as uint16;
+    CopyPalettesToFadingPalettes();
+    DecomposePaletteDataForFading();
+    QueueSfx1_Max15(0x22 as uint16);
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicSprInstr_Func218(mut k: uint16, mut j: uint16) -> uint16 {
+    *((&raw mut g_ram as *mut uint8).offset(0xb2c as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0xb2e as ::core::ffi::c_int as isize) as *mut uint16) =
+        -(16 as ::core::ffi::c_int) as uint16;
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func210_EndingSamusFall(mut k: uint16) {
+    AddToHiLo(
+        (&raw mut g_ram as *mut uint8).offset(0xb2e as ::core::ffi::c_int as isize) as *mut uint16,
+        (&raw mut g_ram as *mut uint8).offset(0xb2c as ::core::ffi::c_int as isize) as *mut uint16,
+        0x3800 as uint32,
+    );
+    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    AddToHiLo(
+        ((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        ((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset(v1 as isize) as *mut uint16,
+        (*((&raw mut g_ram as *mut uint8).offset(0xb2e as ::core::ffi::c_int as isize)
+            as *mut uint16) as uint32)
+            << 16 as ::core::ffi::c_int
+            | *((&raw mut g_ram as *mut uint8).offset(0xb2c as ::core::ffi::c_int as isize)
+                as *mut uint16) as uint32,
+    );
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func216() {
+    if *((&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
+        - 16 as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        let mut v0: uint16 = (2 as ::core::ffi::c_int
+            * *((&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize)
+                as *mut uint16) as ::core::ffi::c_int) as uint16;
+        let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x330 as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        (*gVramWriteEntry(
+            *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
+                as *mut uint16) as ::core::ffi::c_int,
+        ))
+        .size = 2048 as uint16;
+        v1 = (v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        let mut v2: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        (*gVramWriteEntry(v1 as ::core::ffi::c_int)).size = *(g_rom.offset(
+            (((0x8bf6b8 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                << 15 as ::core::ffi::c_int
+                | 0x8bf6b8 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                & 0x3fffff as ::core::ffi::c_int) as isize,
+        ) as *const uint8
+            as *mut uint16)
+            .offset(v2 as isize);
+        v1 = (v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        let fresh28 = v1;
+        v1 = v1.wrapping_add(1);
+        *(&raw mut (*(gVramWriteEntry
+            as unsafe extern "C" fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
+            fresh28 as ::core::ffi::c_int,
+        ))
+        .size as *mut uint8)
+            .offset(0 as ::core::ffi::c_int as isize) = 127 as uint8;
+        (*gVramWriteEntry(v1 as ::core::ffi::c_int)).size = *(g_rom.offset(
+            (((0x8bf6d8 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                << 15 as ::core::ffi::c_int
+                | 0x8bf6d8 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                & 0x3fffff as ::core::ffi::c_int) as isize,
+        ) as *const uint8
+            as *mut uint16)
+            .offset(v2 as isize);
+        *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
+            as *mut uint16) = (v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        let ref mut fresh29 = *((&raw mut g_ram as *mut uint8)
+            .offset(0x1a4d as ::core::ffi::c_int as isize)
+            as *mut uint16);
+        *fresh29 = (*fresh29).wrapping_add(1);
+    }
+}
+#[no_mangle]
+pub unsafe extern "C" fn CinematicFunction_Intro_Func219(mut k: uint16, mut j: uint16) -> uint16 {
+    DisableTextGlowObjects_();
+    let mut v0: uint16 = 8 as uint16;
+    loop {
+        *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
+            as *mut uint16)
+            .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
+            *(g_rom.offset(
+                (((0x8ce7e9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
+                    << 15 as ::core::ffi::c_int
+                    | 0x8ce7e9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
+                    & 0x3fffff as ::core::ffi::c_int) as isize,
+            ) as *const uint8 as *mut uint16)
+                .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+        v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
+        if !(((v0 as ::core::ffi::c_int - 512 as ::core::ffi::c_int) as int16
+            as ::core::ffi::c_int)
+            < 0 as ::core::ffi::c_int)
+        {
+            break;
+        }
+    }
+    *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 0 as uint8;
+    *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 0x80 as uint8;
+    *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize) as *mut uint16) =
+        0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a03 as ::core::ffi::c_int as isize)
+        as *mut uint16)
+        .offset(1 as ::core::ffi::c_int as isize) = 1 as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
+        as *mut uint16) = (0x8be0f4 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 60 as uint16;
+    return j;
+}
+#[no_mangle]
+pub unsafe extern "C" fn CallCinematicFunction(mut ea: uint32) {
+    match ea {
+        9148999 => {
+            CinematicFunctionNone();
+            return;
+        }
+        9149288 => {
+            CinematicFunctionOpening();
+            return;
+        }
+        9149719 => {
+            CinematicFunc_Func2();
+            return;
+        }
+        9149840 => {
+            CinematicFunc_Func4();
+            return;
+        }
+        9149970 => {
+            CinematicFunc_Func5();
+            return;
+        }
+        9150091 => {
+            CinematicFunc_Func7();
+            return;
+        }
+        9150248 => return,
+        9150249 => {
+            CinematicFunc_Func1();
+            return;
+        }
+        9150290 => {
+            CinematicFunc_Func10();
+            return;
+        }
+        9150382 => {
+            CinematicFunc_Func9();
+            return;
+        }
+        9151375 => return,
+        9151376 => return,
+        9151377 => {
+            CinematicFunc_Nothing();
+            return;
+        }
+        9151381 => {
+            CinematicFunction_Intro_Initial();
+            return;
+        }
+        9151911 => {
+            CinematicFunction_Intro_FadeIn();
+            return;
+        }
+        9151933 => {
+            CinematicFunction_Intro_DrawInitJpn();
+            return;
+        }
+        9151992 => {
+            CinematicFunction_Intro_LastMetroidCaptivity();
+            return;
+        }
+        9152019 => {
+            CinematicFunc_Intro_QueueGalaxyIsAtPeace();
+            return;
+        }
+        9152057 => {
+            CinematicFunc_Intro_WaitForQueueWait4secs();
+            return;
+        }
+        9152076 => {
+            CinematicFunc_Intro_FadeOut();
+            return;
+        }
+        9152099 => {
+            CinematicFunc_Intro_WaitForFadeOut();
+            return;
+        }
+        9152111 => {
+            CinematicFunc_Intro_SetupTextPage2();
+            return;
+        }
+        9152555 => {
+            CinematicFunc_Intro_WaitFadeinShowText();
+            return;
+        }
+        9152586 => {
+            CinematicFunc_Intro_WaitForFadeinSleep();
+            return;
+        }
+        9154232 => {
+            CinematicFunction_Intro_WaitInputSetupMotherBrainFight();
+            return;
+        }
+        9154412 => {
+            CinematicFunction_Intro_WaitInputSetupBabyMetroid();
+            return;
+        }
+        9154802 => {
+            CinematicFunction_Intro_Func11();
+            return;
+        }
+        9154851 => {
+            CinematicFunction_Intro_Func12();
+            return;
+        }
+        9155034 => {
+            CinematicFunction_Intro_Func15();
+            return;
+        }
+        9155079 => {
+            CinematicFunction_Intro_Func15b();
+            return;
+        }
+        9155152 => {
+            CinematicFunction_Intro_XfadeGameplayFade();
+            return;
+        }
+        9155282 => {
+            CinematicFunction_Intro_XfadeScientistFade();
+            return;
+        }
+        9155423 => {
+            CinematicFunction_Intro_Page2();
+            return;
+        }
+        9155440 => {
+            CinematicFunction_Intro_Page3();
+            return;
+        }
+        9155457 => {
+            CinematicFunction_Intro_Page4();
+            return;
+        }
+        9155474 => {
+            CinematicFunction_Intro_Page5();
+            return;
+        }
+        9155572 => {
+            CinematicFunction_Intro_Fadestuff();
+            return;
+        }
+        9155672 => {
+            CinematicFunction_Intro_Fadestuff2();
+            return;
+        }
+        9156399 => {
+            CinematicFunction_Intro_Func34();
+            return;
+        }
+        9157792 => {
+            CinematicFunction_Intro_Func54();
+            return;
+        }
+        9158116 => {
+            CinematicFunction_Intro_Func55();
+            return;
+        }
+        9158137 => {
+            CinematicFunction_Intro_Func56();
+            return;
+        }
+        9158618 => {
+            CinematicFunction_Intro_Func67();
+            return;
+        }
+        9158853 => {
+            CinematicFunction_Intro_Func72();
+            return;
+        }
+        9158912 => {
+            CinematicFunction_Intro_Func73();
+            return;
+        }
+        9158939 => {
+            CinematicFunctionBlackoutFromCeres();
+            return;
+        }
+        9159396 => {
+            CinematicFunction_Intro_Func74();
+            return;
+        }
+        9159409 => {
+            CinematicFunction_Intro_Func75();
+            return;
+        }
+        9159493 => {
+            CinematicFunction_Intro_Func76();
+            return;
+        }
+        9160138 => {
+            CinematicFunction_Intro_Func77();
+            return;
+        }
+        9160208 => {
+            CinematicFunction_Intro_Func84();
+            return;
+        }
+        9160231 => {
+            CinematicFunction_Intro_Func85();
+            return;
+        }
+        9160345 => {
+            CinematicFunction_Intro_Func86();
+            return;
+        }
+        9160604 => {
+            CinematicFunction_Intro_Func87();
+            return;
+        }
+        9160650 => {
+            CinematicFunction_Intro_Func88();
+            return;
+        }
+        9161209 => {
+            CinematicFunction_Intro_Func105();
+            return;
+        }
+        9161270 => {
+            CinematicFunction_Intro_Func106();
+            return;
+        }
+        9161349 => {
+            CinematicFunction_Intro_Func107();
+            return;
+        }
+        9161424 => {
+            CinematicFunction_Intro_Func108();
+            return;
+        }
+        9161438 => return,
+        9161439 => {
+            CinematicFunction_Intro_Func95();
+            return;
+        }
+        9163904 => {
+            CinematicFunctionEscapeFromCebes();
+            return;
+        }
+        9164503 => {
+            CinematicFunction_Intro_Func109();
+            return;
+        }
+        9164530 => {
+            CinematicFunction_Intro_Func110();
+            return;
+        }
+        9164545 => {
+            CinematicFunction_Intro_Func111();
+            return;
+        }
+        9164593 => {
+            CinematicFunction_Intro_Func112();
+            return;
+        }
+        9164792 => {
+            CinematicFunction_Intro_Func113();
+            return;
+        }
+        9164807 => {
+            CinematicFunction_Intro_Func114();
+            return;
+        }
+        9164855 => {
+            CinematicFunction_Intro_Func115();
+            return;
+        }
+        9165314 => {
+            CinematicFunction_Intro_Func116();
+            return;
+        }
+        9165338 => {
+            CinematicFunction_Intro_Func117();
+            return;
+        }
+        9165523 => {
+            CinematicFunction_Intro_Func118();
+            return;
+        }
+        9165725 => return,
+        9165726 => {
+            CinematicFunction_Intro_Func119();
+            return;
+        }
+        9165764 => {
+            CinematicFunction_Intro_Func120();
+            return;
+        }
+        9165989 => {
+            CinematicFunction_Intro_Func121();
+            return;
+        }
+        9166146 => {
+            CinematicFunction_Intro_Func123();
+            return;
+        }
+        9166285 => {
+            CinematicFunction_Intro_Func124();
+            return;
+        }
+        9166435 => return,
+        9166436 => {
+            CinematicFunction_Intro_Func125();
+            return;
+        }
+        9166464 => {
+            CinematicFunction_Intro_Func126();
+            return;
+        }
+        9167092 => {
+            CinematicFunction_Intro_Func129();
+            return;
+        }
+        9167120 => {
+            CinematicFunction_Intro_Func130();
+            return;
+        }
+        9167192 => {
+            CinematicFunction_Intro_Func131();
+            return;
+        }
+        9167248 => {
+            CinematicFunction_Intro_Func132();
+            return;
+        }
+        9167314 => {
+            CinematicFunction_Intro_Func134();
+            return;
+        }
+        9167461 => {
+            CinematicFunction_Intro_Func136();
+            return;
+        }
+        9167507 => {
+            CinematicFunction_Intro_Func135();
+            return;
+        }
+        9167581 => {
+            CinematicFunction_Intro_Func137();
+            return;
+        }
+        9167636 => {
+            CinematicFunction_Intro_Func138();
+            return;
+        }
+        9167682 => {
+            CinematicFunction_Intro_Func145();
+            return;
+        }
+        9167790 => {
+            CinematicFunction_Intro_Func139();
+            return;
+        }
+        9168010 => {
+            CinematicFunction_Intro_Func141();
+            return;
+        }
+        9168132 => {
+            CinematicFunction_Intro_Func143();
+            return;
+        }
+        9168266 => {
+            CinematicFunction_Intro_Func144();
+            return;
+        }
+        9168791 => {
+            CinematicFunction_Intro_Func148();
+            return;
+        }
+        9168826 => return,
+        _ => {
+            Unreachable();
+        }
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CallCinematicSprInstr(
+    mut ea: uint32,
+    mut k: uint16,
+    mut j: uint16,
+) -> uint16 {
+    match ea {
+        9147448 => return CinematicSprInstr_Delete(k, j),
+        9147458 => return CinematicSprInstr_Sleep(k, j),
+        9147468 => return CinematicSprInstr_SetPreInstr(k, j),
+        9147479 => return CinematicSprInstr_ClearPreInstr(k, j),
+        9147554 => return CinematicSprInstr_GotoRel(k, j),
+        9147580 => return CinematicSprInstr_Goto(k, j),
+        9147587 => return CinematicSprInstr_DecTimerGoto(k, j),
+        9147597 => return CinematicSprInstr_DecTimerGotoRel(k, j),
+        9147606 => return CinematicSprInstr_SetTimer(k, j),
+        9149665 => return CinematicSprInstr_9CE1(k, j),
+        9149789 => return CinematicSprInstr_9D5D(k, j),
+        9149910 => return CinematicSprInstr_9DD6(k, j),
+        9150040 => return CinematicSprInstr_Func8(k, j),
+        9150157 => return CinematicSprInstr_Func9(k, j),
+        9150192 => return CinematicSprInstr_sub_8B9EF0(k, j),
+        9150233 => return CinematicSprInstr_9F19(k, j),
+        9152792 => return CinematicSprInstr_SpawnMetroidEggParticles(k, j),
+        9155382 => return CinematicSprInstr_StartIntroPage2(k, j),
+        9155390 => return CinematicSprInstr_StartIntroPage3(k, j),
+        9155398 => return CinematicSprInstr_StartIntroPage4(k, j),
+        9155406 => return CinematicSprInstr_StartIntroPage5(k, j),
+        9156805 => return CinematicSprInstr_Func43(k, j),
+        9157153 => return CinematicSprInstr_SpawnIntroRinkas01(k, j),
+        9157174 => return CinematicSprInstr_SpawnIntroRinkas23(k, j),
+        9158806 => return CinematicCommonInstr_Func69(k, j),
+        9158818 => return CinematicCommonInstr_Func70(k, j),
+        9159684 => return CinematicSprInstr_SpawnCeresExplosions1(k, j),
+        9159948 => return CinematicSprInstr_SpawnCeresExplosions3(k, j),
+        9161125 => return CinematicSprInstr_C9A5(k, j),
+        9161135 => return CinematicSprInstr_C9AF(k, j),
+        9161149 => return CinematicSprInstr_C9BD(k, j),
+        9161159 => return CinematicSprInstr_C9C7(k, j),
+        9171550 => return CinematicSprInstr_Func181(k, j),
+        9171588 => return CinematicSprInstr_Func182(k, j),
+        9171605 => return CinematicSprInstr_Func183(k, j),
+        9171639 => return CinematicSprInstr_Func185(k, j),
+        9171706 => return CinematicSprInstr_Func186(k, j),
+        9171755 => return CinematicSprInstr_Func187(k, j),
+        9171888 => return CinematicSprInstr_Func190(k, j),
+        9171918 => return CinematicSprInstr_Func192(k, j),
+        9171995 => return CinematicSprInstr_Func193(k, j),
+        9172004 => return CinematicSprInstr_Func194(k, j),
+        9172013 => return CinematicSprInstr_Func195(k, j),
+        9172022 => return CinematicSprInstr_Func196(k, j),
+        9172031 => return CinematicSprInstr_Func197(k, j),
+        9172040 => return CinematicSprInstr_Func198(k, j),
+        9172253 => return CinematicSprInstr_Func208(k, j),
+        9172308 => return CinematicSprInstr_Func211(k, j),
+        9172375 => return CinematicSprInstr_Func213(k, j),
+        9172410 => return CinematicSprInstr_Func214(k, j),
+        9172484 => return CinematicSprInstr_Func217(k, j),
+        9172561 => return CinematicSprInstr_Func218(k, j),
+        _ => return Unreachable() as uint16,
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CallCinematicSprPreInstr(mut ea: uint32, mut j: uint16) {
+    match ea {
+        9158617 => return,
+        9147353 => return,
+        9147487 => return,
+        9149647 => {
+            sub_8B9CCF(j);
+            return;
+        }
+        9152724 => return,
+        9152744 => {
+            SetSomeStuffForSpriteObject_4_MetroidEgg(j);
+            return;
+        }
+        9152771 => {
+            CinematicSprPreInstr_A903(j);
+            return;
+        }
+        9152916 => {
+            SetSomeStuffForSpriteObject_7(j);
+            return;
+        }
+        9153203 => {
+            SetSomeStuffForSpriteObject_9(j);
+            return;
+        }
+        9153896 => {
+            SetSomeStuffForSpriteObject_11(j);
+            return;
+        }
+        9153958 => {
+            SetSomeStuffForSpriteObject_13(j);
+            return;
+        }
+        9154074 => {
+            SetSomeStuffForSpriteObject_18(j);
+            return;
+        }
+        9156486 => {
+            CinematicFunction_Intro_Func36(j);
+            return;
+        }
+        9156623 => {
+            CinematicFunction_Intro_Func39(j);
+            return;
+        }
+        9156654 => {
+            CinematicSprPreInstr_B82E(j);
+            return;
+        }
+        9156824 => {
+            CinematicFunction_Intro_Func44(j);
+            return;
+        }
+        9156923 => {
+            CinematicFunction_Intro_Func45(j);
+            return;
+        }
+        9157135 => {
+            CinematicFunction_Intro_Func48(j);
+            return;
+        }
+        9157214 => {
+            CinematicFunction_Intro_Func50(j);
+            return;
+        }
+        9157235 => {
+            CinematicFunction_Intro_Func51(j);
+            return;
+        }
+        9157389 => {
+            CinematicFunction_Intro_Func52(j);
+            return;
+        }
+        9157412 => {
+            CinematicFunction_Intro_Func53(j);
+            return;
+        }
+        9158325 => {
+            CinematicFunction_Intro_Func58(j);
+            return;
+        }
+        9158453 => {
+            CinematicFunction_Intro_Func60(j);
+            return;
+        }
+        9158495 => {
+            CinematicFunction_Intro_Func62(j);
+            return;
+        }
+        9158537 => {
+            CinematicFunction_Intro_Func64(j);
+            return;
+        }
+        9158598 => {
+            CinematicFunction_Intro_Func66(j);
+            return;
+        }
+        9159817 => {
+            CinematicSprPreInstr_C489(j);
+            return;
+        }
+        9160066 => {
+            CinematicFunction_Intro_Func82(j);
+            return;
+        }
+        9160782 => {
+            CinematicFunction_Intro_Func90(j);
+            return;
+        }
+        9160797 => {
+            CinematicFunction_Intro_Func91(j);
+            return;
+        }
+        9160874 => {
+            CinematicFunction_Intro_Func93(j);
+            return;
+        }
+        9160889 => {
+            CinematicFunction_Intro_Func94(j);
+            return;
+        }
+        9160953 => {
+            CinematicFunction_Intro_Func96(j);
+            return;
+        }
+        9160968 => {
+            CinematicFunction_Intro_Func97(j);
+            return;
+        }
+        9170866 => {
+            CinematicFunction_Intro_Func151(j);
+            return;
+        }
+        9171431 => {
+            CinematicFunction_Intro_Func179(j);
+            return;
+        }
+        9171495 => {
+            CinematicFunction_Intro_Func180(j);
+            return;
+        }
+        9171621 => {
+            CinematicFunction_Intro_Func184(j);
+            return;
+        }
+        9171802 => {
+            CinematicSprPreInstr_F35A(j);
+            return;
+        }
+        9171829 => {
+            CinematicFunction_Intro_Func189(j);
+            return;
+        }
+        9171867 => {
+            CinematicFunction_Intro_Func189b(j);
+            return;
+        }
+        9171897 => {
+            CinematicFunction_Intro_Func191(j);
+            return;
+        }
+        9172053 => {
+            CinematicFunction_Intro_Func199(j);
+            return;
+        }
+        9172068 => {
+            CinematicFunction_Intro_Func200(j);
+            return;
+        }
+        9172088 => {
+            CinematicFunction_Intro_Func201(j);
+            return;
+        }
+        9172103 => {
+            CinematicFunction_Intro_Func202(j);
+            return;
+        }
+        9172123 => {
+            CinematicFunction_Intro_Func203(j);
+            return;
+        }
+        9172138 => {
+            CinematicFunction_Intro_Func204(j);
+            return;
+        }
+        9172177 => {
+            CinematicFunction_Intro_Func205(j);
+            return;
+        }
+        9172192 => {
+            CinematicFunction_Intro_Func206(j);
+            return;
+        }
+        9172231 => {
+            CinematicFunction_Intro_Func207(j);
+            return;
+        }
+        9172252 => return,
+        9172264 => {
+            CinematicSprPreInstr_F528(j);
+            return;
+        }
+        9172351 => {
+            CinematicSprPreInstr_F57F(j);
+            return;
+        }
+        9172445 => {
+            CinematicFunction_Intro_Func215(j);
+            return;
+        }
+        _ => {
+            Unreachable();
+        }
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CallCinematicBgPreInstr(mut ea: uint32, mut j: uint16) {
+    match ea {
+        9147353 => return,
+        9155772 => {
+            CinematicBgPreInstr_SamusBlink(j);
+            return;
+        }
+        _ => {
+            Unreachable();
+        }
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CallCinematicBgInstr(
+    mut ea: uint32,
+    mut k: uint16,
+    mut j: uint16,
+) -> uint16 {
+    match ea {
+        9148056 => return CinematicBgInstr_Delete(k, j),
+        9148190 => return CinematicBgInstr_Goto(k, j),
+        9154004 => return CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j),
+        9154115 => return CinematicBgInstr_HandleCreateJpnText_Page1(k, j),
+        9154139 => return CinematicBgInstr_SpawnMarkerWaitInput_Page1(k, j),
+        9154169 => return CinematicBgInstr_HandleCreateJpnText_Page2(k, j),
+        9154193 => return CinematicBgInstr_SpawnMarkerWaitInput_Page2(k, j),
+        9154676 => return CinematicBgInstr_HandleCreateJpnText_Page3(k, j),
+        9154700 => return CinematicBgInstr_SpawnMarkerWaitInput_Page3(k, j),
+        9154739 => return CinematicBgInstr_HandleCreateJpnText_Page4(k, j),
+        9154763 => return CinematicBgInstr_SpawnMarkerWaitInput_Page4(k, j),
+        9154971 => return CinematicBgInstr_HandleCreateJpnText_Page5(k, j),
+        9154995 => return CinematicBgInstr_SpawnMarkerWaitInput_Page5(k, j),
+        9155112 => return CinematicBgInstr_Func16(k, j),
+        9155136 => return CinematicBgInstr_Func17(k, j),
+        9158806 => return CinematicCommonInstr_Func69(k, j),
+        9158818 => return CinematicCommonInstr_Func70(k, j),
+        9168423 => return CalcItemPercentageCount(k, j),
+        9168745 => return CinematicFunction_Intro_Func146(k, j),
+        9168768 => return CinematicFunction_Intro_Func147(k, j),
+        _ => return Unreachable() as uint16,
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CallCinematicSpriteObjectSetup(mut ea: uint32, mut j: uint16) {
+    match ea {
+        9147353 => return,
+        9149210 => {
+            CinematicSpriteInit_7(j);
+            return;
+        }
+        9149229 => {
+            CinematicSpriteInit_8(j);
+            return;
+        }
+        9149248 => {
+            CinematicSpriteInit_9(j);
+            return;
+        }
+        9149628 => {
+            CinematicSpriteInit_0(j);
+            return;
+        }
+        9149770 => {
+            CinematicSpriteInit_1(j);
+            return;
+        }
+        9149891 => {
+            CinematicSpriteInit_2(j);
+            return;
+        }
+        9150021 => {
+            CinematicSpriteInit_3(j);
+            return;
+        }
+        9150131 => {
+            CinematicSpriteInit_4(j);
+            return;
+        }
+        9150166 => {
+            CinematicSpriteInit_5(j);
+            return;
+        }
+        9150207 => {
+            CinematicSpriteInit_6(j);
+            return;
+        }
+        9152705 => {
+            SetSomeStuffForSpriteObject_2(j);
+            return;
+        }
+        9152725 => {
+            SetSomeStuffForSpriteObject_3(j);
+            return;
+        }
+        9152856 => {
+            SetSomeStuffForSpriteObject_6(j);
+            return;
+        }
+        9153178 => {
+            SetSomeStuffForSpriteObject_8(j);
+            return;
+        }
+        9153877 => {
+            SetSomeStuffForSpriteObject_10(j);
+            return;
+        }
+        9153939 => {
+            SetSomeStuffForSpriteObject_12(j);
+            return;
+        }
+        9154055 => {
+            SetSomeStuffForSpriteObject_17(j);
+            return;
+        }
+        9156467 => {
+            CinematicFunction_Intro_Func35(j);
+            return;
+        }
+        9156758 => {
+            CinematicFunction_Intro_Func42(j);
+            return;
+        }
+        9157005 => {
+            CinematicFunction_Intro_Func46(j);
+            return;
+        }
+        9157076 => {
+            CinematicFunction_Intro_Func47(j);
+            return;
+        }
+        9157195 => {
+            CinematicFunction_Intro_Func49(j);
+            return;
+        }
+        9158270 => {
+            CinematicFunction_Intro_Func57(j);
+            return;
+        }
+        9158434 => {
+            CinematicFunction_Intro_Func59(j);
+            return;
+        }
+        9158476 => {
+            CinematicFunction_Intro_Func61(j);
+            return;
+        }
+        9158518 => {
+            CinematicFunction_Intro_Func63(j);
+            return;
+        }
+        9158560 => {
+            CinematicFunction_Intro_Func65(j);
+            return;
+        }
+        9158787 => {
+            CinematicFunction_Intro_Func68(j);
+            return;
+        }
+        9158834 => {
+            CinematicFunction_Intro_Func71(j);
+            return;
+        }
+        9159732 => {
+            CinematicFunction_Intro_Func78(j);
+            return;
+        }
+        9159865 => {
+            CinematicFunction_Intro_Func80(j);
+            return;
+        }
+        9159987 => {
+            CinematicFunction_Intro_Func81(j);
+            return;
+        }
+        9160105 => {
+            CinematicFunction_Intro_Func83(j);
+            return;
+        }
+        9160763 => {
+            CinematicFunction_Intro_Func89(j);
+            return;
+        }
+        9160855 => {
+            CinematicFunction_Intro_Func92(j);
+            return;
+        }
+        9161026 => {
+            CinematicFunction_Intro_Func98(j);
+            return;
+        }
+        9161046 => {
+            CinematicFunction_Intro_Func99(j);
+            return;
+        }
+        9161066 => {
+            CinematicFunction_Intro_Func100(j);
+            return;
+        }
+        9161086 => {
+            CinematicFunction_Intro_Func101(j);
+            return;
+        }
+        9161106 => {
+            CinematicFunction_Intro_Func102(j);
+            return;
+        }
+        9161190 => {
+            CinematicFunction_Intro_Func104(j);
+            return;
+        }
+        9170841 => {
+            CinematicFunction_Intro_Func150(j);
+            return;
+        }
+        9170922 => {
+            CinematicFunction_Intro_Func152(j);
+            return;
+        }
+        9170941 => {
+            CinematicFunction_Intro_Func153(j);
+            return;
+        }
+        9170949 => {
+            CinematicFunction_Intro_Func154(j);
+            return;
+        }
+        9170968 => {
+            CinematicFunction_Intro_Func155(j);
+            return;
+        }
+        9170987 => {
+            CinematicFunction_Intro_Func156(j);
+            return;
+        }
+        9171006 => {
+            CinematicFunction_Intro_Func157(j);
+            return;
+        }
+        9171038 => {
+            CinematicFunction_Intro_Func159(j);
+            return;
+        }
+        9171053 => {
+            CinematicFunction_Intro_Func161(j);
+            return;
+        }
+        9171068 => {
+            CinematicFunction_Intro_Func162(j);
+            return;
+        }
+        9171077 => {
+            CinematicFunction_Intro_Func163(j);
+            return;
+        }
+        9171092 => {
+            CinematicFunction_Intro_Func164(j);
+            return;
+        }
+        9171122 => {
+            CinematicFunction_Intro_Func165(j);
+            return;
+        }
+        9171169 => {
+            CinematicFunction_Intro_Func166(j);
+            return;
+        }
+        9171177 => {
+            CinematicFunction_Intro_Func167(j);
+            return;
+        }
+        9171185 => {
+            CinematicFunction_Intro_Func168(j);
+            return;
+        }
+        9171193 => {
+            CinematicFunction_Intro_Func169(j);
+            return;
+        }
+        9171230 => {
+            CinematicFunction_Intro_Func170(j);
+            return;
+        }
+        9171267 => {
+            CinematicFunction_Intro_Func171(j);
+            return;
+        }
+        9171286 => {
+            CinematicFunction_Intro_Func172(j);
+            return;
+        }
+        9171305 => {
+            CinematicFunction_Intro_Func173(j);
+            return;
+        }
+        9171324 => {
+            CinematicFunction_Intro_Func174(j);
+            return;
+        }
+        9171343 => {
+            CinematicFunction_Intro_Func175(j);
+            return;
+        }
+        9171368 => {
+            CinematicFunction_Intro_Func176(j);
+            return;
+        }
+        9171393 => {
+            CinematicFunction_Intro_Func177(j);
+            return;
+        }
+        9171412 => {
+            CinematicFunction_Intro_Func178(j);
+            return;
+        }
+        _ => {
+            Unreachable();
+        }
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CallIntroObjectInstr(
+    mut ea: uint32,
+    mut k: uint16,
+    mut j: uint16,
+) -> uint16 {
+    match ea {
+        9148926 => return IntroObject_Delete(k, j),
+        9148934 => return IntroObject_Goto(k, j),
+        9148941 => return IntroObject_DecTimerGoto(k, j),
+        9148951 => return IntroObject_SetTimer(k, j),
+        9172734 => return CinematicFunction_Intro_Func219(k, j),
+        _ => return Unreachable() as uint16,
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CallCinematicSpriteInit(mut ea: uint32, mut j: uint16) {
+    match ea {
+        9149210 => {
+            CinematicSpriteInit_7(j);
+            return;
+        }
+        9149229 => {
+            CinematicSpriteInit_8(j);
+            return;
+        }
+        9149248 => {
+            CinematicSpriteInit_9(j);
+            return;
+        }
+        9149628 => {
+            CinematicSpriteInit_0(j);
+            return;
+        }
+        9149770 => {
+            CinematicSpriteInit_1(j);
+            return;
+        }
+        9149891 => {
+            CinematicSpriteInit_2(j);
+            return;
+        }
+        9150021 => {
+            CinematicSpriteInit_3(j);
+            return;
+        }
+        9150131 => {
+            CinematicSpriteInit_4(j);
+            return;
+        }
+        9150166 => {
+            CinematicSpriteInit_5(j);
+            return;
+        }
+        9150207 => {
+            CinematicSpriteInit_6(j);
+            return;
+        }
+        9147353 => return,
+        _ => {
+            Unreachable();
+        }
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CallMode7Instr(mut ea: uint32, mut k: uint16, mut j: uint16) -> uint16 {
+    match ea {
+        9147755 => return Mode7Instr_Delete(k, j),
+        9147762 => return Mode7Instr_SetPreInstr(k, j),
+        9147773 => return Mode7Instr_ClearPreInstr(k, j),
+        9147782 => return Mode7Instr_Goto(k, j),
+        9147789 => return Mode7Instr_DecTimerAndGoto(k, j),
+        9147799 => return Mode7Instr_SetTimer(k, j),
+        9151067 => return PlayBabyMetroidCry1(k, j),
+        9151075 => return PlayBabyMetroidCry2(k, j),
+        9151083 => return PlayBabyMetroidCry3(k, j),
+        9151091 => return CinematicSetPal1(k, j),
+        9151108 => return CinematicSetPal2(k, j),
+        9151125 => return CinematicSetPal3(k, j),
+        9151142 => return CinematicSetPal4(k, j),
+        9155870 => return sub_8BB51E(k, j),
+        9155919 => return EnableCinematicBgTilemapUpdates__0(k, j),
+        9155924 => return CinematicFunction_Intro_Func21(k, j),
+        9156024 => return CinematicFunction_Intro_ThenWaitInputSetupBabyMetroid(k, j),
+        9156035 => return CinematicFunction_Intro_Func23(k, j),
+        9156123 => return CinematicFunction_Intro_Func25(k, j),
+        9156134 => return CinematicFunction_Intro_Func26(k, j),
+        9156234 => return CinematicFunction_Intro_Func28(k, j),
+        9156245 => return CinematicFunction_Intro_Func29(k, j),
+        9156333 => return CinematicFunction_Intro_Func31(k, j),
+        9156344 => return CinematicFunction_Intro_Func32(k, j),
+        9156363 => return EnableCinematicBgTilemapUpdates__(k, j),
+        _ => return Unreachable() as uint16,
+    };
+}
+#[no_mangle]
+pub unsafe extern "C" fn CallMode7PreInstr(mut ea: uint32, mut k: uint16) {
+    match ea {
+        9147353 => return,
+        9155973 => {
+            CinematicFunction_Intro_Func22(k);
+            return;
+        }
+        9156078 => {
+            CinematicFunction_Intro_Func24(k);
+            return;
+        }
+        9156183 => {
+            CinematicFunction_Intro_Func27(k);
+            return;
+        }
+        9156288 => {
+            CinematicFunction_Intro_Func30(k);
+            return;
+        }
+        _ => {
+            Unreachable();
+        }
+    };
+}

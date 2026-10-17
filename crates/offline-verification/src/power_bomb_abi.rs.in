@@ -1,9 +1,0 @@
-unsafe extern "C" {fn sm_power_bomb_hdma(ram:*mut u8,len:usize,script:u16)->i32;}
-impl family::Host for CCallback {
- fn spawn_hdma(&mut self,ram:&mut Wram<'_>,script:u16)->Result<u16,&'static str>{
-  let mut state:Vec<u8>=(0..WRAM_SIZE).map(|i|ram.byte(i)).collect();
-  let value=unsafe{sm_power_bomb_hdma(state.as_mut_ptr(),state.len(),script)};
-  if !(0..=65535).contains(&value){return Err("HDMA callback failed");}
-  for(i,v) in state.into_iter().enumerate(){ram.set_byte(i,v);}Ok(value as u16)
- }
-}

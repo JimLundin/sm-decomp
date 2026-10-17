@@ -1,4 +1,6 @@
 [toolchain]
+# Nightly for `c_variadic` and `extern_types`, which the transpiled code
+# still uses (`extern_types` and friends). Dropping both is a phase 2 goal; then this can move to stable.
 channel = "nightly-2026-09-29"
 profile = "minimal"
-components = ["clippy", "rustfmt"]
+components = ["rustfmt", "clippy"]

@@ -1,9 +1,0 @@
-// Shared declarations only; every observer executes the retained actual C body.
-#include <stdint.h>
-void RidleySubsystemBoundaryBegin(unsigned, uint32_t, uint16_t, uint32_t);
-void RidleySubsystemBoundaryEnd(uint32_t, unsigned);
-int RidleySubsystemNativeHeader(uint16_t);
-void RidleySubsystemEffect(const char *, uint32_t, uint16_t, uint16_t, uint16_t, uint32_t);
-void RidleySubsystemServiceBegin(unsigned, uint16_t, uint16_t);
-void RidleySubsystemServiceEnd(unsigned, uint16_t, uint16_t, uint32_t);
-void RidleySubsystemInventorySave(void);

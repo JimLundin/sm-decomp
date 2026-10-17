@@ -1,56 +1,32 @@
-## Agent skills
+# Agent instructions
 
-### Translation first and batch verification
+Read `docs/PLAN.md` first. It replaces every earlier workflow, skill, ticket
+and evidence rule. Ignore `.scratch/`, readiness gates, acceptance pointers,
+translation scopes and anything else from before 2026-10-17; that project
+is archived in the tag `archive/pre-transpile-2026-10-17`.
 
-Prioritize translating complete recovered-C subsystems into Rust. Use lightweight
-source review and focused checks during translation; accumulate coherent batches
-before expensive verification. Record translated-but-unverified source honestly.
+## The loop
 
-The user authorized GitHub Actions batch verification and public-project
-preparation on 2026-10-17, superseding the earlier local-only restriction. Preserve
-complete acceptance gates and exact source/input evidence on hosted runners.
-Keep ROMs, private captures, credentials and private evidence out of public Git
-history, logs and artifacts. Publication requires the reviewed source/history
-audit; missing hosted inputs remain explicit unfinished gates.
+1. Take the earliest unfinished item in `docs/PLAN.md`.
+2. Make one focused change in `sm/`.
+3. `cargo fmt`, `cargo build --release`, then the verify run over the any%
+   movie (once phase 1 exists). No new failing frames.
+4. `sh tools/progress.sh`; numbers must not go up without a reason.
+5. Commit to `main` with a message that says what changed and the verify
+   result. Update `docs/PLAN.md` when an item is done or the plan changes.
 
-### Project language
+## Rules
 
-Implement project tools, orchestration and tests in Rust. Python is permitted
-for running the DLL host. Outside that launcher exception, replace legacy Python
-entry points with validated Rust commands; preserve their evidence contracts.
-
-### Code quality
-
-Before implementation, assignment or integration review, follow
-`docs/agents/code-quality.md` for coding standards, required review evidence
-and ways to shorten the verification loop.
-
-### Issue tracker
-
-For specs, tickets and work status, use local Markdown in `.scratch/` following
-`docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-For triage, use the default role names defined in `docs/agents/triage-labels.md`.
-
-### Domain docs
-
-Before codebase exploration, follow the single-context reading rules in
-`docs/agents/domain.md`.
-
-### Run cleanup
-
-After verification runs and before closing work or handing it back, follow
-`docs/agents/run-cleanup.md`. Cleanup is part of completion.
-
-### Translation progress
-
-For gameplay translation, assignment or integration, follow
-`docs/agents/translation-progress.md`. Assign whole subsystems and publish each
-stage to the shared inventory before handing work back.
-
-### Parallel sessions
-
-For decomp session startup, concurrent sessions or crash recovery, follow
-`docs/agents/decomp-sessions.md`.
+- `sm/src` is the source of truth. There is no C to consult or regenerate
+  from. When the meaning of code is unclear, use the oracle and the
+  `ram_map.rs` names, and the bank logs at https://patrickjohnston.org/bank/.
+- Preserve behaviour exactly, quirks included. The oracle decides, not taste.
+- Keep `g_ram` byte-compatible with the SNES layout.
+- Small commits. A refactor that touches many files is fine if it is one
+  mechanical idea; mixing ideas in one commit is not.
+- Do not build process tooling, evidence stores or dashboards. If the loop
+  above is too slow or too weak, say so in `docs/PLAN.md` and fix the verify
+  run itself.
+- Never commit ROMs, save states or anything derived from the ROM.
+- When stuck for more than an hour of work on one item, write down what you
+  found in `docs/PLAN.md` under that item and stop.

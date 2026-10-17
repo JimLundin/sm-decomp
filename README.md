@@ -1,44 +1,37 @@
 # sm-decomp
 
-A Super Metroid (SNES) decompilation project targeting a playable source port
-with gameplay logic in readable Rust and emulated SNES hardware. Vanilla
-Super Metroid comes first; Map Rando integration remains future work.
+Super Metroid (SNES) in Rust. The whole game runs as Rust code on emulated
+SNES hardware, and every frame can be checked against the original ROM
+running on the built-in 65816 emulator.
 
-This public repository distributes reviewed source selections. It contains no
-ROM, private captures, fixture payload archives or prior private Git history.
-Supply your own authorized ROM for tests that require it. Historical private
-evidence remains separate; this distribution makes no claim that such material
-was never committed privately.
+The code was transpiled once from [snesrev/sm](https://github.com/snesrev/sm)
+with c2rust and is now being cleaned up into idiomatic Rust, one subsystem at
+a time, with that per-frame comparison as the test. See
+[docs/PLAN.md](docs/PLAN.md).
 
-The existing decomp foundation includes accepted RAM decompression and
-NextRandom comparisons documented in [docs/DECOMP_PIVOT.md](docs/DECOMP_PIVOT.md).
-Full Rust gameplay ownership, original-ROM any% completion and Map Rando are
-unfinished. Nine additional complete actor source candidates (191 definitions)
-are in [translations](translations/README.md). See [translation progress](docs/TRANSLATION_PROGRESS.md). They are translated and unverified.
-All nine are registered as restart library targets.
-Library wiring does not provide production runtime dispatch or native adapters.
-Their inclusion is not compilation,
-integration, actual-C, live replay or original-ROM acceptance.
+## Run
 
-The project pins nightly-2026-09-29, Rust edition 2024. See
-[docs/SETUP.md](docs/SETUP.md) and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
-The root patched RustySNES dependency requires the pinned prepare-rustysnes
-bootstrap before clean-checkout Cargo resolution. Downloaded dependency trees
-are excluded. The restart workspace and standalone tools have separate checks;
-root checks alone do not cover them.
+Needs SDL2 (`apt install libsdl2-dev` on Debian/Ubuntu) and rustup.
+Put your own ROM at `rom/sm.smc` (see [rom/README.md](rom/README.md)), then
+from the repository root:
 
-Binary SMF fixtures are excluded pending provenance review. Full fixture
-tests also require separately authorized ROM, item-seed, energy-prefix and
-Construction captures. Missing inputs remain failing acceptance gates.
-The translation-batch workflow is acceptance pending and does not replace
-root, standalone, actual-C, refusal/terminal, live or original-ROM gates.
-Private inputs and complete run payloads must stay outside public artifacts.
+```sh
+cargo run --release -- rom/sm.smc
+```
 
-Original contributions use the [MIT license](LICENSE). Applicable upstream
-notices remain with their modules and must be preserved. Recovered function
-boundaries and source are attributed to [snesrev/sm](https://github.com/snesrev/sm)
-and [sm_rewrite](https://github.com/testyourmine/sm_rewrite); labels and tables
-also use [bank logs](https://patrickjohnston.org/bank/). Hardware/reference work
-builds on [RustySNES](https://github.com/doublegate/RustySNES),
-[MesenCE](https://github.com/nesdev-org/MesenCE), lsnes and SingleStepTests.
-See the retained module documentation for evidence and scope limits.
+Settings and key bindings are in `sm.ini`. By default arrows move, X/Z/S/A
+are SNES A/B/X/Y, C/V are L/R, Enter is Start and right Shift is Select. Lines reading `Verify failure!` mean the
+Rust code disagreed with the original ROM on that frame; please report them.
+
+## Credits and licence
+
+Game logic, runtime and SNES emulation come from snesrev/sm (MIT, see
+[LICENSE-snesrev](LICENSE-snesrev)), translated to Rust with c2rust. Names and
+labels also draw on Patrick Johnston's
+[bank logs](https://patrickjohnston.org/bank/). Original contributions in this
+repository are MIT ([LICENSE](LICENSE)). Super Metroid is a trademark of
+Nintendo; no ROM or game data is included.
+
+Earlier approaches (static recompilation, the mixed C/Rust `restart`
+workspace, hand-ported subsystems) are preserved in the tag
+`archive/pre-transpile-2026-10-17`.

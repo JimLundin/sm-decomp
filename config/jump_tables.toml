@@ -1,8 +1,0 @@
-# Known targets of indirect jumps (JMP (a,x), JSR (a,x), JMP (a), JML [a]),
-# keyed by the jump instruction's address. Indirect jumps dispatch at runtime
-# anyway; listing targets here lets them be pre-generated instead of discovered
-# one miss at a time. Super Metroid uses these heavily for enemy AI, Samus
-# pose/movement handlers and game-state dispatch — the bank logs list most tables.
-#
-# [tables]
-# "82xxxx" = ["828yyy", "828zzz"]
