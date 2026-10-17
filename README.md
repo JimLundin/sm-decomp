@@ -14,8 +14,8 @@ The existing decomp foundation includes accepted RAM decompression and
 NextRandom comparisons documented in [docs/DECOMP_PIVOT.md](docs/DECOMP_PIVOT.md).
 Full Rust gameplay ownership, original-ROM any% completion and Map Rando are
 unfinished. Eight additional complete actor source candidates (159 definitions)
-are in [translations](translations/README.md). They are translated and unverified.
-Six are registered as restart library targets; the newest two remain source-only.
+are in [translations](translations/README.md). See [translation progress](docs/TRANSLATION_PROGRESS.md). They are translated and unverified.
+All eight are registered as restart library targets.
 Library wiring does not provide production runtime dispatch or native adapters.
 Their inclusion is not compilation,
 integration, actual-C, live replay or original-ROM acceptance.

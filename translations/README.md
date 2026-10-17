@@ -1,8 +1,7 @@
 # Translated actor source candidates
 
 Eight complete actor scopes, 159 definitions, are translated and unverified.
-Six existing sources are registered as restart library targets; Mini Crocomire
-and MiniDraygon/Evir remain source-only pending wiring. No production runtime
+All eight sources are registered as restart library targets. No production runtime
 registration or native adapter is provided. The six Cargo manifests are preserved exactly;
 Skree and Rinka are standalone std-only modules without Cargo manifests.
 No compilation, test or native execution verdict is asserted here.
