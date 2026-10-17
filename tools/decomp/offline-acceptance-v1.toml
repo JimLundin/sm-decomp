@@ -1,0 +1,11 @@
+"schema" = "decomp-offline-acceptance-contract-v2"
+"routine" = "DecompressToMem"
+"address" = 8433945
+"job_sha256" = "680bb87eaf8477861282545ad84ee6b07f361b690abb7800911631b70ff63ec4"
+"original_rom_sha256" = "12b77c4bc9c1832cee8881244659065ee1d84c70c3d29e6eaf92e6798cc2ca72"
+"synthetic_fixture_count" = 40
+"captured_call_count" = 23
+"original_call_count" = 3
+"comparison" = "full WRAM against unchanged C plus all ordered destination stores from identified instrumented C; explicit bounded original exclusions"
+"exclusions" = ["malformed-input C equivalence", "whole-game parity", "live Rust ownership"]
+"predecessor" = "ticket04 captured offline comparison; fresh decomp-c-captures-v2 source/routine/ROM/WRAM-validated capture manifest sealed into each accepting run"

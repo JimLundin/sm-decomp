@@ -1,0 +1,12 @@
+"schema" = 1
+"job" = "next-random"
+"routine" = "$80:8111 NextRandom"
+"source_revision" = "578f90b3cc49557bb70060ad033bb90b8cf8ac50"
+"RAM_reads" = [{ "offset" = 1509, "size" = 2, "type" = "unaligned little endian u16" }]
+"RAM_writes" = [{ "offset" = 1509, "size" = 2, "type" = "one semantic LE u16; byte effect order low then high" }]
+"callees" = []
+"ROM_assets" = []
+"numeric_contract" = "16-bit wrapping; high-byte multiply truncation; retain carry from adding low-product high byte, truncated high product and 1"
+"execution_contract" = "pure synchronous canonical exclusive WRAM; no MMIO, scheduler migration or allocation retention"
+"exclusions" = ["original CPU register/scratch/flags effects", "full original-ROM replay parity", "machine store instruction timing", "other routines remain C"]
+"independent_examples" = [{ "seed" = 0, "expected" = 273 }, { "seed" = 1, "expected" = 278 }, { "seed" = 65535, "expected" = 269, "derivation" = "low 255*5=0x04fb; high 255*5 truncated=251; carry 4+251+1=256; word 0x00fb plus end carry 1 plus17=269" }, { "seed" = 13056, "expected" = 18, "derivation" = "seed0x3300; low product0; high51*5=255; carry256; word0 plus end carry1 plus17=18" }, { "seed" = 255, "expected" = 1548 }]

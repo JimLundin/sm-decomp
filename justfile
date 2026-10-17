@@ -1,0 +1,217 @@
+default:
+    @just --list
+
+# Download pinned dependencies and build the Rust tools.
+setup:
+    cargo run --manifest-path tools/bootstrap/Cargo.toml --locked -- setup
+
+setup-lsnes:
+    cargo run --manifest-path tools/bootstrap/Cargo.toml --locked --offline -- setup-lsnes
+
+doctor:
+    cargo run --manifest-path tools/bootstrap/Cargo.toml --locked --offline -- doctor
+
+# Build the pinned C game headlessly and replay twice with visible CPU fallback.
+decomp-baseline frames="9000":
+    cargo run -p pipeline --locked --offline -- decomp-baseline --frames {{quote(frames)}}
+
+# Immutable setup evidence; a pass verifies setup only and cannot accept readiness.
+readiness-preflight:
+    cargo run -p pipeline --locked --offline -- readiness-preflight
+
+# Complete enabled native corpus and independent generated-step timing checks.
+pattern-check:
+    cargo run -p pipeline --locked --offline -- pattern-check --timing
+
+# Complete independent proof of disabled, source-declared instruction support.
+pattern-prove opcode="ad":
+    cargo run -p pipeline --locked --offline -- iteration-pattern prove --opcode {{quote(opcode)}}
+
+# Promotion requires supported exhaustion and complete proof before cold gates.
+pattern-promote selection proof *args:
+    cargo run -p pipeline --locked --offline -- iteration-pattern promote --selection {{quote(selection)}} --proof {{quote(proof)}} {{args}}
+
+# Cold instruction/bus replay; immutable evidence names the first disagreement.
+diagnose start="0" instructions="100":
+    cargo run -p pipeline --locked --offline -- readiness-diagnose --start-input {{start}} --instructions {{instructions}}
+
+# Includes corpus cases if `just fuzz` has generated them.
+check:
+    cargo fmt --all --check
+    cargo fmt --manifest-path tools/bootstrap/Cargo.toml -- --check
+    cargo test --manifest-path tools/bootstrap/Cargo.toml --locked --offline
+    cargo test --workspace --locked --offline
+    just hardware-check
+
+hardware-check:
+    cargo run --manifest-path tools/bootstrap/Cargo.toml --locked --offline -- hardware-check
+
+# Independent restart workspace, including fixtures and example compilation.
+restart-check:
+    cargo fmt --manifest-path restart/Cargo.toml --all --check
+    cargo clippy --manifest-path restart/Cargo.toml --workspace --all-targets --all-features --locked --offline --jobs 1 -- -D warnings
+    cargo test --manifest-path restart/Cargo.toml --workspace --all-targets --all-features --locked --offline --jobs 1 --no-fail-fast
+    cargo test --manifest-path restart/Cargo.toml --workspace --doc --all-features --locked --offline --jobs 1
+
+# One gameplay package's edit loop; actual-C/native/live and restart-check remain required.
+# See restart/DEVELOPMENT.md for ownership, package names and acceptance scope.
+restart-focused package:
+    cargo fmt --manifest-path restart/Cargo.toml -p {{quote(package)}} --check
+    cargo clippy --manifest-path restart/Cargo.toml -p {{quote(package)}} --all-targets --all-features --locked --offline --jobs 1 -- -D warnings
+    cargo test --manifest-path restart/Cargo.toml -p {{quote(package)}} --all-targets --all-features --locked --offline --jobs 1
+    cargo test --manifest-path restart/Cargo.toml -p {{quote(package)}} --doc --all-features --locked --offline --jobs 1
+
+# Run this for each standalone manifest named in the CI matrix.
+standalone-check manifest:
+    cargo fmt --manifest-path {{quote(manifest)}} --all --check
+    cargo clippy --manifest-path {{quote(manifest)}} --all-targets --all-features --locked --offline --jobs 1 -- -D warnings
+    cargo test --manifest-path {{quote(manifest)}} --all-features --locked --offline --jobs 1
+
+# Independent synthetic timing diagnostic; NOP cases expose an open HDMA issue.
+probe-hdma kind="indirect" loop="nop" phases="8":
+    cargo run -p pipeline --locked --offline -- probe-hdma --kind {{quote(kind)}} --loop {{quote(loop)}} --phases {{phases}}
+
+fmt:
+    cargo fmt --all
+
+lint:
+    cargo clippy --workspace --all-targets --locked --offline -- -D warnings
+    cargo clippy --manifest-path tools/bootstrap/Cargo.toml --all-targets --locked --offline -- -D warnings
+
+demo:
+    cargo run -p game --locked --offline
+
+# Writes ROM-derived output and switches game away from the built-in demo.
+recompile:
+    cargo run -p recomp --locked --offline
+    cargo build -p game --locked --offline
+
+recompile-steps:
+    cargo run -p recomp --locked --offline -- --out out/generated/game.rs --steps-out out/generated/steps.rs
+    cargo build --release -p diff --locked --offline
+
+diff-generated input frames="9000" out="out/diff-generated":
+    cargo run --release -p diff --locked --offline -- {{quote(input)}} --generated --frames {{frames}} --out {{quote(out)}}
+
+iterate input="movies/super-metroid-any-3653.lsmv" frames="9000":
+    just recompile-steps
+    just diff-generated {{quote(input)}} {{frames}}
+
+sync-compare baseline candidate start end offset="0":
+    cargo run -p pipeline --locked --offline -- checkpoints {{quote(baseline)}} {{quote(candidate)}} --start-frame {{start}} --end-frame {{end}} --candidate-frame-offset {{offset}}
+
+lsnes-replay input frames="12000" out="out/sync/lsnes.csv":
+    cargo run -p pipeline --locked --offline -- lsnes-replay {{quote(input)}} --frames {{frames}} --out {{quote(out)}}
+
+sync-smoke:
+    just sync-check movies/super-metroid-any-3653.lsmv 390 272
+
+sync-check input="movies/super-metroid-any-3653.lsmv" frames="12000" start="272":
+    just lsnes-replay {{quote(input)}} {{frames}}
+    just sync-replay out/sync/lsnes.csv {{quote(input)}} {{frames}} {{start}}
+
+# Reuse a completed original-core capture while iterating on hardware fixes.
+sync-replay baseline="out/sync/lsnes.csv" input="movies/super-metroid-any-3653.lsmv" frames="12000" start="272":
+    cargo run --release -p snes --bin reference-replay --locked --offline -- {{quote(input)}} --frames {{frames}} --out out/sync/reference-fingerprints.csv --checkpoints out/sync/reference.csv --lsnes-frame-labels
+    just sync-compare {{quote(baseline)}} out/sync/reference.csv {{start}} {{frames}}
+
+# Initial corpus any% movie: verify every recorded frame from a clean start.
+sync-full:
+    just sync-check movies/super-metroid-any-3653.lsmv 129712 272
+
+reference-smoke frames="120":
+    cargo run -p snes --bin reference-smoke --locked --offline -- rom/sm.sfc {{frames}}
+
+mesen-smoke:
+    tools/mesen --testRunner tools/mesen-smoke.lua rom/sm.sfc --timeout=30
+
+# Optional instruction semantics check; existing decimal ADC failures are documented.
+fuzz cases="20":
+    cargo run -p fuzz --locked --offline -- gen deps/65816/v1 {{cases}}
+    cargo test -p fuzz --locked --offline
+
+symbols:
+    cargo run --manifest-path tools/bootstrap/Cargo.toml --locked --offline -- symbols
+
+fetch-movies:
+    cargo run -p movie --locked --offline -- fetch-corpus
+
+movie input output:
+    cargo run -p movie --locked --offline -- {{quote(input)}} {{quote(output)}}
+
+import-movies:
+    cargo run -p movie --locked --offline -- import-corpus --offline
+
+reference-replay input frames="3600" out="out/reference-replay.csv":
+    cargo run --release -p snes --bin reference-replay --locked --offline -- {{quote(input)}} --frames {{frames}} --out {{quote(out)}}
+
+diff-fallback input frames="3600" out="out/diff":
+    cargo run --release -p diff --locked --offline -- {{quote(input)}} --fallback-only --frames {{frames}} --out {{quote(out)}}
+
+mesen-replay input frames="3600":
+    cargo run -p pipeline --locked --offline -- mesen-replay {{quote(input)}} --frames {{frames}}
+    tools/mesen --doNotSaveSettings --snes.port1.type=SnesController --snes.port2.type=None --testRunner out/mesen-replay.lua rom/sm.sfc --timeout=180
+
+trace-merge misses:
+    cargo run -p trace --locked --offline -- merge config/functions.toml {{quote(misses)}}
+
+trace-names:
+    cargo run -p trace --locked --offline -- names config/functions.toml out/symbols.toml
+
+# Fresh strict original-core synchronization with immutable evidence.
+readiness-sync *args:
+    cargo run -p pipeline --locked --offline -- readiness-sync {{args}}
+
+# One isolated cold parity run; readiness defaults retain the complete domain.
+readiness-parity mode="generated" frames="18000":
+    cargo run -p pipeline --locked --offline -- readiness-parity --mode {{quote(mode)}} --frames {{frames}}
+
+# Explain verified reuse eligibility; this scope never accepts a candidate.
+readiness-reuse *args:
+    cargo run -p pipeline --locked --offline -- readiness-reuse {{args}}
+
+# Complete fixed readiness domain and atomic acceptance after all mandatory gates.
+readiness *args:
+    cargo run -p pipeline --locked --offline -- readiness {{args}}
+
+# Isolated synthetic fault controls; a scoped pass cannot accept readiness.
+readiness-feedback *args:
+    cargo run -p pipeline --locked --offline -- readiness-feedback {{args}}
+
+# Retained synthetic iteration policy, late-failure and publication controls.
+iteration-feedback *args:
+    cargo run -p pipeline --locked --offline -- iteration-demonstrations run {{args}}
+
+validate-iteration *args:
+    cargo run -p pipeline --locked --offline -- validate-iteration {{args}}
+
+# Explicit diagnostic scope; never updates the accepted pointer.
+replay *args:
+    cargo run -p pipeline --locked --offline -- readiness-diagnose {{args}}
+
+readiness-restore run destination *args:
+    cargo run -p pipeline --locked --offline -- readiness-restore {{quote(run)}} {{quote(destination)}} {{args}}
+
+# Choose one identity-bound measured routine/width without mutating reviewed config.
+select-iteration *args:
+    cargo run -p pipeline --locked --offline -- iteration-selection {{args}}
+
+# Prepare/apply one bounded measured supported slice, then require cold acceptance.
+supported-increment *args:
+    cargo run -p pipeline --locked --offline -- supported-increment {{args}}
+
+# Carry an evidence-bound experiment history across the same unresolved increment.
+iteration-diagnosis *args:
+    cargo run -p pipeline --locked --offline -- iteration-diagnosis {{args}}
+
+# Explicit bounded recompilation session: default one accepted increment.
+recomp-iteration *args:
+    cargo run -p pipeline --locked --offline -- recomp-iteration {{args}}
+
+# Fresh partial offline routine job; whole-routine acceptance remains disabled.
+decomp-routine *args:
+    cargo run -p pipeline --locked --offline -- decomp-verify {{args}}
+
+# Independent C/mixed replay, requires a current sealed offline acceptance pointer.
+decomp-live *args:
+    cargo run -p pipeline --locked --offline -- routine-live {{args}}

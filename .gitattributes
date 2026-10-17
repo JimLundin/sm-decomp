@@ -1,0 +1,14 @@
+# These sealed process/test observations preserve their original whitespace.
+.scratch/decomp-parallel/drill/*-final-process.toml -whitespace
+.scratch/decomp-parallel/preparation/02-ownership-evidence/final-focused.txt -whitespace
+.scratch/decomp-parallel/preparation/cutover/claim-process-paths.txt -whitespace
+.scratch/decomp-parallel/preparation/readiness-final/** -whitespace
+.scratch/decomp-parallel/drill-final/*-final-process.toml -whitespace
+.scratch/decomp-parallel/drill-final/post-removal-authentication.log -whitespace
+.scratch/decomp-parallel/preparation/readiness-recovery-20261013/** -whitespace
+.scratch/decomp-parallel/preparation/readiness-retry-20261013/** -whitespace
+.scratch/decomp-parallel/preparation/recovery-docs-20261013/proposed-docs.patch -whitespace
+.scratch/decomp-integration-retry/evidence/*.stdout -whitespace
+.scratch/decomp-integration-retry/handoff.toml -whitespace
+
+*.smf -text diff=smfixture

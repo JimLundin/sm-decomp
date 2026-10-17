@@ -1,0 +1,14 @@
+#[path=__MODULE__] mod family__INDEX__;
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn port_family___INDEX__(ram:*mut u8,len:usize,rom:*const u8,rom_len:usize,id:u32,a:i32,b:i32)->i64 {
+ if ram.is_null() || len!=WRAM_SIZE || (ram as usize).checked_add(len).is_none() {return -1;}
+ if rom.is_null() || rom_len==0 || rom_len>0x400000 || (rom as usize).checked_add(rom_len).is_none() {return -1;}
+ if (ram as usize)<(rom as usize)+rom_len && (rom as usize)<(ram as usize)+len {return -1;}
+ let names=__NAMES__;
+ let Some(name)=names.get(id as usize) else {return -1;};
+ let rom=unsafe {std::slice::from_raw_parts(rom,rom_len)};
+ let support=unsafe {live_transaction::inspect(ram,|state|Ok(__SUPPORT__))};
+ match support {Ok(true)=>{},Ok(false)=>return -2,Err(_)=>return -1}
+ let result=unsafe {live_transaction::run(ram,|bytes|__CALL__)};
+ match result {Ok(value)=>i64::from(value),Err(_)=>-1}
+}

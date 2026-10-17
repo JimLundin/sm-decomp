@@ -1,0 +1,58 @@
+[workspace]
+resolver = "3"
+exclude = ["deps/rustysnes", "tools/bootstrap"]
+members = [
+    "crates/pipeline",
+    "crates/pipeline-model",
+    "crates/tool-execution",
+    "crates/decomp-source",
+    "crates/offline-verification",
+    "crates/translation-execution",
+    "crates/evidence",
+    "crates/port",
+    "crates/decomp",
+    "crates/runtime",
+    "crates/recomp",
+    "crates/game",
+    "crates/diff",
+    "crates/fuzz",
+    "crates/movie",
+    "crates/trace",
+    "crates/snes",
+]
+
+[workspace.package]
+edition = "2024"
+license = "MIT"
+version = "0.1.0"
+publish = false
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+anyhow = "1"
+sha2 = "0.10"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+runtime = { path = "crates/runtime" }
+recomp = { path = "crates/recomp" }
+pipeline-model = { path = "crates/pipeline-model" }
+tool-execution = { path = "crates/tool-execution" }
+decomp-source = { path = "crates/decomp-source" }
+offline-verification = { path = "crates/offline-verification" }
+rustysnes-core = { git = "https://github.com/doublegate/RustySNES", rev = "98f8d398020b8798b16076fae315960031c6b3b7", features = ["lsnes-profile"] }
+
+[patch."https://github.com/doublegate/RustySNES"]
+rustysnes-core = { path = "deps/rustysnes/crates/rustysnes-core" }
+
+# Build the controller and its separate sandbox with this same profile. Keep
+# line tables in companion debug files, outside the executable identity read.
+# No LTO keeps source-change builds bounded while dependencies stay optimized.
+[profile.verification]
+inherits = "release"
+opt-level = 2
+codegen-units = 16
+lto = false
+debug = "line-tables-only"
+split-debuginfo = "packed"
+strip = "debuginfo"

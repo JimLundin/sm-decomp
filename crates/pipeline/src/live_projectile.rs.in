@@ -1,0 +1,26 @@
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn port_native_projectile(ram:*mut u8,len:usize,rom:*const u8,rom_len:usize,host:*mut u16,host_len:usize,kind:u16,a:u16,b:u32)->i32 {
+ if ram.is_null() || len!=WRAM_SIZE || rom_len>0x400000 || (rom.is_null() && rom_len!=0) {return -1;}
+ let Some(rend)=(ram as usize).checked_add(len)else{return -1;};
+ let Some(oend)=(rom as usize).checked_add(rom_len)else{return -1;};
+ if (ram as usize)<oend && (rom as usize)<rend {return -1;}
+ let name=match kind{1=>"SpawnEprojWithRoomGfx",2=>"EprojRunAll",3=>"SpawnEprojWithGfx",_=>return -1};
+ let rom=if rom_len==0{&[]}else{unsafe{std::slice::from_raw_parts(rom,rom_len)}};
+ let no_host=match unsafe{live_transaction::inspect(ram,|state|Ok(if kind!=2{(0..18).all(|i|state.word(0x1997+i*2)!=0)}else{state.word(0x198d)&0x8000==0}))}{Ok(value)=>value,Err(_)=>return -1};
+ if !no_host {
+  if host.is_null() || host_len!=8 || (host as usize)%2!=0{return -1;}
+  let Some(hend)=(host as usize).checked_add(16)else{return -1;};
+  if (host as usize)<rend && (ram as usize)<hend || (host as usize)<oend && (rom.as_ptr() as usize)<hend{return -1;}
+ }
+ let supported=unsafe{live_transaction::inspect(ram,|state|memory::observed_projectile_ownership::supports_call(state,rom,name,a.into(),b as i32))};
+ match supported{Ok(false)=>return -2,Ok(true)=>{},Err(_)=>return -1}
+ // The disabled scheduler is read-only. Saturated allocation still writes its
+ // parameter word, so it must retain a complete private transaction.
+ if kind==2 && no_host{return 0;}
+ let mut context=if no_host{memory::enemy_projectiles::ProjectileHost::default()}else{memory::enemy_projectiles::ProjectileHost::from_words(unsafe{std::ptr::read(host.cast::<[u16;8]>())})};
+ let result=unsafe{live_transaction::run(ram,|bytes|{
+  let value=memory::observed_projectile_ownership::dispatch_host(&mut Wram::new(bytes)?,rom,&mut context,name,a.into(),b as i32)?;
+  i32::try_from(value).map_err(|_|"projectile result extent")
+ })};
+ match result{Ok(value)=>{unsafe{if !no_host{std::ptr::write(host.cast::<[u16;8]>(),context.words());}}value},Err(_)=>-1}
+}

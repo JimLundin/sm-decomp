@@ -1,0 +1,23 @@
+//! Canonical full-WRAM access shared by isolated gameplay harnesses.
+
+pub const WRAM_SIZE: usize = 0x20000;
+
+pub(crate) struct Wram<'a>(pub(crate) &'a mut [u8]);
+
+impl<'a> Wram<'a> {
+    pub fn new(bytes: &'a mut [u8]) -> Result<Self, &'static str> {
+        if bytes.len() != WRAM_SIZE {
+            return Err("full canonical WRAM required");
+        }
+        Ok(Self(bytes))
+    }
+    pub fn byte(&self, offset: usize) -> u8 {
+        self.0[offset]
+    }
+    pub fn word(&self, offset: usize) -> u16 {
+        u16::from_le_bytes([self.0[offset], self.0[offset + 1]])
+    }
+    pub fn set_word(&mut self, offset: usize, value: u16) {
+        self.0[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+    }
+}

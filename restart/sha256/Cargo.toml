@@ -1,0 +1,11 @@
+[package]
+name = "sm-sha256"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[features]
+private-checks = []
+
+[dependencies]
+sha2-core = { package = "sha2", version = "=0.11.1", default-features = false }

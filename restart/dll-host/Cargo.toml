@@ -1,0 +1,16 @@
+[package]
+name = "sm-restart-dll-host"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+native-preparation = ["sm-restart/native-preparation"]
+private-checks = ["sm-restart/private-checks"]
+
+[dependencies]
+sm-native-host = { path = "../native-host", default-features = false }
+sm-restart = { path = "..", default-features = false }
