@@ -108,6 +108,21 @@ impl Game {
         start
     }
 
+    /// Current collision block index ($7E:0DC4 in ram_map).
+    pub fn cur_block_index(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xdc4], self.g_ram[0xdc5]])
+    }
+
+    pub fn set_cur_block_index(&mut self, index: u16) {
+        self.g_ram[0xdc4..0xdc6].copy_from_slice(&index.to_le_bytes());
+    }
+
+    /// Live level-data word selected by the collision block index.
+    pub fn current_level_block(&self) -> u16 {
+        let offset = 0x10002 + usize::from(self.cur_block_index()) * 2;
+        u16::from_le_bytes([self.g_ram[offset], self.g_ram[offset + 1]])
+    }
+
     /// Room width in blocks ($7E:07A5 in ram_map).
     pub fn room_width_in_blocks(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0x7a5], self.g_ram[0x7a6]])

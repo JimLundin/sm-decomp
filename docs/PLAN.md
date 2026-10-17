@@ -453,6 +453,17 @@ safe coordinate access and explicit live reads; other counters unchanged.
 Local Cargo remains ASR-denied; Linux stable validation is pending.
 Next: convert collision type dispatch and callback context to Rust references
 and named RAM access, then remove unsafe from movement as dependencies permit.
+Collision dispatch/context applied: horizontal/vertical tables are direct
+matches on the live level-data block type. All 16 selections in both tables
+match the originals, including extension handlers and high-bit retries.
+Collision context and its handlers use `&mut EnemyBlockCollInfo`; raw context
+pointers are gone. Named cur_block_index and live level-data byte reads retain
+RAM layout. Format, optimized DLL build and any% pass: 129,712 frames, zero
+failures (182.93s). Raw offsets -6, unsafe functions -2, c_int cast lines -17,
+Rust lines -48; other counters unchanged. Local Cargo remains ASR-denied;
+Linux stable frontend validation is pending on this commit.
+Next: convert extension/spike handler RAM/ROM reads, then slope handlers,
+so the shared movement boundary can become safe.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:

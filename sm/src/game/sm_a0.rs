@@ -636,7 +636,7 @@ pub struct EnemyBlockCollInfo {
     pub ebci_r30: uint16,
     pub ebci_r32: uint16,
 }
-pub type Func_EnemyBlockCollInfo_U8 = unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8;
+pub type Func_EnemyBlockCollInfo_U8 = unsafe fn(&mut EnemyBlockCollInfo, &mut Game) -> uint8;
 pub use crate::types::Point32;
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 #[inline]
@@ -10497,13 +10497,7 @@ pub unsafe fn ProcessEnemyInstructions(game: &mut Game) {
         }
     }
 }
-unsafe fn ClearCarry_13(mut ebci: *mut EnemyBlockCollInfo, game: &mut Game) -> uint8 {
-    return 0 as uint8;
-}
-unsafe fn SetCarry_4(mut ebci: *mut EnemyBlockCollInfo, game: &mut Game) -> uint8 {
-    return 1 as uint8;
-}
-unsafe fn EnemyBlockCollReact_Spike(mut ebci: *mut EnemyBlockCollInfo, game: &mut Game) -> uint8 {
+unsafe fn EnemyBlockCollReact_Spike(mut ebci: &mut EnemyBlockCollInfo, game: &mut Game) -> uint8 {
     let mut v0: uint16 = *(game.g_rom.offset(
         (((0xa0c2da as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0xa0c2da as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -10526,7 +10520,7 @@ unsafe fn EnemyBlockCollReact_Spike(mut ebci: *mut EnemyBlockCollInfo, game: &mu
     return 0 as uint8;
 }
 unsafe fn EnemyBlockCollHorizReact_Slope(
-    mut ebci: *mut EnemyBlockCollInfo,
+    mut ebci: &mut EnemyBlockCollInfo,
     game: &mut Game,
 ) -> uint8 {
     if *(&raw mut game.g_ram as *mut uint8)
@@ -10564,7 +10558,7 @@ unsafe fn EnemyBlockCollHorizReact_Slope(
     };
 }
 unsafe fn EnemyBlockCollVertReact_Slope(
-    mut ebci: *mut EnemyBlockCollInfo,
+    mut ebci: &mut EnemyBlockCollInfo,
     game: &mut Game,
 ) -> uint8 {
     if *(&raw mut game.g_ram as *mut uint8)
@@ -10617,7 +10611,7 @@ static byte_A0C435: [uint8; 20] = [
     0x83 as ::core::ffi::c_int as uint8,
 ];
 unsafe fn EnemyBlockCollHorizReact_Slope_Square(
-    mut ebci: *mut EnemyBlockCollInfo,
+    mut ebci: &mut EnemyBlockCollInfo,
     mut k: uint16,
     mut a: uint16,
     game: &mut Game,
@@ -10636,9 +10630,9 @@ unsafe fn EnemyBlockCollHorizReact_Slope_Square(
         >> 6 as ::core::ffi::c_int) as uint16;
     let mut i: uint16 = (4 as ::core::ffi::c_int * a as ::core::ffi::c_int
         + (temp_collision_DD6 as ::core::ffi::c_int
-            ^ ((*ebci).ebci_r26 as ::core::ffi::c_int & 8 as ::core::ffi::c_int)
+            ^ (ebci.ebci_r26 as ::core::ffi::c_int & 8 as ::core::ffi::c_int)
                 >> 3 as ::core::ffi::c_int)) as uint16;
-    if (*ebci).ebci_r28 == 0 {
+    if ebci.ebci_r28 == 0 {
         if *(&raw mut (*E).y_height as *mut uint8).offset(0 as ::core::ffi::c_int as isize)
             as ::core::ffi::c_int
             + *(&raw mut (*E).y_pos as *mut uint8).offset(0 as ::core::ffi::c_int as isize)
@@ -10656,7 +10650,7 @@ unsafe fn EnemyBlockCollHorizReact_Slope_Square(
             }) < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
         }
         current_block = 71061888979233781;
-    } else if (*ebci).ebci_r28 as ::core::ffi::c_int != (*ebci).ebci_r30 as ::core::ffi::c_int
+    } else if ebci.ebci_r28 as ::core::ffi::c_int != ebci.ebci_r30 as ::core::ffi::c_int
         || (*E).y_pos as ::core::ffi::c_int - (*E).y_height as ::core::ffi::c_int
             & 8 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
@@ -10689,7 +10683,7 @@ unsafe fn EnemyBlockCollHorizReact_Slope_Square(
     }) < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
 }
 unsafe fn EnemyBlockCollVertReact_Slope_Square(
-    mut ebci: *mut EnemyBlockCollInfo,
+    mut ebci: &mut EnemyBlockCollInfo,
     mut a: uint16,
     mut k: uint16,
     game: &mut Game,
@@ -10708,9 +10702,9 @@ unsafe fn EnemyBlockCollVertReact_Slope_Square(
         >> 6 as ::core::ffi::c_int) as uint16;
     let mut i: uint16 = (4 as ::core::ffi::c_int * a as ::core::ffi::c_int
         + (temp_collision_DD6 as ::core::ffi::c_int
-            ^ ((*ebci).ebci_r26 as ::core::ffi::c_int & 8 as ::core::ffi::c_int)
+            ^ (ebci.ebci_r26 as ::core::ffi::c_int & 8 as ::core::ffi::c_int)
                 >> 2 as ::core::ffi::c_int)) as uint16;
-    if (*ebci).ebci_r28 == 0 {
+    if ebci.ebci_r28 == 0 {
         if *(&raw mut (*E).x_width as *mut uint8).offset(0 as ::core::ffi::c_int as isize)
             as ::core::ffi::c_int
             + *(&raw mut (*E).x_pos as *mut uint8).offset(0 as ::core::ffi::c_int as isize)
@@ -10728,7 +10722,7 @@ unsafe fn EnemyBlockCollVertReact_Slope_Square(
             }) < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
         }
         current_block = 5657398053751573661;
-    } else if (*ebci).ebci_r28 as ::core::ffi::c_int != (*ebci).ebci_r30 as ::core::ffi::c_int
+    } else if ebci.ebci_r28 as ::core::ffi::c_int != ebci.ebci_r30 as ::core::ffi::c_int
         || (*E).x_pos as ::core::ffi::c_int - (*E).x_width as ::core::ffi::c_int
             & 8 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
@@ -10761,21 +10755,20 @@ unsafe fn EnemyBlockCollVertReact_Slope_Square(
     }) < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
 }
 unsafe fn EnemyBlockCollHorizReact_Slope_NonSquare(
-    mut ebci: *mut EnemyBlockCollInfo,
+    mut ebci: &mut EnemyBlockCollInfo,
     game: &mut Game,
 ) -> uint8 {
-    if (*ebci).ebci_r32 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
+    if ebci.ebci_r32 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int
     {
-        return ((*ebci).ebci_r32 as ::core::ffi::c_int & 0x4000 as ::core::ffi::c_int
+        return (ebci.ebci_r32 as ::core::ffi::c_int & 0x4000 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
     }
     let mut i: ::core::ffi::c_int = 2 as ::core::ffi::c_int
         * (*((&raw mut game.g_ram as *mut uint8).offset(0x1e77 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
             & 0x1f as ::core::ffi::c_int);
-    if (*ebci).ebci_r18_r20 >= 0 as int32 {
-        (*ebci).ebci_r18_r20 = ((*ebci).ebci_r18_r20 >> 8 as ::core::ffi::c_int)
+    if ebci.ebci_r18_r20 >= 0 as int32 {
+        ebci.ebci_r18_r20 = (ebci.ebci_r18_r20 >> 8 as ::core::ffi::c_int)
             * *(game.g_rom.offset(
                 (((0xa0c49f as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                     << 15 as ::core::ffi::c_int
@@ -10784,7 +10777,7 @@ unsafe fn EnemyBlockCollHorizReact_Slope_NonSquare(
             ) as *const uint8 as *mut uint16)
                 .offset((i + 1 as ::core::ffi::c_int) as isize) as int32;
     } else {
-        (*ebci).ebci_r18_r20 = -(-(((*ebci).ebci_r18_r20 >> 8 as ::core::ffi::c_int) as int16
+        ebci.ebci_r18_r20 = -(-((ebci.ebci_r18_r20 >> 8 as ::core::ffi::c_int) as int16
             as ::core::ffi::c_int)
             * *(game.g_rom.offset(
                 (((0xa0c49f as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -10798,7 +10791,7 @@ unsafe fn EnemyBlockCollHorizReact_Slope_NonSquare(
     return 0 as uint8;
 }
 unsafe fn EnemyBlockCollVertReact_Slope_NonSquare(
-    mut ebci: *mut EnemyBlockCollInfo,
+    mut ebci: &mut EnemyBlockCollInfo,
     game: &mut Game,
 ) -> uint8 {
     let mut v3: int16 = 0;
@@ -10824,12 +10817,12 @@ unsafe fn EnemyBlockCollVertReact_Slope_NonSquare(
     );
     let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8)
         .offset(0xdc4 as ::core::ffi::c_int as isize) as *mut uint16);
-    if (*ebci).ebci_r18_r20 < 0 as int32 {
+    if ebci.ebci_r18_r20 < 0 as int32 {
         v11 = ((*E).x_pos as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as int16;
         if v11 as ::core::ffi::c_int != mod_0 as ::core::ffi::c_int {
             return 0 as uint8;
         }
-        let mut temp_collision_DD4: uint16 = ((*ebci).ebci_r24 as ::core::ffi::c_int
+        let mut temp_collision_DD4: uint16 = (ebci.ebci_r24 as ::core::ffi::c_int
             - (*E).y_height as ::core::ffi::c_int
             & 0xf as ::core::ffi::c_int
             ^ 0xf as ::core::ffi::c_int) as uint16;
@@ -10865,7 +10858,7 @@ unsafe fn EnemyBlockCollVertReact_Slope_NonSquare(
             v15 as ::core::ffi::c_int <= 0 as ::core::ffi::c_int
         } {
             (*E).y_pos =
-                ((*ebci).ebci_r24 as ::core::ffi::c_int - v15 as ::core::ffi::c_int) as uint16;
+                (ebci.ebci_r24 as ::core::ffi::c_int - v15 as ::core::ffi::c_int) as uint16;
             (*E).y_subpos = 0 as uint16;
             return 1 as uint8;
         } else {
@@ -10877,7 +10870,7 @@ unsafe fn EnemyBlockCollVertReact_Slope_NonSquare(
             return 0 as uint8;
         }
         let mut temp_collision_DD4_0: uint16 = ((*E).y_height as ::core::ffi::c_int
-            + (*ebci).ebci_r24 as ::core::ffi::c_int
+            + ebci.ebci_r24 as ::core::ffi::c_int
             - 1 as ::core::ffi::c_int
             & 0xf as ::core::ffi::c_int) as uint16;
         let mut temp_collision_DD6_0: uint16 = (16 as ::core::ffi::c_int
@@ -10921,8 +10914,7 @@ unsafe fn EnemyBlockCollVertReact_Slope_NonSquare(
                 == 1 as ::core::ffi::c_int
                 || (v8 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int
         } {
-            (*E).y_pos =
-                ((*ebci).ebci_r24 as ::core::ffi::c_int + v8 as ::core::ffi::c_int) as uint16;
+            (*E).y_pos = (ebci.ebci_r24 as ::core::ffi::c_int + v8 as ::core::ffi::c_int) as uint16;
             (*E).y_subpos = -(1 as ::core::ffi::c_int) as uint16;
             return 1 as uint8;
         } else {
@@ -10931,7 +10923,7 @@ unsafe fn EnemyBlockCollVertReact_Slope_NonSquare(
     };
 }
 unsafe fn EnemyBlockCollReact_HorizExt(
-    mut ebci: *mut EnemyBlockCollInfo,
+    mut ebci: &mut EnemyBlockCollInfo,
     game: &mut Game,
 ) -> uint8 {
     let mut t: uint8 = *(&raw mut game.g_ram as *mut uint8)
@@ -10949,7 +10941,7 @@ unsafe fn EnemyBlockCollReact_HorizExt(
     }
     return 0 as uint8;
 }
-unsafe fn EnemyBlockCollReact_VertExt(mut ebci: *mut EnemyBlockCollInfo, game: &mut Game) -> uint8 {
+unsafe fn EnemyBlockCollReact_VertExt(mut ebci: &mut EnemyBlockCollInfo, game: &mut Game) -> uint8 {
     if *(&raw mut game.g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -11040,7 +11032,7 @@ unsafe fn Enemy_MoveRight_IgnoreSlopes_Inner(
         ebci_r32: slope_mode,
     };
     let mut block_offset = row_offset.wrapping_add(edge >> 4).wrapping_mul(2);
-    while EnemyBlockCollReact_Horiz(&raw mut collision, block_offset, game) & 1 == 0 {
+    while EnemyBlockCollReact_Horiz(&mut collision, block_offset, game) & 1 == 0 {
         // The callback can change room state; retain the original live read.
         block_offset = block_offset.wrapping_add(game.room_width_in_blocks().wrapping_mul(2));
         collision.ebci_r28 = collision.ebci_r28.wrapping_sub(1);
@@ -11114,7 +11106,7 @@ pub unsafe fn Enemy_MoveDown(k: uint16, amount32: int32, game: &mut Game) -> uin
         ebci_r32: 0,
     };
     let mut block_offset = row_offset.wrapping_add(left >> 4).wrapping_mul(2);
-    while EnemyBlockCollReact_Vert(&raw mut collision, block_offset, game) & 1 == 0 {
+    while EnemyBlockCollReact_Vert(&mut collision, block_offset, game) & 1 == 0 {
         collision.ebci_r28 = collision.ebci_r28.wrapping_sub(1);
         if collision.ebci_r28 & 0x8000 != 0 {
             // Vertical movement stores the precomputed position, unlike horizontal.
@@ -11144,104 +11136,49 @@ pub unsafe fn Enemy_MoveDown(k: uint16, amount32: int32, game: &mut Game) -> uin
     }
     1
 }
-static off_A0C859: [Option<Func_EnemyBlockCollInfo_U8>; 16] = unsafe {
-    [
-        Some(ClearCarry_13 as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-        Some(
-            EnemyBlockCollHorizReact_Slope
-                as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8,
-        ),
-        Some(ClearCarry_13 as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-        Some(ClearCarry_13 as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-        Some(ClearCarry_13 as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-        Some(
-            EnemyBlockCollReact_HorizExt as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8,
-        ),
-        Some(ClearCarry_13 as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-        Some(ClearCarry_13 as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-        Some(SetCarry_4 as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-        Some(SetCarry_4 as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-        Some(EnemyBlockCollReact_Spike as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-        Some(SetCarry_4 as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-        Some(SetCarry_4 as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-        Some(EnemyBlockCollReact_VertExt as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-        Some(SetCarry_4 as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-        Some(SetCarry_4 as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-    ]
-};
 unsafe fn EnemyBlockCollReact_Horiz(
-    mut ebci: *mut EnemyBlockCollInfo,
-    mut k: uint16,
+    collision: &mut EnemyBlockCollInfo,
+    block_offset: uint16,
     game: &mut Game,
 ) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
-    let mut rv: uint8 = 0 as uint8;
+    game.set_cur_block_index(block_offset >> 1);
     loop {
-        rv = off_A0C859[((*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x10002 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
-            ) as ::core::ffi::c_int
-            & 0xf000 as ::core::ffi::c_int)
-            >> 12 as ::core::ffi::c_int) as usize]
-            .expect("non-null function pointer")(ebci, game);
-        if !(rv as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0) {
-            break;
+        // Extension blocks change cur_block_index and request another dispatch.
+        let block_type = game.current_level_block() >> 12;
+        let result = match block_type {
+            0 | 2 | 3 | 4 | 6 | 7 => 0,
+            1 => EnemyBlockCollHorizReact_Slope(collision, game),
+            5 => EnemyBlockCollReact_HorizExt(collision, game),
+            10 => EnemyBlockCollReact_Spike(collision, game),
+            13 => EnemyBlockCollReact_VertExt(collision, game),
+            _ => 1,
+        };
+        if result & 0x80 == 0 {
+            return result;
         }
     }
-    return rv;
 }
-static off_A0C88D: [Option<Func_EnemyBlockCollInfo_U8>; 16] = unsafe {
-    [
-        Some(ClearCarry_13 as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-        Some(
-            EnemyBlockCollVertReact_Slope as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8,
-        ),
-        Some(ClearCarry_13 as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-        Some(ClearCarry_13 as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-        Some(ClearCarry_13 as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-        Some(
-            EnemyBlockCollReact_HorizExt as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8,
-        ),
-        Some(ClearCarry_13 as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-        Some(ClearCarry_13 as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-        Some(SetCarry_4 as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-        Some(SetCarry_4 as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-        Some(EnemyBlockCollReact_Spike as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-        Some(SetCarry_4 as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-        Some(SetCarry_4 as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-        Some(EnemyBlockCollReact_VertExt as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-        Some(SetCarry_4 as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-        Some(SetCarry_4 as unsafe fn(*mut EnemyBlockCollInfo, &mut Game) -> uint8),
-    ]
-};
 unsafe fn EnemyBlockCollReact_Vert(
-    mut ebci: *mut EnemyBlockCollInfo,
-    mut k: uint16,
+    collision: &mut EnemyBlockCollInfo,
+    block_offset: uint16,
     game: &mut Game,
 ) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
-    let mut rv: uint8 = 0 as uint8;
+    game.set_cur_block_index(block_offset >> 1);
     loop {
-        rv = off_A0C88D[((*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x10002 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
-            ) as ::core::ffi::c_int
-            & 0xf000 as ::core::ffi::c_int)
-            >> 12 as ::core::ffi::c_int) as usize]
-            .expect("non-null function pointer")(ebci, game);
-        if !(rv as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0) {
-            break;
+        // Extension blocks change cur_block_index and request another dispatch.
+        let block_type = game.current_level_block() >> 12;
+        let result = match block_type {
+            0 | 2 | 3 | 4 | 6 | 7 => 0,
+            1 => EnemyBlockCollVertReact_Slope(collision, game),
+            5 => EnemyBlockCollReact_HorizExt(collision, game),
+            10 => EnemyBlockCollReact_Spike(collision, game),
+            13 => EnemyBlockCollReact_VertExt(collision, game),
+            _ => 1,
+        };
+        if result & 0x80 == 0 {
+            return result;
         }
     }
-    return rv;
 }
 pub unsafe fn CalculateBlockContainingPixelPos(
     mut xpos: uint16,
