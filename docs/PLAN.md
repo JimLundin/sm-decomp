@@ -758,6 +758,26 @@ oracle for 33,336 frames, zero failures (47.17s), with missiles still 5/5.
 Upper shootable blocks constrain the next jump; the worker is inspecting
 live block changes and testing a neutral jump through the shot column
 before steering right. No source or progress counter changes.
+Normal post-missile elevator return now verified: target/post-missile-return/
+elevator-up-final.inputs passes the standard oracle for 35,180 frames,
+zero failures (48.67s), ending 97B5 at X128/Y136 with Morph 0004 and
+current/maximum missiles 5/5. It includes the entire boot, Morph pickup,
+first missiles, A107 return, 9F11 ascent and elevator Up; no items were
+injected or gates changed. The pickup message is closed.
+The difficult upper 9F11 step uses upward shots from its central Y235
+platform, then a vertical jump and downward-left beam shots near the apex
+to clear shootable blocks and land at X125/Y139. A fresh left jump crosses
+the destroyed floor and exits to 9E9F. Running west stops at X1477/Y699;
+a fresh left jump reaches X1424/Y683, then left 8, neutral 20, fresh Up 8
+and neutral 800 return through the elevator. Useful inputs are retained.
+Next focused coverage item: allow elevator control to settle, enter the
+awake 975C state, defeat its five pirates with the basic beam and open
+the gray west door. Preserve all five missiles. Normalize arrival in 96BA
+to X396/Y2187 and append the verified 4,747-frame ascent suffix; verify
+that combined return before proceeding through Parlor toward bombs.
+This pass's workers have finished; tracked source and residue counters are
+unchanged. Linux format/release build and all four original replays remain
+passing on the unchanged source 90889612; local Cargo remains ASR-denied.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
