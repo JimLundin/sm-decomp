@@ -261,8 +261,8 @@ every step makes the next one easier.
    -> 261,547; other counters unchanged. Final-source Linux validation
    passed on `bd036cd8`: format, release build, smoke and full any% all pass.
    https://github.com/JimLundin/sm-decomp/actions/runs/39066700833.
-3. Replace the hand-written SDL/OpenGL FFI with the `sdl2` crate (or similar)
-   and drop `extern_types`; then move `rust-toolchain.toml` to stable.
+3. **Crate bindings and stable — done.** Handwritten SDL/OpenGL FFI replaced
+   with crate bindings; `extern_types` dropped and toolchain moved to stable.
    SDL batch applied: handwritten functions/events now use `sdl2-sys` 0.38;
    integer config domains retain exact values, SDL enums adapted at boundary.
    Optional default `frontend` feature keeps the direct core DLL independent
@@ -291,6 +291,9 @@ every step makes the next one easier.
    129,712 frames, zero failures (188.07s); format passes with permitted
    compiler. Blocks +1, C export/unsafe +1, no_mangle +2, lines +34 are
    required Windows CRT compatibility symbols; gameplay counters unchanged.
+   Linux stable format/release build, smoke and full any% passed on
+   `aaa80120`; no failing frames. Final Windows-only CRT source rerun:
+   https://github.com/JimLundin/sm-decomp/actions/runs/39067855970.
 4. Globals: gather `static mut` game state behind one `Game` struct passed by
    `&mut`, keeping `g_ram` as the 128 KiB array it is (RAM layout must stay
    byte-identical for the oracle comparison and for save states).
