@@ -161,8 +161,8 @@ change is judged.
 Mechanical refactors, each verified with the phase 1 run. Order matters:
 every step makes the next one easier.
 
-1. Shared types: each file currently redeclares every C struct and typedef it
-   uses. Move them into one `types.rs` and delete the copies.
+1. **Shared types — done.** Repeated C structs and typedefs now have one
+   definition in `types.rs`; copies are public re-exports.
    Preparation while phase 1 runs: the first mechanical batch can consolidate
    `LongPtr` (22 identical copies), `OamEnt` (7), and `VramWriteEntry` (18)
    into `sm/src/types.rs`, registered in `lib.rs`. Replace definitions with
@@ -201,8 +201,9 @@ every step makes the next one easier.
    library/frontend metadata builds pass. Rust lines 271,083 -> 271,090:
    seven extra lines retain old public paths alongside four canonical names.
    All other counters unchanged. Linux Cargo build passed on the preceding
-   runtime batch; final-source Linux validation is pending:
-   https://github.com/JimLundin/sm-decomp/actions/runs/39065148166.
+   runtime batch. Final-source Linux format/release build and all four
+   replays passed on `d6097771`: any% 129,712 frames, zero failures (462.85s).
+   https://github.com/JimLundin/sm-decomp/actions/runs/39065322648.
    This touches `rtl.rs` and game banks 80, 81, 82, 84, 86, 88, 8b, 8f, 90,
    91, 94, 9b, a0, a2, a3, a4, a5, a6, a7, a8, a9, b2 (only the types each
    already defines). Keep all fields, `Copy`/`Clone`, and representation exact:
