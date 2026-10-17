@@ -565,6 +565,23 @@ stops input tuning at the item's hour limit with a measured successful
 DFD7 ascent; concurrent supervisor trials retain their files and continue
 independently. Linux exact-pad format/release build and all four replays
 passed on ede7dbcd: https://github.com/JimLundin/sm-decomp/actions/runs/39074190882.
+Ceres escape coverage achieved with recorded controller inputs, without
+changing gameplay: target/elevator-route/escape-20.inputs passes the
+standard trace verifier for 20,989 frames, zero failures (29.31s). Escape
+states 32/33/34 occur at frames 18,935/18,995/19,010; Zebes landing site
+91F8 enters gameplay at frame 20,923. Coverage expands to seven rooms and
+five enemy definitions (D07F/D0BF/E13F/E1FF/E23F); Waver is still absent.
+The elevator route uses fresh jump presses after each landing, holds jump
+through the apex, and approaches alternating shelves from their open side.
+Successful shelf positions: X48/Y571, X127/Y475, X92/Y379, X98/Y267,
+X72/Y171, then X118/Y75 triggers escape. Trial inputs remain ignored;
+none is committed. Source/progress counters unchanged. Linux format,
+release build and all four replays also pass on f4637ede:
+https://github.com/JimLundin/sm-decomp/actions/runs/39075031032.
+Next: extend the verified controller route from the Zebes landing site to
+rooms containing Waver and then other gameplay, measuring actual reach.
+Retain the useful inputs and active builds; independent workers use
+separate target directories and never clean another worker's files.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
