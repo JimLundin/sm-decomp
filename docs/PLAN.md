@@ -111,9 +111,37 @@ every step makes the next one easier.
 
 1. Shared types: each file currently redeclares every C struct and typedef it
    uses. Move them into one `types.rs` and delete the copies.
+   Preparation while phase 1 runs: the first mechanical batch can consolidate
+   `LongPtr` (22 identical copies), `OamEnt` (7), and `VramWriteEntry` (18)
+   into `sm/src/types.rs`, registered in `lib.rs`. Replace definitions with
+   explicit `pub use crate::types::{...}` so existing public paths survive.
+   This touches `rtl.rs` and game banks 80, 81, 82, 84, 86, 88, 8b, 8f, 90,
+   91, 94, 9b, a0, a2, a3, a4, a5, a6, a7, a8, a9, b2 (only the types each
+   already defines). Keep all fields, `Copy`/`Clone`, and representation exact:
+   `LongPtr` is `repr(C, packed)`, size 3/alignment 1; `OamEnt` is `repr(C)`,
+   size 4/alignment 1; `VramWriteEntry` is `repr(C)`, size 8/alignment 2, with
+   `src` at byte 2 and `vram_dst` at byte 6, including the existing padding.
+   Its layout must not be changed to packed despite the SNES queue's 7-byte
+   stride. Shared fields need only `uint8 = u8`, `uint16 = u16`, and
+   `VoidP = uint16`; leave other local integer and function-pointer aliases
+   for a separate batch, preserving their current widths and C ABI.
+   After normalizing line endings, duplicate named structs/unions match
+   except `Apu`'s numbered anonymous-union dependency and `C2RustUnnamed`:
+   that name denotes an APU history union in hardware/runtime modules but
+   a packed menu struct in bank 82. Do not consolidate by name alone; resolve
+   these dependencies explicitly in a later hardware-type batch. The first
+   batch is prepared only; apply and commit it after the baseline verifies.
 2. Replace `extern "C" { fn Foo(); }` declarations with `use` of the real
    function. Then drop `#[no_mangle]` and `extern "C"` from Rust-to-Rust
    functions. Keep the C ABI only at the SDL boundary.
+   After shared types, pilot the three `snes/input.rs` exports and their sole
+   consumer, `snes/snes.rs`; then `game/sm_92.rs` (four exports, consumers in
+   `sm_90.rs` and `sm_9b.rs`, no function-pointer tables). Replace declarations
+   with imports before removing each export's ABI and `#[no_mangle]`.
+   Convert callback aliases, tables and casts together. `main.rs` is a separate
+   binary crate: its `Die`, `Warning` and audio-lock hooks cannot be imported
+   by the library until ownership moves or explicit callbacks replace them.
+   Keep real libc, math, SDL and OpenGL FFI until their replacements exist.
 3. Replace the hand-written SDL/OpenGL FFI with the `sdl2` crate (or similar)
    and drop `extern_types`; then move `rust-toolchain.toml` to stable.
 4. Globals: gather `static mut` game state behind one `Game` struct passed by
