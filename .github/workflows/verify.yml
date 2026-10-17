@@ -8,8 +8,29 @@ permissions:
 
 jobs:
   verify:
+    name: Verify ${{ matrix.name }}
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: smoke (3,600 frames)
+            movie: any%
+            frames: 3600
+            timeout: 120
+          - name: full any%
+            movie: any%
+            frames: 0
+            timeout: 1200
+          - name: full low%
+            movie: low% (13%)
+            frames: 0
+            timeout: 1200
+          - name: full 100%
+            movie: 100%
+            frames: 0
+            timeout: 1200
     steps:
       - uses: actions/checkout@v4
         with:
@@ -30,9 +51,10 @@ jobs:
           cargo fmt --check
           cargo build --release --locked
           sh tools/progress.sh
-      - name: Prepare ROM and any% inputs
+      - name: Prepare ROM and movie inputs
         working-directory: game
         env:
+          MOVIE_CATEGORY: ${{ matrix.movie }}
           ROM_00: ${{ secrets.SM_ROM_00 }}
           ROM_01: ${{ secrets.SM_ROM_01 }}
           ROM_02: ${{ secrets.SM_ROM_02 }}
@@ -80,25 +102,33 @@ jobs:
           ROM_44: ${{ secrets.SM_ROM_44 }}
         run: |
           python3 - <<'PY'
-          import base64, gzip, hashlib, io, os, pathlib, tomllib, urllib.request, zipfile
+          import base64, gzip, hashlib, io, os, pathlib, subprocess, sys, tomllib, urllib.request, zipfile
           encoded = "".join(os.environ[f"ROM_{i:02d}"] for i in range(45))
           if not encoded:
               raise SystemExit("ROM secrets are missing")
           pathlib.Path("rom/sm.smc").write_bytes(gzip.decompress(base64.b64decode(encoded)))
           rom = pathlib.Path('rom/sm.smc').read_bytes()
           assert hashlib.sha1(rom).hexdigest() == 'da957f0d63d14cb441d215462904c4fa8519c613', 'wrong ROM'
-          movie = tomllib.loads(pathlib.Path('movies/manifest.toml').read_text())['movies'][0]
+          movies = tomllib.loads(pathlib.Path('movies/manifest.toml').read_text())['movies']
+          movie = next(movie for movie in movies if movie['category'] == os.environ['MOVIE_CATEGORY'])
           data = urllib.request.urlopen(movie['download'], timeout=60).read()
           with zipfile.ZipFile(io.BytesIO(data)) as archive:
-              if 'input' not in archive.namelist():
-                  data = archive.read(next(name for name in archive.namelist() if name.endswith('.lsmv')))
+              if 'input' not in archive.namelist() and 'Input Log.txt' not in archive.namelist():
+                  data = archive.read(next(name for name in archive.namelist() if name.lower().endswith(('.lsmv', '.bk2'))))
           assert hashlib.sha256(data).hexdigest() == movie['sha256'], 'wrong movie'
-          pathlib.Path('movies', movie['file']).write_bytes(data)
+          movie_path = pathlib.Path('movies', movie['file'])
+          movie_path.write_bytes(data)
+          subprocess.run([sys.executable, 'tools/movie_inputs.py', str(movie_path),
+                          'movies/verify.inputs', '--rom', 'rom/sm.smc'], check=True)
           PY
-          python3 tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/any.inputs --rom rom/sm.smc
-      - name: Verify first minute
+      - name: Verify movie
         working-directory: game
-        run: timeout 120 target/release/sm verify rom/sm.smc movies/any.inputs --frames 3600
-      - name: Verify full any% movie
-        working-directory: game
-        run: timeout 1200 target/release/sm verify rom/sm.smc movies/any.inputs
+        env:
+          VERIFY_FRAMES: ${{ matrix.frames }}
+          VERIFY_TIMEOUT: ${{ matrix.timeout }}
+        run: |
+          args=()
+          if [ "$VERIFY_FRAMES" -gt 0 ]; then
+            args+=(--frames "$VERIFY_FRAMES")
+          fi
+          timeout "$VERIFY_TIMEOUT" target/release/sm verify rom/sm.smc movies/verify.inputs "${args[@]}"
