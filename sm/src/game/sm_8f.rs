@@ -50,12 +50,7 @@ pub type uint32 = uint32_t;
 pub type int32 = int32_t;
 pub type VoidP = uint16;
 pub type CoroutineRet = uint8_t;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct LongPtr {
-    pub addr: VoidP,
-    pub bank: uint8,
-}
+pub use crate::types::LongPtr;
 pub type SnesRegs = ::core::ffi::c_uint;
 pub const MIRR7: SnesRegs = 17279;
 pub const UNUSED7: SnesRegs = 17275;

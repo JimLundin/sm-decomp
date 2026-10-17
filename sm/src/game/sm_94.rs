@@ -32,14 +32,7 @@ pub type uint32 = uint32_t;
 pub type int32 = int32_t;
 pub type VoidP = uint16;
 pub type Func_V = unsafe extern "C" fn() -> ();
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct OamEnt {
-    pub xcoord: uint8,
-    pub ycoord: uint8,
-    pub charnum: uint8,
-    pub flags: uint8,
-}
+pub use crate::types::OamEnt;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct DoorDef {

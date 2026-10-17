@@ -107,12 +107,7 @@ pub type int16 = int16_t;
 pub type uint32 = uint32_t;
 pub type int32 = int32_t;
 pub type VoidP = uint16;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct LongPtr {
-    pub addr: VoidP,
-    pub bank: uint8,
-}
+pub use crate::types::LongPtr;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct PairU16 {
@@ -132,21 +127,8 @@ pub type Func_U8 = unsafe extern "C" fn() -> uint8;
 pub type Func_Y_V = unsafe extern "C" fn(uint16) -> ();
 pub type FuncXY_V = unsafe extern "C" fn(uint16, uint16) -> ();
 pub type Func_Y_To_PairU16 = unsafe extern "C" fn(uint16) -> PairU16;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct OamEnt {
-    pub xcoord: uint8,
-    pub ycoord: uint8,
-    pub charnum: uint8,
-    pub flags: uint8,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct VramWriteEntry {
-    pub size: uint16,
-    pub src: LongPtr,
-    pub vram_dst: uint16,
-}
+pub use crate::types::OamEnt;
+pub use crate::types::VramWriteEntry;
 pub type SamusPose = ::core::ffi::c_uint;
 pub const kPose_FC_FaceL_StandTrans_AimDL: SamusPose = 252;
 pub const kPose_FB_FaceR_StandTrans_AimDR: SamusPose = 251;

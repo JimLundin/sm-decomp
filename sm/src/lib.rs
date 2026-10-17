@@ -88,5 +88,7 @@ pub mod rtl;
 pub mod spc_player;
 /// Debug tracing.
 pub mod tracing;
+/// Shared byte-compatible gameplay types.
+pub mod types;
 /// Small helpers (file I/O, strings).
 pub mod util;

@@ -49,12 +49,7 @@ pub type int16 = int16_t;
 pub type uint32 = uint32_t;
 pub type int32 = int32_t;
 pub type VoidP = uint16;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct LongPtr {
-    pub addr: VoidP,
-    pub bank: uint8,
-}
+pub use crate::types::LongPtr;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Point16U {

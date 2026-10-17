@@ -84,12 +84,7 @@ pub type int16 = int16_t;
 pub type uint32 = uint32_t;
 pub type int32 = int32_t;
 pub type VoidP = uint16;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct LongPtr {
-    pub addr: VoidP,
-    pub bank: uint8,
-}
+pub use crate::types::LongPtr;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Point16U {
@@ -106,13 +101,7 @@ pub struct Rect16U {
 }
 pub type Func_V = unsafe extern "C" fn() -> ();
 pub type Func_Y_V = unsafe extern "C" fn(uint16) -> ();
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct VramWriteEntry {
-    pub size: uint16,
-    pub src: LongPtr,
-    pub vram_dst: uint16,
-}
+pub use crate::types::VramWriteEntry;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct EprojDef {

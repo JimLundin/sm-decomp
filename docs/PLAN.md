@@ -167,6 +167,10 @@ every step makes the next one easier.
    `LongPtr` (22 identical copies), `OamEnt` (7), and `VramWriteEntry` (18)
    into `sm/src/types.rs`, registered in `lib.rs`. Replace definitions with
    explicit `pub use crate::types::{...}` so existing public paths survive.
+   First batch applied and verified: any% 129,712 frames, zero failures
+   (180.81s). Layout assertions and normal library/frontend metadata builds
+   pass; local Cargo linking remains blocked by the documented ASR policy.
+   Rust source lines fell from 279,256 to 279,020; other counters unchanged.
    This touches `rtl.rs` and game banks 80, 81, 82, 84, 86, 88, 8b, 8f, 90,
    91, 94, 9b, a0, a2, a3, a4, a5, a6, a7, a8, a9, b2 (only the types each
    already defines). Keep all fields, `Copy`/`Clone`, and representation exact:
@@ -180,8 +184,9 @@ every step makes the next one easier.
    except `Apu`'s numbered anonymous-union dependency and `C2RustUnnamed`:
    that name denotes an APU history union in hardware/runtime modules but
    a packed menu struct in bank 82. Do not consolidate by name alone; resolve
-   these dependencies explicitly in a later hardware-type batch. The first
-   batch is prepared only; apply and commit it after the baseline verifies.
+   these dependencies explicitly in a later hardware-type batch. Remaining
+   batches: aliases, gameplay data, hardware/music closure, runtime/platform
+   types, then a duplicate inventory before marking this item done.
 2. Replace `extern "C" { fn Foo(); }` declarations with `use` of the real
    function. Then drop `#[no_mangle]` and `extern "C"` from Rust-to-Rust
    functions. Keep the C ABI only at the SDL boundary.

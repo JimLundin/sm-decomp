@@ -92,12 +92,7 @@ pub type uint32 = uint32_t;
 pub type int32 = int32_t;
 pub type VoidP = uint16;
 pub type CoroutineRet = uint8_t;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct LongPtr {
-    pub addr: VoidP,
-    pub bank: uint8,
-}
+pub use crate::types::LongPtr;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Point16U {
@@ -105,21 +100,8 @@ pub struct Point16U {
     pub y: uint16,
 }
 pub type Func_V = unsafe extern "C" fn() -> ();
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct OamEnt {
-    pub xcoord: uint8,
-    pub ycoord: uint8,
-    pub charnum: uint8,
-    pub flags: uint8,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct VramWriteEntry {
-    pub size: uint16,
-    pub src: LongPtr,
-    pub vram_dst: uint16,
-}
+pub use crate::types::OamEnt;
+pub use crate::types::VramWriteEntry;
 pub type SnesRegs = ::core::ffi::c_uint;
 pub const MIRR7: SnesRegs = 17279;
 pub const UNUSED7: SnesRegs = 17275;
