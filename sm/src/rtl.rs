@@ -1,7 +1,6 @@
+pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data};
 extern "C" {
-    pub type _IO_wide_data;
-    pub type _IO_codecvt;
-    pub type _IO_marker;
+
     fn __assert_fail(
         __assertion: *const ::core::ffi::c_char,
         __file: *const ::core::ffi::c_char,
@@ -87,45 +86,10 @@ extern "C" {
     fn ByteArray_AppendByte(arr: *mut ByteArray, v: uint8);
 }
 pub use crate::types::{
-    __int16_t, __int32_t, __int8_t, __off64_t, __off_t, __uint16_t, __uint32_t, __uint8_t, int16,
-    int16_t, int32_t, int8_t, size_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, LongPtr,
-    PairU16, VoidP,
+    _IO_lock_t, __int16_t, __int32_t, __int8_t, __off64_t, __off_t, __uint16_t, __uint32_t,
+    __uint8_t, int16, int16_t, int32_t, int8_t, size_t, uint16, uint16_t, uint32, uint32_t, uint8,
+    uint8_t, LongPtr, PairU16, VoidP, _IO_FILE, FILE,
 };
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct _IO_FILE {
-    pub _flags: ::core::ffi::c_int,
-    pub _IO_read_ptr: *mut ::core::ffi::c_char,
-    pub _IO_read_end: *mut ::core::ffi::c_char,
-    pub _IO_read_base: *mut ::core::ffi::c_char,
-    pub _IO_write_base: *mut ::core::ffi::c_char,
-    pub _IO_write_ptr: *mut ::core::ffi::c_char,
-    pub _IO_write_end: *mut ::core::ffi::c_char,
-    pub _IO_buf_base: *mut ::core::ffi::c_char,
-    pub _IO_buf_end: *mut ::core::ffi::c_char,
-    pub _IO_save_base: *mut ::core::ffi::c_char,
-    pub _IO_backup_base: *mut ::core::ffi::c_char,
-    pub _IO_save_end: *mut ::core::ffi::c_char,
-    pub _markers: *mut _IO_marker,
-    pub _chain: *mut _IO_FILE,
-    pub _fileno: ::core::ffi::c_int,
-    pub _flags2: ::core::ffi::c_int,
-    pub _old_offset: __off_t,
-    pub _cur_column: ::core::ffi::c_ushort,
-    pub _vtable_offset: ::core::ffi::c_schar,
-    pub _shortbuf: [::core::ffi::c_char; 1],
-    pub _lock: *mut ::core::ffi::c_void,
-    pub _offset: __off64_t,
-    pub _codecvt: *mut _IO_codecvt,
-    pub _wide_data: *mut _IO_wide_data,
-    pub _freeres_list: *mut _IO_FILE,
-    pub _freeres_buf: *mut ::core::ffi::c_void,
-    pub __pad5: size_t,
-    pub _mode: ::core::ffi::c_int,
-    pub _unused2: [::core::ffi::c_char; 20],
-}
-pub use crate::types::_IO_lock_t;
-pub type FILE = _IO_FILE;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct ApuWriteEnt {
@@ -155,14 +119,7 @@ pub struct StateRecorder {
     pub log: ByteArray,
     pub base_snapshot: ByteArray,
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct ByteArray {
-    pub data: *mut uint8,
-    pub size: size_t,
-    pub capacity: size_t,
-}
-pub use crate::types::{Channel, SaveLoadFunc, SfxChan, SfxRegs, SpcPlayer};
+pub use crate::types::{ByteArray, Channel, SaveLoadFunc, SfxChan, SfxRegs, SpcPlayer};
 pub type C2RustUnnamed_0 = ::core::ffi::c_uint;
 pub const kSaveLoad_Replay: C2RustUnnamed_0 = 3;
 pub const kSaveLoad_Load: C2RustUnnamed_0 = 2;

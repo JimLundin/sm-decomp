@@ -10,12 +10,11 @@
 #[allow(unused_imports)]
 use ::sm as _;
 mod verify;
+pub use sm::types::{_IO_codecvt, _IO_marker, _IO_wide_data, SDL_Window};
 extern "C" {
-    pub type _IO_wide_data;
-    pub type _IO_codecvt;
-    pub type _IO_marker;
+
     pub type SDL_mutex;
-    pub type SDL_Window;
+
     pub type _SDL_GameController;
     pub type SDL_SysWMmsg;
     pub type SDL_Renderer;
@@ -214,46 +213,9 @@ extern "C" {
         -> ::core::ffi::c_int;
 }
 pub use sm::types::{
-    __int16_t, __int32_t, __int64_t, __int8_t, __mode_t, __off64_t, __off_t, __uint16_t,
-    __uint32_t, __uint64_t, __uint8_t, size_t,
-};
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct _IO_FILE {
-    pub _flags: ::core::ffi::c_int,
-    pub _IO_read_ptr: *mut ::core::ffi::c_char,
-    pub _IO_read_end: *mut ::core::ffi::c_char,
-    pub _IO_read_base: *mut ::core::ffi::c_char,
-    pub _IO_write_base: *mut ::core::ffi::c_char,
-    pub _IO_write_ptr: *mut ::core::ffi::c_char,
-    pub _IO_write_end: *mut ::core::ffi::c_char,
-    pub _IO_buf_base: *mut ::core::ffi::c_char,
-    pub _IO_buf_end: *mut ::core::ffi::c_char,
-    pub _IO_save_base: *mut ::core::ffi::c_char,
-    pub _IO_backup_base: *mut ::core::ffi::c_char,
-    pub _IO_save_end: *mut ::core::ffi::c_char,
-    pub _markers: *mut _IO_marker,
-    pub _chain: *mut _IO_FILE,
-    pub _fileno: ::core::ffi::c_int,
-    pub _flags2: ::core::ffi::c_int,
-    pub _old_offset: __off_t,
-    pub _cur_column: ::core::ffi::c_ushort,
-    pub _vtable_offset: ::core::ffi::c_schar,
-    pub _shortbuf: [::core::ffi::c_char; 1],
-    pub _lock: *mut ::core::ffi::c_void,
-    pub _offset: __off64_t,
-    pub _codecvt: *mut _IO_codecvt,
-    pub _wide_data: *mut _IO_wide_data,
-    pub _freeres_list: *mut _IO_FILE,
-    pub _freeres_buf: *mut ::core::ffi::c_void,
-    pub __pad5: size_t,
-    pub _mode: ::core::ffi::c_int,
-    pub _unused2: [::core::ffi::c_char; 20],
-}
-pub use sm::types::_IO_lock_t;
-pub type FILE = _IO_FILE;
-pub use sm::types::{
-    int16_t, int32_t, int64_t, int8_t, uint16_t, uint32_t, uint64_t, uint8_t, SDL_bool,
+    _IO_lock_t, __int16_t, __int32_t, __int64_t, __int8_t, __mode_t, __off64_t, __off_t,
+    __uint16_t, __uint32_t, __uint64_t, __uint8_t, int16_t, int32_t, int64_t, int8_t, size_t,
+    uint16_t, uint32_t, uint64_t, uint8_t, SDL_bool, _IO_FILE, FILE,
 };
 pub const SDL_TRUE: SDL_bool = 1;
 pub const SDL_FALSE: SDL_bool = 0;
@@ -1201,37 +1163,7 @@ pub type C2RustUnnamed_11 = ::core::ffi::c_uint;
 pub const kOutputMethod_OpenGL: C2RustUnnamed_11 = 2;
 pub const kOutputMethod_SDLSoftware: C2RustUnnamed_11 = 1;
 pub const kOutputMethod_SDL: C2RustUnnamed_11 = 0;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Config {
-    pub window_width: ::core::ffi::c_int,
-    pub window_height: ::core::ffi::c_int,
-    pub enhanced_mode7: bool,
-    pub new_renderer: bool,
-    pub ignore_aspect_ratio: bool,
-    pub fullscreen: uint8,
-    pub window_scale: uint8,
-    pub enable_audio: bool,
-    pub linear_filtering: bool,
-    pub output_method: uint8,
-    pub audio_freq: uint16,
-    pub audio_channels: uint8,
-    pub audio_samples: uint16,
-    pub autosave: bool,
-    pub extended_aspect_ratio: uint8,
-    pub extend_y: bool,
-    pub no_sprite_limits: bool,
-    pub display_perf_title: bool,
-    pub enable_msu: uint8,
-    pub resume_msu: bool,
-    pub disable_frame_delay: bool,
-    pub msuvolume: uint8,
-    pub features0: uint32,
-    pub link_graphics: *const ::core::ffi::c_char,
-    pub memory_buffer: *mut ::core::ffi::c_char,
-    pub shader: *const ::core::ffi::c_char,
-    pub msu_path: *const ::core::ffi::c_char,
-}
+pub use sm::types::Config;
 pub type C2RustUnnamed_12 = ::core::ffi::c_int;
 pub const kGamepadBtn_Count: C2RustUnnamed_12 = 17;
 pub const kGamepadBtn_R2: C2RustUnnamed_12 = 16;
@@ -1252,21 +1184,7 @@ pub const kGamepadBtn_X: C2RustUnnamed_12 = 2;
 pub const kGamepadBtn_B: C2RustUnnamed_12 = 1;
 pub const kGamepadBtn_A: C2RustUnnamed_12 = 0;
 pub const kGamepadBtn_Invalid: C2RustUnnamed_12 = -1;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct RendererFuncs {
-    pub Initialize: Option<unsafe extern "C" fn(*mut SDL_Window) -> bool>,
-    pub Destroy: Option<unsafe extern "C" fn() -> ()>,
-    pub BeginDraw: Option<
-        unsafe extern "C" fn(
-            ::core::ffi::c_int,
-            ::core::ffi::c_int,
-            *mut *mut uint8,
-            *mut ::core::ffi::c_int,
-        ) -> (),
-    >,
-    pub EndDraw: Option<unsafe extern "C" fn() -> ()>,
-}
+pub use sm::types::RendererFuncs;
 pub const kMaxWindowScale: C2RustUnnamed_13 = 10;
 pub type C2RustUnnamed_13 = ::core::ffi::c_uint;
 pub const kDefaultSamples: C2RustUnnamed_13 = 2048;

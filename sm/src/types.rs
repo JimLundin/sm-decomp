@@ -1629,3 +1629,198 @@ pub struct WindowLayer {
     pub window2inversed: bool,
     pub maskLogic: uint8_t,
 }
+
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct ByteArray {
+    pub data: *mut uint8,
+    pub size: size_t,
+    pub capacity: size_t,
+}
+
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct Config {
+    pub window_width: ::core::ffi::c_int,
+    pub window_height: ::core::ffi::c_int,
+    pub enhanced_mode7: bool,
+    pub new_renderer: bool,
+    pub ignore_aspect_ratio: bool,
+    pub fullscreen: uint8,
+    pub window_scale: uint8,
+    pub enable_audio: bool,
+    pub linear_filtering: bool,
+    pub output_method: uint8,
+    pub audio_freq: uint16,
+    pub audio_channels: uint8,
+    pub audio_samples: uint16,
+    pub autosave: bool,
+    pub extended_aspect_ratio: uint8,
+    pub extend_y: bool,
+    pub no_sprite_limits: bool,
+    pub display_perf_title: bool,
+    pub enable_msu: uint8,
+    pub resume_msu: bool,
+    pub disable_frame_delay: bool,
+    pub msuvolume: uint8,
+    pub features0: uint32,
+    pub link_graphics: *const ::core::ffi::c_char,
+    pub memory_buffer: *mut ::core::ffi::c_char,
+    pub shader: *const ::core::ffi::c_char,
+    pub msu_path: *const ::core::ffi::c_char,
+}
+
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct GlTextureWithSize {
+    pub gl_texture: uint,
+    pub width: uint16,
+    pub height: uint16,
+}
+
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct GlslParam {
+    pub next: *mut GlslParam,
+    pub id: *mut ::core::ffi::c_char,
+    pub has_value: bool,
+    pub value: ::core::ffi::c_float,
+    pub min: ::core::ffi::c_float,
+    pub max: ::core::ffi::c_float,
+    pub uniform: [uint; 20],
+}
+
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct GlslPass {
+    pub filename: *mut ::core::ffi::c_char,
+    pub scale_type_x: uint8,
+    pub scale_type_y: uint8,
+    pub float_framebuffer: bool,
+    pub srgb_framebuffer: bool,
+    pub mipmap_input: bool,
+    pub scale_x: ::core::ffi::c_float,
+    pub scale_y: ::core::ffi::c_float,
+    pub wrap_mode: uint,
+    pub frame_count_mod: uint,
+    pub frame_count: uint,
+    pub gl_program: uint,
+    pub gl_fbo: uint,
+    pub filter: uint,
+    pub gl_texture: uint,
+    pub width: uint16,
+    pub height: uint16,
+    pub unif: GlslUniforms,
+}
+
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct GlslShader {
+    pub n_pass: ::core::ffi::c_int,
+    pub pass: *mut GlslPass,
+    pub first_param: *mut GlslParam,
+    pub first_texture: *mut GlslTexture,
+    pub gl_vao: *mut uint,
+    pub gl_vbo: uint,
+    pub frame_count: uint,
+    pub max_prev_frame: ::core::ffi::c_int,
+    pub prev_frame: [GlTextureWithSize; 8],
+}
+
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct GlslTexture {
+    pub next: *mut GlslTexture,
+    pub id: *mut ::core::ffi::c_char,
+    pub filename: *mut ::core::ffi::c_char,
+    pub filter: uint,
+    pub gl_texture: uint,
+    pub wrap_mode: uint,
+    pub mipmap: bool,
+    pub width: ::core::ffi::c_int,
+    pub height: ::core::ffi::c_int,
+}
+
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct GlslTextureUniform {
+    pub Texture: ::core::ffi::c_int,
+    pub InputSize: ::core::ffi::c_int,
+    pub TextureSize: ::core::ffi::c_int,
+    pub TexCoord: ::core::ffi::c_int,
+}
+
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct GlslUniforms {
+    pub Top: GlslTextureUniform,
+    pub OutputSize: ::core::ffi::c_int,
+    pub FrameCount: ::core::ffi::c_int,
+    pub FrameDirection: ::core::ffi::c_int,
+    pub LUTTexCoord: ::core::ffi::c_int,
+    pub VertexCoord: ::core::ffi::c_int,
+    pub Orig: GlslTextureUniform,
+    pub Prev: [GlslTextureUniform; 7],
+    pub Pass: [GlslTextureUniform; 20],
+    pub PassPrev: [GlslTextureUniform; 20],
+    pub Texture: [::core::ffi::c_int; 10],
+}
+
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct RendererFuncs {
+    pub Initialize: Option<unsafe extern "C" fn(*mut SDL_Window) -> bool>,
+    pub Destroy: Option<unsafe extern "C" fn() -> ()>,
+    pub BeginDraw: Option<
+        unsafe extern "C" fn(
+            ::core::ffi::c_int,
+            ::core::ffi::c_int,
+            *mut *mut uint8,
+            *mut ::core::ffi::c_int,
+        ) -> (),
+    >,
+    pub EndDraw: Option<unsafe extern "C" fn() -> ()>,
+}
+
+#[derive(Copy, Clone)]
+#[repr(C)]
+pub struct _IO_FILE {
+    pub _flags: ::core::ffi::c_int,
+    pub _IO_read_ptr: *mut ::core::ffi::c_char,
+    pub _IO_read_end: *mut ::core::ffi::c_char,
+    pub _IO_read_base: *mut ::core::ffi::c_char,
+    pub _IO_write_base: *mut ::core::ffi::c_char,
+    pub _IO_write_ptr: *mut ::core::ffi::c_char,
+    pub _IO_write_end: *mut ::core::ffi::c_char,
+    pub _IO_buf_base: *mut ::core::ffi::c_char,
+    pub _IO_buf_end: *mut ::core::ffi::c_char,
+    pub _IO_save_base: *mut ::core::ffi::c_char,
+    pub _IO_backup_base: *mut ::core::ffi::c_char,
+    pub _IO_save_end: *mut ::core::ffi::c_char,
+    pub _markers: *mut _IO_marker,
+    pub _chain: *mut _IO_FILE,
+    pub _fileno: ::core::ffi::c_int,
+    pub _flags2: ::core::ffi::c_int,
+    pub _old_offset: __off_t,
+    pub _cur_column: ::core::ffi::c_ushort,
+    pub _vtable_offset: ::core::ffi::c_schar,
+    pub _shortbuf: [::core::ffi::c_char; 1],
+    pub _lock: *mut ::core::ffi::c_void,
+    pub _offset: __off64_t,
+    pub _codecvt: *mut _IO_codecvt,
+    pub _wide_data: *mut _IO_wide_data,
+    pub _freeres_list: *mut _IO_FILE,
+    pub _freeres_buf: *mut ::core::ffi::c_void,
+    pub __pad5: size_t,
+    pub _mode: ::core::ffi::c_int,
+    pub _unused2: [::core::ffi::c_char; 20],
+}
+
+extern "C" {
+    pub type SDL_Window;
+    pub type _IO_codecvt;
+    pub type _IO_marker;
+    pub type _IO_wide_data;
+}
+
+pub type FILE = _IO_FILE;
