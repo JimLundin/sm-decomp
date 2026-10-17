@@ -1816,7 +1816,6 @@ pub struct _IO_FILE {
 }
 
 extern "C" {
-    pub type SDL_Window;
     pub type _IO_codecvt;
     pub type _IO_marker;
     pub type _IO_wide_data;
@@ -1831,3 +1830,12 @@ pub type OutputMethod = ::core::ffi::c_uint;
 pub type GamepadButton = ::core::ffi::c_int;
 
 pub type SaveLoadOperation = ::core::ffi::c_uint;
+
+#[cfg(all(feature = "frontend", not(sm_verify_dll)))]
+pub use sdl2_sys::SDL_Window;
+
+#[cfg(any(not(feature = "frontend"), sm_verify_dll))]
+#[repr(C)]
+pub struct SDL_Window {
+    _private: [u8; 0],
+}

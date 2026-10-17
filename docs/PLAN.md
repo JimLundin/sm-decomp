@@ -262,6 +262,13 @@ every step makes the next one easier.
    pending before marking item 2 done.
 3. Replace the hand-written SDL/OpenGL FFI with the `sdl2` crate (or similar)
    and drop `extern_types`; then move `rust-toolchain.toml` to stable.
+   SDL batch applied: handwritten functions/events now use `sdl2-sys` 0.38;
+   integer config domains retain exact values, SDL enums adapted at boundary.
+   Optional default `frontend` feature keeps the direct core DLL independent
+   of SDL dependencies. Any% 129,712 frames, zero failures (190.18s); format
+   and real-binding library/frontend metadata builds pass. Source lines
+   261,547 -> 261,137; c_int casts 90,009 -> 90,001; other counters unchanged.
+   Local Cargo dependency build scripts also meet the managed ASR block.
 4. Globals: gather `static mut` game state behind one `Game` struct passed by
    `&mut`, keeping `g_ram` as the 128 KiB array it is (RAM layout must stay
    byte-identical for the oracle comparison and for save states).
