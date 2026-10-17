@@ -1,5 +1,5 @@
 [workspace]
-members = [".", "native-host", "presentation", "trace", "projectile", "room-scroll", "original", "ceres-door", "room-transition", "door-scrolling", "camera", "item-instructions", "persistence", "player-motion", "waver", "ripper", "rio", "dll-host", "evidence", "skree", "beetom", "platform", "rinka", "fireflea", "bouncing-goofball", "mini-crocomire", "minidraygon"]
+members = [".", "native-host", "presentation", "trace", "projectile", "room-scroll", "original", "ceres-door", "room-transition", "door-scrolling", "camera", "item-instructions", "persistence", "player-motion", "waver", "ripper", "rio", "dll-host", "evidence", "skree", "beetom", "platform", "rinka", "fireflea", "bouncing-goofball", "mini-crocomire", "minidraygon", "yapping-maw"]
 resolver = "3"
 
 [package]
