@@ -2993,9 +2993,11 @@ pub unsafe extern "C" fn DrawFileCopyClearConfirmation() {
     );
     let mut v0: ::core::ffi::c_int = 832 as ::core::ffi::c_int;
     loop {
-        (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
-            .pause_menu_map_tilemap[(v0 + 768 as ::core::ffi::c_int) as usize] = 15 as uint16;
+        // Menu rows live in the full $3600..$3dff RAM tilemap.
+        *((&raw mut g_ram as *mut uint8)
+            .add(0x3600)
+            .cast::<uint16>()
+            .add(v0 as usize)) = 15 as uint16;
         v0 += 1;
         if !(((v0 * 2 as ::core::ffi::c_int - 1728 as ::core::ffi::c_int) as int16
             as ::core::ffi::c_int)
@@ -3261,9 +3263,11 @@ pub unsafe extern "C" fn FileSelectMenu_13_FileCopyDoIt() {
     *fresh61 = (*fresh61).wrapping_add(1);
     let mut v5: ::core::ffi::c_int = 640 as ::core::ffi::c_int;
     loop {
-        (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
-            as *mut Ram3000))
-            .pause_menu_map_tilemap[(v5 + 768 as ::core::ffi::c_int) as usize] = 15 as uint16;
+        // Menu rows live in the full $3600..$3dff RAM tilemap.
+        *((&raw mut g_ram as *mut uint8)
+            .add(0x3600)
+            .cast::<uint16>()
+            .add(v5 as usize)) = 15 as uint16;
         v5 += 1;
         if !(((v5 * 2 as ::core::ffi::c_int - 1856 as ::core::ffi::c_int) as int16
             as ::core::ffi::c_int)
