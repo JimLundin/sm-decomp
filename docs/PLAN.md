@@ -501,6 +501,19 @@ zero failures (251.31s under parallel load), with the same six Ceres rooms.
 Raw offsets -17, unsafe functions -2, c_int cast lines -93, Rust lines -133;
 remaining counters unchanged. Local Cargo remains ASR-denied. Low%/100%
 continue in parallel. Defer nonsquare work until input coverage improves.
+All three square-source replays finished with zero failures: any% 129,712
+(251.31s), low% 167,797 (326.24s), 100% 222,788 (417.91s), concurrently.
+All visit the same six Ceres rooms; low%/100% see only E13F/E23F.
+Verify now preserves simultaneous opposite-direction buttons through
+RtlRunFrame instead of applying the UI input filter. All 4,096 pad values
+retain the previous UI result and preserve the recorded verify bits.
+Format and optimized core/DLL build pass; full any% passes 129,712 frames,
+zero failures (205.42s). Rust lines +3 add the verify exception; other
+counters unchanged. Local Cargo remains ASR-denied. Low%/100% run in
+parallel. Coverage remains six Ceres rooms, so input timing still needs work.
+Trace found first corridor entry at frame 11,627, when the original movie
+already presses left and immediately returns to the shaft. Try a simple
+controller sequence aligned to this frame loop before adding scheduling code.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:

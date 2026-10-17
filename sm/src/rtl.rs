@@ -1070,11 +1070,14 @@ pub unsafe fn RtlStopReplay(game: &mut Game) {
     StateRecorder_StopReplay(&raw mut game.state_recorder);
 }
 pub unsafe fn RtlRunFrame(mut inputs: ::core::ffi::c_int, game: &mut Game) -> bool {
-    if inputs & 0x30 as ::core::ffi::c_int == 0x30 as ::core::ffi::c_int {
-        inputs ^= 0x30 as ::core::ffi::c_int;
-    }
-    if inputs & 0xc0 as ::core::ffi::c_int == 0xc0 as ::core::ffi::c_int {
-        inputs ^= 0xc0 as ::core::ffi::c_int;
+    // TAS verification preserves every recorded button, including opposites.
+    if !game.VERIFY_ACTIVE {
+        if inputs & 0x30 as ::core::ffi::c_int == 0x30 as ::core::ffi::c_int {
+            inputs ^= 0x30 as ::core::ffi::c_int;
+        }
+        if inputs & 0xc0 as ::core::ffi::c_int == 0xc0 as ::core::ffi::c_int {
+            inputs ^= 0xc0 as ::core::ffi::c_int;
+        }
     }
     let mut is_replay: bool = game.state_recorder.replay_mode;
     if is_replay {
