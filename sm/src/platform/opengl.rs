@@ -1,15 +1,5 @@
 use crate::config::g_config;
 use crate::host::Die;
-use crate::platform::gl_core::{
-    _ptrc_glAttachShader, _ptrc_glBindBuffer, _ptrc_glBindTexture, _ptrc_glBindVertexArray,
-    _ptrc_glBufferData, _ptrc_glClear, _ptrc_glClearColor, _ptrc_glCompileShader,
-    _ptrc_glCreateProgram, _ptrc_glCreateShader, _ptrc_glDebugMessageCallback, _ptrc_glDrawArrays,
-    _ptrc_glEnable, _ptrc_glEnableVertexAttribArray, _ptrc_glGenBuffers, _ptrc_glGenTextures,
-    _ptrc_glGenVertexArrays, _ptrc_glGetProgramInfoLog, _ptrc_glGetProgramiv,
-    _ptrc_glGetShaderInfoLog, _ptrc_glGetShaderiv, _ptrc_glLinkProgram, _ptrc_glShaderSource,
-    _ptrc_glTexImage2D, _ptrc_glTexParameteri, _ptrc_glTexSubImage2D, _ptrc_glUseProgram,
-    _ptrc_glVertexAttribPointer, _ptrc_glViewport, ogl_IsVersionGEQ, ogl_LoadFunctions,
-};
 use crate::platform::glsl_shader::{GlslShader_CreateFromFile, GlslShader_Render};
 pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data, SDL_Window};
 pub use sdl2_sys::{
@@ -82,28 +72,30 @@ pub use crate::types::{
     GlslTextureUniform, GlslUniforms, RendererFuncs,
 };
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-pub const GL_TEXTURE_2D: ::core::ffi::c_int = 0xde1 as ::core::ffi::c_int;
-pub const GL_DEBUG_OUTPUT: ::core::ffi::c_int = 0x92e0 as ::core::ffi::c_int;
-pub const GL_DEBUG_OUTPUT_SYNCHRONOUS: ::core::ffi::c_int = 0x8242 as ::core::ffi::c_int;
-pub const GL_DEBUG_TYPE_ERROR: ::core::ffi::c_int = 0x824c as ::core::ffi::c_int;
-pub const GL_DEBUG_TYPE_OTHER: ::core::ffi::c_int = 0x8251 as ::core::ffi::c_int;
-pub const GL_COLOR_BUFFER_BIT: ::core::ffi::c_int = 0x4000 as ::core::ffi::c_int;
-pub const GL_FALSE: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-pub const GL_FLOAT: ::core::ffi::c_int = 0x1406 as ::core::ffi::c_int;
-pub const GL_LINEAR: ::core::ffi::c_int = 0x2601 as ::core::ffi::c_int;
-pub const GL_NEAREST: ::core::ffi::c_int = 0x2600 as ::core::ffi::c_int;
-pub const GL_RGBA: ::core::ffi::c_int = 0x1908 as ::core::ffi::c_int;
-pub const GL_TEXTURE_MAG_FILTER: ::core::ffi::c_int = 0x2800 as ::core::ffi::c_int;
-pub const GL_TEXTURE_MIN_FILTER: ::core::ffi::c_int = 0x2801 as ::core::ffi::c_int;
-pub const GL_TRIANGLE_STRIP: ::core::ffi::c_int = 0x5 as ::core::ffi::c_int;
-pub const GL_BGRA: ::core::ffi::c_int = 0x80e1 as ::core::ffi::c_int;
-pub const GL_UNSIGNED_INT_8_8_8_8_REV: ::core::ffi::c_int = 0x8367 as ::core::ffi::c_int;
-pub const GL_ARRAY_BUFFER: ::core::ffi::c_int = 0x8892 as ::core::ffi::c_int;
-pub const GL_STATIC_DRAW: ::core::ffi::c_int = 0x88e4 as ::core::ffi::c_int;
-pub const GL_COMPILE_STATUS: ::core::ffi::c_int = 0x8b81 as ::core::ffi::c_int;
-pub const GL_FRAGMENT_SHADER: ::core::ffi::c_int = 0x8b30 as ::core::ffi::c_int;
-pub const GL_LINK_STATUS: ::core::ffi::c_int = 0x8b82 as ::core::ffi::c_int;
-pub const GL_VERTEX_SHADER: ::core::ffi::c_int = 0x8b31 as ::core::ffi::c_int;
+pub const GL_TEXTURE_2D: ::core::ffi::c_int = gl::TEXTURE_2D as ::core::ffi::c_int;
+pub const GL_DEBUG_OUTPUT: ::core::ffi::c_int = gl::DEBUG_OUTPUT as ::core::ffi::c_int;
+pub const GL_DEBUG_OUTPUT_SYNCHRONOUS: ::core::ffi::c_int =
+    gl::DEBUG_OUTPUT_SYNCHRONOUS as ::core::ffi::c_int;
+pub const GL_DEBUG_TYPE_ERROR: ::core::ffi::c_int = gl::DEBUG_TYPE_ERROR as ::core::ffi::c_int;
+pub const GL_DEBUG_TYPE_OTHER: ::core::ffi::c_int = gl::DEBUG_TYPE_OTHER as ::core::ffi::c_int;
+pub const GL_COLOR_BUFFER_BIT: ::core::ffi::c_int = gl::COLOR_BUFFER_BIT as ::core::ffi::c_int;
+pub const GL_FALSE: ::core::ffi::c_int = gl::FALSE as ::core::ffi::c_int;
+pub const GL_FLOAT: ::core::ffi::c_int = gl::FLOAT as ::core::ffi::c_int;
+pub const GL_LINEAR: ::core::ffi::c_int = gl::LINEAR as ::core::ffi::c_int;
+pub const GL_NEAREST: ::core::ffi::c_int = gl::NEAREST as ::core::ffi::c_int;
+pub const GL_RGBA: ::core::ffi::c_int = gl::RGBA as ::core::ffi::c_int;
+pub const GL_TEXTURE_MAG_FILTER: ::core::ffi::c_int = gl::TEXTURE_MAG_FILTER as ::core::ffi::c_int;
+pub const GL_TEXTURE_MIN_FILTER: ::core::ffi::c_int = gl::TEXTURE_MIN_FILTER as ::core::ffi::c_int;
+pub const GL_TRIANGLE_STRIP: ::core::ffi::c_int = gl::TRIANGLE_STRIP as ::core::ffi::c_int;
+pub const GL_BGRA: ::core::ffi::c_int = gl::BGRA as ::core::ffi::c_int;
+pub const GL_UNSIGNED_INT_8_8_8_8_REV: ::core::ffi::c_int =
+    gl::UNSIGNED_INT_8_8_8_8_REV as ::core::ffi::c_int;
+pub const GL_ARRAY_BUFFER: ::core::ffi::c_int = gl::ARRAY_BUFFER as ::core::ffi::c_int;
+pub const GL_STATIC_DRAW: ::core::ffi::c_int = gl::STATIC_DRAW as ::core::ffi::c_int;
+pub const GL_COMPILE_STATUS: ::core::ffi::c_int = gl::COMPILE_STATUS as ::core::ffi::c_int;
+pub const GL_FRAGMENT_SHADER: ::core::ffi::c_int = gl::FRAGMENT_SHADER as ::core::ffi::c_int;
+pub const GL_LINK_STATUS: ::core::ffi::c_int = gl::LINK_STATUS as ::core::ffi::c_int;
+pub const GL_VERTEX_SHADER: ::core::ffi::c_int = gl::VERTEX_SHADER as ::core::ffi::c_int;
 pub const kDebugFlag: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 static mut g_window: *mut SDL_Window = ::core::ptr::null::<SDL_Window>() as *mut SDL_Window;
 static mut g_screen_buffer: *mut uint8 = ::core::ptr::null::<uint8>() as *mut uint8;
@@ -151,33 +143,34 @@ unsafe fn OpenGLRenderer_Init(mut window: *mut SDL_Window) -> bool {
     g_window = window;
     let mut context: SDL_GLContext = SDL_GL_CreateContext(window as *mut SDL_Window);
     SDL_GL_SetSwapInterval(1 as ::core::ffi::c_int);
-    ogl_LoadFunctions();
-    if ogl_IsVersionGEQ(3 as ::core::ffi::c_int, 3 as ::core::ffi::c_int) == 0 {
+    gl::load_with(|name| {
+        sdl2_sys::SDL_GL_GetProcAddress(std::ffi::CString::new(name).expect("GL symbol").as_ptr())
+            as *const ::core::ffi::c_void
+    });
+    let mut gl_major = 0;
+    let mut gl_minor = 0;
+    gl::GetIntegerv(gl::MAJOR_VERSION, &raw mut gl_major);
+    gl::GetIntegerv(gl::MINOR_VERSION, &raw mut gl_minor);
+    if (gl_major, gl_minor) < (3, 3) {
         Die(b"You need OpenGL 3.3\0" as *const u8 as *const ::core::ffi::c_char);
     }
-    _ptrc_glGenTextures.expect("non-null function pointer")(
-        1 as GLsizei,
-        &raw mut g_texture.gl_texture,
-    );
+    gl::GenTextures(1 as GLsizei, &raw mut g_texture.gl_texture);
     static mut kVertices: [::core::ffi::c_float; 20] = [
         -1.0f32, 1.0f32, 0.0f32, 0.0f32, 0.0f32, -1.0f32, -1.0f32, 0.0f32, 0.0f32, 1.0f32, 1.0f32,
         1.0f32, 0.0f32, 1.0f32, 0.0f32, 1.0f32, -1.0f32, 0.0f32, 1.0f32, 1.0f32,
     ];
     let mut vbo: ::core::ffi::c_uint = 0;
-    _ptrc_glGenBuffers.expect("non-null function pointer")(1 as GLsizei, &raw mut vbo);
-    _ptrc_glGenVertexArrays.expect("non-null function pointer")(1 as GLsizei, &raw mut g_VAO);
-    _ptrc_glBindVertexArray.expect("non-null function pointer")(g_VAO as GLuint);
-    _ptrc_glBindBuffer.expect("non-null function pointer")(
-        GL_ARRAY_BUFFER as GLenum,
-        vbo as GLuint,
-    );
-    _ptrc_glBufferData.expect("non-null function pointer")(
+    gl::GenBuffers(1 as GLsizei, &raw mut vbo);
+    gl::GenVertexArrays(1 as GLsizei, &raw mut g_VAO);
+    gl::BindVertexArray(g_VAO as GLuint);
+    gl::BindBuffer(GL_ARRAY_BUFFER as GLenum, vbo as GLuint);
+    gl::BufferData(
         GL_ARRAY_BUFFER as GLenum,
         ::core::mem::size_of::<[::core::ffi::c_float; 20]>() as GLsizeiptr,
         &raw const kVertices as *const ::core::ffi::c_float as *const ::core::ffi::c_void,
         GL_STATIC_DRAW as GLenum,
     );
-    _ptrc_glVertexAttribPointer.expect("non-null function pointer")(
+    gl::VertexAttribPointer(
         0 as GLuint,
         3 as GLint,
         GL_FLOAT as GLenum,
@@ -186,8 +179,8 @@ unsafe fn OpenGLRenderer_Init(mut window: *mut SDL_Window) -> bool {
             as GLsizei,
         ::core::ptr::null::<::core::ffi::c_void>(),
     );
-    _ptrc_glEnableVertexAttribArray.expect("non-null function pointer")(0 as GLuint);
-    _ptrc_glVertexAttribPointer.expect("non-null function pointer")(
+    gl::EnableVertexAttribArray(0 as GLuint);
+    gl::VertexAttribPointer(
         1 as GLuint,
         2 as GLint,
         GL_FLOAT as GLenum,
@@ -197,28 +190,23 @@ unsafe fn OpenGLRenderer_Init(mut window: *mut SDL_Window) -> bool {
         (3 as usize).wrapping_mul(::core::mem::size_of::<::core::ffi::c_float>() as usize)
             as *mut ::core::ffi::c_void,
     );
-    _ptrc_glEnableVertexAttribArray.expect("non-null function pointer")(1 as GLuint);
+    gl::EnableVertexAttribArray(1 as GLuint);
     let mut vs_code: *const GLchar = b"#version 330 core\nlayout(location = 0) in vec3 aPos; layout(location = 1) in vec2 aTexCoord; out vec2 TexCoord; void main(void) { gl_Position = vec4(aPos, 1.0); TexCoord = vec2(aTexCoord.x, aTexCoord.y); }\0"
         as *const u8 as *const GLchar;
     let mut vs: ::core::ffi::c_uint =
-        _ptrc_glCreateShader.expect("non-null function pointer")(GL_VERTEX_SHADER as GLenum)
-            as ::core::ffi::c_uint;
-    _ptrc_glShaderSource.expect("non-null function pointer")(
+        gl::CreateShader(GL_VERTEX_SHADER as GLenum) as ::core::ffi::c_uint;
+    gl::ShaderSource(
         vs as GLuint,
         1 as GLsizei,
         &raw mut vs_code,
         ::core::ptr::null::<GLint>(),
     );
-    _ptrc_glCompileShader.expect("non-null function pointer")(vs as GLuint);
+    gl::CompileShader(vs as GLuint);
     let mut success: ::core::ffi::c_int = 0;
     let mut infolog: [::core::ffi::c_char; 512] = [0; 512];
-    _ptrc_glGetShaderiv.expect("non-null function pointer")(
-        vs as GLuint,
-        GL_COMPILE_STATUS as GLenum,
-        &raw mut success,
-    );
+    gl::GetShaderiv(vs as GLuint, GL_COMPILE_STATUS as GLenum, &raw mut success);
     if success == 0 {
-        _ptrc_glGetShaderInfoLog.expect("non-null function pointer")(
+        gl::GetShaderInfoLog(
             vs as GLuint,
             512 as GLsizei,
             ::core::ptr::null_mut::<GLsizei>(),
@@ -232,22 +220,17 @@ unsafe fn OpenGLRenderer_Init(mut window: *mut SDL_Window) -> bool {
     let mut fs_code: *const GLchar = b"#version 330 core\nout vec4 FragColor; in vec2 TexCoord; uniform sampler2D texture1; void main(void) { FragColor = texture(texture1, TexCoord); }\0"
         as *const u8 as *const GLchar;
     let mut fs: ::core::ffi::c_uint =
-        _ptrc_glCreateShader.expect("non-null function pointer")(GL_FRAGMENT_SHADER as GLenum)
-            as ::core::ffi::c_uint;
-    _ptrc_glShaderSource.expect("non-null function pointer")(
+        gl::CreateShader(GL_FRAGMENT_SHADER as GLenum) as ::core::ffi::c_uint;
+    gl::ShaderSource(
         fs as GLuint,
         1 as GLsizei,
         &raw mut fs_code,
         ::core::ptr::null::<GLint>(),
     );
-    _ptrc_glCompileShader.expect("non-null function pointer")(fs as GLuint);
-    _ptrc_glGetShaderiv.expect("non-null function pointer")(
-        fs as GLuint,
-        GL_COMPILE_STATUS as GLenum,
-        &raw mut success,
-    );
+    gl::CompileShader(fs as GLuint);
+    gl::GetShaderiv(fs as GLuint, GL_COMPILE_STATUS as GLenum, &raw mut success);
     if success == 0 {
-        _ptrc_glGetShaderInfoLog.expect("non-null function pointer")(
+        gl::GetShaderInfoLog(
             fs as GLuint,
             512 as GLsizei,
             ::core::ptr::null_mut::<GLsizei>(),
@@ -258,18 +241,18 @@ unsafe fn OpenGLRenderer_Init(mut window: *mut SDL_Window) -> bool {
             &raw mut infolog as *mut ::core::ffi::c_char,
         );
     }
-    g_program = _ptrc_glCreateProgram.expect("non-null function pointer")() as ::core::ffi::c_uint;
+    g_program = gl::CreateProgram() as ::core::ffi::c_uint;
     let mut program: ::core::ffi::c_int = g_program as ::core::ffi::c_int;
-    _ptrc_glAttachShader.expect("non-null function pointer")(program as GLuint, vs as GLuint);
-    _ptrc_glAttachShader.expect("non-null function pointer")(program as GLuint, fs as GLuint);
-    _ptrc_glLinkProgram.expect("non-null function pointer")(program as GLuint);
-    _ptrc_glGetProgramiv.expect("non-null function pointer")(
+    gl::AttachShader(program as GLuint, vs as GLuint);
+    gl::AttachShader(program as GLuint, fs as GLuint);
+    gl::LinkProgram(program as GLuint);
+    gl::GetProgramiv(
         program as GLuint,
         GL_LINK_STATUS as GLenum,
         &raw mut success,
     );
     if success == 0 {
-        _ptrc_glGetProgramInfoLog.expect("non-null function pointer")(
+        gl::GetProgramInfoLog(
             program as GLuint,
             512 as GLsizei,
             ::core::ptr::null_mut::<GLsizei>(),
@@ -324,14 +307,11 @@ unsafe fn OpenGLRenderer_EndDraw() {
         drawable_width - viewport_width >> 1 as ::core::ffi::c_int;
     let mut viewport_y: ::core::ffi::c_int =
         viewport_height - viewport_height >> 1 as ::core::ffi::c_int;
-    _ptrc_glBindTexture.expect("non-null function pointer")(
-        GL_TEXTURE_2D as GLenum,
-        g_texture.gl_texture as GLuint,
-    );
+    gl::BindTexture(GL_TEXTURE_2D as GLenum, g_texture.gl_texture as GLuint);
     if g_draw_width == g_texture.width as ::core::ffi::c_int
         && g_draw_height == g_texture.height as ::core::ffi::c_int
     {
-        _ptrc_glTexSubImage2D.expect("non-null function pointer")(
+        gl::TexSubImage2D(
             GL_TEXTURE_2D as GLenum,
             0 as GLint,
             0 as GLint,
@@ -345,7 +325,7 @@ unsafe fn OpenGLRenderer_EndDraw() {
     } else {
         g_texture.width = g_draw_width as uint16;
         g_texture.height = g_draw_height as uint16;
-        _ptrc_glTexImage2D.expect("non-null function pointer")(
+        gl::TexImage2D(
             GL_TEXTURE_2D as GLenum,
             0 as GLint,
             GL_RGBA,
@@ -357,38 +337,34 @@ unsafe fn OpenGLRenderer_EndDraw() {
             g_screen_buffer as *const ::core::ffi::c_void,
         );
     }
-    _ptrc_glClearColor.expect("non-null function pointer")(0.0f32, 0.0f32, 0.0f32, 1.0f32);
-    _ptrc_glClear.expect("non-null function pointer")(GL_COLOR_BUFFER_BIT as GLbitfield);
+    gl::ClearColor(0.0f32, 0.0f32, 0.0f32, 1.0f32);
+    gl::Clear(GL_COLOR_BUFFER_BIT as GLbitfield);
     if g_glsl_shader.is_null() {
-        _ptrc_glViewport.expect("non-null function pointer")(
+        gl::Viewport(
             viewport_x as GLint,
             viewport_y as GLint,
             viewport_width as GLsizei,
             viewport_height as GLsizei,
         );
-        _ptrc_glUseProgram.expect("non-null function pointer")(g_program as GLuint);
+        gl::UseProgram(g_program as GLuint);
         let mut filter: ::core::ffi::c_int = if g_config.linear_filtering as ::core::ffi::c_int != 0
         {
             GL_LINEAR
         } else {
             GL_NEAREST
         };
-        _ptrc_glTexParameteri.expect("non-null function pointer")(
+        gl::TexParameteri(
             GL_TEXTURE_2D as GLenum,
             GL_TEXTURE_MIN_FILTER as GLenum,
             filter as GLint,
         );
-        _ptrc_glTexParameteri.expect("non-null function pointer")(
+        gl::TexParameteri(
             GL_TEXTURE_2D as GLenum,
             GL_TEXTURE_MAG_FILTER as GLenum,
             filter as GLint,
         );
-        _ptrc_glBindVertexArray.expect("non-null function pointer")(g_VAO as GLuint);
-        _ptrc_glDrawArrays.expect("non-null function pointer")(
-            GL_TRIANGLE_STRIP as GLenum,
-            0 as GLint,
-            4 as GLsizei,
-        );
+        gl::BindVertexArray(g_VAO as GLuint);
+        gl::DrawArrays(GL_TRIANGLE_STRIP as GLenum, 0 as GLint, 4 as GLsizei);
     } else {
         GlslShader_Render(
             g_glsl_shader,

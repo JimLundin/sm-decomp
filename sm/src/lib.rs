@@ -70,7 +70,6 @@ pub mod snes {
 /// Window, renderer and OpenGL output.
 #[cfg(all(not(sm_verify_dll), feature = "frontend"))]
 pub mod platform {
-    pub mod gl_core;
     pub mod glsl_shader;
     pub mod opengl;
 }

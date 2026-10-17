@@ -269,6 +269,13 @@ every step makes the next one easier.
    and real-binding library/frontend metadata builds pass. Source lines
    261,547 -> 261,137; c_int casts 90,009 -> 90,001; other counters unchanged.
    Local Cargo dependency build scripts also meet the managed ASR block.
+   OpenGL batch applied: renderer/shader use `gl` 0.14 calls and binding
+   constants; handwritten loader module removed. All 121 call sites preserve
+   function selection/arguments; core 3.3 requirement checked through GL
+   version integers. Any% 129,712 frames, zero failures (184.90s); format and
+   real-binding library/frontend metadata builds pass. Extern blocks 40 ->39,
+   unsafe functions 6,901 ->6,863, c_int casts 90,001 ->89,831, Rust lines
+   261,137 ->249,227; remaining counters unchanged.
 4. Globals: gather `static mut` game state behind one `Game` struct passed by
    `&mut`, keeping `g_ram` as the 128 KiB array it is (RAM layout must stay
    byte-identical for the oracle comparison and for save states).

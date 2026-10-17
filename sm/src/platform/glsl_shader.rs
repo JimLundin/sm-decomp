@@ -1,18 +1,4 @@
 use crate::config::{g_config, ParseBool};
-use crate::platform::gl_core::{
-    _ptrc_glActiveTexture, _ptrc_glAttachShader, _ptrc_glBindBuffer, _ptrc_glBindFramebuffer,
-    _ptrc_glBindTexture, _ptrc_glBufferData, _ptrc_glCompileShader, _ptrc_glCreateProgram,
-    _ptrc_glCreateShader, _ptrc_glDeleteBuffers, _ptrc_glDeleteFramebuffers, _ptrc_glDeleteProgram,
-    _ptrc_glDeleteShader, _ptrc_glDeleteTextures, _ptrc_glDisable,
-    _ptrc_glDisableVertexAttribArray, _ptrc_glDrawArrays, _ptrc_glEnable,
-    _ptrc_glEnableVertexAttribArray, _ptrc_glFramebufferTexture2D, _ptrc_glGenBuffers,
-    _ptrc_glGenFramebuffers, _ptrc_glGenTextures, _ptrc_glGenerateMipmap,
-    _ptrc_glGetAttribLocation, _ptrc_glGetIntegerv, _ptrc_glGetProgramInfoLog,
-    _ptrc_glGetProgramiv, _ptrc_glGetShaderInfoLog, _ptrc_glGetShaderiv,
-    _ptrc_glGetUniformLocation, _ptrc_glLinkProgram, _ptrc_glShaderSource, _ptrc_glTexImage2D,
-    _ptrc_glTexParameteri, _ptrc_glUniform1f, _ptrc_glUniform1i, _ptrc_glUniform2fv,
-    _ptrc_glUniformMatrix4fv, _ptrc_glUseProgram, _ptrc_glVertexAttribPointer, _ptrc_glViewport,
-};
 pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data};
 use crate::util::{
     ByteArray_AppendData, ByteArray_Destroy, NextDelim, NextLineStripComments,
@@ -230,41 +216,45 @@ pub const INT_MAX: ::core::ffi::c_int = __INT_MAX__;
 pub const UINT_MAX: ::core::ffi::c_uint = (__INT_MAX__ as ::core::ffi::c_uint)
     .wrapping_mul(2 as ::core::ffi::c_uint)
     .wrapping_add(1 as ::core::ffi::c_uint);
-pub const GL_TEXTURE_2D: ::core::ffi::c_int = 0xde1 as ::core::ffi::c_int;
+pub const GL_TEXTURE_2D: ::core::ffi::c_int = gl::TEXTURE_2D as ::core::ffi::c_int;
 pub const GL_CLAMP: ::core::ffi::c_int = 0x2900 as ::core::ffi::c_int;
-pub const GL_FALSE: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-pub const GL_FLOAT: ::core::ffi::c_int = 0x1406 as ::core::ffi::c_int;
-pub const GL_LINEAR: ::core::ffi::c_int = 0x2601 as ::core::ffi::c_int;
-pub const GL_LINEAR_MIPMAP_LINEAR: ::core::ffi::c_int = 0x2703 as ::core::ffi::c_int;
+pub const GL_FALSE: ::core::ffi::c_int = gl::FALSE as ::core::ffi::c_int;
+pub const GL_FLOAT: ::core::ffi::c_int = gl::FLOAT as ::core::ffi::c_int;
+pub const GL_LINEAR: ::core::ffi::c_int = gl::LINEAR as ::core::ffi::c_int;
+pub const GL_LINEAR_MIPMAP_LINEAR: ::core::ffi::c_int =
+    gl::LINEAR_MIPMAP_LINEAR as ::core::ffi::c_int;
 pub const GL_LUMINANCE: ::core::ffi::c_int = 0x1909 as ::core::ffi::c_int;
-pub const GL_NEAREST: ::core::ffi::c_int = 0x2600 as ::core::ffi::c_int;
-pub const GL_NEAREST_MIPMAP_NEAREST: ::core::ffi::c_int = 0x2700 as ::core::ffi::c_int;
-pub const GL_REPEAT: ::core::ffi::c_int = 0x2901 as ::core::ffi::c_int;
-pub const GL_RGB: ::core::ffi::c_int = 0x1907 as ::core::ffi::c_int;
-pub const GL_RGBA: ::core::ffi::c_int = 0x1908 as ::core::ffi::c_int;
-pub const GL_TEXTURE_MAG_FILTER: ::core::ffi::c_int = 0x2800 as ::core::ffi::c_int;
-pub const GL_TEXTURE_MIN_FILTER: ::core::ffi::c_int = 0x2801 as ::core::ffi::c_int;
-pub const GL_TEXTURE_WRAP_S: ::core::ffi::c_int = 0x2802 as ::core::ffi::c_int;
-pub const GL_TEXTURE_WRAP_T: ::core::ffi::c_int = 0x2803 as ::core::ffi::c_int;
-pub const GL_TRIANGLE_STRIP: ::core::ffi::c_int = 0x5 as ::core::ffi::c_int;
-pub const GL_TRUE: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-pub const GL_UNSIGNED_BYTE: ::core::ffi::c_int = 0x1401 as ::core::ffi::c_int;
-pub const GL_CLAMP_TO_EDGE: ::core::ffi::c_int = 0x812f as ::core::ffi::c_int;
-pub const GL_UNSIGNED_INT_8_8_8_8: ::core::ffi::c_int = 0x8035 as ::core::ffi::c_int;
-pub const GL_CLAMP_TO_BORDER: ::core::ffi::c_int = 0x812d as ::core::ffi::c_int;
-pub const GL_TEXTURE0: ::core::ffi::c_int = 0x84c0 as ::core::ffi::c_int;
-pub const GL_ARRAY_BUFFER: ::core::ffi::c_int = 0x8892 as ::core::ffi::c_int;
-pub const GL_STATIC_DRAW: ::core::ffi::c_int = 0x88e4 as ::core::ffi::c_int;
-pub const GL_COMPILE_STATUS: ::core::ffi::c_int = 0x8b81 as ::core::ffi::c_int;
-pub const GL_FRAGMENT_SHADER: ::core::ffi::c_int = 0x8b30 as ::core::ffi::c_int;
-pub const GL_LINK_STATUS: ::core::ffi::c_int = 0x8b82 as ::core::ffi::c_int;
-pub const GL_VERTEX_SHADER: ::core::ffi::c_int = 0x8b31 as ::core::ffi::c_int;
-pub const GL_SRGB8_ALPHA8: ::core::ffi::c_int = 0x8c43 as ::core::ffi::c_int;
-pub const GL_COLOR_ATTACHMENT0: ::core::ffi::c_int = 0x8ce0 as ::core::ffi::c_int;
-pub const GL_FRAMEBUFFER: ::core::ffi::c_int = 0x8d40 as ::core::ffi::c_int;
-pub const GL_FRAMEBUFFER_BINDING: ::core::ffi::c_int = 0x8ca6 as ::core::ffi::c_int;
-pub const GL_FRAMEBUFFER_SRGB: ::core::ffi::c_int = 0x8db9 as ::core::ffi::c_int;
-pub const GL_RGBA32F: ::core::ffi::c_int = 0x8814 as ::core::ffi::c_int;
+pub const GL_NEAREST: ::core::ffi::c_int = gl::NEAREST as ::core::ffi::c_int;
+pub const GL_NEAREST_MIPMAP_NEAREST: ::core::ffi::c_int =
+    gl::NEAREST_MIPMAP_NEAREST as ::core::ffi::c_int;
+pub const GL_REPEAT: ::core::ffi::c_int = gl::REPEAT as ::core::ffi::c_int;
+pub const GL_RGB: ::core::ffi::c_int = gl::RGB as ::core::ffi::c_int;
+pub const GL_RGBA: ::core::ffi::c_int = gl::RGBA as ::core::ffi::c_int;
+pub const GL_TEXTURE_MAG_FILTER: ::core::ffi::c_int = gl::TEXTURE_MAG_FILTER as ::core::ffi::c_int;
+pub const GL_TEXTURE_MIN_FILTER: ::core::ffi::c_int = gl::TEXTURE_MIN_FILTER as ::core::ffi::c_int;
+pub const GL_TEXTURE_WRAP_S: ::core::ffi::c_int = gl::TEXTURE_WRAP_S as ::core::ffi::c_int;
+pub const GL_TEXTURE_WRAP_T: ::core::ffi::c_int = gl::TEXTURE_WRAP_T as ::core::ffi::c_int;
+pub const GL_TRIANGLE_STRIP: ::core::ffi::c_int = gl::TRIANGLE_STRIP as ::core::ffi::c_int;
+pub const GL_TRUE: ::core::ffi::c_int = gl::TRUE as ::core::ffi::c_int;
+pub const GL_UNSIGNED_BYTE: ::core::ffi::c_int = gl::UNSIGNED_BYTE as ::core::ffi::c_int;
+pub const GL_CLAMP_TO_EDGE: ::core::ffi::c_int = gl::CLAMP_TO_EDGE as ::core::ffi::c_int;
+pub const GL_UNSIGNED_INT_8_8_8_8: ::core::ffi::c_int =
+    gl::UNSIGNED_INT_8_8_8_8 as ::core::ffi::c_int;
+pub const GL_CLAMP_TO_BORDER: ::core::ffi::c_int = gl::CLAMP_TO_BORDER as ::core::ffi::c_int;
+pub const GL_TEXTURE0: ::core::ffi::c_int = gl::TEXTURE0 as ::core::ffi::c_int;
+pub const GL_ARRAY_BUFFER: ::core::ffi::c_int = gl::ARRAY_BUFFER as ::core::ffi::c_int;
+pub const GL_STATIC_DRAW: ::core::ffi::c_int = gl::STATIC_DRAW as ::core::ffi::c_int;
+pub const GL_COMPILE_STATUS: ::core::ffi::c_int = gl::COMPILE_STATUS as ::core::ffi::c_int;
+pub const GL_FRAGMENT_SHADER: ::core::ffi::c_int = gl::FRAGMENT_SHADER as ::core::ffi::c_int;
+pub const GL_LINK_STATUS: ::core::ffi::c_int = gl::LINK_STATUS as ::core::ffi::c_int;
+pub const GL_VERTEX_SHADER: ::core::ffi::c_int = gl::VERTEX_SHADER as ::core::ffi::c_int;
+pub const GL_SRGB8_ALPHA8: ::core::ffi::c_int = gl::SRGB8_ALPHA8 as ::core::ffi::c_int;
+pub const GL_COLOR_ATTACHMENT0: ::core::ffi::c_int = gl::COLOR_ATTACHMENT0 as ::core::ffi::c_int;
+pub const GL_FRAMEBUFFER: ::core::ffi::c_int = gl::FRAMEBUFFER as ::core::ffi::c_int;
+pub const GL_FRAMEBUFFER_BINDING: ::core::ffi::c_int =
+    gl::FRAMEBUFFER_BINDING as ::core::ffi::c_int;
+pub const GL_FRAMEBUFFER_SRGB: ::core::ffi::c_int = gl::FRAMEBUFFER_SRGB as ::core::ffi::c_int;
+pub const GL_RGBA32F: ::core::ffi::c_int = gl::RGBA32F as ::core::ffi::c_int;
 #[inline]
 unsafe fn atoi(mut __nptr: *const ::core::ffi::c_char) -> ::core::ffi::c_int {
     return strtol(
@@ -5553,22 +5543,21 @@ unsafe fn GlslPass_Compile(
     strings[2 as ::core::ffi::c_int as usize] = (data as *mut GLchar).offset(skip as isize);
     lengths[2 as ::core::ffi::c_int as usize] =
         size.wrapping_sub(skip) as ::core::ffi::c_int as GLint;
-    let mut shader: uint =
-        _ptrc_glCreateShader.expect("non-null function pointer")(type_0 as GLenum) as uint;
-    _ptrc_glShaderSource.expect("non-null function pointer")(
+    let mut shader: uint = gl::CreateShader(type_0 as GLenum) as uint;
+    gl::ShaderSource(
         shader as GLuint,
         3 as GLsizei,
         &raw mut strings as *mut *const GLchar,
         &raw mut lengths as *mut GLint,
     );
-    _ptrc_glCompileShader.expect("non-null function pointer")(shader as GLuint);
-    _ptrc_glGetShaderiv.expect("non-null function pointer")(
+    gl::CompileShader(shader as GLuint);
+    gl::GetShaderiv(
         shader as GLuint,
         GL_COMPILE_STATUS as GLenum,
         &raw mut compile_status,
     );
     buffer[0 as ::core::ffi::c_int as usize] = 0 as ::core::ffi::c_char;
-    _ptrc_glGetShaderInfoLog.expect("non-null function pointer")(
+    gl::GetShaderInfoLog(
         shader as GLuint,
         ::core::mem::size_of::<[::core::ffi::c_char; 256]>() as GLsizei,
         ::core::ptr::null_mut::<GLsizei>(),
@@ -5596,12 +5585,9 @@ unsafe fn GlslPass_Compile(
         );
     }
     if compile_status == GL_TRUE {
-        _ptrc_glAttachShader.expect("non-null function pointer")(
-            (*p).gl_program as GLuint,
-            shader as GLuint,
-        );
+        gl::AttachShader((*p).gl_program as GLuint, shader as GLuint);
     }
-    _ptrc_glDeleteShader.expect("non-null function pointer")(shader as GLuint);
+    gl::DeleteShader(shader as GLuint);
     return compile_status == GL_TRUE;
 }
 unsafe fn GlslTextureUniform_Read(
@@ -5634,37 +5620,33 @@ unsafe fn GlslTextureUniform_Read(
         b"Texture\0" as *const u8 as *const ::core::ffi::c_char as *const ::core::ffi::c_void,
         8 as size_t,
     );
-    (*result).Texture = _ptrc_glGetUniformLocation.expect("non-null function pointer")(
-        program as GLuint,
-        &raw mut buf as *mut ::core::ffi::c_char,
-    ) as ::core::ffi::c_int;
+    (*result).Texture =
+        gl::GetUniformLocation(program as GLuint, &raw mut buf as *mut ::core::ffi::c_char)
+            as ::core::ffi::c_int;
     memcpy(
         e as *mut ::core::ffi::c_void,
         b"InputSize\0" as *const u8 as *const ::core::ffi::c_char as *const ::core::ffi::c_void,
         10 as size_t,
     );
-    (*result).InputSize = _ptrc_glGetUniformLocation.expect("non-null function pointer")(
-        program as GLuint,
-        &raw mut buf as *mut ::core::ffi::c_char,
-    ) as ::core::ffi::c_int;
+    (*result).InputSize =
+        gl::GetUniformLocation(program as GLuint, &raw mut buf as *mut ::core::ffi::c_char)
+            as ::core::ffi::c_int;
     memcpy(
         e as *mut ::core::ffi::c_void,
         b"TextureSize\0" as *const u8 as *const ::core::ffi::c_char as *const ::core::ffi::c_void,
         12 as size_t,
     );
-    (*result).TextureSize = _ptrc_glGetUniformLocation.expect("non-null function pointer")(
-        program as GLuint,
-        &raw mut buf as *mut ::core::ffi::c_char,
-    ) as ::core::ffi::c_int;
+    (*result).TextureSize =
+        gl::GetUniformLocation(program as GLuint, &raw mut buf as *mut ::core::ffi::c_char)
+            as ::core::ffi::c_int;
     memcpy(
         e as *mut ::core::ffi::c_void,
         b"TexCoord\0" as *const u8 as *const ::core::ffi::c_char as *const ::core::ffi::c_void,
         9 as size_t,
     );
-    (*result).TexCoord = _ptrc_glGetAttribLocation.expect("non-null function pointer")(
-        program as GLuint,
-        &raw mut buf as *mut ::core::ffi::c_char,
-    ) as ::core::ffi::c_int;
+    (*result).TexCoord =
+        gl::GetAttribLocation(program as GLuint, &raw mut buf as *mut ::core::ffi::c_char)
+            as ::core::ffi::c_int;
 }
 static mut kMvpMatrixOrtho: [::core::ffi::c_float; 16] = [
     2.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, 2.0f32, 0.0f32, 0.0f32, 0.0f32, 0.0f32, -1.0f32,
@@ -5677,13 +5659,13 @@ unsafe fn GlslShader_GetUniforms(mut gs: *mut GlslShader) {
     let mut p_end: *mut GlslPass = p.offset((*gs).n_pass as isize);
     while p < p_end {
         let mut program: uint = (*p).gl_program;
-        _ptrc_glUseProgram.expect("non-null function pointer")(program as GLuint);
-        let mut MVPMatrix: GLint = _ptrc_glGetUniformLocation.expect("non-null function pointer")(
+        gl::UseProgram(program as GLuint);
+        let mut MVPMatrix: GLint = gl::GetUniformLocation(
             program as GLuint,
             b"MVPMatrix\0" as *const u8 as *const GLchar,
         );
         if MVPMatrix >= 0 as ::core::ffi::c_int {
-            _ptrc_glUniformMatrix4fv.expect("non-null function pointer")(
+            gl::UniformMatrix4fv(
                 MVPMatrix,
                 1 as GLsizei,
                 GL_FALSE as GLboolean,
@@ -5696,23 +5678,23 @@ unsafe fn GlslShader_GetUniforms(mut gs: *mut GlslShader) {
             -(1 as ::core::ffi::c_int),
             &raw mut (*p).unif.Top,
         );
-        (*p).unif.OutputSize = _ptrc_glGetUniformLocation.expect("non-null function pointer")(
+        (*p).unif.OutputSize = gl::GetUniformLocation(
             program as GLuint,
             b"OutputSize\0" as *const u8 as *const GLchar,
         ) as ::core::ffi::c_int;
-        (*p).unif.FrameCount = _ptrc_glGetUniformLocation.expect("non-null function pointer")(
+        (*p).unif.FrameCount = gl::GetUniformLocation(
             program as GLuint,
             b"FrameCount\0" as *const u8 as *const GLchar,
         ) as ::core::ffi::c_int;
-        (*p).unif.FrameDirection = _ptrc_glGetUniformLocation.expect("non-null function pointer")(
+        (*p).unif.FrameDirection = gl::GetUniformLocation(
             program as GLuint,
             b"FrameDirection\0" as *const u8 as *const GLchar,
         ) as ::core::ffi::c_int;
-        (*p).unif.LUTTexCoord = _ptrc_glGetAttribLocation.expect("non-null function pointer")(
+        (*p).unif.LUTTexCoord = gl::GetAttribLocation(
             program as GLuint,
             b"LUTTexCoord\0" as *const u8 as *const GLchar,
         ) as ::core::ffi::c_int;
-        (*p).unif.VertexCoord = _ptrc_glGetAttribLocation.expect("non-null function pointer")(
+        (*p).unif.VertexCoord = gl::GetAttribLocation(
             program as GLuint,
             b"VertexCoord\0" as *const u8 as *const GLchar,
         ) as ::core::ffi::c_int;
@@ -5761,25 +5743,21 @@ unsafe fn GlslShader_GetUniforms(mut gs: *mut GlslShader) {
         let mut t: *mut GlslTexture = (*gs).first_texture;
         let mut j_1: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
         while !t.is_null() {
-            (*p).unif.Texture[j_1 as usize] = _ptrc_glGetUniformLocation
-                .expect("non-null function pointer")(
-                program as GLuint, (*t).id
-            ) as ::core::ffi::c_int;
+            (*p).unif.Texture[j_1 as usize] =
+                gl::GetUniformLocation(program as GLuint, (*t).id) as ::core::ffi::c_int;
             t = (*t).next as *mut GlslTexture;
             j_1 += 1;
         }
         let mut pa: *mut GlslParam = (*gs).first_param;
         while !pa.is_null() {
-            (*pa).uniform[pass_idx as usize] = _ptrc_glGetUniformLocation
-                .expect("non-null function pointer")(
-                program as GLuint, (*pa).id
-            ) as uint;
+            (*pa).uniform[pass_idx as usize] =
+                gl::GetUniformLocation(program as GLuint, (*pa).id) as uint;
             pa = (*pa).next as *mut GlslParam;
         }
         p = p.offset(1);
         pass_idx += 1;
     }
-    _ptrc_glUseProgram.expect("non-null function pointer")(0 as GLuint);
+    gl::UseProgram(0 as GLuint);
 }
 unsafe fn IsGlslFilename(mut filename: *const ::core::ffi::c_char) -> bool {
     let mut len: size_t = strlen(filename);
@@ -5864,8 +5842,7 @@ pub unsafe fn GlslShader_CreateFromFile(
                         current_block = 13851546192323845927;
                         break;
                     } else {
-                        (*p).gl_program =
-                            _ptrc_glCreateProgram.expect("non-null function pointer")() as uint;
+                        (*p).gl_program = gl::CreateProgram() as uint;
                         if !GlslPass_Compile(
                             p,
                             GL_VERTEX_SHADER as uint,
@@ -5880,16 +5857,14 @@ pub unsafe fn GlslShader_CreateFromFile(
                             current_block = 13851546192323845927;
                             break;
                         }
-                        _ptrc_glLinkProgram.expect("non-null function pointer")(
-                            (*p).gl_program as GLuint,
-                        );
-                        _ptrc_glGetProgramiv.expect("non-null function pointer")(
+                        gl::LinkProgram((*p).gl_program as GLuint);
+                        gl::GetProgramiv(
                             (*p).gl_program as GLuint,
                             GL_LINK_STATUS as GLenum,
                             &raw mut link_status,
                         );
                         buffer[0 as ::core::ffi::c_int as usize] = 0 as ::core::ffi::c_char;
-                        _ptrc_glGetProgramInfoLog.expect("non-null function pointer")(
+                        gl::GetProgramInfoLog(
                             (*p).gl_program as GLuint,
                             ::core::mem::size_of::<[::core::ffi::c_char; 256]>() as GLsizei,
                             ::core::ptr::null_mut::<GLsizei>(),
@@ -5915,14 +5890,8 @@ pub unsafe fn GlslShader_CreateFromFile(
                             current_block = 13851546192323845927;
                             break;
                         }
-                        _ptrc_glGenFramebuffers.expect("non-null function pointer")(
-                            1 as GLsizei,
-                            &raw mut (*p).gl_fbo,
-                        );
-                        _ptrc_glGenTextures.expect("non-null function pointer")(
-                            1 as GLsizei,
-                            &raw mut (*p).gl_texture,
-                        );
+                        gl::GenFramebuffers(1 as GLsizei, &raw mut (*p).gl_fbo);
+                        gl::GenTextures(1 as GLsizei, &raw mut (*p).gl_texture);
                         i += 1;
                     }
                 }
@@ -5932,30 +5901,24 @@ pub unsafe fn GlslShader_CreateFromFile(
                 _ => {
                     let mut t: *mut GlslTexture = (*gs).first_texture;
                     while !t.is_null() {
-                        _ptrc_glGenTextures.expect("non-null function pointer")(
-                            1 as GLsizei,
-                            &raw mut (*t).gl_texture,
-                        );
-                        _ptrc_glBindTexture.expect("non-null function pointer")(
-                            GL_TEXTURE_2D as GLenum,
-                            (*t).gl_texture as GLuint,
-                        );
-                        _ptrc_glTexParameteri.expect("non-null function pointer")(
+                        gl::GenTextures(1 as GLsizei, &raw mut (*t).gl_texture);
+                        gl::BindTexture(GL_TEXTURE_2D as GLenum, (*t).gl_texture as GLuint);
+                        gl::TexParameteri(
                             GL_TEXTURE_2D as GLenum,
                             GL_TEXTURE_WRAP_S as GLenum,
                             (*t).wrap_mode as GLint,
                         );
-                        _ptrc_glTexParameteri.expect("non-null function pointer")(
+                        gl::TexParameteri(
                             GL_TEXTURE_2D as GLenum,
                             GL_TEXTURE_WRAP_T as GLenum,
                             (*t).wrap_mode as GLint,
                         );
-                        _ptrc_glTexParameteri.expect("non-null function pointer")(
+                        gl::TexParameteri(
                             GL_TEXTURE_2D as GLenum,
                             GL_TEXTURE_MAG_FILTER as GLenum,
                             (*t).filter as GLint,
                         );
-                        _ptrc_glTexParameteri.expect("non-null function pointer")(
+                        gl::TexParameteri(
                             GL_TEXTURE_2D as GLenum,
                             GL_TEXTURE_MIN_FILTER as GLenum,
                             (if (*t).mipmap as ::core::ffi::c_int != 0 {
@@ -5990,7 +5953,7 @@ pub unsafe fn GlslShader_CreateFromFile(
                                     new_filename_0,
                                 );
                             } else {
-                                _ptrc_glTexImage2D.expect("non-null function pointer")(
+                                gl::TexImage2D(
                                     GL_TEXTURE_2D as GLenum,
                                     0 as GLint,
                                     GL_RGBA,
@@ -6012,9 +5975,7 @@ pub unsafe fn GlslShader_CreateFromFile(
                             free(new_filename_0 as *mut ::core::ffi::c_void);
                         }
                         if (*t).mipmap {
-                            _ptrc_glGenerateMipmap.expect("non-null function pointer")(
-                                GL_TEXTURE_2D as GLenum,
-                            );
+                            gl::GenerateMipmap(GL_TEXTURE_2D as GLenum);
                         }
                         t = (*t).next as *mut GlslTexture;
                     }
@@ -6032,7 +5993,7 @@ pub unsafe fn GlslShader_CreateFromFile(
                     GlslShader_GetUniforms(gs);
                     let mut i_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
                     while i_0 < (*gs).max_prev_frame {
-                        _ptrc_glGenTextures.expect("non-null function pointer")(
+                        gl::GenTextures(
                             1 as GLsizei,
                             &raw mut (*(&raw mut (*gs).prev_frame as *mut GlTextureWithSize)
                                 .offset(
@@ -6043,24 +6004,15 @@ pub unsafe fn GlslShader_CreateFromFile(
                         );
                         i_0 += 1;
                     }
-                    _ptrc_glGenBuffers.expect("non-null function pointer")(
-                        1 as GLsizei,
-                        &raw mut (*gs).gl_vbo,
-                    );
-                    _ptrc_glBindBuffer.expect("non-null function pointer")(
-                        GL_ARRAY_BUFFER as GLenum,
-                        (*gs).gl_vbo as GLuint,
-                    );
-                    _ptrc_glBufferData.expect("non-null function pointer")(
+                    gl::GenBuffers(1 as GLsizei, &raw mut (*gs).gl_vbo);
+                    gl::BindBuffer(GL_ARRAY_BUFFER as GLenum, (*gs).gl_vbo as GLuint);
+                    gl::BufferData(
                         GL_ARRAY_BUFFER as GLenum,
                         ::core::mem::size_of::<[GLfloat; 16]>() as GLsizeiptr,
                         &raw const kTexCoords as *const GLfloat as *const ::core::ffi::c_void,
                         GL_STATIC_DRAW as GLenum,
                     );
-                    _ptrc_glBindBuffer.expect("non-null function pointer")(
-                        GL_ARRAY_BUFFER as GLenum,
-                        0 as GLuint,
-                    );
+                    gl::BindBuffer(GL_ARRAY_BUFFER as GLenum, 0 as GLuint);
                     success = true_0 != 0;
                 }
             }
@@ -6078,15 +6030,9 @@ pub unsafe fn GlslShader_Destroy(mut gs: *mut GlslShader) {
     let mut p: *mut GlslPass = (*gs).pass.offset(1 as ::core::ffi::c_int as isize);
     let mut p_end: *mut GlslPass = p.offset((*gs).n_pass as isize);
     while p < p_end {
-        _ptrc_glDeleteProgram.expect("non-null function pointer")((*p).gl_program as GLuint);
-        _ptrc_glDeleteTextures.expect("non-null function pointer")(
-            1 as GLsizei,
-            &raw mut (*p).gl_texture,
-        );
-        _ptrc_glDeleteFramebuffers.expect("non-null function pointer")(
-            1 as GLsizei,
-            &raw mut (*p).gl_fbo,
-        );
+        gl::DeleteProgram((*p).gl_program as GLuint);
+        gl::DeleteTextures(1 as GLsizei, &raw mut (*p).gl_texture);
+        gl::DeleteFramebuffers(1 as GLsizei, &raw mut (*p).gl_fbo);
         free((*p).filename as *mut ::core::ffi::c_void);
         p = p.offset(1);
     }
@@ -6098,10 +6044,7 @@ pub unsafe fn GlslShader_Destroy(mut gs: *mut GlslShader) {
             break;
         }
         (*gs).first_texture = (*t).next as *mut GlslTexture;
-        _ptrc_glDeleteTextures.expect("non-null function pointer")(
-            1 as GLsizei,
-            &raw mut (*t).gl_texture,
-        );
+        gl::DeleteTextures(1 as GLsizei, &raw mut (*t).gl_texture);
         free((*t).id as *mut ::core::ffi::c_void);
         free((*t).filename as *mut ::core::ffi::c_void);
         free(t as *mut ::core::ffi::c_void);
@@ -6118,14 +6061,14 @@ pub unsafe fn GlslShader_Destroy(mut gs: *mut GlslShader) {
     }
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i < 8 as ::core::ffi::c_int {
-        _ptrc_glDeleteTextures.expect("non-null function pointer")(
+        gl::DeleteTextures(
             1 as GLsizei,
             &raw mut (*(&raw mut (*gs).prev_frame as *mut GlTextureWithSize).offset(i as isize))
                 .gl_texture,
         );
         i += 1;
     }
-    _ptrc_glDeleteBuffers.expect("non-null function pointer")(1 as GLsizei, &raw mut (*gs).gl_vbo);
+    gl::DeleteBuffers(1 as GLsizei, &raw mut (*gs).gl_vbo);
     free(gs as *mut ::core::ffi::c_void);
 }
 unsafe fn RenderCtx_SetTexture(
@@ -6134,16 +6077,11 @@ unsafe fn RenderCtx_SetTexture(
     mut texture_id: uint,
 ) {
     if textureu >= 0 as ::core::ffi::c_int {
-        _ptrc_glActiveTexture.expect("non-null function pointer")(
-            (GL_TEXTURE0 as GLenum).wrapping_add((*ctx).texture_unit as GLenum),
-        );
-        _ptrc_glBindTexture.expect("non-null function pointer")(
-            GL_TEXTURE_2D as GLenum,
-            texture_id as GLuint,
-        );
+        gl::ActiveTexture((GL_TEXTURE0 as GLenum).wrapping_add((*ctx).texture_unit as GLenum));
+        gl::BindTexture(GL_TEXTURE_2D as GLenum, texture_id as GLuint);
         let fresh55 = (*ctx).texture_unit;
         (*ctx).texture_unit = (*ctx).texture_unit.wrapping_add(1);
-        _ptrc_glUniform1i.expect("non-null function pointer")(textureu as GLint, fresh55 as GLint);
+        gl::Uniform1i(textureu as GLint, fresh55 as GLint);
     }
 }
 unsafe fn RenderCtx_SetTexCoords(
@@ -6168,7 +6106,7 @@ unsafe fn RenderCtx_SetTexCoords(
         let fresh54 = (*ctx).num_vaos;
         (*ctx).num_vaos = (*ctx).num_vaos.wrapping_add(1);
         (*ctx).vaos[fresh54 as usize] = tex_coord as uint;
-        _ptrc_glVertexAttribPointer.expect("non-null function pointer")(
+        gl::VertexAttribPointer(
             tex_coord as GLuint,
             2 as GLint,
             GL_FLOAT as GLenum,
@@ -6176,7 +6114,7 @@ unsafe fn RenderCtx_SetTexCoords(
             0 as GLsizei,
             offset as *mut ::core::ffi::c_void,
         );
-        _ptrc_glEnableVertexAttribArray.expect("non-null function pointer")(tex_coord as GLuint);
+        gl::EnableVertexAttribArray(tex_coord as GLuint);
     }
 }
 unsafe fn RenderCtx_SetGlslTextureUniform(
@@ -6192,14 +6130,14 @@ unsafe fn RenderCtx_SetGlslTextureUniform(
     ];
     RenderCtx_SetTexture(ctx, (*u).Texture, texture);
     if (*u).InputSize >= 0 as ::core::ffi::c_int {
-        _ptrc_glUniform2fv.expect("non-null function pointer")(
+        gl::Uniform2fv(
             (*u).InputSize as GLint,
             1 as GLsizei,
             &raw mut size as *mut ::core::ffi::c_float,
         );
     }
     if (*u).TextureSize >= 0 as ::core::ffi::c_int {
-        _ptrc_glUniform2fv.expect("non-null function pointer")(
+        gl::Uniform2fv(
             (*u).TextureSize as GLint,
             1 as GLsizei,
             &raw mut size as *mut ::core::ffi::c_float,
@@ -6225,14 +6163,14 @@ unsafe fn GlslShader_SetShaderVars(
             (*p.offset(0 as ::core::ffi::c_int as isize)).width as ::core::ffi::c_float,
             (*p.offset(0 as ::core::ffi::c_int as isize)).height as ::core::ffi::c_float,
         ];
-        _ptrc_glUniform2fv.expect("non-null function pointer")(
+        gl::Uniform2fv(
             (*p).unif.OutputSize as GLint,
             1 as GLsizei,
             &raw mut output_size as *mut ::core::ffi::c_float,
         );
     }
     if (*p).unif.FrameCount >= 0 as ::core::ffi::c_int {
-        _ptrc_glUniform1i.expect("non-null function pointer")(
+        gl::Uniform1i(
             (*p).unif.FrameCount as GLint,
             (if (*p).frame_count_mod != 0 {
                 (*gs).frame_count.wrapping_rem((*p).frame_count_mod)
@@ -6242,10 +6180,7 @@ unsafe fn GlslShader_SetShaderVars(
         );
     }
     if (*p).unif.FrameDirection >= 0 as ::core::ffi::c_int {
-        _ptrc_glUniform1i.expect("non-null function pointer")(
-            (*p).unif.FrameDirection as GLint,
-            1 as GLint,
-        );
+        gl::Uniform1i((*p).unif.FrameDirection as GLint, 1 as GLint);
     }
     RenderCtx_SetTexCoords(ctx, (*p).unif.LUTTexCoord, (*ctx).offset as uintptr_t);
     RenderCtx_SetTexCoords(ctx, (*p).unif.VertexCoord, 0 as uintptr_t);
@@ -6324,14 +6259,14 @@ unsafe fn GlslShader_SetShaderVars(
     let mut pa: *mut GlslParam = (*gs).first_param;
     while !pa.is_null() {
         if (*pa).uniform[pass as usize] >= 0 as uint {
-            _ptrc_glUniform1f.expect("non-null function pointer")(
+            gl::Uniform1f(
                 (*pa).uniform[pass as usize] as GLint,
                 (*pa).value as GLfloat,
             );
         }
         pa = (*pa).next as *mut GlslParam;
     }
-    _ptrc_glActiveTexture.expect("non-null function pointer")(GL_TEXTURE0 as GLenum);
+    gl::ActiveTexture(GL_TEXTURE0 as GLenum);
 }
 pub unsafe fn GlslShader_Render(
     mut gs: *mut GlslShader,
@@ -6345,14 +6280,11 @@ pub unsafe fn GlslShader_Render(
     (*(*gs).pass.offset(0 as ::core::ffi::c_int as isize)).width = (*tex).width;
     (*(*gs).pass.offset(0 as ::core::ffi::c_int as isize)).height = (*tex).height;
     let mut previous_framebuffer: GLint = 0;
-    _ptrc_glGetIntegerv.expect("non-null function pointer")(
+    gl::GetIntegerv(
         GL_FRAMEBUFFER_BINDING as GLenum,
         &raw mut previous_framebuffer,
     );
-    _ptrc_glBindBuffer.expect("non-null function pointer")(
-        GL_ARRAY_BUFFER as GLenum,
-        (*gs).gl_vbo as GLuint,
-    );
+    gl::BindBuffer(GL_ARRAY_BUFFER as GLenum, (*gs).gl_vbo as GLuint);
     let mut pass: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
     while pass <= (*gs).n_pass {
         let mut last_pass: bool = pass == (*gs).n_pass;
@@ -6402,13 +6334,10 @@ pub unsafe fn GlslShader_Render(
             }
         }
         if !last_pass {
-            _ptrc_glBindTexture.expect("non-null function pointer")(
-                GL_TEXTURE_2D as GLenum,
-                (*p).gl_texture as GLuint,
-            );
+            gl::BindTexture(GL_TEXTURE_2D as GLenum, (*p).gl_texture as GLuint);
             if (*p).srgb_framebuffer {
-                _ptrc_glEnable.expect("non-null function pointer")(GL_FRAMEBUFFER_SRGB as GLenum);
-                _ptrc_glTexImage2D.expect("non-null function pointer")(
+                gl::Enable(GL_FRAMEBUFFER_SRGB as GLenum);
+                gl::TexImage2D(
                     GL_TEXTURE_2D as GLenum,
                     0 as GLint,
                     GL_SRGB8_ALPHA8,
@@ -6420,7 +6349,7 @@ pub unsafe fn GlslShader_Render(
                     ::core::ptr::null::<::core::ffi::c_void>(),
                 );
             } else {
-                _ptrc_glTexImage2D.expect("non-null function pointer")(
+                gl::TexImage2D(
                     GL_TEXTURE_2D as GLenum,
                     0 as GLint,
                     if (*p).float_framebuffer as ::core::ffi::c_int != 0 {
@@ -6440,17 +6369,14 @@ pub unsafe fn GlslShader_Render(
                     ::core::ptr::null::<::core::ffi::c_void>(),
                 );
             }
-            _ptrc_glViewport.expect("non-null function pointer")(
+            gl::Viewport(
                 0 as GLint,
                 0 as GLint,
                 (*p).width as GLsizei,
                 (*p).height as GLsizei,
             );
-            _ptrc_glBindFramebuffer.expect("non-null function pointer")(
-                GL_FRAMEBUFFER as GLenum,
-                (*p).gl_fbo as GLuint,
-            );
-            _ptrc_glFramebufferTexture2D.expect("non-null function pointer")(
+            gl::BindFramebuffer(GL_FRAMEBUFFER as GLenum, (*p).gl_fbo as GLuint);
+            gl::FramebufferTexture2D(
                 GL_FRAMEBUFFER as GLenum,
                 GL_COLOR_ATTACHMENT0 as GLenum,
                 GL_TEXTURE_2D as GLenum,
@@ -6458,18 +6384,15 @@ pub unsafe fn GlslShader_Render(
                 0 as GLint,
             );
         } else {
-            _ptrc_glBindFramebuffer.expect("non-null function pointer")(
-                GL_FRAMEBUFFER as GLenum,
-                previous_framebuffer as GLuint,
-            );
-            _ptrc_glViewport.expect("non-null function pointer")(
+            gl::BindFramebuffer(GL_FRAMEBUFFER as GLenum, previous_framebuffer as GLuint);
+            gl::Viewport(
                 viewport_x as GLint,
                 viewport_y as GLint,
                 viewport_width as GLsizei,
                 viewport_height as GLsizei,
             );
         }
-        _ptrc_glBindTexture.expect("non-null function pointer")(
+        gl::BindTexture(
             GL_TEXTURE_2D as GLenum,
             (*p.offset(-(1 as ::core::ffi::c_int) as isize)).gl_texture as GLuint,
         );
@@ -6484,12 +6407,12 @@ pub unsafe fn GlslShader_Render(
                 GL_NEAREST
             }) as uint
         };
-        _ptrc_glTexParameteri.expect("non-null function pointer")(
+        gl::TexParameteri(
             GL_TEXTURE_2D as GLenum,
             GL_TEXTURE_MAG_FILTER as GLenum,
             filter as GLint,
         );
-        _ptrc_glTexParameteri.expect("non-null function pointer")(
+        gl::TexParameteri(
             GL_TEXTURE_2D as GLenum,
             GL_TEXTURE_MIN_FILTER as GLenum,
             (if (*p).mipmap_input as ::core::ffi::c_int != 0 {
@@ -6502,20 +6425,20 @@ pub unsafe fn GlslShader_Render(
                 filter
             }) as GLint,
         );
-        _ptrc_glTexParameteri.expect("non-null function pointer")(
+        gl::TexParameteri(
             GL_TEXTURE_2D as GLenum,
             GL_TEXTURE_WRAP_S as GLenum,
             (*p).wrap_mode as GLint,
         );
-        _ptrc_glTexParameteri.expect("non-null function pointer")(
+        gl::TexParameteri(
             GL_TEXTURE_2D as GLenum,
             GL_TEXTURE_WRAP_T as GLenum,
             (*p).wrap_mode as GLint,
         );
         if (*p).mipmap_input {
-            _ptrc_glGenerateMipmap.expect("non-null function pointer")(GL_TEXTURE_2D as GLenum);
+            gl::GenerateMipmap(GL_TEXTURE_2D as GLenum);
         }
-        _ptrc_glUseProgram.expect("non-null function pointer")((*p).gl_program as GLuint);
+        gl::UseProgram((*p).gl_program as GLuint);
         let mut ctx: RenderCtx = RenderCtx {
             texture_unit: 0,
             offset: 0,
@@ -6530,30 +6453,21 @@ pub unsafe fn GlslShader_Render(
             0 as usize
         }) as uint;
         GlslShader_SetShaderVars(gs, &raw mut ctx, pass);
-        _ptrc_glDrawArrays.expect("non-null function pointer")(
-            GL_TRIANGLE_STRIP as GLenum,
-            0 as GLint,
-            4 as GLsizei,
-        );
+        gl::DrawArrays(GL_TRIANGLE_STRIP as GLenum, 0 as GLint, 4 as GLsizei);
         let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
         while i < ctx.num_vaos as ::core::ffi::c_int {
-            _ptrc_glDisableVertexAttribArray.expect("non-null function pointer")(
-                ctx.vaos[i as usize],
-            );
+            gl::DisableVertexAttribArray(ctx.vaos[i as usize]);
             i += 1;
         }
         if (*p).srgb_framebuffer {
-            _ptrc_glDisable.expect("non-null function pointer")(GL_FRAMEBUFFER_SRGB as GLenum);
+            gl::Disable(GL_FRAMEBUFFER_SRGB as GLenum);
         }
         pass += 1;
     }
-    _ptrc_glBindFramebuffer.expect("non-null function pointer")(
-        GL_FRAMEBUFFER as GLenum,
-        previous_framebuffer as GLuint,
-    );
-    _ptrc_glUseProgram.expect("non-null function pointer")(0 as GLuint);
-    _ptrc_glBindTexture.expect("non-null function pointer")(GL_TEXTURE_2D as GLenum, 0 as GLuint);
-    _ptrc_glBindBuffer.expect("non-null function pointer")(GL_ARRAY_BUFFER as GLenum, 0 as GLuint);
+    gl::BindFramebuffer(GL_FRAMEBUFFER as GLenum, previous_framebuffer as GLuint);
+    gl::UseProgram(0 as GLuint);
+    gl::BindTexture(GL_TEXTURE_2D as GLenum, 0 as GLuint);
+    gl::BindBuffer(GL_ARRAY_BUFFER as GLenum, 0 as GLuint);
     if (*gs).max_prev_frame != 0 as ::core::ffi::c_int {
         let mut store_pos: *mut GlTextureWithSize = (&raw mut (*gs).prev_frame
             as *mut GlTextureWithSize)
