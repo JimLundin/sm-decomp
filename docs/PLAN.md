@@ -36,7 +36,11 @@ no C game source, extra worktrees or stashes were present. The retired local
 archive, so its tip is preserved as the tag
 `archive/restart-playable-baseline-2026-10-17` before removing the branch.
 Old scratch/restart artifacts, draft refactors and dependency source caches
-were removed from the checkout. The documented archive branch stays intact.
+were moved out of the checkout into a temporary directory (recursive deletion
+was rejected by automatic approval review). Only the current verifier DLL
+outputs remain in `target/`; there are zero C-family source files in the
+checkout. The documented archive branch stays intact. This audit changes no
+Rust source; residue counters are unchanged.
 
 ## The oracle
 
@@ -315,7 +319,7 @@ every step makes the next one easier.
    Linux stable format/release build, smoke and full any% passed on
    `aaa80120`; no failing frames. Final Windows-only CRT source rerun:
    https://github.com/JimLundin/sm-decomp/actions/runs/39067855970.
-4. **Globals: implementation complete, Linux validation pending.** Gather
+4. **Globals: done.** Gather
    `static mut` game state behind one `Game` struct passed by
    `&mut`, keeping `g_ram` as the 128 KiB array it is (RAM layout must stay
    byte-identical for the oracle comparison and for save states).
@@ -357,7 +361,9 @@ every step makes the next one easier.
    metadata builds pass. Unsafe functions +1 and Rust lines +31 provide the
    immutable string-pointer constructor and its documented safety contract;
    all other residue counters unchanged. Final-source any%: 129,712 frames,
-   zero failures (183.28s). Linux stable release validation is pending:
+   zero failures (183.28s). Linux stable format/release build, smoke and
+   full any% passed on `4f305830` (129712 frames: 0 failing frames (463.11s)).
+   Supplemental full 100% is still running:
    https://github.com/JimLundin/sm-decomp/actions/runs/39070035812.
 
 ## Phase 3: readable gameplay, one subsystem at a time
@@ -367,8 +373,9 @@ use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
 the original `SignExtend8(0x8000)` initialization and the middle-byte velocity
 reversal; every possible middle word (65,536) produces identical reversal
 bytes. Any%: 129,712 frames, zero failures (184.53s); format and core/frontend
-metadata builds pass. Local Cargo remains ASR-denied; Linux validation will
-run on this commit. Raw RAM offsets -6, c_int cast lines -34, Rust lines -41;
+metadata builds pass. Linux stable format/release build, smoke and full
+any% pass on `136f3f19` (129712 frames: 0 failing frames (225.05s)).
+https://github.com/JimLundin/sm-decomp/actions/runs/39070442060. Raw RAM offsets -6, c_int cast lines -34, Rust lines -41;
 all other counters unchanged. Next: name Waver's RAM fields and accessors,
 then remove its raw-pointer access without holding RAM borrows across calls.
 Waver RAM view applied: fields named for velocity, animation and sine phase;
