@@ -48,6 +48,7 @@ pub mod game {
     pub mod sm_b2;
     pub mod sm_b3;
     pub mod sm_b4;
+    pub mod waver;
 }
 
 /// Emulated SNES hardware. Also runs the original ROM as the differential

@@ -390,6 +390,19 @@ c_int cast lines -1; Rust lines +102 provide safe field accessors and explicit
 borrow scopes. Linux stable validation is pending on this commit.
 Next: move Waver into a readable subsystem module and finish its ROM-read
 boundary, then choose the next enemy/subsystem.
+Waver module move applied: `game/waver.rs` owns its slot layout, RAM view
+and four entry points; bank A3 re-exports preserve all caller paths. The ROM
+animation-word read is isolated with its loaded-allocation precondition;
+no ROM-derived table is embedded. Mechanical audit confirms unchanged
+layout, RAM view and entry bodies except extraction of that read. Format,
+core DLL build and full any% pass (129,712 frames, zero failures, 185.11s).
+Rust lines +22 and unsafe functions +1 document/isolate the ROM boundary;
+all other counters unchanged. Local Cargo remains ASR-denied. The prior
+temporary SDL metadata dependencies disappeared and the standard DLL output
+was denied overwrite; a fresh DLL output linked/loaded and verified this
+source. Linux validates the actual stable frontend release build.
+Next: make Waver's movement/ROM dependencies an explicit safe boundary and
+choose the next readable gameplay subsystem.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
