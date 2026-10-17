@@ -46,31 +46,11 @@ extern "C" {
     fn EnableHdmaObjects();
     fn WaitUntilEndOfVblankAndClearHdma();
 }
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __int32_t = i32;
-pub type __uint32_t = u32;
-pub type int8_t = __int8_t;
-pub type int16_t = __int16_t;
-pub type int32_t = __int32_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type size_t = usize;
-pub type uint8 = uint8_t;
-pub type int8 = int8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type uint32 = uint32_t;
-pub type int32 = int32_t;
-pub type VoidP = uint16;
-pub use crate::types::LongPtr;
-pub type Func_V = unsafe extern "C" fn() -> ();
-pub use crate::types::OamEnt;
-pub use crate::types::VramWriteEntry;
-pub type SnesRegs = ::core::ffi::c_uint;
+pub use crate::types::{
+    __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
+    int32_t, int8, int8_t, size_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, Func_V,
+    LongPtr, OamEnt, SnesRegs, VoidP, VramWriteEntry,
+};
 pub const MIRR7: SnesRegs = 17279;
 pub const UNUSED7: SnesRegs = 17275;
 pub const NTRL7: SnesRegs = 17274;
@@ -337,7 +317,7 @@ pub struct RoomDefHeader {
     pub cre_bitset_: uint8,
     pub ptr_to_doorout: VoidP,
 }
-pub type GameState = ::core::ffi::c_uint;
+pub use crate::types::GameState;
 pub const kGameState_44_TransitionFromDemo: GameState = 44;
 pub const kGameState_43_TransitionFromDemo: GameState = 43;
 pub const kGameState_42_PlayingDemo: GameState = 42;
@@ -383,7 +363,7 @@ pub const kGameState_3_Unused: GameState = 3;
 pub const kGameState_2_GameOptionsMenu: GameState = 2;
 pub const kGameState_1_OpeningCinematic: GameState = 1;
 pub const kGameState_0_Reset: GameState = 0;
-pub type Buttons = ::core::ffi::c_uint;
+pub use crate::types::Buttons;
 pub const kButton_B: Buttons = 32768;
 pub const kButton_Y: Buttons = 16384;
 pub const kButton_Select: Buttons = 8192;
@@ -502,7 +482,7 @@ pub union Ram3000 {
     pub misc: Ram3000_Misc,
     pub menu: Ram3000_Menu,
 }
-pub type Consts_81 = ::core::ffi::c_uint;
+pub use crate::types::Consts_81;
 pub const addr_kAreaSelectBackgroundTilemaps: Consts_81 = 48922;
 pub const addr_kAreaSelectForegroundTilemap: Consts_81 = 46874;
 pub const addr_kMenuTilemap_DataCleared: Consts_81 = 46810;
@@ -537,7 +517,7 @@ pub const addr_kMenuTilemap_YesReturnToGame: Consts_81 = 37708;
 pub const addr_kMenuTilemap_TryAgain: Consts_81 = 37684;
 pub const addr_kMenuTilemap_FindMetroidLarva: Consts_81 = 37636;
 pub const addr_kMenuTilemap_GameOver: Consts_81 = 37596;
-pub type Consts_82 = ::core::ffi::c_uint;
+pub use crate::types::Consts_82;
 pub const addr_stru_82F4D6: Consts_82 = 62678;
 pub const addr_stru_82F4D0: Consts_82 = 62672;
 pub const addr_stru_82F4CA: Consts_82 = 62666;

@@ -171,6 +171,11 @@ every step makes the next one easier.
    (180.81s). Layout assertions and normal library/frontend metadata builds
    pass; local Cargo linking remains blocked by the documented ASR policy.
    Rust source lines fell from 279,256 to 279,020; other counters unchanged.
+   Alias batch applied: 1,113 local typedefs now re-export shared definitions,
+   preserving resolved widths, signedness, pointers and C callback ABIs.
+   Any% passes 129,712 frames with zero failures (182.10s); format and direct
+   library/frontend metadata builds pass. Rust lines now 278,552; other
+   counters unchanged. Local Cargo build still encounters the ASR block.
    This touches `rtl.rs` and game banks 80, 81, 82, 84, 86, 88, 8b, 8f, 90,
    91, 94, 9b, a0, a2, a3, a4, a5, a6, a7, a8, a9, b2 (only the types each
    already defines). Keep all fields, `Copy`/`Clone`, and representation exact:

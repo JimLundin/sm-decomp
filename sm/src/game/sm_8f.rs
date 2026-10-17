@@ -33,25 +33,10 @@ extern "C" {
         pal_r24: uint16,
     ) -> uint16;
 }
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __int32_t = i32;
-pub type __uint32_t = u32;
-pub type int16_t = __int16_t;
-pub type int32_t = __int32_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type uint8 = uint8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type uint32 = uint32_t;
-pub type int32 = int32_t;
-pub type VoidP = uint16;
-pub type CoroutineRet = uint8_t;
-pub use crate::types::LongPtr;
-pub type SnesRegs = ::core::ffi::c_uint;
+pub use crate::types::{
+    __int16_t, __int32_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32, int32_t,
+    uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, CoroutineRet, LongPtr, SnesRegs, VoidP,
+};
 pub const MIRR7: SnesRegs = 17279;
 pub const UNUSED7: SnesRegs = 17275;
 pub const NTRL7: SnesRegs = 17274;
@@ -333,7 +318,7 @@ pub struct RoomDefRoomstate {
     pub bg_data_ptr: VoidP,
     pub room_setup_code: VoidP,
 }
-pub type Consts_86 = ::core::ffi::c_uint;
+pub use crate::types::Consts_86;
 pub const addr_kEproj_Sparks: Consts_86 = 62616;
 pub const addr_kEproj_EnemyDeathExplosion: Consts_86 = 62277;
 pub const addr_kEproj_Pickup: Consts_86 = 62263;
@@ -507,7 +492,7 @@ pub const addr_stru_868BEC: Consts_86 = 35820;
 pub const addr_stru_868BDE: Consts_86 = 35806;
 pub const addr_stru_868BD0: Consts_86 = 35792;
 pub const addr_stru_868BC2: Consts_86 = 35778;
-pub type Consts_87 = ::core::ffi::c_uint;
+pub use crate::types::Consts_87;
 pub const addr_kAnimtiles_TourianStatue_Draygon: Consts_87 = 34142;
 pub const addr_kAnimtiles_TourianStatue_Kraid: Consts_87 = 34136;
 pub const addr_kAnimtiles_TourianStatue_Ridley: Consts_87 = 34130;

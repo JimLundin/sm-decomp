@@ -48,30 +48,11 @@ extern "C" {
     fn Xray_SetupStage8_SetBackdropColor();
     fn MotherBrain_CalculateRainbowBeamHdma();
 }
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __uint32_t = u32;
-pub type int8_t = __int8_t;
-pub type int16_t = __int16_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type uintptr_t = usize;
-pub type uint8 = uint8_t;
-pub type int8 = int8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type uint32 = uint32_t;
-pub type VoidP = uint16;
-pub use crate::types::LongPtr;
-pub type Func_V = unsafe extern "C" fn() -> ();
-pub type Func_U8 = unsafe extern "C" fn() -> uint8;
-pub type Func_Y_V = unsafe extern "C" fn(uint16) -> ();
-pub type Func_Y_Y = unsafe extern "C" fn(uint16) -> uint16;
-pub use crate::types::VramWriteEntry;
-pub type SnesRegs = ::core::ffi::c_uint;
+pub use crate::types::{
+    __int16_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int8, int8_t, uint16,
+    uint16_t, uint32, uint32_t, uint8, uint8_t, uintptr_t, Func_U8, Func_V, Func_Y_V, Func_Y_Y,
+    LongPtr, SnesRegs, VoidP, VramWriteEntry,
+};
 pub const MIRR7: SnesRegs = 17279;
 pub const UNUSED7: SnesRegs = 17275;
 pub const NTRL7: SnesRegs = 17274;
@@ -332,7 +313,7 @@ pub struct SpawnHdmaObject_Args {
     pub field_1: uint8,
     pub addr: VoidP,
 }
-pub type SamusPose = ::core::ffi::c_uint;
+pub use crate::types::SamusPose;
 pub const kPose_FC_FaceL_StandTrans_AimDL: SamusPose = 252;
 pub const kPose_FB_FaceR_StandTrans_AimDR: SamusPose = 251;
 pub const kPose_FA_FaceL_StandTrans_AimUL: SamusPose = 250;
@@ -570,7 +551,7 @@ pub union Ram4000 {
     pub intro_japanese_text_tiles: [uint16; 768],
     pub backups: Ram4000_Backups,
 }
-pub type Consts_86 = ::core::ffi::c_uint;
+pub use crate::types::Consts_86;
 pub const addr_kEproj_Sparks: Consts_86 = 62616;
 pub const addr_kEproj_EnemyDeathExplosion: Consts_86 = 62277;
 pub const addr_kEproj_Pickup: Consts_86 = 62263;
@@ -744,7 +725,7 @@ pub const addr_stru_868BEC: Consts_86 = 35820;
 pub const addr_stru_868BDE: Consts_86 = 35806;
 pub const addr_stru_868BD0: Consts_86 = 35792;
 pub const addr_stru_868BC2: Consts_86 = 35778;
-pub type Consts_87 = ::core::ffi::c_uint;
+pub use crate::types::Consts_87;
 pub const addr_kAnimtiles_TourianStatue_Draygon: Consts_87 = 34142;
 pub const addr_kAnimtiles_TourianStatue_Kraid: Consts_87 = 34136;
 pub const addr_kAnimtiles_TourianStatue_Ridley: Consts_87 = 34130;
@@ -755,7 +736,7 @@ pub const addr_kAnimtiles_Acid: Consts_87 = 33481;
 pub const addr_kAnimtiles_Lava: Consts_87 = 33451;
 pub const addr_kAnimtiles_WreckedShipTradmillLeft: Consts_87 = 33403;
 pub const addr_kAnimtiles_WreckedShipTradmillRight: Consts_87 = 33397;
-pub type Consts_88 = ::core::ffi::c_uint;
+pub use crate::types::Consts_88;
 pub const addr_word_88DF71: Consts_88 = 57201;
 pub const addr_word_88DF6B: Consts_88 = 57195;
 pub const addr_word_88DF65: Consts_88 = 57189;
@@ -767,10 +748,10 @@ pub const addr_byte_889F06: Consts_88 = 40710;
 pub const addr_kPowerBombExplosionShapeDef0: Consts_88 = 37446;
 pub const addr_loc_889180: Consts_88 = 37248;
 pub const addr_locret_88858A: Consts_88 = 34186;
-pub type Consts_89 = ::core::ffi::c_uint;
+pub use crate::types::Consts_89;
 pub const addr_kIndirectHdmaTable_PowerBombExplodeRight: Consts_89 = 41217;
 pub const addr_kIndirectHdmaTable_PowerBombExplodeLeft: Consts_89 = 38912;
-pub type Consts_8F = ::core::ffi::c_uint;
+pub use crate::types::Consts_8F;
 pub const addr_kDoorClosingPlmIds: Consts_8F = 59018;
 pub const addr_kRoom_dede: Consts_8F = 57054;
 pub const addr_kRoom_dd58: Consts_8F = 56664;

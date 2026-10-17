@@ -15,21 +15,10 @@ extern "C" {
     fn HandleSoundEffects();
     fn QueueSamusMovementSfx();
 }
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __uint32_t = u32;
-pub type int16_t = __int16_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type uint8 = uint8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type uint32 = uint32_t;
-pub type VoidP = uint16;
-pub type CoroutineRet = uint8_t;
-pub type SnesRegs = ::core::ffi::c_uint;
+pub use crate::types::{
+    __int16_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, uint16, uint16_t, uint32,
+    uint32_t, uint8, uint8_t, CoroutineRet, SnesRegs, VoidP,
+};
 pub const MIRR7: SnesRegs = 17279;
 pub const UNUSED7: SnesRegs = 17275;
 pub const NTRL7: SnesRegs = 17274;
@@ -245,7 +234,7 @@ pub struct MsgBoxConfig {
     pub draw_initial_tilemap: VoidP,
     pub message_tilemap: VoidP,
 }
-pub type GameState = ::core::ffi::c_uint;
+pub use crate::types::GameState;
 pub const kGameState_44_TransitionFromDemo: GameState = 44;
 pub const kGameState_43_TransitionFromDemo: GameState = 43;
 pub const kGameState_42_PlayingDemo: GameState = 42;
@@ -291,7 +280,7 @@ pub const kGameState_3_Unused: GameState = 3;
 pub const kGameState_2_GameOptionsMenu: GameState = 2;
 pub const kGameState_1_OpeningCinematic: GameState = 1;
 pub const kGameState_0_Reset: GameState = 0;
-pub type Buttons = ::core::ffi::c_uint;
+pub use crate::types::Buttons;
 pub const kButton_B: Buttons = 32768;
 pub const kButton_Y: Buttons = 16384;
 pub const kButton_Select: Buttons = 8192;
@@ -369,7 +358,7 @@ pub union Ram3000 {
     pub misc: Ram3000_Misc,
     pub menu: Ram3000_Menu,
 }
-pub type Consts_60 = ::core::ffi::c_uint;
+pub use crate::types::Consts_60;
 pub const addr_unk_606300: Consts_60 = 25344;
 pub const addr_unk_6061F0: Consts_60 = 25072;
 pub const addr_unk_605BE0: Consts_60 = 23520;

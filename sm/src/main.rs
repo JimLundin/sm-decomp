@@ -213,18 +213,10 @@ extern "C" {
     fn FindCmdForGamepadButton(button: ::core::ffi::c_int, modifiers: uint32)
         -> ::core::ffi::c_int;
 }
-pub type size_t = usize;
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __int32_t = i32;
-pub type __uint32_t = u32;
-pub type __int64_t = i64;
-pub type __uint64_t = u64;
-pub type __mode_t = ::core::ffi::c_uint;
-pub type __off_t = ::core::ffi::c_long;
-pub type __off64_t = ::core::ffi::c_long;
+pub use sm::types::{
+    __int16_t, __int32_t, __int64_t, __int8_t, __mode_t, __off64_t, __off_t, __uint16_t,
+    __uint32_t, __uint64_t, __uint8_t, size_t,
+};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct _IO_FILE {
@@ -258,29 +250,16 @@ pub struct _IO_FILE {
     pub _mode: ::core::ffi::c_int,
     pub _unused2: [::core::ffi::c_char; 20],
 }
-pub type _IO_lock_t = ();
+pub use sm::types::_IO_lock_t;
 pub type FILE = _IO_FILE;
-pub type int8_t = __int8_t;
-pub type int16_t = __int16_t;
-pub type int32_t = __int32_t;
-pub type int64_t = __int64_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type uint64_t = __uint64_t;
-pub type SDL_bool = ::core::ffi::c_uint;
+pub use sm::types::{
+    int16_t, int32_t, int64_t, int8_t, uint16_t, uint32_t, uint64_t, uint8_t, SDL_bool,
+};
 pub const SDL_TRUE: SDL_bool = 1;
 pub const SDL_FALSE: SDL_bool = 0;
-pub type Uint8 = uint8_t;
-pub type Sint16 = int16_t;
-pub type Uint16 = uint16_t;
-pub type Sint32 = int32_t;
-pub type Uint32 = uint32_t;
-pub type Sint64 = int64_t;
-pub type Uint64 = uint64_t;
-pub type SDL_AudioFormat = Uint16;
-pub type SDL_AudioCallback =
-    Option<unsafe extern "C" fn(*mut ::core::ffi::c_void, *mut Uint8, ::core::ffi::c_int) -> ()>;
+pub use sm::types::{
+    SDL_AudioCallback, SDL_AudioFormat, Sint16, Sint32, Sint64, Uint16, Uint32, Uint64, Uint8,
+};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct SDL_AudioSpec {
@@ -294,7 +273,7 @@ pub struct SDL_AudioSpec {
     pub callback: SDL_AudioCallback,
     pub userdata: *mut ::core::ffi::c_void,
 }
-pub type SDL_AudioDeviceID = Uint32;
+pub use sm::types::SDL_AudioDeviceID;
 pub type C2RustUnnamed = ::core::ffi::c_uint;
 pub const SDL_PIXELFORMAT_EXTERNAL_OES: C2RustUnnamed = 542328143;
 pub const SDL_PIXELFORMAT_NV21: C2RustUnnamed = 825382478;
@@ -391,7 +370,7 @@ pub const SDL_WINDOW_HIDDEN: C2RustUnnamed_0 = 8;
 pub const SDL_WINDOW_SHOWN: C2RustUnnamed_0 = 4;
 pub const SDL_WINDOW_OPENGL: C2RustUnnamed_0 = 2;
 pub const SDL_WINDOW_FULLSCREEN: C2RustUnnamed_0 = 1;
-pub type SDL_HitTestResult = ::core::ffi::c_uint;
+pub use sm::types::SDL_HitTestResult;
 pub const SDL_HITTEST_RESIZE_LEFT: SDL_HitTestResult = 9;
 pub const SDL_HITTEST_RESIZE_BOTTOMLEFT: SDL_HitTestResult = 8;
 pub const SDL_HITTEST_RESIZE_BOTTOM: SDL_HitTestResult = 7;
@@ -409,7 +388,7 @@ pub type SDL_HitTest = Option<
         *mut ::core::ffi::c_void,
     ) -> SDL_HitTestResult,
 >;
-pub type SDL_Scancode = ::core::ffi::c_uint;
+pub use sm::types::SDL_Scancode;
 pub const SDL_NUM_SCANCODES: SDL_Scancode = 512;
 pub const SDL_SCANCODE_ENDCALL: SDL_Scancode = 290;
 pub const SDL_SCANCODE_CALL: SDL_Scancode = 289;
@@ -658,8 +637,7 @@ pub const SDL_SCANCODE_C: SDL_Scancode = 6;
 pub const SDL_SCANCODE_B: SDL_Scancode = 5;
 pub const SDL_SCANCODE_A: SDL_Scancode = 4;
 pub const SDL_SCANCODE_UNKNOWN: SDL_Scancode = 0;
-pub type SDL_Keycode = Sint32;
-pub type SDL_Keymod = ::core::ffi::c_uint;
+pub use sm::types::{SDL_Keycode, SDL_Keymod};
 pub const KMOD_RESERVED: SDL_Keymod = 32768;
 pub const KMOD_GUI: SDL_Keymod = 3072;
 pub const KMOD_ALT: SDL_Keymod = 768;
@@ -686,8 +664,7 @@ pub struct SDL_Keysym {
     pub mod_0: Uint16,
     pub unused: Uint32,
 }
-pub type SDL_JoystickID = Sint32;
-pub type SDL_JoystickPowerLevel = ::core::ffi::c_int;
+pub use sm::types::{SDL_JoystickID, SDL_JoystickPowerLevel};
 pub const SDL_JOYSTICK_POWER_MAX: SDL_JoystickPowerLevel = 5;
 pub const SDL_JOYSTICK_POWER_WIRED: SDL_JoystickPowerLevel = 4;
 pub const SDL_JOYSTICK_POWER_FULL: SDL_JoystickPowerLevel = 3;
@@ -729,9 +706,7 @@ pub const SDL_CONTROLLER_BUTTON_X: C2RustUnnamed_2 = 2;
 pub const SDL_CONTROLLER_BUTTON_B: C2RustUnnamed_2 = 1;
 pub const SDL_CONTROLLER_BUTTON_A: C2RustUnnamed_2 = 0;
 pub const SDL_CONTROLLER_BUTTON_INVALID: C2RustUnnamed_2 = -1;
-pub type SDL_TouchID = Sint64;
-pub type SDL_FingerID = Sint64;
-pub type SDL_GestureID = Sint64;
+pub use sm::types::{SDL_FingerID, SDL_GestureID, SDL_TouchID};
 pub type C2RustUnnamed_3 = ::core::ffi::c_uint;
 pub const SDL_LASTEVENT: C2RustUnnamed_3 = 65535;
 pub const SDL_USEREVENT: C2RustUnnamed_3 = 32768;
@@ -1275,7 +1250,7 @@ pub struct Ppu {
 pub struct PpuPixelPrioBufs {
     pub data: [PpuZbufType; 256],
 }
-pub type PpuZbufType = uint16_t;
+pub use sm::types::PpuZbufType;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct WindowLayer {
@@ -1552,11 +1527,7 @@ pub const kPpuRenderFlags_NoSpriteLimits: C2RustUnnamed_8 = 8;
 pub const kPpuRenderFlags_Height240: C2RustUnnamed_8 = 4;
 pub const kPpuRenderFlags_4x4Mode7: C2RustUnnamed_8 = 2;
 pub const kPpuRenderFlags_NewRenderer: C2RustUnnamed_8 = 1;
-pub type uint8 = uint8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type uint32 = uint32_t;
-pub type uint64 = uint64_t;
+pub use sm::types::{int16, uint16, uint32, uint64, uint8};
 pub type C2RustUnnamed_9 = ::core::ffi::c_uint;
 pub const kSaveLoad_Replay: C2RustUnnamed_9 = 3;
 pub const kSaveLoad_Load: C2RustUnnamed_9 = 2;

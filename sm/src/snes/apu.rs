@@ -21,17 +21,10 @@ extern "C" {
     fn dsp_saveload(dsp: *mut Dsp, func: Option<SaveLoadFunc>, ctx: *mut ::core::ffi::c_void);
     fn getProcessorStateSpc(snes: *mut Apu, line: *mut ::core::ffi::c_char);
 }
-pub type size_t = usize;
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __uint32_t = u32;
-pub type int8_t = __int8_t;
-pub type int16_t = __int16_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
+pub use crate::types::{
+    __int16_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16_t, int8_t, size_t, uint16_t,
+    uint32_t, uint8_t,
+};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Apu {
@@ -149,8 +142,7 @@ pub struct Spc {
     pub stopped: bool,
     pub cyclesUsed: uint8_t,
 }
-pub type SaveLoadFunc =
-    unsafe extern "C" fn(*mut ::core::ffi::c_void, *mut ::core::ffi::c_void, size_t) -> ();
+pub use crate::types::SaveLoadFunc;
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 static mut bootRom: [uint8_t; 64] = [

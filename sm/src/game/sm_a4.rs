@@ -31,35 +31,18 @@ extern "C" {
         pal_r24: uint16,
     ) -> uint16;
 }
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __int32_t = i32;
-pub type __uint32_t = u32;
-pub type int8_t = __int8_t;
-pub type int16_t = __int16_t;
-pub type int32_t = __int32_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type uintptr_t = usize;
-pub type uint8 = uint8_t;
-pub type int8 = int8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type uint32 = uint32_t;
-pub type int32 = int32_t;
-pub type VoidP = uint16;
-pub use crate::types::LongPtr;
+pub use crate::types::{
+    __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
+    int32_t, int8, int8_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, uintptr_t, LongPtr,
+    VoidP,
+};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Point16U {
     pub x: uint16,
     pub y: uint16,
 }
-pub type Func_V = unsafe extern "C" fn() -> ();
-pub use crate::types::VramWriteEntry;
+pub use crate::types::{Func_V, VramWriteEntry};
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct EnemyData {
@@ -133,7 +116,7 @@ pub struct SpawnHdmaObject_Args {
     pub field_1: uint8,
     pub addr: VoidP,
 }
-pub type EnemyProps = ::core::ffi::c_uint;
+pub use crate::types::EnemyProps;
 pub const kEnemyProps_RespawnIfKilled: EnemyProps = 16384;
 pub const kEnemyProps_DisableSamusColl: EnemyProps = 8192;
 pub const kEnemyProps_BlockPlasmaBeam: EnemyProps = 4096;
@@ -159,7 +142,7 @@ pub union Ram4000 {
     pub intro_japanese_text_tiles: [uint16; 768],
     pub backups: Ram4000_Backups,
 }
-pub type Consts_86 = ::core::ffi::c_uint;
+pub use crate::types::Consts_86;
 pub const addr_kEproj_Sparks: Consts_86 = 62616;
 pub const addr_kEproj_EnemyDeathExplosion: Consts_86 = 62277;
 pub const addr_kEproj_Pickup: Consts_86 = 62263;
@@ -333,7 +316,7 @@ pub const addr_stru_868BEC: Consts_86 = 35820;
 pub const addr_stru_868BDE: Consts_86 = 35806;
 pub const addr_stru_868BD0: Consts_86 = 35792;
 pub const addr_stru_868BC2: Consts_86 = 35778;
-pub type Consts_A4 = ::core::ffi::c_uint;
+pub use crate::types::Consts_A4;
 pub const addr_kCrocomire_Ilist_E1D2: Consts_A4 = 57810;
 pub const addr_kCrocomire_Ilist_E1CC: Consts_A4 = 57804;
 pub const addr_kCrocomire_Ilist_E158: Consts_A4 = 57688;
@@ -457,7 +440,7 @@ pub struct Enemy_Crocomire {
     pub crocom_var_3E: uint16,
     pub crocom_var_3F: uint16,
 }
-pub type CrocomireFunc = unsafe extern "C" fn(uint16, *const uint16) -> *const uint16;
+pub use crate::types::CrocomireFunc;
 #[inline]
 unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
     return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {

@@ -52,27 +52,11 @@ extern "C" {
         pal_r24: uint16,
     ) -> uint16;
 }
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __int32_t = i32;
-pub type __uint32_t = u32;
-pub type int8_t = __int8_t;
-pub type int16_t = __int16_t;
-pub type int32_t = __int32_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type size_t = usize;
-pub type uint8 = uint8_t;
-pub type int8 = int8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type uint32 = uint32_t;
-pub type int32 = int32_t;
-pub type VoidP = uint16;
-pub use crate::types::LongPtr;
+pub use crate::types::{
+    __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
+    int32_t, int8, int8_t, size_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, LongPtr,
+    VoidP,
+};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Point16U {
@@ -146,7 +130,7 @@ pub struct EnemyBase {
     pub bank: uint8,
     pub field_2F: uint8,
 }
-pub type EnemyProps = ::core::ffi::c_uint;
+pub use crate::types::EnemyProps;
 pub const kEnemyProps_RespawnIfKilled: EnemyProps = 16384;
 pub const kEnemyProps_DisableSamusColl: EnemyProps = 8192;
 pub const kEnemyProps_BlockPlasmaBeam: EnemyProps = 4096;
@@ -191,7 +175,7 @@ pub struct EnemyDef {
     pub vulnerability_ptr: VoidP,
     pub name_ptr: VoidP,
 }
-pub type Consts_86 = ::core::ffi::c_uint;
+pub use crate::types::Consts_86;
 pub const addr_kEproj_Sparks: Consts_86 = 62616;
 pub const addr_kEproj_EnemyDeathExplosion: Consts_86 = 62277;
 pub const addr_kEproj_Pickup: Consts_86 = 62263;
@@ -365,7 +349,7 @@ pub const addr_stru_868BEC: Consts_86 = 35820;
 pub const addr_stru_868BDE: Consts_86 = 35806;
 pub const addr_stru_868BD0: Consts_86 = 35792;
 pub const addr_stru_868BC2: Consts_86 = 35778;
-pub type Consts_A5 = ::core::ffi::c_uint;
+pub use crate::types::Consts_A5;
 pub const addr_kDraygon_Ilist_E77D: Consts_A5 = 59261;
 pub const addr_stru_A5E729: Consts_A5 = 59177;
 pub const addr_kDraygon_Ilist_E6D5: Consts_A5 = 59093;

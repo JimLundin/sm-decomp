@@ -1099,28 +1099,11 @@ extern "C" {
     fn DrawSpriteObjects();
     fn HandleSpriteObjects();
 }
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __int32_t = i32;
-pub type __uint32_t = u32;
-pub type int8_t = __int8_t;
-pub type int16_t = __int16_t;
-pub type int32_t = __int32_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type uintptr_t = usize;
-pub type size_t = usize;
-pub type uint8 = uint8_t;
-pub type int8 = int8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type uint32 = uint32_t;
-pub type int32 = int32_t;
-pub type VoidP = uint16;
-pub use crate::types::LongPtr;
+pub use crate::types::{
+    __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
+    int32_t, int8, int8_t, size_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, uintptr_t,
+    LongPtr, VoidP,
+};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct PairU16 {
@@ -1294,7 +1277,7 @@ pub struct Hitbox {
     pub func_ptr: VoidP,
     pub func_ptrA: VoidP,
 }
-pub type EnemyProps = ::core::ffi::c_uint;
+pub use crate::types::EnemyProps;
 pub const kEnemyProps_RespawnIfKilled: EnemyProps = 16384;
 pub const kEnemyProps_DisableSamusColl: EnemyProps = 8192;
 pub const kEnemyProps_BlockPlasmaBeam: EnemyProps = 4096;
@@ -1319,7 +1302,7 @@ pub struct EnemyTileset {
     pub enemy_def: VoidP,
     pub vram_dst: uint16,
 }
-pub type EnemyAiBits = ::core::ffi::c_uint;
+pub use crate::types::EnemyAiBits;
 pub const kEnemyAiBits_Frozen: EnemyAiBits = 4;
 pub const kEnemyAiBits_Hurt: EnemyAiBits = 2;
 pub const kEnemyAiBits_Grapple: EnemyAiBits = 1;
@@ -1330,7 +1313,7 @@ pub struct EnemyTileLoadData {
     pub tile_data_ptr: LongPtr,
     pub offset_into_ram: uint16,
 }
-pub type Consts_60 = ::core::ffi::c_uint;
+pub use crate::types::Consts_60;
 pub const addr_unk_606300: Consts_60 = 25344;
 pub const addr_unk_6061F0: Consts_60 = 25072;
 pub const addr_unk_605BE0: Consts_60 = 23520;
@@ -1343,7 +1326,7 @@ pub const addr_unk_6053E0: Consts_60 = 21472;
 pub const addr_unk_605000: Consts_60 = 20480;
 pub const addr_unk_604C00: Consts_60 = 19456;
 pub const addr_unk_604800: Consts_60 = 18432;
-pub type Consts_86 = ::core::ffi::c_uint;
+pub use crate::types::Consts_86;
 pub const addr_kEproj_Sparks: Consts_86 = 62616;
 pub const addr_kEproj_Pickup: Consts_86 = 62263;
 pub const addr_word_86ECA3: Consts_86 = 60579;
@@ -1516,7 +1499,7 @@ pub const addr_stru_868BEC: Consts_86 = 35820;
 pub const addr_stru_868BDE: Consts_86 = 35806;
 pub const addr_stru_868BD0: Consts_86 = 35792;
 pub const addr_stru_868BC2: Consts_86 = 35778;
-pub type Consts_A0 = ::core::ffi::c_uint;
+pub use crate::types::Consts_A0;
 pub const addr_kEnemyDef_F593: Consts_A0 = 62867;
 pub const addr_kEnemyDef_F353: Consts_A0 = 62291;
 pub const addr_kEnemyDef_F293: Consts_A0 = 62099;
@@ -1537,7 +1520,7 @@ pub const addr_kEnemyDef_DDBF: Consts_A0 = 56767;
 pub const addr_kEnemyDef_DD7F: Consts_A0 = 56703;
 pub const addr_kExtendedSpritemap_Nothing_A0: Consts_A0 = 32847;
 pub const addr_kSpritemap_Nothing_A0: Consts_A0 = 32845;
-pub type Consts_A4 = ::core::ffi::c_uint;
+pub use crate::types::Consts_A4;
 pub const addr_kCrocomire_Ilist_E1D2: Consts_A4 = 57810;
 pub const addr_kCrocomire_Ilist_E1CC: Consts_A4 = 57804;
 pub const addr_kCrocomire_Ilist_E158: Consts_A4 = 57688;
@@ -1575,12 +1558,12 @@ pub const addr_kCrocomire_Ilist_BAEA: Consts_A4 = 47850;
 pub const addr_kCrocomire_Ilist_BADE: Consts_A4 = 47838;
 pub const addr_kExtendedSpritemap_Nothing_A4: Consts_A4 = 32847;
 pub const addr_kSpritemap_Nothing_A4: Consts_A4 = 32845;
-pub type Consts_B4 = ::core::ffi::c_uint;
+pub use crate::types::Consts_B4;
 pub const addr_stru_B4EC1C: Consts_B4 = 60444;
 pub const addr_asc_B4DD89: Consts_B4 = 56713;
 pub const addr_kSpriteObject_Ilist_C4B6: Consts_B4 = 50358;
 pub const addr_kSpriteObject_Ilist_C3BA: Consts_B4 = 50106;
-pub type CalculateAngleFromXYFunc = unsafe extern "C" fn(uint16) -> uint8;
+pub use crate::types::CalculateAngleFromXYFunc;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct CheckSolidEnemyColl_Result {

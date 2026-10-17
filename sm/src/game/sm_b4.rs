@@ -12,18 +12,10 @@ extern "C" {
         r0: uint16,
     );
 }
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __uint32_t = u32;
-pub type int16_t = __int16_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type uint8 = uint8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type uint32 = uint32_t;
+pub use crate::types::{
+    __int16_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, uint16, uint16_t, uint32,
+    uint32_t, uint8, uint8_t,
+};
 #[inline]
 unsafe extern "C" fn RomPtr_B4(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0xb40000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);

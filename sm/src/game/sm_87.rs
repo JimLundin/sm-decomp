@@ -14,19 +14,10 @@ extern "C" {
     fn SpawnPalfxObject(j: uint16);
     fn CallSomeSamusCode(a: uint16) -> uint16;
 }
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __uint16_t = u16;
-pub type __uint32_t = u32;
-pub type int8_t = __int8_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type uint8 = uint8_t;
-pub type int8 = int8_t;
-pub type uint16 = uint16_t;
-pub type uint32 = uint32_t;
-pub type Consts_86 = ::core::ffi::c_uint;
+pub use crate::types::{
+    __int8_t, __uint16_t, __uint32_t, __uint8_t, int8, int8_t, uint16, uint16_t, uint32, uint32_t,
+    uint8, uint8_t, Consts_86,
+};
 pub const addr_kEproj_Sparks: Consts_86 = 62616;
 pub const addr_kEproj_EnemyDeathExplosion: Consts_86 = 62277;
 pub const addr_kEproj_Pickup: Consts_86 = 62263;

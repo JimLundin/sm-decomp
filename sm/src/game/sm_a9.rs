@@ -66,28 +66,11 @@ extern "C" {
     fn MotherBrain_SealWall();
     fn TurnOffLightsForShitroidDeath();
 }
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __int32_t = i32;
-pub type __uint32_t = u32;
-pub type int8_t = __int8_t;
-pub type int16_t = __int16_t;
-pub type int32_t = __int32_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type uintptr_t = usize;
-pub type uint8 = uint8_t;
-pub type int8 = int8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type uint32 = uint32_t;
-pub type int32 = int32_t;
-pub type VoidP = uint16;
-pub type CoroutineRet = uint8_t;
-pub use crate::types::LongPtr;
+pub use crate::types::{
+    __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
+    int32_t, int8, int8_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, uintptr_t,
+    CoroutineRet, LongPtr, VoidP,
+};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Point16U {
@@ -102,10 +85,7 @@ pub struct Rect16U {
     pub w: uint16,
     pub h: uint16,
 }
-pub type Func_V = unsafe extern "C" fn() -> ();
-pub use crate::types::OamEnt;
-pub use crate::types::VramWriteEntry;
-pub type SnesRegs = ::core::ffi::c_uint;
+pub use crate::types::{Func_V, OamEnt, SnesRegs, VramWriteEntry};
 pub const MIRR7: SnesRegs = 17279;
 pub const UNUSED7: SnesRegs = 17275;
 pub const NTRL7: SnesRegs = 17274;
@@ -380,7 +360,7 @@ pub struct EnemyBase {
     pub bank: uint8,
     pub field_2F: uint8,
 }
-pub type EnemyProps = ::core::ffi::c_uint;
+pub use crate::types::EnemyProps;
 pub const kEnemyProps_RespawnIfKilled: EnemyProps = 16384;
 pub const kEnemyProps_DisableSamusColl: EnemyProps = 8192;
 pub const kEnemyProps_BlockPlasmaBeam: EnemyProps = 4096;
@@ -411,7 +391,7 @@ pub union ExtraEnemyRam7800 {
     pub kraid: Ram7800_Kraid,
     pub pad: [uint8; 64],
 }
-pub type Consts_86 = ::core::ffi::c_uint;
+pub use crate::types::Consts_86;
 pub const addr_kEproj_Sparks: Consts_86 = 62616;
 pub const addr_kEproj_EnemyDeathExplosion: Consts_86 = 62277;
 pub const addr_kEproj_Pickup: Consts_86 = 62263;
@@ -585,7 +565,7 @@ pub const addr_stru_868BEC: Consts_86 = 35820;
 pub const addr_stru_868BDE: Consts_86 = 35806;
 pub const addr_stru_868BD0: Consts_86 = 35792;
 pub const addr_stru_868BC2: Consts_86 = 35778;
-pub type Consts_8D = ::core::ffi::c_uint;
+pub use crate::types::Consts_8D;
 pub const addr_kPalfx_FFD5: Consts_8D = 65493;
 pub const addr_kPalfx_FFD1: Consts_8D = 65489;
 pub const addr_kPalfx_FFCD: Consts_8D = 65485;
@@ -628,7 +608,7 @@ pub const addr_kPalfx_E198: Consts_8D = 57752;
 pub const addr_kPalfx_E194: Consts_8D = 57748;
 pub const addr_off_8DE192: Consts_8D = 57746;
 pub const addr_locret_8DC5E3: Consts_8D = 50659;
-pub type Consts_A6 = ::core::ffi::c_uint;
+pub use crate::types::Consts_A6;
 pub const addr_stru_A6FCF9: Consts_A6 = 64761;
 pub const addr_stru_A6FCE1: Consts_A6 = 64737;
 pub const addr_kCeresDoor_Sprmap_FAC7: Consts_A6 = 64199;
@@ -699,7 +679,7 @@ pub const addr_kFireGeyser_Ilist_8D1B: Consts_A6 = 36123;
 pub const addr_kSpikeyPlatform_Ilist_8B29: Consts_A6 = 35625;
 pub const addr_kBoulder_Ilist_86CB: Consts_A6 = 34507;
 pub const addr_kBoulder_Ilist_86A7: Consts_A6 = 34471;
-pub type Consts_A9 = ::core::ffi::c_uint;
+pub use crate::types::Consts_A9;
 pub const addr_kShitroid_Ilist_F93A: Consts_A9 = 63802;
 pub const addr_kShitroid_Ilist_F924: Consts_A9 = 63780;
 pub const addr_kShitroid_Ilist_F90E: Consts_A9 = 63758;
@@ -786,7 +766,7 @@ pub const addr_stru_A98B05: Consts_A9 = 35589;
 pub const addr_stru_A98AF5: Consts_A9 = 35573;
 pub const addr_stru_A98AE5: Consts_A9 = 35557;
 pub const addr_locret_A98AE4: Consts_A9 = 35556;
-pub type Consts_B7 = ::core::ffi::c_uint;
+pub use crate::types::Consts_B7;
 pub const addr_kMotherBrain_Misc_TileData: Consts_B7 = 52736;
 pub const addr_kDeadMonsters_TileData: Consts_B7 = 49152;
 pub const addr_kDeadTorizo_TileData: Consts_B7 = 43008;

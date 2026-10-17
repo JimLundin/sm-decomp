@@ -7,17 +7,10 @@ extern "C" {
         __n: size_t,
     ) -> *mut ::core::ffi::c_void;
 }
-pub type size_t = usize;
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type int8_t = __int8_t;
-pub type int16_t = __int16_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type SaveLoadFunc =
-    unsafe extern "C" fn(*mut ::core::ffi::c_void, *mut ::core::ffi::c_void, size_t) -> ();
+pub use crate::types::{
+    __int16_t, __int8_t, __uint16_t, __uint8_t, int16_t, int8_t, size_t, uint16_t, uint8_t,
+    SaveLoadFunc,
+};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Dsp {

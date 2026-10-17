@@ -50,30 +50,11 @@ extern "C" {
     fn GrappleBeamFunc_BEEB();
     fn Samus_CheckSolidEnemyColl(amt: int32) -> CheckEnemyColl_Result;
 }
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __int32_t = i32;
-pub type __uint32_t = u32;
-pub type int8_t = __int8_t;
-pub type int16_t = __int16_t;
-pub type int32_t = __int32_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type size_t = usize;
-pub type uint8 = uint8_t;
-pub type int8 = int8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type uint32 = uint32_t;
-pub type int32 = int32_t;
-pub type VoidP = uint16;
-pub use crate::types::LongPtr;
-pub type Func_V = unsafe extern "C" fn() -> ();
-pub type Func_U8 = unsafe extern "C" fn() -> uint8;
-pub use crate::types::VramWriteEntry;
+pub use crate::types::{
+    __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
+    int32_t, int8, int8_t, size_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, Func_U8,
+    Func_V, LongPtr, VoidP, VramWriteEntry,
+};
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct SpawnHdmaObject_Args {
@@ -81,7 +62,7 @@ pub struct SpawnHdmaObject_Args {
     pub field_1: uint8,
     pub addr: VoidP,
 }
-pub type SamusPose = ::core::ffi::c_uint;
+pub use crate::types::SamusPose;
 pub const kPose_FC_FaceL_StandTrans_AimDL: SamusPose = 252;
 pub const kPose_FB_FaceR_StandTrans_AimDR: SamusPose = 251;
 pub const kPose_FA_FaceL_StandTrans_AimUL: SamusPose = 250;
@@ -306,7 +287,7 @@ pub struct SamusPoseParams {
     pub y_radius: uint8,
     pub field_7: uint8,
 }
-pub type SamusMovementType = ::core::ffi::c_uint;
+pub use crate::types::SamusMovementType;
 pub const kMovementType_1B_ShinesparkEtc: SamusMovementType = 27;
 pub const kMovementType_1A_GrabbedByDraygon: SamusMovementType = 26;
 pub const kMovementType_19_DamageBoost: SamusMovementType = 25;
@@ -373,7 +354,7 @@ pub struct SamusCrystalFlashPalTable {
     pub ptr: VoidP,
     pub timer: uint16,
 }
-pub type GameState = ::core::ffi::c_uint;
+pub use crate::types::GameState;
 pub const kGameState_44_TransitionFromDemo: GameState = 44;
 pub const kGameState_43_TransitionFromDemo: GameState = 43;
 pub const kGameState_42_PlayingDemo: GameState = 42;
@@ -419,7 +400,7 @@ pub const kGameState_3_Unused: GameState = 3;
 pub const kGameState_2_GameOptionsMenu: GameState = 2;
 pub const kGameState_1_OpeningCinematic: GameState = 1;
 pub const kGameState_0_Reset: GameState = 0;
-pub type Buttons = ::core::ffi::c_uint;
+pub use crate::types::Buttons;
 pub const kButton_B: Buttons = 32768;
 pub const kButton_Y: Buttons = 16384;
 pub const kButton_Select: Buttons = 8192;
@@ -471,7 +452,7 @@ pub union Ram4000 {
     pub intro_japanese_text_tiles: [uint16; 768],
     pub backups: Ram4000_Backups,
 }
-pub type Consts_8D = ::core::ffi::c_uint;
+pub use crate::types::Consts_8D;
 pub const addr_kPalfx_FFD5: Consts_8D = 65493;
 pub const addr_kPalfx_FFD1: Consts_8D = 65489;
 pub const addr_kPalfx_FFCD: Consts_8D = 65485;
@@ -514,7 +495,7 @@ pub const addr_kPalfx_E198: Consts_8D = 57752;
 pub const addr_kPalfx_E194: Consts_8D = 57748;
 pub const addr_off_8DE192: Consts_8D = 57746;
 pub const addr_locret_8DC5E3: Consts_8D = 50659;
-pub type Consts_8F = ::core::ffi::c_uint;
+pub use crate::types::Consts_8F;
 pub const addr_kDoorClosingPlmIds: Consts_8F = 59018;
 pub const addr_kRoom_dede: Consts_8F = 57054;
 pub const addr_kRoom_dd58: Consts_8F = 56664;
@@ -524,13 +505,13 @@ pub const addr_kRoom_b32e: Consts_8F = 45870;
 pub const addr_kRoom_a66a: Consts_8F = 42602;
 pub const addr_kRoom_9804: Consts_8F = 38916;
 pub const addr_kRoom_96ba: Consts_8F = 38586;
-pub type Consts_91 = ::core::ffi::c_uint;
+pub use crate::types::Consts_91;
 pub const addr_stru_919346: Consts_91 = 37702;
 pub const addr_stru_918784: Consts_91 = 34692;
 pub const addr_stru_91877E: Consts_91 = 34686;
 pub const addr_kDemoInstrs_LeaveDemo: Consts_91 = 34678;
 pub const addr_off_91864B: Consts_91 = 34379;
-pub type Consts_9B = ::core::ffi::c_uint;
+pub use crate::types::Consts_9B;
 pub const addr_word_9BA3A0: Consts_9B = 41888;
 pub const addr_word_9BA380: Consts_9B = 41856;
 pub const addr_word_9BA120: Consts_9B = 41248;

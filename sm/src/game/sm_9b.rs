@@ -37,27 +37,11 @@ extern "C" {
     fn CalculateAngleFromXY(x_r18: uint16, y_r20: uint16) -> uint16;
     fn GrappleBeam_CollDetect_Enemy() -> PairU16;
 }
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __int32_t = i32;
-pub type __uint32_t = u32;
-pub type int8_t = __int8_t;
-pub type int16_t = __int16_t;
-pub type int32_t = __int32_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type size_t = usize;
-pub type uint8 = uint8_t;
-pub type int8 = int8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type uint32 = uint32_t;
-pub type int32 = int32_t;
-pub type VoidP = uint16;
-pub use crate::types::LongPtr;
+pub use crate::types::{
+    __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
+    int32_t, int8, int8_t, size_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, LongPtr,
+    VoidP,
+};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct PairU16 {
@@ -70,8 +54,7 @@ pub struct Point16U {
     pub x: uint16,
     pub y: uint16,
 }
-pub use crate::types::VramWriteEntry;
-pub type SamusPose = ::core::ffi::c_uint;
+pub use crate::types::{SamusPose, VramWriteEntry};
 pub const kPose_FC_FaceL_StandTrans_AimDL: SamusPose = 252;
 pub const kPose_FB_FaceR_StandTrans_AimDR: SamusPose = 251;
 pub const kPose_FA_FaceL_StandTrans_AimUL: SamusPose = 250;
@@ -296,7 +279,7 @@ pub struct SamusPoseParams {
     pub y_radius: uint8,
     pub field_7: uint8,
 }
-pub type SamusMovementType = ::core::ffi::c_uint;
+pub use crate::types::SamusMovementType;
 pub const kMovementType_1B_ShinesparkEtc: SamusMovementType = 27;
 pub const kMovementType_1A_GrabbedByDraygon: SamusMovementType = 26;
 pub const kMovementType_19_DamageBoost: SamusMovementType = 25;
@@ -334,7 +317,7 @@ pub struct GrappleBeamSpecialAngles {
     pub field_6: uint16,
     pub field_8: VoidP,
 }
-pub type Buttons = ::core::ffi::c_uint;
+pub use crate::types::Buttons;
 pub const kButton_B: Buttons = 32768;
 pub const kButton_Y: Buttons = 16384;
 pub const kButton_Select: Buttons = 8192;
@@ -347,7 +330,7 @@ pub const kButton_A: Buttons = 128;
 pub const kButton_X: Buttons = 64;
 pub const kButton_L: Buttons = 32;
 pub const kButton_R: Buttons = 16;
-pub type Consts_9B = ::core::ffi::c_uint;
+pub use crate::types::Consts_9B;
 pub const addr_word_9BA3A0: Consts_9B = 41888;
 pub const addr_word_9BA380: Consts_9B = 41856;
 pub const addr_word_9BA120: Consts_9B = 41248;

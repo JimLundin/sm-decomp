@@ -39,20 +39,10 @@ extern "C" {
         new_path: *const ::core::ffi::c_char,
     ) -> *mut ::core::ffi::c_char;
 }
-pub type __uint8_t = u8;
-pub type __uint16_t = u16;
-pub type __int32_t = i32;
-pub type __uint32_t = u32;
-pub type __off_t = ::core::ffi::c_long;
-pub type __off64_t = ::core::ffi::c_long;
-pub type int32_t = __int32_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type size_t = usize;
-pub type uint8 = uint8_t;
-pub type uint16 = uint16_t;
-pub type uint32 = uint32_t;
+pub use crate::types::{
+    __int32_t, __off64_t, __off_t, __uint16_t, __uint32_t, __uint8_t, int32_t, size_t, uint16,
+    uint16_t, uint32, uint32_t, uint8, uint8_t,
+};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct _IO_FILE {
@@ -86,10 +76,9 @@ pub struct _IO_FILE {
     pub _mode: ::core::ffi::c_int,
     pub _unused2: [::core::ffi::c_char; 20],
 }
-pub type _IO_lock_t = ();
+pub use crate::types::_IO_lock_t;
 pub type FILE = _IO_FILE;
-pub type Sint32 = int32_t;
-pub type SDL_Keycode = Sint32;
+pub use crate::types::{SDL_Keycode, Sint32};
 pub type C2RustUnnamed = ::core::ffi::c_uint;
 pub const SDLK_ENDCALL: C2RustUnnamed = 1073742114;
 pub const SDLK_CALL: C2RustUnnamed = 1073742113;
@@ -335,7 +324,7 @@ pub const SDLK_BACKSPACE: C2RustUnnamed = 8;
 pub const SDLK_ESCAPE: C2RustUnnamed = 27;
 pub const SDLK_RETURN: C2RustUnnamed = 13;
 pub const SDLK_UNKNOWN: C2RustUnnamed = 0;
-pub type SDL_Keymod = ::core::ffi::c_uint;
+pub use crate::types::SDL_Keymod;
 pub const KMOD_RESERVED: SDL_Keymod = 32768;
 pub const KMOD_GUI: SDL_Keymod = 3072;
 pub const KMOD_ALT: SDL_Keymod = 768;

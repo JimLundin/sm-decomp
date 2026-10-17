@@ -86,27 +86,11 @@ extern "C" {
     fn ByteArray_AppendData(arr: *mut ByteArray, data: *const uint8, data_size: size_t);
     fn ByteArray_AppendByte(arr: *mut ByteArray, v: uint8);
 }
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __int32_t = i32;
-pub type __uint32_t = u32;
-pub type __off_t = ::core::ffi::c_long;
-pub type __off64_t = ::core::ffi::c_long;
-pub type int8_t = __int8_t;
-pub type int16_t = __int16_t;
-pub type int32_t = __int32_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type size_t = usize;
-pub type uint8 = uint8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type uint32 = uint32_t;
-pub type VoidP = uint16;
-pub use crate::types::LongPtr;
+pub use crate::types::{
+    __int16_t, __int32_t, __int8_t, __off64_t, __off_t, __uint16_t, __uint32_t, __uint8_t, int16,
+    int16_t, int32_t, int8_t, size_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, LongPtr,
+    VoidP,
+};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct PairU16 {
@@ -146,7 +130,7 @@ pub struct _IO_FILE {
     pub _mode: ::core::ffi::c_int,
     pub _unused2: [::core::ffi::c_char; 20],
 }
-pub type _IO_lock_t = ();
+pub use crate::types::_IO_lock_t;
 pub type FILE = _IO_FILE;
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -349,7 +333,7 @@ pub struct Ppu {
 pub struct PpuPixelPrioBufs {
     pub data: [PpuZbufType; 256],
 }
-pub type PpuZbufType = uint16_t;
+pub use crate::types::PpuZbufType;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct WindowLayer {
@@ -528,8 +512,7 @@ pub struct Cpu {
 }
 pub const APUI03: SnesRegs = 8515;
 pub const APUI00: SnesRegs = 8512;
-pub type RunFrameFunc = unsafe extern "C" fn(uint16, ::core::ffi::c_int) -> ();
-pub type SyncAllFunc = unsafe extern "C" fn() -> ();
+pub use crate::types::{RunFrameFunc, SyncAllFunc};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct StateRecorder {
@@ -719,8 +702,7 @@ pub struct Channel {
     pub fine_tune: uint8,
     pub cutk: uint8,
 }
-pub type SaveLoadFunc =
-    unsafe extern "C" fn(*mut ::core::ffi::c_void, *mut ::core::ffi::c_void, size_t) -> ();
+pub use crate::types::SaveLoadFunc;
 pub type C2RustUnnamed_0 = ::core::ffi::c_uint;
 pub const kSaveLoad_Replay: C2RustUnnamed_0 = 3;
 pub const kSaveLoad_Load: C2RustUnnamed_0 = 2;
@@ -733,7 +715,7 @@ pub struct LoadFuncState {
     pub pend: *mut uint8,
 }
 pub const kCurrentBugFixCounter: C2RustUnnamed_1 = 1;
-pub type SnesRegs = ::core::ffi::c_uint;
+pub use crate::types::SnesRegs;
 pub const MIRR7: SnesRegs = 17279;
 pub const UNUSED7: SnesRegs = 17275;
 pub const NTRL7: SnesRegs = 17274;

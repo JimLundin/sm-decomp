@@ -53,30 +53,11 @@ extern "C" {
     fn MakeSamusFaceForward();
     fn VariaSuitPickup();
 }
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __int32_t = i32;
-pub type __uint32_t = u32;
-pub type int8_t = __int8_t;
-pub type int16_t = __int16_t;
-pub type int32_t = __int32_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type uintptr_t = usize;
-pub type uint8 = uint8_t;
-pub type int8 = int8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type uint32 = uint32_t;
-pub type int32 = int32_t;
-pub type VoidP = uint16;
-pub type CoroutineRet = uint8_t;
-pub use crate::types::LongPtr;
-pub type Func_Y_V = unsafe extern "C" fn(uint16) -> ();
-pub use crate::types::VramWriteEntry;
+pub use crate::types::{
+    __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
+    int32_t, int8, int8_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, uintptr_t,
+    CoroutineRet, Func_Y_V, LongPtr, VoidP, VramWriteEntry,
+};
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct PlmHeader_Size4 {
@@ -135,7 +116,7 @@ pub struct EnemyData {
     pub parameter_1: uint16,
     pub parameter_2: uint16,
 }
-pub type SamusPose = ::core::ffi::c_uint;
+pub use crate::types::SamusPose;
 pub const kPose_FC_FaceL_StandTrans_AimDL: SamusPose = 252;
 pub const kPose_FB_FaceR_StandTrans_AimDR: SamusPose = 251;
 pub const kPose_FA_FaceL_StandTrans_AimUL: SamusPose = 250;
@@ -348,7 +329,7 @@ pub const kPose_03_FaceR_AimU: SamusPose = 3;
 pub const kPose_02_FaceL_Normal: SamusPose = 2;
 pub const kPose_01_FaceR_Normal: SamusPose = 1;
 pub const kPose_00_FaceF_Powersuit: SamusPose = 0;
-pub type Buttons = ::core::ffi::c_uint;
+pub use crate::types::Buttons;
 pub const kButton_B: Buttons = 32768;
 pub const kButton_Y: Buttons = 16384;
 pub const kButton_Select: Buttons = 8192;
@@ -392,7 +373,7 @@ pub struct TileTable {
 pub struct TileTables {
     pub tables: [TileTable; 1024],
 }
-pub type Consts_60 = ::core::ffi::c_uint;
+pub use crate::types::Consts_60;
 pub const addr_unk_606300: Consts_60 = 25344;
 pub const addr_unk_6061F0: Consts_60 = 25072;
 pub const addr_unk_605BE0: Consts_60 = 23520;
@@ -405,7 +386,7 @@ pub const addr_unk_6053E0: Consts_60 = 21472;
 pub const addr_unk_605000: Consts_60 = 20480;
 pub const addr_unk_604C00: Consts_60 = 19456;
 pub const addr_unk_604800: Consts_60 = 18432;
-pub type Consts_84 = ::core::ffi::c_uint;
+pub use crate::types::Consts_84;
 pub const addr_locret_84D779: Consts_84 = 55161;
 pub const addr_kPlmHeader_D6EA: Consts_84 = 55018;
 pub const addr_kPlmHeader_D113: Consts_84 = 53523;
@@ -418,7 +399,7 @@ pub const addr_word_84AD76: Consts_84 = 44406;
 pub const addr_kDefaultPlmDrawInstruction: Consts_84 = 36256;
 pub const addr_locret_848AE0: Consts_84 = 35552;
 pub const addr_PlmPreInstr_Empty4: Consts_84 = 35494;
-pub type Consts_86 = ::core::ffi::c_uint;
+pub use crate::types::Consts_86;
 pub const addr_kEproj_Sparks: Consts_86 = 62616;
 pub const addr_kEproj_EnemyDeathExplosion: Consts_86 = 62277;
 pub const addr_kEproj_Pickup: Consts_86 = 62263;

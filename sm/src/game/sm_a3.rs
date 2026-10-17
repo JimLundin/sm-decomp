@@ -59,28 +59,11 @@ extern "C" {
         pal_r24: uint16,
     ) -> uint16;
 }
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __int32_t = i32;
-pub type __uint32_t = u32;
-pub type int8_t = __int8_t;
-pub type int16_t = __int16_t;
-pub type int32_t = __int32_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type uint8 = uint8_t;
-pub type int8 = int8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type uint32 = uint32_t;
-pub type int32 = int32_t;
-pub type VoidP = uint16;
-pub use crate::types::LongPtr;
-pub type Func_V = unsafe extern "C" fn() -> ();
-pub type Func_Y_V = unsafe extern "C" fn(uint16) -> ();
+pub use crate::types::{
+    __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
+    int32_t, int8, int8_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, Func_V, Func_Y_V,
+    LongPtr, VoidP,
+};
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct EnemyData {
@@ -175,7 +158,7 @@ pub struct EnemySpawnData {
     pub param_2: uint16,
     pub name: [uint8; 18],
 }
-pub type EnemyProps = ::core::ffi::c_uint;
+pub use crate::types::EnemyProps;
 pub const kEnemyProps_RespawnIfKilled: EnemyProps = 16384;
 pub const kEnemyProps_DisableSamusColl: EnemyProps = 8192;
 pub const kEnemyProps_BlockPlasmaBeam: EnemyProps = 4096;
@@ -228,7 +211,7 @@ pub struct EnemyDef {
     pub vulnerability_ptr: VoidP,
     pub name_ptr: VoidP,
 }
-pub type Consts_86 = ::core::ffi::c_uint;
+pub use crate::types::Consts_86;
 pub const addr_kEproj_Sparks: Consts_86 = 62616;
 pub const addr_kEproj_EnemyDeathExplosion: Consts_86 = 62277;
 pub const addr_kEproj_Pickup: Consts_86 = 62263;
@@ -402,7 +385,7 @@ pub const addr_stru_868BEC: Consts_86 = 35820;
 pub const addr_stru_868BDE: Consts_86 = 35806;
 pub const addr_stru_868BD0: Consts_86 = 35792;
 pub const addr_stru_868BC2: Consts_86 = 35778;
-pub type Consts_A3 = ::core::ffi::c_uint;
+pub use crate::types::Consts_A3;
 pub const addr_kMetroid_Ilist_EA25: Consts_A3 = 59941;
 pub const addr_kMetroid_Ilist_E9CF: Consts_A3 = 59855;
 pub const addr_locret_A3E08A: Consts_A3 = 57482;
@@ -446,7 +429,7 @@ pub const addr_kFireflea_Ilist_8C2F: Consts_A3 = 35887;
 pub const addr_kMetalee_Ilist_8910: Consts_A3 = 35088;
 pub const addr_kWaver_Ilist_86A7: Consts_A3 = 34471;
 pub const addr_kSpritemap_Nothing_A3: Consts_A3 = 32845;
-pub type Consts_B4 = ::core::ffi::c_uint;
+pub use crate::types::Consts_B4;
 pub const addr_stru_B4EC1C: Consts_B4 = 60444;
 pub const addr_asc_B4DD89: Consts_B4 = 56713;
 pub const addr_kSpriteObject_Ilist_C4B6: Consts_B4 = 50358;

@@ -71,38 +71,18 @@ extern "C" {
     fn Samus_SetAnimationFrameIfPoseChanged();
     fn DrawPlayerExplosions2();
 }
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __int32_t = i32;
-pub type __uint32_t = u32;
-pub type int8_t = __int8_t;
-pub type int16_t = __int16_t;
-pub type int32_t = __int32_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type size_t = usize;
-pub type uint8 = uint8_t;
-pub type int8 = int8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type uint32 = uint32_t;
-pub type int32 = int32_t;
-pub type VoidP = uint16;
-pub type CoroutineRet = uint8_t;
-pub use crate::types::LongPtr;
+pub use crate::types::{
+    __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
+    int32_t, int8, int8_t, size_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t,
+    CoroutineRet, LongPtr, VoidP,
+};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Point16U {
     pub x: uint16,
     pub y: uint16,
 }
-pub type Func_V = unsafe extern "C" fn() -> ();
-pub use crate::types::OamEnt;
-pub use crate::types::VramWriteEntry;
-pub type SnesRegs = ::core::ffi::c_uint;
+pub use crate::types::{Func_V, OamEnt, SnesRegs, VramWriteEntry};
 pub const MIRR7: SnesRegs = 17279;
 pub const UNUSED7: SnesRegs = 17275;
 pub const NTRL7: SnesRegs = 17274;
@@ -318,7 +298,7 @@ pub struct Mode7ObjectDef {
     pub field_2: VoidP,
     pub field_4: VoidP,
 }
-pub type SamusPose = ::core::ffi::c_uint;
+pub use crate::types::SamusPose;
 pub const kPose_FC_FaceL_StandTrans_AimDL: SamusPose = 252;
 pub const kPose_FB_FaceR_StandTrans_AimDR: SamusPose = 251;
 pub const kPose_FA_FaceL_StandTrans_AimUL: SamusPose = 250;
@@ -539,7 +519,7 @@ pub struct Mode7VramWriteQueue {
     pub gap3: [uint8; 2],
     pub field_5: uint16,
 }
-pub type GameState = ::core::ffi::c_uint;
+pub use crate::types::GameState;
 pub const kGameState_44_TransitionFromDemo: GameState = 44;
 pub const kGameState_43_TransitionFromDemo: GameState = 43;
 pub const kGameState_42_PlayingDemo: GameState = 42;
@@ -585,7 +565,7 @@ pub const kGameState_3_Unused: GameState = 3;
 pub const kGameState_2_GameOptionsMenu: GameState = 2;
 pub const kGameState_1_OpeningCinematic: GameState = 1;
 pub const kGameState_0_Reset: GameState = 0;
-pub type Buttons = ::core::ffi::c_uint;
+pub use crate::types::Buttons;
 pub const kButton_B: Buttons = 32768;
 pub const kButton_Y: Buttons = 16384;
 pub const kButton_Select: Buttons = 8192;
@@ -672,7 +652,7 @@ pub union Ram3000 {
     pub misc: Ram3000_Misc,
     pub menu: Ram3000_Menu,
 }
-pub type Consts_60 = ::core::ffi::c_uint;
+pub use crate::types::Consts_60;
 pub const addr_unk_606300: Consts_60 = 25344;
 pub const addr_unk_6061F0: Consts_60 = 25072;
 pub const addr_unk_605BE0: Consts_60 = 23520;
@@ -685,7 +665,7 @@ pub const addr_unk_6053E0: Consts_60 = 21472;
 pub const addr_unk_605000: Consts_60 = 20480;
 pub const addr_unk_604C00: Consts_60 = 19456;
 pub const addr_unk_604800: Consts_60 = 18432;
-pub type Consts_8B = ::core::ffi::c_uint;
+pub use crate::types::Consts_8B;
 pub const addr_kCinematicBgObjectDef_8BF74E: Consts_8B = 63310;
 pub const addr_kCinematicBgObjectDef_8BF748: Consts_8B = 63304;
 pub const addr_stru_8BF6F8: Consts_8B = 63224;
@@ -825,9 +805,9 @@ pub const addr_kCinematicSpriteObjectDef_8BA101: Consts_8B = 41217;
 pub const addr_kCinematicSpriteObjectDef_8BA0FB: Consts_8B = 41211;
 pub const addr_kCinematicSpriteObjectDef_8BA0F5: Consts_8B = 41205;
 pub const addr_kCinematicSpriteObjectDef_8BA0EF: Consts_8B = 41199;
-pub type Consts_8C = ::core::ffi::c_uint;
+pub use crate::types::Consts_8C;
 pub const addr_kSpriteMap_NintendoLogo: Consts_8C = 32955;
-pub type Consts_8D = ::core::ffi::c_uint;
+pub use crate::types::Consts_8D;
 pub const addr_kPalfx_FFD5: Consts_8D = 65493;
 pub const addr_kPalfx_FFD1: Consts_8D = 65489;
 pub const addr_kPalfx_FFCD: Consts_8D = 65485;
@@ -870,7 +850,7 @@ pub const addr_kPalfx_E198: Consts_8D = 57752;
 pub const addr_kPalfx_E194: Consts_8D = 57748;
 pub const addr_off_8DE192: Consts_8D = 57746;
 pub const addr_locret_8DC5E3: Consts_8D = 50659;
-pub type Consts_91 = ::core::ffi::c_uint;
+pub use crate::types::Consts_91;
 pub const addr_stru_919346: Consts_91 = 37702;
 pub const addr_stru_918784: Consts_91 = 34692;
 pub const addr_stru_91877E: Consts_91 = 34686;

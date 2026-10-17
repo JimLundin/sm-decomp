@@ -58,33 +58,11 @@ extern "C" {
     fn UpdateBeamTilesAndPalette();
     fn LoadEnemies();
 }
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __int32_t = i32;
-pub type __uint32_t = u32;
-pub type int8_t = __int8_t;
-pub type int16_t = __int16_t;
-pub type int32_t = __int32_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type size_t = usize;
-pub type uint8 = uint8_t;
-pub type int8 = int8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type uint32 = uint32_t;
-pub type int32 = int32_t;
-pub type VoidP = uint16;
-pub type CoroutineRet = uint8_t;
-pub use crate::types::LongPtr;
-pub type Func_V = unsafe extern "C" fn() -> ();
-pub type Func_U8 = unsafe extern "C" fn() -> uint8;
-pub use crate::types::OamEnt;
-pub use crate::types::VramWriteEntry;
-pub type SnesRegs = ::core::ffi::c_uint;
+pub use crate::types::{
+    __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
+    int32_t, int8, int8_t, size_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t,
+    CoroutineRet, Func_U8, Func_V, LongPtr, OamEnt, SnesRegs, VoidP, VramWriteEntry,
+};
 pub const MIRR7: SnesRegs = 17279;
 pub const UNUSED7: SnesRegs = 17275;
 pub const NTRL7: SnesRegs = 17274;
@@ -333,7 +311,7 @@ pub struct RoomDefHeader {
     pub cre_bitset_: uint8,
     pub ptr_to_doorout: VoidP,
 }
-pub type GameState = ::core::ffi::c_uint;
+pub use crate::types::GameState;
 pub const kGameState_44_TransitionFromDemo: GameState = 44;
 pub const kGameState_43_TransitionFromDemo: GameState = 43;
 pub const kGameState_42_PlayingDemo: GameState = 42;
@@ -379,7 +357,7 @@ pub const kGameState_3_Unused: GameState = 3;
 pub const kGameState_2_GameOptionsMenu: GameState = 2;
 pub const kGameState_1_OpeningCinematic: GameState = 1;
 pub const kGameState_0_Reset: GameState = 0;
-pub type Buttons = ::core::ffi::c_uint;
+pub use crate::types::Buttons;
 pub const kButton_B: Buttons = 32768;
 pub const kButton_Y: Buttons = 16384;
 pub const kButton_Select: Buttons = 8192;
@@ -449,7 +427,7 @@ pub struct Mode7CgvmWriteQueue {
     pub vram_addr: uint16,
     pub vmain: uint8,
 }
-pub type Consts_60 = ::core::ffi::c_uint;
+pub use crate::types::Consts_60;
 pub const addr_unk_606300: Consts_60 = 25344;
 pub const addr_unk_6061F0: Consts_60 = 25072;
 pub const addr_unk_605BE0: Consts_60 = 23520;
@@ -462,7 +440,7 @@ pub const addr_unk_6053E0: Consts_60 = 21472;
 pub const addr_unk_605000: Consts_60 = 20480;
 pub const addr_unk_604C00: Consts_60 = 19456;
 pub const addr_unk_604800: Consts_60 = 18432;
-pub type Consts_80 = ::core::ffi::c_uint;
+pub use crate::types::Consts_80;
 pub const addr_word_80A060: Consts_80 = 41056;
 pub const addrl_kDigitTilesetsWeapon: Consts_80 = 8429011;
 pub const addrl_kDigitTilesetsHealth: Consts_80 = 8428991;

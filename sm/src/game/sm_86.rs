@@ -64,27 +64,11 @@ extern "C" {
         pal_r24: uint16,
     ) -> uint16;
 }
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __int32_t = i32;
-pub type __uint32_t = u32;
-pub type int8_t = __int8_t;
-pub type int16_t = __int16_t;
-pub type int32_t = __int32_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type uintptr_t = usize;
-pub type uint8 = uint8_t;
-pub type int8 = int8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type uint32 = uint32_t;
-pub type int32 = int32_t;
-pub type VoidP = uint16;
-pub use crate::types::LongPtr;
+pub use crate::types::{
+    __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
+    int32_t, int8, int8_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, uintptr_t, LongPtr,
+    VoidP,
+};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Point16U {
@@ -99,9 +83,7 @@ pub struct Rect16U {
     pub w: uint16,
     pub h: uint16,
 }
-pub type Func_V = unsafe extern "C" fn() -> ();
-pub type Func_Y_V = unsafe extern "C" fn(uint16) -> ();
-pub use crate::types::VramWriteEntry;
+pub use crate::types::{Func_V, Func_Y_V, VramWriteEntry};
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct EprojDef {
@@ -320,7 +302,7 @@ pub struct Ram7800_Default {
     pub var_1E: uint16,
     pub var_1F: uint16,
 }
-pub type Consts_86 = ::core::ffi::c_uint;
+pub use crate::types::Consts_86;
 pub const addr_kEproj_Sparks: Consts_86 = 62616;
 pub const addr_kEproj_EnemyDeathExplosion: Consts_86 = 62277;
 pub const addr_kEproj_Pickup: Consts_86 = 62263;
@@ -494,7 +476,7 @@ pub const addr_stru_868BEC: Consts_86 = 35820;
 pub const addr_stru_868BDE: Consts_86 = 35806;
 pub const addr_stru_868BD0: Consts_86 = 35792;
 pub const addr_stru_868BC2: Consts_86 = 35778;
-pub type Consts_A0 = ::core::ffi::c_uint;
+pub use crate::types::Consts_A0;
 pub const addr_kEnemyDef_F593: Consts_A0 = 62867;
 pub const addr_kEnemyDef_F353: Consts_A0 = 62291;
 pub const addr_kEnemyDef_F293: Consts_A0 = 62099;

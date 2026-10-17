@@ -32,24 +32,10 @@ extern "C" {
         pal_r24: uint16,
     ) -> uint16;
 }
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __int32_t = i32;
-pub type __uint32_t = u32;
-pub type int16_t = __int16_t;
-pub type int32_t = __int32_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type uintptr_t = usize;
-pub type uint8 = uint8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type uint32 = uint32_t;
-pub type int32 = int32_t;
-pub type VoidP = uint16;
-pub use crate::types::LongPtr;
+pub use crate::types::{
+    __int16_t, __int32_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32, int32_t,
+    uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, uintptr_t, LongPtr, VoidP,
+};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Point16U {
@@ -130,7 +116,7 @@ pub struct EnemyBase {
     pub bank: uint8,
     pub field_2F: uint8,
 }
-pub type ProjectileType = ::core::ffi::c_uint;
+pub use crate::types::ProjectileType;
 pub const kProjectileType_DontInteractWithSamus: ProjectileType = 32768;
 pub const kProjectileType_TypeMask: ProjectileType = 3840;
 pub const kProjectileType_MissileExplosion: ProjectileType = 2048;
@@ -202,7 +188,7 @@ pub struct EnemyDef {
     pub vulnerability_ptr: VoidP,
     pub name_ptr: VoidP,
 }
-pub type Consts_86 = ::core::ffi::c_uint;
+pub use crate::types::Consts_86;
 pub const addr_kEproj_Sparks: Consts_86 = 62616;
 pub const addr_kEproj_EnemyDeathExplosion: Consts_86 = 62277;
 pub const addr_kEproj_Pickup: Consts_86 = 62263;
@@ -376,7 +362,7 @@ pub const addr_stru_868BEC: Consts_86 = 35820;
 pub const addr_stru_868BDE: Consts_86 = 35806;
 pub const addr_stru_868BD0: Consts_86 = 35792;
 pub const addr_stru_868BC2: Consts_86 = 35778;
-pub type Consts_A0 = ::core::ffi::c_uint;
+pub use crate::types::Consts_A0;
 pub const addr_kEnemyDef_F593: Consts_A0 = 62867;
 pub const addr_kEnemyDef_F353: Consts_A0 = 62291;
 pub const addr_kEnemyDef_F293: Consts_A0 = 62099;
@@ -398,7 +384,7 @@ pub const addr_kEnemyDef_DD7F: Consts_A0 = 56703;
 pub const addr_kEnemyDef_DAFF: Consts_A0 = 56063;
 pub const addr_kExtendedSpritemap_Nothing_A0: Consts_A0 = 32847;
 pub const addr_kSpritemap_Nothing_A0: Consts_A0 = 32845;
-pub type Consts_B2 = ::core::ffi::c_uint;
+pub use crate::types::Consts_B2;
 pub const addr_kSpacePirates_Ilist_FC48: Consts_B2 = 64584;
 pub const addr_kSpacePirates_Ilist_FC0E: Consts_B2 = 64526;
 pub const addr_kSpacePirates_Ilist_FBE6: Consts_B2 = 64486;
@@ -433,7 +419,7 @@ pub const addr_kSpacePirates_Ilist_ED36: Consts_B2 = 60726;
 pub const addr_off_B2ECEC: Consts_B2 = 60652;
 pub const addr_kSpacePirates_Ilist_ECE4: Consts_B2 = 60644;
 pub const addr_kSpacePirates_Ilist_ECC0: Consts_B2 = 60608;
-pub type Consts_B4 = ::core::ffi::c_uint;
+pub use crate::types::Consts_B4;
 pub const addr_stru_B4EC1C: Consts_B4 = 60444;
 pub const addr_asc_B4DD89: Consts_B4 = 56713;
 pub const addr_kSpriteObject_Ilist_C4B6: Consts_B4 = 50358;

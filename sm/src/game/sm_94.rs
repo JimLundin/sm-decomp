@@ -12,27 +12,11 @@ extern "C" {
     fn KillProjectile(k: uint16);
     fn CalculateAngleFromXY(x_r18: uint16, y_r20: uint16) -> uint16;
 }
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __int32_t = i32;
-pub type __uint32_t = u32;
-pub type int8_t = __int8_t;
-pub type int16_t = __int16_t;
-pub type int32_t = __int32_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type uint8 = uint8_t;
-pub type int8 = int8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type uint32 = uint32_t;
-pub type int32 = int32_t;
-pub type VoidP = uint16;
-pub type Func_V = unsafe extern "C" fn() -> ();
-pub use crate::types::OamEnt;
+pub use crate::types::{
+    __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
+    int32_t, int8, int8_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, Func_V, OamEnt,
+    VoidP,
+};
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct DoorDef {
@@ -46,7 +30,7 @@ pub struct DoorDef {
     pub samus_distance_from_door: uint16,
     pub door_setup_code: VoidP,
 }
-pub type SamusPose = ::core::ffi::c_uint;
+pub use crate::types::SamusPose;
 pub const kPose_FC_FaceL_StandTrans_AimDL: SamusPose = 252;
 pub const kPose_FB_FaceR_StandTrans_AimDR: SamusPose = 251;
 pub const kPose_FA_FaceL_StandTrans_AimUL: SamusPose = 250;
@@ -259,7 +243,7 @@ pub const kPose_03_FaceR_AimU: SamusPose = 3;
 pub const kPose_02_FaceL_Normal: SamusPose = 2;
 pub const kPose_01_FaceR_Normal: SamusPose = 1;
 pub const kPose_00_FaceF_Powersuit: SamusPose = 0;
-pub type GameState = ::core::ffi::c_uint;
+pub use crate::types::GameState;
 pub const kGameState_44_TransitionFromDemo: GameState = 44;
 pub const kGameState_43_TransitionFromDemo: GameState = 43;
 pub const kGameState_42_PlayingDemo: GameState = 42;
@@ -305,7 +289,7 @@ pub const kGameState_3_Unused: GameState = 3;
 pub const kGameState_2_GameOptionsMenu: GameState = 2;
 pub const kGameState_1_OpeningCinematic: GameState = 1;
 pub const kGameState_0_Reset: GameState = 0;
-pub type Consts_84 = ::core::ffi::c_uint;
+pub use crate::types::Consts_84;
 pub const addr_locret_84D779: Consts_84 = 55161;
 pub const addr_kPlmHeader_D6EA: Consts_84 = 55018;
 pub const addr_kPlmHeader_D113: Consts_84 = 53523;
@@ -318,7 +302,7 @@ pub const addr_word_84AD76: Consts_84 = 44406;
 pub const addr_kDefaultPlmDrawInstruction: Consts_84 = 36256;
 pub const addr_locret_848AE0: Consts_84 = 35552;
 pub const addr_PlmPreInstr_Empty4: Consts_84 = 35494;
-pub type Consts_90 = ::core::ffi::c_uint;
+pub use crate::types::Consts_90;
 pub const addr_loc_90C4F0: Consts_90 = 50416;
 pub const addr_kSuperMissileAccelerations2: Consts_90 = 49963;
 pub const addr_kSuperMissileAccelerations: Consts_90 = 49923;
@@ -329,7 +313,7 @@ pub const addr_stru_909F3D: Consts_90 = 40765;
 pub const addr_stru_909F31: Consts_90 = 40753;
 pub const addr_stru_909F25: Consts_90 = 40741;
 pub const addr_loc_908029: Consts_90 = 32809;
-pub type Consts_94 = ::core::ffi::c_uint;
+pub use crate::types::Consts_94;
 pub const addr_word_94B197: Consts_94 = 45463;
 pub const addr_word_94B193: Consts_94 = 45459;
 pub const addr_word_94B18F: Consts_94 = 45455;

@@ -67,28 +67,11 @@ extern "C" {
     static mut g_got_mismatch_count: ::core::ffi::c_int;
     static mut g_other_image: bool;
 }
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __int32_t = i32;
-pub type __uint32_t = u32;
-pub type __off_t = ::core::ffi::c_long;
-pub type __off64_t = ::core::ffi::c_long;
-pub type __time_t = ::core::ffi::c_long;
-pub type int8_t = __int8_t;
-pub type int16_t = __int16_t;
-pub type int32_t = __int32_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type size_t = usize;
-pub type time_t = __time_t;
-pub type uint8 = uint8_t;
-pub type int8 = int8_t;
-pub type uint16 = uint16_t;
-pub type uint32 = uint32_t;
-pub type VoidP = uint16;
+pub use crate::types::{
+    __int16_t, __int32_t, __int8_t, __off64_t, __off_t, __time_t, __uint16_t, __uint32_t,
+    __uint8_t, int16_t, int32_t, int8, int8_t, size_t, time_t, uint16, uint16_t, uint32, uint32_t,
+    uint8, uint8_t, VoidP,
+};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct _IO_FILE {
@@ -122,7 +105,7 @@ pub struct _IO_FILE {
     pub _mode: ::core::ffi::c_int,
     pub _unused2: [::core::ffi::c_char; 20],
 }
-pub type _IO_lock_t = ();
+pub use crate::types::_IO_lock_t;
 pub type FILE = _IO_FILE;
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -350,7 +333,7 @@ pub struct Ppu {
 pub struct PpuPixelPrioBufs {
     pub data: [PpuZbufType; 256],
 }
-pub type PpuZbufType = uint16_t;
+pub use crate::types::PpuZbufType;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct WindowLayer {
@@ -648,7 +631,7 @@ pub struct ProjectileInstr {
     pub y_radius: uint8,
     pub field_6: uint16,
 }
-pub type SyncAllFunc = unsafe extern "C" fn() -> ();
+pub use crate::types::SyncAllFunc;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Snapshot {
@@ -670,8 +653,7 @@ pub struct Snapshot {
 pub const RM_MINE: RunMode = 1;
 pub const RM_BOTH: RunMode = 0;
 pub const RM_THEIRS: RunMode = 2;
-pub type RunFrameFunc = unsafe extern "C" fn(uint16, ::core::ffi::c_int) -> ();
-pub type SnesRegs = ::core::ffi::c_uint;
+pub use crate::types::{RunFrameFunc, SnesRegs};
 pub const MIRR7: SnesRegs = 17279;
 pub const UNUSED7: SnesRegs = 17275;
 pub const NTRL7: SnesRegs = 17274;
@@ -879,7 +861,7 @@ pub const OAMADDH: SnesRegs = 8451;
 pub const OAMADDL: SnesRegs = 8450;
 pub const OBSEL: SnesRegs = 8449;
 pub const INIDISP: SnesRegs = 8448;
-pub type RunMode = ::core::ffi::c_uint;
+pub use crate::types::RunMode;
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;

@@ -178,33 +178,15 @@ extern "C" {
     fn pow(__x: ::core::ffi::c_double, __y: ::core::ffi::c_double) -> ::core::ffi::c_double;
     static mut g_config: Config;
 }
-pub type ptrdiff_t = isize;
-pub type size_t = usize;
-pub type __uint8_t = u8;
-pub type __uint16_t = u16;
-pub type __uint32_t = u32;
-pub type __off_t = ::core::ffi::c_long;
-pub type __off64_t = ::core::ffi::c_long;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type uintptr_t = usize;
-pub type GLenum = ::core::ffi::c_uint;
-pub type GLboolean = ::core::ffi::c_uchar;
-pub type GLint = ::core::ffi::c_int;
-pub type GLuint = ::core::ffi::c_uint;
-pub type GLsizei = ::core::ffi::c_int;
-pub type GLfloat = ::core::ffi::c_float;
-pub type GLchar = ::core::ffi::c_char;
-pub type GLsizeiptr = ptrdiff_t;
-pub type uint = ::core::ffi::c_uint;
-pub type uint8 = uint8_t;
-pub type uint16 = uint16_t;
-pub type uint32 = uint32_t;
+pub use crate::types::{
+    __off64_t, __off_t, __uint16_t, __uint32_t, __uint8_t, ptrdiff_t, size_t, uint, uint16,
+    uint16_t, uint32, uint32_t, uint8, uint8_t, uintptr_t, GLboolean, GLchar, GLenum, GLfloat,
+    GLint, GLsizei, GLsizeiptr, GLuint,
+};
 pub type C2RustUnnamed = ::core::ffi::c_uint;
 pub const kGlslMaxTextures: C2RustUnnamed = 10;
 pub const kGlslMaxPasses: C2RustUnnamed = 20;
-pub type GLSLScaleType = ::core::ffi::c_uint;
+pub use crate::types::GLSLScaleType;
 pub const GLSL_ABSOLUTE: GLSLScaleType = 3;
 pub const GLSL_VIEWPORT: GLSLScaleType = 2;
 pub const GLSL_SOURCE: GLSLScaleType = 1;
@@ -305,7 +287,7 @@ pub struct ByteArray {
     pub size: size_t,
     pub capacity: size_t,
 }
-pub type stbi_uc = ::core::ffi::c_uchar;
+pub use crate::types::stbi_uc;
 pub type FILE = _IO_FILE;
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -340,7 +322,7 @@ pub struct _IO_FILE {
     pub _mode: ::core::ffi::c_int,
     pub _unused2: [::core::ffi::c_char; 20],
 }
-pub type _IO_lock_t = ();
+pub use crate::types::_IO_lock_t;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct stbi__context {
@@ -372,7 +354,7 @@ pub struct stbi_io_callbacks {
     pub skip: Option<unsafe extern "C" fn(*mut ::core::ffi::c_void, ::core::ffi::c_int) -> ()>,
     pub eof: Option<unsafe extern "C" fn(*mut ::core::ffi::c_void) -> ::core::ffi::c_int>,
 }
-pub type stbi__uint32 = uint32_t;
+pub use crate::types::stbi__uint32;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct stbi__result_info {
@@ -389,7 +371,7 @@ pub struct stbi__png {
     pub out: *mut stbi_uc,
     pub depth: ::core::ffi::c_int,
 }
-pub type stbi__uint16 = uint16_t;
+pub use crate::types::stbi__uint16;
 pub const STBI__SCAN_load: C2RustUnnamed_1 = 0;
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -471,7 +453,7 @@ pub struct Config {
     pub shader: *const ::core::ffi::c_char,
     pub msu_path: *const ::core::ffi::c_char,
 }
-pub type stbi_us = ::core::ffi::c_ushort;
+pub use crate::types::stbi_us;
 pub type C2RustUnnamed_0 = ::core::ffi::c_uint;
 pub const STBI_ORDER_BGR: C2RustUnnamed_0 = 1;
 pub type C2RustUnnamed_1 = ::core::ffi::c_uint;

@@ -52,35 +52,18 @@ extern "C" {
     fn SamusLatchesOnWithGrapple();
     fn MoveEnemyWithVelocity();
 }
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __int32_t = i32;
-pub type __uint32_t = u32;
-pub type int8_t = __int8_t;
-pub type int16_t = __int16_t;
-pub type int32_t = __int32_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type uintptr_t = usize;
-pub type uint8 = uint8_t;
-pub type int8 = int8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type uint32 = uint32_t;
-pub type int32 = int32_t;
-pub type VoidP = uint16;
-pub use crate::types::LongPtr;
+pub use crate::types::{
+    __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
+    int32_t, int8, int8_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, uintptr_t, LongPtr,
+    VoidP,
+};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Point16U {
     pub x: uint16,
     pub y: uint16,
 }
-pub type Func_V = unsafe extern "C" fn() -> ();
-pub use crate::types::VramWriteEntry;
+pub use crate::types::{Func_V, VramWriteEntry};
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct EnemyData {
@@ -147,7 +130,7 @@ pub struct EnemyBase {
     pub bank: uint8,
     pub field_2F: uint8,
 }
-pub type SamusPose = ::core::ffi::c_uint;
+pub use crate::types::SamusPose;
 pub const kPose_FC_FaceL_StandTrans_AimDL: SamusPose = 252;
 pub const kPose_FB_FaceR_StandTrans_AimDR: SamusPose = 251;
 pub const kPose_FA_FaceL_StandTrans_AimUL: SamusPose = 250;
@@ -388,7 +371,7 @@ pub struct EnemySpawnData {
     pub param_2: uint16,
     pub name: [uint8; 18],
 }
-pub type EnemyProps = ::core::ffi::c_uint;
+pub use crate::types::EnemyProps;
 pub const kEnemyProps_RespawnIfKilled: EnemyProps = 16384;
 pub const kEnemyProps_DisableSamusColl: EnemyProps = 8192;
 pub const kEnemyProps_BlockPlasmaBeam: EnemyProps = 4096;
@@ -396,7 +379,7 @@ pub const kEnemyProps_ProcessedOffscreen: EnemyProps = 2048;
 pub const kEnemyProps_Tangible: EnemyProps = 1024;
 pub const kEnemyProps_Deleted: EnemyProps = 512;
 pub const kEnemyProps_Invisible: EnemyProps = 256;
-pub type GameState = ::core::ffi::c_uint;
+pub use crate::types::GameState;
 pub const kGameState_44_TransitionFromDemo: GameState = 44;
 pub const kGameState_43_TransitionFromDemo: GameState = 43;
 pub const kGameState_42_PlayingDemo: GameState = 42;
@@ -442,12 +425,12 @@ pub const kGameState_3_Unused: GameState = 3;
 pub const kGameState_2_GameOptionsMenu: GameState = 2;
 pub const kGameState_1_OpeningCinematic: GameState = 1;
 pub const kGameState_0_Reset: GameState = 0;
-pub type LoadingGameState = ::core::ffi::c_uint;
+pub use crate::types::LoadingGameState;
 pub const kLoadingGameState_22_EscapingCeres: LoadingGameState = 34;
 pub const kLoadingGameState_1F_StartingAtCeres: LoadingGameState = 31;
 pub const kLoadingGameState_5_Main: LoadingGameState = 5;
 pub const kLoadingGameState_0_Intro: LoadingGameState = 0;
-pub type Buttons = ::core::ffi::c_uint;
+pub use crate::types::Buttons;
 pub const kButton_B: Buttons = 32768;
 pub const kButton_Y: Buttons = 16384;
 pub const kButton_Select: Buttons = 8192;
@@ -460,7 +443,7 @@ pub const kButton_A: Buttons = 128;
 pub const kButton_X: Buttons = 64;
 pub const kButton_L: Buttons = 32;
 pub const kButton_R: Buttons = 16;
-pub type Consts_86 = ::core::ffi::c_uint;
+pub use crate::types::Consts_86;
 pub const addr_kEproj_Sparks: Consts_86 = 62616;
 pub const addr_kEproj_EnemyDeathExplosion: Consts_86 = 62277;
 pub const addr_kEproj_Pickup: Consts_86 = 62263;
@@ -634,7 +617,7 @@ pub const addr_stru_868BEC: Consts_86 = 35820;
 pub const addr_stru_868BDE: Consts_86 = 35806;
 pub const addr_stru_868BD0: Consts_86 = 35792;
 pub const addr_stru_868BC2: Consts_86 = 35778;
-pub type Consts_8D = ::core::ffi::c_uint;
+pub use crate::types::Consts_8D;
 pub const addr_kPalfx_FFD5: Consts_8D = 65493;
 pub const addr_kPalfx_FFD1: Consts_8D = 65489;
 pub const addr_kPalfx_FFCD: Consts_8D = 65485;
@@ -677,7 +660,7 @@ pub const addr_kPalfx_E198: Consts_8D = 57752;
 pub const addr_kPalfx_E194: Consts_8D = 57748;
 pub const addr_off_8DE192: Consts_8D = 57746;
 pub const addr_locret_8DC5E3: Consts_8D = 50659;
-pub type Consts_A2 = ::core::ffi::c_uint;
+pub use crate::types::Consts_A2;
 pub const addr_kRisingFallingPlatform_Ilist_EDE7: Consts_A2 = 60903;
 pub const addr_kTimedShutter_Ilist_E9D4: Consts_A2 = 59860;
 pub const addr_kTimedShutter_Ilist_E9AA: Consts_A2 = 59818;

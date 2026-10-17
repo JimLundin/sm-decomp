@@ -19,18 +19,10 @@ extern "C" {
     fn SpawnPalfxObject(j: uint16);
     fn CallSomeSamusCode(a: uint16) -> uint16;
 }
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __uint32_t = u32;
-pub type int16_t = __int16_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type uint8 = uint8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type Func_V = unsafe extern "C" fn() -> ();
+pub use crate::types::{
+    __int16_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, uint16, uint16_t, uint32_t,
+    uint8, uint8_t, Func_V,
+};
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct FxDef {
@@ -47,7 +39,7 @@ pub struct FxDef {
     pub animtiles_bitset: uint8,
     pub palette_blend: uint8,
 }
-pub type GameState = ::core::ffi::c_uint;
+pub use crate::types::GameState;
 pub const kGameState_44_TransitionFromDemo: GameState = 44;
 pub const kGameState_43_TransitionFromDemo: GameState = 43;
 pub const kGameState_42_PlayingDemo: GameState = 42;

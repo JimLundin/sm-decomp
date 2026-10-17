@@ -22,19 +22,10 @@ extern "C" {
     fn dsp_cycle(dsp: *mut Dsp);
     fn dsp_write(dsp: *mut Dsp, adr: uint8_t, val: uint8_t);
 }
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __uint32_t = u32;
-pub type int8_t = __int8_t;
-pub type int16_t = __int16_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type size_t = usize;
-pub type uint8 = uint8_t;
-pub type uint16 = uint16_t;
+pub use crate::types::{
+    __int16_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16_t, int8_t, size_t, uint16,
+    uint16_t, uint32_t, uint8, uint8_t,
+};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Dsp {
@@ -302,7 +293,7 @@ pub struct MemMap {
     pub off: uint16,
     pub org_off: uint16,
 }
-pub type DspReg = ::core::ffi::c_uint;
+pub use crate::types::DspReg;
 pub const FIR7: DspReg = 127;
 pub const ENDX: DspReg = 124;
 pub const V7OUTX: DspReg = 121;

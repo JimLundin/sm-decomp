@@ -65,27 +65,11 @@ extern "C" {
         pal_r24: uint16,
     ) -> uint16;
 }
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __int32_t = i32;
-pub type __uint32_t = u32;
-pub type int8_t = __int8_t;
-pub type int16_t = __int16_t;
-pub type int32_t = __int32_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type uintptr_t = usize;
-pub type uint8 = uint8_t;
-pub type int8 = int8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type uint32 = uint32_t;
-pub type int32 = int32_t;
-pub type VoidP = uint16;
-pub use crate::types::LongPtr;
+pub use crate::types::{
+    __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
+    int32_t, int8, int8_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, uintptr_t, LongPtr,
+    VoidP,
+};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct PairU16 {
@@ -106,9 +90,7 @@ pub struct Rect16U {
     pub w: uint16,
     pub h: uint16,
 }
-pub type Func_V = unsafe extern "C" fn() -> ();
-pub use crate::types::OamEnt;
-pub use crate::types::VramWriteEntry;
+pub use crate::types::{Func_V, OamEnt, VramWriteEntry};
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct EnemyData {
@@ -203,7 +185,7 @@ pub struct EnemySpawnData {
     pub param_2: uint16,
     pub name: [uint8; 18],
 }
-pub type EnemyProps = ::core::ffi::c_uint;
+pub use crate::types::EnemyProps;
 pub const kEnemyProps_RespawnIfKilled: EnemyProps = 16384;
 pub const kEnemyProps_DisableSamusColl: EnemyProps = 8192;
 pub const kEnemyProps_BlockPlasmaBeam: EnemyProps = 4096;
@@ -239,7 +221,7 @@ pub union ExtraEnemyRam7800 {
 pub union ExtraEnemyRam8000 {
     pub pad: [uint8; 64],
 }
-pub type Consts_86 = ::core::ffi::c_uint;
+pub use crate::types::Consts_86;
 pub const addr_kEproj_Sparks: Consts_86 = 62616;
 pub const addr_kEproj_EnemyDeathExplosion: Consts_86 = 62277;
 pub const addr_kEproj_Pickup: Consts_86 = 62263;
@@ -413,7 +395,7 @@ pub const addr_stru_868BEC: Consts_86 = 35820;
 pub const addr_stru_868BDE: Consts_86 = 35806;
 pub const addr_stru_868BD0: Consts_86 = 35792;
 pub const addr_stru_868BC2: Consts_86 = 35778;
-pub type Consts_A6 = ::core::ffi::c_uint;
+pub use crate::types::Consts_A6;
 pub const addr_stru_A6FCF9: Consts_A6 = 64761;
 pub const addr_stru_A6FCE1: Consts_A6 = 64737;
 pub const addr_kCeresDoor_Sprmap_FAC7: Consts_A6 = 64199;
@@ -484,7 +466,7 @@ pub const addr_kFireGeyser_Ilist_8D1B: Consts_A6 = 36123;
 pub const addr_kSpikeyPlatform_Ilist_8B29: Consts_A6 = 35625;
 pub const addr_kBoulder_Ilist_86CB: Consts_A6 = 34507;
 pub const addr_kBoulder_Ilist_86A7: Consts_A6 = 34471;
-pub type Consts_A9 = ::core::ffi::c_uint;
+pub use crate::types::Consts_A9;
 pub const addr_kShitroid_Ilist_F93A: Consts_A9 = 63802;
 pub const addr_kShitroid_Ilist_F924: Consts_A9 = 63780;
 pub const addr_kShitroid_Ilist_F90E: Consts_A9 = 63758;

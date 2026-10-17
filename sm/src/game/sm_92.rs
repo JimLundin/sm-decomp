@@ -6,14 +6,9 @@ extern "C" {
     fn DrawSamusSpritemap(a: uint16, k: uint16, j: uint16);
     fn PlayRoomMusicTrackAfterAFrames(a: uint16);
 }
-pub type __uint8_t = u8;
-pub type __uint16_t = u16;
-pub type __uint32_t = u32;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type uint8 = uint8_t;
-pub type uint16 = uint16_t;
+pub use crate::types::{
+    __uint16_t, __uint32_t, __uint8_t, uint16, uint16_t, uint32_t, uint8, uint8_t,
+};
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct SamusTileAnimationDefs {

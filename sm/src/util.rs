@@ -54,12 +54,7 @@ pub struct __va_list_tag {
     pub overflow_arg_area: *mut ::core::ffi::c_void,
     pub reg_save_area: *mut ::core::ffi::c_void,
 }
-pub type __uint8_t = u8;
-pub type __off_t = ::core::ffi::c_long;
-pub type __off64_t = ::core::ffi::c_long;
-pub type uint8_t = __uint8_t;
-pub type size_t = usize;
-pub type uint8 = uint8_t;
+pub use crate::types::{__off64_t, __off_t, __uint8_t, size_t, uint8, uint8_t};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct ByteArray {
@@ -101,7 +96,7 @@ pub struct _IO_FILE {
     pub _mode: ::core::ffi::c_int,
     pub _unused2: [::core::ffi::c_char; 20],
 }
-pub type _IO_lock_t = ();
+pub use crate::types::_IO_lock_t;
 pub type va_list = __gnuc_va_list;
 pub type __gnuc_va_list = __builtin_va_list;
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();

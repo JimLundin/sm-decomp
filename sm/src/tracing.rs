@@ -7,18 +7,10 @@ extern "C" {
     fn apu_cpuRead(apu: *mut Apu, adr: uint16_t) -> uint8_t;
     fn snes_read(snes: *mut Snes, adr: uint32_t) -> uint8_t;
 }
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __int32_t = i32;
-pub type __uint32_t = u32;
-pub type int8_t = __int8_t;
-pub type int16_t = __int16_t;
-pub type int32_t = __int32_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
+pub use crate::types::{
+    __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16_t, int32_t, int8_t,
+    uint16_t, uint32_t, uint8_t,
+};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Snes {
@@ -215,7 +207,7 @@ pub struct Ppu {
 pub struct PpuPixelPrioBufs {
     pub data: [PpuZbufType; 256],
 }
-pub type PpuZbufType = uint16_t;
+pub use crate::types::PpuZbufType;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct WindowLayer {

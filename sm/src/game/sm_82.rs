@@ -151,31 +151,11 @@ extern "C" {
     fn UnpauseHook_Kraid_IsDead() -> CoroutineRet;
     fn MotherBrainsBody_UnpauseHook() -> CoroutineRet;
 }
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __uint32_t = u32;
-pub type int8_t = __int8_t;
-pub type int16_t = __int16_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type size_t = usize;
-pub type uint8 = uint8_t;
-pub type int8 = int8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type uint32 = uint32_t;
-pub type VoidP = uint16;
-pub type CoroutineRet = uint8_t;
-pub use crate::types::LongPtr;
-pub type Func_V = unsafe extern "C" fn() -> ();
-pub type Func_V_Coroutine = unsafe extern "C" fn() -> CoroutineRet;
-pub type Func_Y_V = unsafe extern "C" fn(uint16) -> ();
-pub type Func_Y_Y = unsafe extern "C" fn(uint16) -> uint16;
-pub use crate::types::VramWriteEntry;
-pub type SnesRegs = ::core::ffi::c_uint;
+pub use crate::types::{
+    __int16_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int8, int8_t, size_t,
+    uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, CoroutineRet, Func_V, Func_V_Coroutine,
+    Func_Y_V, Func_Y_Y, LongPtr, SnesRegs, VoidP, VramWriteEntry,
+};
 pub const MIRR7: SnesRegs = 17279;
 pub const UNUSED7: SnesRegs = 17275;
 pub const NTRL7: SnesRegs = 17274;
@@ -455,7 +435,7 @@ pub struct DoorDef {
     pub samus_distance_from_door: uint16,
     pub door_setup_code: VoidP,
 }
-pub type SamusPose = ::core::ffi::c_uint;
+pub use crate::types::SamusPose;
 pub const kPose_FC_FaceL_StandTrans_AimDL: SamusPose = 252;
 pub const kPose_FB_FaceR_StandTrans_AimDR: SamusPose = 251;
 pub const kPose_FA_FaceL_StandTrans_AimUL: SamusPose = 250;
@@ -688,7 +668,7 @@ pub struct RoomDefHeader {
     pub cre_bitset_: uint8,
     pub ptr_to_doorout: VoidP,
 }
-pub type GameState = ::core::ffi::c_uint;
+pub use crate::types::GameState;
 pub const kGameState_44_TransitionFromDemo: GameState = 44;
 pub const kGameState_43_TransitionFromDemo: GameState = 43;
 pub const kGameState_42_PlayingDemo: GameState = 42;
@@ -734,12 +714,12 @@ pub const kGameState_3_Unused: GameState = 3;
 pub const kGameState_2_GameOptionsMenu: GameState = 2;
 pub const kGameState_1_OpeningCinematic: GameState = 1;
 pub const kGameState_0_Reset: GameState = 0;
-pub type LoadingGameState = ::core::ffi::c_uint;
+pub use crate::types::LoadingGameState;
 pub const kLoadingGameState_22_EscapingCeres: LoadingGameState = 34;
 pub const kLoadingGameState_1F_StartingAtCeres: LoadingGameState = 31;
 pub const kLoadingGameState_5_Main: LoadingGameState = 5;
 pub const kLoadingGameState_0_Intro: LoadingGameState = 0;
-pub type Buttons = ::core::ffi::c_uint;
+pub use crate::types::Buttons;
 pub const kButton_B: Buttons = 32768;
 pub const kButton_Y: Buttons = 16384;
 pub const kButton_Select: Buttons = 8192;
@@ -955,7 +935,7 @@ pub union Ram3000 {
     pub misc: Ram3000_Misc,
     pub menu: Ram3000_Menu,
 }
-pub type Consts_60 = ::core::ffi::c_uint;
+pub use crate::types::Consts_60;
 pub const addr_unk_606300: Consts_60 = 25344;
 pub const addr_unk_6061F0: Consts_60 = 25072;
 pub const addr_unk_605BE0: Consts_60 = 23520;
@@ -968,7 +948,7 @@ pub const addr_unk_6053E0: Consts_60 = 21472;
 pub const addr_unk_605000: Consts_60 = 20480;
 pub const addr_unk_604C00: Consts_60 = 19456;
 pub const addr_unk_604800: Consts_60 = 18432;
-pub type Consts_82 = ::core::ffi::c_uint;
+pub use crate::types::Consts_82;
 pub const addr_stru_82F4D6: Consts_82 = 62678;
 pub const addr_stru_82F4D0: Consts_82 = 62672;
 pub const addr_stru_82F4CA: Consts_82 = 62666;
@@ -990,9 +970,9 @@ pub const addr_stru_82B9B4: Consts_82 = 47540;
 pub const addr_stru_82B9AA: Consts_82 = 47530;
 pub const addr_stru_82B9A0: Consts_82 = 47520;
 pub const addr_kPauseMenuMapData: Consts_82 = 38679;
-pub type Consts_83 = ::core::ffi::c_uint;
+pub use crate::types::Consts_83;
 pub const addr_kDoorDef_947a: Consts_83 = 38010;
-pub type Consts_8F = ::core::ffi::c_uint;
+pub use crate::types::Consts_8F;
 pub const addr_kDoorClosingPlmIds: Consts_8F = 59018;
 pub const addr_kRoom_dede: Consts_8F = 57054;
 pub const addr_kRoom_dd58: Consts_8F = 56664;

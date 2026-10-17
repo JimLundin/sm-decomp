@@ -34,23 +34,10 @@ extern "C" {
     fn NormalEnemyTouchAi();
     fn NormalEnemyTouchAiSkipDeathAnim_CurEnemy();
 }
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __int32_t = i32;
-pub type __uint32_t = u32;
-pub type int16_t = __int16_t;
-pub type int32_t = __int32_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type uintptr_t = usize;
-pub type uint8 = uint8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type uint32 = uint32_t;
-pub type int32 = int32_t;
-pub type VoidP = uint16;
+pub use crate::types::{
+    __int16_t, __int32_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32, int32_t,
+    uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, uintptr_t, VoidP,
+};
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct EnemyData {
@@ -117,7 +104,7 @@ pub struct EnemyBase {
     pub bank: uint8,
     pub field_2F: uint8,
 }
-pub type SamusPose = ::core::ffi::c_uint;
+pub use crate::types::SamusPose;
 pub const kPose_FC_FaceL_StandTrans_AimDL: SamusPose = 252;
 pub const kPose_FB_FaceR_StandTrans_AimDR: SamusPose = 251;
 pub const kPose_FA_FaceL_StandTrans_AimUL: SamusPose = 250;
@@ -330,7 +317,7 @@ pub const kPose_03_FaceR_AimU: SamusPose = 3;
 pub const kPose_02_FaceL_Normal: SamusPose = 2;
 pub const kPose_01_FaceR_Normal: SamusPose = 1;
 pub const kPose_00_FaceF_Powersuit: SamusPose = 0;
-pub type EnemyProps = ::core::ffi::c_uint;
+pub use crate::types::EnemyProps;
 pub const kEnemyProps_RespawnIfKilled: EnemyProps = 16384;
 pub const kEnemyProps_DisableSamusColl: EnemyProps = 8192;
 pub const kEnemyProps_BlockPlasmaBeam: EnemyProps = 4096;
@@ -338,7 +325,7 @@ pub const kEnemyProps_ProcessedOffscreen: EnemyProps = 2048;
 pub const kEnemyProps_Tangible: EnemyProps = 1024;
 pub const kEnemyProps_Deleted: EnemyProps = 512;
 pub const kEnemyProps_Invisible: EnemyProps = 256;
-pub type Consts_84 = ::core::ffi::c_uint;
+pub use crate::types::Consts_84;
 pub const addr_locret_84D779: Consts_84 = 55161;
 pub const addr_kPlmHeader_D6EA: Consts_84 = 55018;
 pub const addr_kPlmHeader_D113: Consts_84 = 53523;
@@ -351,7 +338,7 @@ pub const addr_word_84AD76: Consts_84 = 44406;
 pub const addr_kDefaultPlmDrawInstruction: Consts_84 = 36256;
 pub const addr_locret_848AE0: Consts_84 = 35552;
 pub const addr_PlmPreInstr_Empty4: Consts_84 = 35494;
-pub type Consts_86 = ::core::ffi::c_uint;
+pub use crate::types::Consts_86;
 pub const addr_kEproj_Sparks: Consts_86 = 62616;
 pub const addr_kEproj_EnemyDeathExplosion: Consts_86 = 62277;
 pub const addr_kEproj_Pickup: Consts_86 = 62263;
@@ -525,7 +512,7 @@ pub const addr_stru_868BEC: Consts_86 = 35820;
 pub const addr_stru_868BDE: Consts_86 = 35806;
 pub const addr_stru_868BD0: Consts_86 = 35792;
 pub const addr_stru_868BC2: Consts_86 = 35778;
-pub type Consts_8D = ::core::ffi::c_uint;
+pub use crate::types::Consts_8D;
 pub const addr_kPalfx_FFD5: Consts_8D = 65493;
 pub const addr_kPalfx_FFD1: Consts_8D = 65489;
 pub const addr_kPalfx_FFCD: Consts_8D = 65485;
@@ -568,7 +555,7 @@ pub const addr_kPalfx_E198: Consts_8D = 57752;
 pub const addr_kPalfx_E194: Consts_8D = 57748;
 pub const addr_off_8DE192: Consts_8D = 57746;
 pub const addr_locret_8DC5E3: Consts_8D = 50659;
-pub type Consts_AA = ::core::ffi::c_uint;
+pub use crate::types::Consts_AA;
 pub const addr_kShaktool_Ilist_E461: Consts_AA = 58465;
 pub const addr_kShaktool_Ilist_E3A7: Consts_AA = 58279;
 pub const addr_kTorizo_Ilist_D2BF: Consts_AA = 53951;

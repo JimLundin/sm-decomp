@@ -88,26 +88,10 @@ extern "C" {
     fn GrappleBeamFunc_BF1B();
     fn Samus_CheckSolidEnemyColl(amt: int32) -> CheckEnemyColl_Result;
 }
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __int32_t = i32;
-pub type __uint32_t = u32;
-pub type int8_t = __int8_t;
-pub type int16_t = __int16_t;
-pub type int32_t = __int32_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type uint8 = uint8_t;
-pub type int8 = int8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type uint32 = uint32_t;
-pub type int32 = int32_t;
-pub type VoidP = uint16;
-pub use crate::types::LongPtr;
+pub use crate::types::{
+    __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
+    int32_t, int8, int8_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, LongPtr, VoidP,
+};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct PairU16 {
@@ -120,16 +104,9 @@ pub struct Point16U {
     pub x: uint16,
     pub y: uint16,
 }
-pub type HandlerFunc = unsafe extern "C" fn() -> ();
-pub type Func_V_A = unsafe extern "C" fn() -> uint8;
-pub type Func_V = unsafe extern "C" fn() -> ();
-pub type Func_U8 = unsafe extern "C" fn() -> uint8;
-pub type Func_Y_V = unsafe extern "C" fn(uint16) -> ();
-pub type FuncXY_V = unsafe extern "C" fn(uint16, uint16) -> ();
+pub use crate::types::{FuncXY_V, Func_U8, Func_V, Func_V_A, Func_Y_V, HandlerFunc};
 pub type Func_Y_To_PairU16 = unsafe extern "C" fn(uint16) -> PairU16;
-pub use crate::types::OamEnt;
-pub use crate::types::VramWriteEntry;
-pub type SamusPose = ::core::ffi::c_uint;
+pub use crate::types::{OamEnt, SamusPose, VramWriteEntry};
 pub const kPose_FC_FaceL_StandTrans_AimDL: SamusPose = 252;
 pub const kPose_FB_FaceR_StandTrans_AimDR: SamusPose = 251;
 pub const kPose_FA_FaceL_StandTrans_AimUL: SamusPose = 250;
@@ -342,7 +319,7 @@ pub const kPose_03_FaceR_AimU: SamusPose = 3;
 pub const kPose_02_FaceL_Normal: SamusPose = 2;
 pub const kPose_01_FaceR_Normal: SamusPose = 1;
 pub const kPose_00_FaceF_Powersuit: SamusPose = 0;
-pub type LiquidPhysicsType = ::core::ffi::c_uint;
+pub use crate::types::LiquidPhysicsType;
 pub const kLiquidPhysicsType_LavaAcid: LiquidPhysicsType = 2;
 pub const kLiquidPhysicsType_Water: LiquidPhysicsType = 1;
 pub const kLiquidPhysicsType_Air: LiquidPhysicsType = 0;
@@ -368,7 +345,7 @@ pub struct SamusSpeedTableEntry {
     pub decel: uint16,
     pub decel_sub: uint16,
 }
-pub type SamusMovementType = ::core::ffi::c_uint;
+pub use crate::types::SamusMovementType;
 pub const kMovementType_1B_ShinesparkEtc: SamusMovementType = 27;
 pub const kMovementType_1A_GrabbedByDraygon: SamusMovementType = 26;
 pub const kMovementType_19_DamageBoost: SamusMovementType = 25;
@@ -403,7 +380,7 @@ pub struct DisableMinimapAndMarkBossRoomAsExploredEnt {
     pub boss_id_: uint16,
     pub ptrs: VoidP,
 }
-pub type GameState = ::core::ffi::c_uint;
+pub use crate::types::GameState;
 pub const kGameState_44_TransitionFromDemo: GameState = 44;
 pub const kGameState_43_TransitionFromDemo: GameState = 43;
 pub const kGameState_42_PlayingDemo: GameState = 42;
@@ -449,7 +426,7 @@ pub const kGameState_3_Unused: GameState = 3;
 pub const kGameState_2_GameOptionsMenu: GameState = 2;
 pub const kGameState_1_OpeningCinematic: GameState = 1;
 pub const kGameState_0_Reset: GameState = 0;
-pub type Buttons = ::core::ffi::c_uint;
+pub use crate::types::Buttons;
 pub const kButton_B: Buttons = 32768;
 pub const kButton_Y: Buttons = 16384;
 pub const kButton_Select: Buttons = 8192;
@@ -462,7 +439,7 @@ pub const kButton_A: Buttons = 128;
 pub const kButton_X: Buttons = 64;
 pub const kButton_L: Buttons = 32;
 pub const kButton_R: Buttons = 16;
-pub type Consts_60 = ::core::ffi::c_uint;
+pub use crate::types::Consts_60;
 pub const addr_unk_606300: Consts_60 = 25344;
 pub const addr_unk_6061F0: Consts_60 = 25072;
 pub const addr_unk_605BE0: Consts_60 = 23520;
@@ -475,7 +452,7 @@ pub const addr_unk_6053E0: Consts_60 = 21472;
 pub const addr_unk_605000: Consts_60 = 20480;
 pub const addr_unk_604C00: Consts_60 = 19456;
 pub const addr_unk_604800: Consts_60 = 18432;
-pub type Consts_86 = ::core::ffi::c_uint;
+pub use crate::types::Consts_86;
 pub const addr_kEproj_Sparks: Consts_86 = 62616;
 pub const addr_kEproj_EnemyDeathExplosion: Consts_86 = 62277;
 pub const addr_kEproj_Pickup: Consts_86 = 62263;
@@ -649,7 +626,7 @@ pub const addr_stru_868BEC: Consts_86 = 35820;
 pub const addr_stru_868BDE: Consts_86 = 35806;
 pub const addr_stru_868BD0: Consts_86 = 35792;
 pub const addr_stru_868BC2: Consts_86 = 35778;
-pub type Consts_8D = ::core::ffi::c_uint;
+pub use crate::types::Consts_8D;
 pub const addr_kPalfx_FFD5: Consts_8D = 65493;
 pub const addr_kPalfx_FFD1: Consts_8D = 65489;
 pub const addr_kPalfx_FFCD: Consts_8D = 65485;
@@ -692,7 +669,7 @@ pub const addr_kPalfx_E198: Consts_8D = 57752;
 pub const addr_kPalfx_E194: Consts_8D = 57748;
 pub const addr_off_8DE192: Consts_8D = 57746;
 pub const addr_locret_8DC5E3: Consts_8D = 50659;
-pub type Consts_90 = ::core::ffi::c_uint;
+pub use crate::types::Consts_90;
 pub const addr_loc_90C4F0: Consts_90 = 50416;
 pub const addr_kSuperMissileAccelerations2: Consts_90 = 49963;
 pub const addr_kSuperMissileAccelerations: Consts_90 = 49923;
@@ -710,8 +687,7 @@ pub struct CheckSolidEnemyColl_Result {
     pub collision: uint16,
     pub amt: int32,
 }
-pub type Func_SpazerSba_V = unsafe extern "C" fn(uint16, uint16) -> ();
-pub type Func_AnimDelay = unsafe extern "C" fn(*const uint8) -> bool;
+pub use crate::types::{Func_AnimDelay, Func_SpazerSba_V};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Pair_Bool_Amt {

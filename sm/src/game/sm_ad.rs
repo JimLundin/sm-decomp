@@ -9,22 +9,16 @@ extern "C" {
     fn SpawnEprojWithRoomGfx(j: uint16, a: uint16);
     fn WriteColorsToPalette(k: uint16, db: uint8, j: uint16, a: uint16);
 }
-pub type __uint8_t = u8;
-pub type __uint16_t = u16;
-pub type __uint32_t = u32;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type uint8 = uint8_t;
-pub type uint16 = uint16_t;
-pub type VoidP = uint16;
+pub use crate::types::{
+    __uint16_t, __uint32_t, __uint8_t, uint16, uint16_t, uint32_t, uint8, uint8_t, VoidP,
+};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Point16U {
     pub x: uint16,
     pub y: uint16,
 }
-pub type Func_V = unsafe extern "C" fn() -> ();
+pub use crate::types::Func_V;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct EnemyData {
@@ -91,7 +85,7 @@ pub struct EnemyBase {
     pub bank: uint8,
     pub field_2F: uint8,
 }
-pub type EnemyProps = ::core::ffi::c_uint;
+pub use crate::types::EnemyProps;
 pub const kEnemyProps_RespawnIfKilled: EnemyProps = 16384;
 pub const kEnemyProps_DisableSamusColl: EnemyProps = 8192;
 pub const kEnemyProps_BlockPlasmaBeam: EnemyProps = 4096;
@@ -99,7 +93,7 @@ pub const kEnemyProps_ProcessedOffscreen: EnemyProps = 2048;
 pub const kEnemyProps_Tangible: EnemyProps = 1024;
 pub const kEnemyProps_Deleted: EnemyProps = 512;
 pub const kEnemyProps_Invisible: EnemyProps = 256;
-pub type Consts_86 = ::core::ffi::c_uint;
+pub use crate::types::Consts_86;
 pub const addr_kEproj_Sparks: Consts_86 = 62616;
 pub const addr_kEproj_EnemyDeathExplosion: Consts_86 = 62277;
 pub const addr_kEproj_Pickup: Consts_86 = 62263;
@@ -273,7 +267,7 @@ pub const addr_stru_868BEC: Consts_86 = 35820;
 pub const addr_stru_868BDE: Consts_86 = 35806;
 pub const addr_stru_868BD0: Consts_86 = 35792;
 pub const addr_stru_868BC2: Consts_86 = 35778;
-pub type Consts_AD = ::core::ffi::c_uint;
+pub use crate::types::Consts_AD;
 pub const addr_kTurnOffLightsForShitroidDeath: Consts_AD = 61999;
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -361,7 +355,7 @@ pub struct Enemy_MotherBrain {
     pub mbn_var_3E: uint16,
     pub mbn_var_3F: uint16,
 }
-pub type Func_CalcHdma = unsafe extern "C" fn(uint16, uint16) -> ();
+pub use crate::types::Func_CalcHdma;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Ram8000_Default {

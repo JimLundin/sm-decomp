@@ -106,37 +106,11 @@ extern "C" {
     );
     static mut g_config: Config;
 }
-pub type ptrdiff_t = isize;
-pub type size_t = usize;
-pub type __uint8_t = u8;
-pub type __uint16_t = u16;
-pub type __uint32_t = u32;
-pub type __off_t = ::core::ffi::c_long;
-pub type __off64_t = ::core::ffi::c_long;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type GLenum = ::core::ffi::c_uint;
-pub type GLboolean = ::core::ffi::c_uchar;
-pub type GLbitfield = ::core::ffi::c_uint;
-pub type GLint = ::core::ffi::c_int;
-pub type GLuint = ::core::ffi::c_uint;
-pub type GLsizei = ::core::ffi::c_int;
-pub type GLfloat = ::core::ffi::c_float;
-pub type GLchar = ::core::ffi::c_char;
-pub type GLsizeiptr = ptrdiff_t;
-pub type GLDEBUGPROC = Option<
-    unsafe extern "C" fn(
-        GLenum,
-        GLenum,
-        GLuint,
-        GLenum,
-        GLsizei,
-        *const GLchar,
-        *const ::core::ffi::c_void,
-    ) -> (),
->;
-pub type uint = ::core::ffi::c_uint;
+pub use crate::types::{
+    __off64_t, __off_t, __uint16_t, __uint32_t, __uint8_t, ptrdiff_t, size_t, uint, uint16_t,
+    uint32_t, uint8_t, GLbitfield, GLboolean, GLchar, GLenum, GLfloat, GLint, GLsizei, GLsizeiptr,
+    GLuint, GLDEBUGPROC,
+};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct _IO_FILE {
@@ -170,10 +144,9 @@ pub struct _IO_FILE {
     pub _mode: ::core::ffi::c_int,
     pub _unused2: [::core::ffi::c_char; 20],
 }
-pub type _IO_lock_t = ();
+pub use crate::types::_IO_lock_t;
 pub type FILE = _IO_FILE;
-pub type SDL_GLContext = *mut ::core::ffi::c_void;
-pub type SDL_GLattr = ::core::ffi::c_uint;
+pub use crate::types::{SDL_GLContext, SDL_GLattr};
 pub const SDL_GL_FLOATBUFFERS: SDL_GLattr = 27;
 pub const SDL_GL_CONTEXT_NO_ERROR: SDL_GLattr = 26;
 pub const SDL_GL_CONTEXT_RESET_NOTIFICATION: SDL_GLattr = 25;
@@ -206,9 +179,7 @@ pub type C2RustUnnamed = ::core::ffi::c_uint;
 pub const SDL_GL_CONTEXT_PROFILE_ES: C2RustUnnamed = 4;
 pub const SDL_GL_CONTEXT_PROFILE_COMPATIBILITY: C2RustUnnamed = 2;
 pub const SDL_GL_CONTEXT_PROFILE_CORE: C2RustUnnamed = 1;
-pub type uint8 = uint8_t;
-pub type uint16 = uint16_t;
-pub type uint32 = uint32_t;
+pub use crate::types::{uint16, uint32, uint8};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct RendererFuncs {

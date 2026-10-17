@@ -18,39 +18,13 @@ extern "C" {
     fn strlen(__s: *const ::core::ffi::c_char) -> size_t;
     fn SDL_GL_GetProcAddress(proc_0: *const ::core::ffi::c_char) -> *mut ::core::ffi::c_void;
 }
-pub type size_t = usize;
-pub type __int64_t = i64;
-pub type int64_t = __int64_t;
-pub type ptrdiff_t = isize;
-pub type GLenum = ::core::ffi::c_uint;
-pub type GLboolean = ::core::ffi::c_uchar;
-pub type GLbitfield = ::core::ffi::c_uint;
-pub type GLbyte = ::core::ffi::c_schar;
-pub type GLshort = ::core::ffi::c_short;
-pub type GLint = ::core::ffi::c_int;
-pub type GLubyte = ::core::ffi::c_uchar;
-pub type GLushort = ::core::ffi::c_ushort;
-pub type GLuint = ::core::ffi::c_uint;
-pub type GLsizei = ::core::ffi::c_int;
-pub type GLfloat = ::core::ffi::c_float;
-pub type GLdouble = ::core::ffi::c_double;
-pub type GLchar = ::core::ffi::c_char;
-pub type GLintptr = ptrdiff_t;
-pub type GLsizeiptr = ptrdiff_t;
-pub type GLint64 = int64_t;
-pub type GLDEBUGPROC = Option<
-    unsafe extern "C" fn(
-        GLenum,
-        GLenum,
-        GLuint,
-        GLenum,
-        GLsizei,
-        *const GLchar,
-        *const ::core::ffi::c_void,
-    ) -> (),
->;
+pub use crate::types::{
+    __int64_t, int64_t, ptrdiff_t, size_t, GLbitfield, GLboolean, GLbyte, GLchar, GLdouble, GLenum,
+    GLfloat, GLint, GLint64, GLintptr, GLshort, GLsizei, GLsizeiptr, GLubyte, GLuint, GLushort,
+    GLDEBUGPROC,
+};
 pub const ogl_LOAD_FAILED: ogl_LoadStatus = 0;
-pub type ogl_LoadStatus = ::core::ffi::c_uint;
+pub use crate::types::ogl_LoadStatus;
 pub const ogl_LOAD_SUCCEEDED: ogl_LoadStatus = 1;
 pub type ogl_StrToExtMap = ogl_StrToExtMap_s;
 #[derive(Copy, Clone)]
@@ -60,7 +34,7 @@ pub struct ogl_StrToExtMap_s {
     pub extensionVariable: *mut ::core::ffi::c_int,
     pub LoadExtension: PFN_LOADFUNCPOINTERS,
 }
-pub type PFN_LOADFUNCPOINTERS = Option<unsafe extern "C" fn() -> ::core::ffi::c_int>;
+pub use crate::types::PFN_LOADFUNCPOINTERS;
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const NULL_0: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 #[inline]

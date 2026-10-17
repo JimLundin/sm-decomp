@@ -19,22 +19,10 @@ extern "C" {
     ) -> !;
     static mut g_new_ppu: bool;
 }
-pub type size_t = usize;
-pub type __int8_t = i8;
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __int32_t = i32;
-pub type __uint32_t = u32;
-pub type __uint64_t = u64;
-pub type uint = ::core::ffi::c_uint;
-pub type int8_t = __int8_t;
-pub type int16_t = __int16_t;
-pub type int32_t = __int32_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type uint64_t = __uint64_t;
+pub use crate::types::{
+    __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint64_t, __uint8_t, int16_t,
+    int32_t, int8_t, size_t, uint, uint16_t, uint32_t, uint64_t, uint8_t,
+};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Ppu {
@@ -136,7 +124,7 @@ pub struct Ppu {
 pub struct PpuPixelPrioBufs {
     pub data: [PpuZbufType; 256],
 }
-pub type PpuZbufType = uint16_t;
+pub use crate::types::PpuZbufType;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct WindowLayer {
@@ -408,13 +396,11 @@ pub struct Cpu {
     pub spBreakpoint: uint16_t,
     pub in_emu: bool,
 }
-pub type SaveLoadFunc =
-    unsafe extern "C" fn(*mut ::core::ffi::c_void, *mut ::core::ffi::c_void, size_t) -> ();
+pub use crate::types::SaveLoadFunc;
 pub type C2RustUnnamed_0 = ::core::ffi::c_uint;
 pub const kPpuExtraLeftRight: C2RustUnnamed_0 = 0;
 pub const kPpuXPixels: C2RustUnnamed_0 = 256;
-pub type uint8 = uint8_t;
-pub type uint32 = uint32_t;
+pub use crate::types::{uint32, uint8};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct PpuWindows {
@@ -422,17 +408,17 @@ pub struct PpuWindows {
     pub nr: uint8,
     pub bits: uint8,
 }
-pub type int16 = int16_t;
+pub use crate::types::int16;
 pub const kWindow2Inversed: C2RustUnnamed_3 = 4;
 pub const kWindow2Enabled: C2RustUnnamed_3 = 8;
 pub const kWindow1Inversed: C2RustUnnamed_3 = 1;
 pub const kWindow1Enabled: C2RustUnnamed_3 = 2;
-pub type uint16 = uint16_t;
+pub use crate::types::uint16;
 pub const kPaletteShift: C2RustUnnamed_1 = 8;
 pub type C2RustUnnamed_1 = ::core::ffi::c_uint;
 pub const kPaletteShift_0: C2RustUnnamed_2 = 6;
 pub type C2RustUnnamed_2 = ::core::ffi::c_uint;
-pub type uint64 = uint64_t;
+pub use crate::types::uint64;
 pub type C2RustUnnamed_3 = ::core::ffi::c_uint;
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;

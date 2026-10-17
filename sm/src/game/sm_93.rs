@@ -11,19 +11,10 @@ extern "C" {
     fn HandleProjectileTrails();
     fn Samus_DrawShinesparkCrashEchoProjectiles();
 }
-pub type __uint8_t = u8;
-pub type __int16_t = i16;
-pub type __uint16_t = u16;
-pub type __uint32_t = u32;
-pub type int16_t = __int16_t;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type uint8 = uint8_t;
-pub type uint16 = uint16_t;
-pub type int16 = int16_t;
-pub type uint32 = uint32_t;
-pub type VoidP = uint16;
+pub use crate::types::{
+    __int16_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, uint16, uint16_t, uint32,
+    uint32_t, uint8, uint8_t, VoidP,
+};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Point16U {
@@ -51,7 +42,7 @@ pub struct ProjectileInstr {
     pub y_radius: uint8,
     pub field_6: uint16,
 }
-pub type ProjectileType = ::core::ffi::c_uint;
+pub use crate::types::ProjectileType;
 pub const kProjectileType_DontInteractWithSamus: ProjectileType = 32768;
 pub const kProjectileType_TypeMask: ProjectileType = 3840;
 pub const kProjectileType_MissileExplosion: ProjectileType = 2048;

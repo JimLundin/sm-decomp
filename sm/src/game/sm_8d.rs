@@ -8,16 +8,9 @@ extern "C" {
     fn QueueSfx2_Max6(a: uint16);
     fn QueueSfx3_Max6(a: uint16);
 }
-pub type __uint8_t = u8;
-pub type __uint16_t = u16;
-pub type __uint32_t = u32;
-pub type uint8_t = __uint8_t;
-pub type uint16_t = __uint16_t;
-pub type uint32_t = __uint32_t;
-pub type uint8 = uint8_t;
-pub type uint16 = uint16_t;
-pub type uint32 = uint32_t;
-pub type VoidP = uint16;
+pub use crate::types::{
+    __uint16_t, __uint32_t, __uint8_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, VoidP,
+};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct PairU16 {
@@ -67,7 +60,7 @@ pub struct PalFxDef {
     pub func: VoidP,
     pub instrs: VoidP,
 }
-pub type Consts_8D = ::core::ffi::c_uint;
+pub use crate::types::Consts_8D;
 pub const addr_kPalfx_FFD5: Consts_8D = 65493;
 pub const addr_kPalfx_FFD1: Consts_8D = 65489;
 pub const addr_kPalfx_FFCD: Consts_8D = 65485;
