@@ -514,6 +514,20 @@ parallel. Coverage remains six Ceres rooms, so input timing still needs work.
 Trace found first corridor entry at frame 11,627, when the original movie
 already presses left and immediately returns to the shaft. Try a simple
 controller sequence aligned to this frame loop before adding scheduling code.
+Final exact-pad replays all pass, concurrently: any% 129,712/0 (205.42s),
+low% 167,797/0 (263.94s), 100% 222,788/0 (340.77s). All remain in Ceres;
+none reaches the successful escape states 32/33 or Waver.
+Bounded input-only trials preserved the boot/shaft prefix to frame 11,627
+and replaced corridor inputs with coarse run/jump/shoot patterns. They
+pass the oracle but reach only three rooms, blocking at X219 in DFD7.
+Longer and standing jumps and continuous firing did not clear that obstacle;
+these trials do not expand coverage and are retired. Next: inspect the
+DFD7 obstacle and retime the original corridor segment against room/Samus
+coordinates. Do not resume broad gameplay cleanup on assumed TAS coverage.
+Parallel work now separates replay processes, coverage inspection, slope
+implementation and independent arithmetic review; source changes remain
+one focused verified commit at a time. Latest Linux stable build/replays
+are pending at https://github.com/JimLundin/sm-decomp/actions/runs/39074190882.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
