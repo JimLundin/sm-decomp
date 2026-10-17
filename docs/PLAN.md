@@ -555,6 +555,16 @@ Temporary cleanup mistakenly removed concurrent input trials from the
 shared target/geometry-probe directory. The supervisor reconstructed the
 successful ledge input from its creation history; cleanup is stopped and
 active trial files/DLLs are retained. Tracked source was unaffected.
+Upper-exit trial 17865 now proves the return ascent: leaves DFD7 at frame
+17,950 and enters DF8D gameplay at frame 18,084 (X472/Y139). Subsequent
+right input sends it back into DFD7; the other two upper-exit trials also
+finish there. All three pass 18,595/18,630/18,655 frames with zero failures.
+Next controller correction: keep moving left through DF8D after frame
+18,084, then climb DF45 and meet its elevator escape predicate. This pass
+stops input tuning at the item's hour limit with a measured successful
+DFD7 ascent; concurrent supervisor trials retain their files and continue
+independently. Linux exact-pad format/release build and all four replays
+passed on ede7dbcd: https://github.com/JimLundin/sm-decomp/actions/runs/39074190882.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
