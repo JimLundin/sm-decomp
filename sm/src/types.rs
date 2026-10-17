@@ -1824,3 +1824,11 @@ extern "C" {
 }
 
 pub type FILE = _IO_FILE;
+
+pub type KeyAction = ::core::ffi::c_uint;
+
+pub type OutputMethod = ::core::ffi::c_uint;
+
+pub type GamepadButton = ::core::ffi::c_int;
+
+pub type SaveLoadOperation = ::core::ffi::c_uint;

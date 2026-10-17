@@ -192,6 +192,17 @@ every step makes the next one easier.
    zero failures (182.87s); layout audit, format and library/frontend metadata
    builds pass. Rust lines now 271,083. Extern blocks rise 53 -> 54 because
    shared opaque types need a declaration block; existing FFI blocks remain.
+   Source consolidation complete: final inventory finds zero repeated named
+   structs/unions/typedefs, opaque declarations or anonymous enum concepts.
+   Eight repeated anonymous aliases now re-export `KeyAction`, `OutputMethod`,
+   `GamepadButton` and `SaveLoadOperation`, preserving all constants and
+   signedness. Unique subsystem types and distinct anonymous concepts stay
+   local. Final any%: 129,712 frames, zero failures (187.25s); format and
+   library/frontend metadata builds pass. Rust lines 271,083 -> 271,090:
+   seven extra lines retain old public paths alongside four canonical names.
+   All other counters unchanged. Linux Cargo build passed on the preceding
+   runtime batch; final-source Linux validation is pending:
+   https://github.com/JimLundin/sm-decomp/actions/runs/39065148166.
    This touches `rtl.rs` and game banks 80, 81, 82, 84, 86, 88, 8b, 8f, 90,
    91, 94, 9b, a0, a2, a3, a4, a5, a6, a7, a8, a9, b2 (only the types each
    already defines). Keep all fields, `Copy`/`Clone`, and representation exact:

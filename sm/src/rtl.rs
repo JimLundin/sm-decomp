@@ -119,8 +119,10 @@ pub struct StateRecorder {
     pub log: ByteArray,
     pub base_snapshot: ByteArray,
 }
-pub use crate::types::{ByteArray, Channel, SaveLoadFunc, SfxChan, SfxRegs, SpcPlayer};
-pub type C2RustUnnamed_0 = ::core::ffi::c_uint;
+pub use crate::types::{
+    ByteArray, Channel, SaveLoadFunc, SaveLoadOperation as C2RustUnnamed_0, SfxChan, SfxRegs,
+    SpcPlayer,
+};
 pub const kSaveLoad_Replay: C2RustUnnamed_0 = 3;
 pub const kSaveLoad_Load: C2RustUnnamed_0 = 2;
 pub const kSaveLoad_Save: C2RustUnnamed_0 = 1;
