@@ -403,6 +403,20 @@ was denied overwrite; a fresh DLL output linked/loaded and verified this
 source. Linux validates the actual stable frontend release build.
 Next: make Waver's movement/ROM dependencies an explicit safe boundary and
 choose the next readable gameplay subsystem.
+Checked ROM boundary applied: successful cartridge load registers a private
+pointer/length view in Game. The safe LoROM word reader checks allocation
+bounds while preserving linear table offsets and observes the live patched
+ROM. Registration documents lifetime/serialization requirements; reload and
+free remain unsafe legacy operations. Waver initialization and animation
+update are now safe Rust. Waver_Main remains unsafe because shared movement
+and sine helpers still require valid legacy runtime state; no safe wrapper
+conceals that precondition. All 65,536 animation indexes retain identical
+mapped offsets. Optimized DLL build, format and any% pass: 129,712 frames,
+zero failures (181.81s). Unsafe functions -2; Rust lines +33 establish the
+registered allocation and checked reader; remaining counters unchanged.
+Local Cargo remains ASR-denied; Linux stable frontend validation is pending.
+Next: deepen the shared enemy movement/sine boundary starting with the sine
+helper, then convert collision helpers without changing quirks.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:

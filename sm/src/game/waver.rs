@@ -3,7 +3,6 @@
 //! read from the loaded ROM; no ROM-derived data is stored in this module.
 use crate::game::sm_a0::{Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, SineMult8bit};
 use crate::game_state::Game;
-use crate::rtl::RomPtr;
 use crate::types::{uint16, EnemyBase};
 
 const INITIAL_INSTRUCTION: u16 = 0x86a7;
@@ -121,7 +120,7 @@ pub fn Waver_Instr_1(_k: uint16, jp: *const uint16, game: &mut Game) -> *const u
     jp
 }
 
-pub unsafe fn Waver_Init(game: &mut Game) {
+pub fn Waver_Init(game: &mut Game) {
     let index = game.cur_enemy_index();
     {
         let mut enemy = WaverRam::new(game, index);
@@ -188,7 +187,7 @@ pub unsafe fn Waver_Main(game: &mut Game) {
     }
 }
 
-pub unsafe fn Waver_Func_1(game: &mut Game) {
+pub fn Waver_Func_1(game: &mut Game) {
     let index = game.cur_enemy_index();
     let animation = WaverRam::new(game, index).animation();
     if animation != WaverRam::new(game, index).previous_animation() {
@@ -198,12 +197,7 @@ pub unsafe fn Waver_Func_1(game: &mut Game) {
     }
 }
 
-/// Read one animation word from the runtime-owned ROM allocation.
-///
-/// # Safety
-/// The Game must have a loaded ROM. As in the original dispatch, the animation
-/// value must select a word inside that allocation; it is not masked here.
-unsafe fn animation_instruction(game: &mut Game, animation: u16) -> u16 {
-    let word = RomPtr(ANIMATION_TABLE, game).add(usize::from(animation) * 2);
-    u16::from_le_bytes([*word, *word.add(1)])
+/// Preserve the original unmasked animation index and linear ROM offset.
+fn animation_instruction(game: &Game, animation: u16) -> u16 {
+    game.read_rom_word(ANIMATION_TABLE, usize::from(animation) * 2)
 }

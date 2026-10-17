@@ -1566,6 +1566,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char, game: &mut Game
     }
     game.g_sram = (*(*game.g_snes).cart).ram as *mut uint8;
     game.g_rom = (*(*game.g_snes).cart).rom;
+    game.register_rom(game.g_rom, (*(*game.g_snes).cart).romSize as usize);
     RtlSetupEmuCallbacks(
         ::core::ptr::null_mut::<uint8>(),
         Some(RtlRunFrameCompare as unsafe fn(uint16, ::core::ffi::c_int, &mut Game) -> ()),

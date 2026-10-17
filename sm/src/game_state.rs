@@ -8,6 +8,7 @@ use std::ffi::c_int;
 pub struct Game {
     pub g_ram: [u8; 131072],
     pub g_rom: *const u8,
+    loaded_rom: Option<LoadedRom>,
     pub decompress_src: u32,
     pub eproj_spawn_rect: Rect16U,
     pub eproj_spawn_r22: u16,
@@ -57,8 +58,43 @@ pub struct Game {
     pub pc_bp: uint32_t,
     pub g_debug_apu_cycles: bool,
 }
+// A registered allocation view. Cartridge reload/free are unsafe operations;
+// they must invalidate or replace this view before releasing its allocation.
+struct LoadedRom {
+    bytes: *const u8,
+    len: usize,
+}
+
 // Initialize the large RAM and oracle snapshots directly on the heap.
 impl Game {
+    /// Register the cartridge's ROM after a successful load.
+    ///
+    /// # Safety
+    /// `bytes` must identify `len` initialized bytes that remain allocated
+    /// until this view is replaced or the Game is discarded. Mutations must
+    /// be serialized with Game access; no concurrent writer may touch them.
+    pub(crate) unsafe fn register_rom(&mut self, bytes: *const u8, len: usize) {
+        assert!(!bytes.is_null());
+        self.loaded_rom = Some(LoadedRom { bytes, len });
+    }
+
+    /// Read a little-endian word at a LoROM address plus a linear byte offset.
+    /// Adding the offset after mapping preserves table reads across bank edges.
+    pub fn read_rom_word(&self, address: u32, byte_offset: usize) -> u16 {
+        assert!(
+            address & 0x8000 != 0,
+            "ROM address must select a LoROM window"
+        );
+        let rom = self.loaded_rom.as_ref().expect("ROM must be loaded");
+        let base = (((address >> 16) << 15 | address & 0x7fff) & 0x3fffff) as usize;
+        let start = base.checked_add(byte_offset).expect("ROM offset overflow");
+        let end = start.checked_add(2).expect("ROM offset overflow");
+        assert!(end <= rom.len, "ROM word outside loaded allocation");
+        // Registration guarantees allocation validity; bounds above cover both
+        // bytes. Read only these bytes, without borrowing the patched ROM.
+        unsafe { u16::from_le_bytes([*rom.bytes.add(start), *rom.bytes.add(start + 1)]) }
+    }
+
     /// Current enemy slot offset ($7E:0E54 in ram_map).
     pub fn cur_enemy_index(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0xe54], self.g_ram[0xe55]])
@@ -70,12 +106,14 @@ impl Game {
         let game = storage.as_mut_ptr();
         // All fields in this mechanical ownership batch are integers,
         // integer arrays, bools, raw pointers, Option<fn>, or plain structs
-        // composed only of those types. Zero is a valid representation for
+        // composed only of those types, plus the explicitly initialized ROM
+        // view option. Zero is a valid representation for
         // each; zeroed function options are still written explicitly below.
         // The entire allocation is initialized in place, avoiding a stack
         // temporary containing the 128 KiB RAM and three large snapshots.
         unsafe {
             core::ptr::write_bytes(game, 0, 1);
+            core::ptr::addr_of_mut!((*game).loaded_rom).write(None);
             core::ptr::addr_of_mut!((*game).g_rtl_runframe).write(None);
             core::ptr::addr_of_mut!((*game).g_rtl_syncall).write(None);
             core::ptr::addr_of_mut!((*game).g_use_my_apu_code).write(true);
