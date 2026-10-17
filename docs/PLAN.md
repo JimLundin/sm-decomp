@@ -797,6 +797,20 @@ side entrance. Source BTS3 at X1008/Y608..671 selects the 9879 exit;
 missiles with a fresh Select press and use five fresh shoot presses
 roughly30 frames apart; held shoot does not repeat missile fire.
 The independent Parlor climb is preparing its reusable ascent meanwhile.
+Awake gray gate cleared with normal beam combat: target/awake-return/
+last-pirate.inputs passes the standard oracle for 36,572 frames, zero
+failures (52.96s), preserving missiles 5/5 and Morph 0004. The probe
+observes quota 5/5, and the standard trace enters 96BA at frame36,567;
+final X462/Y2187. Upward-diagonal shooting jumps finish the wall pirate;
+fresh left shooting jumps across the corridor pillars finish the walkers.
+No missile shots or gate edits were used. This replay reaches fourteen
+rooms and eleven enemy definitions; the retained route union has fifteen
+rooms. The worker is normalizing the floor position for the saved ascent.
+Independent Parlor preparation has a verified first ledge at X463/Y1180
+(29,980/0 standard) and a later right ledge at X473/Y1067
+(30,314/0 standard). Upper ceiling islands require approaching each shelf
+from outside its underside. These pre-Morph prefixes remain preparation;
+the item-bearing combined route is still the next required proof.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
