@@ -441,6 +441,18 @@ other counters unchanged. Local Cargo remains ASR-denied; Linux stable
 frontend validation is pending on this commit.
 Next: replace typed enemy coordinate pointers with byte-backed access, then
 convert collision dispatch/callbacks without holding RAM borrows across them.
+Byte-backed enemy coordinates applied: horizontal/vertical movement reads
+and writes position/subposition/size through `game/enemy_ram.rs`, using
+EnemyData offsets and little-endian bytes. Each borrow ends before collision
+callbacks; reads after them retain the original slot and observe live state.
+Horizontal success performs a wrapping 16.16 addition and writes subposition
+before position as before. Vertical success retains its precomputed position.
+Layout audit confirms offsets 2/4/6/8/10/12; optimized DLL build, format and
+any% pass: 129,712 frames, zero failures (184.15s). Rust lines +82 implement
+safe coordinate access and explicit live reads; other counters unchanged.
+Local Cargo remains ASR-denied; Linux stable validation is pending.
+Next: convert collision type dispatch and callback context to Rust references
+and named RAM access, then remove unsafe from movement as dependencies permit.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:

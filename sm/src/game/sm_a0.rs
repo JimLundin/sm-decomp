@@ -11005,23 +11005,31 @@ unsafe fn Enemy_MoveRight_IgnoreSlopes_Inner(
     if amount32 == 0 {
         return 0;
     }
-    let enemy = gEnemyData(i32::from(k), game);
-    let top = (*enemy).y_pos.wrapping_sub((*enemy).y_height);
-    let rows = (*enemy)
-        .y_height
-        .wrapping_add((*enemy).y_pos)
+    let top = game
+        .enemy_coordinates(k)
+        .y_pos()
+        .wrapping_sub(game.enemy_coordinates(k).y_height());
+    let rows = game
+        .enemy_coordinates(k)
+        .y_height()
+        .wrapping_add(game.enemy_coordinates(k).y_pos())
         .wrapping_sub(1)
         .wrapping_sub(top & 0xfff0)
         >> 4;
     let row_offset = u16::from((top >> 4) as u8) * u16::from(game.room_width_in_blocks() as u8);
-    let new_pos = (amount32 as u32)
-        .wrapping_add((u32::from((*enemy).x_pos) << 16) | u32::from((*enemy).x_subpos));
+    let new_pos = (amount32 as u32).wrapping_add(
+        (u32::from(game.enemy_coordinates(k).x_pos()) << 16)
+            | u32::from(game.enemy_coordinates(k).x_subpos()),
+    );
     let new_x = (new_pos >> 16) as u16;
     let moving_left = amount32 < 0;
     let edge = if moving_left {
-        new_x.wrapping_sub((*enemy).x_width)
+        new_x.wrapping_sub(game.enemy_coordinates(k).x_width())
     } else {
-        (*enemy).x_width.wrapping_add(new_x).wrapping_sub(1)
+        game.enemy_coordinates(k)
+            .x_width()
+            .wrapping_add(new_x)
+            .wrapping_sub(1)
     };
     let mut collision = EnemyBlockCollInfo {
         ebci_r18_r20: amount32,
@@ -11038,29 +11046,31 @@ unsafe fn Enemy_MoveRight_IgnoreSlopes_Inner(
         collision.ebci_r28 = collision.ebci_r28.wrapping_sub(1);
         if collision.ebci_r28 & 0x8000 != 0 {
             // Apply the callback-adjusted amount to the enemy's live coordinates.
-            AddToHiLo(
-                &raw mut (*enemy).x_pos,
-                &raw mut (*enemy).x_subpos,
-                collision.ebci_r18_r20 as u32,
-            );
+            let position = (u32::from(game.enemy_coordinates(k).x_pos()) << 16)
+                | u32::from(game.enemy_coordinates(k).x_subpos());
+            let position = position.wrapping_add(collision.ebci_r18_r20 as u32);
+            game.enemy_coordinates(k).set_x_subpos(position as u16);
+            game.enemy_coordinates(k).set_x_pos((position >> 16) as u16);
             return 0;
         }
     }
     if moving_left {
-        let boundary = (*enemy)
-            .x_width
+        let boundary = game
+            .enemy_coordinates(k)
+            .x_width()
             .wrapping_add(1)
             .wrapping_add(collision.ebci_r26 | 0xf);
-        if boundary <= (*enemy).x_pos {
-            (*enemy).x_pos = boundary;
+        if boundary <= game.enemy_coordinates(k).x_pos() {
+            game.enemy_coordinates(k).set_x_pos(boundary);
         }
-        (*enemy).x_subpos = 0;
+        game.enemy_coordinates(k).set_x_subpos(0);
     } else {
-        let boundary = (collision.ebci_r26 & 0xfff0).wrapping_sub((*enemy).x_width);
-        if boundary >= (*enemy).x_pos {
-            (*enemy).x_pos = boundary;
+        let boundary =
+            (collision.ebci_r26 & 0xfff0).wrapping_sub(game.enemy_coordinates(k).x_width());
+        if boundary >= game.enemy_coordinates(k).x_pos() {
+            game.enemy_coordinates(k).set_x_pos(boundary);
         }
-        (*enemy).x_subpos = u16::MAX;
+        game.enemy_coordinates(k).set_x_subpos(u16::MAX);
     }
     1
 }
@@ -11069,22 +11079,30 @@ pub unsafe fn Enemy_MoveDown(k: uint16, amount32: int32, game: &mut Game) -> uin
     if amount32 == 0 {
         return 0;
     }
-    let enemy = gEnemyData(i32::from(k), game);
-    let left = (*enemy).x_pos.wrapping_sub((*enemy).x_width);
-    let columns = (*enemy)
-        .x_width
-        .wrapping_add((*enemy).x_pos)
+    let left = game
+        .enemy_coordinates(k)
+        .x_pos()
+        .wrapping_sub(game.enemy_coordinates(k).x_width());
+    let columns = game
+        .enemy_coordinates(k)
+        .x_width()
+        .wrapping_add(game.enemy_coordinates(k).x_pos())
         .wrapping_sub(1)
         .wrapping_sub(left & 0xfff0)
         >> 4;
-    let new_pos = (amount32 as u32)
-        .wrapping_add((u32::from((*enemy).y_pos) << 16) | u32::from((*enemy).y_subpos));
+    let new_pos = (amount32 as u32).wrapping_add(
+        (u32::from(game.enemy_coordinates(k).y_pos()) << 16)
+            | u32::from(game.enemy_coordinates(k).y_subpos()),
+    );
     let new_y = (new_pos >> 16) as u16;
     let moving_up = amount32 < 0;
     let edge = if moving_up {
-        new_y.wrapping_sub((*enemy).y_height)
+        new_y.wrapping_sub(game.enemy_coordinates(k).y_height())
     } else {
-        (*enemy).y_height.wrapping_add(new_y).wrapping_sub(1)
+        game.enemy_coordinates(k)
+            .y_height()
+            .wrapping_add(new_y)
+            .wrapping_sub(1)
     };
     let row_offset = u16::from((edge >> 4) as u8) * u16::from(game.room_width_in_blocks() as u8);
     let mut collision = EnemyBlockCollInfo {
@@ -11100,27 +11118,29 @@ pub unsafe fn Enemy_MoveDown(k: uint16, amount32: int32, game: &mut Game) -> uin
         collision.ebci_r28 = collision.ebci_r28.wrapping_sub(1);
         if collision.ebci_r28 & 0x8000 != 0 {
             // Vertical movement stores the precomputed position, unlike horizontal.
-            (*enemy).y_subpos = new_pos as u16;
-            (*enemy).y_pos = new_y;
+            game.enemy_coordinates(k).set_y_subpos(new_pos as u16);
+            game.enemy_coordinates(k).set_y_pos(new_y);
             return 0;
         }
         block_offset = block_offset.wrapping_add(2);
     }
     if moving_up {
-        let boundary = (*enemy)
-            .y_height
+        let boundary = game
+            .enemy_coordinates(k)
+            .y_height()
             .wrapping_add(1)
             .wrapping_add(collision.ebci_r26 | 0xf);
-        if boundary <= (*enemy).y_pos {
-            (*enemy).y_pos = boundary;
+        if boundary <= game.enemy_coordinates(k).y_pos() {
+            game.enemy_coordinates(k).set_y_pos(boundary);
         }
-        (*enemy).y_subpos = 0;
+        game.enemy_coordinates(k).set_y_subpos(0);
     } else {
-        let boundary = (collision.ebci_r26 & 0xfff0).wrapping_sub((*enemy).y_height);
-        if boundary >= (*enemy).y_pos {
-            (*enemy).y_pos = boundary;
+        let boundary =
+            (collision.ebci_r26 & 0xfff0).wrapping_sub(game.enemy_coordinates(k).y_height());
+        if boundary >= game.enemy_coordinates(k).y_pos() {
+            game.enemy_coordinates(k).set_y_pos(boundary);
         }
-        (*enemy).y_subpos = u16::MAX;
+        game.enemy_coordinates(k).set_y_subpos(u16::MAX);
     }
     1
 }
