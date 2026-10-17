@@ -15,7 +15,7 @@ casts everywhere, `unsafe` on every function, and modules that find each other
 through `extern "C"` declarations instead of `use`. The work from here is to
 turn it into good Rust without changing what it does.
 
-Everything that existed before is in the tag `archive/pre-transpile-2026-10-17`.
+Everything that existed before is in the branch `archive/pre-transpile-2026-10-17`.
 
 ## The oracle
 
@@ -84,7 +84,7 @@ change is judged.
    counts failing frames, prints the first one with the differing RAM
    addresses (named via `ram_map`), and exits non-zero on any failure.
 3. **Inputs.** Restore movie import (`.lsmv` and `.bk2` to one `u16` per
-   frame) from `crates/movie` in the archive tag, as a module or a small
+   frame) from `crates/movie` in the archive branch, as a module or a small
    `tools/` binary. The TAS will not stay in sync with snesrev's frame loop
    (lag frames differ), and that is fine: the comparison is still valid on
    whatever the inputs make the game do. Sync only affects coverage. Fix sync

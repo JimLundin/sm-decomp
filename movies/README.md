@@ -6,4 +6,4 @@ into this folder; movie files are gitignored.
 
 Converting a movie to per-frame controller input is phase 1 of
 [docs/PLAN.md](../docs/PLAN.md). The previous importer lives in `crates/movie`
-in the tag `archive/pre-transpile-2026-10-17`.
+in the branch `archive/pre-transpile-2026-10-17`.

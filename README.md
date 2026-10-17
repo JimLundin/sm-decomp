@@ -33,5 +33,5 @@ repository are MIT ([LICENSE](LICENSE)). Super Metroid is a trademark of
 Nintendo; no ROM or game data is included.
 
 Earlier approaches (static recompilation, the mixed C/Rust `restart`
-workspace, hand-ported subsystems) are preserved in the tag
+workspace, hand-ported subsystems) are preserved in the branch
 `archive/pre-transpile-2026-10-17`.

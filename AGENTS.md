@@ -3,7 +3,7 @@
 Read `docs/PLAN.md` first. It replaces every earlier workflow, skill, ticket
 and evidence rule. Ignore `.scratch/`, readiness gates, acceptance pointers,
 translation scopes and anything else from before 2026-10-17; that project
-is archived in the tag `archive/pre-transpile-2026-10-17`.
+is archived in the branch `archive/pre-transpile-2026-10-17`.
 
 ## The loop
 
