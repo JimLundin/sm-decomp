@@ -10997,166 +10997,132 @@ pub unsafe fn Enemy_MoveRight_IgnoreSlopes(
     return Enemy_MoveRight_IgnoreSlopes_Inner(k, amt, 0 as uint16, game);
 }
 unsafe fn Enemy_MoveRight_IgnoreSlopes_Inner(
-    mut k: uint16,
-    mut amount32: int32,
-    mut r32: uint16,
+    k: uint16,
+    amount32: int32,
+    slope_mode: uint16,
     game: &mut Game,
 ) -> uint8 {
     if amount32 == 0 {
-        return 0 as uint8;
+        return 0;
     }
-    let mut E: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);
-    let mut r28: uint16 = (((*E).y_height as ::core::ffi::c_int + (*E).y_pos as ::core::ffi::c_int
-        - 1 as ::core::ffi::c_int
-        - ((*E).y_pos as ::core::ffi::c_int - (*E).y_height as ::core::ffi::c_int
-            & 0xfff0 as ::core::ffi::c_int)) as uint16
-        as ::core::ffi::c_int
-        >> 4 as ::core::ffi::c_int) as uint16;
-    let mut r30: uint16 = r28;
-    let mut prod: uint16 = Mult8x8(
-        (((*E).y_pos as ::core::ffi::c_int - (*E).y_height as ::core::ffi::c_int) as uint16
-            as ::core::ffi::c_int
-            >> 4 as ::core::ffi::c_int) as uint8,
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
-    );
-    let mut new_pos: uint32 = (amount32 as uint32)
-        .wrapping_add(((*E).x_pos as uint32) << 16 as ::core::ffi::c_int | (*E).x_subpos as uint32);
-    let mut v5: uint16 = 0;
-    let mut r24: uint16 = (new_pos >> 16 as ::core::ffi::c_int) as uint16;
-    if amount32 as ::core::ffi::c_uint & 0x80000000 as ::core::ffi::c_uint != 0 {
-        v5 = (new_pos >> 16 as ::core::ffi::c_int).wrapping_sub((*E).x_width as uint32) as uint16;
+    let enemy = gEnemyData(i32::from(k), game);
+    let top = (*enemy).y_pos.wrapping_sub((*enemy).y_height);
+    let rows = (*enemy)
+        .y_height
+        .wrapping_add((*enemy).y_pos)
+        .wrapping_sub(1)
+        .wrapping_sub(top & 0xfff0)
+        >> 4;
+    let row_offset = u16::from((top >> 4) as u8) * u16::from(game.room_width_in_blocks() as u8);
+    let new_pos = (amount32 as u32)
+        .wrapping_add((u32::from((*enemy).x_pos) << 16) | u32::from((*enemy).x_subpos));
+    let new_x = (new_pos >> 16) as u16;
+    let moving_left = amount32 < 0;
+    let edge = if moving_left {
+        new_x.wrapping_sub((*enemy).x_width)
     } else {
-        v5 = ((*E).x_width as uint32)
-            .wrapping_add(new_pos >> 16 as ::core::ffi::c_int)
-            .wrapping_sub(1 as uint32) as uint16;
-    }
-    let mut ebci: EnemyBlockCollInfo = EnemyBlockCollInfo {
-        ebci_r18_r20: amount32,
-        ebci_r24: r24,
-        ebci_r26: v5,
-        ebci_r28: r28,
-        ebci_r30: r30,
-        ebci_r32: r32,
+        (*enemy).x_width.wrapping_add(new_x).wrapping_sub(1)
     };
-    let mut v6: uint16 = (2 as ::core::ffi::c_int
-        * (prod as ::core::ffi::c_int + (v5 as ::core::ffi::c_int >> 4 as ::core::ffi::c_int)))
-        as uint16;
-    while EnemyBlockCollReact_Horiz(&raw mut ebci, v6, game) as ::core::ffi::c_int
-        & 1 as ::core::ffi::c_int
-        == 0
-    {
-        v6 = (v6 as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                * 2 as ::core::ffi::c_int) as uint16;
-        ebci.ebci_r28 = ebci.ebci_r28.wrapping_sub(1);
-        if ebci.ebci_r28 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-        {
+    let mut collision = EnemyBlockCollInfo {
+        ebci_r18_r20: amount32,
+        ebci_r24: new_x,
+        ebci_r26: edge,
+        ebci_r28: rows,
+        ebci_r30: rows,
+        ebci_r32: slope_mode,
+    };
+    let mut block_offset = row_offset.wrapping_add(edge >> 4).wrapping_mul(2);
+    while EnemyBlockCollReact_Horiz(&raw mut collision, block_offset, game) & 1 == 0 {
+        // The callback can change room state; retain the original live read.
+        block_offset = block_offset.wrapping_add(game.room_width_in_blocks().wrapping_mul(2));
+        collision.ebci_r28 = collision.ebci_r28.wrapping_sub(1);
+        if collision.ebci_r28 & 0x8000 != 0 {
+            // Apply the callback-adjusted amount to the enemy's live coordinates.
             AddToHiLo(
-                &raw mut (*E).x_pos,
-                &raw mut (*E).x_subpos,
-                ebci.ebci_r18_r20 as uint32,
+                &raw mut (*enemy).x_pos,
+                &raw mut (*enemy).x_subpos,
+                collision.ebci_r18_r20 as u32,
             );
-            return 0 as uint8;
+            return 0;
         }
     }
-    if amount32 as ::core::ffi::c_uint & 0x80000000 as ::core::ffi::c_uint != 0 {
-        let mut v12: uint16 = ((*E).x_width as ::core::ffi::c_int
-            + 1 as ::core::ffi::c_int
-            + (ebci.ebci_r26 as ::core::ffi::c_int | 0xf as ::core::ffi::c_int))
-            as uint16;
-        if v12 as ::core::ffi::c_int <= (*E).x_pos as ::core::ffi::c_int {
-            (*E).x_pos = v12;
+    if moving_left {
+        let boundary = (*enemy)
+            .x_width
+            .wrapping_add(1)
+            .wrapping_add(collision.ebci_r26 | 0xf);
+        if boundary <= (*enemy).x_pos {
+            (*enemy).x_pos = boundary;
         }
-        (*E).x_subpos = 0 as uint16;
-        return 1 as uint8;
+        (*enemy).x_subpos = 0;
     } else {
-        let mut v10: uint16 = ((ebci.ebci_r26 as ::core::ffi::c_int & 0xfff0 as ::core::ffi::c_int)
-            - (*E).x_width as ::core::ffi::c_int) as uint16;
-        if v10 as ::core::ffi::c_int >= (*E).x_pos as ::core::ffi::c_int {
-            (*E).x_pos = v10;
+        let boundary = (collision.ebci_r26 & 0xfff0).wrapping_sub((*enemy).x_width);
+        if boundary >= (*enemy).x_pos {
+            (*enemy).x_pos = boundary;
         }
-        (*E).x_subpos = -(1 as ::core::ffi::c_int) as uint16;
-        return 1 as uint8;
-    };
+        (*enemy).x_subpos = u16::MAX;
+    }
+    1
 }
-pub unsafe fn Enemy_MoveDown(mut k: uint16, mut amount32: int32, game: &mut Game) -> uint8 {
-    let mut v6: int16 = 0;
-    let mut v5: uint16 = 0;
+
+pub unsafe fn Enemy_MoveDown(k: uint16, amount32: int32, game: &mut Game) -> uint8 {
     if amount32 == 0 {
-        return 0 as uint8;
+        return 0;
     }
-    let mut E: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);
-    let mut r28: uint16 = (((*E).x_width as ::core::ffi::c_int + (*E).x_pos as ::core::ffi::c_int
-        - 1 as ::core::ffi::c_int
-        - ((*E).x_pos as ::core::ffi::c_int - (*E).x_width as ::core::ffi::c_int
-            & 0xfff0 as ::core::ffi::c_int)) as uint16
-        as ::core::ffi::c_int
-        >> 4 as ::core::ffi::c_int) as uint16;
-    let mut r30: uint16 = r28;
-    let mut new_pos: uint32 = (amount32 as uint32)
-        .wrapping_add(((*E).y_pos as uint32) << 16 as ::core::ffi::c_int | (*E).y_subpos as uint32);
-    let mut r24: uint16 = (new_pos >> 16 as ::core::ffi::c_int) as uint16;
-    if amount32 as ::core::ffi::c_uint & 0x80000000 as ::core::ffi::c_uint != 0 {
-        v5 = (new_pos >> 16 as ::core::ffi::c_int).wrapping_sub((*E).y_height as uint32) as uint16;
+    let enemy = gEnemyData(i32::from(k), game);
+    let left = (*enemy).x_pos.wrapping_sub((*enemy).x_width);
+    let columns = (*enemy)
+        .x_width
+        .wrapping_add((*enemy).x_pos)
+        .wrapping_sub(1)
+        .wrapping_sub(left & 0xfff0)
+        >> 4;
+    let new_pos = (amount32 as u32)
+        .wrapping_add((u32::from((*enemy).y_pos) << 16) | u32::from((*enemy).y_subpos));
+    let new_y = (new_pos >> 16) as u16;
+    let moving_up = amount32 < 0;
+    let edge = if moving_up {
+        new_y.wrapping_sub((*enemy).y_height)
     } else {
-        v5 = ((*E).y_height as uint32)
-            .wrapping_add(new_pos >> 16 as ::core::ffi::c_int)
-            .wrapping_sub(1 as uint32) as uint16;
-    }
-    let mut prod: uint16 = Mult8x8(
-        (v5 as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint8,
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
-    );
-    v6 = (((*E).x_pos as ::core::ffi::c_int - (*E).x_width as ::core::ffi::c_int) as uint16
-        as ::core::ffi::c_int
-        >> 4 as ::core::ffi::c_int) as int16;
-    let mut ebci: EnemyBlockCollInfo = EnemyBlockCollInfo {
+        (*enemy).y_height.wrapping_add(new_y).wrapping_sub(1)
+    };
+    let row_offset = u16::from((edge >> 4) as u8) * u16::from(game.room_width_in_blocks() as u8);
+    let mut collision = EnemyBlockCollInfo {
         ebci_r18_r20: amount32,
-        ebci_r24: r24,
-        ebci_r26: v5,
-        ebci_r28: r28,
-        ebci_r30: r30,
-        ebci_r32: 0 as uint16,
+        ebci_r24: new_y,
+        ebci_r26: edge,
+        ebci_r28: columns,
+        ebci_r30: columns,
+        ebci_r32: 0,
     };
-    let mut i: ::core::ffi::c_int =
-        2 as ::core::ffi::c_int * (prod as ::core::ffi::c_int + v6 as ::core::ffi::c_int);
-    while EnemyBlockCollReact_Vert(&raw mut ebci, i as uint16, game) as ::core::ffi::c_int
-        & 1 as ::core::ffi::c_int
-        == 0
-    {
-        ebci.ebci_r28 = ebci.ebci_r28.wrapping_sub(1);
-        if ebci.ebci_r28 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-        {
-            (*E).y_subpos = new_pos as uint16;
-            (*E).y_pos = (new_pos >> 16 as ::core::ffi::c_int) as uint16;
-            return 0 as uint8;
+    let mut block_offset = row_offset.wrapping_add(left >> 4).wrapping_mul(2);
+    while EnemyBlockCollReact_Vert(&raw mut collision, block_offset, game) & 1 == 0 {
+        collision.ebci_r28 = collision.ebci_r28.wrapping_sub(1);
+        if collision.ebci_r28 & 0x8000 != 0 {
+            // Vertical movement stores the precomputed position, unlike horizontal.
+            (*enemy).y_subpos = new_pos as u16;
+            (*enemy).y_pos = new_y;
+            return 0;
         }
-        i += 2 as ::core::ffi::c_int;
+        block_offset = block_offset.wrapping_add(2);
     }
-    if amount32 as ::core::ffi::c_uint & 0x80000000 as ::core::ffi::c_uint != 0 {
-        let mut v13: uint16 = ((*E).y_height as ::core::ffi::c_int
-            + 1 as ::core::ffi::c_int
-            + (ebci.ebci_r26 as ::core::ffi::c_int | 0xf as ::core::ffi::c_int))
-            as uint16;
-        if v13 as ::core::ffi::c_int <= (*E).y_pos as ::core::ffi::c_int {
-            (*E).y_pos = v13;
+    if moving_up {
+        let boundary = (*enemy)
+            .y_height
+            .wrapping_add(1)
+            .wrapping_add(collision.ebci_r26 | 0xf);
+        if boundary <= (*enemy).y_pos {
+            (*enemy).y_pos = boundary;
         }
-        (*E).y_subpos = 0 as uint16;
-        return 1 as uint8;
+        (*enemy).y_subpos = 0;
     } else {
-        let mut v10: uint16 = ((ebci.ebci_r26 as ::core::ffi::c_int & 0xfff0 as ::core::ffi::c_int)
-            - (*E).y_height as ::core::ffi::c_int) as uint16;
-        if v10 as ::core::ffi::c_int >= (*E).y_pos as ::core::ffi::c_int {
-            (*E).y_pos = v10;
+        let boundary = (collision.ebci_r26 & 0xfff0).wrapping_sub((*enemy).y_height);
+        if boundary >= (*enemy).y_pos {
+            (*enemy).y_pos = boundary;
         }
-        (*E).y_subpos = -(1 as ::core::ffi::c_int) as uint16;
-        return 1 as uint8;
-    };
+        (*enemy).y_subpos = u16::MAX;
+    }
+    1
 }
 static off_A0C859: [Option<Func_EnemyBlockCollInfo_U8>; 16] = unsafe {
     [

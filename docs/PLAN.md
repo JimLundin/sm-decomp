@@ -429,6 +429,18 @@ lines -17, Rust lines -6; other counters unchanged. Local Cargo remains
 ASR-denied; Linux stable build/any% validation is pending on this commit.
 Next: convert horizontal/vertical enemy collision arithmetic, retaining live
 enemy fields after callbacks and the original wrapping edge calculations.
+Horizontal/vertical collision arithmetic converted: explicit wrapping 16/32-bit
+edge, span, block-offset and boundary calculations replace C cast chains.
+Room width uses its ram_map name/accessor. Original callback order and live
+reads remain: horizontal success applies callback-adjusted displacement to
+live coordinates; vertical success stores its precomputed position. Boundary
+and randomized checks cover 100,100 coordinate/size pairs and 1,001,000 block
+offsets. Format, optimized DLL build and full any% pass: 129,712 frames, zero
+failures (184.60s). Raw RAM offsets -3, c_int cast lines -64, Rust lines -29;
+other counters unchanged. Local Cargo remains ASR-denied; Linux stable
+frontend validation is pending on this commit.
+Next: replace typed enemy coordinate pointers with byte-backed access, then
+convert collision dispatch/callbacks without holding RAM borrows across them.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:

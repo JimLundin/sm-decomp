@@ -108,6 +108,11 @@ impl Game {
         start
     }
 
+    /// Room width in blocks ($7E:07A5 in ram_map).
+    pub fn room_width_in_blocks(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x7a5], self.g_ram[0x7a6]])
+    }
+
     /// Current enemy slot offset ($7E:0E54 in ram_map).
     pub fn cur_enemy_index(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0xe54], self.g_ram[0xe55]])
