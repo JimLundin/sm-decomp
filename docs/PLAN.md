@@ -741,6 +741,23 @@ shelf11-right32.inputs (X401/Y1443) repeats four more times exactly,
 covering the remaining 256-pixel cycles. The unique upper shelves and
 ceiling hatch still need input verification, then the suffix can be
 grafted onto the actual post-missile return. Progress counters unchanged.
+Full nine-screen shaft ascent now verified: target/mother-shaft-ascent2/
+parlor-hatch.inputs passes the standard oracle for 29,687 frames, zero
+failures (41.80s), ending in Parlor 92FD at X370/Y1211, standing.
+The distinct upper shelves reach X334/Y379, X383/Y267, X335/Y211,
+X327/Y139, then the central island X370/Y91. Up/shoot 60, neutral 5,
+Up/jump/shoot 80 and neutral 200 open and cross the ceiling hatch.
+The reusable ascent-from-396-2187.inputs suffix has 4,747 frames; its
+original mother-drop-left.inputs prefix is exactly 24,940 frames.
+Normalize the actual post-missile arrival to standing X396/Y2187 before
+appending it, then verify the combined route. This proof uses a separate
+pre-Morph prefix and does not yet prove the full return with items.
+The post-missile connector climb has reached X119/Y235 in 9F11:
+center-edge-hold.inputs under target/post-missile-return passes the standard
+oracle for 33,336 frames, zero failures (47.17s), with missiles still 5/5.
+Upper shootable blocks constrain the next jump; the worker is inspecting
+live block changes and testing a neutral jump through the shot column
+before steering right. No source or progress counter changes.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
