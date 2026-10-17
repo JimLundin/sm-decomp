@@ -719,6 +719,20 @@ Independent shaft ascent also advances: shelf3-left.inputs under
 target/mother-shaft-ascent2 passes the standard oracle for 25,313 frames,
 zero failures (36.74s), ending standing at X402/Y1955 in 96BA. Its reusable
 fresh jumps extend the previously verified first-ledge prefix.
+First-missile pickup now verified: target/missile-pickup/a107-left.inputs
+passes the standard oracle for 32,591 frames, zero failures (47.97s).
+Current and maximum missiles are both 5/5, Morph equipped/collected 0004,
+and the message is closed; final A107 position X85/Y139, gameplay state 8.
+The successful continuation from frame 31,780 holds left/shoot 90,
+neutral 600, then a fresh jump press and neutral 120. The ordinary beam
+opens the Chozo orb and proximity collects its exposed item.
+The next normal route is back through A107's right exit to 9F11 lower-left,
+Morph right beneath the same wall, then staged jumps up the shaft to its
+upper-left Morph-room exit. Earlier claims that this return bypasses the
+shaft climb described the wrong room and are superseded by this replay.
+Keep all five missiles for the bomb-room red door. The return and awake
+pirate quota are the next coverage item; shaft preparation continues in
+parallel. No gameplay source changed; residue counters remain unchanged.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
