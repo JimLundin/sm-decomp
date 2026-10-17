@@ -529,6 +529,7 @@ unsafe extern "C" fn cart_readLorom(
     mut bank: uint8_t,
     mut adr: uint16_t,
 ) -> uint8_t {
+    let original_bank = bank;
     if (bank as ::core::ffi::c_int >= 0x70 as ::core::ffi::c_int
         && (bank as ::core::ffi::c_int) < 0x7e as ::core::ffi::c_int
         || bank as ::core::ffi::c_int >= 0xf0 as ::core::ffi::c_int)
@@ -556,6 +557,23 @@ unsafe extern "C" fn cart_readLorom(
         b"While trying to read from 0x%x\n\0" as *const u8 as *const ::core::ffi::c_char,
         (bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int | adr as ::core::ffi::c_int,
     );
+    let snes = &*(*cart).snes;
+    let cpu = &*snes.cpu;
+    eprintln!(
+        "Invalid LoROM read ${original_bank:02X}:{adr:04X}, frame {}: PC ${:02X}:{:04X} A ${:04X} X ${:04X} Y ${:04X} SP ${:04X} DP ${:04X} DB ${:02X}",
+        crate::rtl::snes_frame_counter,
+        cpu.k, cpu.pc, cpu.a, cpu.x, cpu.y, cpu.sp, cpu.dp, cpu.db,
+    );
+    eprintln!(
+        "CPU flags: N={} V={} M={} X={} D={} I={} Z={} C={} E={}",
+        cpu.n, cpu.v, cpu.mf, cpu.xf, cpu.d, cpu.i, cpu.z, cpu.c, cpu.e,
+    );
+    let mut direct_page = [0u8; 13];
+    for (index, value) in direct_page.iter_mut().enumerate() {
+        let address = cpu.dp.wrapping_add(0x44 + index as u16);
+        *value = *snes.ram.add(usize::from(address));
+    }
+    eprintln!("Direct page $44..$50: {direct_page:02X?}");
     DumpCpuHistory();
     Die(b"The game crashed in cart_readLorom\0" as *const u8 as *const ::core::ffi::c_char);
     return (*(*cart).snes).openBus;
