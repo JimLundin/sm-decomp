@@ -361,37 +361,37 @@ pub const addr_kHudTilemaps_Missiles: Consts_80 = 39331;
 pub const addr_kHudTilemaps_AutoReserve: Consts_80 = 39307;
 pub use crate::types::SpawnHardcodedPlmArgs;
 #[inline]
-unsafe extern "C" fn swap16(mut v: uint16) -> uint16 {
+unsafe fn swap16(mut v: uint16) -> uint16 {
     return ((v as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
         | v as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint16;
 }
 #[inline]
-unsafe extern "C" fn RomPtr_80(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_80(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x800000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomPtr_92(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_92(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x920000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomPtrWithBank(mut bank: uint8, mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtrWithBank(mut bank: uint8, mut addr: uint16_t) -> *const uint8 {
     return RomPtr(
         ((bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int | addr as ::core::ffi::c_int)
             as uint32_t,
     );
 }
 #[inline]
-unsafe extern "C" fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
+unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
     return (&raw mut g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
         as *mut uint8 as *mut VramWriteEntry;
 }
 #[inline]
-unsafe extern "C" fn get_RoomDefHeader(mut a: uint16) -> *mut RoomDefHeader {
+unsafe fn get_RoomDefHeader(mut a: uint16) -> *mut RoomDefHeader {
     return RomPtr((0x8f0000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut RoomDefHeader;
 }
 #[inline]
-unsafe extern "C" fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
+unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
     let mut t: uint32 = ((*lo as ::core::ffi::c_int
         + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
         as uint32)
@@ -401,15 +401,13 @@ unsafe extern "C" fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: 
 }
 pub const fnDoorTransition_FadeInScreenAndFinish: ::core::ffi::c_int =
     0x82e737 as ::core::ffi::c_int;
-#[no_mangle]
-pub unsafe extern "C" fn APU_UploadBank(mut addr: uint32) {
+pub unsafe fn APU_UploadBank(mut addr: uint32) {
     if !g_use_my_apu_code {
         return;
     }
     RtlApuUpload(RomPtr(addr as uint32_t));
 }
-#[no_mangle]
-pub unsafe extern "C" fn NextRandom() -> uint16 {
+pub unsafe fn NextRandom() -> uint16 {
     let mut RegWord: uint16 =
         (*((&raw mut g_ram as *mut uint8).offset(0x5e5 as ::core::ffi::c_int as isize)
             as *mut uint16 as *mut uint8)
@@ -443,8 +441,7 @@ pub unsafe extern "C" fn NextRandom() -> uint16 {
         result;
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ReleaseButtonsFilter(mut v0: uint16) {
+pub unsafe fn ReleaseButtonsFilter(mut v0: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x5dd as ::core::ffi::c_int as isize) as *mut uint16) =
         v0;
     let mut v1: bool = !(*((&raw mut g_ram as *mut uint8)
@@ -498,14 +495,12 @@ pub unsafe extern "C" fn ReleaseButtonsFilter(mut v0: uint16) {
                 ^ *((&raw mut g_ram as *mut uint8).offset(0x5df as ::core::ffi::c_int as isize)
                     as *mut uint16) as ::core::ffi::c_int)) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PrepareBitAccess(mut a: uint16) -> uint16 {
+pub unsafe fn PrepareBitAccess(mut a: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x5e7 as ::core::ffi::c_int as isize) as *mut uint16) =
         ((1 as ::core::ffi::c_int) << (a as ::core::ffi::c_int & 7 as ::core::ffi::c_int)) as uint16;
     return (a as ::core::ffi::c_int >> 3 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetBossBitForCurArea(mut a: uint16) {
+pub unsafe fn SetBossBitForCurArea(mut a: uint16) {
     let ref mut fresh91 = *(&raw mut g_ram as *mut uint8)
         .offset(0xd828 as ::core::ffi::c_int as isize)
         .offset(
@@ -514,8 +509,7 @@ pub unsafe extern "C" fn SetBossBitForCurArea(mut a: uint16) {
         );
     *fresh91 = (*fresh91 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearBossBitForCurArea(mut a: uint16) {
+pub unsafe fn ClearBossBitForCurArea(mut a: uint16) {
     let ref mut fresh19 = *(&raw mut g_ram as *mut uint8)
         .offset(0xd828 as ::core::ffi::c_int as isize)
         .offset(
@@ -524,8 +518,7 @@ pub unsafe extern "C" fn ClearBossBitForCurArea(mut a: uint16) {
         );
     *fresh19 = (*fresh19 as ::core::ffi::c_int & !(a as ::core::ffi::c_int)) as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CheckBossBitForCurArea(mut a: uint16) -> uint8 {
+pub unsafe fn CheckBossBitForCurArea(mut a: uint16) -> uint8 {
     return (a as ::core::ffi::c_int
         & *(&raw mut g_ram as *mut uint8)
             .offset(0xd828 as ::core::ffi::c_int as isize)
@@ -535,8 +528,7 @@ pub unsafe extern "C" fn CheckBossBitForCurArea(mut a: uint16) -> uint8 {
             ) as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetEventHappened(mut a: uint16) {
+pub unsafe fn SetEventHappened(mut a: uint16) {
     let mut v1: uint16 = PrepareBitAccess(a);
     let ref mut fresh94 = *(&raw mut g_ram as *mut uint8)
         .offset(0xd820 as ::core::ffi::c_int as isize)
@@ -545,8 +537,7 @@ pub unsafe extern "C" fn SetEventHappened(mut a: uint16) {
         | *((&raw mut g_ram as *mut uint8).offset(0x5e7 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int) as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearEventHappened(mut v0: uint16) {
+pub unsafe fn ClearEventHappened(mut v0: uint16) {
     let mut v1: uint16 = PrepareBitAccess(v0);
     let ref mut fresh20 = *(&raw mut g_ram as *mut uint8)
         .offset(0xd820 as ::core::ffi::c_int as isize)
@@ -555,8 +546,7 @@ pub unsafe extern "C" fn ClearEventHappened(mut v0: uint16) {
         & !(*((&raw mut g_ram as *mut uint8).offset(0x5e7 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int)) as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CheckEventHappened(mut a: uint16) -> uint16 {
+pub unsafe fn CheckEventHappened(mut a: uint16) -> uint16 {
     let mut idx: uint16 = PrepareBitAccess(a);
     return (*((&raw mut g_ram as *mut uint8).offset(0x5e7 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -565,8 +555,7 @@ pub unsafe extern "C" fn CheckEventHappened(mut a: uint16) -> uint16 {
             .offset(idx as isize) as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CopySuperMetroidString() {
+pub unsafe fn CopySuperMetroidString() {
     memcpy(
         g_sram.offset(0x1fe0 as ::core::ffi::c_int as isize) as *mut uint8
             as *mut ::core::ffi::c_void,
@@ -575,8 +564,7 @@ pub unsafe extern "C" fn CopySuperMetroidString() {
     );
     RtlWriteSram();
 }
-#[no_mangle]
-pub unsafe extern "C" fn VerifySRAM() {
+pub unsafe fn VerifySRAM() {
     *((&raw mut g_ram as *mut uint8).offset(0x1f59 as ::core::ffi::c_int as isize)
         as *mut uint16) = 3 as uint16;
     if LoadFromSram(0 as uint16) as ::core::ffi::c_int != 0
@@ -602,13 +590,11 @@ pub unsafe extern "C" fn VerifySRAM() {
             as *mut uint16) = 4 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Multiply16x16(mut a: uint16, mut j: uint16) -> uint32 {
+pub unsafe fn Multiply16x16(mut a: uint16, mut j: uint16) -> uint32 {
     let mut result: uint32 = (a as uint32).wrapping_mul(j as uint32);
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn WaitForNMI_Async() -> CoroutineRet {
+pub unsafe fn WaitForNMI_Async() -> CoroutineRet {
     if *(&raw mut g_ram as *mut uint8).offset(0x782 as ::core::ffi::c_int as isize) != 0 {
         *(&raw mut g_ram as *mut uint8).offset(0x782 as ::core::ffi::c_int as isize) = 0 as uint8;
         return 0 as CoroutineRet;
@@ -617,8 +603,7 @@ pub unsafe extern "C" fn WaitForNMI_Async() -> CoroutineRet {
     *(&raw mut g_ram as *mut uint8).offset(0x782 as ::core::ffi::c_int as isize) = 1 as uint8;
     return 1 as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn WaitForNMI_NoUpdate_Async() -> CoroutineRet {
+pub unsafe fn WaitForNMI_NoUpdate_Async() -> CoroutineRet {
     if *(&raw mut g_ram as *mut uint8).offset(0x782 as ::core::ffi::c_int as isize) != 0 {
         *(&raw mut g_ram as *mut uint8).offset(0x782 as ::core::ffi::c_int as isize) = 0 as uint8;
         return 0 as CoroutineRet;
@@ -626,8 +611,7 @@ pub unsafe extern "C" fn WaitForNMI_NoUpdate_Async() -> CoroutineRet {
     *(&raw mut g_ram as *mut uint8).offset(0x782 as ::core::ffi::c_int as isize) = 1 as uint8;
     return 1 as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnableNMI() {
+pub unsafe fn EnableNMI() {
     let mut v0: uint8 = (*(&raw mut g_ram as *mut uint8).offset(0x84 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
         | 0x80 as ::core::ffi::c_int) as uint8;
@@ -639,8 +623,7 @@ pub unsafe extern "C" fn EnableNMI() {
     );
     *(&raw mut g_ram as *mut uint8).offset(0x84 as ::core::ffi::c_int as isize) = v0;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DisableNMI() {
+pub unsafe fn DisableNMI() {
     let mut v0: uint8 = (*(&raw mut g_ram as *mut uint8).offset(0x84 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
         & 0x7f as ::core::ffi::c_int) as uint8;
@@ -652,20 +635,17 @@ pub unsafe extern "C" fn DisableNMI() {
     );
     *(&raw mut g_ram as *mut uint8).offset(0x84 as ::core::ffi::c_int as isize) = v0;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ScreenOff() {
+pub unsafe fn ScreenOff() {
     let ref mut fresh89 =
         *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize);
     *fresh89 = (*fresh89 as ::core::ffi::c_int | 0x80 as ::core::ffi::c_int) as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ScreenOn() {
+pub unsafe fn ScreenOn() {
     let ref mut fresh90 =
         *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize);
     *fresh90 = (*fresh90 as ::core::ffi::c_int & !(0x80 as ::core::ffi::c_int)) as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn memset7E(mut k: *mut uint16, mut a: uint16, mut j: uint16) {
+pub unsafe fn memset7E(mut k: *mut uint16, mut a: uint16, mut j: uint16) {
     loop {
         let fresh99 = k;
         k = k.offset(1);
@@ -676,8 +656,7 @@ pub unsafe extern "C" fn memset7E(mut k: *mut uint16, mut a: uint16, mut j: uint
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Vector_RESET_Async() -> CoroutineRet {
+pub unsafe fn Vector_RESET_Async() -> CoroutineRet {
     let mut _state_variable_: *mut uint8 =
         (&raw mut g_ram as *mut uint8).offset(0x611 as ::core::ffi::c_int as isize);
     let mut bak: uint16 = 0;
@@ -850,14 +829,12 @@ pub unsafe extern "C" fn Vector_RESET_Async() -> CoroutineRet {
     *_state_variable_ = 2 as uint8;
     return 0 as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn InvalidInterrupt_Crash() {
+pub unsafe fn InvalidInterrupt_Crash() {
     printf(b"InvalidInterrupt_Crash\n\0" as *const u8 as *const ::core::ffi::c_char);
     Unreachable();
     loop {}
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadMirrorOfExploredMapTiles() {
+pub unsafe fn LoadMirrorOfExploredMapTiles() {
     let mut v1: uint16 = swap16(
         *((&raw mut g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -887,8 +864,7 @@ pub unsafe extern "C" fn LoadMirrorOfExploredMapTiles() {
                     as *mut uint16) as isize,
             ) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SaveExploredMapTilesToSaved() {
+pub unsafe fn SaveExploredMapTilesToSaved() {
     let mut v1: uint16 = swap16(
         *((&raw mut g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -922,8 +898,7 @@ pub unsafe extern "C" fn SaveExploredMapTilesToSaved() {
         *fresh88 = (*fresh88 as ::core::ffi::c_int | 0xff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn InitializeCpuIoRegs() {
+pub unsafe fn InitializeCpuIoRegs() {
     WriteReg(NMITIMEN as ::core::ffi::c_int as uint16, 1 as uint8);
     *(&raw mut g_ram as *mut uint8).offset(0x84 as ::core::ffi::c_int as isize) = 1 as uint8;
     WriteReg(WRIO as ::core::ffi::c_int as uint16, 0 as uint8);
@@ -942,8 +917,7 @@ pub unsafe extern "C" fn InitializeCpuIoRegs() {
     WriteReg(MEMSEL as ::core::ffi::c_int as uint16, 1 as uint8);
     *(&raw mut g_ram as *mut uint8).offset(0x86 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn InitializePpuIoRegs() {
+pub unsafe fn InitializePpuIoRegs() {
     WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x8f as uint8);
     *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 0x8f as uint8;
     WriteReg(OBSEL as ::core::ffi::c_int as uint16, 3 as uint8);
@@ -1052,38 +1026,33 @@ pub unsafe extern "C" fn InitializePpuIoRegs() {
     WriteReg(SETINI as ::core::ffi::c_int as uint16, 0 as uint8);
     *(&raw mut g_ram as *mut uint8).offset(0x77 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn WriteLotsOf0x1c2f() {
+pub unsafe fn WriteLotsOf0x1c2f() {
     sub_8088EB(0x1c2f as uint16);
     sub_8088FE(0x1c2f as uint16);
     sub_808911(0x1c2f as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_8088EB(mut a: uint16) {
+pub unsafe fn sub_8088EB(mut a: uint16) {
     memset7E(
         (&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize) as *mut uint16,
         a,
         0x800 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_8088FE(mut a: uint16) {
+pub unsafe fn sub_8088FE(mut a: uint16) {
     memset7E(
         (&raw mut g_ram as *mut uint8).offset(0x4000 as ::core::ffi::c_int as isize) as *mut uint16,
         a,
         0x800 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_808911(mut a: uint16) {
+pub unsafe fn sub_808911(mut a: uint16) {
     memset7E(
         (&raw mut g_ram as *mut uint8).offset(0x6000 as ::core::ffi::c_int as isize) as *mut uint16,
         a,
         0x800 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleFadeOut() {
+pub unsafe fn HandleFadeOut() {
     if ((*((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         - 1 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
@@ -1120,8 +1089,7 @@ pub unsafe extern "C" fn HandleFadeOut() {
         *fresh70 = (*fresh70).wrapping_sub(1);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleFadeIn() {
+pub unsafe fn HandleFadeIn() {
     if ((*((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         - 1 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
@@ -1150,8 +1118,7 @@ pub unsafe extern "C" fn HandleFadeIn() {
         *fresh69 = (*fresh69).wrapping_sub(1);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearUnusedOam() {
+pub unsafe fn ClearUnusedOam() {
     let mut i: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0x590 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -1166,8 +1133,7 @@ pub unsafe extern "C" fn ClearUnusedOam() {
     *((&raw mut g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearOamExt() {
+pub unsafe fn ClearOamExt() {
     memset(
         (&raw mut g_ram as *mut uint8).offset(0x570 as ::core::ffi::c_int as isize) as *mut uint16
             as *mut ::core::ffi::c_void,
@@ -1175,8 +1141,7 @@ pub unsafe extern "C" fn ClearOamExt() {
         (::core::mem::size_of::<uint16>() as size_t).wrapping_mul(16 as size_t),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueMode7Transfers(mut db: uint8, mut k: uint16) {
+pub unsafe fn QueueMode7Transfers(mut db: uint8, mut k: uint16) {
     let mut p: *const uint8 = RomPtrWithBank(db, k as uint16_t);
     let mut dst: *mut uint8 = ((&raw mut g_ram as *mut uint8)
         .offset(0x2d0 as ::core::ffi::c_int as isize)
@@ -1216,8 +1181,7 @@ pub unsafe extern "C" fn QueueMode7Transfers(mut db: uint8, mut k: uint16) {
                 as *mut Mode7VramWriteQueue as *mut uint8,
         ) as ::core::ffi::c_long as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn NMI_ProcessMode7Queue() {
+pub unsafe fn NMI_ProcessMode7Queue() {
     if *((&raw mut g_ram as *mut uint8).offset(0x334 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -1233,8 +1197,7 @@ pub unsafe extern "C" fn NMI_ProcessMode7Queue() {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NMI_ProcessMode7QueueInner(mut p: *const uint8) {
+pub unsafe fn NMI_ProcessMode7QueueInner(mut p: *const uint8) {
     loop {
         let mut v2: uint8 = 0;
         loop {
@@ -1291,8 +1254,7 @@ pub unsafe extern "C" fn NMI_ProcessMode7QueueInner(mut p: *const uint8) {
         p = p.offset(7 as ::core::ffi::c_int as isize);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NMI_ProcessVramWriteQueue() {
+pub unsafe fn NMI_ProcessVramWriteQueue() {
     if *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -1332,8 +1294,7 @@ pub unsafe extern "C" fn NMI_ProcessVramWriteQueue() {
     Nmi_ProcessHorizScrollingDma();
     Nmi_ProcessVertScrollingDma();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Nmi_ProcessHorizScrollingDma() {
+pub unsafe fn Nmi_ProcessHorizScrollingDma() {
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x81 as uint8);
     if *((&raw mut g_ram as *mut uint8).offset(0x962 as ::core::ffi::c_int as isize) as *mut uint16)
         as uint8
@@ -1506,8 +1467,7 @@ pub unsafe extern "C" fn Nmi_ProcessHorizScrollingDma() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Nmi_ProcessVertScrollingDma() {
+pub unsafe fn Nmi_ProcessVertScrollingDma() {
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
     if *((&raw mut g_ram as *mut uint8).offset(0x970 as ::core::ffi::c_int as isize) as *mut uint16)
         as uint8
@@ -1680,8 +1640,7 @@ pub unsafe extern "C" fn Nmi_ProcessVertScrollingDma() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NMI_ProcessVramReadQueue() {
+pub unsafe fn NMI_ProcessVramReadQueue() {
     if *((&raw mut g_ram as *mut uint8).offset(0x360 as ::core::ffi::c_int as isize) as *mut uint16)
         as uint8
         != 0
@@ -1752,8 +1711,7 @@ pub unsafe extern "C" fn NMI_ProcessVramReadQueue() {
             .offset(0 as ::core::ffi::c_int as isize) = 0 as uint8;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HasQueuedMusic() -> uint8 {
+pub unsafe fn HasQueuedMusic() -> uint8 {
     let mut v0: ::core::ffi::c_int = 14 as ::core::ffi::c_int;
     while *((&raw mut g_ram as *mut uint8).offset(0x629 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -1767,8 +1725,7 @@ pub unsafe extern "C" fn HasQueuedMusic() -> uint8 {
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleMusicQueue() {
+pub unsafe fn HandleMusicQueue() {
     let ref mut fresh74 = *((&raw mut g_ram as *mut uint8)
         .offset(0x63f as ::core::ffi::c_int as isize) as *mut uint16);
     let fresh75 = *fresh74;
@@ -1879,8 +1836,7 @@ pub unsafe extern "C" fn HandleMusicQueue() {
             .offset(v4 as isize);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueMusic_Delayed8(mut a: uint16) {
+pub unsafe fn QueueMusic_Delayed8(mut a: uint16) {
     let mut v1: int8 = 0;
     if (*((&raw mut g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int)
@@ -1909,8 +1865,7 @@ pub unsafe extern "C" fn QueueMusic_Delayed8(mut a: uint16) {
             & 0xe as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueMusic_DelayedY(mut a: uint16, mut j: uint16) {
+pub unsafe fn QueueMusic_DelayedY(mut a: uint16, mut j: uint16) {
     if (*((&raw mut g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int)
         < 0x28 as ::core::ffi::c_int
@@ -1932,38 +1887,32 @@ pub unsafe extern "C" fn QueueMusic_DelayedY(mut a: uint16, mut j: uint16) {
             as *mut uint16) = (v2 + 2 as ::core::ffi::c_int & 0xe as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueSfx1_Max15(mut a: uint16) {
+pub unsafe fn QueueSfx1_Max15(mut a: uint16) {
     QueueSfx1_Internal(
         ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 15 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueSfx1_Max9(mut a: uint16) {
+pub unsafe fn QueueSfx1_Max9(mut a: uint16) {
     QueueSfx1_Internal(
         ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 9 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueSfx1_Max3(mut a: uint16) {
+pub unsafe fn QueueSfx1_Max3(mut a: uint16) {
     QueueSfx1_Internal(
         ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 3 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueSfx1_Max1(mut a: uint16) {
+pub unsafe fn QueueSfx1_Max1(mut a: uint16) {
     QueueSfx1_Internal(
         ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 1 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueSfx1_Max6(mut a: uint16) {
+pub unsafe fn QueueSfx1_Max6(mut a: uint16) {
     QueueSfx1_Internal(
         ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 6 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueSfx1_Internal(mut a: uint16) {
+pub unsafe fn QueueSfx1_Internal(mut a: uint16) {
     *(&raw mut g_ram as *mut uint8)
         .offset(0x653 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = a as uint8;
@@ -2034,38 +1983,32 @@ pub unsafe extern "C" fn QueueSfx1_Internal(mut a: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueSfx2_Max15(mut a: uint16) {
+pub unsafe fn QueueSfx2_Max15(mut a: uint16) {
     QueueSfx2_Internal(
         ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 15 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueSfx2_Max9(mut a: uint16) {
+pub unsafe fn QueueSfx2_Max9(mut a: uint16) {
     QueueSfx2_Internal(
         ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 9 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueSfx2_Max3(mut a: uint16) {
+pub unsafe fn QueueSfx2_Max3(mut a: uint16) {
     QueueSfx2_Internal(
         ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 3 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueSfx2_Max1(mut a: uint16) {
+pub unsafe fn QueueSfx2_Max1(mut a: uint16) {
     QueueSfx2_Internal(
         ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 1 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueSfx2_Max6(mut a: uint16) {
+pub unsafe fn QueueSfx2_Max6(mut a: uint16) {
     QueueSfx2_Internal(
         ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 6 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueSfx2_Internal(mut a: uint16) {
+pub unsafe fn QueueSfx2_Internal(mut a: uint16) {
     *(&raw mut g_ram as *mut uint8)
         .offset(0x653 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = a as uint8;
@@ -2136,38 +2079,32 @@ pub unsafe extern "C" fn QueueSfx2_Internal(mut a: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueSfx3_Max15(mut a: uint16) {
+pub unsafe fn QueueSfx3_Max15(mut a: uint16) {
     QueueSfx3_Internal(
         ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 15 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueSfx3_Max9(mut a: uint16) {
+pub unsafe fn QueueSfx3_Max9(mut a: uint16) {
     QueueSfx3_Internal(
         ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 9 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueSfx3_Max3(mut a: uint16) {
+pub unsafe fn QueueSfx3_Max3(mut a: uint16) {
     QueueSfx3_Internal(
         ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 3 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueSfx3_Max1(mut a: uint16) {
+pub unsafe fn QueueSfx3_Max1(mut a: uint16) {
     QueueSfx3_Internal(
         ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 1 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueSfx3_Max6(mut a: uint16) {
+pub unsafe fn QueueSfx3_Max6(mut a: uint16) {
     QueueSfx3_Internal(
         ((a as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | 6 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueSfx3_Internal(mut a: uint16) {
+pub unsafe fn QueueSfx3_Internal(mut a: uint16) {
     *(&raw mut g_ram as *mut uint8)
         .offset(0x653 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = a as uint8;
@@ -2238,8 +2175,7 @@ pub unsafe extern "C" fn QueueSfx3_Internal(mut a: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetupDmaTransfer(mut p: *const ::core::ffi::c_void) {
+pub unsafe fn SetupDmaTransfer(mut p: *const ::core::ffi::c_void) {
     let mut s: *const StartDmaCopy = p as *const StartDmaCopy;
     let mut v2: ::core::ffi::c_int = (*s).chan as ::core::ffi::c_int * 16 as ::core::ffi::c_int;
     WriteRegWord(
@@ -2259,8 +2195,7 @@ pub unsafe extern "C" fn SetupDmaTransfer(mut p: *const ::core::ffi::c_void) {
         (*s).das as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn NmiUpdateIoRegisters() {
+pub unsafe fn NmiUpdateIoRegisters() {
     WriteReg(
         NMITIMEN as ::core::ffi::c_int as uint16,
         *(&raw mut g_ram as *mut uint8).offset(0x84 as ::core::ffi::c_int as isize),
@@ -2625,8 +2560,7 @@ pub unsafe extern "C" fn NmiUpdateIoRegisters() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NmiUpdatePalettesAndOam() {
+pub unsafe fn NmiUpdatePalettesAndOam() {
     WriteRegWord(DMAP0 as ::core::ffi::c_int as uint16, 0x400 as uint16);
     WriteRegWord(
         A1T0L as ::core::ffi::c_int as uint16,
@@ -2649,8 +2583,7 @@ pub unsafe extern "C" fn NmiUpdatePalettesAndOam() {
     WriteReg(CGADD as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 3 as uint8);
 }
-#[no_mangle]
-pub unsafe extern "C" fn NmiTransferSamusToVram() {
+pub unsafe fn NmiTransferSamusToVram() {
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
     if *((&raw mut g_ram as *mut uint8).offset(0x71d as ::core::ffi::c_int as isize) as *mut uint16)
         as uint8
@@ -2715,8 +2648,7 @@ pub unsafe extern "C" fn NmiTransferSamusToVram() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NmiProcessAnimtilesVramTransfers() {
+pub unsafe fn NmiProcessAnimtilesVramTransfers() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1ef1 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -2769,8 +2701,7 @@ pub unsafe extern "C" fn NmiProcessAnimtilesVramTransfers() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ReadJoypadInputs() {
+pub unsafe fn ReadJoypadInputs() {
     let mut RegWord: uint16 = ReadRegWord(JOY1L as ::core::ffi::c_int as uint16);
     *((&raw mut g_ram as *mut uint8).offset(0x8b as ::core::ffi::c_int as isize) as *mut uint16) =
         RegWord;
@@ -3013,8 +2944,7 @@ pub unsafe extern "C" fn ReadJoypadInputs() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Vector_NMI() {
+pub unsafe fn Vector_NMI() {
     if *(&raw mut g_ram as *mut uint8).offset(0x5b4 as ::core::ffi::c_int as isize) != 0 {
         NmiUpdatePalettesAndOam();
         NmiTransferSamusToVram();
@@ -3081,8 +3011,7 @@ pub unsafe extern "C" fn Vector_NMI() {
         .offset(0x5b8 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh98 = (*fresh98).wrapping_add(1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CopyToVramNow(mut vram_dst: uint16, mut src: uint32, mut size: uint16) {
+pub unsafe fn CopyToVramNow(mut vram_dst: uint16, mut src: uint32, mut size: uint16) {
     WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x80 as uint8);
     WriteRegWord(VMADDL as ::core::ffi::c_int as uint16, vram_dst);
     WriteRegWord(DMAP1 as ::core::ffi::c_int as uint16, 0x1801 as uint16);
@@ -3096,38 +3025,33 @@ pub unsafe extern "C" fn CopyToVramNow(mut vram_dst: uint16, mut src: uint32, mu
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
     WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0xf as uint8);
 }
-#[no_mangle]
-pub unsafe extern "C" fn IrqHandler_SetResult(mut a: uint16, mut y: uint16, mut x: uint16) {
+pub unsafe fn IrqHandler_SetResult(mut a: uint16, mut y: uint16, mut x: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0xab as ::core::ffi::c_int as isize) as *mut uint16) =
         a;
     WriteRegWord(VTIMEL as ::core::ffi::c_int as uint16, y);
     WriteRegWord(HTIMEL as ::core::ffi::c_int as uint16, x);
 }
-#[no_mangle]
-pub unsafe extern "C" fn IrqHandler_0_Nothing() {
+pub unsafe fn IrqHandler_0_Nothing() {
     let mut a: uint16 = *((&raw mut g_ram as *mut uint8).offset(0xa7 as ::core::ffi::c_int as isize)
         as *mut uint16);
     *((&raw mut g_ram as *mut uint8).offset(0xa7 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     IrqHandler_SetResult(a, 0 as uint16, 0 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn IrqHandler_2_DisableIRQ() {
+pub unsafe fn IrqHandler_2_DisableIRQ() {
     let ref mut fresh76 = *((&raw mut g_ram as *mut uint8)
         .offset(0x84 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh76 = (*fresh76 as ::core::ffi::c_int & !(0x30 as ::core::ffi::c_int)) as uint16;
     IrqHandler_SetResult(0 as uint16, 0 as uint16, 0 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn IrqHandler_4_Main_BeginHudDraw() {
+pub unsafe fn IrqHandler_4_Main_BeginHudDraw() {
     WriteReg(BG3SC as ::core::ffi::c_int as uint16, 0x5a as uint8);
     WriteReg(CGWSEL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(CGADSUB as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(TM as ::core::ffi::c_int as uint16, 4 as uint8);
     IrqHandler_SetResult(6 as uint16, 31 as uint16, 152 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn IrqHandler_6_Main_EndHudDraw() {
+pub unsafe fn IrqHandler_6_Main_EndHudDraw() {
     WriteReg(
         CGWSEL as ::core::ffi::c_int as uint16,
         *(&raw mut g_ram as *mut uint8).offset(0x70 as ::core::ffi::c_int as isize),
@@ -3158,16 +3082,14 @@ pub unsafe extern "C" fn IrqHandler_6_Main_EndHudDraw() {
         152 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn IrqHandler_8_StartOfDoor_BeginHud() {
+pub unsafe fn IrqHandler_8_StartOfDoor_BeginHud() {
     WriteReg(BG3SC as ::core::ffi::c_int as uint16, 0x5a as uint8);
     WriteReg(TM as ::core::ffi::c_int as uint16, 4 as uint8);
     WriteReg(CGWSEL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(CGADSUB as ::core::ffi::c_int as uint16, 0 as uint8);
     IrqHandler_SetResult(10 as uint16, 31 as uint16, 152 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn IrqHandler_10_StartOfDoor_EndHud() {
+pub unsafe fn IrqHandler_10_StartOfDoor_EndHud() {
     let mut v0: uint8 = 0;
     if (*((&raw mut g_ram as *mut uint8).offset(0x7b1 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -3195,15 +3117,13 @@ pub unsafe extern "C" fn IrqHandler_10_StartOfDoor_EndHud() {
         152 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn IrqHandler_12_Draygon_BeginHud() {
+pub unsafe fn IrqHandler_12_Draygon_BeginHud() {
     WriteReg(TM as ::core::ffi::c_int as uint16, 4 as uint8);
     WriteReg(CGWSEL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(CGADSUB as ::core::ffi::c_int as uint16, 0 as uint8);
     IrqHandler_SetResult(14 as uint16, 31 as uint16, 152 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn IrqHandler_14_Draygon_EndHud() {
+pub unsafe fn IrqHandler_14_Draygon_EndHud() {
     WriteReg(
         BG3SC as ::core::ffi::c_int as uint16,
         *(&raw mut g_ram as *mut uint8).offset(0x5b as ::core::ffi::c_int as isize),
@@ -3230,15 +3150,13 @@ pub unsafe extern "C" fn IrqHandler_14_Draygon_EndHud() {
         152 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn IrqHandler_16_VerticalDoor_BeginHud() {
+pub unsafe fn IrqHandler_16_VerticalDoor_BeginHud() {
     WriteReg(TM as ::core::ffi::c_int as uint16, 4 as uint8);
     WriteReg(CGWSEL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(CGADSUB as ::core::ffi::c_int as uint16, 0 as uint8);
     IrqHandler_SetResult(18 as uint16, 31 as uint16, 152 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn IrqHandler_18_VerticalDoor_EndHud() {
+pub unsafe fn IrqHandler_18_VerticalDoor_EndHud() {
     let mut v0: uint8 = 0;
     if (*((&raw mut g_ram as *mut uint8).offset(0x7b1 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -3263,8 +3181,7 @@ pub unsafe extern "C" fn IrqHandler_18_VerticalDoor_EndHud() {
     }
     IrqHandler_SetResult(20 as uint16, 216 as uint16, 152 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn IrqHandler_20_VerticalDoor_EndDraw() {
+pub unsafe fn IrqHandler_20_VerticalDoor_EndDraw() {
     let mut a: uint16 = *((&raw mut g_ram as *mut uint8).offset(0xa7 as ::core::ffi::c_int as isize)
         as *mut uint16);
     *((&raw mut g_ram as *mut uint8).offset(0xa7 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -3279,15 +3196,13 @@ pub unsafe extern "C" fn IrqHandler_20_VerticalDoor_EndDraw() {
         152 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn IrqHandler_22_HorizDoor_BeginHud() {
+pub unsafe fn IrqHandler_22_HorizDoor_BeginHud() {
     WriteReg(TM as ::core::ffi::c_int as uint16, 4 as uint8);
     WriteReg(CGWSEL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(CGADSUB as ::core::ffi::c_int as uint16, 0 as uint8);
     IrqHandler_SetResult(24 as uint16, 31 as uint16, 152 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn IrqHandler_24_HorizDoor_EndHud() {
+pub unsafe fn IrqHandler_24_HorizDoor_EndHud() {
     let mut v0: uint8 = 0;
     if (*((&raw mut g_ram as *mut uint8).offset(0x7b1 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -3312,8 +3227,7 @@ pub unsafe extern "C" fn IrqHandler_24_HorizDoor_EndHud() {
     }
     IrqHandler_SetResult(26 as uint16, 160 as uint16, 152 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn IrqHandler_26_HorizDoor_EndDraw() {
+pub unsafe fn IrqHandler_26_HorizDoor_EndDraw() {
     let mut a: uint16 = *((&raw mut g_ram as *mut uint8).offset(0xa7 as ::core::ffi::c_int as isize)
         as *mut uint16);
     *((&raw mut g_ram as *mut uint8).offset(0xa7 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -3328,16 +3242,14 @@ pub unsafe extern "C" fn IrqHandler_26_HorizDoor_EndDraw() {
         152 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnableIrqInterrupts() {
+pub unsafe fn EnableIrqInterrupts() {
     WriteRegWord(VTIMEL as ::core::ffi::c_int as uint16, 0 as uint16);
     WriteRegWord(HTIMEL as ::core::ffi::c_int as uint16, 152 as uint16);
     let ref mut fresh64 = *((&raw mut g_ram as *mut uint8)
         .offset(0x84 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh64 = (*fresh64 as ::core::ffi::c_int | 0x30 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnableIrqInterruptsNow() {
+pub unsafe fn EnableIrqInterruptsNow() {
     WriteRegWord(VTIMEL as ::core::ffi::c_int as uint16, 0 as uint16);
     WriteRegWord(HTIMEL as ::core::ffi::c_int as uint16, 152 as uint16);
     let ref mut fresh65 = *((&raw mut g_ram as *mut uint8)
@@ -3348,32 +3260,30 @@ pub unsafe extern "C" fn EnableIrqInterruptsNow() {
         *(&raw mut g_ram as *mut uint8).offset(0x84 as ::core::ffi::c_int as isize),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DisableIrqInterrupts() {
+pub unsafe fn DisableIrqInterrupts() {
     let ref mut fresh41 = *((&raw mut g_ram as *mut uint8)
         .offset(0x84 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh41 = (*fresh41 as ::core::ffi::c_int & !(0x30 as ::core::ffi::c_int)) as uint16;
 }
 static mut kIrqHandlers: [Option<Func_V>; 14] = unsafe {
     [
-        Some(IrqHandler_0_Nothing as unsafe extern "C" fn() -> ()),
-        Some(IrqHandler_2_DisableIRQ as unsafe extern "C" fn() -> ()),
-        Some(IrqHandler_4_Main_BeginHudDraw as unsafe extern "C" fn() -> ()),
-        Some(IrqHandler_6_Main_EndHudDraw as unsafe extern "C" fn() -> ()),
-        Some(IrqHandler_8_StartOfDoor_BeginHud as unsafe extern "C" fn() -> ()),
-        Some(IrqHandler_10_StartOfDoor_EndHud as unsafe extern "C" fn() -> ()),
-        Some(IrqHandler_12_Draygon_BeginHud as unsafe extern "C" fn() -> ()),
-        Some(IrqHandler_14_Draygon_EndHud as unsafe extern "C" fn() -> ()),
-        Some(IrqHandler_16_VerticalDoor_BeginHud as unsafe extern "C" fn() -> ()),
-        Some(IrqHandler_18_VerticalDoor_EndHud as unsafe extern "C" fn() -> ()),
-        Some(IrqHandler_20_VerticalDoor_EndDraw as unsafe extern "C" fn() -> ()),
-        Some(IrqHandler_22_HorizDoor_BeginHud as unsafe extern "C" fn() -> ()),
-        Some(IrqHandler_24_HorizDoor_EndHud as unsafe extern "C" fn() -> ()),
-        Some(IrqHandler_26_HorizDoor_EndDraw as unsafe extern "C" fn() -> ()),
+        Some(IrqHandler_0_Nothing as unsafe fn() -> ()),
+        Some(IrqHandler_2_DisableIRQ as unsafe fn() -> ()),
+        Some(IrqHandler_4_Main_BeginHudDraw as unsafe fn() -> ()),
+        Some(IrqHandler_6_Main_EndHudDraw as unsafe fn() -> ()),
+        Some(IrqHandler_8_StartOfDoor_BeginHud as unsafe fn() -> ()),
+        Some(IrqHandler_10_StartOfDoor_EndHud as unsafe fn() -> ()),
+        Some(IrqHandler_12_Draygon_BeginHud as unsafe fn() -> ()),
+        Some(IrqHandler_14_Draygon_EndHud as unsafe fn() -> ()),
+        Some(IrqHandler_16_VerticalDoor_BeginHud as unsafe fn() -> ()),
+        Some(IrqHandler_18_VerticalDoor_EndHud as unsafe fn() -> ()),
+        Some(IrqHandler_20_VerticalDoor_EndDraw as unsafe fn() -> ()),
+        Some(IrqHandler_22_HorizDoor_BeginHud as unsafe fn() -> ()),
+        Some(IrqHandler_24_HorizDoor_EndHud as unsafe fn() -> ()),
+        Some(IrqHandler_26_HorizDoor_EndDraw as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn Vector_IRQ() {
+pub unsafe fn Vector_IRQ() {
     kIrqHandlers[(*((&raw mut g_ram as *mut uint8).offset(0xab as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         >> 1 as ::core::ffi::c_int) as usize]
@@ -3501,8 +3411,7 @@ static mut kHudTilemaps_Missiles: [uint16; 22] = [
     0x343b as ::core::ffi::c_int as uint16,
     0x743b as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn AddMissilesToHudTilemap() {
+pub unsafe fn AddMissilesToHudTilemap() {
     if *((&raw mut g_ram as *mut uint8).offset(0xc608 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(10 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
@@ -3535,8 +3444,7 @@ pub unsafe extern "C" fn AddMissilesToHudTilemap() {
             kHudTilemaps_Missiles[5 as ::core::ffi::c_int as usize];
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn AddSuperMissilesToHudTilemap() {
+pub unsafe fn AddSuperMissilesToHudTilemap() {
     AddToTilemapInner(
         0x1c as uint16,
         RomPtr_80(
@@ -3545,8 +3453,7 @@ pub unsafe extern "C" fn AddSuperMissilesToHudTilemap() {
         ) as *const uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn AddPowerBombsToHudTilemap() {
+pub unsafe fn AddPowerBombsToHudTilemap() {
     AddToTilemapInner(
         0x22 as uint16,
         RomPtr_80(
@@ -3555,8 +3462,7 @@ pub unsafe extern "C" fn AddPowerBombsToHudTilemap() {
         ) as *const uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn AddGrappleToHudTilemap() {
+pub unsafe fn AddGrappleToHudTilemap() {
     AddToTilemapInner(
         0x28 as uint16,
         RomPtr_80(
@@ -3565,8 +3471,7 @@ pub unsafe extern "C" fn AddGrappleToHudTilemap() {
         ) as *const uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn AddXrayToHudTilemap() {
+pub unsafe fn AddXrayToHudTilemap() {
     AddToTilemapInner(
         0x2e as uint16,
         RomPtr_80(
@@ -3575,8 +3480,7 @@ pub unsafe extern "C" fn AddXrayToHudTilemap() {
         ) as *const uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn AddToTilemapInner(mut k: uint16, mut j: *const uint16) {
+pub unsafe fn AddToTilemapInner(mut k: uint16, mut j: *const uint16) {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0xc608 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -3601,8 +3505,7 @@ pub unsafe extern "C" fn AddToTilemapInner(mut k: uint16, mut j: *const uint16) 
             *j.offset(3 as ::core::ffi::c_int as isize);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn InitializeHud() {
+pub unsafe fn InitializeHud() {
     WriteRegWord(
         VMADDL as ::core::ffi::c_int as uint16,
         addr_unk_605800 as ::core::ffi::c_int as uint16,
@@ -3726,8 +3629,7 @@ static mut kEnergyTankIconTilemapOffsets: [uint16; 14] = [
     0xc as ::core::ffi::c_int as uint16,
     0xe as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn HandleHudTilemap() {
+pub unsafe fn HandleHudTilemap() {
     if *((&raw mut g_ram as *mut uint8).offset(0x9c0 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         == 1 as ::core::ffi::c_int
@@ -3969,8 +3871,7 @@ static mut kHudItemTilemapOffsets: [uint16; 5] = [
     0x28 as ::core::ffi::c_int as uint16,
     0x2e as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn ToggleHudItemHighlight(mut a: uint16, mut k: uint16) {
+pub unsafe fn ToggleHudItemHighlight(mut a: uint16, mut k: uint16) {
     let mut v2: int16 = 0;
     *((&raw mut g_ram as *mut uint8).offset(0x77c as ::core::ffi::c_int as isize) as *mut uint16) =
         k;
@@ -4081,8 +3982,7 @@ pub unsafe extern "C" fn ToggleHudItemHighlight(mut a: uint16, mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawThreeHudDigits(mut addr: uint32, mut a: uint16, mut k: uint16) {
+pub unsafe fn DrawThreeHudDigits(mut addr: uint32, mut a: uint16, mut k: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0xc608 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
@@ -4096,8 +3996,7 @@ pub unsafe extern "C" fn DrawThreeHudDigits(mut addr: uint32, mut a: uint16, mut
         (k as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawTwoHudDigits(mut addr: uint32, mut a: uint16, mut k: uint16) {
+pub unsafe fn DrawTwoHudDigits(mut addr: uint32, mut a: uint16, mut k: uint16) {
     let mut v3: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0xc608 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -4115,44 +4014,39 @@ pub unsafe extern "C" fn DrawTwoHudDigits(mut addr: uint32, mut a: uint16, mut k
 }
 static mut kTimerProcessFuncs: [Option<Func_U8>; 7] = unsafe {
     [
-        Some(ProcessTimer_Empty as unsafe extern "C" fn() -> uint8),
-        Some(ProcessTimer_CeresStart as unsafe extern "C" fn() -> uint8),
-        Some(ProcessTimer_MotherBrainStart as unsafe extern "C" fn() -> uint8),
-        Some(ProcessTimer_InitialDelay as unsafe extern "C" fn() -> uint8),
-        Some(ProcessTimer_MovementDelayed as unsafe extern "C" fn() -> uint8),
-        Some(ProcessTimer_MovingIntoPlace as unsafe extern "C" fn() -> uint8),
-        Some(ProcessTimer_Decrement as unsafe extern "C" fn() -> uint8),
+        Some(ProcessTimer_Empty as unsafe fn() -> uint8),
+        Some(ProcessTimer_CeresStart as unsafe fn() -> uint8),
+        Some(ProcessTimer_MotherBrainStart as unsafe fn() -> uint8),
+        Some(ProcessTimer_InitialDelay as unsafe fn() -> uint8),
+        Some(ProcessTimer_MovementDelayed as unsafe fn() -> uint8),
+        Some(ProcessTimer_MovingIntoPlace as unsafe fn() -> uint8),
+        Some(ProcessTimer_Decrement as unsafe fn() -> uint8),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn ProcessTimer() -> uint8 {
+pub unsafe fn ProcessTimer() -> uint8 {
     return kTimerProcessFuncs[*((&raw mut g_ram as *mut uint8)
         .offset(0x943 as ::core::ffi::c_int as isize)
         as *mut uint16) as uint8 as usize]
         .expect("non-null function pointer")();
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessTimer_CeresStart() -> uint8 {
+pub unsafe fn ProcessTimer_CeresStart() -> uint8 {
     ClearTimerRam();
     SetTimerMinutes(0x100 as uint16);
     *((&raw mut g_ram as *mut uint8).offset(0x943 as ::core::ffi::c_int as isize) as *mut uint16) =
         -(32765 as ::core::ffi::c_int) as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessTimer_Empty() -> uint8 {
+pub unsafe fn ProcessTimer_Empty() -> uint8 {
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessTimer_MotherBrainStart() -> uint8 {
+pub unsafe fn ProcessTimer_MotherBrainStart() -> uint8 {
     ClearTimerRam();
     SetTimerMinutes(0x300 as uint16);
     *((&raw mut g_ram as *mut uint8).offset(0x943 as ::core::ffi::c_int as isize) as *mut uint16) =
         -(32765 as ::core::ffi::c_int) as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessTimer_InitialDelay() -> uint8 {
+pub unsafe fn ProcessTimer_InitialDelay() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x948 as ::core::ffi::c_int as isize) as *mut uint16
         as *mut uint8)
         .offset(0 as ::core::ffi::c_int as isize) = (*((&raw mut g_ram as *mut uint8)
@@ -4171,8 +4065,7 @@ pub unsafe extern "C" fn ProcessTimer_InitialDelay() -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessTimer_MovementDelayed() -> uint8 {
+pub unsafe fn ProcessTimer_MovementDelayed() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x948 as ::core::ffi::c_int as isize) as *mut uint16
         as *mut uint8)
         .offset(0 as ::core::ffi::c_int as isize) = (*((&raw mut g_ram as *mut uint8)
@@ -4194,8 +4087,7 @@ pub unsafe extern "C" fn ProcessTimer_MovementDelayed() -> uint8 {
     }
     return ProcessTimer_Decrement();
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessTimer_MovingIntoPlace() -> uint8 {
+pub unsafe fn ProcessTimer_MovingIntoPlace() -> uint8 {
     let mut v0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     let mut v1: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0x948 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -4233,15 +4125,13 @@ pub unsafe extern "C" fn ProcessTimer_MovingIntoPlace() -> uint8 {
     }
     return ProcessTimer_Decrement();
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetTimerMinutes(mut a: uint16) {
+pub unsafe fn SetTimerMinutes(mut a: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x945 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x946 as ::core::ffi::c_int as isize) as *mut uint16) =
         a;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearTimerRam() {
+pub unsafe fn ClearTimerRam() {
     *((&raw mut g_ram as *mut uint8).offset(0x948 as ::core::ffi::c_int as isize) as *mut uint16) =
         0x8000 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x94a as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -4253,8 +4143,7 @@ pub unsafe extern "C" fn ClearTimerRam() {
     *((&raw mut g_ram as *mut uint8).offset(0x943 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DecrementDecimal(mut number: *mut uint8, mut value: uint8) -> bool {
+pub unsafe fn DecrementDecimal(mut number: *mut uint8, mut value: uint8) -> bool {
     let mut result: ::core::ffi::c_int = (*number as ::core::ffi::c_int
         & 0xf as ::core::ffi::c_int)
         + (!(value as ::core::ffi::c_int) & 0xf as ::core::ffi::c_int)
@@ -4276,8 +4165,7 @@ pub unsafe extern "C" fn DecrementDecimal(mut number: *mut uint8, mut value: uin
     *number = result as uint8;
     return result < 0x100 as ::core::ffi::c_int;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessTimer_Decrement() -> uint8 {
+pub unsafe fn ProcessTimer_Decrement() -> uint8 {
     static mut kTimerCentisecondDecrements: [uint8; 128] = [
         1 as ::core::ffi::c_int as uint8,
         2 as ::core::ffi::c_int as uint8,
@@ -4443,8 +4331,7 @@ pub unsafe extern "C" fn ProcessTimer_Decrement() -> uint8 {
             as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawTimer() {
+pub unsafe fn DrawTimer() {
     DrawTimerSpritemap(
         0 as uint16,
         addr_word_80A060 as ::core::ffi::c_int as uint16,
@@ -4465,8 +4352,7 @@ pub unsafe extern "C" fn DrawTimer() {
         0x14 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawTwoTimerDigits(mut a: uint16, mut k: uint16) {
+pub unsafe fn DrawTwoTimerDigits(mut a: uint16, mut k: uint16) {
     DrawTimerSpritemap(
         k,
         *(g_rom.offset(
@@ -4491,8 +4377,7 @@ pub unsafe extern "C" fn DrawTwoTimerDigits(mut a: uint16, mut k: uint16) {
             .offset((a as ::core::ffi::c_int & 0xf as ::core::ffi::c_int) as isize),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawTimerSpritemap(mut a: uint16, mut j: uint16) {
+pub unsafe fn DrawTimerSpritemap(mut a: uint16, mut j: uint16) {
     DrawSpritemap(
         0x80 as uint8,
         j,
@@ -4514,8 +4399,7 @@ pub unsafe extern "C" fn DrawTimerSpritemap(mut a: uint16, mut j: uint16) {
         2560 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn StartGameplay_Async() -> CoroutineRet {
+pub unsafe fn StartGameplay_Async() -> CoroutineRet {
     let mut _state_variable_: *mut uint8 =
         (&raw mut g_ram as *mut uint8).offset(0x613 as ::core::ffi::c_int as isize);
     let mut current_block_54: u64;
@@ -4635,8 +4519,7 @@ pub unsafe extern "C" fn StartGameplay_Async() -> CoroutineRet {
     *_state_variable_ = 0 as uint8;
     return 0 as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Play20FramesOfMusic_Async() -> CoroutineRet {
+pub unsafe fn Play20FramesOfMusic_Async() -> CoroutineRet {
     let mut _state_variable_: *mut uint8 =
         (&raw mut g_ram as *mut uint8).offset(0x614 as ::core::ffi::c_int as isize);
     's_57: {
@@ -4690,8 +4573,7 @@ pub unsafe extern "C" fn Play20FramesOfMusic_Async() -> CoroutineRet {
     *_state_variable_ = 0 as uint8;
     return 0 as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ResumeGameplay() {
+pub unsafe fn ResumeGameplay() {
     WriteRegWord(MDMAEN as ::core::ffi::c_int as uint16, 0 as uint16);
     DisableNMI();
     DisableIrqInterrupts();
@@ -4702,8 +4584,7 @@ pub unsafe extern "C" fn ResumeGameplay() {
     EnableNMI();
     EnableIrqInterrupts();
 }
-#[no_mangle]
-pub unsafe extern "C" fn DisplayViewablePartOfRoom() {
+pub unsafe fn DisplayViewablePartOfRoom() {
     let mut v1: ::core::ffi::c_int = 0;
     let mut v2: ::core::ffi::c_int = 0;
     let mut v3: ::core::ffi::c_int = 0;
@@ -4781,8 +4662,7 @@ pub unsafe extern "C" fn DisplayViewablePartOfRoom() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueClearingOfFxTilemap() {
+pub unsafe fn QueueClearingOfFxTilemap() {
     let mut i: ::core::ffi::c_int = 3838 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x4000 as ::core::ffi::c_int as isize)
@@ -4807,8 +4687,7 @@ pub unsafe extern "C" fn QueueClearingOfFxTilemap() {
     *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16) =
         (v1 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearBG2Tilemap() {
+pub unsafe fn ClearBG2Tilemap() {
     WriteRegWord(VMADDL as ::core::ffi::c_int as uint16, 0x4800 as uint16);
     WriteRegWord(DMAP1 as ::core::ffi::c_int as uint16, 0x1808 as uint16);
     WriteRegWord(A1T1L as ::core::ffi::c_int as uint16, 0xa29a as uint16);
@@ -4824,8 +4703,7 @@ pub unsafe extern "C" fn ClearBG2Tilemap() {
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearFXTilemap() {
+pub unsafe fn ClearFXTilemap() {
     WriteRegWord(VMADDL as ::core::ffi::c_int as uint16, 0x5880 as uint16);
     WriteRegWord(DMAP1 as ::core::ffi::c_int as uint16, 0x1808 as uint16);
     WriteRegWord(A1T1L as ::core::ffi::c_int as uint16, 0xa2f7 as uint16);
@@ -4841,8 +4719,7 @@ pub unsafe extern "C" fn ClearFXTilemap() {
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalculateLayer2Xpos() -> uint8 {
+pub unsafe fn CalculateLayer2Xpos() -> uint8 {
     if *(&raw mut g_ram as *mut uint8).offset(0x91b as ::core::ffi::c_int as isize) == 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x917 as ::core::ffi::c_int as isize)
             as *mut uint16) = *((&raw mut g_ram as *mut uint8)
@@ -4877,8 +4754,7 @@ pub unsafe extern "C" fn CalculateLayer2Xpos() -> uint8 {
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalculateLayer2Ypos() -> uint8 {
+pub unsafe fn CalculateLayer2Ypos() -> uint8 {
     if *(&raw mut g_ram as *mut uint8).offset(0x91c as ::core::ffi::c_int as isize) == 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x919 as ::core::ffi::c_int as isize)
             as *mut uint16) = *((&raw mut g_ram as *mut uint8)
@@ -4912,8 +4788,7 @@ pub unsafe extern "C" fn CalculateLayer2Ypos() -> uint8 {
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalculateBgScrolls() {
+pub unsafe fn CalculateBgScrolls() {
     *((&raw mut g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize) as *mut uint16) =
         (*((&raw mut g_ram as *mut uint8).offset(0x91d as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -4935,13 +4810,11 @@ pub unsafe extern "C" fn CalculateBgScrolls() {
             + *((&raw mut g_ram as *mut uint8).offset(0x919 as ::core::ffi::c_int as isize)
                 as *mut uint16) as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn UpdateScrollVarsUpdateMap() {
+pub unsafe fn UpdateScrollVarsUpdateMap() {
     CalculateBgScrolls();
     UpdateBgGraphicsWhenScrolling();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalculateLayer2PosAndScrollsWhenScrolling() {
+pub unsafe fn CalculateLayer2PosAndScrollsWhenScrolling() {
     if *((&raw mut g_ram as *mut uint8).offset(0xa78 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
     {
@@ -4976,8 +4849,7 @@ pub unsafe extern "C" fn CalculateLayer2PosAndScrollsWhenScrolling() {
         UpdateBgGraphicsWhenScrolling();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn UpdateBgGraphicsWhenScrolling() {
+pub unsafe fn UpdateBgGraphicsWhenScrolling() {
     CalculateBgScrollAndLayerPositionBlocks();
     let mut v0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     let mut v1: bool =
@@ -5150,8 +5022,7 @@ pub unsafe extern "C" fn UpdateBgGraphicsWhenScrolling() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalculateBgScrollAndLayerPositionBlocks() {
+pub unsafe fn CalculateBgScrollAndLayerPositionBlocks() {
     *((&raw mut g_ram as *mut uint8).offset(0x907 as ::core::ffi::c_int as isize) as *mut uint16) =
         (*((&raw mut g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -5225,8 +5096,7 @@ pub unsafe extern "C" fn CalculateBgScrollAndLayerPositionBlocks() {
     *((&raw mut g_ram as *mut uint8).offset(0x8fd as ::core::ffi::c_int as isize) as *mut uint16) =
         v3;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleAutoscrolling_X() {
+pub unsafe fn HandleAutoscrolling_X() {
     let mut v1: int16 = 0;
     let mut v3: int16 = 0;
     let mut v6: int16 = 0;
@@ -5382,8 +5252,7 @@ pub unsafe extern "C" fn HandleAutoscrolling_X() {
             as *mut uint16) = v4;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleScrollingWhenTriggeringScrollRight() {
+pub unsafe fn HandleScrollingWhenTriggeringScrollRight() {
     let mut v1: int16 = 0;
     let mut var939: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x911 as ::core::ffi::c_int as isize)
@@ -5457,8 +5326,7 @@ pub unsafe extern "C" fn HandleScrollingWhenTriggeringScrollRight() {
             as *mut uint16) = v0;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleScrollingWhenTriggeringScrollLeft() {
+pub unsafe fn HandleScrollingWhenTriggeringScrollLeft() {
     let mut v0: int16 = 0;
     let mut var939: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x911 as ::core::ffi::c_int as isize)
@@ -5522,8 +5390,7 @@ pub unsafe extern "C" fn HandleScrollingWhenTriggeringScrollLeft() {
             as *mut uint16) = 0 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleAutoscrolling_Y() {
+pub unsafe fn HandleAutoscrolling_Y() {
     let mut v1: int16 = 0;
     let mut v2: int16 = 0;
     let mut v4: int16 = 0;
@@ -5723,8 +5590,7 @@ pub unsafe extern "C" fn HandleAutoscrolling_Y() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleScrollingWhenTriggeringScrollDown() {
+pub unsafe fn HandleScrollingWhenTriggeringScrollDown() {
     let mut var939: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x915 as ::core::ffi::c_int as isize)
         as *mut uint16);
@@ -5809,8 +5675,7 @@ pub unsafe extern "C" fn HandleScrollingWhenTriggeringScrollDown() {
             as *mut uint16) = v3;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleScrollingWhenTriggeringScrollUp() {
+pub unsafe fn HandleScrollingWhenTriggeringScrollUp() {
     let mut v0: int16 = 0;
     let mut var939: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x915 as ::core::ffi::c_int as isize)
@@ -5874,8 +5739,7 @@ pub unsafe extern "C" fn HandleScrollingWhenTriggeringScrollUp() {
             as *mut uint16) = 0 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn DebugScrollPosSaveLoad() {
+pub unsafe fn DebugScrollPosSaveLoad() {
     if *((&raw mut g_ram as *mut uint8).offset(0x91 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0x40 as ::core::ffi::c_int
@@ -5910,16 +5774,13 @@ pub unsafe extern "C" fn DebugScrollPosSaveLoad() {
             as *mut uint16);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn UploadBackgroundDataColumn() {
+pub unsafe fn UploadBackgroundDataColumn() {
     UpdateLevelOrBackgroundDataColumn(0x1c as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn UploadLevelDataColumn() {
+pub unsafe fn UploadLevelDataColumn() {
     UpdateLevelOrBackgroundDataColumn(0 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn UpdateLevelOrBackgroundDataColumn(mut k: uint16) {
+pub unsafe fn UpdateLevelOrBackgroundDataColumn(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x783 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -6189,16 +6050,13 @@ pub unsafe extern "C" fn UpdateLevelOrBackgroundDataColumn(mut k: uint16) {
         .offset(t2 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh7 = (*fresh7).wrapping_add(1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn UpdateBackgroundDataRow() {
+pub unsafe fn UpdateBackgroundDataRow() {
     UpdateLevelOrBackgroundDataRow(0x1c as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn UpdateLevelDataRow() {
+pub unsafe fn UpdateLevelDataRow() {
     UpdateLevelOrBackgroundDataRow(0 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn UpdateLevelOrBackgroundDataRow(mut v0: uint16) {
+pub unsafe fn UpdateLevelOrBackgroundDataRow(mut v0: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x783 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -6473,8 +6331,7 @@ pub unsafe extern "C" fn UpdateLevelOrBackgroundDataRow(mut v0: uint16) {
         .offset(t2 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh6 = (*fresh6).wrapping_add(1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn FixDoorsMovingUp() {
+pub unsafe fn FixDoorsMovingUp() {
     *((&raw mut g_ram as *mut uint8).offset(0x925 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     CalculateBgScrollAndLayerPositionBlocks();
@@ -6489,14 +6346,13 @@ pub unsafe extern "C" fn FixDoorsMovingUp() {
 }
 static mut kDoorTransitionSetupFuncs: [Option<Func_V>; 4] = unsafe {
     [
-        Some(DoorTransitionScrollingSetup_Right as unsafe extern "C" fn() -> ()),
-        Some(DoorTransitionScrollingSetup_Left as unsafe extern "C" fn() -> ()),
-        Some(DoorTransitionScrollingSetup_Down as unsafe extern "C" fn() -> ()),
-        Some(DoorTransitionScrollingSetup_Up as unsafe extern "C" fn() -> ()),
+        Some(DoorTransitionScrollingSetup_Right as unsafe fn() -> ()),
+        Some(DoorTransitionScrollingSetup_Left as unsafe fn() -> ()),
+        Some(DoorTransitionScrollingSetup_Down as unsafe fn() -> ()),
+        Some(DoorTransitionScrollingSetup_Up as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn DoorTransitionScrollingSetup() {
+pub unsafe fn DoorTransitionScrollingSetup() {
     *((&raw mut g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize) as *mut uint16) =
         *((&raw mut g_ram as *mut uint8).offset(0x927 as ::core::ffi::c_int as isize)
             as *mut uint16);
@@ -6509,8 +6365,7 @@ pub unsafe extern "C" fn DoorTransitionScrollingSetup() {
         & 3 as ::core::ffi::c_int) as usize]
         .expect("non-null function pointer")();
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorTransitionScrollingSetup_Right() {
+pub unsafe fn DoorTransitionScrollingSetup_Right() {
     CalculateLayer2Xpos();
     let ref mut fresh60 = *((&raw mut g_ram as *mut uint8)
         .offset(0x917 as ::core::ffi::c_int as isize) as *mut uint16);
@@ -6530,8 +6385,7 @@ pub unsafe extern "C" fn DoorTransitionScrollingSetup_Right() {
     *fresh63 = (*fresh63).wrapping_sub(1);
     DoorTransition_Right();
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorTransitionScrollingSetup_Left() {
+pub unsafe fn DoorTransitionScrollingSetup_Left() {
     CalculateLayer2Xpos();
     let ref mut fresh56 = *((&raw mut g_ram as *mut uint8)
         .offset(0x917 as ::core::ffi::c_int as isize) as *mut uint16);
@@ -6551,8 +6405,7 @@ pub unsafe extern "C" fn DoorTransitionScrollingSetup_Left() {
     *fresh59 = (*fresh59).wrapping_add(1);
     DoorTransition_Left();
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorTransitionScrollingSetup_Down() {
+pub unsafe fn DoorTransitionScrollingSetup_Down() {
     CalculateLayer2Xpos();
     CalculateLayer2Ypos();
     let ref mut fresh52 = *((&raw mut g_ram as *mut uint8)
@@ -6572,8 +6425,7 @@ pub unsafe extern "C" fn DoorTransitionScrollingSetup_Down() {
     *fresh55 = (*fresh55).wrapping_sub(1);
     DoorTransition_Down();
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorTransitionScrollingSetup_Up() {
+pub unsafe fn DoorTransitionScrollingSetup_Up() {
     CalculateLayer2Xpos();
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x915 as ::core::ffi::c_int as isize) as *mut uint16);
@@ -6603,8 +6455,7 @@ pub unsafe extern "C" fn DoorTransitionScrollingSetup_Up() {
     *fresh51 = (*fresh51).wrapping_sub(1);
     DoorTransition_Up();
 }
-#[no_mangle]
-pub unsafe extern "C" fn UpdatePreviousLayerBlocks() {
+pub unsafe fn UpdatePreviousLayerBlocks() {
     *((&raw mut g_ram as *mut uint8).offset(0x8ff as ::core::ffi::c_int as isize) as *mut uint16) =
         *((&raw mut g_ram as *mut uint8).offset(0x8f7 as ::core::ffi::c_int as isize)
             as *mut uint16);
@@ -6618,8 +6469,7 @@ pub unsafe extern "C" fn UpdatePreviousLayerBlocks() {
         *((&raw mut g_ram as *mut uint8).offset(0x8fd as ::core::ffi::c_int as isize)
             as *mut uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn UpdateBgScrollOffsets() {
+pub unsafe fn UpdateBgScrollOffsets() {
     *((&raw mut g_ram as *mut uint8).offset(0x91d as ::core::ffi::c_int as isize) as *mut uint16) =
         (*((&raw mut g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -6643,14 +6493,13 @@ pub unsafe extern "C" fn UpdateBgScrollOffsets() {
 }
 static mut kDoorTransitionFuncs: [Option<Func_U8>; 4] = unsafe {
     [
-        Some(DoorTransition_Right as unsafe extern "C" fn() -> uint8),
-        Some(DoorTransition_Left as unsafe extern "C" fn() -> uint8),
-        Some(DoorTransition_Down as unsafe extern "C" fn() -> uint8),
-        Some(DoorTransition_Up as unsafe extern "C" fn() -> uint8),
+        Some(DoorTransition_Right as unsafe fn() -> uint8),
+        Some(DoorTransition_Left as unsafe fn() -> uint8),
+        Some(DoorTransition_Down as unsafe fn() -> uint8),
+        Some(DoorTransition_Up as unsafe fn() -> uint8),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn Irq_FollowDoorTransition() {
+pub unsafe fn Irq_FollowDoorTransition() {
     if kDoorTransitionFuncs[(*((&raw mut g_ram as *mut uint8)
         .offset(0x791 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -6672,8 +6521,7 @@ pub unsafe extern "C" fn Irq_FollowDoorTransition() {
         *fresh68 = (*fresh68 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorTransition_Right() -> uint8 {
+pub unsafe fn DoorTransition_Right() -> uint8 {
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x925 as ::core::ffi::c_int as isize) as *mut uint16);
     AddToHiLo(
@@ -6703,8 +6551,7 @@ pub unsafe extern "C" fn DoorTransition_Right() -> uint8 {
     UpdateScrollVarsUpdateMap();
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorTransition_Left() -> uint8 {
+pub unsafe fn DoorTransition_Left() -> uint8 {
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x925 as ::core::ffi::c_int as isize) as *mut uint16);
     AddToHiLo(
@@ -6730,8 +6577,7 @@ pub unsafe extern "C" fn DoorTransition_Left() -> uint8 {
         (v2 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16;
     return (v2 as ::core::ffi::c_int == 63 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorTransition_Down() -> uint8 {
+pub unsafe fn DoorTransition_Down() -> uint8 {
     let mut v6: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x925 as ::core::ffi::c_int as isize) as *mut uint16);
     if *((&raw mut g_ram as *mut uint8).offset(0x925 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -6817,8 +6663,7 @@ pub unsafe extern "C" fn DoorTransition_Down() -> uint8 {
     UpdateScrollVarsUpdateMap();
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorTransition_Up() -> uint8 {
+pub unsafe fn DoorTransition_Up() -> uint8 {
     let mut v6: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x925 as ::core::ffi::c_int as isize) as *mut uint16);
     if *((&raw mut g_ram as *mut uint8).offset(0x925 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -6923,8 +6768,7 @@ pub unsafe extern "C" fn DoorTransition_Up() -> uint8 {
         (v6 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16;
     return (v6 as ::core::ffi::c_int == 56 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ConfigureMode7RotationMatrix() {
+pub unsafe fn ConfigureMode7RotationMatrix() {
     if *((&raw mut g_ram as *mut uint8).offset(0x783 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -6964,7 +6808,7 @@ pub unsafe extern "C" fn ConfigureMode7RotationMatrix() {
     }
 }
 static mut decompress_src: uint32 = 0;
-unsafe extern "C" fn DecompNextByte() -> uint8 {
+unsafe fn DecompNextByte() -> uint8 {
     let mut b: uint8 = *RomPtr(decompress_src as uint32_t);
     let fresh31 = decompress_src;
     decompress_src = decompress_src.wrapping_add(1);
@@ -6973,8 +6817,7 @@ unsafe extern "C" fn DecompNextByte() -> uint8 {
     }
     return b;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DecompressToMem(mut src: uint32, mut decompress_dst: *mut uint8) {
+pub unsafe fn DecompressToMem(mut src: uint32, mut decompress_dst: *mut uint8) {
     decompress_src = src;
     let mut src_pos: ::core::ffi::c_int = 0;
     let mut dst_pos: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -7084,7 +6927,7 @@ pub unsafe extern "C" fn DecompressToMem(mut src: uint32, mut decompress_dst: *m
         }
     }
 }
-unsafe extern "C" fn ReadPpuByte(mut addr: uint16) -> uint8 {
+unsafe fn ReadPpuByte(mut addr: uint16) -> uint8 {
     WriteRegWord(
         VMADDL as ::core::ffi::c_int as uint16,
         (addr as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16,
@@ -7097,8 +6940,7 @@ unsafe extern "C" fn ReadPpuByte(mut addr: uint16) -> uint8 {
         data as ::core::ffi::c_int
     }) as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DecompressToVRAM(mut src: uint32, mut dst_addr: uint16) {
+pub unsafe fn DecompressToVRAM(mut src: uint32, mut dst_addr: uint16) {
     decompress_src = src;
     let mut src_pos: ::core::ffi::c_int = 0;
     let mut dst_pos: ::core::ffi::c_int = dst_addr as ::core::ffi::c_int;
@@ -7237,8 +7079,7 @@ pub unsafe extern "C" fn DecompressToVRAM(mut src: uint32, mut dst_addr: uint16)
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadFromLoadStation() {
+pub unsafe fn LoadFromLoadStation() {
     *((&raw mut g_ram as *mut uint8).offset(0x1e75 as ::core::ffi::c_int as isize)
         as *mut uint16) = 1 as uint16;
     let mut L: *const LoadStationList = RomPtr_80(
@@ -7300,8 +7141,7 @@ pub unsafe extern "C" fn LoadFromLoadStation() {
         as *mut uint8)
         .offset(0 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetElevatorsAsUsed() {
+pub unsafe fn SetElevatorsAsUsed() {
     let mut v0: *const uint8 = RomPtr_80(
         (*(g_rom.offset(
             (((0x80cd46 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)

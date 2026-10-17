@@ -275,11 +275,11 @@ pub struct EprojCollInfo {
     pub eci_r32: uint16,
     pub eci_r34: uint16,
 }
-pub type Func_EprojCollInfo_U8 = unsafe extern "C" fn(*mut EprojCollInfo) -> uint8;
+pub type Func_EprojCollInfo_U8 = unsafe fn(*mut EprojCollInfo) -> uint8;
 pub use crate::types::{Enemy_MotherBrain, Point32};
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 #[inline]
-unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
+unsafe fn abs16(mut t: uint16) -> uint16 {
     return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         -(t as ::core::ffi::c_int)
     } else {
@@ -287,33 +287,33 @@ unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
     }) as uint16;
 }
 #[inline]
-unsafe extern "C" fn __CFADD__uint16(mut x: uint16, mut y: uint16) -> bool {
+unsafe fn __CFADD__uint16(mut x: uint16, mut y: uint16) -> bool {
     return x as ::core::ffi::c_int
         > (x as ::core::ffi::c_int + y as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int;
 }
 #[inline]
-unsafe extern "C" fn __CFADD__uint8(mut x: uint8, mut y: uint8) -> bool {
+unsafe fn __CFADD__uint8(mut x: uint8, mut y: uint8) -> bool {
     return x as ::core::ffi::c_int
         > (x as ::core::ffi::c_int + y as ::core::ffi::c_int) as uint8 as ::core::ffi::c_int;
 }
 #[inline]
-unsafe extern "C" fn RomPtr_86(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_86(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x860000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomPtr_A0(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_A0(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0xa00000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomPtr_A1(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_A1(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0xa10000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomPtr_B4(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_B4(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0xb40000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomBankBase(mut bank: uint8) -> *const uint8 {
+unsafe fn RomBankBase(mut bank: uint8) -> *const uint8 {
     return RomPtr(
         (((bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) + 0x8000 as ::core::ffi::c_int)
             as uint32_t,
@@ -321,28 +321,28 @@ unsafe extern "C" fn RomBankBase(mut bank: uint8) -> *const uint8 {
     .offset(-(0x8000 as ::core::ffi::c_int as isize));
 }
 #[inline]
-unsafe extern "C" fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
+unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
     return (&raw mut g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
         as *mut uint8 as *mut VramWriteEntry;
 }
 #[inline]
-unsafe extern "C" fn get_EnemyDef_A2(mut a: uint16) -> *mut EnemyDef {
+unsafe fn get_EnemyDef_A2(mut a: uint16) -> *mut EnemyDef {
     return RomPtr((0xa00000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut EnemyDef;
 }
 #[inline]
-unsafe extern "C" fn get_EprojDef(mut a: uint16) -> *mut EprojDef {
+unsafe fn get_EprojDef(mut a: uint16) -> *mut EprojDef {
     return RomPtr((0x860000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut EprojDef;
 }
 #[inline]
-unsafe extern "C" fn gRam7800_Default(mut a: uint16) -> *mut Ram7800_Default {
+unsafe fn gRam7800_Default(mut a: uint16) -> *mut Ram7800_Default {
     return (&raw mut g_ram as *mut uint8)
         .offset((0x7800 as ::core::ffi::c_int + a as ::core::ffi::c_int) as isize)
         as *mut uint8 as *mut Ram7800_Default;
 }
 #[inline]
-unsafe extern "C" fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
+unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
     let mut t: uint32 = ((*lo as ::core::ffi::c_int
         + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
         as uint32)
@@ -719,62 +719,55 @@ pub const fnEprojPreInstr_Pickup: ::core::ffi::c_int = 0x86efe0 as ::core::ffi::
 pub const fnEprojInit_Sparks: uint32 = 8844177 as uint32;
 pub const fnEprojPreInstr_Sparks: uint32 = 8844272 as uint32;
 #[inline]
-unsafe extern "C" fn gEnemyData(mut o: ::core::ffi::c_int) -> *mut EnemyData {
+unsafe fn gEnemyData(mut o: ::core::ffi::c_int) -> *mut EnemyData {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut EnemyData;
 }
 #[inline]
-unsafe extern "C" fn gEnemySpawnData(mut o: ::core::ffi::c_int) -> *mut EnemySpawnData {
+unsafe fn gEnemySpawnData(mut o: ::core::ffi::c_int) -> *mut EnemySpawnData {
     return (&raw mut g_ram as *mut uint8)
         .offset(0x7000 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut EnemySpawnData;
 }
 #[inline]
-unsafe extern "C" fn gExtraEnemyRam7800(mut o: ::core::ffi::c_int) -> *mut ExtraEnemyRam7800 {
+unsafe fn gExtraEnemyRam7800(mut o: ::core::ffi::c_int) -> *mut ExtraEnemyRam7800 {
     return (&raw mut g_ram as *mut uint8)
         .offset(0x7800 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut ExtraEnemyRam7800;
 }
 #[inline]
-unsafe extern "C" fn gExtraEnemyRam8000(mut o: ::core::ffi::c_int) -> *mut ExtraEnemyRam8000 {
+unsafe fn gExtraEnemyRam8000(mut o: ::core::ffi::c_int) -> *mut ExtraEnemyRam8000 {
     return (&raw mut g_ram as *mut uint8)
         .offset(0x8000 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut ExtraEnemyRam8000;
 }
 #[inline]
-unsafe extern "C" fn Get_MotherBrain(mut o: ::core::ffi::c_int) -> *mut Enemy_MotherBrain {
+unsafe fn Get_MotherBrain(mut o: ::core::ffi::c_int) -> *mut Enemy_MotherBrain {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_MotherBrain;
 }
-#[no_mangle]
 pub static mut eproj_spawn_rect: Rect16U = Rect16U {
     x: 0,
     y: 0,
     w: 0,
     h: 0,
 };
-#[no_mangle]
 pub static mut eproj_spawn_r22: uint16 = 0;
-#[no_mangle]
 pub static mut eproj_spawn_pt: Point16U = Point16U { x: 0, y: 0 };
-#[no_mangle]
 pub static mut eproj_spawn_varE24: uint16 = 0;
-#[no_mangle]
-pub unsafe extern "C" fn EnableEprojs() {
+pub unsafe fn EnableEprojs() {
     let ref mut fresh18 = *((&raw mut g_ram as *mut uint8)
         .offset(0x198d as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh18 = (*fresh18 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DisableEprojs() {
+pub unsafe fn DisableEprojs() {
     let ref mut fresh17 = *((&raw mut g_ram as *mut uint8)
         .offset(0x198d as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh17 = (*fresh17 as ::core::ffi::c_int & !(0x8000 as ::core::ffi::c_int)) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearEprojs() {
+pub unsafe fn ClearEprojs() {
     let mut i: ::core::ffi::c_int = 34 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
@@ -783,7 +776,7 @@ pub unsafe extern "C" fn ClearEprojs() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-unsafe extern "C" fn SpawnEprojInner(mut j: uint16, mut gfx_idx: uint16) {
+unsafe fn SpawnEprojInner(mut j: uint16, mut gfx_idx: uint16) {
     let mut v3: uint16 = 34 as uint16;
     while *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -844,8 +837,7 @@ unsafe extern "C" fn SpawnEprojInner(mut j: uint16, mut gfx_idx: uint16) {
         v3,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnEprojWithGfx(mut a: uint16, mut k: uint16, mut j: uint16) {
+pub unsafe fn SpawnEprojWithGfx(mut a: uint16, mut k: uint16, mut j: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
         as *mut uint16) = a;
     let mut E: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int);
@@ -855,13 +847,12 @@ pub unsafe extern "C" fn SpawnEprojWithGfx(mut a: uint16, mut k: uint16, mut j: 
             as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnEprojWithRoomGfx(mut j: uint16, mut a: uint16) {
+pub unsafe fn SpawnEprojWithRoomGfx(mut j: uint16, mut a: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
         as *mut uint16) = a;
     SpawnEprojInner(j, 0 as uint16);
 }
-unsafe extern "C" fn EprojRunOne(mut k: uint16) {
+unsafe fn EprojRunOne(mut k: uint16) {
     CallEprojPreInstr(
         (*((&raw mut g_ram as *mut uint8).offset(0x1a03 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -917,8 +908,7 @@ unsafe extern "C" fn EprojRunOne(mut k: uint16) {
             as ::core::ffi::c_long as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojRunAll() {
+pub unsafe fn EprojRunAll() {
     if *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -941,15 +931,13 @@ pub unsafe extern "C" fn EprojRunAll() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_Delete(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
+pub unsafe fn EprojInstr_Delete(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return ::core::ptr::null::<uint8>();
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_Sleep(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
+pub unsafe fn EprojInstr_Sleep(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1b47 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
@@ -957,29 +945,20 @@ pub unsafe extern "C" fn EprojInstr_Sleep(mut k: uint16, mut epjp: *const uint8)
             - 2 as ::core::ffi::c_long) as uint16;
     return ::core::ptr::null::<uint8>();
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_SetPreInstr_(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_SetPreInstr_(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1a03 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(epjp as *mut uint16);
     return epjp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_ClearPreInstr(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_ClearPreInstr(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1a03 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0x8170 as uint16;
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallEprojFunc(mut ea: uint32, mut k: uint32) {
+pub unsafe fn CallEprojFunc(mut ea: uint32, mut k: uint32) {
     match ea {
         8833019 => {
             SpawnMotherBrainDeathBeam(k as uint16);
@@ -990,24 +969,17 @@ pub unsafe extern "C" fn CallEprojFunc(mut ea: uint32, mut k: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_CallFunc(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_CallFunc(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     CallEprojFunc(Load24(epjp as *mut LongPtr), k as uint32);
     return epjp.offset(3 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_Goto(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
+pub unsafe fn EprojInstr_Goto(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     return *(epjp as *mut uint16) as uintptr_t as *const uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_GotoRel(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
+pub unsafe fn EprojInstr_GotoRel(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     return epjp.offset(*epjp as int8 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_DecTimerAndGotoIfNonZero(
+pub unsafe fn EprojInstr_DecTimerAndGotoIfNonZero(
     mut k: uint16,
     mut epjp: *const uint8,
 ) -> *const uint8 {
@@ -1023,8 +995,7 @@ pub unsafe extern "C" fn EprojInstr_DecTimerAndGotoIfNonZero(
         return EprojInstr_Goto(k, epjp);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_DecTimerAndGotoRelIfNonZero(
+pub unsafe fn EprojInstr_DecTimerAndGotoRelIfNonZero(
     mut k: uint16,
     mut epjp: *const uint8,
 ) -> *const uint8 {
@@ -1040,19 +1011,14 @@ pub unsafe extern "C" fn EprojInstr_DecTimerAndGotoRelIfNonZero(
         return EprojInstr_GotoRel(k, epjp);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_SetTimer(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_SetTimer(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x19df as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(epjp as *mut uint16);
     return epjp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_MoveRandomlyWithinRadius(
+pub unsafe fn EprojInstr_MoveRandomlyWithinRadius(
     mut k: uint16,
     mut epjp: *const uint8,
 ) -> *const uint8 {
@@ -1100,8 +1066,7 @@ pub unsafe extern "C" fn EprojInstr_MoveRandomlyWithinRadius(
     *fresh45 = (*fresh45 as ::core::ffi::c_int + v6 as ::core::ffi::c_int) as uint16;
     return epjp.offset(4 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_SetProjectileProperties(
+pub unsafe fn EprojInstr_SetProjectileProperties(
     mut k: uint16,
     mut epjp: *const uint8,
 ) -> *const uint8 {
@@ -1112,8 +1077,7 @@ pub unsafe extern "C" fn EprojInstr_SetProjectileProperties(
         (*fresh43 as ::core::ffi::c_int | *(epjp as *mut uint16) as ::core::ffi::c_int) as uint16;
     return epjp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_ClearProjectileProperties(
+pub unsafe fn EprojInstr_ClearProjectileProperties(
     mut k: uint16,
     mut epjp: *const uint8,
 ) -> *const uint8 {
@@ -1124,8 +1088,7 @@ pub unsafe extern "C" fn EprojInstr_ClearProjectileProperties(
         (*fresh42 as ::core::ffi::c_int & *(epjp as *mut uint16) as ::core::ffi::c_int) as uint16;
     return epjp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_EnableCollisionWithSamusProj(
+pub unsafe fn EprojInstr_EnableCollisionWithSamusProj(
     mut k: uint16,
     mut epjp: *const uint8,
 ) -> *const uint8 {
@@ -1135,8 +1098,7 @@ pub unsafe extern "C" fn EprojInstr_EnableCollisionWithSamusProj(
     *fresh41 = (*fresh41 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_DisableCollisionWithSamusProj(
+pub unsafe fn EprojInstr_DisableCollisionWithSamusProj(
     mut k: uint16,
     mut epjp: *const uint8,
 ) -> *const uint8 {
@@ -1146,8 +1108,7 @@ pub unsafe extern "C" fn EprojInstr_DisableCollisionWithSamusProj(
     *fresh40 = (*fresh40 as ::core::ffi::c_int & !(0x8000 as ::core::ffi::c_int)) as uint16;
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_DisableCollisionWithSamus(
+pub unsafe fn EprojInstr_DisableCollisionWithSamus(
     mut k: uint16,
     mut epjp: *const uint8,
 ) -> *const uint8 {
@@ -1157,8 +1118,7 @@ pub unsafe extern "C" fn EprojInstr_DisableCollisionWithSamus(
     *fresh39 = (*fresh39 as ::core::ffi::c_int | 0x2000 as ::core::ffi::c_int) as uint16;
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_EnableCollisionWithSamus(
+pub unsafe fn EprojInstr_EnableCollisionWithSamus(
     mut k: uint16,
     mut epjp: *const uint8,
 ) -> *const uint8 {
@@ -1168,8 +1128,7 @@ pub unsafe extern "C" fn EprojInstr_EnableCollisionWithSamus(
     *fresh38 = (*fresh38 as ::core::ffi::c_int & !(0x2000 as ::core::ffi::c_int)) as uint16;
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_SetToNotDieOnContact(
+pub unsafe fn EprojInstr_SetToNotDieOnContact(
     mut k: uint16,
     mut epjp: *const uint8,
 ) -> *const uint8 {
@@ -1179,62 +1138,41 @@ pub unsafe extern "C" fn EprojInstr_SetToNotDieOnContact(
     *fresh37 = (*fresh37 as ::core::ffi::c_int | 0x4000 as ::core::ffi::c_int) as uint16;
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_SetToDieOnContact(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_SetToDieOnContact(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     let ref mut fresh36 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1bd7 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh36 = (*fresh36 as ::core::ffi::c_int & !(0x4000 as ::core::ffi::c_int)) as uint16;
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_SetLowPriority(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_SetLowPriority(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     let ref mut fresh35 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1bd7 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh35 = (*fresh35 as ::core::ffi::c_int | 0x1000 as ::core::ffi::c_int) as uint16;
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_SetHighPriority(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_SetHighPriority(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     let ref mut fresh34 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1bd7 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh34 = (*fresh34 as ::core::ffi::c_int & !(0x1000 as ::core::ffi::c_int)) as uint16;
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_SetXyRadius(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_SetXyRadius(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1bb3 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(epjp as *mut uint16);
     return epjp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_SetXyRadiusZero(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_SetXyRadiusZero(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1bb3 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_CalculateDirectionTowardsSamus(
+pub unsafe fn EprojInstr_CalculateDirectionTowardsSamus(
     mut k: uint16,
     mut epjp: *const uint8,
 ) -> *const uint8 {
@@ -1270,8 +1208,7 @@ pub unsafe extern "C" fn EprojInstr_CalculateDirectionTowardsSamus(
         .offset(v4 as isize) = kSinCosTable8bit_Sext[v5 as usize] as uint16;
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_WriteColorsToPalette(
+pub unsafe fn EprojInstr_WriteColorsToPalette(
     mut k: uint16,
     mut epjp: *const uint8,
 ) -> *const uint8 {
@@ -1293,136 +1230,71 @@ pub unsafe extern "C" fn EprojInstr_WriteColorsToPalette(
     }
     return epjp.offset(5 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_QueueMusic(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_QueueMusic(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     QueueMusic_Delayed8(*epjp as uint16);
     return epjp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_QueueSfx1_Max6(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_QueueSfx1_Max6(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     QueueSfx1_Max6(*epjp as uint16);
     return epjp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_QueueSfx2_Max6(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_QueueSfx2_Max6(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     QueueSfx2_Max6(*epjp as uint16);
     return epjp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_QueueSfx3_Max6(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_QueueSfx3_Max6(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     QueueSfx3_Max6(*epjp as uint16);
     return epjp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_QueueSfx1_Max15(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_QueueSfx1_Max15(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     QueueSfx1_Max15(*epjp as uint16);
     return epjp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_QueueSfx2_Max15(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_QueueSfx2_Max15(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     QueueSfx2_Max15(*epjp as uint16);
     return epjp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_QueueSfx3_Max15(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_QueueSfx3_Max15(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     QueueSfx3_Max15(*epjp as uint16);
     return epjp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_QueueSfx1_Max3(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_QueueSfx1_Max3(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     QueueSfx1_Max3(*epjp as uint16);
     return epjp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_QueueSfx2_Max3(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_QueueSfx2_Max3(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     QueueSfx2_Max3(*epjp as uint16);
     return epjp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_QueueSfx3_Max3(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_QueueSfx3_Max3(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     QueueSfx3_Max3(*epjp as uint16);
     return epjp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_QueueSfx1_Max9(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_QueueSfx1_Max9(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     QueueSfx1_Max9(*epjp as uint16);
     return epjp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_QueueSfx2_Max9(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_QueueSfx2_Max9(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     QueueSfx2_Max9(*epjp as uint16);
     return epjp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_QueueSfx3_Max9(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_QueueSfx3_Max9(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     QueueSfx3_Max9(*epjp as uint16);
     return epjp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_QueueSfx1_Max1(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_QueueSfx1_Max1(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     QueueSfx1_Max1(*epjp as uint16);
     return epjp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_QueueSfx2_Max1(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_QueueSfx2_Max1(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     QueueSfx2_Max1(*epjp as uint16);
     return epjp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_QueueSfx3_Max1(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_QueueSfx3_Max1(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     QueueSfx3_Max1(*epjp as uint16);
     return epjp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawLowPriorityEprojs() {
+pub unsafe fn DrawLowPriorityEprojs() {
     let mut pt: Point16U = GetValuesForScreenShaking();
     let mut i: ::core::ffi::c_int = 34 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
@@ -1444,8 +1316,7 @@ pub unsafe extern "C" fn DrawLowPriorityEprojs() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawHighPriorityEprojs() {
+pub unsafe fn DrawHighPriorityEprojs() {
     let mut pt: Point16U = GetValuesForScreenShaking();
     let mut i: ::core::ffi::c_int = 34 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
@@ -1467,8 +1338,7 @@ pub unsafe extern "C" fn DrawHighPriorityEprojs() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawEprojs(mut k: uint16, mut pt: Point16U) {
+pub unsafe fn DrawEprojs(mut k: uint16, mut pt: Point16U) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1b6b as ::core::ffi::c_int as isize) as *mut uint16)
@@ -1508,8 +1378,7 @@ pub unsafe extern "C" fn DrawEprojs(mut k: uint16, mut pt: Point16U) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GetValuesForScreenShaking() -> Point16U {
+pub unsafe fn GetValuesForScreenShaking() -> Point16U {
     let mut R34: uint16 = 0;
     let mut R36: uint16 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
@@ -1571,7 +1440,7 @@ pub unsafe extern "C" fn GetValuesForScreenShaking() -> Point16U {
     }
     return Point16U { x: R36, y: R34 };
 }
-unsafe extern "C" fn EprojColl_8506(mut eci: *mut EprojCollInfo) -> uint8 {
+unsafe fn EprojColl_8506(mut eci: *mut EprojCollInfo) -> uint8 {
     if *(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -1594,7 +1463,7 @@ unsafe extern "C" fn EprojColl_8506(mut eci: *mut EprojCollInfo) -> uint8 {
     }
     return 0 as uint8;
 }
-unsafe extern "C" fn EprojColl_Unknown8536(mut eci: *mut EprojCollInfo) -> uint8 {
+unsafe fn EprojColl_Unknown8536(mut eci: *mut EprojCollInfo) -> uint8 {
     if *(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -1619,13 +1488,13 @@ unsafe extern "C" fn EprojColl_Unknown8536(mut eci: *mut EprojCollInfo) -> uint8
     }
     return 0 as uint8;
 }
-unsafe extern "C" fn EprojColl_ClearCarry(mut eci: *mut EprojCollInfo) -> uint8 {
+unsafe fn EprojColl_ClearCarry(mut eci: *mut EprojCollInfo) -> uint8 {
     return 0 as uint8;
 }
-unsafe extern "C" fn EprojColl_SetCarry(mut eci: *mut EprojCollInfo) -> uint8 {
+unsafe fn EprojColl_SetCarry(mut eci: *mut EprojCollInfo) -> uint8 {
     return 1 as uint8;
 }
-unsafe extern "C" fn EprojColl_858E(mut eci: *mut EprojCollInfo) -> uint8 {
+unsafe fn EprojColl_858E(mut eci: *mut EprojCollInfo) -> uint8 {
     let mut v0: uint16 = (*(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -1650,7 +1519,7 @@ unsafe extern "C" fn EprojColl_858E(mut eci: *mut EprojCollInfo) -> uint8 {
         ) as uint16;
     return EprojColl_873D();
 }
-unsafe extern "C" fn EprojColl_85AD(mut eci: *mut EprojCollInfo) -> uint8 {
+unsafe fn EprojColl_85AD(mut eci: *mut EprojCollInfo) -> uint8 {
     let mut v0: uint16 = (*(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -1692,11 +1561,7 @@ static mut unk_868729: [uint8; 20] = [
     0x82 as ::core::ffi::c_int as uint8,
     0x83 as ::core::ffi::c_int as uint8,
 ];
-unsafe extern "C" fn EprojColl_85C2(
-    mut eci: *mut EprojCollInfo,
-    mut a: uint16,
-    mut k: uint16,
-) -> uint8 {
+unsafe fn EprojColl_85C2(mut eci: *mut EprojCollInfo, mut a: uint16, mut k: uint16) -> uint8 {
     let mut current_block: u64;
     let mut temp_collision_DD4: uint16 =
         (4 as ::core::ffi::c_int * a as ::core::ffi::c_int) as uint16;
@@ -1854,7 +1719,7 @@ unsafe extern "C" fn EprojColl_85C2(
         .offset(v6 as isize) = v7;
     return 1 as uint8;
 }
-unsafe extern "C" fn EprojColl_8676(
+unsafe fn EprojColl_8676(
     mut eci: *mut EprojCollInfo,
     mut a: uint16,
     mut k: uint16,
@@ -2016,11 +1881,10 @@ unsafe extern "C" fn EprojColl_8676(
         .offset(v7 as isize) = v8;
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojColl_873D() -> uint8 {
+pub unsafe fn EprojColl_873D() -> uint8 {
     return 0 as uint8;
 }
-unsafe extern "C" fn EprojColl_874E(mut eci: *mut EprojCollInfo) -> uint8 {
+unsafe fn EprojColl_874E(mut eci: *mut EprojCollInfo) -> uint8 {
     let mut v3: int16 = 0;
     let mut v5: int16 = 0;
     let mut v6: uint16 = 0;
@@ -2207,46 +2071,45 @@ unsafe extern "C" fn EprojColl_874E(mut eci: *mut EprojCollInfo) -> uint8 {
 }
 static mut kEprojBlockCollisition_FuncA: [Option<Func_EprojCollInfo_U8>; 16] = unsafe {
     [
-        Some(EprojColl_ClearCarry as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_858E as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_ClearCarry as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_ClearCarry as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_ClearCarry as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_8506 as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_ClearCarry as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_ClearCarry as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_SetCarry as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_SetCarry as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_SetCarry as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_SetCarry as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_SetCarry as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_Unknown8536 as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_ClearCarry as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_SetCarry as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_858E as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_8506 as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_SetCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_SetCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_SetCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_SetCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_SetCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_Unknown8536 as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_SetCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
     ]
 };
 static mut kEprojBlockCollisition_FuncB: [Option<Func_EprojCollInfo_U8>; 16] = unsafe {
     [
-        Some(EprojColl_ClearCarry as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_85AD as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_ClearCarry as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_ClearCarry as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_ClearCarry as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_8506 as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_ClearCarry as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_ClearCarry as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_SetCarry as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_SetCarry as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_SetCarry as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_SetCarry as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_SetCarry as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_Unknown8536 as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_ClearCarry as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
-        Some(EprojColl_SetCarry as unsafe extern "C" fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_85AD as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_8506 as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_SetCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_SetCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_SetCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_SetCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_SetCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_Unknown8536 as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
+        Some(EprojColl_SetCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn EprojBlockCollisition_CheckHorizontal(
+pub unsafe fn EprojBlockCollisition_CheckHorizontal(
     mut eci: *mut EprojCollInfo,
     mut k: uint16,
 ) -> uint8 {
@@ -2270,8 +2133,7 @@ pub unsafe extern "C" fn EprojBlockCollisition_CheckHorizontal(
     }
     return rv;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojBlockCollisition_CheckVertical(
+pub unsafe fn EprojBlockCollisition_CheckVertical(
     mut eci: *mut EprojCollInfo,
     mut k: uint16,
 ) -> uint8 {
@@ -2295,8 +2157,7 @@ pub unsafe extern "C" fn EprojBlockCollisition_CheckVertical(
     }
     return rv;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojBlockCollisition_Horiz(mut k: uint16) -> uint8 {
+pub unsafe fn EprojBlockCollisition_Horiz(mut k: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut amt: int32 = (*((&raw mut g_ram as *mut uint8)
         .offset(0x1ab7 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -2423,8 +2284,7 @@ pub unsafe extern "C" fn EprojBlockCollisition_Horiz(mut k: uint16) -> uint8 {
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojBlockCollisition_Vertical(mut k: uint16) -> uint8 {
+pub unsafe fn EprojBlockCollisition_Vertical(mut k: uint16) -> uint8 {
     let mut v5: int16 = 0;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut amt: int32 = (*((&raw mut g_ram as *mut uint8)
@@ -2549,7 +2409,7 @@ pub unsafe extern "C" fn EprojBlockCollisition_Vertical(mut k: uint16) -> uint8 
     }
     return 1 as uint8;
 }
-unsafe extern "C" fn Eproj_Init_0x8aaf(mut j: uint16) {
+unsafe fn Eproj_Init_0x8aaf(mut j: uint16) {
     NextRandom();
     let mut v1: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -2593,8 +2453,7 @@ unsafe extern "C" fn Eproj_Init_0x8aaf(mut j: uint16) {
                 >> 1 as ::core::ffi::c_int) as isize,
         );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_PreInit_0x8aaf(mut k: uint16) {
+pub unsafe fn Eproj_PreInit_0x8aaf(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
@@ -2620,7 +2479,7 @@ pub unsafe extern "C" fn Eproj_PreInit_0x8aaf(mut k: uint16) {
             .offset(v1 as isize) = 0 as uint16;
     }
 }
-unsafe extern "C" fn Eproj_Init_0x8bc2_SkreeDownRight(mut j: uint16) {
+unsafe fn Eproj_Init_0x8bc2_SkreeDownRight(mut j: uint16) {
     let mut v1: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2640,7 +2499,7 @@ unsafe extern "C" fn Eproj_Init_0x8bc2_SkreeDownRight(mut j: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = 320 as uint16;
 }
-unsafe extern "C" fn Eproj_Init_0x8bd0_SkreeUpRight(mut j: uint16) {
+unsafe fn Eproj_Init_0x8bd0_SkreeUpRight(mut j: uint16) {
     let mut v1: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2660,7 +2519,7 @@ unsafe extern "C" fn Eproj_Init_0x8bd0_SkreeUpRight(mut j: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = 96 as uint16;
 }
-unsafe extern "C" fn Eproj_Init_0x8bde_SkreeDownLeft(mut j: uint16) {
+unsafe fn Eproj_Init_0x8bde_SkreeDownLeft(mut j: uint16) {
     let mut v1: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2680,7 +2539,7 @@ unsafe extern "C" fn Eproj_Init_0x8bde_SkreeDownLeft(mut j: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = -(320 as ::core::ffi::c_int) as uint16;
 }
-unsafe extern "C" fn Eproj_Init_0x8bec_SkreeUpLeft(mut j: uint16) {
+unsafe fn Eproj_Init_0x8bec_SkreeUpLeft(mut j: uint16) {
     let mut v1: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2700,8 +2559,7 @@ unsafe extern "C" fn Eproj_Init_0x8bec_SkreeUpLeft(mut j: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = -(96 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_PreInstr_SkreeParticle(mut k: uint16) {
+pub unsafe fn Eproj_PreInstr_SkreeParticle(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
@@ -2737,8 +2595,7 @@ pub unsafe extern "C" fn Eproj_PreInstr_SkreeParticle(mut k: uint16) {
             .offset(v1 as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_SpawnEnemyDropsWithDraygonsEyeDrops(
+pub unsafe fn EprojInstr_SpawnEnemyDropsWithDraygonsEyeDrops(
     mut k: uint16,
     mut epjp: *const uint8,
 ) -> *const uint8 {
@@ -2758,29 +2615,21 @@ pub unsafe extern "C" fn EprojInstr_SpawnEnemyDropsWithDraygonsEyeDrops(
     );
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_SetPreInstrA(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_SetPreInstrA(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1a03 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         (0x868dff as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_SetPreInstrB(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_SetPreInstrB(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1a03 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         (0x868dca as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return epjp;
 }
-unsafe extern "C" fn EprojInit_DraygonsGunk(mut j: uint16) {
+unsafe fn EprojInit_DraygonsGunk(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -2815,7 +2664,7 @@ unsafe extern "C" fn EprojInit_DraygonsGunk(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 1024 as uint16;
 }
-unsafe extern "C" fn EprojInit_DraygonsWallTurretProjs(mut j: uint16) {
+unsafe fn EprojInit_DraygonsWallTurretProjs(mut j: uint16) {
     Eproj_AngleToSamus(j, eproj_spawn_pt.x, eproj_spawn_pt.y);
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x19bb as ::core::ffi::c_int as isize)
@@ -2826,8 +2675,7 @@ unsafe extern "C" fn EprojInit_DraygonsWallTurretProjs(mut j: uint16) {
         .offset(v1 as isize) =
         (0x868d54 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPowerBombCollision(mut k: uint16) {
+pub unsafe fn EprojPowerBombCollision(mut k: uint16) {
     let mut r18: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xcea as ::core::ffi::c_int as isize) as *mut uint16
         as *mut uint8)
@@ -2885,8 +2733,7 @@ pub unsafe extern "C" fn EprojPowerBombCollision(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_868D99(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
+pub unsafe fn EprojInstr_868D99(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     EprojPowerBombCollision(k);
     let mut v2: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0xa66 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -2928,8 +2775,7 @@ pub unsafe extern "C" fn EprojInstr_868D99(mut k: uint16, mut epjp: *const uint8
     }
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_8DCA(mut k: uint16) {
+pub unsafe fn EprojPreInstr_8DCA(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = 0;
     EprojPowerBombCollision(k);
     if *((&raw mut g_ram as *mut uint8).offset(0xa6e as ::core::ffi::c_int as isize) as *mut uint16)
@@ -2977,8 +2823,7 @@ pub unsafe extern "C" fn EprojPreInstr_8DCA(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_DraygonsTurret_8DFF(mut k: uint16) {
+pub unsafe fn EprojPreInstr_DraygonsTurret_8DFF(mut k: uint16) {
     let mut v1: int16 = 0;
     EprojPowerBombCollision(k);
     Eproj_FuncE73E_MoveXY(k);
@@ -2989,8 +2834,7 @@ pub unsafe extern "C" fn EprojPreInstr_DraygonsTurret_8DFF(mut k: uint16) {
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_DraygonsGunk_8E0F(mut k: uint16) {
+pub unsafe fn EprojPreInstr_DraygonsGunk_8E0F(mut k: uint16) {
     let mut v3: uint16 = 0;
     EprojPowerBombCollision(k);
     Eproj_FuncE73E_MoveXY(k);
@@ -3024,7 +2868,7 @@ pub unsafe extern "C" fn EprojPreInstr_DraygonsGunk_8E0F(mut k: uint16) {
             .offset(v1 as isize) = 0 as uint16;
     }
 }
-unsafe extern "C" fn EprojInit_CrocomireProjectile(mut j: uint16) {
+unsafe fn EprojInit_CrocomireProjectile(mut j: uint16) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1ab7 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -3057,8 +2901,7 @@ unsafe extern "C" fn EprojInit_CrocomireProjectile(mut j: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = 2560 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_CrocomireProjectile(mut k: uint16) {
+pub unsafe fn EprojPreInstr_CrocomireProjectile(mut k: uint16) {
     EprojBlockCollisition_Horiz(k);
     *((&raw mut g_ram as *mut uint8).offset(0x19bb as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -3101,8 +2944,7 @@ pub unsafe extern "C" fn EprojPreInstr_CrocomireProjectile(mut k: uint16) {
         .offset(v2 as isize) =
         (0x8690b3 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_8690B3(mut k: uint16) {
+pub unsafe fn sub_8690B3(mut k: uint16) {
     if EprojBlockCollisition_Horiz(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
         || EprojBlockCollisition_Vertical(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
     {
@@ -3111,7 +2953,7 @@ pub unsafe extern "C" fn sub_8690B3(mut k: uint16) {
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
 }
-unsafe extern "C" fn EprojInit_CrocomireSpikeWallPieces(mut j: uint16) {
+unsafe fn EprojInit_CrocomireSpikeWallPieces(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -3230,8 +3072,7 @@ static mut CrocomireSpikeWallPieces_Tab3: [int8; 36] = [
     1 as ::core::ffi::c_int as int8,
     0 as ::core::ffi::c_int as int8,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_CrocomireSpikeWallPieces(mut k: uint16) {
+pub unsafe fn EprojPreInstr_CrocomireSpikeWallPieces(mut k: uint16) {
     let mut v3: int8 = 0;
     let mut v6: int8 = 0;
     let mut v7: int8 = 0;
@@ -3378,8 +3219,7 @@ pub unsafe extern "C" fn EprojPreInstr_CrocomireSpikeWallPieces(mut k: uint16) {
         QueueSfx2_Max6(0x25 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_9270(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
+pub unsafe fn EprojInstr_9270(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     eproj_spawn_pt = Point16U {
         x: *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
@@ -3396,7 +3236,7 @@ pub unsafe extern "C" fn EprojInstr_9270(mut k: uint16, mut epjp: *const uint8) 
     );
     return epjp;
 }
-unsafe extern "C" fn EprojInit_CrocomireBridgeCrumbling(mut j: uint16) {
+unsafe fn EprojInit_CrocomireBridgeCrumbling(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -3426,8 +3266,7 @@ unsafe extern "C" fn EprojInit_CrocomireBridgeCrumbling(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 1024 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_CrocomireBridgeCrumbling(mut k: uint16) {
+pub unsafe fn EprojPreInstr_CrocomireBridgeCrumbling(mut k: uint16) {
     if EprojBlockCollisition_Vertical(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -3444,8 +3283,7 @@ pub unsafe extern "C" fn EprojPreInstr_CrocomireBridgeCrumbling(mut k: uint16) {
                 & 0x3fff as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MoveEprojWithVelocity(mut k: uint16) -> uint16 {
+pub unsafe fn MoveEprojWithVelocity(mut k: uint16) -> uint16 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1ab7 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -3468,8 +3306,7 @@ pub unsafe extern "C" fn MoveEprojWithVelocity(mut k: uint16) -> uint16 {
             + (carry >> 8 as ::core::ffi::c_int))) as uint16;
     return MoveEprojWithVelocityY(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn MoveEprojWithVelocityY(mut k: uint16) -> uint16 {
+pub unsafe fn MoveEprojWithVelocityY(mut k: uint16) -> uint16 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1adb as ::core::ffi::c_int as isize) as *mut uint16)
@@ -3495,8 +3332,7 @@ pub unsafe extern "C" fn MoveEprojWithVelocityY(mut k: uint16) -> uint16 {
         .offset(v1 as isize) = result;
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MoveEprojWithVelocityX(mut k: uint16) -> uint16 {
+pub unsafe fn MoveEprojWithVelocityX(mut k: uint16) -> uint16 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1ab7 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -3522,8 +3358,7 @@ pub unsafe extern "C" fn MoveEprojWithVelocityX(mut k: uint16) -> uint16 {
         .offset(v1 as isize) = result;
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetAreaDependentEprojPropertiesEx(mut k: uint16, mut j: uint16) {
+pub unsafe fn SetAreaDependentEprojPropertiesEx(mut k: uint16, mut j: uint16) {
     let mut v2: uint16 = 0;
     let mut p: *mut uint16 = RomPtr_86(k as uint16_t) as *mut uint16;
     if *((&raw mut g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize) as *mut uint16)
@@ -3555,7 +3390,7 @@ static mut kEprojInit_9634_Yvel: [int16; 4] = [
     0xfc as ::core::ffi::c_int as int16,
     0x16a as ::core::ffi::c_int as int16,
 ];
-unsafe extern "C" fn EprojInit_9634(mut j: uint16) {
+unsafe fn EprojInit_9634(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -3594,8 +3429,7 @@ unsafe extern "C" fn EprojInit_9634(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = kEprojInit_9634_Yvel[v2 as usize] as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_9634(mut k: uint16) {
+pub unsafe fn EprojPreInstr_9634(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -3634,7 +3468,7 @@ pub unsafe extern "C" fn EprojPreInstr_9634(mut k: uint16) {
         *fresh137 = (*fresh137).wrapping_add(1);
     };
 }
-unsafe extern "C" fn EprojInit_9642_RidleysFireball(mut j: uint16) {
+unsafe fn EprojInit_9642_RidleysFireball(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1b23 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -3681,15 +3515,13 @@ unsafe extern "C" fn EprojInit_9642_RidleysFireball(mut j: uint16) {
         j,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetAreaDependentEprojProperties(mut j: uint16) {
+pub unsafe fn SetAreaDependentEprojProperties(mut j: uint16) {
     SetAreaDependentEprojPropertiesEx(
         addr_kRidleysFireball_Tab0 as ::core::ffi::c_int as uint16,
         j,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_9642_RidleysFireball(mut k: uint16) {
+pub unsafe fn EprojPreInstr_9642_RidleysFireball(mut k: uint16) {
     let mut v1: uint16 = 0;
     if EprojBlockCollisition_Horiz(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         v1 = -(27042 as ::core::ffi::c_int) as uint16;
@@ -3720,8 +3552,7 @@ pub unsafe extern "C" fn EprojPreInstr_9642_RidleysFireball(mut k: uint16) {
         QueueSfx2_Max6(0x2b as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_DisableCollisionsWithSamus(
+pub unsafe fn EprojInstr_DisableCollisionsWithSamus(
     mut k: uint16,
     mut epjp: *const uint8,
 ) -> *const uint8 {
@@ -3731,7 +3562,7 @@ pub unsafe extern "C" fn EprojInstr_DisableCollisionsWithSamus(
     *fresh32 = (*fresh32 as ::core::ffi::c_int | 0x2000 as ::core::ffi::c_int) as uint16;
     return epjp;
 }
-unsafe extern "C" fn EprojInit_9660_FireballExplosion(mut j: uint16) {
+unsafe fn EprojInit_9660_FireballExplosion(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x19bb as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -3757,7 +3588,7 @@ unsafe extern "C" fn EprojInit_9660_FireballExplosion(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 0 as uint16;
 }
-unsafe extern "C" fn EprojInit_Common(mut j: uint16, mut k: uint16, mut a: uint16) {
+unsafe fn EprojInit_Common(mut j: uint16, mut k: uint16, mut a: uint16) {
     let mut v3: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1b23 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -3786,7 +3617,7 @@ unsafe extern "C" fn EprojInit_Common(mut j: uint16, mut k: uint16, mut a: uint1
         .offset(v3 as isize) = 2560 as uint16;
     SetAreaDependentEprojProperties(j);
 }
-unsafe extern "C" fn EprojInit_9688(mut j: uint16) {
+unsafe fn EprojInit_9688(mut j: uint16) {
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1993 as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -3798,7 +3629,7 @@ unsafe extern "C" fn EprojInit_9688(mut j: uint16) {
         .offset(v2 as isize) = -(3584 as ::core::ffi::c_int) as uint16;
     EprojInit_Common(j, v1, 0x9688 as uint16);
 }
-unsafe extern "C" fn EprojInit_9696(mut j: uint16) {
+unsafe fn EprojInit_9696(mut j: uint16) {
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1993 as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -3810,7 +3641,7 @@ unsafe extern "C" fn EprojInit_9696(mut j: uint16) {
         .offset(v2 as isize) = 3584 as uint16;
     EprojInit_Common(j, v1, 0x9696 as uint16);
 }
-unsafe extern "C" fn EprojInit_966C(mut j: uint16) {
+unsafe fn EprojInit_966C(mut j: uint16) {
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1993 as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -3822,7 +3653,7 @@ unsafe extern "C" fn EprojInit_966C(mut j: uint16) {
         .offset(v2 as isize) = 0 as uint16;
     EprojInit_Common(j, v1, 0x966c as uint16);
 }
-unsafe extern "C" fn EprojInit_967A(mut j: uint16) {
+unsafe fn EprojInit_967A(mut j: uint16) {
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1993 as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -3834,8 +3665,7 @@ unsafe extern "C" fn EprojInit_967A(mut j: uint16) {
         .offset(v2 as isize) = 0 as uint16;
     EprojInit_Common(j, v1, 0x967a as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_966C(mut k: uint16) {
+pub unsafe fn EprojPreInstr_966C(mut k: uint16) {
     MoveEprojWithVelocityX(k);
     if EprojBlockCollisition_Vertical(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -3847,8 +3677,7 @@ pub unsafe extern "C" fn EprojPreInstr_966C(mut k: uint16) {
             .offset(v1 as isize) = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_9688(mut k: uint16) {
+pub unsafe fn EprojPreInstr_9688(mut k: uint16) {
     MoveEprojWithVelocityY(k);
     if EprojBlockCollisition_Horiz(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -3860,32 +3689,28 @@ pub unsafe extern "C" fn EprojPreInstr_9688(mut k: uint16) {
             .offset(v1 as isize) = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_96A4(mut k: uint16) {
+pub unsafe fn EprojPreInstr_96A4(mut k: uint16) {
     if EprojBlockCollisition_Horiz(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
             as *mut uint16)
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_96C0(mut k: uint16) {
+pub unsafe fn EprojPreInstr_96C0(mut k: uint16) {
     if EprojBlockCollisition_Vertical(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
             as *mut uint16)
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_96CE(mut k: uint16) {
+pub unsafe fn EprojPreInstr_96CE(mut k: uint16) {
     if EprojBlockCollisition_Vertical(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
             as *mut uint16)
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_95BA(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
+pub unsafe fn EprojInstr_95BA(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
     SpawnEprojWithRoomGfx(addr_stru_86966C as ::core::ffi::c_int as uint16, k);
@@ -3894,8 +3719,7 @@ pub unsafe extern "C" fn EprojInstr_95BA(mut k: uint16, mut epjp: *const uint8) 
     SpawnEprojWithRoomGfx(addr_stru_86967A as ::core::ffi::c_int as uint16, k);
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_95ED(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
+pub unsafe fn EprojInstr_95ED(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
     SpawnEprojWithRoomGfx(addr_stru_869688 as ::core::ffi::c_int as uint16, k);
@@ -3904,8 +3728,7 @@ pub unsafe extern "C" fn EprojInstr_95ED(mut k: uint16, mut epjp: *const uint8) 
     SpawnEprojWithRoomGfx(addr_stru_869696 as ::core::ffi::c_int as uint16, k);
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_9620(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
+pub unsafe fn EprojInstr_9620(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     let ref mut fresh31 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1aff as ::core::ffi::c_int as isize) as *mut uint16
         as *mut uint8)
@@ -3921,7 +3744,7 @@ pub unsafe extern "C" fn EprojInstr_9620(mut k: uint16, mut epjp: *const uint8) 
     }
     return epjp;
 }
-unsafe extern "C" fn EprojInit_9734_CeresFallingDebris(mut j: uint16) {
+unsafe fn EprojInit_9734_CeresFallingDebris(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -3947,8 +3770,7 @@ unsafe extern "C" fn EprojInit_9734_CeresFallingDebris(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 16 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_9734_CeresFallingDebris(mut k: uint16) {
+pub unsafe fn EprojPreInstr_9734_CeresFallingDebris(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh135 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1adb as ::core::ffi::c_int as isize) as *mut uint16)
@@ -3973,8 +3795,7 @@ pub unsafe extern "C" fn EprojPreInstr_9734_CeresFallingDebris(mut k: uint16) {
         QueueSfx2_Max6(0x6d as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_980E(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
+pub unsafe fn EprojInstr_980E(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     eproj_spawn_pt = Point16U {
         x: *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
@@ -4030,7 +3851,7 @@ static mut byte_869979: [uint8; 8] = [
     0xc0 as ::core::ffi::c_int as uint8,
     0xe0 as ::core::ffi::c_int as uint8,
 ];
-unsafe extern "C" fn EprojInit_PhantoonDestroyableFireballs(mut j: uint16) {
+unsafe fn EprojInit_PhantoonDestroyableFireballs(mut j: uint16) {
     let mut v1: int8 = 0;
     v1 = ((*((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -4206,7 +4027,7 @@ unsafe extern "C" fn EprojInit_PhantoonDestroyableFireballs(mut j: uint16) {
         }
     };
 }
-unsafe extern "C" fn EprojInit_PhantoonStartingFireballs(mut j: uint16) {
+unsafe fn EprojInit_PhantoonStartingFireballs(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a27 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -4243,8 +4064,7 @@ unsafe extern "C" fn EprojInit_PhantoonStartingFireballs(mut j: uint16) {
         .y_pos as ::core::ffi::c_int
         + 16 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_PhantoonStartingFireballs(mut k: uint16) {
+pub unsafe fn EprojPreInstr_PhantoonStartingFireballs(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh133 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1adb as ::core::ffi::c_int as isize) as *mut uint16)
@@ -4279,8 +4099,7 @@ pub unsafe extern "C" fn EprojPreInstr_PhantoonStartingFireballs(mut k: uint16) 
         *fresh134 = (*fresh134 as ::core::ffi::c_int + 8 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_PhantoonStartingFireballs2(mut k: uint16) {
+pub unsafe fn EprojPreInstr_PhantoonStartingFireballs2(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: bool = *((&raw mut g_ram as *mut uint8)
         .offset(0x1aff as ::core::ffi::c_int as isize) as *mut uint16)
@@ -4334,8 +4153,7 @@ static mut word_869A3E: [uint16; 3] = [
     0xfe00 as ::core::ffi::c_int as uint16,
     0xff00 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_PhantoonStartingFireballs3(mut k: uint16) {
+pub unsafe fn EprojPreInstr_PhantoonStartingFireballs3(mut k: uint16) {
     let mut current_block: u64;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh129 = *((&raw mut g_ram as *mut uint8)
@@ -4379,8 +4197,7 @@ pub unsafe extern "C" fn EprojPreInstr_PhantoonStartingFireballs3(mut k: uint16)
         _ => {}
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_PhantoonDestroyableFireballs(mut k: uint16) {
+pub unsafe fn EprojPreInstr_PhantoonDestroyableFireballs(mut k: uint16) {
     let mut v4: int16 = 0;
     let mut v5: uint16 = 0;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -4453,8 +4270,7 @@ pub unsafe extern "C" fn EprojPreInstr_PhantoonDestroyableFireballs(mut k: uint1
             .offset(v1 as isize) = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_PhantoonDestroyableFireballs_2(mut k: uint16) {
+pub unsafe fn EprojPreInstr_PhantoonDestroyableFireballs_2(mut k: uint16) {
     let mut v2: bool = false;
     let mut v3: bool = false;
     let mut current_block: u64;
@@ -4517,8 +4333,7 @@ pub unsafe extern "C" fn EprojPreInstr_PhantoonDestroyableFireballs_2(mut k: uin
         _ => {}
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_PhantoonDestroyableFireballs_3(mut k: uint16) {
+pub unsafe fn EprojPreInstr_PhantoonDestroyableFireballs_3(mut k: uint16) {
     let mut v4: int16 = 0;
     let mut v5: uint16 = 0;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -4588,8 +4403,7 @@ pub unsafe extern "C" fn EprojPreInstr_PhantoonDestroyableFireballs_3(mut k: uin
             .offset(v1 as isize) = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_PhantoonStartingFireballsB(mut k: uint16) {
+pub unsafe fn EprojPreInstr_PhantoonStartingFireballsB(mut k: uint16) {
     if (*((&raw mut g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
         as *mut EnemyData)
         .offset(0 as ::core::ffi::c_int as isize))
@@ -4609,8 +4423,7 @@ pub unsafe extern "C" fn EprojPreInstr_PhantoonStartingFireballsB(mut k: uint16)
             .offset(v1 as isize) = 48 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_PhantoonStartingFireballsB_2(mut k: uint16) {
+pub unsafe fn EprojPreInstr_PhantoonStartingFireballsB_2(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1ab7 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -4686,8 +4499,7 @@ pub unsafe extern "C" fn EprojPreInstr_PhantoonStartingFireballsB_2(mut k: uint1
         .y_pos as ::core::ffi::c_int
         + 16 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_PhantomFireballs_Func1(mut j: uint16, mut a: uint16) -> Point16U {
+pub unsafe fn Eproj_PhantomFireballs_Func1(mut j: uint16, mut a: uint16) -> Point16U {
     let mut v3: int16 = 0;
     let mut v2: uint16 = 0;
     let mut v4: uint16 = 0;
@@ -4724,8 +4536,7 @@ pub unsafe extern "C" fn Eproj_PhantomFireballs_Func1(mut j: uint16, mut a: uint
     let mut r22: uint16 = v4;
     return Point16U { x: r20, y: r22 };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_PhantomFireballs_Func2(mut k: uint16, mut r24: uint16) -> uint16 {
+pub unsafe fn Eproj_PhantomFireballs_Func2(mut k: uint16, mut r24: uint16) -> uint16 {
     let mut r18: uint16 = (Mult8x8(
         *((&raw const kSinCosTable8bit_Sext as *const int16)
             .offset(64 as ::core::ffi::c_int as isize) as *const int16 as *mut uint8)
@@ -4743,7 +4554,7 @@ pub unsafe extern "C" fn Eproj_PhantomFireballs_Func2(mut k: uint16, mut r24: ui
             r24 as uint8,
         ) as ::core::ffi::c_int) as uint16;
 }
-unsafe extern "C" fn EprojInit_RocksKraidSpits(mut j: uint16) {
+unsafe fn EprojInit_RocksKraidSpits(mut j: uint16) {
     let mut v1: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -4775,7 +4586,7 @@ unsafe extern "C" fn EprojInit_RocksKraidSpits(mut j: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = 1536 as uint16;
 }
-unsafe extern "C" fn EprojInit_RocksFallingKraidCeiling(mut j: uint16) {
+unsafe fn EprojInit_RocksFallingKraidCeiling(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -4805,7 +4616,7 @@ unsafe extern "C" fn EprojInit_RocksFallingKraidCeiling(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 1536 as uint16;
 }
-unsafe extern "C" fn EprojInit_RocksWhenKraidRises(mut j: uint16) {
+unsafe fn EprojInit_RocksWhenKraidRises(mut j: uint16) {
     let mut v1: int16 = 0;
     v1 = (*((&raw mut g_ram as *mut uint8).offset(0x5e5 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -4848,8 +4659,7 @@ unsafe extern "C" fn EprojInit_RocksWhenKraidRises(mut j: uint16) {
         .offset(v2 as isize) = 1536 as uint16;
     QueueSfx3_Max6(0x1e as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_KraidRocks(mut k: uint16) {
+pub unsafe fn EprojPreInstr_KraidRocks(mut k: uint16) {
     if EprojBlockCollisition_Horiz(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
         || EprojBlockCollisition_Vertical(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
     {
@@ -4880,8 +4690,7 @@ pub unsafe extern "C" fn EprojPreInstr_KraidRocks(mut k: uint16) {
         *fresh122 = (*fresh122 as ::core::ffi::c_int + 64 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_RocksFallingKraidCeiling(mut k: uint16) {
+pub unsafe fn EprojPreInstr_RocksFallingKraidCeiling(mut k: uint16) {
     if EprojBlockCollisition_Vertical(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -4898,13 +4707,12 @@ pub unsafe extern "C" fn EprojPreInstr_RocksFallingKraidCeiling(mut k: uint16) {
                 & 0x3fff as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_869DA5(mut k: uint16) {
+pub unsafe fn sub_869DA5(mut k: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x19bb as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
 }
-unsafe extern "C" fn EprojInit_MiniKraidSpit(mut j: uint16) {
+unsafe fn EprojInit_MiniKraidSpit(mut j: uint16) {
     let mut v2: *mut ExtraEnemyRam7800 = ::core::ptr::null_mut::<ExtraEnemyRam7800>();
     let mut v1: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -4936,8 +4744,7 @@ unsafe extern "C" fn EprojInit_MiniKraidSpit(mut j: uint16) {
         as *mut uint16)
         .offset(v3 as isize) = (*v2).kraid.field_2;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInit_MiniKraidSpit(mut k: uint16) {
+pub unsafe fn EprojPreInit_MiniKraidSpit(mut k: uint16) {
     let mut v2: int16 = 0;
     if EprojBlockCollisition_Horiz(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
         || EprojBlockCollisition_Vertical(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
@@ -4971,7 +4778,7 @@ static mut kEprojInit_MiniKraidSpikes_Tab0: [int16; 3] = [
     12 as ::core::ffi::c_int as int16,
     24 as ::core::ffi::c_int as int16,
 ];
-unsafe extern "C" fn EprojInit_MiniKraidSpikes(mut j: uint16, mut a: uint16) {
+unsafe fn EprojInit_MiniKraidSpikes(mut j: uint16, mut a: uint16) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1ab7 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -5006,21 +4813,20 @@ unsafe extern "C" fn EprojInit_MiniKraidSpikes(mut j: uint16, mut a: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = 0 as uint16;
 }
-unsafe extern "C" fn EprojInit_MiniKraidSpikesLeft(mut j: uint16) {
+unsafe fn EprojInit_MiniKraidSpikesLeft(mut j: uint16) {
     EprojInit_MiniKraidSpikes(j, -(0x200 as ::core::ffi::c_int) as uint16);
 }
-unsafe extern "C" fn EprojInit_MiniKraidSpikesRight(mut j: uint16) {
+unsafe fn EprojInit_MiniKraidSpikesRight(mut j: uint16) {
     EprojInit_MiniKraidSpikes(j, 0x200 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_MiniKraidSpikes(mut k: uint16) {
+pub unsafe fn EprojPreInstr_MiniKraidSpikes(mut k: uint16) {
     if EprojBlockCollisition_Horiz(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
             as *mut uint16)
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
 }
-unsafe extern "C" fn EprojInit_WalkingLavaSeahorseFireball(mut j: uint16) {
+unsafe fn EprojInit_WalkingLavaSeahorseFireball(mut j: uint16) {
     static mut word_869EF9: [int16; 3] = [
         -(0x100 as ::core::ffi::c_int) as int16,
         0 as ::core::ffi::c_int as int16,
@@ -5066,8 +4872,7 @@ unsafe extern "C" fn EprojInit_WalkingLavaSeahorseFireball(mut j: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_WalkingLavaSeahorseFireball(mut k: uint16) {
+pub unsafe fn EprojPreInstr_WalkingLavaSeahorseFireball(mut k: uint16) {
     let mut v2: uint16 = 0;
     if EprojBlockCollisition_Vertical(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
         || EprojBlockCollisition_Horiz(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
@@ -5114,7 +4919,7 @@ pub unsafe extern "C" fn EprojPreInstr_WalkingLavaSeahorseFireball(mut k: uint16
             .offset(v1 as isize) = v2;
     };
 }
-unsafe extern "C" fn EprojInit_PirateMotherBrainLaser(mut j: uint16) {
+unsafe fn EprojInit_PirateMotherBrainLaser(mut j: uint16) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1b47 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -5148,19 +4953,14 @@ unsafe extern "C" fn EprojInit_PirateMotherBrainLaser(mut j: uint16) {
         .offset(v2 as isize) = (*v3).parameter_1;
     QueueSfx2_Max6(0x67 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_SetPreInstrAndRun(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_SetPreInstrAndRun(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1a03 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(epjp as *mut uint16);
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_PirateMotherBrainLaser_MoveLeft(mut k: uint16) {
+pub unsafe fn EprojPreInstr_PirateMotherBrainLaser_MoveLeft(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh21 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1a4b as ::core::ffi::c_int as isize) as *mut uint16)
@@ -5184,8 +4984,7 @@ pub unsafe extern "C" fn EprojPreInstr_PirateMotherBrainLaser_MoveLeft(mut k: ui
             .offset(v1 as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_PirateMotherBrainLaser_MoveRight(mut k: uint16) {
+pub unsafe fn EprojPreInstr_PirateMotherBrainLaser_MoveRight(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh23 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1a4b as ::core::ffi::c_int as isize) as *mut uint16)
@@ -5209,7 +5008,7 @@ pub unsafe extern "C" fn EprojPreInstr_PirateMotherBrainLaser_MoveRight(mut k: u
             .offset(v1 as isize) = 0 as uint16;
     }
 }
-unsafe extern "C" fn EprojInit_PirateClaw(mut j: uint16) {
+unsafe fn EprojInit_PirateClaw(mut j: uint16) {
     let mut r: Rect16U = eproj_spawn_rect;
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
@@ -5240,8 +5039,7 @@ unsafe extern "C" fn EprojInit_PirateClaw(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_PirateClawThrownLeft(mut k: uint16) {
+pub unsafe fn EprojPreInstr_PirateClawThrownLeft(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0x1b23 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -5304,8 +5102,7 @@ pub unsafe extern "C" fn EprojPreInstr_PirateClawThrownLeft(mut k: uint16) {
             .offset(v1 as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_PirateClawThrownRight(mut k: uint16) {
+pub unsafe fn EprojPreInstr_PirateClawThrownRight(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0x1b23 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -5376,7 +5173,7 @@ static mut word_86A2D6: [int16; 6] = [
     -(72 as ::core::ffi::c_int) as int16,
     -(80 as ::core::ffi::c_int) as int16,
 ];
-unsafe extern "C" fn EprojInit_A379(mut j: uint16) {
+unsafe fn EprojInit_A379(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a27 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -5419,7 +5216,7 @@ unsafe extern "C" fn EprojInit_A379(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = v2;
 }
-unsafe extern "C" fn EprojInit_CeresElevatorPad(mut j: uint16) {
+unsafe fn EprojInit_CeresElevatorPad(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -5432,8 +5229,7 @@ unsafe extern "C" fn EprojInit_CeresElevatorPad(mut j: uint16) {
         .offset(v1 as isize) = 60 as uint16;
     sub_86A301(j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86A301(mut j: uint16) {
+pub unsafe fn sub_86A301(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a27 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -5456,14 +5252,13 @@ pub unsafe extern "C" fn sub_86A301(mut j: uint16) {
         .offset(0xaf6 as ::core::ffi::c_int as isize)
         as *mut uint16);
 }
-unsafe extern "C" fn EprojInit_CeresElevatorPlatform(mut j: uint16) {
+unsafe fn EprojInit_CeresElevatorPlatform(mut j: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 97 as uint16;
     sub_86A301(j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_CeresElevatorPad(mut k: uint16) {
+pub unsafe fn EprojPreInstr_CeresElevatorPad(mut k: uint16) {
     let mut v2: bool = false;
     let mut v3: bool = false;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -5515,8 +5310,7 @@ pub unsafe extern "C" fn EprojPreInstr_CeresElevatorPad(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_CeresElevatorPlatform(mut k: uint16) {
+pub unsafe fn EprojPreInstr_CeresElevatorPlatform(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         == 72 as ::core::ffi::c_int
@@ -5530,13 +5324,11 @@ pub unsafe extern "C" fn EprojPreInstr_CeresElevatorPlatform(mut k: uint16) {
             .offset(v1 as isize) = addr_off_86A28B as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_PrePhantomRoom(mut j: uint16) {
+pub unsafe fn EprojPreInstr_PrePhantomRoom(mut j: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x923 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_A3BE(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
+pub unsafe fn EprojInstr_A3BE(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -5552,8 +5344,7 @@ pub unsafe extern "C" fn EprojInstr_A3BE(mut k: uint16, mut epjp: *const uint8) 
         .offset(v1 as isize);
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_GotoWithProbability25(
+pub unsafe fn EprojInstr_GotoWithProbability25(
     mut k: uint16,
     mut epjp: *const uint8,
 ) -> *const uint8 {
@@ -5565,7 +5356,7 @@ pub unsafe extern "C" fn EprojInstr_GotoWithProbability25(
         return epjp.offset(2 as ::core::ffi::c_int as isize);
     };
 }
-unsafe extern "C" fn EprojInit_BombTorizoLowHealthDrool(mut j: uint16) {
+unsafe fn EprojInit_BombTorizoLowHealthDrool(mut j: uint16) {
     let mut parameter_1: int16 = 0;
     let mut v4: uint16 = 0;
     let mut v5: uint16 = 0;
@@ -5636,7 +5427,7 @@ unsafe extern "C" fn EprojInit_BombTorizoLowHealthDrool(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = v8;
 }
-unsafe extern "C" fn EprojInit_BombTorizoLowHealthInitialDrool(mut j: uint16) {
+unsafe fn EprojInit_BombTorizoLowHealthInitialDrool(mut j: uint16) {
     let mut v3: int16 = 0;
     let mut parameter_1: int16 = 0;
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -5694,7 +5485,7 @@ unsafe extern "C" fn EprojInit_BombTorizoLowHealthInitialDrool(mut j: uint16) {
             .offset(v1 as isize) = 0 as uint16;
     };
 }
-unsafe extern "C" fn EprojInit_A977(mut j: uint16) {
+unsafe fn EprojInit_A977(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x19bb as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -5811,7 +5602,7 @@ static mut kEprojInit_BombTorizoLowHealthExplode_Y: [int16; 6] = [
     -(20 as ::core::ffi::c_int) as int16,
     -(20 as ::core::ffi::c_int) as int16,
 ];
-unsafe extern "C" fn EprojInit_BombTorizoExplosiveSwipe(mut j: uint16) {
+unsafe fn EprojInit_BombTorizoExplosiveSwipe(mut j: uint16) {
     let mut v1: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -5852,7 +5643,7 @@ unsafe extern "C" fn EprojInit_BombTorizoExplosiveSwipe(mut j: uint16) {
             as uint16;
     };
 }
-unsafe extern "C" fn EprojInit_BombTorizoStatueBreaking(mut j: uint16) {
+unsafe fn EprojInit_BombTorizoStatueBreaking(mut j: uint16) {
     let mut v1: int8 = 0;
     CalculatePlmBlockCoords(
         *((&raw mut g_ram as *mut uint8).offset(0x1c27 as ::core::ffi::c_int as isize)
@@ -5900,7 +5691,7 @@ unsafe extern "C" fn EprojInit_BombTorizoStatueBreaking(mut j: uint16) {
         .offset(v3 as isize);
     *fresh15 = (*fresh15 as ::core::ffi::c_int | 0x1000 as ::core::ffi::c_int) as uint16;
 }
-unsafe extern "C" fn EprojInit_BombTorizoLowHealthExplode(mut j: uint16) {
+unsafe fn EprojInit_BombTorizoLowHealthExplode(mut j: uint16) {
     let mut v1: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -5950,7 +5741,7 @@ unsafe extern "C" fn EprojInit_BombTorizoLowHealthExplode(mut j: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = v5;
 }
-unsafe extern "C" fn EprojInit_BombTorizoDeathExplosion(mut j: uint16) {
+unsafe fn EprojInit_BombTorizoDeathExplosion(mut j: uint16) {
     let mut v1: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -5971,8 +5762,7 @@ unsafe extern "C" fn EprojInit_BombTorizoDeathExplosion(mut j: uint16) {
         as *mut uint16)
         .offset(v3 as isize) = y_pos;
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86A887(mut v0: uint16) {
+pub unsafe fn sub_86A887(mut v0: uint16) {
     let mut v2: int16 = 0;
     let mut v3: int16 = 0;
     let mut v4: int16 = 0;
@@ -6044,8 +5834,7 @@ pub unsafe extern "C" fn sub_86A887(mut v0: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_A977(mut k: uint16) {
+pub unsafe fn EprojPreInstr_A977(mut k: uint16) {
     let mut carry: uint8 = EprojBlockCollisition_Vertical(k);
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0x1adb as ::core::ffi::c_int as isize)
@@ -6076,8 +5865,7 @@ pub unsafe extern "C" fn EprojPreInstr_A977(mut k: uint16) {
             .offset(v1 as isize) = 0xa918 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86A91A(mut v0: uint16) {
+pub unsafe fn sub_86A91A(mut v0: uint16) {
     let mut v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1ab7 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -6124,7 +5912,7 @@ pub unsafe extern "C" fn sub_86A91A(mut v0: uint16) {
     }
     EprojBlockCollisition_Vertical(v0);
 }
-unsafe extern "C" fn EprojInit_AB07(mut j: uint16) {
+unsafe fn EprojInit_AB07(mut j: uint16) {
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v2: *mut VramWriteEntry = gVramWriteEntry(
@@ -6156,8 +5944,7 @@ unsafe extern "C" fn EprojInit_AB07(mut j: uint16) {
         as *mut uint16) as ::core::ffi::c_int
         - 36 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_AB07(mut k: uint16) {
+pub unsafe fn EprojPreInstr_AB07(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut amt: int32 = ((8 as ::core::ffi::c_int
         * (*((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
@@ -6195,11 +5982,7 @@ pub unsafe extern "C" fn EprojPreInstr_AB07(mut k: uint16) {
         amt as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_SpawnEnemyDrops(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_SpawnEnemyDrops(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     eproj_spawn_pt = Point16U {
         x: *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
@@ -6223,7 +6006,7 @@ pub unsafe extern "C" fn EprojInstr_SpawnEnemyDrops(
     );
     return epjp.offset(4 as ::core::ffi::c_int as isize);
 }
-unsafe extern "C" fn Eproj_InitXYVelRandom(mut j: uint16, mut k: uint16, mut pt: Point16U) {
+unsafe fn Eproj_InitXYVelRandom(mut j: uint16, mut k: uint16, mut pt: Point16U) {
     let mut v2: *const uint16 = RomPtr_86(k as uint16_t) as *const uint16;
     let mut v3: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1b47 as ::core::ffi::c_int as isize)
@@ -6248,7 +6031,7 @@ unsafe extern "C" fn Eproj_InitXYVelRandom(mut j: uint16, mut k: uint16, mut pt:
         + NextRandom() as uint8 as ::core::ffi::c_int
         - 128 as ::core::ffi::c_int) as uint16;
 }
-unsafe extern "C" fn EprojInit_BombTorizosChozoOrbs(mut j: uint16) {
+unsafe fn EprojInit_BombTorizosChozoOrbs(mut j: uint16) {
     let mut E: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -6269,7 +6052,7 @@ unsafe extern "C" fn EprojInit_BombTorizosChozoOrbs(mut j: uint16) {
         },
     );
 }
-unsafe extern "C" fn EprojInit_GoldenTorizosChozoOrbs(mut j: uint16) {
+unsafe fn EprojInit_GoldenTorizosChozoOrbs(mut j: uint16) {
     let mut E: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -6290,8 +6073,7 @@ unsafe extern "C" fn EprojInit_GoldenTorizosChozoOrbs(mut j: uint16) {
         },
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_BombTorizosChozoOrbs(mut k: uint16) {
+pub unsafe fn EprojPreInstr_BombTorizosChozoOrbs(mut k: uint16) {
     if EprojBlockCollisition_Horiz(k) != 0 {
         let mut v3: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut g_ram as *mut uint8).offset(0x1b47 as ::core::ffi::c_int as isize)
@@ -6344,8 +6126,7 @@ pub unsafe extern "C" fn EprojPreInstr_BombTorizosChozoOrbs(mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_GoldenTorizosChozoOrbs(mut k: uint16) {
+pub unsafe fn EprojPreInstr_GoldenTorizosChozoOrbs(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = 0;
     let mut v2: int16 = 0;
     let mut v3: uint16 = 0;
@@ -6414,8 +6195,7 @@ pub unsafe extern "C" fn EprojPreInstr_GoldenTorizosChozoOrbs(mut k: uint16) {
         *fresh110 = (*fresh110 as ::core::ffi::c_int + 24 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_GotoDependingOnXDirection(
+pub unsafe fn EprojInstr_GotoDependingOnXDirection(
     mut k: uint16,
     mut epjp: *const uint8,
 ) -> *const uint8 {
@@ -6445,7 +6225,7 @@ pub unsafe extern "C" fn EprojInstr_GotoDependingOnXDirection(
         return *(epjp as *mut uint16) as uintptr_t as *const uint8;
     };
 }
-unsafe extern "C" fn EprojInit_TorizoSonicBoom(mut j: uint16) {
+unsafe fn EprojInit_TorizoSonicBoom(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = if NextRandom() as ::core::ffi::c_int & 1 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
@@ -6490,8 +6270,7 @@ unsafe extern "C" fn EprojInit_TorizoSonicBoom(mut j: uint16) {
             .offset(v3 as isize) = addr_off_86ADBF as ::core::ffi::c_int as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_TorizoSonicBoom(mut k: uint16) {
+pub unsafe fn EprojPreInstr_TorizoSonicBoom(mut k: uint16) {
     if EprojBlockCollisition_Horiz(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         let mut v4: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut g_ram as *mut uint8).offset(0x1b47 as ::core::ffi::c_int as isize)
@@ -6541,7 +6320,7 @@ pub unsafe extern "C" fn EprojPreInstr_TorizoSonicBoom(mut k: uint16) {
         }
     };
 }
-unsafe extern "C" fn EprojInit_WreckedShipChozoSpikeFootsteps(mut j: uint16) {
+unsafe fn EprojInit_WreckedShipChozoSpikeFootsteps(mut j: uint16) {
     let mut v1: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -6558,11 +6337,7 @@ unsafe extern "C" fn EprojInit_WreckedShipChozoSpikeFootsteps(mut j: uint16) {
         .offset(v2 as isize) =
         ((*v1).y_pos as ::core::ffi::c_int + 28 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_ResetXYpos1(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_ResetXYpos1(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -6578,7 +6353,7 @@ pub unsafe extern "C" fn EprojInstr_ResetXYpos1(
         .offset(v2 as isize);
     return epjp;
 }
-unsafe extern "C" fn EprojInit_TourianStatueDustClouds(mut j: uint16) {
+unsafe fn EprojInit_TourianStatueDustClouds(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -6587,7 +6362,7 @@ unsafe extern "C" fn EprojInit_TourianStatueDustClouds(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 188 as uint16;
 }
-unsafe extern "C" fn EprojInit_TourianLandingDustCloudsRightFoot(mut j: uint16) {
+unsafe fn EprojInit_TourianLandingDustCloudsRightFoot(mut j: uint16) {
     let mut v1: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -6602,18 +6377,14 @@ unsafe extern "C" fn EprojInit_TourianLandingDustCloudsRightFoot(mut j: uint16) 
         .offset(v2 as isize) =
         ((*v1).x_pos as ::core::ffi::c_int + 24 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_MoveY_Minus4(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_MoveY_Minus4(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     let ref mut fresh30 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1a93 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh30 = (*fresh30 as ::core::ffi::c_int - 4 as ::core::ffi::c_int) as uint16;
     return epjp;
 }
-unsafe extern "C" fn EprojInit_TorizoLandingDustCloudLeftFoot(mut j: uint16) {
+unsafe fn EprojInit_TorizoLandingDustCloudLeftFoot(mut j: uint16) {
     let mut v1: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -6628,7 +6399,7 @@ unsafe extern "C" fn EprojInit_TorizoLandingDustCloudLeftFoot(mut j: uint16) {
         .offset(v2 as isize) =
         ((*v1).x_pos as ::core::ffi::c_int - 24 as ::core::ffi::c_int) as uint16;
 }
-unsafe extern "C" fn EprojInit_GoldenTorizoEgg(mut j: uint16) {
+unsafe fn EprojInit_GoldenTorizoEgg(mut j: uint16) {
     let mut v1: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -6656,8 +6427,7 @@ unsafe extern "C" fn EprojInit_GoldenTorizoEgg(mut j: uint16) {
         },
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_GoldenTorizoEgg(mut k: uint16) {
+pub unsafe fn EprojPreInstr_GoldenTorizoEgg(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh104 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1b23 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -6745,8 +6515,7 @@ pub unsafe extern "C" fn EprojPreInstr_GoldenTorizoEgg(mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86B0B9(mut k: uint16) {
+pub unsafe fn sub_86B0B9(mut k: uint16) {
     let mut v2: int16 = 0;
     if EprojBlockCollisition_Horiz(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         let mut v3: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -6775,8 +6544,7 @@ pub unsafe extern "C" fn sub_86B0B9(mut k: uint16) {
         *fresh103 = (*fresh103 as ::core::ffi::c_int + v2 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86B0DD(mut k: uint16) {
+pub unsafe fn sub_86B0DD(mut k: uint16) {
     if EprojBlockCollisition_Vertical(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut g_ram as *mut uint8).offset(0x1b47 as ::core::ffi::c_int as isize)
@@ -6803,8 +6571,7 @@ pub unsafe extern "C" fn sub_86B0DD(mut k: uint16) {
         *fresh102 = (*fresh102 as ::core::ffi::c_int + 48 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86B13E(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
+pub unsafe fn sub_86B13E(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     return (if *((&raw mut g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
@@ -6821,7 +6588,7 @@ static mut word_86B205: [int16; 2] = [
     -(0x1e as ::core::ffi::c_int) as int16,
     0x1e as ::core::ffi::c_int as int16,
 ];
-unsafe extern "C" fn EprojInit_GoldenTorizoSuperMissile(mut j: uint16) {
+unsafe fn EprojInit_GoldenTorizoSuperMissile(mut j: uint16) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -6857,8 +6624,7 @@ unsafe extern "C" fn EprojInit_GoldenTorizoSuperMissile(mut j: uint16) {
     ) as *const uint8 as *mut uint16)
         .offset(v4 as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_GoldenTorizoSuperMissile(mut k: uint16) {
+pub unsafe fn EprojPreInstr_GoldenTorizoSuperMissile(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
@@ -6881,8 +6647,7 @@ pub unsafe extern "C" fn EprojPreInstr_GoldenTorizoSuperMissile(mut k: uint16) {
         .offset(v1 as isize) =
         ((*v2).y_pos as ::core::ffi::c_int - 52 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_B237(mut k: uint16) {
+pub unsafe fn EprojPreInstr_B237(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = 0;
     let mut carry: uint8 = 0;
     if EprojBlockCollisition_Horiz(k) as ::core::ffi::c_int != 0 || {
@@ -6918,7 +6683,7 @@ pub unsafe extern "C" fn EprojPreInstr_B237(mut k: uint16) {
         }
     };
 }
-unsafe extern "C" fn sub_86B279(mut k: uint16, mut a: uint16) {
+unsafe fn sub_86B279(mut k: uint16, mut a: uint16) {
     let mut v3: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1ab7 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -6931,8 +6696,7 @@ unsafe extern "C" fn sub_86B279(mut k: uint16, mut a: uint16) {
         * kSinCosTable8bit_Sext[a as usize] as ::core::ffi::c_int)
         as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_SetVelTowardsSamus1(
+pub unsafe fn EprojInstr_SetVelTowardsSamus1(
     mut k: uint16,
     mut epjp: *const uint8,
 ) -> *const uint8 {
@@ -6943,8 +6707,7 @@ pub unsafe extern "C" fn EprojInstr_SetVelTowardsSamus1(
     );
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_SetVelTowardsSamus2(
+pub unsafe fn EprojInstr_SetVelTowardsSamus2(
     mut k: uint16,
     mut epjp: *const uint8,
 ) -> *const uint8 {
@@ -6955,7 +6718,7 @@ pub unsafe extern "C" fn EprojInstr_SetVelTowardsSamus2(
     );
     return epjp;
 }
-unsafe extern "C" fn EprojInit_GoldenTorizoEyeBeam(mut j: uint16) {
+unsafe fn EprojInit_GoldenTorizoEyeBeam(mut j: uint16) {
     let mut E: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -6996,8 +6759,7 @@ unsafe extern "C" fn EprojInit_GoldenTorizoEyeBeam(mut j: uint16) {
         * kSinCosTable8bit_Sext[v4 as usize] as ::core::ffi::c_int)
         as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_GoldenTorizoEyeBeam(mut k: uint16) {
+pub unsafe fn EprojPreInstr_GoldenTorizoEyeBeam(mut k: uint16) {
     if EprojBlockCollisition_Horiz(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1b47 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -7028,11 +6790,7 @@ pub unsafe extern "C" fn EprojPreInstr_GoldenTorizoEyeBeam(mut k: uint16) {
         return;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_GotoIfFunc1(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_GotoIfFunc1(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     if (*gExtraEnemyRam7800(
         *((&raw mut g_ram as *mut uint8).offset(0x1b23 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -7049,11 +6807,7 @@ pub unsafe extern "C" fn EprojInstr_GotoIfFunc1(
         return epjp.offset(2 as ::core::ffi::c_int as isize);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_ResetXYpos2(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_ResetXYpos2(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -7069,7 +6823,7 @@ pub unsafe extern "C" fn EprojInstr_ResetXYpos2(
         .offset(v2 as isize);
     return epjp;
 }
-unsafe extern "C" fn EprojInit_TourianEscapeShaftFakeWallExplode(mut j: uint16) {
+unsafe fn EprojInit_TourianEscapeShaftFakeWallExplode(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -7084,7 +6838,7 @@ unsafe extern "C" fn EprojInit_TourianEscapeShaftFakeWallExplode(mut j: uint16) 
         as *mut uint16)
         .offset(v1 as isize) = 2184 as uint16;
 }
-unsafe extern "C" fn EprojInit_LavaSeahorseFireball(mut j: uint16) {
+unsafe fn EprojInit_LavaSeahorseFireball(mut j: uint16) {
     let mut v1: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -7123,8 +6877,7 @@ unsafe extern "C" fn EprojInit_LavaSeahorseFireball(mut j: uint16) {
             .offset(v2 as isize) = addr_word_86B4BF as ::core::ffi::c_int as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86B535(mut k: uint16) {
+pub unsafe fn sub_86B535(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
@@ -7184,8 +6937,7 @@ pub unsafe extern "C" fn sub_86B535(mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_DeleteIfYposOutside(mut k: uint16) {
+pub unsafe fn Eproj_DeleteIfYposOutside(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if (*((&raw mut g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -7221,7 +6973,7 @@ static mut word_86B65B: [int16; 20] = [
     144 as ::core::ffi::c_int as int16,
     -(64 as ::core::ffi::c_int) as int16,
 ];
-unsafe extern "C" fn EprojInit_EyeDoorProjectile(mut j: uint16) {
+unsafe fn EprojInit_EyeDoorProjectile(mut j: uint16) {
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c27 as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -7262,7 +7014,7 @@ static mut word_86B6B1: [int16; 4] = [
     64 as ::core::ffi::c_int as int16,
     512 as ::core::ffi::c_int as int16,
 ];
-unsafe extern "C" fn EprojInit_EyeDoorSweat(mut j: uint16) {
+unsafe fn EprojInit_EyeDoorSweat(mut j: uint16) {
     CalculatePlmBlockCoords(
         *((&raw mut g_ram as *mut uint8).offset(0x1c27 as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -7293,8 +7045,7 @@ unsafe extern "C" fn EprojInit_EyeDoorSweat(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = word_86B6B1[(v2 + 1 as ::core::ffi::c_int) as usize] as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_EyeDoorProjectile(mut k: uint16) {
+pub unsafe fn EprojPreInstr_EyeDoorProjectile(mut k: uint16) {
     let mut v3: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if !(EprojBlockCollisition_Horiz(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
         || EprojBlockCollisition_Vertical(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0)
@@ -7342,8 +7093,7 @@ pub unsafe extern "C" fn EprojPreInstr_EyeDoorProjectile(mut k: uint16) {
         as *mut uint16)
         .offset(v3 as isize) = 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_EyeDoorSweat(mut k: uint16) {
+pub unsafe fn EprojPreInstr_EyeDoorSweat(mut k: uint16) {
     EprojBlockCollisition_Horiz(k);
     let mut carry: uint8 = EprojBlockCollisition_Vertical(k);
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -7373,8 +7123,7 @@ pub unsafe extern "C" fn EprojPreInstr_EyeDoorSweat(mut k: uint16) {
             .offset(v1 as isize) = 1 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_SpawnTourianStatueUnlockingParticle(
+pub unsafe fn EprojInstr_SpawnTourianStatueUnlockingParticle(
     mut k: uint16,
     mut epjp: *const uint8,
 ) -> *const uint8 {
@@ -7384,11 +7133,7 @@ pub unsafe extern "C" fn EprojInstr_SpawnTourianStatueUnlockingParticle(
     );
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_Earthquake(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_Earthquake(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
         as *mut uint16) = 1 as uint16;
     let ref mut fresh29 = *((&raw mut g_ram as *mut uint8)
@@ -7396,8 +7141,7 @@ pub unsafe extern "C" fn EprojInstr_Earthquake(
     *fresh29 = (*fresh29 as ::core::ffi::c_int | 0x20 as ::core::ffi::c_int) as uint16;
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_SpawnTourianStatueUnlockingParticleTail(
+pub unsafe fn EprojInstr_SpawnTourianStatueUnlockingParticleTail(
     mut k: uint16,
     mut epjp: *const uint8,
 ) -> *const uint8 {
@@ -7407,11 +7151,7 @@ pub unsafe extern "C" fn EprojInstr_SpawnTourianStatueUnlockingParticleTail(
     );
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_AddToYpos(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_AddToYpos(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     let ref mut fresh28 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1a93 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
@@ -7419,7 +7159,7 @@ pub unsafe extern "C" fn EprojInstr_AddToYpos(
         (*fresh28 as ::core::ffi::c_int + *(epjp as *mut uint16) as ::core::ffi::c_int) as uint16;
     return epjp.offset(2 as ::core::ffi::c_int as isize);
 }
-unsafe extern "C" fn EprojInit_TourianStatueUnlockingParticleWaterSplash(mut j: uint16) {
+unsafe fn EprojInit_TourianStatueUnlockingParticleWaterSplash(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -7468,7 +7208,7 @@ static mut kEprojInit_TourianStatueEyeGlow_Colors: [uint16; 16] = [
     0x2680 as ::core::ffi::c_int as uint16,
     0x1580 as ::core::ffi::c_int as uint16,
 ];
-unsafe extern "C" fn EprojInit_TourianStatueEyeGlow(mut j: uint16) {
+unsafe fn EprojInit_TourianStatueEyeGlow(mut j: uint16) {
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1993 as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v2: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
@@ -7494,7 +7234,7 @@ unsafe extern "C" fn EprojInit_TourianStatueEyeGlow(mut j: uint16) {
         i += 2 as ::core::ffi::c_int;
     }
 }
-unsafe extern "C" fn EprojInit_TourianStatueUnlockingParticle(mut j: uint16) {
+unsafe fn EprojInit_TourianStatueUnlockingParticle(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0x1993 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -7530,8 +7270,7 @@ unsafe extern "C" fn EprojInit_TourianStatueUnlockingParticle(mut j: uint16) {
         * kSinCosTable8bit_Sext[v4 as usize] as ::core::ffi::c_int)
         as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojIni_TourianStatueUnlockingParticleTail(mut v0: uint16) {
+pub unsafe fn EprojIni_TourianStatueUnlockingParticleTail(mut v0: uint16) {
     let mut v1: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0x1993 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -7550,7 +7289,7 @@ pub unsafe extern "C" fn EprojIni_TourianStatueUnlockingParticleTail(mut v0: uin
         as *mut uint16)
         .offset(v1 as isize);
 }
-unsafe extern "C" fn EprojInit_TourianStatueSoul(mut j: uint16) {
+unsafe fn EprojInit_TourianStatueSoul(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0x1993 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -7566,7 +7305,7 @@ unsafe extern "C" fn EprojInit_TourianStatueSoul(mut j: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = -(1024 as ::core::ffi::c_int) as uint16;
 }
-unsafe extern "C" fn EprojInit_TourianStatueBaseDecoration(mut j: uint16) {
+unsafe fn EprojInit_TourianStatueBaseDecoration(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -7581,7 +7320,7 @@ unsafe extern "C" fn EprojInit_TourianStatueBaseDecoration(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 184 as uint16;
 }
-unsafe extern "C" fn EprojInit_TourianStatueRidley(mut j: uint16) {
+unsafe fn EprojInit_TourianStatueRidley(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -7596,7 +7335,7 @@ unsafe extern "C" fn EprojInit_TourianStatueRidley(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 85 as uint16;
 }
-unsafe extern "C" fn EprojInit_TourianStatuePhantoon(mut j: uint16) {
+unsafe fn EprojInit_TourianStatuePhantoon(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -7611,8 +7350,7 @@ unsafe extern "C" fn EprojInit_TourianStatuePhantoon(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 136 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_TourianStatueUnlockingParticleWaterSplash(mut k: uint16) {
+pub unsafe fn EprojPreInstr_TourianStatueUnlockingParticleWaterSplash(mut k: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
@@ -7620,8 +7358,7 @@ pub unsafe extern "C" fn EprojPreInstr_TourianStatueUnlockingParticleWaterSplash
             as *mut uint16) as ::core::ffi::c_int
             - 4 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_TourianStatueUnlockingParticle(mut k: uint16) {
+pub unsafe fn EprojPreInstr_TourianStatueUnlockingParticle(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut amt: int32 = (*((&raw mut g_ram as *mut uint8)
         .offset(0x1ab7 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -7686,8 +7423,7 @@ pub unsafe extern "C" fn EprojPreInstr_TourianStatueUnlockingParticle(mut k: uin
         *fresh97 = (*fresh97 as ::core::ffi::c_int + 16 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_TourianStatueSoul(mut k: uint16) {
+pub unsafe fn EprojPreInstr_TourianStatueSoul(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut amt: int32 = (*((&raw mut g_ram as *mut uint8)
         .offset(0x1adb as ::core::ffi::c_int as isize) as *mut uint16)
@@ -7720,7 +7456,7 @@ pub unsafe extern "C" fn EprojPreInstr_TourianStatueSoul(mut k: uint16) {
         .offset(v1 as isize);
     *fresh96 = (*fresh96 as ::core::ffi::c_int - 128 as ::core::ffi::c_int) as uint16;
 }
-unsafe extern "C" fn EprojPreInstr_BA42(mut k: uint16) {
+unsafe fn EprojPreInstr_BA42(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -7742,8 +7478,7 @@ unsafe extern "C" fn EprojPreInstr_BA42(mut k: uint16) {
                 .offset(0 as ::core::ffi::c_int as isize))
             .field_0 as *mut uint16) as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_TourianStatueStuff(mut k: uint16) {
+pub unsafe fn EprojPreInstr_TourianStatueStuff(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x1e6f as ::core::ffi::c_int as isize)
         as *mut uint16)
         == 0
@@ -7755,8 +7490,7 @@ pub unsafe extern "C" fn EprojPreInstr_TourianStatueStuff(mut k: uint16) {
     }
     EprojPreInstr_BA42(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86BB30(mut j: uint16) {
+pub unsafe fn sub_86BB30(mut j: uint16) {
     let mut v1: *mut ExtraEnemyRam8000 = gExtraEnemyRam8000(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -7784,7 +7518,7 @@ pub unsafe extern "C" fn sub_86BB30(mut j: uint16) {
                 as *mut uint16) as isize,
         );
 }
-unsafe extern "C" fn EprojInit_NuclearWaffleBody(mut j: uint16) {
+unsafe fn EprojInit_NuclearWaffleBody(mut j: uint16) {
     let mut v2: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -7818,7 +7552,7 @@ unsafe extern "C" fn EprojInit_NuclearWaffleBody(mut j: uint16) {
         as *mut uint16)
         .offset(v3 as isize) = 1 as uint16;
 }
-unsafe extern "C" fn EprojInit_NorfairLavaquakeRocks(mut j: uint16) {
+unsafe fn EprojInit_NorfairLavaquakeRocks(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1b47 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -7854,8 +7588,7 @@ unsafe extern "C" fn EprojInit_NorfairLavaquakeRocks(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = (*v2).y_subpos;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallNorfairLavaquakeRocksFunc(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallNorfairLavaquakeRocksFunc(mut ea: uint32, mut k: uint16) {
     match ea {
         8829974 => {
             Eproj_NorfairLavaquakeRocks_Func1(k);
@@ -7870,8 +7603,7 @@ pub unsafe extern "C" fn CallNorfairLavaquakeRocksFunc(mut ea: uint32, mut k: ui
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_NorfairLavaquakeRocks_Inner2(mut k: uint16) -> uint16 {
+pub unsafe fn EprojPreInstr_NorfairLavaquakeRocks_Inner2(mut k: uint16) -> uint16 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     return (((*((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -7902,16 +7634,14 @@ pub unsafe extern "C" fn EprojPreInstr_NorfairLavaquakeRocks_Inner2(mut k: uint1
             as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_NorfairLavaquakeRocks_Inner(mut k: uint16) {
+pub unsafe fn EprojPreInstr_NorfairLavaquakeRocks_Inner(mut k: uint16) {
     if EprojPreInstr_NorfairLavaquakeRocks_Inner2(k) != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
             as *mut uint16)
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_NorfairLavaquakeRocks(mut k: uint16) {
+pub unsafe fn EprojPreInstr_NorfairLavaquakeRocks(mut k: uint16) {
     CallNorfairLavaquakeRocksFunc(
         (*((&raw mut g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -7922,8 +7652,7 @@ pub unsafe extern "C" fn EprojPreInstr_NorfairLavaquakeRocks(mut k: uint16) {
     );
     EprojPreInstr_NorfairLavaquakeRocks_Inner(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_NorfairLavaquakeRocks_Func1(mut k: uint16) {
+pub unsafe fn Eproj_NorfairLavaquakeRocks_Func1(mut k: uint16) {
     let mut v2: int16 = 0;
     let mut v3: int16 = 0;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -7988,8 +7717,7 @@ pub unsafe extern "C" fn Eproj_NorfairLavaquakeRocks_Func1(mut k: uint16) {
             (0x86bc8f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_NorfairLavaquakeRocks_Func2(mut k: uint16) {
+pub unsafe fn Eproj_NorfairLavaquakeRocks_Func2(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0x1adb as ::core::ffi::c_int as isize) as *mut uint16)
@@ -8043,8 +7771,7 @@ pub unsafe extern "C" fn Eproj_NorfairLavaquakeRocks_Func2(mut k: uint16) {
     }
     Eproj_NorfairLavaquakeRocks_Func3(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_NorfairLavaquakeRocks_Func3(mut k: uint16) {
+pub unsafe fn Eproj_NorfairLavaquakeRocks_Func3(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
@@ -8079,7 +7806,7 @@ static mut kEprojInit_ShaktoolAttackMiddleBackCircle_Y: [int16; 8] = [
     0 as ::core::ffi::c_int as int16,
     -(12 as ::core::ffi::c_int) as int16,
 ];
-unsafe extern "C" fn EprojInit_BDA2(mut j: uint16) {
+unsafe fn EprojInit_BDA2(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -8118,7 +7845,7 @@ unsafe extern "C" fn EprojInit_BDA2(mut j: uint16) {
         + kEprojInit_ShaktoolAttackMiddleBackCircle_Y[v5 as usize] as ::core::ffi::c_int)
         as uint16;
 }
-unsafe extern "C" fn EprojInit_ShaktoolAttackMiddleBackCircle(mut j: uint16) {
+unsafe fn EprojInit_ShaktoolAttackMiddleBackCircle(mut j: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
@@ -8126,7 +7853,7 @@ unsafe extern "C" fn EprojInit_ShaktoolAttackMiddleBackCircle(mut j: uint16) {
             as *mut uint16);
     EprojInit_BDA2(j);
 }
-unsafe extern "C" fn EprojInit_ShaktoolAttackFrontCircle(mut v1: uint16) {
+unsafe fn EprojInit_ShaktoolAttackFrontCircle(mut v1: uint16) {
     if EprojBlockCollisition_Horiz(v1) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
         || EprojBlockCollisition_Vertical(v1) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
     {
@@ -8135,8 +7862,7 @@ unsafe extern "C" fn EprojInit_ShaktoolAttackFrontCircle(mut v1: uint16) {
             .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_BE12(mut k: uint16) {
+pub unsafe fn EprojPreInstr_BE12(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -8184,7 +7910,7 @@ static mut EprojInit_MotherBrainRoomTurrets_Y: [int16; 12] = [
     0x40 as ::core::ffi::c_int as int16,
     0x40 as ::core::ffi::c_int as int16,
 ];
-unsafe extern "C" fn EprojInit_MotherBrainRoomTurrets(mut j: uint16) {
+unsafe fn EprojInit_MotherBrainRoomTurrets(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x19bb as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -8275,7 +8001,7 @@ static mut kEproj_MotherBrainRoomTurretBullets_Yvel: [int16; 8] = [
     -(704 as ::core::ffi::c_int) as int16,
     -(498 as ::core::ffi::c_int) as int16,
 ];
-unsafe extern "C" fn EprojInit_MotherBrainRoomTurretBullets(mut j: uint16) {
+unsafe fn EprojInit_MotherBrainRoomTurretBullets(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1b23 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -8324,8 +8050,7 @@ unsafe extern "C" fn EprojInit_MotherBrainRoomTurretBullets(mut j: uint16) {
             as *mut uint16)
             .offset(v4 as isize) as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_MotherBrainRoomTurrets(mut k: uint16) {
+pub unsafe fn EprojPreInstr_MotherBrainRoomTurrets(mut k: uint16) {
     if Eproj_MotherBrainRoomTurretBullets_CheckIfTurretOnScreen(k) as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
         != 0
@@ -8400,8 +8125,7 @@ pub unsafe extern "C" fn EprojPreInstr_MotherBrainRoomTurrets(mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_MotherBrainRoomTurretBullets_Func2(mut v0: uint16) {
+pub unsafe fn Eproj_MotherBrainRoomTurretBullets_Func2(mut v0: uint16) {
     let mut r20: uint8 = (*((&raw mut g_ram as *mut uint8)
         .offset(0x1a6f as ::core::ffi::c_int as isize) as *mut uint16
         as *mut uint8)
@@ -8439,8 +8163,7 @@ pub unsafe extern "C" fn Eproj_MotherBrainRoomTurretBullets_Func2(mut v0: uint16
         *fresh94 = (*fresh94 as ::core::ffi::c_int + v1 as ::core::ffi::c_int) as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_SetXvelRandom(mut v0: uint16) {
+pub unsafe fn Eproj_SetXvelRandom(mut v0: uint16) {
     let mut Random: uint16 = NextRandom() as uint8 as uint16;
     if Random as uint8 as ::core::ffi::c_int - 32 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -8452,8 +8175,7 @@ pub unsafe extern "C" fn Eproj_SetXvelRandom(mut v0: uint16) {
         as *mut uint16)
         .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = Random;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_SetYvelRandom(mut v0: uint16) {
+pub unsafe fn Eproj_SetYvelRandom(mut v0: uint16) {
     let mut Random: uint16 = NextRandom() as uint8 as uint16;
     if Random as uint8 as ::core::ffi::c_int - 128 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -8465,10 +8187,7 @@ pub unsafe extern "C" fn Eproj_SetYvelRandom(mut v0: uint16) {
         as *mut uint16)
         .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = Random;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_MotherBrainRoomTurretBullets_CheckIfTurretOnScreen(
-    mut k: uint16,
-) -> uint8 {
+pub unsafe fn Eproj_MotherBrainRoomTurretBullets_CheckIfTurretOnScreen(mut k: uint16) -> uint8 {
     let mut v2: int16 = 0;
     let mut v3: int16 = 0;
     let mut v4: int16 = 0;
@@ -8509,8 +8228,7 @@ pub unsafe extern "C" fn Eproj_MotherBrainRoomTurretBullets_CheckIfTurretOnScree
     }
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_MotherBrainRoomTurretBullets(mut k: uint16) {
+pub unsafe fn EprojPreInstr_MotherBrainRoomTurretBullets(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh85 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1bd7 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -8549,8 +8267,7 @@ static mut kMotherBrainsBomb_Yaccel: [int16; 10] = [
     0x170 as ::core::ffi::c_int as int16,
     0 as ::core::ffi::c_int as int16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_MotherBrainBomb(mut k: uint16) {
+pub unsafe fn EprojPreInstr_MotherBrainBomb(mut k: uint16) {
     let mut v2: int16 = 0;
     if MotherBrainBomb_Bomb_CollDetect_DoubleRet(k) != 0 {
         return;
@@ -8663,11 +8380,7 @@ pub unsafe extern "C" fn EprojPreInstr_MotherBrainBomb(mut k: uint16) {
         _ => {}
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_SwitchJump(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_SwitchJump(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     return *(epjp.offset(
         *((&raw mut g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -8675,17 +8388,13 @@ pub unsafe extern "C" fn EprojInstr_SwitchJump(
             as ::core::ffi::c_int as isize,
     ) as *mut uint16) as uintptr_t as *const uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_UserPalette0(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_UserPalette0(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x19bb as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return epjp;
 }
-unsafe extern "C" fn Eproj_CheckForBombCollisionWithRect(mut rect: Rect16U) -> uint8 {
+unsafe fn Eproj_CheckForBombCollisionWithRect(mut rect: Rect16U) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xcd2 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
     {
@@ -8747,10 +8456,7 @@ unsafe extern "C" fn Eproj_CheckForBombCollisionWithRect(mut rect: Rect16U) -> u
     }
     return 0 as uint8;
 }
-unsafe extern "C" fn Eproj_CheckForEnemyCollisionWithRect(
-    mut k: uint16,
-    mut rect: Rect16U,
-) -> uint8 {
+unsafe fn Eproj_CheckForEnemyCollisionWithRect(mut k: uint16, mut rect: Rect16U) -> uint8 {
     let mut v1: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int);
     return ((abs16(((*v1).x_pos as ::core::ffi::c_int - rect.x as ::core::ffi::c_int) as uint16)
         as ::core::ffi::c_int
@@ -8761,7 +8467,7 @@ unsafe extern "C" fn Eproj_CheckForEnemyCollisionWithRect(
             - (*v1).y_height as ::core::ffi::c_int)
             < rect.h as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
 }
-unsafe extern "C" fn Eproj_CheckForCollisionWithSamus(mut v0: uint16) -> uint8 {
+unsafe fn Eproj_CheckForCollisionWithSamus(mut v0: uint16) -> uint8 {
     let mut rect: Rect16U = Eproj_GetCollDetectRect(v0);
     let mut v1: uint16 = abs16(
         (*((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
@@ -8795,19 +8501,16 @@ unsafe extern "C" fn Eproj_CheckForCollisionWithSamus(mut v0: uint16) -> uint8 {
     }
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Math_MultBySin(mut a: uint16, mut r18: uint16) -> uint16 {
+pub unsafe fn Math_MultBySin(mut a: uint16, mut r18: uint16) -> uint16 {
     return Math_MultBySinCos(a, r18);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Math_MultByCos(mut a: uint16, mut r18: uint16) -> uint16 {
+pub unsafe fn Math_MultByCos(mut a: uint16, mut r18: uint16) -> uint16 {
     return Math_MultBySinCos(
         a,
         (r18 as ::core::ffi::c_int + 64 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Math_MultBySinCos(mut r38: uint16, mut a: uint16) -> uint16 {
+pub unsafe fn Math_MultBySinCos(mut r38: uint16, mut a: uint16) -> uint16 {
     let mut r46: uint16 = kSinCosTable8bit_Sext[((a as ::core::ffi::c_int
         & 0xff as ::core::ffi::c_int)
         + 64 as ::core::ffi::c_int) as usize] as uint16;
@@ -8819,8 +8522,7 @@ pub unsafe extern "C" fn Math_MultBySinCos(mut r38: uint16, mut a: uint16) -> ui
         prod as ::core::ffi::c_int
     }) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_MotherBrainsBlueRingLasers(mut j: uint16) {
+pub unsafe fn Eproj_MotherBrainsBlueRingLasers(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -8857,8 +8559,7 @@ pub unsafe extern "C" fn Eproj_MotherBrainsBlueRingLasers(mut j: uint16) {
         + 16 as ::core::ffi::c_int) as uint16;
     sub_86C320(j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86C320(mut k: uint16) {
+pub unsafe fn sub_86C320(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -8877,8 +8578,7 @@ pub unsafe extern "C" fn sub_86C320(mut k: uint16) {
     .y_pos as ::core::ffi::c_int
         + 16 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_MoveToBlueRingSpawnPosition(mut k: uint16) {
+pub unsafe fn Eproj_MoveToBlueRingSpawnPosition(mut k: uint16) {
     let mut v5: int16 = 0;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
@@ -8956,8 +8656,7 @@ pub unsafe extern "C" fn Eproj_MoveToBlueRingSpawnPosition(mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CheckForCollisionWithShitroid_DoubleRet(mut v0: uint16) -> uint8 {
+pub unsafe fn CheckForCollisionWithShitroid_DoubleRet(mut v0: uint16) -> uint8 {
     if (*((&raw mut g_ram as *mut uint8).offset(0x7800 as ::core::ffi::c_int as isize)
         as *mut ExtraEnemyRam7800)
         .offset(1 as ::core::ffi::c_int as isize))
@@ -8992,8 +8691,7 @@ pub unsafe extern "C" fn CheckForCollisionWithShitroid_DoubleRet(mut v0: uint16)
         .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return 0xff as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CheckForBlueRingCollisionWithRoom(mut k: uint16) -> uint8 {
+pub unsafe fn CheckForBlueRingCollisionWithRoom(mut k: uint16) -> uint8 {
     let mut v2: int16 = 0;
     let mut v3: int16 = 0;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -9028,7 +8726,7 @@ pub unsafe extern "C" fn CheckForBlueRingCollisionWithRoom(mut k: uint16) -> uin
     }
     return result;
 }
-unsafe extern "C" fn Eproj_GetCollDetectRect(mut k: uint16) -> Rect16U {
+unsafe fn Eproj_GetCollDetectRect(mut k: uint16) -> Rect16U {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut rect: Rect16U = Rect16U {
         x: *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
@@ -9052,16 +8750,14 @@ unsafe extern "C" fn Eproj_GetCollDetectRect(mut k: uint16) -> Rect16U {
     };
     return rect;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_Earthqhake5(mut k: uint16) {
+pub unsafe fn Eproj_Earthqhake5(mut k: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
         as *mut uint16) = 10 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
         as *mut uint16) = 5 as uint16;
     BlueRingContactExplosion(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn BlueRingContactExplosion(mut k: uint16) {
+pub unsafe fn BlueRingContactExplosion(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -9081,13 +8777,12 @@ pub unsafe extern "C" fn BlueRingContactExplosion(mut k: uint16) {
     QueueSfx3_Max6(0x13 as uint16);
     sub_86C42E(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86C42E(mut k: uint16) {
+pub unsafe fn sub_86C42E(mut k: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x19bb as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
 }
-unsafe extern "C" fn EprojInit_MotherBrainBomb(mut j: uint16) {
+unsafe fn EprojInit_MotherBrainBomb(mut j: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x1a27 as ::core::ffi::c_int as isize) as *mut uint16
         as *mut uint8)
         .offset(j as ::core::ffi::c_int as isize) = *((&raw mut g_ram as *mut uint8)
@@ -9133,8 +8828,7 @@ unsafe extern "C" fn EprojInit_MotherBrainBomb(mut j: uint16) {
     .kraid_mouth_flags;
     fresh10.write_unaligned(fresh10.read_unaligned().wrapping_add(1));
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBomb_Bomb_CollDetect_DoubleRet(mut k: uint16) -> uint8 {
+pub unsafe fn MotherBrainBomb_Bomb_CollDetect_DoubleRet(mut k: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut rect: Rect16U = Rect16U {
         x: *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
@@ -9202,8 +8896,7 @@ pub unsafe extern "C" fn MotherBrainBomb_Bomb_CollDetect_DoubleRet(mut k: uint16
     );
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MoveMotherBrainBomb(mut k: uint16, mut a: uint16) -> uint8 {
+pub unsafe fn MoveMotherBrainBomb(mut k: uint16, mut a: uint16) -> uint8 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1adb as ::core::ffi::c_int as isize) as *mut uint16)
@@ -9258,8 +8951,7 @@ pub unsafe extern "C" fn MoveMotherBrainBomb(mut k: uint16, mut a: uint16) -> ui
         .offset(v2 as isize) = -(512 as ::core::ffi::c_int) as uint16;
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86C605(mut j: uint16) {
+pub unsafe fn sub_86C605(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -9310,7 +9002,7 @@ pub unsafe extern "C" fn sub_86C605(mut j: uint16) {
     (*E).mbn_var_27 = Math_MultBySin(0xc00 as uint16, r18 as uint16);
     (*E).mbn_var_28 = Math_MultByCos(0xc00 as uint16, r18 as uint16);
 }
-unsafe extern "C" fn EprojInit_MotherBrainDeathBeemFired(mut j: uint16) {
+unsafe fn EprojInit_MotherBrainDeathBeemFired(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
@@ -9432,8 +9124,7 @@ unsafe extern "C" fn EprojInit_MotherBrainDeathBeemFired(mut j: uint16) {
             .offset(v1 as isize) = 0 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnMotherBrainDeathBeam(mut x: uint16) {
+pub unsafe fn SpawnMotherBrainDeathBeam(mut x: uint16) {
     SpawnEprojWithRoomGfx(
         addr_kEproj_MotherBrainDeathBeamFired as ::core::ffi::c_int as uint16,
         *((&raw mut g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
@@ -9441,8 +9132,7 @@ pub unsafe extern "C" fn SpawnMotherBrainDeathBeam(mut x: uint16) {
             .offset((x as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_MotherBrainRainbowBeam(mut k: uint16) {
+pub unsafe fn EprojPreInstr_MotherBrainRainbowBeam(mut k: uint16) {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -9459,7 +9149,7 @@ pub unsafe extern "C" fn EprojPreInstr_MotherBrainRainbowBeam(mut k: uint16) {
         .offset(1 as ::core::ffi::c_int as isize))
     .y_pos;
 }
-unsafe extern "C" fn EprojInit_MotherBrainRainbowBeam(mut j: uint16) {
+unsafe fn EprojInit_MotherBrainRainbowBeam(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x19bb as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -9486,8 +9176,7 @@ static mut kEprojInit_MotherBrainsDrool: [int16; 12] = [
     0xc as ::core::ffi::c_int as int16,
     0x12 as ::core::ffi::c_int as int16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_C84D(mut k: uint16) {
+pub unsafe fn EprojPreInstr_C84D(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: ::core::ffi::c_int = (4 as ::core::ffi::c_int
         * *((&raw mut g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
@@ -9519,7 +9208,7 @@ pub unsafe extern "C" fn EprojPreInstr_C84D(mut k: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 0 as uint16;
 }
-unsafe extern "C" fn EprojInit_MotherBrainsDrool(mut j: uint16) {
+unsafe fn EprojInit_MotherBrainsDrool(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x19bb as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -9531,7 +9220,7 @@ unsafe extern "C" fn EprojInit_MotherBrainsDrool(mut j: uint16) {
         as *mut uint16);
     EprojPreInstr_C84D(j);
 }
-unsafe extern "C" fn EprojInit_MotherBrainsDrool_Falling(mut k: uint16) {
+unsafe fn EprojInit_MotherBrainsDrool_Falling(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh79 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1adb as ::core::ffi::c_int as isize) as *mut uint16)
@@ -9551,19 +9240,14 @@ unsafe extern "C" fn EprojInit_MotherBrainsDrool_Falling(mut k: uint16) {
             .offset(v1 as isize) = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_Add12ToY(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_Add12ToY(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     let ref mut fresh27 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1a93 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh27 = (*fresh27 as ::core::ffi::c_int + 12 as ::core::ffi::c_int) as uint16;
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInit_MotherBrainsDeathExplosion_0(mut k: uint16) {
+pub unsafe fn EprojPreInit_MotherBrainsDeathExplosion_0(mut k: uint16) {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -9586,7 +9270,7 @@ pub unsafe extern "C" fn EprojPreInit_MotherBrainsDeathExplosion_0(mut k: uint16
             as *mut uint16)
             .offset(v2 as isize) as ::core::ffi::c_int) as uint16;
 }
-unsafe extern "C" fn EprojInit_MotherBrainsDeathExplosion(mut j: uint16) {
+unsafe fn EprojInit_MotherBrainsDeathExplosion(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1b47 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -9613,7 +9297,7 @@ unsafe extern "C" fn EprojInit_MotherBrainsDeathExplosion(mut j: uint16) {
         .offset(v1 as isize) = eproj_spawn_pt.y;
     EprojPreInit_MotherBrainsDeathExplosion_0(j);
 }
-unsafe extern "C" fn EprojInit_MotherBrainsRainbowBeamExplosion(mut j: uint16) {
+unsafe fn EprojInit_MotherBrainsRainbowBeamExplosion(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x19bb as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -9637,8 +9321,7 @@ unsafe extern "C" fn EprojInit_MotherBrainsRainbowBeamExplosion(mut j: uint16) {
         as *mut uint16) as ::core::ffi::c_int
         + eproj_spawn_pt.y as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_MotherBrainsRainbowBeamExplosion(mut k: uint16) {
+pub unsafe fn EprojPreInstr_MotherBrainsRainbowBeamExplosion(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -9657,7 +9340,7 @@ pub unsafe extern "C" fn EprojPreInstr_MotherBrainsRainbowBeamExplosion(mut k: u
             as *mut uint16)
             .offset(v1 as isize) as ::core::ffi::c_int) as uint16;
 }
-unsafe extern "C" fn EprojInit_MotherBrainEscapeDoorParticles(mut j: uint16) {
+unsafe fn EprojInit_MotherBrainEscapeDoorParticles(mut j: uint16) {
     static mut kEprojInit_MotherBrainEscapeDoorParticles_X: [int16; 16] = [
         0 as ::core::ffi::c_int as int16,
         -(0x20 as ::core::ffi::c_int) as int16,
@@ -9725,8 +9408,7 @@ unsafe extern "C" fn EprojInit_MotherBrainEscapeDoorParticles(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 32 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_MotherBrainsExplodedDoorParticles(mut k: uint16) {
+pub unsafe fn EprojPreInstr_MotherBrainsExplodedDoorParticles(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: int16 = (abs16(
         *((&raw mut g_ram as *mut uint8).offset(0x1ab7 as ::core::ffi::c_int as isize)
@@ -9782,7 +9464,7 @@ pub unsafe extern "C" fn EprojPreInstr_MotherBrainsExplodedDoorParticles(mut k: 
         );
     }
 }
-unsafe extern "C" fn EprojInit_MotherBrainPurpleBreathBig(mut j: uint16) {
+unsafe fn EprojInit_MotherBrainPurpleBreathBig(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x19bb as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -9804,7 +9486,7 @@ unsafe extern "C" fn EprojInit_MotherBrainPurpleBreathBig(mut j: uint16) {
     .y_pos as ::core::ffi::c_int
         + 16 as ::core::ffi::c_int) as uint16;
 }
-unsafe extern "C" fn EprojInit_MotherBrainPurpleBreathSmall(mut j: uint16) {
+unsafe fn EprojInit_MotherBrainPurpleBreathSmall(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x19bb as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -9831,8 +9513,7 @@ unsafe extern "C" fn EprojInit_MotherBrainPurpleBreathSmall(mut j: uint16) {
     .kraid
     .kraid_hurt_frame = 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_MotherBrainPurpleBreathIsActive(
+pub unsafe fn EprojInstr_MotherBrainPurpleBreathIsActive(
     mut k: uint16,
     mut epjp: *const uint8,
 ) -> *const uint8 {
@@ -9843,8 +9524,7 @@ pub unsafe extern "C" fn EprojInstr_MotherBrainPurpleBreathIsActive(
     .kraid_hurt_frame = 0 as uint16;
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_TimeBombSetJapaneseText(mut k: uint16) {
+pub unsafe fn EprojPreInstr_TimeBombSetJapaneseText(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1ab7 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -9859,13 +9539,13 @@ pub unsafe extern "C" fn EprojPreInstr_TimeBombSetJapaneseText(mut k: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 192 as uint16;
 }
-unsafe extern "C" fn EprojInit_TimeBombSetJapaneseText(mut j: uint16) {
+unsafe fn EprojInit_TimeBombSetJapaneseText(mut j: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x19bb as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     EprojPreInstr_TimeBombSetJapaneseText(j);
 }
-unsafe extern "C" fn EprojInit_MotherBrainTubeFalling(mut j: uint16) {
+unsafe fn EprojInit_MotherBrainTubeFalling(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x19bb as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -9887,8 +9567,7 @@ unsafe extern "C" fn EprojInit_MotherBrainTubeFalling(mut j: uint16) {
         .offset(v1 as isize) =
         (0x86cbea as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallMotherBrainTubeFallingFunc(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallMotherBrainTubeFallingFunc(mut ea: uint32, mut k: uint16) {
     match ea {
         8834026 => {
             MotherBrainTubeFallingFunc_GenerateExplosion(k);
@@ -9903,8 +9582,7 @@ pub unsafe extern "C" fn CallMotherBrainTubeFallingFunc(mut ea: uint32, mut k: u
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_MotherBrainTubeFalling(mut k: uint16) {
+pub unsafe fn EprojPreInstr_MotherBrainTubeFalling(mut k: uint16) {
     CallMotherBrainTubeFallingFunc(
         (*((&raw mut g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -9914,8 +9592,7 @@ pub unsafe extern "C" fn EprojPreInstr_MotherBrainTubeFalling(mut k: uint16) {
         k,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainTubeFallingFunc_GenerateExplosion(mut k: uint16) {
+pub unsafe fn MotherBrainTubeFallingFunc_GenerateExplosion(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     eproj_spawn_pt = Point16U {
         x: *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
@@ -9936,8 +9613,7 @@ pub unsafe extern "C" fn MotherBrainTubeFallingFunc_GenerateExplosion(mut k: uin
         (0x86cc08 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     MotherBrainTubeFallingFunc_Falling(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainTubeFallingFunc_Falling(mut k: uint16) {
+pub unsafe fn MotherBrainTubeFallingFunc_Falling(mut k: uint16) {
     let mut v2: int16 = 0;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh75 = *((&raw mut g_ram as *mut uint8)
@@ -9973,7 +9649,7 @@ static mut kEprojInit_MotherBrainGlassShatteringShard_Y: [int16; 3] = [
     32 as ::core::ffi::c_int as int16,
     32 as ::core::ffi::c_int as int16,
 ];
-unsafe extern "C" fn EprojInit_MotherBrainGlassShatteringShard(mut j: uint16) {
+unsafe fn EprojInit_MotherBrainGlassShatteringShard(mut j: uint16) {
     let mut v1: uint16 = (2 as ::core::ffi::c_int * NextRandom() as ::core::ffi::c_int
         & 0x1fe as ::core::ffi::c_int) as uint16;
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -10040,7 +9716,7 @@ unsafe extern "C" fn EprojInit_MotherBrainGlassShatteringShard(mut j: uint16) {
         + ((NextRandom() as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
             - 8 as ::core::ffi::c_int)) as uint16;
 }
-unsafe extern "C" fn EprojInit_MotherBrainGlassShatteringSparkle(mut j: uint16) {
+unsafe fn EprojInit_MotherBrainGlassShatteringSparkle(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0x1993 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -10066,8 +9742,7 @@ unsafe extern "C" fn EprojInit_MotherBrainGlassShatteringSparkle(mut j: uint16) 
         as *mut uint16)
         .offset(v2 as isize) = 1600 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_MotherBrainGlassShatteringShard(mut k: uint16) {
+pub unsafe fn EprojPreInstr_MotherBrainGlassShatteringShard(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut amt: int32 = (*((&raw mut g_ram as *mut uint8)
         .offset(0x1ab7 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -10123,7 +9798,7 @@ pub unsafe extern "C" fn EprojPreInstr_MotherBrainGlassShatteringShard(mut k: ui
         }
     };
 }
-unsafe extern "C" fn EprojInit_KiHunterAcidSpitCommon(mut k: uint16, mut j: uint16) {
+unsafe fn EprojInit_KiHunterAcidSpitCommon(mut k: uint16, mut j: uint16) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1adb as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -10139,7 +9814,7 @@ unsafe extern "C" fn EprojInit_KiHunterAcidSpitCommon(mut k: uint16, mut j: uint
         as *mut uint16)
         .offset(v2 as isize) = 0 as uint16;
 }
-unsafe extern "C" fn EprojInit_KiHunterAcidSpitLeft(mut j: uint16) {
+unsafe fn EprojInit_KiHunterAcidSpitLeft(mut j: uint16) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1ab7 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -10158,7 +9833,7 @@ unsafe extern "C" fn EprojInit_KiHunterAcidSpitLeft(mut j: uint16) {
         j,
     );
 }
-unsafe extern "C" fn EprojInit_KiHunterAcidSpitRight(mut j: uint16) {
+unsafe fn EprojInit_KiHunterAcidSpitRight(mut j: uint16) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1ab7 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -10177,8 +9852,7 @@ unsafe extern "C" fn EprojInit_KiHunterAcidSpitRight(mut j: uint16) {
         j,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86CFD5(mut k: uint16) {
+pub unsafe fn sub_86CFD5(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a03 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -10189,8 +9863,7 @@ pub unsafe extern "C" fn sub_86CFD5(mut k: uint16) {
         .offset(v1 as isize);
     *fresh73 = (*fresh73 as ::core::ffi::c_int - 19 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86CFE6(mut k: uint16) {
+pub unsafe fn sub_86CFE6(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a03 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -10201,8 +9874,7 @@ pub unsafe extern "C" fn sub_86CFE6(mut k: uint16) {
         .offset(v1 as isize);
     *fresh72 = (*fresh72 as ::core::ffi::c_int + 19 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86CFF8(mut k: uint16) {
+pub unsafe fn sub_86CFF8(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if EprojBlockCollisition_Vertical(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1b47 as ::core::ffi::c_int as isize)
@@ -10233,7 +9905,7 @@ pub unsafe extern "C" fn sub_86CFF8(mut k: uint16) {
             .offset(v1 as isize) = v2;
     };
 }
-unsafe extern "C" fn EprojInit_KagosBugs(mut j: uint16) {
+unsafe fn EprojInit_KagosBugs(mut j: uint16) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1b23 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -10266,8 +9938,7 @@ unsafe extern "C" fn EprojInit_KagosBugs(mut j: uint16) {
         .offset(v2 as isize) =
         (0x86d0ca as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_KagosBugs_Func1(mut k: uint16) {
+pub unsafe fn EprojPreInstr_KagosBugs_Func1(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1aff as ::core::ffi::c_int as isize) as *mut uint16)
@@ -10282,8 +9953,7 @@ pub unsafe extern "C" fn EprojPreInstr_KagosBugs_Func1(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_KagosBugs_Func2(mut k: uint16) {
+pub unsafe fn EprojPreInstr_KagosBugs_Func2(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0x1b23 as ::core::ffi::c_int as isize)
@@ -10304,8 +9974,7 @@ pub unsafe extern "C" fn EprojPreInstr_KagosBugs_Func2(mut k: uint16) {
         *fresh26 = (*fresh26 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_KagosBugs(mut k: uint16) {
+pub unsafe fn EprojPreInstr_KagosBugs(mut k: uint16) {
     EprojPreInstr_KagosBugs_Func1(k);
     EprojPreInstr_KagosBugs_Func2(k);
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -10333,8 +10002,7 @@ pub unsafe extern "C" fn EprojPreInstr_KagosBugs(mut k: uint16) {
     };
 }
 static mut word_86D082: uint16 = 0xe0 as uint16;
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_D0EC(mut k: uint16) {
+pub unsafe fn EprojPreInstr_D0EC(mut k: uint16) {
     let mut current_block: u64;
     EprojPreInstr_KagosBugs_Func1(k);
     EprojPreInstr_KagosBugs_Func2(k);
@@ -10384,8 +10052,7 @@ pub unsafe extern "C" fn EprojPreInstr_D0EC(mut k: uint16) {
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_D128(mut v0: uint16) {
+pub unsafe fn EprojPreInstr_D128(mut v0: uint16) {
     EprojPreInstr_KagosBugs_Func1(v0);
     EprojPreInstr_KagosBugs_Func2(v0);
     if EprojBlockCollisition_Horiz(v0) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
@@ -10416,8 +10083,7 @@ pub unsafe extern "C" fn EprojPreInstr_D128(mut v0: uint16) {
 }
 static mut g_word_86D086: uint16 = 0x200 as uint16;
 static mut g_word_86D084: uint16 = 0x30 as uint16;
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_D15C(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
+pub unsafe fn EprojInstr_D15C(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     EprojPreInstr_KagosBugs_Func1(k);
     EprojPreInstr_KagosBugs_Func2(k);
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -10461,8 +10127,7 @@ pub unsafe extern "C" fn EprojInstr_D15C(mut k: uint16, mut epjp: *const uint8) 
         (0x86d0ec as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_D1B6(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
+pub unsafe fn EprojInstr_D1B6(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1bfb as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -10477,15 +10142,13 @@ pub unsafe extern "C" fn EprojInstr_D1B6(mut k: uint16, mut epjp: *const uint8) 
         (0x86d0ca as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_D1C7(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
+pub unsafe fn EprojInstr_D1C7(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x19bb as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_D1CE(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
+pub unsafe fn EprojInstr_D1CE(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     eproj_spawn_pt = Point16U {
         x: *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -10501,7 +10164,7 @@ pub unsafe extern "C" fn EprojInstr_D1CE(mut k: uint16, mut epjp: *const uint8) 
     );
     return epjp;
 }
-unsafe extern "C" fn EprojInit_MaridiaFloatersSpikes(mut j: uint16) {
+unsafe fn EprojInit_MaridiaFloatersSpikes(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a27 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -10551,8 +10214,7 @@ static mut word_86D22A: [int16; 8] = [
     0 as ::core::ffi::c_int as int16,
     -(32 as ::core::ffi::c_int) as int16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_MaridiaFloatersSpikes(mut k: uint16) {
+pub unsafe fn EprojPreInstr_MaridiaFloatersSpikes(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh68 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1ab7 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -10581,7 +10243,7 @@ pub unsafe extern "C" fn EprojPreInstr_MaridiaFloatersSpikes(mut k: uint16) {
             .offset(v1 as isize) = 1 as uint16;
     }
 }
-unsafe extern "C" fn EprojInit_WreckedShipRobotLaserCommon(mut k: uint16, mut j: uint16) {
+unsafe fn EprojInit_WreckedShipRobotLaserCommon(mut k: uint16, mut j: uint16) {
     let mut v2: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int);
     let mut v3: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
@@ -10629,7 +10291,7 @@ unsafe extern "C" fn EprojInit_WreckedShipRobotLaserCommon(mut k: uint16, mut j:
         QueueSfx2_Max6(0x67 as uint16);
     }
 }
-unsafe extern "C" fn EprojInit_WreckedShipRobotLaserDown(mut j: uint16) {
+unsafe fn EprojInit_WreckedShipRobotLaserDown(mut j: uint16) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1ab7 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -10650,7 +10312,7 @@ unsafe extern "C" fn EprojInit_WreckedShipRobotLaserDown(mut j: uint16) {
         j,
     );
 }
-unsafe extern "C" fn EprojInit_WreckedShipRobotLaserHorizontal(mut j: uint16) {
+unsafe fn EprojInit_WreckedShipRobotLaserHorizontal(mut j: uint16) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1ab7 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -10668,7 +10330,7 @@ unsafe extern "C" fn EprojInit_WreckedShipRobotLaserHorizontal(mut j: uint16) {
         j,
     );
 }
-unsafe extern "C" fn EprojInit_WreckedShipRobotLaserUp(mut j: uint16) {
+unsafe fn EprojInit_WreckedShipRobotLaserUp(mut j: uint16) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1ab7 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -10686,8 +10348,7 @@ unsafe extern "C" fn EprojInit_WreckedShipRobotLaserUp(mut j: uint16) {
         j,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_WreckedShipRobotLaser(mut k: uint16) {
+pub unsafe fn EprojPreInstr_WreckedShipRobotLaser(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x19bb as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -10700,8 +10361,7 @@ pub unsafe extern "C" fn EprojPreInstr_WreckedShipRobotLaser(mut k: uint16) {
             .offset(v1 as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_AssignNewN00bTubeShardVelocity(
+pub unsafe fn EprojInstr_AssignNewN00bTubeShardVelocity(
     mut k: uint16,
     mut epjp: *const uint8,
 ) -> *const uint8 {
@@ -10718,11 +10378,7 @@ pub unsafe extern "C" fn EprojInstr_AssignNewN00bTubeShardVelocity(
         .offset(v2 as isize) = 192 as uint16;
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_SetN00bTubeShardX(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_SetN00bTubeShardX(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -10759,8 +10415,7 @@ pub unsafe extern "C" fn EprojInstr_SetN00bTubeShardX(
         .offset(v2 as isize) = 1 as uint16;
     return ::core::ptr::null::<uint8>();
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_D62A(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
+pub unsafe fn EprojInstr_D62A(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
@@ -10791,11 +10446,7 @@ pub unsafe extern "C" fn EprojInstr_D62A(mut k: uint16, mut epjp: *const uint8) 
         .offset(v2 as isize) = 1 as uint16;
     return ::core::ptr::null::<uint8>();
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_SetXvelRandom(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_SetXvelRandom(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     NextRandom();
     *((&raw mut g_ram as *mut uint8).offset(0x1ab7 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -10805,7 +10456,7 @@ pub unsafe extern "C" fn EprojInstr_SetXvelRandom(
             .offset(1 as ::core::ffi::c_int as isize) as *mut uint16);
     return epjp;
 }
-unsafe extern "C" fn EprojInit_N00bTubeCrack(mut j: uint16) {
+unsafe fn EprojInit_N00bTubeCrack(mut j: uint16) {
     CalculatePlmBlockCoords(
         *((&raw mut g_ram as *mut uint8).offset(0x1c27 as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -10872,7 +10523,7 @@ static mut kEprojInit_N00bTubeShards_Yvel: [int16; 10] = [
     -(288 as ::core::ffi::c_int) as int16,
     384 as ::core::ffi::c_int as int16,
 ];
-unsafe extern "C" fn EprojInit_N00bTubeShards(mut j: uint16) {
+unsafe fn EprojInit_N00bTubeShards(mut j: uint16) {
     CalculatePlmBlockCoords(
         *((&raw mut g_ram as *mut uint8).offset(0x1c27 as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -10930,7 +10581,7 @@ static mut kEprojInit_N00bTubeReleasedAirBubbles_Y: [uint16; 6] = [
     64 as ::core::ffi::c_int as uint16,
     84 as ::core::ffi::c_int as uint16,
 ];
-unsafe extern "C" fn EprojInit_N00bTubeReleasedAirBubbles(mut j: uint16) {
+unsafe fn EprojInit_N00bTubeReleasedAirBubbles(mut j: uint16) {
     CalculatePlmBlockCoords(
         *((&raw mut g_ram as *mut uint8).offset(0x1c27 as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -10961,8 +10612,7 @@ unsafe extern "C" fn EprojInit_N00bTubeReleasedAirBubbles(mut j: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = -(1280 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86D7BF(mut k: uint16) {
+pub unsafe fn sub_86D7BF(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -10993,8 +10643,7 @@ pub unsafe extern "C" fn sub_86D7BF(mut k: uint16) {
             .offset(v1 as isize);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86D7DE(mut k: uint16) {
+pub unsafe fn sub_86D7DE(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut amt: int32 = (192 as ::core::ffi::c_int as int16 as int32) << 8 as ::core::ffi::c_int;
     AddToHiLo(
@@ -11007,8 +10656,7 @@ pub unsafe extern "C" fn sub_86D7DE(mut k: uint16) {
         amt as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_N00bTubeShards(mut k: uint16) {
+pub unsafe fn EprojPreInstr_N00bTubeShards(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut amt: int32 = (*((&raw mut g_ram as *mut uint8)
         .offset(0x1ab7 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -11038,8 +10686,7 @@ pub unsafe extern "C" fn EprojPreInstr_N00bTubeShards(mut k: uint16) {
     );
     Eproj_DeleteIfYposOutside(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86D83D(mut k: uint16) {
+pub unsafe fn sub_86D83D(mut k: uint16) {
     let mut v2: ::core::ffi::c_int = (*((&raw mut g_ram as *mut uint8)
         .offset(0x1ab7 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -11087,8 +10734,7 @@ pub unsafe extern "C" fn sub_86D83D(mut k: uint16) {
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86D89F(mut k: uint16) {
+pub unsafe fn sub_86D89F(mut k: uint16) {
     let mut v1: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0x1ab7 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
@@ -11122,8 +10768,7 @@ pub unsafe extern "C" fn sub_86D89F(mut k: uint16) {
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86D8DF(mut k: uint16) {
+pub unsafe fn sub_86D8DF(mut k: uint16) {
     let mut v5: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut amt: int32 = (*((&raw mut g_ram as *mut uint8)
         .offset(0x1adb as ::core::ffi::c_int as isize) as *mut uint16)
@@ -11145,8 +10790,7 @@ pub unsafe extern "C" fn sub_86D8DF(mut k: uint16) {
         as *mut uint16)
         .offset(v5 as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86D992(mut v0: uint16) {
+pub unsafe fn sub_86D992(mut v0: uint16) {
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1993 as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v2: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -11199,8 +10843,7 @@ pub unsafe extern "C" fn sub_86D992(mut v0: uint16) {
             .offset(v2 as isize) = 384 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_SpikeShootingPlantSpikes_MoveY1(mut k: uint16) {
+pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_MoveY1(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
@@ -11215,8 +10858,7 @@ pub unsafe extern "C" fn EprojPreInstr_SpikeShootingPlantSpikes_MoveY1(mut k: ui
             << 8 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_SpikeShootingPlantSpikes_MoveY2(mut k: uint16) {
+pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_MoveY2(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
@@ -11231,8 +10873,7 @@ pub unsafe extern "C" fn EprojPreInstr_SpikeShootingPlantSpikes_MoveY2(mut k: ui
             << 8 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_SpikeShootingPlantSpikes_MoveX1(mut k: uint16) {
+pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_MoveX1(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
@@ -11247,8 +10888,7 @@ pub unsafe extern "C" fn EprojPreInstr_SpikeShootingPlantSpikes_MoveX1(mut k: ui
             << 8 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_SpikeShootingPlantSpikes_MoveX2(mut k: uint16) {
+pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_MoveX2(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
@@ -11263,74 +10903,56 @@ pub unsafe extern "C" fn EprojPreInstr_SpikeShootingPlantSpikes_MoveX2(mut k: ui
             << 8 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_SpikeShootingPlantSpikes_0_MoveX1(mut k: uint16) {
+pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_0_MoveX1(mut k: uint16) {
     EprojPreInstr_SpikeShootingPlantSpikes_MoveX1(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_SpikeShootingPlantSpikes_2_MoveX2(mut k: uint16) {
+pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_2_MoveX2(mut k: uint16) {
     EprojPreInstr_SpikeShootingPlantSpikes_MoveX2(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_SpikeShootingPlantSpikes_1_MoveY1(mut k: uint16) {
+pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_1_MoveY1(mut k: uint16) {
     EprojPreInstr_SpikeShootingPlantSpikes_MoveY1(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_SpikeShootingPlantSpikes_4_MoveY2(mut k: uint16) {
+pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_4_MoveY2(mut k: uint16) {
     EprojPreInstr_SpikeShootingPlantSpikes_MoveY2(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_SpikeShootingPlantSpikes_6_MoveX1Y1(mut k: uint16) {
+pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_6_MoveX1Y1(mut k: uint16) {
     EprojPreInstr_SpikeShootingPlantSpikes_MoveX1(k);
     EprojPreInstr_SpikeShootingPlantSpikes_MoveY1(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_SpikeShootingPlantSpikes_8_MoveX1Y2(mut k: uint16) {
+pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_8_MoveX1Y2(mut k: uint16) {
     EprojPreInstr_SpikeShootingPlantSpikes_MoveX1(k);
     EprojPreInstr_SpikeShootingPlantSpikes_MoveY2(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_SpikeShootingPlantSpikes_7_MoveX2Y1(mut k: uint16) {
+pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_7_MoveX2Y1(mut k: uint16) {
     EprojPreInstr_SpikeShootingPlantSpikes_MoveX2(k);
     EprojPreInstr_SpikeShootingPlantSpikes_MoveY1(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_SpikeShootingPlantSpikes_9_MoveX2Y2(mut k: uint16) {
+pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_9_MoveX2Y2(mut k: uint16) {
     EprojPreInstr_SpikeShootingPlantSpikes_MoveX2(k);
     EprojPreInstr_SpikeShootingPlantSpikes_MoveY2(k);
 }
 static mut kEprojPreInstr_SpikeShootingPlantSpikes: [Option<Func_Y_V>; 10] = unsafe {
     [
-        Some(EprojPreInstr_SpikeShootingPlantSpikes_0_MoveX1 as unsafe extern "C" fn(uint16) -> ()),
-        Some(EprojPreInstr_SpikeShootingPlantSpikes_1_MoveY1 as unsafe extern "C" fn(uint16) -> ()),
-        Some(EprojPreInstr_SpikeShootingPlantSpikes_2_MoveX2 as unsafe extern "C" fn(uint16) -> ()),
-        Some(EprojPreInstr_SpikeShootingPlantSpikes_0_MoveX1 as unsafe extern "C" fn(uint16) -> ()),
-        Some(EprojPreInstr_SpikeShootingPlantSpikes_4_MoveY2 as unsafe extern "C" fn(uint16) -> ()),
-        Some(EprojPreInstr_SpikeShootingPlantSpikes_2_MoveX2 as unsafe extern "C" fn(uint16) -> ()),
-        Some(
-            EprojPreInstr_SpikeShootingPlantSpikes_6_MoveX1Y1 as unsafe extern "C" fn(uint16) -> (),
-        ),
-        Some(
-            EprojPreInstr_SpikeShootingPlantSpikes_7_MoveX2Y1 as unsafe extern "C" fn(uint16) -> (),
-        ),
-        Some(
-            EprojPreInstr_SpikeShootingPlantSpikes_8_MoveX1Y2 as unsafe extern "C" fn(uint16) -> (),
-        ),
-        Some(
-            EprojPreInstr_SpikeShootingPlantSpikes_9_MoveX2Y2 as unsafe extern "C" fn(uint16) -> (),
-        ),
+        Some(EprojPreInstr_SpikeShootingPlantSpikes_0_MoveX1 as unsafe fn(uint16) -> ()),
+        Some(EprojPreInstr_SpikeShootingPlantSpikes_1_MoveY1 as unsafe fn(uint16) -> ()),
+        Some(EprojPreInstr_SpikeShootingPlantSpikes_2_MoveX2 as unsafe fn(uint16) -> ()),
+        Some(EprojPreInstr_SpikeShootingPlantSpikes_0_MoveX1 as unsafe fn(uint16) -> ()),
+        Some(EprojPreInstr_SpikeShootingPlantSpikes_4_MoveY2 as unsafe fn(uint16) -> ()),
+        Some(EprojPreInstr_SpikeShootingPlantSpikes_2_MoveX2 as unsafe fn(uint16) -> ()),
+        Some(EprojPreInstr_SpikeShootingPlantSpikes_6_MoveX1Y1 as unsafe fn(uint16) -> ()),
+        Some(EprojPreInstr_SpikeShootingPlantSpikes_7_MoveX2Y1 as unsafe fn(uint16) -> ()),
+        Some(EprojPreInstr_SpikeShootingPlantSpikes_8_MoveX1Y2 as unsafe fn(uint16) -> ()),
+        Some(EprojPreInstr_SpikeShootingPlantSpikes_9_MoveX2Y2 as unsafe fn(uint16) -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstrHelper_SpikeShootingPlantSpikes_Func1(mut k: uint16) {
+pub unsafe fn EprojPreInstrHelper_SpikeShootingPlantSpikes_Func1(mut k: uint16) {
     if EprojPreInstrHelper_SpikeShootingPlantSpikes_Func2(k) != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
             as *mut uint16)
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_SpikeShootingPlantSpikes(mut k: uint16) {
+pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes(mut k: uint16) {
     kEprojPreInstr_SpikeShootingPlantSpikes[(*((&raw mut g_ram as *mut uint8)
         .offset(0x1aff as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -11340,10 +10962,7 @@ pub unsafe extern "C" fn EprojPreInstr_SpikeShootingPlantSpikes(mut k: uint16) {
         .expect("non-null function pointer")(k);
     EprojPreInstrHelper_SpikeShootingPlantSpikes_Func1(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstrHelper_SpikeShootingPlantSpikes_Func2(
-    mut k: uint16,
-) -> uint16 {
+pub unsafe fn EprojPreInstrHelper_SpikeShootingPlantSpikes_Func2(mut k: uint16) -> uint16 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     return (((*((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -11374,7 +10993,7 @@ pub unsafe extern "C" fn EprojPreInstrHelper_SpikeShootingPlantSpikes_Func2(
             as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
 }
-unsafe extern "C" fn EprojInit_DBF2(mut j: uint16) {
+unsafe fn EprojInit_DBF2(mut j: uint16) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1b47 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -11416,16 +11035,14 @@ unsafe extern "C" fn EprojInit_DBF2(mut j: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = 256 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_DBF2_Func1(mut k: uint16) {
+pub unsafe fn EprojPreInstr_DBF2_Func1(mut k: uint16) {
     if EprojPreInstrHelper_DBF2_Func2(k) != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
             as *mut uint16)
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_DBF2(mut k: uint16) {
+pub unsafe fn EprojPreInstr_DBF2(mut k: uint16) {
     CallEprojPreInstr(
         (*((&raw mut g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -11436,8 +11053,7 @@ pub unsafe extern "C" fn EprojPreInstr_DBF2(mut k: uint16) {
     );
     EprojPreInstr_DBF2_Func1(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_DBF2_MoveX1(mut k: uint16) {
+pub unsafe fn EprojPreInstr_DBF2_MoveX1(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
@@ -11452,8 +11068,7 @@ pub unsafe extern "C" fn EprojPreInstr_DBF2_MoveX1(mut k: uint16) {
             << 8 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_DBF2_MoveX2(mut k: uint16) {
+pub unsafe fn EprojPreInstr_DBF2_MoveX2(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
@@ -11468,8 +11083,7 @@ pub unsafe extern "C" fn EprojPreInstr_DBF2_MoveX2(mut k: uint16) {
             << 8 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstrHelper_DBF2_Func2(mut k: uint16) -> uint16 {
+pub unsafe fn EprojPreInstrHelper_DBF2_Func2(mut k: uint16) -> uint16 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     return (((*((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -11500,18 +11114,13 @@ pub unsafe extern "C" fn EprojPreInstrHelper_DBF2_Func2(mut k: uint16) -> uint16
             as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_DC5A(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
+pub unsafe fn EprojInstr_DC5A(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1bd7 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 12288 as uint16;
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_SpawnEnemyDrops_0(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_SpawnEnemyDrops_0(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     eproj_spawn_pt = Point16U {
         x: *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
@@ -11528,11 +11137,7 @@ pub unsafe extern "C" fn EprojInstr_SpawnEnemyDrops_0(
     );
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_SpawnSporesEproj(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_SpawnSporesEproj(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     eproj_spawn_pt = Point16U {
         x: *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
@@ -11548,7 +11153,7 @@ pub unsafe extern "C" fn EprojInstr_SpawnSporesEproj(
     );
     return epjp;
 }
-unsafe extern "C" fn EprojInit_Spores(mut j: uint16) {
+unsafe fn EprojInit_Spores(mut j: uint16) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh4 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1a4b as ::core::ffi::c_int as isize) as *mut uint16)
@@ -11571,7 +11176,7 @@ static mut word_86DCB9: [int16; 5] = [
     -(40 as ::core::ffi::c_int) as int16,
     -(32 as ::core::ffi::c_int) as int16,
 ];
-unsafe extern "C" fn EprojInit_SporeSpawnStalk(mut j: uint16) {
+unsafe fn EprojInit_SporeSpawnStalk(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -11591,8 +11196,7 @@ unsafe extern "C" fn EprojInit_SporeSpawnStalk(mut j: uint16) {
         .offset(0 as ::core::ffi::c_int as isize))
     .x_pos;
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86DCC3(mut v0: uint16) {
+pub unsafe fn sub_86DCC3(mut v0: uint16) {
     let mut v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -11616,7 +11220,7 @@ static mut kEprojInit_SporeSpawners_X: [int16; 4] = [
     0xa0 as ::core::ffi::c_int as int16,
     0xe0 as ::core::ffi::c_int as int16,
 ];
-unsafe extern "C" fn EprojInit_SporeSpawners(mut j: uint16) {
+unsafe fn EprojInit_SporeSpawners(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -11627,8 +11231,7 @@ unsafe extern "C" fn EprojInit_SporeSpawners(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 520 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_Spores(mut k: uint16) {
+pub unsafe fn EprojPreInstr_Spores(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: uint16 = *(((&raw mut g_ram as *mut uint8)
         .offset(0x1aff as ::core::ffi::c_int as isize) as *mut uint16)
@@ -11692,8 +11295,7 @@ pub unsafe extern "C" fn EprojPreInstr_Spores(mut k: uint16) {
             .offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
             + 2 as ::core::ffi::c_int) as uint8 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_SporeSpawners(mut k: uint16) {
+pub unsafe fn EprojPreInstr_SporeSpawners(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x9000 as ::core::ffi::c_int as isize)
         as *mut uint16)
         == 0
@@ -11722,7 +11324,7 @@ pub unsafe extern "C" fn EprojPreInstr_SporeSpawners(mut k: uint16) {
         *fresh64 = (*fresh64).wrapping_sub(1);
     }
 }
-unsafe extern "C" fn EprojInit_NamiFuneFireball(mut j: uint16) {
+unsafe fn EprojInit_NamiFuneFireball(mut j: uint16) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1b47 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -11790,7 +11392,7 @@ unsafe extern "C" fn EprojInit_NamiFuneFireball(mut j: uint16) {
     ) as *const uint8 as *mut uint16)
         .offset((v4 + 1 as ::core::ffi::c_int) as isize);
 }
-unsafe extern "C" fn EprojInit_NamiFuneFireball_MoveX1(mut k: uint16) {
+unsafe fn EprojInit_NamiFuneFireball_MoveX1(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
@@ -11805,7 +11407,7 @@ unsafe extern "C" fn EprojInit_NamiFuneFireball_MoveX1(mut k: uint16) {
             << 8 as ::core::ffi::c_int) as uint32,
     );
 }
-unsafe extern "C" fn EprojInit_NamiFuneFireball_MoveX2(mut k: uint16) {
+unsafe fn EprojInit_NamiFuneFireball_MoveX2(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
@@ -11820,8 +11422,7 @@ unsafe extern "C" fn EprojInit_NamiFuneFireball_MoveX2(mut k: uint16) {
             << 8 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallNamiFuneFireballFunc(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallNamiFuneFireballFunc(mut ea: uint32, mut k: uint16) {
     match ea {
         8838976 => {
             EprojInit_NamiFuneFireball_MoveX1(k);
@@ -11836,8 +11437,7 @@ pub unsafe extern "C" fn CallNamiFuneFireballFunc(mut ea: uint32, mut k: uint16)
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_NamiFuneFireball(mut v0: uint16) {
+pub unsafe fn EprojPreInstr_NamiFuneFireball(mut v0: uint16) {
     CallNamiFuneFireballFunc(
         (*((&raw mut g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -11848,16 +11448,14 @@ pub unsafe extern "C" fn EprojPreInstr_NamiFuneFireball(mut v0: uint16) {
     );
     Eproj_NamiFuneFireball_After(v0);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_NamiFuneFireball_After(mut v0: uint16) {
+pub unsafe fn Eproj_NamiFuneFireball_After(mut v0: uint16) {
     if EprojPreInstrHelper_DBF2_Func2(v0) != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
             as *mut uint16)
             .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86DFA0(mut k: uint16) -> uint16 {
+pub unsafe fn sub_86DFA0(mut k: uint16) -> uint16 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     return (((*((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -11874,8 +11472,7 @@ pub unsafe extern "C" fn sub_86DFA0(mut k: uint16) -> uint16 {
             as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_DFEA(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
+pub unsafe fn EprojInstr_DFEA(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     eproj_spawn_pt = Point16U {
         x: *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
@@ -11892,7 +11489,7 @@ pub unsafe extern "C" fn EprojInstr_DFEA(mut k: uint16, mut epjp: *const uint8) 
     );
     return epjp;
 }
-unsafe extern "C" fn EprojInit_LavaThrownByLavaman(mut j: uint16) {
+unsafe fn EprojInit_LavaThrownByLavaman(mut j: uint16) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1b47 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -11937,8 +11534,7 @@ unsafe extern "C" fn EprojInit_LavaThrownByLavaman(mut j: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = 768 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallLavamanFunc(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallLavamanFunc(mut ea: uint32, mut k: uint16) {
     match ea {
         8839248 => {
             Eproj_LavaThrownByLavaman_MoveX1(k);
@@ -11953,8 +11549,7 @@ pub unsafe extern "C" fn CallLavamanFunc(mut ea: uint32, mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86E049(mut v0: uint16) {
+pub unsafe fn sub_86E049(mut v0: uint16) {
     CallLavamanFunc(
         (*((&raw mut g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -11965,8 +11560,7 @@ pub unsafe extern "C" fn sub_86E049(mut v0: uint16) {
     );
     sub_86E0A4(v0);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_LavaThrownByLavaman_MoveX1(mut k: uint16) {
+pub unsafe fn Eproj_LavaThrownByLavaman_MoveX1(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
@@ -11981,8 +11575,7 @@ pub unsafe extern "C" fn Eproj_LavaThrownByLavaman_MoveX1(mut k: uint16) {
             << 8 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_LavaThrownByLavaman_MoveX2(mut k: uint16) {
+pub unsafe fn Eproj_LavaThrownByLavaman_MoveX2(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
@@ -11997,16 +11590,14 @@ pub unsafe extern "C" fn Eproj_LavaThrownByLavaman_MoveX2(mut k: uint16) {
             << 8 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86E0A4(mut v0: uint16) {
+pub unsafe fn sub_86E0A4(mut v0: uint16) {
     if sub_86E0B0(v0) != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
             as *mut uint16)
             .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86E0B0(mut k: uint16) -> uint16 {
+pub unsafe fn sub_86E0B0(mut k: uint16) -> uint16 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     return (((*((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -12037,7 +11628,7 @@ pub unsafe extern "C" fn sub_86E0B0(mut k: uint16) -> uint16 {
             as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
 }
-unsafe extern "C" fn EprojInit_DustCloudOrExplosion(mut v0: uint16) {
+unsafe fn EprojInit_DustCloudOrExplosion(mut v0: uint16) {
     let mut v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1b47 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -12057,7 +11648,7 @@ unsafe extern "C" fn EprojInit_DustCloudOrExplosion(mut v0: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = eproj_spawn_pt.y;
 }
-unsafe extern "C" fn EprojInit_EyeDoorSmoke(mut j: uint16) {
+unsafe fn EprojInit_EyeDoorSmoke(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1b47 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -12134,23 +11725,21 @@ unsafe extern "C" fn EprojInit_EyeDoorSmoke(mut j: uint16) {
                 + 1 as ::core::ffi::c_int)) as uint16;
     NextRandom();
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_DustCloudOrExplosion(mut k: uint16) {
+pub unsafe fn EprojPreInstr_DustCloudOrExplosion(mut k: uint16) {
     if CheckIfEprojIsOffScreen(k) != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
             as *mut uint16)
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_SetYVel(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
+pub unsafe fn EprojInstr_SetYVel(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1adb as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(epjp as *mut uint16);
     return epjp.offset(2 as ::core::ffi::c_int as isize);
 }
-unsafe extern "C" fn EprojInit_SpawnedGate_Common(mut j: uint16, mut v1: uint16) {
+unsafe fn EprojInit_SpawnedGate_Common(mut j: uint16, mut v1: uint16) {
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c27 as ::core::ffi::c_int as isize) as *mut uint16);
     CalculatePlmBlockCoords(
@@ -12176,17 +11765,16 @@ unsafe extern "C" fn EprojInit_SpawnedGate_Common(mut j: uint16, mut v1: uint16)
             * *((&raw mut g_ram as *mut uint8).offset(0x1c2b as ::core::ffi::c_int as isize)
                 as *mut uint16) as ::core::ffi::c_int) as uint16;
 }
-unsafe extern "C" fn EprojInit_SpawnedShotGate(mut j: uint16) {
+unsafe fn EprojInit_SpawnedShotGate(mut j: uint16) {
     EprojInit_SpawnedGate_Common(j, 0 as uint16);
 }
-unsafe extern "C" fn EprojInit_ClosedDownwardsShotGate(mut j: uint16) {
+unsafe fn EprojInit_ClosedDownwardsShotGate(mut j: uint16) {
     EprojInit_SpawnedGate_Common(j, 0x40 as uint16);
 }
-unsafe extern "C" fn EprojInit_ClosedUpwardsShotGate(mut j: uint16) {
+unsafe fn EprojInit_ClosedUpwardsShotGate(mut j: uint16) {
     EprojInit_SpawnedGate_Common(j, -(0x40 as ::core::ffi::c_int) as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_E605(mut k: uint16) {
+pub unsafe fn EprojPreInstr_E605(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0x19df as ::core::ffi::c_int as isize) as *mut uint16)
@@ -12237,7 +11825,7 @@ pub unsafe extern "C" fn EprojPreInstr_E605(mut k: uint16) {
                     .wrapping_sub(1 as usize) as isize,
             ) as int8 as ::core::ffi::c_int) as uint16;
 }
-unsafe extern "C" fn EprojInit_SaveStationElectricity(mut j: uint16) {
+unsafe fn EprojInit_SaveStationElectricity(mut j: uint16) {
     CalculatePlmBlockCoords(
         *((&raw mut g_ram as *mut uint8).offset(0x1c27 as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -12256,7 +11844,7 @@ unsafe extern "C" fn EprojInit_SaveStationElectricity(mut j: uint16) {
             as *mut uint16) as ::core::ffi::c_int
             - 2 as ::core::ffi::c_int)) as uint16;
 }
-unsafe extern "C" fn CheckIfEprojIsOffScreen(mut k: uint16) -> uint16 {
+unsafe fn CheckIfEprojIsOffScreen(mut k: uint16) -> uint16 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if (*((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -12294,8 +11882,7 @@ unsafe extern "C" fn CheckIfEprojIsOffScreen(mut k: uint16) -> uint16 {
     }
     return 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_FuncE722(mut k: uint16) -> uint16 {
+pub unsafe fn Eproj_FuncE722(mut k: uint16) -> uint16 {
     let mut v2: int16 = 0;
     let mut v3: int16 = 0;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -12321,8 +11908,7 @@ pub unsafe extern "C" fn Eproj_FuncE722(mut k: uint16) -> uint16 {
     }
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_FuncE73E_MoveXY(mut k: uint16) {
+pub unsafe fn Eproj_FuncE73E_MoveXY(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0x97dc as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -12403,8 +11989,7 @@ pub unsafe extern "C" fn Eproj_FuncE73E_MoveXY(mut k: uint16) {
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_AngleToSamus(mut j: uint16, mut r18: uint16, mut r20: uint16) {
+pub unsafe fn Eproj_AngleToSamus(mut j: uint16, mut r18: uint16, mut r20: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -12446,7 +12031,7 @@ pub unsafe extern "C" fn Eproj_AngleToSamus(mut j: uint16, mut r18: uint16, mut 
         as *mut uint16)
         .offset(v1 as isize) = pt.y as uint16;
 }
-unsafe extern "C" fn EprojInit_BotwoonsBody(mut j: uint16) {
+unsafe fn EprojInit_BotwoonsBody(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -12507,8 +12092,7 @@ unsafe extern "C" fn EprojInit_BotwoonsBody(mut j: uint16) {
         .offset(v1 as isize) = 2 as uint16;
     (*Ex).kraid.kraid_healths_4ths[0 as ::core::ffi::c_int as usize] = 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallBotwoonEprojFunc(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallBotwoonEprojFunc(mut ea: uint32, mut k: uint16) {
     match ea {
         8841880 => {
             Eproj_BotwoonsBody_Main(k);
@@ -12532,8 +12116,7 @@ pub unsafe extern "C" fn CallBotwoonEprojFunc(mut ea: uint32, mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_BotwoonsBody(mut k: uint16) {
+pub unsafe fn EprojPreInstr_BotwoonsBody(mut k: uint16) {
     if *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x8000 as ::core::ffi::c_int as isize)
         as *mut ExtraEnemyRam8000)
         .offset(0 as ::core::ffi::c_int as isize))
@@ -12562,8 +12145,7 @@ pub unsafe extern "C" fn EprojPreInstr_BotwoonsBody(mut k: uint16) {
         k,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_BotwoonsBody_Main(mut k: uint16) {
+pub unsafe fn Eproj_BotwoonsBody_Main(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: uint16 = *(g_rom.offset(
         (((0x86e9f1 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
@@ -12593,8 +12175,7 @@ pub unsafe extern "C" fn Eproj_BotwoonsBody_Main(mut k: uint16) {
     }
     Eproj_BotwoonsBodyHurtFlashHandling1(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_BotwoonsBodyHurtFlashHandling1(mut k: uint16) {
+pub unsafe fn Eproj_BotwoonsBodyHurtFlashHandling1(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh58 = *((&raw mut g_ram as *mut uint8)
         .offset(0x19bb as ::core::ffi::c_int as isize) as *mut uint16)
@@ -12619,8 +12200,7 @@ pub unsafe extern "C" fn Eproj_BotwoonsBodyHurtFlashHandling1(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_BotwoonsBodyHurtFlashHandling2(mut j: uint16) {
+pub unsafe fn Eproj_BotwoonsBodyHurtFlashHandling2(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh55 = *((&raw mut g_ram as *mut uint8)
         .offset(0x19bb as ::core::ffi::c_int as isize) as *mut uint16)
@@ -12645,8 +12225,7 @@ pub unsafe extern "C" fn Eproj_BotwoonsBodyHurtFlashHandling2(mut j: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_BotwonsBodyFunction_Dying(mut v0: uint16) {
+pub unsafe fn Eproj_BotwonsBodyFunction_Dying(mut v0: uint16) {
     let mut v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -12657,8 +12236,7 @@ pub unsafe extern "C" fn Eproj_BotwonsBodyFunction_Dying(mut v0: uint16) {
         .offset(v1 as isize) = 0xeb04 as uint16;
     Eproj_BotwonsBodyFunction_Dying2(v0);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_BotwonsBodyFunction_Dying2(mut v0: uint16) {
+pub unsafe fn Eproj_BotwonsBodyFunction_Dying2(mut v0: uint16) {
     let mut v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh57 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1aff as ::core::ffi::c_int as isize) as *mut uint16)
@@ -12677,8 +12255,7 @@ pub unsafe extern "C" fn Eproj_BotwonsBodyFunction_Dying2(mut v0: uint16) {
         .offset(v1 as isize) = 0 as uint16;
     Eproj_BotwoonsBodyHurtFlashHandling1(v0);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_BotwonsBodyFunction_DyingFalling(mut v0: uint16) {
+pub unsafe fn Eproj_BotwonsBodyFunction_DyingFalling(mut v0: uint16) {
     let mut v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v3: ::core::ffi::c_int = 8 as ::core::ffi::c_int
         * ((*((&raw mut g_ram as *mut uint8).offset(0x1adb as ::core::ffi::c_int as isize)
@@ -12748,11 +12325,10 @@ pub unsafe extern "C" fn Eproj_BotwonsBodyFunction_DyingFalling(mut v0: uint16) 
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueSmallExplosionSfx() {
+pub unsafe fn QueueSmallExplosionSfx() {
     QueueSfx2_Max6(0x24 as uint16);
 }
-unsafe extern "C" fn EprojInit_BotwoonsSpit(mut j: uint16) {
+unsafe fn EprojInit_BotwoonsSpit(mut j: uint16) {
     let mut v1: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -12789,21 +12365,18 @@ unsafe extern "C" fn EprojInit_BotwoonsSpit(mut j: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = pt.y as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_BotwoonsSpit(mut k: uint16) {
+pub unsafe fn EprojPreInstr_BotwoonsSpit(mut k: uint16) {
     Eproj_FuncE73E_MoveXY(k);
     sub_86EC0C(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86EC0C(mut k: uint16) {
+pub unsafe fn sub_86EC0C(mut k: uint16) {
     if sub_86EC18(k) != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
             as *mut uint16)
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_86EC18(mut k: uint16) -> uint16 {
+pub unsafe fn sub_86EC18(mut k: uint16) -> uint16 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     return (((*((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -12834,7 +12407,7 @@ pub unsafe extern "C" fn sub_86EC18(mut k: uint16) -> uint16 {
             as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
 }
-unsafe extern "C" fn EprojInit_YappingMawsBody(mut j: uint16) {
+unsafe fn EprojInit_YappingMawsBody(mut j: uint16) {
     let mut v2: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -12876,8 +12449,7 @@ unsafe extern "C" fn EprojInit_YappingMawsBody(mut j: uint16) {
                 as isize,
         ) as *mut uint8 as *mut uint16) = j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_ECE3(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
+pub unsafe fn EprojInstr_ECE3(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut x: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0x1a4b as ::core::ffi::c_int as isize) as *mut uint16)
@@ -12895,8 +12467,7 @@ pub unsafe extern "C" fn EprojInstr_ECE3(mut k: uint16, mut epjp: *const uint8) 
     CreateSpriteAtPos(x, y, *(epjp as *mut uint16), 0 as uint16);
     return epjp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_ED17(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
+pub unsafe fn EprojInstr_ED17(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut x: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0x1a4b as ::core::ffi::c_int as isize) as *mut uint16)
@@ -12914,32 +12485,19 @@ pub unsafe extern "C" fn EprojInstr_ED17(mut k: uint16, mut epjp: *const uint8) 
     CreateSpriteAtPos(x, y, *(epjp as *mut uint16), 0 as uint16);
     return epjp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_QueueSfx2_9(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_QueueSfx2_9(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     QueueSfx2_Max1(9 as uint16);
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_QueueSfx2_24(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_QueueSfx2_24(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     QueueSfx2_Max1(0x24 as uint16);
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_QueueSfx2_B(
-    mut k: uint16,
-    mut epjp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn EprojInstr_QueueSfx2_B(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     QueueSfx2_Max1(0xb as uint16);
     return epjp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_EEAF(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
+pub unsafe fn EprojInstr_EEAF(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     let mut v2: uint16 = RandomDropRoutine(k);
     if k as ::core::ffi::c_int != 0 as ::core::ffi::c_int
         && v2 as ::core::ffi::c_int - 6 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0
@@ -12994,8 +12552,7 @@ pub unsafe extern "C" fn EprojInstr_EEAF(mut k: uint16, mut epjp: *const uint8) 
         return 0xeca3 as ::core::ffi::c_int as uintptr_t as *const uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojInstr_HandleRespawningEnemy(
+pub unsafe fn EprojInstr_HandleRespawningEnemy(
     mut k: uint16,
     mut epjp: *const uint8,
 ) -> *const uint8 {
@@ -13015,7 +12572,7 @@ pub unsafe extern "C" fn EprojInstr_HandleRespawningEnemy(
     }
     return epjp;
 }
-unsafe extern "C" fn EprojInit_F337(mut j: uint16) {
+unsafe fn EprojInit_F337(mut j: uint16) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -13073,7 +12630,7 @@ unsafe extern "C" fn EprojInit_F337(mut j: uint16) {
             (0x86efdf as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
-unsafe extern "C" fn EprojInit_EnemyDeathExplosion(mut j: uint16) {
+unsafe fn EprojInit_EnemyDeathExplosion(mut j: uint16) {
     let mut v1: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -13124,16 +12681,15 @@ unsafe extern "C" fn EprojInit_EnemyDeathExplosion(mut j: uint16) {
 static mut off_86F0AD: [Option<Func_V>; 7] = unsafe {
     [
         None,
-        Some(Eproj_Pickup_SmallHealth as unsafe extern "C" fn() -> ()),
-        Some(Eproj_Pickup_BigHealth as unsafe extern "C" fn() -> ()),
-        Some(Eproj_Pickup_PowerBombs as unsafe extern "C" fn() -> ()),
-        Some(Eproj_Pickup_Missiles as unsafe extern "C" fn() -> ()),
-        Some(Eproj_Pickup_SuperMissiles as unsafe extern "C" fn() -> ()),
+        Some(Eproj_Pickup_SmallHealth as unsafe fn() -> ()),
+        Some(Eproj_Pickup_BigHealth as unsafe fn() -> ()),
+        Some(Eproj_Pickup_PowerBombs as unsafe fn() -> ()),
+        Some(Eproj_Pickup_Missiles as unsafe fn() -> ()),
+        Some(Eproj_Pickup_SuperMissiles as unsafe fn() -> ()),
         None,
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_Pickup(mut k: uint16) {
+pub unsafe fn EprojPreInstr_Pickup(mut k: uint16) {
     let mut v2: uint16 = 0;
     let mut v3: uint16 = 0;
     let mut current_block: u64;
@@ -13309,28 +12865,23 @@ pub unsafe extern "C" fn EprojPreInstr_Pickup(mut k: uint16) {
         .offset(v4 as isize) =
         (0x86efdf as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_Pickup_SmallHealth() {
+pub unsafe fn Eproj_Pickup_SmallHealth() {
     Samus_RestoreHealth(5 as uint16);
     QueueSfx2_Max1(1 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_Pickup_BigHealth() {
+pub unsafe fn Eproj_Pickup_BigHealth() {
     Samus_RestoreHealth(0x14 as uint16);
     QueueSfx2_Max1(2 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_Pickup_PowerBombs() {
+pub unsafe fn Eproj_Pickup_PowerBombs() {
     Samus_RestorePowerBombs(1 as uint16);
     QueueSfx2_Max1(5 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_Pickup_Missiles() {
+pub unsafe fn Eproj_Pickup_Missiles() {
     Samus_RestoreMissiles(2 as uint16);
     QueueSfx2_Max1(3 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Eproj_Pickup_SuperMissiles() {
+pub unsafe fn Eproj_Pickup_SuperMissiles() {
     Samus_RestoreSuperMissiles(1 as uint16);
     QueueSfx2_Max1(4 as uint16);
 }
@@ -13342,8 +12893,7 @@ static mut byte_86F25E: [uint8; 6] = [
     5 as ::core::ffi::c_int as uint8,
     3 as ::core::ffi::c_int as uint8,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn RandomDropRoutine(mut k: uint16) -> uint16 {
+pub unsafe fn RandomDropRoutine(mut k: uint16) -> uint16 {
     let mut v2: uint16 = 0;
     let mut Random: uint8 = 0;
     let mut v5: uint16 = 0;
@@ -13511,8 +13061,7 @@ pub unsafe extern "C" fn RandomDropRoutine(mut k: uint16) -> uint16 {
     i = 3 as ::core::ffi::c_int;
     return byte_86F25E[i as usize] as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn RespawnEnemy(mut v0: uint16) {
+pub unsafe fn RespawnEnemy(mut v0: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize) as *mut uint16) =
         v0;
     let mut v1: *const uint8 = RomPtr_A1(
@@ -13555,7 +13104,7 @@ pub unsafe extern "C" fn RespawnEnemy(mut v0: uint16) {
             | (*Edef).ai_init as ::core::ffi::c_int) as uint32,
     );
 }
-unsafe extern "C" fn EprojInit_Sparks(mut j: uint16) {
+unsafe fn EprojInit_Sparks(mut j: uint16) {
     static mut word_86F3D4: [uint16; 14] = [
         0xffff as ::core::ffi::c_int as uint16,
         0xb800 as ::core::ffi::c_int as uint16,
@@ -13618,8 +13167,7 @@ unsafe extern "C" fn EprojInit_Sparks(mut j: uint16) {
     ) as *const uint8 as *mut uint16)
         .offset((v4 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojPreInstr_Sparks(mut k: uint16) {
+pub unsafe fn EprojPreInstr_Sparks(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0x1adb as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -13746,7 +13294,7 @@ pub unsafe extern "C" fn EprojPreInstr_Sparks(mut k: uint16) {
         );
     }
 }
-unsafe extern "C" fn CallEprojInit(mut ea: uint32, mut j: uint16) {
+unsafe fn CallEprojInit(mut ea: uint32, mut j: uint16) {
     match ea {
         8817209 => {
             Eproj_Init_0x8aaf(j);
@@ -14209,7 +13757,7 @@ unsafe extern "C" fn CallEprojInit(mut ea: uint32, mut j: uint16) {
         }
     };
 }
-unsafe extern "C" fn CallEprojPreInstr(mut ea: uint32, mut k: uint16) {
+unsafe fn CallEprojPreInstr(mut ea: uint32, mut k: uint16) {
     match ea {
         8825112 => return,
         8814960 => return,
@@ -14714,11 +14262,7 @@ unsafe extern "C" fn CallEprojPreInstr(mut ea: uint32, mut k: uint16) {
         }
     };
 }
-unsafe extern "C" fn CallEprojInstr(
-    mut ea: uint32,
-    mut k: uint16,
-    mut j: *const uint8,
-) -> *const uint8 {
+unsafe fn CallEprojInstr(mut ea: uint32, mut k: uint16, mut j: *const uint8) -> *const uint8 {
     match ea {
         8814932 => return EprojInstr_Delete(k, j),
         8814937 => return EprojInstr_Sleep(k, j),

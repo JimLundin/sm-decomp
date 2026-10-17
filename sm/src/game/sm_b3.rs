@@ -329,7 +329,7 @@ pub struct Enemy_PipeBug {
     pub pbg_var_3F: uint16,
 }
 #[inline]
-unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
+unsafe fn abs16(mut t: uint16) -> uint16 {
     return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         -(t as ::core::ffi::c_int)
     } else {
@@ -337,11 +337,11 @@ unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
     }) as uint16;
 }
 #[inline]
-unsafe extern "C" fn RomPtr_B3(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_B3(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0xb30000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
+unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
     let mut t: uint32 = ((*lo as ::core::ffi::c_int
         + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
         as uint32)
@@ -389,31 +389,31 @@ pub const fnBotwoon_Func_30: ::core::ffi::c_int = 0xb39f7a as ::core::ffi::c_int
 pub const fnBotwoon_Func_32: ::core::ffi::c_int = 0xb3e250 as ::core::ffi::c_int;
 pub const fnBotwoon_Func_33: uint32 = 11788940 as uint32;
 #[inline]
-unsafe extern "C" fn gEnemyData(mut o: ::core::ffi::c_int) -> *mut EnemyData {
+unsafe fn gEnemyData(mut o: ::core::ffi::c_int) -> *mut EnemyData {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut EnemyData;
 }
 #[inline]
-unsafe extern "C" fn Get_Botwoon(mut o: ::core::ffi::c_int) -> *mut Enemy_Botwoon {
+unsafe fn Get_Botwoon(mut o: ::core::ffi::c_int) -> *mut Enemy_Botwoon {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_Botwoon;
 }
 #[inline]
-unsafe extern "C" fn Get_EscapeDachora(mut o: ::core::ffi::c_int) -> *mut Enemy_EscapeDachora {
+unsafe fn Get_EscapeDachora(mut o: ::core::ffi::c_int) -> *mut Enemy_EscapeDachora {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_EscapeDachora;
 }
 #[inline]
-unsafe extern "C" fn Get_EscapeEtecoon(mut o: ::core::ffi::c_int) -> *mut Enemy_EscapeEtecoon {
+unsafe fn Get_EscapeEtecoon(mut o: ::core::ffi::c_int) -> *mut Enemy_EscapeEtecoon {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_EscapeEtecoon;
 }
 #[inline]
-unsafe extern "C" fn Get_PipeBug(mut o: ::core::ffi::c_int) -> *mut Enemy_PipeBug {
+unsafe fn Get_PipeBug(mut o: ::core::ffi::c_int) -> *mut Enemy_PipeBug {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_PipeBug;
@@ -423,62 +423,44 @@ static mut g_word_B39E77: [int16; 3] = [
     3 as ::core::ffi::c_int as int16,
     4 as ::core::ffi::c_int as int16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_GrappleReact_NoInteract_B3() {
+pub unsafe fn Enemy_GrappleReact_NoInteract_B3() {
     SwitchEnemyAiToMainAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_GrappleReact_KillEnemy_B3() {
+pub unsafe fn Enemy_GrappleReact_KillEnemy_B3() {
     EnemyGrappleDeath();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_GrappleReact_CancelBeam_B3() {
+pub unsafe fn Enemy_GrappleReact_CancelBeam_B3() {
     Enemy_SwitchToFrozenAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalTouchAI_B3() {
+pub unsafe fn Enemy_NormalTouchAI_B3() {
     NormalEnemyTouchAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalTouchAI_SkipDeathAnim_B3() {
+pub unsafe fn Enemy_NormalTouchAI_SkipDeathAnim_B3() {
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalShotAI_B3() {
+pub unsafe fn Enemy_NormalShotAI_B3() {
     NormalEnemyShotAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalShotAI_SkipSomeParts_B3() {
+pub unsafe fn Enemy_NormalShotAI_SkipSomeParts_B3() {
     NormalEnemyShotAiSkipDeathAnim_CurEnemy();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalPowerBombAI_SkipDeathAnim_B3() {
+pub unsafe fn Enemy_NormalPowerBombAI_SkipDeathAnim_B3() {
     NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalFrozenAI_B3() {
+pub unsafe fn Enemy_NormalFrozenAI_B3() {
     NormalEnemyFrozenAI();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_SetAiPreInstr_B3(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn Enemy_SetAiPreInstr_B3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*gEnemyData(k as ::core::ffi::c_int)).ai_preinstr =
         *jp.offset(0 as ::core::ffi::c_int as isize);
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_ClearAiPreInstr_B3(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn Enemy_ClearAiPreInstr_B3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*gEnemyData(k as ::core::ffi::c_int)).ai_preinstr =
         (0xb3807b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn UnusedSpinningTurtleEye_Init() {
+pub unsafe fn UnusedSpinningTurtleEye_Init() {
     let mut v0: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -488,10 +470,8 @@ pub unsafe extern "C" fn UnusedSpinningTurtleEye_Init() {
     (*v0).current_instruction =
         addr_kUnusedSpinningTurtleEye_Ilist_86A7 as ::core::ffi::c_int as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn UnusedSpinningTurtleEye_Main() {}
-#[no_mangle]
-pub unsafe extern "C" fn BrinstarPipeBug_Init() {
+pub unsafe fn UnusedSpinningTurtleEye_Main() {}
+pub unsafe fn BrinstarPipeBug_Init() {
     let mut PipeBug: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -512,8 +492,7 @@ pub unsafe extern "C" fn BrinstarPipeBug_Init() {
             addr_kBrinstarPipeBug_Ilist_8A1D as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn BrinstarPipeBug_Main() {
+pub unsafe fn BrinstarPipeBug_Main() {
     let mut PipeBug: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -522,8 +501,7 @@ pub unsafe extern "C" fn BrinstarPipeBug_Main() {
         ((*PipeBug).pbg_var_F as ::core::ffi::c_int | 0xb30000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn BrinstarPipeBug_PreInstr_1(mut k: uint16) {
+pub unsafe fn BrinstarPipeBug_PreInstr_1(mut k: uint16) {
     if CheckIfEnemyIsOnScreen() == 0 {
         (*Get_PipeBug(
             *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -532,8 +510,7 @@ pub unsafe extern "C" fn BrinstarPipeBug_PreInstr_1(mut k: uint16) {
         .pbg_var_F = (0xb38890 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn BrinstarPipeBug_PreInstr_2(mut k: uint16) {
+pub unsafe fn BrinstarPipeBug_PreInstr_2(mut k: uint16) {
     let mut SamusEnemyDelta_Y: int16 = 0;
     SamusEnemyDelta_Y = GetSamusEnemyDelta_Y(k) as int16;
     if (SamusEnemyDelta_Y as ::core::ffi::c_int) < 0 as ::core::ffi::c_int
@@ -572,8 +549,7 @@ pub unsafe extern "C" fn BrinstarPipeBug_PreInstr_2(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn BrinstarPipeBug_PreInstr_3(mut k: uint16) {
+pub unsafe fn BrinstarPipeBug_PreInstr_3(mut k: uint16) {
     let mut PipeBug: *mut Enemy_PipeBug = Get_PipeBug(k as ::core::ffi::c_int);
     let fresh7 = (*PipeBug).base.y_subpos;
     (*PipeBug).base.y_subpos = (*PipeBug).base.y_subpos.wrapping_sub(1);
@@ -595,8 +571,7 @@ pub unsafe extern "C" fn BrinstarPipeBug_PreInstr_3(mut k: uint16) {
             (0xb3891c as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn BrinstarPipeBug_PreInstr_4(mut k: uint16) {
+pub unsafe fn BrinstarPipeBug_PreInstr_4(mut k: uint16) {
     let mut PipeBug: *mut Enemy_PipeBug = Get_PipeBug(k as ::core::ffi::c_int);
     if (*PipeBug).pbg_var_A as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
@@ -625,8 +600,7 @@ pub unsafe extern "C" fn BrinstarPipeBug_PreInstr_4(mut k: uint16) {
             (0xb3897e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn BrinstarPipeBug_PreInstr_5(mut k: uint16) {
+pub unsafe fn BrinstarPipeBug_PreInstr_5(mut k: uint16) {
     let mut E: *mut Enemy_PipeBug = Get_PipeBug(k as ::core::ffi::c_int);
     let fresh8 = (*E).pbg_var_D;
     (*E).pbg_var_D = (*E).pbg_var_D.wrapping_sub(1);
@@ -634,8 +608,7 @@ pub unsafe extern "C" fn BrinstarPipeBug_PreInstr_5(mut k: uint16) {
         (*E).pbg_var_F = (0xb38890 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn BrinstarPipeBug_Func_1() {
+pub unsafe fn BrinstarPipeBug_Func_1() {
     let mut PipeBug: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -665,8 +638,7 @@ pub unsafe extern "C" fn BrinstarPipeBug_Func_1() {
         (*PipeBug).base.timer = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NorfairPipeBug_Init() {
+pub unsafe fn NorfairPipeBug_Init() {
     let mut PipeBug: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -689,8 +661,7 @@ pub unsafe extern "C" fn NorfairPipeBug_Init() {
     (*PipeBug).pbg_var_A =
         (0xb38bcd as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallBugInstr(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallBugInstr(mut ea: uint32, mut k: uint16) {
     match ea {
         11766733 => {
             NorfairPipeBug_Func_1();
@@ -768,8 +739,7 @@ pub unsafe extern "C" fn CallBugInstr(mut ea: uint32, mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn NorfairPipeBug_Main() {
+pub unsafe fn NorfairPipeBug_Main() {
     let mut PipeBug: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -781,8 +751,7 @@ pub unsafe extern "C" fn NorfairPipeBug_Main() {
     );
     NorfairPipeBug_8BA8();
 }
-#[no_mangle]
-pub unsafe extern "C" fn NorfairPipeBug_8BA8() {
+pub unsafe fn NorfairPipeBug_8BA8() {
     if CheckIfEnemyIsOnScreen() != 0 {
         let mut PipeBug: *mut Enemy_PipeBug = Get_PipeBug(
             *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -797,9 +766,8 @@ pub unsafe extern "C" fn NorfairPipeBug_8BA8() {
         (*PipeBug).base.y_pos = (*PipeBug).pbg_var_E;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NorfairPipeBug_Func_1() {
-    if *(&raw mut (*(Get_PipeBug as unsafe extern "C" fn(::core::ffi::c_int) -> *mut Enemy_PipeBug)(
+pub unsafe fn NorfairPipeBug_Func_1() {
+    if *(&raw mut (*(Get_PipeBug as unsafe fn(::core::ffi::c_int) -> *mut Enemy_PipeBug)(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
     ))
@@ -842,8 +810,7 @@ pub unsafe extern "C" fn NorfairPipeBug_Func_1() {
         .pbg_var_A = (0xb38bff as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NorfairPipeBug_Func_2() {
+pub unsafe fn NorfairPipeBug_Func_2() {
     let mut k: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0xe54 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int;
@@ -910,8 +877,7 @@ pub unsafe extern "C" fn NorfairPipeBug_Func_2() {
         NorfairPipeBug_Func_3(k as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NorfairPipeBug_Func_3(mut k: uint16) {
+pub unsafe fn NorfairPipeBug_Func_3(mut k: uint16) {
     (*Get_PipeBug(k as ::core::ffi::c_int)).pbg_var_A =
         (0xb38ca6 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*Get_PipeBug(k as ::core::ffi::c_int + 64 as ::core::ffi::c_int)).pbg_var_A =
@@ -938,8 +904,7 @@ pub unsafe extern "C" fn NorfairPipeBug_Func_3(mut k: uint16) {
     (*Get_PipeBug(k as ::core::ffi::c_int + 256 as ::core::ffi::c_int)).pbg_var_F =
         (0xb38dd2 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn NorfairPipeBug_Func_4() {
+pub unsafe fn NorfairPipeBug_Func_4() {
     let mut E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -989,8 +954,7 @@ pub unsafe extern "C" fn NorfairPipeBug_Func_4() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NorfairPipeBug_Func_5(mut k: uint16) {
+pub unsafe fn NorfairPipeBug_Func_5(mut k: uint16) {
     let mut E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -998,8 +962,7 @@ pub unsafe extern "C" fn NorfairPipeBug_Func_5(mut k: uint16) {
     (*E).pbg_var_C = (*E).pbg_var_C.wrapping_add(1);
     (*E).pbg_var_A = (0xb38e5a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn NorfairPipeBug_Func_6() {
+pub unsafe fn NorfairPipeBug_Func_6() {
     let mut E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1034,8 +997,7 @@ pub unsafe extern "C" fn NorfairPipeBug_Func_6() {
         (*E).pbg_var_A = (0xb38e5a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NorfairPipeBug_Func_7() {
+pub unsafe fn NorfairPipeBug_Func_7() {
     let mut E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1070,8 +1032,7 @@ pub unsafe extern "C" fn NorfairPipeBug_Func_7() {
         (*E).pbg_var_A = (0xb38e5a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NorfairPipeBug_Func_8() {
+pub unsafe fn NorfairPipeBug_Func_8() {
     let mut E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1107,8 +1068,7 @@ pub unsafe extern "C" fn NorfairPipeBug_Func_8() {
         (*E).pbg_var_A = (0xb38e5a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NorfairPipeBug_Func_9() {
+pub unsafe fn NorfairPipeBug_Func_9() {
     let mut E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1144,8 +1104,7 @@ pub unsafe extern "C" fn NorfairPipeBug_Func_9() {
         (*E).pbg_var_A = (0xb38e5a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NorfairPipeBug_Func_10() {
+pub unsafe fn NorfairPipeBug_Func_10() {
     let mut E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1172,8 +1131,7 @@ pub unsafe extern "C" fn NorfairPipeBug_Func_10() {
                 .offset((v2 + 3 as ::core::ffi::c_int) as isize) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn NorfairPipeBug_Func_11() {
+pub unsafe fn NorfairPipeBug_Func_11() {
     let mut E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1200,10 +1158,8 @@ pub unsafe extern "C" fn NorfairPipeBug_Func_11() {
                 .offset((v2 + 1 as ::core::ffi::c_int) as isize) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_B38E56() {}
-#[no_mangle]
-pub unsafe extern "C" fn NorfairPipeBug_Func_12() {
+pub unsafe fn sub_B38E56() {}
+pub unsafe fn NorfairPipeBug_Func_12() {
     let mut E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1233,8 +1189,7 @@ pub unsafe extern "C" fn NorfairPipeBug_Func_12() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn BrinstarYellowPipeBug_Init() {
+pub unsafe fn BrinstarYellowPipeBug_Init() {
     let mut E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1281,8 +1236,7 @@ pub unsafe extern "C" fn BrinstarYellowPipeBug_Init() {
     (*E).pbg_var_A = (0xb38fb5 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).pbg_var_06 = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn BrinstarYellowPipeBug_Main() {
+pub unsafe fn BrinstarYellowPipeBug_Main() {
     let mut E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1293,8 +1247,7 @@ pub unsafe extern "C" fn BrinstarYellowPipeBug_Main() {
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn BrinstarYellowPipeBug_Func_1() {
+pub unsafe fn BrinstarYellowPipeBug_Func_1() {
     let mut v2: int16 = 0;
     let mut SamusEnemyDelta_X: int16 = 0;
     let mut E: *mut Enemy_PipeBug = Get_PipeBug(
@@ -1349,8 +1302,7 @@ pub unsafe extern "C" fn BrinstarYellowPipeBug_Func_1() {
         _ => {}
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn BrinstarYellowPipeBug_Func_2(mut k: uint16) {
+pub unsafe fn BrinstarYellowPipeBug_Func_2(mut k: uint16) {
     let mut E: *mut Enemy_PipeBug = Get_PipeBug(k as ::core::ffi::c_int);
     let mut v2: uint16 =
         ((*E).pbg_var_20 as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16;
@@ -1369,8 +1321,7 @@ pub unsafe extern "C" fn BrinstarYellowPipeBug_Func_2(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn BrinstarYellowPipeBug_Func_3() {
+pub unsafe fn BrinstarYellowPipeBug_Func_3() {
     let mut E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1410,8 +1361,7 @@ pub unsafe extern "C" fn BrinstarYellowPipeBug_Func_3() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn BrinstarYellowPipeBug_Func_4(mut k: uint16) {
+pub unsafe fn BrinstarYellowPipeBug_Func_4(mut k: uint16) {
     let mut E: *mut Enemy_PipeBug = Get_PipeBug(k as ::core::ffi::c_int);
     AddToHiLo(
         &raw mut (*E).base.x_pos,
@@ -1419,8 +1369,7 @@ pub unsafe extern "C" fn BrinstarYellowPipeBug_Func_4(mut k: uint16) {
         ((*E).pbg_var_03 as uint32) << 16 as ::core::ffi::c_int | (*E).pbg_var_02 as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn BrinstarYellowPipeBug_Func_5() {
+pub unsafe fn BrinstarYellowPipeBug_Func_5() {
     let mut E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1460,8 +1409,7 @@ pub unsafe extern "C" fn BrinstarYellowPipeBug_Func_5() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn BrinstarYellowPipeBug_Func_6(mut k: uint16) {
+pub unsafe fn BrinstarYellowPipeBug_Func_6(mut k: uint16) {
     let mut E: *mut Enemy_PipeBug = Get_PipeBug(k as ::core::ffi::c_int);
     AddToHiLo(
         &raw mut (*E).base.x_pos,
@@ -1469,8 +1417,7 @@ pub unsafe extern "C" fn BrinstarYellowPipeBug_Func_6(mut k: uint16) {
         ((*E).pbg_var_01 as uint32) << 16 as ::core::ffi::c_int | (*E).pbg_var_00 as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn BrinstarYellowPipeBug_Func_7() {
+pub unsafe fn BrinstarYellowPipeBug_Func_7() {
     let mut E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1519,8 +1466,7 @@ pub unsafe extern "C" fn BrinstarYellowPipeBug_Func_7() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn BrinstarYellowPipeBug_Func_8() {
+pub unsafe fn BrinstarYellowPipeBug_Func_8() {
     let mut E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1569,8 +1515,7 @@ pub unsafe extern "C" fn BrinstarYellowPipeBug_Func_8() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn BrinstarYellowPipeBug_Func_9(mut k: uint16) {
+pub unsafe fn BrinstarYellowPipeBug_Func_9(mut k: uint16) {
     let mut E: *mut Enemy_PipeBug = Get_PipeBug(k as ::core::ffi::c_int);
     (*E).pbg_var_E = (*E).pbg_var_E.wrapping_add(1);
     let mut v3: ::core::ffi::c_int =
@@ -1595,8 +1540,7 @@ pub unsafe extern "C" fn BrinstarYellowPipeBug_Func_9(mut k: uint16) {
                 .offset((v3 + 2 as ::core::ffi::c_int) as isize) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn BrinstarYellowPipeBug_Func_10(mut k: uint16) {
+pub unsafe fn BrinstarYellowPipeBug_Func_10(mut k: uint16) {
     let mut E: *mut Enemy_PipeBug = Get_PipeBug(k as ::core::ffi::c_int);
     (*E).pbg_var_E = (*E).pbg_var_E.wrapping_sub(1);
     if (*E).pbg_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -1629,8 +1573,7 @@ pub unsafe extern "C" fn BrinstarYellowPipeBug_Func_10(mut k: uint16) {
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Botwoon_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1639,8 +1582,7 @@ pub unsafe extern "C" fn Botwoon_Instr_1(mut k: uint16, mut jp: *const uint16) -
     (*E).base.y_height = 16 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Instr_2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Botwoon_Instr_2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1649,8 +1591,7 @@ pub unsafe extern "C" fn Botwoon_Instr_2(mut k: uint16, mut jp: *const uint16) -
     (*E).base.y_height = 12 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Instr_3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Botwoon_Instr_3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1659,8 +1600,7 @@ pub unsafe extern "C" fn Botwoon_Instr_3(mut k: uint16, mut jp: *const uint16) -
     (*E).base.y_height = 8 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Instr_4(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Botwoon_Instr_4(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1669,8 +1609,7 @@ pub unsafe extern "C" fn Botwoon_Instr_4(mut k: uint16, mut jp: *const uint16) -
     (*E).base.y_height = 12 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Instr_5(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Botwoon_Instr_5(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1679,8 +1618,7 @@ pub unsafe extern "C" fn Botwoon_Instr_5(mut k: uint16, mut jp: *const uint16) -
     (*E).base.y_height = 16 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Instr_6(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Botwoon_Instr_6(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1689,8 +1627,7 @@ pub unsafe extern "C" fn Botwoon_Instr_6(mut k: uint16, mut jp: *const uint16) -
     (*E).base.y_height = 16 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Instr_7(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Botwoon_Instr_7(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1699,8 +1636,7 @@ pub unsafe extern "C" fn Botwoon_Instr_7(mut k: uint16, mut jp: *const uint16) -
     (*E).base.y_height = 12 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Instr_8(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Botwoon_Instr_8(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1709,8 +1645,7 @@ pub unsafe extern "C" fn Botwoon_Instr_8(mut k: uint16, mut jp: *const uint16) -
     (*E).base.y_height = 8 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Instr_9(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Botwoon_Instr_9(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1719,8 +1654,7 @@ pub unsafe extern "C" fn Botwoon_Instr_9(mut k: uint16, mut jp: *const uint16) -
     (*E).base.y_height = 12 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Instr_10(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Botwoon_Instr_10(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1729,11 +1663,7 @@ pub unsafe extern "C" fn Botwoon_Instr_10(mut k: uint16, mut jp: *const uint16) 
     (*E).base.y_height = 16 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Instr_SetSpitting(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn Botwoon_Instr_SetSpitting(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1741,20 +1671,14 @@ pub unsafe extern "C" fn Botwoon_Instr_SetSpitting(
     .botwoon_var_5A = 1 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Instr_QueueSpitSfx(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn Botwoon_Instr_QueueSpitSfx(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     QueueSfx2_Max6(0x7c as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_QueueExplosionSfx() {
+pub unsafe fn Botwoon_QueueExplosionSfx() {
     QueueSfx2_Max6(0x24 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Init() {
+pub unsafe fn Botwoon_Init() {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1845,8 +1769,7 @@ pub unsafe extern "C" fn Botwoon_Init() {
             + 256 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallBotwoonFuncVarD(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallBotwoonFuncVarD(mut ea: uint32, mut k: uint16) {
     match ea {
         11769976 => {
             Botwoon_Func_6();
@@ -1885,8 +1808,7 @@ pub unsafe extern "C" fn CallBotwoonFuncVarD(mut ea: uint32, mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallBotwoonFuncVarE(mut ea: uint32) {
+pub unsafe fn CallBotwoonFuncVarE(mut ea: uint32) {
     match ea {
         11770807 => {
             Botwoon_Func_19();
@@ -1905,8 +1827,7 @@ pub unsafe extern "C" fn CallBotwoonFuncVarE(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Main() {
+pub unsafe fn Botwoon_Main() {
     Botwoon_Func_3();
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -1919,8 +1840,7 @@ pub unsafe extern "C" fn Botwoon_Main() {
     );
     Botwoon_HealthBasedPalHandling();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_1(mut k: uint16) {
+pub unsafe fn Botwoon_Func_1(mut k: uint16) {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(k as ::core::ffi::c_int);
     if *(g_rom.offset(
         (((0xb39675 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
@@ -1934,8 +1854,7 @@ pub unsafe extern "C" fn Botwoon_Func_1(mut k: uint16) {
         (*E).botwoon_var_2E = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_2() {
+pub unsafe fn Botwoon_Func_2() {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1951,8 +1870,7 @@ pub unsafe extern "C" fn Botwoon_Func_2() {
     }
     (*E).botwoon_var_2E = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_3() {
+pub unsafe fn Botwoon_Func_3() {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1968,14 +1886,12 @@ pub unsafe extern "C" fn Botwoon_Func_3() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_4() {
+pub unsafe fn Botwoon_Func_4() {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(0 as ::core::ffi::c_int);
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         | kEnemyProps_Tangible as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_5() {
+pub unsafe fn Botwoon_Func_5() {
     let mut v0: uint16 = 34 as uint16;
     loop {
         let ref mut fresh4 = *((&raw mut g_ram as *mut uint8)
@@ -1994,8 +1910,7 @@ pub unsafe extern "C" fn Botwoon_Func_5() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_HealthBasedPalHandling() {
+pub unsafe fn Botwoon_HealthBasedPalHandling() {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2039,8 +1954,7 @@ pub unsafe extern "C" fn Botwoon_HealthBasedPalHandling() {
             ((*E).botwoon_var_4F as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_6() {
+pub unsafe fn Botwoon_Func_6() {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2053,8 +1967,7 @@ pub unsafe extern "C" fn Botwoon_Func_6() {
             (0xb3989d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_7() {
+pub unsafe fn Botwoon_Func_7() {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2099,8 +2012,7 @@ pub unsafe extern "C" fn Botwoon_Func_7() {
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_8() {
+pub unsafe fn Botwoon_Func_8() {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2115,8 +2027,7 @@ pub unsafe extern "C" fn Botwoon_Func_8() {
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_9() {
+pub unsafe fn Botwoon_Func_9() {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2127,8 +2038,7 @@ pub unsafe extern "C" fn Botwoon_Func_9() {
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         & !(kEnemyProps_Tangible as ::core::ffi::c_int)) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_10(mut k: uint16) {
+pub unsafe fn Botwoon_Func_10(mut k: uint16) {
     Botwoon_Func_11(k);
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(k as ::core::ffi::c_int);
     let mut r18: uint16 = (if (*E).botwoon_var_33 as ::core::ffi::c_int != 0 {
@@ -2141,8 +2051,7 @@ pub unsafe extern "C" fn Botwoon_Func_10(mut k: uint16) {
         + 4 as ::core::ffi::c_int * (*E).botwoon_var_37 as ::core::ffi::c_int)
         as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_11(mut k: uint16) {
+pub unsafe fn Botwoon_Func_11(mut k: uint16) {
     let mut health: int16 = 0;
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(k as ::core::ffi::c_int);
     if (*E).botwoon_var_33 == 0 {
@@ -2182,8 +2091,7 @@ pub unsafe extern "C" fn Botwoon_Func_11(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_12() {
+pub unsafe fn Botwoon_Func_12() {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2210,8 +2118,7 @@ pub unsafe extern "C" fn Botwoon_Func_12() {
         Botwoon_Func_24();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_13() {
+pub unsafe fn Botwoon_Func_13() {
     let mut v3: uint16 = 0;
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -2247,8 +2154,7 @@ pub unsafe extern "C" fn Botwoon_Func_13() {
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_14() {
+pub unsafe fn Botwoon_Func_14() {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2261,8 +2167,7 @@ pub unsafe extern "C" fn Botwoon_Func_14() {
             (0xb39a5e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_15() {
+pub unsafe fn Botwoon_Func_15() {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2316,8 +2221,7 @@ pub unsafe extern "C" fn Botwoon_Func_15() {
             ((*E).base.properties as ::core::ffi::c_int | 0x500 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_16() {
+pub unsafe fn Botwoon_Func_16() {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2331,8 +2235,7 @@ pub unsafe extern "C" fn Botwoon_Func_16() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_17(mut k: uint16) {
+pub unsafe fn Botwoon_Func_17(mut k: uint16) {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0xf as uint8,
         field_1: 0x4 as uint8,
@@ -2344,8 +2247,7 @@ pub unsafe extern "C" fn Botwoon_Func_17(mut k: uint16) {
     (*E).botwoon_var_24 = 0 as uint16;
     (*E).botwoon_var_25 = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_18(mut k: uint16) {
+pub unsafe fn Botwoon_Func_18(mut k: uint16) {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(k as ::core::ffi::c_int);
     if (*E).botwoon_var_23 as ::core::ffi::c_int - 192 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -2400,8 +2302,7 @@ pub unsafe extern "C" fn Botwoon_Func_18(mut k: uint16) {
         QueueMusic_Delayed8(3 as uint16);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_19() {
+pub unsafe fn Botwoon_Func_19() {
     let mut pt: Point16U = Botwoon_Func_20(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -2420,8 +2321,7 @@ pub unsafe extern "C" fn Botwoon_Func_19() {
         (*E).botwoon_var_3C = 1 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_20(mut k: uint16) -> Point16U {
+pub unsafe fn Botwoon_Func_20(mut k: uint16) -> Point16U {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(k as ::core::ffi::c_int);
     let mut v2: ::core::ffi::c_int =
         (*E).botwoon_var_37 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -2462,8 +2362,7 @@ pub unsafe extern "C" fn Botwoon_Func_20(mut k: uint16) -> Point16U {
     }
     return Point16U { x: r18, y: r20 };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_21() {
+pub unsafe fn Botwoon_Func_21() {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2471,8 +2370,7 @@ pub unsafe extern "C" fn Botwoon_Func_21() {
     let mut pt: Point32 = ConvertAngleToXy((*E).botwoon_var_3A, (*E).botwoon_var_38);
     EnemyFunc_B691((*E).botwoon_var_3A, pt);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_22() {
+pub unsafe fn Botwoon_Func_22() {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2485,8 +2383,7 @@ pub unsafe extern "C" fn Botwoon_Func_22() {
         as *mut uint8)
         .offset(botwoon_var_B as ::core::ffi::c_int as isize) as *mut uint16) = (*E).base.y_pos;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_23() {
+pub unsafe fn Botwoon_Func_23() {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2563,8 +2460,7 @@ pub unsafe extern "C" fn Botwoon_Func_23() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_24() {
+pub unsafe fn Botwoon_Func_24() {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2572,8 +2468,7 @@ pub unsafe extern "C" fn Botwoon_Func_24() {
     (*E).botwoon_var_B = ((*E).botwoon_var_B as ::core::ffi::c_int + 4 as ::core::ffi::c_int
         & 0x3ff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_25() {
+pub unsafe fn Botwoon_Func_25() {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2633,8 +2528,7 @@ pub unsafe extern "C" fn Botwoon_Func_25() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_26(mut k: uint16) {
+pub unsafe fn Botwoon_Func_26(mut k: uint16) {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2688,8 +2582,7 @@ pub unsafe extern "C" fn Botwoon_Func_26(mut k: uint16) {
     (*E).botwoon_var_50 = (*E).base.x_pos;
     (*E).botwoon_var_51 = (*E).base.y_pos;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_27(mut k: uint16) {
+pub unsafe fn Botwoon_Func_27(mut k: uint16) {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2724,8 +2617,7 @@ pub unsafe extern "C" fn Botwoon_Func_27(mut k: uint16) {
         ((*E).botwoon_var_F as ::core::ffi::c_int | 0xb30000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_28(mut k: uint16) {
+pub unsafe fn Botwoon_Func_28(mut k: uint16) {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2755,8 +2647,7 @@ pub unsafe extern "C" fn Botwoon_Func_28(mut k: uint16) {
             (0xb39f7a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_29(mut k: uint16) {
+pub unsafe fn Botwoon_Func_29(mut k: uint16) {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2786,8 +2677,7 @@ pub unsafe extern "C" fn Botwoon_Func_29(mut k: uint16) {
     ))
     .botwoon_var_F = (0xb39f7a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_30(mut k: uint16) {
+pub unsafe fn Botwoon_Func_30(mut k: uint16) {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(k as ::core::ffi::c_int);
     let mut v2: int16 =
         ((*E).botwoon_var_21 as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as int16;
@@ -2798,8 +2688,7 @@ pub unsafe extern "C" fn Botwoon_Func_30(mut k: uint16) {
             (0xb39dc0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_31(mut k: uint16) {
+pub unsafe fn Botwoon_Func_31(mut k: uint16) {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2865,8 +2754,7 @@ pub unsafe extern "C" fn Botwoon_Func_31(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Touch() {
+pub unsafe fn Botwoon_Touch() {
     Enemy_NormalTouchAI_SkipDeathAnim_B3();
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -2877,8 +2765,7 @@ pub unsafe extern "C" fn Botwoon_Touch() {
         Botwoon_Func_4();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Shot() {
+pub unsafe fn Botwoon_Shot() {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2890,8 +2777,7 @@ pub unsafe extern "C" fn Botwoon_Shot() {
         Botwoon_Func_4();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Powerbomb() {
+pub unsafe fn Botwoon_Powerbomb() {
     Enemy_NormalPowerBombAI_SkipDeathAnim_B3();
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -2902,8 +2788,7 @@ pub unsafe extern "C" fn Botwoon_Powerbomb() {
         Botwoon_Func_4();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_32() {
+pub unsafe fn Botwoon_Func_32() {
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2924,8 +2809,7 @@ pub unsafe extern "C" fn Botwoon_Func_32() {
     }
     Botwoon_Func_33();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Botwoon_Func_33() {
+pub unsafe fn Botwoon_Func_33() {
     let mut x: uint16 = 0 as uint16;
     let mut y: uint16 = 0 as uint16;
     let mut E: *mut Enemy_Botwoon = Get_Botwoon(
@@ -2970,11 +2854,7 @@ pub unsafe extern "C" fn Botwoon_Func_33() {
     (*E).base.x_pos = ((*E).base.x_pos as ::core::ffi::c_int + x as ::core::ffi::c_int) as uint16;
     (*E).base.y_pos = ((*E).base.y_pos as ::core::ffi::c_int + y as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EscapeEtecoon_Instr_1(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn EscapeEtecoon_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     if *((&raw mut g_ram as *mut uint8).offset(0x1962 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         >= 0xce as ::core::ffi::c_int
@@ -2984,19 +2864,14 @@ pub unsafe extern "C" fn EscapeEtecoon_Instr_1(
         return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EscapeEtecoon_Instr_2(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn EscapeEtecoon_Instr_2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_EscapeEtecoon = Get_EscapeEtecoon(k as ::core::ffi::c_int);
     (*E).base.x_pos = ((*E).base.x_pos as ::core::ffi::c_int
         + *jp.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int)
         as uint16;
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EscapeEtecoon_Main() {
+pub unsafe fn EscapeEtecoon_Main() {
     let mut E: *mut Enemy_EscapeEtecoon = Get_EscapeEtecoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -3005,8 +2880,7 @@ pub unsafe extern "C" fn EscapeEtecoon_Main() {
         ((*E).een_var_F as ::core::ffi::c_int | 0xb30000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn EscapeEtecoon_E65C(mut k: uint16) {
+pub unsafe fn EscapeEtecoon_E65C(mut k: uint16) {
     let mut E: *mut Enemy_EscapeEtecoon = Get_EscapeEtecoon(k as ::core::ffi::c_int);
     AddToHiLo(
         &raw mut (*E).base.x_pos,
@@ -3014,16 +2888,14 @@ pub unsafe extern "C" fn EscapeEtecoon_E65C(mut k: uint16) {
         0x38000 as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn EscapeEtecoon_E670(mut k: uint16) {
+pub unsafe fn EscapeEtecoon_E670(mut k: uint16) {
     if CheckEventHappened(0xf as uint16) != 0 {
         (*Get_EscapeEtecoon(k as ::core::ffi::c_int))
             .base
             .current_instruction = addr_kEscapeEtecoon_Ilist_E5DA as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EscapeEtecoon_E680(mut k: uint16) {
+pub unsafe fn EscapeEtecoon_E680(mut k: uint16) {
     let mut E: *mut Enemy_EscapeEtecoon = Get_EscapeEtecoon(k as ::core::ffi::c_int);
     if Enemy_MoveRight_IgnoreSlopes(
         k,
@@ -3049,8 +2921,7 @@ pub unsafe extern "C" fn EscapeEtecoon_E680(mut k: uint16) {
         (1 as ::core::ffi::c_int as int16 as int32) << 16 as ::core::ffi::c_int,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn EscapeEtecoon_Init() {
+pub unsafe fn EscapeEtecoon_Init() {
     let mut E: *mut Enemy_EscapeEtecoon = Get_EscapeEtecoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -3105,11 +2976,7 @@ pub unsafe extern "C" fn EscapeEtecoon_Init() {
             .offset(v3 as isize);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EscapeDachora_Instr_2(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn EscapeDachora_Instr_2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     if *((&raw mut g_ram as *mut uint8).offset(0x1962 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         >= 0xce as ::core::ffi::c_int
@@ -3119,22 +2986,14 @@ pub unsafe extern "C" fn EscapeDachora_Instr_2(
         return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EscapeDachora_Instr_3(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn EscapeDachora_Instr_3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     if CheckEventHappened(0xf as uint16) != 0 {
         return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
     } else {
         return jp.offset(1 as ::core::ffi::c_int as isize);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EscapeDachora_Instr_1(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn EscapeDachora_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_EscapeDachora = Get_EscapeDachora(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -3142,11 +3001,7 @@ pub unsafe extern "C" fn EscapeDachora_Instr_1(
     (*E).base.x_pos = ((*E).base.x_pos as ::core::ffi::c_int - 6 as ::core::ffi::c_int) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EscapeDachora_Instr_4(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn EscapeDachora_Instr_4(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_EscapeDachora = Get_EscapeDachora(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -3154,8 +3009,7 @@ pub unsafe extern "C" fn EscapeDachora_Instr_4(
     (*E).base.x_pos = ((*E).base.x_pos as ::core::ffi::c_int + 6 as ::core::ffi::c_int) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EscapeDachora_Init() {
+pub unsafe fn EscapeDachora_Init() {
     let mut E: *mut Enemy_EscapeDachora = Get_EscapeDachora(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,

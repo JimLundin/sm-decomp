@@ -373,54 +373,54 @@ pub const addr_stru_82B9A0: Consts_82 = 47520;
 pub const addr_kPauseMenuMapData: Consts_82 = 38679;
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 #[inline]
-unsafe extern "C" fn swap16(mut v: uint16) -> uint16 {
+unsafe fn swap16(mut v: uint16) -> uint16 {
     return ((v as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
         | v as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint16;
 }
 #[inline]
-unsafe extern "C" fn RomPtr_81(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_81(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x810000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomPtr_82(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_82(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x820000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomPtr_8C(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_8C(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x8c0000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomPtr_92(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_92(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x920000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomPtr_93(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_93(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x930000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomPtrWithBank(mut bank: uint8, mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtrWithBank(mut bank: uint8, mut addr: uint16_t) -> *const uint8 {
     return RomPtr(
         ((bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int | addr as ::core::ffi::c_int)
             as uint32_t,
     );
 }
 #[inline]
-unsafe extern "C" fn gOamEnt(mut v: ::core::ffi::c_int) -> *mut OamEnt {
+unsafe fn gOamEnt(mut v: ::core::ffi::c_int) -> *mut OamEnt {
     return (&raw mut g_ram as *mut uint8).offset((0x370 as ::core::ffi::c_int + v) as isize)
         as *mut uint8 as *mut OamEnt;
 }
 #[inline]
-unsafe extern "C" fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
+unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
     return (&raw mut g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
         as *mut uint8 as *mut VramWriteEntry;
 }
 #[inline]
-unsafe extern "C" fn get_RoomDefHeader(mut a: uint16) -> *mut RoomDefHeader {
+unsafe fn get_RoomDefHeader(mut a: uint16) -> *mut RoomDefHeader {
     return RomPtr((0x8f0000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut RoomDefHeader;
 }
 #[inline]
-unsafe extern "C" fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
+unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
     let mut t: uint32 = ((*lo as ::core::ffi::c_int
         + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
         as uint32)
@@ -436,13 +436,11 @@ static mut kFileSelectMap_AreaIndexes: [uint16; 6] = [
     4 as ::core::ffi::c_int as uint16,
     2 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn SoftReset() {
+pub unsafe fn SoftReset() {
     *((&raw mut g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize) as *mut uint16) =
         0xffff as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SaveToSram(mut a: uint16) {
+pub unsafe fn SaveToSram(mut a: uint16) {
     let mut v7: uint16 = 0;
     let mut v11: uint16 = 0;
     let mut r20: uint16 = 0 as uint16;
@@ -524,8 +522,7 @@ pub unsafe extern "C" fn SaveToSram(mut a: uint16) {
         as *mut uint8 as *mut uint16) = v11;
     RtlWriteSram();
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadFromSram(mut a: uint16) -> uint8 {
+pub unsafe fn LoadFromSram(mut a: uint16) -> uint8 {
     let mut r20: uint16 = 0 as uint16;
     let mut r18: uint16 =
         (2 as ::core::ffi::c_int * (a as ::core::ffi::c_int & 3 as ::core::ffi::c_int)) as uint16;
@@ -624,8 +621,7 @@ pub unsafe extern "C" fn LoadFromSram(mut a: uint16) -> uint8 {
         return 1 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn UnpackMapFromSave() {
+pub unsafe fn UnpackMapFromSave() {
     let mut i: ::core::ffi::c_int = 1792 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         *((&raw mut g_ram as *mut uint8).offset(0xcd52 as ::core::ffi::c_int as isize)
@@ -679,8 +675,7 @@ pub unsafe extern "C" fn UnpackMapFromSave() {
         i_0 += 1;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PackMapToSave() {
+pub unsafe fn PackMapToSave() {
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i < 6 as ::core::ffi::c_int {
         let mut n: ::core::ffi::c_int = *(g_rom.offset(
@@ -727,8 +722,7 @@ pub unsafe extern "C" fn PackMapToSave() {
         i += 1;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawSpritemap(
+pub unsafe fn DrawSpritemap(
     mut db: uint8,
     mut j: uint16,
     mut x_r20: uint16,
@@ -786,8 +780,7 @@ pub unsafe extern "C" fn DrawSpritemap(
     *((&raw mut g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize) as *mut uint16) =
         idx as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawSpritemapOffScreen(
+pub unsafe fn DrawSpritemapOffScreen(
     mut j: uint16,
     mut x_r20: uint16,
     mut y_r18: uint16,
@@ -844,13 +837,7 @@ pub unsafe extern "C" fn DrawSpritemapOffScreen(
     *((&raw mut g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize) as *mut uint16) =
         idx as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawMenuSpritemap(
-    mut a: uint16,
-    mut k: uint16,
-    mut j: uint16,
-    mut chr_r3: uint16,
-) {
+pub unsafe fn DrawMenuSpritemap(mut a: uint16, mut k: uint16, mut j: uint16, mut chr_r3: uint16) {
     let mut pp: *const uint8 = RomPtr_82(
         *(g_rom.offset(
             (((0x82c569 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -896,8 +883,7 @@ pub unsafe extern "C" fn DrawMenuSpritemap(
     *((&raw mut g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize) as *mut uint16) =
         idx as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawSamusSpritemap(mut a: uint16, mut x_pos: uint16, mut y_pos: uint16) {
+pub unsafe fn DrawSamusSpritemap(mut a: uint16, mut x_pos: uint16, mut y_pos: uint16) {
     if *(g_rom.offset(
         (((0x92808d as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0x92808d as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -951,12 +937,7 @@ pub unsafe extern "C" fn DrawSamusSpritemap(mut a: uint16, mut x_pos: uint16, mu
     *((&raw mut g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize) as *mut uint16) =
         idx as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawBeamGrappleSpritemap(
-    mut a: uint16,
-    mut x_r20: uint16,
-    mut y_r18: uint16,
-) {
+pub unsafe fn DrawBeamGrappleSpritemap(mut a: uint16, mut x_r20: uint16, mut y_r18: uint16) {
     DrawGrappleOrProjectileSpritemap(
         RomPtr_93(
             *(g_rom.offset(
@@ -971,12 +952,7 @@ pub unsafe extern "C" fn DrawBeamGrappleSpritemap(
         y_r18,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawProjectileSpritemap(
-    mut k: uint16,
-    mut x_r20: uint16,
-    mut y_r18: uint16,
-) {
+pub unsafe fn DrawProjectileSpritemap(mut k: uint16, mut x_r20: uint16, mut y_r18: uint16) {
     DrawGrappleOrProjectileSpritemap(
         RomPtr_93(
             *((&raw mut g_ram as *mut uint8).offset(0xcb8 as ::core::ffi::c_int as isize)
@@ -988,8 +964,7 @@ pub unsafe extern "C" fn DrawProjectileSpritemap(
         y_r18,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawGrappleOrProjectileSpritemap(
+pub unsafe fn DrawGrappleOrProjectileSpritemap(
     mut pp: *const uint8,
     mut x_r20: uint16,
     mut y_r18: uint16,
@@ -1028,8 +1003,7 @@ pub unsafe extern "C" fn DrawGrappleOrProjectileSpritemap(
     *((&raw mut g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize) as *mut uint16) =
         idx as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawSpritemapWithBaseTile(
+pub unsafe fn DrawSpritemapWithBaseTile(
     mut db: uint8,
     mut j: uint16,
     mut r20_x: uint16,
@@ -1079,8 +1053,7 @@ pub unsafe extern "C" fn DrawSpritemapWithBaseTile(
     *((&raw mut g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize) as *mut uint16) =
         idx as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawSpritemapWithBaseTile2(
+pub unsafe fn DrawSpritemapWithBaseTile2(
     mut db: uint8,
     mut j: uint16,
     mut r20_x: uint16,
@@ -1135,8 +1108,7 @@ pub unsafe extern "C" fn DrawSpritemapWithBaseTile2(
     *((&raw mut g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize) as *mut uint16) =
         idx as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawSpritemapWithBaseTileOffscreen(
+pub unsafe fn DrawSpritemapWithBaseTileOffscreen(
     mut db: uint8,
     mut j: uint16,
     mut r20_x: uint16,
@@ -1191,8 +1163,7 @@ pub unsafe extern "C" fn DrawSpritemapWithBaseTileOffscreen(
     *((&raw mut g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize) as *mut uint16) =
         idx as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawEprojSpritemapWithBaseTile(
+pub unsafe fn DrawEprojSpritemapWithBaseTile(
     mut db: uint8,
     mut j: uint16,
     mut x_r20: uint16,
@@ -1247,8 +1218,7 @@ pub unsafe extern "C" fn DrawEprojSpritemapWithBaseTile(
     *((&raw mut g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize) as *mut uint16) =
         idx as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawEprojSpritemapWithBaseTileOffscreen(
+pub unsafe fn DrawEprojSpritemapWithBaseTileOffscreen(
     mut db: uint8,
     mut j: uint16,
     mut x_r20: uint16,
@@ -1303,8 +1273,7 @@ pub unsafe extern "C" fn DrawEprojSpritemapWithBaseTileOffscreen(
     *((&raw mut g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize) as *mut uint16) =
         idx as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameOverMenu_0_FadeOutConfigGfx() {
+pub unsafe fn GameOverMenu_0_FadeOutConfigGfx() {
     HandleFadeOut();
     if *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
@@ -1371,8 +1340,7 @@ pub unsafe extern "C" fn GameOverMenu_0_FadeOutConfigGfx() {
         *fresh89 = (*fresh89).wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameOverMenu_24_FadeIn() {
+pub unsafe fn GameOverMenu_24_FadeIn() {
     HandleFadeIn();
     if *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
@@ -1385,8 +1353,7 @@ pub unsafe extern "C" fn GameOverMenu_24_FadeIn() {
         *fresh90 = (*fresh90).wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MapVramForMenu() {
+pub unsafe fn MapVramForMenu() {
     *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 0 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x52 as ::core::ffi::c_int as isize) = 3 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize) = 81 as uint8;
@@ -1396,8 +1363,7 @@ pub unsafe extern "C" fn MapVramForMenu() {
     *(&raw mut g_ram as *mut uint8).offset(0x5e as ::core::ffi::c_int as isize) = 4 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 19 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadInitialMenuTiles() {
+pub unsafe fn LoadInitialMenuTiles() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
@@ -1459,8 +1425,7 @@ pub unsafe extern "C" fn LoadInitialMenuTiles() {
     SetupDmaTransfer(&raw const unk_818E51 as *const ::core::ffi::c_void);
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadMenuPalettes() {
+pub unsafe fn LoadMenuPalettes() {
     let mut v0: uint16 = 0 as uint16;
     loop {
         let mut v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -1492,8 +1457,7 @@ pub unsafe extern "C" fn LoadMenuPalettes() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameOverMenu_3_Main() {
+pub unsafe fn GameOverMenu_3_Main() {
     let mut v0: int16 = 0;
     let mut v1: int16 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize) as *mut uint16)
@@ -1554,8 +1518,7 @@ pub unsafe extern "C" fn GameOverMenu_3_Main() {
         .offset(0x590 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh93 = (*fresh93 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn RestorePalettesAndIoAfterDebugGameover() {
+pub unsafe fn RestorePalettesAndIoAfterDebugGameover() {
     let mut v0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     loop {
         *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
@@ -1589,8 +1552,7 @@ pub unsafe extern "C" fn RestorePalettesAndIoAfterDebugGameover() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameOverMenu_5_Continue() {
+pub unsafe fn GameOverMenu_5_Continue() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x40 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
@@ -1614,24 +1576,22 @@ pub unsafe extern "C" fn GameOverMenu_5_Continue() {
 }
 static mut kGameOverMenuFuncs: [Option<Func_V>; 8] = unsafe {
     [
-        Some(GameOverMenu_0_FadeOutConfigGfx as unsafe extern "C" fn() -> ()),
-        Some(GameOverMenu_1_Init as unsafe extern "C" fn() -> ()),
-        Some(GameOverMenu_2_PlayMusic as unsafe extern "C" fn() -> ()),
-        Some(GameOverMenu_3_FadeIn as unsafe extern "C" fn() -> ()),
-        Some(GameOverMenu_4_Main as unsafe extern "C" fn() -> ()),
-        Some(GameOverMenu_5_FadeOutToGameMap as unsafe extern "C" fn() -> ()),
-        Some(GameOverMenu_6_LoadGameMapView as unsafe extern "C" fn() -> ()),
-        Some(GameOverMenu_7_FadeOutToSoftReset as unsafe extern "C" fn() -> ()),
+        Some(GameOverMenu_0_FadeOutConfigGfx as unsafe fn() -> ()),
+        Some(GameOverMenu_1_Init as unsafe fn() -> ()),
+        Some(GameOverMenu_2_PlayMusic as unsafe fn() -> ()),
+        Some(GameOverMenu_3_FadeIn as unsafe fn() -> ()),
+        Some(GameOverMenu_4_Main as unsafe fn() -> ()),
+        Some(GameOverMenu_5_FadeOutToGameMap as unsafe fn() -> ()),
+        Some(GameOverMenu_6_LoadGameMapView as unsafe fn() -> ()),
+        Some(GameOverMenu_7_FadeOutToSoftReset as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn GameOverMenu() {
+pub unsafe fn GameOverMenu() {
     kGameOverMenuFuncs[*((&raw mut g_ram as *mut uint8)
             .offset(0x727 as ::core::ffi::c_int as isize) as *mut uint16) as usize]
         .expect("non-null function pointer")();
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameOverMenu_3_FadeIn() {
+pub unsafe fn GameOverMenu_3_FadeIn() {
     HandleGameOverBabyMetroid();
     DrawMenuSelectionMissile();
     HandleFadeIn();
@@ -1646,8 +1606,7 @@ pub unsafe extern "C" fn GameOverMenu_3_FadeIn() {
         *fresh86 = (*fresh86).wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameOverMenu_5_FadeOutToGameMap() {
+pub unsafe fn GameOverMenu_5_FadeOutToGameMap() {
     HandleGameOverBabyMetroid();
     DrawMenuSelectionMissile();
     HandleFadeOut();
@@ -1662,8 +1621,7 @@ pub unsafe extern "C" fn GameOverMenu_5_FadeOutToGameMap() {
         *fresh83 = (*fresh83).wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameOverMenu_7_FadeOutToSoftReset() {
+pub unsafe fn GameOverMenu_7_FadeOutToSoftReset() {
     DrawMenuSelectionMissile();
     HandleGameOverBabyMetroid();
     HandleFadeOut();
@@ -1675,8 +1633,7 @@ pub unsafe extern "C" fn GameOverMenu_7_FadeOutToSoftReset() {
         SoftReset();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameOverMenu_6_LoadGameMapView() {
+pub unsafe fn GameOverMenu_6_LoadGameMapView() {
     DisableHdmaObjects();
     WaitUntilEndOfVblankAndClearHdma();
     *((&raw mut g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -1684,8 +1641,7 @@ pub unsafe extern "C" fn GameOverMenu_6_LoadGameMapView() {
     *((&raw mut g_ram as *mut uint8).offset(0x727 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameOverMenu_4_Main() {
+pub unsafe fn GameOverMenu_4_Main() {
     HandleGameOverBabyMetroid();
     DrawMenuSelectionMissile();
     if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize) as *mut uint16)
@@ -1756,8 +1712,7 @@ pub unsafe extern "C" fn GameOverMenu_4_Main() {
         as *mut uint16)
         .offset(10 as ::core::ffi::c_int as isize) = v0;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameOverMenu_1_Init() {
+pub unsafe fn GameOverMenu_1_Init() {
     *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 17 as uint8;
     *(&raw mut g_ram as *mut uint8)
         .offset(0x74 as ::core::ffi::c_int as isize)
@@ -1886,8 +1841,7 @@ pub unsafe extern "C" fn GameOverMenu_1_Init() {
         as *mut uint16)
         .offset(10 as ::core::ffi::c_int as isize) = 160 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameOverMenu_2_PlayMusic() {
+pub unsafe fn GameOverMenu_2_PlayMusic() {
     if HasQueuedMusic() == 0 {
         let ref mut fresh87 = *((&raw mut g_ram as *mut uint8)
             .offset(0x727 as ::core::ffi::c_int as isize)
@@ -1898,51 +1852,49 @@ pub unsafe extern "C" fn GameOverMenu_2_PlayMusic() {
 }
 static mut kFileSelectMenuFuncs: [Option<Func_V>; 34] = unsafe {
     [
-        Some(FileSelectMenu_0_FadeOutConfigGfx as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_1_LoadFileSelectMenuBG2 as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_2_InitMain as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_3_FadeInToMain as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_4_Main as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_5_FadeOutFromMain as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_6_FileCopyInit as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_7_FadeInFromMain as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_8 as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_9_InitializeSelectDest as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_10_FileCopySelectDest as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_11_InitializeConfirm as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_12_FileCopyConfirm as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_13_FileCopyDoIt as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_14_CopyCompleted as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_15_FadeOutToMain as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_16 as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_17_FadeInToMain as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_18 as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_5_FadeOutFromMain as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_20_FileClearInit as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_7_FadeInFromMain as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_22_FileClearSelectSlot as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_23_FileClearInitConfirm as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_24_FileClearConfirm as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_25_FileClearDoClear as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_26_ClearCompleted as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_15_FadeOutToMain as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_16 as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_17_FadeInToMain as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_30 as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_31_TurnSamusHelmet as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_32_FadeOutToOptions as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMenu_33_FadeOutToTitle as unsafe extern "C" fn() -> ()),
+        Some(FileSelectMenu_0_FadeOutConfigGfx as unsafe fn() -> ()),
+        Some(FileSelectMenu_1_LoadFileSelectMenuBG2 as unsafe fn() -> ()),
+        Some(FileSelectMenu_2_InitMain as unsafe fn() -> ()),
+        Some(FileSelectMenu_3_FadeInToMain as unsafe fn() -> ()),
+        Some(FileSelectMenu_4_Main as unsafe fn() -> ()),
+        Some(FileSelectMenu_5_FadeOutFromMain as unsafe fn() -> ()),
+        Some(FileSelectMenu_6_FileCopyInit as unsafe fn() -> ()),
+        Some(FileSelectMenu_7_FadeInFromMain as unsafe fn() -> ()),
+        Some(FileSelectMenu_8 as unsafe fn() -> ()),
+        Some(FileSelectMenu_9_InitializeSelectDest as unsafe fn() -> ()),
+        Some(FileSelectMenu_10_FileCopySelectDest as unsafe fn() -> ()),
+        Some(FileSelectMenu_11_InitializeConfirm as unsafe fn() -> ()),
+        Some(FileSelectMenu_12_FileCopyConfirm as unsafe fn() -> ()),
+        Some(FileSelectMenu_13_FileCopyDoIt as unsafe fn() -> ()),
+        Some(FileSelectMenu_14_CopyCompleted as unsafe fn() -> ()),
+        Some(FileSelectMenu_15_FadeOutToMain as unsafe fn() -> ()),
+        Some(FileSelectMenu_16 as unsafe fn() -> ()),
+        Some(FileSelectMenu_17_FadeInToMain as unsafe fn() -> ()),
+        Some(FileSelectMenu_18 as unsafe fn() -> ()),
+        Some(FileSelectMenu_5_FadeOutFromMain as unsafe fn() -> ()),
+        Some(FileSelectMenu_20_FileClearInit as unsafe fn() -> ()),
+        Some(FileSelectMenu_7_FadeInFromMain as unsafe fn() -> ()),
+        Some(FileSelectMenu_22_FileClearSelectSlot as unsafe fn() -> ()),
+        Some(FileSelectMenu_23_FileClearInitConfirm as unsafe fn() -> ()),
+        Some(FileSelectMenu_24_FileClearConfirm as unsafe fn() -> ()),
+        Some(FileSelectMenu_25_FileClearDoClear as unsafe fn() -> ()),
+        Some(FileSelectMenu_26_ClearCompleted as unsafe fn() -> ()),
+        Some(FileSelectMenu_15_FadeOutToMain as unsafe fn() -> ()),
+        Some(FileSelectMenu_16 as unsafe fn() -> ()),
+        Some(FileSelectMenu_17_FadeInToMain as unsafe fn() -> ()),
+        Some(FileSelectMenu_30 as unsafe fn() -> ()),
+        Some(FileSelectMenu_31_TurnSamusHelmet as unsafe fn() -> ()),
+        Some(FileSelectMenu_32_FadeOutToOptions as unsafe fn() -> ()),
+        Some(FileSelectMenu_33_FadeOutToTitle as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu() {
+pub unsafe fn FileSelectMenu() {
     kFileSelectMenuFuncs[*((&raw mut g_ram as *mut uint8)
         .offset(0x727 as ::core::ffi::c_int as isize) as *mut uint16)
         as usize]
         .expect("non-null function pointer")();
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_0_FadeOutConfigGfx() {
+pub unsafe fn FileSelectMenu_0_FadeOutConfigGfx() {
     HandleFadeOut();
     if *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
@@ -1974,8 +1926,7 @@ pub unsafe extern "C" fn FileSelectMenu_0_FadeOutConfigGfx() {
         0 as uint16;
     LoadFileSelectPalettes();
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadFileSelectPalettes() {
+pub unsafe fn LoadFileSelectPalettes() {
     let mut v0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     loop {
         let mut v1: ::core::ffi::c_int = v0 >> 1 as ::core::ffi::c_int;
@@ -2006,8 +1957,7 @@ pub unsafe extern "C" fn LoadFileSelectPalettes() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_32_FadeOutToOptions() {
+pub unsafe fn FileSelectMenu_32_FadeOutToOptions() {
     DrawMenuSelectionMissile();
     DrawBorderAroundSamusData();
     DrawFileSelectSamusHelmets();
@@ -2035,8 +1985,7 @@ pub unsafe extern "C" fn FileSelectMenu_32_FadeOutToOptions() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_33_FadeOutToTitle() {
+pub unsafe fn FileSelectMenu_33_FadeOutToTitle() {
     DrawBorderAroundSamusData();
     DrawFileSelectSamusHelmets();
     HandleFadeOut();
@@ -2048,13 +1997,11 @@ pub unsafe extern "C" fn FileSelectMenu_33_FadeOutToTitle() {
         SoftReset();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_5_FadeOutFromMain() {
+pub unsafe fn FileSelectMenu_5_FadeOutFromMain() {
     DrawMenuSelectionMissile();
     FileSelectMenu_15_FadeOutToMain();
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_15_FadeOutToMain() {
+pub unsafe fn FileSelectMenu_15_FadeOutToMain() {
     HandleFadeOut();
     *(&raw mut g_ram as *mut uint8).offset(0x57 as ::core::ffi::c_int as isize) =
         (*(&raw mut g_ram as *mut uint8).offset(0x57 as ::core::ffi::c_int as isize)
@@ -2091,8 +2038,7 @@ static mut kMenuSelectionMissileXY: [uint16; 12] = [
     0xd3 as ::core::ffi::c_int as uint16,
     0xe as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_17_FadeInToMain() {
+pub unsafe fn FileSelectMenu_17_FadeInToMain() {
     let mut v0: ::core::ffi::c_int = (4 as ::core::ffi::c_int
         * *((&raw mut g_ram as *mut uint8).offset(0x952 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int) as uint16
@@ -2107,8 +2053,7 @@ pub unsafe extern "C" fn FileSelectMenu_17_FadeInToMain() {
         kMenuSelectionMissileXY[(v0 + 1 as ::core::ffi::c_int) as usize];
     FileSelectMenu_7_FadeInFromMain();
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_7_FadeInFromMain() {
+pub unsafe fn FileSelectMenu_7_FadeInFromMain() {
     DrawMenuSelectionMissile();
     HandleFadeIn();
     *(&raw mut g_ram as *mut uint8).offset(0x57 as ::core::ffi::c_int as isize) =
@@ -2131,15 +2076,13 @@ pub unsafe extern "C" fn FileSelectMenu_7_FadeInFromMain() {
         *fresh46 = (*fresh46).wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_6_FileCopyInit() {
+pub unsafe fn FileSelectMenu_6_FileCopyInit() {
     let ref mut fresh76 = *((&raw mut g_ram as *mut uint8)
         .offset(0x727 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh76 = (*fresh76).wrapping_add(1);
     FileSelectMenu_Func1();
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_Func1() {
+pub unsafe fn FileSelectMenu_Func1() {
     ClearMenuTilemap();
     (*((&raw mut g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
         as *mut EnemyData)
@@ -2164,12 +2107,10 @@ pub unsafe extern "C" fn FileSelectMenu_Func1() {
         as *mut uint16)
         .offset(17 as ::core::ffi::c_int as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_819591() {
+pub unsafe fn sub_819591() {
     SetInitialFileCopyMenuSelection();
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetInitialFileCopyMenuSelection() {
+pub unsafe fn SetInitialFileCopyMenuSelection() {
     let mut v0: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0x954 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int;
@@ -2187,8 +2128,7 @@ pub unsafe extern "C" fn SetInitialFileCopyMenuSelection() {
         as *mut uint16)
         .offset(15 as ::core::ffi::c_int as isize) = v1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearMenuTilemap() {
+pub unsafe fn ClearMenuTilemap() {
     let mut i: ::core::ffi::c_int = 2046 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         *(((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
@@ -2199,15 +2139,13 @@ pub unsafe extern "C" fn ClearMenuTilemap() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadMenuExitTilemap() {
+pub unsafe fn LoadMenuExitTilemap() {
     LoadMenuTilemap(
         0x688 as uint16,
         addr_kMenuTilemap_Exit as ::core::ffi::c_int as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawFileCopySaveFileInfo() {
+pub unsafe fn DrawFileCopySaveFileInfo() {
     LoadFromSram_(0 as uint16);
     (*((&raw mut g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
         as *mut EnemyData)
@@ -2258,8 +2196,7 @@ pub unsafe extern "C" fn DrawFileCopySaveFileInfo() {
     DrawFileCopySaveSlotCInfo();
     QueueTransferOfMenuTilemapToVramBG1();
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawFileCopySaveSlotAInfo() {
+pub unsafe fn DrawFileCopySaveSlotAInfo() {
     DrawFileSelectionHealth(
         (*((&raw mut g_ram as *mut uint8).offset(0x954 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -2283,8 +2220,7 @@ pub unsafe extern "C" fn DrawFileCopySaveSlotAInfo() {
         addr_kMenuTilemap_SamusA as ::core::ffi::c_int as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawFileCopySaveSlotBInfo() {
+pub unsafe fn DrawFileCopySaveSlotBInfo() {
     DrawFileSelectionHealth(
         (!(*((&raw mut g_ram as *mut uint8).offset(0x954 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int)
@@ -2306,8 +2242,7 @@ pub unsafe extern "C" fn DrawFileCopySaveSlotBInfo() {
         addr_kMenuTilemap_SamusB as ::core::ffi::c_int as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawFileCopySaveSlotCInfo() {
+pub unsafe fn DrawFileCopySaveSlotCInfo() {
     DrawFileSelectionHealth(
         (!(*((&raw mut g_ram as *mut uint8).offset(0x954 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int)
@@ -2329,8 +2264,7 @@ pub unsafe extern "C" fn DrawFileCopySaveSlotCInfo() {
         addr_kMenuTilemap_SamusC as ::core::ffi::c_int as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueTransferOfMenuTilemapToVramBG1() {
+pub unsafe fn QueueTransferOfMenuTilemapToVramBG1() {
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v1: *mut VramWriteEntry = gVramWriteEntry(
@@ -2357,8 +2291,7 @@ static mut kBitShl: [uint8; 3] = [
     2 as ::core::ffi::c_int as uint8,
     4 as ::core::ffi::c_int as uint8,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_8() {
+pub unsafe fn FileSelectMenu_8() {
     let mut v0: uint8 = 0;
     DrawBorderAroundDataCopyMode();
     DrawMenuSelectionMissile();
@@ -2473,8 +2406,7 @@ pub unsafe extern "C" fn FileSelectMenu_8() {
         SetFileCopyMenuSelectionMissilePosition();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetFileCopyMenuSelectionMissilePosition() {
+pub unsafe fn SetFileCopyMenuSelectionMissilePosition() {
     static mut kFileCopyMissileY: [uint16; 4] = [
         72 as ::core::ffi::c_int as uint16,
         104 as ::core::ffi::c_int as uint16,
@@ -2492,8 +2424,7 @@ pub unsafe extern "C" fn SetFileCopyMenuSelectionMissilePosition() {
         as *mut uint16)
         .offset(5 as ::core::ffi::c_int as isize) = 22 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_9_InitializeSelectDest() {
+pub unsafe fn FileSelectMenu_9_InitializeSelectDest() {
     DrawBorderAroundDataCopyMode();
     DrawFileCopySelectDestinationSaveFileInfo();
     let ref mut fresh72 = *((&raw mut g_ram as *mut uint8)
@@ -2516,8 +2447,7 @@ pub unsafe extern "C" fn FileSelectMenu_9_InitializeSelectDest() {
         .offset(15 as ::core::ffi::c_int as isize) = v0;
     SetFileCopyMenuSelectionMissilePosition();
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawFileCopySelectDestinationSaveFileInfo() {
+pub unsafe fn DrawFileCopySelectDestinationSaveFileInfo() {
     ClearMenuTilemap();
     (*((&raw mut g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
         as *mut EnemyData)
@@ -2587,8 +2517,7 @@ pub unsafe extern "C" fn DrawFileCopySelectDestinationSaveFileInfo() {
     DrawFileCopySaveSlotCInfo();
     QueueTransferOfMenuTilemapToVramBG1();
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_10_FileCopySelectDest() {
+pub unsafe fn FileSelectMenu_10_FileCopySelectDest() {
     let mut current_block: u64;
     static mut kFileCopySelectDest_MissileY: [uint16; 4] = [
         72 as ::core::ffi::c_int as uint16,
@@ -2732,8 +2661,7 @@ pub unsafe extern "C" fn FileSelectMenu_10_FileCopySelectDest() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_11_InitializeConfirm() {
+pub unsafe fn FileSelectMenu_11_InitializeConfirm() {
     DrawBorderAroundDataCopyMode();
     (*((&raw mut g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
         as *mut EnemyData)
@@ -2767,8 +2695,7 @@ pub unsafe extern "C" fn FileSelectMenu_11_InitializeConfirm() {
     *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
         as *mut uint16) = 8 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawFileCopyClearConfirmation() {
+pub unsafe fn DrawFileCopyClearConfirmation() {
     (*((&raw mut g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
         as *mut EnemyData)
         .offset(0 as ::core::ffi::c_int as isize))
@@ -2810,8 +2737,7 @@ pub unsafe extern "C" fn DrawFileCopyClearConfirmation() {
     );
     DrawFileCopyConfirmationSaveFileInfo();
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawFileCopyConfirmationSaveFileInfo() {
+pub unsafe fn DrawFileCopyConfirmationSaveFileInfo() {
     LoadFromSram_(0 as uint16);
     let mut v0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
@@ -2868,8 +2794,7 @@ pub unsafe extern "C" fn DrawFileCopyConfirmationSaveFileInfo() {
     DrawFileCopySaveSlotCInfo();
     QueueTransferOfMenuTilemapToVramBG1();
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_12_FileCopyConfirm() {
+pub unsafe fn FileSelectMenu_12_FileCopyConfirm() {
     DrawBorderAroundDataCopyMode();
     DrawMenuSelectionMissile();
     HandleFileCopyArrowPalette();
@@ -2944,8 +2869,7 @@ pub unsafe extern "C" fn FileSelectMenu_12_FileCopyConfirm() {
         as *mut uint16)
         .offset(5 as ::core::ffi::c_int as isize) = 94 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleFileCopyArrowPalette() {
+pub unsafe fn HandleFileCopyArrowPalette() {
     if *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
         as *mut uint16)
         != 0
@@ -2989,8 +2913,7 @@ pub unsafe extern "C" fn HandleFileCopyArrowPalette() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_13_FileCopyDoIt() {
+pub unsafe fn FileSelectMenu_13_FileCopyDoIt() {
     static mut kBitShl_16bit: [uint16; 3] = [
         1 as ::core::ffi::c_int as uint16,
         2 as ::core::ffi::c_int as uint16,
@@ -3115,8 +3038,7 @@ pub unsafe extern "C" fn FileSelectMenu_13_FileCopyDoIt() {
     DrawFileCopyConfirmationSaveFileInfo();
     RtlWriteSram();
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_14_CopyCompleted() {
+pub unsafe fn FileSelectMenu_14_CopyCompleted() {
     DrawBorderAroundDataCopyMode();
     if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
@@ -3145,22 +3067,19 @@ pub unsafe extern "C" fn FileSelectMenu_14_CopyCompleted() {
             as *mut uint16) = slot as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_18() {
+pub unsafe fn FileSelectMenu_18() {
     let ref mut fresh59 = *((&raw mut g_ram as *mut uint8)
         .offset(0x727 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh59 = (*fresh59 as ::core::ffi::c_int - 14 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_20_FileClearInit() {
+pub unsafe fn FileSelectMenu_20_FileClearInit() {
     DrawBorderAroundDataClearMode();
     let ref mut fresh58 = *((&raw mut g_ram as *mut uint8)
         .offset(0x727 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh58 = (*fresh58).wrapping_add(1);
     InitFileSelectMenuFileClear();
 }
-#[no_mangle]
-pub unsafe extern "C" fn InitFileSelectMenuFileClear() {
+pub unsafe fn InitFileSelectMenuFileClear() {
     ClearMenuTilemap();
     (*((&raw mut g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
         as *mut EnemyData)
@@ -3182,8 +3101,7 @@ pub unsafe extern "C" fn InitFileSelectMenuFileClear() {
     SetInitialFileCopyMenuSelection();
     SetFileClearMenuMissilePos();
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_22_FileClearSelectSlot() {
+pub unsafe fn FileSelectMenu_22_FileClearSelectSlot() {
     static mut kBitShl_: [uint8; 3] = [
         1 as ::core::ffi::c_int as uint8,
         2 as ::core::ffi::c_int as uint8,
@@ -3311,8 +3229,7 @@ pub unsafe extern "C" fn FileSelectMenu_22_FileClearSelectSlot() {
         .offset(0x727 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh57 = (*fresh57 as ::core::ffi::c_int + 5 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetFileClearMenuMissilePos() {
+pub unsafe fn SetFileClearMenuMissilePos() {
     static mut kFileClear_MissileY: [uint16; 4] = [
         72 as ::core::ffi::c_int as uint16,
         104 as ::core::ffi::c_int as uint16,
@@ -3330,8 +3247,7 @@ pub unsafe extern "C" fn SetFileClearMenuMissilePos() {
         as *mut uint16)
         .offset(5 as ::core::ffi::c_int as isize) = 22 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_23_FileClearInitConfirm() {
+pub unsafe fn FileSelectMenu_23_FileClearInitConfirm() {
     DrawBorderAroundDataClearMode();
     (*((&raw mut g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
         as *mut EnemyData)
@@ -3359,8 +3275,7 @@ pub unsafe extern "C" fn FileSelectMenu_23_FileClearInitConfirm() {
         as *mut uint16)
         .offset(15 as ::core::ffi::c_int as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_24_FileClearConfirm() {
+pub unsafe fn FileSelectMenu_24_FileClearConfirm() {
     let mut current_block: u64;
     let mut v0: uint16 = 0;
     DrawBorderAroundDataClearMode();
@@ -3439,8 +3354,7 @@ pub unsafe extern "C" fn FileSelectMenu_24_FileClearConfirm() {
         as *mut uint16)
         .offset(5 as ::core::ffi::c_int as isize) = 94 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_25_FileClearDoClear() {
+pub unsafe fn FileSelectMenu_25_FileClearDoClear() {
     static mut kBitShl_Not: [uint16; 3] = [
         0xfffe as ::core::ffi::c_int as uint16,
         0xfffd as ::core::ffi::c_int as uint16,
@@ -3526,8 +3440,7 @@ pub unsafe extern "C" fn FileSelectMenu_25_FileClearDoClear() {
     DrawFileCopyConfirmationSaveFileInfo();
     RtlWriteSram();
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_26_ClearCompleted() {
+pub unsafe fn FileSelectMenu_26_ClearCompleted() {
     DrawBorderAroundDataClearMode();
     if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
@@ -3564,15 +3477,13 @@ pub unsafe extern "C" fn FileSelectMenu_26_ClearCompleted() {
         return;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_30() {
+pub unsafe fn FileSelectMenu_30() {
     DrawBorderAroundSamusData();
     let ref mut fresh45 = *((&raw mut g_ram as *mut uint8)
         .offset(0x727 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh45 = (*fresh45 as ::core::ffi::c_int - 26 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_31_TurnSamusHelmet() {
+pub unsafe fn FileSelectMenu_31_TurnSamusHelmet() {
     DrawMenuSelectionMissile();
     DrawBorderAroundSamusData();
     DrawFileSelectSlotSamusHelmet(4 as uint16);
@@ -3610,8 +3521,7 @@ pub unsafe extern "C" fn FileSelectMenu_31_TurnSamusHelmet() {
         *fresh44 = (*fresh44).wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawFileSelectSamusHelmets() {
+pub unsafe fn DrawFileSelectSamusHelmets() {
     *((&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
     DrawFileSelectSlotSamusHelmet(4 as uint16);
@@ -3622,8 +3532,7 @@ pub unsafe extern "C" fn DrawFileSelectSamusHelmets() {
         as *mut uint16) = 0 as uint16;
     DrawFileSelectSlotSamusHelmet(8 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawFileSelectSlotSamusHelmet(mut k: uint16) {
+pub unsafe fn DrawFileSelectSlotSamusHelmet(mut k: uint16) {
     let mut v0: uint16 = k;
     let mut v1: int16 = 0;
     v1 = *(((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
@@ -3691,40 +3600,38 @@ pub unsafe extern "C" fn DrawFileSelectSlotSamusHelmet(mut k: uint16) {
 }
 static mut kFileSelectMapFuncs: [Option<Func_V>; 23] = unsafe {
     [
-        Some(FileSelectMap_0 as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMap_1 as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMap_2_LoadAreaSelectForegroundTilemap as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMap_3_LoadAreaSelectBackgroundTilemap as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMap_4_SetupExpandingSquareTransition as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMap_5_ExpandingSquare as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMap_6_AreaSelectMap as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMap_7_PrepExpandSquareTransToRoomMap as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMap_8_ExpandSquareTransToRoomSelectMap as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMap_9_InitRoomSelectMap as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMap_10_RoomSelectMap as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMap_11 as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMap_11 as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMap_13 as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMap_14 as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMap_15_ClearTileMap as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMap_16_LoadPalettes as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMap_2_LoadAreaSelectForegroundTilemap as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMap_18 as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMap_4_SetupExpandingSquareTransition as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMap_20_SetupExpandingSquare as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMap_21_MoveExpandingSquare as unsafe extern "C" fn() -> ()),
-        Some(FileSelectMap_22 as unsafe extern "C" fn() -> ()),
+        Some(FileSelectMap_0 as unsafe fn() -> ()),
+        Some(FileSelectMap_1 as unsafe fn() -> ()),
+        Some(FileSelectMap_2_LoadAreaSelectForegroundTilemap as unsafe fn() -> ()),
+        Some(FileSelectMap_3_LoadAreaSelectBackgroundTilemap as unsafe fn() -> ()),
+        Some(FileSelectMap_4_SetupExpandingSquareTransition as unsafe fn() -> ()),
+        Some(FileSelectMap_5_ExpandingSquare as unsafe fn() -> ()),
+        Some(FileSelectMap_6_AreaSelectMap as unsafe fn() -> ()),
+        Some(FileSelectMap_7_PrepExpandSquareTransToRoomMap as unsafe fn() -> ()),
+        Some(FileSelectMap_8_ExpandSquareTransToRoomSelectMap as unsafe fn() -> ()),
+        Some(FileSelectMap_9_InitRoomSelectMap as unsafe fn() -> ()),
+        Some(FileSelectMap_10_RoomSelectMap as unsafe fn() -> ()),
+        Some(FileSelectMap_11 as unsafe fn() -> ()),
+        Some(FileSelectMap_11 as unsafe fn() -> ()),
+        Some(FileSelectMap_13 as unsafe fn() -> ()),
+        Some(FileSelectMap_14 as unsafe fn() -> ()),
+        Some(FileSelectMap_15_ClearTileMap as unsafe fn() -> ()),
+        Some(FileSelectMap_16_LoadPalettes as unsafe fn() -> ()),
+        Some(FileSelectMap_2_LoadAreaSelectForegroundTilemap as unsafe fn() -> ()),
+        Some(FileSelectMap_18 as unsafe fn() -> ()),
+        Some(FileSelectMap_4_SetupExpandingSquareTransition as unsafe fn() -> ()),
+        Some(FileSelectMap_20_SetupExpandingSquare as unsafe fn() -> ()),
+        Some(FileSelectMap_21_MoveExpandingSquare as unsafe fn() -> ()),
+        Some(FileSelectMap_22 as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMap() {
+pub unsafe fn FileSelectMap() {
     kFileSelectMapFuncs[*((&raw mut g_ram as *mut uint8)
         .offset(0x727 as ::core::ffi::c_int as isize) as *mut uint16)
         as usize]
         .expect("non-null function pointer")();
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMap_22() {
+pub unsafe fn FileSelectMap_22() {
     DrawAreaSelectMapLabels();
     HandleFadeOut();
     if *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
@@ -3738,8 +3645,7 @@ pub unsafe extern "C" fn FileSelectMap_22() {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_1_LoadFileSelectMenuBG2() {
+pub unsafe fn FileSelectMenu_1_LoadFileSelectMenuBG2() {
     let mut v2: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     // This menu spans $3600..$3dff, beyond the pause-map union field.
     let menu_tilemap = (&raw mut g_ram as *mut uint8).add(0x3600).cast::<uint16>();
@@ -3783,8 +3689,7 @@ pub unsafe extern "C" fn FileSelectMenu_1_LoadFileSelectMenuBG2() {
         as *mut uint16)
         .offset(0 as ::core::ffi::c_int as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_2_InitMain() {
+pub unsafe fn FileSelectMenu_2_InitMain() {
     let mut v0: uint16 = 0;
     if *(g_sram.offset(0x1fec as ::core::ffi::c_int as isize) as *mut uint16) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -3809,8 +3714,7 @@ pub unsafe extern "C" fn FileSelectMenu_2_InitMain() {
         v0;
     FileSelectMenu_16();
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_16() {
+pub unsafe fn FileSelectMenu_16() {
     let mut i: ::core::ffi::c_int = 2046 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         *(((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
@@ -4024,12 +3928,10 @@ pub unsafe extern "C" fn FileSelectMenu_16() {
         as *mut uint16)
         .offset(17 as ::core::ffi::c_int as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadFromSram_(mut a: uint16) -> uint8 {
+pub unsafe fn LoadFromSram_(mut a: uint16) -> uint8 {
     return LoadFromSram(a);
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_3_FadeInToMain() {
+pub unsafe fn FileSelectMenu_3_FadeInToMain() {
     DrawFileSelectSamusHelmets();
     let mut v0: ::core::ffi::c_int = (4 as ::core::ffi::c_int
         * *((&raw mut g_ram as *mut uint8).offset(0x952 as ::core::ffi::c_int as isize)
@@ -4057,8 +3959,7 @@ pub unsafe extern "C" fn FileSelectMenu_3_FadeInToMain() {
         *fresh80 = (*fresh80).wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawFileSelectionHealth(mut a: uint16, mut k: uint16) {
+pub unsafe fn DrawFileSelectionHealth(mut a: uint16, mut k: uint16) {
     let mut v2: int16 = 0;
     let mut v4: int16 = 0;
     if a != 0 {
@@ -4137,8 +4038,7 @@ pub unsafe extern "C" fn DrawFileSelectionHealth(mut a: uint16, mut k: uint16) {
                 | n + 8288 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawFileSelectionTime(mut a: uint16, mut k: uint16) {
+pub unsafe fn DrawFileSelectionTime(mut a: uint16, mut k: uint16) {
     if a == 0 {
         let mut r26: uint16 = k;
         let mut div_val: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
@@ -4205,8 +4105,7 @@ pub unsafe extern "C" fn DrawFileSelectionTime(mut a: uint16, mut k: uint16) {
                 | div_min + 8288 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMenu_4_Main() {
+pub unsafe fn FileSelectMenu_4_Main() {
     let mut current_block: u64;
     let mut v0: int16 = 0;
     let mut v1: uint16 = 0;
@@ -4426,8 +4325,7 @@ pub unsafe extern "C" fn FileSelectMenu_4_Main() {
         .offset(5 as ::core::ffi::c_int as isize) =
         kMenuSelectionMissileXY[(v3 + 1 as ::core::ffi::c_int) as usize];
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMap_0() {
+pub unsafe fn FileSelectMap_0() {
     let mut v1: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     ClearMenuTilemap();
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
@@ -4478,8 +4376,7 @@ pub unsafe extern "C" fn FileSelectMap_0() {
         .offset(0x727 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh43 = (*fresh43).wrapping_add(1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMap_1() {
+pub unsafe fn FileSelectMap_1() {
     let mut v1: int16 = 0;
     let mut v2: int16 = 0;
     if AdvanceGradualColorChangeOfPalette(0 as uint16, 0x40 as uint16) != 0 {
@@ -4538,8 +4435,7 @@ pub unsafe extern "C" fn FileSelectMap_1() {
         *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 2 as uint8;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_81A3D1(mut k: uint16) {
+pub unsafe fn sub_81A3D1(mut k: uint16) {
     LoadActiveAreaMapForegroundColors(k);
 }
 static mut kActiveAreaMapForegroundColors: [uint16; 6] = [
@@ -4558,16 +4454,13 @@ static mut kInactiveAreaMapForegroundColors: [uint16; 6] = [
     0x54 as ::core::ffi::c_int as uint16,
     0x5a as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn LoadActiveAreaMapForegroundColors(mut v0: uint16) {
+pub unsafe fn LoadActiveAreaMapForegroundColors(mut v0: uint16) {
     LoadAreaMapForegroundColors(kActiveAreaMapForegroundColors[v0 as usize]);
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadInactiveAreaMapForegroundColors(mut v0: uint16) {
+pub unsafe fn LoadInactiveAreaMapForegroundColors(mut v0: uint16) {
     LoadAreaMapForegroundColors(kInactiveAreaMapForegroundColors[v0 as usize]);
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadAreaMapForegroundColors(mut j: uint16) {
+pub unsafe fn LoadAreaMapForegroundColors(mut j: uint16) {
     loop {
         let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         if *(g_rom.offset(
@@ -4618,8 +4511,7 @@ pub unsafe extern "C" fn LoadAreaMapForegroundColors(mut j: uint16) {
         j = (v4 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMap_2_LoadAreaSelectForegroundTilemap() {
+pub unsafe fn FileSelectMap_2_LoadAreaSelectForegroundTilemap() {
     let mut v1: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
@@ -4645,8 +4537,7 @@ pub unsafe extern "C" fn FileSelectMap_2_LoadAreaSelectForegroundTilemap() {
         .offset(0x727 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh18 = (*fresh18).wrapping_add(1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMap_18() {
+pub unsafe fn FileSelectMap_18() {
     let ref mut fresh17 = *((&raw mut g_ram as *mut uint8)
         .offset(0x727 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh17 = (*fresh17).wrapping_add(1);
@@ -4655,8 +4546,7 @@ pub unsafe extern "C" fn FileSelectMap_18() {
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMap_3_LoadAreaSelectBackgroundTilemap() {
+pub unsafe fn FileSelectMap_3_LoadAreaSelectBackgroundTilemap() {
     let ref mut fresh41 = *((&raw mut g_ram as *mut uint8)
         .offset(0x727 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh41 = (*fresh41).wrapping_add(1);
@@ -4665,8 +4555,7 @@ pub unsafe extern "C" fn FileSelectMap_3_LoadAreaSelectBackgroundTilemap() {
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadAreaSelectBackgroundTilemap(mut j: uint16) {
+pub unsafe fn LoadAreaSelectBackgroundTilemap(mut j: uint16) {
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v2: *mut VramWriteEntry = gVramWriteEntry(
@@ -4684,8 +4573,7 @@ pub unsafe extern "C" fn LoadAreaSelectBackgroundTilemap(mut j: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16) =
         (v1 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMap_4_SetupExpandingSquareTransition() {
+pub unsafe fn FileSelectMap_4_SetupExpandingSquareTransition() {
     *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 4 as uint8;
     WriteReg(TS as ::core::ffi::c_int as uint16, 4 as uint8);
     *(&raw mut g_ram as *mut uint8).offset(0x6d as ::core::ffi::c_int as isize) = 4 as uint8;
@@ -4716,8 +4604,7 @@ pub unsafe extern "C" fn FileSelectMap_4_SetupExpandingSquareTransition() {
         as *mut uint16) as ::core::ffi::c_int
         + 1 as ::core::ffi::c_int) as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ConfigureWindow1ForExpandingSquare() {
+pub unsafe fn ConfigureWindow1ForExpandingSquare() {
     *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 19 as uint8;
     WriteReg(TM as ::core::ffi::c_int as uint16, 0x13 as uint8);
     *(&raw mut g_ram as *mut uint8).offset(0x6c as ::core::ffi::c_int as isize) = 19 as uint8;
@@ -4729,8 +4616,7 @@ pub unsafe extern "C" fn ConfigureWindow1ForExpandingSquare() {
     *(&raw mut g_ram as *mut uint8).offset(0x62 as ::core::ffi::c_int as isize) = 35 as uint8;
     WriteReg(WOBJSEL as ::core::ffi::c_int as uint16, 0x23 as uint8);
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetupInitialExpandingSquareHDMA() {
+pub unsafe fn SetupInitialExpandingSquareHDMA() {
     *((&raw mut g_ram as *mut uint8).offset(0x9e20 as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x9e22 as ::core::ffi::c_int as isize)
@@ -4861,8 +4747,7 @@ pub unsafe extern "C" fn SetupInitialExpandingSquareHDMA() {
     WriteReg(NTRL3 as ::core::ffi::c_int as uint16, 0 as uint8);
 }
 static mut kExpandingSquareTransitionSpeed: uint8 = 4 as uint8;
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMap_5_ExpandingSquare() {
+pub unsafe fn FileSelectMap_5_ExpandingSquare() {
     let mut v5: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     DrawAreaSelectMapLabels();
     let mut v0: uint8 = ((*((&raw mut g_ram as *mut uint8)
@@ -5034,8 +4919,7 @@ pub unsafe extern "C" fn FileSelectMap_5_ExpandingSquare() {
                     as *mut uint16) as ::core::ffi::c_int) as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMap_6_AreaSelectMap() {
+pub unsafe fn FileSelectMap_6_AreaSelectMap() {
     let mut current_block: u64;
     let mut v0: int16 = 0;
     v0 = *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
@@ -5139,24 +5023,21 @@ pub unsafe extern "C" fn FileSelectMap_6_AreaSelectMap() {
     }
     DrawAreaSelectMapLabels();
 }
-#[no_mangle]
-pub unsafe extern "C" fn DecAndWraparoundTo5(mut a: uint16) -> uint16 {
+pub unsafe fn DecAndWraparoundTo5(mut a: uint16) -> uint16 {
     let mut result: uint16 = (a as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16;
     if result as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
         return 5 as uint16;
     }
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn WraparoundFrom6to0(mut a: uint16) -> uint16 {
+pub unsafe fn WraparoundFrom6to0(mut a: uint16) -> uint16 {
     let mut result: uint16 = (a as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16;
     if result as ::core::ffi::c_int - 6 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
         return 0 as uint16;
     }
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SelectFileSelectMapArea() {
+pub unsafe fn SelectFileSelectMapArea() {
     let mut v2: int8 = 0;
     let mut v3: int16 = 0;
     let mut v4: int16 = 0;
@@ -5235,8 +5116,7 @@ pub unsafe extern "C" fn SelectFileSelectMapArea() {
         v0;
     DrawAreaSelectMapLabels();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CheckIfFileSelectMapAreaCanBeSelected(mut a: uint16) -> uint16 {
+pub unsafe fn CheckIfFileSelectMapAreaCanBeSelected(mut a: uint16) -> uint16 {
     let mut v1: ::core::ffi::c_int =
         2 as ::core::ffi::c_int * kFileSelectMap_AreaIndexes[a as usize] as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8)
@@ -5258,8 +5138,7 @@ pub unsafe extern "C" fn CheckIfFileSelectMapAreaCanBeSelected(mut a: uint16) ->
     return (t as ::core::ffi::c_int != 0xffff as ::core::ffi::c_int) as ::core::ffi::c_int
         as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SwitchActiveFileSelectMapArea(mut R28: uint16) {
+pub unsafe fn SwitchActiveFileSelectMapArea(mut R28: uint16) {
     LoadInactiveAreaMapForegroundColors(
         kFileSelectMap_AreaIndexes[*((&raw mut g_ram as *mut uint8)
             .offset(0x950 as ::core::ffi::c_int as isize)
@@ -5288,8 +5167,7 @@ static mut kAreaSelectMapLabelPositions: [uint16; 12] = [
     0x87 as ::core::ffi::c_int as uint16,
     0x8b as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn DrawAreaSelectMapLabels() {
+pub unsafe fn DrawAreaSelectMapLabels() {
     let mut r3: uint16 = 0 as uint16;
     DrawMenuSpritemap(
         *(g_rom.offset(
@@ -5379,8 +5257,7 @@ static mut kRoomSelectMapExpandingSquareTimers: [uint16; 6] = [
     0x33 as ::core::ffi::c_int as uint16,
     0x22 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMap_7_PrepExpandSquareTransToRoomMap() {
+pub unsafe fn FileSelectMap_7_PrepExpandSquareTransToRoomMap() {
     DrawAreaSelectMapLabels();
     SetupInitialExpandingSquareHDMA();
     *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 19 as uint8;
@@ -5486,8 +5363,7 @@ pub unsafe extern "C" fn FileSelectMap_7_PrepExpandSquareTransToRoomMap() {
     *fresh34 = (*fresh34).wrapping_add(1);
     QueueSfx1_Max6(0x3b as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetupRoomSelectMapExpandingSquareTransHDMA() {
+pub unsafe fn SetupRoomSelectMapExpandingSquareTransHDMA() {
     let mut k: uint16 = 0 as uint16;
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x9e3a as ::core::ffi::c_int as isize) as *mut uint16);
@@ -5529,12 +5405,7 @@ pub unsafe extern "C" fn SetupRoomSelectMapExpandingSquareTransHDMA() {
     .field_0)
         .offset(k as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn AddExpandingSqTransLeftIndirHDMA(
-    mut a: uint16,
-    mut k: uint16,
-    mut j: uint16,
-) {
+pub unsafe fn AddExpandingSqTransLeftIndirHDMA(mut a: uint16, mut k: uint16, mut j: uint16) {
     if a as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
         *(&raw mut (*((&raw mut g_ram as *mut uint8)
             .offset(0x9e00 as ::core::ffi::c_int as isize)
@@ -5576,8 +5447,7 @@ pub unsafe extern "C" fn AddExpandingSqTransLeftIndirHDMA(
             .offset(k as ::core::ffi::c_int as isize) as *mut uint16) = j;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn AddExpandingSqTransRightIndirHDMA(
+pub unsafe fn AddExpandingSqTransRightIndirHDMA(
     mut a: uint16,
     mut k: uint16,
     mut j: uint16,
@@ -5625,8 +5495,7 @@ pub unsafe extern "C" fn AddExpandingSqTransRightIndirHDMA(
         return (k as ::core::ffi::c_int + 3 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMap_8_ExpandSquareTransToRoomSelectMap() {
+pub unsafe fn FileSelectMap_8_ExpandSquareTransToRoomSelectMap() {
     if HandleRoomSelectMapExpandingSquareTrans() as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
@@ -5642,8 +5511,7 @@ pub unsafe extern "C" fn FileSelectMap_8_ExpandSquareTransToRoomSelectMap() {
     }
     DrawAreaSelectMapLabels();
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleRoomSelectMapExpandingSquareTrans() -> uint16 {
+pub unsafe fn HandleRoomSelectMapExpandingSquareTrans() -> uint16 {
     AddToHiLo(
         (&raw mut g_ram as *mut uint8).offset(0x9e32 as ::core::ffi::c_int as isize) as *mut uint16,
         (&raw mut g_ram as *mut uint8).offset(0x9e30 as ::core::ffi::c_int as isize) as *mut uint16,
@@ -5722,8 +5590,7 @@ pub unsafe extern "C" fn HandleRoomSelectMapExpandingSquareTrans() -> uint16 {
     *fresh0 = (*fresh0).wrapping_sub(1);
     return *fresh0;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMap_9_InitRoomSelectMap() {
+pub unsafe fn FileSelectMap_9_InitRoomSelectMap() {
     LoadMirrorOfExploredMapTiles();
     DrawRoomSelectMap();
     LoadFromLoadStation();
@@ -5765,8 +5632,7 @@ pub unsafe extern "C" fn FileSelectMap_9_InitRoomSelectMap() {
     *((&raw mut g_ram as *mut uint8).offset(0x77a as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMap_10_RoomSelectMap() {
+pub unsafe fn FileSelectMap_10_RoomSelectMap() {
     let mut v1: int16 = 0;
     let mut v3: int16 = 0;
     let mut v4: int8 = 0;
@@ -6018,12 +5884,10 @@ pub unsafe extern "C" fn FileSelectMap_10_RoomSelectMap() {
         QueueSfx1_Max6(0x38 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_81AEC8() {
+pub unsafe fn sub_81AEC8() {
     HandleFileSelectMapScrollArrows();
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleFileSelectMapScrollArrows() {
+pub unsafe fn HandleFileSelectMapScrollArrows() {
     if *((&raw mut g_ram as *mut uint8).offset(0x5ac as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         - 24 as ::core::ffi::c_int
@@ -6095,16 +5959,14 @@ pub unsafe extern "C" fn HandleFileSelectMapScrollArrows() {
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMap_11() {
+pub unsafe fn FileSelectMap_11() {
     DrawFileSelectMapIcons();
     DisplayMapElevatorDestinations();
     let ref mut fresh25 = *((&raw mut g_ram as *mut uint8)
         .offset(0x727 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh25 = (*fresh25).wrapping_add(1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMap_13() {
+pub unsafe fn FileSelectMap_13() {
     DrawFileSelectMapIcons();
     DisplayMapElevatorDestinations();
     HandleFadeOut();
@@ -6123,8 +5985,7 @@ pub unsafe extern "C" fn FileSelectMap_13() {
         .x_pos = 32 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMap_14() {
+pub unsafe fn FileSelectMap_14() {
     let fresh22 = &raw mut (*((&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         as *mut EnemyData)
@@ -6141,8 +6002,7 @@ pub unsafe extern "C" fn FileSelectMap_14() {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMap_15_ClearTileMap() {
+pub unsafe fn FileSelectMap_15_ClearTileMap() {
     *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 18 as uint8;
     let mut i: ::core::ffi::c_int = 2046 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
@@ -6175,8 +6035,7 @@ pub unsafe extern "C" fn FileSelectMap_15_ClearTileMap() {
         .offset(0x727 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh21 = (*fresh21).wrapping_add(1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMap_16_LoadPalettes() {
+pub unsafe fn FileSelectMap_16_LoadPalettes() {
     let mut v0: int16 = 0;
     let mut v1: int16 = 0;
     LoadMenuPalettes();
@@ -6204,8 +6063,7 @@ pub unsafe extern "C" fn FileSelectMap_16_LoadPalettes() {
         .offset(0x727 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh20 = (*fresh20).wrapping_add(1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMap_20_SetupExpandingSquare() {
+pub unsafe fn FileSelectMap_20_SetupExpandingSquare() {
     *(&raw mut g_ram as *mut uint8).offset(0x85 as ::core::ffi::c_int as isize) = 0 as uint8;
     QueueSfx1_Max6(0x3c as uint16);
     *((&raw mut g_ram as *mut uint8).offset(0x9e50 as ::core::ffi::c_int as isize)
@@ -6366,8 +6224,7 @@ pub unsafe extern "C" fn FileSelectMap_20_SetupExpandingSquare() {
     *((&raw mut g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectMap_21_MoveExpandingSquare() {
+pub unsafe fn FileSelectMap_21_MoveExpandingSquare() {
     AddToHiLo(
         (&raw mut g_ram as *mut uint8).offset(0x9e32 as ::core::ffi::c_int as isize) as *mut uint16,
         (&raw mut g_ram as *mut uint8).offset(0x9e30 as ::core::ffi::c_int as isize) as *mut uint16,
@@ -6419,8 +6276,7 @@ pub unsafe extern "C" fn FileSelectMap_21_MoveExpandingSquare() {
         *(&raw mut g_ram as *mut uint8).offset(0x6d as ::core::ffi::c_int as isize) = 0 as uint8;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NewSaveFile() {
+pub unsafe fn NewSaveFile() {
     *((&raw mut g_ram as *mut uint8).offset(0x9c4 as ::core::ffi::c_int as isize) as *mut uint16) =
         99 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -6565,8 +6421,7 @@ pub unsafe extern "C" fn NewSaveFile() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FileSelectClearRestOfMenuTilemapRow(mut v0: uint16) {
+pub unsafe fn FileSelectClearRestOfMenuTilemapRow(mut v0: uint16) {
     let mut n: ::core::ffi::c_int = 32 as ::core::ffi::c_int
         - ((v0 as ::core::ffi::c_int & 0x3f as ::core::ffi::c_int) >> 1 as ::core::ffi::c_int);
     loop {
@@ -6582,8 +6437,7 @@ pub unsafe extern "C" fn FileSelectClearRestOfMenuTilemapRow(mut v0: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadMenuTilemap(mut k: uint16, mut j: uint16) {
+pub unsafe fn LoadMenuTilemap(mut k: uint16, mut j: uint16) {
     let mut v2: int16 = 0;
     let mut k_bak: ::core::ffi::c_int = k as ::core::ffi::c_int;
     loop {

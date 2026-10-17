@@ -294,29 +294,22 @@ pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 #[inline]
-unsafe extern "C" fn get_ProjectileInstr(mut a: uint16) -> *mut ProjectileInstr {
+unsafe fn get_ProjectileInstr(mut a: uint16) -> *mut ProjectileInstr {
     return RomPtr((0x930000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut ProjectileInstr;
 }
 #[inline]
-unsafe extern "C" fn Get_Botwoon(mut o: ::core::ffi::c_int) -> *mut Enemy_Botwoon {
+unsafe fn Get_Botwoon(mut o: ::core::ffi::c_int) -> *mut Enemy_Botwoon {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_Botwoon;
 }
-#[no_mangle]
 pub static mut g_runmode: uint8 = RM_BOTH as ::core::ffi::c_int as uint8;
-#[no_mangle]
 pub static mut g_snes: *mut Snes = ::core::ptr::null::<Snes>() as *mut Snes;
-#[no_mangle]
 pub static mut g_cpu: *mut Cpu = ::core::ptr::null::<Cpu>() as *mut Cpu;
-#[no_mangle]
 pub static mut g_calling_asm_from_c: bool = false;
-#[no_mangle]
 pub static mut g_calling_asm_from_c_ret: ::core::ffi::c_int = 0;
-#[no_mangle]
 pub static mut g_fail: bool = false;
-#[no_mangle]
 pub static mut g_use_my_apu_code: bool = true_0 != 0;
 static mut g_snapshot_mine: Snapshot = Snapshot {
     a: 0,
@@ -371,8 +364,7 @@ static mut hookcnt: uint32 = 0;
 static mut hookadr: uint32 = 0;
 static mut hook_orgbyte: [uint8; 1024] = [0; 1024];
 static mut hook_fixbug_orgbyte: [uint8; 1024] = [0; 1024];
-#[no_mangle]
-pub unsafe extern "C" fn Call(mut addr: uint32) {
+pub unsafe fn Call(mut addr: uint32) {
     '_c2rust_label: {
         if addr & 0x8000 as uint32 != 0 {
         } else {
@@ -392,12 +384,10 @@ pub unsafe extern "C" fn Call(mut addr: uint32) {
         0 as ::core::ffi::c_int,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn SnesRomPtr(mut v: uint32) -> *mut uint8_t {
+pub unsafe fn SnesRomPtr(mut v: uint32) -> *mut uint8_t {
     return RomPtr(v as uint32_t) as *mut uint8_t;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessHook(mut v: uint32) -> bool {
+pub unsafe fn ProcessHook(mut v: uint32) -> bool {
     let mut rombyte: *mut uint8_t = SnesRomPtr(v);
     match hookmode {
         0 => {
@@ -424,8 +414,7 @@ pub unsafe extern "C" fn ProcessHook(mut v: uint32) -> bool {
     }
     return false_0 != 0;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FixBugHook(mut addr: uint32) -> bool {
+pub unsafe fn FixBugHook(mut addr: uint32) -> bool {
     match hookmode {
         1 => {
             let mut rombyte: *mut uint8_t = SnesRomPtr(addr);
@@ -605,8 +594,7 @@ static mut kPatchedCarrys: [uint32; 155] = [
     0xa48ca4 as ::core::ffi::c_int as uint32,
 ];
 static mut kPatchedCarrysOrg: [uint8; 155] = [0; 155];
-#[no_mangle]
-pub unsafe extern "C" fn PatchBugs(mut mode: uint32, mut addr: uint32) -> uint32 {
+pub unsafe fn PatchBugs(mut mode: uint32, mut addr: uint32) -> uint32 {
     hookmode = mode;
     hookadr = addr;
     hookcnt = 0 as uint32;
@@ -822,8 +810,7 @@ pub unsafe extern "C" fn PatchBugs(mut mode: uint32, mut addr: uint32) -> uint32
     }
     return 0 as uint32;
 }
-#[no_mangle]
-pub unsafe extern "C" fn RunPatchBugHook(mut addr: uint32) -> ::core::ffi::c_int {
+pub unsafe fn RunPatchBugHook(mut addr: uint32) -> ::core::ffi::c_int {
     let mut new_pc: uint32 = PatchBugs(2 as uint32, addr);
     if hookmode == 3 as uint32 {
         if new_pc == 0 as uint32 {
@@ -836,8 +823,7 @@ pub unsafe extern "C" fn RunPatchBugHook(mut addr: uint32) -> ::core::ffi::c_int
     }
     return -(1 as ::core::ffi::c_int);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CpuOpcodeHook(mut addr: uint32) -> ::core::ffi::c_int {
+pub unsafe fn CpuOpcodeHook(mut addr: uint32) -> ::core::ffi::c_int {
     let mut i: size_t = 0 as size_t;
     while i
         != (::core::mem::size_of::<[uint32; 155]>() as usize)
@@ -862,8 +848,7 @@ pub unsafe extern "C" fn CpuOpcodeHook(mut addr: uint32) -> ::core::ffi::c_int {
     };
     return 0 as ::core::ffi::c_int;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HookedFunctionRts(mut is_long: ::core::ffi::c_int) -> bool {
+pub unsafe fn HookedFunctionRts(mut is_long: ::core::ffi::c_int) -> bool {
     if g_calling_asm_from_c {
         g_calling_asm_from_c_ret = is_long;
         g_calling_asm_from_c = false_0 != 0;
@@ -879,11 +864,7 @@ pub unsafe extern "C" fn HookedFunctionRts(mut is_long: ::core::ffi::c_int) -> b
     };
     return false_0 != 0;
 }
-unsafe extern "C" fn VerifySnapshotsEq(
-    mut b: *mut Snapshot,
-    mut a: *mut Snapshot,
-    mut prev: *mut Snapshot,
-) {
+unsafe fn VerifySnapshotsEq(mut b: *mut Snapshot, mut a: *mut Snapshot, mut prev: *mut Snapshot) {
     // Keep checking every frame, but bound headless logs to the first failure.
     let report_details = !VERIFY_ACTIVE || VERIFY_FAILURES == 0;
     memcpy(
@@ -1406,7 +1387,7 @@ unsafe extern "C" fn VerifySnapshotsEq(
         }
     }
 }
-unsafe extern "C" fn MakeSnapshot(mut s: *mut Snapshot) {
+unsafe fn MakeSnapshot(mut s: *mut Snapshot) {
     let mut c: *mut Cpu = g_cpu;
     (*s).a = (*c).a as uint16;
     (*s).x = (*c).x as uint16;
@@ -1439,7 +1420,7 @@ unsafe extern "C" fn MakeSnapshot(mut s: *mut Snapshot) {
         (::core::mem::size_of::<uint16>() as size_t).wrapping_mul(0x120 as size_t),
     );
 }
-unsafe extern "C" fn RestoreSnapshot(mut s: *mut Snapshot) {
+unsafe fn RestoreSnapshot(mut s: *mut Snapshot) {
     let mut c: *mut Cpu = g_cpu;
     (*c).a = (*s).a as uint16_t;
     (*c).x = (*s).x as uint16_t;
@@ -1472,8 +1453,7 @@ unsafe extern "C" fn RestoreSnapshot(mut s: *mut Snapshot) {
         (::core::mem::size_of::<uint16>() as size_t).wrapping_mul(0x120 as size_t),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn RunAsmCode(
+pub unsafe fn RunAsmCode(
     mut pc: uint32,
     mut a: uint16,
     mut x: uint16,
@@ -1526,7 +1506,7 @@ pub unsafe extern "C" fn RunAsmCode(
     (*g_snes).debug_cycles = dc;
     return g_calling_asm_from_c_ret;
 }
-unsafe extern "C" fn loadRom(mut name: *const ::core::ffi::c_char, mut snes: *mut Snes) -> bool {
+unsafe fn loadRom(mut name: *const ::core::ffi::c_char, mut snes: *mut Snes) -> bool {
     let mut length: size_t = 0 as size_t;
     let mut file: *mut uint8_t = ::core::ptr::null_mut::<uint8_t>();
     file = ReadWholeFile(name, &raw mut length) as *mut uint8_t;
@@ -1538,22 +1518,18 @@ unsafe extern "C" fn loadRom(mut name: *const ::core::ffi::c_char, mut snes: *mu
     free(file as *mut ::core::ffi::c_void);
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PatchBytes(mut addr: uint32, mut value: *const uint8, mut n: size_t) {
+pub unsafe fn PatchBytes(mut addr: uint32, mut value: *const uint8, mut n: size_t) {
     let mut i: size_t = 0 as size_t;
     while i != n {
         *SnesRomPtr(addr).offset(i as isize) = *value.offset(i as isize) as uint8_t;
         i = i.wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FixupCarry(mut addr: uint32) {
+pub unsafe fn FixupCarry(mut addr: uint32) {
     *SnesRomPtr(addr) = 0 as uint8_t;
 }
-#[no_mangle]
 pub static mut currently_installed_bug_fix_counter: uint16 = 0;
-#[no_mangle]
-pub unsafe extern "C" fn RtlUpdateSnesPatchForBugfix() {
+pub unsafe fn RtlUpdateSnesPatchForBugfix() {
     currently_installed_bug_fix_counter = *((&raw mut g_ram as *mut uint8)
         .offset(0xc2 as ::core::ffi::c_int as isize)
         as *mut uint16);
@@ -1606,8 +1582,7 @@ pub unsafe extern "C" fn RtlUpdateSnesPatchForBugfix() {
         ::core::mem::size_of::<[uint8; 2]>() as size_t,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
+pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
     g_snes = snes_init(&raw mut g_ram as *mut uint8_t) as *mut Snes;
     g_cpu = (*g_snes).cpu;
     let mut loaded: bool = loadRom(filename, g_snes);
@@ -1618,7 +1593,7 @@ pub unsafe extern "C" fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *
     g_rom = (*(*g_snes).cart).rom;
     RtlSetupEmuCallbacks(
         ::core::ptr::null_mut::<uint8>(),
-        Some(RtlRunFrameCompare as unsafe extern "C" fn(uint16, ::core::ffi::c_int) -> ()),
+        Some(RtlRunFrameCompare as unsafe fn(uint16, ::core::ffi::c_int) -> ()),
         None,
     );
     *(&raw mut g_ram as *mut uint8).offset(0x611 as ::core::ffi::c_int as isize) = 1 as uint8;
@@ -2710,8 +2685,7 @@ pub unsafe extern "C" fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *
     PatchBugs(1 as uint32, 0 as uint32);
     return g_snes;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DebugGameOverMenu() {
+pub unsafe fn DebugGameOverMenu() {
     '_c2rust_label: {
         __assert_fail(
             b"0\0" as *const u8 as *const ::core::ffi::c_char,
@@ -2721,8 +2695,7 @@ pub unsafe extern "C" fn DebugGameOverMenu() {
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn RunCpuUntilPC(mut pc1: uint32, mut pc2: uint32) -> uint32 {
+pub unsafe fn RunCpuUntilPC(mut pc1: uint32, mut pc2: uint32) -> uint32 {
     loop {
         if (*g_snes).debug_cycles {
             let mut line: [::core::ffi::c_char; 80] = [0; 80];
@@ -2738,8 +2711,7 @@ pub unsafe extern "C" fn RunCpuUntilPC(mut pc1: uint32, mut pc2: uint32) -> uint
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn RunOneFrameOfGame_Emulated() {
+pub unsafe fn RunOneFrameOfGame_Emulated() {
     let mut bug_fix_bak: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xc2 as ::core::ffi::c_int as isize)
         as *mut uint16);
@@ -2749,8 +2721,7 @@ pub unsafe extern "C" fn RunOneFrameOfGame_Emulated() {
     *((&raw mut g_ram as *mut uint8).offset(0xc2 as ::core::ffi::c_int as isize) as *mut uint16) =
         bug_fix_bak;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawFrameToPpu() {
+pub unsafe fn DrawFrameToPpu() {
     (*g_snes).vPos = 0 as uint16_t;
     (*g_snes).hPos = (*g_snes).vPos;
     while !(*(*g_snes).cpu).nmiWanted {
@@ -2769,8 +2740,7 @@ pub unsafe extern "C" fn DrawFrameToPpu() {
     }
     (*(*g_snes).cpu).nmiWanted = false_0 != 0;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SaveBugSnapshot() {
+pub unsafe fn SaveBugSnapshot() {
     if VERIFY_ACTIVE {
         return;
     }
@@ -2824,8 +2794,7 @@ unsafe fn report_first_verify_failure() {
     }
     eprintln!("RAM: {differing_bytes} differing bytes (showing at most 64)");
 }
-#[no_mangle]
-pub unsafe extern "C" fn RunOneFrameOfGame_Both() {
+pub unsafe fn RunOneFrameOfGame_Both() {
     (*g_snes).ppu = (*g_snes).snes_ppu;
     MakeSnapshot(&raw mut g_snapshot_before);
     loop {
@@ -2900,8 +2869,7 @@ pub unsafe extern "C" fn RunOneFrameOfGame_Both() {
         g_got_mismatch_count -= 1;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn RtlRunFrameCompare(mut input: uint16, mut run_what: ::core::ffi::c_int) {
+pub unsafe fn RtlRunFrameCompare(mut input: uint16, mut run_what: ::core::ffi::c_int) {
     (*(*g_snes).input1).currentState = input as uint16_t;
     if g_runmode as ::core::ffi::c_int == RM_THEIRS as ::core::ffi::c_int {
         RunOneFrameOfGame_Emulated();

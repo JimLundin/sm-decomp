@@ -556,7 +556,7 @@ pub struct Enemy_Torizo {
     pub toriz_var_1F: uint16,
 }
 #[inline]
-unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
+unsafe fn abs16(mut t: uint16) -> uint16 {
     return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         -(t as ::core::ffi::c_int)
     } else {
@@ -564,7 +564,7 @@ unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
     }) as uint16;
 }
 #[inline]
-unsafe extern "C" fn RomBankBase(mut bank: uint8) -> *const uint8 {
+unsafe fn RomBankBase(mut bank: uint8) -> *const uint8 {
     return RomPtr(
         (((bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) + 0x8000 as ::core::ffi::c_int)
             as uint32_t,
@@ -572,7 +572,7 @@ unsafe extern "C" fn RomBankBase(mut bank: uint8) -> *const uint8 {
     .offset(-(0x8000 as ::core::ffi::c_int as isize));
 }
 #[inline]
-unsafe extern "C" fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
+unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
     let mut t: uint32 = ((*lo as ::core::ffi::c_int
         + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
         as uint32)
@@ -581,7 +581,7 @@ unsafe extern "C" fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: 
     *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
 #[inline]
-unsafe extern "C" fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
+unsafe fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
     *lo = t as uint16;
     *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
@@ -596,19 +596,19 @@ pub const fnTorizo_D5E6: uint32 = 11195878 as uint32;
 pub const fnnullsub_274: ::core::ffi::c_int = 0xaadcaa as ::core::ffi::c_int;
 pub const fnnullsub_276: ::core::ffi::c_int = 0xaae7a6 as ::core::ffi::c_int;
 #[inline]
-unsafe extern "C" fn gEnemyData(mut o: ::core::ffi::c_int) -> *mut EnemyData {
+unsafe fn gEnemyData(mut o: ::core::ffi::c_int) -> *mut EnemyData {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut EnemyData;
 }
 #[inline]
-unsafe extern "C" fn Get_Shaktool(mut o: ::core::ffi::c_int) -> *mut Enemy_Shaktool {
+unsafe fn Get_Shaktool(mut o: ::core::ffi::c_int) -> *mut Enemy_Shaktool {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_Shaktool;
 }
 #[inline]
-unsafe extern "C" fn Get_Torizo(mut o: ::core::ffi::c_int) -> *mut Enemy_Torizo {
+unsafe fn Get_Torizo(mut o: ::core::ffi::c_int) -> *mut Enemy_Torizo {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_Torizo;
@@ -1019,40 +1019,28 @@ static mut kChozoStatue_Palettes3: [int16; 16] = [
     0x5294 as ::core::ffi::c_int as int16,
     1 as ::core::ffi::c_int as int16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_GrappleReact_CancelBeam_AA() {
+pub unsafe fn Enemy_GrappleReact_CancelBeam_AA() {
     Enemy_SwitchToFrozenAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalFrozenAI_AA() {
+pub unsafe fn Enemy_NormalFrozenAI_AA() {
     NormalEnemyFrozenAI();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_ClearAiPreInstr_AA(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn Enemy_ClearAiPreInstr_AA(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*gEnemyData(k as ::core::ffi::c_int)).ai_preinstr =
         (0xaa807b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_SetAiPreInstr_AA(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn Enemy_SetAiPreInstr_AA(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*gEnemyData(k as ::core::ffi::c_int)).ai_preinstr =
         *jp.offset(0 as ::core::ffi::c_int as isize);
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*Get_Torizo(k as ::core::ffi::c_int)).toriz_var_E =
         *jp.offset(0 as ::core::ffi::c_int as isize);
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_31(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_31(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     (*E).toriz_parameter_2 =
         ((*E).toriz_parameter_2 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
@@ -1088,29 +1076,25 @@ pub unsafe extern "C" fn Torizo_Instr_31(mut k: uint16, mut jp: *const uint16) -
     );
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_33(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_33(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     (*E).toriz_parameter_2 =
         ((*E).toriz_parameter_2 as ::core::ffi::c_int | 0x4000 as ::core::ffi::c_int) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_36(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_36(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         & !(kEnemyProps_Invisible as ::core::ffi::c_int)) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_37(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_37(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         | kEnemyProps_Invisible as ::core::ffi::c_int) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_35(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_35(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v3: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
@@ -1124,8 +1108,7 @@ pub unsafe extern "C" fn Torizo_Instr_35(mut k: uint16, mut jp: *const uint16) -
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_38(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_38(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     SetBossBitForCurArea(4 as uint16);
     QueueMusic_Delayed8(g_word_AAB09A);
     if *((&raw mut g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize) as *mut uint16)
@@ -1137,24 +1120,20 @@ pub unsafe extern "C" fn Torizo_Instr_38(mut k: uint16, mut jp: *const uint16) -
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_6(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_6(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     sub_82DAF7(0x600 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_5(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_5(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     Torizo_C268();
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_9(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_9(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     QueueMusic_Delayed8(g_word_AAB098);
     SpawnPalfxObject(addr_stru_8DF759 as ::core::ffi::c_int as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_C20A(mut k: uint16) {
+pub unsafe fn Torizo_C20A(mut k: uint16) {
     let mut v2: int16 = 0;
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     if (*E).toriz_parameter_1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -1169,8 +1148,7 @@ pub unsafe extern "C" fn Torizo_C20A(mut k: uint16) {
     (*E).toriz_var_C = 40 as uint16;
     (*E).base.instruction_timer = 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_C22D(mut k: uint16) {
+pub unsafe fn Torizo_C22D(mut k: uint16) {
     let mut v2: int16 = 0;
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     if (*E).toriz_parameter_1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -1185,8 +1163,7 @@ pub unsafe extern "C" fn Torizo_C22D(mut k: uint16) {
     (*E).toriz_var_C = 40 as uint16;
     (*E).base.instruction_timer = 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_C250() {
+pub unsafe fn Torizo_C250() {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
@@ -1199,8 +1176,7 @@ pub unsafe extern "C" fn Torizo_C250() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_C268() {
+pub unsafe fn Torizo_C268() {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
@@ -1213,8 +1189,7 @@ pub unsafe extern "C" fn Torizo_C268() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_C280() {
+pub unsafe fn Torizo_C280() {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
@@ -1227,8 +1202,7 @@ pub unsafe extern "C" fn Torizo_C280() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_C298() {
+pub unsafe fn Torizo_C298() {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
@@ -1241,8 +1215,7 @@ pub unsafe extern "C" fn Torizo_C298() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_C2B0() {
+pub unsafe fn Torizo_C2B0() {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
@@ -1255,22 +1228,18 @@ pub unsafe extern "C" fn Torizo_C2B0() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_7(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_7(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*Get_Torizo(k as ::core::ffi::c_int)).toriz_var_04 = 30583 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_8(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_8(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*Get_Torizo(k as ::core::ffi::c_int)).toriz_var_04 = 0 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_25(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_25(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     if (*Get_Torizo(k as ::core::ffi::c_int)).toriz_parameter_2 as ::core::ffi::c_int
         & 0x4000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
@@ -1285,22 +1254,18 @@ pub unsafe extern "C" fn Torizo_Instr_25(mut k: uint16, mut jp: *const uint16) -
         return jp.offset(2 as ::core::ffi::c_int as isize);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_22(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_22(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*Get_Torizo(k as ::core::ffi::c_int)).toriz_var_00 =
         *jp.offset(0 as ::core::ffi::c_int as isize);
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_19(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_19(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return (*Get_Torizo(k as ::core::ffi::c_int)).toriz_var_00 as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_32(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_32(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return (*Get_Torizo(k as ::core::ffi::c_int)).toriz_var_01 as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_30(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_30(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut a: uint16 = *jp.offset(0 as ::core::ffi::c_int as isize);
     let mut i: ::core::ffi::c_int = 5 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
@@ -1318,8 +1283,7 @@ pub unsafe extern "C" fn Torizo_Instr_30(mut k: uint16, mut jp: *const uint16) -
     (*E).base.instruction_timer = 40 as uint16;
     return ::core::ptr::null::<uint16>();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_34(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_34(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     SpawnEprojWithRoomGfx(
         addr_kEproj_BombTorizoDeathExplosion as ::core::ffi::c_int as uint16,
         0 as uint16,
@@ -1332,8 +1296,7 @@ pub unsafe extern "C" fn Torizo_Instr_34(mut k: uint16, mut jp: *const uint16) -
     (*E).base.instruction_timer = 1 as uint16;
     return ::core::ptr::null::<uint16>();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_24(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_24(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     SpawnEprojWithRoomGfx(
         addr_kEproj_TourianLandingDustCloudsRightFoot as ::core::ffi::c_int as uint16,
         0 as uint16,
@@ -1344,8 +1307,7 @@ pub unsafe extern "C" fn Torizo_Instr_24(mut k: uint16, mut jp: *const uint16) -
     );
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_12(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_12(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut health: uint16 = (*Get_Torizo(k as ::core::ffi::c_int)).base.health;
     if (health as ::core::ffi::c_int) < 0x15e as ::core::ffi::c_int {
         SpawnEprojWithGfx(
@@ -1356,23 +1318,20 @@ pub unsafe extern "C" fn Torizo_Instr_12(mut k: uint16, mut jp: *const uint16) -
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_10(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_10(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     (*E).toriz_parameter_1 =
         ((*E).toriz_parameter_1 as ::core::ffi::c_int | 0x4000 as ::core::ffi::c_int) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_11(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_11(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     (*E).toriz_parameter_1 =
         ((*E).toriz_parameter_1 as ::core::ffi::c_int & 0x1fff as ::core::ffi::c_int) as uint16;
     (*E).toriz_var_09 = (*E).toriz_var_09.wrapping_add(1);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_29(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_29(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     (*E).toriz_parameter_1 = ((*E).toriz_parameter_1 as ::core::ffi::c_int
         & 0x1fff as ::core::ffi::c_int
@@ -1380,8 +1339,7 @@ pub unsafe extern "C" fn Torizo_Instr_29(mut k: uint16, mut jp: *const uint16) -
     (*E).toriz_var_09 = (*E).toriz_var_09.wrapping_add(1);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     (*E).toriz_parameter_1 = ((*E).toriz_parameter_1 as ::core::ffi::c_int
         & 0x1fff as ::core::ffi::c_int
@@ -1389,8 +1347,7 @@ pub unsafe extern "C" fn Torizo_Instr_1(mut k: uint16, mut jp: *const uint16) ->
     (*E).toriz_var_09 = (*E).toriz_var_09.wrapping_add(1);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_28(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_28(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     (*E).toriz_parameter_1 = ((*E).toriz_parameter_1 as ::core::ffi::c_int
         & 0x1fff as ::core::ffi::c_int
@@ -1398,8 +1355,7 @@ pub unsafe extern "C" fn Torizo_Instr_28(mut k: uint16, mut jp: *const uint16) -
     (*E).toriz_var_09 = (*E).toriz_var_09.wrapping_add(1);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_4(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_4(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = *jp.offset(0 as ::core::ffi::c_int as isize);
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     (*E).base.x_pos = ((*E).base.x_pos as ::core::ffi::c_int
@@ -1411,8 +1367,7 @@ pub unsafe extern "C" fn Torizo_Instr_4(mut k: uint16, mut jp: *const uint16) ->
         as uint16;
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_40(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_40(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = *jp.offset(0 as ::core::ffi::c_int as isize);
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     (*E).base.x_pos = ((*E).base.x_pos as ::core::ffi::c_int
@@ -1424,8 +1379,7 @@ pub unsafe extern "C" fn Torizo_Instr_40(mut k: uint16, mut jp: *const uint16) -
         as uint16;
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_16(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_16(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     (*E).toriz_var_A = g_word_AAC4BD[(*jp.offset(0 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
@@ -1461,8 +1415,7 @@ pub unsafe extern "C" fn Torizo_Instr_16(mut k: uint16, mut jp: *const uint16) -
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_27(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_27(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     (*E).toriz_var_A = g_word_AAC532[(*jp.offset(0 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
@@ -1498,8 +1451,7 @@ pub unsafe extern "C" fn Torizo_Instr_27(mut k: uint16, mut jp: *const uint16) -
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_23(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_23(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     if (*Get_Torizo(k as ::core::ffi::c_int)).toriz_var_B as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
@@ -1509,8 +1461,7 @@ pub unsafe extern "C" fn Torizo_Instr_23(mut k: uint16, mut jp: *const uint16) -
         return jp.offset(1 as ::core::ffi::c_int as isize);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_14(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_14(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     if CompareDistToSamus_X(k, 0x38 as uint16) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
     {
         return jp.offset(1 as ::core::ffi::c_int as isize);
@@ -1530,8 +1481,7 @@ pub unsafe extern "C" fn Torizo_Instr_14(mut k: uint16, mut jp: *const uint16) -
         as ::core::ffi::c_long as uint16;
     return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_15(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_15(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     if CompareDistToSamus_X(k, 0x20 as uint16) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
         || Torizo_Func_12(k) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
@@ -1541,8 +1491,7 @@ pub unsafe extern "C" fn Torizo_Instr_15(mut k: uint16, mut jp: *const uint16) -
     Torizo_C22D(k);
     return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_26(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_26(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     (*E).toriz_var_00 = (jp.offset(2 as ::core::ffi::c_int as isize) as *mut uint8)
         .offset_from(RomBankBase((*gEnemyData(k as ::core::ffi::c_int)).bank))
@@ -1566,8 +1515,7 @@ pub unsafe extern "C" fn Torizo_Instr_26(mut k: uint16, mut jp: *const uint16) -
         return *jp.offset(1 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_18(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_18(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     SpawnEprojWithGfx(
         0 as uint16,
         k,
@@ -1585,8 +1533,7 @@ pub unsafe extern "C" fn Torizo_Instr_18(mut k: uint16, mut jp: *const uint16) -
     );
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_20(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_20(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     SpawnEprojWithGfx(
         *jp.offset(0 as ::core::ffi::c_int as isize),
         k,
@@ -1594,8 +1541,7 @@ pub unsafe extern "C" fn Torizo_Instr_20(mut k: uint16, mut jp: *const uint16) -
     );
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_44(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_44(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     SpawnEprojWithGfx(
         *jp.offset(0 as ::core::ffi::c_int as isize),
         k,
@@ -1603,26 +1549,22 @@ pub unsafe extern "C" fn Torizo_Instr_44(mut k: uint16, mut jp: *const uint16) -
     );
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_21(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_21(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     SpawnEprojWithRoomGfx(
         addr_kEproj_BombTorizoExplosiveSwipe as ::core::ffi::c_int as uint16,
         *jp.offset(0 as ::core::ffi::c_int as isize),
     );
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_17(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_17(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     QueueSfx2_Max6(0x27 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_13(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_13(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     QueueSfx2_Max6(0x4b as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_C620(mut k: uint16) {
+pub unsafe fn Torizo_C620(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
         && *((&raw mut g_ram as *mut uint8).offset(0x5e5 as ::core::ffi::c_int as isize)
@@ -1642,8 +1584,7 @@ pub unsafe extern "C" fn Torizo_C620(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_C643(mut k: uint16) {
+pub unsafe fn Torizo_C643(mut k: uint16) {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     if Enemy_MoveDown(
         k,
@@ -1665,8 +1606,7 @@ pub unsafe extern "C" fn Torizo_C643(mut k: uint16) {
             ((*E).toriz_var_B as ::core::ffi::c_int + 40 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Hurt() {
+pub unsafe fn Torizo_Hurt() {
     Torizo_C620(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -1695,8 +1635,7 @@ pub unsafe extern "C" fn Torizo_Hurt() {
         Torizo_C2B0();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallTorizoFunc(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallTorizoFunc(mut ea: uint32, mut k: uint16) {
     match ea {
         11191979 => return,
         11191999 => {
@@ -1728,8 +1667,7 @@ pub unsafe extern "C" fn CallTorizoFunc(mut ea: uint32, mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Main() {
+pub unsafe fn Torizo_Main() {
     let mut E: *mut Enemy_Torizo = Get_Torizo(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1740,21 +1678,18 @@ pub unsafe extern "C" fn Torizo_Main() {
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Func_2(mut k: uint16) {
+pub unsafe fn Torizo_Func_2(mut k: uint16) {
     Torizo_C643(k);
     if sub_82DAF7(0x600 as uint16) as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
         (*Get_Torizo(k as ::core::ffi::c_int)).toriz_var_E =
             (0xaac6ab as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Func_3(mut k: uint16) {
+pub unsafe fn Torizo_Func_3(mut k: uint16) {
     Torizo_C620(k);
     Torizo_C643(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Func_4(mut k: uint16) {
+pub unsafe fn Torizo_Func_4(mut k: uint16) {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         | kEnemyProps_Tangible as ::core::ffi::c_int) as uint16;
@@ -1778,8 +1713,7 @@ pub unsafe extern "C" fn Torizo_Func_4(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Func_1(mut k: uint16) {
+pub unsafe fn Torizo_Func_1(mut k: uint16) {
     Torizo_C620(k);
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     if (*E).toriz_parameter_2 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -1812,8 +1746,7 @@ pub unsafe extern "C" fn Torizo_Func_1(mut k: uint16) {
         (*E).base.instruction_timer = 1 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Func_5(mut k: uint16) {
+pub unsafe fn Torizo_Func_5(mut k: uint16) {
     let mut v3: uint16 = 0;
     let mut v8: uint16 = 0;
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
@@ -1899,12 +1832,10 @@ pub unsafe extern "C" fn Torizo_Func_5(mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Func_6(mut k: uint16) {
+pub unsafe fn Torizo_Func_6(mut k: uint16) {
     Torizo_C643(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Func_7(mut k: uint16) {
+pub unsafe fn Torizo_Func_7(mut k: uint16) {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     Enemy_MoveRight_IgnoreSlopes(
         k,
@@ -1928,8 +1859,7 @@ pub unsafe extern "C" fn Torizo_Func_7(mut k: uint16) {
             + (*E).toriz_var_C as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Init() {
+pub unsafe fn Torizo_Init() {
     let mut E: *mut Enemy_Torizo = Get_Torizo(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2023,12 +1953,10 @@ pub unsafe extern "C" fn Torizo_Init() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn GoldTorizo_Touch() {
+pub unsafe fn GoldTorizo_Touch() {
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Shot() {
+pub unsafe fn Torizo_Shot() {
     if *((&raw mut g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -2058,16 +1986,14 @@ pub unsafe extern "C" fn Torizo_Shot() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Func_8() {
+pub unsafe fn Torizo_Func_8() {
     if *((&raw mut g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
         Torizo_D658();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_39(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_39(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     if (*Get_Torizo(k as ::core::ffi::c_int)).base.y_pos as ::core::ffi::c_int
         == 375 as ::core::ffi::c_int
     {
@@ -2076,13 +2002,11 @@ pub unsafe extern "C" fn Torizo_Instr_39(mut k: uint16, mut jp: *const uint16) -
         return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_41(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_41(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     Torizo_C298();
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_42(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_42(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     QueueMusic_Delayed8(5 as uint16);
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     (*E).base.x_width = 18 as uint16;
@@ -2090,23 +2014,20 @@ pub unsafe extern "C" fn Torizo_Instr_42(mut k: uint16, mut jp: *const uint16) -
     SpawnPalfxObject(addr_stru_8DF75D as ::core::ffi::c_int as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_48(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_48(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     (*E).toriz_parameter_2 =
         ((*E).toriz_parameter_2 as ::core::ffi::c_int & !(0x1000 as ::core::ffi::c_int)) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_57(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_57(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     SpawnEprojWithRoomGfx(
         addr_stru_86B1C0 as ::core::ffi::c_int as uint16,
         0 as uint16,
     );
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_58(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_58(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: int16 = 0;
     v2 = 34 as int16;
     while *(((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
@@ -2122,29 +2043,25 @@ pub unsafe extern "C" fn Torizo_Instr_58(mut k: uint16, mut jp: *const uint16) -
     }
     return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_59(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_59(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     (*E).toriz_var_06 =
         ((*E).toriz_var_06 as ::core::ffi::c_int & !(0x8000 as ::core::ffi::c_int)) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_62(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_62(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     (*E).toriz_var_06 =
         ((*E).toriz_var_06 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_63(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_63(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     (*E).toriz_parameter_2 =
         ((*E).toriz_parameter_2 as ::core::ffi::c_int & !(0x2000 as ::core::ffi::c_int)) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GoldTorizo_Main() {
+pub unsafe fn GoldTorizo_Main() {
     let mut E: *mut Enemy_Torizo = Get_Torizo(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2166,36 +2083,30 @@ pub unsafe extern "C" fn GoldTorizo_Main() {
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_56(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_56(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     QueueSfx2_Max6(0x34 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_60(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_60(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     QueueSfx2_Max6(0x67 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_46(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_46(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     QueueSfx2_Max6(0x48 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Func_12(mut k: uint16) -> uint16 {
+pub unsafe fn Torizo_Func_12(mut k: uint16) -> uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     return ((*E).toriz_parameter_1 as ::core::ffi::c_int
         ^ (*E).base.x_pos as ::core::ffi::c_int
             - *((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
                 as *mut uint16) as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Func_11(mut k: uint16) {
+pub unsafe fn Torizo_Func_11(mut k: uint16) {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     SetGoldenTorizoPalette((*E).base.health);
 }
-#[no_mangle]
-pub unsafe extern "C" fn GoldTorizo_Hurt() {
+pub unsafe fn GoldTorizo_Hurt() {
     Torizo_C620(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -2226,16 +2137,14 @@ pub unsafe extern "C" fn GoldTorizo_Hurt() {
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_47(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_47(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     SpawnEprojWithRoomGfx(
         addr_kEproj_GoldenTorizoSuperMissile as ::core::ffi::c_int as uint16,
         0 as uint16,
     );
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_49(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_49(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     if Torizo_Func_12(k) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
         || CompareDistToSamus_X(k, 4 as uint16) as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0
@@ -2268,16 +2177,14 @@ pub unsafe extern "C" fn Torizo_Instr_49(mut k: uint16, mut jp: *const uint16) -
     (*Get_Torizo(k as ::core::ffi::c_int)).toriz_var_09 = 0 as uint16;
     return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_61(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_61(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     SpawnEprojWithRoomGfx(
         addr_kEproj_GoldenTorizoEyeBeam as ::core::ffi::c_int as uint16,
         *jp.offset(0 as ::core::ffi::c_int as isize),
     );
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_53(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_53(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     if Torizo_Func_12(k) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
         || CompareDistToSamus_X(k, 0x20 as uint16) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
@@ -2295,8 +2202,7 @@ pub unsafe extern "C" fn Torizo_Instr_53(mut k: uint16, mut jp: *const uint16) -
             as ::core::ffi::c_long as uint16;
     return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_55(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_55(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     if (*E).base.health as ::core::ffi::c_int > 0x788 as ::core::ffi::c_int
         || NextRandom() as ::core::ffi::c_int & 0x102 as ::core::ffi::c_int
@@ -2310,8 +2216,7 @@ pub unsafe extern "C" fn Torizo_Instr_55(mut k: uint16, mut jp: *const uint16) -
         as ::core::ffi::c_long as uint16;
     return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_52(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_52(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     if (*E).base.health as ::core::ffi::c_int <= 0x2a30 as ::core::ffi::c_int
         || (*E).toriz_parameter_2 as ::core::ffi::c_int & 0x2000 as ::core::ffi::c_int
@@ -2324,8 +2229,7 @@ pub unsafe extern "C" fn Torizo_Instr_52(mut k: uint16, mut jp: *const uint16) -
         as ::core::ffi::c_long as uint16;
     return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_50(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_50(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     if CompareDistToSamus_X(k, 0x70 as uint16) as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0
     {
         return jp.offset(1 as ::core::ffi::c_int as isize);
@@ -2350,8 +2254,7 @@ pub unsafe extern "C" fn Torizo_Instr_50(mut k: uint16, mut jp: *const uint16) -
     Torizo_C20A(k);
     return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_43(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_43(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     SpawnEprojWithGfx(
         0 as uint16,
         k,
@@ -2359,8 +2262,7 @@ pub unsafe extern "C" fn Torizo_Instr_43(mut k: uint16, mut jp: *const uint16) -
     );
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_51(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_51(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     if ((*E).toriz_var_09 as ::core::ffi::c_int) < 8 as ::core::ffi::c_int
         && (CompareDistToSamus_X(k, 0x20 as uint16) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
@@ -2374,8 +2276,7 @@ pub unsafe extern "C" fn Torizo_Instr_51(mut k: uint16, mut jp: *const uint16) -
     Torizo_C22D(k);
     return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_45(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_45(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*Get_Torizo(k as ::core::ffi::c_int)).toriz_var_00 =
         (jp.offset(2 as ::core::ffi::c_int as isize) as *mut uint8)
             .offset_from(RomBankBase((*gEnemyData(k as ::core::ffi::c_int)).bank))
@@ -2399,8 +2300,7 @@ pub unsafe extern "C" fn Torizo_Instr_45(mut k: uint16, mut jp: *const uint16) -
         return *jp.offset(1 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Instr_54(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Torizo_Instr_54(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     (*E).toriz_var_A = g_word_AAD59A[(*jp.offset(0 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
@@ -2436,8 +2336,7 @@ pub unsafe extern "C" fn Torizo_Instr_54(mut k: uint16, mut jp: *const uint16) -
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Func_9(mut k: uint16) {
+pub unsafe fn Torizo_Func_9(mut k: uint16) {
     let mut E: *mut Enemy_Torizo = Get_Torizo(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2454,25 +2353,21 @@ pub unsafe extern "C" fn Torizo_Func_9(mut k: uint16) {
         (*E).base.instruction_timer = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_Func_10(mut k: uint16) {
+pub unsafe fn Torizo_Func_10(mut k: uint16) {
     Torizo_C620(k);
     Torizo_C643(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_D5E6(mut k: uint16) {
+pub unsafe fn Torizo_D5E6(mut k: uint16) {
     Torizo_C620(k);
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     CallEnemyPreInstr(
         ((*E).toriz_var_F as ::core::ffi::c_int | 0xaa0000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_D5ED(mut k: uint16) {
+pub unsafe fn Torizo_D5ED(mut k: uint16) {
     Torizo_C643(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_D5F1(mut k: uint16) {
+pub unsafe fn Torizo_D5F1(mut k: uint16) {
     let mut v3: uint16 = 0;
     let mut E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int);
     let mut torizo_var_03: uint16 = (*E).toriz_var_03;
@@ -2514,8 +2409,7 @@ pub unsafe extern "C" fn Torizo_D5F1(mut k: uint16) {
         (*E).base.instruction_timer = 1 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_D658() {
+pub unsafe fn Torizo_D658() {
     let mut E: *mut Enemy_Torizo = Get_Torizo(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2524,8 +2418,7 @@ pub unsafe extern "C" fn Torizo_D658() {
         Torizo_D6A6();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GoldTorizo_Shot() {
+pub unsafe fn GoldTorizo_Shot() {
     let mut E: *mut Enemy_Torizo = Get_Torizo(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2586,8 +2479,7 @@ pub unsafe extern "C" fn GoldTorizo_Shot() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_D6A6() {
+pub unsafe fn Torizo_D6A6() {
     NormalEnemyShotAiSkipDeathAnim_CurEnemy();
     let mut E: *mut Enemy_Torizo = Get_Torizo(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -2602,8 +2494,7 @@ pub unsafe extern "C" fn Torizo_D6A6() {
             | kEnemyProps_Tangible as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_D6D1(mut k: uint16, mut j: uint16) {
+pub unsafe fn Torizo_D6D1(mut k: uint16, mut j: uint16) {
     let ref mut fresh1 = *((&raw mut g_ram as *mut uint8)
         .offset(0xc04 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
@@ -2621,8 +2512,7 @@ pub unsafe extern "C" fn Torizo_D6D1(mut k: uint16, mut j: uint16) {
     }
     (*E).base.current_instruction = v3;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_D6F7(mut k: uint16, mut j: uint16) {
+pub unsafe fn Torizo_D6F7(mut k: uint16, mut j: uint16) {
     let mut E: *mut Enemy_Torizo = Get_Torizo(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2663,8 +2553,7 @@ pub unsafe extern "C" fn Torizo_D6F7(mut k: uint16, mut j: uint16) {
         Torizo_D6A6();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn TourianEntranceStatue_Init() {
+pub unsafe fn TourianEntranceStatue_Init() {
     let mut v0: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2719,8 +2608,7 @@ pub unsafe extern "C" fn TourianEntranceStatue_Init() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_Instr_2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Shaktool_Instr_2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Shaktool = Get_Shaktool(k as ::core::ffi::c_int);
     let mut EX: *mut Enemy_Shaktool =
         Get_Shaktool((*E).shakt_var_E as ::core::ffi::c_int + 192 as ::core::ffi::c_int);
@@ -2730,15 +2618,13 @@ pub unsafe extern "C" fn Shaktool_Instr_2(mut k: uint16, mut jp: *const uint16) 
         ((*EX).shakt_var_D as ::core::ffi::c_int ^ 0x80 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_Instr_3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Shaktool_Instr_3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Shaktool = Get_Shaktool(k as ::core::ffi::c_int);
     let mut EX: *mut Enemy_Shaktool =
         Get_Shaktool((*E).shakt_var_E as ::core::ffi::c_int + 192 as ::core::ffi::c_int);
     return Shaktool_D956(k, jp, (*EX).shakt_var_D);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_Instr_4(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Shaktool_Instr_4(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Shaktool = Get_Shaktool(k as ::core::ffi::c_int);
     return Shaktool_D956(
         k,
@@ -2748,8 +2634,7 @@ pub unsafe extern "C" fn Shaktool_Instr_4(mut k: uint16, mut jp: *const uint16) 
             ^ 0x80 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_Instr_5(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Shaktool_Instr_5(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Shaktool = Get_Shaktool(k as ::core::ffi::c_int);
     return Shaktool_D956(
         k,
@@ -2758,12 +2643,7 @@ pub unsafe extern "C" fn Shaktool_Instr_5(mut k: uint16, mut jp: *const uint16) 
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_D956(
-    mut k: uint16,
-    mut jp: *const uint16,
-    mut a: uint16,
-) -> *const uint16 {
+pub unsafe fn Shaktool_D956(mut k: uint16, mut jp: *const uint16, mut a: uint16) -> *const uint16 {
     let mut E: *mut Enemy_Shaktool = Get_Shaktool(k as ::core::ffi::c_int);
     let mut v3: ::core::ffi::c_int = a as uint8 as ::core::ffi::c_int;
     AddToHiLo(
@@ -2780,12 +2660,10 @@ pub unsafe extern "C" fn Shaktool_D956(
     );
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_Instr_6(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Shaktool_Instr_6(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_Func_2(mut k: uint16) {
+pub unsafe fn Shaktool_Func_2(mut k: uint16) {
     SpawnEprojWithGfx(
         0 as uint16,
         k,
@@ -2802,8 +2680,7 @@ pub unsafe extern "C" fn Shaktool_Func_2(mut k: uint16) {
         addr_kEproj_ShaktoolAttackBackCircle as ::core::ffi::c_int as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Shaktool_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut shakt_var_E: uint16 = (*Get_Shaktool(k as ::core::ffi::c_int)).shakt_var_E;
     (*Get_Shaktool(shakt_var_E as ::core::ffi::c_int)).shakt_var_F = *(g_rom.offset(
         (((0xaadedb as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
@@ -2862,8 +2739,7 @@ pub unsafe extern "C" fn Shaktool_Instr_1(mut k: uint16, mut jp: *const uint16) 
             .offset(6 as ::core::ffi::c_int as isize);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_DAE5(mut k: uint16) {
+pub unsafe fn Shaktool_DAE5(mut k: uint16) {
     if NextRandom() as ::core::ffi::c_int & 0x8431 as ::core::ffi::c_int == 0 as ::core::ffi::c_int
     {
         let mut i: ::core::ffi::c_int = 12 as ::core::ffi::c_int;
@@ -2884,8 +2760,7 @@ pub unsafe extern "C" fn Shaktool_DAE5(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_DB0E(mut k: uint16, mut a: uint16) {
+pub unsafe fn Shaktool_DB0E(mut k: uint16, mut a: uint16) {
     let mut shakt_var_E: uint16 = (*Get_Shaktool(k as ::core::ffi::c_int)).shakt_var_E;
     (*Get_Shaktool(shakt_var_E as ::core::ffi::c_int)).shakt_parameter_1 = a;
     (*Get_Shaktool(shakt_var_E as ::core::ffi::c_int + 64 as ::core::ffi::c_int))
@@ -2901,8 +2776,7 @@ pub unsafe extern "C" fn Shaktool_DB0E(mut k: uint16, mut a: uint16) {
     (*Get_Shaktool(shakt_var_E as ::core::ffi::c_int + 384 as ::core::ffi::c_int))
         .shakt_parameter_1 = a;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_DB27(mut k: uint16, mut a: uint16) {
+pub unsafe fn Shaktool_DB27(mut k: uint16, mut a: uint16) {
     let mut shakto_var_E: uint16 = (*Get_Shaktool(k as ::core::ffi::c_int)).shakt_var_E;
     (*Get_Shaktool(shakto_var_E as ::core::ffi::c_int)).shakt_var_A = a;
     (*Get_Shaktool(shakto_var_E as ::core::ffi::c_int + 64 as ::core::ffi::c_int)).shakt_var_A = a;
@@ -2912,8 +2786,7 @@ pub unsafe extern "C" fn Shaktool_DB27(mut k: uint16, mut a: uint16) {
     (*Get_Shaktool(shakto_var_E as ::core::ffi::c_int + 320 as ::core::ffi::c_int)).shakt_var_A = a;
     (*Get_Shaktool(shakto_var_E as ::core::ffi::c_int + 384 as ::core::ffi::c_int)).shakt_var_A = a;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_DB40(mut k: uint16, mut a: uint16) {
+pub unsafe fn Shaktool_DB40(mut k: uint16, mut a: uint16) {
     let mut shakto_var_E: uint16 = (*Get_Shaktool(k as ::core::ffi::c_int)).shakt_var_E;
     (*Get_Shaktool(shakto_var_E as ::core::ffi::c_int)).shakt_var_B = a;
     (*Get_Shaktool(shakto_var_E as ::core::ffi::c_int + 64 as ::core::ffi::c_int)).shakt_var_B = a;
@@ -2923,8 +2796,7 @@ pub unsafe extern "C" fn Shaktool_DB40(mut k: uint16, mut a: uint16) {
     (*Get_Shaktool(shakto_var_E as ::core::ffi::c_int + 320 as ::core::ffi::c_int)).shakt_var_B = a;
     (*Get_Shaktool(shakto_var_E as ::core::ffi::c_int + 384 as ::core::ffi::c_int)).shakt_var_B = a;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_DB59(mut k: uint16) {
+pub unsafe fn Shaktool_DB59(mut k: uint16) {
     let mut shakto_var_E: uint16 = 0;
     let mut shakto_var_B: uint16 = 0;
     let mut v7: uint16 = 0;
@@ -3011,8 +2883,7 @@ pub unsafe extern "C" fn Shaktool_DB59(mut k: uint16) {
         .base
         .y_subpos = 0x8000 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_DC07(mut k: uint16) {
+pub unsafe fn Shaktool_DC07(mut k: uint16) {
     let mut E: *mut Enemy_Shaktool = Get_Shaktool(k as ::core::ffi::c_int);
     let mut v2: uint16 = 0;
     if (*E).shakt_parameter_1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -3031,8 +2902,7 @@ pub unsafe extern "C" fn Shaktool_DC07(mut k: uint16) {
                 .wrapping_sub(1 as usize) as isize,
         ) as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_DC2A(mut k: uint16) {
+pub unsafe fn Shaktool_DC2A(mut k: uint16) {
     let mut E: *mut Enemy_Shaktool = Get_Shaktool(k as ::core::ffi::c_int);
     let mut v3: ::core::ffi::c_int = *(&raw mut (*E).shakt_var_B as *mut uint8).offset(
         (::core::mem::size_of::<uint16>() as usize)
@@ -3085,8 +2955,7 @@ pub unsafe extern "C" fn Shaktool_DC2A(mut k: uint16) {
             ),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_DC6F(mut k: uint16) {
+pub unsafe fn Shaktool_DC6F(mut k: uint16) {
     let mut E: *mut Enemy_Shaktool = Get_Shaktool(k as ::core::ffi::c_int);
     Shaktool_DB40(k, (*E).shakt_var_A);
     let mut shakto_var_E: uint16 = (*E).shakt_var_E;
@@ -3105,8 +2974,7 @@ pub unsafe extern "C" fn Shaktool_DC6F(mut k: uint16) {
     (*Get_Shaktool(shakto_var_E as ::core::ffi::c_int + 384 as ::core::ffi::c_int)).shakt_var_C =
         g_word_AADEE9[6 as ::core::ffi::c_int as usize];
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_Hurt() {
+pub unsafe fn Shaktool_Hurt() {
     let mut E: *mut Enemy_Shaktool = Get_Shaktool(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -3115,8 +2983,7 @@ pub unsafe extern "C" fn Shaktool_Hurt() {
         ((*E).shakt_var_F as ::core::ffi::c_int | 0xaa0000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_DCAC(mut k: uint16) {
+pub unsafe fn Shaktool_DCAC(mut k: uint16) {
     Shaktool_DC2A(k);
     let mut E: *mut Enemy_Shaktool = Get_Shaktool(k as ::core::ffi::c_int);
     let mut shakto_var_C: uint16 = 0;
@@ -3136,8 +3003,7 @@ pub unsafe extern "C" fn Shaktool_DCAC(mut k: uint16) {
             shakto_var_C as ::core::ffi::c_int
         }) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_DCD7(mut k: uint16) {
+pub unsafe fn Shaktool_DCD7(mut k: uint16) {
     Shaktool_DCAC(k);
     let mut E: *mut Enemy_Shaktool = Get_Shaktool(k as ::core::ffi::c_int);
     let mut r18: uint16 =
@@ -3177,8 +3043,7 @@ pub unsafe extern "C" fn Shaktool_DCD7(mut k: uint16) {
         );
     (*E).base.instruction_timer = 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_DD25(mut k: uint16) {
+pub unsafe fn Shaktool_DD25(mut k: uint16) {
     let mut v7: int16 = 0;
     let mut E: *mut Enemy_Shaktool = Get_Shaktool(k as ::core::ffi::c_int);
     let mut y_pos: uint16 = (*E).base.y_pos;
@@ -3299,8 +3164,7 @@ pub unsafe extern "C" fn Shaktool_DD25(mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_Init() {
+pub unsafe fn Shaktool_Init() {
     let mut E: *mut Enemy_Shaktool = Get_Shaktool(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -3372,12 +3236,10 @@ pub unsafe extern "C" fn Shaktool_Init() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_Touch() {
+pub unsafe fn Shaktool_Touch() {
     NormalEnemyTouchAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_Shot() {
+pub unsafe fn Shaktool_Shot() {
     NormalEnemyShotAi();
     let mut E: *mut Enemy_Shaktool = Get_Shaktool(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -3408,45 +3270,38 @@ pub unsafe extern "C" fn Shaktool_Shot() {
             .properties = 512 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_Instr_9(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Shaktool_Instr_9(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1980 as ::core::ffi::c_int as isize)
         as *mut uint16) = 32 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x197c as ::core::ffi::c_int as isize)
         as *mut uint16) = 64 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_Instr_11(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Shaktool_Instr_11(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1978 as ::core::ffi::c_int as isize)
         as *mut uint16) = 722 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_Instr_10(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Shaktool_Instr_10(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     CallSomeSamusCode(1 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_AAE445(mut k: uint16) {
+pub unsafe fn sub_AAE445(mut k: uint16) {
     let mut v1: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int);
     if (*v1).parameter_1 != 0 {
         (*v1).current_instruction = addr_kShaktool_Ilist_E3A7 as ::core::ffi::c_int as uint16;
         (*v1).instruction_timer = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_Instr_8(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Shaktool_Instr_8(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     QueueSfx2_Max6(0x1c as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_Instr_13(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Shaktool_Instr_13(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     QueueSfx2_Max6(0x4b as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_Instr_12(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Shaktool_Instr_12(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut e: *mut Enemy_Shaktool = Get_Shaktool(k as ::core::ffi::c_int);
     let mut arg: uint16 = *jp.offset(0 as ::core::ffi::c_int as isize);
     CalculateBlockContainingPixelPos(
@@ -3472,8 +3327,7 @@ pub unsafe extern "C" fn Shaktool_Instr_12(mut k: uint16, mut jp: *const uint16)
     }
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_Instr_7(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Shaktool_Instr_7(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Shaktool = Get_Shaktool(k as ::core::ffi::c_int);
     (*E).shakt_var_C = *jp.offset(0 as ::core::ffi::c_int as isize);
     Enemy_MoveRight_IgnoreSlopes(
@@ -3526,8 +3380,7 @@ pub unsafe extern "C" fn Shaktool_Instr_7(mut k: uint16, mut jp: *const uint16) 
             + (*E).base.y_pos as ::core::ffi::c_int) as uint16;
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_Instr_14(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Shaktool_Instr_14(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     CallSomeSamusCode(1 as uint16);
     *((&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
@@ -3548,8 +3401,7 @@ pub unsafe extern "C" fn Shaktool_Instr_14(mut k: uint16, mut jp: *const uint16)
     });
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn N00bTubeCracks_Init() {
+pub unsafe fn N00bTubeCracks_Init() {
     let mut i: ::core::ffi::c_int = 62 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         *((&raw mut g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize)
@@ -3565,8 +3417,7 @@ pub unsafe extern "C" fn N00bTubeCracks_Init() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ChozoStatue_Init() {
+pub unsafe fn ChozoStatue_Init() {
     let mut v0: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -3617,8 +3468,7 @@ pub unsafe extern "C" fn ChozoStatue_Init() {
         });
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_AAE784() {
+pub unsafe fn sub_AAE784() {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
@@ -3638,8 +3488,7 @@ pub unsafe extern "C" fn sub_AAE784() {
         field_2: 0xd6d6 as VoidP,
     });
 }
-#[no_mangle]
-pub unsafe extern "C" fn ChozoStatue_Main() {
+pub unsafe fn ChozoStatue_Main() {
     let mut v0: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -3648,8 +3497,7 @@ pub unsafe extern "C" fn ChozoStatue_Main() {
         ((*v0).ai_preinstr as ::core::ffi::c_int | 0xaa0000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shaktool_PreInstr_0(mut k: uint16) {
+pub unsafe fn Shaktool_PreInstr_0(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8)
         .offset(0xd828 as ::core::ffi::c_int as isize)
         .offset(

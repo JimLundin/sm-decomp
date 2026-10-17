@@ -427,23 +427,21 @@ pub const addr_kAnimtiles_WreckedShipTradmillRight: Consts_87 = 33397;
 pub use crate::types::SpawnHardcodedPlmArgs;
 pub const kCoroutineNone: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 #[inline]
-unsafe extern "C" fn RomPtr_8F(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_8F(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x8f0000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn get_DoorDef(mut a: uint16) -> *mut DoorDef {
+unsafe fn get_DoorDef(mut a: uint16) -> *mut DoorDef {
     return RomPtr((0x830000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut DoorDef;
 }
 #[inline]
-unsafe extern "C" fn get_RoomDefRoomstate(mut a: uint16) -> *mut RoomDefRoomstate {
+unsafe fn get_RoomDefRoomstate(mut a: uint16) -> *mut RoomDefRoomstate {
     return RomPtr((0x8f0000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut RoomDefRoomstate;
 }
 #[inline]
-unsafe extern "C" fn get_RoomDefStateSelect_E6E5_Finish(
-    mut a: uint16,
-) -> *mut RoomDefStateSelect_E6E5_Finish {
+unsafe fn get_RoomDefStateSelect_E6E5_Finish(mut a: uint16) -> *mut RoomDefStateSelect_E6E5_Finish {
     return RomPtr((0x8f0000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut RoomDefStateSelect_E6E5_Finish;
 }
@@ -586,8 +584,7 @@ pub const fnRoomDefStateSelect_MorphBallMissiles: uint32 = 9430610 as uint32;
 pub const fnRoomDefStateSelect_PowerBombs: uint32 = 9430633 as uint32;
 pub const fnRoomCode_CrocomireShaking: uint32 = 9431245 as uint32;
 pub const fnRoomCode_RidleyRoomShaking: uint32 = 9431376 as uint32;
-#[no_mangle]
-pub unsafe extern "C" fn RoomSetup_AfterSavingAnimals() {
+pub unsafe fn RoomSetup_AfterSavingAnimals() {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0x3d as uint8,
         field_1: 0xb as uint8,
@@ -598,47 +595,40 @@ pub unsafe extern "C" fn RoomSetup_AfterSavingAnimals() {
     *((&raw mut g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
         as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomSetup_AutoDestroyWallAfterEscape() {
+pub unsafe fn RoomSetup_AutoDestroyWallAfterEscape() {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0x10 as uint8,
         field_1: 0x87 as uint8,
         field_2: 0xb964 as VoidP,
     });
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomSetup_TurnWallIntoShotblocks() {
+pub unsafe fn RoomSetup_TurnWallIntoShotblocks() {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0xf as uint8,
         field_1: 0xa as uint8,
         field_2: 0xb9ed as VoidP,
     });
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomSetup_ShakeDuringEscape() {
+pub unsafe fn RoomSetup_ShakeDuringEscape() {
     *((&raw mut g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
         as *mut uint16) = 6 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
         as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
     FxTypeFunc_20();
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomSetup_ScrollingSkyLand() {
+pub unsafe fn RoomSetup_ScrollingSkyLand() {
     FxTypeFunc_20();
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomSetup_ScrollingSkyOcean() {
+pub unsafe fn RoomSetup_ScrollingSkyOcean() {
     RoomSetupAsm_ScrollingSkyOcean();
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomSetup_RunStatueUnlockAnims() {
+pub unsafe fn RoomSetup_RunStatueUnlockAnims() {
     SpawnAnimtiles(addr_kAnimtiles_TourianStatue_Kraid as ::core::ffi::c_int as uint16);
     SpawnAnimtiles(addr_kAnimtiles_TourianStatue_Phantoon as ::core::ffi::c_int as uint16);
     SpawnAnimtiles(addr_kAnimtiles_TourianStatue_Draygon as ::core::ffi::c_int as uint16);
     SpawnAnimtiles(addr_kAnimtiles_TourianStatue_Ridley as ::core::ffi::c_int as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_StartWreckedShipTreadmillWest() {
+pub unsafe fn DoorCode_StartWreckedShipTreadmillWest() {
     SpawnAnimtiles(addr_kAnimtiles_WreckedShipTradmillRight as ::core::ffi::c_int as uint16);
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0x4 as uint8,
@@ -646,26 +636,22 @@ pub unsafe extern "C" fn DoorCode_StartWreckedShipTreadmillWest() {
         field_2: 0xb64b as VoidP,
     });
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_Scroll6_Green() {
+pub unsafe fn DoorCode_Scroll6_Green() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(6 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_Scroll0_Blue() {
+pub unsafe fn DoorCode_Scroll0_Blue() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_Scroll13_Blue() {
+pub unsafe fn DoorCode_Scroll13_Blue() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(19 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_Scroll_4Blue_8Green() {
+pub unsafe fn DoorCode_Scroll_4Blue_8Green() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 0 as uint8;
@@ -673,8 +659,7 @@ pub unsafe extern "C" fn DoorCode_Scroll_4Blue_8Green() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(8 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_Scroll_8toB_Red() {
+pub unsafe fn DoorCode_Scroll_8toB_Red() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(8 as ::core::ffi::c_int as isize) = 0 as uint8;
@@ -688,8 +673,7 @@ pub unsafe extern "C" fn DoorCode_Scroll_8toB_Red() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(11 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_Scroll_LotsRed() {
+pub unsafe fn DoorCode_Scroll_LotsRed() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 0 as uint8;
@@ -715,8 +699,7 @@ pub unsafe extern "C" fn DoorCode_Scroll_LotsRed() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(17 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_Scroll_1_4_Green() {
+pub unsafe fn DoorCode_Scroll_1_4_Green() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 2 as uint8;
@@ -724,38 +707,32 @@ pub unsafe extern "C" fn DoorCode_Scroll_1_4_Green() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_Scroll_2_Blue() {
+pub unsafe fn DoorCode_Scroll_2_Blue() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_Scroll_17_Blue() {
+pub unsafe fn DoorCode_Scroll_17_Blue() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(23 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_Scroll_4_Blue() {
+pub unsafe fn DoorCode_Scroll_4_Blue() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_Scroll_6_Green() {
+pub unsafe fn DoorCode_Scroll_6_Green() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(6 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_Scroll_3_Green() {
+pub unsafe fn DoorCode_Scroll_3_Green() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(3 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_0() {
+pub unsafe fn DoorCode_SetScroll_0() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(24 as ::core::ffi::c_int as isize) = 2 as uint8;
@@ -763,8 +740,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_0() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(28 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_1() {
+pub unsafe fn DoorCode_SetScroll_1() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(5 as ::core::ffi::c_int as isize) = 1 as uint8;
@@ -772,14 +748,12 @@ pub unsafe extern "C" fn DoorCode_SetScroll_1() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(6 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_2() {
+pub unsafe fn DoorCode_SetScroll_2() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(29 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_3() {
+pub unsafe fn DoorCode_SetScroll_3() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 2 as uint8;
@@ -787,8 +761,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_3() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(3 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_4() {
+pub unsafe fn DoorCode_SetScroll_4() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 0 as uint8;
@@ -796,14 +769,12 @@ pub unsafe extern "C" fn DoorCode_SetScroll_4() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_5() {
+pub unsafe fn DoorCode_SetScroll_5() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(11 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_6() {
+pub unsafe fn DoorCode_SetScroll_6() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(28 as ::core::ffi::c_int as isize) = 0 as uint8;
@@ -811,14 +782,12 @@ pub unsafe extern "C" fn DoorCode_SetScroll_6() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(29 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_7() {
+pub unsafe fn DoorCode_SetScroll_7() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_8() {
+pub unsafe fn DoorCode_SetScroll_8() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(32 as ::core::ffi::c_int as isize) = 2 as uint8;
@@ -829,20 +798,17 @@ pub unsafe extern "C" fn DoorCode_SetScroll_8() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(37 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_9() {
+pub unsafe fn DoorCode_SetScroll_9() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_10() {
+pub unsafe fn DoorCode_SetScroll_10() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_11() {
+pub unsafe fn DoorCode_SetScroll_11() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(6 as ::core::ffi::c_int as isize) = 2 as uint8;
@@ -850,8 +816,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_11() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(7 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_12() {
+pub unsafe fn DoorCode_SetScroll_12() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 1 as uint8;
@@ -859,8 +824,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_12() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_13() {
+pub unsafe fn DoorCode_SetScroll_13() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 1 as uint8;
@@ -868,8 +832,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_13() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(3 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_14() {
+pub unsafe fn DoorCode_SetScroll_14() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 0 as uint8;
@@ -877,8 +840,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_14() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_15() {
+pub unsafe fn DoorCode_SetScroll_15() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 1 as uint8;
@@ -886,8 +848,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_15() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(3 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_16() {
+pub unsafe fn DoorCode_SetScroll_16() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 2 as uint8;
@@ -895,14 +856,12 @@ pub unsafe extern "C" fn DoorCode_SetScroll_16() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_17() {
+pub unsafe fn DoorCode_SetScroll_17() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_18() {
+pub unsafe fn DoorCode_SetScroll_18() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(15 as ::core::ffi::c_int as isize) = 2 as uint8;
@@ -910,14 +869,12 @@ pub unsafe extern "C" fn DoorCode_SetScroll_18() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(18 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_19() {
+pub unsafe fn DoorCode_SetScroll_19() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(6 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_20() {
+pub unsafe fn DoorCode_SetScroll_20() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 2 as uint8;
@@ -925,14 +882,12 @@ pub unsafe extern "C" fn DoorCode_SetScroll_20() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_21() {
+pub unsafe fn DoorCode_SetScroll_21() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_22() {
+pub unsafe fn DoorCode_SetScroll_22() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(3 as ::core::ffi::c_int as isize) = 0 as uint8;
@@ -949,8 +904,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_22() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(8 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_23() {
+pub unsafe fn DoorCode_SetScroll_23() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 1 as uint8;
@@ -967,8 +921,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_23() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(6 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_24() {
+pub unsafe fn DoorCode_SetScroll_24() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 1 as uint8;
@@ -976,8 +929,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_24() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_25() {
+pub unsafe fn DoorCode_SetScroll_25() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 0 as uint8;
@@ -985,14 +937,12 @@ pub unsafe extern "C" fn DoorCode_SetScroll_25() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_26() {
+pub unsafe fn DoorCode_SetScroll_26() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(10 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_27() {
+pub unsafe fn DoorCode_SetScroll_27() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 1 as uint8;
@@ -1000,8 +950,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_27() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_28() {
+pub unsafe fn DoorCode_SetScroll_28() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 2 as uint8;
@@ -1009,8 +958,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_28() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_29() {
+pub unsafe fn DoorCode_SetScroll_29() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(6 as ::core::ffi::c_int as isize) = 1 as uint8;
@@ -1021,8 +969,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_29() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(8 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_30() {
+pub unsafe fn DoorCode_SetScroll_30() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 0 as uint8;
@@ -1030,14 +977,12 @@ pub unsafe extern "C" fn DoorCode_SetScroll_30() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(3 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_31() {
+pub unsafe fn DoorCode_SetScroll_31() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(7 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_32() {
+pub unsafe fn DoorCode_SetScroll_32() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 0 as uint8;
@@ -1045,8 +990,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_32() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_33() {
+pub unsafe fn DoorCode_SetScroll_33() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(3 as ::core::ffi::c_int as isize) = 0 as uint8;
@@ -1054,8 +998,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_33() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_34() {
+pub unsafe fn DoorCode_SetScroll_34() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 1 as uint8;
@@ -1063,8 +1006,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_34() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_35() {
+pub unsafe fn DoorCode_SetScroll_35() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 1 as uint8;
@@ -1078,14 +1020,12 @@ pub unsafe extern "C" fn DoorCode_SetScroll_35() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(3 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_36() {
+pub unsafe fn DoorCode_SetScroll_36() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_37() {
+pub unsafe fn DoorCode_SetScroll_37() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 1 as uint8;
@@ -1096,8 +1036,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_37() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_38() {
+pub unsafe fn DoorCode_SetScroll_38() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 1 as uint8;
@@ -1105,14 +1044,12 @@ pub unsafe extern "C" fn DoorCode_SetScroll_38() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(3 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_39() {
+pub unsafe fn DoorCode_SetScroll_39() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_40() {
+pub unsafe fn DoorCode_SetScroll_40() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 1 as uint8;
@@ -1120,14 +1057,12 @@ pub unsafe extern "C" fn DoorCode_SetScroll_40() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_41() {
+pub unsafe fn DoorCode_SetScroll_41() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(24 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_42() {
+pub unsafe fn DoorCode_SetScroll_42() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(3 as ::core::ffi::c_int as isize) = 0 as uint8;
@@ -1135,22 +1070,18 @@ pub unsafe extern "C" fn DoorCode_SetScroll_42() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_43() {
+pub unsafe fn DoorCode_SetScroll_43() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(14 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_ScrollingSkyLand_() {
+pub unsafe fn RoomCode_ScrollingSkyLand_() {
     RoomCode_ScrollingSkyLand();
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_ScrollingSkyOcean_() {
+pub unsafe fn RoomCode_ScrollingSkyOcean_() {
     RoomMainAsm_ScrollingSkyOcean();
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_GenRandomExplodes_Nonblank() {
+pub unsafe fn RoomCode_GenRandomExplodes_Nonblank() {
     if *((&raw mut g_ram as *mut uint8).offset(0xa78 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
         && *((&raw mut g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize)
@@ -1189,23 +1120,20 @@ pub unsafe extern "C" fn RoomCode_GenRandomExplodes_Nonblank() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_ScrollingSkyLand_Shakes() {
+pub unsafe fn RoomCode_ScrollingSkyLand_Shakes() {
     RoomCode_ScrollingSkyLand();
     RoomCode_GenRandomExplodes_Nonblank();
     let ref mut fresh17 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1840 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh17 = (*fresh17 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_ExplodeShakes() {
+pub unsafe fn RoomCode_ExplodeShakes() {
     RoomCode_GenRandomExplodes_Nonblank();
     let ref mut fresh16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1840 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh16 = (*fresh16 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_GenRandomExplodes_4th() {
+pub unsafe fn RoomCode_GenRandomExplodes_4th() {
     if *((&raw mut g_ram as *mut uint8).offset(0xa78 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
         && *((&raw mut g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize)
@@ -1228,8 +1156,7 @@ pub unsafe extern "C" fn RoomCode_GenRandomExplodes_4th() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_GenRandomExplodes(mut x_r18: uint16, mut y_r20: uint16) {
+pub unsafe fn RoomCode_GenRandomExplodes(mut x_r18: uint16, mut y_r20: uint16) {
     static mut kRoomCode_GenRandomExplodes_Sprite: [uint8; 8] = [
         3 as ::core::ffi::c_int as uint8,
         3 as ::core::ffi::c_int as uint8,
@@ -1265,8 +1192,7 @@ pub unsafe extern "C" fn RoomCode_GenRandomExplodes(mut x_r18: uint16, mut y_r20
         0 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_ScrollRightDachora() {
+pub unsafe fn RoomCode_ScrollRightDachora() {
     if *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(11 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
@@ -1288,23 +1214,20 @@ pub unsafe extern "C" fn RoomCode_ScrollRightDachora() {
                 + 3 as ::core::ffi::c_int)) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_8FC8C8() {
+pub unsafe fn RoomCode_8FC8C8() {
     SpawnEprojWithRoomGfx(
         addr_kEproj_PrePhantomRoom as ::core::ffi::c_int as uint16,
         0 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_SetupShaktoolRoomPlm() {
+pub unsafe fn RoomCode_SetupShaktoolRoomPlm() {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0 as uint8,
         field_1: 0 as uint8,
         field_2: 0xb8eb as VoidP,
     });
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_SetPauseCodeForDraygon() {
+pub unsafe fn RoomCode_SetPauseCodeForDraygon() {
     mov24(
         (&raw mut g_ram as *mut uint8).offset(0x601 as ::core::ffi::c_int as isize) as *mut LongPtr,
         fnPauseHook_DraygonRoom as uint32,
@@ -1314,13 +1237,11 @@ pub unsafe extern "C" fn RoomCode_SetPauseCodeForDraygon() {
         fnUnpauseHook_DraygonRoom as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn PauseHook_DraygonRoom() {
+pub unsafe fn PauseHook_DraygonRoom() {
     *((&raw mut g_ram as *mut uint8).offset(0xa7 as ::core::ffi::c_int as isize) as *mut uint16) =
         4 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn UnpauseHook_DraygonRoom() -> CoroutineRet {
+pub unsafe fn UnpauseHook_DraygonRoom() -> CoroutineRet {
     if *((&raw mut g_ram as *mut uint8).offset(0x18b4 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
@@ -1331,8 +1252,7 @@ pub unsafe extern "C" fn UnpauseHook_DraygonRoom() -> CoroutineRet {
     }
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_SetCollectedMap() {
+pub unsafe fn RoomCode_SetCollectedMap() {
     let mut v0: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0xd908 as ::core::ffi::c_int as isize)
         .offset(
@@ -1349,16 +1269,14 @@ pub unsafe extern "C" fn RoomCode_SetCollectedMap() {
     *((&raw mut g_ram as *mut uint8).offset(0x789 as ::core::ffi::c_int as isize) as *mut uint16) =
         v0;
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_SetZebesTimebombEvent() {
+pub unsafe fn RoomCode_SetZebesTimebombEvent() {
     SetEventHappened(0xe as uint16);
     *((&raw mut g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
         as *mut uint16) = 18 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
         as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_SetLightHorizRoomShake() {
+pub unsafe fn RoomCode_SetLightHorizRoomShake() {
     *((&raw mut g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
         as *mut uint16) = 18 as uint16;
     *((&raw mut g_ram as *mut uint8)
@@ -1369,15 +1287,13 @@ pub unsafe extern "C" fn RoomCode_SetLightHorizRoomShake() {
     *((&raw mut g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
         as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_SetMediumHorizRoomShake() {
+pub unsafe fn RoomCode_SetMediumHorizRoomShake() {
     *((&raw mut g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
         as *mut uint16) = 21 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
         as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_Escape4_SetMediumHorizRoomShake() {
+pub unsafe fn RoomCode_Escape4_SetMediumHorizRoomShake() {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0x10 as uint8,
         field_1: 0x10 as uint8,
@@ -1393,8 +1309,7 @@ pub unsafe extern "C" fn RoomCode_Escape4_SetMediumHorizRoomShake() {
     *((&raw mut g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
         as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_SetCeresDoorSolid() {
+pub unsafe fn RoomCode_SetCeresDoorSolid() {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0xf as uint8,
         field_1: 0x26 as uint8,
@@ -1402,19 +1317,16 @@ pub unsafe extern "C" fn RoomCode_SetCeresDoorSolid() {
     });
     FxTypeFunc_2C_Haze();
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_CeresColorMathHdma() {
+pub unsafe fn RoomCode_CeresColorMathHdma() {
     FxTypeFunc_2C_Haze();
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_CeresColorMathHdma_BgBase() {
+pub unsafe fn RoomCode_CeresColorMathHdma_BgBase() {
     *(&raw mut g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize) = 102 as uint8;
     FxTypeFunc_2C_Haze();
     *((&raw mut g_ram as *mut uint8).offset(0x7eb as ::core::ffi::c_int as isize) as *mut uint16) =
         9 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_StartWreckedSkipTreadmill_East() {
+pub unsafe fn DoorCode_StartWreckedSkipTreadmill_East() {
     SpawnAnimtiles(addr_kAnimtiles_WreckedShipTradmillLeft as ::core::ffi::c_int as uint16);
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0x4 as uint8,
@@ -1422,20 +1334,17 @@ pub unsafe extern "C" fn DoorCode_StartWreckedSkipTreadmill_East() {
         field_2: 0xb64f as VoidP,
     });
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_44() {
+pub unsafe fn DoorCode_SetScroll_44() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_45() {
+pub unsafe fn DoorCode_SetScroll_45() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_46() {
+pub unsafe fn DoorCode_SetScroll_46() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(3 as ::core::ffi::c_int as isize) = 0 as uint8;
@@ -1443,14 +1352,12 @@ pub unsafe extern "C" fn DoorCode_SetScroll_46() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_47() {
+pub unsafe fn DoorCode_SetScroll_47() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(41 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_48() {
+pub unsafe fn DoorCode_SetScroll_48() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(40 as ::core::ffi::c_int as isize) = 2 as uint8;
@@ -1458,8 +1365,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_48() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(46 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_49() {
+pub unsafe fn DoorCode_SetScroll_49() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(6 as ::core::ffi::c_int as isize) = 0 as uint8;
@@ -1479,8 +1385,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_49() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(11 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetupElevatubeFromSouth() {
+pub unsafe fn DoorCode_SetupElevatubeFromSouth() {
     *((&raw mut g_ram as *mut uint8)
         .offset(0x7e1 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) =
@@ -1499,8 +1404,7 @@ pub unsafe extern "C" fn DoorCode_SetupElevatubeFromSouth() {
         field_2: 0xb8f9 as VoidP,
     });
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetupElevatubeFromNorth() {
+pub unsafe fn DoorCode_SetupElevatubeFromNorth() {
     *((&raw mut g_ram as *mut uint8)
         .offset(0x7e1 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) = 256 as uint16;
@@ -1525,8 +1429,7 @@ pub unsafe extern "C" fn DoorCode_SetupElevatubeFromNorth() {
         field_2: 0xb8f9 as VoidP,
     });
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_Elevatube() {
+pub unsafe fn RoomCode_Elevatube() {
     let mut v0: uint16 = 0;
     *((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize) as *mut uint16) =
         128 as uint16;
@@ -1570,18 +1473,15 @@ pub unsafe extern "C" fn RoomCode_Elevatube() {
                 as *mut uint16) as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_ResetElevatubeNorthExit() {
+pub unsafe fn DoorCode_ResetElevatubeNorthExit() {
     CallSomeSamusCode(1 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_ResetElevatubeSouthExit() {
+pub unsafe fn DoorCode_ResetElevatubeSouthExit() {
     *((&raw mut g_ram as *mut uint8).offset(0xcd20 as ::core::ffi::c_int as isize)
         as *mut uint16) = 514 as uint16;
     CallSomeSamusCode(1 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_50() {
+pub unsafe fn DoorCode_SetScroll_50() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(10 as ::core::ffi::c_int as isize) = 0 as uint8;
@@ -1589,8 +1489,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_50() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(11 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn UNUSED_DoorCode_SetScroll_51() {
+pub unsafe fn UNUSED_DoorCode_SetScroll_51() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(17 as ::core::ffi::c_int as isize) = 0 as uint8;
@@ -1598,14 +1497,12 @@ pub unsafe extern "C" fn UNUSED_DoorCode_SetScroll_51() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(16 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn UNUSED_DoorCode_SetScroll_52() {
+pub unsafe fn UNUSED_DoorCode_SetScroll_52() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_53() {
+pub unsafe fn DoorCode_SetScroll_53() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 0 as uint8;
@@ -1613,8 +1510,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_53() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_54() {
+pub unsafe fn DoorCode_SetScroll_54() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 0 as uint8;
@@ -1622,8 +1518,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_54() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_55() {
+pub unsafe fn DoorCode_SetScroll_55() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(9 as ::core::ffi::c_int as isize) = 0 as uint8;
@@ -1631,8 +1526,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_55() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(10 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_56() {
+pub unsafe fn DoorCode_SetScroll_56() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 0 as uint8;
@@ -1643,32 +1537,27 @@ pub unsafe extern "C" fn DoorCode_SetScroll_56() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_57() {
+pub unsafe fn DoorCode_SetScroll_57() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_58() {
+pub unsafe fn DoorCode_SetScroll_58() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(6 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_59() {
+pub unsafe fn DoorCode_SetScroll_59() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_60() {
+pub unsafe fn DoorCode_SetScroll_60() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_61() {
+pub unsafe fn DoorCode_SetScroll_61() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 0 as uint8;
@@ -1676,8 +1565,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_61() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(7 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_62() {
+pub unsafe fn DoorCode_SetScroll_62() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 0 as uint8;
@@ -1685,8 +1573,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_62() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_63() {
+pub unsafe fn DoorCode_SetScroll_63() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 2 as uint8;
@@ -1694,8 +1581,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_63() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_64() {
+pub unsafe fn DoorCode_SetScroll_64() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 2 as uint8;
@@ -1703,8 +1589,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_64() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_SetScroll_65() {
+pub unsafe fn DoorCode_SetScroll_65() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(24 as ::core::ffi::c_int as isize) = 1 as uint8;
@@ -1712,8 +1597,7 @@ pub unsafe extern "C" fn DoorCode_SetScroll_65() {
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(25 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_CeresElevatorShaft() {
+pub unsafe fn DoorCode_CeresElevatorShaft() {
     *(&raw mut g_ram as *mut uint8).offset(0x56 as ::core::ffi::c_int as isize) = 7 as uint8;
     WriteReg(BGMODE as ::core::ffi::c_int as uint16, 7 as uint8);
     *((&raw mut g_ram as *mut uint8).offset(0x78 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -1743,14 +1627,12 @@ pub unsafe extern "C" fn DoorCode_CeresElevatorShaft() {
         b"<\0" as *const u8 as *const ::core::ffi::c_char,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorCode_CeresElevatorShaft_2() {
+pub unsafe fn DoorCode_CeresElevatorShaft_2() {
     *(&raw mut g_ram as *mut uint8).offset(0x56 as ::core::ffi::c_int as isize) = 9 as uint8;
     *((&raw mut g_ram as *mut uint8).offset(0x783 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_CeresElevatorShaft_() {
+pub unsafe fn RoomCode_CeresElevatorShaft_() {
     RoomCode_CeresElevatorShaft();
 }
 static mut kRoomCode_SpawnCeresFallingDebris_Tab: [uint16; 16] = [
@@ -1771,8 +1653,7 @@ static mut kRoomCode_SpawnCeresFallingDebris_Tab: [uint16; 16] = [
     0x170 as ::core::ffi::c_int as uint16,
     0x190 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_SpawnCeresFallingDebris() {
+pub unsafe fn RoomCode_SpawnCeresFallingDebris() {
     if *((&raw mut g_ram as *mut uint8).offset(0x93f as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         != 0
@@ -1813,8 +1694,7 @@ pub unsafe extern "C" fn RoomCode_SpawnCeresFallingDebris() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_HandleCeresRidleyGetaway() {
+pub unsafe fn RoomCode_HandleCeresRidleyGetaway() {
     if *((&raw mut g_ram as *mut uint8).offset(0x93f as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
@@ -1823,8 +1703,7 @@ pub unsafe extern "C" fn RoomCode_HandleCeresRidleyGetaway() {
         HandleCeresRidleyGetawayCutscene();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_ShakeScreenHorizDiag() {
+pub unsafe fn RoomCode_ShakeScreenHorizDiag() {
     let mut v0: uint16 = 0;
     let mut current_block_3: u64;
     if *((&raw mut g_ram as *mut uint8).offset(0x7e1 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -1860,8 +1739,7 @@ pub unsafe extern "C" fn RoomCode_ShakeScreenHorizDiag() {
     }
     RoomCode_GenRandomExplodes_4th();
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_ShakeScreenHorizDiagStrong() {
+pub unsafe fn RoomCode_ShakeScreenHorizDiagStrong() {
     let mut v0: int16 = 0;
     let mut current_block_3: u64;
     if *((&raw mut g_ram as *mut uint8).offset(0x7e1 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -1904,8 +1782,7 @@ pub unsafe extern "C" fn RoomCode_ShakeScreenHorizDiagStrong() {
         as *mut uint16);
     RoomCode_GenRandomExplodes_4th();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallRoomDefStateSelect(mut ea: uint32, mut k: uint16) -> uint16 {
+pub unsafe fn CallRoomDefStateSelect(mut ea: uint32, mut k: uint16) -> uint16 {
     match ea {
         9430502 => return RoomDefStateSelect_Finish(k),
         9430527 => return RoomDefStateSelect_TourianBoss01(k),
@@ -1916,8 +1793,7 @@ pub unsafe extern "C" fn CallRoomDefStateSelect(mut ea: uint32, mut k: uint16) -
         _ => return Unreachable() as uint16,
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleRoomDefStateSelect(mut k: uint16) {
+pub unsafe fn HandleRoomDefStateSelect(mut k: uint16) {
     let mut v1: uint16 = (k as ::core::ffi::c_int + 11 as ::core::ffi::c_int) as uint16;
     loop {
         let mut event_pointer: uint16 =
@@ -1931,22 +1807,19 @@ pub unsafe extern "C" fn HandleRoomDefStateSelect(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomDefStateSelect_Finish(mut k: uint16) -> uint16 {
+pub unsafe fn RoomDefStateSelect_Finish(mut k: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x7bb as ::core::ffi::c_int as isize) as *mut uint16) =
         k;
     return 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomDefStateSelect_TourianBoss01(mut k: uint16) -> uint16 {
+pub unsafe fn RoomDefStateSelect_TourianBoss01(mut k: uint16) -> uint16 {
     if CheckBossBitForCurArea(1 as uint16) as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
         return (k as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     }
     let mut v1: *const uint16 = RomPtr_8F(k as uint16_t) as *const uint16;
     return RoomDefStateSelect_Finish(*v1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomDefStateSelect_IsEventSet(mut k: uint16) -> uint16 {
+pub unsafe fn RoomDefStateSelect_IsEventSet(mut k: uint16) -> uint16 {
     let mut v1: *const uint8 = RomPtr_8F(k as uint16_t);
     if CheckEventHappened(*v1 as uint16) != 0 {
         return RoomDefStateSelect_Finish(
@@ -1956,8 +1829,7 @@ pub unsafe extern "C" fn RoomDefStateSelect_IsEventSet(mut k: uint16) -> uint16 
         return (k as ::core::ffi::c_int + 3 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomDefStateSelect_IsBossDead(mut k: uint16) -> uint16 {
+pub unsafe fn RoomDefStateSelect_IsBossDead(mut k: uint16) -> uint16 {
     let mut v1: *const uint8 = RomPtr_8F(k as uint16_t);
     if CheckBossBitForCurArea(*v1 as uint16) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         return RoomDefStateSelect_Finish(
@@ -1967,8 +1839,7 @@ pub unsafe extern "C" fn RoomDefStateSelect_IsBossDead(mut k: uint16) -> uint16 
         return (k as ::core::ffi::c_int + 3 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomDefStateSelect_MorphBallMissiles(mut k: uint16) -> uint16 {
+pub unsafe fn RoomDefStateSelect_MorphBallMissiles(mut k: uint16) -> uint16 {
     if *((&raw mut g_ram as *mut uint8).offset(0x9a4 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 4 as ::core::ffi::c_int
@@ -1982,8 +1853,7 @@ pub unsafe extern "C" fn RoomDefStateSelect_MorphBallMissiles(mut k: uint16) -> 
     let mut v1: *const uint16 = RomPtr_8F(k as uint16_t) as *const uint16;
     return RoomDefStateSelect_Finish(*v1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomDefStateSelect_PowerBombs(mut k: uint16) -> uint16 {
+pub unsafe fn RoomDefStateSelect_PowerBombs(mut k: uint16) -> uint16 {
     if *((&raw mut g_ram as *mut uint8).offset(0x9d0 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
     {
@@ -1992,8 +1862,7 @@ pub unsafe extern "C" fn RoomDefStateSelect_PowerBombs(mut k: uint16) -> uint16 
     let mut v1: *const uint16 = RomPtr_8F(k as uint16_t) as *const uint16;
     return RoomDefStateSelect_Finish(*v1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallRoomSetupCode(mut ea: uint32) {
+pub unsafe fn CallRoomSetupCode(mut ea: uint32) {
     match ea {
         9408916 => {
             RoomSetup_AfterSavingAnimals();
@@ -2074,8 +1943,7 @@ pub unsafe extern "C" fn CallRoomSetupCode(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn RunRoomSetupCode() {
+pub unsafe fn RunRoomSetupCode() {
     let mut RoomDefRoomstate: *mut RoomDefRoomstate = ::core::ptr::null_mut::<RoomDefRoomstate>();
     RoomDefRoomstate = get_RoomDefRoomstate(
         *((&raw mut g_ram as *mut uint8).offset(0x7bb as ::core::ffi::c_int as isize)
@@ -2088,8 +1956,7 @@ pub unsafe extern "C" fn RunRoomSetupCode() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallDoorDefSetupCode(mut ea: uint32) {
+pub unsafe fn CallDoorDefSetupCode(mut ea: uint32) {
     match ea {
         9419121 => {
             DoorCode_StartWreckedShipTreadmillWest();
@@ -2424,8 +2291,7 @@ pub unsafe extern "C" fn CallDoorDefSetupCode(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn RunDoorSetupCode() {
+pub unsafe fn RunDoorSetupCode() {
     let mut DD: *mut DoorDef = get_DoorDef(
         *((&raw mut g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -2437,8 +2303,7 @@ pub unsafe extern "C" fn RunDoorSetupCode() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_CrocomireShaking() {
+pub unsafe fn RoomCode_CrocomireShaking() {
     let mut ai_var_D: uint16 = 0;
     if (*((&raw mut g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
         as *mut EnemyData)
@@ -2563,8 +2428,7 @@ static mut kRoomCode_RidleyRoomShaking_Y: [int16; 8] = [
     0 as ::core::ffi::c_int as int16,
     -(2 as ::core::ffi::c_int) as int16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_RidleyRoomShaking() {
+pub unsafe fn RoomCode_RidleyRoomShaking() {
     let mut ai_var_A: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         as *mut EnemyData)
@@ -2609,8 +2473,7 @@ pub unsafe extern "C" fn RoomCode_RidleyRoomShaking() {
             as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallRoomCode(mut ea: uint32) {
+pub unsafe fn CallRoomCode(mut ea: uint32) {
     match ea {
         9421078 => {
             RoomCode_ScrollingSkyLand_();
@@ -2674,8 +2537,7 @@ pub unsafe extern "C" fn CallRoomCode(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn RunRoomMainCode() {
+pub unsafe fn RunRoomMainCode() {
     if *((&raw mut g_ram as *mut uint8).offset(0x7df as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {

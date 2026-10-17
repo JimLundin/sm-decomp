@@ -490,25 +490,25 @@ pub struct Enemy_SporeSpawn {
     pub ssn_var_5F: uint16,
 }
 #[inline]
-unsafe extern "C" fn RomPtr_A0(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_A0(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0xa00000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomPtr_A5(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_A5(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0xa50000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
+unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
     return (&raw mut g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
         as *mut uint8 as *mut VramWriteEntry;
 }
 #[inline]
-unsafe extern "C" fn get_EnemyDef_A2(mut a: uint16) -> *mut EnemyDef {
+unsafe fn get_EnemyDef_A2(mut a: uint16) -> *mut EnemyDef {
     return RomPtr((0xa00000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut EnemyDef;
 }
 #[inline]
-unsafe extern "C" fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
+unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
     let mut t: uint32 = ((*lo as ::core::ffi::c_int
         + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
         as uint32)
@@ -517,7 +517,7 @@ unsafe extern "C" fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: 
     *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
 #[inline]
-unsafe extern "C" fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
+unsafe fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
     *lo = t as uint16;
     *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
@@ -564,45 +564,39 @@ pub const fnSporeSpawn_Func_2: ::core::ffi::c_int = 0xa5eb52 as ::core::ffi::c_i
 pub const fnSporeSpawn_Func_3: uint32 = 10873755 as uint32;
 pub const fnSporeSpawn_Func_4: uint32 = 10873838 as uint32;
 #[inline]
-unsafe extern "C" fn gEnemyData(mut o: ::core::ffi::c_int) -> *mut EnemyData {
+unsafe fn gEnemyData(mut o: ::core::ffi::c_int) -> *mut EnemyData {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut EnemyData;
 }
 #[inline]
-unsafe extern "C" fn Get_Draygon(mut o: ::core::ffi::c_int) -> *mut Enemy_Draygon {
+unsafe fn Get_Draygon(mut o: ::core::ffi::c_int) -> *mut Enemy_Draygon {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_Draygon;
 }
 #[inline]
-unsafe extern "C" fn Get_SporeSpawn(mut o: ::core::ffi::c_int) -> *mut Enemy_SporeSpawn {
+unsafe fn Get_SporeSpawn(mut o: ::core::ffi::c_int) -> *mut Enemy_SporeSpawn {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_SporeSpawn;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_GrappleReact_NoInteract_A5() {
+pub unsafe fn Enemy_GrappleReact_NoInteract_A5() {
     SwitchEnemyAiToMainAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_GrappleReact_CancelBeam_A5() {
+pub unsafe fn Enemy_GrappleReact_CancelBeam_A5() {
     Enemy_SwitchToFrozenAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalTouchAI_A5() {
+pub unsafe fn Enemy_NormalTouchAI_A5() {
     NormalEnemyTouchAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalShotAI_A5() {
+pub unsafe fn Enemy_NormalShotAI_A5() {
     NormalEnemyShotAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalFrozenAI_A5() {
+pub unsafe fn Enemy_NormalFrozenAI_A5() {
     NormalEnemyFrozenAI();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Init() {
+pub unsafe fn Draygon_Init() {
     let mut j: uint16 = 0;
     let mut i: ::core::ffi::c_int = 48 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
@@ -665,8 +659,7 @@ pub unsafe extern "C" fn Draygon_Init() {
     (*Get_Draygon(0 as ::core::ffi::c_int)).draygon_var_45 = 1 as uint16;
     DisableMinimapAndMarkBossRoomAsExplored();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallDraygonFunc(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallDraygonFunc(mut ea: uint32, mut k: uint16) {
     match ea {
         10846283 => return,
         10848027 => {
@@ -819,8 +812,7 @@ pub unsafe extern "C" fn CallDraygonFunc(mut ea: uint32, mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Main() {
+pub unsafe fn Draygon_Main() {
     let mut EK: *mut Enemy_Draygon = Get_Draygon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -843,8 +835,7 @@ pub unsafe extern "C" fn Draygon_Main() {
     (*E2).base.y_pos = y_pos;
     (*E3).base.y_pos = y_pos;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_1() {
+pub unsafe fn Draygon_Func_1() {
     let mut v2: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     Draygon_Func_3();
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
@@ -881,8 +872,7 @@ pub unsafe extern "C" fn Draygon_Func_1() {
         (*E).draygon_var_0F = 24 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_2() {
+pub unsafe fn Draygon_Func_2() {
     Draygon_Func_3();
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     if (*E).draygon_var_B as ::core::ffi::c_int - 1232 as ::core::ffi::c_int
@@ -897,8 +887,7 @@ pub unsafe extern "C" fn Draygon_Func_2() {
         (*E).draygon_var_B = 0 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_3() {
+pub unsafe fn Draygon_Func_3() {
     let mut Random: int8 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -939,8 +928,7 @@ pub unsafe extern "C" fn Draygon_Func_3() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_4() {
+pub unsafe fn Draygon_Func_4() {
     Draygon_Func_3();
     Draygon_Func_5();
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
@@ -949,8 +937,7 @@ pub unsafe extern "C" fn Draygon_Func_4() {
     (*E).base.instruction_timer = 1 as uint16;
     (*E).draygon_var_20 = 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_5() {
+pub unsafe fn Draygon_Func_5() {
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     let mut varE24: uint16 = 384 as uint16;
     let mut varE22: uint16 = 0 as uint16;
@@ -1006,8 +993,7 @@ pub unsafe extern "C" fn Draygon_Func_5() {
     (*E).draygon_var_B = v6;
     (*E).draygon_var_C = v6;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_6() {
+pub unsafe fn Draygon_Func_6() {
     Draygon_Func_3();
     Draygon_Func_35();
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
@@ -1039,8 +1025,7 @@ pub unsafe extern "C" fn Draygon_Func_6() {
             (0xa58922 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_7() {
+pub unsafe fn Draygon_Func_7() {
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     if *((&raw mut g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -1055,8 +1040,7 @@ pub unsafe extern "C" fn Draygon_Func_7() {
         (*E).base.instruction_timer = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_8() {
+pub unsafe fn Draygon_Func_8() {
     Draygon_Func_3();
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     let mut t: uint32 = EnemyFunc_Divide(
@@ -1067,8 +1051,7 @@ pub unsafe extern "C" fn Draygon_Func_8() {
     SetHiLo(&raw mut (*E).draygon_var_D, &raw mut (*E).draygon_var_E, t);
     (*E).draygon_var_A = (0xa58951 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_9() {
+pub unsafe fn Draygon_Func_9() {
     Draygon_Func_3();
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     let mut draygon_var_B: uint16 = (*E).draygon_var_B;
@@ -1109,8 +1092,7 @@ pub unsafe extern "C" fn Draygon_Func_9() {
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_10() {
+pub unsafe fn Draygon_Func_10() {
     Draygon_Func_3();
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     printf(b"Wtf is varE26?\n\0" as *const u8 as *const ::core::ffi::c_char);
@@ -1131,8 +1113,7 @@ pub unsafe extern "C" fn Draygon_Func_10() {
     (*E).draygon_var_20 = 0 as uint16;
     (*E).draygon_var_B = (*E).draygon_var_C;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_11() {
+pub unsafe fn Draygon_Func_11() {
     Draygon_Func_3();
     Draygon_Func_35();
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
@@ -1164,8 +1145,7 @@ pub unsafe extern "C" fn Draygon_Func_11() {
             (0xa58a50 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_12() {
+pub unsafe fn Draygon_Func_12() {
     Draygon_Func_3();
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     let mut t: uint32 = EnemyFunc_Divide(
@@ -1177,8 +1157,7 @@ pub unsafe extern "C" fn Draygon_Func_12() {
     (*E).draygon_var_E = t as uint16;
     (*E).draygon_var_A = (0xa58a90 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_13() {
+pub unsafe fn Draygon_Func_13() {
     Draygon_Func_3();
     Draygon_Func_35();
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
@@ -1223,8 +1202,7 @@ pub unsafe extern "C" fn Draygon_Func_13() {
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_14() {
+pub unsafe fn Draygon_Func_14() {
     Draygon_Func_3();
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     (*E).base.x_pos = -(80 as ::core::ffi::c_int) as uint16;
@@ -1240,8 +1218,7 @@ pub unsafe extern "C" fn Draygon_Func_14() {
     (*E).base.instruction_timer = 1 as uint16;
     (*E).draygon_var_20 = 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_15() {
+pub unsafe fn Draygon_Func_15() {
     Draygon_Func_3();
     Draygon_Func_35();
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
@@ -1267,8 +1244,7 @@ pub unsafe extern "C" fn Draygon_Func_15() {
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_16() {
+pub unsafe fn Draygon_Func_16() {
     let mut current_block: u64;
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     Draygon_Func_3();
@@ -1349,8 +1325,7 @@ pub unsafe extern "C" fn Draygon_Func_16() {
         _ => {}
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_17(mut k: uint16) {
+pub unsafe fn Draygon_Func_17(mut k: uint16) {
     Draygon_Func_35();
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     (*E).base.y_pos = (CosineMult8bit((*E).draygon_var_0D, 32 as uint16) as ::core::ffi::c_int
@@ -1374,8 +1349,7 @@ pub unsafe extern "C" fn Draygon_Func_17(mut k: uint16) {
         (*E).draygon_var_B = (*E).draygon_var_C;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_18() {
+pub unsafe fn Draygon_Func_18() {
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     (*E).base.x_pos = (*E).draygon_var_02;
     (*E).base.y_pos = 384 as uint16;
@@ -1390,8 +1364,7 @@ pub unsafe extern "C" fn Draygon_Func_18() {
     (*E).base.instruction_timer = 1 as uint16;
     (*E).draygon_var_20 = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_19() {
+pub unsafe fn Draygon_Func_19() {
     Draygon_Func_3();
     Draygon_Func_35();
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
@@ -1417,8 +1390,7 @@ pub unsafe extern "C" fn Draygon_Func_19() {
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_20() {
+pub unsafe fn Draygon_Func_20() {
     let mut current_block: u64;
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     if *((&raw mut g_ram as *mut uint8).offset(0xa66 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -1499,8 +1471,7 @@ pub unsafe extern "C" fn Draygon_Func_20() {
         _ => {}
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_21(mut k: uint16) {
+pub unsafe fn Draygon_Func_21(mut k: uint16) {
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     Draygon_Func_35();
     if *((&raw mut g_ram as *mut uint8).offset(0xa66 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -1532,8 +1503,7 @@ pub unsafe extern "C" fn Draygon_Func_21(mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_22() {
+pub unsafe fn Draygon_Func_22() {
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     let mut v2: int16 = 0;
     let mut v4: uint16 = 0;
@@ -1606,15 +1576,13 @@ pub unsafe extern "C" fn Draygon_Func_22() {
             (0xa59154 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_23() {
+pub unsafe fn Draygon_Func_23() {
     *((&raw mut g_ram as *mut uint8).offset(0xd32 as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x9bc8c5 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*Get_Draygon(0 as ::core::ffi::c_int)).draygon_var_A =
         (0xa59128 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_24(mut k: uint16) {
+pub unsafe fn Draygon_Func_24(mut k: uint16) {
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     let mut v5: uint16 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0xa64 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -1663,8 +1631,7 @@ pub unsafe extern "C" fn Draygon_Func_24(mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_25(mut k: uint16) {
+pub unsafe fn Draygon_Func_25(mut k: uint16) {
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     let mut v6: uint16 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0xa64 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -1748,8 +1715,7 @@ pub unsafe extern "C" fn Draygon_Func_25(mut k: uint16) {
             (0xa590d4 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_26(mut k: uint16) {
+pub unsafe fn Draygon_Func_26(mut k: uint16) {
     let mut v0: uint16 = k;
     let mut v3: uint16 = 0;
     Draygon_Func_40(v0);
@@ -1772,8 +1738,7 @@ pub unsafe extern "C" fn Draygon_Func_26(mut k: uint16) {
             (0xa58fd6 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_27(mut k: uint16) {
+pub unsafe fn Draygon_Func_27(mut k: uint16) {
     Draygon_Func_40(k);
     let mut v1: uint16 = addr_kDraygon_Ilist_9A68 as ::core::ffi::c_int as uint16;
     if (*Get_Draygon(k as ::core::ffi::c_int)).draygon_var_20 != 0 {
@@ -1785,12 +1750,10 @@ pub unsafe extern "C" fn Draygon_Func_27(mut k: uint16) {
     (*Get_Draygon(0 as ::core::ffi::c_int)).draygon_var_A =
         (0xa59124 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_28(mut k: uint16) {
+pub unsafe fn Draygon_Func_28(mut k: uint16) {
     Draygon_Func_40(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_29() {
+pub unsafe fn Draygon_Func_29() {
     Samus_ReleaseFromDraygon_();
     *((&raw mut g_ram as *mut uint8).offset(0xa64 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
@@ -1806,8 +1769,7 @@ pub unsafe extern "C" fn Draygon_Func_29() {
     (*E2).base.current_instruction = v1;
     (*E2).base.instruction_timer = 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_30() {
+pub unsafe fn Draygon_Func_30() {
     let mut v1: int16 = 0;
     Draygon_Func_3();
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
@@ -1824,8 +1786,7 @@ pub unsafe extern "C" fn Draygon_Func_30() {
         (*E).base.y_pos = (*E).draygon_var_01;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_31() {
+pub unsafe fn Draygon_Func_31() {
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     if (*Get_Draygon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -1895,8 +1856,7 @@ pub unsafe extern "C" fn Draygon_Func_31() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_32() {
+pub unsafe fn Draygon_Func_32() {
     Draygon_Func_34();
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     (*E).draygon_var_B = (*E).draygon_var_B.wrapping_sub(1);
@@ -1907,8 +1867,7 @@ pub unsafe extern "C" fn Draygon_Func_32() {
             (0xa592ab as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_33() {
+pub unsafe fn Draygon_Func_33() {
     Draygon_Func_34();
     Draygon_Func_42(0 as uint16);
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
@@ -1937,8 +1896,7 @@ pub unsafe extern "C" fn Draygon_Func_33() {
         Draygon_Func_44();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_34() {
+pub unsafe fn Draygon_Func_34() {
     if *((&raw mut g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 7 as ::core::ffi::c_int
@@ -1955,8 +1913,7 @@ pub unsafe extern "C" fn Draygon_Func_34() {
         CreateSpriteAtPos(x, y, 21 as uint16, 0 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_35() {
+pub unsafe fn Draygon_Func_35() {
     let mut Draygon: *mut Enemy_Draygon = Get_Draygon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1973,8 +1930,7 @@ pub unsafe extern "C" fn Draygon_Func_35() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_36() {
+pub unsafe fn Draygon_Func_36() {
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     *((&raw mut g_ram as *mut uint8).offset(0xb5 as ::core::ffi::c_int as isize) as *mut uint16) =
         ((*E).draygon_var_5E as ::core::ffi::c_int
@@ -1989,8 +1945,7 @@ pub unsafe extern "C" fn Draygon_Func_36() {
             - (*E).base.y_pos as ::core::ffi::c_int
             - 192 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_37() {
+pub unsafe fn Draygon_Func_37() {
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     if *((&raw mut g_ram as *mut uint8).offset(0x8d as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -2040,8 +1995,7 @@ pub unsafe extern "C" fn Draygon_Func_37() {
         (*E2).base.instruction_timer = 1 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_38() {
+pub unsafe fn Draygon_Func_38() {
     let mut current_block: u64;
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
@@ -2103,8 +2057,7 @@ pub unsafe extern "C" fn Draygon_Func_38() {
         (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_39() {
+pub unsafe fn Draygon_Func_39() {
     let mut current_block: u64;
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
@@ -2179,8 +2132,7 @@ pub unsafe extern "C" fn Draygon_Func_39() {
             ((*E).base.y_pos as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_40(mut k: uint16) {
+pub unsafe fn Draygon_Func_40(mut k: uint16) {
     let mut v1: int16 = 0;
     v1 = 8 as int16;
     if (*Get_Draygon(k as ::core::ffi::c_int)).draygon_var_20 == 0 {
@@ -2203,8 +2155,7 @@ pub unsafe extern "C" fn Draygon_Func_40(mut k: uint16) {
             (0xa59154 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*Get_Draygon(0 as ::core::ffi::c_int))
         .base
         .current_instruction = *jp.offset(0 as ::core::ffi::c_int as isize);
@@ -2231,8 +2182,7 @@ pub unsafe extern "C" fn Draygon_Instr_1(mut k: uint16, mut jp: *const uint16) -
         .instruction_timer = 1 as uint16;
     return jp.offset(4 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Hurt() {
+pub unsafe fn Draygon_Hurt() {
     let mut v0: uint16 = addr_kDraygon_MorePalettes2 as ::core::ffi::c_int as uint16;
     if (*Get_Draygon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -2318,13 +2268,11 @@ pub unsafe extern "C" fn Draygon_Hurt() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Touch() {
+pub unsafe fn Draygon_Touch() {
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy();
     sub_A5960D();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Shot() {
+pub unsafe fn Draygon_Shot() {
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     if (*E).draygon_var_0F as ::core::ffi::c_int - 152 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -2336,13 +2284,11 @@ pub unsafe extern "C" fn Draygon_Shot() {
     NormalEnemyShotAiSkipDeathAnim_CurEnemy();
     sub_A5960D();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Powerbomb() {
+pub unsafe fn Draygon_Powerbomb() {
     NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy();
     sub_A5960D();
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_A5960D() {
+pub unsafe fn sub_A5960D() {
     if (*Get_Draygon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2393,8 +2339,7 @@ pub unsafe extern "C" fn sub_A5960D() {
         (*E).draygon_var_2B = pt.y as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_41() {
+pub unsafe fn Draygon_Func_41() {
     let mut i: ::core::ffi::c_int = 0;
     let mut j: uint16 = 0;
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
@@ -2435,13 +2380,12 @@ pub unsafe extern "C" fn Draygon_Func_41() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_13(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_13(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*Get_Draygon(k as ::core::ffi::c_int)).draygon_var_A =
         *jp.offset(0 as ::core::ffi::c_int as isize);
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-unsafe extern "C" fn Draygon_Func_47() -> Point16U {
+unsafe fn Draygon_Func_47() -> Point16U {
     NextRandom();
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     let mut r18: uint16 = ((*((&raw mut g_ram as *mut uint8)
@@ -2460,38 +2404,32 @@ unsafe extern "C" fn Draygon_Func_47() -> Point16U {
         y: (r20 as ::core::ffi::c_int + (*E).base.y_pos as ::core::ffi::c_int) as uint16,
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_8(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_8(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut pt: Point16U = Draygon_Func_47();
     CreateSpriteAtPos(pt.x, pt.y, 21 as uint16, 0 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_7(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_7(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut pt: Point16U = Draygon_Func_47();
     CreateSpriteAtPos(pt.x, pt.y, 3 as uint16, 0 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_6(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_6(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut pt: Point16U = Draygon_Func_47();
     CreateSpriteAtPos(pt.x, pt.y, 29 as uint16, 0 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_9(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_9(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut pt: Point16U = Draygon_Func_47();
     CreateSpriteAtPos(pt.x, pt.y, 24 as uint16, 0 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0xa9 as ::core::ffi::c_int as isize) as *mut uint16) =
         12 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_11(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_11(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E2: *mut Enemy_Draygon = Get_Draygon(0x80 as ::core::ffi::c_int);
     (*E2).base.instruction_timer = 1 as uint16;
     (*E2).base.current_instruction = addr_kDraygon_Ilist_97B9 as ::core::ffi::c_int as uint16;
@@ -2500,15 +2438,13 @@ pub unsafe extern "C" fn Draygon_Instr_11(mut k: uint16, mut jp: *const uint16) 
     (*E3).base.current_instruction = addr_kDraygon_Ilist_97B9 as ::core::ffi::c_int as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_5(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_5(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         | kEnemyProps_Tangible as ::core::ffi::c_int) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_15(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_15(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     (*E).draygon_var_0F = 24 as uint16;
     let mut v3: *const uint8 = RomPtr_A0((*E).base.enemy_ptr as uint16_t);
@@ -2530,37 +2466,31 @@ pub unsafe extern "C" fn Draygon_Instr_15(mut k: uint16, mut jp: *const uint16) 
     );
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_17(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_17(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0xa9 as ::core::ffi::c_int as isize) as *mut uint16) =
         12 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_14(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_14(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     (*E).draygon_var_5E = *jp.offset(0 as ::core::ffi::c_int as isize);
     (*E).draygon_var_5F = *jp.offset(1 as ::core::ffi::c_int as isize);
     return jp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_16(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_16(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*Get_Draygon(0 as ::core::ffi::c_int)).draygon_var_A =
         *jp.offset(0 as ::core::ffi::c_int as isize);
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_10(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_10(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     QueueSfx2_Max6(*jp.offset(0 as ::core::ffi::c_int as isize));
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_4(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_4(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     QueueSfx3_Max6(*jp.offset(0 as ::core::ffi::c_int as isize));
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_12(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_12(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     eproj_spawn_pt = Point16U {
         x: ((*E).base.x_pos as ::core::ffi::c_int - 28 as ::core::ffi::c_int) as uint16,
@@ -2577,8 +2507,7 @@ pub unsafe extern "C" fn Draygon_Instr_12(mut k: uint16, mut jp: *const uint16) 
     );
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_18(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_18(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     eproj_spawn_pt = Point16U {
         x: ((*E).base.x_pos as ::core::ffi::c_int + 24 as ::core::ffi::c_int) as uint16,
@@ -2595,8 +2524,7 @@ pub unsafe extern "C" fn Draygon_Instr_18(mut k: uint16, mut jp: *const uint16) 
     );
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_42(mut varE24: uint16) {
+pub unsafe fn Draygon_Func_42(mut varE24: uint16) {
     let mut v0: uint16 = 62 as uint16;
     let mut i: ::core::ffi::c_int = 20 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
@@ -2699,8 +2627,7 @@ pub unsafe extern "C" fn Draygon_Func_42(mut varE24: uint16) {
         i -= 4 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_43() {
+pub unsafe fn Draygon_Func_43() {
     let mut v1: int16 = 0;
     let mut j: int16 = 0;
     let mut i: ::core::ffi::c_int = 62 as ::core::ffi::c_int;
@@ -2763,8 +2690,7 @@ pub unsafe extern "C" fn Draygon_Func_43() {
         j -= 1;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_44() {
+pub unsafe fn Draygon_Func_44() {
     let mut i: ::core::ffi::c_int = 62 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         *((&raw mut g_ram as *mut uint8).offset(0xef78 as ::core::ffi::c_int as isize)
@@ -2773,15 +2699,13 @@ pub unsafe extern "C" fn Draygon_Func_44() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_45() {
+pub unsafe fn Draygon_Func_45() {
     CreateSpriteAtPos(16 as uint16, 384 as uint16, 59 as uint16, 0xe00 as uint16);
     CreateSpriteAtPos(16 as uint16, 384 as uint16, 59 as uint16, 0xe00 as uint16);
     CreateSpriteAtPos(16 as uint16, 384 as uint16, 59 as uint16, 0xe00 as uint16);
     CreateSpriteAtPos(16 as uint16, 384 as uint16, 59 as uint16, 0xe00 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_46() {
+pub unsafe fn Draygon_Func_46() {
     let mut v0: uint16 = 62 as uint16;
     loop {
         let mut v1: uint16 = ((*Get_Draygon(0 as ::core::ffi::c_int)).draygon_var_46
@@ -2860,8 +2784,7 @@ pub unsafe extern "C" fn Draygon_Func_46() {
     (*E).draygon_var_46 =
         ((*E).draygon_var_46 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DraygonsEye_Init() {
+pub unsafe fn DraygonsEye_Init() {
     let mut E: *mut Enemy_Draygon = Get_Draygon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2869,14 +2792,12 @@ pub unsafe extern "C" fn DraygonsEye_Init() {
     (*E).base.current_instruction = addr_kDraygon_Ilist_9944 as ::core::ffi::c_int as uint16;
     (*E).draygon_var_A = (0xa5804b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*Get_Draygon(0x40 as ::core::ffi::c_int)).draygon_var_A =
         *jp.offset(0 as ::core::ffi::c_int as isize);
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn DraygonsEye_Main() {
+pub unsafe fn DraygonsEye_Main() {
     let mut E: *mut Enemy_Draygon = Get_Draygon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2887,8 +2808,7 @@ pub unsafe extern "C" fn DraygonsEye_Main() {
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_48(mut k: uint16) {
+pub unsafe fn Draygon_Func_48(mut k: uint16) {
     if (*Get_Draygon(k as ::core::ffi::c_int)).base.frame_counter as ::core::ffi::c_int
         & 0x7f as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
@@ -2946,8 +2866,7 @@ pub unsafe extern "C" fn Draygon_Func_48(mut k: uint16) {
         (*E).base.timer = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_49(mut k: uint16) {
+pub unsafe fn Draygon_Func_49(mut k: uint16) {
     let mut E0: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     if (*Get_Draygon(k as ::core::ffi::c_int)).base.frame_counter as ::core::ffi::c_int
         & 0x7f as ::core::ffi::c_int
@@ -3004,8 +2923,7 @@ pub unsafe extern "C" fn Draygon_Func_49(mut k: uint16) {
         (*E).base.timer = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DraygonsTail_Init() {
+pub unsafe fn DraygonsTail_Init() {
     let mut v0: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -3013,8 +2931,7 @@ pub unsafe extern "C" fn DraygonsTail_Init() {
     (*v0).current_instruction = addr_kDraygon_Ilist_99FC as ::core::ffi::c_int as uint16;
     (*v0).palette_index = 0xe00 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DraygonsArms_Init() {
+pub unsafe fn DraygonsArms_Init() {
     let mut v0: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -3023,8 +2940,7 @@ pub unsafe extern "C" fn DraygonsArms_Init() {
     (*v0).palette_index = 0xe00 as uint16;
     (*v0).layer = 2 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_25(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_25(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     if (*E).draygon_var_0B as ::core::ffi::c_int - 40 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -3035,52 +2951,44 @@ pub unsafe extern "C" fn Draygon_Instr_25(mut k: uint16, mut jp: *const uint16) 
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_24(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_24(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*Get_Draygon(0 as ::core::ffi::c_int)).draygon_var_2F = 0 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_50(mut j: uint16) {
+pub unsafe fn Draygon_Func_50(mut j: uint16) {
     let mut v1: *const uint8 = RomPtr_A5(j as uint16_t);
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     (*E).draygon_var_0B = *(v1 as *mut uint16);
     (*E).draygon_var_0C = *(v1.offset(2 as ::core::ffi::c_int as isize) as *mut uint16);
     (*E).draygon_var_0A = *(v1.offset(4 as ::core::ffi::c_int as isize) as *mut uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_21(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_21(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     (*E).draygon_var_0B = *jp.offset(0 as ::core::ffi::c_int as isize);
     (*E).draygon_var_0C = *jp.offset(1 as ::core::ffi::c_int as isize);
     return jp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_51(mut j: uint16) {
+pub unsafe fn Draygon_Func_51(mut j: uint16) {
     let mut v1: uint16 = *(RomPtr_A5(j as uint16_t) as *mut uint16);
     (*Get_Draygon(0 as ::core::ffi::c_int)).draygon_var_0B = v1;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Func_52(mut j: uint16) {
+pub unsafe fn Draygon_Func_52(mut j: uint16) {
     let mut v1: uint16 = *(RomPtr_A5(j as uint16_t) as *mut uint16);
     (*Get_Draygon(0 as ::core::ffi::c_int)).draygon_var_0C = v1;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_53(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn Draygon_Instr_53(mut k: uint16, mut j: uint16) -> uint16 {
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     (*E).draygon_var_0B = ((*E).draygon_var_0B as ::core::ffi::c_int
         + *(RomPtr_A5(j as uint16_t) as *mut uint16) as ::core::ffi::c_int)
         as uint16;
     return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_22(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_22(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x9000 as ::core::ffi::c_int as isize)
         as *mut uint16) = *jp.offset(0 as ::core::ffi::c_int as isize);
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_27(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_27(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     (*E).base.x_pos = 128 as uint16;
     (*E).base.y_pos = 624 as uint16;
@@ -3089,18 +2997,15 @@ pub unsafe extern "C" fn Draygon_Instr_27(mut k: uint16, mut jp: *const uint16) 
         | 0xa000 as ::core::ffi::c_int) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_23(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_23(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     QueueSfx2_Max6(*jp.offset(0 as ::core::ffi::c_int as isize));
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_30(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_30(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     Enemy_ItemDrop_SporeSpawn(k);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_20(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_20(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*Get_Draygon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -3108,8 +3013,7 @@ pub unsafe extern "C" fn Draygon_Instr_20(mut k: uint16, mut jp: *const uint16) 
     .draygon_var_A = *jp.offset(0 as ::core::ffi::c_int as isize);
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_29(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_29(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = *jp.offset(0 as ::core::ffi::c_int as isize);
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i != 32 as ::core::ffi::c_int {
@@ -3155,8 +3059,7 @@ pub unsafe extern "C" fn Draygon_Instr_29(mut k: uint16, mut jp: *const uint16) 
     }
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_19(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_19(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = *jp.offset(0 as ::core::ffi::c_int as isize);
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i != 32 as ::core::ffi::c_int {
@@ -3202,8 +3105,7 @@ pub unsafe extern "C" fn Draygon_Instr_19(mut k: uint16, mut jp: *const uint16) 
     }
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_28(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_28(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     NextRandom();
     let mut r18: uint16 = ((*((&raw mut g_ram as *mut uint8)
         .offset(0x5e5 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -3224,8 +3126,7 @@ pub unsafe extern "C" fn Draygon_Instr_28(mut k: uint16, mut jp: *const uint16) 
     QueueSfx2_Max6(0x29 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Draygon_Instr_26(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Draygon_Instr_26(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     NextRandom();
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int);
     let mut x: uint16 = ((*E).base.x_pos as ::core::ffi::c_int
@@ -3243,8 +3144,7 @@ pub unsafe extern "C" fn Draygon_Instr_26(mut k: uint16, mut jp: *const uint16) 
     QueueSfx2_Max6(0x25 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_A5E9F5() {
+pub unsafe fn sub_A5E9F5() {
     if *((&raw mut g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0xf as ::core::ffi::c_int
@@ -3265,8 +3165,7 @@ pub unsafe extern "C" fn sub_A5E9F5() {
         CreateSpriteAtPos(x, y, 21 as uint16, 0 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SporeSpawn_Init() {
+pub unsafe fn SporeSpawn_Init() {
     let mut v0: uint16 = 0 as uint16;
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i != 32 as ::core::ffi::c_int {
@@ -3374,8 +3273,7 @@ pub unsafe extern "C" fn SporeSpawn_Init() {
         SporeSpawn_Func_5();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallSporeSpawnFunc(mut ea: uint32) {
+pub unsafe fn CallSporeSpawnFunc(mut ea: uint32) {
     match ea {
         10873626 => return,
         10873627 => {
@@ -3402,8 +3300,7 @@ pub unsafe extern "C" fn CallSporeSpawnFunc(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn SporeSpawn_Main() {
+pub unsafe fn SporeSpawn_Main() {
     let mut E: *mut Enemy_SporeSpawn = Get_SporeSpawn(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -3412,8 +3309,7 @@ pub unsafe extern "C" fn SporeSpawn_Main() {
         ((*E).ssn_var_A as ::core::ffi::c_int | 0xa50000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn SporeSpawn_Func_1() {
+pub unsafe fn SporeSpawn_Func_1() {
     SporeSpawn_Func_5();
     let mut E: *mut Enemy_SporeSpawn = Get_SporeSpawn(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -3431,8 +3327,7 @@ pub unsafe extern "C" fn SporeSpawn_Func_1() {
     (*E0).ssn_var_0C = 1 as uint16;
     (*E0).ssn_var_0A = 192 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SporeSpawn_Func_2(mut k: uint16) {
+pub unsafe fn SporeSpawn_Func_2(mut k: uint16) {
     SporeSpawn_Func_5();
     let mut E0: *mut Enemy_SporeSpawn = Get_SporeSpawn(0 as ::core::ffi::c_int);
     let mut E: *mut Enemy_SporeSpawn = Get_SporeSpawn(k as ::core::ffi::c_int);
@@ -3450,8 +3345,7 @@ pub unsafe extern "C" fn SporeSpawn_Func_2(mut k: uint16) {
         .offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
         + (*E0).ssn_var_0A as ::core::ffi::c_int) as uint8 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SporeSpawn_Func_3() {
+pub unsafe fn SporeSpawn_Func_3() {
     let mut E0: *mut Enemy_SporeSpawn = Get_SporeSpawn(0 as ::core::ffi::c_int);
     (*E0).ssn_var_43 = (64 as ::core::ffi::c_int
         - CalculateAngleFromXY(
@@ -3472,8 +3366,7 @@ pub unsafe extern "C" fn SporeSpawn_Func_3() {
     (*E).ssn_var_2A = (pt.y >> 16 as ::core::ffi::c_int) as uint16;
     (*E).ssn_var_2B = pt.y as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SporeSpawn_Func_4() {
+pub unsafe fn SporeSpawn_Func_4() {
     let mut E: *mut Enemy_SporeSpawn = Get_SporeSpawn(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -3501,8 +3394,7 @@ pub unsafe extern "C" fn SporeSpawn_Func_4() {
     SporeSpawn_Func_5();
     sub_A5E9F5();
 }
-#[no_mangle]
-pub unsafe extern "C" fn SporeSpawn_Func_5() {
+pub unsafe fn SporeSpawn_Func_5() {
     let mut E: *mut Enemy_SporeSpawn = Get_SporeSpawn(0 as ::core::ffi::c_int);
     let mut v1: uint16 =
         ((*E).base.x_pos as ::core::ffi::c_int - (*E).ssn_var_04 as ::core::ffi::c_int) as uint16;
@@ -3632,8 +3524,7 @@ pub unsafe extern "C" fn SporeSpawn_Func_5() {
         .offset(17 as ::core::ffi::c_int as isize) = v4;
     (*E).ssn_var_25 = v4;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SporeSpawn_Shot() {
+pub unsafe fn SporeSpawn_Shot() {
     let mut v4: int16 = 0;
     let mut v0: uint16 = (2 as ::core::ffi::c_int
         * *((&raw mut g_ram as *mut uint8).offset(0x18a6 as ::core::ffi::c_int as isize)
@@ -3701,13 +3592,11 @@ pub unsafe extern "C" fn SporeSpawn_Shot() {
         SporeSpawn_Func_6();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SporeSpawn_Touch() {
+pub unsafe fn SporeSpawn_Touch() {
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy();
     SporeSpawn_Func_6();
 }
-#[no_mangle]
-pub unsafe extern "C" fn SporeSpawn_Func_6() {
+pub unsafe fn SporeSpawn_Func_6() {
     if (*Get_SporeSpawn(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -3752,8 +3641,7 @@ pub unsafe extern "C" fn SporeSpawn_Func_6() {
         });
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SporeSpawn_Func_7(mut a: uint16) {
+pub unsafe fn SporeSpawn_Func_7(mut a: uint16) {
     let mut v1: uint16 = a;
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i != 32 as ::core::ffi::c_int {

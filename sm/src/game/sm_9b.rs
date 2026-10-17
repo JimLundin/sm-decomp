@@ -301,7 +301,7 @@ pub const addr_kSamusPalette_GravitySuit: Consts_9B = 38912;
 pub const addr_kSamusPalette_VariaSuit: Consts_9B = 38176;
 pub const addr_kSamusPalette_PowerSuit: Consts_9B = 37888;
 #[inline]
-unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
+unsafe fn abs16(mut t: uint16) -> uint16 {
     return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         -(t as ::core::ffi::c_int)
     } else {
@@ -309,25 +309,25 @@ unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
     }) as uint16;
 }
 #[inline]
-unsafe extern "C" fn swap16(mut v: uint16) -> uint16 {
+unsafe fn swap16(mut v: uint16) -> uint16 {
     return ((v as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
         | v as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint16;
 }
 #[inline]
-unsafe extern "C" fn RomPtr_9B(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_9B(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x9b0000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomPtr_A0(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_A0(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0xa00000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
+unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
     return (&raw mut g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
         as *mut uint8 as *mut VramWriteEntry;
 }
 #[inline]
-unsafe extern "C" fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
+unsafe fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
     *lo = t as uint16;
     *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
@@ -469,8 +469,7 @@ static mut kIsGrappleBannedForMovementType: [uint8; 28] = [
     0 as ::core::ffi::c_int as uint8,
     1 as ::core::ffi::c_int as uint8,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn ProjectileTrail_Func5(mut k: uint16, mut j: uint16) {
+pub unsafe fn ProjectileTrail_Func5(mut k: uint16, mut j: uint16) {
     let mut R22: uint16 = ProjectileInsts_GetValue(k);
     let mut r18: uint16 = 0;
     let mut r20: uint16 = 0;
@@ -580,8 +579,7 @@ pub unsafe extern "C" fn ProjectileTrail_Func5(mut k: uint16, mut j: uint16) {
         + *p.offset(2 as ::core::ffi::c_int as isize) as int8 as ::core::ffi::c_int
         - 4 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn StartSamusDeathAnimation() {
+pub unsafe fn StartSamusDeathAnimation() {
     let mut v0: uint16 =
         *(&raw mut g_ram as *mut uint8).offset(0xa1f as ::core::ffi::c_int as isize) as uint16;
     if *(&raw mut g_ram as *mut uint8).offset(0xa1f as ::core::ffi::c_int as isize)
@@ -630,12 +628,10 @@ pub unsafe extern "C" fn StartSamusDeathAnimation() {
         - *((&raw mut g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawSamusStartingDeathAnim_() {
+pub unsafe fn DrawSamusStartingDeathAnim_() {
     Samus_DrawStartingDeathAnim();
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleSamusDeathSequence() -> uint16 {
+pub unsafe fn HandleSamusDeathSequence() -> uint16 {
     if *((&raw mut g_ram as *mut uint8).offset(0xde6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         - 4 as ::core::ffi::c_int
@@ -698,8 +694,7 @@ pub unsafe extern "C" fn HandleSamusDeathSequence() -> uint16 {
         return 1 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleSamusDeathSequence_Helper2() {
+pub unsafe fn HandleSamusDeathSequence_Helper2() {
     let mut v0: *const uint16 = RomPtr_9B(
         *(g_rom.offset(
             (((0x9bb5c8 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -744,8 +739,7 @@ pub unsafe extern "C" fn HandleSamusDeathSequence_Helper2() {
         0 as uint16;
     GameState_24_SamusNoHealth_Explosion_2();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CopyPalettesForSamusDeath(mut v0: uint16) {
+pub unsafe fn CopyPalettesForSamusDeath(mut v0: uint16) {
     let mut r20: ::core::ffi::c_int = *(g_rom.offset(
         (((0x9bb6d2 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0x9bb6d2 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -784,8 +778,7 @@ pub unsafe extern "C" fn CopyPalettesForSamusDeath(mut v0: uint16) {
         32 as size_t,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueTransferOfSamusDeathSequence(mut v0: uint16) {
+pub unsafe fn QueueTransferOfSamusDeathSequence(mut v0: uint16) {
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
     (*gVramWriteEntry(
@@ -799,8 +792,7 @@ pub unsafe extern "C" fn QueueTransferOfSamusDeathSequence(mut v0: uint16) {
     v1 = (v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     let fresh7 = v1;
     v1 = v1.wrapping_add(1);
-    *(&raw mut (*(gVramWriteEntry
-        as unsafe extern "C" fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
+    *(&raw mut (*(gVramWriteEntry as unsafe fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
         fresh7 as ::core::ffi::c_int,
     ))
     .size as *mut uint8)
@@ -809,13 +801,11 @@ pub unsafe extern "C" fn QueueTransferOfSamusDeathSequence(mut v0: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16) =
         (v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_24_SamusNoHealth_Explosion_Helper() -> uint16 {
+pub unsafe fn GameState_24_SamusNoHealth_Explosion_Helper() -> uint16 {
     GameState_24_SamusNoHealth_Explosion_1();
     return GameState_24_SamusNoHealth_Explosion_2();
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_24_SamusNoHealth_Explosion_1() {
+pub unsafe fn GameState_24_SamusNoHealth_Explosion_1() {
     if *((&raw mut g_ram as *mut uint8).offset(0xdec as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
         && *((&raw mut g_ram as *mut uint8).offset(0xde4 as ::core::ffi::c_int as isize)
@@ -851,8 +841,7 @@ pub unsafe extern "C" fn GameState_24_SamusNoHealth_Explosion_1() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_24_SamusNoHealth_Explosion_2() -> uint16 {
+pub unsafe fn GameState_24_SamusNoHealth_Explosion_2() -> uint16 {
     let ref mut fresh1 = *((&raw mut g_ram as *mut uint8)
         .offset(0xde2 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh1 = (*fresh1).wrapping_sub(1);
@@ -934,8 +923,7 @@ pub unsafe extern "C" fn GameState_24_SamusNoHealth_Explosion_2() -> uint16 {
     DrawSamusSuitExploding();
     return 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CancelGrappleBeamIfIncompatiblePose() {
+pub unsafe fn CancelGrappleBeamIfIncompatiblePose() {
     let mut v0: int16 = 0;
     if !(kIsGrappleBannedForMovementType
         [*(&raw mut g_ram as *mut uint8).offset(0xa1f as ::core::ffi::c_int as isize) as usize]
@@ -992,8 +980,7 @@ pub unsafe extern "C" fn CancelGrappleBeamIfIncompatiblePose() {
             (0x9bc856 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CheckIfGrappleIsConnectedToBlock() -> uint8 {
+pub unsafe fn CheckIfGrappleIsConnectedToBlock() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xd22 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xd24 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -1007,10 +994,7 @@ pub unsafe extern "C" fn CheckIfGrappleIsConnectedToBlock() -> uint8 {
         1 as uint16;
     return 1 as uint8;
 }
-unsafe extern "C" fn ProcessEnemyGrappleBeamColl(
-    mut a: uint16,
-    mut r18: uint16,
-) -> ::core::ffi::c_int {
+unsafe fn ProcessEnemyGrappleBeamColl(mut a: uint16, mut r18: uint16) -> ::core::ffi::c_int {
     match a as ::core::ffi::c_int {
         0 | 2 => return -(1 as ::core::ffi::c_int),
         3 => return 1 as ::core::ffi::c_int,
@@ -1049,8 +1033,7 @@ unsafe extern "C" fn ProcessEnemyGrappleBeamColl(
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallGrappleNextFunc(mut ea: uint32) {
+pub unsafe fn CallGrappleNextFunc(mut ea: uint32) {
     match ea {
         10205657 => {
             GrappleNext_SwingClockwise();
@@ -1097,8 +1080,7 @@ pub unsafe extern "C" fn CallGrappleNextFunc(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleConnectingGrapple() {
+pub unsafe fn HandleConnectingGrapple() {
     if *(&raw mut g_ram as *mut uint8).offset(0xa1f as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
         == kMovementType_1A_GrabbedByDraygon as ::core::ffi::c_int
@@ -1184,68 +1166,57 @@ pub unsafe extern "C" fn HandleConnectingGrapple() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleNext_SwingClockwise() {
+pub unsafe fn GrappleNext_SwingClockwise() {
     *((&raw mut g_ram as *mut uint8).offset(0xa2a as ::core::ffi::c_int as isize) as *mut uint16) =
         kPose_B2_FaceR_Grapple_Air as ::core::ffi::c_int as uint16;
     HandleConnectingGrapple_Swinging();
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleNext_SwingAntiClockwise() {
+pub unsafe fn GrappleNext_SwingAntiClockwise() {
     *((&raw mut g_ram as *mut uint8).offset(0xa2a as ::core::ffi::c_int as isize) as *mut uint16) =
         kPose_B3_FaceL_Grapple_Air as ::core::ffi::c_int as uint16;
     HandleConnectingGrapple_Swinging();
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleNext_StandAimRight() {
+pub unsafe fn GrappleNext_StandAimRight() {
     *((&raw mut g_ram as *mut uint8).offset(0xa2a as ::core::ffi::c_int as isize) as *mut uint16) =
         kPose_A8_FaceR_Grappling as ::core::ffi::c_int as uint16;
     HandleConnectingGrapple_StuckInPlace();
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleNext_StandAimDownRight() {
+pub unsafe fn GrappleNext_StandAimDownRight() {
     *((&raw mut g_ram as *mut uint8).offset(0xa2a as ::core::ffi::c_int as isize) as *mut uint16) =
         kPose_AA_FaceR_Grappling_AimDR as ::core::ffi::c_int as uint16;
     HandleConnectingGrapple_StuckInPlace();
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleNext_StandAimDownLeft() {
+pub unsafe fn GrappleNext_StandAimDownLeft() {
     *((&raw mut g_ram as *mut uint8).offset(0xa2a as ::core::ffi::c_int as isize) as *mut uint16) =
         kPose_AB_FaceL_Grappling_AimDL as ::core::ffi::c_int as uint16;
     HandleConnectingGrapple_StuckInPlace();
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleNext_StandAimLeft() {
+pub unsafe fn GrappleNext_StandAimLeft() {
     *((&raw mut g_ram as *mut uint8).offset(0xa2a as ::core::ffi::c_int as isize) as *mut uint16) =
         kPose_A9_FaceL_Grappling as ::core::ffi::c_int as uint16;
     HandleConnectingGrapple_StuckInPlace();
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleNext_CrouchAimRight() {
+pub unsafe fn GrappleNext_CrouchAimRight() {
     *((&raw mut g_ram as *mut uint8).offset(0xa2a as ::core::ffi::c_int as isize) as *mut uint16) =
         kPose_B4_FaceR_Grappling_Crouch as ::core::ffi::c_int as uint16;
     HandleConnectingGrapple_StuckInPlace();
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleNext_CrouchAimDownRight() {
+pub unsafe fn GrappleNext_CrouchAimDownRight() {
     *((&raw mut g_ram as *mut uint8).offset(0xa2a as ::core::ffi::c_int as isize) as *mut uint16) =
         kPose_B6_FaceR_Grappling_Crouch_AimDR as ::core::ffi::c_int as uint16;
     HandleConnectingGrapple_StuckInPlace();
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleNext_CrouchAimDownLeft() {
+pub unsafe fn GrappleNext_CrouchAimDownLeft() {
     *((&raw mut g_ram as *mut uint8).offset(0xa2a as ::core::ffi::c_int as isize) as *mut uint16) =
         kPose_B7_FaceL_Grappling_Crouch_AimDL as ::core::ffi::c_int as uint16;
     HandleConnectingGrapple_StuckInPlace();
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleNext_CrouchAimLeft() {
+pub unsafe fn GrappleNext_CrouchAimLeft() {
     *((&raw mut g_ram as *mut uint8).offset(0xa2a as ::core::ffi::c_int as isize) as *mut uint16) =
         kPose_B5_FaceL_Grappling_Crouch as ::core::ffi::c_int as uint16;
     HandleConnectingGrapple_StuckInPlace();
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleConnectingGrapple_Swinging() {
+pub unsafe fn HandleConnectingGrapple_Swinging() {
     *((&raw mut g_ram as *mut uint8).offset(0xa30 as ::core::ffi::c_int as isize) as *mut uint16) =
         9 as uint16;
     let mut v0: uint16 = swap16(CalculateAngleFromXY(
@@ -1277,8 +1248,7 @@ pub unsafe extern "C" fn HandleConnectingGrapple_Swinging() {
     }
     BlockFunc_AC11();
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleConnectingGrapple_StuckInPlace() {
+pub unsafe fn HandleConnectingGrapple_StuckInPlace() {
     *((&raw mut g_ram as *mut uint8).offset(0xa30 as ::core::ffi::c_int as isize) as *mut uint16) =
         10 as uint16;
     let mut v0: uint16 = swap16(CalculateAngleFromXY(
@@ -1310,8 +1280,7 @@ pub unsafe extern "C" fn HandleConnectingGrapple_StuckInPlace() {
     }
     BlockFunc_AC11();
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleSpecialGrappleBeamAngles() -> uint8 {
+pub unsafe fn HandleSpecialGrappleBeamAngles() -> uint8 {
     let mut v0: uint16 = 7 as uint16;
     while *((&raw mut g_ram as *mut uint8).offset(0xcfa as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -1429,8 +1398,7 @@ pub unsafe extern "C" fn HandleSpecialGrappleBeamAngles() -> uint8 {
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleBeamFunc_BB64() {
+pub unsafe fn GrappleBeamFunc_BB64() {
     let mut current_block: u64;
     if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -1552,8 +1520,7 @@ pub unsafe extern "C" fn GrappleBeamFunc_BB64() {
     *((&raw mut g_ram as *mut uint8).offset(0xd2a as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleBeamFunc_BC1F() {
+pub unsafe fn GrappleBeamFunc_BC1F() {
     if *((&raw mut g_ram as *mut uint8).offset(0xcfa as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0xc000 as ::core::ffi::c_int
@@ -1679,8 +1646,7 @@ pub unsafe extern "C" fn GrappleBeamFunc_BC1F() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleBeamFunc_BCFF() {
+pub unsafe fn GrappleBeamFunc_BCFF() {
     let ref mut fresh14 = *((&raw mut g_ram as *mut uint8)
         .offset(0xd26 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh14 = (*fresh14 as ::core::ffi::c_int
@@ -1722,8 +1688,7 @@ pub unsafe extern "C" fn GrappleBeamFunc_BCFF() {
             as *mut uint16) = -(g_word_9BC11E as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleBeamFunc_BD44() {
+pub unsafe fn GrappleBeamFunc_BD44() {
     if *((&raw mut g_ram as *mut uint8).offset(0xd30 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         != 0
@@ -1778,8 +1743,7 @@ pub unsafe extern "C" fn GrappleBeamFunc_BD44() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleBeamFunc_BD95() {
+pub unsafe fn GrappleBeamFunc_BD95() {
     let mut current_block: u64;
     let mut v0: uint16 = abs16(
         *((&raw mut g_ram as *mut uint8).offset(0xd26 as ::core::ffi::c_int as isize)
@@ -1935,8 +1899,7 @@ pub unsafe extern "C" fn GrappleBeamFunc_BD95() {
             as *mut uint16);
     GrappleBeamFunc_BE98();
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleBeamFunc_BE98() {
+pub unsafe fn GrappleBeamFunc_BE98() {
     let mut v0: int16 = 0;
     let mut v1: int16 = 0;
     v0 = (*((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
@@ -1992,8 +1955,7 @@ pub unsafe extern "C" fn GrappleBeamFunc_BE98() {
             - 12 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleBeamFunc_BEEB() {
+pub unsafe fn GrappleBeamFunc_BEEB() {
     let mut v0: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0xd34 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int;
@@ -2038,8 +2000,7 @@ pub unsafe extern "C" fn GrappleBeamFunc_BEEB() {
             + *((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
                 as *mut uint16) as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleBeamFunc_BF1B() {
+pub unsafe fn GrappleBeamFunc_BF1B() {
     let mut r22: uint16 = (*(g_rom.offset(
         (((0x91b629 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0x91b629 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -2152,8 +2113,7 @@ pub unsafe extern "C" fn GrappleBeamFunc_BF1B() {
             - r22 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn UpdateGrappleBeamTilesAndIncrFlameCtr() {
+pub unsafe fn UpdateGrappleBeamTilesAndIncrFlameCtr() {
     UpdateGrappleBeamTiles();
     if *((&raw mut g_ram as *mut uint8).offset(0xcd0 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -2167,8 +2127,7 @@ pub unsafe extern "C" fn UpdateGrappleBeamTilesAndIncrFlameCtr() {
         *fresh29 = (*fresh29).wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn UpdateGrappleBeamTiles() {
+pub unsafe fn UpdateGrappleBeamTiles() {
     let ref mut fresh25 = *((&raw mut g_ram as *mut uint8)
         .offset(0xd3e as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh25 = (*fresh25).wrapping_sub(1);
@@ -2213,8 +2172,7 @@ pub unsafe extern "C" fn UpdateGrappleBeamTiles() {
     v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     let fresh27 = v0;
     v0 = v0.wrapping_add(1);
-    *(&raw mut (*(gVramWriteEntry
-        as unsafe extern "C" fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
+    *(&raw mut (*(gVramWriteEntry as unsafe fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
         fresh27 as ::core::ffi::c_int,
     ))
     .size as *mut uint8)
@@ -2239,8 +2197,7 @@ pub unsafe extern "C" fn UpdateGrappleBeamTiles() {
     v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     let fresh28 = v0;
     v0 = v0.wrapping_add(1);
-    *(&raw mut (*(gVramWriteEntry
-        as unsafe extern "C" fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
+    *(&raw mut (*(gVramWriteEntry as unsafe fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
         fresh28 as ::core::ffi::c_int,
     ))
     .size as *mut uint8)
@@ -2249,8 +2206,7 @@ pub unsafe extern "C" fn UpdateGrappleBeamTiles() {
     *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16) =
         (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleGrappleBeamFlare() {
+pub unsafe fn HandleGrappleBeamFlare() {
     if *((&raw mut g_ram as *mut uint8).offset(0xcd0 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -2363,8 +2319,7 @@ pub unsafe extern "C" fn HandleGrappleBeamFlare() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleBeamHandler() {
+pub unsafe fn GrappleBeamHandler() {
     let mut r18: uint16 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0xcf6 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
@@ -2422,8 +2377,7 @@ pub unsafe extern "C" fn GrappleBeamHandler() {
         *fresh11 = (*fresh11 as ::core::ffi::c_int & !(1 as ::core::ffi::c_int)) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleBeamFunc_Inactive() {
+pub unsafe fn GrappleBeamFunc_Inactive() {
     if *((&raw mut g_ram as *mut uint8).offset(0x9b2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
@@ -2457,8 +2411,7 @@ pub unsafe extern "C" fn GrappleBeamFunc_Inactive() {
         Samus_LoadSuitPalette();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleBeamFunc_FireGoToCancel() {
+pub unsafe fn GrappleBeamFunc_FireGoToCancel() {
     let mut r22: uint16 = 0;
     let mut v0: ::core::ffi::c_int = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize) as *mut uint16)
@@ -2761,8 +2714,7 @@ pub unsafe extern "C" fn GrappleBeamFunc_FireGoToCancel() {
             (0x90a337 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CheckBannedDraygonGrappleDirs(mut a: uint16) -> uint16 {
+pub unsafe fn CheckBannedDraygonGrappleDirs(mut a: uint16) -> uint16 {
     if a as ::core::ffi::c_int == kPose_BE_FaceL_Draygon_Move as ::core::ffi::c_int {
         if *((&raw mut g_ram as *mut uint8).offset(0x8b as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -2809,12 +2761,10 @@ pub unsafe extern "C" fn CheckBannedDraygonGrappleDirs(mut a: uint16) -> uint16 
     }
     return 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearCarry_12() -> uint8 {
+pub unsafe fn ClearCarry_12() -> uint8 {
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleBeamFunc_Firing() {
+pub unsafe fn GrappleBeamFunc_Firing() {
     if *((&raw mut g_ram as *mut uint8).offset(0x9b2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & *((&raw mut g_ram as *mut uint8).offset(0x8b as ::core::ffi::c_int as isize)
@@ -2871,8 +2821,7 @@ pub unsafe extern "C" fn GrappleBeamFunc_Firing() {
         .offset(0xa64 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh17 = (*fresh17 as ::core::ffi::c_int | 1 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleBeamFunc_ConnectedLockedInPlace() {
+pub unsafe fn GrappleBeamFunc_ConnectedLockedInPlace() {
     if !(*((&raw mut g_ram as *mut uint8).offset(0x9b2 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & *((&raw mut g_ram as *mut uint8).offset(0x8b as ::core::ffi::c_int as isize)
@@ -2886,8 +2835,7 @@ pub unsafe extern "C" fn GrappleBeamFunc_ConnectedLockedInPlace() {
             (0x9bc856 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleBeamFunc_Connected_Swinging() {
+pub unsafe fn GrappleBeamFunc_Connected_Swinging() {
     let mut current_block: u64;
     if *((&raw mut g_ram as *mut uint8).offset(0x9b2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -2956,8 +2904,7 @@ pub unsafe extern "C" fn GrappleBeamFunc_Connected_Swinging() {
             (0x9bc8c5 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleBeamFunc_Wallgrab() {
+pub unsafe fn GrappleBeamFunc_Wallgrab() {
     if !(*((&raw mut g_ram as *mut uint8).offset(0x9b2 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & *((&raw mut g_ram as *mut uint8).offset(0x8b as ::core::ffi::c_int as isize)
@@ -2972,8 +2919,7 @@ pub unsafe extern "C" fn GrappleBeamFunc_Wallgrab() {
             (0x9bc832 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleBeamFunc_C832() {
+pub unsafe fn GrappleBeamFunc_C832() {
     let ref mut fresh12 = *((&raw mut g_ram as *mut uint8)
         .offset(0xa9e as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh12 = (*fresh12).wrapping_sub(1);
@@ -2992,8 +2938,7 @@ pub unsafe extern "C" fn GrappleBeamFunc_C832() {
             (0x9bc8c5 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleBeamFunc_Cancel() {
+pub unsafe fn GrappleBeamFunc_Cancel() {
     QueueSfx1_Max15(7 as uint16);
     if *(&raw mut g_ram as *mut uint8).offset(0xa1f as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
@@ -3051,8 +2996,7 @@ pub unsafe extern "C" fn GrappleBeamFunc_Cancel() {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleBeam_Func2() {
+pub unsafe fn GrappleBeam_Func2() {
     let mut current_block: u64;
     QueueSfx1_Max15(7 as uint16);
     if *((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize) as *mut uint16)
@@ -3252,8 +3196,7 @@ pub unsafe extern "C" fn GrappleBeam_Func2() {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleBeamFunc_C9CE() {
+pub unsafe fn GrappleBeamFunc_C9CE() {
     QueueSfx1_Max15(7 as uint16);
     if *(&raw mut g_ram as *mut uint8).offset(0xa1e as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
@@ -3337,8 +3280,7 @@ pub unsafe extern "C" fn GrappleBeamFunc_C9CE() {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PropelSamusFromGrappleSwing() {
+pub unsafe fn PropelSamusFromGrappleSwing() {
     let mut v1: int16 = 0;
     let mut v2: int16 = 0;
     let mut v0: uint16 = 0;
@@ -3434,8 +3376,7 @@ pub unsafe extern "C" fn PropelSamusFromGrappleSwing() {
         Multiply16x16(v3, v0),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleBeamFunc_ReleaseFromSwing() {
+pub unsafe fn GrappleBeamFunc_ReleaseFromSwing() {
     QueueSfx1_Max15(7 as uint16);
     if *((&raw mut g_ram as *mut uint8).offset(0xd26 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -3498,8 +3439,7 @@ pub unsafe extern "C" fn GrappleBeamFunc_ReleaseFromSwing() {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallGrappleBeamFunc(mut ea: uint32) {
+pub unsafe fn CallGrappleBeamFunc(mut ea: uint32) {
     match ea {
         10206052 => {
             GrappleBeamFunc_BB64();

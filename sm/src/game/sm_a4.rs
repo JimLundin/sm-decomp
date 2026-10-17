@@ -325,7 +325,7 @@ pub struct Enemy_Crocomire {
 }
 pub use crate::types::CrocomireFunc;
 #[inline]
-unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
+unsafe fn abs16(mut t: uint16) -> uint16 {
     return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         -(t as ::core::ffi::c_int)
     } else {
@@ -333,28 +333,28 @@ unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
     }) as uint16;
 }
 #[inline]
-unsafe extern "C" fn __CFADD__uint16(mut x: uint16, mut y: uint16) -> bool {
+unsafe fn __CFADD__uint16(mut x: uint16, mut y: uint16) -> bool {
     return x as ::core::ffi::c_int
         > (x as ::core::ffi::c_int + y as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int;
 }
 #[inline]
-unsafe extern "C" fn __CFADD__uint8(mut x: uint8, mut y: uint8) -> bool {
+unsafe fn __CFADD__uint8(mut x: uint8, mut y: uint8) -> bool {
     return x as ::core::ffi::c_int
         > (x as ::core::ffi::c_int + y as ::core::ffi::c_int) as uint8 as ::core::ffi::c_int;
 }
 #[inline]
-unsafe extern "C" fn RomPtr_A4(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_A4(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0xa40000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomPtrWithBank(mut bank: uint8, mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtrWithBank(mut bank: uint8, mut addr: uint16_t) -> *const uint8 {
     return RomPtr(
         ((bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int | addr as ::core::ffi::c_int)
             as uint32_t,
     );
 }
 #[inline]
-unsafe extern "C" fn RomBankBase(mut bank: uint8) -> *const uint8 {
+unsafe fn RomBankBase(mut bank: uint8) -> *const uint8 {
     return RomPtr(
         (((bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) + 0x8000 as ::core::ffi::c_int)
             as uint32_t,
@@ -362,12 +362,12 @@ unsafe extern "C" fn RomBankBase(mut bank: uint8) -> *const uint8 {
     .offset(-(0x8000 as ::core::ffi::c_int as isize));
 }
 #[inline]
-unsafe extern "C" fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
+unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
     return (&raw mut g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
         as *mut uint8 as *mut VramWriteEntry;
 }
 #[inline]
-unsafe extern "C" fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
+unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
     let mut t: uint32 = ((*lo as ::core::ffi::c_int
         + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
         as uint32)
@@ -376,18 +376,18 @@ unsafe extern "C" fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: 
     *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
 #[inline]
-unsafe extern "C" fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
+unsafe fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
     *lo = t as uint16;
     *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
 #[inline]
-unsafe extern "C" fn gEnemyData(mut o: ::core::ffi::c_int) -> *mut EnemyData {
+unsafe fn gEnemyData(mut o: ::core::ffi::c_int) -> *mut EnemyData {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut EnemyData;
 }
 #[inline]
-unsafe extern "C" fn Get_Crocomire(mut o: ::core::ffi::c_int) -> *mut Enemy_Crocomire {
+unsafe fn Get_Crocomire(mut o: ::core::ffi::c_int) -> *mut Enemy_Crocomire {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_Crocomire;
@@ -401,24 +401,19 @@ static mut g_word_A4869E: uint16 = 3 as uint16;
 static mut g_word_A486A0: uint16 = 8 as uint16;
 static mut g_word_A486A2: uint16 = 0x300 as uint16;
 static mut g_word_A486A4: uint16 = 0x640 as uint16;
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_GrappleReact_SamusLatchesOn_A4() {
+pub unsafe fn Enemy_GrappleReact_SamusLatchesOn_A4() {
     SamusLatchesOnWithGrapple();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalTouchAI_A4() {
+pub unsafe fn Enemy_NormalTouchAI_A4() {
     NormalEnemyTouchAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalShotAI_A4() {
+pub unsafe fn Enemy_NormalShotAI_A4() {
     NormalEnemyShotAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalFrozenAI_A4() {
+pub unsafe fn Enemy_NormalFrozenAI_A4() {
     NormalEnemyFrozenAI();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Hurt() {
+pub unsafe fn Crocomire_Hurt() {
     Crocomire_Func_27(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -427,31 +422,30 @@ pub unsafe extern "C" fn Crocomire_Hurt() {
 }
 static mut off_A486B3: [Option<CrocomireFunc>; 21] = unsafe {
     [
-        Some(Crocomire_Func_2 as unsafe extern "C" fn(uint16, *const uint16) -> *const uint16),
-        Some(Crocomire_Func_3 as unsafe extern "C" fn(uint16, *const uint16) -> *const uint16),
-        Some(Crocomire_Func_4 as unsafe extern "C" fn(uint16, *const uint16) -> *const uint16),
-        Some(Crocomire_Func_5 as unsafe extern "C" fn(uint16, *const uint16) -> *const uint16),
-        Some(Crocomire_Func_7 as unsafe extern "C" fn(uint16, *const uint16) -> *const uint16),
-        Some(Crocomire_Func_8 as unsafe extern "C" fn(uint16, *const uint16) -> *const uint16),
-        Some(Crocomire_Func_9 as unsafe extern "C" fn(uint16, *const uint16) -> *const uint16),
-        Some(Crocomire_Func_10 as unsafe extern "C" fn(uint16, *const uint16) -> *const uint16),
-        Some(Crocomire_Func_11 as unsafe extern "C" fn(uint16, *const uint16) -> *const uint16),
-        Some(Crocomire_Func_13 as unsafe extern "C" fn(uint16, *const uint16) -> *const uint16),
-        Some(Crocomire_Func_14 as unsafe extern "C" fn(uint16, *const uint16) -> *const uint16),
-        Some(Crocomire_Func_15 as unsafe extern "C" fn(uint16, *const uint16) -> *const uint16),
-        Some(Crocomire_Func_16 as unsafe extern "C" fn(uint16, *const uint16) -> *const uint16),
-        Some(Crocomire_Func_17 as unsafe extern "C" fn(uint16, *const uint16) -> *const uint16),
-        Some(Crocomire_Func_18 as unsafe extern "C" fn(uint16, *const uint16) -> *const uint16),
-        Some(Crocomire_Func_21 as unsafe extern "C" fn(uint16, *const uint16) -> *const uint16),
-        Some(Crocomire_Func_22 as unsafe extern "C" fn(uint16, *const uint16) -> *const uint16),
-        Some(Crocomire_Func_23 as unsafe extern "C" fn(uint16, *const uint16) -> *const uint16),
-        Some(Crocomire_Func_24 as unsafe extern "C" fn(uint16, *const uint16) -> *const uint16),
-        Some(Crocomire_Func_25 as unsafe extern "C" fn(uint16, *const uint16) -> *const uint16),
-        Some(Crocomire_Func_26 as unsafe extern "C" fn(uint16, *const uint16) -> *const uint16),
+        Some(Crocomire_Func_2 as unsafe fn(uint16, *const uint16) -> *const uint16),
+        Some(Crocomire_Func_3 as unsafe fn(uint16, *const uint16) -> *const uint16),
+        Some(Crocomire_Func_4 as unsafe fn(uint16, *const uint16) -> *const uint16),
+        Some(Crocomire_Func_5 as unsafe fn(uint16, *const uint16) -> *const uint16),
+        Some(Crocomire_Func_7 as unsafe fn(uint16, *const uint16) -> *const uint16),
+        Some(Crocomire_Func_8 as unsafe fn(uint16, *const uint16) -> *const uint16),
+        Some(Crocomire_Func_9 as unsafe fn(uint16, *const uint16) -> *const uint16),
+        Some(Crocomire_Func_10 as unsafe fn(uint16, *const uint16) -> *const uint16),
+        Some(Crocomire_Func_11 as unsafe fn(uint16, *const uint16) -> *const uint16),
+        Some(Crocomire_Func_13 as unsafe fn(uint16, *const uint16) -> *const uint16),
+        Some(Crocomire_Func_14 as unsafe fn(uint16, *const uint16) -> *const uint16),
+        Some(Crocomire_Func_15 as unsafe fn(uint16, *const uint16) -> *const uint16),
+        Some(Crocomire_Func_16 as unsafe fn(uint16, *const uint16) -> *const uint16),
+        Some(Crocomire_Func_17 as unsafe fn(uint16, *const uint16) -> *const uint16),
+        Some(Crocomire_Func_18 as unsafe fn(uint16, *const uint16) -> *const uint16),
+        Some(Crocomire_Func_21 as unsafe fn(uint16, *const uint16) -> *const uint16),
+        Some(Crocomire_Func_22 as unsafe fn(uint16, *const uint16) -> *const uint16),
+        Some(Crocomire_Func_23 as unsafe fn(uint16, *const uint16) -> *const uint16),
+        Some(Crocomire_Func_24 as unsafe fn(uint16, *const uint16) -> *const uint16),
+        Some(Crocomire_Func_25 as unsafe fn(uint16, *const uint16) -> *const uint16),
+        Some(Crocomire_Func_26 as unsafe fn(uint16, *const uint16) -> *const uint16),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut crocom_var_C: uint16 = (*Get_Crocomire(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -460,20 +454,17 @@ pub unsafe extern "C" fn Crocomire_Instr_1(mut k: uint16, mut jp: *const uint16)
     return off_A486B3[(crocom_var_C as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize]
         .expect("non-null function pointer")(crocom_var_C, jp);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Func_2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*Get_Crocomire(k as ::core::ffi::c_int))
         .base
         .instruction_timer = 1 as uint16;
     return addr_kCrocomire_Ilist_BADE as ::core::ffi::c_int as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Func_3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*Get_Crocomire(0 as ::core::ffi::c_int)).crocom_var_C = 4 as uint16;
     return addr_kCrocomire_Ilist_BBCE as ::core::ffi::c_int as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_4(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Func_4(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     let mut v1: uint16 = abs16(
         ((*E).base.x_pos as ::core::ffi::c_int
@@ -488,8 +479,7 @@ pub unsafe extern "C" fn Crocomire_Func_4(mut k: uint16, mut jp: *const uint16) 
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_5(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Func_5(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     if (*E).crocom_var_B as ::core::ffi::c_int & 0x800 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
@@ -518,8 +508,7 @@ pub unsafe extern "C" fn Crocomire_Func_5(mut k: uint16, mut jp: *const uint16) 
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_14(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_14(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     if (*((&raw mut g_ram as *mut uint8).offset(0x5e5 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & 0xfff as ::core::ffi::c_int)
@@ -534,8 +523,7 @@ pub unsafe extern "C" fn Crocomire_Instr_14(mut k: uint16, mut jp: *const uint16
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_7(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Func_7(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     let mut crocom_var_B: uint16 = (*E).crocom_var_B;
     if crocom_var_B as ::core::ffi::c_int & 0x800 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
@@ -565,8 +553,7 @@ pub unsafe extern "C" fn Crocomire_Func_7(mut k: uint16, mut jp: *const uint16) 
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_8(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Func_8(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     let mut crocom_var_B: uint16 = (*E).crocom_var_B;
     if crocom_var_B as ::core::ffi::c_int & 0x800 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
@@ -577,8 +564,7 @@ pub unsafe extern "C" fn Crocomire_Func_8(mut k: uint16, mut jp: *const uint16) 
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_9(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Func_9(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = 0;
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     let mut crocom_var_D: uint16 = (*E).crocom_var_D;
@@ -594,8 +580,7 @@ pub unsafe extern "C" fn Crocomire_Func_9(mut k: uint16, mut jp: *const uint16) 
         return addr_kCrocomire_Ilist_BBCE as ::core::ffi::c_int as uintptr_t as *const uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_10(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Func_10(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     if ((*E).base.x_pos as ::core::ffi::c_int - g_word_A486A2 as ::core::ffi::c_int) as int16
         as ::core::ffi::c_int
@@ -606,20 +591,17 @@ pub unsafe extern "C" fn Crocomire_Func_10(mut k: uint16, mut jp: *const uint16)
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_11(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Func_11(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*Get_Crocomire(0 as ::core::ffi::c_int)).crocom_var_C = 6 as uint16;
     return addr_kCrocomire_Ilist_BD2A as ::core::ffi::c_int as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_12(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Func_12(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     (*E).crocom_var_B =
         ((*E).crocom_var_B as ::core::ffi::c_int & !(0x400 as ::core::ffi::c_int)) as uint16;
     return addr_kCrocomire_Ilist_BCD8 as ::core::ffi::c_int as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_13(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Func_13(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     if (*E).crocom_var_B as ::core::ffi::c_int & 0x800 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
@@ -639,8 +621,7 @@ pub unsafe extern "C" fn Crocomire_Func_13(mut k: uint16, mut jp: *const uint16)
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_14(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Func_14(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     if (*E).crocom_var_B as ::core::ffi::c_int & 0x800 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
@@ -660,8 +641,7 @@ pub unsafe extern "C" fn Crocomire_Func_14(mut k: uint16, mut jp: *const uint16)
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_15(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Func_15(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     if (*E).crocom_var_B as ::core::ffi::c_int & 0x800 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
@@ -681,8 +661,7 @@ pub unsafe extern "C" fn Crocomire_Func_15(mut k: uint16, mut jp: *const uint16)
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_16(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Func_16(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     let mut v1: uint16 =
         ((*E).crocom_var_D as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16;
@@ -694,8 +673,7 @@ pub unsafe extern "C" fn Crocomire_Func_16(mut k: uint16, mut jp: *const uint16)
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_17(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Func_17(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     let mut crocom_var_B: uint16 = (*E).crocom_var_B;
     if crocom_var_B as ::core::ffi::c_int & 0x800 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
@@ -715,8 +693,7 @@ pub unsafe extern "C" fn Crocomire_Func_17(mut k: uint16, mut jp: *const uint16)
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_18(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Func_18(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut result: *const uint16 = Crocomire_Func_2(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -729,8 +706,7 @@ pub unsafe extern "C" fn Crocomire_Func_18(mut k: uint16, mut jp: *const uint16)
     (*E).crocom_var_C = 30 as uint16;
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_19(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Func_19(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: bool = false;
     jp = Crocomire_Func_2(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -751,15 +727,13 @@ pub unsafe extern "C" fn Crocomire_Func_19(mut k: uint16, mut jp: *const uint16)
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_20(mut k: uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Func_20(mut k: uint16) -> *const uint16 {
     (*Get_Crocomire(k as ::core::ffi::c_int)).crocom_var_C = 20 as uint16;
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     (*E).crocom_var_B = (*E).crocom_var_B;
     return addr_kCrocomire_Ilist_BAEA as ::core::ffi::c_int as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_21(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Func_21(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     if (*E).crocom_var_B as ::core::ffi::c_int & 0x100 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
@@ -780,8 +754,7 @@ pub unsafe extern "C" fn Crocomire_Func_21(mut k: uint16, mut jp: *const uint16)
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_22(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Func_22(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     k = *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
         as *mut uint16);
     jp = Crocomire_Func_2(k, jp);
@@ -794,8 +767,7 @@ pub unsafe extern "C" fn Crocomire_Func_22(mut k: uint16, mut jp: *const uint16)
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_23(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Func_23(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     k = *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
         as *mut uint16);
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
@@ -824,8 +796,7 @@ pub unsafe extern "C" fn Crocomire_Func_23(mut k: uint16, mut jp: *const uint16)
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_24(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Func_24(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: bool = false;
     k = *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
         as *mut uint16);
@@ -848,8 +819,7 @@ pub unsafe extern "C" fn Crocomire_Func_24(mut k: uint16, mut jp: *const uint16)
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_25(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Func_25(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     k = *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
         as *mut uint16);
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
@@ -863,8 +833,7 @@ pub unsafe extern "C" fn Crocomire_Func_25(mut k: uint16, mut jp: *const uint16)
     (*E).crocom_var_C = 40 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_26(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Func_26(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     if (*E).crocom_var_D != 0 {
         let mut crocom_var_B: uint16 = (*E).crocom_var_B;
@@ -888,8 +857,7 @@ pub unsafe extern "C" fn Crocomire_Func_26(mut k: uint16, mut jp: *const uint16)
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Init() {
+pub unsafe fn Crocomire_Init() {
     let mut v7: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     *((&raw mut g_ram as *mut uint8).offset(0x179c as ::core::ffi::c_int as isize)
         as *mut uint16) = 6 as uint16;
@@ -1016,8 +984,7 @@ pub unsafe extern "C" fn Crocomire_Init() {
         (*E_0).base.instruction_timer = 1 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_27(mut k: uint16) {
+pub unsafe fn Crocomire_Func_27(mut k: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize) as *mut uint16) =
         (67 as ::core::ffi::c_int
             - (*Get_Crocomire(k as ::core::ffi::c_int)).base.y_pos as ::core::ffi::c_int)
@@ -1054,8 +1021,7 @@ pub unsafe extern "C" fn Crocomire_Func_27(mut k: uint16) {
         as uint16;
     Crocomire_8BA4();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_8BA4() {
+pub unsafe fn Crocomire_8BA4() {
     let mut current_block: u64;
     let mut E0: *mut Enemy_Crocomire = Get_Crocomire(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -1120,59 +1086,57 @@ pub unsafe extern "C" fn Crocomire_8BA4() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn nullsub_305() {}
+pub unsafe fn nullsub_305() {}
 static mut off_A48C14: [Option<Func_V>; 45] = unsafe {
     [
-        Some(Crocomire_Func_28 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_52 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_36 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_92CE as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_54 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_36 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_92CE as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_54 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_57 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_60 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_62 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_929E as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_64 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_65 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_66 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_51 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_8D47 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_929E as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_51 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_8D47 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_929E as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_51 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_59 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_60 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_62 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_63 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_56 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_9506 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_65 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_66 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_49 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_68 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_70 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_71 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_72 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_73 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_88 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_9B65 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_90 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_89 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_9B86 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_305 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_91 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_29 as unsafe extern "C" fn() -> ()),
-        Some(Crocomire_Func_69 as unsafe extern "C" fn() -> ()),
+        Some(Crocomire_Func_28 as unsafe fn() -> ()),
+        Some(Crocomire_Func_52 as unsafe fn() -> ()),
+        Some(Crocomire_Func_36 as unsafe fn() -> ()),
+        Some(Crocomire_92CE as unsafe fn() -> ()),
+        Some(Crocomire_Func_54 as unsafe fn() -> ()),
+        Some(Crocomire_Func_36 as unsafe fn() -> ()),
+        Some(Crocomire_92CE as unsafe fn() -> ()),
+        Some(Crocomire_Func_54 as unsafe fn() -> ()),
+        Some(Crocomire_Func_57 as unsafe fn() -> ()),
+        Some(Crocomire_Func_60 as unsafe fn() -> ()),
+        Some(Crocomire_Func_62 as unsafe fn() -> ()),
+        Some(Crocomire_929E as unsafe fn() -> ()),
+        Some(Crocomire_Func_64 as unsafe fn() -> ()),
+        Some(Crocomire_Func_65 as unsafe fn() -> ()),
+        Some(Crocomire_Func_66 as unsafe fn() -> ()),
+        Some(Crocomire_Func_51 as unsafe fn() -> ()),
+        Some(Crocomire_8D47 as unsafe fn() -> ()),
+        Some(Crocomire_929E as unsafe fn() -> ()),
+        Some(Crocomire_Func_51 as unsafe fn() -> ()),
+        Some(Crocomire_8D47 as unsafe fn() -> ()),
+        Some(Crocomire_929E as unsafe fn() -> ()),
+        Some(Crocomire_Func_51 as unsafe fn() -> ()),
+        Some(Crocomire_Func_59 as unsafe fn() -> ()),
+        Some(Crocomire_Func_60 as unsafe fn() -> ()),
+        Some(Crocomire_Func_62 as unsafe fn() -> ()),
+        Some(Crocomire_Func_63 as unsafe fn() -> ()),
+        Some(Crocomire_Func_56 as unsafe fn() -> ()),
+        Some(Crocomire_9506 as unsafe fn() -> ()),
+        Some(Crocomire_Func_65 as unsafe fn() -> ()),
+        Some(Crocomire_Func_66 as unsafe fn() -> ()),
+        Some(Crocomire_Func_49 as unsafe fn() -> ()),
+        Some(Crocomire_Func_68 as unsafe fn() -> ()),
+        Some(Crocomire_Func_70 as unsafe fn() -> ()),
+        Some(Crocomire_Func_71 as unsafe fn() -> ()),
+        Some(Crocomire_Func_72 as unsafe fn() -> ()),
+        Some(Crocomire_Func_73 as unsafe fn() -> ()),
+        Some(Crocomire_Func_88 as unsafe fn() -> ()),
+        Some(Crocomire_9B65 as unsafe fn() -> ()),
+        Some(Crocomire_Func_90 as unsafe fn() -> ()),
+        Some(Crocomire_Func_89 as unsafe fn() -> ()),
+        Some(Crocomire_9B86 as unsafe fn() -> ()),
+        Some(nullsub_305 as unsafe fn() -> ()),
+        Some(Crocomire_Func_91 as unsafe fn() -> ()),
+        Some(Crocomire_Func_29 as unsafe fn() -> ()),
+        Some(Crocomire_Func_69 as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Main() {
+pub unsafe fn Crocomire_Main() {
     let mut v0: ::core::ffi::c_int = (*Get_Crocomire(0 as ::core::ffi::c_int)).crocom_var_A
         as ::core::ffi::c_int
         >> 1 as ::core::ffi::c_int;
@@ -1180,8 +1144,7 @@ pub unsafe extern "C" fn Crocomire_Main() {
     Crocomire_Func_30();
     Crocomire_Func_31();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_28() {
+pub unsafe fn Crocomire_Func_28() {
     Crocomire_Func_37();
     *((&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
@@ -1201,15 +1164,13 @@ pub unsafe extern "C" fn Crocomire_Func_28() {
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_29() {
+pub unsafe fn Crocomire_Func_29() {
     *((&raw mut g_ram as *mut uint8).offset(0xb5 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_30() {
+pub unsafe fn Crocomire_Func_30() {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     if (*E).crocom_var_A == 0
         && (((*E).base.x_pos as ::core::ffi::c_int
@@ -1236,8 +1197,7 @@ pub unsafe extern "C" fn Crocomire_Func_30() {
             as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_31() {
+pub unsafe fn Crocomire_Func_31() {
     let mut j: uint16 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0x797 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
@@ -1278,23 +1238,19 @@ pub unsafe extern "C" fn Crocomire_Func_31() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_11(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_11(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     QueueSfx2_Max6(0x74 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_7(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_7(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     QueueSfx2_Max6(0x25 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_19(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_19(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     QueueSfx2_Max6(0x75 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_35() {
+pub unsafe fn Crocomire_Func_35() {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     let mut crocom_var_20: uint16 = (*E).crocom_var_20;
     if crocom_var_20 != 0 {
@@ -1307,14 +1263,12 @@ pub unsafe extern "C" fn Crocomire_Func_35() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_36() {
+pub unsafe fn Crocomire_Func_36() {
     Crocomire_Func_35();
     Crocomire_8BA4();
     Crocomire_8D47();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_8D47() {
+pub unsafe fn Crocomire_8D47() {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     let mut crocom_var_D: uint16 = (*E).crocom_var_D;
     if crocom_var_D != 0 {
@@ -1326,8 +1280,7 @@ pub unsafe extern "C" fn Crocomire_8D47() {
         (*E).crocom_var_E = 768 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_37() {
+pub unsafe fn Crocomire_Func_37() {
     let mut E0: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     if (*E0).base.x_pos as ::core::ffi::c_int - 1536 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -1496,8 +1449,7 @@ pub unsafe extern "C" fn Crocomire_Func_37() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_8EE5() {
+pub unsafe fn Crocomire_8EE5() {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0x61 as uint8,
         field_1: 0xb as uint8,
@@ -1605,8 +1557,7 @@ pub unsafe extern "C" fn Crocomire_8EE5() {
         0x15 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
         as *mut uint16) = 4 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
@@ -1614,8 +1565,7 @@ pub unsafe extern "C" fn Crocomire_Instr_2(mut k: uint16, mut jp: *const uint16)
     QueueSfx2_Max6(0x76 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_4(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_4(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     if (*Get_Crocomire(0 as ::core::ffi::c_int)).crocom_var_B as ::core::ffi::c_int
         & 0x800 as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
@@ -1628,18 +1578,15 @@ pub unsafe extern "C" fn Crocomire_Instr_4(mut k: uint16, mut jp: *const uint16)
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     Crocomire_Func_43();
     return Crocomire_Instr_4(k, jp);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_15(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_15(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     Crocomire_Func_43();
     return Crocomire_Instr_4(k, jp);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_43() {
+pub unsafe fn Crocomire_Func_43() {
     let mut v1: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0x5e5 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -1653,8 +1600,7 @@ pub unsafe extern "C" fn Crocomire_Func_43() {
     }
     Crocomire_Func_87(::core::ptr::null::<uint16>(), v1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_16(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_16(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     if Enemy_MoveRight_IgnoreSlopes(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -1682,8 +1628,7 @@ pub unsafe extern "C" fn Crocomire_Instr_16(mut k: uint16, mut jp: *const uint16
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_13(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_13(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     if (((*E).base.x_pos as ::core::ffi::c_int
         - (*E).base.x_width as ::core::ffi::c_int
@@ -1700,26 +1645,22 @@ pub unsafe extern "C" fn Crocomire_Instr_13(mut k: uint16, mut jp: *const uint16
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_18(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_18(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     Enemy_MoveRight_IgnoreSlopes(
         k,
         (4 as ::core::ffi::c_int as int16 as int32) << 16 as ::core::ffi::c_int,
     );
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_12(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_12(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     Crocomire_Func_43();
     return Crocomire_Instr_13(k, jp);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_17(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_17(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     Crocomire_Func_43();
     return Crocomire_Instr_18(k, jp);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_49() {
+pub unsafe fn Crocomire_Func_49() {
     Crocomire_Func_50();
     Crocomire_Func_53();
     Crocomire_Func_55();
@@ -1749,8 +1690,7 @@ pub unsafe extern "C" fn Crocomire_Func_49() {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_50() {
+pub unsafe fn Crocomire_Func_50() {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     let mut y_pos: uint16 = (*E).base.y_pos;
     let mut v2: uint16 = addr_kCrocomire_Ilist_BF7E as ::core::ffi::c_int as uint16;
@@ -1771,8 +1711,7 @@ pub unsafe extern "C" fn Crocomire_Func_50() {
     (*E).base.current_instruction = v2;
     (*E).base.instruction_timer = 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_51() {
+pub unsafe fn Crocomire_Func_51() {
     Crocomire_Func_53();
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     let mut y_pos: uint16 = (*E).base.y_pos;
@@ -1795,8 +1734,7 @@ pub unsafe extern "C" fn Crocomire_Func_51() {
     (*E).base.instruction_timer = 1 as uint16;
     Crocomire_Func_55();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_52() {
+pub unsafe fn Crocomire_Func_52() {
     let mut v0: uint16 = *(((&raw mut g_ram as *mut uint8)
         .offset(0x9015 as ::core::ffi::c_int as isize) as *mut uint16
         as *mut uint8)
@@ -1831,8 +1769,7 @@ pub unsafe extern "C" fn Crocomire_Func_52() {
     }
     Crocomire_Func_54();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_53() {
+pub unsafe fn Crocomire_Func_53() {
     let ref mut fresh9 = *((&raw mut g_ram as *mut uint8)
         .offset(0x9018 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh9 = (*fresh9).wrapping_sub(1);
@@ -1864,14 +1801,12 @@ pub unsafe extern "C" fn Crocomire_Func_53() {
         CreateSpriteAtPos(x, y, 21 as uint16, 0 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_54() {
+pub unsafe fn Crocomire_Func_54() {
     Crocomire_Func_35();
     Crocomire_Func_53();
     Crocomire_Func_55();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_55() {
+pub unsafe fn Crocomire_Func_55() {
     let mut crocom_var_D: int8 = 0;
     let mut v7: int8 = 0;
     let mut v9: int8 = 0;
@@ -1998,8 +1933,7 @@ pub unsafe extern "C" fn Crocomire_Func_55() {
         (*E0).crocom_var_D = 48 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_56() {
+pub unsafe fn Crocomire_Func_56() {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2025,8 +1959,7 @@ pub unsafe extern "C" fn Crocomire_Func_56() {
     Crocomire_Func_53();
     Crocomire_92D8();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_929E() {
+pub unsafe fn Crocomire_929E() {
     Crocomire_Func_53();
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -2052,14 +1985,12 @@ pub unsafe extern "C" fn Crocomire_929E() {
     (*E).base.instruction_timer = 1 as uint16;
     Crocomire_92D8();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_92CE() {
+pub unsafe fn Crocomire_92CE() {
     Crocomire_Func_35();
     Crocomire_Func_53();
     Crocomire_92D8();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_92D8() {
+pub unsafe fn Crocomire_92D8() {
     let mut v3: int16 = 0;
     let mut v6: int8 = 0;
     Crocomire_Func_58();
@@ -2151,8 +2082,7 @@ pub unsafe extern "C" fn Crocomire_92D8() {
             as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_57() {
+pub unsafe fn Crocomire_Func_57() {
     let mut i: ::core::ffi::c_int = 0;
     *(&raw mut g_ram as *mut uint8).offset(0x68c as ::core::ffi::c_int as isize) = 48 as uint8;
     *((&raw mut g_ram as *mut uint8).offset(0x688 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -2224,8 +2154,7 @@ pub unsafe extern "C" fn Crocomire_Func_57() {
     }
     Crocomire_93BE((i + 1024 as ::core::ffi::c_int) as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_93BE(mut k: uint16) {
+pub unsafe fn Crocomire_93BE(mut k: uint16) {
     let mut v3: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
@@ -2243,8 +2172,7 @@ pub unsafe extern "C" fn Crocomire_93BE(mut k: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16) =
         (v2 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_58() {
+pub unsafe fn Crocomire_Func_58() {
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xb7 as ::core::ffi::c_int as isize) as *mut uint16);
     let mut i: ::core::ffi::c_int = 510 as ::core::ffi::c_int;
@@ -2255,8 +2183,7 @@ pub unsafe extern "C" fn Crocomire_Func_58() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_59() {
+pub unsafe fn Crocomire_Func_59() {
     let mut i: ::core::ffi::c_int = 0;
     Crocomire_Func_58();
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(
@@ -2311,8 +2238,7 @@ pub unsafe extern "C" fn Crocomire_Func_59() {
     }
     Crocomire_93BE((i + 1024 as ::core::ffi::c_int) as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_60() {
+pub unsafe fn Crocomire_Func_60() {
     let mut i: ::core::ffi::c_int = 0;
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -2419,12 +2345,10 @@ pub unsafe extern "C" fn Crocomire_Func_60() {
         j -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_61() {
+pub unsafe fn Crocomire_Func_61() {
     Crocomire_Func_62();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_62() {
+pub unsafe fn Crocomire_Func_62() {
     let mut v2: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x68a as ::core::ffi::c_int as isize) as *mut uint16);
@@ -2493,18 +2417,15 @@ pub unsafe extern "C" fn Crocomire_Func_62() {
             as *mut uint16) = (v1 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_64() {
+pub unsafe fn Crocomire_Func_64() {
     QueueSfx2_Max6(0x77 as uint16);
     Crocomire_950F();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_9506() {
+pub unsafe fn Crocomire_9506() {
     QueueSfx2_Max6(0x2d as uint16);
     Crocomire_950F();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_950F() {
+pub unsafe fn Crocomire_950F() {
     static mut unk_A49559: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x42 as uint8,
         field_1: 0x10 as uint8,
@@ -2554,8 +2475,7 @@ pub unsafe extern "C" fn Crocomire_950F() {
         &raw const unk_A49559 as *const ::core::ffi::c_void,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_63() {
+pub unsafe fn Crocomire_Func_63() {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2563,8 +2483,7 @@ pub unsafe extern "C" fn Crocomire_Func_63() {
     (*E).crocom_var_A =
         ((*E).crocom_var_A as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_65() {
+pub unsafe fn Crocomire_Func_65() {
     let mut v4: uint16 = 0;
     let mut current_block: u64;
     let mut i: ::core::ffi::c_int = 0;
@@ -2730,8 +2649,7 @@ pub unsafe extern "C" fn Crocomire_Func_65() {
         .offset(((*E0).crocom_var_1F as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_66() {
+pub unsafe fn Crocomire_Func_66() {
     let mut v3: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -2774,8 +2692,7 @@ static mut kCrocoEraseLineMasks: [uint8; 8] = [
     0xfd as ::core::ffi::c_int as uint8,
     0xfe as ::core::ffi::c_int as uint8,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_67() -> uint16 {
+pub unsafe fn Crocomire_Func_67() -> uint16 {
     let mut n: ::core::ffi::c_int = *(&raw mut g_ram as *mut uint8)
         .offset(0x68c as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int;
@@ -2948,8 +2865,7 @@ pub unsafe extern "C" fn Crocomire_Func_67() -> uint16 {
     *fresh6 = (*fresh6 as ::core::ffi::c_int + 8 as ::core::ffi::c_int) as uint16;
     return 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_68() {
+pub unsafe fn Crocomire_Func_68() {
     if *((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         - 640 as ::core::ffi::c_int
@@ -2983,8 +2899,7 @@ pub unsafe extern "C" fn Crocomire_Func_68() {
         Crocomire_9BB3();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_69() {
+pub unsafe fn Crocomire_Func_69() {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     let mut v1: uint16 =
         ((*E).base.x_pos as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
@@ -2997,8 +2912,7 @@ pub unsafe extern "C" fn Crocomire_Func_69() {
         (*E).base.y_pos = 220 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_70() {
+pub unsafe fn Crocomire_Func_70() {
     let mut E0: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     let mut E1: *mut Enemy_Crocomire = Get_Crocomire(0x40 as ::core::ffi::c_int);
     let mut E2: *mut Enemy_Crocomire = Get_Crocomire(0x80 as ::core::ffi::c_int);
@@ -3108,8 +3022,7 @@ pub unsafe extern "C" fn Crocomire_Func_70() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_71() {
+pub unsafe fn Crocomire_Func_71() {
     let mut v3: int16 = 0;
     let mut v6: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
@@ -3222,8 +3135,7 @@ pub unsafe extern "C" fn Crocomire_Func_71() {
         Crocomire_9BB3();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_72() {
+pub unsafe fn Crocomire_Func_72() {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     if (*E).base.x_pos as ::core::ffi::c_int - 224 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -3251,8 +3163,7 @@ pub unsafe extern "C" fn Crocomire_Func_72() {
         Crocomire_9BB3();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_73() {
+pub unsafe fn Crocomire_Func_73() {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     let mut t: uint32 = (((*E).crocom_var_F as uint32) << 16 as ::core::ffi::c_int
         | (*E).crocom_var_E as uint32)
@@ -3281,60 +3192,46 @@ pub unsafe extern "C" fn Crocomire_Func_73() {
         Crocomire_9BB3();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_8(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_8(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return Crocomire_Func_87(jp, 0xffe0 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_6(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_6(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return Crocomire_Func_87(jp, 0 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_9(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_9(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return Crocomire_Func_87(jp, 0xfff0 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_5(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_5(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return Crocomire_Func_87(jp, 0x10 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_20(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_20(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return Crocomire_Func_87(jp, 0 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_21(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_21(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return Crocomire_Func_87(jp, 8 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_22(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_22(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return Crocomire_Func_87(jp, 0x10 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_23(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_23(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return Crocomire_Func_87(jp, 0x18 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_24(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_24(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return Crocomire_Func_87(jp, 0x20 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_10(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_10(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return Crocomire_Func_87(jp, 0x28 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_25(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_25(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return Crocomire_Func_87(jp, 0x30 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_26(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_26(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return Crocomire_Func_87(jp, 0x38 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Instr_27(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Instr_27(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return Crocomire_Func_87(jp, 0x40 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_87(mut jp: *const uint16, mut a: uint16) -> *const uint16 {
+pub unsafe fn Crocomire_Func_87(mut jp: *const uint16, mut a: uint16) -> *const uint16 {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     eproj_spawn_pt = Point16U {
         x: (a as ::core::ffi::c_int
@@ -3351,8 +3248,7 @@ pub unsafe extern "C" fn Crocomire_Func_87(mut jp: *const uint16, mut a: uint16)
     );
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_88() {
+pub unsafe fn Crocomire_Func_88() {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     if (*E).base.current_instruction as ::core::ffi::c_int + 0x1e3a as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -3384,8 +3280,7 @@ pub unsafe extern "C" fn Crocomire_Func_88() {
         Crocomire_9BB3();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_9B65() {
+pub unsafe fn Crocomire_9B65() {
     *((&raw mut g_ram as *mut uint8).offset(0xcd20 as ::core::ffi::c_int as isize)
         as *mut uint16) = 257 as uint16;
     *((&raw mut g_ram as *mut uint8)
@@ -3398,12 +3293,10 @@ pub unsafe extern "C" fn Crocomire_9B65() {
     });
     Crocomire_9BB3();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_89() {
+pub unsafe fn Crocomire_Func_89() {
     Crocomire_9BB3();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_90() {
+pub unsafe fn Crocomire_Func_90() {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     if (*E).base.current_instruction as ::core::ffi::c_int + 0x1e3a as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -3412,8 +3305,7 @@ pub unsafe extern "C" fn Crocomire_Func_90() {
         Crocomire_9BB3();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_9B86() {
+pub unsafe fn Crocomire_9B86() {
     QueueMusic_Delayed8(6 as uint16);
     *((&raw mut g_ram as *mut uint8).offset(0x941 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
@@ -3429,18 +3321,15 @@ pub unsafe extern "C" fn Crocomire_9B86() {
     Crocomire_Func_87(::core::ptr::null::<uint16>(), 0x10 as uint16);
     Crocomire_9BB3();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_9BB3() {
+pub unsafe fn Crocomire_9BB3() {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     (*E).crocom_var_A = (*E).crocom_var_A.wrapping_add(1);
     (*E).crocom_var_A = (*E).crocom_var_A.wrapping_add(1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_91() {
+pub unsafe fn Crocomire_Func_91() {
     Crocomire_9BB3();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_92() {
+pub unsafe fn Crocomire_Func_92() {
     NormalEnemyTouchAi();
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     (*E).crocom_var_B =
@@ -3448,8 +3337,7 @@ pub unsafe extern "C" fn Crocomire_Func_92() {
     *((&raw mut g_ram as *mut uint8).offset(0xb58 as ::core::ffi::c_int as isize) as *mut uint16) =
         -(4 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_93() {
+pub unsafe fn Crocomire_Func_93() {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     let mut v1: uint16 =
         ((*E).crocom_var_B as ::core::ffi::c_int & 0xf as ::core::ffi::c_int) as uint16;
@@ -3459,8 +3347,7 @@ pub unsafe extern "C" fn Crocomire_Func_93() {
     (*E).crocom_var_B =
         ((*E).crocom_var_B as ::core::ffi::c_int | v1 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_94() {
+pub unsafe fn Crocomire_Func_94() {
     let mut v0: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0x18a6 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int;
@@ -3487,8 +3374,7 @@ pub unsafe extern "C" fn Crocomire_Func_94() {
         v1,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Powerbomb() {
+pub unsafe fn Crocomire_Powerbomb() {
     let mut v2: uint16 = 0;
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(0 as ::core::ffi::c_int);
     if (*E).crocom_var_A == 0 {
@@ -3542,8 +3428,7 @@ pub unsafe extern "C" fn Crocomire_Powerbomb() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_95() {
+pub unsafe fn Crocomire_Func_95() {
     let mut v1: uint16 = 0;
     let mut v2: uint16 = 0;
     let mut current_block: u64;
@@ -3624,8 +3509,7 @@ pub unsafe extern "C" fn Crocomire_Func_95() {
     (*E).base.ai_handler_bits =
         ((*E).base.ai_handler_bits as ::core::ffi::c_int | 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Crocomire_Func_1() {
+pub unsafe fn Crocomire_Func_1() {
     let mut v0: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0x18a6 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int;
@@ -3652,8 +3536,7 @@ pub unsafe extern "C" fn Crocomire_Func_1() {
         v1,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn CrocomireTongue_Init() {
+pub unsafe fn CrocomireTongue_Init() {
     let mut E: *mut Enemy_Crocomire = Get_Crocomire(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -3679,5 +3562,4 @@ pub unsafe extern "C" fn CrocomireTongue_Init() {
         (*E).base.palette_index = 3584 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CrocomireTongue_Main() {}
+pub unsafe fn CrocomireTongue_Main() {}

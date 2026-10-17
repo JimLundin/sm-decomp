@@ -1305,11 +1305,7 @@ static mut opcodeTypeSpc: [::core::ffi::c_int; 256] = [
     3 as ::core::ffi::c_int,
     0 as ::core::ffi::c_int,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn getProcessorStateCpu(
-    mut snes: *mut Snes,
-    mut line: *mut ::core::ffi::c_char,
-) {
+pub unsafe fn getProcessorStateCpu(mut snes: *mut Snes, mut line: *mut ::core::ffi::c_char) {
     let mut disLine: [::core::ffi::c_char; 14] =
         ::core::mem::transmute::<[u8; 14], [::core::ffi::c_char; 14]>(*b"             \0");
     getDisassemblyCpu(snes, &raw mut disLine as *mut ::core::ffi::c_char);
@@ -1373,11 +1369,7 @@ pub unsafe extern "C" fn getProcessorStateCpu(
         },
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn getProcessorStateSpc(
-    mut apu: *mut Apu,
-    mut line: *mut ::core::ffi::c_char,
-) {
+pub unsafe fn getProcessorStateSpc(mut apu: *mut Apu, mut line: *mut ::core::ffi::c_char) {
     let mut disLine: [::core::ffi::c_char; 18] =
         ::core::mem::transmute::<[u8; 18], [::core::ffi::c_char; 18]>(*b"                 \0");
     getDisassemblySpc(apu, &raw mut disLine as *mut ::core::ffi::c_char);
@@ -1433,7 +1425,7 @@ pub unsafe extern "C" fn getProcessorStateSpc(
         },
     );
 }
-unsafe extern "C" fn getDisassemblyCpu(mut snes: *mut Snes, mut line: *mut ::core::ffi::c_char) {
+unsafe fn getDisassemblyCpu(mut snes: *mut Snes, mut line: *mut ::core::ffi::c_char) {
     let mut adr: uint32_t = ((*(*snes).cpu).pc as ::core::ffi::c_int
         | ((*(*snes).cpu).k as ::core::ffi::c_int) << 16 as ::core::ffi::c_int)
         as uint32_t;
@@ -1534,7 +1526,7 @@ unsafe extern "C" fn getDisassemblyCpu(mut snes: *mut Snes, mut line: *mut ::cor
         _ => {}
     };
 }
-unsafe extern "C" fn getDisassemblySpc(mut apu: *mut Apu, mut line: *mut ::core::ffi::c_char) {
+unsafe fn getDisassemblySpc(mut apu: *mut Apu, mut line: *mut ::core::ffi::c_char) {
     let mut adr: uint16_t = (*(*apu).spc).pc;
     let mut opcode: uint8_t = apu_cpuRead(apu, adr);
     let mut byte: uint8_t = apu_cpuRead(

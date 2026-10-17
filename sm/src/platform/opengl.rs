@@ -141,7 +141,7 @@ unsafe extern "C" fn MessageCallback(
         Die(b"OpenGL error!\n\0" as *const u8 as *const ::core::ffi::c_char);
     }
 }
-unsafe extern "C" fn OpenGLRenderer_Init(mut window: *mut SDL_Window) -> bool {
+unsafe fn OpenGLRenderer_Init(mut window: *mut SDL_Window) -> bool {
     g_window = window;
     let mut context: SDL_GLContext = SDL_GL_CreateContext(window as *mut SDL_Window);
     SDL_GL_SetSwapInterval(1 as ::core::ffi::c_int);
@@ -279,8 +279,8 @@ unsafe extern "C" fn OpenGLRenderer_Init(mut window: *mut SDL_Window) -> bool {
     }
     return true_0 != 0;
 }
-unsafe extern "C" fn OpenGLRenderer_Destroy() {}
-unsafe extern "C" fn OpenGLRenderer_BeginDraw(
+unsafe fn OpenGLRenderer_Destroy() {}
+unsafe fn OpenGLRenderer_BeginDraw(
     mut width: ::core::ffi::c_int,
     mut height: ::core::ffi::c_int,
     mut pixels: *mut *mut uint8,
@@ -297,7 +297,7 @@ unsafe extern "C" fn OpenGLRenderer_BeginDraw(
     *pixels = g_screen_buffer;
     *pitch = width * 4 as ::core::ffi::c_int;
 }
-unsafe extern "C" fn OpenGLRenderer_EndDraw() {
+unsafe fn OpenGLRenderer_EndDraw() {
     let mut drawable_width: ::core::ffi::c_int = 0;
     let mut drawable_height: ::core::ffi::c_int = 0;
     SDL_GL_GetDrawableSize(
@@ -396,21 +396,20 @@ unsafe extern "C" fn OpenGLRenderer_EndDraw() {
     SDL_GL_SwapWindow(g_window as *mut SDL_Window);
 }
 static mut kOpenGLRendererFuncs: RendererFuncs = RendererFuncs {
-    Initialize: Some(OpenGLRenderer_Init as unsafe extern "C" fn(*mut SDL_Window) -> bool),
-    Destroy: Some(OpenGLRenderer_Destroy as unsafe extern "C" fn() -> ()),
+    Initialize: Some(OpenGLRenderer_Init as unsafe fn(*mut SDL_Window) -> bool),
+    Destroy: Some(OpenGLRenderer_Destroy as unsafe fn() -> ()),
     BeginDraw: Some(
         OpenGLRenderer_BeginDraw
-            as unsafe extern "C" fn(
+            as unsafe fn(
                 ::core::ffi::c_int,
                 ::core::ffi::c_int,
                 *mut *mut uint8,
                 *mut ::core::ffi::c_int,
             ) -> (),
     ),
-    EndDraw: Some(OpenGLRenderer_EndDraw as unsafe extern "C" fn() -> ()),
+    EndDraw: Some(OpenGLRenderer_EndDraw as unsafe fn() -> ()),
 };
-#[no_mangle]
-pub unsafe extern "C" fn OpenGLRenderer_Create(mut funcs: *mut RendererFuncs) {
+pub unsafe fn OpenGLRenderer_Create(mut funcs: *mut RendererFuncs) {
     SDL_GL_SetAttribute(
         SDL_GL_CONTEXT_PROFILE_MASK,
         SDL_GL_CONTEXT_PROFILE_CORE as ::core::ffi::c_int,

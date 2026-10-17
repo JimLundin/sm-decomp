@@ -744,12 +744,12 @@ pub const addr_kDemoInstrs_LeaveDemo: Consts_91 = 34678;
 pub const addr_off_91864B: Consts_91 = 34379;
 pub const kCoroutineNone: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 #[inline]
-unsafe extern "C" fn __CFADD__uint16(mut x: uint16, mut y: uint16) -> bool {
+unsafe fn __CFADD__uint16(mut x: uint16, mut y: uint16) -> bool {
     return x as ::core::ffi::c_int
         > (x as ::core::ffi::c_int + y as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int;
 }
 #[inline]
-unsafe extern "C" fn RomPtr_RAM(mut addr: uint16_t) -> *mut uint8 {
+unsafe fn RomPtr_RAM(mut addr: uint16_t) -> *mut uint8 {
     '_c2rust_label: {
         if (addr as ::core::ffi::c_int) < 0x2000 as ::core::ffi::c_int {
         } else {
@@ -764,25 +764,25 @@ unsafe extern "C" fn RomPtr_RAM(mut addr: uint16_t) -> *mut uint8 {
     return (&raw mut g_ram as *mut uint8).offset(addr as ::core::ffi::c_int as isize);
 }
 #[inline]
-unsafe extern "C" fn RomPtr_8B(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_8B(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x8b0000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomPtr_8C(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_8C(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x8c0000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn gOamEnt(mut v: ::core::ffi::c_int) -> *mut OamEnt {
+unsafe fn gOamEnt(mut v: ::core::ffi::c_int) -> *mut OamEnt {
     return (&raw mut g_ram as *mut uint8).offset((0x370 as ::core::ffi::c_int + v) as isize)
         as *mut uint8 as *mut OamEnt;
 }
 #[inline]
-unsafe extern "C" fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
+unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
     return (&raw mut g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
         as *mut uint8 as *mut VramWriteEntry;
 }
 #[inline]
-unsafe extern "C" fn get_Mode7ObjectDef(mut a: uint16) -> *mut Mode7ObjectDef {
+unsafe fn get_Mode7ObjectDef(mut a: uint16) -> *mut Mode7ObjectDef {
     return RomPtr((0x8b0000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut Mode7ObjectDef;
 }
@@ -1132,7 +1132,7 @@ pub const fnSamus_Func15: ::core::ffi::c_int = 0x90e833 as ::core::ffi::c_int;
 pub const fnSamusDrawHandler_Default: ::core::ffi::c_int = 0x90eb52 as ::core::ffi::c_int;
 pub const fnlocret_8B9585: ::core::ffi::c_int = 0x8b9585 as ::core::ffi::c_int;
 #[inline]
-unsafe extern "C" fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
+unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
     let mut t: uint32 = ((*lo as ::core::ffi::c_int
         + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
         as uint32)
@@ -1140,8 +1140,7 @@ unsafe extern "C" fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: 
     *lo = t as uint16;
     *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetupPpuForTitleSequence() {
+pub unsafe fn SetupPpuForTitleSequence() {
     WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x80 as uint8);
     *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 0x80 as uint8;
     WriteReg(OBSEL as ::core::ffi::c_int as uint16, 3 as uint8);
@@ -1245,8 +1244,7 @@ pub unsafe extern "C" fn SetupPpuForTitleSequence() {
     *((&raw mut g_ram as *mut uint8).offset(0x199f as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetupPpu_Intro() {
+pub unsafe fn SetupPpu_Intro() {
     WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x80 as uint8);
     *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 0x80 as uint8;
     WriteReg(OBSEL as ::core::ffi::c_int as uint16, 3 as uint8);
@@ -1331,8 +1329,7 @@ pub unsafe extern "C" fn SetupPpu_Intro() {
     *((&raw mut g_ram as *mut uint8).offset(0xbb as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetupPpu_3_Mode7() {
+pub unsafe fn SetupPpu_3_Mode7() {
     WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x80 as uint8);
     *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 0x80 as uint8;
     WriteReg(OBSEL as ::core::ffi::c_int as uint16, 3 as uint8);
@@ -1396,8 +1393,7 @@ pub unsafe extern "C" fn SetupPpu_3_Mode7() {
     *((&raw mut g_ram as *mut uint8).offset(0x1982 as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetupPpu_4_Mode1() {
+pub unsafe fn SetupPpu_4_Mode1() {
     WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x80 as uint8);
     *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 0x80 as uint8;
     WriteReg(OBSEL as ::core::ffi::c_int as uint16, 3 as uint8);
@@ -1434,8 +1430,7 @@ pub unsafe extern "C" fn SetupPpu_4_Mode1() {
     *((&raw mut g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetupPpu_5_Mode7() {
+pub unsafe fn SetupPpu_5_Mode7() {
     WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x80 as uint8);
     *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 0x80 as uint8;
     WriteReg(OBSEL as ::core::ffi::c_int as uint16, 0xa3 as uint8);
@@ -1509,8 +1504,7 @@ pub unsafe extern "C" fn SetupPpu_5_Mode7() {
     *((&raw mut g_ram as *mut uint8).offset(0x199f as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetupPpu_6_Mode1() {
+pub unsafe fn SetupPpu_6_Mode1() {
     WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x80 as uint8);
     *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 0x80 as uint8;
     WriteReg(OBSEL as ::core::ffi::c_int as uint16, 2 as uint8);
@@ -1578,8 +1572,7 @@ pub unsafe extern "C" fn SetupPpu_6_Mode1() {
     *((&raw mut g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetupPpu_7_Mode1() {
+pub unsafe fn SetupPpu_7_Mode1() {
     WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x80 as uint8);
     *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 0x80 as uint8;
     WriteReg(OBSEL as ::core::ffi::c_int as uint16, 0 as uint8);
@@ -1661,8 +1654,7 @@ pub unsafe extern "C" fn SetupPpu_7_Mode1() {
     *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleMode7TransformationNoRotation() {
+pub unsafe fn HandleMode7TransformationNoRotation() {
     *((&raw mut g_ram as *mut uint8).offset(0x78 as ::core::ffi::c_int as isize) as *mut uint16) =
         *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
             as *mut uint16);
@@ -1680,13 +1672,12 @@ pub unsafe extern "C" fn HandleMode7TransformationNoRotation() {
         *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
             as *mut uint16);
 }
-unsafe extern "C" fn Smult16x16(mut r38: uint16, mut r40: uint16) -> uint32 {
+unsafe fn Smult16x16(mut r38: uint16, mut r40: uint16) -> uint32 {
     let mut t: uint32 =
         (r38 as int16 as ::core::ffi::c_int * r40 as int16 as ::core::ffi::c_int) as uint32;
     return t;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleMode7TransformationMatrix() {
+pub unsafe fn HandleMode7TransformationMatrix() {
     let ref mut fresh152 = *((&raw mut g_ram as *mut uint8)
         .offset(0x78 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh152 = (Smult16x16(
@@ -1720,8 +1711,7 @@ pub unsafe extern "C" fn HandleMode7TransformationMatrix() {
         *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
             as *mut uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetPpuBackdropSomeColor() {
+pub unsafe fn SetPpuBackdropSomeColor() {
     *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 0 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) =
         -(127 as ::core::ffi::c_int) as uint8;
@@ -1735,8 +1725,7 @@ pub unsafe extern "C" fn SetPpuBackdropSomeColor() {
         .offset(0x74 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 0x80 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetPpuBackdropBlack() {
+pub unsafe fn SetPpuBackdropBlack() {
     *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 0 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 0 as uint8;
     *(&raw mut g_ram as *mut uint8)
@@ -1749,8 +1738,7 @@ pub unsafe extern "C" fn SetPpuBackdropBlack() {
         .offset(0x74 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 0x80 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn UpdateCinematicBgTilemap() {
+pub unsafe fn UpdateCinematicBgTilemap() {
     if *(&raw mut g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
         != 7 as ::core::ffi::c_int
@@ -1768,8 +1756,7 @@ pub unsafe extern "C" fn UpdateCinematicBgTilemap() {
         v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
         let fresh157 = v0;
         v0 = v0.wrapping_add(1);
-        *(&raw mut (*(gVramWriteEntry
-            as unsafe extern "C" fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
+        *(&raw mut (*(gVramWriteEntry as unsafe fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
             fresh157 as ::core::ffi::c_int,
         ))
         .size as *mut uint8)
@@ -1781,8 +1768,7 @@ pub unsafe extern "C" fn UpdateCinematicBgTilemap() {
             as *mut uint16) = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn UpdateSamusEyesTilemap() {
+pub unsafe fn UpdateSamusEyesTilemap() {
     if *(&raw mut g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
         != 7 as ::core::ffi::c_int
@@ -1804,8 +1790,7 @@ pub unsafe extern "C" fn UpdateSamusEyesTilemap() {
         v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
         let fresh156 = v0;
         v0 = v0.wrapping_add(1);
-        *(&raw mut (*(gVramWriteEntry
-            as unsafe extern "C" fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
+        *(&raw mut (*(gVramWriteEntry as unsafe fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
             fresh156 as ::core::ffi::c_int,
         ))
         .size as *mut uint8)
@@ -1815,8 +1800,7 @@ pub unsafe extern "C" fn UpdateSamusEyesTilemap() {
             as *mut uint16) = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicUpdateSomeBg() {
+pub unsafe fn CinematicUpdateSomeBg() {
     if *(&raw mut g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
         != 7 as ::core::ffi::c_int
@@ -1838,8 +1822,7 @@ pub unsafe extern "C" fn CinematicUpdateSomeBg() {
         v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
         let fresh4 = v0;
         v0 = v0.wrapping_add(1);
-        *(&raw mut (*(gVramWriteEntry
-            as unsafe extern "C" fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
+        *(&raw mut (*(gVramWriteEntry as unsafe fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
             fresh4 as ::core::ffi::c_int,
         ))
         .size as *mut uint8)
@@ -1851,8 +1834,7 @@ pub unsafe extern "C" fn CinematicUpdateSomeBg() {
             as *mut uint16) = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallProcessCinematicBgObject(
+pub unsafe fn CallProcessCinematicBgObject(
     mut ea: uint32,
     mut k: uint16,
     mut j: uint16,
@@ -1888,8 +1870,7 @@ pub unsafe extern "C" fn CallProcessCinematicBgObject(
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessCinematicBgObject(mut v0: uint16, mut r18: uint16) {
+pub unsafe fn ProcessCinematicBgObject(mut v0: uint16, mut r18: uint16) {
     let mut j: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x19b5 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
@@ -1901,12 +1882,7 @@ pub unsafe extern "C" fn ProcessCinematicBgObject(mut v0: uint16, mut r18: uint1
         r18,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessCinematicBgObject_DrawChar(
-    mut k: uint16,
-    mut j: uint16,
-    mut r18: uint16,
-) {
+pub unsafe fn ProcessCinematicBgObject_DrawChar(mut k: uint16, mut j: uint16, mut r18: uint16) {
     let mut v3: int16 = 0;
     *((&raw mut g_ram as *mut uint8).offset(0x1ba1 as ::core::ffi::c_int as isize)
         as *mut uint16) = (*((&raw mut g_ram as *mut uint8)
@@ -1953,8 +1929,7 @@ pub unsafe extern "C" fn ProcessCinematicBgObject_DrawChar(
     }
     ProcessCinematicBgObject_DrawToTextTilemap(0x1e as uint16, j, r18);
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessCinematicBgObject_DrawToTextTilemap(
+pub unsafe fn ProcessCinematicBgObject_DrawToTextTilemap(
     mut k: uint16,
     mut j: uint16,
     mut r18: uint16,
@@ -1990,15 +1965,8 @@ pub unsafe extern "C" fn ProcessCinematicBgObject_DrawToTextTilemap(
         offs = r22;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessCinematicBgObject_Nothing(
-    mut k: uint16,
-    mut j: uint16,
-    mut r18: uint16,
-) {
-}
-#[no_mangle]
-pub unsafe extern "C" fn ProcessCinematicBgObject_DrawToBgTilemap(
+pub unsafe fn ProcessCinematicBgObject_Nothing(mut k: uint16, mut j: uint16, mut r18: uint16) {}
+pub unsafe fn ProcessCinematicBgObject_DrawToBgTilemap(
     mut k: uint16,
     mut j: uint16,
     mut r18: uint16,
@@ -2035,8 +2003,7 @@ pub unsafe extern "C" fn ProcessCinematicBgObject_DrawToBgTilemap(
         offs = r22;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicGetTilemapOffsetForTile(mut r18: uint16) -> uint16 {
+pub unsafe fn CinematicGetTilemapOffsetForTile(mut r18: uint16) -> uint16 {
     return (2 as ::core::ffi::c_int * r18 as uint8 as ::core::ffi::c_int
         + *(&raw mut r18 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>() as usize)
@@ -2045,12 +2012,7 @@ pub unsafe extern "C" fn CinematicGetTilemapOffsetForTile(mut r18: uint16) -> ui
         ) as ::core::ffi::c_int
             * 0x40 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessCinematicBgObject_Unk1(
-    mut k: uint16,
-    mut j: uint16,
-    mut r18: uint16,
-) {
+pub unsafe fn ProcessCinematicBgObject_Unk1(mut k: uint16, mut j: uint16, mut r18: uint16) {
     let mut r22: uint16 = Mult0x80Add(r18);
     let mut v2: *const uint8 = RomPtr_8C(j as uint16_t);
     let mut r18x: uint16 = *v2.offset(2 as ::core::ffi::c_int as isize) as uint16;
@@ -2102,12 +2064,7 @@ pub unsafe extern "C" fn ProcessCinematicBgObject_Unk1(
     *((&raw mut g_ram as *mut uint8).offset(0x334 as ::core::ffi::c_int as isize) as *mut uint16) =
         v4;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessCinematicBgObject_Unk2(
-    mut k: uint16,
-    mut j: uint16,
-    mut r18: uint16,
-) {
+pub unsafe fn ProcessCinematicBgObject_Unk2(mut k: uint16, mut j: uint16, mut r18: uint16) {
     let mut r22: uint16 = Mult0x80Add(r18);
     let mut v2: *const uint8 = RomPtr_8C(j as uint16_t);
     let mut n: ::core::ffi::c_int =
@@ -2160,8 +2117,7 @@ pub unsafe extern "C" fn ProcessCinematicBgObject_Unk2(
     *((&raw mut g_ram as *mut uint8).offset(0x334 as ::core::ffi::c_int as isize) as *mut uint16) =
         v4;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Mult0x80Add(mut r18: uint16) -> uint16 {
+pub unsafe fn Mult0x80Add(mut r18: uint16) -> uint16 {
     return (r18 as uint8 as ::core::ffi::c_int
         + 0x80 as ::core::ffi::c_int
             * *(&raw mut r18 as *mut uint8).offset(
@@ -2170,8 +2126,7 @@ pub unsafe extern "C" fn Mult0x80Add(mut r18: uint16) -> uint16 {
                     .wrapping_sub(1 as usize) as isize,
             ) as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_CalcPos_Mode7() {
+pub unsafe fn Samus_CalcPos_Mode7() {
     let mut r34: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0xaf6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -2218,8 +2173,7 @@ pub unsafe extern "C" fn Samus_CalcPos_Mode7() {
             as *mut uint16) as ::core::ffi::c_int
             - r26 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalcExplosion_Mode7(mut k: uint16) -> Point16U {
+pub unsafe fn CalcExplosion_Mode7(mut k: uint16) -> Point16U {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut r34: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0xb64 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -2269,8 +2223,7 @@ pub unsafe extern "C" fn CalcExplosion_Mode7(mut k: uint16) -> Point16U {
             as *mut uint16) as ::core::ffi::c_int) as uint16;
     return Point16U { x: r20, y: r18 };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalcCeresSteamPos_Mode7(mut pt: Point16U) -> Point16U {
+pub unsafe fn CalcCeresSteamPos_Mode7(mut pt: Point16U) -> Point16U {
     let mut r34: uint16 = (pt.x as ::core::ffi::c_int
         - *((&raw mut g_ram as *mut uint8).offset(0x80 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int) as uint16;
@@ -2312,8 +2265,7 @@ pub unsafe extern "C" fn CalcCeresSteamPos_Mode7(mut pt: Point16U) -> Point16U {
         - r26 as ::core::ffi::c_int) as uint16;
     return pt;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CopyPalettesToFadingPalettes() {
+pub unsafe fn CopyPalettesToFadingPalettes() {
     let mut v0: ::core::ffi::c_int = 256 as ::core::ffi::c_int;
     let mut v1: uint16 = 0 as uint16;
     loop {
@@ -2332,8 +2284,7 @@ pub unsafe extern "C" fn CopyPalettesToFadingPalettes() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DecomposePaletteDataForFading() {
+pub unsafe fn DecomposePaletteDataForFading() {
     let mut v0: uint16 = 0 as uint16;
     let mut v1: ::core::ffi::c_int = 256 as ::core::ffi::c_int;
     loop {
@@ -2378,8 +2329,7 @@ pub unsafe extern "C" fn DecomposePaletteDataForFading() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearYColorsFromIndexX(mut k: uint16, mut j: uint16) {
+pub unsafe fn ClearYColorsFromIndexX(mut k: uint16, mut j: uint16) {
     loop {
         let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
@@ -2401,8 +2351,7 @@ pub unsafe extern "C" fn ClearYColorsFromIndexX(mut k: uint16, mut j: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FadeOutYColorsFromIndexX(mut k: uint16, mut j: uint16) {
+pub unsafe fn FadeOutYColorsFromIndexX(mut k: uint16, mut j: uint16) {
     loop {
         let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         let ref mut fresh16 = *((&raw mut g_ram as *mut uint8)
@@ -2439,8 +2388,7 @@ pub unsafe extern "C" fn FadeOutYColorsFromIndexX(mut k: uint16, mut j: uint16) 
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FadeInYColorsFromIndexX(mut k: uint16, mut j: uint16) {
+pub unsafe fn FadeInYColorsFromIndexX(mut k: uint16, mut j: uint16) {
     loop {
         let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
@@ -2486,8 +2434,7 @@ pub unsafe extern "C" fn FadeInYColorsFromIndexX(mut k: uint16, mut j: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ComposeFadingPalettes() {
+pub unsafe fn ComposeFadingPalettes() {
     let mut v0: uint16 = 0 as uint16;
     let mut v1: ::core::ffi::c_int = 256 as ::core::ffi::c_int;
     loop {
@@ -2528,8 +2475,7 @@ pub unsafe extern "C" fn ComposeFadingPalettes() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func20(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func20(mut j: uint16) {
     let mut tt: *mut uint16 = RomPtr_8B(j as uint16_t) as *mut uint16;
     let mut v2: uint16 = *tt.offset(0 as ::core::ffi::c_int as isize);
     let mut r18: ::core::ffi::c_int =
@@ -2567,8 +2513,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func20(mut j: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn TransferJapaneseTextTilesToVram() {
+pub unsafe fn TransferJapaneseTextTilesToVram() {
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
     (*gVramWriteEntry(
@@ -2581,8 +2526,7 @@ pub unsafe extern "C" fn TransferJapaneseTextTilesToVram() {
     v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     let fresh21 = v0;
     v0 = v0.wrapping_add(1);
-    *(&raw mut (*(gVramWriteEntry
-        as unsafe extern "C" fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
+    *(&raw mut (*(gVramWriteEntry as unsafe fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
         fresh21 as ::core::ffi::c_int,
     ))
     .size as *mut uint8)
@@ -2591,8 +2535,7 @@ pub unsafe extern "C" fn TransferJapaneseTextTilesToVram() {
     *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16) =
         (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleSamusDuringIntro() {
+pub unsafe fn HandleSamusDuringIntro() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1a57 as ::core::ffi::c_int as isize)
         as *mut uint16)
         != 0
@@ -2619,8 +2562,7 @@ pub unsafe extern "C" fn HandleSamusDuringIntro() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawIntroSprites() {
+pub unsafe fn DrawIntroSprites() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1a57 as ::core::ffi::c_int as isize)
         as *mut uint16)
         != 0
@@ -2642,8 +2584,7 @@ pub unsafe extern "C" fn DrawIntroSprites() {
         DrawCinematicSpriteObjects_Intro();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalcSinMult(mut k: uint16, mut r24: uint16) -> uint16 {
+pub unsafe fn CalcSinMult(mut k: uint16, mut r24: uint16) -> uint16 {
     let mut r18: uint16 = (Mult8x8(
         *((&raw const kSinCosTable8bit_Sext as *const int16)
             .offset(64 as ::core::ffi::c_int as isize) as *const int16 as *mut uint8)
@@ -2668,8 +2609,7 @@ static mut kMoveUnusedSpritesMasks: [uint16; 8] = [
     0x5000 as ::core::ffi::c_int as uint16,
     0x4000 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn MoveUnusedSpritesOffScreen() {
+pub unsafe fn MoveUnusedSpritesOffScreen() {
     if *((&raw mut g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         >= 0x200 as ::core::ffi::c_int
@@ -2710,8 +2650,7 @@ pub unsafe extern "C" fn MoveUnusedSpritesOffScreen() {
         i_0 += 1;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn AdvanceFastScreenFadeOut() -> uint8 {
+pub unsafe fn AdvanceFastScreenFadeOut() -> uint8 {
     if *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
         & 0xf as ::core::ffi::c_int
@@ -2736,8 +2675,7 @@ pub unsafe extern "C" fn AdvanceFastScreenFadeOut() -> uint8 {
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn AdvanceSlowScreenFadeOut() -> uint8 {
+pub unsafe fn AdvanceSlowScreenFadeOut() -> uint8 {
     let mut v0: bool = ((*((&raw mut g_ram as *mut uint8)
         .offset(0x723 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -2788,8 +2726,7 @@ pub unsafe extern "C" fn AdvanceSlowScreenFadeOut() -> uint8 {
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn AdvanceFastScreenFadeIn() -> uint8 {
+pub unsafe fn AdvanceFastScreenFadeIn() -> uint8 {
     if (*((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         + *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
@@ -2811,8 +2748,7 @@ pub unsafe extern "C" fn AdvanceFastScreenFadeIn() -> uint8 {
         return 1 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn AdvanceSlowScreenFadeIn() -> uint8 {
+pub unsafe fn AdvanceSlowScreenFadeIn() -> uint8 {
     let mut v0: bool = ((*((&raw mut g_ram as *mut uint8)
         .offset(0x723 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -2859,8 +2795,7 @@ pub unsafe extern "C" fn AdvanceSlowScreenFadeIn() -> uint8 {
         .offset(0 as ::core::ffi::c_int as isize) = 0 as uint8;
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn InitializeIoDisplayLogo_Async() -> CoroutineRet {
+pub unsafe fn InitializeIoDisplayLogo_Async() -> CoroutineRet {
     let mut _state_variable_: *mut uint8 =
         (&raw mut g_ram as *mut uint8).offset(0x612 as ::core::ffi::c_int as isize);
     's_645: {
@@ -3224,8 +3159,7 @@ pub unsafe extern "C" fn InitializeIoDisplayLogo_Async() -> CoroutineRet {
     *_state_variable_ = 0 as uint8;
     return 0 as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn AddNintentoLogoToOam() {
+pub unsafe fn AddNintentoLogoToOam() {
     DrawSpritemap(
         0x8c as uint8,
         addr_kSpriteMap_NintendoLogo as ::core::ffi::c_int as uint16,
@@ -3234,8 +3168,7 @@ pub unsafe extern "C" fn AddNintentoLogoToOam() {
         0 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnCinematicSpriteObject(mut j: uint16, mut a: uint16) -> uint8 {
+pub unsafe fn SpawnCinematicSpriteObject(mut j: uint16, mut a: uint16) -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1b9d as ::core::ffi::c_int as isize)
         as *mut uint16) = a;
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
@@ -3251,14 +3184,12 @@ pub unsafe extern "C" fn SpawnCinematicSpriteObject(mut j: uint16, mut a: uint16
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnCinematicSpriteObjectToR18(mut j: uint16, mut r18: uint16) -> uint8 {
+pub unsafe fn SpawnCinematicSpriteObjectToR18(mut j: uint16, mut r18: uint16) -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1b9d as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
     return SpawnCimenaticSpriteObjectInner(j, r18);
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnCimenaticSpriteObjectInner(mut k: uint16, mut j: uint16) -> uint8 {
+pub unsafe fn SpawnCimenaticSpriteObjectInner(mut k: uint16, mut j: uint16) -> uint8 {
     let mut v2: *const uint8 = RomPtr_8B(k as uint16_t);
     let mut v3: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
@@ -3288,8 +3219,7 @@ pub unsafe extern "C" fn SpawnCimenaticSpriteObjectInner(mut k: uint16, mut j: u
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearCinematicSprites() {
+pub unsafe fn ClearCinematicSprites() {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
@@ -3302,8 +3232,7 @@ pub unsafe extern "C" fn ClearCinematicSprites() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleCinematicSprites() {
+pub unsafe fn HandleCinematicSprites() {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         *((&raw mut g_ram as *mut uint8).offset(0x1a59 as ::core::ffi::c_int as isize)
@@ -3320,8 +3249,7 @@ pub unsafe extern "C" fn HandleCinematicSprites() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessCinematicSpriteInstructionList(mut k: uint16) {
+pub unsafe fn ProcessCinematicSpriteInstructionList(mut k: uint16) {
     CallCinematicSprPreInstr(
         (*((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -3375,8 +3303,7 @@ pub unsafe extern "C" fn ProcessCinematicSpriteInstructionList(mut k: uint16) {
             .offset(v7 as isize) = (v4 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_Delete(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_Delete(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a5d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -3386,41 +3313,35 @@ pub unsafe extern "C" fn CinematicSprInstr_Delete(mut k: uint16, mut j: uint16) 
         .offset(v2 as isize) = 0 as uint16;
     return 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_Sleep(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_Sleep(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         (j as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
     return 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_SetPreInstr(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_SetPreInstr(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(RomPtr_8B(j as uint16_t) as *mut uint16);
     return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_ClearPreInstr(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_ClearPreInstr(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         (0x8b945f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_GotoRel(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_GotoRel(mut k: uint16, mut j: uint16) -> uint16 {
     return (j as ::core::ffi::c_int + *RomPtr_8B(j as uint16_t) as int8 as ::core::ffi::c_int)
         as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_Goto(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_Goto(mut k: uint16, mut j: uint16) -> uint16 {
     return *(RomPtr_8B(j as uint16_t) as *mut uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_DecTimerGoto(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_DecTimerGoto(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh26 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1b7d as ::core::ffi::c_int as isize) as *mut uint16)
@@ -3433,8 +3354,7 @@ pub unsafe extern "C" fn CinematicSprInstr_DecTimerGoto(mut k: uint16, mut j: ui
         return CinematicSprInstr_Goto(k, j);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_DecTimerGotoRel(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_DecTimerGotoRel(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh24 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1b7d as ::core::ffi::c_int as isize) as *mut uint16)
@@ -3447,18 +3367,15 @@ pub unsafe extern "C" fn CinematicSprInstr_DecTimerGotoRel(mut k: uint16, mut j:
         return CinematicSprInstr_GotoRel(k, j);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_SetTimer(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_SetTimer(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(RomPtr_8B(j as uint16_t) as *mut uint16);
     return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_8B94E1() {}
-#[no_mangle]
-pub unsafe extern "C" fn SpawnMode7Object(mut j: uint16, mut a: uint16) -> uint8 {
+pub unsafe fn sub_8B94E1() {}
+pub unsafe fn SpawnMode7Object(mut j: uint16, mut a: uint16) -> uint8 {
     let mut Mode7ObjectDef: *mut Mode7ObjectDef = ::core::ptr::null_mut::<Mode7ObjectDef>();
     *((&raw mut g_ram as *mut uint8).offset(0x19b3 as ::core::ffi::c_int as isize)
         as *mut uint16) = a;
@@ -3494,8 +3411,7 @@ pub unsafe extern "C" fn SpawnMode7Object(mut j: uint16, mut a: uint16) -> uint8
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleMode7Objects() {
+pub unsafe fn HandleMode7Objects() {
     let mut i: ::core::ffi::c_int = 2 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         *((&raw mut g_ram as *mut uint8).offset(0x19b1 as ::core::ffi::c_int as isize)
@@ -3512,8 +3428,7 @@ pub unsafe extern "C" fn HandleMode7Objects() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessMode7ObjectInstructions(mut k: uint16) {
+pub unsafe fn ProcessMode7ObjectInstructions(mut k: uint16) {
     CallMode7PreInstr(
         (*((&raw mut g_ram as *mut uint8).offset(0x19a5 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -3568,35 +3483,30 @@ pub unsafe extern "C" fn ProcessMode7ObjectInstructions(mut k: uint16) {
             (v4 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Mode7Instr_Delete(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn Mode7Instr_Delete(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x19a1 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Mode7Instr_SetPreInstr(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn Mode7Instr_SetPreInstr(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x19a5 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(RomPtr_8B(j as uint16_t) as *mut uint16);
     return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Mode7Instr_ClearPreInstr(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn Mode7Instr_ClearPreInstr(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x19a5 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         (0x8b9585 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Mode7Instr_Goto(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn Mode7Instr_Goto(mut k: uint16, mut j: uint16) -> uint16 {
     return *(RomPtr_8B(j as uint16_t) as *mut uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Mode7Instr_DecTimerAndGoto(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn Mode7Instr_DecTimerAndGoto(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh0 = *((&raw mut g_ram as *mut uint8)
         .offset(0x19ad as ::core::ffi::c_int as isize) as *mut uint16)
@@ -3609,40 +3519,34 @@ pub unsafe extern "C" fn Mode7Instr_DecTimerAndGoto(mut k: uint16, mut j: uint16
         return Mode7Instr_Goto(k, j);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Mode7Instr_SetTimer(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn Mode7Instr_SetTimer(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x19ad as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(RomPtr_8B(j as uint16_t) as *mut uint16);
     return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnableCinematicBgObjects() {
+pub unsafe fn EnableCinematicBgObjects() {
     let ref mut fresh13 = *((&raw mut g_ram as *mut uint8)
         .offset(0x19f1 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh13 = (*fresh13 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DisableCinematicBgObjects() {
+pub unsafe fn DisableCinematicBgObjects() {
     let ref mut fresh9 = *((&raw mut g_ram as *mut uint8)
         .offset(0x19f1 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh9 = (*fresh9 as ::core::ffi::c_int & !(0x8000 as ::core::ffi::c_int)) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnableCinematicBgTilemapUpdates() {
+pub unsafe fn EnableCinematicBgTilemapUpdates() {
     let ref mut fresh14 = *((&raw mut g_ram as *mut uint8)
         .offset(0x19f3 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh14 = (*fresh14 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DisableCinematicBgTilemapUpdates() {
+pub unsafe fn DisableCinematicBgTilemapUpdates() {
     let ref mut fresh10 = *((&raw mut g_ram as *mut uint8)
         .offset(0x19f3 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh10 = (*fresh10 as ::core::ffi::c_int & !(0x8000 as ::core::ffi::c_int)) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearCinematicBgObjects(mut a: uint16) {
+pub unsafe fn ClearCinematicBgObjects(mut a: uint16) {
     let mut j: uint16 = 0;
     let mut i: ::core::ffi::c_int = 2046 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
@@ -3666,8 +3570,7 @@ pub unsafe extern "C" fn ClearCinematicBgObjects(mut a: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x1ba1 as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallCinematicBgObjectSetup(mut ea: uint32, mut j: uint16) {
+pub unsafe fn CallCinematicBgObjectSetup(mut ea: uint32, mut j: uint16) {
     match ea {
         9147353 => return,
         _ => {
@@ -3675,8 +3578,7 @@ pub unsafe extern "C" fn CallCinematicBgObjectSetup(mut ea: uint32, mut j: uint1
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnCinematicBgObject(mut j: uint16, mut a: uint16) -> uint8 {
+pub unsafe fn SpawnCinematicBgObject(mut j: uint16, mut a: uint16) -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x19f5 as ::core::ffi::c_int as isize)
         as *mut uint16) = a;
     let mut v3: uint16 = 6 as uint16;
@@ -3713,8 +3615,7 @@ pub unsafe extern "C" fn SpawnCinematicBgObject(mut j: uint16, mut a: uint16) ->
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleCinematicBgObjects() {
+pub unsafe fn HandleCinematicBgObjects() {
     if *((&raw mut g_ram as *mut uint8).offset(0x19f1 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -3745,8 +3646,7 @@ pub unsafe extern "C" fn HandleCinematicBgObjects() {
         UpdateSamusEyesTilemap();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessCinematicBgObjectsInstrs(mut k: uint16) {
+pub unsafe fn ProcessCinematicBgObjectsInstrs(mut k: uint16) {
     CallCinematicBgPreInstr(
         (*((&raw mut g_ram as *mut uint8).offset(0x19d5 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -3804,8 +3704,7 @@ pub unsafe extern "C" fn ProcessCinematicBgObjectsInstrs(mut k: uint16) {
             .offset(v7 as isize) = (v4 as ::core::ffi::c_int + 6 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicBgInstr_Delete(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicBgInstr_Delete(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x19b5 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -3815,14 +3714,11 @@ pub unsafe extern "C" fn CinematicBgInstr_Delete(mut k: uint16, mut j: uint16) -
         .offset(v2 as isize) = 0 as uint16;
     return 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicBgInstr_Goto(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicBgInstr_Goto(mut k: uint16, mut j: uint16) -> uint16 {
     return *(RomPtr_8C(j as uint16_t) as *mut uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_8B9743() {}
-#[no_mangle]
-pub unsafe extern "C" fn DrawCinematicSpriteObjects_Intro() {
+pub unsafe fn sub_8B9743() {}
+pub unsafe fn DrawCinematicSpriteObjects_Intro() {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
@@ -3868,8 +3764,7 @@ pub unsafe extern "C" fn DrawCinematicSpriteObjects_Intro() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawCinematicSpriteObjects_Ending() {
+pub unsafe fn DrawCinematicSpriteObjects_Ending() {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
@@ -3923,8 +3818,7 @@ pub unsafe extern "C" fn DrawCinematicSpriteObjects_Ending() {
         MoveUnusedSpritesOffScreen();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnTextGlowObject(mut j: uint16, mut r18: uint16) {
+pub unsafe fn SpawnTextGlowObject(mut j: uint16, mut r18: uint16) {
     let mut v1: uint16 = 14 as uint16;
     while *(((&raw mut g_ram as *mut uint8).offset(0x19f7 as ::core::ffi::c_int as isize)
         as *mut uint16 as *mut uint8)
@@ -3958,8 +3852,7 @@ pub unsafe extern "C" fn SpawnTextGlowObject(mut j: uint16, mut r18: uint16) {
         as *mut uint8)
         .offset(v1 as ::core::ffi::c_int as isize) as *mut uint16) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleTextGlowObjects() {
+pub unsafe fn HandleTextGlowObjects() {
     let mut i: ::core::ffi::c_int = 14 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         *((&raw mut g_ram as *mut uint8).offset(0x1a47 as ::core::ffi::c_int as isize)
@@ -3976,8 +3869,7 @@ pub unsafe extern "C" fn HandleTextGlowObjects() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessTextGlowObject() {
+pub unsafe fn ProcessTextGlowObject() {
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1a47 as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v1: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
@@ -4083,20 +3975,17 @@ pub unsafe extern "C" fn ProcessTextGlowObject() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnableTextGlowObjects_() {
+pub unsafe fn EnableTextGlowObjects_() {
     let ref mut fresh15 = *((&raw mut g_ram as *mut uint8)
         .offset(0x19ff as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh15 = (*fresh15 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DisableTextGlowObjects_() {
+pub unsafe fn DisableTextGlowObjects_() {
     let ref mut fresh7 = *((&raw mut g_ram as *mut uint8)
         .offset(0x19ff as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh7 = (*fresh7 as ::core::ffi::c_int & !(0x8000 as ::core::ffi::c_int)) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func128(mut a: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func128(mut a: uint16) {
     let mut i: ::core::ffi::c_int = 2046 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
@@ -4129,8 +4018,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func128(mut a: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CreditsObject_Init(mut j: uint16) {
+pub unsafe fn CreditsObject_Init(mut j: uint16) {
     let mut v1: *const uint8 = RomPtr_8B(j as uint16_t);
     *((&raw mut g_ram as *mut uint8).offset(0x19fd as ::core::ffi::c_int as isize)
         as *mut uint16) = *(v1.offset(2 as ::core::ffi::c_int as isize) as *mut uint16);
@@ -4145,8 +4033,7 @@ pub unsafe extern "C" fn CreditsObject_Init(mut j: uint16) {
         0 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn CreditsObject_Process() {
+pub unsafe fn CreditsObject_Process() {
     if *((&raw mut g_ram as *mut uint8).offset(0x19ff as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -4161,8 +4048,7 @@ pub unsafe extern "C" fn CreditsObject_Process() {
         CinematicUpdateSomeBg();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CreditsObject_ProcessOne() {
+pub unsafe fn CreditsObject_ProcessOne() {
     let mut i: ::core::ffi::c_int = 0;
     CallCreditsObjectFunc(
         (*((&raw mut g_ram as *mut uint8).offset(0x19fd as ::core::ffi::c_int as isize)
@@ -4217,8 +4103,7 @@ pub unsafe extern "C" fn CreditsObject_ProcessOne() {
             as *mut uint16) = (i + 4 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CreditsObject_Func1(mut j: uint16) {
+pub unsafe fn CreditsObject_Func1(mut j: uint16) {
     let mut RegWord: uint16 = Mult8x8(
         *((&raw mut g_ram as *mut uint8).offset(0x1a01 as ::core::ffi::c_int as isize)
             as *mut uint16) as uint8,
@@ -4245,18 +4130,15 @@ pub unsafe extern "C" fn CreditsObject_Func1(mut j: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn IntroObject_Delete(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn IntroObject_Delete(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x19f7 as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
     return 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn IntroObject_Goto(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn IntroObject_Goto(mut k: uint16, mut j: uint16) -> uint16 {
     return *(RomPtr_8C(j as uint16_t) as *mut uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn IntroObject_DecTimerGoto(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn IntroObject_DecTimerGoto(mut k: uint16, mut j: uint16) -> uint16 {
     let ref mut fresh8 = *((&raw mut g_ram as *mut uint8)
         .offset(0x19fb as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh8 = (*fresh8).wrapping_sub(1);
@@ -4266,14 +4148,12 @@ pub unsafe extern "C" fn IntroObject_DecTimerGoto(mut k: uint16, mut j: uint16) 
         return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn IntroObject_SetTimer(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn IntroObject_SetTimer(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x19fb as ::core::ffi::c_int as isize)
         as *mut uint16) = *(RomPtr_8C(j as uint16_t) as *mut uint16);
     return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_1_OpeningCinematic_() -> CoroutineRet {
+pub unsafe fn GameState_1_OpeningCinematic_() -> CoroutineRet {
     CallCinematicFunction(
         (*((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -4288,10 +4168,8 @@ pub unsafe extern "C" fn GameState_1_OpeningCinematic_() -> CoroutineRet {
     HandleMode7TransformationNoRotation();
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunctionNone() {}
-#[no_mangle]
-pub unsafe extern "C" fn MaybeSkipCinematics() {
+pub unsafe fn CinematicFunctionNone() {}
+pub unsafe fn MaybeSkipCinematics() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         + 0x60d8 as ::core::ffi::c_int
@@ -4315,8 +4193,7 @@ pub unsafe extern "C" fn MaybeSkipCinematics() {
             as *mut uint16) = 2 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleCinematicsTransitions_1() {
+pub unsafe fn HandleCinematicsTransitions_1() {
     if AdvanceFastScreenFadeOut() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1a53 as ::core::ffi::c_int as isize)
             as *mut uint16) = 2 as uint16;
@@ -4326,8 +4203,7 @@ pub unsafe extern "C" fn HandleCinematicsTransitions_1() {
         QueueMusic_Delayed8(6 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleCinematicsTransitions_2() {
+pub unsafe fn HandleCinematicsTransitions_2() {
     ClearCinematicSprites();
     SpawnCinematicSpriteObject(
         addr_kCinematicSpriteObjectDef_8BA119 as ::core::ffi::c_int as uint16,
@@ -4394,8 +4270,7 @@ pub unsafe extern "C" fn HandleCinematicsTransitions_2() {
     *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 17 as uint8;
     SpawnTitleScreenGradientObjs();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSpriteInit_7(mut j: uint16) {
+pub unsafe fn CinematicSpriteInit_7(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -4407,8 +4282,7 @@ pub unsafe extern "C" fn CinematicSpriteInit_7(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 1024 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSpriteInit_8(mut j: uint16) {
+pub unsafe fn CinematicSpriteInit_8(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -4420,8 +4294,7 @@ pub unsafe extern "C" fn CinematicSpriteInit_8(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSpriteInit_9(mut j: uint16) {
+pub unsafe fn CinematicSpriteInit_9(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -4433,8 +4306,7 @@ pub unsafe extern "C" fn CinematicSpriteInit_9(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 2048 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleCinematicsTransitions_3() {
+pub unsafe fn HandleCinematicsTransitions_3() {
     if AdvanceFastScreenFadeIn() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1a53 as ::core::ffi::c_int as isize)
             as *mut uint16) = 0 as uint16;
@@ -4448,13 +4320,12 @@ pub unsafe extern "C" fn HandleCinematicsTransitions_3() {
 static mut off_8B9A7B: [Option<Func_V>; 4] = unsafe {
     [
         None,
-        Some(HandleCinematicsTransitions_1 as unsafe extern "C" fn() -> ()),
-        Some(HandleCinematicsTransitions_2 as unsafe extern "C" fn() -> ()),
-        Some(HandleCinematicsTransitions_3 as unsafe extern "C" fn() -> ()),
+        Some(HandleCinematicsTransitions_1 as unsafe fn() -> ()),
+        Some(HandleCinematicsTransitions_2 as unsafe fn() -> ()),
+        Some(HandleCinematicsTransitions_3 as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn HandleCinematicsTransitions() {
+pub unsafe fn HandleCinematicsTransitions() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1a53 as ::core::ffi::c_int as isize)
         as *mut uint16)
         != 0
@@ -4464,8 +4335,7 @@ pub unsafe extern "C" fn HandleCinematicsTransitions() {
             .expect("non-null function pointer")();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunctionOpening() {
+pub unsafe fn CinematicFunctionOpening() {
     LoadTitleSequenceGraphics();
     QueueMusic_Delayed8(0xff03 as uint16);
     *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
@@ -4476,8 +4346,7 @@ pub unsafe extern "C" fn CinematicFunctionOpening() {
     );
     QueueMusic_Delayed8(5 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadTitleSequenceGraphics() {
+pub unsafe fn LoadTitleSequenceGraphics() {
     let mut v1: int16 = 0;
     SetupPpuForTitleSequence();
     *((&raw mut g_ram as *mut uint8).offset(0xab as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -4611,8 +4480,7 @@ pub unsafe extern "C" fn LoadTitleSequenceGraphics() {
         v2,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSpriteInit_0(mut j: uint16) {
+pub unsafe fn CinematicSpriteInit_0(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -4624,18 +4492,15 @@ pub unsafe extern "C" fn CinematicSpriteInit_0(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 512 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_8B9CCF(mut k: uint16) {
+pub unsafe fn sub_8B9CCF(mut k: uint16) {
     *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 15 as uint8;
     *((&raw mut g_ram as *mut uint8).offset(0x1b3d as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         (0x8b93d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_8B9CDE() {}
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_9CE1(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn sub_8B9CDE() {}
+pub unsafe fn CinematicSprInstr_9CE1(mut k: uint16, mut j: uint16) -> uint16 {
     *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 17 as uint8;
     *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) = (0x8b9d17 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -4656,8 +4521,7 @@ pub unsafe extern "C" fn CinematicSprInstr_9CE1(mut k: uint16, mut j: uint16) ->
     SetPpuBackdropSomeColor();
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunc_Func2() {
+pub unsafe fn CinematicFunc_Func2() {
     AddToHiLo(
         (&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize) as *mut uint16,
         (&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize) as *mut uint16,
@@ -4685,8 +4549,7 @@ pub unsafe extern "C" fn CinematicFunc_Func2() {
     }
     MaybeSkipCinematics();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSpriteInit_1(mut j: uint16) {
+pub unsafe fn CinematicSpriteInit_1(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -4698,8 +4561,7 @@ pub unsafe extern "C" fn CinematicSpriteInit_1(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 512 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_9D5D(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_9D5D(mut k: uint16, mut j: uint16) -> uint16 {
     *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 17 as uint8;
     *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) = (0x8b9d90 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -4719,8 +4581,7 @@ pub unsafe extern "C" fn CinematicSprInstr_9D5D(mut k: uint16, mut j: uint16) ->
         as *mut uint16) = 0x8000 as uint16;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunc_Func4() {
+pub unsafe fn CinematicFunc_Func4() {
     AddToHiLo(
         (&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize) as *mut uint16,
         (&raw mut g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize) as *mut uint16,
@@ -4748,8 +4609,7 @@ pub unsafe extern "C" fn CinematicFunc_Func4() {
     }
     MaybeSkipCinematics();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSpriteInit_2(mut j: uint16) {
+pub unsafe fn CinematicSpriteInit_2(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -4761,8 +4621,7 @@ pub unsafe extern "C" fn CinematicSpriteInit_2(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 512 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_9DD6(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_9DD6(mut k: uint16, mut j: uint16) -> uint16 {
     *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 17 as uint8;
     *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) = (0x8b9e12 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -4787,8 +4646,7 @@ pub unsafe extern "C" fn CinematicSprInstr_9DD6(mut k: uint16, mut j: uint16) ->
     SetPpuBackdropSomeColor();
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunc_Func5() {
+pub unsafe fn CinematicFunc_Func5() {
     AddToHiLo(
         (&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize) as *mut uint16,
         (&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize) as *mut uint16,
@@ -4816,8 +4674,7 @@ pub unsafe extern "C" fn CinematicFunc_Func5() {
     }
     MaybeSkipCinematics();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSpriteInit_3(mut j: uint16) {
+pub unsafe fn CinematicSpriteInit_3(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -4829,8 +4686,7 @@ pub unsafe extern "C" fn CinematicSpriteInit_3(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 512 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_Func8(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_Func8(mut k: uint16, mut j: uint16) -> uint16 {
     *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 17 as uint8;
     *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) = (0x8b9e8b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -4855,8 +4711,7 @@ pub unsafe extern "C" fn CinematicSprInstr_Func8(mut k: uint16, mut j: uint16) -
     SpawnTitleScreenGradientObjs();
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunc_Func7() {
+pub unsafe fn CinematicFunc_Func7() {
     if *((&raw mut g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
@@ -4885,8 +4740,7 @@ pub unsafe extern "C" fn CinematicFunc_Func7() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSpriteInit_4(mut j: uint16) {
+pub unsafe fn CinematicSpriteInit_4(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -4899,8 +4753,7 @@ pub unsafe extern "C" fn CinematicSpriteInit_4(mut j: uint16) {
         .offset(v1 as isize) = 1024 as uint16;
     SpawnPalfxObject(addr_kPalfx_E194 as ::core::ffi::c_int as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_Func9(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_Func9(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v0: uint16 = 0x9ecd as uint16;
     SpawnCinematicSpriteObject(
         addr_kCinematicSpriteObjectDef_8BA113 as ::core::ffi::c_int as uint16,
@@ -4908,8 +4761,7 @@ pub unsafe extern "C" fn CinematicSprInstr_Func9(mut k: uint16, mut j: uint16) -
     );
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSpriteInit_5(mut j: uint16) {
+pub unsafe fn CinematicSpriteInit_5(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -4922,8 +4774,7 @@ pub unsafe extern "C" fn CinematicSpriteInit_5(mut j: uint16) {
         .offset(v1 as isize) = 512 as uint16;
     SpawnPalfxObject(addr_kPalfx_E198 as ::core::ffi::c_int as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_sub_8B9EF0(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_sub_8B9EF0(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
@@ -4933,8 +4784,7 @@ pub unsafe extern "C" fn CinematicSprInstr_sub_8B9EF0(mut k: uint16, mut j: uint
     );
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSpriteInit_6(mut j: uint16) {
+pub unsafe fn CinematicSpriteInit_6(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -4947,16 +4797,14 @@ pub unsafe extern "C" fn CinematicSpriteInit_6(mut j: uint16) {
         .offset(v1 as isize) = 2048 as uint16;
     SpawnPalfxObject(addr_kPalfx_E19C as ::core::ffi::c_int as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_9F19(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_9F19(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1f53 as ::core::ffi::c_int as isize)
         as *mut uint16) = 900 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) = (0x8b9f29 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunc_Func1() {
+pub unsafe fn CinematicFunc_Func1() {
     let mut current_block: u64;
     let ref mut fresh148 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1f53 as ::core::ffi::c_int as isize) as *mut uint16);
@@ -4996,8 +4844,7 @@ pub unsafe extern "C" fn CinematicFunc_Func1() {
         _ => {}
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunc_Func10() {
+pub unsafe fn CinematicFunc_Func10() {
     let mut j: uint16 = 0;
     if AdvanceSlowScreenFadeOut() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         EnableNMI();
@@ -5042,8 +4889,7 @@ pub unsafe extern "C" fn CinematicFunc_Func10() {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunc_Func9() {
+pub unsafe fn CinematicFunc_Func9() {
     let mut j: uint16 = 0;
     if AdvanceSlowScreenFadeOut() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         EnableNMI();
@@ -5088,8 +4934,7 @@ pub unsafe extern "C" fn CinematicFunc_Func9() {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ConfigureTitleSequenceGradientHDMA() {
+pub unsafe fn ConfigureTitleSequenceGradientHDMA() {
     let mut v0: uint16 = *(g_rom.offset(
         (((0x8cbc5d as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0x8cbc5d as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -5114,18 +4959,15 @@ pub unsafe extern "C" fn ConfigureTitleSequenceGradientHDMA() {
         i += 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlayBabyMetroidCry1(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn PlayBabyMetroidCry1(mut k: uint16, mut j: uint16) -> uint16 {
     QueueSfx3_Max6(0x23 as uint16);
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlayBabyMetroidCry2(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn PlayBabyMetroidCry2(mut k: uint16, mut j: uint16) -> uint16 {
     QueueSfx3_Max6(0x26 as uint16);
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlayBabyMetroidCry3(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn PlayBabyMetroidCry3(mut k: uint16, mut j: uint16) -> uint16 {
     QueueSfx3_Max6(0x27 as uint16);
     return j;
 }
@@ -5201,8 +5043,7 @@ static mut kCinematicPal4: [uint16; 16] = [
     0x7fff as ::core::ffi::c_int as uint16,
     0x77a6 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSetPal1(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSetPal1(mut k: uint16, mut j: uint16) -> uint16 {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
@@ -5213,8 +5054,7 @@ pub unsafe extern "C" fn CinematicSetPal1(mut k: uint16, mut j: uint16) -> uint1
     }
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSetPal2(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSetPal2(mut k: uint16, mut j: uint16) -> uint16 {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
@@ -5225,8 +5065,7 @@ pub unsafe extern "C" fn CinematicSetPal2(mut k: uint16, mut j: uint16) -> uint1
     }
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSetPal3(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSetPal3(mut k: uint16, mut j: uint16) -> uint16 {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
@@ -5237,8 +5076,7 @@ pub unsafe extern "C" fn CinematicSetPal3(mut k: uint16, mut j: uint16) -> uint1
     }
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSetPal4(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSetPal4(mut k: uint16, mut j: uint16) -> uint16 {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
@@ -5249,8 +5087,7 @@ pub unsafe extern "C" fn CinematicSetPal4(mut k: uint16, mut j: uint16) -> uint1
     }
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_37_CeresGoesBoomWithSamus_() -> CoroutineRet {
+pub unsafe fn GameState_37_CeresGoesBoomWithSamus_() -> CoroutineRet {
     CallCinematicFunction(
         (*((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -5279,10 +5116,8 @@ pub unsafe extern "C" fn GameState_37_CeresGoesBoomWithSamus_() -> CoroutineRet 
     HandleMode7TransformationMatrix();
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunc_Nothing() {}
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Initial() {
+pub unsafe fn CinematicFunc_Nothing() {}
+pub unsafe fn CinematicFunction_Intro_Initial() {
     let mut j: uint16 = 0;
     let mut k: uint16 = 0;
     SetupPpu_Intro();
@@ -5521,8 +5356,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Initial() {
     QueueMusic_Delayed8(0 as uint16);
     QueueMusic_Delayed8(0xff3f as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_FadeIn() {
+pub unsafe fn CinematicFunction_Intro_FadeIn() {
     if HasQueuedMusic() as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
             as *mut uint16) =
@@ -5533,8 +5367,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_FadeIn() {
             as *mut uint16) = 2 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_DrawInitJpn() {
+pub unsafe fn CinematicFunction_Intro_DrawInitJpn() {
     if AdvanceSlowScreenFadeIn() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
             as *mut uint16) =
@@ -5559,7 +5392,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_DrawInitJpn() {
             let fresh146 = v0;
             v0 = v0.wrapping_add(1);
             *(&raw mut (*(gVramWriteEntry
-                as unsafe extern "C" fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
+                as unsafe fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
                 fresh146 as ::core::ffi::c_int,
             ))
             .size as *mut uint8)
@@ -5570,8 +5403,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_DrawInitJpn() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_LastMetroidCaptivity() {
+pub unsafe fn CinematicFunction_Intro_LastMetroidCaptivity() {
     let ref mut fresh145 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh145 = (*fresh145).wrapping_sub(1);
@@ -5590,8 +5422,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_LastMetroidCaptivity() {
         QueueMusic_Delayed8(5 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunc_Intro_QueueGalaxyIsAtPeace() {
+pub unsafe fn CinematicFunc_Intro_QueueGalaxyIsAtPeace() {
     let ref mut fresh143 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh143 = (*fresh143).wrapping_sub(1);
@@ -5610,8 +5441,7 @@ pub unsafe extern "C" fn CinematicFunc_Intro_QueueGalaxyIsAtPeace() {
             (0x8ba639 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunc_Intro_WaitForQueueWait4secs() {
+pub unsafe fn CinematicFunc_Intro_WaitForQueueWait4secs() {
     if HasQueuedMusic() as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
             as *mut uint16) =
@@ -5620,8 +5450,7 @@ pub unsafe extern "C" fn CinematicFunc_Intro_WaitForQueueWait4secs() {
             as *mut uint16) = 240 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunc_Intro_FadeOut() {
+pub unsafe fn CinematicFunc_Intro_FadeOut() {
     let ref mut fresh141 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh141 = (*fresh141).wrapping_sub(1);
@@ -5641,16 +5470,14 @@ pub unsafe extern "C" fn CinematicFunc_Intro_FadeOut() {
             as *mut uint16) = 2 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunc_Intro_WaitForFadeOut() {
+pub unsafe fn CinematicFunc_Intro_WaitForFadeOut() {
     if AdvanceSlowScreenFadeOut() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
             as *mut uint16) =
             (0x8ba66f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunc_Intro_SetupTextPage2() {
+pub unsafe fn CinematicFunc_Intro_SetupTextPage2() {
     ClearJapaneseTextTiles();
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0x80 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x41 as uint8);
@@ -5735,8 +5562,7 @@ pub unsafe extern "C" fn CinematicFunc_Intro_SetupTextPage2() {
     *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) = (0x8ba82b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunc_Intro_WaitFadeinShowText() {
+pub unsafe fn CinematicFunc_Intro_WaitFadeinShowText() {
     if HasQueuedMusic() as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
             as *mut uint16) =
@@ -5751,16 +5577,14 @@ pub unsafe extern "C" fn CinematicFunc_Intro_WaitFadeinShowText() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunc_Intro_WaitForFadeinSleep() {
+pub unsafe fn CinematicFunc_Intro_WaitForFadeinSleep() {
     if AdvanceSlowScreenFadeIn() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
             as *mut uint16) =
             (0x8ba391 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearEnglishTextTilemap() {
+pub unsafe fn ClearEnglishTextTilemap() {
     let mut v0: uint16 = 128 as uint16;
     loop {
         let fresh5 = v0;
@@ -5776,8 +5600,7 @@ pub unsafe extern "C" fn ClearEnglishTextTilemap() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearJapaneseTextTiles() {
+pub unsafe fn ClearJapaneseTextTiles() {
     let mut v0: uint16 = 0 as uint16;
     loop {
         (*((&raw mut g_ram as *mut uint8).offset(0x4000 as ::core::ffi::c_int as isize)
@@ -5844,8 +5667,7 @@ pub unsafe extern "C" fn ClearJapaneseTextTiles() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetSomeStuffForSpriteObject_2(mut v0: uint16) {
+pub unsafe fn SetSomeStuffForSpriteObject_2(mut v0: uint16) {
     let mut v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -5857,8 +5679,7 @@ pub unsafe extern "C" fn SetSomeStuffForSpriteObject_2(mut v0: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 3072 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetSomeStuffForSpriteObject_3(mut j: uint16) {
+pub unsafe fn SetSomeStuffForSpriteObject_3(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -5870,8 +5691,7 @@ pub unsafe extern "C" fn SetSomeStuffForSpriteObject_3(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 3584 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetSomeStuffForSpriteObject_4_MetroidEgg(mut k: uint16) {
+pub unsafe fn SetSomeStuffForSpriteObject_4_MetroidEgg(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         - 169 as ::core::ffi::c_int
@@ -5891,8 +5711,7 @@ pub unsafe extern "C" fn SetSomeStuffForSpriteObject_4_MetroidEgg(mut k: uint16)
             (0x8b93d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprPreInstr_A903(mut k: uint16) {
+pub unsafe fn CinematicSprPreInstr_A903(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
         == 0
@@ -5908,11 +5727,7 @@ pub unsafe extern "C" fn CinematicSprPreInstr_A903(mut k: uint16) {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_SpawnMetroidEggParticles(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn CinematicSprInstr_SpawnMetroidEggParticles(mut k: uint16, mut j: uint16) -> uint16 {
     SpawnCinematicSpriteObject(
         addr_kCinematicSpriteObjectDef_8BCECD as ::core::ffi::c_int as uint16,
         0 as uint16,
@@ -5954,8 +5769,7 @@ static mut kSetSomeStuffForSpriteObject_6_Tab: [int16; 12] = [
     0x63 as ::core::ffi::c_int as int16,
     0x60 as ::core::ffi::c_int as int16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn SetSomeStuffForSpriteObject_6(mut j: uint16) {
+pub unsafe fn SetSomeStuffForSpriteObject_6(mut j: uint16) {
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1b9d as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -6080,8 +5894,7 @@ static mut kSetSomeStuffForSpriteObject_7_Tab1: [uint16; 82] = [
     0x991a as ::core::ffi::c_int as uint16,
     0x1a7d as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn SetSomeStuffForSpriteObject_7(mut k: uint16) {
+pub unsafe fn SetSomeStuffForSpriteObject_7(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v3: ::core::ffi::c_int = 2 as ::core::ffi::c_int
         * *(((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
@@ -6164,8 +5977,7 @@ pub unsafe extern "C" fn SetSomeStuffForSpriteObject_7(mut k: uint16) {
             .offset(v1 as isize) = addr_off_8BCE53 as ::core::ffi::c_int as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetSomeStuffForSpriteObject_8(mut j: uint16) {
+pub unsafe fn SetSomeStuffForSpriteObject_8(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -6466,8 +6278,7 @@ static mut kSetSomeStuffForSpriteObject_9_Tab1: [int16; 138] = [
     5 as ::core::ffi::c_int as int16,
     -(0x2000 as ::core::ffi::c_int) as int16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn SetSomeStuffForSpriteObject_9(mut k: uint16) {
+pub unsafe fn SetSomeStuffForSpriteObject_9(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v3: ::core::ffi::c_int = 2 as ::core::ffi::c_int
         * *(((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
@@ -6596,8 +6407,7 @@ pub unsafe extern "C" fn SetSomeStuffForSpriteObject_9(mut k: uint16) {
         *fresh65 = (*fresh65 as ::core::ffi::c_int + 256 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetSomeStuffForSpriteObject_10(mut j: uint16) {
+pub unsafe fn SetSomeStuffForSpriteObject_10(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -6609,8 +6419,7 @@ pub unsafe extern "C" fn SetSomeStuffForSpriteObject_10(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 3072 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetSomeStuffForSpriteObject_11(mut k: uint16) {
+pub unsafe fn SetSomeStuffForSpriteObject_11(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
         != 0
@@ -6645,8 +6454,7 @@ pub unsafe extern "C" fn SetSomeStuffForSpriteObject_11(mut k: uint16) {
             .offset(v1 as isize) = addr_off_8BCE53 as ::core::ffi::c_int as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetSomeStuffForSpriteObject_12(mut j: uint16) {
+pub unsafe fn SetSomeStuffForSpriteObject_12(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -6658,8 +6466,7 @@ pub unsafe extern "C" fn SetSomeStuffForSpriteObject_12(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 3072 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetSomeStuffForSpriteObject_13(mut k: uint16) {
+pub unsafe fn SetSomeStuffForSpriteObject_13(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
         != 0
@@ -6696,8 +6503,7 @@ pub unsafe extern "C" fn SetSomeStuffForSpriteObject_13(mut k: uint16) {
             .offset(v1 as isize) = addr_off_8BCE53 as ::core::ffi::c_int as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicBgInstr_SetSomeStuffForSpriteObject_14(
+pub unsafe fn CinematicBgInstr_SetSomeStuffForSpriteObject_14(
     mut k: uint16,
     mut j: uint16,
 ) -> uint16 {
@@ -6710,8 +6516,7 @@ pub unsafe extern "C" fn CinematicBgInstr_SetSomeStuffForSpriteObject_14(
         .offset(15 as ::core::ffi::c_int as isize) = 1 as uint16;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetSomeStuffForSpriteObject_15() {
+pub unsafe fn SetSomeStuffForSpriteObject_15() {
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(15 as ::core::ffi::c_int as isize) = 8 as uint16;
@@ -6719,8 +6524,7 @@ pub unsafe extern "C" fn SetSomeStuffForSpriteObject_15() {
         as *mut uint16)
         .offset(15 as ::core::ffi::c_int as isize) = 248 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetSomeStuffForSpriteObject_16() {
+pub unsafe fn SetSomeStuffForSpriteObject_16() {
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(15 as ::core::ffi::c_int as isize) = 8 as uint16;
@@ -6735,8 +6539,7 @@ pub unsafe extern "C" fn SetSomeStuffForSpriteObject_16() {
         as *mut uint16)
         .offset(15 as ::core::ffi::c_int as isize) = 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetSomeStuffForSpriteObject_17(mut j: uint16) {
+pub unsafe fn SetSomeStuffForSpriteObject_17(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -6748,8 +6551,7 @@ pub unsafe extern "C" fn SetSomeStuffForSpriteObject_17(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 3072 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetSomeStuffForSpriteObject_18(mut k: uint16) {
+pub unsafe fn SetSomeStuffForSpriteObject_18(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x1ba3 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         == 59 as ::core::ffi::c_int
@@ -6775,11 +6577,7 @@ pub unsafe extern "C" fn SetSomeStuffForSpriteObject_18(mut k: uint16) {
             .offset(v2 as isize) = addr_off_8BCE53 as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicBgInstr_HandleCreateJpnText_Page1(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn CinematicBgInstr_HandleCreateJpnText_Page1(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1ba1 as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
     if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -6793,11 +6591,7 @@ pub unsafe extern "C" fn CinematicBgInstr_HandleCreateJpnText_Page1(
     }
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicBgInstr_SpawnMarkerWaitInput_Page1(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page1(mut k: uint16, mut j: uint16) -> uint16 {
     j = CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j);
     if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
@@ -6812,11 +6606,7 @@ pub unsafe extern "C" fn CinematicBgInstr_SpawnMarkerWaitInput_Page1(
         as *mut uint16) = (0x8baeb8 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicBgInstr_HandleCreateJpnText_Page2(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn CinematicBgInstr_HandleCreateJpnText_Page2(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1ba1 as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
     if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -6830,11 +6620,7 @@ pub unsafe extern "C" fn CinematicBgInstr_HandleCreateJpnText_Page2(
     }
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicBgInstr_SpawnMarkerWaitInput_Page2(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page2(mut k: uint16, mut j: uint16) -> uint16 {
     j = CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j);
     if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
@@ -6855,8 +6641,7 @@ pub unsafe extern "C" fn CinematicBgInstr_SpawnMarkerWaitInput_Page2(
     }
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_WaitInputSetupMotherBrainFight() {
+pub unsafe fn CinematicFunction_Intro_WaitInputSetupMotherBrainFight() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1ba3 as ::core::ffi::c_int as isize)
         as *mut uint16)
         != 0
@@ -6962,8 +6747,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_WaitInputSetupMotherBrainFight(
         CinematicFunction_Intro_SetupTransitionToGameplay();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_WaitInputSetupBabyMetroid() {
+pub unsafe fn CinematicFunction_Intro_WaitInputSetupBabyMetroid() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1ba3 as ::core::ffi::c_int as isize)
         as *mut uint16)
         != 0
@@ -7062,8 +6846,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_WaitInputSetupBabyMetroid() {
         CinematicFunction_Intro_SetupTransitionToGameplay();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_SetupTransitionToGameplay() {
+pub unsafe fn CinematicFunction_Intro_SetupTransitionToGameplay() {
     *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 6 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 17 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 2 as uint8;
@@ -7101,11 +6884,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_SetupTransitionToGameplay() {
     ClearYColorsFromIndexX(0x1e0 as uint16, 0x10 as uint16);
     ComposeFadingPalettes();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicBgInstr_HandleCreateJpnText_Page3(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn CinematicBgInstr_HandleCreateJpnText_Page3(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1ba1 as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
     if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -7119,11 +6898,7 @@ pub unsafe extern "C" fn CinematicBgInstr_HandleCreateJpnText_Page3(
     }
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicBgInstr_SpawnMarkerWaitInput_Page3(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page3(mut k: uint16, mut j: uint16) -> uint16 {
     j = CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j);
     if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
@@ -7144,11 +6919,7 @@ pub unsafe extern "C" fn CinematicBgInstr_SpawnMarkerWaitInput_Page3(
     }
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicBgInstr_HandleCreateJpnText_Page4(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn CinematicBgInstr_HandleCreateJpnText_Page4(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1ba1 as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
     if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -7162,11 +6933,7 @@ pub unsafe extern "C" fn CinematicBgInstr_HandleCreateJpnText_Page4(
     }
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicBgInstr_SpawnMarkerWaitInput_Page4(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page4(mut k: uint16, mut j: uint16) -> uint16 {
     j = CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j);
     if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
@@ -7187,8 +6954,7 @@ pub unsafe extern "C" fn CinematicBgInstr_SpawnMarkerWaitInput_Page4(
     }
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func11() {
+pub unsafe fn CinematicFunction_Intro_Func11() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1ba3 as ::core::ffi::c_int as isize)
         as *mut uint16)
         != 0
@@ -7215,8 +6981,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func11() {
         CinematicFunction_Intro_Func13();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func12() {
+pub unsafe fn CinematicFunction_Intro_Func12() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1ba3 as ::core::ffi::c_int as isize)
         as *mut uint16)
         != 0
@@ -7243,8 +7008,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func12() {
         CinematicFunction_Intro_Func13();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func13() {
+pub unsafe fn CinematicFunction_Intro_Func13() {
     *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 6 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 17 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 2 as uint8;
@@ -7280,11 +7044,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func13() {
     ClearYColorsFromIndexX(0x1c0 as uint16, 9 as uint16);
     ComposeFadingPalettes();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicBgInstr_HandleCreateJpnText_Page5(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn CinematicBgInstr_HandleCreateJpnText_Page5(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1ba1 as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
     if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -7298,11 +7058,7 @@ pub unsafe extern "C" fn CinematicBgInstr_HandleCreateJpnText_Page5(
     }
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicBgInstr_SpawnMarkerWaitInput_Page5(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn CinematicBgInstr_SpawnMarkerWaitInput_Page5(mut k: uint16, mut j: uint16) -> uint16 {
     j = CinematicBgInstr_SetSomeStuffForSpriteObject_14(k, j);
     if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
@@ -7323,8 +7079,7 @@ pub unsafe extern "C" fn CinematicBgInstr_SpawnMarkerWaitInput_Page5(
     }
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func15b() {
+pub unsafe fn CinematicFunction_Intro_Func15b() {
     EnableCinematicBgTilemapUpdates();
     ClearEnglishTextTilemap();
     SpawnCinematicBgObject(
@@ -7336,8 +7091,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func15b() {
     SetSomeStuffForSpriteObject_16();
     QueueMusic_Delayed8(0 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func15() {
+pub unsafe fn CinematicFunction_Intro_Func15() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1ba3 as ::core::ffi::c_int as isize)
         as *mut uint16)
         != 0
@@ -7367,8 +7121,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func15() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicBgInstr_Func16(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicBgInstr_Func16(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1ba1 as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
     if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -7382,8 +7135,7 @@ pub unsafe extern "C" fn CinematicBgInstr_Func16(mut k: uint16, mut j: uint16) -
     }
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicBgInstr_Func17(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicBgInstr_Func17(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) = (0x8bb72f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -7392,8 +7144,7 @@ pub unsafe extern "C" fn CinematicBgInstr_Func17(mut k: uint16, mut j: uint16) -
         1 as uint16;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_XfadeGameplayFade() {
+pub unsafe fn CinematicFunction_Intro_XfadeGameplayFade() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & 3 as ::core::ffi::c_int
@@ -7442,8 +7193,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_XfadeGameplayFade() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_XfadeScientistFade() {
+pub unsafe fn CinematicFunction_Intro_XfadeScientistFade() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & 3 as ::core::ffi::c_int
@@ -7483,42 +7233,36 @@ pub unsafe extern "C" fn CinematicFunction_Intro_XfadeScientistFade() {
             (0x8ba391 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_StartIntroPage2(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_StartIntroPage2(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) = (0x8bb35f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     Instr_StartIntroPage_Common();
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_StartIntroPage3(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_StartIntroPage3(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) = (0x8bb370 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     Instr_StartIntroPage_Common();
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_StartIntroPage4(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_StartIntroPage4(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) = (0x8bb381 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     Instr_StartIntroPage_Common();
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_StartIntroPage5(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_StartIntroPage5(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) = (0x8bb392 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     Instr_StartIntroPage_Common();
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Instr_StartIntroPage_Common() {
+pub unsafe fn Instr_StartIntroPage_Common() {
     DisableCinematicBgTilemapUpdates();
     ClearJapaneseTextTiles();
     TransferJapaneseTextTilesToVram();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_SetupStuff() {
+pub unsafe fn CinematicFunction_Intro_SetupStuff() {
     *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 6 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 17 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 2 as uint8;
@@ -7555,8 +7299,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_SetupStuff() {
     EnableCinematicBgTilemapUpdates();
     SetSomeStuffForSpriteObject_16();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Page2() {
+pub unsafe fn CinematicFunction_Intro_Page2() {
     SpawnCinematicBgObject(
         addr_kCinematicBgObjectDef_8BCF45 as ::core::ffi::c_int as uint16,
         0x4c00 as uint16,
@@ -7565,8 +7308,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Page2() {
         as *mut uint16) = (0x8bb3f4 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     CinematicFunction_Intro_SetupStuff();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Page3() {
+pub unsafe fn CinematicFunction_Intro_Page3() {
     SpawnCinematicBgObject(
         addr_kCinematicBgObjectDef_8BCF4B as ::core::ffi::c_int as uint16,
         0x4c00 as uint16,
@@ -7575,8 +7317,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Page3() {
         as *mut uint16) = (0x8bb3f4 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     CinematicFunction_Intro_SetupStuff();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Page4() {
+pub unsafe fn CinematicFunction_Intro_Page4() {
     SpawnCinematicBgObject(
         addr_kCinematicBgObjectDef_8BCF51 as ::core::ffi::c_int as uint16,
         0x4c00 as uint16,
@@ -7585,8 +7326,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Page4() {
         as *mut uint16) = (0x8bb458 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     CinematicFunction_Intro_SetupStuff();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Page5() {
+pub unsafe fn CinematicFunction_Intro_Page5() {
     SpawnCinematicBgObject(
         addr_kCinematicBgObjectDef_8BCF57 as ::core::ffi::c_int as uint16,
         0x4c00 as uint16,
@@ -7595,8 +7335,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Page5() {
         as *mut uint16) = (0x8bb458 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     CinematicFunction_Intro_SetupStuff();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Fadestuff() {
+pub unsafe fn CinematicFunction_Intro_Fadestuff() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & 3 as ::core::ffi::c_int
@@ -7624,8 +7363,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Fadestuff() {
             (0x8ba391 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Fadestuff2() {
+pub unsafe fn CinematicFunction_Intro_Fadestuff2() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & 3 as ::core::ffi::c_int
@@ -7676,8 +7414,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Fadestuff2() {
             (0x8ba391 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicBgPreInstr_SamusBlink(mut k: uint16) {
+pub unsafe fn CinematicBgPreInstr_SamusBlink(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         == 0x8bb207 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -7698,8 +7435,7 @@ pub unsafe extern "C" fn CinematicBgPreInstr_SamusBlink(mut k: uint16) {
             (0x8b93d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallCreditsObjectFunc(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallCreditsObjectFunc(mut ea: uint32, mut k: uint16) {
     match ea {
         9147353 => return,
         9155772 => {
@@ -7711,8 +7447,7 @@ pub unsafe extern "C" fn CallCreditsObjectFunc(mut ea: uint32, mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func19(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func19(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(15 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
@@ -7725,8 +7460,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func19(mut k: uint16) {
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func18() {
+pub unsafe fn CinematicFunction_Intro_Func18() {
     DisableCinematicBgTilemapUpdates();
     *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -7756,8 +7490,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func18() {
     CinematicFunction_Intro_Func20(addr_word_8BD389 as ::core::ffi::c_int as uint16);
     TransferJapaneseTextTilesToVram();
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_8BB51E(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn sub_8BB51E(mut k: uint16, mut j: uint16) -> uint16 {
     DisableCinematicBgTilemapUpdates();
     *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -7789,16 +7522,11 @@ pub unsafe extern "C" fn sub_8BB51E(mut k: uint16, mut j: uint16) -> uint16 {
     TransferJapaneseTextTilesToVram();
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnableCinematicBgTilemapUpdates__0(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn EnableCinematicBgTilemapUpdates__0(mut k: uint16, mut j: uint16) -> uint16 {
     EnableCinematicBgTilemapUpdates();
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func21(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicFunction_Intro_Func21(mut k: uint16, mut j: uint16) -> uint16 {
     DisableCinematicBgTilemapUpdates();
     *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -7830,8 +7558,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func21(mut k: uint16, mut j: ui
     TransferJapaneseTextTilesToVram();
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func22(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func22(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -7855,8 +7582,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func22(mut k: uint16) {
             as *mut uint16) = 60 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_ThenWaitInputSetupBabyMetroid(
+pub unsafe fn CinematicFunction_Intro_ThenWaitInputSetupBabyMetroid(
     mut k: uint16,
     mut j: uint16,
 ) -> uint16 {
@@ -7865,8 +7591,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_ThenWaitInputSetupBabyMetroid(
         as *mut uint16) = (0x8baf6c as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func23(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicFunction_Intro_Func23(mut k: uint16, mut j: uint16) -> uint16 {
     DisableCinematicBgTilemapUpdates();
     *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -7897,8 +7622,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func23(mut k: uint16, mut j: ui
     TransferJapaneseTextTilesToVram();
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func24(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func24(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -7921,15 +7645,13 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func24(mut k: uint16) {
             as *mut uint16) = 60 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func25(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicFunction_Intro_Func25(mut k: uint16, mut j: uint16) -> uint16 {
     EnableCinematicBgTilemapUpdates();
     *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) = (0x8bb0f2 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func26(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicFunction_Intro_Func26(mut k: uint16, mut j: uint16) -> uint16 {
     DisableCinematicBgTilemapUpdates();
     *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -7961,8 +7683,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func26(mut k: uint16, mut j: ui
     TransferJapaneseTextTilesToVram();
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func27(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func27(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -7986,15 +7707,13 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func27(mut k: uint16) {
             as *mut uint16) = 60 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func28(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicFunction_Intro_Func28(mut k: uint16, mut j: uint16) -> uint16 {
     EnableCinematicBgTilemapUpdates();
     *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) = (0x8bb123 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func29(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicFunction_Intro_Func29(mut k: uint16, mut j: uint16) -> uint16 {
     DisableCinematicBgTilemapUpdates();
     *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -8025,8 +7744,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func29(mut k: uint16, mut j: ui
     TransferJapaneseTextTilesToVram();
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func30(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func30(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -8049,28 +7767,24 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func30(mut k: uint16) {
             as *mut uint16) = 60 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func31(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicFunction_Intro_Func31(mut k: uint16, mut j: uint16) -> uint16 {
     EnableCinematicBgTilemapUpdates();
     *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) = (0x8bb1da as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func32(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicFunction_Intro_Func32(mut k: uint16, mut j: uint16) -> uint16 {
     DisableCinematicBgTilemapUpdates();
     ClearJapaneseTextTiles();
     CinematicFunction_Intro_Func20(addr_word_8BD371 as ::core::ffi::c_int as uint16);
     TransferJapaneseTextTilesToVram();
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnableCinematicBgTilemapUpdates__(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn EnableCinematicBgTilemapUpdates__(mut k: uint16, mut j: uint16) -> uint16 {
     EnableCinematicBgTilemapUpdates();
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func33() {
+pub unsafe fn CinematicFunction_Intro_Func33() {
     if *((&raw mut g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
@@ -8085,8 +7799,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func33() {
         *fresh170 = (*fresh170 as ::core::ffi::c_int | 2 as ::core::ffi::c_int) as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func34() {
+pub unsafe fn CinematicFunction_Intro_Func34() {
     HandleFadeOut();
     if *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
@@ -8124,8 +7837,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func34() {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func35(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func35(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -8137,8 +7849,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func35(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 3584 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func36(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func36(mut k: uint16) {
     CinematicFunction_Intro_Func37(k);
     let mut v1: uint16 = 8 as uint16;
     while *((&raw mut g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize)
@@ -8216,8 +7927,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func36(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func39(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func39(mut k: uint16) {
     CinematicFunction_Intro_Func37(k);
     CinematicFunction_Intro_Func40();
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -8237,8 +7947,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func39(mut k: uint16) {
             .offset(v1 as isize) = addr_off_8BCB19 as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprPreInstr_B82E(mut k: uint16) {
+pub unsafe fn CinematicSprPreInstr_B82E(mut k: uint16) {
     CinematicFunction_Intro_Func40();
     if *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -8255,8 +7964,7 @@ pub unsafe extern "C" fn CinematicSprPreInstr_B82E(mut k: uint16) {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func37(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func37(mut k: uint16) {
     let mut j: uint16 = 0;
     let mut v3: uint16 = 0;
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
@@ -8301,8 +8009,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func37(mut k: uint16) {
         *fresh60 = (*fresh60).wrapping_sub(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func40() {
+pub unsafe fn CinematicFunction_Intro_Func40() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1a51 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
@@ -8331,8 +8038,7 @@ static mut kCinematicFunction_Intro_Func42_Tab1: [uint16; 4] = [
     0x38 as ::core::ffi::c_int as uint16,
     0x58 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func42(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func42(mut j: uint16) {
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1b9d as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -8354,8 +8060,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func42(mut j: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = 3584 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_Func43(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_Func43(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -8374,8 +8079,7 @@ pub unsafe extern "C" fn CinematicSprInstr_Func43(mut k: uint16, mut j: uint16) 
     }
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func44(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func44(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
@@ -8433,8 +8137,7 @@ static mut kCinematicFunction_Intro_Func45_Tab0: [uint16; 4] = [
     0 as ::core::ffi::c_int as uint16,
     0xffff as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func45(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func45(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0x1b7d as ::core::ffi::c_int as isize)
@@ -8505,8 +8208,7 @@ static mut kCinematicFunction_Intro_Func46_Tab2: [uint16; 5] = [
     0x30 as ::core::ffi::c_int as uint16,
     0x40 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func46(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func46(mut j: uint16) {
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1b9d as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -8548,8 +8250,7 @@ static mut kCinematicFunction_Intro_Func47_Tab2: [uint16; 3] = [
     8 as ::core::ffi::c_int as uint16,
     0x10 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func47(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func47(mut j: uint16) {
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1b9d as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -8576,8 +8277,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func47(mut j: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = 2560 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func48(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func48(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
         == 0
@@ -8591,11 +8291,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func48(mut k: uint16) {
             .offset(v1 as isize) = addr_off_8BCE53 as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_SpawnIntroRinkas01(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn CinematicSprInstr_SpawnIntroRinkas01(mut k: uint16, mut j: uint16) -> uint16 {
     SpawnCinematicSpriteObject(
         addr_kCinematicSpriteObjectDef_8BCF21 as ::core::ffi::c_int as uint16,
         0 as uint16,
@@ -8606,11 +8302,7 @@ pub unsafe extern "C" fn CinematicSprInstr_SpawnIntroRinkas01(
     );
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_SpawnIntroRinkas23(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn CinematicSprInstr_SpawnIntroRinkas23(mut k: uint16, mut j: uint16) -> uint16 {
     SpawnCinematicSpriteObject(
         addr_kCinematicSpriteObjectDef_8BCF21 as ::core::ffi::c_int as uint16,
         2 as uint16,
@@ -8621,8 +8313,7 @@ pub unsafe extern "C" fn CinematicSprInstr_SpawnIntroRinkas23(
     );
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func49(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func49(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -8634,8 +8325,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func49(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 3584 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func50(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func50(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -8654,8 +8344,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func50(mut k: uint16) {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func51(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func51(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -8734,8 +8423,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func51(mut k: uint16) {
             (0x8bbb0d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func52(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func52(mut k: uint16) {
     let ref mut fresh55 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1a4d as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh55 = (*fresh55).wrapping_sub(1);
@@ -8760,8 +8448,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func52(mut k: uint16) {
             .offset(v2 as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func53(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func53(mut k: uint16) {
     let mut kh: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -8891,8 +8578,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func53(mut k: uint16) {
             as *mut uint16) = 0 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn ResetButtonAssignmentsToDefault() {
+pub unsafe fn ResetButtonAssignmentsToDefault() {
     *((&raw mut g_ram as *mut uint8).offset(0xd82 as ::core::ffi::c_int as isize) as *mut uint16) =
         *((&raw mut g_ram as *mut uint8).offset(0x9b2 as ::core::ffi::c_int as isize)
             as *mut uint16);
@@ -8937,8 +8623,7 @@ pub unsafe extern "C" fn ResetButtonAssignmentsToDefault() {
     *((&raw mut g_ram as *mut uint8).offset(0x9be as ::core::ffi::c_int as isize) as *mut uint16) =
         kButton_R as ::core::ffi::c_int as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn RevertButtonConfig() {
+pub unsafe fn RevertButtonConfig() {
     *((&raw mut g_ram as *mut uint8).offset(0x9b2 as ::core::ffi::c_int as isize) as *mut uint16) =
         *((&raw mut g_ram as *mut uint8).offset(0xd82 as ::core::ffi::c_int as isize)
             as *mut uint16);
@@ -8961,8 +8646,7 @@ pub unsafe extern "C" fn RevertButtonConfig() {
         *((&raw mut g_ram as *mut uint8).offset(0xd8e as ::core::ffi::c_int as isize)
             as *mut uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func54() {
+pub unsafe fn CinematicFunction_Intro_Func54() {
     let mut v1: int16 = 0;
     SetupPpu_3_Mode7();
     ClearCinematicSprites();
@@ -9095,8 +8779,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func54() {
     QueueMusic_Delayed8(0xff2d as uint16);
     QueueMusic_DelayedY(5 as uint16, 0xe as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func55() {
+pub unsafe fn CinematicFunction_Intro_Func55() {
     if HasQueuedMusic() as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
         *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 15 as uint8;
         *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
@@ -9104,8 +8787,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func55() {
             (0x8bbdf9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func56() {
+pub unsafe fn CinematicFunction_Intro_Func56() {
     if *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         - 32 as ::core::ffi::c_int
@@ -9166,8 +8848,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func56() {
         *fresh128 = (*fresh128 as ::core::ffi::c_int - 16 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func57(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func57(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0x1b9d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -9195,8 +8876,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func57(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 2048 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func58(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func58(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         == 0x8bbdf9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -9246,8 +8926,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func58(mut k: uint16) {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func59(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func59(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -9259,8 +8938,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func59(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 2048 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func60(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func60(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
@@ -9276,8 +8954,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func60(mut k: uint16) {
         .offset(v1 as isize);
     *fresh48 = (*fresh48 as ::core::ffi::c_int & 0x1ff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func61(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func61(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -9289,8 +8966,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func61(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 3072 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func62(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func62(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
@@ -9306,8 +8982,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func62(mut k: uint16) {
         .offset(v1 as isize);
     *fresh47 = (*fresh47 as ::core::ffi::c_int & 0x1ff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func63(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func63(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -9319,8 +8994,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func63(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 2048 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func64(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func64(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
@@ -9336,8 +9010,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func64(mut k: uint16) {
         .offset(v1 as isize);
     *fresh46 = (*fresh46 as ::core::ffi::c_int & 0x1ff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func65(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func65(mut j: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x1b9d as ::core::ffi::c_int as isize)
         as *mut uint16)
         != 0
@@ -9363,8 +9036,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func65(mut j: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = 2048 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func66(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func66(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
@@ -9376,8 +9048,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func66(mut k: uint16) {
         -(0x2000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func67() {
+pub unsafe fn CinematicFunction_Intro_Func67() {
     let ref mut fresh123 = *(&raw mut g_ram as *mut uint8)
         .offset(0x74 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize);
@@ -9463,8 +9134,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func67() {
             (0x8ba38f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func68(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func68(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -9476,8 +9146,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func68(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicCommonInstr_Func69(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicCommonInstr_Func69(mut k: uint16, mut j: uint16) -> uint16 {
     if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
     {
@@ -9485,8 +9154,7 @@ pub unsafe extern "C" fn CinematicCommonInstr_Func69(mut k: uint16, mut j: uint1
     }
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicCommonInstr_Func70(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicCommonInstr_Func70(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) = (0x8bc0c5 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -9495,8 +9163,7 @@ pub unsafe extern "C" fn CinematicCommonInstr_Func70(mut k: uint16, mut j: uint1
         1 as uint16;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func71(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func71(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -9508,8 +9175,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func71(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func72() {
+pub unsafe fn CinematicFunction_Intro_Func72() {
     HandleFadeOut();
     if *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
@@ -9542,8 +9208,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func72() {
             (0x8bc100 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func73() {
+pub unsafe fn CinematicFunction_Intro_Func73() {
     *((&raw mut g_ram as *mut uint8).offset(0xd914 as ::core::ffi::c_int as isize)
         as *mut uint16) = kGameState_31_SetUpNewGame as ::core::ffi::c_int as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -9557,8 +9222,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func73() {
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunctionBlackoutFromCeres() {
+pub unsafe fn CinematicFunctionBlackoutFromCeres() {
     let mut j: int16 = 0;
     let mut v3: int16 = 0;
     SetupPpu_3_Mode7();
@@ -9746,16 +9410,14 @@ pub unsafe extern "C" fn CinematicFunctionBlackoutFromCeres() {
         QueueMusic_DelayedY(7 as uint16, 0xe as uint16);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func74() {
+pub unsafe fn CinematicFunction_Intro_Func74() {
     if HasQueuedMusic() as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
             as *mut uint16) =
             (0x8bc2f1 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func75() {
+pub unsafe fn CinematicFunction_Intro_Func75() {
     AddToHiLo(
         (&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize) as *mut uint16,
         (&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize) as *mut uint16,
@@ -9787,8 +9449,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func75() {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func76() {
+pub unsafe fn CinematicFunction_Intro_Func76() {
     AddToHiLo(
         (&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize) as *mut uint16,
         (&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize) as *mut uint16,
@@ -9855,11 +9516,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func76() {
             (0x8bc5ca as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_SpawnCeresExplosions1(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn CinematicSprInstr_SpawnCeresExplosions1(mut k: uint16, mut j: uint16) -> uint16 {
     SpawnCinematicSpriteObject(
         addr_kCinematicSpriteObjectDef_8BCEBB as ::core::ffi::c_int as uint16,
         0 as uint16,
@@ -9903,8 +9560,7 @@ static mut kCinematicFunction_Intro_Func78_Tab2: [int16; 5] = [
     -(16 as ::core::ffi::c_int) as int16,
     0 as ::core::ffi::c_int as int16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func78(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func78(mut j: uint16) {
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1b9d as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -9937,8 +9593,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func78(mut j: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = 2560 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprPreInstr_C489(mut k: uint16) {
+pub unsafe fn CinematicSprPreInstr_C489(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         == 0x8bc5ca as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -10011,8 +9666,7 @@ static mut kCinematicFunction_Intro_Func81_Tab2: [int16; 4] = [
     -(10 as ::core::ffi::c_int) as int16,
     12 as ::core::ffi::c_int as int16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func80(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func80(mut j: uint16) {
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1b9d as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -10041,11 +9695,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func80(mut j: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = 2560 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_SpawnCeresExplosions3(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn CinematicSprInstr_SpawnCeresExplosions3(mut k: uint16, mut j: uint16) -> uint16 {
     SpawnCinematicSpriteObject(
         addr_kCinematicSpriteObjectDef_8BCEC7 as ::core::ffi::c_int as uint16,
         0 as uint16,
@@ -10064,8 +9714,7 @@ pub unsafe extern "C" fn CinematicSprInstr_SpawnCeresExplosions3(
     );
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func81(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func81(mut j: uint16) {
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1b9d as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -10097,8 +9746,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func81(mut j: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = 2560 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func82(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func82(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
@@ -10119,8 +9767,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func82(mut k: uint16) {
         0x4000 as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func83(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func83(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -10140,8 +9787,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func83(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 2560 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func77() {
+pub unsafe fn CinematicFunction_Intro_Func77() {
     *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 16 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x72 as ::core::ffi::c_int as isize) = 55 as uint8;
     let ref mut fresh119 = *((&raw mut g_ram as *mut uint8)
@@ -10170,8 +9816,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func77() {
         *fresh120 = (*fresh120 as ::core::ffi::c_int - 16 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func84() {
+pub unsafe fn CinematicFunction_Intro_Func84() {
     let ref mut fresh118 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh118 = (*fresh118).wrapping_sub(1);
@@ -10191,8 +9836,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func84() {
             (0x8bc627 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func85() {
+pub unsafe fn CinematicFunction_Intro_Func85() {
     HandleFadeOut();
     if *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
@@ -10255,8 +9899,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func85() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func86() {
+pub unsafe fn CinematicFunction_Intro_Func86() {
     SetupPpu_4_Mode1();
     let mut i: ::core::ffi::c_int = 656 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
@@ -10359,8 +10002,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func86() {
     *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize) as *mut uint16) =
         1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func87() {
+pub unsafe fn CinematicFunction_Intro_Func87() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1a51 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & 3 as ::core::ffi::c_int
@@ -10384,8 +10026,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func87() {
             (0x8bc7ca as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func88() {
+pub unsafe fn CinematicFunction_Intro_Func88() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1a51 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & 3 as ::core::ffi::c_int
@@ -10447,8 +10088,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func88() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func89(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func89(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -10460,8 +10100,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func89(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 3584 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func90(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func90(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         == 0x8bcade as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -10472,8 +10111,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func90(mut k: uint16) {
             (0x8bc85d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func91(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func91(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh43 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1b7d as ::core::ffi::c_int as isize) as *mut uint16)
@@ -10506,8 +10144,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func91(mut k: uint16) {
             .offset(v1 as isize) = addr_off_8BCE53 as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func92(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func92(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -10519,8 +10156,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func92(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 2048 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func93(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func93(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         == 0x8bcade as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -10531,8 +10167,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func93(mut k: uint16) {
             (0x8bc8b9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func94(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func94(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh42 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1b7d as ::core::ffi::c_int as isize) as *mut uint16)
@@ -10568,8 +10203,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func94(mut k: uint16) {
             (0x8bcadf as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func96(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func96(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         == 0x8bcade as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -10580,8 +10214,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func96(mut k: uint16) {
             (0x8bc908 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func97(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func97(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh41 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1b7d as ::core::ffi::c_int as isize) as *mut uint16)
@@ -10614,8 +10247,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func97(mut k: uint16) {
             .offset(v1 as isize) = addr_off_8BCE53 as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func98(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func98(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -10627,8 +10259,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func98(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 2048 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func99(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func99(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -10640,8 +10271,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func99(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 2048 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func100(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func100(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -10653,8 +10283,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func100(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 2048 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func101(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func101(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -10666,8 +10295,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func101(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 2048 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func102(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func102(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -10679,13 +10307,11 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func102(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_C9A5(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_C9A5(mut k: uint16, mut j: uint16) -> uint16 {
     SpawnPalfxObject(addr_kPalfx_E1B0 as ::core::ffi::c_int as uint16);
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_C9AF(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_C9AF(mut k: uint16, mut j: uint16) -> uint16 {
     if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -10697,13 +10323,11 @@ pub unsafe extern "C" fn CinematicSprInstr_C9AF(mut k: uint16, mut j: uint16) ->
     }
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_C9BD(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_C9BD(mut k: uint16, mut j: uint16) -> uint16 {
     SpawnPalfxObject(addr_loc_8BE1B4 as ::core::ffi::c_int as uint16);
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_C9C7(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_C9C7(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1993 as ::core::ffi::c_int as isize)
         as *mut uint16) = 62 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
@@ -10716,8 +10340,7 @@ pub unsafe extern "C" fn CinematicSprInstr_C9C7(mut k: uint16, mut j: uint16) ->
         as *mut uint16) = (0x8bc9f9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func104(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func104(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -10729,8 +10352,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func104(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func105() {
+pub unsafe fn CinematicFunction_Intro_Func105() {
     AddToHiLo(
         (&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize) as *mut uint16,
         (&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize) as *mut uint16,
@@ -10757,8 +10379,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func105() {
             (0x8bca36 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func106() {
+pub unsafe fn CinematicFunction_Intro_Func106() {
     AddToHiLo(
         (&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize) as *mut uint16,
         (&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize) as *mut uint16,
@@ -10795,8 +10416,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func106() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func107() {
+pub unsafe fn CinematicFunction_Intro_Func107() {
     AddToHiLo(
         (&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize) as *mut uint16,
         (&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize) as *mut uint16,
@@ -10826,8 +10446,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func107() {
             as *mut uint16) = 64 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func108() {
+pub unsafe fn CinematicFunction_Intro_Func108() {
     let ref mut fresh111 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh111 = (*fresh111).wrapping_sub(1);
@@ -10843,8 +10462,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func108() {
             (0x8bcade as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func95() {
+pub unsafe fn CinematicFunction_Intro_Func95() {
     *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 0x80 as uint8;
     let mut i: ::core::ffi::c_int = 656 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
@@ -10859,8 +10477,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func95() {
         *((&raw mut g_ram as *mut uint8).offset(0x9c4 as ::core::ffi::c_int as isize)
             as *mut uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_39_EndingAndCredits_() -> CoroutineRet {
+pub unsafe fn GameState_39_EndingAndCredits_() -> CoroutineRet {
     CallCinematicFunction(
         (*((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -10888,8 +10505,7 @@ pub unsafe extern "C" fn GameState_39_EndingAndCredits_() -> CoroutineRet {
     HandleMode7TransformationMatrix();
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MaybeHandleCinematicBgObjects() {
+pub unsafe fn MaybeHandleCinematicBgObjects() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         + 0x1afc as ::core::ffi::c_int
@@ -10899,8 +10515,7 @@ pub unsafe extern "C" fn MaybeHandleCinematicBgObjects() {
         HandleCinematicBgObjects();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunctionEscapeFromCebes() {
+pub unsafe fn CinematicFunctionEscapeFromCebes() {
     let mut j: int16 = 0;
     *((&raw mut g_ram as *mut uint8).offset(0xab as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
@@ -11127,8 +10742,7 @@ pub unsafe extern "C" fn CinematicFunctionEscapeFromCebes() {
     QueueMusic_Delayed8(0xff33 as uint16);
     QueueMusic_DelayedY(5 as uint16, 0xe as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func109() {
+pub unsafe fn CinematicFunction_Intro_Func109() {
     if HasQueuedMusic() as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
         SpawnPalfxObject(addr_kPalfx_E1D8 as ::core::ffi::c_int as uint16);
         SpawnPalfxObject(addr_kPalfx_E1DC as ::core::ffi::c_int as uint16);
@@ -11137,8 +10751,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func109() {
             (0x8bd6f2 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func110() {
+pub unsafe fn CinematicFunction_Intro_Func110() {
     CinematicFunction_Intro_Func111();
     if AdvanceFastScreenFadeIn() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
@@ -11146,8 +10759,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func110() {
             (0x8bd701 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func111() {
+pub unsafe fn CinematicFunction_Intro_Func111() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1a51 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
@@ -11175,8 +10787,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func111() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func112() {
+pub unsafe fn CinematicFunction_Intro_Func112() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
@@ -11256,8 +10867,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func112() {
     *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) = (0x8bd7f8 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func114() {
+pub unsafe fn CinematicFunction_Intro_Func114() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1a51 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
@@ -11285,8 +10895,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func114() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func113() {
+pub unsafe fn CinematicFunction_Intro_Func113() {
     CinematicFunction_Intro_Func114();
     if AdvanceFastScreenFadeIn() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
@@ -11294,8 +10903,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func113() {
             (0x8bd807 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func115() {
+pub unsafe fn CinematicFunction_Intro_Func115() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
@@ -11509,8 +11117,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func115() {
     *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) = (0x8bda02 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func116() {
+pub unsafe fn CinematicFunction_Intro_Func116() {
     CinematicFunction_Intro_Func117();
     if AdvanceFastScreenFadeIn() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
@@ -11522,8 +11129,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func116() {
             (0x8bda1a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func117() {
+pub unsafe fn CinematicFunction_Intro_Func117() {
     let ref mut fresh106 = *((&raw mut g_ram as *mut uint8)
         .offset(0x198f as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh106 = (*fresh106 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
@@ -11656,8 +11262,7 @@ static mut kCinematicFunction_Intro_Func118_Tab1: [uint16; 16] = [
     0x3000 as ::core::ffi::c_int as uint16,
     0x3800 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func118() {
+pub unsafe fn CinematicFunction_Intro_Func118() {
     let mut v2: ::core::ffi::c_uint = 0;
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
@@ -11763,8 +11368,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func118() {
             (0x8bdb9d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func119() {
+pub unsafe fn CinematicFunction_Intro_Func119() {
     let ref mut fresh104 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh104 = (*fresh104).wrapping_sub(1);
@@ -11783,8 +11387,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func119() {
             (0x8bdbc4 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func120() {
+pub unsafe fn CinematicFunction_Intro_Func120() {
     if HasQueuedMusic() as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
         *(&raw mut g_ram as *mut uint8).offset(0x55 as ::core::ffi::c_int as isize) = 7 as uint8;
         *(&raw mut g_ram as *mut uint8).offset(0x5f as ::core::ffi::c_int as isize) = 0x80 as uint8;
@@ -11837,8 +11440,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func120() {
             (0x8bdca5 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func122() {
+pub unsafe fn CinematicFunction_Intro_Func122() {
     let ref mut fresh96 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh96 = (*fresh96).wrapping_sub(1);
@@ -11938,8 +11540,7 @@ static mut kCinematicFunction_Intro_Func121_Tab0: [uint16; 32] = [
     0xffff as ::core::ffi::c_int as uint16,
     0x8000 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func121() {
+pub unsafe fn CinematicFunction_Intro_Func121() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
         != 0
@@ -12008,8 +11609,7 @@ static mut kCinematicFunction_Intro_Func123_Tab0: [uint16; 16] = [
     0xffff as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func123() {
+pub unsafe fn CinematicFunction_Intro_Func123() {
     CinematicFunction_Intro_Func122();
     if *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -12076,8 +11676,7 @@ static mut g_word_8BDE43: [uint16; 16] = [
     0x18c6 as ::core::ffi::c_int as uint16,
     0x7fff as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func124() {
+pub unsafe fn CinematicFunction_Intro_Func124() {
     CinematicFunction_Intro_Func122();
     AddToHiLo(
         (&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize) as *mut uint16,
@@ -12141,8 +11740,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func124() {
         *fresh94 = (*fresh94 as ::core::ffi::c_int - 4 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func125() {
+pub unsafe fn CinematicFunction_Intro_Func125() {
     *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize) as *mut uint16) =
         1 as uint16;
     if AdvanceFastScreenFadeOut() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
@@ -12156,8 +11754,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func125() {
             (0x8bde80 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func126() {
+pub unsafe fn CinematicFunction_Intro_Func126() {
     SetupPpu_7_Mode1();
     ClearCinematicSprites();
     ClearPaletteFXObjects();
@@ -12405,8 +12002,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func126() {
     *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) = (0x8bdb9d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func129() {
+pub unsafe fn CinematicFunction_Intro_Func129() {
     let ref mut fresh92 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh92 = (*fresh92).wrapping_sub(1);
@@ -12425,8 +12021,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func129() {
         *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 16 as uint8;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func130() {
+pub unsafe fn CinematicFunction_Intro_Func130() {
     HandleFadeIn();
     if *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
@@ -12451,8 +12046,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func130() {
             (0x8be158 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func131() {
+pub unsafe fn CinematicFunction_Intro_Func131() {
     FadeInYColorsFromIndexX(0x40 as uint16, 0x10 as uint16);
     ComposeFadingPalettes();
     let ref mut fresh90 = *((&raw mut g_ram as *mut uint8)
@@ -12477,8 +12071,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func131() {
         CinematicFunction_Intro_Func133();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func132() {
+pub unsafe fn CinematicFunction_Intro_Func132() {
     let ref mut fresh86 = *((&raw mut g_ram as *mut uint8)
         .offset(0xbb as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh86 = (*fresh86 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
@@ -12527,8 +12120,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func132() {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func134() {
+pub unsafe fn CinematicFunction_Intro_Func134() {
     let ref mut fresh85 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh85 = (*fresh85).wrapping_sub(1);
@@ -12602,8 +12194,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func134() {
             (0x8be265 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func136() {
+pub unsafe fn CinematicFunction_Intro_Func136() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & 3 as ::core::ffi::c_int
@@ -12625,8 +12216,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func136() {
         CinematicFunction_Intro_Func135();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func135() {
+pub unsafe fn CinematicFunction_Intro_Func135() {
     let ref mut fresh84 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh84 = (*fresh84).wrapping_sub(1);
@@ -12676,8 +12266,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func135() {
             (0x8be2dd as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func137() {
+pub unsafe fn CinematicFunction_Intro_Func137() {
     let ref mut fresh83 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1a4b as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh83 = (*fresh83).wrapping_sub(1);
@@ -12717,8 +12306,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func137() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func138() {
+pub unsafe fn CinematicFunction_Intro_Func138() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & 3 as ::core::ffi::c_int
@@ -12740,8 +12328,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func138() {
         CinematicFunction_Intro_Func145();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func145() {
+pub unsafe fn CinematicFunction_Intro_Func145() {
     let ref mut fresh81 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1a49 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh81 = (*fresh81).wrapping_sub(1);
@@ -12801,8 +12388,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func145() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func140() {
+pub unsafe fn CinematicFunction_Intro_Func140() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1a4f as ::core::ffi::c_int as isize)
         as *mut uint16)
         != 0
@@ -12815,8 +12401,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func140() {
         ComposeFadingPalettes();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func139() {
+pub unsafe fn CinematicFunction_Intro_Func139() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize)
         as *mut uint16)
         != 0
@@ -12869,8 +12454,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func139() {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func142() {
+pub unsafe fn CinematicFunction_Intro_Func142() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1a4f as ::core::ffi::c_int as isize)
         as *mut uint16)
         == 0
@@ -12916,7 +12500,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func142() {
             let fresh75 = v1;
             v1 = v1.wrapping_add(1);
             *(&raw mut (*(gVramWriteEntry
-                as unsafe extern "C" fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
+                as unsafe fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
                 fresh75 as ::core::ffi::c_int,
             ))
             .size as *mut uint8)
@@ -12946,8 +12530,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func142() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func141() {
+pub unsafe fn CinematicFunction_Intro_Func141() {
     CinematicFunction_Intro_Func140();
     CinematicFunction_Intro_Func142();
     let ref mut fresh74 = *((&raw mut g_ram as *mut uint8)
@@ -13018,8 +12601,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func141() {
         CinematicUpdateSomeBg();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func143() {
+pub unsafe fn CinematicFunction_Intro_Func143() {
     let mut j: uint16 = 0;
     let ref mut fresh69 = *(&raw mut g_ram as *mut uint8)
         .offset(0x74 as ::core::ffi::c_int as isize)
@@ -13111,8 +12693,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func143() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func144() {
+pub unsafe fn CinematicFunction_Intro_Func144() {
     let mut j: uint16 = 0;
     let mut v0: ::core::ffi::c_int = (4 as ::core::ffi::c_int
         * *((&raw mut g_ram as *mut uint8).offset(0x1a49 as ::core::ffi::c_int as isize)
@@ -13167,8 +12748,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func144() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalcItemPercentageCount(mut k: uint16, mut instrp: uint16) -> uint16 {
+pub unsafe fn CalcItemPercentageCount(mut k: uint16, mut instrp: uint16) -> uint16 {
     let mut current_block: u64;
     let mut j: uint16 = 0;
     let mut v0: uint16 = 4 as uint16;
@@ -13329,8 +12909,7 @@ pub unsafe extern "C" fn CalcItemPercentageCount(mut k: uint16, mut instrp: uint
         .pause_menu_map_tilemap[497 as ::core::ffi::c_int as usize] = 14458 as uint16;
     return instrp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func146(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicFunction_Intro_Func146(mut k: uint16, mut j: uint16) -> uint16 {
     if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -13351,8 +12930,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func146(mut k: uint16, mut j: u
     }
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func147(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicFunction_Intro_Func147(mut k: uint16, mut j: uint16) -> uint16 {
     let mut i: ::core::ffi::c_int = 126 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         *(((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
@@ -13366,8 +12944,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func147(mut k: uint16, mut j: u
         as *mut uint16) = (0x8be797 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func148() {
+pub unsafe fn CinematicFunction_Intro_Func148() {
     let ref mut fresh67 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1997 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh67 = (*fresh67 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
@@ -13387,8 +12964,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func148() {
         CopySuperMetroidString();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func127() {
+pub unsafe fn CinematicFunction_Intro_Func127() {
     let mut v1: int16 = 0;
     let mut v4: int16 = 0;
     let mut v0: uint16 = (&raw mut g_ram as *mut uint8)
@@ -13432,8 +13008,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func127() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func149() {
+pub unsafe fn CinematicFunction_Intro_Func149() {
     let mut v2: int16 = 0;
     let mut v5: int16 = 0;
     let mut v8: int16 = 0;
@@ -13634,8 +13209,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func149() {
                             (v22 as ::core::ffi::c_int + 512 as ::core::ffi::c_int) as uint16;
                     }
                     if *v16.offset(1 as ::core::ffi::c_int as isize) != 0 {
-                        *(&raw mut (*(gOamEnt
-                            as unsafe extern "C" fn(::core::ffi::c_int) -> *mut OamEnt)(
+                        *(&raw mut (*(gOamEnt as unsafe fn(::core::ffi::c_int) -> *mut OamEnt)(
                             v13 as ::core::ffi::c_int,
                         ))
                         .charnum as *mut uint16) = *(g_rom.offset(
@@ -13669,8 +13243,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func149() {
             as *mut uint16) = v13;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func150(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func150(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -13685,8 +13258,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func150(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 260 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func151(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func151(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
@@ -13718,8 +13290,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func151(mut k: uint16) {
             .offset(v1 as isize) = addr_off_8BEE9B as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func152(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func152(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -13731,8 +13302,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func152(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 3584 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func153(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func153(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -13744,8 +13314,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func153(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 3584 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func154(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func154(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -13757,8 +13326,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func154(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 2560 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func155(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func155(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -13770,8 +13338,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func155(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 3072 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func156(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func156(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -13783,8 +13350,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func156(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 1024 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func157(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func157(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -13796,8 +13362,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func157(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 512 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func158(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func158(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -13806,8 +13371,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func158(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func159(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func159(mut j: uint16) {
     CinematicFunction_Intro_Func160(
         j,
         *((&raw mut g_ram as *mut uint8).offset(0xdec as ::core::ffi::c_int as isize)
@@ -13818,8 +13382,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func159(mut j: uint16) {
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 156 as uint16;
     CinematicFunction_Intro_Func158(j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func161(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func161(mut j: uint16) {
     CinematicFunction_Intro_Func160(
         j,
         *((&raw mut g_ram as *mut uint8).offset(0xdee as ::core::ffi::c_int as isize)
@@ -13830,15 +13393,13 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func161(mut j: uint16) {
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 164 as uint16;
     CinematicFunction_Intro_Func158(j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func162(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func162(mut j: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 172 as uint16;
     CinematicFunction_Intro_Func158(j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func163(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func163(mut j: uint16) {
     CinematicFunction_Intro_Func160(
         j,
         *((&raw mut g_ram as *mut uint8).offset(0xdf0 as ::core::ffi::c_int as isize)
@@ -13849,8 +13410,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func163(mut j: uint16) {
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 180 as uint16;
     CinematicFunction_Intro_Func158(j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func164(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func164(mut j: uint16) {
     CinematicFunction_Intro_Func160(
         j,
         *((&raw mut g_ram as *mut uint8).offset(0xdf2 as ::core::ffi::c_int as isize)
@@ -13861,24 +13421,21 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func164(mut j: uint16) {
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 188 as uint16;
     CinematicFunction_Intro_Func158(j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func160(mut j: uint16, mut a: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func160(mut j: uint16, mut a: uint16) {
     let ref mut fresh3 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1b1d as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh3 = (*fresh3 as ::core::ffi::c_int + 8 as ::core::ffi::c_int * a as ::core::ffi::c_int)
         as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func165(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func165(mut j: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         -(96 as ::core::ffi::c_int) as uint16;
     CinematicFunction_F0B8(j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_F0B8(mut j: uint16) {
+pub unsafe fn CinematicFunction_F0B8(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0x1b9d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -13904,30 +13461,26 @@ pub unsafe extern "C" fn CinematicFunction_F0B8(mut j: uint16) {
             .offset(v1 as isize) = 2560 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func166(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func166(mut j: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         -(32 as ::core::ffi::c_int) as uint16;
     CinematicFunction_F0B8(j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func167(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func167(mut j: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 288 as uint16;
     CinematicFunction_F0B8(j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func168(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func168(mut j: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 352 as uint16;
     CinematicFunction_F0B8(j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func169(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func169(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -13948,8 +13501,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func169(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 2560 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func170(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func170(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -13970,8 +13522,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func170(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 2560 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func171(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func171(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -13983,8 +13534,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func171(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 2560 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func172(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func172(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -13996,8 +13546,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func172(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 3072 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func173(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func173(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -14009,8 +13558,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func173(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 3072 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func174(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func174(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -14022,8 +13570,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func174(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 2560 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func175(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func175(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -14038,8 +13585,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func175(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 8 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func176(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func176(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -14054,8 +13600,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func176(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 8 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func177(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func177(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -14067,8 +13612,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func177(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 3584 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func178(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func178(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a7d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -14080,8 +13624,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func178(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 3584 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func179(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func179(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh38 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1a9d as ::core::ffi::c_int as isize) as *mut uint16)
@@ -14119,8 +13662,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func179(mut k: uint16) {
         *fresh39 = (*fresh39 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func180(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func180(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh36 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1a9d as ::core::ffi::c_int as isize) as *mut uint16)
@@ -14157,8 +13699,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func180(mut k: uint16) {
             (0x8b93d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_Func181(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_Func181(mut k: uint16, mut j: uint16) -> uint16 {
     *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 3 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 16 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 2 as uint8;
@@ -14171,16 +13712,14 @@ pub unsafe extern "C" fn CinematicSprInstr_Func181(mut k: uint16, mut j: uint16)
         as *mut uint16) = (0x8be58a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_Func182(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_Func182(mut k: uint16, mut j: uint16) -> uint16 {
     SpawnPalfxObject(addr_kPalfx_E1C4 as ::core::ffi::c_int as uint16);
     *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(254 as ::core::ffi::c_int as isize) = 1 as uint16;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_Func183(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_Func183(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v0: uint16 = 0 as uint16;
     SpawnCinematicSpriteObject(
         addr_kCinematicSpriteObjectDef_8BEEB5 as ::core::ffi::c_int as uint16,
@@ -14191,8 +13730,7 @@ pub unsafe extern "C" fn CinematicSprInstr_Func183(mut k: uint16, mut j: uint16)
         .offset(0 as ::core::ffi::c_int as isize) = 0x7fff as uint16;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func184(mut j: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func184(mut j: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x1b1d as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(15 as ::core::ffi::c_int as isize)
@@ -14207,8 +13745,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func184(mut j: uint16) {
             .offset(v2 as isize) = addr_off_8BEE9B as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_Func185(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_Func185(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v0: uint16 = 0;
     *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 17 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 2 as uint8;
@@ -14229,8 +13766,7 @@ pub unsafe extern "C" fn CinematicSprInstr_Func185(mut k: uint16, mut j: uint16)
     SpawnPalfxObject(addr_kPalfx_E1E8 as ::core::ffi::c_int as uint16);
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_Func186(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_Func186(mut k: uint16, mut j: uint16) -> uint16 {
     *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 3 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 18 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x6f as ::core::ffi::c_int as isize) = 2 as uint8;
@@ -14244,8 +13780,7 @@ pub unsafe extern "C" fn CinematicSprInstr_Func186(mut k: uint16, mut j: uint16)
     );
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_Func187(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_Func187(mut k: uint16, mut j: uint16) -> uint16 {
     *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 0 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 0 as uint8;
     *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
@@ -14268,8 +13803,7 @@ pub unsafe extern "C" fn CinematicSprInstr_Func187(mut k: uint16, mut j: uint16)
         as *mut uint16) = 120 as uint16;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprPreInstr_F35A(mut k: uint16) {
+pub unsafe fn CinematicSprPreInstr_F35A(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         == 0x8bdca5 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -14287,8 +13821,7 @@ pub unsafe extern "C" fn CinematicSprPreInstr_F35A(mut k: uint16) {
             .offset(v1 as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func189(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func189(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         ((&raw mut g_ram as *mut uint8).offset(0x1b7d as ::core::ffi::c_int as isize)
@@ -14316,8 +13849,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func189(mut k: uint16) {
     );
     CinematicFunction_Intro_Func189b(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func189b(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func189b(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         == 0x8bde63 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -14331,8 +13863,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func189b(mut k: uint16) {
             .offset(v5 as isize) = addr_off_8BEE9B as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_Func190(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_Func190(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v0: uint16 = 0 as uint16;
     SpawnCinematicSpriteObject(
         addr_kCinematicSpriteObjectDef_8BEECD as ::core::ffi::c_int as uint16,
@@ -14340,8 +13871,7 @@ pub unsafe extern "C" fn CinematicSprInstr_Func190(mut k: uint16, mut j: uint16)
     );
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func191(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func191(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         == 0x8bde80 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -14355,8 +13885,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func191(mut k: uint16) {
             .offset(v1 as isize) = addr_off_8BEE9B as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_Func192(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_Func192(mut k: uint16, mut j: uint16) -> uint16 {
     SpawnCinematicSpriteObject(
         addr_kCinematicSpriteObjectDef_8BEEFD as ::core::ffi::c_int as uint16,
         0 as uint16,
@@ -14387,48 +13916,42 @@ pub unsafe extern "C" fn CinematicSprInstr_Func192(mut k: uint16, mut j: uint16)
         min2 as uint16;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_Func193(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_Func193(mut k: uint16, mut j: uint16) -> uint16 {
     SpawnCinematicSpriteObject(
         addr_kCinematicSpriteObjectDef_8BEF03 as ::core::ffi::c_int as uint16,
         0 as uint16,
     );
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_Func194(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_Func194(mut k: uint16, mut j: uint16) -> uint16 {
     SpawnCinematicSpriteObject(
         addr_kCinematicSpriteObjectDef_8BEF09 as ::core::ffi::c_int as uint16,
         0 as uint16,
     );
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_Func195(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_Func195(mut k: uint16, mut j: uint16) -> uint16 {
     SpawnCinematicSpriteObject(
         addr_kCinematicSpriteObjectDef_8BEF0F as ::core::ffi::c_int as uint16,
         0 as uint16,
     );
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_Func196(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_Func196(mut k: uint16, mut j: uint16) -> uint16 {
     SpawnCinematicSpriteObject(
         addr_kCinematicSpriteObjectDef_8BEF15 as ::core::ffi::c_int as uint16,
         0 as uint16,
     );
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_Func197(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_Func197(mut k: uint16, mut j: uint16) -> uint16 {
     SpawnCinematicSpriteObject(
         addr_kCinematicSpriteObjectDef_8BEF1B as ::core::ffi::c_int as uint16,
         0 as uint16,
     );
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_Func198(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_Func198(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x725 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -14437,8 +13960,7 @@ pub unsafe extern "C" fn CinematicSprInstr_Func198(mut k: uint16, mut j: uint16)
         as *mut uint16) = (0x8bde64 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func199(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func199(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         - 176 as ::core::ffi::c_int
@@ -14451,8 +13973,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func199(mut k: uint16) {
             (0x8bf464 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func200(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func200(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -14465,8 +13986,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func200(mut k: uint16) {
         .offset(v1 as isize);
     *fresh35 = (*fresh35).wrapping_add(1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func201(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func201(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         - 176 as ::core::ffi::c_int
@@ -14479,8 +13999,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func201(mut k: uint16) {
             (0x8bf487 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func202(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func202(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -14493,8 +14012,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func202(mut k: uint16) {
         .offset(v1 as isize);
     *fresh34 = (*fresh34).wrapping_sub(1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func203(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func203(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         - 96 as ::core::ffi::c_int
@@ -14507,8 +14025,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func203(mut k: uint16) {
             (0x8bf4aa as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func204(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func204(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -14531,8 +14048,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func204(mut k: uint16) {
         .offset(v1 as isize);
     *fresh33 = (*fresh33).wrapping_sub(1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func205(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func205(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x198f as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         - 96 as ::core::ffi::c_int
@@ -14545,8 +14061,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func205(mut k: uint16) {
             (0x8bf4e0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func206(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func206(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -14569,8 +14084,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func206(mut k: uint16) {
         .offset(v1 as isize);
     *fresh31 = (*fresh31).wrapping_add(1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func207(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func207(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         == 0x8bdb9d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -14584,16 +14098,14 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func207(mut k: uint16) {
             .offset(v1 as isize) = addr_off_8BEE9B as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_Func208(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_Func208(mut k: uint16, mut j: uint16) -> uint16 {
     SpawnCinematicSpriteObjectToR18(
         addr_kCinematicSpriteObjectDef_8BEF3F as ::core::ffi::c_int as uint16,
         0 as uint16,
     );
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprPreInstr_F528(mut k: uint16) {
+pub unsafe fn CinematicSprPreInstr_F528(mut k: uint16) {
     CinematicFunction_Intro_Func210_EndingSamusFall(k);
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
@@ -14619,8 +14131,7 @@ pub unsafe extern "C" fn CinematicSprPreInstr_F528(mut k: uint16) {
             .offset(v1 as isize) = 3072 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_Func211(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_Func211(mut k: uint16, mut j: uint16) -> uint16 {
     if *((&raw mut g_ram as *mut uint8).offset(0x9e0 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         - 10 as ::core::ffi::c_int
@@ -14643,8 +14154,7 @@ pub unsafe extern "C" fn CinematicSprInstr_Func211(mut k: uint16, mut j: uint16)
     );
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprPreInstr_F57F(mut k: uint16) {
+pub unsafe fn CinematicSprPreInstr_F57F(mut k: uint16) {
     CinematicFunction_Intro_Func210_EndingSamusFall(k);
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
@@ -14662,8 +14172,7 @@ pub unsafe extern "C" fn CinematicSprPreInstr_F57F(mut k: uint16) {
             .offset(v1 as isize) = addr_off_8BEE9B as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_Func213(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_Func213(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0x9e0 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -14684,8 +14193,7 @@ pub unsafe extern "C" fn CinematicSprInstr_Func213(mut k: uint16, mut j: uint16)
         .offset((v1 + 1 as ::core::ffi::c_int) as isize) = 120 as uint16;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_Func214(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_Func214(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0x9e0 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -14709,8 +14217,7 @@ pub unsafe extern "C" fn CinematicSprInstr_Func214(mut k: uint16, mut j: uint16)
     }
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func215(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func215(mut k: uint16) {
     CinematicFunction_Intro_Func216();
     CinematicFunction_Intro_Func210_EndingSamusFall(k);
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -14736,8 +14243,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func215(mut k: uint16) {
             (0x8b93d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_Func217(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_Func217(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1abd as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 3584 as uint16;
@@ -14763,16 +14269,14 @@ pub unsafe extern "C" fn CinematicSprInstr_Func217(mut k: uint16, mut j: uint16)
     QueueSfx1_Max15(0x22 as uint16);
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicSprInstr_Func218(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicSprInstr_Func218(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0xb2c as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xb2e as ::core::ffi::c_int as isize) as *mut uint16) =
         -(16 as ::core::ffi::c_int) as uint16;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func210_EndingSamusFall(mut k: uint16) {
+pub unsafe fn CinematicFunction_Intro_Func210_EndingSamusFall(mut k: uint16) {
     AddToHiLo(
         (&raw mut g_ram as *mut uint8).offset(0xb2e as ::core::ffi::c_int as isize) as *mut uint16,
         (&raw mut g_ram as *mut uint8).offset(0xb2c as ::core::ffi::c_int as isize) as *mut uint16,
@@ -14793,8 +14297,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func210_EndingSamusFall(mut k: 
                 as *mut uint16) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func216() {
+pub unsafe fn CinematicFunction_Intro_Func216() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1a4d as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         - 16 as ::core::ffi::c_int
@@ -14825,8 +14328,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func216() {
         v1 = (v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
         let fresh28 = v1;
         v1 = v1.wrapping_add(1);
-        *(&raw mut (*(gVramWriteEntry
-            as unsafe extern "C" fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
+        *(&raw mut (*(gVramWriteEntry as unsafe fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
             fresh28 as ::core::ffi::c_int,
         ))
         .size as *mut uint8)
@@ -14847,8 +14349,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func216() {
         *fresh29 = (*fresh29).wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func219(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CinematicFunction_Intro_Func219(mut k: uint16, mut j: uint16) -> uint16 {
     DisableTextGlowObjects_();
     let mut v0: uint16 = 8 as uint16;
     loop {
@@ -14889,8 +14390,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func219(mut k: uint16, mut j: u
         as *mut uint16) = 60 as uint16;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallCinematicFunction(mut ea: uint32) {
+pub unsafe fn CallCinematicFunction(mut ea: uint32) {
     match ea {
         9148999 => {
             CinematicFunctionNone();
@@ -15264,12 +14764,7 @@ pub unsafe extern "C" fn CallCinematicFunction(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallCinematicSprInstr(
-    mut ea: uint32,
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn CallCinematicSprInstr(mut ea: uint32, mut k: uint16, mut j: uint16) -> uint16 {
     match ea {
         9147448 => return CinematicSprInstr_Delete(k, j),
         9147458 => return CinematicSprInstr_Sleep(k, j),
@@ -15326,8 +14821,7 @@ pub unsafe extern "C" fn CallCinematicSprInstr(
         _ => return Unreachable() as uint16,
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallCinematicSprPreInstr(mut ea: uint32, mut j: uint16) {
+pub unsafe fn CallCinematicSprPreInstr(mut ea: uint32, mut j: uint16) {
     match ea {
         9158617 => return,
         9147353 => return,
@@ -15543,8 +15037,7 @@ pub unsafe extern "C" fn CallCinematicSprPreInstr(mut ea: uint32, mut j: uint16)
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallCinematicBgPreInstr(mut ea: uint32, mut j: uint16) {
+pub unsafe fn CallCinematicBgPreInstr(mut ea: uint32, mut j: uint16) {
     match ea {
         9147353 => return,
         9155772 => {
@@ -15556,12 +15049,7 @@ pub unsafe extern "C" fn CallCinematicBgPreInstr(mut ea: uint32, mut j: uint16) 
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallCinematicBgInstr(
-    mut ea: uint32,
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn CallCinematicBgInstr(mut ea: uint32, mut k: uint16, mut j: uint16) -> uint16 {
     match ea {
         9148056 => return CinematicBgInstr_Delete(k, j),
         9148190 => return CinematicBgInstr_Goto(k, j),
@@ -15586,8 +15074,7 @@ pub unsafe extern "C" fn CallCinematicBgInstr(
         _ => return Unreachable() as uint16,
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallCinematicSpriteObjectSetup(mut ea: uint32, mut j: uint16) {
+pub unsafe fn CallCinematicSpriteObjectSetup(mut ea: uint32, mut j: uint16) {
     match ea {
         9147353 => return,
         9149210 => {
@@ -15863,12 +15350,7 @@ pub unsafe extern "C" fn CallCinematicSpriteObjectSetup(mut ea: uint32, mut j: u
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallIntroObjectInstr(
-    mut ea: uint32,
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn CallIntroObjectInstr(mut ea: uint32, mut k: uint16, mut j: uint16) -> uint16 {
     match ea {
         9148926 => return IntroObject_Delete(k, j),
         9148934 => return IntroObject_Goto(k, j),
@@ -15878,8 +15360,7 @@ pub unsafe extern "C" fn CallIntroObjectInstr(
         _ => return Unreachable() as uint16,
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallCinematicSpriteInit(mut ea: uint32, mut j: uint16) {
+pub unsafe fn CallCinematicSpriteInit(mut ea: uint32, mut j: uint16) {
     match ea {
         9149210 => {
             CinematicSpriteInit_7(j);
@@ -15927,8 +15408,7 @@ pub unsafe extern "C" fn CallCinematicSpriteInit(mut ea: uint32, mut j: uint16) 
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallMode7Instr(mut ea: uint32, mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CallMode7Instr(mut ea: uint32, mut k: uint16, mut j: uint16) -> uint16 {
     match ea {
         9147755 => return Mode7Instr_Delete(k, j),
         9147762 => return Mode7Instr_SetPreInstr(k, j),
@@ -15958,8 +15438,7 @@ pub unsafe extern "C" fn CallMode7Instr(mut ea: uint32, mut k: uint16, mut j: ui
         _ => return Unreachable() as uint16,
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallMode7PreInstr(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallMode7PreInstr(mut ea: uint32, mut k: uint16) {
     match ea {
         9147353 => return,
         9155973 => {

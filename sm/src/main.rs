@@ -1197,22 +1197,14 @@ pub const SDL_INIT_VIDEO: ::core::ffi::c_uint = 0x20 as ::core::ffi::c_uint;
 pub const SDL_INIT_GAMECONTROLLER: ::core::ffi::c_uint = 0x2000 as ::core::ffi::c_uint;
 pub const kDebugFlag: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 #[inline]
-unsafe extern "C" fn IntMin(
-    mut a: ::core::ffi::c_int,
-    mut b: ::core::ffi::c_int,
-) -> ::core::ffi::c_int {
+unsafe fn IntMin(mut a: ::core::ffi::c_int, mut b: ::core::ffi::c_int) -> ::core::ffi::c_int {
     return if a < b { a } else { b };
 }
 #[inline]
-unsafe extern "C" fn IntMax(
-    mut a: ::core::ffi::c_int,
-    mut b: ::core::ffi::c_int,
-) -> ::core::ffi::c_int {
+unsafe fn IntMax(mut a: ::core::ffi::c_int, mut b: ::core::ffi::c_int) -> ::core::ffi::c_int {
     return if a > b { a } else { b };
 }
-#[no_mangle]
 pub static mut g_is_turbo: bool = false;
-#[no_mangle]
 pub static mut g_want_dump_memmap_flags: bool = false;
 static mut g_pixels: [uint8_t; 245760] = [0; 245760];
 static mut g_my_pixels: [uint8_t; 245760] = [0; 245760];
@@ -1268,8 +1260,7 @@ unsafe fn host_warning(mut error: *const ::core::ffi::c_char) {
         error,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn ChangeWindowScale(mut scale_step: ::core::ffi::c_int) {
+pub unsafe fn ChangeWindowScale(mut scale_step: ::core::ffi::c_int) {
     if SDL_GetWindowFlags(g_window as *mut SDL_Window)
         & (SDL_WINDOW_FULLSCREEN_DESKTOP as ::core::ffi::c_int
             | SDL_WINDOW_FULLSCREEN as ::core::ffi::c_int
@@ -1396,8 +1387,7 @@ unsafe extern "C" fn HitTestCallback(
     }
     return SDL_HITTEST_NORMAL;
 }
-#[no_mangle]
-pub unsafe extern "C" fn RtlDrawPpuFrame(
+pub unsafe fn RtlDrawPpuFrame(
     mut pixel_buffer: *mut uint8,
     mut pitch: size_t,
     mut render_flags: uint32,
@@ -1419,7 +1409,7 @@ pub unsafe extern "C" fn RtlDrawPpuFrame(
         y = y.wrapping_add(1);
     }
 }
-unsafe extern "C" fn DrawPpuFrameWithPerf() {
+unsafe fn DrawPpuFrameWithPerf() {
     let mut render_scale: ::core::ffi::c_int =
         PpuGetCurrentRenderScale((*g_snes).ppu, g_ppu_render_flags as uint32_t);
     let mut pixel_buffer: *mut uint8 = ::core::ptr::null_mut::<uint8>();
@@ -1468,8 +1458,7 @@ unsafe extern "C" fn DrawPpuFrameWithPerf() {
             (render_scale == 4 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8,
         );
     }
-    ::core::mem::transmute::<_, fn()>(g_renderer_funcs.EndDraw.expect("non-null function pointer"))(
-    );
+    g_renderer_funcs.EndDraw.expect("non-null function pointer")();
 }
 static mut g_audio_mutex: *mut SDL_mutex = ::core::ptr::null::<SDL_mutex>() as *mut SDL_mutex;
 static mut g_audiobuffer_cur: *mut uint8 = ::core::ptr::null::<uint8>() as *mut uint8;
@@ -1565,7 +1554,7 @@ static mut g_sdl_renderer_rect: SDL_Rect = SDL_Rect {
     w: 0,
     h: 0,
 };
-unsafe extern "C" fn SdlRenderer_Init(mut window: *mut SDL_Window) -> bool {
+unsafe fn SdlRenderer_Init(mut window: *mut SDL_Window) -> bool {
     if !g_config.shader.is_null() {
         fprintf(
             stderr,
@@ -1633,11 +1622,11 @@ unsafe extern "C" fn SdlRenderer_Init(mut window: *mut SDL_Window) -> bool {
     }
     return true_0 != 0;
 }
-unsafe extern "C" fn SdlRenderer_Destroy() {
+unsafe fn SdlRenderer_Destroy() {
     SDL_DestroyTexture(g_texture);
     SDL_DestroyRenderer(g_renderer);
 }
-unsafe extern "C" fn SdlRenderer_BeginDraw(
+unsafe fn SdlRenderer_BeginDraw(
     mut width: ::core::ffi::c_int,
     mut height: ::core::ffi::c_int,
     mut pixels: *mut *mut uint8,
@@ -1659,7 +1648,7 @@ unsafe extern "C" fn SdlRenderer_BeginDraw(
         return;
     }
 }
-unsafe extern "C" fn SdlRenderer_EndDraw() {
+unsafe fn SdlRenderer_EndDraw() {
     SDL_UnlockTexture(g_texture);
     SDL_RenderClear(g_renderer);
     SDL_RenderCopy(
@@ -1671,18 +1660,18 @@ unsafe extern "C" fn SdlRenderer_EndDraw() {
     SDL_RenderPresent(g_renderer);
 }
 static mut kSdlRendererFuncs: RendererFuncs = RendererFuncs {
-    Initialize: Some(SdlRenderer_Init as unsafe extern "C" fn(*mut SDL_Window) -> bool),
-    Destroy: Some(SdlRenderer_Destroy as unsafe extern "C" fn() -> ()),
+    Initialize: Some(SdlRenderer_Init as unsafe fn(*mut SDL_Window) -> bool),
+    Destroy: Some(SdlRenderer_Destroy as unsafe fn() -> ()),
     BeginDraw: Some(
         SdlRenderer_BeginDraw
-            as unsafe extern "C" fn(
+            as unsafe fn(
                 ::core::ffi::c_int,
                 ::core::ffi::c_int,
                 *mut *mut uint8,
                 *mut ::core::ffi::c_int,
             ) -> (),
     ),
-    EndDraw: Some(SdlRenderer_EndDraw as unsafe extern "C" fn() -> ()),
+    EndDraw: Some(SdlRenderer_EndDraw as unsafe fn() -> ()),
 };
 unsafe fn main_0(
     mut argc: ::core::ffi::c_int,
@@ -2102,13 +2091,12 @@ unsafe fn main_0(
     SDL_CloseAudioDevice(g_audio_device);
     SDL_DestroyMutex(g_audio_mutex);
     free(g_audiobuffer as *mut ::core::ffi::c_void);
-    ::core::mem::transmute::<_, fn()>(g_renderer_funcs.Destroy.expect("non-null function pointer"))(
-    );
+    g_renderer_funcs.Destroy.expect("non-null function pointer")();
     SDL_DestroyWindow(window as *mut SDL_Window);
     SDL_Quit();
     return 0 as ::core::ffi::c_int;
 }
-unsafe extern "C" fn RenderDigit(
+unsafe fn RenderDigit(
     mut dst: *mut uint8,
     mut pitch: size_t,
     mut digit: ::core::ffi::c_int,
@@ -2266,7 +2254,7 @@ unsafe extern "C" fn RenderDigit(
         }
     };
 }
-unsafe extern "C" fn RenderNumber(
+unsafe fn RenderNumber(
     mut dst: *mut uint8,
     mut pitch: size_t,
     mut n: ::core::ffi::c_int,
@@ -2310,7 +2298,7 @@ unsafe extern "C" fn RenderNumber(
         i += 8 as ::core::ffi::c_int * 4 as ::core::ffi::c_int;
     }
 }
-unsafe extern "C" fn HandleCommand(mut j: uint32, mut pressed: bool) {
+unsafe fn HandleCommand(mut j: uint32, mut pressed: bool) {
     if j <= kKeys_Controls_Last as ::core::ffi::c_int as uint32 {
         static mut kKbdRemap: [uint8; 13] = [
             0 as ::core::ffi::c_int as uint8,
@@ -2449,7 +2437,7 @@ unsafe extern "C" fn HandleCommand(mut j: uint32, mut pressed: bool) {
         }
     };
 }
-unsafe extern "C" fn HandleInput(
+unsafe fn HandleInput(
     mut keyCode: ::core::ffi::c_int,
     mut keyMod: ::core::ffi::c_int,
     mut pressed: bool,
@@ -2459,7 +2447,7 @@ unsafe extern "C" fn HandleInput(
         HandleCommand(j as uint32, pressed);
     }
 }
-unsafe extern "C" fn OpenOneGamepad(mut i: ::core::ffi::c_int) {
+unsafe fn OpenOneGamepad(mut i: ::core::ffi::c_int) {
     if SDL_IsGameController(i) as u64 != 0 {
         let mut controller: *mut SDL_GameController = SDL_GameControllerOpen(i);
         if controller.is_null() {
@@ -2472,7 +2460,7 @@ unsafe extern "C" fn OpenOneGamepad(mut i: ::core::ffi::c_int) {
         }
     }
 }
-unsafe extern "C" fn RemapSdlButton(mut button: ::core::ffi::c_int) -> ::core::ffi::c_int {
+unsafe fn RemapSdlButton(mut button: ::core::ffi::c_int) -> ::core::ffi::c_int {
     match button {
         0 => return kGamepadBtn_A as ::core::ffi::c_int,
         1 => return kGamepadBtn_B as ::core::ffi::c_int,
@@ -2492,7 +2480,7 @@ unsafe extern "C" fn RemapSdlButton(mut button: ::core::ffi::c_int) -> ::core::f
         _ => return -(1 as ::core::ffi::c_int),
     };
 }
-unsafe extern "C" fn HandleGamepadInput(mut button: ::core::ffi::c_int, mut pressed: bool) {
+unsafe fn HandleGamepadInput(mut button: ::core::ffi::c_int, mut pressed: bool) {
     if (g_gamepad_modifiers & ((1 as ::core::ffi::c_int) << button) as uint32 != 0)
         as ::core::ffi::c_int
         == pressed as ::core::ffi::c_int
@@ -2508,7 +2496,7 @@ unsafe extern "C" fn HandleGamepadInput(mut button: ::core::ffi::c_int, mut pres
         HandleCommand(g_gamepad_last_cmd[button as usize] as uint32, pressed);
     }
 }
-unsafe extern "C" fn HandleVolumeAdjustment(mut volume_adjustment: ::core::ffi::c_int) {
+unsafe fn HandleVolumeAdjustment(mut volume_adjustment: ::core::ffi::c_int) {
     g_sdl_audio_mixer_volume = IntMin(
         IntMax(
             0 as ::core::ffi::c_int,
@@ -2522,7 +2510,7 @@ unsafe extern "C" fn HandleVolumeAdjustment(mut volume_adjustment: ::core::ffi::
         g_sdl_audio_mixer_volume,
     );
 }
-unsafe extern "C" fn ApproximateAtan2(
+unsafe fn ApproximateAtan2(
     mut y: ::core::ffi::c_float,
     mut x: ::core::ffi::c_float,
 ) -> ::core::ffi::c_float {
@@ -2543,7 +2531,7 @@ unsafe extern "C" fn ApproximateAtan2(
         ux_s as uint32_t ^ uy_s as uint32_t | *(&raw mut atan_1q as *mut uint32);
     return q + *(&raw mut uatan_2q as *mut ::core::ffi::c_float);
 }
-unsafe extern "C" fn HandleGamepadAxisInput(
+unsafe fn HandleGamepadAxisInput(
     mut gamepad_id: ::core::ffi::c_int,
     mut axis: ::core::ffi::c_int,
     mut value: ::core::ffi::c_int,
@@ -2616,7 +2604,7 @@ unsafe extern "C" fn HandleGamepadAxisInput(
         }
     }
 }
-unsafe extern "C" fn SwitchDirectory() {
+unsafe fn SwitchDirectory() {
     let mut buf: [::core::ffi::c_char; 4096] = [0; 4096];
     if getcwd(
         &raw mut buf as *mut ::core::ffi::c_char,

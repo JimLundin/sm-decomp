@@ -38,7 +38,7 @@ pub use crate::types::PFN_LOADFUNCPOINTERS;
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const NULL_0: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 #[inline]
-unsafe extern "C" fn atoi(mut __nptr: *const ::core::ffi::c_char) -> ::core::ffi::c_int {
+unsafe fn atoi(mut __nptr: *const ::core::ffi::c_char) -> ::core::ffi::c_int {
     return strtol(
         __nptr,
         NULL as *mut *mut ::core::ffi::c_char,
@@ -48,170 +48,113 @@ unsafe extern "C" fn atoi(mut __nptr: *const ::core::ffi::c_char) -> ::core::ffi
 pub const GL_EXTENSIONS: ::core::ffi::c_int = 0x1f03 as ::core::ffi::c_int;
 pub const GL_VERSION: ::core::ffi::c_int = 0x1f02 as ::core::ffi::c_int;
 pub const GL_NUM_EXTENSIONS: ::core::ffi::c_int = 0x821d as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_compressed_texture_pixel_storage: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_conservative_depth: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_ES2_compatibility: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_get_program_binary: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_explicit_uniform_location: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_internalformat_query: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_internalformat_query2: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_map_buffer_alignment: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_program_interface_query: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_separate_shader_objects: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_shading_language_420pack: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_shading_language_packing: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_texture_buffer_range: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_texture_storage: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_texture_view: ::core::ffi::c_int = ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_vertex_attrib_binding: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_viewport_array: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_arrays_of_arrays: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_clear_buffer_object: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_copy_image: ::core::ffi::c_int = ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_ES3_compatibility: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_fragment_layer_viewport: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_framebuffer_no_attachments: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_invalidate_subdata: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_robust_buffer_access_behavior: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_stencil_texturing: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_texture_query_levels: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_texture_storage_multisample: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_KHR_debug: ::core::ffi::c_int = ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_buffer_storage: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_clear_texture: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_enhanced_layouts: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_multi_bind: ::core::ffi::c_int = ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_query_buffer_object: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_texture_mirror_clamp_to_edge: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_texture_stencil8: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_vertex_type_10f_11f_11f_rev: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_seamless_cubemap_per_texture: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_clip_control: ::core::ffi::c_int = ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_conditional_render_inverted: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_cull_distance: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_derivative_control: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_direct_state_access: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_get_texture_sub_image: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_shader_texture_image_samples: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_ARB_texture_barrier: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_KHR_context_flush_control: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_KHR_robust_buffer_access_behavior: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_KHR_robustness: ::core::ffi::c_int = ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_EXT_texture_compression_s3tc: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_EXT_texture_sRGB: ::core::ffi::c_int = ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut ogl_ext_EXT_texture_filter_anisotropic: ::core::ffi::c_int =
     ogl_LOAD_FAILED as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut _ptrc_glClearDepthf: Option<unsafe extern "C" fn(GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glDepthRangef: Option<unsafe extern "C" fn(GLfloat, GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glGetShaderPrecisionFormat: Option<
     unsafe extern "C" fn(GLenum, GLenum, *mut GLint, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glReleaseShaderCompiler: Option<unsafe extern "C" fn() -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glShaderBinary: Option<
     unsafe extern "C" fn(GLsizei, *const GLuint, GLenum, *const ::core::ffi::c_void, GLsizei) -> (),
 > = None;
-unsafe extern "C" fn Load_ARB_ES2_compatibility() -> ::core::ffi::c_int {
+unsafe fn Load_ARB_ES2_compatibility() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     _ptrc_glClearDepthf = ::core::mem::transmute::<
         *mut ::core::ffi::c_void,
@@ -268,7 +211,6 @@ unsafe extern "C" fn Load_ARB_ES2_compatibility() -> ::core::ffi::c_int {
     }
     return numFailed;
 }
-#[no_mangle]
 pub static mut _ptrc_glGetProgramBinary: Option<
     unsafe extern "C" fn(
         GLuint,
@@ -278,15 +220,13 @@ pub static mut _ptrc_glGetProgramBinary: Option<
         *mut ::core::ffi::c_void,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramBinary: Option<
     unsafe extern "C" fn(GLuint, GLenum, *const ::core::ffi::c_void, GLsizei) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramParameteri: Option<
     unsafe extern "C" fn(GLuint, GLenum, GLint) -> (),
 > = None;
-unsafe extern "C" fn Load_ARB_get_program_binary() -> ::core::ffi::c_int {
+unsafe fn Load_ARB_get_program_binary() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     _ptrc_glGetProgramBinary = ::core::mem::transmute::<
         *mut ::core::ffi::c_void,
@@ -325,11 +265,10 @@ unsafe extern "C" fn Load_ARB_get_program_binary() -> ::core::ffi::c_int {
     }
     return numFailed;
 }
-#[no_mangle]
 pub static mut _ptrc_glGetInternalformativ: Option<
     unsafe extern "C" fn(GLenum, GLenum, GLenum, GLsizei, *mut GLint) -> (),
 > = None;
-unsafe extern "C" fn Load_ARB_internalformat_query() -> ::core::ffi::c_int {
+unsafe fn Load_ARB_internalformat_query() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     _ptrc_glGetInternalformativ = ::core::mem::transmute::<
         *mut ::core::ffi::c_void,
@@ -342,11 +281,10 @@ unsafe extern "C" fn Load_ARB_internalformat_query() -> ::core::ffi::c_int {
     }
     return numFailed;
 }
-#[no_mangle]
 pub static mut _ptrc_glGetInternalformati64v: Option<
     unsafe extern "C" fn(GLenum, GLenum, GLenum, GLsizei, *mut GLint64) -> (),
 > = None;
-unsafe extern "C" fn Load_ARB_internalformat_query2() -> ::core::ffi::c_int {
+unsafe fn Load_ARB_internalformat_query2() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     _ptrc_glGetInternalformati64v = ::core::mem::transmute::<
         *mut ::core::ffi::c_void,
@@ -359,27 +297,21 @@ unsafe extern "C" fn Load_ARB_internalformat_query2() -> ::core::ffi::c_int {
     }
     return numFailed;
 }
-#[no_mangle]
 pub static mut _ptrc_glGetProgramInterfaceiv: Option<
     unsafe extern "C" fn(GLuint, GLenum, GLenum, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetProgramResourceIndex: Option<
     unsafe extern "C" fn(GLuint, GLenum, *const GLchar) -> GLuint,
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetProgramResourceLocation: Option<
     unsafe extern "C" fn(GLuint, GLenum, *const GLchar) -> GLint,
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetProgramResourceLocationIndex: Option<
     unsafe extern "C" fn(GLuint, GLenum, *const GLchar) -> GLint,
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetProgramResourceName: Option<
     unsafe extern "C" fn(GLuint, GLenum, GLuint, GLsizei, *mut GLsizei, *mut GLchar) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetProgramResourceiv: Option<
     unsafe extern "C" fn(
         GLuint,
@@ -392,7 +324,7 @@ pub static mut _ptrc_glGetProgramResourceiv: Option<
         *mut GLint,
     ) -> (),
 > = None;
-unsafe extern "C" fn Load_ARB_program_interface_query() -> ::core::ffi::c_int {
+unsafe fn Load_ARB_program_interface_query() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     _ptrc_glGetProgramInterfaceiv = ::core::mem::transmute::<
         *mut ::core::ffi::c_void,
@@ -463,239 +395,179 @@ unsafe extern "C" fn Load_ARB_program_interface_query() -> ::core::ffi::c_int {
     }
     return numFailed;
 }
-#[no_mangle]
 pub static mut _ptrc_glActiveShaderProgram: Option<unsafe extern "C" fn(GLuint, GLuint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glBindProgramPipeline: Option<unsafe extern "C" fn(GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glCreateShaderProgramv: Option<
     unsafe extern "C" fn(GLenum, GLsizei, *const *const GLchar) -> GLuint,
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glDeleteProgramPipelines: Option<
     unsafe extern "C" fn(GLsizei, *const GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGenProgramPipelines: Option<
     unsafe extern "C" fn(GLsizei, *mut GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetProgramPipelineInfoLog: Option<
     unsafe extern "C" fn(GLuint, GLsizei, *mut GLsizei, *mut GLchar) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetProgramPipelineiv: Option<
     unsafe extern "C" fn(GLuint, GLenum, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glIsProgramPipeline: Option<unsafe extern "C" fn(GLuint) -> GLboolean> = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform1d: Option<
     unsafe extern "C" fn(GLuint, GLint, GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform1dv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, *const GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform1f: Option<
     unsafe extern "C" fn(GLuint, GLint, GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform1fv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform1i: Option<unsafe extern "C" fn(GLuint, GLint, GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform1iv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, *const GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform1ui: Option<
     unsafe extern "C" fn(GLuint, GLint, GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform1uiv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, *const GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform2d: Option<
     unsafe extern "C" fn(GLuint, GLint, GLdouble, GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform2dv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, *const GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform2f: Option<
     unsafe extern "C" fn(GLuint, GLint, GLfloat, GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform2fv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform2i: Option<
     unsafe extern "C" fn(GLuint, GLint, GLint, GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform2iv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, *const GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform2ui: Option<
     unsafe extern "C" fn(GLuint, GLint, GLuint, GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform2uiv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, *const GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform3d: Option<
     unsafe extern "C" fn(GLuint, GLint, GLdouble, GLdouble, GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform3dv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, *const GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform3f: Option<
     unsafe extern "C" fn(GLuint, GLint, GLfloat, GLfloat, GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform3fv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform3i: Option<
     unsafe extern "C" fn(GLuint, GLint, GLint, GLint, GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform3iv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, *const GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform3ui: Option<
     unsafe extern "C" fn(GLuint, GLint, GLuint, GLuint, GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform3uiv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, *const GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform4d: Option<
     unsafe extern "C" fn(GLuint, GLint, GLdouble, GLdouble, GLdouble, GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform4dv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, *const GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform4f: Option<
     unsafe extern "C" fn(GLuint, GLint, GLfloat, GLfloat, GLfloat, GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform4fv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform4i: Option<
     unsafe extern "C" fn(GLuint, GLint, GLint, GLint, GLint, GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform4iv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, *const GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform4ui: Option<
     unsafe extern "C" fn(GLuint, GLint, GLuint, GLuint, GLuint, GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniform4uiv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, *const GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniformMatrix2dv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, GLboolean, *const GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniformMatrix2fv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, GLboolean, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniformMatrix2x3dv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, GLboolean, *const GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniformMatrix2x3fv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, GLboolean, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniformMatrix2x4dv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, GLboolean, *const GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniformMatrix2x4fv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, GLboolean, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniformMatrix3dv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, GLboolean, *const GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniformMatrix3fv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, GLboolean, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniformMatrix3x2dv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, GLboolean, *const GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniformMatrix3x2fv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, GLboolean, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniformMatrix3x4dv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, GLboolean, *const GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniformMatrix3x4fv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, GLboolean, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniformMatrix4dv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, GLboolean, *const GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniformMatrix4fv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, GLboolean, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniformMatrix4x2dv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, GLboolean, *const GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniformMatrix4x2fv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, GLboolean, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniformMatrix4x3dv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, GLboolean, *const GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glProgramUniformMatrix4x3fv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, GLboolean, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUseProgramStages: Option<
     unsafe extern "C" fn(GLuint, GLbitfield, GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glValidateProgramPipeline: Option<unsafe extern "C" fn(GLuint) -> ()> = None;
-unsafe extern "C" fn Load_ARB_separate_shader_objects() -> ::core::ffi::c_int {
+unsafe fn Load_ARB_separate_shader_objects() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     _ptrc_glActiveShaderProgram = ::core::mem::transmute::<
         *mut ::core::ffi::c_void,
@@ -1239,11 +1111,10 @@ unsafe extern "C" fn Load_ARB_separate_shader_objects() -> ::core::ffi::c_int {
     }
     return numFailed;
 }
-#[no_mangle]
 pub static mut _ptrc_glTexBufferRange: Option<
     unsafe extern "C" fn(GLenum, GLenum, GLuint, GLintptr, GLsizeiptr) -> (),
 > = None;
-unsafe extern "C" fn Load_ARB_texture_buffer_range() -> ::core::ffi::c_int {
+unsafe fn Load_ARB_texture_buffer_range() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     _ptrc_glTexBufferRange = ::core::mem::transmute::<
         *mut ::core::ffi::c_void,
@@ -1256,19 +1127,16 @@ unsafe extern "C" fn Load_ARB_texture_buffer_range() -> ::core::ffi::c_int {
     }
     return numFailed;
 }
-#[no_mangle]
 pub static mut _ptrc_glTexStorage1D: Option<
     unsafe extern "C" fn(GLenum, GLsizei, GLenum, GLsizei) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTexStorage2D: Option<
     unsafe extern "C" fn(GLenum, GLsizei, GLenum, GLsizei, GLsizei) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTexStorage3D: Option<
     unsafe extern "C" fn(GLenum, GLsizei, GLenum, GLsizei, GLsizei, GLsizei) -> (),
 > = None;
-unsafe extern "C" fn Load_ARB_texture_storage() -> ::core::ffi::c_int {
+unsafe fn Load_ARB_texture_storage() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     _ptrc_glTexStorage1D = ::core::mem::transmute::<
         *mut ::core::ffi::c_void,
@@ -1299,11 +1167,10 @@ unsafe extern "C" fn Load_ARB_texture_storage() -> ::core::ffi::c_int {
     }
     return numFailed;
 }
-#[no_mangle]
 pub static mut _ptrc_glTextureView: Option<
     unsafe extern "C" fn(GLuint, GLenum, GLuint, GLenum, GLuint, GLuint, GLuint, GLuint) -> (),
 > = None;
-unsafe extern "C" fn Load_ARB_texture_view() -> ::core::ffi::c_int {
+unsafe fn Load_ARB_texture_view() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     _ptrc_glTextureView = ::core::mem::transmute::<
         *mut ::core::ffi::c_void,
@@ -1327,29 +1194,23 @@ unsafe extern "C" fn Load_ARB_texture_view() -> ::core::ffi::c_int {
     }
     return numFailed;
 }
-#[no_mangle]
 pub static mut _ptrc_glBindVertexBuffer: Option<
     unsafe extern "C" fn(GLuint, GLuint, GLintptr, GLsizei) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttribBinding: Option<unsafe extern "C" fn(GLuint, GLuint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttribFormat: Option<
     unsafe extern "C" fn(GLuint, GLint, GLenum, GLboolean, GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttribIFormat: Option<
     unsafe extern "C" fn(GLuint, GLint, GLenum, GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttribLFormat: Option<
     unsafe extern "C" fn(GLuint, GLint, GLenum, GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexBindingDivisor: Option<unsafe extern "C" fn(GLuint, GLuint) -> ()> =
     None;
-unsafe extern "C" fn Load_ARB_vertex_attrib_binding() -> ::core::ffi::c_int {
+unsafe fn Load_ARB_vertex_attrib_binding() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     _ptrc_glBindVertexBuffer = ::core::mem::transmute::<
         *mut ::core::ffi::c_void,
@@ -1407,46 +1268,36 @@ unsafe extern "C" fn Load_ARB_vertex_attrib_binding() -> ::core::ffi::c_int {
     }
     return numFailed;
 }
-#[no_mangle]
 pub static mut _ptrc_glDepthRangeArrayv: Option<
     unsafe extern "C" fn(GLuint, GLsizei, *const GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glDepthRangeIndexed: Option<
     unsafe extern "C" fn(GLuint, GLdouble, GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetDoublei_v: Option<
     unsafe extern "C" fn(GLenum, GLuint, *mut GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetFloati_v: Option<
     unsafe extern "C" fn(GLenum, GLuint, *mut GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glScissorArrayv: Option<
     unsafe extern "C" fn(GLuint, GLsizei, *const GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glScissorIndexed: Option<
     unsafe extern "C" fn(GLuint, GLint, GLint, GLsizei, GLsizei) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glScissorIndexedv: Option<unsafe extern "C" fn(GLuint, *const GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glViewportArrayv: Option<
     unsafe extern "C" fn(GLuint, GLsizei, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glViewportIndexedf: Option<
     unsafe extern "C" fn(GLuint, GLfloat, GLfloat, GLfloat, GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glViewportIndexedfv: Option<
     unsafe extern "C" fn(GLuint, *const GLfloat) -> (),
 > = None;
-unsafe extern "C" fn Load_ARB_viewport_array() -> ::core::ffi::c_int {
+unsafe fn Load_ARB_viewport_array() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     _ptrc_glDepthRangeArrayv = ::core::mem::transmute::<
         *mut ::core::ffi::c_void,
@@ -1540,11 +1391,9 @@ unsafe extern "C" fn Load_ARB_viewport_array() -> ::core::ffi::c_int {
     }
     return numFailed;
 }
-#[no_mangle]
 pub static mut _ptrc_glClearBufferData: Option<
     unsafe extern "C" fn(GLenum, GLenum, GLenum, GLenum, *const ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glClearBufferSubData: Option<
     unsafe extern "C" fn(
         GLenum,
@@ -1556,7 +1405,7 @@ pub static mut _ptrc_glClearBufferSubData: Option<
         *const ::core::ffi::c_void,
     ) -> (),
 > = None;
-unsafe extern "C" fn Load_ARB_clear_buffer_object() -> ::core::ffi::c_int {
+unsafe fn Load_ARB_clear_buffer_object() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     _ptrc_glClearBufferData = ::core::mem::transmute::<
         *mut ::core::ffi::c_void,
@@ -1590,7 +1439,6 @@ unsafe extern "C" fn Load_ARB_clear_buffer_object() -> ::core::ffi::c_int {
     }
     return numFailed;
 }
-#[no_mangle]
 pub static mut _ptrc_glCopyImageSubData: Option<
     unsafe extern "C" fn(
         GLuint,
@@ -1610,7 +1458,7 @@ pub static mut _ptrc_glCopyImageSubData: Option<
         GLsizei,
     ) -> (),
 > = None;
-unsafe extern "C" fn Load_ARB_copy_image() -> ::core::ffi::c_int {
+unsafe fn Load_ARB_copy_image() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     _ptrc_glCopyImageSubData = ::core::mem::transmute::<
         *mut ::core::ffi::c_void,
@@ -1641,15 +1489,13 @@ unsafe extern "C" fn Load_ARB_copy_image() -> ::core::ffi::c_int {
     }
     return numFailed;
 }
-#[no_mangle]
 pub static mut _ptrc_glFramebufferParameteri: Option<
     unsafe extern "C" fn(GLenum, GLenum, GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetFramebufferParameteriv: Option<
     unsafe extern "C" fn(GLenum, GLenum, *mut GLint) -> (),
 > = None;
-unsafe extern "C" fn Load_ARB_framebuffer_no_attachments() -> ::core::ffi::c_int {
+unsafe fn Load_ARB_framebuffer_no_attachments() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     _ptrc_glFramebufferParameteri = ::core::mem::transmute::<
         *mut ::core::ffi::c_void,
@@ -1671,27 +1517,21 @@ unsafe extern "C" fn Load_ARB_framebuffer_no_attachments() -> ::core::ffi::c_int
     }
     return numFailed;
 }
-#[no_mangle]
 pub static mut _ptrc_glInvalidateBufferData: Option<unsafe extern "C" fn(GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glInvalidateBufferSubData: Option<
     unsafe extern "C" fn(GLuint, GLintptr, GLsizeiptr) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glInvalidateFramebuffer: Option<
     unsafe extern "C" fn(GLenum, GLsizei, *const GLenum) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glInvalidateSubFramebuffer: Option<
     unsafe extern "C" fn(GLenum, GLsizei, *const GLenum, GLint, GLint, GLsizei, GLsizei) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glInvalidateTexImage: Option<unsafe extern "C" fn(GLuint, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glInvalidateTexSubImage: Option<
     unsafe extern "C" fn(GLuint, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei) -> (),
 > = None;
-unsafe extern "C" fn Load_ARB_invalidate_subdata() -> ::core::ffi::c_int {
+unsafe fn Load_ARB_invalidate_subdata() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     _ptrc_glInvalidateBufferData = ::core::mem::transmute::<
         *mut ::core::ffi::c_void,
@@ -1770,15 +1610,13 @@ unsafe extern "C" fn Load_ARB_invalidate_subdata() -> ::core::ffi::c_int {
     }
     return numFailed;
 }
-#[no_mangle]
 pub static mut _ptrc_glTexStorage2DMultisample: Option<
     unsafe extern "C" fn(GLenum, GLsizei, GLenum, GLsizei, GLsizei, GLboolean) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTexStorage3DMultisample: Option<
     unsafe extern "C" fn(GLenum, GLsizei, GLenum, GLsizei, GLsizei, GLsizei, GLboolean) -> (),
 > = None;
-unsafe extern "C" fn Load_ARB_texture_storage_multisample() -> ::core::ffi::c_int {
+unsafe fn Load_ARB_texture_storage_multisample() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     _ptrc_glTexStorage2DMultisample = ::core::mem::transmute::<
         *mut ::core::ffi::c_void,
@@ -1810,19 +1648,15 @@ unsafe extern "C" fn Load_ARB_texture_storage_multisample() -> ::core::ffi::c_in
     }
     return numFailed;
 }
-#[no_mangle]
 pub static mut _ptrc_glDebugMessageCallback: Option<
     unsafe extern "C" fn(GLDEBUGPROC, *const ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glDebugMessageControl: Option<
     unsafe extern "C" fn(GLenum, GLenum, GLenum, GLsizei, *const GLuint, GLboolean) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glDebugMessageInsert: Option<
     unsafe extern "C" fn(GLenum, GLenum, GLuint, GLenum, GLsizei, *const GLchar) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetDebugMessageLog: Option<
     unsafe extern "C" fn(
         GLuint,
@@ -1835,33 +1669,26 @@ pub static mut _ptrc_glGetDebugMessageLog: Option<
         *mut GLchar,
     ) -> GLuint,
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetObjectLabel: Option<
     unsafe extern "C" fn(GLenum, GLuint, GLsizei, *mut GLsizei, *mut GLchar) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetObjectPtrLabel: Option<
     unsafe extern "C" fn(*const ::core::ffi::c_void, GLsizei, *mut GLsizei, *mut GLchar) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetPointerv: Option<
     unsafe extern "C" fn(GLenum, *mut *mut ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glObjectLabel: Option<
     unsafe extern "C" fn(GLenum, GLuint, GLsizei, *const GLchar) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glObjectPtrLabel: Option<
     unsafe extern "C" fn(*const ::core::ffi::c_void, GLsizei, *const GLchar) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glPopDebugGroup: Option<unsafe extern "C" fn() -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glPushDebugGroup: Option<
     unsafe extern "C" fn(GLenum, GLuint, GLsizei, *const GLchar) -> (),
 > = None;
-unsafe extern "C" fn Load_KHR_debug() -> ::core::ffi::c_int {
+unsafe fn Load_KHR_debug() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     _ptrc_glDebugMessageCallback = ::core::mem::transmute::<
         *mut ::core::ffi::c_void,
@@ -1982,11 +1809,10 @@ unsafe extern "C" fn Load_KHR_debug() -> ::core::ffi::c_int {
     }
     return numFailed;
 }
-#[no_mangle]
 pub static mut _ptrc_glBufferStorage: Option<
     unsafe extern "C" fn(GLenum, GLsizeiptr, *const ::core::ffi::c_void, GLbitfield) -> (),
 > = None;
-unsafe extern "C" fn Load_ARB_buffer_storage() -> ::core::ffi::c_int {
+unsafe fn Load_ARB_buffer_storage() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     _ptrc_glBufferStorage = ::core::mem::transmute::<
         *mut ::core::ffi::c_void,
@@ -2001,11 +1827,9 @@ unsafe extern "C" fn Load_ARB_buffer_storage() -> ::core::ffi::c_int {
     }
     return numFailed;
 }
-#[no_mangle]
 pub static mut _ptrc_glClearTexImage: Option<
     unsafe extern "C" fn(GLuint, GLint, GLenum, GLenum, *const ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glClearTexSubImage: Option<
     unsafe extern "C" fn(
         GLuint,
@@ -2021,7 +1845,7 @@ pub static mut _ptrc_glClearTexSubImage: Option<
         *const ::core::ffi::c_void,
     ) -> (),
 > = None;
-unsafe extern "C" fn Load_ARB_clear_texture() -> ::core::ffi::c_int {
+unsafe fn Load_ARB_clear_texture() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     _ptrc_glClearTexImage = ::core::mem::transmute::<
         *mut ::core::ffi::c_void,
@@ -2059,11 +1883,9 @@ unsafe extern "C" fn Load_ARB_clear_texture() -> ::core::ffi::c_int {
     }
     return numFailed;
 }
-#[no_mangle]
 pub static mut _ptrc_glBindBuffersBase: Option<
     unsafe extern "C" fn(GLenum, GLuint, GLsizei, *const GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glBindBuffersRange: Option<
     unsafe extern "C" fn(
         GLenum,
@@ -2074,23 +1896,19 @@ pub static mut _ptrc_glBindBuffersRange: Option<
         *const GLsizeiptr,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glBindImageTextures: Option<
     unsafe extern "C" fn(GLuint, GLsizei, *const GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glBindSamplers: Option<
     unsafe extern "C" fn(GLuint, GLsizei, *const GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glBindTextures: Option<
     unsafe extern "C" fn(GLuint, GLsizei, *const GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glBindVertexBuffers: Option<
     unsafe extern "C" fn(GLuint, GLsizei, *const GLuint, *const GLintptr, *const GLsizei) -> (),
 > = None;
-unsafe extern "C" fn Load_ARB_multi_bind() -> ::core::ffi::c_int {
+unsafe fn Load_ARB_multi_bind() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     _ptrc_glBindBuffersBase = ::core::mem::transmute::<
         *mut ::core::ffi::c_void,
@@ -2165,9 +1983,8 @@ unsafe extern "C" fn Load_ARB_multi_bind() -> ::core::ffi::c_int {
     }
     return numFailed;
 }
-#[no_mangle]
 pub static mut _ptrc_glClipControl: Option<unsafe extern "C" fn(GLenum, GLenum) -> ()> = None;
-unsafe extern "C" fn Load_ARB_clip_control() -> ::core::ffi::c_int {
+unsafe fn Load_ARB_clip_control() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     _ptrc_glClipControl = ::core::mem::transmute::<
         *mut ::core::ffi::c_void,
@@ -2180,9 +1997,7 @@ unsafe extern "C" fn Load_ARB_clip_control() -> ::core::ffi::c_int {
     }
     return numFailed;
 }
-#[no_mangle]
 pub static mut _ptrc_glBindTextureUnit: Option<unsafe extern "C" fn(GLuint, GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glBlitNamedFramebuffer: Option<
     unsafe extern "C" fn(
         GLuint,
@@ -2199,15 +2014,12 @@ pub static mut _ptrc_glBlitNamedFramebuffer: Option<
         GLenum,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCheckNamedFramebufferStatus: Option<
     unsafe extern "C" fn(GLuint, GLenum) -> GLenum,
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glClearNamedBufferData: Option<
     unsafe extern "C" fn(GLuint, GLenum, GLenum, GLenum, *const ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glClearNamedBufferSubData: Option<
     unsafe extern "C" fn(
         GLuint,
@@ -2219,23 +2031,18 @@ pub static mut _ptrc_glClearNamedBufferSubData: Option<
         *const ::core::ffi::c_void,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glClearNamedFramebufferfi: Option<
     unsafe extern "C" fn(GLuint, GLenum, GLint, GLfloat, GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glClearNamedFramebufferfv: Option<
     unsafe extern "C" fn(GLuint, GLenum, GLint, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glClearNamedFramebufferiv: Option<
     unsafe extern "C" fn(GLuint, GLenum, GLint, *const GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glClearNamedFramebufferuiv: Option<
     unsafe extern "C" fn(GLuint, GLenum, GLint, *const GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCompressedTextureSubImage1D: Option<
     unsafe extern "C" fn(
         GLuint,
@@ -2247,7 +2054,6 @@ pub static mut _ptrc_glCompressedTextureSubImage1D: Option<
         *const ::core::ffi::c_void,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCompressedTextureSubImage2D: Option<
     unsafe extern "C" fn(
         GLuint,
@@ -2261,7 +2067,6 @@ pub static mut _ptrc_glCompressedTextureSubImage2D: Option<
         *const ::core::ffi::c_void,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCompressedTextureSubImage3D: Option<
     unsafe extern "C" fn(
         GLuint,
@@ -2277,285 +2082,213 @@ pub static mut _ptrc_glCompressedTextureSubImage3D: Option<
         *const ::core::ffi::c_void,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCopyNamedBufferSubData: Option<
     unsafe extern "C" fn(GLuint, GLuint, GLintptr, GLintptr, GLsizeiptr) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCopyTextureSubImage1D: Option<
     unsafe extern "C" fn(GLuint, GLint, GLint, GLint, GLint, GLsizei) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCopyTextureSubImage2D: Option<
     unsafe extern "C" fn(GLuint, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCopyTextureSubImage3D: Option<
     unsafe extern "C" fn(GLuint, GLint, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCreateBuffers: Option<unsafe extern "C" fn(GLsizei, *mut GLuint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glCreateFramebuffers: Option<
     unsafe extern "C" fn(GLsizei, *mut GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCreateProgramPipelines: Option<
     unsafe extern "C" fn(GLsizei, *mut GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCreateQueries: Option<
     unsafe extern "C" fn(GLenum, GLsizei, *mut GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCreateRenderbuffers: Option<
     unsafe extern "C" fn(GLsizei, *mut GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCreateSamplers: Option<unsafe extern "C" fn(GLsizei, *mut GLuint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glCreateTextures: Option<
     unsafe extern "C" fn(GLenum, GLsizei, *mut GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCreateTransformFeedbacks: Option<
     unsafe extern "C" fn(GLsizei, *mut GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCreateVertexArrays: Option<
     unsafe extern "C" fn(GLsizei, *mut GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glDisableVertexArrayAttrib: Option<
     unsafe extern "C" fn(GLuint, GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glEnableVertexArrayAttrib: Option<unsafe extern "C" fn(GLuint, GLuint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glFlushMappedNamedBufferRange: Option<
     unsafe extern "C" fn(GLuint, GLintptr, GLsizeiptr) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGenerateTextureMipmap: Option<unsafe extern "C" fn(GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glGetCompressedTextureImage: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, *mut ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetNamedBufferParameteri64v: Option<
     unsafe extern "C" fn(GLuint, GLenum, *mut GLint64) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetNamedBufferParameteriv: Option<
     unsafe extern "C" fn(GLuint, GLenum, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetNamedBufferPointerv: Option<
     unsafe extern "C" fn(GLuint, GLenum, *mut *mut ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetNamedBufferSubData: Option<
     unsafe extern "C" fn(GLuint, GLintptr, GLsizeiptr, *mut ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetNamedFramebufferAttachmentParameteriv: Option<
     unsafe extern "C" fn(GLuint, GLenum, GLenum, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetNamedFramebufferParameteriv: Option<
     unsafe extern "C" fn(GLuint, GLenum, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetNamedRenderbufferParameteriv: Option<
     unsafe extern "C" fn(GLuint, GLenum, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetQueryBufferObjecti64v: Option<
     unsafe extern "C" fn(GLuint, GLuint, GLenum, GLintptr) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetQueryBufferObjectiv: Option<
     unsafe extern "C" fn(GLuint, GLuint, GLenum, GLintptr) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetQueryBufferObjectui64v: Option<
     unsafe extern "C" fn(GLuint, GLuint, GLenum, GLintptr) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetQueryBufferObjectuiv: Option<
     unsafe extern "C" fn(GLuint, GLuint, GLenum, GLintptr) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetTextureImage: Option<
     unsafe extern "C" fn(GLuint, GLint, GLenum, GLenum, GLsizei, *mut ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetTextureLevelParameterfv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLenum, *mut GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetTextureLevelParameteriv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLenum, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetTextureParameterIiv: Option<
     unsafe extern "C" fn(GLuint, GLenum, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetTextureParameterIuiv: Option<
     unsafe extern "C" fn(GLuint, GLenum, *mut GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetTextureParameterfv: Option<
     unsafe extern "C" fn(GLuint, GLenum, *mut GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetTextureParameteriv: Option<
     unsafe extern "C" fn(GLuint, GLenum, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetTransformFeedbacki64_v: Option<
     unsafe extern "C" fn(GLuint, GLenum, GLuint, *mut GLint64) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetTransformFeedbacki_v: Option<
     unsafe extern "C" fn(GLuint, GLenum, GLuint, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetTransformFeedbackiv: Option<
     unsafe extern "C" fn(GLuint, GLenum, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetVertexArrayIndexed64iv: Option<
     unsafe extern "C" fn(GLuint, GLuint, GLenum, *mut GLint64) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetVertexArrayIndexediv: Option<
     unsafe extern "C" fn(GLuint, GLuint, GLenum, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetVertexArrayiv: Option<
     unsafe extern "C" fn(GLuint, GLenum, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glInvalidateNamedFramebufferData: Option<
     unsafe extern "C" fn(GLuint, GLsizei, *const GLenum) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glInvalidateNamedFramebufferSubData: Option<
     unsafe extern "C" fn(GLuint, GLsizei, *const GLenum, GLint, GLint, GLsizei, GLsizei) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMapNamedBuffer: Option<
     unsafe extern "C" fn(GLuint, GLenum) -> *mut ::core::ffi::c_void,
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMapNamedBufferRange: Option<
     unsafe extern "C" fn(GLuint, GLintptr, GLsizeiptr, GLbitfield) -> *mut ::core::ffi::c_void,
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glNamedBufferData: Option<
     unsafe extern "C" fn(GLuint, GLsizeiptr, *const ::core::ffi::c_void, GLenum) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glNamedBufferStorage: Option<
     unsafe extern "C" fn(GLuint, GLsizeiptr, *const ::core::ffi::c_void, GLbitfield) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glNamedBufferSubData: Option<
     unsafe extern "C" fn(GLuint, GLintptr, GLsizeiptr, *const ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glNamedFramebufferDrawBuffer: Option<
     unsafe extern "C" fn(GLuint, GLenum) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glNamedFramebufferDrawBuffers: Option<
     unsafe extern "C" fn(GLuint, GLsizei, *const GLenum) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glNamedFramebufferParameteri: Option<
     unsafe extern "C" fn(GLuint, GLenum, GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glNamedFramebufferReadBuffer: Option<
     unsafe extern "C" fn(GLuint, GLenum) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glNamedFramebufferRenderbuffer: Option<
     unsafe extern "C" fn(GLuint, GLenum, GLenum, GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glNamedFramebufferTexture: Option<
     unsafe extern "C" fn(GLuint, GLenum, GLuint, GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glNamedFramebufferTextureLayer: Option<
     unsafe extern "C" fn(GLuint, GLenum, GLuint, GLint, GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glNamedRenderbufferStorage: Option<
     unsafe extern "C" fn(GLuint, GLenum, GLsizei, GLsizei) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glNamedRenderbufferStorageMultisample: Option<
     unsafe extern "C" fn(GLuint, GLsizei, GLenum, GLsizei, GLsizei) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTextureBuffer: Option<unsafe extern "C" fn(GLuint, GLenum, GLuint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glTextureBufferRange: Option<
     unsafe extern "C" fn(GLuint, GLenum, GLuint, GLintptr, GLsizeiptr) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTextureParameterIiv: Option<
     unsafe extern "C" fn(GLuint, GLenum, *const GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTextureParameterIuiv: Option<
     unsafe extern "C" fn(GLuint, GLenum, *const GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTextureParameterf: Option<
     unsafe extern "C" fn(GLuint, GLenum, GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTextureParameterfv: Option<
     unsafe extern "C" fn(GLuint, GLenum, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTextureParameteri: Option<
     unsafe extern "C" fn(GLuint, GLenum, GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTextureParameteriv: Option<
     unsafe extern "C" fn(GLuint, GLenum, *const GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTextureStorage1D: Option<
     unsafe extern "C" fn(GLuint, GLsizei, GLenum, GLsizei) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTextureStorage2D: Option<
     unsafe extern "C" fn(GLuint, GLsizei, GLenum, GLsizei, GLsizei) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTextureStorage2DMultisample: Option<
     unsafe extern "C" fn(GLuint, GLsizei, GLenum, GLsizei, GLsizei, GLboolean) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTextureStorage3D: Option<
     unsafe extern "C" fn(GLuint, GLsizei, GLenum, GLsizei, GLsizei, GLsizei) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTextureStorage3DMultisample: Option<
     unsafe extern "C" fn(GLuint, GLsizei, GLenum, GLsizei, GLsizei, GLsizei, GLboolean) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTextureSubImage1D: Option<
     unsafe extern "C" fn(
         GLuint,
@@ -2567,7 +2300,6 @@ pub static mut _ptrc_glTextureSubImage1D: Option<
         *const ::core::ffi::c_void,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTextureSubImage2D: Option<
     unsafe extern "C" fn(
         GLuint,
@@ -2581,7 +2313,6 @@ pub static mut _ptrc_glTextureSubImage2D: Option<
         *const ::core::ffi::c_void,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTextureSubImage3D: Option<
     unsafe extern "C" fn(
         GLuint,
@@ -2597,45 +2328,34 @@ pub static mut _ptrc_glTextureSubImage3D: Option<
         *const ::core::ffi::c_void,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTransformFeedbackBufferBase: Option<
     unsafe extern "C" fn(GLuint, GLuint, GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTransformFeedbackBufferRange: Option<
     unsafe extern "C" fn(GLuint, GLuint, GLuint, GLintptr, GLsizeiptr) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUnmapNamedBuffer: Option<unsafe extern "C" fn(GLuint) -> GLboolean> = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexArrayAttribBinding: Option<
     unsafe extern "C" fn(GLuint, GLuint, GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexArrayAttribFormat: Option<
     unsafe extern "C" fn(GLuint, GLuint, GLint, GLenum, GLboolean, GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexArrayAttribIFormat: Option<
     unsafe extern "C" fn(GLuint, GLuint, GLint, GLenum, GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexArrayAttribLFormat: Option<
     unsafe extern "C" fn(GLuint, GLuint, GLint, GLenum, GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexArrayBindingDivisor: Option<
     unsafe extern "C" fn(GLuint, GLuint, GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexArrayElementBuffer: Option<
     unsafe extern "C" fn(GLuint, GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexArrayVertexBuffer: Option<
     unsafe extern "C" fn(GLuint, GLuint, GLuint, GLintptr, GLsizei) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexArrayVertexBuffers: Option<
     unsafe extern "C" fn(
         GLuint,
@@ -2646,7 +2366,7 @@ pub static mut _ptrc_glVertexArrayVertexBuffers: Option<
         *const GLsizei,
     ) -> (),
 > = None;
-unsafe extern "C" fn Load_ARB_direct_state_access() -> ::core::ffi::c_int {
+unsafe fn Load_ARB_direct_state_access() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     _ptrc_glBindTextureUnit = ::core::mem::transmute::<
         *mut ::core::ffi::c_void,
@@ -3685,7 +3405,6 @@ unsafe extern "C" fn Load_ARB_direct_state_access() -> ::core::ffi::c_int {
     }
     return numFailed;
 }
-#[no_mangle]
 pub static mut _ptrc_glGetCompressedTextureSubImage: Option<
     unsafe extern "C" fn(
         GLuint,
@@ -3700,7 +3419,6 @@ pub static mut _ptrc_glGetCompressedTextureSubImage: Option<
         *mut ::core::ffi::c_void,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetTextureSubImage: Option<
     unsafe extern "C" fn(
         GLuint,
@@ -3717,7 +3435,7 @@ pub static mut _ptrc_glGetTextureSubImage: Option<
         *mut ::core::ffi::c_void,
     ) -> (),
 > = None;
-unsafe extern "C" fn Load_ARB_get_texture_sub_image() -> ::core::ffi::c_int {
+unsafe fn Load_ARB_get_texture_sub_image() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     _ptrc_glGetCompressedTextureSubImage = ::core::mem::transmute::<
         *mut ::core::ffi::c_void,
@@ -3767,9 +3485,8 @@ unsafe extern "C" fn Load_ARB_get_texture_sub_image() -> ::core::ffi::c_int {
     }
     return numFailed;
 }
-#[no_mangle]
 pub static mut _ptrc_glTextureBarrier: Option<unsafe extern "C" fn() -> ()> = None;
-unsafe extern "C" fn Load_ARB_texture_barrier() -> ::core::ffi::c_int {
+unsafe fn Load_ARB_texture_barrier() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     _ptrc_glTextureBarrier =
         ::core::mem::transmute::<*mut ::core::ffi::c_void, Option<unsafe extern "C" fn() -> ()>>(
@@ -3780,21 +3497,16 @@ unsafe extern "C" fn Load_ARB_texture_barrier() -> ::core::ffi::c_int {
     }
     return numFailed;
 }
-#[no_mangle]
 pub static mut _ptrc_glGetGraphicsResetStatus: Option<unsafe extern "C" fn() -> GLenum> = None;
-#[no_mangle]
 pub static mut _ptrc_glGetnUniformfv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, *mut GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetnUniformiv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetnUniformuiv: Option<
     unsafe extern "C" fn(GLuint, GLint, GLsizei, *mut GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glReadnPixels: Option<
     unsafe extern "C" fn(
         GLint,
@@ -3807,7 +3519,7 @@ pub static mut _ptrc_glReadnPixels: Option<
         *mut ::core::ffi::c_void,
     ) -> (),
 > = None;
-unsafe extern "C" fn Load_KHR_robustness() -> ::core::ffi::c_int {
+unsafe fn Load_KHR_robustness() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     _ptrc_glGetGraphicsResetStatus = ::core::mem::transmute::<
         *mut ::core::ffi::c_void,
@@ -3867,13 +3579,9 @@ unsafe extern "C" fn Load_KHR_robustness() -> ::core::ffi::c_int {
     }
     return numFailed;
 }
-#[no_mangle]
 pub static mut _ptrc_glAccum: Option<unsafe extern "C" fn(GLenum, GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glAlphaFunc: Option<unsafe extern "C" fn(GLenum, GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glBegin: Option<unsafe extern "C" fn(GLenum) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glBitmap: Option<
     unsafe extern "C" fn(
         GLsizei,
@@ -3885,364 +3593,224 @@ pub static mut _ptrc_glBitmap: Option<
         *const GLubyte,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glBlendFunc: Option<unsafe extern "C" fn(GLenum, GLenum) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glCallList: Option<unsafe extern "C" fn(GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glCallLists: Option<
     unsafe extern "C" fn(GLsizei, GLenum, *const ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glClear: Option<unsafe extern "C" fn(GLbitfield) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glClearAccum: Option<
     unsafe extern "C" fn(GLfloat, GLfloat, GLfloat, GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glClearColor: Option<
     unsafe extern "C" fn(GLfloat, GLfloat, GLfloat, GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glClearDepth: Option<unsafe extern "C" fn(GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glClearIndex: Option<unsafe extern "C" fn(GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glClearStencil: Option<unsafe extern "C" fn(GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glClipPlane: Option<unsafe extern "C" fn(GLenum, *const GLdouble) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glColor3b: Option<unsafe extern "C" fn(GLbyte, GLbyte, GLbyte) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glColor3bv: Option<unsafe extern "C" fn(*const GLbyte) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glColor3d: Option<unsafe extern "C" fn(GLdouble, GLdouble, GLdouble) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glColor3dv: Option<unsafe extern "C" fn(*const GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glColor3f: Option<unsafe extern "C" fn(GLfloat, GLfloat, GLfloat) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glColor3fv: Option<unsafe extern "C" fn(*const GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glColor3i: Option<unsafe extern "C" fn(GLint, GLint, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glColor3iv: Option<unsafe extern "C" fn(*const GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glColor3s: Option<unsafe extern "C" fn(GLshort, GLshort, GLshort) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glColor3sv: Option<unsafe extern "C" fn(*const GLshort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glColor3ub: Option<unsafe extern "C" fn(GLubyte, GLubyte, GLubyte) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glColor3ubv: Option<unsafe extern "C" fn(*const GLubyte) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glColor3ui: Option<unsafe extern "C" fn(GLuint, GLuint, GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glColor3uiv: Option<unsafe extern "C" fn(*const GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glColor3us: Option<unsafe extern "C" fn(GLushort, GLushort, GLushort) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glColor3usv: Option<unsafe extern "C" fn(*const GLushort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glColor4b: Option<unsafe extern "C" fn(GLbyte, GLbyte, GLbyte, GLbyte) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glColor4bv: Option<unsafe extern "C" fn(*const GLbyte) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glColor4d: Option<
     unsafe extern "C" fn(GLdouble, GLdouble, GLdouble, GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glColor4dv: Option<unsafe extern "C" fn(*const GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glColor4f: Option<
     unsafe extern "C" fn(GLfloat, GLfloat, GLfloat, GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glColor4fv: Option<unsafe extern "C" fn(*const GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glColor4i: Option<unsafe extern "C" fn(GLint, GLint, GLint, GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glColor4iv: Option<unsafe extern "C" fn(*const GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glColor4s: Option<
     unsafe extern "C" fn(GLshort, GLshort, GLshort, GLshort) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glColor4sv: Option<unsafe extern "C" fn(*const GLshort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glColor4ub: Option<
     unsafe extern "C" fn(GLubyte, GLubyte, GLubyte, GLubyte) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glColor4ubv: Option<unsafe extern "C" fn(*const GLubyte) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glColor4ui: Option<
     unsafe extern "C" fn(GLuint, GLuint, GLuint, GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glColor4uiv: Option<unsafe extern "C" fn(*const GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glColor4us: Option<
     unsafe extern "C" fn(GLushort, GLushort, GLushort, GLushort) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glColor4usv: Option<unsafe extern "C" fn(*const GLushort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glColorMask: Option<
     unsafe extern "C" fn(GLboolean, GLboolean, GLboolean, GLboolean) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glColorMaterial: Option<unsafe extern "C" fn(GLenum, GLenum) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glCopyPixels: Option<
     unsafe extern "C" fn(GLint, GLint, GLsizei, GLsizei, GLenum) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCullFace: Option<unsafe extern "C" fn(GLenum) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glDeleteLists: Option<unsafe extern "C" fn(GLuint, GLsizei) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glDepthFunc: Option<unsafe extern "C" fn(GLenum) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glDepthMask: Option<unsafe extern "C" fn(GLboolean) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glDepthRange: Option<unsafe extern "C" fn(GLdouble, GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glDisable: Option<unsafe extern "C" fn(GLenum) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glDrawBuffer: Option<unsafe extern "C" fn(GLenum) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glDrawPixels: Option<
     unsafe extern "C" fn(GLsizei, GLsizei, GLenum, GLenum, *const ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glEdgeFlag: Option<unsafe extern "C" fn(GLboolean) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glEdgeFlagv: Option<unsafe extern "C" fn(*const GLboolean) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glEnable: Option<unsafe extern "C" fn(GLenum) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glEnd: Option<unsafe extern "C" fn() -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glEndList: Option<unsafe extern "C" fn() -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glEvalCoord1d: Option<unsafe extern "C" fn(GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glEvalCoord1dv: Option<unsafe extern "C" fn(*const GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glEvalCoord1f: Option<unsafe extern "C" fn(GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glEvalCoord1fv: Option<unsafe extern "C" fn(*const GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glEvalCoord2d: Option<unsafe extern "C" fn(GLdouble, GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glEvalCoord2dv: Option<unsafe extern "C" fn(*const GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glEvalCoord2f: Option<unsafe extern "C" fn(GLfloat, GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glEvalCoord2fv: Option<unsafe extern "C" fn(*const GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glEvalMesh1: Option<unsafe extern "C" fn(GLenum, GLint, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glEvalMesh2: Option<
     unsafe extern "C" fn(GLenum, GLint, GLint, GLint, GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glEvalPoint1: Option<unsafe extern "C" fn(GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glEvalPoint2: Option<unsafe extern "C" fn(GLint, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glFeedbackBuffer: Option<
     unsafe extern "C" fn(GLsizei, GLenum, *mut GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glFinish: Option<unsafe extern "C" fn() -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glFlush: Option<unsafe extern "C" fn() -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glFogf: Option<unsafe extern "C" fn(GLenum, GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glFogfv: Option<unsafe extern "C" fn(GLenum, *const GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glFogi: Option<unsafe extern "C" fn(GLenum, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glFogiv: Option<unsafe extern "C" fn(GLenum, *const GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glFrontFace: Option<unsafe extern "C" fn(GLenum) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glFrustum: Option<
     unsafe extern "C" fn(GLdouble, GLdouble, GLdouble, GLdouble, GLdouble, GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGenLists: Option<unsafe extern "C" fn(GLsizei) -> GLuint> = None;
-#[no_mangle]
 pub static mut _ptrc_glGetBooleanv: Option<unsafe extern "C" fn(GLenum, *mut GLboolean) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glGetClipPlane: Option<unsafe extern "C" fn(GLenum, *mut GLdouble) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glGetDoublev: Option<unsafe extern "C" fn(GLenum, *mut GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glGetError: Option<unsafe extern "C" fn() -> GLenum> = None;
-#[no_mangle]
 pub static mut _ptrc_glGetFloatv: Option<unsafe extern "C" fn(GLenum, *mut GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glGetIntegerv: Option<unsafe extern "C" fn(GLenum, *mut GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glGetLightfv: Option<
     unsafe extern "C" fn(GLenum, GLenum, *mut GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetLightiv: Option<unsafe extern "C" fn(GLenum, GLenum, *mut GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glGetMapdv: Option<unsafe extern "C" fn(GLenum, GLenum, *mut GLdouble) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glGetMapfv: Option<unsafe extern "C" fn(GLenum, GLenum, *mut GLfloat) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glGetMapiv: Option<unsafe extern "C" fn(GLenum, GLenum, *mut GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glGetMaterialfv: Option<
     unsafe extern "C" fn(GLenum, GLenum, *mut GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetMaterialiv: Option<
     unsafe extern "C" fn(GLenum, GLenum, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetPixelMapfv: Option<unsafe extern "C" fn(GLenum, *mut GLfloat) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glGetPixelMapuiv: Option<unsafe extern "C" fn(GLenum, *mut GLuint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glGetPixelMapusv: Option<unsafe extern "C" fn(GLenum, *mut GLushort) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glGetPolygonStipple: Option<unsafe extern "C" fn(*mut GLubyte) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glGetString: Option<unsafe extern "C" fn(GLenum) -> *const GLubyte> = None;
-#[no_mangle]
 pub static mut _ptrc_glGetTexEnvfv: Option<
     unsafe extern "C" fn(GLenum, GLenum, *mut GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetTexEnviv: Option<unsafe extern "C" fn(GLenum, GLenum, *mut GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glGetTexGendv: Option<
     unsafe extern "C" fn(GLenum, GLenum, *mut GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetTexGenfv: Option<
     unsafe extern "C" fn(GLenum, GLenum, *mut GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetTexGeniv: Option<unsafe extern "C" fn(GLenum, GLenum, *mut GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glGetTexImage: Option<
     unsafe extern "C" fn(GLenum, GLint, GLenum, GLenum, *mut ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetTexLevelParameterfv: Option<
     unsafe extern "C" fn(GLenum, GLint, GLenum, *mut GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetTexLevelParameteriv: Option<
     unsafe extern "C" fn(GLenum, GLint, GLenum, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetTexParameterfv: Option<
     unsafe extern "C" fn(GLenum, GLenum, *mut GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetTexParameteriv: Option<
     unsafe extern "C" fn(GLenum, GLenum, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glHint: Option<unsafe extern "C" fn(GLenum, GLenum) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glIndexMask: Option<unsafe extern "C" fn(GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glIndexd: Option<unsafe extern "C" fn(GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glIndexdv: Option<unsafe extern "C" fn(*const GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glIndexf: Option<unsafe extern "C" fn(GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glIndexfv: Option<unsafe extern "C" fn(*const GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glIndexi: Option<unsafe extern "C" fn(GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glIndexiv: Option<unsafe extern "C" fn(*const GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glIndexs: Option<unsafe extern "C" fn(GLshort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glIndexsv: Option<unsafe extern "C" fn(*const GLshort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glInitNames: Option<unsafe extern "C" fn() -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glIsEnabled: Option<unsafe extern "C" fn(GLenum) -> GLboolean> = None;
-#[no_mangle]
 pub static mut _ptrc_glIsList: Option<unsafe extern "C" fn(GLuint) -> GLboolean> = None;
-#[no_mangle]
 pub static mut _ptrc_glLightModelf: Option<unsafe extern "C" fn(GLenum, GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glLightModelfv: Option<unsafe extern "C" fn(GLenum, *const GLfloat) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glLightModeli: Option<unsafe extern "C" fn(GLenum, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glLightModeliv: Option<unsafe extern "C" fn(GLenum, *const GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glLightf: Option<unsafe extern "C" fn(GLenum, GLenum, GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glLightfv: Option<unsafe extern "C" fn(GLenum, GLenum, *const GLfloat) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glLighti: Option<unsafe extern "C" fn(GLenum, GLenum, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glLightiv: Option<unsafe extern "C" fn(GLenum, GLenum, *const GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glLineStipple: Option<unsafe extern "C" fn(GLint, GLushort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glLineWidth: Option<unsafe extern "C" fn(GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glListBase: Option<unsafe extern "C" fn(GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glLoadIdentity: Option<unsafe extern "C" fn() -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glLoadMatrixd: Option<unsafe extern "C" fn(*const GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glLoadMatrixf: Option<unsafe extern "C" fn(*const GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glLoadName: Option<unsafe extern "C" fn(GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glLogicOp: Option<unsafe extern "C" fn(GLenum) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glMap1d: Option<
     unsafe extern "C" fn(GLenum, GLdouble, GLdouble, GLint, GLint, *const GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMap1f: Option<
     unsafe extern "C" fn(GLenum, GLfloat, GLfloat, GLint, GLint, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMap2d: Option<
     unsafe extern "C" fn(
         GLenum,
@@ -4257,7 +3825,6 @@ pub static mut _ptrc_glMap2d: Option<
         *const GLdouble,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMap2f: Option<
     unsafe extern "C" fn(
         GLenum,
@@ -4272,172 +3839,105 @@ pub static mut _ptrc_glMap2f: Option<
         *const GLfloat,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMapGrid1d: Option<unsafe extern "C" fn(GLint, GLdouble, GLdouble) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glMapGrid1f: Option<unsafe extern "C" fn(GLint, GLfloat, GLfloat) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glMapGrid2d: Option<
     unsafe extern "C" fn(GLint, GLdouble, GLdouble, GLint, GLdouble, GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMapGrid2f: Option<
     unsafe extern "C" fn(GLint, GLfloat, GLfloat, GLint, GLfloat, GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMaterialf: Option<unsafe extern "C" fn(GLenum, GLenum, GLfloat) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glMaterialfv: Option<
     unsafe extern "C" fn(GLenum, GLenum, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMateriali: Option<unsafe extern "C" fn(GLenum, GLenum, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glMaterialiv: Option<
     unsafe extern "C" fn(GLenum, GLenum, *const GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMatrixMode: Option<unsafe extern "C" fn(GLenum) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glMultMatrixd: Option<unsafe extern "C" fn(*const GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glMultMatrixf: Option<unsafe extern "C" fn(*const GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glNewList: Option<unsafe extern "C" fn(GLuint, GLenum) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glNormal3b: Option<unsafe extern "C" fn(GLbyte, GLbyte, GLbyte) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glNormal3bv: Option<unsafe extern "C" fn(*const GLbyte) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glNormal3d: Option<unsafe extern "C" fn(GLdouble, GLdouble, GLdouble) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glNormal3dv: Option<unsafe extern "C" fn(*const GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glNormal3f: Option<unsafe extern "C" fn(GLfloat, GLfloat, GLfloat) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glNormal3fv: Option<unsafe extern "C" fn(*const GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glNormal3i: Option<unsafe extern "C" fn(GLint, GLint, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glNormal3iv: Option<unsafe extern "C" fn(*const GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glNormal3s: Option<unsafe extern "C" fn(GLshort, GLshort, GLshort) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glNormal3sv: Option<unsafe extern "C" fn(*const GLshort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glOrtho: Option<
     unsafe extern "C" fn(GLdouble, GLdouble, GLdouble, GLdouble, GLdouble, GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glPassThrough: Option<unsafe extern "C" fn(GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glPixelMapfv: Option<
     unsafe extern "C" fn(GLenum, GLsizei, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glPixelMapuiv: Option<
     unsafe extern "C" fn(GLenum, GLsizei, *const GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glPixelMapusv: Option<
     unsafe extern "C" fn(GLenum, GLsizei, *const GLushort) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glPixelStoref: Option<unsafe extern "C" fn(GLenum, GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glPixelStorei: Option<unsafe extern "C" fn(GLenum, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glPixelTransferf: Option<unsafe extern "C" fn(GLenum, GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glPixelTransferi: Option<unsafe extern "C" fn(GLenum, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glPixelZoom: Option<unsafe extern "C" fn(GLfloat, GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glPointSize: Option<unsafe extern "C" fn(GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glPolygonMode: Option<unsafe extern "C" fn(GLenum, GLenum) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glPolygonStipple: Option<unsafe extern "C" fn(*const GLubyte) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glPopAttrib: Option<unsafe extern "C" fn() -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glPopMatrix: Option<unsafe extern "C" fn() -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glPopName: Option<unsafe extern "C" fn() -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glPushAttrib: Option<unsafe extern "C" fn(GLbitfield) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glPushMatrix: Option<unsafe extern "C" fn() -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glPushName: Option<unsafe extern "C" fn(GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glRasterPos2d: Option<unsafe extern "C" fn(GLdouble, GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glRasterPos2dv: Option<unsafe extern "C" fn(*const GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glRasterPos2f: Option<unsafe extern "C" fn(GLfloat, GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glRasterPos2fv: Option<unsafe extern "C" fn(*const GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glRasterPos2i: Option<unsafe extern "C" fn(GLint, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glRasterPos2iv: Option<unsafe extern "C" fn(*const GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glRasterPos2s: Option<unsafe extern "C" fn(GLshort, GLshort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glRasterPos2sv: Option<unsafe extern "C" fn(*const GLshort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glRasterPos3d: Option<
     unsafe extern "C" fn(GLdouble, GLdouble, GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glRasterPos3dv: Option<unsafe extern "C" fn(*const GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glRasterPos3f: Option<unsafe extern "C" fn(GLfloat, GLfloat, GLfloat) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glRasterPos3fv: Option<unsafe extern "C" fn(*const GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glRasterPos3i: Option<unsafe extern "C" fn(GLint, GLint, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glRasterPos3iv: Option<unsafe extern "C" fn(*const GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glRasterPos3s: Option<unsafe extern "C" fn(GLshort, GLshort, GLshort) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glRasterPos3sv: Option<unsafe extern "C" fn(*const GLshort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glRasterPos4d: Option<
     unsafe extern "C" fn(GLdouble, GLdouble, GLdouble, GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glRasterPos4dv: Option<unsafe extern "C" fn(*const GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glRasterPos4f: Option<
     unsafe extern "C" fn(GLfloat, GLfloat, GLfloat, GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glRasterPos4fv: Option<unsafe extern "C" fn(*const GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glRasterPos4i: Option<unsafe extern "C" fn(GLint, GLint, GLint, GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glRasterPos4iv: Option<unsafe extern "C" fn(*const GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glRasterPos4s: Option<
     unsafe extern "C" fn(GLshort, GLshort, GLshort, GLshort) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glRasterPos4sv: Option<unsafe extern "C" fn(*const GLshort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glReadBuffer: Option<unsafe extern "C" fn(GLenum) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glReadPixels: Option<
     unsafe extern "C" fn(
         GLint,
@@ -4449,167 +3949,105 @@ pub static mut _ptrc_glReadPixels: Option<
         *mut ::core::ffi::c_void,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glRectd: Option<
     unsafe extern "C" fn(GLdouble, GLdouble, GLdouble, GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glRectdv: Option<
     unsafe extern "C" fn(*const GLdouble, *const GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glRectf: Option<
     unsafe extern "C" fn(GLfloat, GLfloat, GLfloat, GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glRectfv: Option<unsafe extern "C" fn(*const GLfloat, *const GLfloat) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glRecti: Option<unsafe extern "C" fn(GLint, GLint, GLint, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glRectiv: Option<unsafe extern "C" fn(*const GLint, *const GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glRects: Option<
     unsafe extern "C" fn(GLshort, GLshort, GLshort, GLshort) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glRectsv: Option<unsafe extern "C" fn(*const GLshort, *const GLshort) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glRenderMode: Option<unsafe extern "C" fn(GLenum) -> GLint> = None;
-#[no_mangle]
 pub static mut _ptrc_glRotated: Option<
     unsafe extern "C" fn(GLdouble, GLdouble, GLdouble, GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glRotatef: Option<
     unsafe extern "C" fn(GLfloat, GLfloat, GLfloat, GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glScaled: Option<unsafe extern "C" fn(GLdouble, GLdouble, GLdouble) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glScalef: Option<unsafe extern "C" fn(GLfloat, GLfloat, GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glScissor: Option<unsafe extern "C" fn(GLint, GLint, GLsizei, GLsizei) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glSelectBuffer: Option<unsafe extern "C" fn(GLsizei, *mut GLuint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glShadeModel: Option<unsafe extern "C" fn(GLenum) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glStencilFunc: Option<unsafe extern "C" fn(GLenum, GLint, GLuint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glStencilMask: Option<unsafe extern "C" fn(GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glStencilOp: Option<unsafe extern "C" fn(GLenum, GLenum, GLenum) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord1d: Option<unsafe extern "C" fn(GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord1dv: Option<unsafe extern "C" fn(*const GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord1f: Option<unsafe extern "C" fn(GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord1fv: Option<unsafe extern "C" fn(*const GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord1i: Option<unsafe extern "C" fn(GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord1iv: Option<unsafe extern "C" fn(*const GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord1s: Option<unsafe extern "C" fn(GLshort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord1sv: Option<unsafe extern "C" fn(*const GLshort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord2d: Option<unsafe extern "C" fn(GLdouble, GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord2dv: Option<unsafe extern "C" fn(*const GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord2f: Option<unsafe extern "C" fn(GLfloat, GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord2fv: Option<unsafe extern "C" fn(*const GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord2i: Option<unsafe extern "C" fn(GLint, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord2iv: Option<unsafe extern "C" fn(*const GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord2s: Option<unsafe extern "C" fn(GLshort, GLshort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord2sv: Option<unsafe extern "C" fn(*const GLshort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord3d: Option<
     unsafe extern "C" fn(GLdouble, GLdouble, GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord3dv: Option<unsafe extern "C" fn(*const GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord3f: Option<unsafe extern "C" fn(GLfloat, GLfloat, GLfloat) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord3fv: Option<unsafe extern "C" fn(*const GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord3i: Option<unsafe extern "C" fn(GLint, GLint, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord3iv: Option<unsafe extern "C" fn(*const GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord3s: Option<unsafe extern "C" fn(GLshort, GLshort, GLshort) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord3sv: Option<unsafe extern "C" fn(*const GLshort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord4d: Option<
     unsafe extern "C" fn(GLdouble, GLdouble, GLdouble, GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord4dv: Option<unsafe extern "C" fn(*const GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord4f: Option<
     unsafe extern "C" fn(GLfloat, GLfloat, GLfloat, GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord4fv: Option<unsafe extern "C" fn(*const GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord4i: Option<unsafe extern "C" fn(GLint, GLint, GLint, GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord4iv: Option<unsafe extern "C" fn(*const GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord4s: Option<
     unsafe extern "C" fn(GLshort, GLshort, GLshort, GLshort) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoord4sv: Option<unsafe extern "C" fn(*const GLshort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexEnvf: Option<unsafe extern "C" fn(GLenum, GLenum, GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexEnvfv: Option<
     unsafe extern "C" fn(GLenum, GLenum, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTexEnvi: Option<unsafe extern "C" fn(GLenum, GLenum, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexEnviv: Option<unsafe extern "C" fn(GLenum, GLenum, *const GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glTexGend: Option<unsafe extern "C" fn(GLenum, GLenum, GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexGendv: Option<
     unsafe extern "C" fn(GLenum, GLenum, *const GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTexGenf: Option<unsafe extern "C" fn(GLenum, GLenum, GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexGenfv: Option<
     unsafe extern "C" fn(GLenum, GLenum, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTexGeni: Option<unsafe extern "C" fn(GLenum, GLenum, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexGeniv: Option<unsafe extern "C" fn(GLenum, GLenum, *const GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glTexImage1D: Option<
     unsafe extern "C" fn(
         GLenum,
@@ -4622,7 +4060,6 @@ pub static mut _ptrc_glTexImage1D: Option<
         *const ::core::ffi::c_void,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTexImage2D: Option<
     unsafe extern "C" fn(
         GLenum,
@@ -4636,170 +4073,112 @@ pub static mut _ptrc_glTexImage2D: Option<
         *const ::core::ffi::c_void,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTexParameterf: Option<unsafe extern "C" fn(GLenum, GLenum, GLfloat) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glTexParameterfv: Option<
     unsafe extern "C" fn(GLenum, GLenum, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTexParameteri: Option<unsafe extern "C" fn(GLenum, GLenum, GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glTexParameteriv: Option<
     unsafe extern "C" fn(GLenum, GLenum, *const GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTranslated: Option<
     unsafe extern "C" fn(GLdouble, GLdouble, GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTranslatef: Option<unsafe extern "C" fn(GLfloat, GLfloat, GLfloat) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glVertex2d: Option<unsafe extern "C" fn(GLdouble, GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glVertex2dv: Option<unsafe extern "C" fn(*const GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glVertex2f: Option<unsafe extern "C" fn(GLfloat, GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glVertex2fv: Option<unsafe extern "C" fn(*const GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glVertex2i: Option<unsafe extern "C" fn(GLint, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glVertex2iv: Option<unsafe extern "C" fn(*const GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glVertex2s: Option<unsafe extern "C" fn(GLshort, GLshort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glVertex2sv: Option<unsafe extern "C" fn(*const GLshort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glVertex3d: Option<unsafe extern "C" fn(GLdouble, GLdouble, GLdouble) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glVertex3dv: Option<unsafe extern "C" fn(*const GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glVertex3f: Option<unsafe extern "C" fn(GLfloat, GLfloat, GLfloat) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glVertex3fv: Option<unsafe extern "C" fn(*const GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glVertex3i: Option<unsafe extern "C" fn(GLint, GLint, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glVertex3iv: Option<unsafe extern "C" fn(*const GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glVertex3s: Option<unsafe extern "C" fn(GLshort, GLshort, GLshort) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glVertex3sv: Option<unsafe extern "C" fn(*const GLshort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glVertex4d: Option<
     unsafe extern "C" fn(GLdouble, GLdouble, GLdouble, GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertex4dv: Option<unsafe extern "C" fn(*const GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glVertex4f: Option<
     unsafe extern "C" fn(GLfloat, GLfloat, GLfloat, GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertex4fv: Option<unsafe extern "C" fn(*const GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glVertex4i: Option<unsafe extern "C" fn(GLint, GLint, GLint, GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glVertex4iv: Option<unsafe extern "C" fn(*const GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glVertex4s: Option<
     unsafe extern "C" fn(GLshort, GLshort, GLshort, GLshort) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertex4sv: Option<unsafe extern "C" fn(*const GLshort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glViewport: Option<
     unsafe extern "C" fn(GLint, GLint, GLsizei, GLsizei) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glAreTexturesResident: Option<
     unsafe extern "C" fn(GLsizei, *const GLuint, *mut GLboolean) -> GLboolean,
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glArrayElement: Option<unsafe extern "C" fn(GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glBindTexture: Option<unsafe extern "C" fn(GLenum, GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glColorPointer: Option<
     unsafe extern "C" fn(GLint, GLenum, GLsizei, *const ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCopyTexImage1D: Option<
     unsafe extern "C" fn(GLenum, GLint, GLenum, GLint, GLint, GLsizei, GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCopyTexImage2D: Option<
     unsafe extern "C" fn(GLenum, GLint, GLenum, GLint, GLint, GLsizei, GLsizei, GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCopyTexSubImage1D: Option<
     unsafe extern "C" fn(GLenum, GLint, GLint, GLint, GLint, GLsizei) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCopyTexSubImage2D: Option<
     unsafe extern "C" fn(GLenum, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glDeleteTextures: Option<unsafe extern "C" fn(GLsizei, *const GLuint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glDisableClientState: Option<unsafe extern "C" fn(GLenum) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glDrawArrays: Option<unsafe extern "C" fn(GLenum, GLint, GLsizei) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glDrawElements: Option<
     unsafe extern "C" fn(GLenum, GLsizei, GLenum, *const ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glEdgeFlagPointer: Option<
     unsafe extern "C" fn(GLsizei, *const ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glEnableClientState: Option<unsafe extern "C" fn(GLenum) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glGenTextures: Option<unsafe extern "C" fn(GLsizei, *mut GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glIndexPointer: Option<
     unsafe extern "C" fn(GLenum, GLsizei, *const ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glIndexub: Option<unsafe extern "C" fn(GLubyte) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glIndexubv: Option<unsafe extern "C" fn(*const GLubyte) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glInterleavedArrays: Option<
     unsafe extern "C" fn(GLenum, GLsizei, *const ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glIsTexture: Option<unsafe extern "C" fn(GLuint) -> GLboolean> = None;
-#[no_mangle]
 pub static mut _ptrc_glNormalPointer: Option<
     unsafe extern "C" fn(GLenum, GLsizei, *const ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glPolygonOffset: Option<unsafe extern "C" fn(GLfloat, GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glPopClientAttrib: Option<unsafe extern "C" fn() -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glPrioritizeTextures: Option<
     unsafe extern "C" fn(GLsizei, *const GLuint, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glPushClientAttrib: Option<unsafe extern "C" fn(GLbitfield) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexCoordPointer: Option<
     unsafe extern "C" fn(GLint, GLenum, GLsizei, *const ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTexSubImage1D: Option<
     unsafe extern "C" fn(
         GLenum,
@@ -4811,7 +4190,6 @@ pub static mut _ptrc_glTexSubImage1D: Option<
         *const ::core::ffi::c_void,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTexSubImage2D: Option<
     unsafe extern "C" fn(
         GLenum,
@@ -4825,19 +4203,15 @@ pub static mut _ptrc_glTexSubImage2D: Option<
         *const ::core::ffi::c_void,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexPointer: Option<
     unsafe extern "C" fn(GLint, GLenum, GLsizei, *const ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCopyTexSubImage3D: Option<
     unsafe extern "C" fn(GLenum, GLint, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glDrawRangeElements: Option<
     unsafe extern "C" fn(GLenum, GLuint, GLuint, GLsizei, GLenum, *const ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTexImage3D: Option<
     unsafe extern "C" fn(
         GLenum,
@@ -4852,7 +4226,6 @@ pub static mut _ptrc_glTexImage3D: Option<
         *const ::core::ffi::c_void,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTexSubImage3D: Option<
     unsafe extern "C" fn(
         GLenum,
@@ -4868,11 +4241,8 @@ pub static mut _ptrc_glTexSubImage3D: Option<
         *const ::core::ffi::c_void,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glActiveTexture: Option<unsafe extern "C" fn(GLenum) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glClientActiveTexture: Option<unsafe extern "C" fn(GLenum) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glCompressedTexImage1D: Option<
     unsafe extern "C" fn(
         GLenum,
@@ -4884,7 +4254,6 @@ pub static mut _ptrc_glCompressedTexImage1D: Option<
         *const ::core::ffi::c_void,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCompressedTexImage2D: Option<
     unsafe extern "C" fn(
         GLenum,
@@ -4897,7 +4266,6 @@ pub static mut _ptrc_glCompressedTexImage2D: Option<
         *const ::core::ffi::c_void,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCompressedTexImage3D: Option<
     unsafe extern "C" fn(
         GLenum,
@@ -4911,7 +4279,6 @@ pub static mut _ptrc_glCompressedTexImage3D: Option<
         *const ::core::ffi::c_void,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCompressedTexSubImage1D: Option<
     unsafe extern "C" fn(
         GLenum,
@@ -4923,7 +4290,6 @@ pub static mut _ptrc_glCompressedTexSubImage1D: Option<
         *const ::core::ffi::c_void,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCompressedTexSubImage2D: Option<
     unsafe extern "C" fn(
         GLenum,
@@ -4937,7 +4303,6 @@ pub static mut _ptrc_glCompressedTexSubImage2D: Option<
         *const ::core::ffi::c_void,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCompressedTexSubImage3D: Option<
     unsafe extern "C" fn(
         GLenum,
@@ -4953,167 +4318,119 @@ pub static mut _ptrc_glCompressedTexSubImage3D: Option<
         *const ::core::ffi::c_void,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetCompressedTexImage: Option<
     unsafe extern "C" fn(GLenum, GLint, *mut ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glLoadTransposeMatrixd: Option<unsafe extern "C" fn(*const GLdouble) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glLoadTransposeMatrixf: Option<unsafe extern "C" fn(*const GLfloat) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glMultTransposeMatrixd: Option<unsafe extern "C" fn(*const GLdouble) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glMultTransposeMatrixf: Option<unsafe extern "C" fn(*const GLfloat) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord1d: Option<unsafe extern "C" fn(GLenum, GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord1dv: Option<
     unsafe extern "C" fn(GLenum, *const GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord1f: Option<unsafe extern "C" fn(GLenum, GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord1fv: Option<
     unsafe extern "C" fn(GLenum, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord1i: Option<unsafe extern "C" fn(GLenum, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord1iv: Option<unsafe extern "C" fn(GLenum, *const GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord1s: Option<unsafe extern "C" fn(GLenum, GLshort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord1sv: Option<
     unsafe extern "C" fn(GLenum, *const GLshort) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord2d: Option<
     unsafe extern "C" fn(GLenum, GLdouble, GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord2dv: Option<
     unsafe extern "C" fn(GLenum, *const GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord2f: Option<
     unsafe extern "C" fn(GLenum, GLfloat, GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord2fv: Option<
     unsafe extern "C" fn(GLenum, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord2i: Option<unsafe extern "C" fn(GLenum, GLint, GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord2iv: Option<unsafe extern "C" fn(GLenum, *const GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord2s: Option<
     unsafe extern "C" fn(GLenum, GLshort, GLshort) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord2sv: Option<
     unsafe extern "C" fn(GLenum, *const GLshort) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord3d: Option<
     unsafe extern "C" fn(GLenum, GLdouble, GLdouble, GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord3dv: Option<
     unsafe extern "C" fn(GLenum, *const GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord3f: Option<
     unsafe extern "C" fn(GLenum, GLfloat, GLfloat, GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord3fv: Option<
     unsafe extern "C" fn(GLenum, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord3i: Option<
     unsafe extern "C" fn(GLenum, GLint, GLint, GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord3iv: Option<unsafe extern "C" fn(GLenum, *const GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord3s: Option<
     unsafe extern "C" fn(GLenum, GLshort, GLshort, GLshort) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord3sv: Option<
     unsafe extern "C" fn(GLenum, *const GLshort) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord4d: Option<
     unsafe extern "C" fn(GLenum, GLdouble, GLdouble, GLdouble, GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord4dv: Option<
     unsafe extern "C" fn(GLenum, *const GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord4f: Option<
     unsafe extern "C" fn(GLenum, GLfloat, GLfloat, GLfloat, GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord4fv: Option<
     unsafe extern "C" fn(GLenum, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord4i: Option<
     unsafe extern "C" fn(GLenum, GLint, GLint, GLint, GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord4iv: Option<unsafe extern "C" fn(GLenum, *const GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord4s: Option<
     unsafe extern "C" fn(GLenum, GLshort, GLshort, GLshort, GLshort) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiTexCoord4sv: Option<
     unsafe extern "C" fn(GLenum, *const GLshort) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glSampleCoverage: Option<unsafe extern "C" fn(GLfloat, GLboolean) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glBlendColor: Option<
     unsafe extern "C" fn(GLfloat, GLfloat, GLfloat, GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glBlendEquation: Option<unsafe extern "C" fn(GLenum) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glBlendFuncSeparate: Option<
     unsafe extern "C" fn(GLenum, GLenum, GLenum, GLenum) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glFogCoordPointer: Option<
     unsafe extern "C" fn(GLenum, GLsizei, *const ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glFogCoordd: Option<unsafe extern "C" fn(GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glFogCoorddv: Option<unsafe extern "C" fn(*const GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glFogCoordf: Option<unsafe extern "C" fn(GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glFogCoordfv: Option<unsafe extern "C" fn(*const GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiDrawArrays: Option<
     unsafe extern "C" fn(GLenum, *const GLint, *const GLsizei, GLsizei) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glMultiDrawElements: Option<
     unsafe extern "C" fn(
         GLenum,
@@ -5123,193 +4440,124 @@ pub static mut _ptrc_glMultiDrawElements: Option<
         GLsizei,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glPointParameterf: Option<unsafe extern "C" fn(GLenum, GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glPointParameterfv: Option<
     unsafe extern "C" fn(GLenum, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glPointParameteri: Option<unsafe extern "C" fn(GLenum, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glPointParameteriv: Option<unsafe extern "C" fn(GLenum, *const GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glSecondaryColor3b: Option<
     unsafe extern "C" fn(GLbyte, GLbyte, GLbyte) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glSecondaryColor3bv: Option<unsafe extern "C" fn(*const GLbyte) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glSecondaryColor3d: Option<
     unsafe extern "C" fn(GLdouble, GLdouble, GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glSecondaryColor3dv: Option<unsafe extern "C" fn(*const GLdouble) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glSecondaryColor3f: Option<
     unsafe extern "C" fn(GLfloat, GLfloat, GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glSecondaryColor3fv: Option<unsafe extern "C" fn(*const GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glSecondaryColor3i: Option<unsafe extern "C" fn(GLint, GLint, GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glSecondaryColor3iv: Option<unsafe extern "C" fn(*const GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glSecondaryColor3s: Option<
     unsafe extern "C" fn(GLshort, GLshort, GLshort) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glSecondaryColor3sv: Option<unsafe extern "C" fn(*const GLshort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glSecondaryColor3ub: Option<
     unsafe extern "C" fn(GLubyte, GLubyte, GLubyte) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glSecondaryColor3ubv: Option<unsafe extern "C" fn(*const GLubyte) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glSecondaryColor3ui: Option<
     unsafe extern "C" fn(GLuint, GLuint, GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glSecondaryColor3uiv: Option<unsafe extern "C" fn(*const GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glSecondaryColor3us: Option<
     unsafe extern "C" fn(GLushort, GLushort, GLushort) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glSecondaryColor3usv: Option<unsafe extern "C" fn(*const GLushort) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glSecondaryColorPointer: Option<
     unsafe extern "C" fn(GLint, GLenum, GLsizei, *const ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glWindowPos2d: Option<unsafe extern "C" fn(GLdouble, GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glWindowPos2dv: Option<unsafe extern "C" fn(*const GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glWindowPos2f: Option<unsafe extern "C" fn(GLfloat, GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glWindowPos2fv: Option<unsafe extern "C" fn(*const GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glWindowPos2i: Option<unsafe extern "C" fn(GLint, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glWindowPos2iv: Option<unsafe extern "C" fn(*const GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glWindowPos2s: Option<unsafe extern "C" fn(GLshort, GLshort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glWindowPos2sv: Option<unsafe extern "C" fn(*const GLshort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glWindowPos3d: Option<
     unsafe extern "C" fn(GLdouble, GLdouble, GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glWindowPos3dv: Option<unsafe extern "C" fn(*const GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glWindowPos3f: Option<unsafe extern "C" fn(GLfloat, GLfloat, GLfloat) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glWindowPos3fv: Option<unsafe extern "C" fn(*const GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glWindowPos3i: Option<unsafe extern "C" fn(GLint, GLint, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glWindowPos3iv: Option<unsafe extern "C" fn(*const GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glWindowPos3s: Option<unsafe extern "C" fn(GLshort, GLshort, GLshort) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glWindowPos3sv: Option<unsafe extern "C" fn(*const GLshort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glBeginQuery: Option<unsafe extern "C" fn(GLenum, GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glBindBuffer: Option<unsafe extern "C" fn(GLenum, GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glBufferData: Option<
     unsafe extern "C" fn(GLenum, GLsizeiptr, *const ::core::ffi::c_void, GLenum) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glBufferSubData: Option<
     unsafe extern "C" fn(GLenum, GLintptr, GLsizeiptr, *const ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glDeleteBuffers: Option<unsafe extern "C" fn(GLsizei, *const GLuint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glDeleteQueries: Option<unsafe extern "C" fn(GLsizei, *const GLuint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glEndQuery: Option<unsafe extern "C" fn(GLenum) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glGenBuffers: Option<unsafe extern "C" fn(GLsizei, *mut GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glGenQueries: Option<unsafe extern "C" fn(GLsizei, *mut GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glGetBufferParameteriv: Option<
     unsafe extern "C" fn(GLenum, GLenum, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetBufferPointerv: Option<
     unsafe extern "C" fn(GLenum, GLenum, *mut *mut ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetBufferSubData: Option<
     unsafe extern "C" fn(GLenum, GLintptr, GLsizeiptr, *mut ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetQueryObjectiv: Option<
     unsafe extern "C" fn(GLuint, GLenum, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetQueryObjectuiv: Option<
     unsafe extern "C" fn(GLuint, GLenum, *mut GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetQueryiv: Option<unsafe extern "C" fn(GLenum, GLenum, *mut GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glIsBuffer: Option<unsafe extern "C" fn(GLuint) -> GLboolean> = None;
-#[no_mangle]
 pub static mut _ptrc_glIsQuery: Option<unsafe extern "C" fn(GLuint) -> GLboolean> = None;
-#[no_mangle]
 pub static mut _ptrc_glMapBuffer: Option<
     unsafe extern "C" fn(GLenum, GLenum) -> *mut ::core::ffi::c_void,
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUnmapBuffer: Option<unsafe extern "C" fn(GLenum) -> GLboolean> = None;
-#[no_mangle]
 pub static mut _ptrc_glAttachShader: Option<unsafe extern "C" fn(GLuint, GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glBindAttribLocation: Option<
     unsafe extern "C" fn(GLuint, GLuint, *const GLchar) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glBlendEquationSeparate: Option<unsafe extern "C" fn(GLenum, GLenum) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glCompileShader: Option<unsafe extern "C" fn(GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glCreateProgram: Option<unsafe extern "C" fn() -> GLuint> = None;
-#[no_mangle]
 pub static mut _ptrc_glCreateShader: Option<unsafe extern "C" fn(GLenum) -> GLuint> = None;
-#[no_mangle]
 pub static mut _ptrc_glDeleteProgram: Option<unsafe extern "C" fn(GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glDeleteShader: Option<unsafe extern "C" fn(GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glDetachShader: Option<unsafe extern "C" fn(GLuint, GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glDisableVertexAttribArray: Option<unsafe extern "C" fn(GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glDrawBuffers: Option<unsafe extern "C" fn(GLsizei, *const GLenum) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glEnableVertexAttribArray: Option<unsafe extern "C" fn(GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glGetActiveAttrib: Option<
     unsafe extern "C" fn(
         GLuint,
@@ -5321,7 +4569,6 @@ pub static mut _ptrc_glGetActiveAttrib: Option<
         *mut GLchar,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetActiveUniform: Option<
     unsafe extern "C" fn(
         GLuint,
@@ -5333,279 +4580,200 @@ pub static mut _ptrc_glGetActiveUniform: Option<
         *mut GLchar,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetAttachedShaders: Option<
     unsafe extern "C" fn(GLuint, GLsizei, *mut GLsizei, *mut GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetAttribLocation: Option<
     unsafe extern "C" fn(GLuint, *const GLchar) -> GLint,
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetProgramInfoLog: Option<
     unsafe extern "C" fn(GLuint, GLsizei, *mut GLsizei, *mut GLchar) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetProgramiv: Option<
     unsafe extern "C" fn(GLuint, GLenum, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetShaderInfoLog: Option<
     unsafe extern "C" fn(GLuint, GLsizei, *mut GLsizei, *mut GLchar) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetShaderSource: Option<
     unsafe extern "C" fn(GLuint, GLsizei, *mut GLsizei, *mut GLchar) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetShaderiv: Option<unsafe extern "C" fn(GLuint, GLenum, *mut GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glGetUniformLocation: Option<
     unsafe extern "C" fn(GLuint, *const GLchar) -> GLint,
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetUniformfv: Option<
     unsafe extern "C" fn(GLuint, GLint, *mut GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetUniformiv: Option<unsafe extern "C" fn(GLuint, GLint, *mut GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glGetVertexAttribPointerv: Option<
     unsafe extern "C" fn(GLuint, GLenum, *mut *mut ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetVertexAttribdv: Option<
     unsafe extern "C" fn(GLuint, GLenum, *mut GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetVertexAttribfv: Option<
     unsafe extern "C" fn(GLuint, GLenum, *mut GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetVertexAttribiv: Option<
     unsafe extern "C" fn(GLuint, GLenum, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glIsProgram: Option<unsafe extern "C" fn(GLuint) -> GLboolean> = None;
-#[no_mangle]
 pub static mut _ptrc_glIsShader: Option<unsafe extern "C" fn(GLuint) -> GLboolean> = None;
-#[no_mangle]
 pub static mut _ptrc_glLinkProgram: Option<unsafe extern "C" fn(GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glShaderSource: Option<
     unsafe extern "C" fn(GLuint, GLsizei, *const *const GLchar, *const GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glStencilFuncSeparate: Option<
     unsafe extern "C" fn(GLenum, GLenum, GLint, GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glStencilMaskSeparate: Option<unsafe extern "C" fn(GLenum, GLuint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glStencilOpSeparate: Option<
     unsafe extern "C" fn(GLenum, GLenum, GLenum, GLenum) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUniform1f: Option<unsafe extern "C" fn(GLint, GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glUniform1fv: Option<
     unsafe extern "C" fn(GLint, GLsizei, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUniform1i: Option<unsafe extern "C" fn(GLint, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glUniform1iv: Option<
     unsafe extern "C" fn(GLint, GLsizei, *const GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUniform2f: Option<unsafe extern "C" fn(GLint, GLfloat, GLfloat) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glUniform2fv: Option<
     unsafe extern "C" fn(GLint, GLsizei, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUniform2i: Option<unsafe extern "C" fn(GLint, GLint, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glUniform2iv: Option<
     unsafe extern "C" fn(GLint, GLsizei, *const GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUniform3f: Option<
     unsafe extern "C" fn(GLint, GLfloat, GLfloat, GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUniform3fv: Option<
     unsafe extern "C" fn(GLint, GLsizei, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUniform3i: Option<unsafe extern "C" fn(GLint, GLint, GLint, GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glUniform3iv: Option<
     unsafe extern "C" fn(GLint, GLsizei, *const GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUniform4f: Option<
     unsafe extern "C" fn(GLint, GLfloat, GLfloat, GLfloat, GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUniform4fv: Option<
     unsafe extern "C" fn(GLint, GLsizei, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUniform4i: Option<
     unsafe extern "C" fn(GLint, GLint, GLint, GLint, GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUniform4iv: Option<
     unsafe extern "C" fn(GLint, GLsizei, *const GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUniformMatrix2fv: Option<
     unsafe extern "C" fn(GLint, GLsizei, GLboolean, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUniformMatrix3fv: Option<
     unsafe extern "C" fn(GLint, GLsizei, GLboolean, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUniformMatrix4fv: Option<
     unsafe extern "C" fn(GLint, GLsizei, GLboolean, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUseProgram: Option<unsafe extern "C" fn(GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glValidateProgram: Option<unsafe extern "C" fn(GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib1d: Option<unsafe extern "C" fn(GLuint, GLdouble) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib1dv: Option<
     unsafe extern "C" fn(GLuint, *const GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib1f: Option<unsafe extern "C" fn(GLuint, GLfloat) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib1fv: Option<unsafe extern "C" fn(GLuint, *const GLfloat) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib1s: Option<unsafe extern "C" fn(GLuint, GLshort) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib1sv: Option<unsafe extern "C" fn(GLuint, *const GLshort) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib2d: Option<
     unsafe extern "C" fn(GLuint, GLdouble, GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib2dv: Option<
     unsafe extern "C" fn(GLuint, *const GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib2f: Option<
     unsafe extern "C" fn(GLuint, GLfloat, GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib2fv: Option<unsafe extern "C" fn(GLuint, *const GLfloat) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib2s: Option<
     unsafe extern "C" fn(GLuint, GLshort, GLshort) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib2sv: Option<unsafe extern "C" fn(GLuint, *const GLshort) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib3d: Option<
     unsafe extern "C" fn(GLuint, GLdouble, GLdouble, GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib3dv: Option<
     unsafe extern "C" fn(GLuint, *const GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib3f: Option<
     unsafe extern "C" fn(GLuint, GLfloat, GLfloat, GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib3fv: Option<unsafe extern "C" fn(GLuint, *const GLfloat) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib3s: Option<
     unsafe extern "C" fn(GLuint, GLshort, GLshort, GLshort) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib3sv: Option<unsafe extern "C" fn(GLuint, *const GLshort) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib4Nbv: Option<unsafe extern "C" fn(GLuint, *const GLbyte) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib4Niv: Option<unsafe extern "C" fn(GLuint, *const GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib4Nsv: Option<
     unsafe extern "C" fn(GLuint, *const GLshort) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib4Nub: Option<
     unsafe extern "C" fn(GLuint, GLubyte, GLubyte, GLubyte, GLubyte) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib4Nubv: Option<
     unsafe extern "C" fn(GLuint, *const GLubyte) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib4Nuiv: Option<
     unsafe extern "C" fn(GLuint, *const GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib4Nusv: Option<
     unsafe extern "C" fn(GLuint, *const GLushort) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib4bv: Option<unsafe extern "C" fn(GLuint, *const GLbyte) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib4d: Option<
     unsafe extern "C" fn(GLuint, GLdouble, GLdouble, GLdouble, GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib4dv: Option<
     unsafe extern "C" fn(GLuint, *const GLdouble) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib4f: Option<
     unsafe extern "C" fn(GLuint, GLfloat, GLfloat, GLfloat, GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib4fv: Option<unsafe extern "C" fn(GLuint, *const GLfloat) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib4iv: Option<unsafe extern "C" fn(GLuint, *const GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib4s: Option<
     unsafe extern "C" fn(GLuint, GLshort, GLshort, GLshort, GLshort) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib4sv: Option<unsafe extern "C" fn(GLuint, *const GLshort) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib4ubv: Option<
     unsafe extern "C" fn(GLuint, *const GLubyte) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib4uiv: Option<unsafe extern "C" fn(GLuint, *const GLuint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttrib4usv: Option<
     unsafe extern "C" fn(GLuint, *const GLushort) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttribPointer: Option<
     unsafe extern "C" fn(
         GLuint,
@@ -5616,53 +4784,38 @@ pub static mut _ptrc_glVertexAttribPointer: Option<
         *const ::core::ffi::c_void,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUniformMatrix2x3fv: Option<
     unsafe extern "C" fn(GLint, GLsizei, GLboolean, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUniformMatrix2x4fv: Option<
     unsafe extern "C" fn(GLint, GLsizei, GLboolean, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUniformMatrix3x2fv: Option<
     unsafe extern "C" fn(GLint, GLsizei, GLboolean, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUniformMatrix3x4fv: Option<
     unsafe extern "C" fn(GLint, GLsizei, GLboolean, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUniformMatrix4x2fv: Option<
     unsafe extern "C" fn(GLint, GLsizei, GLboolean, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUniformMatrix4x3fv: Option<
     unsafe extern "C" fn(GLint, GLsizei, GLboolean, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glBeginConditionalRender: Option<unsafe extern "C" fn(GLuint, GLenum) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glBeginTransformFeedback: Option<unsafe extern "C" fn(GLenum) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glBindBufferBase: Option<unsafe extern "C" fn(GLenum, GLuint, GLuint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glBindBufferRange: Option<
     unsafe extern "C" fn(GLenum, GLuint, GLuint, GLintptr, GLsizeiptr) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glBindFragDataLocation: Option<
     unsafe extern "C" fn(GLuint, GLuint, *const GLchar) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glBindFramebuffer: Option<unsafe extern "C" fn(GLenum, GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glBindRenderbuffer: Option<unsafe extern "C" fn(GLenum, GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glBindVertexArray: Option<unsafe extern "C" fn(GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glBlitFramebuffer: Option<
     unsafe extern "C" fn(
         GLint,
@@ -5677,118 +4830,85 @@ pub static mut _ptrc_glBlitFramebuffer: Option<
         GLenum,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCheckFramebufferStatus: Option<unsafe extern "C" fn(GLenum) -> GLenum> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glClampColor: Option<unsafe extern "C" fn(GLenum, GLenum) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glClearBufferfi: Option<
     unsafe extern "C" fn(GLenum, GLint, GLfloat, GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glClearBufferfv: Option<
     unsafe extern "C" fn(GLenum, GLint, *const GLfloat) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glClearBufferiv: Option<
     unsafe extern "C" fn(GLenum, GLint, *const GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glClearBufferuiv: Option<
     unsafe extern "C" fn(GLenum, GLint, *const GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glColorMaski: Option<
     unsafe extern "C" fn(GLuint, GLboolean, GLboolean, GLboolean, GLboolean) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glDeleteFramebuffers: Option<
     unsafe extern "C" fn(GLsizei, *const GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glDeleteRenderbuffers: Option<
     unsafe extern "C" fn(GLsizei, *const GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glDeleteVertexArrays: Option<
     unsafe extern "C" fn(GLsizei, *const GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glDisablei: Option<unsafe extern "C" fn(GLenum, GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glEnablei: Option<unsafe extern "C" fn(GLenum, GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glEndConditionalRender: Option<unsafe extern "C" fn() -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glEndTransformFeedback: Option<unsafe extern "C" fn() -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glFlushMappedBufferRange: Option<
     unsafe extern "C" fn(GLenum, GLintptr, GLsizeiptr) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glFramebufferRenderbuffer: Option<
     unsafe extern "C" fn(GLenum, GLenum, GLenum, GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glFramebufferTexture1D: Option<
     unsafe extern "C" fn(GLenum, GLenum, GLenum, GLuint, GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glFramebufferTexture2D: Option<
     unsafe extern "C" fn(GLenum, GLenum, GLenum, GLuint, GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glFramebufferTexture3D: Option<
     unsafe extern "C" fn(GLenum, GLenum, GLenum, GLuint, GLint, GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glFramebufferTextureLayer: Option<
     unsafe extern "C" fn(GLenum, GLenum, GLuint, GLint, GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGenFramebuffers: Option<unsafe extern "C" fn(GLsizei, *mut GLuint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glGenRenderbuffers: Option<unsafe extern "C" fn(GLsizei, *mut GLuint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glGenVertexArrays: Option<unsafe extern "C" fn(GLsizei, *mut GLuint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glGenerateMipmap: Option<unsafe extern "C" fn(GLenum) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glGetBooleani_v: Option<
     unsafe extern "C" fn(GLenum, GLuint, *mut GLboolean) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetFragDataLocation: Option<
     unsafe extern "C" fn(GLuint, *const GLchar) -> GLint,
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetFramebufferAttachmentParameteriv: Option<
     unsafe extern "C" fn(GLenum, GLenum, GLenum, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetIntegeri_v: Option<
     unsafe extern "C" fn(GLenum, GLuint, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetRenderbufferParameteriv: Option<
     unsafe extern "C" fn(GLenum, GLenum, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetStringi: Option<unsafe extern "C" fn(GLenum, GLuint) -> *const GLubyte> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glGetTexParameterIiv: Option<
     unsafe extern "C" fn(GLenum, GLenum, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetTexParameterIuiv: Option<
     unsafe extern "C" fn(GLenum, GLenum, *mut GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetTransformFeedbackVarying: Option<
     unsafe extern "C" fn(
         GLuint,
@@ -5800,197 +4920,143 @@ pub static mut _ptrc_glGetTransformFeedbackVarying: Option<
         *mut GLchar,
     ) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetUniformuiv: Option<
     unsafe extern "C" fn(GLuint, GLint, *mut GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetVertexAttribIiv: Option<
     unsafe extern "C" fn(GLuint, GLenum, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetVertexAttribIuiv: Option<
     unsafe extern "C" fn(GLuint, GLenum, *mut GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glIsEnabledi: Option<unsafe extern "C" fn(GLenum, GLuint) -> GLboolean> = None;
-#[no_mangle]
 pub static mut _ptrc_glIsFramebuffer: Option<unsafe extern "C" fn(GLuint) -> GLboolean> = None;
-#[no_mangle]
 pub static mut _ptrc_glIsRenderbuffer: Option<unsafe extern "C" fn(GLuint) -> GLboolean> = None;
-#[no_mangle]
 pub static mut _ptrc_glIsVertexArray: Option<unsafe extern "C" fn(GLuint) -> GLboolean> = None;
-#[no_mangle]
 pub static mut _ptrc_glMapBufferRange: Option<
     unsafe extern "C" fn(GLenum, GLintptr, GLsizeiptr, GLbitfield) -> *mut ::core::ffi::c_void,
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glRenderbufferStorage: Option<
     unsafe extern "C" fn(GLenum, GLenum, GLsizei, GLsizei) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glRenderbufferStorageMultisample: Option<
     unsafe extern "C" fn(GLenum, GLsizei, GLenum, GLsizei, GLsizei) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTexParameterIiv: Option<
     unsafe extern "C" fn(GLenum, GLenum, *const GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTexParameterIuiv: Option<
     unsafe extern "C" fn(GLenum, GLenum, *const GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glTransformFeedbackVaryings: Option<
     unsafe extern "C" fn(GLuint, GLsizei, *const *const GLchar, GLenum) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUniform1ui: Option<unsafe extern "C" fn(GLint, GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glUniform1uiv: Option<
     unsafe extern "C" fn(GLint, GLsizei, *const GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUniform2ui: Option<unsafe extern "C" fn(GLint, GLuint, GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glUniform2uiv: Option<
     unsafe extern "C" fn(GLint, GLsizei, *const GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUniform3ui: Option<
     unsafe extern "C" fn(GLint, GLuint, GLuint, GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUniform3uiv: Option<
     unsafe extern "C" fn(GLint, GLsizei, *const GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUniform4ui: Option<
     unsafe extern "C" fn(GLint, GLuint, GLuint, GLuint, GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glUniform4uiv: Option<
     unsafe extern "C" fn(GLint, GLsizei, *const GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttribI1i: Option<unsafe extern "C" fn(GLuint, GLint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttribI1iv: Option<unsafe extern "C" fn(GLuint, *const GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttribI1ui: Option<unsafe extern "C" fn(GLuint, GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttribI1uiv: Option<
     unsafe extern "C" fn(GLuint, *const GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttribI2i: Option<unsafe extern "C" fn(GLuint, GLint, GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttribI2iv: Option<unsafe extern "C" fn(GLuint, *const GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttribI2ui: Option<
     unsafe extern "C" fn(GLuint, GLuint, GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttribI2uiv: Option<
     unsafe extern "C" fn(GLuint, *const GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttribI3i: Option<
     unsafe extern "C" fn(GLuint, GLint, GLint, GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttribI3iv: Option<unsafe extern "C" fn(GLuint, *const GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttribI3ui: Option<
     unsafe extern "C" fn(GLuint, GLuint, GLuint, GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttribI3uiv: Option<
     unsafe extern "C" fn(GLuint, *const GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttribI4bv: Option<unsafe extern "C" fn(GLuint, *const GLbyte) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttribI4i: Option<
     unsafe extern "C" fn(GLuint, GLint, GLint, GLint, GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttribI4iv: Option<unsafe extern "C" fn(GLuint, *const GLint) -> ()> =
     None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttribI4sv: Option<
     unsafe extern "C" fn(GLuint, *const GLshort) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttribI4ubv: Option<
     unsafe extern "C" fn(GLuint, *const GLubyte) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttribI4ui: Option<
     unsafe extern "C" fn(GLuint, GLuint, GLuint, GLuint, GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttribI4uiv: Option<
     unsafe extern "C" fn(GLuint, *const GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttribI4usv: Option<
     unsafe extern "C" fn(GLuint, *const GLushort) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glVertexAttribIPointer: Option<
     unsafe extern "C" fn(GLuint, GLint, GLenum, GLsizei, *const ::core::ffi::c_void) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glCopyBufferSubData: Option<
     unsafe extern "C" fn(GLenum, GLenum, GLintptr, GLintptr, GLsizeiptr) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glDrawArraysInstanced: Option<
     unsafe extern "C" fn(GLenum, GLint, GLsizei, GLsizei) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glDrawElementsInstanced: Option<
     unsafe extern "C" fn(GLenum, GLsizei, GLenum, *const ::core::ffi::c_void, GLsizei) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetActiveUniformBlockName: Option<
     unsafe extern "C" fn(GLuint, GLuint, GLsizei, *mut GLsizei, *mut GLchar) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetActiveUniformBlockiv: Option<
     unsafe extern "C" fn(GLuint, GLuint, GLenum, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetActiveUniformName: Option<
     unsafe extern "C" fn(GLuint, GLuint, GLsizei, *mut GLsizei, *mut GLchar) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetActiveUniformsiv: Option<
     unsafe extern "C" fn(GLuint, GLsizei, *const GLuint, GLenum, *mut GLint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetUniformBlockIndex: Option<
     unsafe extern "C" fn(GLuint, *const GLchar) -> GLuint,
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glGetUniformIndices: Option<
     unsafe extern "C" fn(GLuint, GLsizei, *const *const GLchar, *mut GLuint) -> (),
 > = None;
-#[no_mangle]
 pub static mut _ptrc_glPrimitiveRestartIndex: Option<unsafe extern "C" fn(GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glTexBuffer: Option<unsafe extern "C" fn(GLenum, GLenum, GLuint) -> ()> = None;
-#[no_mangle]
 pub static mut _ptrc_glUniformBlockBinding: Option<
     unsafe extern "C" fn(GLuint, GLuint, GLuint) -> (),
 > = None;
-unsafe extern "C" fn Load_Version_3_1() -> ::core::ffi::c_int {
+unsafe fn Load_Version_3_1() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     _ptrc_glAccum = ::core::mem::transmute::<
         *mut ::core::ffi::c_void,
@@ -12131,17 +11197,13 @@ static mut ExtensionMap: [ogl_StrToExtMap; 52] = unsafe {
             extensionName: b"GL_ARB_ES2_compatibility\0" as *const u8 as *const ::core::ffi::c_char
                 as *mut ::core::ffi::c_char,
             extensionVariable: &raw const ogl_ext_ARB_ES2_compatibility as *mut ::core::ffi::c_int,
-            LoadExtension: Some(
-                Load_ARB_ES2_compatibility as unsafe extern "C" fn() -> ::core::ffi::c_int,
-            ),
+            LoadExtension: Some(Load_ARB_ES2_compatibility as unsafe fn() -> ::core::ffi::c_int),
         },
         ogl_StrToExtMap_s {
             extensionName: b"GL_ARB_get_program_binary\0" as *const u8 as *const ::core::ffi::c_char
                 as *mut ::core::ffi::c_char,
             extensionVariable: &raw const ogl_ext_ARB_get_program_binary as *mut ::core::ffi::c_int,
-            LoadExtension: Some(
-                Load_ARB_get_program_binary as unsafe extern "C" fn() -> ::core::ffi::c_int,
-            ),
+            LoadExtension: Some(Load_ARB_get_program_binary as unsafe fn() -> ::core::ffi::c_int),
         },
         ogl_StrToExtMap_s {
             extensionName: b"GL_ARB_explicit_uniform_location\0" as *const u8
@@ -12157,9 +11219,7 @@ static mut ExtensionMap: [ogl_StrToExtMap; 52] = unsafe {
                 as *mut ::core::ffi::c_char,
             extensionVariable: &raw const ogl_ext_ARB_internalformat_query
                 as *mut ::core::ffi::c_int,
-            LoadExtension: Some(
-                Load_ARB_internalformat_query as unsafe extern "C" fn() -> ::core::ffi::c_int,
-            ),
+            LoadExtension: Some(Load_ARB_internalformat_query as unsafe fn() -> ::core::ffi::c_int),
         },
         ogl_StrToExtMap_s {
             extensionName: b"GL_ARB_internalformat_query2\0" as *const u8
@@ -12168,7 +11228,7 @@ static mut ExtensionMap: [ogl_StrToExtMap; 52] = unsafe {
             extensionVariable: &raw const ogl_ext_ARB_internalformat_query2
                 as *mut ::core::ffi::c_int,
             LoadExtension: Some(
-                Load_ARB_internalformat_query2 as unsafe extern "C" fn() -> ::core::ffi::c_int,
+                Load_ARB_internalformat_query2 as unsafe fn() -> ::core::ffi::c_int,
             ),
         },
         ogl_StrToExtMap_s {
@@ -12186,7 +11246,7 @@ static mut ExtensionMap: [ogl_StrToExtMap; 52] = unsafe {
             extensionVariable: &raw const ogl_ext_ARB_program_interface_query
                 as *mut ::core::ffi::c_int,
             LoadExtension: Some(
-                Load_ARB_program_interface_query as unsafe extern "C" fn() -> ::core::ffi::c_int,
+                Load_ARB_program_interface_query as unsafe fn() -> ::core::ffi::c_int,
             ),
         },
         ogl_StrToExtMap_s {
@@ -12196,7 +11256,7 @@ static mut ExtensionMap: [ogl_StrToExtMap; 52] = unsafe {
             extensionVariable: &raw const ogl_ext_ARB_separate_shader_objects
                 as *mut ::core::ffi::c_int,
             LoadExtension: Some(
-                Load_ARB_separate_shader_objects as unsafe extern "C" fn() -> ::core::ffi::c_int,
+                Load_ARB_separate_shader_objects as unsafe fn() -> ::core::ffi::c_int,
             ),
         },
         ogl_StrToExtMap_s {
@@ -12221,25 +11281,19 @@ static mut ExtensionMap: [ogl_StrToExtMap; 52] = unsafe {
                 as *mut ::core::ffi::c_char,
             extensionVariable: &raw const ogl_ext_ARB_texture_buffer_range
                 as *mut ::core::ffi::c_int,
-            LoadExtension: Some(
-                Load_ARB_texture_buffer_range as unsafe extern "C" fn() -> ::core::ffi::c_int,
-            ),
+            LoadExtension: Some(Load_ARB_texture_buffer_range as unsafe fn() -> ::core::ffi::c_int),
         },
         ogl_StrToExtMap_s {
             extensionName: b"GL_ARB_texture_storage\0" as *const u8 as *const ::core::ffi::c_char
                 as *mut ::core::ffi::c_char,
             extensionVariable: &raw const ogl_ext_ARB_texture_storage as *mut ::core::ffi::c_int,
-            LoadExtension: Some(
-                Load_ARB_texture_storage as unsafe extern "C" fn() -> ::core::ffi::c_int,
-            ),
+            LoadExtension: Some(Load_ARB_texture_storage as unsafe fn() -> ::core::ffi::c_int),
         },
         ogl_StrToExtMap_s {
             extensionName: b"GL_ARB_texture_view\0" as *const u8 as *const ::core::ffi::c_char
                 as *mut ::core::ffi::c_char,
             extensionVariable: &raw const ogl_ext_ARB_texture_view as *mut ::core::ffi::c_int,
-            LoadExtension: Some(
-                Load_ARB_texture_view as unsafe extern "C" fn() -> ::core::ffi::c_int,
-            ),
+            LoadExtension: Some(Load_ARB_texture_view as unsafe fn() -> ::core::ffi::c_int),
         },
         ogl_StrToExtMap_s {
             extensionName: b"GL_ARB_vertex_attrib_binding\0" as *const u8
@@ -12248,16 +11302,14 @@ static mut ExtensionMap: [ogl_StrToExtMap; 52] = unsafe {
             extensionVariable: &raw const ogl_ext_ARB_vertex_attrib_binding
                 as *mut ::core::ffi::c_int,
             LoadExtension: Some(
-                Load_ARB_vertex_attrib_binding as unsafe extern "C" fn() -> ::core::ffi::c_int,
+                Load_ARB_vertex_attrib_binding as unsafe fn() -> ::core::ffi::c_int,
             ),
         },
         ogl_StrToExtMap_s {
             extensionName: b"GL_ARB_viewport_array\0" as *const u8 as *const ::core::ffi::c_char
                 as *mut ::core::ffi::c_char,
             extensionVariable: &raw const ogl_ext_ARB_viewport_array as *mut ::core::ffi::c_int,
-            LoadExtension: Some(
-                Load_ARB_viewport_array as unsafe extern "C" fn() -> ::core::ffi::c_int,
-            ),
+            LoadExtension: Some(Load_ARB_viewport_array as unsafe fn() -> ::core::ffi::c_int),
         },
         ogl_StrToExtMap_s {
             extensionName: b"GL_ARB_arrays_of_arrays\0" as *const u8 as *const ::core::ffi::c_char
@@ -12271,17 +11323,13 @@ static mut ExtensionMap: [ogl_StrToExtMap; 52] = unsafe {
                 as *mut ::core::ffi::c_char,
             extensionVariable: &raw const ogl_ext_ARB_clear_buffer_object
                 as *mut ::core::ffi::c_int,
-            LoadExtension: Some(
-                Load_ARB_clear_buffer_object as unsafe extern "C" fn() -> ::core::ffi::c_int,
-            ),
+            LoadExtension: Some(Load_ARB_clear_buffer_object as unsafe fn() -> ::core::ffi::c_int),
         },
         ogl_StrToExtMap_s {
             extensionName: b"GL_ARB_copy_image\0" as *const u8 as *const ::core::ffi::c_char
                 as *mut ::core::ffi::c_char,
             extensionVariable: &raw const ogl_ext_ARB_copy_image as *mut ::core::ffi::c_int,
-            LoadExtension: Some(
-                Load_ARB_copy_image as unsafe extern "C" fn() -> ::core::ffi::c_int,
-            ),
+            LoadExtension: Some(Load_ARB_copy_image as unsafe fn() -> ::core::ffi::c_int),
         },
         ogl_StrToExtMap_s {
             extensionName: b"GL_ARB_ES3_compatibility\0" as *const u8 as *const ::core::ffi::c_char
@@ -12304,16 +11352,14 @@ static mut ExtensionMap: [ogl_StrToExtMap; 52] = unsafe {
             extensionVariable: &raw const ogl_ext_ARB_framebuffer_no_attachments
                 as *mut ::core::ffi::c_int,
             LoadExtension: Some(
-                Load_ARB_framebuffer_no_attachments as unsafe extern "C" fn() -> ::core::ffi::c_int,
+                Load_ARB_framebuffer_no_attachments as unsafe fn() -> ::core::ffi::c_int,
             ),
         },
         ogl_StrToExtMap_s {
             extensionName: b"GL_ARB_invalidate_subdata\0" as *const u8 as *const ::core::ffi::c_char
                 as *mut ::core::ffi::c_char,
             extensionVariable: &raw const ogl_ext_ARB_invalidate_subdata as *mut ::core::ffi::c_int,
-            LoadExtension: Some(
-                Load_ARB_invalidate_subdata as unsafe extern "C" fn() -> ::core::ffi::c_int,
-            ),
+            LoadExtension: Some(Load_ARB_invalidate_subdata as unsafe fn() -> ::core::ffi::c_int),
         },
         ogl_StrToExtMap_s {
             extensionName: b"GL_ARB_robust_buffer_access_behavior\0" as *const u8
@@ -12344,31 +11390,26 @@ static mut ExtensionMap: [ogl_StrToExtMap; 52] = unsafe {
             extensionVariable: &raw const ogl_ext_ARB_texture_storage_multisample
                 as *mut ::core::ffi::c_int,
             LoadExtension: Some(
-                Load_ARB_texture_storage_multisample
-                    as unsafe extern "C" fn() -> ::core::ffi::c_int,
+                Load_ARB_texture_storage_multisample as unsafe fn() -> ::core::ffi::c_int,
             ),
         },
         ogl_StrToExtMap_s {
             extensionName: b"GL_KHR_debug\0" as *const u8 as *const ::core::ffi::c_char
                 as *mut ::core::ffi::c_char,
             extensionVariable: &raw const ogl_ext_KHR_debug as *mut ::core::ffi::c_int,
-            LoadExtension: Some(Load_KHR_debug as unsafe extern "C" fn() -> ::core::ffi::c_int),
+            LoadExtension: Some(Load_KHR_debug as unsafe fn() -> ::core::ffi::c_int),
         },
         ogl_StrToExtMap_s {
             extensionName: b"GL_ARB_buffer_storage\0" as *const u8 as *const ::core::ffi::c_char
                 as *mut ::core::ffi::c_char,
             extensionVariable: &raw const ogl_ext_ARB_buffer_storage as *mut ::core::ffi::c_int,
-            LoadExtension: Some(
-                Load_ARB_buffer_storage as unsafe extern "C" fn() -> ::core::ffi::c_int,
-            ),
+            LoadExtension: Some(Load_ARB_buffer_storage as unsafe fn() -> ::core::ffi::c_int),
         },
         ogl_StrToExtMap_s {
             extensionName: b"GL_ARB_clear_texture\0" as *const u8 as *const ::core::ffi::c_char
                 as *mut ::core::ffi::c_char,
             extensionVariable: &raw const ogl_ext_ARB_clear_texture as *mut ::core::ffi::c_int,
-            LoadExtension: Some(
-                Load_ARB_clear_texture as unsafe extern "C" fn() -> ::core::ffi::c_int,
-            ),
+            LoadExtension: Some(Load_ARB_clear_texture as unsafe fn() -> ::core::ffi::c_int),
         },
         ogl_StrToExtMap_s {
             extensionName: b"GL_ARB_enhanced_layouts\0" as *const u8 as *const ::core::ffi::c_char
@@ -12380,9 +11421,7 @@ static mut ExtensionMap: [ogl_StrToExtMap; 52] = unsafe {
             extensionName: b"GL_ARB_multi_bind\0" as *const u8 as *const ::core::ffi::c_char
                 as *mut ::core::ffi::c_char,
             extensionVariable: &raw const ogl_ext_ARB_multi_bind as *mut ::core::ffi::c_int,
-            LoadExtension: Some(
-                Load_ARB_multi_bind as unsafe extern "C" fn() -> ::core::ffi::c_int,
-            ),
+            LoadExtension: Some(Load_ARB_multi_bind as unsafe fn() -> ::core::ffi::c_int),
         },
         ogl_StrToExtMap_s {
             extensionName: b"GL_ARB_query_buffer_object\0" as *const u8
@@ -12426,9 +11465,7 @@ static mut ExtensionMap: [ogl_StrToExtMap; 52] = unsafe {
             extensionName: b"GL_ARB_clip_control\0" as *const u8 as *const ::core::ffi::c_char
                 as *mut ::core::ffi::c_char,
             extensionVariable: &raw const ogl_ext_ARB_clip_control as *mut ::core::ffi::c_int,
-            LoadExtension: Some(
-                Load_ARB_clip_control as unsafe extern "C" fn() -> ::core::ffi::c_int,
-            ),
+            LoadExtension: Some(Load_ARB_clip_control as unsafe fn() -> ::core::ffi::c_int),
         },
         ogl_StrToExtMap_s {
             extensionName: b"GL_ARB_conditional_render_inverted\0" as *const u8
@@ -12456,9 +11493,7 @@ static mut ExtensionMap: [ogl_StrToExtMap; 52] = unsafe {
                 as *mut ::core::ffi::c_char,
             extensionVariable: &raw const ogl_ext_ARB_direct_state_access
                 as *mut ::core::ffi::c_int,
-            LoadExtension: Some(
-                Load_ARB_direct_state_access as unsafe extern "C" fn() -> ::core::ffi::c_int,
-            ),
+            LoadExtension: Some(Load_ARB_direct_state_access as unsafe fn() -> ::core::ffi::c_int),
         },
         ogl_StrToExtMap_s {
             extensionName: b"GL_ARB_get_texture_sub_image\0" as *const u8
@@ -12467,7 +11502,7 @@ static mut ExtensionMap: [ogl_StrToExtMap; 52] = unsafe {
             extensionVariable: &raw const ogl_ext_ARB_get_texture_sub_image
                 as *mut ::core::ffi::c_int,
             LoadExtension: Some(
-                Load_ARB_get_texture_sub_image as unsafe extern "C" fn() -> ::core::ffi::c_int,
+                Load_ARB_get_texture_sub_image as unsafe fn() -> ::core::ffi::c_int,
             ),
         },
         ogl_StrToExtMap_s {
@@ -12482,9 +11517,7 @@ static mut ExtensionMap: [ogl_StrToExtMap; 52] = unsafe {
             extensionName: b"GL_ARB_texture_barrier\0" as *const u8 as *const ::core::ffi::c_char
                 as *mut ::core::ffi::c_char,
             extensionVariable: &raw const ogl_ext_ARB_texture_barrier as *mut ::core::ffi::c_int,
-            LoadExtension: Some(
-                Load_ARB_texture_barrier as unsafe extern "C" fn() -> ::core::ffi::c_int,
-            ),
+            LoadExtension: Some(Load_ARB_texture_barrier as unsafe fn() -> ::core::ffi::c_int),
         },
         ogl_StrToExtMap_s {
             extensionName: b"GL_KHR_context_flush_control\0" as *const u8
@@ -12506,9 +11539,7 @@ static mut ExtensionMap: [ogl_StrToExtMap; 52] = unsafe {
             extensionName: b"GL_KHR_robustness\0" as *const u8 as *const ::core::ffi::c_char
                 as *mut ::core::ffi::c_char,
             extensionVariable: &raw const ogl_ext_KHR_robustness as *mut ::core::ffi::c_int,
-            LoadExtension: Some(
-                Load_KHR_robustness as unsafe extern "C" fn() -> ::core::ffi::c_int,
-            ),
+            LoadExtension: Some(Load_KHR_robustness as unsafe fn() -> ::core::ffi::c_int),
         },
         ogl_StrToExtMap_s {
             extensionName: b"GL_EXT_texture_compression_s3tc\0" as *const u8
@@ -12535,9 +11566,7 @@ static mut ExtensionMap: [ogl_StrToExtMap; 52] = unsafe {
     ]
 };
 static mut g_extensionMapSize: ::core::ffi::c_int = 52 as ::core::ffi::c_int;
-unsafe extern "C" fn FindExtEntry(
-    mut extensionName: *const ::core::ffi::c_char,
-) -> *mut ogl_StrToExtMap {
+unsafe fn FindExtEntry(mut extensionName: *const ::core::ffi::c_char) -> *mut ogl_StrToExtMap {
     let mut loop_0: ::core::ffi::c_int = 0;
     let mut currLoc: *mut ogl_StrToExtMap = &raw mut ExtensionMap as *mut ogl_StrToExtMap;
     loop_0 = 0 as ::core::ffi::c_int;
@@ -12550,7 +11579,7 @@ unsafe extern "C" fn FindExtEntry(
     }
     return ::core::ptr::null_mut::<ogl_StrToExtMap>();
 }
-unsafe extern "C" fn ClearExtensionVars() {
+unsafe fn ClearExtensionVars() {
     ogl_ext_ARB_compressed_texture_pixel_storage = ogl_LOAD_FAILED as ::core::ffi::c_int;
     ogl_ext_ARB_conservative_depth = ogl_LOAD_FAILED as ::core::ffi::c_int;
     ogl_ext_ARB_ES2_compatibility = ogl_LOAD_FAILED as ::core::ffi::c_int;
@@ -12604,7 +11633,7 @@ unsafe extern "C" fn ClearExtensionVars() {
     ogl_ext_EXT_texture_sRGB = ogl_LOAD_FAILED as ::core::ffi::c_int;
     ogl_ext_EXT_texture_filter_anisotropic = ogl_LOAD_FAILED as ::core::ffi::c_int;
 }
-unsafe extern "C" fn LoadExtByName(mut extensionName: *const ::core::ffi::c_char) {
+unsafe fn LoadExtByName(mut extensionName: *const ::core::ffi::c_char) {
     let mut entry: *mut ogl_StrToExtMap = ::core::ptr::null_mut::<ogl_StrToExtMap>();
     entry = FindExtEntry(extensionName);
     if !entry.is_null() {
@@ -12621,7 +11650,7 @@ unsafe extern "C" fn LoadExtByName(mut extensionName: *const ::core::ffi::c_char
         }
     }
 }
-unsafe extern "C" fn ProcExtsFromExtString(mut strExtList: *const ::core::ffi::c_char) {
+unsafe fn ProcExtsFromExtString(mut strExtList: *const ::core::ffi::c_char) {
     let mut iExtListLen: size_t = strlen(strExtList);
     let mut strExtListEnd: *const ::core::ffi::c_char = strExtList.offset(iExtListLen as isize);
     let mut strCurrPos: *const ::core::ffi::c_char = strExtList;
@@ -12651,7 +11680,7 @@ unsafe extern "C" fn ProcExtsFromExtString(mut strExtList: *const ::core::ffi::c
         }
     }
 }
-unsafe extern "C" fn ProcExtsFromExtList() {
+unsafe fn ProcExtsFromExtList() {
     let mut iLoop: GLint = 0;
     let mut iNumExtensions: GLint = 0 as GLint;
     _ptrc_glGetIntegerv.expect("non-null function pointer")(
@@ -12669,8 +11698,7 @@ unsafe extern "C" fn ProcExtsFromExtList() {
         iLoop += 1;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ogl_LoadFunctions() -> ::core::ffi::c_int {
+pub unsafe fn ogl_LoadFunctions() -> ::core::ffi::c_int {
     let mut numFailed: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     ClearExtensionVars();
     _ptrc_glGetString = ::core::mem::transmute::<
@@ -12716,7 +11744,7 @@ pub unsafe extern "C" fn ogl_LoadFunctions() -> ::core::ffi::c_int {
 }
 static mut g_major_version: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 static mut g_minor_version: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-unsafe extern "C" fn ParseVersionFromString(
+unsafe fn ParseVersionFromString(
     mut pOutMajor: *mut ::core::ffi::c_int,
     mut pOutMinor: *mut ::core::ffi::c_int,
     mut strVersion: *const ::core::ffi::c_char,
@@ -12731,7 +11759,7 @@ unsafe extern "C" fn ParseVersionFromString(
     *pOutMajor = atoi(strVersion);
     *pOutMinor = atoi(strDotPos.offset(1 as ::core::ffi::c_int as isize));
 }
-unsafe extern "C" fn GetGLVersion() {
+unsafe fn GetGLVersion() {
     ParseVersionFromString(
         &raw mut g_major_version,
         &raw mut g_minor_version,
@@ -12739,22 +11767,19 @@ unsafe extern "C" fn GetGLVersion() {
             as *const ::core::ffi::c_char,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn ogl_GetMajorVersion() -> ::core::ffi::c_int {
+pub unsafe fn ogl_GetMajorVersion() -> ::core::ffi::c_int {
     if g_major_version == 0 as ::core::ffi::c_int {
         GetGLVersion();
     }
     return g_major_version;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ogl_GetMinorVersion() -> ::core::ffi::c_int {
+pub unsafe fn ogl_GetMinorVersion() -> ::core::ffi::c_int {
     if g_major_version == 0 as ::core::ffi::c_int {
         GetGLVersion();
     }
     return g_minor_version;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ogl_IsVersionGEQ(
+pub unsafe fn ogl_IsVersionGEQ(
     mut majorVersion: ::core::ffi::c_int,
     mut minorVersion: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {

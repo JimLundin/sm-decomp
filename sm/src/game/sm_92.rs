@@ -15,7 +15,7 @@ pub struct SamusTileAnimationDefs {
     pub bottom_half_pos: uint8,
 }
 #[inline]
-unsafe extern "C" fn get_SamusTileAnimationDefs(mut a: uint16) -> *mut SamusTileAnimationDefs {
+unsafe fn get_SamusTileAnimationDefs(mut a: uint16) -> *mut SamusTileAnimationDefs {
     return RomPtr((0x920000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut SamusTileAnimationDefs;
 }

@@ -1024,7 +1024,7 @@ pub struct Enemy_MotherBrainsTubesFalling {
     pub mbtfg_parameter_2: uint16,
 }
 #[inline]
-unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
+unsafe fn abs16(mut t: uint16) -> uint16 {
     return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         -(t as ::core::ffi::c_int)
     } else {
@@ -1033,27 +1033,27 @@ unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
 }
 pub const kCoroutineNone: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 #[inline]
-unsafe extern "C" fn RomPtr_A9(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_A9(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0xa90000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomPtr_B7(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_B7(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0xb70000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomPtrWithBank(mut bank: uint8, mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtrWithBank(mut bank: uint8, mut addr: uint16_t) -> *const uint8 {
     return RomPtr(
         ((bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int | addr as ::core::ffi::c_int)
             as uint32_t,
     );
 }
 #[inline]
-unsafe extern "C" fn gOamEnt(mut v: ::core::ffi::c_int) -> *mut OamEnt {
+unsafe fn gOamEnt(mut v: ::core::ffi::c_int) -> *mut OamEnt {
     return (&raw mut g_ram as *mut uint8).offset((0x370 as ::core::ffi::c_int + v) as isize)
         as *mut uint8 as *mut OamEnt;
 }
 #[inline]
-unsafe extern "C" fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
+unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
     return (&raw mut g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
         as *mut uint8 as *mut VramWriteEntry;
 }
@@ -1450,55 +1450,55 @@ pub const fnShitroid_HandleCutscenePalette: ::core::ffi::c_int = 0xa9f683 as ::c
 pub const fnShitroid_HandleCutscenePalette_LowHealth: ::core::ffi::c_int =
     0xa9f68f as ::core::ffi::c_int;
 #[inline]
-unsafe extern "C" fn gEnemyData(mut o: ::core::ffi::c_int) -> *mut EnemyData {
+unsafe fn gEnemyData(mut o: ::core::ffi::c_int) -> *mut EnemyData {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut EnemyData;
 }
 #[inline]
-unsafe extern "C" fn Get_DeadEnemy(mut o: ::core::ffi::c_int) -> *mut Enemy_DeadEnemy {
+unsafe fn Get_DeadEnemy(mut o: ::core::ffi::c_int) -> *mut Enemy_DeadEnemy {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_DeadEnemy;
 }
 #[inline]
-unsafe extern "C" fn Get_DeadMonsters(mut o: ::core::ffi::c_int) -> *mut Enemy_DeadMonsters {
+unsafe fn Get_DeadMonsters(mut o: ::core::ffi::c_int) -> *mut Enemy_DeadMonsters {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_DeadMonsters;
 }
 #[inline]
-unsafe extern "C" fn Get_DeadSidehopper(mut o: ::core::ffi::c_int) -> *mut Enemy_DeadSidehopper {
+unsafe fn Get_DeadSidehopper(mut o: ::core::ffi::c_int) -> *mut Enemy_DeadSidehopper {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_DeadSidehopper;
 }
 #[inline]
-unsafe extern "C" fn Get_DeadTorizo(mut o: ::core::ffi::c_int) -> *mut Enemy_DeadTorizo {
+unsafe fn Get_DeadTorizo(mut o: ::core::ffi::c_int) -> *mut Enemy_DeadTorizo {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_DeadTorizo;
 }
 #[inline]
-unsafe extern "C" fn Get_MotherBomb(mut o: ::core::ffi::c_int) -> *mut Enemy_MotherBomb {
+unsafe fn Get_MotherBomb(mut o: ::core::ffi::c_int) -> *mut Enemy_MotherBomb {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_MotherBomb;
 }
 #[inline]
-unsafe extern "C" fn Get_MotherBrain(mut o: ::core::ffi::c_int) -> *mut Enemy_MotherBrain {
+unsafe fn Get_MotherBrain(mut o: ::core::ffi::c_int) -> *mut Enemy_MotherBrain {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_MotherBrain;
 }
 #[inline]
-unsafe extern "C" fn Get_MotherBrainBody(mut o: ::core::ffi::c_int) -> *mut Enemy_MotherBrainBody {
+unsafe fn Get_MotherBrainBody(mut o: ::core::ffi::c_int) -> *mut Enemy_MotherBrainBody {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_MotherBrainBody;
 }
 #[inline]
-unsafe extern "C" fn Get_MotherBrainsTubesFalling(
+unsafe fn Get_MotherBrainsTubesFalling(
     mut o: ::core::ffi::c_int,
 ) -> *mut Enemy_MotherBrainsTubesFalling {
     return (&raw mut g_ram as *mut uint8)
@@ -1506,23 +1506,19 @@ unsafe extern "C" fn Get_MotherBrainsTubesFalling(
         .offset(o as isize) as *mut Enemy_MotherBrainsTubesFalling;
 }
 #[inline]
-unsafe extern "C" fn Get_ShitdroidInCutscene(
-    mut o: ::core::ffi::c_int,
-) -> *mut Enemy_ShitroidInCutscene {
+unsafe fn Get_ShitdroidInCutscene(mut o: ::core::ffi::c_int) -> *mut Enemy_ShitroidInCutscene {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_ShitroidInCutscene;
 }
 #[inline]
-unsafe extern "C" fn Get_Shitroid(mut o: ::core::ffi::c_int) -> *mut Enemy_Shitroid {
+unsafe fn Get_Shitroid(mut o: ::core::ffi::c_int) -> *mut Enemy_Shitroid {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_Shitroid;
 }
 #[inline]
-unsafe extern "C" fn Get_ShitroidInCutscene(
-    mut o: ::core::ffi::c_int,
-) -> *mut Enemy_ShitroidInCutscene {
+unsafe fn Get_ShitroidInCutscene(mut o: ::core::ffi::c_int) -> *mut Enemy_ShitroidInCutscene {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_ShitroidInCutscene;
@@ -1732,8 +1728,7 @@ static mut g_byte_A9F56A: [int8; 16] = [
     2 as ::core::ffi::c_int as int8,
     1 as ::core::ffi::c_int as int8,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn CallCorpseRottingMove(mut ea: uint32, mut k: uint16, mut j: uint16) {
+pub unsafe fn CallCorpseRottingMove(mut ea: uint32, mut k: uint16, mut j: uint16) {
     match ea {
         11133835 => {
             Torizo_CorpseRottingCopyFunc(k, j);
@@ -1836,8 +1831,7 @@ pub unsafe extern "C" fn CallCorpseRottingMove(mut ea: uint32, mut k: uint16, mu
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallCorpseRottingInit(mut ea: uint32) {
+pub unsafe fn CallCorpseRottingInit(mut ea: uint32) {
     match ea {
         11132440 => {
             Torizo_CorpseRottingInitFunc();
@@ -1892,8 +1886,7 @@ pub unsafe extern "C" fn CallCorpseRottingInit(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallCorpseRottingFinish(mut ea: uint32) {
+pub unsafe fn CallCorpseRottingFinish(mut ea: uint32) {
     match ea {
         11121187 => {
             MotherBrain_CorpseRottingFinished();
@@ -1912,8 +1905,7 @@ pub unsafe extern "C" fn CallCorpseRottingFinish(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallMotherBrainFunc(mut ea: uint32) {
+pub unsafe fn CallMotherBrainFunc(mut ea: uint32) {
     match ea {
         11110352 => {
             MotherBrainsBrain_SetupBrainToDraw();
@@ -2428,16 +2420,13 @@ pub unsafe extern "C" fn CallMotherBrainFunc(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_GrappleReact_CancelBeam_A9() {
+pub unsafe fn Enemy_GrappleReact_CancelBeam_A9() {
     Enemy_SwitchToFrozenAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalFrozenAI_A9() {
+pub unsafe fn Enemy_NormalFrozenAI_A9() {
     NormalEnemyFrozenAI();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainsBody_Init() {
+pub unsafe fn MotherBrainsBody_Init() {
     let mut i: ::core::ffi::c_int = 4094 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
@@ -2488,8 +2477,7 @@ pub unsafe extern "C" fn MotherBrainsBody_Init() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainsBrain_Init() {
+pub unsafe fn MotherBrainsBrain_Init() {
     InitializeEnemyCorpseRotting(
         0x40 as uint16,
         addr_stru_A9DE08 as ::core::ffi::c_int as uint16,
@@ -2507,8 +2495,7 @@ pub unsafe extern "C" fn MotherBrainsBrain_Init() {
     MotherBrain_SetBrainInstrs(addr_stru_A99C21 as ::core::ffi::c_int as uint16);
     MotherBrain_SetupBrainNormalPal();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainsBody_Hurt() {
+pub unsafe fn MotherBrainsBody_Hurt() {
     MotherBrain_Pal_HandleRoomPal();
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     if (*E).mbn_var_A as ::core::ffi::c_int
@@ -2531,8 +2518,7 @@ pub unsafe extern "C" fn MotherBrainsBody_Hurt() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainsBody_UnpauseHook() -> CoroutineRet {
+pub unsafe fn MotherBrainsBody_UnpauseHook() -> CoroutineRet {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     if (*E).mbn_var_16 != 0 {
         QueueSfx1_Max6(0x40 as uint16);
@@ -2547,13 +2533,11 @@ pub unsafe extern "C" fn MotherBrainsBody_UnpauseHook() -> CoroutineRet {
     }
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainsBody_Powerbomb() {
+pub unsafe fn MotherBrainsBody_Powerbomb() {
     NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy();
     MotherBrainsBrain_Hurt();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainsBrain_Hurt() {
+pub unsafe fn MotherBrainsBrain_Hurt() {
     mov24(
         (&raw mut g_ram as *mut uint8).offset(0x178c as ::core::ffi::c_int as isize)
             as *mut LongPtr,
@@ -2570,8 +2554,7 @@ pub unsafe extern "C" fn MotherBrainsBrain_Hurt() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainsBrain_SetupBrainAndNeckToDraw() {
+pub unsafe fn MotherBrainsBrain_SetupBrainAndNeckToDraw() {
     if *((&raw mut g_ram as *mut uint8).offset(0xa78 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
     {
@@ -2587,25 +2570,21 @@ pub unsafe extern "C" fn MotherBrainsBrain_SetupBrainAndNeckToDraw() {
         0xa987c9 as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_DrawBrainNeck_EnemyGfxDrawHook() {
+pub unsafe fn MotherBrain_DrawBrainNeck_EnemyGfxDrawHook() {
     MotherBrain_DrawBrain();
     MotherBrain_DrawNeck();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainsBrain_SetupBrainToDraw() {
+pub unsafe fn MotherBrainsBrain_SetupBrainToDraw() {
     mov24(
         (&raw mut g_ram as *mut uint8).offset(0x178c as ::core::ffi::c_int as isize)
             as *mut LongPtr,
         0xa987dd as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainsBrain_GfxDrawHook() {
+pub unsafe fn MotherBrainsBrain_GfxDrawHook() {
     MotherBrain_DrawBrain();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainsBody_FirstPhase_DoubleRet() {
+pub unsafe fn MotherBrainsBody_FirstPhase_DoubleRet() {
     if CheckEventHappened(2 as uint16) != 0 {
         let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
         (*E1).mbn_var_00 = *((&raw mut g_ram as *mut uint8)
@@ -2629,15 +2608,13 @@ pub unsafe extern "C" fn MotherBrainsBody_FirstPhase_DoubleRet() {
     }
     MotherBrain_SamusCollDetect();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Descent_0_Pause() {
+pub unsafe fn MotherBrainBody_FakeDeath_Descent_0_Pause() {
     let mut E: *mut Enemy_MotherBrainBody = Get_MotherBrainBody(0 as ::core::ffi::c_int);
     (*E).mbby_var_A = (0xa98829 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).mbby_var_F = 64 as uint16;
     MotherBrainBody_FakeDeath_Descent_1();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Descent_1() {
+pub unsafe fn MotherBrainBody_FakeDeath_Descent_1() {
     let mut E: *mut Enemy_MotherBrainBody = Get_MotherBrainBody(0 as ::core::ffi::c_int);
     (*E).mbby_var_F = (*E).mbby_var_F.wrapping_sub(1);
     if (*E).mbby_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -2653,8 +2630,7 @@ pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Descent_1() {
         MotherBrainBody_FakeDeath_Descent_2();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Descent_2() {
+pub unsafe fn MotherBrainBody_FakeDeath_Descent_2() {
     let mut E: *mut Enemy_MotherBrainBody = Get_MotherBrainBody(0 as ::core::ffi::c_int);
     (*E).mbby_var_F = (*E).mbby_var_F.wrapping_sub(1);
     if (*E).mbby_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -2667,8 +2643,7 @@ pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Descent_2() {
         MotherBrainBody_FakeDeath_Descent_3();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Descent_3() {
+pub unsafe fn MotherBrainBody_FakeDeath_Descent_3() {
     let mut E: *mut Enemy_MotherBrainBody = Get_MotherBrainBody(0 as ::core::ffi::c_int);
     (*E).mbby_var_F = (*E).mbby_var_F.wrapping_sub(1);
     if (*E).mbby_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -2680,8 +2655,7 @@ pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Descent_3() {
         MotherBrainBody_FakeDeath_Descent_4();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Descent_4() {
+pub unsafe fn MotherBrainBody_FakeDeath_Descent_4() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -2701,8 +2675,7 @@ pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Descent_4() {
         });
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Descent_5() {
+pub unsafe fn MotherBrainBody_FakeDeath_Descent_5() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -2724,16 +2697,14 @@ pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Descent_5() {
     }
     MotherBrainBody_FakeDeath_Descent_6();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Descent_6() {
+pub unsafe fn MotherBrainBody_FakeDeath_Descent_6() {
     let mut E: *mut Enemy_MotherBrainBody = Get_MotherBrainBody(0x40 as ::core::ffi::c_int);
     CallMotherBrainFunc(
         ((*E).mbby_var_E as ::core::ffi::c_int | 0xa90000 as ::core::ffi::c_int) as uint32,
     );
     MotherBrain_HandleFakeDeathExplosions();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_HandleFakeDeathExplosions() {
+pub unsafe fn MotherBrain_HandleFakeDeathExplosions() {
     let mut v1: int16 = 0;
     let mut v2: int16 = 0;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
@@ -2782,8 +2753,7 @@ pub unsafe extern "C" fn MotherBrain_HandleFakeDeathExplosions() {
         (*E).mbn_var_38 = v1 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_0_Wait() {
+pub unsafe fn MotherBrainBody_0_Wait() {
     let mut v1: int16 = 0;
     let mut v0: uint16 = 0 as uint16;
     v1 = 0 as int16;
@@ -2813,8 +2783,7 @@ pub unsafe extern "C" fn MotherBrainBody_0_Wait() {
             (0xa9896e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_1_ClearBottomLeftTube() {
+pub unsafe fn MotherBrainBody_1_ClearBottomLeftTube() {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0x5 as uint8,
         field_1: 0x9 as uint8,
@@ -2824,8 +2793,7 @@ pub unsafe extern "C" fn MotherBrainBody_1_ClearBottomLeftTube() {
     (*E).mbby_var_E = (0xa98983 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).mbby_var_F = 32 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_2_SpawnTopRightTubeFalling() {
+pub unsafe fn MotherBrainBody_2_SpawnTopRightTubeFalling() {
     let mut E: *mut Enemy_MotherBrainBody = Get_MotherBrainBody(0x40 as ::core::ffi::c_int);
     (*E).mbby_var_F = (*E).mbby_var_F.wrapping_sub(1);
     if (*E).mbby_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -2839,8 +2807,7 @@ pub unsafe extern "C" fn MotherBrainBody_2_SpawnTopRightTubeFalling() {
         (*E).mbby_var_E = -(30304 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_3_ClearCeilingBlock9() {
+pub unsafe fn MotherBrainBody_3_ClearCeilingBlock9() {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0x9 as uint8,
         field_1: 0x2 as uint8,
@@ -2850,8 +2817,7 @@ pub unsafe extern "C" fn MotherBrainBody_3_ClearCeilingBlock9() {
     (*E).mbby_var_E = (0xa989b5 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).mbby_var_F = 32 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_4_SpawnTopLeftTubeFalling() {
+pub unsafe fn MotherBrainBody_4_SpawnTopLeftTubeFalling() {
     let mut E: *mut Enemy_MotherBrainBody = Get_MotherBrainBody(0x40 as ::core::ffi::c_int);
     (*E).mbby_var_F = (*E).mbby_var_F.wrapping_sub(1);
     if (*E).mbby_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -2868,8 +2834,7 @@ pub unsafe extern "C" fn MotherBrainBody_4_SpawnTopLeftTubeFalling() {
         (*E).mbby_var_E = (0xa989d2 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_4_ClearCeilingBlock6() {
+pub unsafe fn MotherBrainBody_4_ClearCeilingBlock6() {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0x6 as uint8,
         field_1: 0x2 as uint8,
@@ -2879,8 +2844,7 @@ pub unsafe extern "C" fn MotherBrainBody_4_ClearCeilingBlock6() {
     (*E).mbby_var_E = (0xa989e7 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).mbby_var_F = 32 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_5_SpawnTubeFallingEnemy1() {
+pub unsafe fn MotherBrainBody_5_SpawnTubeFallingEnemy1() {
     let mut E: *mut Enemy_MotherBrainBody = Get_MotherBrainBody(0x40 as ::core::ffi::c_int);
     (*E).mbby_var_F = (*E).mbby_var_F.wrapping_sub(1);
     if (*E).mbby_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -2893,8 +2857,7 @@ pub unsafe extern "C" fn MotherBrainBody_5_SpawnTubeFallingEnemy1() {
         (*E).mbby_var_E = (0xa989fa as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_6_ClearBottomRightTube() {
+pub unsafe fn MotherBrainBody_6_ClearBottomRightTube() {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0xa as uint8,
         field_1: 0x9 as uint8,
@@ -2904,8 +2867,7 @@ pub unsafe extern "C" fn MotherBrainBody_6_ClearBottomRightTube() {
     (*E).mbby_var_E = (0xa98a0f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).mbby_var_F = 32 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_7_SpawnTubeFallingEnemy2() {
+pub unsafe fn MotherBrainBody_7_SpawnTubeFallingEnemy2() {
     let mut E: *mut Enemy_MotherBrainBody = Get_MotherBrainBody(0x40 as ::core::ffi::c_int);
     (*E).mbby_var_F = (*E).mbby_var_F.wrapping_sub(1);
     if (*E).mbby_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -2918,8 +2880,7 @@ pub unsafe extern "C" fn MotherBrainBody_7_SpawnTubeFallingEnemy2() {
         (*E).mbby_var_E = (0xa98a22 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_8_ClearBottomMiddleLeftTube() {
+pub unsafe fn MotherBrainBody_8_ClearBottomMiddleLeftTube() {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0x6 as uint8,
         field_1: 0xa as uint8,
@@ -2929,8 +2890,7 @@ pub unsafe extern "C" fn MotherBrainBody_8_ClearBottomMiddleLeftTube() {
     (*E).mbby_var_E = (0xa98a37 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).mbby_var_F = 32 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_9_SpawnTopMiddleLeftFalling() {
+pub unsafe fn MotherBrainBody_9_SpawnTopMiddleLeftFalling() {
     let mut E: *mut Enemy_MotherBrainBody = Get_MotherBrainBody(0x40 as ::core::ffi::c_int);
     (*E).mbby_var_F = (*E).mbby_var_F.wrapping_sub(1);
     if (*E).mbby_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -2947,8 +2907,7 @@ pub unsafe extern "C" fn MotherBrainBody_9_SpawnTopMiddleLeftFalling() {
         (*E).mbby_var_E = (0xa98a54 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_10_ClearCeilingTubeColumn7() {
+pub unsafe fn MotherBrainBody_10_ClearCeilingTubeColumn7() {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0x7 as uint8,
         field_1: 0x2 as uint8,
@@ -2958,8 +2917,7 @@ pub unsafe extern "C" fn MotherBrainBody_10_ClearCeilingTubeColumn7() {
     (*E).mbby_var_E = (0xa98a69 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).mbby_var_F = 32 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_11_SpawnTopMiddleRightFalling() {
+pub unsafe fn MotherBrainBody_11_SpawnTopMiddleRightFalling() {
     let mut E: *mut Enemy_MotherBrainBody = Get_MotherBrainBody(0x40 as ::core::ffi::c_int);
     (*E).mbby_var_F = (*E).mbby_var_F.wrapping_sub(1);
     if (*E).mbby_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -2976,8 +2934,7 @@ pub unsafe extern "C" fn MotherBrainBody_11_SpawnTopMiddleRightFalling() {
         (*E).mbby_var_E = (0xa98a86 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_12_ClearCeilingTubeColumn8() {
+pub unsafe fn MotherBrainBody_12_ClearCeilingTubeColumn8() {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0x8 as uint8,
         field_1: 0x2 as uint8,
@@ -2987,8 +2944,7 @@ pub unsafe extern "C" fn MotherBrainBody_12_ClearCeilingTubeColumn8() {
     (*E).mbby_var_E = (0xa98a9b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).mbby_var_F = 32 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_13_SpawnTubeFallingEnemy3() {
+pub unsafe fn MotherBrainBody_13_SpawnTubeFallingEnemy3() {
     let mut E: *mut Enemy_MotherBrainBody = Get_MotherBrainBody(0x40 as ::core::ffi::c_int);
     (*E).mbby_var_F = (*E).mbby_var_F.wrapping_sub(1);
     if (*E).mbby_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -3001,8 +2957,7 @@ pub unsafe extern "C" fn MotherBrainBody_13_SpawnTubeFallingEnemy3() {
         (*E).mbby_var_E = (0xa98aae as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_14_ClearBottomMiddleRightTube() {
+pub unsafe fn MotherBrainBody_14_ClearBottomMiddleRightTube() {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0x9 as uint8,
         field_1: 0xa as uint8,
@@ -3012,8 +2967,7 @@ pub unsafe extern "C" fn MotherBrainBody_14_ClearBottomMiddleRightTube() {
     (*E).mbby_var_E = (0xa98ac3 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).mbby_var_F = 2 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_15_SpawnTubeFallingEnemy4() {
+pub unsafe fn MotherBrainBody_15_SpawnTubeFallingEnemy4() {
     let mut E: *mut Enemy_MotherBrainBody = Get_MotherBrainBody(0x40 as ::core::ffi::c_int);
     (*E).mbby_var_F = (*E).mbby_var_F.wrapping_sub(1);
     if (*E).mbby_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -3026,8 +2980,7 @@ pub unsafe extern "C" fn MotherBrainBody_15_SpawnTubeFallingEnemy4() {
         (*E).mbby_var_E = (0xa98ad6 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_16_ClearBottomMiddleTubes() {
+pub unsafe fn MotherBrainBody_16_ClearBottomMiddleTubes() {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0x7 as uint8,
         field_1: 0x7 as uint8,
@@ -3036,8 +2989,7 @@ pub unsafe extern "C" fn MotherBrainBody_16_ClearBottomMiddleTubes() {
     (*Get_MotherBrainBody(0x40 as ::core::ffi::c_int)).mbby_var_E =
         addr_locret_A98AE4 as ::core::ffi::c_int as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainsTubesFalling_Init() {
+pub unsafe fn MotherBrainsTubesFalling_Init() {
     let mut E: *mut Enemy_MotherBrainsTubesFalling = Get_MotherBrainsTubesFalling(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -3057,8 +3009,7 @@ pub unsafe extern "C" fn MotherBrainsTubesFalling_Init() {
     ) as *const uint8 as *mut uint16)
         .offset(v1 as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallMotherBrainsTubesFalling(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallMotherBrainsTubesFalling(mut ea: uint32, mut k: uint16) {
     match ea {
         11111304 => {
             MotherBrainsTubesFalling_Main_NonMain(k);
@@ -3077,8 +3028,7 @@ pub unsafe extern "C" fn CallMotherBrainsTubesFalling(mut ea: uint32, mut k: uin
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainsTubesFalling_Main(mut k: uint16) {
+pub unsafe fn MotherBrainsTubesFalling_Main(mut k: uint16) {
     let mut E: *mut Enemy_MotherBrainsTubesFalling =
         Get_MotherBrainsTubesFalling(k as ::core::ffi::c_int);
     CallMotherBrainsTubesFalling(
@@ -3086,8 +3036,7 @@ pub unsafe extern "C" fn MotherBrainsTubesFalling_Main(mut k: uint16) {
         k,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainsTubesFalling_Main_NonMain(mut k: uint16) {
+pub unsafe fn MotherBrainsTubesFalling_Main_NonMain(mut k: uint16) {
     let mut E: *mut Enemy_MotherBrainsTubesFalling =
         Get_MotherBrainsTubesFalling(k as ::core::ffi::c_int);
     let mut v2: uint16 =
@@ -3103,8 +3052,7 @@ pub unsafe extern "C" fn MotherBrainsTubesFalling_Main_NonMain(mut k: uint16) {
         MotherBrainsTubesFalling_Explode(k);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainsTubesFalling_HandleSmoke(mut k: uint16) {
+pub unsafe fn MotherBrainsTubesFalling_HandleSmoke(mut k: uint16) {
     let mut E: *mut Enemy_MotherBrainsTubesFalling =
         Get_MotherBrainsTubesFalling(k as ::core::ffi::c_int);
     (*E).mbtfg_var_D = (*E).mbtfg_var_D.wrapping_sub(1);
@@ -3114,8 +3062,7 @@ pub unsafe extern "C" fn MotherBrainsTubesFalling_HandleSmoke(mut k: uint16) {
         MotherBrainsTubesFalling_SpawnSmoke(k);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainsTubesFalling_Explode(mut k: uint16) {
+pub unsafe fn MotherBrainsTubesFalling_Explode(mut k: uint16) {
     let mut E: *mut Enemy_MotherBrainsTubesFalling =
         Get_MotherBrainsTubesFalling(k as ::core::ffi::c_int);
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
@@ -3130,8 +3077,7 @@ pub unsafe extern "C" fn MotherBrainsTubesFalling_Explode(mut k: uint16) {
     );
     QueueSfx2_Max3(0x24 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainsTubesFalling_WaitToFall(mut k: uint16) {
+pub unsafe fn MotherBrainsTubesFalling_WaitToFall(mut k: uint16) {
     let mut E: *mut Enemy_MotherBrainsTubesFalling =
         Get_MotherBrainsTubesFalling(k as ::core::ffi::c_int);
     (*E).mbtfg_parameter_2 = (*E).mbtfg_parameter_2.wrapping_sub(1);
@@ -3143,8 +3089,7 @@ pub unsafe extern "C" fn MotherBrainsTubesFalling_WaitToFall(mut k: uint16) {
         MotherBrainsTubesFalling_Falling(k);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainsTubesFalling_Falling(mut k: uint16) {
+pub unsafe fn MotherBrainsTubesFalling_Falling(mut k: uint16) {
     let mut E: *mut Enemy_MotherBrainsTubesFalling =
         Get_MotherBrainsTubesFalling(k as ::core::ffi::c_int);
     let mut v2: uint16 =
@@ -3187,8 +3132,7 @@ pub unsafe extern "C" fn MotherBrainsTubesFalling_Falling(mut k: uint16) {
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainsTubesFalling_SpawnSmoke(mut k: uint16) {
+pub unsafe fn MotherBrainsTubesFalling_SpawnSmoke(mut k: uint16) {
     let mut E: *mut Enemy_MotherBrainsTubesFalling =
         Get_MotherBrainsTubesFalling(k as ::core::ffi::c_int);
     (*E).mbtfg_var_D = 8 as uint16;
@@ -3205,8 +3149,7 @@ pub unsafe extern "C" fn MotherBrainsTubesFalling_SpawnSmoke(mut k: uint16) {
         9 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_0_DrawBG1Row23() {
+pub unsafe fn MotherBrainBody_FakeDeath_Ascent_0_DrawBG1Row23() {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0x2 as uint8,
         field_1: 0x2 as uint8,
@@ -3220,8 +3163,7 @@ pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_0_DrawBG1Row23() {
     (*Get_MotherBrainBody(0 as ::core::ffi::c_int)).mbby_var_A =
         (0xa98c9e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_1_DrawBG1Row45() {
+pub unsafe fn MotherBrainBody_FakeDeath_Ascent_1_DrawBG1Row45() {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0x2 as uint8,
         field_1: 0x4 as uint8,
@@ -3235,8 +3177,7 @@ pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_1_DrawBG1Row45() {
     (*Get_MotherBrainBody(0 as ::core::ffi::c_int)).mbby_var_A =
         (0xa98cb5 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_2_DrawBG1Row67() {
+pub unsafe fn MotherBrainBody_FakeDeath_Ascent_2_DrawBG1Row67() {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0x2 as uint8,
         field_1: 0x6 as uint8,
@@ -3250,8 +3191,7 @@ pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_2_DrawBG1Row67() {
     (*Get_MotherBrainBody(0 as ::core::ffi::c_int)).mbby_var_A =
         (0xa98ccc as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_3_DrawBG1Row89() {
+pub unsafe fn MotherBrainBody_FakeDeath_Ascent_3_DrawBG1Row89() {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0x2 as uint8,
         field_1: 0x8 as uint8,
@@ -3265,8 +3205,7 @@ pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_3_DrawBG1Row89() {
     (*Get_MotherBrainBody(0 as ::core::ffi::c_int)).mbby_var_A =
         (0xa98ce3 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_4_DrawBG1RowAB() {
+pub unsafe fn MotherBrainBody_FakeDeath_Ascent_4_DrawBG1RowAB() {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0x2 as uint8,
         field_1: 0xa as uint8,
@@ -3280,8 +3219,7 @@ pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_4_DrawBG1RowAB() {
     (*Get_MotherBrainBody(0 as ::core::ffi::c_int)).mbby_var_A =
         (0xa98cfa as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_5_DrawBG1RowCD() {
+pub unsafe fn MotherBrainBody_FakeDeath_Ascent_5_DrawBG1RowCD() {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0x2 as uint8,
         field_1: 0xc as uint8,
@@ -3295,8 +3233,7 @@ pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_5_DrawBG1RowCD() {
     (*Get_MotherBrainBody(0 as ::core::ffi::c_int)).mbby_var_A =
         (0xa98d11 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_6_SetupPhase2Gfx() {
+pub unsafe fn MotherBrainBody_FakeDeath_Ascent_6_SetupPhase2Gfx() {
     *((&raw mut g_ram as *mut uint8).offset(0x91b as ::core::ffi::c_int as isize) as *mut uint16) =
         257 as uint16;
     let ref mut fresh8 = *((&raw mut g_ram as *mut uint8)
@@ -3320,8 +3257,7 @@ pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_6_SetupPhase2Gfx() {
         1 as uint16;
     (*Get_MotherBrain(0x40 as ::core::ffi::c_int)).mbn_var_02 = 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_7_SetupPhase2Brain() {
+pub unsafe fn MotherBrainBody_FakeDeath_Ascent_7_SetupPhase2Brain() {
     *((&raw mut g_ram as *mut uint8).offset(0x1982 as ::core::ffi::c_int as isize)
         as *mut uint16) = 52 as uint16;
     let mut E: *mut Enemy_MotherBrainBody = Get_MotherBrainBody(0x40 as ::core::ffi::c_int);
@@ -3336,8 +3272,7 @@ pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_7_SetupPhase2Brain() {
     (*E0).mbby_var_F = 128 as uint16;
     MotherBrainBody_FakeDeath_Ascent_8_Pause();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_8_Pause() {
+pub unsafe fn MotherBrainBody_FakeDeath_Ascent_8_Pause() {
     let mut E: *mut Enemy_MotherBrainBody = Get_MotherBrainBody(0 as ::core::ffi::c_int);
     (*E).mbby_var_F = (*E).mbby_var_F.wrapping_sub(1);
     if (*E).mbby_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -3348,8 +3283,7 @@ pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_8_Pause() {
         MotherBrainBody_FakeDeath_Ascent_9_PrepareRise();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_9_PrepareRise() {
+pub unsafe fn MotherBrainBody_FakeDeath_Ascent_9_PrepareRise() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -3365,8 +3299,7 @@ pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_9_PrepareRise() {
         MotherBrainBody_FakeDeath_Ascent_10_LoadLegTiles();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_10_LoadLegTiles() {
+pub unsafe fn MotherBrainBody_FakeDeath_Ascent_10_LoadLegTiles() {
     if ProcessSpriteTilesTransfers(
         0xa9 as uint8,
         addr_stru_A98F8F as ::core::ffi::c_int as uint16,
@@ -3377,8 +3310,7 @@ pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_10_LoadLegTiles() {
         MotherBrainBody_FakeDeath_Ascent_11_ContinuePause();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_11_ContinuePause() {
+pub unsafe fn MotherBrainBody_FakeDeath_Ascent_11_ContinuePause() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -3394,8 +3326,7 @@ pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_11_ContinuePause() {
         (*E).mbn_var_A = (0xa98dec as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_12_StartMusic() {
+pub unsafe fn MotherBrainBody_FakeDeath_Ascent_12_StartMusic() {
     MotherBrain_SetBodyInstrs(addr_kMotherBrain_Ilist_9A02 as ::core::ffi::c_int as uint16);
     let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     (*E1).base.instruction_timer = 1 as uint16;
@@ -3419,8 +3350,7 @@ pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_12_StartMusic() {
     (*E1).mbn_var_33 = 6 as uint16;
     (*E0).mbn_var_A = (0xa98e4d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_13_Raise() {
+pub unsafe fn MotherBrainBody_FakeDeath_Ascent_13_Raise() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     let mut v1: uint16 = 0;
     if !(*((&raw mut g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize)
@@ -3452,8 +3382,7 @@ pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_13_Raise() {
         MotherBrainBody_FakeDeath_Ascent_14_WaitForUncouching();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_14_WaitForUncouching() {
+pub unsafe fn MotherBrainBody_FakeDeath_Ascent_14_WaitForUncouching() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     if (*E).mbn_var_02 == 0 {
         (*E).mbn_var_37 = 0 as uint16;
@@ -3461,8 +3390,7 @@ pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_14_WaitForUncouching()
         (*E).mbn_var_F = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_15_TransitionFromGrey() {
+pub unsafe fn MotherBrainBody_FakeDeath_Ascent_15_TransitionFromGrey() {
     let mut E0: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E0).mbn_var_F = (*E0).mbn_var_F.wrapping_sub(1);
     if (*E0).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -3491,8 +3419,7 @@ pub unsafe extern "C" fn MotherBrainBody_FakeDeath_Ascent_15_TransitionFromGrey(
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_2ndphase_16_ShakeHeadMenacingly() {
+pub unsafe fn MotherBrainBody_2ndphase_16_ShakeHeadMenacingly() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -3505,8 +3432,7 @@ pub unsafe extern "C" fn MotherBrainBody_2ndphase_16_ShakeHeadMenacingly() {
         MotherBrainBody_2ndphase_17_BringHeadBackUp();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_2ndphase_17_BringHeadBackUp() {
+pub unsafe fn MotherBrainBody_2ndphase_17_BringHeadBackUp() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -3520,8 +3446,7 @@ pub unsafe extern "C" fn MotherBrainBody_2ndphase_17_BringHeadBackUp() {
         MotherBrainBody_2ndphase_18_FinishStretching();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainBody_2ndphase_18_FinishStretching() {
+pub unsafe fn MotherBrainBody_2ndphase_18_FinishStretching() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -3531,8 +3456,7 @@ pub unsafe extern "C" fn MotherBrainBody_2ndphase_18_FinishStretching() {
         (*E).mbn_var_A = (0xa9b605 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_SpawnDustCloudsForAscent() {
+pub unsafe fn MotherBrain_SpawnDustCloudsForAscent() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -3554,8 +3478,7 @@ pub unsafe extern "C" fn MotherBrain_SpawnDustCloudsForAscent() {
     );
     QueueSfx2_Max3(0x29 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_SetupNeckForFakeAscent() {
+pub unsafe fn MotherBrain_SetupNeckForFakeAscent() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     (*E).mbn_var_24 = 2 as uint16;
     (*E).mbn_var_27 = 10 as uint16;
@@ -3566,8 +3489,7 @@ pub unsafe extern "C" fn MotherBrain_SetupNeckForFakeAscent() {
     (*E).mbn_var_21 = 20480 as uint16;
     (*E).mbn_var_34 = 256 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_HandleNeckLower() {
+pub unsafe fn MotherBrain_HandleNeckLower() {
     let mut mbn_var_32: uint16 = (*Get_MotherBrain(0x40 as ::core::ffi::c_int)).mbn_var_32;
     if mbn_var_32 != 0 {
         match mbn_var_32 as ::core::ffi::c_int {
@@ -3592,10 +3514,8 @@ pub unsafe extern "C" fn MotherBrain_HandleNeckLower() {
         MotherBrain_HandleNeckLower_0();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_HandleNeckLower_0() {}
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_HandleNeckLower_2_BobDown() {
+pub unsafe fn MotherBrain_HandleNeckLower_0() {}
+pub unsafe fn MotherBrain_HandleNeckLower_2_BobDown() {
     let mut v1: int16 = 0;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     v1 = ((*E).mbn_var_20 as ::core::ffi::c_int - (*E).mbn_var_34 as ::core::ffi::c_int) as int16;
@@ -3605,8 +3525,7 @@ pub unsafe extern "C" fn MotherBrain_HandleNeckLower_2_BobDown() {
     }
     (*E).mbn_var_20 = v1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_HandleNeckLower_4_BobUp() {
+pub unsafe fn MotherBrain_HandleNeckLower_4_BobUp() {
     let mut v1: int16 = 0;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     if (*E).base.y_pos as ::core::ffi::c_int - 60 as ::core::ffi::c_int
@@ -3624,8 +3543,7 @@ pub unsafe extern "C" fn MotherBrain_HandleNeckLower_4_BobUp() {
         (*E).mbn_var_20 = v1 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_HandleNeckLower_6_Lower() {
+pub unsafe fn MotherBrain_HandleNeckLower_6_Lower() {
     let mut v1: int16 = 0;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     v1 = ((*E).mbn_var_20 as ::core::ffi::c_int - (*E).mbn_var_34 as ::core::ffi::c_int) as int16;
@@ -3635,8 +3553,7 @@ pub unsafe extern "C" fn MotherBrain_HandleNeckLower_6_Lower() {
     }
     (*E).mbn_var_20 = v1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_HandleNeckLower_8_Raise() {
+pub unsafe fn MotherBrain_HandleNeckLower_8_Raise() {
     let mut v1: int16 = 0;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     v1 = ((*E).mbn_var_34 as ::core::ffi::c_int + (*E).mbn_var_20 as ::core::ffi::c_int) as int16;
@@ -3646,8 +3563,7 @@ pub unsafe extern "C" fn MotherBrain_HandleNeckLower_8_Raise() {
     }
     (*E).mbn_var_20 = v1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_HandleNeckUpper() {
+pub unsafe fn MotherBrain_HandleNeckUpper() {
     let mut v2: int16 = 0;
     let mut v6: int16 = 0;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
@@ -3713,8 +3629,7 @@ pub unsafe extern "C" fn MotherBrain_HandleNeckUpper() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_HandleNeck() {
+pub unsafe fn MotherBrain_HandleNeck() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_0A = ((*E).base.x_pos as ::core::ffi::c_int - 80 as ::core::ffi::c_int) as uint16;
     (*E).mbn_var_0B = ((*E).base.y_pos as ::core::ffi::c_int + 46 as ::core::ffi::c_int) as uint16;
@@ -3764,8 +3679,7 @@ pub unsafe extern "C" fn MotherBrain_HandleNeck() {
         + ComputeCosMult((*E1).mbn_var_30, r18) as ::core::ffi::c_int)
         as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallMotherBrainInstr(mut ea: uint32, mut k: uint16) -> uint16 {
+pub unsafe fn CallMotherBrainInstr(mut ea: uint32, mut k: uint16) -> uint16 {
     match ea {
         11115279 => return MotherBrain_Instr_Goto(k),
         11115284 => return MotherBrain_Instr_EnableNeckMovementGoto(k),
@@ -3792,8 +3706,7 @@ pub unsafe extern "C" fn CallMotherBrainInstr(mut ea: uint32, mut k: uint16) -> 
         _ => return Unreachable() as uint16,
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Func_1_DoubleRet() -> ::core::ffi::c_int {
+pub unsafe fn MotherBrain_Func_1_DoubleRet() -> ::core::ffi::c_int {
     let mut current_block: u64;
     let mut v5: uint16 = 0;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
@@ -3846,8 +3759,7 @@ pub unsafe extern "C" fn MotherBrain_Func_1_DoubleRet() -> ::core::ffi::c_int {
     (*E).mbn_var_21 = pc;
     return *(p.offset(2 as ::core::ffi::c_int as isize) as *mut uint16) as ::core::ffi::c_int;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_DrawNeck() {
+pub unsafe fn MotherBrain_DrawNeck() {
     if (*Get_MotherBrain(0 as ::core::ffi::c_int)).base.properties as ::core::ffi::c_int
         & kEnemyProps_Invisible as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
@@ -3860,8 +3772,7 @@ pub unsafe extern "C" fn MotherBrain_DrawNeck() {
         MotherBrain_DrawNeckSegment((*E).mbn_var_22, (*E).mbn_var_23);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_DrawBrain() {
+pub unsafe fn MotherBrain_DrawBrain() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     if (*E).mbn_var_14 as ::core::ffi::c_int != 0
         && (*E).mbn_var_15 == 0
@@ -3912,8 +3823,7 @@ pub unsafe extern "C" fn MotherBrain_DrawBrain() {
         MotherBrain_AddSpritemapToOam(v2, r18, r20, r22);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_DrawNeckSegment(mut x: uint16, mut y: uint16) {
+pub unsafe fn MotherBrain_DrawNeckSegment(mut x: uint16, mut y: uint16) {
     let mut v0: ::core::ffi::c_int = ((*Get_MotherBrain(0x40 as ::core::ffi::c_int))
         .base
         .flash_timer as ::core::ffi::c_int
@@ -3926,8 +3836,7 @@ pub unsafe extern "C" fn MotherBrain_DrawNeckSegment(mut x: uint16, mut y: uint1
         (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_0C,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_AddSpritemapToOam(
+pub unsafe fn MotherBrain_AddSpritemapToOam(
     mut j: uint16,
     mut r18: uint16,
     mut r20: uint16,
@@ -3980,12 +3889,10 @@ pub unsafe extern "C" fn MotherBrain_AddSpritemapToOam(
     *((&raw mut g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize) as *mut uint16) =
         idx as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_CalculateRainbowBeamHdma() {
+pub unsafe fn MotherBrain_CalculateRainbowBeamHdma() {
     MotherBrain_CalcHdma();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_MoveBodyDownScrollLeft(mut k: uint16, mut a: uint16) {
+pub unsafe fn MotherBrain_MoveBodyDownScrollLeft(mut k: uint16, mut a: uint16) {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).base.y_pos = ((*E).base.y_pos as ::core::ffi::c_int + a as ::core::ffi::c_int) as uint16;
     let ref mut fresh1 = *((&raw mut g_ram as *mut uint8)
@@ -3995,8 +3902,7 @@ pub unsafe extern "C" fn MotherBrain_MoveBodyDownScrollLeft(mut k: uint16, mut a
         (k as ::core::ffi::c_int + 34 as ::core::ffi::c_int - (*E).base.x_pos as ::core::ffi::c_int)
             as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_MoveBodyDown(mut a: uint16) {
+pub unsafe fn MotherBrain_MoveBodyDown(mut a: uint16) {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).base.y_pos = ((*E).base.y_pos as ::core::ffi::c_int + a as ::core::ffi::c_int) as uint16;
     let ref mut fresh0 = *((&raw mut g_ram as *mut uint8)
@@ -4005,8 +3911,7 @@ pub unsafe extern "C" fn MotherBrain_MoveBodyDown(mut a: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0xb5 as ::core::ffi::c_int as isize) as *mut uint16) =
         (34 as ::core::ffi::c_int - (*E).base.x_pos as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_FootstepEffect() {
+pub unsafe fn MotherBrain_FootstepEffect() {
     *((&raw mut g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
         as *mut uint16) = 1 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
@@ -4017,56 +3922,49 @@ pub unsafe extern "C" fn MotherBrain_FootstepEffect() {
         printf(b"Write to rom!\n\0" as *const u8 as *const ::core::ffi::c_char);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_MoveBodyUp10Left4(
+pub unsafe fn MotherBrain_Instr_MoveBodyUp10Left4(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
     MotherBrain_MoveBodyDownScrollLeft(4 as uint16, 0xfff6 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_MoveBodyUp16Left4(
+pub unsafe fn MotherBrain_Instr_MoveBodyUp16Left4(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
     MotherBrain_MoveBodyDownScrollLeft(4 as uint16, 0xfff0 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_MoveBodyUp12Right2(
+pub unsafe fn MotherBrain_Instr_MoveBodyUp12Right2(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
     MotherBrain_MoveBodyDownScrollLeft(0xfffe as uint16, 0xfff4 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_MoveDown12Left4(
+pub unsafe fn MotherBrain_Instr_MoveDown12Left4(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
     MotherBrain_MoveBodyDownScrollLeft(4 as uint16, 0xc as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_MoveDown16Right2(
+pub unsafe fn MotherBrain_Instr_MoveDown16Right2(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
     MotherBrain_MoveBodyDownScrollLeft(0xfffe as uint16, 0x10 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_MoveDown10Right2(
+pub unsafe fn MotherBrain_Instr_MoveDown10Right2(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
     MotherBrain_MoveBodyDownScrollLeft(0xfffe as uint16, 0xa as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_MoveUp2Right1(
+pub unsafe fn MotherBrain_Instr_MoveUp2Right1(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
@@ -4075,26 +3973,17 @@ pub unsafe extern "C" fn MotherBrain_Instr_MoveUp2Right1(
     MotherBrain_MoveBodyDown(0xfffe as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_MoveRight2(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn MotherBrain_Instr_MoveRight2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).base.x_pos = ((*E).base.x_pos as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     MotherBrain_MoveBodyDown(0 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_MoveUp1(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn MotherBrain_Instr_MoveUp1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     MotherBrain_MoveBodyDown(1 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_MoveUp1Right3_Sfx(
+pub unsafe fn MotherBrain_Instr_MoveUp1Right3_Sfx(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
@@ -4104,8 +3993,7 @@ pub unsafe extern "C" fn MotherBrain_Instr_MoveUp1Right3_Sfx(
     MotherBrain_MoveBodyDown(1 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_Down2Right15(
+pub unsafe fn MotherBrain_Instr_Down2Right15(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
@@ -4114,28 +4002,19 @@ pub unsafe extern "C" fn MotherBrain_Instr_Down2Right15(
     MotherBrain_MoveBodyDown(0xfffe as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_Down4Right6(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn MotherBrain_Instr_Down4Right6(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).base.x_pos = ((*E).base.x_pos as ::core::ffi::c_int + 6 as ::core::ffi::c_int) as uint16;
     MotherBrain_MoveBodyDown(0xfffc as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_Up4Left2(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn MotherBrain_Instr_Up4Left2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).base.x_pos = ((*E).base.x_pos as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
     MotherBrain_MoveBodyDown(4 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_Up2Left1_Sfx(
+pub unsafe fn MotherBrain_Instr_Up2Left1_Sfx(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
@@ -4145,8 +4024,7 @@ pub unsafe extern "C" fn MotherBrain_Instr_Up2Left1_Sfx(
     MotherBrain_MoveBodyDown(2 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_Up2Left1_Sfx2(
+pub unsafe fn MotherBrain_Instr_Up2Left1_Sfx2(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
@@ -4156,26 +4034,17 @@ pub unsafe extern "C" fn MotherBrain_Instr_Up2Left1_Sfx2(
     MotherBrain_MoveBodyDown(2 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_MoveLeft2(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn MotherBrain_Instr_MoveLeft2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).base.x_pos = ((*E).base.x_pos as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
     MotherBrain_MoveBodyDown(0 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_MoveDown1(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn MotherBrain_Instr_MoveDown1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     MotherBrain_MoveBodyDown(0xffff as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_MoveDown1Left3(
+pub unsafe fn MotherBrain_Instr_MoveDown1Left3(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
@@ -4184,8 +4053,7 @@ pub unsafe extern "C" fn MotherBrain_Instr_MoveDown1Left3(
     MotherBrain_MoveBodyDown(0xffff as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_MoveUp2Left15_Sfx(
+pub unsafe fn MotherBrain_Instr_MoveUp2Left15_Sfx(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
@@ -4195,8 +4063,7 @@ pub unsafe extern "C" fn MotherBrain_Instr_MoveUp2Left15_Sfx(
     MotherBrain_MoveBodyDown(2 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_MoveUp4Left6(
+pub unsafe fn MotherBrain_Instr_MoveUp4Left6(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
@@ -4205,8 +4072,7 @@ pub unsafe extern "C" fn MotherBrain_Instr_MoveUp4Left6(
     MotherBrain_MoveBodyDown(4 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_MoveDown4Right2(
+pub unsafe fn MotherBrain_Instr_MoveDown4Right2(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
@@ -4215,8 +4081,7 @@ pub unsafe extern "C" fn MotherBrain_Instr_MoveDown4Right2(
     MotherBrain_MoveBodyDown(0xfffc as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_MoveDown2Right1(
+pub unsafe fn MotherBrain_Instr_MoveDown2Right1(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
@@ -4225,56 +4090,49 @@ pub unsafe extern "C" fn MotherBrain_Instr_MoveDown2Right1(
     MotherBrain_MoveBodyDown(0xfffe as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_SetPose_Standing(
+pub unsafe fn MotherBrain_Instr_SetPose_Standing(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
     (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_02 = 0 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_SetPose_Walking(
+pub unsafe fn MotherBrain_Instr_SetPose_Walking(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
     (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_02 = 1 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_SetPose_Crouched(
+pub unsafe fn MotherBrain_Instr_SetPose_Crouched(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
     (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_02 = 3 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_SetPose_CrouchedTrans(
+pub unsafe fn MotherBrain_Instr_SetPose_CrouchedTrans(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
     (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_02 = 2 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_SetPose_DeathBeamMode(
+pub unsafe fn MotherBrain_Instr_SetPose_DeathBeamMode(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
     (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_02 = 4 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_SetPose_LeaningDown(
+pub unsafe fn MotherBrain_Instr_SetPose_LeaningDown(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
     (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_02 = 6 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_SpawnEprojToOffset(
+pub unsafe fn MotherBrain_Instr_SpawnEprojToOffset(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
@@ -4293,8 +4151,7 @@ pub unsafe extern "C" fn MotherBrain_Instr_SpawnEprojToOffset(
     );
     return jp.offset(3 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_SpawnDeathBeamEproj(
+pub unsafe fn MotherBrain_Instr_SpawnDeathBeamEproj(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
@@ -4306,8 +4163,7 @@ pub unsafe extern "C" fn MotherBrain_Instr_SpawnDeathBeamEproj(
     );
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_IncrBeamAttackPhase(
+pub unsafe fn MotherBrain_Instr_IncrBeamAttackPhase(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
@@ -4315,34 +4171,28 @@ pub unsafe extern "C" fn MotherBrain_Instr_IncrBeamAttackPhase(
     (*E).mbn_var_17 = (*E).mbn_var_17.wrapping_add(1);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_Goto(mut k: uint16) -> uint16 {
+pub unsafe fn MotherBrain_Instr_Goto(mut k: uint16) -> uint16 {
     return *(RomPtr_A9(k as uint16_t) as *mut uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_EnableNeckMovementGoto(mut k: uint16) -> uint16 {
+pub unsafe fn MotherBrain_Instr_EnableNeckMovementGoto(mut k: uint16) -> uint16 {
     (*Get_MotherBrain(0x40 as ::core::ffi::c_int)).mbn_var_31 = 1 as uint16;
     return *(RomPtr_A9(k as uint16_t) as *mut uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_DisableNeckMovement(mut k: uint16) -> uint16 {
+pub unsafe fn MotherBrain_Instr_DisableNeckMovement(mut k: uint16) -> uint16 {
     (*Get_MotherBrain(0x40 as ::core::ffi::c_int)).mbn_var_31 = 0 as uint16;
     return k;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_QueueSfx2(mut k: uint16) -> uint16 {
+pub unsafe fn MotherBrain_Instr_QueueSfx2(mut k: uint16) -> uint16 {
     let mut v2: *const uint16 = RomPtr_A9(k as uint16_t) as *const uint16;
     QueueSfx2_Max6(*v2);
     return (k as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_QueueSfx3(mut k: uint16) -> uint16 {
+pub unsafe fn MotherBrain_Instr_QueueSfx3(mut k: uint16) -> uint16 {
     let mut v2: *const uint16 = RomPtr_A9(k as uint16_t) as *const uint16;
     QueueSfx3_Max6(*v2);
     return (k as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_SpawnDroolEproj(mut k: uint16) -> uint16 {
+pub unsafe fn MotherBrain_Instr_SpawnDroolEproj(mut k: uint16) -> uint16 {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     if (*E).mbn_var_12 != 0 {
         let mut v2: uint16 =
@@ -4366,21 +4216,18 @@ pub unsafe extern "C" fn MotherBrain_Instr_SpawnDroolEproj(mut k: uint16) -> uin
     }
     return k;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_SpawnPurpleBreath(mut k: uint16) -> uint16 {
+pub unsafe fn MotherBrain_Instr_SpawnPurpleBreath(mut k: uint16) -> uint16 {
     SpawnEprojWithRoomGfx(
         addr_kEproj_MotherBrainPurpleBreathBig as ::core::ffi::c_int as uint16,
         0 as uint16,
     );
     return k;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_SetMainShakeTimer50(mut k: uint16) -> uint16 {
+pub unsafe fn MotherBrain_Instr_SetMainShakeTimer50(mut k: uint16) -> uint16 {
     (*Get_MotherBrain(0x40 as ::core::ffi::c_int)).mbn_var_00 = 50 as uint16;
     return k;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_GotoEitherOr(mut k: uint16) -> uint16 {
+pub unsafe fn MotherBrain_Instr_GotoEitherOr(mut k: uint16) -> uint16 {
     let mut result: uint16 = addr_stru_A99C5F as ::core::ffi::c_int as uint16;
     if *((&raw mut g_ram as *mut uint8).offset(0x5e5 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -4391,8 +4238,7 @@ pub unsafe extern "C" fn MotherBrain_Instr_GotoEitherOr(mut k: uint16) -> uint16
     }
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_MaybeGoto(mut k: uint16) -> uint16 {
+pub unsafe fn MotherBrain_Instr_MaybeGoto(mut k: uint16) -> uint16 {
     if (*((&raw mut g_ram as *mut uint8).offset(0x5e5 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int)
         < 0xf000 as ::core::ffi::c_int
@@ -4401,8 +4247,7 @@ pub unsafe extern "C" fn MotherBrain_Instr_MaybeGoto(mut k: uint16) -> uint16 {
     }
     return k;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_MaybeGoto2(mut k: uint16) -> uint16 {
+pub unsafe fn MotherBrain_Instr_MaybeGoto2(mut k: uint16) -> uint16 {
     if (*((&raw mut g_ram as *mut uint8).offset(0x5e5 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & 0xfff as ::core::ffi::c_int)
@@ -4412,8 +4257,7 @@ pub unsafe extern "C" fn MotherBrain_Instr_MaybeGoto2(mut k: uint16) -> uint16 {
     }
     return k;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_QueueShitroidAttackSfx(mut k: uint16) -> uint16 {
+pub unsafe fn MotherBrain_Instr_QueueShitroidAttackSfx(mut k: uint16) -> uint16 {
     if (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_13 as ::core::ffi::c_int
         != 11 as ::core::ffi::c_int
     {
@@ -4421,12 +4265,10 @@ pub unsafe extern "C" fn MotherBrain_Instr_QueueShitroidAttackSfx(mut k: uint16)
     }
     return k;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_Goto2(mut k: uint16) -> uint16 {
+pub unsafe fn MotherBrain_Instr_Goto2(mut k: uint16) -> uint16 {
     return addr_stru_A99CD1 as ::core::ffi::c_int as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_SpawnBlueRingEproj(mut k: uint16) -> uint16 {
+pub unsafe fn MotherBrain_Instr_SpawnBlueRingEproj(mut k: uint16) -> uint16 {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     SpawnEprojWithRoomGfx(
         addr_kEproj_MotherBrainBlueRingLasers as ::core::ffi::c_int as uint16,
@@ -4434,8 +4276,7 @@ pub unsafe extern "C" fn MotherBrain_Instr_SpawnBlueRingEproj(mut k: uint16) -> 
     );
     return k;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_AimRingsAtShitroid(mut k: uint16) -> uint16 {
+pub unsafe fn MotherBrain_Instr_AimRingsAtShitroid(mut k: uint16) -> uint16 {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain((*E).mbn_var_0A as ::core::ffi::c_int);
     MotherBrain_Instr_AimRings(
@@ -4448,8 +4289,7 @@ pub unsafe extern "C" fn MotherBrain_Instr_AimRingsAtShitroid(mut k: uint16) -> 
     );
     return k;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_AimRingsAtSamus(mut k: uint16) -> uint16 {
+pub unsafe fn MotherBrain_Instr_AimRingsAtSamus(mut k: uint16) -> uint16 {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     MotherBrain_Instr_AimRings(
         (*((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
@@ -4463,8 +4303,7 @@ pub unsafe extern "C" fn MotherBrain_Instr_AimRingsAtSamus(mut k: uint16) -> uin
     );
     return k;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_AimRings(mut x: uint16, mut y: uint16) {
+pub unsafe fn MotherBrain_Instr_AimRings(mut x: uint16, mut y: uint16) {
     let mut current_block: u64;
     let mut v0: uint16 = -(CalculateAngleFromXY(x, y) as ::core::ffi::c_int
         + 0x80 as ::core::ffi::c_int) as uint8 as uint16;
@@ -4489,8 +4328,7 @@ pub unsafe extern "C" fn MotherBrain_Instr_AimRings(mut x: uint16, mut y: uint16
     }
     (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_1A = v0;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_IncrShitroidAttackCtr(mut k: uint16) -> uint16 {
+pub unsafe fn MotherBrain_Instr_IncrShitroidAttackCtr(mut k: uint16) -> uint16 {
     let mut v3: int16 = 0;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     v3 = ((*E).mbn_var_13 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as int16;
@@ -4500,13 +4338,11 @@ pub unsafe extern "C" fn MotherBrain_Instr_IncrShitroidAttackCtr(mut k: uint16) 
     (*E).mbn_var_13 = v3 as uint16;
     return k;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_SetShitroidAttackCtr0(mut k: uint16) -> uint16 {
+pub unsafe fn MotherBrain_Instr_SetShitroidAttackCtr0(mut k: uint16) -> uint16 {
     (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_13 = 0 as uint16;
     return k;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_SpawnBombEproj(mut k: uint16) -> uint16 {
+pub unsafe fn MotherBrain_Instr_SpawnBombEproj(mut k: uint16) -> uint16 {
     let mut v2: *const uint16 = RomPtr_A9(k as uint16_t) as *const uint16;
     SpawnEprojWithRoomGfx(
         addr_kEproj_MotherBrainBomb as ::core::ffi::c_int as uint16,
@@ -4514,8 +4350,7 @@ pub unsafe extern "C" fn MotherBrain_Instr_SpawnBombEproj(mut k: uint16) -> uint
     );
     return (k as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_SpawnLaserEproj(mut k: uint16) -> uint16 {
+pub unsafe fn MotherBrain_Instr_SpawnLaserEproj(mut k: uint16) -> uint16 {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     (*E).mbn_var_31 = 0 as uint16;
     eproj_spawn_r22 = 1 as uint16;
@@ -4529,23 +4364,20 @@ pub unsafe extern "C" fn MotherBrain_Instr_SpawnLaserEproj(mut k: uint16) -> uin
     );
     return k;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_SpawnRainbowEproj(mut k: uint16) -> uint16 {
+pub unsafe fn MotherBrain_Instr_SpawnRainbowEproj(mut k: uint16) -> uint16 {
     SpawnEprojWithRoomGfx(
         addr_kEproj_MotherBrainRainbowBeamCharging as ::core::ffi::c_int as uint16,
         0 as uint16,
     );
     return k;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Instr_SetupFxForRainbowBeam(mut k: uint16) -> uint16 {
+pub unsafe fn MotherBrain_Instr_SetupFxForRainbowBeam(mut k: uint16) -> uint16 {
     (*Get_MotherBrain(0x40 as ::core::ffi::c_int)).mbn_var_14 = 0 as uint16;
     MotherBrain_SetupBrainPalForLaser();
     QueueSfx2_Max6(0x7f as uint16);
     return k;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Death_0() {
+pub unsafe fn MotherBrain_Phase3_Death_0() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         | kEnemyProps_Tangible as ::core::ffi::c_int) as uint16;
@@ -4562,8 +4394,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Death_0() {
         MotherBrain_Phase3_Death_1();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Death_1() {
+pub unsafe fn MotherBrain_Phase3_Death_1() {
     MotherBrain_GenerateSmokyExplosions();
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
@@ -4573,8 +4404,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Death_1() {
         (*E).mbn_var_A = (0xa9af21 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Death_2() {
+pub unsafe fn MotherBrain_Phase3_Death_2() {
     MotherBrain_GenerateSmokyExplosions();
     if MotherBrain_MakeWalkForwards(2 as uint16, 0x60 as uint16) as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
@@ -4590,8 +4420,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Death_2() {
         (*E).mbn_var_F = 32 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Death_3() {
+pub unsafe fn MotherBrain_Phase3_Death_3() {
     MotherBrain_GenerateSmokyExplosions();
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
@@ -4623,8 +4452,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Death_3() {
         MotherBrain_Phase3_Death_4();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Death_4() {
+pub unsafe fn MotherBrain_Phase3_Death_4() {
     MotherBrain_GenerateMixedExplosions();
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
@@ -4637,8 +4465,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Death_4() {
         MotherBrain_Phase3_Death_5();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Death_5() {
+pub unsafe fn MotherBrain_Phase3_Death_5() {
     HandleMotherBrainBodyFlickering();
     MotherBrain_GenerateMixedExplosions();
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
@@ -4677,8 +4504,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Death_5() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Death_6() {
+pub unsafe fn MotherBrain_Phase3_Death_6() {
     MotherBrain_GenerateMixedExplosions();
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
@@ -4688,28 +4514,21 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Death_6() {
         (*E).mbn_var_A = (0xa9b115 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_GenerateSmokyExplosions() {
+pub unsafe fn MotherBrain_GenerateSmokyExplosions() {
     MotherBrain_GenerateExplosions(
         0x10 as uint16,
         addr_word_A9B10F as ::core::ffi::c_int as uint16,
         2 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_GenerateMixedExplosions() {
+pub unsafe fn MotherBrain_GenerateMixedExplosions() {
     MotherBrain_GenerateExplosions(
         8 as uint16,
         addr_word_A9B109 as ::core::ffi::c_int as uint16,
         4 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_GenerateExplosions(
-    mut a: uint16,
-    mut r22: uint16,
-    mut r24: uint16,
-) {
+pub unsafe fn MotherBrain_GenerateExplosions(mut a: uint16, mut r22: uint16, mut r24: uint16) {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     (*E).mbn_var_E = (*E).mbn_var_E.wrapping_sub(1);
     let mut v2: bool = (*E).mbn_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -4767,8 +4586,7 @@ pub unsafe extern "C" fn MotherBrain_GenerateExplosions(
         QueueSfx3_Max3(0x13 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Death_7() {
+pub unsafe fn MotherBrain_Phase3_Death_7() {
     MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9C29 as ::core::ffi::c_int as uint16);
     (*Get_MotherBrain(0x40 as ::core::ffi::c_int)).mbn_var_A =
         (0xa987d0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -4777,8 +4595,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Death_7() {
     (*E).mbn_var_A = (0xa9b12d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     MotherBrain_Phase3_Death_8();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Death_8() {
+pub unsafe fn MotherBrain_Phase3_Death_8() {
     let mut v3: int16 = 0;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     let mut v1: uint16 =
@@ -4799,8 +4616,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Death_8() {
     }
     (*E1).base.y_pos = v3 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Death_9() {
+pub unsafe fn MotherBrain_Phase3_Death_9() {
     if ProcessSpriteTilesTransfers(
         0xa9 as uint8,
         addr_stru_A99003 as ::core::ffi::c_int as uint16,
@@ -4811,8 +4627,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Death_9() {
         (*E).mbn_var_F = 32 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Death_10() {
+pub unsafe fn MotherBrain_Phase3_Death_10() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -4823,8 +4638,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Death_10() {
         (*E).mbn_var_F = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Death_11() {
+pub unsafe fn MotherBrain_Phase3_Death_11() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -4850,8 +4664,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Death_11() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Death_12() {
+pub unsafe fn MotherBrain_Phase3_Death_12() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -4864,8 +4677,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Death_12() {
         (*E).mbn_var_04 = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Death_13() {
+pub unsafe fn MotherBrain_Phase3_Death_13() {
     if ProcessCorpseRotting(0x40 as uint16) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         let mut dms_var_53: uint16 = (*Get_DeadMonsters(0x40 as ::core::ffi::c_int)).dms_var_53;
         ProcessCorpseRottingVramTransfers(dms_var_53);
@@ -4883,8 +4695,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Death_13() {
         MotherBrain_Phase3_Death_14_20framedelay();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Death_14_20framedelay() {
+pub unsafe fn MotherBrain_Phase3_Death_14_20framedelay() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -4896,8 +4707,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Death_14_20framedelay() {
         (*E).mbn_var_A = (0xa9b258 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_CorpseRottingFinished() {
+pub unsafe fn MotherBrain_CorpseRottingFinished() {
     let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     eproj_spawn_pt = Point16U {
         x: ((*E1).base.x_pos as ::core::ffi::c_int
@@ -4919,8 +4729,7 @@ pub unsafe extern "C" fn MotherBrain_CorpseRottingFinished() {
         QueueSfx2_Max3(0x10 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Death_15_LoadEscapeTimerTiles() {
+pub unsafe fn MotherBrain_Phase3_Death_15_LoadEscapeTimerTiles() {
     if ProcessSpriteTilesTransfers(
         0xa6 as uint8,
         addr_stru_A6C4CB as ::core::ffi::c_int as uint16,
@@ -4931,8 +4740,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Death_15_LoadEscapeTimerTiles() {
         MotherBrain_Phase3_Death_16_StartEscape();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Death_16_StartEscape() {
+pub unsafe fn MotherBrain_Phase3_Death_16_StartEscape() {
     if ProcessSpriteTilesTransfers(
         0xa9 as uint8,
         addr_stru_A9902F as ::core::ffi::c_int as uint16,
@@ -4968,8 +4776,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Death_16_StartEscape() {
         (*E).mbn_var_A = v1;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Death_17_SpawnTimeBomb() {
+pub unsafe fn MotherBrain_Phase3_Death_17_SpawnTimeBomb() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -4983,8 +4790,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Death_17_SpawnTimeBomb() {
     }
     MotherBrain_Phase3_Death_18_TypesZebesText();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Death_18_TypesZebesText() {
+pub unsafe fn MotherBrain_Phase3_Death_18_TypesZebesText() {
     if HandleTypewriterText_Ext(0x2610 as uint16) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
         != 0
     {
@@ -4993,8 +4799,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Death_18_TypesZebesText() {
         (*E).mbn_var_F = 32 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Death_19_EscapeDoorExploding() {
+pub unsafe fn MotherBrain_Phase3_Death_19_EscapeDoorExploding() {
     MotherBrain_GenerateEscapeDoorExploding();
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
@@ -5012,8 +4817,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Death_19_EscapeDoorExploding() {
         (*E1).mbn_var_F = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Death_20_BlowUpEscapeDoor() {
+pub unsafe fn MotherBrain_Phase3_Death_20_BlowUpEscapeDoor() {
     MotherBrain_ExplodeEscapeDoor();
     (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_A =
         (0xa9b33c as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -5023,8 +4827,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Death_20_BlowUpEscapeDoor() {
         field_2: 0xb677 as VoidP,
     });
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Death_21_KeepEarthquakeGoing() {
+pub unsafe fn MotherBrain_Phase3_Death_21_KeepEarthquakeGoing() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
         as *mut uint16)
         == 0
@@ -5035,8 +4838,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Death_21_KeepEarthquakeGoing() {
         *fresh10 = (*fresh10).wrapping_sub(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_GenerateEscapeDoorExploding() {
+pub unsafe fn MotherBrain_GenerateEscapeDoorExploding() {
     let mut v1: int16 = 0;
     let mut v2: int16 = 0;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
@@ -5068,8 +4870,7 @@ pub unsafe extern "C" fn MotherBrain_GenerateEscapeDoorExploding() {
         QueueSfx2_Max3(0x24 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_ExplodeEscapeDoor() {
+pub unsafe fn MotherBrain_ExplodeEscapeDoor() {
     let mut v0: uint16 = 0 as uint16;
     let mut v1: uint16 = 0;
     loop {
@@ -5086,8 +4887,7 @@ pub unsafe extern "C" fn MotherBrain_ExplodeEscapeDoor() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_SamusCollDetect() {
+pub unsafe fn MotherBrain_SamusCollDetect() {
     let mut v1: int8 = 0;
     let mut E0: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     let mut R26: uint16 = (*E0).mbn_var_04;
@@ -5141,8 +4941,7 @@ pub unsafe extern "C" fn MotherBrain_SamusCollDetect() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_SamusCollDetectPart(
+pub unsafe fn MotherBrain_SamusCollDetectPart(
     mut k: uint16,
     mut r18: uint16,
     mut r20: uint16,
@@ -5241,12 +5040,10 @@ pub unsafe extern "C" fn MotherBrain_SamusCollDetectPart(
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainsBody_Shot() {
+pub unsafe fn MotherBrainsBody_Shot() {
     CreateDudShot();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainsBrain_Shot() {
+pub unsafe fn MotherBrainsBrain_Shot() {
     let mut v2: int16 = 0;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     if (*E).mbn_var_00 != 0 {
@@ -5292,8 +5089,7 @@ pub unsafe extern "C" fn MotherBrainsBrain_Shot() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase23_ShotReaction() {
+pub unsafe fn MotherBrain_Phase23_ShotReaction() {
     let mut v1: int16 = 0;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     if (*E).mbn_var_00 as ::core::ffi::c_int == 4 as ::core::ffi::c_int
@@ -5312,8 +5108,7 @@ pub unsafe extern "C" fn MotherBrain_Phase23_ShotReaction() {
         (*E).mbn_var_07 = v1 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_DetermineShotReactionType() -> uint16 {
+pub unsafe fn MotherBrain_DetermineShotReactionType() -> uint16 {
     return g_byte_A9B5A1[(*(((&raw mut g_ram as *mut uint8)
         .offset(0xc18 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(
@@ -5327,8 +5122,7 @@ pub unsafe extern "C" fn MotherBrain_DetermineShotReactionType() -> uint16 {
         ) as ::core::ffi::c_int
         & 7 as ::core::ffi::c_int) as usize] as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_BeamShotReaction() {
+pub unsafe fn MotherBrain_Phase3_BeamShotReaction() {
     let mut v1: int16 = 0;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     v1 = ((*E).mbn_var_07 as ::core::ffi::c_int - 266 as ::core::ffi::c_int) as int16;
@@ -5340,8 +5134,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_BeamShotReaction() {
     }
     (*E).mbn_var_07 = v1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainsBrain_Touch() {
+pub unsafe fn MotherBrainsBrain_Touch() {
     let mut v0: int16 = 0;
     if *(&raw mut g_ram as *mut uint8).offset(0xa1f as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
@@ -5358,8 +5151,7 @@ pub unsafe extern "C" fn MotherBrainsBrain_Touch() {
         (*v1.offset(1 as ::core::ffi::c_int as isize)).flash_timer = v0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_HurtSamus() {
+pub unsafe fn MotherBrain_HurtSamus() {
     Ridley_Func_98();
     *((&raw mut g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
         as *mut uint16) = 96 as uint16;
@@ -5376,8 +5168,7 @@ pub unsafe extern "C" fn MotherBrain_HurtSamus() {
             .x_pos as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
             >= 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Body_Phase2_Thinking() {
+pub unsafe fn MotherBrain_Body_Phase2_Thinking() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     if (*E1).base.health == 0 {
@@ -5427,8 +5218,7 @@ pub unsafe extern "C" fn MotherBrain_Body_Phase2_Thinking() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Body_Phase2_TryAttack() {
+pub unsafe fn MotherBrain_Body_Phase2_TryAttack() {
     let mut v0: int16 = 0;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     v0 = (2 as ::core::ffi::c_int * (*E).mbn_var_18 as ::core::ffi::c_int) as int16;
@@ -5504,8 +5294,7 @@ pub unsafe extern "C" fn MotherBrain_Body_Phase2_TryAttack() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase2_DecideAttackStrategy_DoubleRet() -> uint8 {
+pub unsafe fn MotherBrain_Phase2_DecideAttackStrategy_DoubleRet() -> uint8 {
     if g_word_A9B72C
         [*(&raw mut g_ram as *mut uint8).offset(0xa1f as ::core::ffi::c_int as isize) as usize]
         != 0
@@ -5548,8 +5337,7 @@ pub unsafe extern "C" fn MotherBrain_Phase2_DecideAttackStrategy_DoubleRet() -> 
         return 1 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase2_Attack_Cooldown() {
+pub unsafe fn MotherBrain_Phase2_Attack_Cooldown() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     let fresh9 = (*E).mbn_parameter_1;
     (*E).mbn_parameter_1 = (*E).mbn_parameter_1.wrapping_sub(1);
@@ -5557,14 +5345,12 @@ pub unsafe extern "C" fn MotherBrain_Phase2_Attack_Cooldown() {
         (*E).mbn_var_18 = (*E).mbn_var_18.wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase2_Attack_End() {
+pub unsafe fn MotherBrain_Phase2_Attack_End() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_18 = 0 as uint16;
     (*E).mbn_var_A = (0xa9b605 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_FiringBomb_DecideOnWalking() {
+pub unsafe fn MotherBrain_FiringBomb_DecideOnWalking() {
     if *((&raw mut g_ram as *mut uint8).offset(0x5e5 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         >= 0xff80 as ::core::ffi::c_int
@@ -5595,8 +5381,7 @@ pub unsafe extern "C" fn MotherBrain_FiringBomb_DecideOnWalking() {
         (*E).mbn_var_A = (0xa9b7ac as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_FiringBomb_WalkingBackwards() {
+pub unsafe fn MotherBrain_FiringBomb_WalkingBackwards() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     if MotherBrain_MakeWalkBackwards((*E).mbn_var_F, 6 as uint16) as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
@@ -5605,8 +5390,7 @@ pub unsafe extern "C" fn MotherBrain_FiringBomb_WalkingBackwards() {
         MotherBrain_FiringBomb_DecideOnCrouching();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_FiringBomb_DecideOnCrouching() {
+pub unsafe fn MotherBrain_FiringBomb_DecideOnCrouching() {
     if NextRandom() as ::core::ffi::c_int >= 0x8000 as ::core::ffi::c_int {
         (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_A =
             (0xa9b7c6 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -5615,14 +5399,12 @@ pub unsafe extern "C" fn MotherBrain_FiringBomb_DecideOnCrouching() {
         MotherBrain_B7CB();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_FiringBomb_Crouch() {
+pub unsafe fn MotherBrain_FiringBomb_Crouch() {
     if MotherBrain_MakeHerCrouch() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         MotherBrain_B7CB();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_B7CB() {
+pub unsafe fn MotherBrain_B7CB() {
     let mut v0: uint16 = addr_kMotherBrain_Ilist_9ECC as ::core::ffi::c_int as uint16;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     if (*E).mbn_var_1F != 0 {
@@ -5632,8 +5414,7 @@ pub unsafe extern "C" fn MotherBrain_B7CB() {
     (*E).mbn_var_A = (0xa9b7e8 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).mbn_var_F = 44 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_FiringBomb_Fired() {
+pub unsafe fn MotherBrain_FiringBomb_Fired() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -5648,14 +5429,12 @@ pub unsafe extern "C" fn MotherBrain_FiringBomb_Fired() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_FiringBomb_Standup() {
+pub unsafe fn MotherBrain_FiringBomb_Standup() {
     if MotherBrain_MakeHerStandUp() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         MotherBrain_FiringBomb_Finish();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_FiringBomb_Finish() {
+pub unsafe fn MotherBrain_FiringBomb_Finish() {
     let mut v0: uint16 = (0xa9b605 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     if (*E).mbn_var_1F != 0 {
@@ -5663,8 +5442,7 @@ pub unsafe extern "C" fn MotherBrain_FiringBomb_Finish() {
     }
     (*E).mbn_var_A = v0;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBomb_FiringLaser_PositionHead() {
+pub unsafe fn MotherBomb_FiringLaser_PositionHead() {
     let mut v0: int16 = 0;
     v0 = 8 as int16;
     let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
@@ -5682,8 +5460,7 @@ pub unsafe extern "C" fn MotherBomb_FiringLaser_PositionHead() {
     (*E).mbn_var_A = (0xa9b839 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).mbn_var_F = 4 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBomb_FiringLaser_PositionHeadSlowlyFire() {
+pub unsafe fn MotherBomb_FiringLaser_PositionHeadSlowlyFire() {
     let mut v2: int16 = 0;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
@@ -5703,8 +5480,7 @@ pub unsafe extern "C" fn MotherBomb_FiringLaser_PositionHeadSlowlyFire() {
         (*E).mbn_var_F = 16 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBomb_FiringLaser_FinishAttack() {
+pub unsafe fn MotherBomb_FiringLaser_FinishAttack() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -5719,20 +5495,18 @@ pub unsafe extern "C" fn MotherBomb_FiringLaser_FinishAttack() {
 }
 static mut off_A9B887: [Option<Func_V>; 4] = unsafe {
     [
-        Some(MotherBomb_FiringDeathBeam_0 as unsafe extern "C" fn() -> ()),
-        Some(MotherBomb_FiringDeathBeam_1 as unsafe extern "C" fn() -> ()),
-        Some(MotherBomb_FiringDeathBeam_2 as unsafe extern "C" fn() -> ()),
-        Some(MotherBomb_FiringDeathBeam_3 as unsafe extern "C" fn() -> ()),
+        Some(MotherBomb_FiringDeathBeam_0 as unsafe fn() -> ()),
+        Some(MotherBomb_FiringDeathBeam_1 as unsafe fn() -> ()),
+        Some(MotherBomb_FiringDeathBeam_2 as unsafe fn() -> ()),
+        Some(MotherBomb_FiringDeathBeam_3 as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn MotherBomb_FiringDeathBeam() {
+pub unsafe fn MotherBomb_FiringDeathBeam() {
     let mut v0: ::core::ffi::c_int =
         (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_17 as ::core::ffi::c_int;
     off_A9B887[v0 as usize].expect("non-null function pointer")();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBomb_FiringDeathBeam_0() {
+pub unsafe fn MotherBomb_FiringDeathBeam_0() {
     if MotherBrain_MakeWalkBackwards(0x28 as uint16, 8 as uint16) as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
         != 0
@@ -5744,18 +5518,15 @@ pub unsafe extern "C" fn MotherBomb_FiringDeathBeam_0() {
         (*E).mbn_var_17 = (*E).mbn_var_17.wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBomb_FiringDeathBeam_1() {
+pub unsafe fn MotherBomb_FiringDeathBeam_1() {
     if (*Get_MotherBrain(0x40 as ::core::ffi::c_int)).mbn_var_05 == 0 {
         MotherBrain_SetBodyInstrs(addr_kMotherBrain_Ilist_9A42 as ::core::ffi::c_int as uint16);
         let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
         (*E).mbn_var_17 = (*E).mbn_var_17.wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBomb_FiringDeathBeam_2() {}
-#[no_mangle]
-pub unsafe extern "C" fn MotherBomb_FiringDeathBeam_3() {
+pub unsafe fn MotherBomb_FiringDeathBeam_2() {}
+pub unsafe fn MotherBomb_FiringDeathBeam_3() {
     MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9C87 as ::core::ffi::c_int as uint16);
     let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     (*E1).mbn_var_32 = 2 as uint16;
@@ -5764,8 +5535,7 @@ pub unsafe extern "C" fn MotherBomb_FiringDeathBeam_3() {
     (*E).mbn_var_17 = 0 as uint16;
     (*E).mbn_var_A = (0xa9b605 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_0() {
+pub unsafe fn MotherBomb_FiringRainbowBeam_0() {
     MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9C87 as ::core::ffi::c_int as uint16);
     let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     (*E1).mbn_var_34 = 64 as uint16;
@@ -5776,8 +5546,7 @@ pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_0() {
     (*E).mbn_var_A = (0xa9b91a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).mbn_var_F = 256 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_1_StartCharge() {
+pub unsafe fn MotherBomb_FiringRainbowBeam_1_StartCharge() {
     let mut E: *mut Enemy_MotherBomb = Get_MotherBomb(0 as ::core::ffi::c_int);
     (*E).mbb_var_F = (*E).mbb_var_F.wrapping_sub(1);
     if (*E).mbb_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -5788,8 +5557,7 @@ pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_1_StartCharge() {
         MotherBomb_FiringRainbowBeam_2_RetractNeck();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_2_RetractNeck() {
+pub unsafe fn MotherBomb_FiringRainbowBeam_2_RetractNeck() {
     if MotherBrain_WalkBackwardsSlowlyAndRetractHead(0x28 as uint16) as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
         != 0
@@ -5800,8 +5568,7 @@ pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_2_RetractNeck() {
         MotherBomb_FiringRainbowBeam_3_Wait();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_3_Wait() {
+pub unsafe fn MotherBomb_FiringRainbowBeam_3_Wait() {
     let mut E: *mut Enemy_MotherBomb = Get_MotherBomb(0 as ::core::ffi::c_int);
     (*E).mbb_var_F = (*E).mbb_var_F.wrapping_sub(1);
     if (*E).mbb_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -5812,8 +5579,7 @@ pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_3_Wait() {
         MotherBomb_FiringRainbowBeam_4_ExtendNeckDown();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_4_ExtendNeckDown() {
+pub unsafe fn MotherBomb_FiringRainbowBeam_4_ExtendNeckDown() {
     *((&raw mut g_ram as *mut uint8).offset(0xccc as ::core::ffi::c_int as isize) as *mut uint16) =
         8 as uint16;
     let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
@@ -5825,8 +5591,7 @@ pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_4_ExtendNeckDown() {
     (*E).mbn_var_F = 16 as uint16;
     MotherBomb_FiringRainbowBeam_5_StartFiring();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_5_StartFiring() {
+pub unsafe fn MotherBomb_FiringRainbowBeam_5_StartFiring() {
     MotherBrain_AimBeamAndIncrWidth();
     if *((&raw mut g_ram as *mut uint8).offset(0xcee as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
@@ -5869,8 +5634,7 @@ pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_5_StartFiring() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_6_MoveSamusToWall() {
+pub unsafe fn MotherBomb_FiringRainbowBeam_6_MoveSamusToWall() {
     MotherBrain_PlayRainbowBeamSfx();
     MotherBrain_HandleRainbowBeamPalette();
     MotherBrain_AimBeamAndIncrWidth();
@@ -5883,8 +5647,7 @@ pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_6_MoveSamusToWall() {
         (*E).mbb_var_F = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_7_DelayFrame() {
+pub unsafe fn MotherBomb_FiringRainbowBeam_7_DelayFrame() {
     MotherBrain_PlayRainbowBeamSfx();
     MotherBrain_HandleRainbowBeamPalette();
     MotherBrain_AimBeamAndIncrWidth();
@@ -5902,8 +5665,7 @@ pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_7_DelayFrame() {
         (*E).mbb_var_A = (0xa9ba27 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_8_StartDrainSamus() {
+pub unsafe fn MotherBomb_FiringRainbowBeam_8_StartDrainSamus() {
     let mut E: *mut Enemy_MotherBomb = Get_MotherBomb(0 as ::core::ffi::c_int);
     (*E).mbb_var_A = (0xa9ba3c as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).mbb_var_F = 299 as uint16;
@@ -5913,8 +5675,7 @@ pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_8_StartDrainSamus() {
         as *mut uint16) = 8 as uint16;
     MotherBomb_FiringRainbowBeam_9_DrainingSamus();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_9_DrainingSamus() {
+pub unsafe fn MotherBomb_FiringRainbowBeam_9_DrainingSamus() {
     MotherBrain_PlayRainbowBeamSfx();
     MotherBrain_HandleRainbowBeamPalette();
     MotherBrain_AimBeamAndIncrWidth();
@@ -5930,8 +5691,7 @@ pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_9_DrainingSamus() {
         (*E).mbb_var_A = (0xa9ba5e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_10_FinishFiringRainbow() {
+pub unsafe fn MotherBomb_FiringRainbowBeam_10_FinishFiringRainbow() {
     MotherBrain_PlayRainbowBeamSfx();
     MotherBrain_HandleRainbowBeamPalette();
     MotherBrain_AimBeam();
@@ -5961,15 +5721,13 @@ pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_10_FinishFiringRainbow() {
         (*E).mbn_var_A = (0xa9bac4 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_11_LetSamusFall() {
+pub unsafe fn MotherBomb_FiringRainbowBeam_11_LetSamusFall() {
     SomeMotherBrainScripts(0 as uint16);
     (*Get_MotherBomb(0 as ::core::ffi::c_int)).mbb_var_A =
         (0xa9bad1 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     MotherBomb_FiringRainbowBeam_12_WaitForSamusHitGround();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_12_WaitForSamusHitGround() {
+pub unsafe fn MotherBomb_FiringRainbowBeam_12_WaitForSamusHitGround() {
     if MotherBrain_MoveSamusForFallingAfterBeam() as ::core::ffi::c_int & 1 as ::core::ffi::c_int
         != 0
     {
@@ -5977,8 +5735,7 @@ pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_12_WaitForSamusHitGround()
             (0xa9badd as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_13_LowerHead() {
+pub unsafe fn MotherBomb_FiringRainbowBeam_13_LowerHead() {
     let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     (*E1).mbn_var_34 = 64 as uint16;
     (*E1).mbn_var_31 = 1 as uint16;
@@ -5988,8 +5745,7 @@ pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_13_LowerHead() {
     (*E).mbn_var_A = (0xa9bb06 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).mbn_var_F = 128 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_14_DecideNextAction() {
+pub unsafe fn MotherBomb_FiringRainbowBeam_14_DecideNextAction() {
     let mut E: *mut Enemy_MotherBomb = Get_MotherBomb(0 as ::core::ffi::c_int);
     (*E).mbb_var_F = (*E).mbb_var_F.wrapping_sub(1);
     if (*E).mbb_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -6013,8 +5769,7 @@ pub unsafe extern "C" fn MotherBomb_FiringRainbowBeam_14_DecideNextAction() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_PlayRainbowBeamSfx() {
+pub unsafe fn MotherBrain_PlayRainbowBeamSfx() {
     let mut mbn_var_15: int16 = 0;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     mbn_var_15 = (*E).mbn_var_15 as int16;
@@ -6024,24 +5779,21 @@ pub unsafe extern "C" fn MotherBrain_PlayRainbowBeamSfx() {
         (*E).mbn_var_16 = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_WalkBackwardsSlowlyAndRetractHead(mut a: uint16) -> uint8 {
+pub unsafe fn MotherBrain_WalkBackwardsSlowlyAndRetractHead(mut a: uint16) -> uint8 {
     let mut rv: uint8 = MotherBrain_MakeWalkBackwards(a, 0xa as uint16);
     if rv != 0 {
         MotherBrain_RetractHead();
     }
     return rv;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_RetractHead() {
+pub unsafe fn MotherBrain_RetractHead() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     (*E).mbn_var_34 = 80 as uint16;
     (*E).mbn_var_31 = 1 as uint16;
     (*E).mbn_var_32 = 8 as uint16;
     (*E).mbn_var_33 = 6 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_AimBeamAndIncrWidth() {
+pub unsafe fn MotherBrain_AimBeamAndIncrWidth() {
     let mut v1: int16 = 0;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     v1 = ((*E).mbn_var_33 as ::core::ffi::c_int + 384 as ::core::ffi::c_int) as int16;
@@ -6054,8 +5806,7 @@ pub unsafe extern "C" fn MotherBrain_AimBeamAndIncrWidth() {
     (*E).mbn_var_33 = v1 as uint16;
     MotherBrain_AimBeam();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_AimBeam() {
+pub unsafe fn MotherBrain_AimBeam() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_31 = -(CalculateAngleFromXY(
         (*((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
@@ -6070,12 +5821,10 @@ pub unsafe extern "C" fn MotherBrain_AimBeam() {
         + 0x80 as ::core::ffi::c_int)
         as uint8 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_CalculateRainbowBeamHdma_() {
+pub unsafe fn MotherBrain_CalculateRainbowBeamHdma_() {
     MotherBrain_CalculateRainbowBeamHdma();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_MoveSamusTowardsWallDueToBeam() -> uint8 {
+pub unsafe fn MotherBrain_MoveSamusTowardsWallDueToBeam() -> uint8 {
     let mut v0: uint8 = MotherBrain_MoveSamusHorizTowardsWall(0x1000 as uint16);
     if v0 == 0 {
         let mut v1: uint16 = Math_MultByCos(
@@ -6086,8 +5835,7 @@ pub unsafe extern "C" fn MotherBrain_MoveSamusTowardsWallDueToBeam() -> uint8 {
     }
     return v0;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_MoveSamusTowardsMiddleOfWall() {
+pub unsafe fn MotherBrain_MoveSamusTowardsMiddleOfWall() {
     let mut v0: uint16 = 64 as uint16;
     if ((124 as ::core::ffi::c_int
         - *((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
@@ -6098,8 +5846,7 @@ pub unsafe extern "C" fn MotherBrain_MoveSamusTowardsMiddleOfWall() {
     }
     MotherBrain_MoveSamusVerticallyTowardsCeilingFloor(v0);
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_MoveSamusForFallingAfterBeam() -> uint8 {
+pub unsafe fn MotherBrain_MoveSamusForFallingAfterBeam() -> uint8 {
     let mut v1: int16 = 0;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     v1 = ((*E).mbn_parameter_1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as int16;
@@ -6114,10 +5861,7 @@ pub unsafe extern "C" fn MotherBrain_MoveSamusForFallingAfterBeam() -> uint8 {
     return (MotherBrain_MoveSamusVerticallyTowardsCeilingFloor(v2) as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int) as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_MoveSamusVerticallyTowardsCeilingFloor(
-    mut a: uint16,
-) -> uint8 {
+pub unsafe fn MotherBrain_MoveSamusVerticallyTowardsCeilingFloor(mut a: uint16) -> uint8 {
     let mut carry: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0xafc as ::core::ffi::c_int as isize)
         as *mut uint16 as *mut uint8)
@@ -6174,8 +5918,7 @@ pub unsafe extern "C" fn MotherBrain_MoveSamusVerticallyTowardsCeilingFloor(
         0 as uint16;
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_MoveSamusHorizTowardsWall(mut a: uint16) -> uint8 {
+pub unsafe fn MotherBrain_MoveSamusHorizTowardsWall(mut a: uint16) -> uint8 {
     let mut carry: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0xaf8 as ::core::ffi::c_int as isize)
         as *mut uint16 as *mut uint8)
@@ -6223,8 +5966,7 @@ pub unsafe extern "C" fn MotherBrain_MoveSamusHorizTowardsWall(mut a: uint16) ->
         return 1 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_HandleRainbowBeamExplosions() {
+pub unsafe fn MotherBrain_HandleRainbowBeamExplosions() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_parameter_2 = (*E).mbn_parameter_2.wrapping_sub(1);
     if (*E).mbn_parameter_2 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -6245,12 +5987,10 @@ pub unsafe extern "C" fn MotherBrain_HandleRainbowBeamExplosions() {
         QueueSfx2_Max6(0x24 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_BodyRainbowBeamPalAnimIndex0() {
+pub unsafe fn MotherBrain_BodyRainbowBeamPalAnimIndex0() {
     (*Get_MotherBrain(0x40 as ::core::ffi::c_int)).mbn_var_01 = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_WriteDefaultPalette() {
+pub unsafe fn MotherBrain_WriteDefaultPalette() {
     WriteColorsToPalette(
         0x82 as uint16,
         0xa9 as uint8,
@@ -6270,8 +6010,7 @@ pub unsafe extern "C" fn MotherBrain_WriteDefaultPalette() {
         0xf as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_WritePhase2DeathPalette() {
+pub unsafe fn MotherBrain_WritePhase2DeathPalette() {
     MotherBrain_WritePalette(
         *(g_rom.offset(
             (((0xade434 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -6282,8 +6021,7 @@ pub unsafe extern "C" fn MotherBrain_WritePhase2DeathPalette() {
             .offset(6 as ::core::ffi::c_int as isize),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_HandleRainbowBeamPalette() {
+pub unsafe fn MotherBrain_HandleRainbowBeamPalette() {
     if (*Get_MotherBrain(0 as ::core::ffi::c_int))
         .base
         .frame_counter as ::core::ffi::c_int
@@ -6319,8 +6057,7 @@ pub unsafe extern "C" fn MotherBrain_HandleRainbowBeamPalette() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_WritePalette(mut j: uint16) {
+pub unsafe fn MotherBrain_WritePalette(mut j: uint16) {
     WriteColorsToPalette(0x82 as uint16, 0xad as uint8, j, 15 as uint16);
     WriteColorsToPalette(0x122 as uint16, 0xad as uint8, j, 15 as uint16);
     WriteColorsToPalette(
@@ -6330,8 +6067,7 @@ pub unsafe extern "C" fn MotherBrain_WritePalette(mut j: uint16) {
         15 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase2Cut_0() {
+pub unsafe fn MotherBrain_Phase2Cut_0() {
     let mut v0: uint16 = SuitDamageDivision(0x50 as uint16);
     if (4 as ::core::ffi::c_int * v0 as ::core::ffi::c_int + 20 as ::core::ffi::c_int
         - *((&raw mut g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize)
@@ -6372,8 +6108,7 @@ pub unsafe extern "C" fn MotherBrain_Phase2Cut_0() {
         MotherBrain_SetBrainInstrs(v1);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase2Cut_1() {
+pub unsafe fn MotherBrain_Phase2Cut_1() {
     if MotherBrain_MakeHerStandUp() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
         (*E).mbn_var_A = (0xa9bda9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -6381,8 +6116,7 @@ pub unsafe extern "C" fn MotherBrain_Phase2Cut_1() {
         MotherBrain_Phase2Cut_2();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase2Cut_2() {
+pub unsafe fn MotherBrain_Phase2Cut_2() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -6393,8 +6127,7 @@ pub unsafe extern "C" fn MotherBrain_Phase2Cut_2() {
         (*E).mbn_var_F = 256 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase2Cut_3() {
+pub unsafe fn MotherBrain_Phase2Cut_3() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -6405,8 +6138,7 @@ pub unsafe extern "C" fn MotherBrain_Phase2Cut_3() {
         MotherBrain_Phase2Cut_4();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase2Cut_4() {
+pub unsafe fn MotherBrain_Phase2Cut_4() {
     if ProcessSpriteTilesTransfers(
         0xa9 as uint8,
         addr_stru_A98FE5 as ::core::ffi::c_int as uint16,
@@ -6419,8 +6151,7 @@ pub unsafe extern "C" fn MotherBrain_Phase2Cut_4() {
         (*E).mbn_var_F = 256 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase2Cut_5() {
+pub unsafe fn MotherBrain_Phase2Cut_5() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -6436,15 +6167,13 @@ pub unsafe extern "C" fn MotherBrain_Phase2Cut_5() {
         (*E).mbn_var_A = (0xa9be1a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_SpawnShitroidInCutscene() {
+pub unsafe fn MotherBrain_SpawnShitroidInCutscene() {
     (*Get_MotherBrain(0x40 as ::core::ffi::c_int)).mbn_var_0A = SpawnEnemy(
         0xa9 as uint8,
         addr_stru_A9BE28 as ::core::ffi::c_int as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_DrainedByShitroid_0() {
+pub unsafe fn MotherBrain_DrainedByShitroid_0() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_00 = 3 as uint16;
     let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
@@ -6455,8 +6184,7 @@ pub unsafe extern "C" fn MotherBrain_DrainedByShitroid_0() {
     (*E).mbn_var_F = 48 as uint16;
     MotherBrain_DrainedByShitroid_1();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_DrainedByShitroid_1() {
+pub unsafe fn MotherBrain_DrainedByShitroid_1() {
     MotherBrain_HandleRainbowBeamPalette();
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
@@ -6473,8 +6201,7 @@ pub unsafe extern "C" fn MotherBrain_DrainedByShitroid_1() {
         (*E1).mbn_var_33 = 4 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallMotherBrainPainfulWalk(mut ea: uint32) {
+pub unsafe fn CallMotherBrainPainfulWalk(mut ea: uint32) {
     match ea {
         11124688 => {
             MotherBrain_PainfulWalkForwards();
@@ -6497,8 +6224,7 @@ pub unsafe extern "C" fn CallMotherBrainPainfulWalk(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_DrainedByShitroid_2() {
+pub unsafe fn MotherBrain_DrainedByShitroid_2() {
     let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     if (*E1).mbn_var_00 == 0 {
         (*E1).mbn_var_00 = 50 as uint16;
@@ -6521,8 +6247,7 @@ pub unsafe extern "C" fn MotherBrain_DrainedByShitroid_2() {
         (*E).mbn_var_A = (0xa9bf0e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_DrainedByShitroid_3() {
+pub unsafe fn MotherBrain_DrainedByShitroid_3() {
     let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     CallMotherBrainPainfulWalk(
         ((*E1).mbn_var_08 as ::core::ffi::c_int | 0xa90000 as ::core::ffi::c_int) as uint32,
@@ -6540,8 +6265,7 @@ pub unsafe extern "C" fn MotherBrain_DrainedByShitroid_3() {
         MotherBrain_DrainedByShitroid_4();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_DrainedByShitroid_4() {
+pub unsafe fn MotherBrain_DrainedByShitroid_4() {
     if MotherBrain_MakeWalkBackwards(0x28 as uint16, 0 as uint16) as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
         != 0
@@ -6552,8 +6276,7 @@ pub unsafe extern "C" fn MotherBrain_DrainedByShitroid_4() {
         MotherBrain_DrainedByShitroid_5();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_DrainedByShitroid_5() {
+pub unsafe fn MotherBrain_DrainedByShitroid_5() {
     let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     if *(&raw mut (*E1).mbn_var_32 as *mut uint32) == 0 {
         (*E1).mbn_var_12 = ((*E1).mbn_var_33 as ::core::ffi::c_int
@@ -6567,8 +6290,7 @@ pub unsafe extern "C" fn MotherBrain_DrainedByShitroid_5() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_DrainedByShitroid_6() {
+pub unsafe fn MotherBrain_DrainedByShitroid_6() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -6580,8 +6302,7 @@ pub unsafe extern "C" fn MotherBrain_DrainedByShitroid_6() {
         MotherBrain_DrainedByShitroid_7();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_DrainedByShitroid_7() {
+pub unsafe fn MotherBrain_DrainedByShitroid_7() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     let mut v2: bool = (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -6605,8 +6326,7 @@ pub unsafe extern "C" fn MotherBrain_DrainedByShitroid_7() {
         (*E).mbn_var_A = (0xa9c059 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_PainfulWalkForwards() {
+pub unsafe fn MotherBrain_PainfulWalkForwards() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     if MotherBrain_MakeWalkForwards((*E).mbn_var_07, 0x48 as uint16) as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
@@ -6616,8 +6336,7 @@ pub unsafe extern "C" fn MotherBrain_PainfulWalkForwards() {
         MotherBrain_SetPainfulWalkingTimer();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_PainfulWalkingForwards() {
+pub unsafe fn MotherBrain_PainfulWalkingForwards() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     let mut v1: uint16 =
         ((*E).mbn_var_09 as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16;
@@ -6627,8 +6346,7 @@ pub unsafe extern "C" fn MotherBrain_PainfulWalkingForwards() {
         (*E).mbn_var_08 = (0xa9c004 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_PainfulWalkBackwards() {
+pub unsafe fn MotherBrain_PainfulWalkBackwards() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     if MotherBrain_MakeWalkBackwards(0x28 as uint16, (*E).mbn_var_07) as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
@@ -6638,8 +6356,7 @@ pub unsafe extern "C" fn MotherBrain_PainfulWalkBackwards() {
         MotherBrain_SetPainfulWalkingTimer();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_PainfulWalkingBackwards() {
+pub unsafe fn MotherBrain_PainfulWalkingBackwards() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     let mut v1: uint16 =
         ((*E).mbn_var_09 as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16;
@@ -6649,21 +6366,18 @@ pub unsafe extern "C" fn MotherBrain_PainfulWalkingBackwards() {
         (*E).mbn_var_08 = (0xa9bfd0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_SetPainfulWalkingTimer() {
+pub unsafe fn MotherBrain_SetPainfulWalkingTimer() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     (*E).mbn_var_09 = *((&raw const g_word_A9C049 as *const int16).offset((*E).mbn_var_06 as isize)
         as *const int16 as *mut uint8)
         .offset(0 as ::core::ffi::c_int as isize) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase2_Revive_0() {
+pub unsafe fn MotherBrain_Phase2_Revive_0() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_A = (0xa9c066 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).mbn_var_F = 768 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase2_Revive_1() {
+pub unsafe fn MotherBrain_Phase2_Revive_1() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -6677,15 +6391,13 @@ pub unsafe extern "C" fn MotherBrain_Phase2_Revive_1() {
         MotherBrain_Phase2_Revive_2();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase2_Revive_2() {
+pub unsafe fn MotherBrain_Phase2_Revive_2() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_A = (0xa9c08f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).mbn_var_37 = 0 as uint16;
     MotherBrain_Phase2_Revive_3();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase2_Revive_3() {
+pub unsafe fn MotherBrain_Phase2_Revive_3() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     let mut v1: bool = (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -6707,8 +6419,7 @@ pub unsafe extern "C" fn MotherBrain_Phase2_Revive_3() {
         MotherBrain_Phase2_Revive_4();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase2_Revive_4() {
+pub unsafe fn MotherBrain_Phase2_Revive_4() {
     if MotherBrain_MakeHerStandUp() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
         (*E1).mbn_var_32 = 6 as uint16;
@@ -6721,8 +6432,7 @@ pub unsafe extern "C" fn MotherBrain_Phase2_Revive_4() {
         MotherBrain_Phase2_Revive_5();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase2_Revive_5() {
+pub unsafe fn MotherBrain_Phase2_Revive_5() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -6734,8 +6444,7 @@ pub unsafe extern "C" fn MotherBrain_Phase2_Revive_5() {
         MotherBrain_Phase2_Revive_6();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase2_Revive_6() {
+pub unsafe fn MotherBrain_Phase2_Revive_6() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     let mut v1: bool = (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -6750,8 +6459,7 @@ pub unsafe extern "C" fn MotherBrain_Phase2_Revive_6() {
         (*Get_MotherBrain(0x40 as ::core::ffi::c_int)).mbn_var_11 = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase2_Revive_7() {
+pub unsafe fn MotherBrain_Phase2_Revive_7() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_13 = 0 as uint16;
     let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
@@ -6762,8 +6470,7 @@ pub unsafe extern "C" fn MotherBrain_Phase2_Revive_7() {
     (*E).mbn_var_A = (0xa9c147 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     MotherBrain_Phase2_Revive_8();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase2_Revive_8() {
+pub unsafe fn MotherBrain_Phase2_Revive_8() {
     if MotherBrain_MakeHerStandUp() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_A =
             (0xa9c15c as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -6771,8 +6478,7 @@ pub unsafe extern "C" fn MotherBrain_Phase2_Revive_8() {
         MotherBrain_Phase2_MurderShitroid_1();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase2_MurderShitroid_1() {
+pub unsafe fn MotherBrain_Phase2_MurderShitroid_1() {
     MotherBrain_MaybeStandupOrLeanDown();
     if *((&raw mut g_ram as *mut uint8).offset(0x5e5 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -6789,8 +6495,7 @@ pub unsafe extern "C" fn MotherBrain_Phase2_MurderShitroid_1() {
         (*E).mbn_var_F = 64 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase2_MurderShitroid_2() {
+pub unsafe fn MotherBrain_Phase2_MurderShitroid_2() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -6799,19 +6504,16 @@ pub unsafe extern "C" fn MotherBrain_Phase2_MurderShitroid_2() {
         (*E).mbn_var_A = (0xa9c15c as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase2_PrepareForFinalShitroid() {
+pub unsafe fn MotherBrain_Phase2_PrepareForFinalShitroid() {
     MotherBrain_MakeHerStandUp();
     MotherBrain_MakeWalkBackwards(0x40 as uint16, 4 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase2_ExecuteFinalkShitroid() {
+pub unsafe fn MotherBrain_Phase2_ExecuteFinalkShitroid() {
     MotherBrain_SetBrainInstrs(addr_kMotherBrain_Ilist_9DB1 as ::core::ffi::c_int as uint16);
     (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_A =
         (0xa9c1a6 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_MaybeStandupOrLeanDown() {
+pub unsafe fn MotherBrain_MaybeStandupOrLeanDown() {
     let mut mbn_var_02: uint16 = (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_02;
     if mbn_var_02 != 0 {
         if mbn_var_02 as ::core::ffi::c_int == 6 as ::core::ffi::c_int
@@ -6828,8 +6530,7 @@ pub unsafe extern "C" fn MotherBrain_MaybeStandupOrLeanDown() {
         MotherBrain_MakeHerLeanDown();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Recover_MakeDistance() {
+pub unsafe fn MotherBrain_Phase3_Recover_MakeDistance() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_00 = 4 as uint16;
     (*E).mbn_var_A = (0xa9c1f0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -6839,8 +6540,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Recover_MakeDistance() {
         2 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Recover_SetupForFight() {
+pub unsafe fn MotherBrain_Phase3_Recover_SetupForFight() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -6855,8 +6555,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Recover_SetupForFight() {
         MotherBrain_Phase3_Fighting_Main();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Fighting_Main() {
+pub unsafe fn MotherBrain_Phase3_Fighting_Main() {
     if (*Get_MotherBrain(0x40 as ::core::ffi::c_int)).base.health != 0 {
         MotherBrain_Phase3_NeckHandler();
         MotherBrain_Phase3_WalkHandler();
@@ -6885,8 +6584,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Fighting_Main() {
             (0xa9aee1 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Fighting_Cooldown() {
+pub unsafe fn MotherBrain_Phase3_Fighting_Cooldown() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_F = (*E).mbn_var_F.wrapping_sub(1);
     if (*E).mbn_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -6895,8 +6593,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Fighting_Cooldown() {
         (*E).mbn_var_A = (0xa9c209 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallMotherBrainWallkFunc1A(mut ea: uint32) {
+pub unsafe fn CallMotherBrainWallkFunc1A(mut ea: uint32) {
     match ea {
         11125354 => {
             MotherBrain_Phase3_Walk_TryToInchForward();
@@ -6915,8 +6612,7 @@ pub unsafe extern "C" fn CallMotherBrainWallkFunc1A(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_WalkHandler() {
+pub unsafe fn MotherBrain_Phase3_WalkHandler() {
     if (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_02 == 0 {
         CallMotherBrainWallkFunc1A(
             ((*Get_MotherBrain(0x40 as ::core::ffi::c_int)).mbn_var_1A as ::core::ffi::c_int
@@ -6924,8 +6620,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_WalkHandler() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Walk_TryToInchForward() {
+pub unsafe fn MotherBrain_Phase3_Walk_TryToInchForward() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     let mut mbn_var_07: uint16 = (*E).mbn_var_07;
     if mbn_var_07 != 0 {
@@ -6960,8 +6655,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Walk_TryToInchForward() {
         MotherBrain_Phase3_Walk_RetreatQuickly();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Walk_RetreatQuickly() {
+pub unsafe fn MotherBrain_Phase3_Walk_RetreatQuickly() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     if MotherBrain_MakeWalkBackwards((*E).mbn_var_1B, 2 as uint16) as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
@@ -6973,8 +6667,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Walk_RetreatQuickly() {
         (*E).mbn_var_1A = (0xa9c2d2 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Walk_RetreatSlowly() {
+pub unsafe fn MotherBrain_Phase3_Walk_RetreatSlowly() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     if MotherBrain_MakeWalkBackwards((*E).mbn_var_1B, 4 as uint16) as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
@@ -6983,16 +6676,14 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Walk_RetreatSlowly() {
         MotherBrain_SetToTryToInchForward(0x40 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_SetToTryToInchForward(mut a: uint16) {
+pub unsafe fn MotherBrain_SetToTryToInchForward(mut a: uint16) {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_07 = a;
     let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     (*E1).mbn_var_1A = (0xa9c26a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E1).mbn_var_1B = ((*E).base.x_pos as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallMotherBrainNeckFunc(mut ea: uint32) {
+pub unsafe fn CallMotherBrainNeckFunc(mut ea: uint32) {
     match ea {
         11125587 => return,
         11125552 => {
@@ -7020,15 +6711,13 @@ pub unsafe extern "C" fn CallMotherBrainNeckFunc(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_NeckHandler() {
+pub unsafe fn MotherBrain_Phase3_NeckHandler() {
     CallMotherBrainNeckFunc(
         ((*Get_MotherBrain(0x40 as ::core::ffi::c_int)).mbn_var_18 as ::core::ffi::c_int
             | 0xa90000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Neck_Normal() {
+pub unsafe fn MotherBrain_Phase3_Neck_Normal() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     (*E).mbn_var_32 = 1 as uint16;
     (*E).mbn_var_34 = 128 as uint16;
@@ -7036,8 +6725,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Neck_Normal() {
     (*E).mbn_var_33 = 4 as uint16;
     (*E).mbn_var_18 = addr_locret_A9C353 as ::core::ffi::c_int as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Neck_SetupRecoilRecovery() {
+pub unsafe fn MotherBrain_Phase3_Neck_SetupRecoilRecovery() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     (*E).mbn_var_31 = 1 as uint16;
     (*E).mbn_var_34 = 1280 as uint16;
@@ -7047,8 +6735,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Neck_SetupRecoilRecovery() {
     (*E).mbn_var_19 = 16 as uint16;
     MotherBrain_Phase3_Neck_RecoilRecovery();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Neck_RecoilRecovery() {
+pub unsafe fn MotherBrain_Phase3_Neck_RecoilRecovery() {
     let mut v1: int16 = 0;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     v1 = ((*E).mbn_var_19 as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as int16;
@@ -7059,8 +6746,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Neck_RecoilRecovery() {
         (*E).mbn_var_19 = v1 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Neck_SetupHyperBeamRecoil() {
+pub unsafe fn MotherBrain_Phase3_Neck_SetupHyperBeamRecoil() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     (*E).mbn_var_31 = 1 as uint16;
     (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_06 = 1 as uint16;
@@ -7073,8 +6759,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Neck_SetupHyperBeamRecoil() {
     (*E).mbn_var_19 = 11 as uint16;
     MotherBrain_Phase3_Neck_HyperBeamRecoil();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_Neck_HyperBeamRecoil() {
+pub unsafe fn MotherBrain_Phase3_Neck_HyperBeamRecoil() {
     let mut v2: int16 = 0;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     v2 = ((*E).mbn_var_19 as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as int16;
@@ -7086,8 +6771,7 @@ pub unsafe extern "C" fn MotherBrain_Phase3_Neck_HyperBeamRecoil() {
         (*E).mbn_var_19 = v2 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MoveEnemyWithVelocity() {
+pub unsafe fn MoveEnemyWithVelocity() {
     let mut v0: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -7127,46 +6811,39 @@ pub unsafe extern "C" fn MoveEnemyWithVelocity() {
             as ::core::ffi::c_int
             + (carry >> 8 as ::core::ffi::c_int))) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_SetBodyInstrs(mut a: uint16) {
+pub unsafe fn MotherBrain_SetBodyInstrs(mut a: uint16) {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).base.current_instruction = a;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_SetBrainUnusedInstrs(mut a: uint16) {
+pub unsafe fn MotherBrain_SetBrainUnusedInstrs(mut a: uint16) {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     (*E).base.current_instruction = a;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_SetBrainInstrs(mut a: uint16) {
+pub unsafe fn MotherBrain_SetBrainInstrs(mut a: uint16) {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_21 = a;
     (*E).mbn_var_20 = 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_SetInstrList(mut k: uint16, mut a: uint16) {
+pub unsafe fn Enemy_SetInstrList(mut k: uint16, mut a: uint16) {
     let mut v2: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int);
     (*v2).current_instruction = a;
     (*v2).instruction_timer = 1 as uint16;
     (*v2).timer = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ComputeSinMult(mut a: uint16, mut r18: uint16) -> uint16 {
+pub unsafe fn ComputeSinMult(mut a: uint16, mut r18: uint16) -> uint16 {
     return sub_A9C46C(r18, a);
 }
-#[no_mangle]
-pub unsafe extern "C" fn ComputeCosMult(mut a: uint16, mut r18: uint16) -> uint16 {
+pub unsafe fn ComputeCosMult(mut a: uint16, mut r18: uint16) -> uint16 {
     return sub_A9C46C(
         (r18 as ::core::ffi::c_int + 64 as ::core::ffi::c_int) as uint16,
         a,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_A9C46C(mut a: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn sub_A9C46C(mut a: uint16, mut j: uint16) -> uint16 {
     let mut v2: uint16 = kSinCosTable8bit_Sext[((a as ::core::ffi::c_int
         & 0xff as ::core::ffi::c_int)
         + 64 as ::core::ffi::c_int) as usize] as uint16;
@@ -7182,8 +6859,7 @@ pub unsafe extern "C" fn sub_A9C46C(mut a: uint16, mut j: uint16) -> uint16 {
     WriteReg(M7B as ::core::ffi::c_int as uint16, j as uint8);
     return ReadRegWord(MPYM as ::core::ffi::c_int as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_IncreaseYpos(mut k: uint16, mut a: uint16) {
+pub unsafe fn Enemy_IncreaseYpos(mut k: uint16, mut a: uint16) {
     let mut v2: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int);
     let mut carry: ::core::ffi::c_int = *(&raw mut (*v2).y_subpos as *mut uint8).offset(
         (::core::mem::size_of::<uint16>() as usize)
@@ -7201,8 +6877,7 @@ pub unsafe extern "C" fn Enemy_IncreaseYpos(mut k: uint16, mut a: uint16) {
         + ((a as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as int8 as ::core::ffi::c_int
             + (carry >> 8 as ::core::ffi::c_int))) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_DecrementAmmoDueToRainbowBeam() {
+pub unsafe fn Samus_DecrementAmmoDueToRainbowBeam() {
     if *((&raw mut g_ram as *mut uint8).offset(0xe44 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 3 as ::core::ffi::c_int
@@ -7298,8 +6973,7 @@ pub unsafe extern "C" fn Samus_DecrementAmmoDueToRainbowBeam() {
             as *mut uint16) = v2;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_PlayGainingLosingHealthSfx() {
+pub unsafe fn Samus_PlayGainingLosingHealthSfx() {
     if *((&raw mut g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         - 81 as ::core::ffi::c_int
@@ -7313,8 +6987,7 @@ pub unsafe extern "C" fn Samus_PlayGainingLosingHealthSfx() {
         QueueSfx3_Max3(0x2d as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_DamageDueToShitroid() {
+pub unsafe fn Samus_DamageDueToShitroid() {
     let mut v0: int16 = 0;
     v0 = -(4 as ::core::ffi::c_int) as int16;
     if *((&raw mut g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -7337,8 +7010,7 @@ pub unsafe extern "C" fn Samus_DamageDueToShitroid() {
     *((&raw mut g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize) as *mut uint16) =
         v1;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_DamageDueToRainbowBeam() {
+pub unsafe fn Samus_DamageDueToRainbowBeam() {
     let mut v0: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0x9c2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -7353,8 +7025,7 @@ pub unsafe extern "C" fn Samus_DamageDueToRainbowBeam() {
         v0;
     Samus_PlayGainingLosingHealthSfx();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_HealDueToShitroid() -> uint8 {
+pub unsafe fn Samus_HealDueToShitroid() -> uint8 {
     if ((*((&raw mut g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         + 1 as ::core::ffi::c_int
@@ -7377,8 +7048,7 @@ pub unsafe extern "C" fn Samus_HealDueToShitroid() -> uint8 {
         return 0 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessSpriteTilesTransfers(mut db: uint8, mut k: uint16) -> uint8 {
+pub unsafe fn ProcessSpriteTilesTransfers(mut db: uint8, mut k: uint16) -> uint8 {
     let mut v7: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     let mut src: uint16 = (*E).mbn_var_22;
@@ -7410,8 +7080,7 @@ pub unsafe extern "C" fn ProcessSpriteTilesTransfers(mut db: uint8, mut k: uint1
     (*E).mbn_var_22 = v6;
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_MakeWalkForwards(mut j: uint16, mut a: uint16) -> uint8 {
+pub unsafe fn MotherBrain_MakeWalkForwards(mut j: uint16, mut a: uint16) -> uint8 {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     if (a as ::core::ffi::c_int - (*E).base.x_pos as ::core::ffi::c_int) as int16
         as ::core::ffi::c_int
@@ -7438,8 +7107,7 @@ pub unsafe extern "C" fn MotherBrain_MakeWalkForwards(mut j: uint16, mut a: uint
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_MakeWalkBackwards(mut a: uint16, mut j: uint16) -> uint8 {
+pub unsafe fn MotherBrain_MakeWalkBackwards(mut a: uint16, mut j: uint16) -> uint8 {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     if ((a as ::core::ffi::c_int - (*E).base.x_pos as ::core::ffi::c_int) as int16
         as ::core::ffi::c_int)
@@ -7466,8 +7134,7 @@ pub unsafe extern "C" fn MotherBrain_MakeWalkBackwards(mut a: uint16, mut j: uin
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_MakeHerStandUp() -> uint8 {
+pub unsafe fn MotherBrain_MakeHerStandUp() -> uint8 {
     let mut mbn_var_02: uint16 = (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_02;
     if mbn_var_02 != 0 {
         let mut v1: uint16 = addr_kMotherBrain_Ilist_99C6 as ::core::ffi::c_int as uint16;
@@ -7482,8 +7149,7 @@ pub unsafe extern "C" fn MotherBrain_MakeHerStandUp() -> uint8 {
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_MakeHerCrouch() -> uint8 {
+pub unsafe fn MotherBrain_MakeHerCrouch() -> uint8 {
     let mut mbn_var_02: uint16 = (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_02;
     if mbn_var_02 != 0 {
         if mbn_var_02 as ::core::ffi::c_int == 3 as ::core::ffi::c_int {
@@ -7494,8 +7160,7 @@ pub unsafe extern "C" fn MotherBrain_MakeHerCrouch() -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_MakeHerLeanDown() -> uint8 {
+pub unsafe fn MotherBrain_MakeHerLeanDown() -> uint8 {
     let mut mbn_var_02: uint16 = (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_02;
     if mbn_var_02 != 0 {
         if mbn_var_02 as ::core::ffi::c_int == 6 as ::core::ffi::c_int {
@@ -7506,8 +7171,7 @@ pub unsafe extern "C" fn MotherBrain_MakeHerLeanDown() -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_HandleWalking() {
+pub unsafe fn MotherBrain_HandleWalking() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     if (*E).mbn_var_02 == 0 {
         let mut v2: uint16 = 0;
@@ -7565,8 +7229,7 @@ pub unsafe extern "C" fn MotherBrain_HandleWalking() {
         return;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_Init() {
+pub unsafe fn ShitroidInCutscene_Init() {
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitdroidInCutscene(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -7597,8 +7260,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_Init() {
         0xf as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallShitroidCutsceneFuncA(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallShitroidCutsceneFuncA(mut ea: uint32, mut k: uint16) {
     match ea {
         11125133 => return,
         11126732 => {
@@ -7714,8 +7376,7 @@ pub unsafe extern "C" fn CallShitroidCutsceneFuncA(mut ea: uint32, mut k: uint16
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallShitroidCutsceneFunc0F(mut ea: uint32) {
+pub unsafe fn CallShitroidCutsceneFunc0F(mut ea: uint32) {
     match ea {
         11127484 => return,
         11127960 => return,
@@ -7732,8 +7393,7 @@ pub unsafe extern "C" fn CallShitroidCutsceneFunc0F(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_Main() {
+pub unsafe fn ShitroidInCutscene_Main() {
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitdroidInCutscene(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -7762,8 +7422,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_Main() {
         (r18 as ::core::ffi::c_int | 0xa90000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_Flashing(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_Flashing(mut k: uint16) {
     let mut v1: int16 = 0;
     v1 = 3584 as int16;
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitdroidInCutscene(k as ::core::ffi::c_int);
@@ -7778,16 +7437,14 @@ pub unsafe extern "C" fn ShitroidInCutscene_Flashing(mut k: uint16) {
     }
     (*E).base.palette_index = v1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_HandleCry() {
+pub unsafe fn ShitroidInCutscene_HandleCry() {
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitdroidInCutscene(0 as ::core::ffi::c_int);
     if (*E).sice_var_14 != 0 {
         (*E).sice_var_14 = 0 as uint16;
         QueueSfx2_Max6(0x72 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_DashOntoScreen(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_DashOntoScreen(mut k: uint16) {
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitdroidInCutscene(k as ::core::ffi::c_int);
     (*E).sice_var_F = (*E).sice_var_F.wrapping_sub(1);
     if (*E).sice_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -7800,8 +7457,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_DashOntoScreen(mut k: uint16) {
         ShitroidInCutscene_CurveTowardsBrain(k);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_CurveTowardsBrain(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_CurveTowardsBrain(mut k: uint16) {
     ShitroidInCutscene_UpdateSpeedAndAngle(
         k,
         -(384 as ::core::ffi::c_int) as uint16,
@@ -7817,8 +7473,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_CurveTowardsBrain(mut k: uint16) {
         (*E).sice_var_F = 9 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_GetIntoFace(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_GetIntoFace(mut k: uint16) {
     let mut v3: bool = false;
     ShitroidInCutscene_UpdateSpeedAndAngle(
         k,
@@ -7846,8 +7501,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_GetIntoFace(mut k: uint16) {
         SomeMotherBrainScripts(1 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_LatchOntoBrain(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_LatchOntoBrain(mut k: uint16) {
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitroidInCutscene(0x40 as ::core::ffi::c_int);
     let mut rect: Rect16U = Rect16U {
         x: (*E).base.x_pos,
@@ -7861,8 +7515,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_LatchOntoBrain(mut k: uint16) {
             (0xa9c879 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_SetMotherBrainToStumbleBack(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_SetMotherBrainToStumbleBack(mut k: uint16) {
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitroidInCutscene(0 as ::core::ffi::c_int);
     MotherBrain_MakeWalkBackwards(
         ((*E).base.x_pos as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
@@ -7872,8 +7525,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_SetMotherBrainToStumbleBack(mut k: u
         (0xa9c889 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     ShitroidInCutscene_ActivateRainbowBeam(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_ActivateRainbowBeam(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_ActivateRainbowBeam(mut k: uint16) {
     let mut E1: *mut Enemy_ShitroidInCutscene = Get_ShitdroidInCutscene(0x40 as ::core::ffi::c_int);
     if Shitroid_AccelerateTowardsPoint(
         k,
@@ -7901,8 +7553,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_ActivateRainbowBeam(mut k: uint16) {
         (*E0).sice_var_16 = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_BrainTurnsToCorpse(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_BrainTurnsToCorpse(mut k: uint16) {
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitdroidInCutscene(k as ::core::ffi::c_int);
     let mut E1: *mut Enemy_ShitroidInCutscene = Get_ShitdroidInCutscene(0x40 as ::core::ffi::c_int);
     let mut v2: ::core::ffi::c_int = ((*E).base.frame_counter as ::core::ffi::c_int
@@ -7918,8 +7569,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_BrainTurnsToCorpse(mut k: uint16) {
         (*E).sice_var_F = 64 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_StopDraining(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_StopDraining(mut k: uint16) {
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitroidInCutscene(k as ::core::ffi::c_int);
     let mut E1: *mut Enemy_ShitroidInCutscene = Get_ShitroidInCutscene(0x40 as ::core::ffi::c_int);
     (*E).base.x_pos = (*E1).base.x_pos;
@@ -7936,8 +7586,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_StopDraining(mut k: uint16) {
         (*E).sice_var_C = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_LetGoAndSpawnDust(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_LetGoAndSpawnDust(mut k: uint16) {
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitdroidInCutscene(k as ::core::ffi::c_int);
     (*E).sice_var_F = (*E).sice_var_F.wrapping_sub(1);
     if (*E).sice_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -7948,8 +7597,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_LetGoAndSpawnDust(mut k: uint16) {
     }
     ShitroidInCutscene_MoveUpToCeiling(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_MoveUpToCeiling(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_MoveUpToCeiling(mut k: uint16) {
     let mut rect: Rect16U = Rect16U {
         x: (*Get_ShitdroidInCutscene(0x40 as ::core::ffi::c_int))
             .base
@@ -7966,8 +7614,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_MoveUpToCeiling(mut k: uint16) {
         (*E).sice_var_0E = addr_stru_A9CA24 as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_SpawnOneDustCloudAt(mut xd: uint16, mut yd: uint16) {
+pub unsafe fn ShitroidInCutscene_SpawnOneDustCloudAt(mut xd: uint16, mut yd: uint16) {
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitroidInCutscene(0x40 as ::core::ffi::c_int);
     eproj_spawn_pt = Point16U {
         x: ((*E).base.x_pos as ::core::ffi::c_int + xd as ::core::ffi::c_int) as uint16,
@@ -7978,8 +7625,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_SpawnOneDustCloudAt(mut xd: uint16, 
         9 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_SpawnThreeDustClouds() {
+pub unsafe fn ShitroidInCutscene_SpawnThreeDustClouds() {
     ShitroidInCutscene_SpawnOneDustCloudAt(
         -(16 as ::core::ffi::c_int) as uint16,
         -(8 as ::core::ffi::c_int) as uint16,
@@ -7987,8 +7633,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_SpawnThreeDustClouds() {
     ShitroidInCutscene_SpawnOneDustCloudAt(0 as uint16, -(16 as ::core::ffi::c_int) as uint16);
     ShitroidInCutscene_SpawnOneDustCloudAt(16 as uint16, -(8 as ::core::ffi::c_int) as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallShitroidMoveFunc(
+pub unsafe fn CallShitroidMoveFunc(
     mut ea: uint32,
     mut k: uint16,
     mut j: uint16,
@@ -8009,8 +7654,7 @@ pub unsafe extern "C" fn CallShitroidMoveFunc(
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_MoveToSamus(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_MoveToSamus(mut k: uint16) {
     let mut v4: int16 = 0;
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitdroidInCutscene(k as ::core::ffi::c_int);
     (*E).sice_var_04 = 0 as uint16;
@@ -8049,8 +7693,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_MoveToSamus(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_LatchOntoSamus(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_LatchOntoSamus(mut k: uint16) {
     Shitroid_Func_GraduallyAccelerateTowards0x400(
         k,
         0 as uint16,
@@ -8061,8 +7704,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_LatchOntoSamus(mut k: uint16) {
             - 20 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_HealSamusToFullHealth(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_HealSamusToFullHealth(mut k: uint16) {
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitdroidInCutscene(k as ::core::ffi::c_int);
     (*E).sice_var_04 = 0 as uint16;
     ShitroidInCutscene_HandleCry();
@@ -8086,8 +7728,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_HealSamusToFullHealth(mut k: uint16)
             (0xa9cabc as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_IdleUntilToNoHealth(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_IdleUntilToNoHealth(mut k: uint16) {
     ShitroidInCutscene_HandleCry();
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitdroidInCutscene(k as ::core::ffi::c_int);
     let mut sice_var_06: uint16 = (*E).sice_var_06;
@@ -8117,8 +7758,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_IdleUntilToNoHealth(mut k: uint16) {
         (*E).sice_var_09 = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_ReleaseSamus(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_ReleaseSamus(mut k: uint16) {
     QueueSfx2_Max6(0x72 as uint16);
     (*Get_ShitdroidInCutscene(0x40 as ::core::ffi::c_int)).sice_var_0B = 1 as uint16;
     (*Get_ShitdroidInCutscene(k as ::core::ffi::c_int)).sice_var_A =
@@ -8127,8 +7767,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_ReleaseSamus(mut k: uint16) {
         (0xa9c18e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     ShitroidInCutscene_StareDownMotherBrain(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_StareDownMotherBrain(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_StareDownMotherBrain(mut k: uint16) {
     let mut rect: Rect16U = Rect16U {
         x: (*((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -8143,8 +7782,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_StareDownMotherBrain(mut k: uint16) 
             (0xa9cb56 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_FlyOffScreen(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_FlyOffScreen(mut k: uint16) {
     let mut rect: Rect16U = Rect16U {
         x: 272 as uint16,
         y: 64 as uint16,
@@ -8157,8 +7795,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_FlyOffScreen(mut k: uint16) {
             (0xa9cb7b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_MoveToFinalChargeStart(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_MoveToFinalChargeStart(mut k: uint16) {
     let mut rect: Rect16U = Rect16U {
         x: 305 as uint16,
         y: 160 as uint16,
@@ -8175,8 +7812,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_MoveToFinalChargeStart(mut k: uint16
         (*E).sice_var_A = (0xa9cbb3 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_InitiateFinalCharge(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_InitiateFinalCharge(mut k: uint16) {
     let mut rect: Rect16U = Rect16U {
         x: 290 as uint16,
         y: 128 as uint16,
@@ -8189,8 +7825,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_InitiateFinalCharge(mut k: uint16) {
             (0xa9cbd8 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_FinalCharge(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_FinalCharge(mut k: uint16) {
     let mut E1: *mut Enemy_ShitroidInCutscene = Get_ShitdroidInCutscene(0x40 as ::core::ffi::c_int);
     Shitroid_Func_GraduallyAccelerateTowards0x400(
         k,
@@ -8218,8 +7853,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_FinalCharge(mut k: uint16) {
         ShitroidInCutscene_ShitroidFinalBelow(k);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_ShitroidFinalBelow(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_ShitroidFinalBelow(mut k: uint16) {
     ShitroidInCutscene_Shake(k);
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitdroidInCutscene(k as ::core::ffi::c_int);
     (*E).sice_var_F = (*E).sice_var_F.wrapping_sub(1);
@@ -8233,8 +7867,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_ShitroidFinalBelow(mut k: uint16) {
         ShitroidInCutscene_PlaySamusTheme(k);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_PlaySamusTheme(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_PlaySamusTheme(mut k: uint16) {
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitroidInCutscene(k as ::core::ffi::c_int);
     (*E).sice_var_F = (*E).sice_var_F.wrapping_sub(1);
     if (*E).sice_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -8247,8 +7880,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_PlaySamusTheme(mut k: uint16) {
         ShitroidInCutscene_PrepareSamusHyperbeam(k);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_PrepareSamusHyperbeam(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_PrepareSamusHyperbeam(mut k: uint16) {
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitdroidInCutscene(k as ::core::ffi::c_int);
     (*E).sice_var_F = (*E).sice_var_F.wrapping_sub(1);
     if (*E).sice_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -8260,8 +7892,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_PrepareSamusHyperbeam(mut k: uint16)
         (*E).sice_var_A = (0xa9cc99 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_DeathSequence(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_DeathSequence(mut k: uint16) {
     HandleSamusRainbowPaletteAnimation(k);
     ShitroidInCutscene_AccelerateDownwards(k);
     if ShitroidInCutscene_FadeShitroidToBlack(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
@@ -8277,8 +7908,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_DeathSequence(mut k: uint16) {
         ShitroidInCutscene_HandleEnemyBlinking(k);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_UnloadShitroid(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_UnloadShitroid(mut k: uint16) {
     HandleSamusRainbowPaletteAnimation(k);
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitroidInCutscene(k as ::core::ffi::c_int);
     (*E).sice_var_F = (*E).sice_var_F.wrapping_sub(1);
@@ -8296,8 +7926,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_UnloadShitroid(mut k: uint16) {
         ShitroidInCutscene_LetSamusRainbowMore(k);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_LetSamusRainbowMore(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_LetSamusRainbowMore(mut k: uint16) {
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitdroidInCutscene(k as ::core::ffi::c_int);
     (*E).sice_var_F = (*E).sice_var_F.wrapping_sub(1);
     if (*E).sice_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -8308,8 +7937,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_LetSamusRainbowMore(mut k: uint16) {
         ShitroidInCutscene_FinishCutscene(k);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_FinishCutscene(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_FinishCutscene(mut k: uint16) {
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitdroidInCutscene(0 as ::core::ffi::c_int);
     let mut v2: uint16 =
         ((*E).sice_var_37 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16;
@@ -8333,8 +7961,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_FinishCutscene(mut k: uint16) {
         (*Get_ShitdroidInCutscene(0x40 as ::core::ffi::c_int)).sice_var_0A = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallSamusRainbowPaletteFunc(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallSamusRainbowPaletteFunc(mut ea: uint32, mut k: uint16) {
     match ea {
         11128112 => {
             SamusRainbowPaletteFunc_ActivateWhenEnemyLow(k);
@@ -8349,16 +7976,14 @@ pub unsafe extern "C" fn CallSamusRainbowPaletteFunc(mut ea: uint32, mut k: uint
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleSamusRainbowPaletteAnimation(mut k: uint16) {
+pub unsafe fn HandleSamusRainbowPaletteAnimation(mut k: uint16) {
     let mut r18: uint16 = (*Get_ShitdroidInCutscene(0x40 as ::core::ffi::c_int)).sice_var_16;
     CallSamusRainbowPaletteFunc(
         (r18 as ::core::ffi::c_int | 0xa90000 as ::core::ffi::c_int) as uint32,
         k,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusRainbowPaletteFunc_ActivateWhenEnemyLow(mut k: uint16) {
+pub unsafe fn SamusRainbowPaletteFunc_ActivateWhenEnemyLow(mut k: uint16) {
     if ((*Get_ShitdroidInCutscene(k as ::core::ffi::c_int))
         .base
         .y_pos as ::core::ffi::c_int
@@ -8372,8 +7997,7 @@ pub unsafe extern "C" fn SamusRainbowPaletteFunc_ActivateWhenEnemyLow(mut k: uin
             (0xa9cd4b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusRainbowPaletteFunc_GraduallySlowDown() {
+pub unsafe fn SamusRainbowPaletteFunc_GraduallySlowDown() {
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitdroidInCutscene(0x40 as ::core::ffi::c_int);
     let mut sice_var_1D: uint16 = (*E).sice_var_1D;
     (*E).sice_var_1D = (sice_var_1D as ::core::ffi::c_int + 768 as ::core::ffi::c_int) as uint16;
@@ -8394,8 +8018,7 @@ pub unsafe extern "C" fn SamusRainbowPaletteFunc_GraduallySlowDown() {
             as *mut uint16) = v2;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_FadeShitroidToBlack(mut k: uint16) -> uint8 {
+pub unsafe fn ShitroidInCutscene_FadeShitroidToBlack(mut k: uint16) -> uint8 {
     let mut v2: int16 = 0;
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitdroidInCutscene(k as ::core::ffi::c_int);
     if (*E).base.y_pos as ::core::ffi::c_int - 128 as ::core::ffi::c_int
@@ -8433,8 +8056,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_FadeShitroidToBlack(mut k: uint16) -
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_HandleShitroidDeathExplosions(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_HandleShitroidDeathExplosions(mut k: uint16) {
     let mut v2: int16 = 0;
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitdroidInCutscene(k as ::core::ffi::c_int);
     v2 = ((*E).sice_var_08 as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as int16;
@@ -8480,8 +8102,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_HandleShitroidDeathExplosions(mut k:
         (*E).sice_var_08 = v2 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_HandleEnemyBlinking(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_HandleEnemyBlinking(mut k: uint16) {
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitroidInCutscene(k as ::core::ffi::c_int);
     if (*E).base.frame_counter as ::core::ffi::c_int & 1 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
@@ -8494,8 +8115,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_HandleEnemyBlinking(mut k: uint16) {
             | kEnemyProps_Invisible as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_AccelerateDownwards(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_AccelerateDownwards(mut k: uint16) {
     let mut v2: int16 = 0;
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitroidInCutscene(k as ::core::ffi::c_int);
     v2 = (abs16((*E).sice_var_B) as ::core::ffi::c_int - 32 as ::core::ffi::c_int) as int16;
@@ -8510,8 +8130,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_AccelerateDownwards(mut k: uint16) {
     }) as uint16;
     (*E).sice_var_C = ((*E).sice_var_C as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_HandleHealthBasedPalette(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_HandleHealthBasedPalette(mut k: uint16) {
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitdroidInCutscene(k as ::core::ffi::c_int);
     if (*E).sice_var_09 != 0 {
         let mut health: uint16 = (*E).base.health;
@@ -8585,8 +8204,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_HandleHealthBasedPalette(mut k: uint
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_Shake(mut k: uint16) {
+pub unsafe fn ShitroidInCutscene_Shake(mut k: uint16) {
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitdroidInCutscene(k as ::core::ffi::c_int);
     (*E).sice_var_C = (*E).sice_var_C.wrapping_sub(1);
     let mut v2: ::core::ffi::c_int = ((*E).base.frame_counter as ::core::ffi::c_int
@@ -8597,8 +8215,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_Shake(mut k: uint16) {
     (*E).base.y_pos = ((*E).sice_var_11 as ::core::ffi::c_int
         + g_word_A993C3[v2 as usize] as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_Touch() {
+pub unsafe fn ShitroidInCutscene_Touch() {
     let mut E: *mut Enemy_ShitroidInCutscene = Get_ShitroidInCutscene(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -8626,8 +8243,7 @@ pub unsafe extern "C" fn ShitroidInCutscene_Touch() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShitroidInCutscene_UpdateSpeedAndAngle(
+pub unsafe fn ShitroidInCutscene_UpdateSpeedAndAngle(
     mut k: uint16,
     mut r18: uint16,
     mut r20: uint16,
@@ -8692,16 +8308,13 @@ pub unsafe extern "C" fn ShitroidInCutscene_UpdateSpeedAndAngle(
     (*E).sice_var_B = Math_MultBySin((*E).sice_var_0B, r18);
     (*E).sice_var_C = Math_MultByCos((*E).sice_var_0B, r18);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Shitroid_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return addr_kShitroid_Ilist_CFA2 as ::core::ffi::c_int as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Instr_2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Shitroid_Instr_2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return addr_kShitroid_Ilist_CFB8 as ::core::ffi::c_int as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Pal_ProcessInvincibility() {
+pub unsafe fn MotherBrain_Pal_ProcessInvincibility() {
     if (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_00 as ::core::ffi::c_int
         == 4 as ::core::ffi::c_int
     {
@@ -8732,21 +8345,18 @@ pub unsafe extern "C" fn MotherBrain_Pal_ProcessInvincibility() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Pal_BeginScreenFlash() {
+pub unsafe fn MotherBrain_Pal_BeginScreenFlash() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_0E = addr_stru_A9D046 as ::core::ffi::c_int as uint16;
     (*E).mbn_var_0F = 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Pal_EndScreenFlash() {
+pub unsafe fn MotherBrain_Pal_EndScreenFlash() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     (*E).mbn_var_0E = 0 as uint16;
     (*E).mbn_var_0F = 0 as uint16;
     MotherBrain_Pal_WriteRoomPal(addr_word_A9D082 as ::core::ffi::c_int as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Pal_HandleRoomPal() {
+pub unsafe fn MotherBrain_Pal_HandleRoomPal() {
     let mut j: uint16 = HandleMotherBrainInstructionList(
         (((&raw mut g_ram as *mut uint8).offset(0x7800 as ::core::ffi::c_int as isize)
             as *mut ExtraEnemyRam7800 as *mut uint8)
@@ -8757,8 +8367,7 @@ pub unsafe extern "C" fn MotherBrain_Pal_HandleRoomPal() {
         MotherBrain_Pal_WriteRoomPal(j);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Pal_WriteRoomPal(mut j: uint16) {
+pub unsafe fn MotherBrain_Pal_WriteRoomPal(mut j: uint16) {
     WriteColorsToPalette(0x68 as uint16, 0xa9 as uint8, j, 12 as uint16);
     WriteColorsToPalette(
         0xa6 as uint16,
@@ -8773,8 +8382,7 @@ pub unsafe extern "C" fn MotherBrain_Pal_WriteRoomPal(mut j: uint16) {
         12 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleMotherBrainInstructionList(mut a: uint16) -> uint16 {
+pub unsafe fn HandleMotherBrainInstructionList(mut a: uint16) -> uint16 {
     let mut current_block: u64;
     let mut st: *mut MotherBrainInstrExecState = (&raw mut g_ram as *mut uint8).offset(a as isize)
         as *mut uint8
@@ -8832,8 +8440,7 @@ pub unsafe extern "C" fn HandleMotherBrainInstructionList(mut a: uint16) -> uint
         return *v3.offset(1 as ::core::ffi::c_int as isize);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_HandlePalette() {
+pub unsafe fn MotherBrain_HandlePalette() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     if (*E).mbn_var_10 != 0 {
         MotherBrain_HandleBrainPal();
@@ -8842,16 +8449,13 @@ pub unsafe extern "C" fn MotherBrain_HandlePalette() {
         MotherBrain_HealthBasedPaletteHandling();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_SetupBrainNormalPal() {
+pub unsafe fn MotherBrain_SetupBrainNormalPal() {
     (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_E = 10 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_SetupBrainPalForLaser() {
+pub unsafe fn MotherBrain_SetupBrainPalForLaser() {
     (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_E = 514 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_HandleBrainPal() {
+pub unsafe fn MotherBrain_HandleBrainPal() {
     let mut mbn_var_D_high: int8 = 0;
     let mut mbn_var_D: int8 = 0;
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
@@ -8911,13 +8515,7 @@ pub unsafe extern "C" fn MotherBrain_HandleBrainPal() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn WriteColorsToPalette(
-    mut k: uint16,
-    mut db: uint8,
-    mut j: uint16,
-    mut a: uint16,
-) {
+pub unsafe fn WriteColorsToPalette(mut k: uint16, mut db: uint8, mut j: uint16, mut a: uint16) {
     let mut n: ::core::ffi::c_int = a as ::core::ffi::c_int;
     loop {
         *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
@@ -8932,8 +8530,7 @@ pub unsafe extern "C" fn WriteColorsToPalette(
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn WriteColorsToTargetPalette(
+pub unsafe fn WriteColorsToTargetPalette(
     mut db: uint8,
     mut k: uint16,
     mut j: uint16,
@@ -8953,8 +8550,7 @@ pub unsafe extern "C" fn WriteColorsToTargetPalette(
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadTorizo_Init() {
+pub unsafe fn DeadTorizo_Init() {
     let mut i: ::core::ffi::c_int = 4094 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
@@ -8980,8 +8576,7 @@ pub unsafe extern "C" fn DeadTorizo_Init() {
         addr_stru_A9DD58 as ::core::ffi::c_int as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallDeadTorizoFuncA(mut ea: uint32) {
+pub unsafe fn CallDeadTorizoFuncA(mut ea: uint32) {
     match ea {
         11129773 => {
             DeadTorizo_WaitForSamusColl(
@@ -9004,8 +8599,7 @@ pub unsafe extern "C" fn CallDeadTorizoFuncA(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadTorizo_Main() {
+pub unsafe fn DeadTorizo_Main() {
     let mut E: *mut Enemy_DeadTorizo = Get_DeadTorizo(0 as ::core::ffi::c_int);
     if (*E).base.properties as ::core::ffi::c_int & kEnemyProps_Tangible as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
@@ -9025,8 +8619,7 @@ pub unsafe extern "C" fn DeadTorizo_Main() {
     );
     DeadTorizo_Func_1();
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadTorizo_MainGfxHook() {
+pub unsafe fn DeadTorizo_MainGfxHook() {
     MotherBrain_AddSpritemapToOam(
         addr_kDeadTorizo_Sprmap_D761 as ::core::ffi::c_int as uint16,
         296 as uint16,
@@ -9034,8 +8627,7 @@ pub unsafe extern "C" fn DeadTorizo_MainGfxHook() {
         0 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadTorizo_WaitForSamusColl(mut k: uint16) {
+pub unsafe fn DeadTorizo_WaitForSamusColl(mut k: uint16) {
     if k as ::core::ffi::c_int
         == *((&raw mut g_ram as *mut uint8).offset(0x182c as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -9057,8 +8649,7 @@ pub unsafe extern "C" fn DeadTorizo_WaitForSamusColl(mut k: uint16) {
             (0xa9d3c8 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadTorizo_PreRotDelay() {
+pub unsafe fn DeadTorizo_PreRotDelay() {
     let mut E: *mut Enemy_DeadTorizo = Get_DeadTorizo(0 as ::core::ffi::c_int);
     let mut v1: uint16 =
         ((*E).dto_var_04 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16;
@@ -9070,8 +8661,7 @@ pub unsafe extern "C" fn DeadTorizo_PreRotDelay() {
         DeadTorizo_Rotting();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadTorizo_Rotting() {
+pub unsafe fn DeadTorizo_Rotting() {
     let mut E: *mut Enemy_DeadTorizo = Get_DeadTorizo(0 as ::core::ffi::c_int);
     let mut v1: uint16 =
         ((*E).dto_var_03 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16;
@@ -9090,8 +8680,7 @@ pub unsafe extern "C" fn DeadTorizo_Rotting() {
         (*E).dto_var_A = (0xa9d3c7 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadTorizo_Powerbomb() {
+pub unsafe fn DeadTorizo_Powerbomb() {
     if (*Get_DeadTorizo(0 as ::core::ffi::c_int)).base.properties as ::core::ffi::c_int
         & kEnemyProps_Tangible as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
@@ -9099,15 +8688,13 @@ pub unsafe extern "C" fn DeadTorizo_Powerbomb() {
         DeadTorizo_Shot();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadTorizo_Shot() {
+pub unsafe fn DeadTorizo_Shot() {
     let mut E: *mut Enemy_DeadTorizo = Get_DeadTorizo(0 as ::core::ffi::c_int);
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         | kEnemyProps_Tangible as ::core::ffi::c_int) as uint16;
     (*E).dto_var_A = (0xa9d3e6 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadTorizo_Func_0() -> uint8 {
+pub unsafe fn DeadTorizo_Func_0() -> uint8 {
     let mut v5: int16 = 0;
     let mut v3: uint16 = 0;
     let mut v4: uint16 = 0;
@@ -9182,8 +8769,7 @@ pub unsafe extern "C" fn DeadTorizo_Func_0() -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadTorizo_Func_1() {
+pub unsafe fn DeadTorizo_Func_1() {
     let mut v5: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     let mut v10: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     let mut E: *mut Enemy_DeadTorizo = Get_DeadTorizo(0 as ::core::ffi::c_int);
@@ -9297,8 +8883,7 @@ pub unsafe extern "C" fn DeadTorizo_Func_1() {
     *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16) =
         v3;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadTorizo_CorpseRottingFinished() {
+pub unsafe fn DeadTorizo_CorpseRottingFinished() {
     eproj_spawn_pt = Point16U {
         x: ((*((&raw mut g_ram as *mut uint8).offset(0x5e5 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -9318,8 +8903,7 @@ pub unsafe extern "C" fn DeadTorizo_CorpseRottingFinished() {
         QueueSfx2_Max6(0x10 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadTorizo_CopyLineOfSandHeapTileData(mut a: uint16) {
+pub unsafe fn DeadTorizo_CopyLineOfSandHeapTileData(mut a: uint16) {
     let mut v1: uint16 = *(g_rom.offset(
         (((0xa9d67c as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0xa9d67c as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -9496,8 +9080,7 @@ pub unsafe extern "C" fn DeadTorizo_CopyLineOfSandHeapTileData(mut a: uint16) {
         as *mut uint16)
         .offset((v2 + 136 as ::core::ffi::c_int) as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadSidehopper_Init() {
+pub unsafe fn DeadSidehopper_Init() {
     let mut dsr_parameter_1: uint16 = (*Get_DeadSidehopper(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -9512,8 +9095,7 @@ pub unsafe extern "C" fn DeadSidehopper_Init() {
         DeadSidehopper_Init_0();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadSidehopper_Init_0() {
+pub unsafe fn DeadSidehopper_Init_0() {
     let mut E: *mut Enemy_DeadSidehopper = Get_DeadSidehopper(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -9549,8 +9131,7 @@ pub unsafe extern "C" fn DeadSidehopper_Init_0() {
         addr_stru_A9DD68 as ::core::ffi::c_int as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadSidehopper_Init_1() {
+pub unsafe fn DeadSidehopper_Init_1() {
     let mut E: *mut Enemy_DeadSidehopper = Get_DeadSidehopper(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -9569,8 +9150,7 @@ pub unsafe extern "C" fn DeadSidehopper_Init_1() {
         addr_stru_A9DD78 as ::core::ffi::c_int as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadZoomer_Init() {
+pub unsafe fn DeadZoomer_Init() {
     let mut v1: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -9602,8 +9182,7 @@ pub unsafe extern "C" fn DeadZoomer_Init() {
             .offset(v2 as isize),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadRipper_Init() {
+pub unsafe fn DeadRipper_Init() {
     let mut v1: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -9635,8 +9214,7 @@ pub unsafe extern "C" fn DeadRipper_Init() {
             .offset(v2 as isize),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadSkree_Init() {
+pub unsafe fn DeadSkree_Init() {
     let mut v1: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -9668,8 +9246,7 @@ pub unsafe extern "C" fn DeadSkree_Init() {
             .offset(v2 as isize),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadSidehopper_Powerbomb() {
+pub unsafe fn DeadSidehopper_Powerbomb() {
     if (*Get_DeadSidehopper(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -9682,8 +9259,7 @@ pub unsafe extern "C" fn DeadSidehopper_Powerbomb() {
         DeadSidehopper_Main();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallDeadSidehopperFunc(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallDeadSidehopperFunc(mut ea: uint32, mut k: uint16) {
     match ea {
         11131121 => {
             DeadSidehopper_Activated(k);
@@ -9760,8 +9336,7 @@ pub unsafe extern "C" fn CallDeadSidehopperFunc(mut ea: uint32, mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadSidehopper_Main() {
+pub unsafe fn DeadSidehopper_Main() {
     let mut E: *mut Enemy_DeadSidehopper = Get_DeadSidehopper(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -9772,8 +9347,7 @@ pub unsafe extern "C" fn DeadSidehopper_Main() {
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadSidehopper_Alive_WaitForActivate(mut k: uint16) {
+pub unsafe fn DeadSidehopper_Alive_WaitForActivate(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         - 513 as ::core::ffi::c_int
@@ -9785,8 +9359,7 @@ pub unsafe extern "C" fn DeadSidehopper_Alive_WaitForActivate(mut k: uint16) {
         DeadSidehopper_Activated(k);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadSidehopper_Activated(mut k: uint16) {
+pub unsafe fn DeadSidehopper_Activated(mut k: uint16) {
     if DeadMonsters_Func_3(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         let mut E: *mut Enemy_DeadSidehopper = Get_DeadSidehopper(k as ::core::ffi::c_int);
         (*E).dsr_var_06 = ((*E).dsr_var_06 as ::core::ffi::c_int + 1 as ::core::ffi::c_int
@@ -9798,14 +9371,12 @@ pub unsafe extern "C" fn DeadSidehopper_Activated(mut k: uint16) {
         (*E).dsr_var_A = (0xa9d90f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadMonsters_Func_1(mut k: uint16) {
+pub unsafe fn DeadMonsters_Func_1(mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(k as ::core::ffi::c_int);
     (*E).dms_var_A = (0xa9d91d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).dms_var_F = 64 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadMonsters_Func_2(mut k: uint16) {
+pub unsafe fn DeadMonsters_Func_2(mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(k as ::core::ffi::c_int);
     (*E).dms_var_F = (*E).dms_var_F.wrapping_sub(1);
     if (*E).dms_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -9839,8 +9410,7 @@ pub unsafe extern "C" fn DeadMonsters_Func_2(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadMonsters_Func_3(mut k: uint16) -> uint8 {
+pub unsafe fn DeadMonsters_Func_3(mut k: uint16) -> uint8 {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(k as ::core::ffi::c_int);
     DeadMonsters_Func_4(k, (*E).dms_var_0A);
     let mut v2: uint16 = 32 as uint16;
@@ -9879,8 +9449,7 @@ pub unsafe extern "C" fn DeadMonsters_Func_3(mut k: uint16) -> uint8 {
         return Enemy_MoveDown(k, (v3 as int16 as int32) << 8 as ::core::ffi::c_int);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadMonsters_Func_4(mut k: uint16, mut a: uint16) {
+pub unsafe fn DeadMonsters_Func_4(mut k: uint16, mut a: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(k as ::core::ffi::c_int);
     if (*E).base.x_pos as ::core::ffi::c_int - 544 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -9905,8 +9474,7 @@ pub unsafe extern "C" fn DeadMonsters_Func_4(mut k: uint16, mut a: uint16) {
         Enemy_MoveRight_IgnoreSlopes(k, (a as int16 as int32) << 8 as ::core::ffi::c_int);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadMonsters_Func_5(mut k: uint16) {
+pub unsafe fn DeadMonsters_Func_5(mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(k as ::core::ffi::c_int);
     let mut v2: uint16 =
         ((*E).dms_var_07 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16;
@@ -9940,36 +9508,31 @@ pub unsafe extern "C" fn DeadMonsters_Func_5(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadSidehopper_WaitForSamusColl(mut k: uint16) {
+pub unsafe fn DeadSidehopper_WaitForSamusColl(mut k: uint16) {
     DeadMonsters_WaitForSamusColl(
         k,
         (0xa9da8f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadZoomer_WaitForSamusColl(mut k: uint16) {
+pub unsafe fn DeadZoomer_WaitForSamusColl(mut k: uint16) {
     DeadMonsters_WaitForSamusColl(
         k,
         (0xa9da94 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadSkree_WaitForSamusColl(mut k: uint16) {
+pub unsafe fn DeadSkree_WaitForSamusColl(mut k: uint16) {
     DeadMonsters_WaitForSamusColl(
         k,
         (0xa9da9e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadRipper_WaitForSamusColl(mut k: uint16) {
+pub unsafe fn DeadRipper_WaitForSamusColl(mut k: uint16) {
     DeadMonsters_WaitForSamusColl(
         k,
         (0xa9da99 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadMonsters_WaitForSamusColl(mut k: uint16, mut j: uint16) {
+pub unsafe fn DeadMonsters_WaitForSamusColl(mut k: uint16, mut j: uint16) {
     if k as ::core::ffi::c_int
         == *((&raw mut g_ram as *mut uint8).offset(0x182c as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -9990,36 +9553,31 @@ pub unsafe extern "C" fn DeadMonsters_WaitForSamusColl(mut k: uint16, mut j: uin
         (*Get_DeadMonsters(k as ::core::ffi::c_int)).dms_var_A = j;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadSidehopper_PreRotDelay(mut k: uint16) {
+pub unsafe fn DeadSidehopper_PreRotDelay(mut k: uint16) {
     DeadMonsters_PreRotDelay_Common(
         k,
         (0xa9daba as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadZoomer_PreRotDelay(mut k: uint16) {
+pub unsafe fn DeadZoomer_PreRotDelay(mut k: uint16) {
     DeadMonsters_PreRotDelay_Common(
         k,
         (0xa9dad0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadRipper_PreRotDelay(mut k: uint16) {
+pub unsafe fn DeadRipper_PreRotDelay(mut k: uint16) {
     DeadMonsters_PreRotDelay_Common(
         k,
         (0xa9dae6 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadSkree_PreRotDelay(mut k: uint16) {
+pub unsafe fn DeadSkree_PreRotDelay(mut k: uint16) {
     DeadMonsters_PreRotDelay_Common(
         k,
         (0xa9dafc as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadMonsters_PreRotDelay_Common(mut k: uint16, mut j: uint16) {
+pub unsafe fn DeadMonsters_PreRotDelay_Common(mut k: uint16, mut j: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(k as ::core::ffi::c_int);
     (*E).dms_var_B = (*E).dms_var_B.wrapping_add(1);
     if (*E).dms_var_B as ::core::ffi::c_int >= 0x10 as ::core::ffi::c_int {
@@ -10028,8 +9586,7 @@ pub unsafe extern "C" fn DeadMonsters_PreRotDelay_Common(mut k: uint16, mut j: u
             | kEnemyProps_Tangible as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadSidehopper_Rotting(mut k: uint16) {
+pub unsafe fn DeadSidehopper_Rotting(mut k: uint16) {
     let mut v1: uint8 = ProcessCorpseRotting(k);
     if v1 as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
         (*Get_DeadMonsters(
@@ -10045,8 +9602,7 @@ pub unsafe extern "C" fn DeadSidehopper_Rotting(mut k: uint16) {
     .dms_var_53;
     ProcessCorpseRottingVramTransfers(dms_var_53);
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadZoomer_Rotting(mut k: uint16) {
+pub unsafe fn DeadZoomer_Rotting(mut k: uint16) {
     let mut v1: uint8 = ProcessCorpseRotting(k);
     if v1 as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
         (*Get_DeadMonsters(
@@ -10062,8 +9618,7 @@ pub unsafe extern "C" fn DeadZoomer_Rotting(mut k: uint16) {
     .dms_var_53;
     ProcessCorpseRottingVramTransfers(dms_var_53);
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadRipper_Rotting(mut k: uint16) {
+pub unsafe fn DeadRipper_Rotting(mut k: uint16) {
     let mut v1: uint8 = ProcessCorpseRotting(k);
     if v1 as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
         (*Get_DeadMonsters(
@@ -10079,8 +9634,7 @@ pub unsafe extern "C" fn DeadRipper_Rotting(mut k: uint16) {
     .dms_var_53;
     ProcessCorpseRottingVramTransfers(dms_var_53);
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadSkree_Rotting(mut k: uint16) {
+pub unsafe fn DeadSkree_Rotting(mut k: uint16) {
     let mut v1: uint8 = ProcessCorpseRotting(k);
     if v1 as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
         (*Get_DeadMonsters(
@@ -10096,8 +9650,7 @@ pub unsafe extern "C" fn DeadSkree_Rotting(mut k: uint16) {
     .dms_var_53;
     ProcessCorpseRottingVramTransfers(dms_var_53);
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessCorpseRotting(mut k: uint16) -> uint8 {
+pub unsafe fn ProcessCorpseRotting(mut k: uint16) -> uint8 {
     let mut E: *mut Enemy_DeadMonsters = ::core::ptr::null_mut::<Enemy_DeadMonsters>();
     let mut r18_0: uint16 = 0;
     let mut v11: *mut uint16 = ::core::ptr::null_mut::<uint16>();
@@ -10185,8 +9738,7 @@ pub unsafe extern "C" fn ProcessCorpseRotting(mut k: uint16) -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CopyMoveCorpseRottingRotEntry(
+pub unsafe fn CopyMoveCorpseRottingRotEntry(
     mut r20: *const uint16,
     mut a: uint16,
     mut r18: uint16,
@@ -10215,8 +9767,7 @@ pub unsafe extern "C" fn CopyMoveCorpseRottingRotEntry(
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CorpseRottingRotEntryFinishedHook() {
+pub unsafe fn CorpseRottingRotEntryFinishedHook() {
     let mut v0: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -10241,8 +9792,7 @@ pub unsafe extern "C" fn CorpseRottingRotEntryFinishedHook() {
         QueueSfx2_Max3(0x10 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn InitializeCorpseRottingDataTable(mut table: *mut uint16, mut a: uint16) {
+pub unsafe fn InitializeCorpseRottingDataTable(mut table: *mut uint16, mut a: uint16) {
     let mut v2: int16 = 0;
     v2 = (a as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as int16;
     let mut r18: uint16 = 0 as uint16;
@@ -10257,8 +9807,7 @@ pub unsafe extern "C" fn InitializeCorpseRottingDataTable(mut table: *mut uint16
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn InitializeEnemyCorpseRotting(mut k: uint16, mut j: uint16) {
+pub unsafe fn InitializeEnemyCorpseRotting(mut k: uint16, mut j: uint16) {
     let mut v2: *const uint8 = RomPtr_A9(j as uint16_t);
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(k as ::core::ffi::c_int);
     (*E).dms_var_52 = *(v2 as *mut uint16);
@@ -10287,8 +9836,7 @@ pub unsafe extern "C" fn InitializeEnemyCorpseRotting(mut k: uint16, mut j: uint
             | 0xa90000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessCorpseRottingVramTransfers(mut k: uint16) {
+pub unsafe fn ProcessCorpseRottingVramTransfers(mut k: uint16) {
     let mut p: *const uint8 = RomPtr_A9(k as uint16_t);
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
@@ -10311,8 +9859,7 @@ pub unsafe extern "C" fn ProcessCorpseRottingVramTransfers(mut k: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16) =
         v1;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadZoomer_Powerbomb() {
+pub unsafe fn DeadZoomer_Powerbomb() {
     if (*gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -10324,12 +9871,10 @@ pub unsafe extern "C" fn DeadZoomer_Powerbomb() {
         DeadZoomer_Shot();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadZoomer_Shot() {
+pub unsafe fn DeadZoomer_Shot() {
     DeadSidehopper_DD34((0xa9dad0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadRipper_Powerbomb() {
+pub unsafe fn DeadRipper_Powerbomb() {
     if (*gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -10341,12 +9886,10 @@ pub unsafe extern "C" fn DeadRipper_Powerbomb() {
         DeadRipper_Shot();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadRipper_Shot() {
+pub unsafe fn DeadRipper_Shot() {
     DeadSidehopper_DD34((0xa9dae6 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadSkree_Powerbomb() {
+pub unsafe fn DeadSkree_Powerbomb() {
     if (*gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -10358,12 +9901,10 @@ pub unsafe extern "C" fn DeadSkree_Powerbomb() {
         DeadSkree_Shot();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadSkree_Shot() {
+pub unsafe fn DeadSkree_Shot() {
     DeadSidehopper_DD34((0xa9dafc as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadSidehopper_Shot() {
+pub unsafe fn DeadSidehopper_Shot() {
     let mut E: *mut Enemy_DeadSidehopper = Get_DeadSidehopper(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -10375,12 +9916,10 @@ pub unsafe extern "C" fn DeadSidehopper_Shot() {
         DeadSidehopper_DD31();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadSidehopper_DD31() {
+pub unsafe fn DeadSidehopper_DD31() {
     DeadSidehopper_DD34((0xa9daba as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadSidehopper_DD34(mut a: uint16) {
+pub unsafe fn DeadSidehopper_DD34(mut a: uint16) {
     let mut E: *mut Enemy_DeadSidehopper = Get_DeadSidehopper(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -10390,8 +9929,7 @@ pub unsafe extern "C" fn DeadSidehopper_DD34(mut a: uint16) {
         | (kEnemyProps_ProcessedOffscreen as ::core::ffi::c_int
             | kEnemyProps_Tangible as ::core::ffi::c_int)) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeadSidehopper_Touch() {
+pub unsafe fn DeadSidehopper_Touch() {
     if ((*Get_DeadSidehopper(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -10404,8 +9942,7 @@ pub unsafe extern "C" fn DeadSidehopper_Touch() {
         DeadSidehopper_DD31();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_CorpseRottingInitFunc() {
+pub unsafe fn Torizo_CorpseRottingInitFunc() {
     let mut p: *const uint8 =
         RomPtr_B7(addr_kDeadTorizo_TileData as ::core::ffi::c_int as uint16_t);
     MemCpy(
@@ -10493,8 +10030,7 @@ pub unsafe extern "C" fn Torizo_CorpseRottingInitFunc() {
         0x140 as ::core::ffi::c_int,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Sidehopper_CorpseRottingInitFunc_0() {
+pub unsafe fn Sidehopper_CorpseRottingInitFunc_0() {
     let mut p: *const uint8 =
         RomPtr_B7(addr_kDeadMonsters_TileData as ::core::ffi::c_int as uint16_t);
     MemCpy(
@@ -10533,8 +10069,7 @@ pub unsafe extern "C" fn Sidehopper_CorpseRottingInitFunc_0() {
         0xa0 as ::core::ffi::c_int,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Sidehopper_CorpseRottingInitFunc_2() {
+pub unsafe fn Sidehopper_CorpseRottingInitFunc_2() {
     let mut p: *const uint8 =
         RomPtr_B7(addr_kDeadMonsters_TileData as ::core::ffi::c_int as uint16_t);
     MemCpy(
@@ -10573,8 +10108,7 @@ pub unsafe extern "C" fn Sidehopper_CorpseRottingInitFunc_2() {
         0xa0 as ::core::ffi::c_int,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Zoomer_CorpseRottingInitFunc_0() {
+pub unsafe fn Zoomer_CorpseRottingInitFunc_0() {
     let mut p: *const uint8 =
         RomPtr_B7(addr_kDeadMonsters_TileData as ::core::ffi::c_int as uint16_t);
     MemCpy(
@@ -10592,8 +10126,7 @@ pub unsafe extern "C" fn Zoomer_CorpseRottingInitFunc_0() {
         0x60 as ::core::ffi::c_int,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Zoomer_CorpseRottingInitFunc_2() {
+pub unsafe fn Zoomer_CorpseRottingInitFunc_2() {
     let mut p: *const uint8 =
         RomPtr_B7(addr_kDeadMonsters_TileData as ::core::ffi::c_int as uint16_t);
     MemCpy(
@@ -10611,8 +10144,7 @@ pub unsafe extern "C" fn Zoomer_CorpseRottingInitFunc_2() {
         0x60 as ::core::ffi::c_int,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Zoomer_CorpseRottingInitFunc_4() {
+pub unsafe fn Zoomer_CorpseRottingInitFunc_4() {
     let mut p: *const uint8 =
         RomPtr_B7(addr_kDeadMonsters_TileData as ::core::ffi::c_int as uint16_t);
     MemCpy(
@@ -10630,8 +10162,7 @@ pub unsafe extern "C" fn Zoomer_CorpseRottingInitFunc_4() {
         0x60 as ::core::ffi::c_int,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ripper_CorpseRottingInitFunc_0() {
+pub unsafe fn Ripper_CorpseRottingInitFunc_0() {
     let mut p: *const uint8 =
         RomPtr_B7(addr_kDeadMonsters_TileData as ::core::ffi::c_int as uint16_t);
     MemCpy(
@@ -10649,8 +10180,7 @@ pub unsafe extern "C" fn Ripper_CorpseRottingInitFunc_0() {
         0x60 as ::core::ffi::c_int,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ripper_CorpseRottingInitFunc_2() {
+pub unsafe fn Ripper_CorpseRottingInitFunc_2() {
     let mut p: *const uint8 =
         RomPtr_B7(addr_kDeadMonsters_TileData as ::core::ffi::c_int as uint16_t);
     MemCpy(
@@ -10668,8 +10198,7 @@ pub unsafe extern "C" fn Ripper_CorpseRottingInitFunc_2() {
         0x60 as ::core::ffi::c_int,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Skree_CorpseRottingInitFunc_0() {
+pub unsafe fn Skree_CorpseRottingInitFunc_0() {
     let mut p: *const uint8 =
         RomPtr_B7(addr_kDeadMonsters_TileData as ::core::ffi::c_int as uint16_t);
     MemCpy(
@@ -10701,8 +10230,7 @@ pub unsafe extern "C" fn Skree_CorpseRottingInitFunc_0() {
         0x40 as ::core::ffi::c_int,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Skree_CorpseRottingInitFunc_2() {
+pub unsafe fn Skree_CorpseRottingInitFunc_2() {
     let mut p: *const uint8 =
         RomPtr_B7(addr_kDeadMonsters_TileData as ::core::ffi::c_int as uint16_t);
     MemCpy(
@@ -10734,8 +10262,7 @@ pub unsafe extern "C" fn Skree_CorpseRottingInitFunc_2() {
         0x40 as ::core::ffi::c_int,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Skree_CorpseRottingInitFunc_4() {
+pub unsafe fn Skree_CorpseRottingInitFunc_4() {
     let mut p: *const uint8 =
         RomPtr_B7(addr_kDeadMonsters_TileData as ::core::ffi::c_int as uint16_t);
     MemCpy(
@@ -10767,8 +10294,7 @@ pub unsafe extern "C" fn Skree_CorpseRottingInitFunc_4() {
         0x40 as ::core::ffi::c_int,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_CorpseRottingInitFunc() {
+pub unsafe fn MotherBrain_CorpseRottingInitFunc() {
     let mut base: *mut uint8 =
         (&raw mut g_ram as *mut uint8).offset(0x9000 as ::core::ffi::c_int as isize) as *mut uint8;
     let mut src: *const uint8 =
@@ -10804,8 +10330,7 @@ pub unsafe extern "C" fn MotherBrain_CorpseRottingInitFunc() {
         0xe0 as ::core::ffi::c_int,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_CorpseRottingMoveFunc(mut j: uint16, mut k: uint16) {
+pub unsafe fn Torizo_CorpseRottingMoveFunc(mut j: uint16, mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(0 as ::core::ffi::c_int);
     if (*E).dms_var_41 as ::core::ffi::c_int >= 0x50 as ::core::ffi::c_int {
         if (*E).dms_var_41 as ::core::ffi::c_int - 94 as ::core::ffi::c_int
@@ -11064,8 +10589,7 @@ pub unsafe extern "C" fn Torizo_CorpseRottingMoveFunc(mut j: uint16, mut k: uint
             .offset((v14 + 152 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Torizo_CorpseRottingCopyFunc(mut j: uint16, mut k: uint16) {
+pub unsafe fn Torizo_CorpseRottingCopyFunc(mut j: uint16, mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(0 as ::core::ffi::c_int);
     if (*E).dms_var_41 as ::core::ffi::c_int >= 0x50 as ::core::ffi::c_int
         && (*E).dms_var_41 as ::core::ffi::c_int - 94 as ::core::ffi::c_int
@@ -11263,8 +10787,7 @@ pub unsafe extern "C" fn Torizo_CorpseRottingCopyFunc(mut j: uint16, mut k: uint
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Sidehopper_CorpseRottingMoveFunc_0(mut j: uint16, mut k: uint16) {
+pub unsafe fn Sidehopper_CorpseRottingMoveFunc_0(mut j: uint16, mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(0 as ::core::ffi::c_int);
     if (*E).dms_var_41 as ::core::ffi::c_int >= 8 as ::core::ffi::c_int {
         if (*E).dms_var_41 as ::core::ffi::c_int - 38 as ::core::ffi::c_int
@@ -11397,8 +10920,7 @@ pub unsafe extern "C" fn Sidehopper_CorpseRottingMoveFunc_0(mut j: uint16, mut k
         as *mut uint16)
         .offset((v11 + 72 as ::core::ffi::c_int) as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Sidehopper_CorpseRottingCopyFunc_0(mut j: uint16, mut k: uint16) {
+pub unsafe fn Sidehopper_CorpseRottingCopyFunc_0(mut j: uint16, mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(0 as ::core::ffi::c_int);
     if (*E).dms_var_41 as ::core::ffi::c_int >= 8 as ::core::ffi::c_int
         && (*E).dms_var_41 as ::core::ffi::c_int - 38 as ::core::ffi::c_int
@@ -11498,8 +11020,7 @@ pub unsafe extern "C" fn Sidehopper_CorpseRottingCopyFunc_0(mut j: uint16, mut k
             .offset((v11 + 72 as ::core::ffi::c_int) as isize);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Sidehopper_CorpseRottingMoveFunc_2(mut j: uint16, mut k: uint16) {
+pub unsafe fn Sidehopper_CorpseRottingMoveFunc_2(mut j: uint16, mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(0 as ::core::ffi::c_int);
     if (*E).dms_var_41 as ::core::ffi::c_int - 38 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -11630,8 +11151,7 @@ pub unsafe extern "C" fn Sidehopper_CorpseRottingMoveFunc_2(mut j: uint16, mut k
             .offset((v5 + 472 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Sidehopper_CorpseRottingCopyFunc_2(mut j: uint16, mut k: uint16) {
+pub unsafe fn Sidehopper_CorpseRottingCopyFunc_2(mut j: uint16, mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(0 as ::core::ffi::c_int);
     if (*E).dms_var_41 as ::core::ffi::c_int - 38 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -11733,8 +11253,7 @@ pub unsafe extern "C" fn Sidehopper_CorpseRottingCopyFunc_2(mut j: uint16, mut k
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Zoomer_CorpseRottingMoveFunc_0(mut j: uint16, mut k: uint16) {
+pub unsafe fn Zoomer_CorpseRottingMoveFunc_0(mut j: uint16, mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(0 as ::core::ffi::c_int);
     if (*E).dms_var_41 as ::core::ffi::c_int - 14 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -11811,8 +11330,7 @@ pub unsafe extern "C" fn Zoomer_CorpseRottingMoveFunc_0(mut j: uint16, mut k: ui
         as *mut uint16)
         .offset((v5 + 1224 as ::core::ffi::c_int) as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Zoomer_CorpseRottingCopyFunc_0(mut j: uint16, mut k: uint16) {
+pub unsafe fn Zoomer_CorpseRottingCopyFunc_0(mut j: uint16, mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(0 as ::core::ffi::c_int);
     if (*E).dms_var_41 as ::core::ffi::c_int - 14 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -11872,8 +11390,7 @@ pub unsafe extern "C" fn Zoomer_CorpseRottingCopyFunc_0(mut j: uint16, mut k: ui
             .offset((v7 + 1224 as ::core::ffi::c_int) as isize);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Zoomer_CorpseRottingMoveFunc_2(mut j: uint16, mut k: uint16) {
+pub unsafe fn Zoomer_CorpseRottingMoveFunc_2(mut j: uint16, mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(0 as ::core::ffi::c_int);
     if (*E).dms_var_41 as ::core::ffi::c_int - 14 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -11950,8 +11467,7 @@ pub unsafe extern "C" fn Zoomer_CorpseRottingMoveFunc_2(mut j: uint16, mut k: ui
         as *mut uint16)
         .offset((v5 + 1320 as ::core::ffi::c_int) as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Zoomer_CorpseRottingCopyFunc_2(mut j: uint16, mut k: uint16) {
+pub unsafe fn Zoomer_CorpseRottingCopyFunc_2(mut j: uint16, mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(0 as ::core::ffi::c_int);
     if (*E).dms_var_41 as ::core::ffi::c_int - 14 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -12011,8 +11527,7 @@ pub unsafe extern "C" fn Zoomer_CorpseRottingCopyFunc_2(mut j: uint16, mut k: ui
             .offset((v7 + 1320 as ::core::ffi::c_int) as isize);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Zoomer_CorpseRottingMoveFunc_4(mut j: uint16, mut k: uint16) {
+pub unsafe fn Zoomer_CorpseRottingMoveFunc_4(mut j: uint16, mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(0 as ::core::ffi::c_int);
     if (*E).dms_var_41 as ::core::ffi::c_int - 14 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -12089,8 +11604,7 @@ pub unsafe extern "C" fn Zoomer_CorpseRottingMoveFunc_4(mut j: uint16, mut k: ui
         as *mut uint16)
         .offset((v5 + 1416 as ::core::ffi::c_int) as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Zoomer_CorpseRottingCopyFunc_4(mut j: uint16, mut k: uint16) {
+pub unsafe fn Zoomer_CorpseRottingCopyFunc_4(mut j: uint16, mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(0 as ::core::ffi::c_int);
     if (*E).dms_var_41 as ::core::ffi::c_int - 14 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -12150,8 +11664,7 @@ pub unsafe extern "C" fn Zoomer_CorpseRottingCopyFunc_4(mut j: uint16, mut k: ui
             .offset((v7 + 1416 as ::core::ffi::c_int) as isize);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ripper_CorpseRottingMoveFunc_0(mut j: uint16, mut k: uint16) {
+pub unsafe fn Ripper_CorpseRottingMoveFunc_0(mut j: uint16, mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(0 as ::core::ffi::c_int);
     if (*E).dms_var_41 as ::core::ffi::c_int - 14 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -12228,8 +11741,7 @@ pub unsafe extern "C" fn Ripper_CorpseRottingMoveFunc_0(mut j: uint16, mut k: ui
         as *mut uint16)
         .offset((v5 + 1512 as ::core::ffi::c_int) as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ripper_CorpseRottingCopyFunc_0(mut j: uint16, mut k: uint16) {
+pub unsafe fn Ripper_CorpseRottingCopyFunc_0(mut j: uint16, mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(0 as ::core::ffi::c_int);
     if (*E).dms_var_41 as ::core::ffi::c_int - 14 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -12289,8 +11801,7 @@ pub unsafe extern "C" fn Ripper_CorpseRottingCopyFunc_0(mut j: uint16, mut k: ui
             .offset((v7 + 1512 as ::core::ffi::c_int) as isize);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ripper_CorpseRottingMoveFunc_2(mut j: uint16, mut k: uint16) {
+pub unsafe fn Ripper_CorpseRottingMoveFunc_2(mut j: uint16, mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(0 as ::core::ffi::c_int);
     if (*E).dms_var_41 as ::core::ffi::c_int - 14 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -12367,8 +11878,7 @@ pub unsafe extern "C" fn Ripper_CorpseRottingMoveFunc_2(mut j: uint16, mut k: ui
         as *mut uint16)
         .offset((v5 + 1608 as ::core::ffi::c_int) as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ripper_CorpseRottingCopyFunc_2(mut j: uint16, mut k: uint16) {
+pub unsafe fn Ripper_CorpseRottingCopyFunc_2(mut j: uint16, mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(0 as ::core::ffi::c_int);
     if (*E).dms_var_41 as ::core::ffi::c_int - 14 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -12428,8 +11938,7 @@ pub unsafe extern "C" fn Ripper_CorpseRottingCopyFunc_2(mut j: uint16, mut k: ui
             .offset((v7 + 1608 as ::core::ffi::c_int) as isize);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Skree_CorpseRottingMoveFunc_0(mut j: uint16, mut k: uint16) {
+pub unsafe fn Skree_CorpseRottingMoveFunc_0(mut j: uint16, mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(0 as ::core::ffi::c_int);
     if (*E).dms_var_41 as ::core::ffi::c_int - 30 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -12482,8 +11991,7 @@ pub unsafe extern "C" fn Skree_CorpseRottingMoveFunc_0(mut j: uint16, mut k: uin
         as *mut uint16)
         .offset((v5 + 824 as ::core::ffi::c_int) as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Skree_CorpseRottingCopyFunc_0(mut j: uint16, mut k: uint16) {
+pub unsafe fn Skree_CorpseRottingCopyFunc_0(mut j: uint16, mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(0 as ::core::ffi::c_int);
     if (*E).dms_var_41 as ::core::ffi::c_int - 30 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -12524,8 +12032,7 @@ pub unsafe extern "C" fn Skree_CorpseRottingCopyFunc_0(mut j: uint16, mut k: uin
             .offset((v5 + 824 as ::core::ffi::c_int) as isize);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Skree_CorpseRottingMoveFunc_2(mut j: uint16, mut k: uint16) {
+pub unsafe fn Skree_CorpseRottingMoveFunc_2(mut j: uint16, mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(0 as ::core::ffi::c_int);
     if (*E).dms_var_41 as ::core::ffi::c_int - 30 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -12578,8 +12085,7 @@ pub unsafe extern "C" fn Skree_CorpseRottingMoveFunc_2(mut j: uint16, mut k: uin
         as *mut uint16)
         .offset((v5 + 952 as ::core::ffi::c_int) as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Skree_CorpseRottingCopyFunc_2(mut j: uint16, mut k: uint16) {
+pub unsafe fn Skree_CorpseRottingCopyFunc_2(mut j: uint16, mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(0 as ::core::ffi::c_int);
     if (*E).dms_var_41 as ::core::ffi::c_int - 30 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -12620,8 +12126,7 @@ pub unsafe extern "C" fn Skree_CorpseRottingCopyFunc_2(mut j: uint16, mut k: uin
             .offset((v5 + 952 as ::core::ffi::c_int) as isize);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Skree_CorpseRottingMoveFunc_4(mut j: uint16, mut k: uint16) {
+pub unsafe fn Skree_CorpseRottingMoveFunc_4(mut j: uint16, mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(0 as ::core::ffi::c_int);
     if (*E).dms_var_41 as ::core::ffi::c_int - 30 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -12674,8 +12179,7 @@ pub unsafe extern "C" fn Skree_CorpseRottingMoveFunc_4(mut j: uint16, mut k: uin
         as *mut uint16)
         .offset((v5 + 1080 as ::core::ffi::c_int) as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Skree_CorpseRottingCopyFunc_4(mut j: uint16, mut k: uint16) {
+pub unsafe fn Skree_CorpseRottingCopyFunc_4(mut j: uint16, mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(0 as ::core::ffi::c_int);
     if (*E).dms_var_41 as ::core::ffi::c_int - 30 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -12716,8 +12220,7 @@ pub unsafe extern "C" fn Skree_CorpseRottingCopyFunc_4(mut j: uint16, mut k: uin
             .offset((v5 + 1080 as ::core::ffi::c_int) as isize);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_CorpseRottingMoveFunc(mut j: uint16, mut k: uint16) {
+pub unsafe fn MotherBrain_CorpseRottingMoveFunc(mut j: uint16, mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(0 as ::core::ffi::c_int);
     if (*E).dms_var_41 as ::core::ffi::c_int >= 0x10 as ::core::ffi::c_int {
         if (*E).dms_var_41 as ::core::ffi::c_int - 46 as ::core::ffi::c_int
@@ -12891,8 +12394,7 @@ pub unsafe extern "C" fn MotherBrain_CorpseRottingMoveFunc(mut j: uint16, mut k:
             .offset(k as ::core::ffi::c_int as isize) as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_CorpseRottingCopyFunc(mut j: uint16, mut k: uint16) {
+pub unsafe fn MotherBrain_CorpseRottingCopyFunc(mut j: uint16, mut k: uint16) {
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(0 as ::core::ffi::c_int);
     if (*E).dms_var_41 as ::core::ffi::c_int >= 0x10 as ::core::ffi::c_int
         && (*E).dms_var_41 as ::core::ffi::c_int - 46 as ::core::ffi::c_int
@@ -13020,8 +12522,7 @@ pub unsafe extern "C" fn MotherBrain_CorpseRottingCopyFunc(mut j: uint16, mut k:
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_A9ECD0(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn sub_A9ECD0(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = (0xa9d910 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     let mut E: *mut Enemy_DeadMonsters = Get_DeadMonsters(k as ::core::ffi::c_int);
     if (*E).dms_var_08 != 0 {
@@ -13030,8 +12531,7 @@ pub unsafe extern "C" fn sub_A9ECD0(mut k: uint16, mut jp: *const uint16) -> *co
     (*E).dms_var_A = v2;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_1(mut k: uint16, mut j: uint16) -> uint8 {
+pub unsafe fn Shitroid_Func_1(mut k: uint16, mut j: uint16) -> uint8 {
     let mut E: *mut Enemy_Shitroid = Get_Shitroid(j as ::core::ffi::c_int);
     let mut G: *mut Enemy_Shitroid = Get_Shitroid(k as ::core::ffi::c_int);
     let mut r18: uint16 = ((*G).base.x_width as ::core::ffi::c_int
@@ -13053,8 +12553,7 @@ pub unsafe extern "C" fn Shitroid_Func_1(mut k: uint16, mut j: uint16) -> uint8 
     }
     return v5 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_2(mut k: uint16, mut rect: Rect16U) -> uint8 {
+pub unsafe fn Shitroid_Func_2(mut k: uint16, mut rect: Rect16U) -> uint8 {
     let mut E: *mut Enemy_Shitroid = Get_Shitroid(k as ::core::ffi::c_int);
     let mut R26: uint16 = ((*E).base.x_width as ::core::ffi::c_int
         + rect.w as ::core::ffi::c_int
@@ -13073,8 +12572,7 @@ pub unsafe extern "C" fn Shitroid_Func_2(mut k: uint16, mut rect: Rect16U) -> ui
     }
     return v3 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Init() {
+pub unsafe fn Shitroid_Init() {
     let mut i: ::core::ffi::c_int = 4094 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
@@ -13130,8 +12628,7 @@ pub unsafe extern "C" fn Shitroid_Init() {
         0x10 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Powerbomb() {
+pub unsafe fn Shitroid_Powerbomb() {
     if (*Get_Shitroid(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -13146,8 +12643,7 @@ pub unsafe extern "C" fn Shitroid_Powerbomb() {
     }
     Shitroid_Main();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallShitroidFunc(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallShitroidFunc(mut ea: uint32, mut k: uint16) {
     match ea {
         11136991 => {
             Shitroid_Func_3(k);
@@ -13246,8 +12742,7 @@ pub unsafe extern "C" fn CallShitroidFunc(mut ea: uint32, mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Main() {
+pub unsafe fn Shitroid_Main() {
     let mut E: *mut Enemy_Shitroid = Get_Shitroid(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -13266,14 +12761,12 @@ pub unsafe extern "C" fn Shitroid_Main() {
         Shitroid_HandleNormalPalette();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_3(mut k: uint16) {
+pub unsafe fn Shitroid_Func_3(mut k: uint16) {
     let mut E: *mut Enemy_Shitroid = Get_Shitroid(k as ::core::ffi::c_int);
     (*E).shitr_var_B = 0 as uint16;
     (*E).shitr_var_C = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_4() {
+pub unsafe fn Shitroid_Func_4() {
     if *((&raw mut g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         - 513 as ::core::ffi::c_int
@@ -13311,15 +12804,13 @@ pub unsafe extern "C" fn Shitroid_Func_4() {
         (*E).shitr_var_04 = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_5(mut k: uint16) {
+pub unsafe fn Shitroid_Func_5(mut k: uint16) {
     let mut E: *mut Enemy_Shitroid = Get_Shitroid(k as ::core::ffi::c_int);
     (*E).shitr_var_A = (0xa9f037 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).shitr_var_F = 464 as uint16;
     Shitroid_Func_6(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_6(mut k: uint16) {
+pub unsafe fn Shitroid_Func_6(mut k: uint16) {
     let mut E: *mut Enemy_Shitroid = Get_Shitroid(k as ::core::ffi::c_int);
     (*E).shitr_var_F = (*E).shitr_var_F.wrapping_sub(1);
     if (*E).shitr_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -13331,8 +12822,7 @@ pub unsafe extern "C" fn Shitroid_Func_6(mut k: uint16) {
         Shitroid_Func_7(k);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_7(mut k: uint16) {
+pub unsafe fn Shitroid_Func_7(mut k: uint16) {
     let mut rect: Rect16U = Rect16U {
         x: 584 as uint16,
         y: 74 as uint16,
@@ -13345,8 +12835,7 @@ pub unsafe extern "C" fn Shitroid_Func_7(mut k: uint16) {
             (0xa9f06d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_8(mut k: uint16) {
+pub unsafe fn Shitroid_Func_8(mut k: uint16) {
     let mut E: *mut Enemy_Shitroid =
         Get_Shitroid(k as ::core::ffi::c_int + 64 as ::core::ffi::c_int);
     Shitroid_Func_GraduallyAccelerateTowards0x400(
@@ -13366,8 +12855,7 @@ pub unsafe extern "C" fn Shitroid_Func_8(mut k: uint16) {
             (0xa9f094 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_9(mut k: uint16) {
+pub unsafe fn Shitroid_Func_9(mut k: uint16) {
     let mut E1: *mut Enemy_Shitroid =
         Get_Shitroid(k as ::core::ffi::c_int + 64 as ::core::ffi::c_int);
     if Shitroid_AccelerateTowardsPoint(
@@ -13395,8 +12883,7 @@ pub unsafe extern "C" fn Shitroid_Func_9(mut k: uint16) {
         (*E).shitr_var_F = 320 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_10(mut k: uint16) {
+pub unsafe fn Shitroid_Func_10(mut k: uint16) {
     let mut E: *mut Enemy_Shitroid = Get_Shitroid(k as ::core::ffi::c_int);
     let mut v2: ::core::ffi::c_int = ((*E).base.frame_counter as ::core::ffi::c_int
         & 6 as ::core::ffi::c_int)
@@ -13419,16 +12906,14 @@ pub unsafe extern "C" fn Shitroid_Func_10(mut k: uint16) {
         (*E).shitr_var_E = 10 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_11(mut k: uint16) {
+pub unsafe fn Shitroid_Func_11(mut k: uint16) {
     (*Get_Shitroid(0x40 as ::core::ffi::c_int)).shitr_var_08 = 1 as uint16;
     let mut E: *mut Enemy_Shitroid = Get_Shitroid(k as ::core::ffi::c_int);
     (*E).shitr_var_A = (0xa9f138 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).shitr_var_F = 192 as uint16;
     Shitroid_Func_12(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_12(mut k: uint16) {
+pub unsafe fn Shitroid_Func_12(mut k: uint16) {
     let mut E: *mut Enemy_Shitroid = Get_Shitroid(k as ::core::ffi::c_int);
     Shitroid_Func_GraduallyAccelerateTowards0x400(k, 0 as uint16, (*E).base.x_pos, 104 as uint16);
     (*E).shitr_var_F = (*E).shitr_var_F.wrapping_sub(1);
@@ -13459,8 +12944,7 @@ pub unsafe extern "C" fn Shitroid_Func_12(mut k: uint16) {
         });
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_13(mut k: uint16) {
+pub unsafe fn Shitroid_Func_13(mut k: uint16) {
     let mut E: *mut Enemy_Shitroid = Get_Shitroid(k as ::core::ffi::c_int);
     let mut v2: uint16 = abs16(
         ((*E).base.x_pos as ::core::ffi::c_int
@@ -13525,8 +13009,7 @@ pub unsafe extern "C" fn Shitroid_Func_13(mut k: uint16) {
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_14(mut k: uint16) {
+pub unsafe fn Shitroid_Func_14(mut k: uint16) {
     Shitroid_Func_GraduallyAccelerateTowards0x400(
         k,
         0xf as uint16,
@@ -13537,15 +13020,13 @@ pub unsafe extern "C" fn Shitroid_Func_14(mut k: uint16) {
             - 32 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_15(mut k: uint16) {
+pub unsafe fn Shitroid_Func_15(mut k: uint16) {
     CallSomeSamusCode(0x12 as uint16);
     (*Get_Shitroid(0 as ::core::ffi::c_int)).shitr_var_A =
         (0xa9f21b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     Shitroid_Func_16(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_16(mut k: uint16) {
+pub unsafe fn Shitroid_Func_16(mut k: uint16) {
     let mut E: *mut Enemy_Shitroid = Get_Shitroid(k as ::core::ffi::c_int);
     if (*((&raw mut g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int)
@@ -13596,15 +13077,13 @@ pub unsafe extern "C" fn Shitroid_Func_16(mut k: uint16) {
         Samus_DamageDueToShitroid();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_17(mut k: uint16) {
+pub unsafe fn Shitroid_Func_17(mut k: uint16) {
     let mut E: *mut Enemy_Shitroid = Get_Shitroid(k as ::core::ffi::c_int);
     (*E).shitr_var_A = (0xa9f2ae as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).shitr_var_F = 120 as uint16;
     Shitroid_Func_18(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_18(mut k: uint16) {
+pub unsafe fn Shitroid_Func_18(mut k: uint16) {
     let mut E: *mut Enemy_Shitroid = Get_Shitroid(k as ::core::ffi::c_int);
     (*E).shitr_var_F = (*E).shitr_var_F.wrapping_sub(1);
     if (*E).shitr_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -13616,8 +13095,7 @@ pub unsafe extern "C" fn Shitroid_Func_18(mut k: uint16) {
         Shitroid_Func_19(k);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_19(mut k: uint16) {
+pub unsafe fn Shitroid_Func_19(mut k: uint16) {
     Shitroid_Func_GraduallyAccelerateTowards0x400(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -13644,8 +13122,7 @@ pub unsafe extern "C" fn Shitroid_Func_19(mut k: uint16) {
         Shitroid_Func_20();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_20() {
+pub unsafe fn Shitroid_Func_20() {
     Shitroid_Func_GraduallyAccelerateTowards0x400(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -13669,8 +13146,7 @@ pub unsafe extern "C" fn Shitroid_Func_20() {
         Shitroid_Func_21();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_21() {
+pub unsafe fn Shitroid_Func_21() {
     Shitroid_Func_GraduallyAccelerateTowards0x400(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -13696,15 +13172,13 @@ pub unsafe extern "C" fn Shitroid_Func_21() {
         (*E).base.timer = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_22(mut k: uint16) {
+pub unsafe fn Shitroid_Func_22(mut k: uint16) {
     QueueSfx2_Max6(0x52 as uint16);
     (*Get_Shitroid(k as ::core::ffi::c_int)).shitr_var_A =
         (0xa9f36d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     Shitroid_Func_23();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_23() {
+pub unsafe fn Shitroid_Func_23() {
     let mut rect: Rect16U = Rect16U {
         x: -(128 as ::core::ffi::c_int) as uint16,
         y: 64 as uint16,
@@ -13738,8 +13212,7 @@ pub unsafe extern "C" fn Shitroid_Func_23() {
             (0xa9efdf as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_24(mut k: uint16) {
+pub unsafe fn Shitroid_Func_24(mut k: uint16) {
     let mut E: *mut Enemy_Shitroid = Get_Shitroid(k as ::core::ffi::c_int);
     (*E).shitr_var_F = (*E).shitr_var_F.wrapping_sub(1);
     if (*E).shitr_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -13754,27 +13227,23 @@ pub unsafe extern "C" fn Shitroid_Func_24(mut k: uint16) {
         Shitroid_Func_27(k);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_25(mut k: uint16) {
+pub unsafe fn Shitroid_Func_25(mut k: uint16) {
     if Shitroid_Func_27(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         Shitroid_F3C4(k);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_F3C4(mut k: uint16) {
+pub unsafe fn Shitroid_F3C4(mut k: uint16) {
     (*Get_Shitroid(k as ::core::ffi::c_int)).shitr_var_A =
         (0xa9f360 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_26(mut k: uint16) {
+pub unsafe fn Shitroid_Func_26(mut k: uint16) {
     if (*Get_Shitroid(k as ::core::ffi::c_int)).shitr_var_A as ::core::ffi::c_int
         == 0xa9f3be as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
     {
         Shitroid_F3C4(k);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_27(mut k: uint16) -> uint8 {
+pub unsafe fn Shitroid_Func_27(mut k: uint16) -> uint8 {
     let mut E: *mut Enemy_Shitroid = Get_Shitroid(k as ::core::ffi::c_int);
     let mut v2: uint16 = abs16(
         ((*E).base.x_pos as ::core::ffi::c_int
@@ -13837,8 +13306,7 @@ pub unsafe extern "C" fn Shitroid_Func_27(mut k: uint16) -> uint8 {
             & 0x8000 as ::core::ffi::c_int
             != 0) as ::core::ffi::c_int as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_GraduallyAccelerateTowardsPt(
+pub unsafe fn Shitroid_GraduallyAccelerateTowardsPt(
     mut k: uint16,
     mut j: uint16,
     mut r18: uint16,
@@ -13899,8 +13367,7 @@ pub unsafe extern "C" fn Shitroid_GraduallyAccelerateTowardsPt(
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Func_GraduallyAccelerateTowards0x400(
+pub unsafe fn Shitroid_Func_GraduallyAccelerateTowards0x400(
     mut k: uint16,
     mut j: uint16,
     mut r18: uint16,
@@ -13908,8 +13375,7 @@ pub unsafe extern "C" fn Shitroid_Func_GraduallyAccelerateTowards0x400(
 ) {
     Shitroid_GraduallyAccelerateTowardsPt(k, j, r18, r20, 1024 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_GraduallyAccelerateTowards0x4(
+pub unsafe fn Shitroid_GraduallyAccelerateTowards0x4(
     mut k: uint16,
     mut j: uint16,
     mut r18: uint16,
@@ -13917,8 +13383,7 @@ pub unsafe extern "C" fn Shitroid_GraduallyAccelerateTowards0x4(
 ) {
     Shitroid_GraduallyAccelerateTowardsPt(k, j, r18, r20, 4 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_GraduallyAccelerateTowards0x8(
+pub unsafe fn Shitroid_GraduallyAccelerateTowards0x8(
     mut k: uint16,
     mut j: uint16,
     mut r18: uint16,
@@ -13926,8 +13391,7 @@ pub unsafe extern "C" fn Shitroid_GraduallyAccelerateTowards0x8(
 ) {
     Shitroid_GraduallyAccelerateTowardsPt(k, j, r18, r20, 8 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_GraduallyAccelerateTowards0x10(
+pub unsafe fn Shitroid_GraduallyAccelerateTowards0x10(
     mut k: uint16,
     mut j: uint16,
     mut r18: uint16,
@@ -13935,8 +13399,7 @@ pub unsafe extern "C" fn Shitroid_GraduallyAccelerateTowards0x10(
 ) {
     Shitroid_GraduallyAccelerateTowardsPt(k, j, r18, r20, 16 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_GraduallyAccelerateHoriz(
+pub unsafe fn Shitroid_GraduallyAccelerateHoriz(
     mut k: uint16,
     mut r18: uint16,
     mut r24: uint16,
@@ -14009,8 +13472,7 @@ pub unsafe extern "C" fn Shitroid_GraduallyAccelerateHoriz(
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_CheckIfOnScreen(mut k: uint16) -> uint8 {
+pub unsafe fn Shitroid_CheckIfOnScreen(mut k: uint16) -> uint8 {
     let mut y_pos: int16 = 0;
     let mut v3: int16 = 0;
     let mut x_pos: int16 = 0;
@@ -14047,8 +13509,7 @@ pub unsafe extern "C" fn Shitroid_CheckIfOnScreen(mut k: uint16) -> uint8 {
     }
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_AccelerateTowardsPoint(
+pub unsafe fn Shitroid_AccelerateTowardsPoint(
     mut k: uint16,
     mut a: uint16,
     mut r18: uint16,
@@ -14062,8 +13523,7 @@ pub unsafe extern "C" fn Shitroid_AccelerateTowardsPoint(
     R28 = (R28 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
     return (R28 as ::core::ffi::c_int & 1 as ::core::ffi::c_int) as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_AccelerateTowardsY(
+pub unsafe fn Shitroid_AccelerateTowardsY(
     mut k: uint16,
     mut r20: uint16,
     mut r22: uint16,
@@ -14109,8 +13569,7 @@ pub unsafe extern "C" fn Shitroid_AccelerateTowardsY(
     }
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_AccelerateTowardsX(
+pub unsafe fn Shitroid_AccelerateTowardsX(
     mut k: uint16,
     mut r18: uint16,
     mut r22: uint16,
@@ -14155,29 +13614,25 @@ pub unsafe extern "C" fn Shitroid_AccelerateTowardsX(
     }
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_HandleNormalPalette() {
+pub unsafe fn Shitroid_HandleNormalPalette() {
     Shitroid_HandleCutscenePalette_Common(
         addr_word_A9F6D1 as ::core::ffi::c_int as uint16,
         330 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_HandleCutscenePalette() {
+pub unsafe fn Shitroid_HandleCutscenePalette() {
     Shitroid_HandleCutscenePalette_Common(
         addr_word_A9F6D1 as ::core::ffi::c_int as uint16,
         490 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_HandleCutscenePalette_LowHealth() {
+pub unsafe fn Shitroid_HandleCutscenePalette_LowHealth() {
     Shitroid_HandleCutscenePalette_Common(
         addr_word_A9F711 as ::core::ffi::c_int as uint16,
         490 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_HandleCutscenePalette_Common(mut r22: uint16, mut r18: uint16) {
+pub unsafe fn Shitroid_HandleCutscenePalette_Common(mut r22: uint16, mut r18: uint16) {
     let mut shitro_var_D_high: int8 = 0;
     let mut E: *mut Enemy_Shitroid = Get_Shitroid(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -14220,8 +13675,7 @@ pub unsafe extern "C" fn Shitroid_HandleCutscenePalette_Common(mut r22: uint16, 
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_HandleCrySoundEffect(mut k: uint16, mut a: uint16) -> uint16 {
+pub unsafe fn Shitroid_HandleCrySoundEffect(mut k: uint16, mut a: uint16) -> uint16 {
     if a as ::core::ffi::c_int == 5 as ::core::ffi::c_int {
         let mut E: *mut Enemy_Shitroid = Get_Shitroid(k as ::core::ffi::c_int);
         if (*E).shitr_var_04 != 0 {
@@ -14241,8 +13695,7 @@ pub unsafe extern "C" fn Shitroid_HandleCrySoundEffect(mut k: uint16, mut a: uin
     }
     return a;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Touch() {
+pub unsafe fn Shitroid_Touch() {
     let mut E: *mut Enemy_Shitroid = Get_Shitroid(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -14312,8 +13765,7 @@ pub unsafe extern "C" fn Shitroid_Touch() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Shot() {
+pub unsafe fn Shitroid_Shot() {
     let mut E: *mut Enemy_Shitroid = Get_Shitroid(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -14349,20 +13801,16 @@ pub unsafe extern "C" fn Shitroid_Shot() {
             + Math_MultByCos(v1, r18) as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Instr_3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Shitroid_Instr_3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return addr_kShitroid_Ilist_F90E as ::core::ffi::c_int as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Instr_4(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Shitroid_Instr_4(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return addr_kShitroid_Ilist_F924 as ::core::ffi::c_int as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Instr_6(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Shitroid_Instr_6(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return addr_kShitroid_Ilist_F93A as ::core::ffi::c_int as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Shitroid_Instr_5(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Shitroid_Instr_5(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     if *((&raw mut g_ram as *mut uint8).offset(0x5e5 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int

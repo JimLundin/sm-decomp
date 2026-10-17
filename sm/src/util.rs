@@ -62,8 +62,7 @@ pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 pub const SEEK_END: ::core::ffi::c_int = 2 as ::core::ffi::c_int;
-#[no_mangle]
-pub unsafe extern "C" fn NextDelim(
+pub unsafe fn NextDelim(
     mut s: *mut *mut ::core::ffi::c_char,
     mut sep: ::core::ffi::c_int,
 ) -> *mut ::core::ffi::c_char {
@@ -87,12 +86,11 @@ pub unsafe extern "C" fn NextDelim(
     return r;
 }
 #[inline]
-unsafe extern "C" fn ToLower(mut a: ::core::ffi::c_int) -> ::core::ffi::c_int {
+unsafe fn ToLower(mut a: ::core::ffi::c_int) -> ::core::ffi::c_int {
     return a
         + (a >= 'A' as i32 && a <= 'Z' as i32) as ::core::ffi::c_int * 32 as ::core::ffi::c_int;
 }
-#[no_mangle]
-pub unsafe extern "C" fn StringEqualsNoCase(
+pub unsafe fn StringEqualsNoCase(
     mut a: *const ::core::ffi::c_char,
     mut b: *const ::core::ffi::c_char,
 ) -> bool {
@@ -111,8 +109,7 @@ pub unsafe extern "C" fn StringEqualsNoCase(
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn StringStartsWithNoCase(
+pub unsafe fn StringStartsWithNoCase(
     mut a: *const ::core::ffi::c_char,
     mut b: *const ::core::ffi::c_char,
 ) -> *const ::core::ffi::c_char {
@@ -129,8 +126,7 @@ pub unsafe extern "C" fn StringStartsWithNoCase(
         b = b.offset(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ReadWholeFile(
+pub unsafe fn ReadWholeFile(
     mut name: *const ::core::ffi::c_char,
     mut length: *mut size_t,
 ) -> *mut uint8 {
@@ -156,8 +152,7 @@ pub unsafe extern "C" fn ReadWholeFile(
     }
     return buffer;
 }
-#[no_mangle]
-pub unsafe extern "C" fn NextLineStripComments(
+pub unsafe fn NextLineStripComments(
     mut s: *mut *mut ::core::ffi::c_char,
 ) -> *mut ::core::ffi::c_char {
     let mut p: *mut ::core::ffi::c_char = *s;
@@ -197,8 +192,7 @@ pub unsafe extern "C" fn NextLineStripComments(
     }
     return p;
 }
-#[no_mangle]
-pub unsafe extern "C" fn NextPossiblyQuotedString(
+pub unsafe fn NextPossiblyQuotedString(
     mut s: *mut *mut ::core::ffi::c_char,
 ) -> *mut ::core::ffi::c_char {
     let mut r: *mut ::core::ffi::c_char = *s;
@@ -232,8 +226,7 @@ pub unsafe extern "C" fn NextPossiblyQuotedString(
     *s = t;
     return r;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ReplaceFilenameWithNewPath(
+pub unsafe fn ReplaceFilenameWithNewPath(
     mut old_path: *const ::core::ffi::c_char,
     mut new_path: *const ::core::ffi::c_char,
 ) -> *mut ::core::ffi::c_char {
@@ -261,10 +254,7 @@ pub unsafe extern "C" fn ReplaceFilenameWithNewPath(
     );
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SplitKeyValue(
-    mut p: *mut ::core::ffi::c_char,
-) -> *mut ::core::ffi::c_char {
+pub unsafe fn SplitKeyValue(mut p: *mut ::core::ffi::c_char) -> *mut ::core::ffi::c_char {
     let mut equals: *mut ::core::ffi::c_char = strchr(p, '=' as i32);
     if equals.is_null() {
         return ::core::ptr::null_mut::<::core::ffi::c_char>();
@@ -285,8 +275,7 @@ pub unsafe extern "C" fn SplitKeyValue(
     }
     return v;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SkipPrefix(
+pub unsafe fn SkipPrefix(
     mut big: *const ::core::ffi::c_char,
     mut little: *const ::core::ffi::c_char,
 ) -> *const ::core::ffi::c_char {
@@ -299,11 +288,7 @@ pub unsafe extern "C" fn SkipPrefix(
     }
     return big;
 }
-#[no_mangle]
-pub unsafe extern "C" fn StrSet(
-    mut rv: *mut *mut ::core::ffi::c_char,
-    mut s: *const ::core::ffi::c_char,
-) {
+pub unsafe fn StrSet(mut rv: *mut *mut ::core::ffi::c_char, mut s: *const ::core::ffi::c_char) {
     let mut news: *mut ::core::ffi::c_char = strdup(s);
     let mut old: *mut ::core::ffi::c_char = *rv;
     *rv = news;
@@ -329,8 +314,7 @@ pub unsafe extern "C" fn StrFmt(
     }
     return strdup(&raw mut buf as *mut ::core::ffi::c_char);
 }
-#[no_mangle]
-pub unsafe extern "C" fn ByteArray_Resize(mut arr: *mut ByteArray, mut new_size: size_t) {
+pub unsafe fn ByteArray_Resize(mut arr: *mut ByteArray, mut new_size: size_t) {
     (*arr).size = new_size;
     if new_size > (*arr).capacity {
         let mut minsize: size_t = (*arr)
@@ -350,14 +334,12 @@ pub unsafe extern "C" fn ByteArray_Resize(mut arr: *mut ByteArray, mut new_size:
         (*arr).data = data;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ByteArray_Destroy(mut arr: *mut ByteArray) {
+pub unsafe fn ByteArray_Destroy(mut arr: *mut ByteArray) {
     let mut data: *mut ::core::ffi::c_void = (*arr).data as *mut ::core::ffi::c_void;
     (*arr).data = ::core::ptr::null_mut::<uint8>();
     free(data);
 }
-#[no_mangle]
-pub unsafe extern "C" fn ByteArray_AppendData(
+pub unsafe fn ByteArray_AppendData(
     mut arr: *mut ByteArray,
     mut data: *const uint8,
     mut data_size: size_t,
@@ -372,8 +354,7 @@ pub unsafe extern "C" fn ByteArray_AppendData(
         data_size,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn ByteArray_AppendByte(mut arr: *mut ByteArray, mut v: uint8) {
+pub unsafe fn ByteArray_AppendByte(mut arr: *mut ByteArray, mut v: uint8) {
     ByteArray_Resize(arr, (*arr).size.wrapping_add(1 as size_t));
     *(*arr)
         .data

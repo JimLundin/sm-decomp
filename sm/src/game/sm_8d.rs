@@ -55,16 +55,16 @@ pub const addr_kPalfx_E194: Consts_8D = 57748;
 pub const addr_off_8DE192: Consts_8D = 57746;
 pub const addr_locret_8DC5E3: Consts_8D = 50659;
 #[inline]
-unsafe extern "C" fn RomPtr_8D(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_8D(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x8d0000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn get_PalFxDef(mut a: uint16) -> *mut PalFxDef {
+unsafe fn get_PalFxDef(mut a: uint16) -> *mut PalFxDef {
     return RomPtr((0x8d0000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut PalFxDef;
 }
 #[inline]
-unsafe extern "C" fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
+unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
     let mut t: uint32 = ((*lo as ::core::ffi::c_int
         + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
         as uint32)
@@ -104,20 +104,17 @@ pub const fnPalPreInstr_DeletePalfxIfMinibossDead: uint32 = 9301701 as uint32;
 pub const fnPalInstr_SetPalfxIndex: uint32 = 9302470 as uint32;
 pub const fnPalPreInstr_F621: uint32 = 9303585 as uint32;
 pub const fnPalInit_F779_Brinstar8: uint32 = 9303856 as uint32;
-#[no_mangle]
-pub unsafe extern "C" fn EnablePaletteFx() {
+pub unsafe fn EnablePaletteFx() {
     let ref mut fresh1 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1e79 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh1 = (*fresh1 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DisablePaletteFx() {
+pub unsafe fn DisablePaletteFx() {
     let ref mut fresh0 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1e79 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh0 = (*fresh0 as ::core::ffi::c_int & !(0x8000 as ::core::ffi::c_int)) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearPaletteFXObjects() {
+pub unsafe fn ClearPaletteFXObjects() {
     let mut i: ::core::ffi::c_int = 14 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         *((&raw mut g_ram as *mut uint8).offset(0x1e7d as ::core::ffi::c_int as isize)
@@ -126,8 +123,7 @@ pub unsafe extern "C" fn ClearPaletteFXObjects() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnPalfxObject(mut j: uint16) {
+pub unsafe fn SpawnPalfxObject(mut j: uint16) {
     let mut PalFxDef: *mut PalFxDef = ::core::ptr::null_mut::<PalFxDef>();
     let mut v1: uint16 = 14 as uint16;
     while *((&raw mut g_ram as *mut uint8).offset(0x1e7d as ::core::ffi::c_int as isize)
@@ -167,10 +163,8 @@ pub unsafe extern "C" fn SpawnPalfxObject(mut j: uint16) {
         v1,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalPreInstr_nullsub_129(mut k: uint16) {}
-#[no_mangle]
-pub unsafe extern "C" fn PaletteFxHandler() {
+pub unsafe fn PalPreInstr_nullsub_129(mut k: uint16) {}
+pub unsafe fn PaletteFxHandler() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1e79 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -193,8 +187,7 @@ pub unsafe extern "C" fn PaletteFxHandler() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalFx_ProcessOne(mut k: uint16) {
+pub unsafe fn PalFx_ProcessOne(mut k: uint16) {
     CallPalFxPreInstr(
         (*((&raw mut g_ram as *mut uint8).offset(0x1ead as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -270,8 +263,7 @@ pub unsafe extern "C" fn PalFx_ProcessOne(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalInstr_Wait(mut k: uint16, mut j: uint16) -> PairU16 {
+pub unsafe fn PalInstr_Wait(mut k: uint16, mut j: uint16) -> PairU16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1ebd as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(
@@ -281,57 +273,49 @@ pub unsafe extern "C" fn PalInstr_Wait(mut k: uint16, mut j: uint16) -> PairU16 
         ) = (j as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
     return MakePairU16(0 as uint16, 0 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalInstr_ColorPlus2(mut k: uint16, mut j: uint16) -> PairU16 {
+pub unsafe fn PalInstr_ColorPlus2(mut k: uint16, mut j: uint16) -> PairU16 {
     return MakePairU16(
         (k as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16,
         (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalInstr_ColorPlus3(mut k: uint16, mut j: uint16) -> PairU16 {
+pub unsafe fn PalInstr_ColorPlus3(mut k: uint16, mut j: uint16) -> PairU16 {
     return MakePairU16(
         (k as ::core::ffi::c_int + 6 as ::core::ffi::c_int) as uint16,
         (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalInstr_ColorPlus4(mut k: uint16, mut j: uint16) -> PairU16 {
+pub unsafe fn PalInstr_ColorPlus4(mut k: uint16, mut j: uint16) -> PairU16 {
     return MakePairU16(
         (k as ::core::ffi::c_int + 8 as ::core::ffi::c_int) as uint16,
         (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalInstr_ColorPlus8(mut k: uint16, mut j: uint16) -> PairU16 {
+pub unsafe fn PalInstr_ColorPlus8(mut k: uint16, mut j: uint16) -> PairU16 {
     return MakePairU16(
         (k as ::core::ffi::c_int + 16 as ::core::ffi::c_int) as uint16,
         (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalInstr_ColorPlus9(mut k: uint16, mut j: uint16) -> PairU16 {
+pub unsafe fn PalInstr_ColorPlus9(mut k: uint16, mut j: uint16) -> PairU16 {
     return MakePairU16(
         (k as ::core::ffi::c_int + 18 as ::core::ffi::c_int) as uint16,
         (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalInstr_ColorPlus15(mut k: uint16, mut j: uint16) -> PairU16 {
+pub unsafe fn PalInstr_ColorPlus15(mut k: uint16, mut j: uint16) -> PairU16 {
     return MakePairU16(
         (k as ::core::ffi::c_int + 30 as ::core::ffi::c_int) as uint16,
         (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalInstr_Delete(mut k: uint16, mut j: uint16) -> PairU16 {
+pub unsafe fn PalInstr_Delete(mut k: uint16, mut j: uint16) -> PairU16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1e7d as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return MakePairU16(k, 0 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalInstr_SetPreInstr(mut k: uint16, mut j: uint16) -> PairU16 {
+pub unsafe fn PalInstr_SetPreInstr(mut k: uint16, mut j: uint16) -> PairU16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1ead as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
@@ -341,21 +325,18 @@ pub unsafe extern "C" fn PalInstr_SetPreInstr(mut k: uint16, mut j: uint16) -> P
         (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalInstr_ClearPreInstr(mut k: uint16, mut j: uint16) -> PairU16 {
+pub unsafe fn PalInstr_ClearPreInstr(mut k: uint16, mut j: uint16) -> PairU16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1ead as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         addr_locret_8DC5E3 as ::core::ffi::c_int as uint16;
     return MakePairU16(k, j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalInstr_Goto(mut k: uint16, mut j: uint16) -> PairU16 {
+pub unsafe fn PalInstr_Goto(mut k: uint16, mut j: uint16) -> PairU16 {
     let mut v2: uint16 = *(RomPtr_8D(j as uint16_t) as *mut uint16);
     return MakePairU16(k, v2);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalInstr_DecTimerGoto(mut k: uint16, mut j: uint16) -> PairU16 {
+pub unsafe fn PalInstr_DecTimerGoto(mut k: uint16, mut j: uint16) -> PairU16 {
     let mut v4: PairU16 = PairU16 { k: 0, j: 0 };
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh4 = *((&raw mut g_ram as *mut uint8)
@@ -372,8 +353,7 @@ pub unsafe extern "C" fn PalInstr_DecTimerGoto(mut k: uint16, mut j: uint16) -> 
     v4 = PalInstr_Goto(k, j);
     return MakePairU16(v4.k, v4.j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalInstr_SetTimer(mut k: uint16, mut j: uint16) -> PairU16 {
+pub unsafe fn PalInstr_SetTimer(mut k: uint16, mut j: uint16) -> PairU16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1edd as ::core::ffi::c_int as isize) as *mut uint16
         as *mut uint8)
         .offset(k as ::core::ffi::c_int as isize) = *RomPtr_8D(j as uint16_t);
@@ -382,8 +362,7 @@ pub unsafe extern "C" fn PalInstr_SetTimer(mut k: uint16, mut j: uint16) -> Pair
         (j as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalInstr_SetColorIndex(mut k: uint16, mut j: uint16) -> PairU16 {
+pub unsafe fn PalInstr_SetColorIndex(mut k: uint16, mut j: uint16) -> PairU16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1e8d as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
@@ -393,8 +372,7 @@ pub unsafe extern "C" fn PalInstr_SetColorIndex(mut k: uint16, mut j: uint16) ->
         (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalInstr_QueueMusic(mut k: uint16, mut j: uint16) -> PairU16 {
+pub unsafe fn PalInstr_QueueMusic(mut k: uint16, mut j: uint16) -> PairU16 {
     let mut v2: *const uint8 = RomPtr_8D(j as uint16_t);
     QueueMusic_Delayed8(*v2 as uint16);
     return MakePairU16(
@@ -402,8 +380,7 @@ pub unsafe extern "C" fn PalInstr_QueueMusic(mut k: uint16, mut j: uint16) -> Pa
         (j as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalInstr_QueueSfx1(mut k: uint16, mut j: uint16) -> PairU16 {
+pub unsafe fn PalInstr_QueueSfx1(mut k: uint16, mut j: uint16) -> PairU16 {
     let mut v2: *const uint16 = RomPtr_8D(j as uint16_t) as *const uint16;
     QueueSfx1_Max6(*v2);
     return MakePairU16(
@@ -411,8 +388,7 @@ pub unsafe extern "C" fn PalInstr_QueueSfx1(mut k: uint16, mut j: uint16) -> Pai
         (j as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalInstr_QueueSfx2(mut k: uint16, mut j: uint16) -> PairU16 {
+pub unsafe fn PalInstr_QueueSfx2(mut k: uint16, mut j: uint16) -> PairU16 {
     let mut v2: *const uint16 = RomPtr_8D(j as uint16_t) as *const uint16;
     QueueSfx2_Max6(*v2);
     return MakePairU16(
@@ -420,8 +396,7 @@ pub unsafe extern "C" fn PalInstr_QueueSfx2(mut k: uint16, mut j: uint16) -> Pai
         (j as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalInstr_QueueSfx3(mut k: uint16, mut j: uint16) -> PairU16 {
+pub unsafe fn PalInstr_QueueSfx3(mut k: uint16, mut j: uint16) -> PairU16 {
     let mut v2: *const uint16 = RomPtr_8D(j as uint16_t) as *const uint16;
     QueueSfx3_Max6(*v2);
     return MakePairU16(
@@ -429,15 +404,13 @@ pub unsafe extern "C" fn PalInstr_QueueSfx3(mut k: uint16, mut j: uint16) -> Pai
         (j as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalInit_E1BC(mut k: uint16, mut j: uint16) {
+pub unsafe fn PalInit_E1BC(mut k: uint16, mut j: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x1ead as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         (0x8de20b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalPreInstr_E1BC(mut k: uint16) {
+pub unsafe fn PalPreInstr_E1BC(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         == 0x8bb35f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -451,8 +424,7 @@ pub unsafe extern "C" fn PalPreInstr_E1BC(mut k: uint16) {
             .offset(v1 as isize) = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalPreInstr_CheckEnemy0Health(mut k: uint16) {
+pub unsafe fn PalPreInstr_CheckEnemy0Health(mut k: uint16) {
     if (*((&raw mut g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
         as *mut EnemyData)
         .offset(0 as ::core::ffi::c_int as isize))
@@ -464,8 +436,7 @@ pub unsafe extern "C" fn PalPreInstr_CheckEnemy0Health(mut k: uint16) {
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalPreInstr_SamusInHeat(mut k: uint16) {
+pub unsafe fn PalPreInstr_SamusInHeat(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0x21 as ::core::ffi::c_int
@@ -523,13 +494,13 @@ pub unsafe extern "C" fn PalPreInstr_SamusInHeat(mut k: uint16) {
         }
         *((&raw mut g_ram as *mut uint8).offset(0x1ebd as ::core::ffi::c_int as isize)
             as *mut uint16)
-            .offset(v3 as isize) =
-            *((RomPtr_8D as unsafe extern "C" fn(uint16_t) -> *const uint8)(v4 as uint16_t)
-                .offset(v2 as isize) as *const uint8 as *mut uint16);
+            .offset(v3 as isize) = *((RomPtr_8D as unsafe fn(uint16_t) -> *const uint8)(
+            v4 as uint16_t,
+        )
+        .offset(v2 as isize) as *const uint8 as *mut uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalInit_F761_Norfair1(mut k: uint16, mut j: uint16) {
+pub unsafe fn PalInit_F761_Norfair1(mut k: uint16, mut j: uint16) {
     let mut v2: uint16 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -550,8 +521,7 @@ pub unsafe extern "C" fn PalInit_F761_Norfair1(mut k: uint16, mut j: uint16) {
         as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = v2;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalPreInstr_SwitchIfYpos(mut k: uint16) {
+pub unsafe fn PalPreInstr_SwitchIfYpos(mut k: uint16) {
     if (*((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int)
         < 0x380 as ::core::ffi::c_int
@@ -565,8 +535,7 @@ pub unsafe extern "C" fn PalPreInstr_SwitchIfYpos(mut k: uint16) {
             .offset(v2 as isize) = addr_word_8DEB43 as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalPreInstr_SwitchIfYpos2(mut k: uint16) {
+pub unsafe fn PalPreInstr_SwitchIfYpos2(mut k: uint16) {
     if (*((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int)
         < 0x380 as ::core::ffi::c_int
@@ -580,8 +549,7 @@ pub unsafe extern "C" fn PalPreInstr_SwitchIfYpos2(mut k: uint16) {
             .offset(v2 as isize) = addr_word_8DEC76 as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalPreInstr_DeletePalfxIfMinibossDead(mut k: uint16) {
+pub unsafe fn PalPreInstr_DeletePalfxIfMinibossDead(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8)
         .offset(0xd828 as ::core::ffi::c_int as isize)
         .offset(
@@ -596,8 +564,7 @@ pub unsafe extern "C" fn PalPreInstr_DeletePalfxIfMinibossDead(mut k: uint16) {
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalInstr_SetPalfxIndex(mut k: uint16, mut j: uint16) -> PairU16 {
+pub unsafe fn PalInstr_SetPalfxIndex(mut k: uint16, mut j: uint16) -> PairU16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1eed as ::core::ffi::c_int as isize)
         as *mut uint16) = *RomPtr_8D(j as uint16_t) as uint16;
     return MakePairU16(
@@ -605,8 +572,7 @@ pub unsafe extern "C" fn PalInstr_SetPalfxIndex(mut k: uint16, mut j: uint16) ->
         (j as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalPreInstr_F621(mut k: uint16) {
+pub unsafe fn PalPreInstr_F621(mut k: uint16) {
     if *(((&raw mut g_ram as *mut uint8).offset(0x1e79 as ::core::ffi::c_int as isize)
         as *mut uint16 as *mut uint8)
         .offset(k as ::core::ffi::c_int as isize) as *mut uint16)
@@ -617,8 +583,7 @@ pub unsafe extern "C" fn PalPreInstr_F621(mut k: uint16) {
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PalInit_F779_Brinstar8(mut k: uint16, mut j: uint16) {
+pub unsafe fn PalInit_F779_Brinstar8(mut k: uint16, mut j: uint16) {
     if *((&raw mut g_ram as *mut uint8)
         .offset(0xd828 as ::core::ffi::c_int as isize)
         .offset(
@@ -633,8 +598,7 @@ pub unsafe extern "C" fn PalInit_F779_Brinstar8(mut k: uint16, mut j: uint16) {
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallPalFxPreInstr(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallPalFxPreInstr(mut ea: uint32, mut k: uint16) {
     match ea {
         9291046 => {
             PalPreInstr_nullsub_129(k);
@@ -673,8 +637,7 @@ pub unsafe extern "C" fn CallPalFxPreInstr(mut ea: uint32, mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallPalInstr(mut ea: uint32, mut k: uint16, mut j: uint16) -> PairU16 {
+pub unsafe fn CallPalInstr(mut ea: uint32, mut k: uint16, mut j: uint16) -> PairU16 {
     match ea {
         9291157 => return PalInstr_Wait(k, j),
         9291161 => return PalInstr_ColorPlus2(k, j),
@@ -704,8 +667,7 @@ pub unsafe extern "C" fn CallPalInstr(mut ea: uint32, mut k: uint16, mut j: uint
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallPalfxFunc(mut ea: uint32, mut k: uint16, mut j: uint16) {
+pub unsafe fn CallPalfxFunc(mut ea: uint32, mut k: uint16, mut j: uint16) {
     match ea {
         9291397 => return,
         9298436 => {

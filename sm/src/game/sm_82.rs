@@ -692,7 +692,7 @@ pub const __ASSERT_FUNCTION: [::core::ffi::c_char; 28] = unsafe {
     ::core::mem::transmute::<[u8; 28], [::core::ffi::c_char; 28]>(*b"uint8 *RomPtr_RAM(uint16_t)\0")
 };
 #[inline]
-unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
+unsafe fn abs16(mut t: uint16) -> uint16 {
     return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         -(t as ::core::ffi::c_int)
     } else {
@@ -700,13 +700,13 @@ unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
     }) as uint16;
 }
 #[inline]
-unsafe extern "C" fn swap16(mut v: uint16) -> uint16 {
+unsafe fn swap16(mut v: uint16) -> uint16 {
     return ((v as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
         | v as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint16;
 }
 pub const kCoroutineNone: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 #[inline]
-unsafe extern "C" fn RomPtr_RAM(mut addr: uint16_t) -> *mut uint8 {
+unsafe fn RomPtr_RAM(mut addr: uint16_t) -> *mut uint8 {
     '_c2rust_label: {
         if (addr as ::core::ffi::c_int) < 0x2000 as ::core::ffi::c_int {
         } else {
@@ -721,72 +721,72 @@ unsafe extern "C" fn RomPtr_RAM(mut addr: uint16_t) -> *mut uint8 {
     return (&raw mut g_ram as *mut uint8).offset(addr as ::core::ffi::c_int as isize);
 }
 #[inline]
-unsafe extern "C" fn RomPtr_82(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_82(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x820000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomPtr_8F(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_8F(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x8f0000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomPtrWithBank(mut bank: uint8, mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtrWithBank(mut bank: uint8, mut addr: uint16_t) -> *const uint8 {
     return RomPtr(
         ((bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int | addr as ::core::ffi::c_int)
             as uint32_t,
     );
 }
 #[inline]
-unsafe extern "C" fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
+unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
     return (&raw mut g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
         as *mut uint8 as *mut VramWriteEntry;
 }
 #[inline]
-unsafe extern "C" fn get_DoorDef(mut a: uint16) -> *mut DoorDef {
+unsafe fn get_DoorDef(mut a: uint16) -> *mut DoorDef {
     return RomPtr((0x830000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut DoorDef;
 }
 #[inline]
-unsafe extern "C" fn get_RoomDefHeader(mut a: uint16) -> *mut RoomDefHeader {
+unsafe fn get_RoomDefHeader(mut a: uint16) -> *mut RoomDefHeader {
     return RomPtr((0x8f0000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut RoomDefHeader;
 }
 #[inline]
-unsafe extern "C" fn get_RoomDefRoomstate(mut a: uint16) -> *mut RoomDefRoomstate {
+unsafe fn get_RoomDefRoomstate(mut a: uint16) -> *mut RoomDefRoomstate {
     return RomPtr((0x8f0000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut RoomDefRoomstate;
 }
 #[inline]
-unsafe extern "C" fn get_TileSet(mut a: uint16) -> *mut TileSet {
+unsafe fn get_TileSet(mut a: uint16) -> *mut TileSet {
     return RomPtr((0x8f0000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut TileSet;
 }
 #[inline]
-unsafe extern "C" fn get_EnemyDef_A2(mut a: uint16) -> *mut EnemyDef {
+unsafe fn get_EnemyDef_A2(mut a: uint16) -> *mut EnemyDef {
     return RomPtr((0xa00000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut EnemyDef;
 }
 #[inline]
-unsafe extern "C" fn get_EnemyTileset(mut a: uint16) -> *mut EnemyTileset {
+unsafe fn get_EnemyTileset(mut a: uint16) -> *mut EnemyTileset {
     return RomPtr((0xb40000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut EnemyTileset;
 }
 #[inline]
-unsafe extern "C" fn get_RoomPlmEntry(mut a: uint16) -> *mut RoomPlmEntry {
+unsafe fn get_RoomPlmEntry(mut a: uint16) -> *mut RoomPlmEntry {
     return RomPtr((0x8f0000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut RoomPlmEntry;
 }
 #[inline]
-unsafe extern "C" fn get_DemoRoomData(mut a: uint16) -> *mut DemoRoomData {
+unsafe fn get_DemoRoomData(mut a: uint16) -> *mut DemoRoomData {
     return RomPtr((0x820000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut DemoRoomData;
 }
 #[inline]
-unsafe extern "C" fn get_LoadBg_E(mut a: uint16) -> *mut LoadBg_E {
+unsafe fn get_LoadBg_E(mut a: uint16) -> *mut LoadBg_E {
     return RomPtr((0x8f0000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut LoadBg_E;
 }
 #[inline]
-unsafe extern "C" fn get_PlmHeader_Size6(mut a: uint16) -> *mut PlmHeader_Size6 {
+unsafe fn get_PlmHeader_Size6(mut a: uint16) -> *mut PlmHeader_Size6 {
     return RomPtr((0x840000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut PlmHeader_Size6;
 }
@@ -857,8 +857,7 @@ pub const fnKraid_UnpauseHook_IsSinking: uint32 = 10994336 as uint32;
 pub const fnPauseHook_Kraid: uint32 = 10994469 as uint32;
 pub const fnMotherBrainsBody_UnpauseHook: uint32 = 11110243 as uint32;
 pub const fnlocret_828C81: ::core::ffi::c_int = 0x828c81 as ::core::ffi::c_int;
-#[no_mangle]
-pub unsafe extern "C" fn CallDemoRoomDataFunc(mut ea: uint32) {
+pub unsafe fn CallDemoRoomDataFunc(mut ea: uint32) {
     match ea {
         8554778 => {
             DemoRoom_ChargeBeamRoomScroll21();
@@ -882,8 +881,7 @@ pub unsafe extern "C" fn CallDemoRoomDataFunc(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn InitAndLoadGameData_Async() -> CoroutineRet {
+pub unsafe fn InitAndLoadGameData_Async() -> CoroutineRet {
     let mut v0: int16 = 0;
     let mut v2: int16 = 0;
     let mut v4: int16 = 0;
@@ -1207,13 +1205,11 @@ pub unsafe extern "C" fn InitAndLoadGameData_Async() -> CoroutineRet {
     *_state_variable_ = 0 as uint8;
     return 0 as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn InitIoForGameplay() {
+pub unsafe fn InitIoForGameplay() {
     InitCpuForGameplay();
     InitPpuForGameplay();
 }
-#[no_mangle]
-pub unsafe extern "C" fn InitCpuForGameplay() {
+pub unsafe fn InitCpuForGameplay() {
     WriteReg(NMITIMEN as ::core::ffi::c_int as uint16, 1 as uint8);
     *(&raw mut g_ram as *mut uint8).offset(0x84 as ::core::ffi::c_int as isize) = 1 as uint8;
     WriteReg(WRIO as ::core::ffi::c_int as uint16, 0 as uint8);
@@ -1232,8 +1228,7 @@ pub unsafe extern "C" fn InitCpuForGameplay() {
     WriteReg(MEMSEL as ::core::ffi::c_int as uint16, 1 as uint8);
     *(&raw mut g_ram as *mut uint8).offset(0x86 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn InitPpuForGameplay() {
+pub unsafe fn InitPpuForGameplay() {
     WriteReg(INIDISP as ::core::ffi::c_int as uint16, 0x80 as uint8);
     *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 0x80 as uint8;
     WriteReg(OBSEL as ::core::ffi::c_int as uint16, 3 as uint8);
@@ -1326,8 +1321,7 @@ pub unsafe extern "C" fn InitPpuForGameplay() {
         0xfe as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadInitialPalette() {
+pub unsafe fn LoadInitialPalette() {
     let mut v0: int16 = 0;
     v0 = 512 as int16;
     let mut v1: uint16 = 0 as uint16;
@@ -1349,8 +1343,7 @@ pub unsafe extern "C" fn LoadInitialPalette() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadStdBG3andSpriteTilesClearTilemaps() {
+pub unsafe fn LoadStdBG3andSpriteTilesClearTilemaps() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x40 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
@@ -1412,8 +1405,7 @@ pub unsafe extern "C" fn LoadStdBG3andSpriteTilesClearTilemaps() {
     SetupDmaTransfer(&raw const unk_828358 as *const ::core::ffi::c_void);
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_32_MadeItToCeresElevator() -> CoroutineRet {
+pub unsafe fn GameState_32_MadeItToCeresElevator() -> CoroutineRet {
     if *((&raw mut g_ram as *mut uint8).offset(0x943 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -1443,8 +1435,7 @@ pub unsafe extern "C" fn GameState_32_MadeItToCeresElevator() -> CoroutineRet {
     }
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_33_BlackoutFromCeres() -> CoroutineRet {
+pub unsafe fn GameState_33_BlackoutFromCeres() -> CoroutineRet {
     if *((&raw mut g_ram as *mut uint8).offset(0x943 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -1499,8 +1490,7 @@ pub unsafe extern "C" fn GameState_33_BlackoutFromCeres() -> CoroutineRet {
     }
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_35_TimeUp() -> CoroutineRet {
+pub unsafe fn GameState_35_TimeUp() -> CoroutineRet {
     let mut _coret_: uint8 = GameState_8_MainGameplay() as uint8;
     if _coret_ != 0 {
         return _coret_ as CoroutineRet;
@@ -1517,8 +1507,7 @@ pub unsafe extern "C" fn GameState_35_TimeUp() -> CoroutineRet {
     }
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_36_WhitingOutFromTimeUp() -> CoroutineRet {
+pub unsafe fn GameState_36_WhitingOutFromTimeUp() -> CoroutineRet {
     HandleFadeOut();
     if *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
@@ -1575,8 +1564,7 @@ pub unsafe extern "C" fn GameState_36_WhitingOutFromTimeUp() -> CoroutineRet {
     }
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_38_SamusEscapesFromZebes() -> CoroutineRet {
+pub unsafe fn GameState_38_SamusEscapesFromZebes() -> CoroutineRet {
     let mut _coret_: uint8 = GameState_8_MainGameplay() as uint8;
     if _coret_ != 0 {
         return _coret_ as CoroutineRet;
@@ -1616,8 +1604,7 @@ pub unsafe extern "C" fn GameState_38_SamusEscapesFromZebes() -> CoroutineRet {
     }
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_41_TransitionToDemo() -> CoroutineRet {
+pub unsafe fn GameState_41_TransitionToDemo() -> CoroutineRet {
     let mut _coret_: uint8 = GameState_8_MainGameplay() as uint8;
     if _coret_ != 0 {
         return _coret_ as CoroutineRet;
@@ -1629,8 +1616,7 @@ pub unsafe extern "C" fn GameState_41_TransitionToDemo() -> CoroutineRet {
     *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize) = 15 as uint8;
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_42_PlayingDemo_Async() -> CoroutineRet {
+pub unsafe fn GameState_42_PlayingDemo_Async() -> CoroutineRet {
     let mut current_block: u64;
     let mut _state_variable_: *mut uint8 =
         (&raw mut g_ram as *mut uint8).offset(0x614 as ::core::ffi::c_int as isize);
@@ -1729,8 +1715,7 @@ pub unsafe extern "C" fn GameState_42_PlayingDemo_Async() -> CoroutineRet {
     }
     return 0 as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_43_TransitionFromDemo() -> CoroutineRet {
+pub unsafe fn GameState_43_TransitionFromDemo() -> CoroutineRet {
     if *((&raw mut g_ram as *mut uint8).offset(0xdec as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         != 1 as ::core::ffi::c_int
@@ -1777,8 +1762,7 @@ pub unsafe extern "C" fn GameState_43_TransitionFromDemo() -> CoroutineRet {
     *(&raw mut g_ram as *mut uint8).offset(0x6d as ::core::ffi::c_int as isize) = 0 as uint8;
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_44_TransitionFromDemo() -> CoroutineRet {
+pub unsafe fn GameState_44_TransitionFromDemo() -> CoroutineRet {
     *((&raw mut g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize) as *mut uint16) =
         kGameState_1_OpeningCinematic as ::core::ffi::c_int as uint16;
     if *((&raw mut g_ram as *mut uint8).offset(0xdec as ::core::ffi::c_int as isize) as *mut uint16)
@@ -1809,8 +1793,7 @@ pub unsafe extern "C" fn GameState_44_TransitionFromDemo() -> CoroutineRet {
     }
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CheckForNextDemo() {
+pub unsafe fn CheckForNextDemo() {
     if *(RomPtr_82(
         (*(g_rom.offset(
             (((0x82876c as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -1849,8 +1832,7 @@ pub unsafe extern "C" fn CheckForNextDemo() {
             as *mut uint16) = 0x8000 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadDemoRoomData() {
+pub unsafe fn LoadDemoRoomData() {
     let mut drd: *mut DemoRoomData = ::core::ptr::null_mut::<DemoRoomData>();
     *((&raw mut g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
@@ -2000,81 +1982,76 @@ pub unsafe extern "C" fn LoadDemoRoomData() {
     *((&raw mut g_ram as *mut uint8).offset(0x5f7 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DemoRoom_ChargeBeamRoomScroll21() {
+pub unsafe fn DemoRoom_ChargeBeamRoomScroll21() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(33 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DemoRoom_SetBG2TilemapBase() {
+pub unsafe fn DemoRoom_SetBG2TilemapBase() {
     *((&raw mut g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize) as *mut uint16) =
         74 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DemoRoom_SetKraidFunctionTimer() {
+pub unsafe fn DemoRoom_SetKraidFunctionTimer() {
     (*((&raw mut g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
         as *mut EnemyData)
         .offset(0 as ::core::ffi::c_int as isize))
     .ai_preinstr = 60 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DemoRoom_SetBrinstarBossBits() {
+pub unsafe fn DemoRoom_SetBrinstarBossBits() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0xd828 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
 static mut kGameStateFuncs: [Option<Func_V_Coroutine>; 45] = unsafe {
     [
-        Some(GameState_0_Reset_Async as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_1_OpeningCinematic as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_2_GameOptionsMenu as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_3_Null as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_4_FileSelectMenus as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_5_FileSelectMap as unsafe extern "C" fn() -> CoroutineRet),
-        Some(InitAndLoadGameData_Async as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_7_MainGameplayFadeIn as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_8_MainGameplay as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_9_HitDoorBlock as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_10_LoadingNextRoom_Async as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_11_LoadingNextRoom_Async as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_12_Pausing_Darkening_Async as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_13_Pausing_Async as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_14_Paused_Async as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_15_Paused_Async as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_16_Unpausing_Async as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_17_Unpausing_Async as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_18_Unpausing as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_19_SamusNoHealth as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_20_SamusNoHealth_BlackOut as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_21_SamusNoHealth as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_22_SamusNoHealth_Dying as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_23_SamusNoHealth_Flashing as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_24_SamusNoHealth_Explosion as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_25_SamusNoHealth_BlackOut as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_26_GameOverMenu as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_27_ReserveTanksAuto as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_28_Unused as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_29_DebugGameOverMenu as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_37_CeresGoesBoomWithSamus as unsafe extern "C" fn() -> CoroutineRet),
-        Some(InitAndLoadGameData_Async as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_32_MadeItToCeresElevator as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_33_BlackoutFromCeres as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_37_CeresGoesBoomWithSamus as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_35_TimeUp as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_36_WhitingOutFromTimeUp as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_37_CeresGoesBoomWithSamus as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_38_SamusEscapesFromZebes as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_39_EndingAndCredits as unsafe extern "C" fn() -> CoroutineRet),
-        Some(InitAndLoadGameData_Async as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_41_TransitionToDemo as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_42_PlayingDemo_Async as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_43_TransitionFromDemo as unsafe extern "C" fn() -> CoroutineRet),
-        Some(GameState_44_TransitionFromDemo as unsafe extern "C" fn() -> CoroutineRet),
+        Some(GameState_0_Reset_Async as unsafe fn() -> CoroutineRet),
+        Some(GameState_1_OpeningCinematic as unsafe fn() -> CoroutineRet),
+        Some(GameState_2_GameOptionsMenu as unsafe fn() -> CoroutineRet),
+        Some(GameState_3_Null as unsafe fn() -> CoroutineRet),
+        Some(GameState_4_FileSelectMenus as unsafe fn() -> CoroutineRet),
+        Some(GameState_5_FileSelectMap as unsafe fn() -> CoroutineRet),
+        Some(InitAndLoadGameData_Async as unsafe fn() -> CoroutineRet),
+        Some(GameState_7_MainGameplayFadeIn as unsafe fn() -> CoroutineRet),
+        Some(GameState_8_MainGameplay as unsafe fn() -> CoroutineRet),
+        Some(GameState_9_HitDoorBlock as unsafe fn() -> CoroutineRet),
+        Some(GameState_10_LoadingNextRoom_Async as unsafe fn() -> CoroutineRet),
+        Some(GameState_11_LoadingNextRoom_Async as unsafe fn() -> CoroutineRet),
+        Some(GameState_12_Pausing_Darkening_Async as unsafe fn() -> CoroutineRet),
+        Some(GameState_13_Pausing_Async as unsafe fn() -> CoroutineRet),
+        Some(GameState_14_Paused_Async as unsafe fn() -> CoroutineRet),
+        Some(GameState_15_Paused_Async as unsafe fn() -> CoroutineRet),
+        Some(GameState_16_Unpausing_Async as unsafe fn() -> CoroutineRet),
+        Some(GameState_17_Unpausing_Async as unsafe fn() -> CoroutineRet),
+        Some(GameState_18_Unpausing as unsafe fn() -> CoroutineRet),
+        Some(GameState_19_SamusNoHealth as unsafe fn() -> CoroutineRet),
+        Some(GameState_20_SamusNoHealth_BlackOut as unsafe fn() -> CoroutineRet),
+        Some(GameState_21_SamusNoHealth as unsafe fn() -> CoroutineRet),
+        Some(GameState_22_SamusNoHealth_Dying as unsafe fn() -> CoroutineRet),
+        Some(GameState_23_SamusNoHealth_Flashing as unsafe fn() -> CoroutineRet),
+        Some(GameState_24_SamusNoHealth_Explosion as unsafe fn() -> CoroutineRet),
+        Some(GameState_25_SamusNoHealth_BlackOut as unsafe fn() -> CoroutineRet),
+        Some(GameState_26_GameOverMenu as unsafe fn() -> CoroutineRet),
+        Some(GameState_27_ReserveTanksAuto as unsafe fn() -> CoroutineRet),
+        Some(GameState_28_Unused as unsafe fn() -> CoroutineRet),
+        Some(GameState_29_DebugGameOverMenu as unsafe fn() -> CoroutineRet),
+        Some(GameState_37_CeresGoesBoomWithSamus as unsafe fn() -> CoroutineRet),
+        Some(InitAndLoadGameData_Async as unsafe fn() -> CoroutineRet),
+        Some(GameState_32_MadeItToCeresElevator as unsafe fn() -> CoroutineRet),
+        Some(GameState_33_BlackoutFromCeres as unsafe fn() -> CoroutineRet),
+        Some(GameState_37_CeresGoesBoomWithSamus as unsafe fn() -> CoroutineRet),
+        Some(GameState_35_TimeUp as unsafe fn() -> CoroutineRet),
+        Some(GameState_36_WhitingOutFromTimeUp as unsafe fn() -> CoroutineRet),
+        Some(GameState_37_CeresGoesBoomWithSamus as unsafe fn() -> CoroutineRet),
+        Some(GameState_38_SamusEscapesFromZebes as unsafe fn() -> CoroutineRet),
+        Some(GameState_39_EndingAndCredits as unsafe fn() -> CoroutineRet),
+        Some(InitAndLoadGameData_Async as unsafe fn() -> CoroutineRet),
+        Some(GameState_41_TransitionToDemo as unsafe fn() -> CoroutineRet),
+        Some(GameState_42_PlayingDemo_Async as unsafe fn() -> CoroutineRet),
+        Some(GameState_43_TransitionFromDemo as unsafe fn() -> CoroutineRet),
+        Some(GameState_44_TransitionFromDemo as unsafe fn() -> CoroutineRet),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn RunOneFrameOfGameInner() -> CoroutineRet {
+pub unsafe fn RunOneFrameOfGameInner() -> CoroutineRet {
     let mut current_block: u64;
     let mut st: ::core::ffi::c_int = *(&raw mut g_ram as *mut uint8)
         .offset(0x611 as ::core::ffi::c_int as isize)
@@ -2160,45 +2137,39 @@ pub unsafe extern "C" fn RunOneFrameOfGameInner() -> CoroutineRet {
     *(&raw mut g_ram as *mut uint8).offset(0x611 as ::core::ffi::c_int as isize) = 0 as uint8;
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn RunOneFrameOfGame() {
+pub unsafe fn RunOneFrameOfGame() {
     let mut ret: CoroutineRet = RunOneFrameOfGameInner();
     if ret as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
         *(&raw mut g_ram as *mut uint8).offset(0x5b4 as ::core::ffi::c_int as isize) = 1 as uint8;
     }
     Vector_NMI();
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_29_DebugGameOverMenu() -> CoroutineRet {
+pub unsafe fn GameState_29_DebugGameOverMenu() -> CoroutineRet {
     DebugGameOverMenu();
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_26_GameOverMenu() -> CoroutineRet {
+pub unsafe fn GameState_26_GameOverMenu() -> CoroutineRet {
     GameOverMenu();
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_4_FileSelectMenus() -> CoroutineRet {
+pub unsafe fn GameState_4_FileSelectMenus() -> CoroutineRet {
     FileSelectMenu();
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_5_FileSelectMap() -> CoroutineRet {
+pub unsafe fn GameState_5_FileSelectMap() -> CoroutineRet {
     FileSelectMap();
     return kCoroutineNone as CoroutineRet;
 }
 static mut kSfxHandlers: [Option<Func_Y_V>; 5] = unsafe {
     [
-        Some(SfxHandlers_0_SendToApu as unsafe extern "C" fn(uint16) -> ()),
-        Some(SfxHandlers_1_WaitForAck as unsafe extern "C" fn(uint16) -> ()),
-        Some(SfxHandlers_2_ClearRequest as unsafe extern "C" fn(uint16) -> ()),
-        Some(SfxHandlers_3_WaitForAck as unsafe extern "C" fn(uint16) -> ()),
-        Some(SfxHandlers_4_Reset as unsafe extern "C" fn(uint16) -> ()),
+        Some(SfxHandlers_0_SendToApu as unsafe fn(uint16) -> ()),
+        Some(SfxHandlers_1_WaitForAck as unsafe fn(uint16) -> ()),
+        Some(SfxHandlers_2_ClearRequest as unsafe fn(uint16) -> ()),
+        Some(SfxHandlers_3_WaitForAck as unsafe fn(uint16) -> ()),
+        Some(SfxHandlers_4_Reset as unsafe fn(uint16) -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn HandleSoundEffects() {
+pub unsafe fn HandleSoundEffects() {
     if (*((&raw mut g_ram as *mut uint8).offset(0x686 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         - 1 as ::core::ffi::c_int) as int8 as ::core::ffi::c_int
@@ -2232,8 +2203,7 @@ pub unsafe extern "C" fn HandleSoundEffects() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn SfxHandlers_0_SendToApu(mut j: uint16) {
+pub unsafe fn SfxHandlers_0_SendToApu(mut j: uint16) {
     if *(&raw mut g_ram as *mut uint8)
         .offset(0x643 as ::core::ffi::c_int as isize)
         .offset(j as isize) as ::core::ffi::c_int
@@ -2266,8 +2236,7 @@ pub unsafe extern "C" fn SfxHandlers_0_SendToApu(mut j: uint16) {
         *fresh134 = (*fresh134).wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SfxHandlers_1_WaitForAck(mut j: uint16) {
+pub unsafe fn SfxHandlers_1_WaitForAck(mut j: uint16) {
     let mut v1: uint8 = *(&raw mut g_ram as *mut uint8)
         .offset(0x64d as ::core::ffi::c_int as isize)
         .offset(j as isize);
@@ -2279,8 +2248,7 @@ pub unsafe extern "C" fn SfxHandlers_1_WaitForAck(mut j: uint16) {
         .offset(0x650 as ::core::ffi::c_int as isize)
         .offset(j as isize) = 6 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SfxHandlers_2_ClearRequest(mut j: uint16) {
+pub unsafe fn SfxHandlers_2_ClearRequest(mut j: uint16) {
     let ref mut fresh135 = *(&raw mut g_ram as *mut uint8)
         .offset(0x650 as ::core::ffi::c_int as isize)
         .offset(j as isize);
@@ -2296,8 +2264,7 @@ pub unsafe extern "C" fn SfxHandlers_2_ClearRequest(mut j: uint16) {
         *fresh137 = (*fresh137).wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SfxHandlers_3_WaitForAck(mut j: uint16) {
+pub unsafe fn SfxHandlers_3_WaitForAck(mut j: uint16) {
     let mut v1: uint8 = *(&raw mut g_ram as *mut uint8)
         .offset(0x64d as ::core::ffi::c_int as isize)
         .offset(j as isize);
@@ -2306,8 +2273,7 @@ pub unsafe extern "C" fn SfxHandlers_3_WaitForAck(mut j: uint16) {
         .offset(j as isize) = 0 as uint8;
     SfxHandlers_0_SendToApu(j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn SfxHandlers_4_Reset(mut j: uint16) {
+pub unsafe fn SfxHandlers_4_Reset(mut j: uint16) {
     let ref mut fresh132 = *(&raw mut g_ram as *mut uint8)
         .offset(0x650 as ::core::ffi::c_int as isize)
         .offset(j as isize);
@@ -2319,8 +2285,7 @@ pub unsafe extern "C" fn SfxHandlers_4_Reset(mut j: uint16) {
             .offset(j as isize) = 0 as uint8;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ResetSoundQueues() {
+pub unsafe fn ResetSoundQueues() {
     *((&raw mut g_ram as *mut uint8).offset(0x643 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     *((&raw mut g_ram as *mut uint8)
@@ -2335,13 +2300,11 @@ pub unsafe extern "C" fn ResetSoundQueues() {
         .offset(0x649 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ShowSpareCpu() {
+pub unsafe fn ShowSpareCpu() {
     *((&raw mut g_ram as *mut uint8).offset(0xdfe as ::core::ffi::c_int as isize) as *mut uint16) =
         *((&raw mut g_ram as *mut uint8).offset(0x8b as ::core::ffi::c_int as isize) as *mut uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_0_Reset_Async() -> CoroutineRet {
+pub unsafe fn GameState_0_Reset_Async() -> CoroutineRet {
     *((&raw mut g_ram as *mut uint8).offset(0xdf8 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xdfa as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -2364,24 +2327,19 @@ pub unsafe extern "C" fn GameState_0_Reset_Async() -> CoroutineRet {
     *fresh79 = (*fresh79).wrapping_add(1);
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_1_OpeningCinematic() -> CoroutineRet {
+pub unsafe fn GameState_1_OpeningCinematic() -> CoroutineRet {
     return GameState_1_OpeningCinematic_();
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_3_Null() -> CoroutineRet {
+pub unsafe fn GameState_3_Null() -> CoroutineRet {
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_37_CeresGoesBoomWithSamus() -> CoroutineRet {
+pub unsafe fn GameState_37_CeresGoesBoomWithSamus() -> CoroutineRet {
     return GameState_37_CeresGoesBoomWithSamus_();
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_39_EndingAndCredits() -> CoroutineRet {
+pub unsafe fn GameState_39_EndingAndCredits() -> CoroutineRet {
     return GameState_39_EndingAndCredits_();
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_7_MainGameplayFadeIn() -> CoroutineRet {
+pub unsafe fn GameState_7_MainGameplayFadeIn() -> CoroutineRet {
     let mut _coret_: uint8 = GameState_8_MainGameplay() as uint8;
     if _coret_ != 0 {
         return _coret_ as CoroutineRet;
@@ -2402,13 +2360,11 @@ pub unsafe extern "C" fn GameState_7_MainGameplayFadeIn() -> CoroutineRet {
     }
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_28_Unused() -> CoroutineRet {
+pub unsafe fn GameState_28_Unused() -> CoroutineRet {
     GameState_28_Unused_();
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_8_MainGameplay() -> CoroutineRet {
+pub unsafe fn GameState_8_MainGameplay() -> CoroutineRet {
     let mut _state_variable_: *mut uint8 =
         (&raw mut g_ram as *mut uint8).offset(0x612 as ::core::ffi::c_int as isize);
     let mut current_block_38: u64;
@@ -2502,8 +2458,7 @@ pub unsafe extern "C" fn GameState_8_MainGameplay() -> CoroutineRet {
     *_state_variable_ = 0 as uint8;
     return 0 as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeleteAllOptionsMenuObjects_() {
+pub unsafe fn DeleteAllOptionsMenuObjects_() {
     let mut i: ::core::ffi::c_int = 14 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
@@ -2516,8 +2471,7 @@ pub unsafe extern "C" fn DeleteAllOptionsMenuObjects_() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallOptionsEntryFunc(mut ea: uint32, mut j: uint16) {
+pub unsafe fn CallOptionsEntryFunc(mut ea: uint32, mut j: uint16) {
     match ea {
         8581782 => {
             sub_82F296(j);
@@ -2548,8 +2502,7 @@ pub unsafe extern "C" fn CallOptionsEntryFunc(mut ea: uint32, mut j: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CreateOptionsMenuObject_(mut a: uint16, mut j: uint16) -> uint8 {
+pub unsafe fn CreateOptionsMenuObject_(mut a: uint16, mut j: uint16) -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
         as *mut uint16) = a;
     let mut v3: uint16 = 14 as uint16;
@@ -2592,10 +2545,8 @@ pub unsafe extern "C" fn CreateOptionsMenuObject_(mut a: uint16, mut j: uint16) 
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn OptionsPreInstr_nullsub_57(mut k: uint16) {}
-#[no_mangle]
-pub unsafe extern "C" fn OptionsMenuFunc1() {
+pub unsafe fn OptionsPreInstr_nullsub_57(mut k: uint16) {}
+pub unsafe fn OptionsMenuFunc1() {
     let mut i: ::core::ffi::c_int = 14 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         *((&raw mut g_ram as *mut uint8).offset(0x1a8f as ::core::ffi::c_int as isize)
@@ -2612,8 +2563,7 @@ pub unsafe extern "C" fn OptionsMenuFunc1() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallOptionsPreInstr(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallOptionsPreInstr(mut ea: uint32, mut k: uint16) {
     match ea {
         8555536 => {
             OptionsPreInstr_nullsub_57(k);
@@ -2644,8 +2594,7 @@ pub unsafe extern "C" fn CallOptionsPreInstr(mut ea: uint32, mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallOptionsInstr(mut ea: uint32, mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CallOptionsInstr(mut ea: uint32, mut k: uint16, mut j: uint16) -> uint16 {
     match ea {
         8555610 => return OptionsInstr_Destroy(k, j),
         8555620 => return OptionsInstr_8C64(k, j),
@@ -2657,8 +2606,7 @@ pub unsafe extern "C" fn CallOptionsInstr(mut ea: uint32, mut k: uint16, mut j: 
         _ => return Unreachable() as uint16,
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn OptionsMenuFunc2(mut k: uint16) {
+pub unsafe fn OptionsMenuFunc2(mut k: uint16) {
     CallOptionsPreInstr(
         (*((&raw mut g_ram as *mut uint8).offset(0x1b0d as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -2714,8 +2662,7 @@ pub unsafe extern "C" fn OptionsMenuFunc2(mut k: uint16) {
             .offset(v7 as isize) = (v4 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn OptionsInstr_Destroy(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn OptionsInstr_Destroy(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a9d as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -2725,36 +2672,31 @@ pub unsafe extern "C" fn OptionsInstr_Destroy(mut k: uint16, mut j: uint16) -> u
         .offset(v2 as isize) = 0 as uint16;
     return 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn OptionsInstr_8C64(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn OptionsInstr_8C64(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1afd as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         (j as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
     return 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn OptionsInstr_SetPreInstr(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn OptionsInstr_SetPreInstr(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1b0d as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(RomPtr_82(j as uint16_t) as *mut uint16);
     return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn OptionsInstr_8C79(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn OptionsInstr_8C79(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1b0d as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         (0x828c81 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn OptionsInstr_Goto(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn OptionsInstr_Goto(mut k: uint16, mut j: uint16) -> uint16 {
     return *(RomPtr_82(j as uint16_t) as *mut uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn OptionsInstr_8C89(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn OptionsInstr_8C89(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh0 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1b2d as ::core::ffi::c_int as isize) as *mut uint16)
@@ -2767,16 +2709,14 @@ pub unsafe extern "C" fn OptionsInstr_8C89(mut k: uint16, mut j: uint16) -> uint
         return OptionsInstr_Goto(k, j);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn OptionsInstr_8C93(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn OptionsInstr_8C93(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1b2d as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(RomPtr_82(j as uint16_t) as *mut uint16);
     return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawOptionsMenuSpritemaps() {
+pub unsafe fn DrawOptionsMenuSpritemaps() {
     let mut i: ::core::ffi::c_int = 14 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
@@ -2806,8 +2746,7 @@ pub unsafe extern "C" fn DrawOptionsMenuSpritemaps() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_12_Pausing_Darkening_Async() -> CoroutineRet {
+pub unsafe fn GameState_12_Pausing_Darkening_Async() -> CoroutineRet {
     let mut _coret_: uint8 = GameState_8_MainGameplay() as uint8;
     if _coret_ != 0 {
         return _coret_ as CoroutineRet;
@@ -2830,8 +2769,7 @@ pub unsafe extern "C" fn GameState_12_Pausing_Darkening_Async() -> CoroutineRet 
     }
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallPauseHook(mut ea: uint32) {
+pub unsafe fn CallPauseHook(mut ea: uint32) {
     match ea {
         8946657 => return,
         9423094 => {
@@ -2847,8 +2785,7 @@ pub unsafe extern "C" fn CallPauseHook(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallUnpauseHook_Async(mut ea: uint32) -> CoroutineRet {
+pub unsafe fn CallUnpauseHook_Async(mut ea: uint32) -> CoroutineRet {
     match ea {
         8946657 => return kCoroutineNone as CoroutineRet,
         9423100 => return UnpauseHook_DraygonRoom(),
@@ -2862,8 +2799,7 @@ pub unsafe extern "C" fn CallUnpauseHook_Async(mut ea: uint32) -> CoroutineRet {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_13_Pausing_Async() -> CoroutineRet {
+pub unsafe fn GameState_13_Pausing_Async() -> CoroutineRet {
     DisableHdmaObjects();
     *(&raw mut g_ram as *mut uint8).offset(0x85 as ::core::ffi::c_int as isize) = 0 as uint8;
     WriteReg(HDMAEN as ::core::ffi::c_int as uint16, 0 as uint8);
@@ -2897,8 +2833,7 @@ pub unsafe extern "C" fn GameState_13_Pausing_Async() -> CoroutineRet {
     *fresh85 = (*fresh85).wrapping_add(1);
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn BackupBG2TilemapForPauseMenu() {
+pub unsafe fn BackupBG2TilemapForPauseMenu() {
     WriteRegWord(
         VMADDL as ::core::ffi::c_int as uint16,
         ((*(&raw mut g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize)
@@ -2918,8 +2853,7 @@ pub unsafe extern "C" fn BackupBG2TilemapForPauseMenu() {
     WriteReg(NTRL1 as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
 }
-#[no_mangle]
-pub unsafe extern "C" fn RestoreBG2TilemapFromPauseScreen() {
+pub unsafe fn RestoreBG2TilemapFromPauseScreen() {
     WriteRegWord(
         VMADDL as ::core::ffi::c_int as uint16,
         ((*(&raw mut g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize)
@@ -2941,8 +2875,7 @@ pub unsafe extern "C" fn RestoreBG2TilemapFromPauseScreen() {
     SetupDmaTransfer(&raw const unk_828DAE as *const ::core::ffi::c_void);
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
 }
-#[no_mangle]
-pub unsafe extern "C" fn BackupSomeGfxStateForPause() {
+pub unsafe fn BackupSomeGfxStateForPause() {
     *(&raw mut g_ram as *mut uint8).offset(0x765 as ::core::ffi::c_int as isize) =
         *(&raw mut g_ram as *mut uint8).offset(0x58 as ::core::ffi::c_int as isize);
     *(&raw mut g_ram as *mut uint8).offset(0x766 as ::core::ffi::c_int as isize) =
@@ -2996,8 +2929,7 @@ pub unsafe extern "C" fn BackupSomeGfxStateForPause() {
     *(&raw mut g_ram as *mut uint8).offset(0x775 as ::core::ffi::c_int as isize) =
         *(&raw mut g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn RestoreSomeGfxStateForPause() {
+pub unsafe fn RestoreSomeGfxStateForPause() {
     *(&raw mut g_ram as *mut uint8).offset(0x91b as ::core::ffi::c_int as isize) =
         *(&raw mut g_ram as *mut uint8).offset(0x772 as ::core::ffi::c_int as isize);
     *(&raw mut g_ram as *mut uint8).offset(0x91c as ::core::ffi::c_int as isize) =
@@ -3045,8 +2977,7 @@ pub unsafe extern "C" fn RestoreSomeGfxStateForPause() {
     *(&raw mut g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) =
         *(&raw mut g_ram as *mut uint8).offset(0x775 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadPauseMenuTilesAndClearBG2() {
+pub unsafe fn LoadPauseMenuTilesAndClearBG2() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
@@ -3093,8 +3024,7 @@ pub unsafe extern "C" fn LoadPauseMenuTilesAndClearBG2() {
     SetupDmaTransfer(&raw const unk_828ECB as *const ::core::ffi::c_void);
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadPauseScreenBaseTilemaps() {
+pub unsafe fn LoadPauseScreenBaseTilemaps() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x38 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
@@ -3167,8 +3097,7 @@ pub unsafe extern "C" fn LoadPauseScreenBaseTilemaps() {
     WriteSamusWireframeTilemap();
     LoadEqupmentScreenReserveHealthTilemap();
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadEqupmentScreenReserveHealthTilemap() {
+pub unsafe fn LoadEqupmentScreenReserveHealthTilemap() {
     if *((&raw mut g_ram as *mut uint8).offset(0x9d4 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -3196,8 +3125,7 @@ pub unsafe extern "C" fn LoadEqupmentScreenReserveHealthTilemap() {
             (r42 + 2052 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn BackupGameplayPalettesAndLoadForPause() {
+pub unsafe fn BackupGameplayPalettesAndLoadForPause() {
     let mut v0: int16 = 0;
     let mut v2: int16 = 0;
     v0 = 512 as int16;
@@ -3236,8 +3164,7 @@ pub unsafe extern "C" fn BackupGameplayPalettesAndLoadForPause() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ContinueInitPauseMenu() {
+pub unsafe fn ContinueInitPauseMenu() {
     SetupPpuForPauseMenu();
     ResetPauseMenuAnimations();
     LoadEquipmentScreenEquipmentTilemaps();
@@ -3246,8 +3173,7 @@ pub unsafe extern "C" fn ContinueInitPauseMenu() {
     DetermineMapScrollLimits();
     SetupMapScrollingForPauseMenu(0x80 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetupMapScrollingForFileSelectMap() {
+pub unsafe fn SetupMapScrollingForFileSelectMap() {
     ResetPauseMenuAnimations();
     DetermineMapScrollLimits();
     *((&raw mut g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -3331,8 +3257,7 @@ pub unsafe extern "C" fn SetupMapScrollingForFileSelectMap() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_14_Paused_Async() -> CoroutineRet {
+pub unsafe fn GameState_14_Paused_Async() -> CoroutineRet {
     DrawPauseMenuDuringFadeIn();
     HandleFadeIn();
     if *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
@@ -3350,8 +3275,7 @@ pub unsafe extern "C" fn GameState_14_Paused_Async() -> CoroutineRet {
     }
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_15_Paused_Async() -> CoroutineRet {
+pub unsafe fn GameState_15_Paused_Async() -> CoroutineRet {
     ReleaseButtonsFilter(3 as uint16);
     MainPauseRoutine();
     HandleHudTilemap();
@@ -3360,24 +3284,22 @@ pub unsafe extern "C" fn GameState_15_Paused_Async() -> CoroutineRet {
 }
 static mut kPauseMenuFuncs: [Option<Func_V>; 8] = unsafe {
     [
-        Some(PauseMenu_0_MapScreen as unsafe extern "C" fn() -> ()),
-        Some(PauseMenu_1_EquipmentScreen as unsafe extern "C" fn() -> ()),
-        Some(PauseMenu_2 as unsafe extern "C" fn() -> ()),
-        Some(PauseMenu_3_MapToEquipment_Load as unsafe extern "C" fn() -> ()),
-        Some(PauseMenu_4_MapToEquipment_FadeIn as unsafe extern "C" fn() -> ()),
-        Some(PauseMenu_5 as unsafe extern "C" fn() -> ()),
-        Some(PauseMenu_6_EquipmentToMap_Load as unsafe extern "C" fn() -> ()),
-        Some(PauseMenu_7_EquipmentToMap_FadeIn as unsafe extern "C" fn() -> ()),
+        Some(PauseMenu_0_MapScreen as unsafe fn() -> ()),
+        Some(PauseMenu_1_EquipmentScreen as unsafe fn() -> ()),
+        Some(PauseMenu_2 as unsafe fn() -> ()),
+        Some(PauseMenu_3_MapToEquipment_Load as unsafe fn() -> ()),
+        Some(PauseMenu_4_MapToEquipment_FadeIn as unsafe fn() -> ()),
+        Some(PauseMenu_5 as unsafe fn() -> ()),
+        Some(PauseMenu_6_EquipmentToMap_Load as unsafe fn() -> ()),
+        Some(PauseMenu_7_EquipmentToMap_FadeIn as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn MainPauseRoutine() {
+pub unsafe fn MainPauseRoutine() {
     kPauseMenuFuncs[*((&raw mut g_ram as *mut uint8).offset(0x727 as ::core::ffi::c_int as isize)
         as *mut uint16) as usize]
         .expect("non-null function pointer")();
 }
-#[no_mangle]
-pub unsafe extern "C" fn PauseMenu_0_MapScreen() {
+pub unsafe fn PauseMenu_0_MapScreen() {
     HandlePauseScreenLR();
     HandlePauseScreenStart();
     HandleMapScrollArrows();
@@ -3388,8 +3310,7 @@ pub unsafe extern "C" fn PauseMenu_0_MapScreen() {
     *((&raw mut g_ram as *mut uint8).offset(0x763 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PauseMenu_1_EquipmentScreen() {
+pub unsafe fn PauseMenu_1_EquipmentScreen() {
     *((&raw mut g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -3400,8 +3321,7 @@ pub unsafe extern "C" fn PauseMenu_1_EquipmentScreen() {
     *((&raw mut g_ram as *mut uint8).offset(0x763 as ::core::ffi::c_int as isize) as *mut uint16) =
         1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PauseMenu_2() {
+pub unsafe fn PauseMenu_2() {
     DisplayMapElevatorDestinations();
     MapScreenDrawSamusPositionIndicator();
     DrawMapIcons();
@@ -3424,8 +3344,7 @@ pub unsafe extern "C" fn PauseMenu_2() {
         *fresh97 = (*fresh97).wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PauseMenu_5() {
+pub unsafe fn PauseMenu_5() {
     EquipmentScreenDrawItemSelector();
     EquipmentScreenDisplayReserveTankAmount();
     HandlePauseMenuLRPressHighlight();
@@ -3445,8 +3364,7 @@ pub unsafe extern "C" fn PauseMenu_5() {
         *fresh95 = (*fresh95).wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PauseMenu_3_MapToEquipment_Load() {
+pub unsafe fn PauseMenu_3_MapToEquipment_Load() {
     DisplayMapElevatorDestinations();
     EquipmentScreenSetupReserveMode();
     EquipmentScreenTransferBG1Tilemap();
@@ -3470,8 +3388,7 @@ pub unsafe extern "C" fn PauseMenu_3_MapToEquipment_Load() {
         .offset(0x727 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh96 = (*fresh96).wrapping_add(1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PauseMenu_6_EquipmentToMap_Load() {
+pub unsafe fn PauseMenu_6_EquipmentToMap_Load() {
     DisplayMapElevatorDestinations();
     LoadPauseMenuMapTilemapAndAreaLabel();
     SetPauseScreenButtonLabelPalettes();
@@ -3494,8 +3411,7 @@ pub unsafe extern "C" fn PauseMenu_6_EquipmentToMap_Load() {
         .offset(0x727 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh94 = (*fresh94).wrapping_add(1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PauseMenu_7_EquipmentToMap_FadeIn() {
+pub unsafe fn PauseMenu_7_EquipmentToMap_FadeIn() {
     MapScreenDrawSamusPositionIndicator();
     DrawMapIcons();
     DisplayMapElevatorDestinations();
@@ -3523,8 +3439,7 @@ pub unsafe extern "C" fn PauseMenu_7_EquipmentToMap_FadeIn() {
             as *mut uint16) = v0;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PauseMenu_4_MapToEquipment_FadeIn() {
+pub unsafe fn PauseMenu_4_MapToEquipment_FadeIn() {
     EquipmentScreenDrawItemSelector();
     EquipmentScreenDisplayReserveTankAmount();
     *((&raw mut g_ram as *mut uint8).offset(0x763 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -3553,26 +3468,23 @@ pub unsafe extern "C" fn PauseMenu_4_MapToEquipment_FadeIn() {
 }
 static mut kMapScrollingFuncs: [Option<Func_V>; 5] = unsafe {
     [
-        Some(MapScrolling_0_None as unsafe extern "C" fn() -> ()),
-        Some(MapScrolling_1_Left as unsafe extern "C" fn() -> ()),
-        Some(MapScrolling_2_Right as unsafe extern "C" fn() -> ()),
-        Some(MapScrolling_3_Up as unsafe extern "C" fn() -> ()),
-        Some(MapScrolling_4_Down as unsafe extern "C" fn() -> ()),
+        Some(MapScrolling_0_None as unsafe fn() -> ()),
+        Some(MapScrolling_1_Left as unsafe fn() -> ()),
+        Some(MapScrolling_2_Right as unsafe fn() -> ()),
+        Some(MapScrolling_3_Up as unsafe fn() -> ()),
+        Some(MapScrolling_4_Down as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn MapScrolling() {
+pub unsafe fn MapScrolling() {
     kMapScrollingFuncs[*((&raw mut g_ram as *mut uint8)
             .offset(0x5fd as ::core::ffi::c_int as isize) as *mut uint16) as usize]
         .expect("non-null function pointer")();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MapScrolling_0_None() {
+pub unsafe fn MapScrolling_0_None() {
     *((&raw mut g_ram as *mut uint8).offset(0x5fb as ::core::ffi::c_int as isize) as *mut uint16) =
         4 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MapScrolling_GetSpeedIndex() -> uint16 {
+pub unsafe fn MapScrolling_GetSpeedIndex() -> uint16 {
     let mut result: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x5ff as ::core::ffi::c_int as isize)
         as *mut uint16);
@@ -3619,8 +3531,7 @@ static mut kMapScrollingSpeedTable: [uint16; 32] = [
     0 as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn MapScrolling_1_Left() {
+pub unsafe fn MapScrolling_1_Left() {
     let ref mut fresh105 = *((&raw mut g_ram as *mut uint8)
         .offset(0xb1 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh105 = (*fresh105 as ::core::ffi::c_int
@@ -3628,8 +3539,7 @@ pub unsafe extern "C" fn MapScrolling_1_Left() {
             >> 1 as ::core::ffi::c_int) as usize] as ::core::ffi::c_int) as uint16;
     MapScrolling_Common();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MapScrolling_Common() {
+pub unsafe fn MapScrolling_Common() {
     let ref mut fresh100 = *((&raw mut g_ram as *mut uint8)
         .offset(0x5ff as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh100 = (*fresh100).wrapping_add(1);
@@ -3653,8 +3563,7 @@ pub unsafe extern "C" fn MapScrolling_Common() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MapScrolling_2_Right() {
+pub unsafe fn MapScrolling_2_Right() {
     let ref mut fresh104 = *((&raw mut g_ram as *mut uint8)
         .offset(0xb1 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh104 = (*fresh104 as ::core::ffi::c_int
@@ -3662,8 +3571,7 @@ pub unsafe extern "C" fn MapScrolling_2_Right() {
             >> 1 as ::core::ffi::c_int) as usize] as ::core::ffi::c_int) as uint16;
     MapScrolling_Common();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MapScrolling_3_Up() {
+pub unsafe fn MapScrolling_3_Up() {
     let ref mut fresh103 = *((&raw mut g_ram as *mut uint8)
         .offset(0xb3 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh103 = (*fresh103 as ::core::ffi::c_int
@@ -3671,8 +3579,7 @@ pub unsafe extern "C" fn MapScrolling_3_Up() {
             >> 1 as ::core::ffi::c_int) as usize] as ::core::ffi::c_int) as uint16;
     MapScrolling_Common();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MapScrolling_4_Down() {
+pub unsafe fn MapScrolling_4_Down() {
     let ref mut fresh99 = *((&raw mut g_ram as *mut uint8)
         .offset(0xb3 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh99 = (*fresh99 as ::core::ffi::c_int
@@ -3680,8 +3587,7 @@ pub unsafe extern "C" fn MapScrolling_4_Down() {
             >> 1 as ::core::ffi::c_int) as usize] as ::core::ffi::c_int) as uint16;
     MapScrolling_Common();
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_16_Unpausing_Async() -> CoroutineRet {
+pub unsafe fn GameState_16_Unpausing_Async() -> CoroutineRet {
     HighlightPauseScreenButton();
     DrawPauseMenuDuringFadeout();
     HandleFadeOut();
@@ -3701,8 +3607,7 @@ pub unsafe extern "C" fn GameState_16_Unpausing_Async() -> CoroutineRet {
     }
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawPauseMenuDuringFadeout() {
+pub unsafe fn DrawPauseMenuDuringFadeout() {
     if *((&raw mut g_ram as *mut uint8).offset(0x763 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         == 1 as ::core::ffi::c_int
@@ -3716,8 +3621,7 @@ pub unsafe extern "C" fn DrawPauseMenuDuringFadeout() {
         MapScreenDrawSamusPositionIndicator();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_17_Unpausing_Async() -> CoroutineRet {
+pub unsafe fn GameState_17_Unpausing_Async() -> CoroutineRet {
     let mut _state_variable_: *mut uint8 =
         (&raw mut g_ram as *mut uint8).offset(0x612 as ::core::ffi::c_int as isize);
     let mut current_block_17: u64;
@@ -3764,8 +3668,7 @@ pub unsafe extern "C" fn GameState_17_Unpausing_Async() -> CoroutineRet {
     *_state_variable_ = 0 as uint8;
     return 0 as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_18_Unpausing() -> CoroutineRet {
+pub unsafe fn GameState_18_Unpausing() -> CoroutineRet {
     let mut _coret_: uint8 = GameState_8_MainGameplay() as uint8;
     if _coret_ != 0 {
         return _coret_ as CoroutineRet;
@@ -3784,8 +3687,7 @@ pub unsafe extern "C" fn GameState_18_Unpausing() -> CoroutineRet {
     }
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadPauseMenuMapTilemapAndAreaLabel() {
+pub unsafe fn LoadPauseMenuMapTilemapAndAreaLabel() {
     *((&raw mut g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize) as *mut uint16) =
         *((&raw mut g_ram as *mut uint8).offset(0xbd as ::core::ffi::c_int as isize)
             as *mut uint16);
@@ -3838,8 +3740,7 @@ pub unsafe extern "C" fn LoadPauseMenuMapTilemapAndAreaLabel() {
     WriteReg(A1B1 as ::core::ffi::c_int as uint16, 0x82 as uint8);
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadPauseMenuMapTilemap() {
+pub unsafe fn LoadPauseMenuMapTilemap() {
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x79f as ::core::ffi::c_int as isize) as *mut uint16);
     if *((&raw mut g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize) as *mut uint16)
@@ -3964,8 +3865,7 @@ pub unsafe extern "C" fn LoadPauseMenuMapTilemap() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawRoomSelectMap() {
+pub unsafe fn DrawRoomSelectMap() {
     *(&raw mut g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize) = 51 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 19 as uint8;
     *((&raw mut g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -4114,8 +4014,7 @@ pub unsafe extern "C" fn DrawRoomSelectMap() {
     *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16) =
         (v16 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawRoomSelectMapAreaLabel(mut dst: *mut uint16) {
+pub unsafe fn DrawRoomSelectMapAreaLabel(mut dst: *mut uint16) {
     let mut v2: *const uint16 = RomPtr_82(
         *(g_rom.offset(
             (((0x82965f as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -4135,8 +4034,7 @@ pub unsafe extern "C" fn DrawRoomSelectMapAreaLabel(mut dst: *mut uint16) {
         i += 1;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetupMapScrollingForPauseMenu(mut a: uint16) {
+pub unsafe fn SetupMapScrollingForPauseMenu(mut a: uint16) {
     let mut v1: int16 = 0;
     let mut v2: int16 = 0;
     *((&raw mut g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -4237,7 +4135,7 @@ static mut k0x80Shr_0: [uint8; 8] = [
     2 as ::core::ffi::c_int as uint8,
     1 as ::core::ffi::c_int as uint8,
 ];
-unsafe extern "C" fn DetermineLeftmostMapColumn(mut r0: *const uint8) -> uint16 {
+unsafe fn DetermineLeftmostMapColumn(mut r0: *const uint8) -> uint16 {
     let mut r18: uint8 = 0;
     let mut v2: uint16 = 0;
     let mut v0: uint16 = 0;
@@ -4277,7 +4175,7 @@ unsafe extern "C" fn DetermineLeftmostMapColumn(mut r0: *const uint8) -> uint16 
     }
     return result;
 }
-unsafe extern "C" fn DetermineRightmostMapColumn(mut r0: *const uint8) -> uint16 {
+unsafe fn DetermineRightmostMapColumn(mut r0: *const uint8) -> uint16 {
     let mut r18: uint8 = 0;
     let mut v1: uint16 = 0;
     let mut result: uint16 = 63 as uint16;
@@ -4314,7 +4212,7 @@ unsafe extern "C" fn DetermineRightmostMapColumn(mut r0: *const uint8) -> uint16
     }
     return result;
 }
-unsafe extern "C" fn DetermineTopmostMapColumn(mut r0: *const uint8) -> uint16 {
+unsafe fn DetermineTopmostMapColumn(mut r0: *const uint8) -> uint16 {
     let mut r3: *const uint8 = r0.offset(128 as ::core::ffi::c_int as isize);
     let mut result: uint16 = 0 as uint16;
     let mut v1: uint16 = 0 as uint16;
@@ -4337,7 +4235,7 @@ unsafe extern "C" fn DetermineTopmostMapColumn(mut r0: *const uint8) -> uint16 {
     }
     return result;
 }
-unsafe extern "C" fn DetermineBottommostMapColumn(mut r0: *const uint8) -> uint16 {
+unsafe fn DetermineBottommostMapColumn(mut r0: *const uint8) -> uint16 {
     let mut r3: *const uint8 = r0.offset(128 as ::core::ffi::c_int as isize);
     let mut result: uint16 = 31 as uint16;
     let mut v1: uint16 = 0 as uint16;
@@ -4357,8 +4255,7 @@ unsafe extern "C" fn DetermineBottommostMapColumn(mut r0: *const uint8) -> uint1
     }
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DetermineMapScrollLimits() {
+pub unsafe fn DetermineMapScrollLimits() {
     let mut r6: *const uint8 = ::core::ptr::null::<uint8>();
     if *((&raw mut g_ram as *mut uint8).offset(0x789 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
@@ -4397,8 +4294,7 @@ pub unsafe extern "C" fn DetermineMapScrollLimits() {
             as ::core::ffi::c_int
             * 8 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetupPpuForPauseMenu() {
+pub unsafe fn SetupPpuForPauseMenu() {
     WriteReg(OBSEL as ::core::ffi::c_int as uint16, 1 as uint8);
     *(&raw mut g_ram as *mut uint8).offset(0x52 as ::core::ffi::c_int as isize) = 1 as uint8;
     WriteReg(BGMODE as ::core::ffi::c_int as uint16, 9 as uint8);
@@ -4433,8 +4329,7 @@ pub unsafe extern "C" fn SetupPpuForPauseMenu() {
     *fresh26 = (*fresh26 as ::core::ffi::c_int & 0xe0 as ::core::ffi::c_int) as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ResetPauseMenuAnimations() {
+pub unsafe fn ResetPauseMenuAnimations() {
     *((&raw mut g_ram as *mut uint8).offset(0x757 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -4471,11 +4366,7 @@ pub unsafe extern "C" fn ResetPauseMenuAnimations() {
     *((&raw mut g_ram as *mut uint8).offset(0x74f as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-unsafe extern "C" fn ChangePaletteValues(
-    mut target: *mut uint16,
-    mut new_color: uint16,
-    mut n: size_t,
-) {
+unsafe fn ChangePaletteValues(mut target: *mut uint16, mut new_color: uint16, mut n: size_t) {
     let mut i: size_t = 0 as size_t;
     while i != n {
         *target.offset(i as isize) = (*target.offset(i as isize) as ::core::ffi::c_int
@@ -4484,8 +4375,7 @@ unsafe extern "C" fn ChangePaletteValues(
         i = i.wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadEquipmentScreenEquipmentTilemaps() {
+pub unsafe fn LoadEquipmentScreenEquipmentTilemaps() {
     if *((&raw mut g_ram as *mut uint8).offset(0x9d4 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -4723,8 +4613,7 @@ pub unsafe extern "C" fn LoadEquipmentScreenEquipmentTilemaps() {
         i_2 += 1;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearSamusBeamTiles() {
+pub unsafe fn ClearSamusBeamTiles() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
@@ -4741,8 +4630,7 @@ pub unsafe extern "C" fn ClearSamusBeamTiles() {
     SetupDmaTransfer(&raw const unk_82A2D4 as *const ::core::ffi::c_void);
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
 }
-#[no_mangle]
-pub unsafe extern "C" fn ContinueInitGameplayResume() {
+pub unsafe fn ContinueInitGameplayResume() {
     let mut v0: int16 = 0;
     v0 = 512 as int16;
     let mut v1: uint16 = 0 as uint16;
@@ -4766,8 +4654,7 @@ pub unsafe extern "C" fn ContinueInitGameplayResume() {
     ClearPauseMenuData();
     CallSomeSamusCode(0xc as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetupPpuForGameplayResume() {
+pub unsafe fn SetupPpuForGameplayResume() {
     WriteReg(OBSEL as ::core::ffi::c_int as uint16, 3 as uint8);
     *(&raw mut g_ram as *mut uint8).offset(0x52 as ::core::ffi::c_int as isize) = 3 as uint8;
     WriteReg(BGMODE as ::core::ffi::c_int as uint16, 9 as uint8);
@@ -4785,8 +4672,7 @@ pub unsafe extern "C" fn SetupPpuForGameplayResume() {
     *(&raw mut g_ram as *mut uint8).offset(0x5c as ::core::ffi::c_int as isize) = 0 as uint8;
     WriteReg(BG4SC as ::core::ffi::c_int as uint16, 0 as uint8);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalculateBgScrolls_Unpause() {
+pub unsafe fn CalculateBgScrolls_Unpause() {
     *((&raw mut g_ram as *mut uint8).offset(0xb1 as ::core::ffi::c_int as isize) as *mut uint16) =
         (*((&raw mut g_ram as *mut uint8).offset(0x91d as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -4808,12 +4694,10 @@ pub unsafe extern "C" fn CalculateBgScrolls_Unpause() {
             + *((&raw mut g_ram as *mut uint8).offset(0x919 as ::core::ffi::c_int as isize)
                 as *mut uint16) as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn UpdateBeamTilesAndPalette_Unpause() {
+pub unsafe fn UpdateBeamTilesAndPalette_Unpause() {
     UpdateBeamTilesAndPalette();
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearPauseMenuData() {
+pub unsafe fn ClearPauseMenuData() {
     *((&raw mut g_ram as *mut uint8).offset(0x727 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x729 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -4871,10 +4755,8 @@ pub unsafe extern "C" fn ClearPauseMenuData() {
     *((&raw mut g_ram as *mut uint8).offset(0x761 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_82A425() {}
-#[no_mangle]
-pub unsafe extern "C" fn sub_82A42A() {
+pub unsafe fn sub_82A425() {}
+pub unsafe fn sub_82A42A() {
     let mut current_block: u64;
     if *((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -4924,8 +4806,7 @@ pub unsafe extern "C" fn sub_82A42A() {
         _ => {}
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_82A47B() {
+pub unsafe fn sub_82A47B() {
     if *((&raw mut g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 4 as ::core::ffi::c_int
@@ -4945,8 +4826,7 @@ pub unsafe extern "C" fn sub_82A47B() {
         Samus_SetAnimationFrameIfPoseChanged();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_82A4A9() {
+pub unsafe fn sub_82A4A9() {
     if *((&raw mut g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 2 as ::core::ffi::c_int
@@ -4966,13 +4846,11 @@ pub unsafe extern "C" fn sub_82A4A9() {
         Samus_SetAnimationFrameIfPoseChanged();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandlePauseScreenLR() {
+pub unsafe fn HandlePauseScreenLR() {
     HandlePauseScreenLrInput();
     DrawLrHighlight();
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandlePauseScreenLrInput() {
+pub unsafe fn HandlePauseScreenLrInput() {
     let mut current_block: u64;
     if *((&raw mut g_ram as *mut uint8).offset(0x5e1 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -5035,8 +4913,7 @@ static mut kPauseLrButtonPressedHighlight_X: [uint16; 2] = [
     0xd0 as ::core::ffi::c_int as uint16,
     0xd0 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn HandlePauseMenuLRPressHighlight() {
+pub unsafe fn HandlePauseMenuLRPressHighlight() {
     if *((&raw mut g_ram as *mut uint8).offset(0x729 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -5062,13 +4939,11 @@ pub unsafe extern "C" fn HandlePauseMenuLRPressHighlight() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawLrHighlight() {
+pub unsafe fn DrawLrHighlight() {
     DrawPauseScreenSpriteAnim(2 as uint16, 0x18 as uint16, 0xd0 as uint16);
     DrawPauseScreenSpriteAnim(2 as uint16, 0xe8 as uint16, 0xd0 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandlePauseScreenStart() {
+pub unsafe fn HandlePauseScreenStart() {
     if *((&raw mut g_ram as *mut uint8).offset(0x5e1 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & kButton_Start as ::core::ffi::c_int
@@ -5096,8 +4971,7 @@ pub unsafe extern "C" fn HandlePauseScreenStart() {
     }
     UpdatePauseMenuLRStartVramTilemap();
 }
-#[no_mangle]
-pub unsafe extern "C" fn HighlightPauseScreenButton() {
+pub unsafe fn HighlightPauseScreenButton() {
     if *((&raw mut g_ram as *mut uint8).offset(0x729 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -5110,20 +4984,18 @@ pub unsafe extern "C" fn HighlightPauseScreenButton() {
 }
 static mut kSetPauseScreenButtonLabelPalettes_Funcs: [Option<Func_V>; 3] = unsafe {
     [
-        Some(SetPauseScreenButtonLabelPalettes_0 as unsafe extern "C" fn() -> ()),
-        Some(SetPauseScreenButtonLabelPalettes_1 as unsafe extern "C" fn() -> ()),
-        Some(SetPauseScreenButtonLabelPalettes_2 as unsafe extern "C" fn() -> ()),
+        Some(SetPauseScreenButtonLabelPalettes_0 as unsafe fn() -> ()),
+        Some(SetPauseScreenButtonLabelPalettes_1 as unsafe fn() -> ()),
+        Some(SetPauseScreenButtonLabelPalettes_2 as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn SetPauseScreenButtonLabelPalettes() {
+pub unsafe fn SetPauseScreenButtonLabelPalettes() {
     kSetPauseScreenButtonLabelPalettes_Funcs[*((&raw mut g_ram as *mut uint8)
         .offset(0x753 as ::core::ffi::c_int as isize)
         as *mut uint16) as usize]
         .expect("non-null function pointer")();
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetPauseScreenButtonLabelPalettes_2() {
+pub unsafe fn SetPauseScreenButtonLabelPalettes_2() {
     let mut v0: int16 = 0;
     let mut v2: int16 = 0;
     let mut v4: int16 = 0;
@@ -5251,8 +5123,7 @@ pub unsafe extern "C" fn SetPauseScreenButtonLabelPalettes_2() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetPauseScreenButtonLabelPalettes_1() {
+pub unsafe fn SetPauseScreenButtonLabelPalettes_1() {
     let mut v0: int16 = 0;
     let mut v2: int16 = 0;
     let mut v4: int16 = 0;
@@ -5380,8 +5251,7 @@ pub unsafe extern "C" fn SetPauseScreenButtonLabelPalettes_1() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetPauseScreenButtonLabelPalettes_0() {
+pub unsafe fn SetPauseScreenButtonLabelPalettes_0() {
     let mut v0: int16 = 0;
     let mut v2: int16 = 0;
     let mut v4: int16 = 0;
@@ -5509,8 +5379,7 @@ pub unsafe extern "C" fn SetPauseScreenButtonLabelPalettes_0() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn UpdatePauseMenuLRStartVramTilemap() {
+pub unsafe fn UpdatePauseMenuLRStartVramTilemap() {
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
     (*gVramWriteEntry(
@@ -5523,8 +5392,7 @@ pub unsafe extern "C" fn UpdatePauseMenuLRStartVramTilemap() {
     v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     let fresh23 = v0;
     v0 = v0.wrapping_add(1);
-    *(&raw mut (*(gVramWriteEntry
-        as unsafe extern "C" fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
+    *(&raw mut (*(gVramWriteEntry as unsafe fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
         fresh23 as ::core::ffi::c_int,
     ))
     .size as *mut uint8)
@@ -5538,12 +5406,7 @@ pub unsafe extern "C" fn UpdatePauseMenuLRStartVramTilemap() {
     *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16) =
         (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawPauseScreenSpriteAnim(
-    mut a: uint16,
-    mut input_k: uint16,
-    mut input_j: uint16,
-) {
+pub unsafe fn DrawPauseScreenSpriteAnim(mut a: uint16, mut input_k: uint16, mut input_j: uint16) {
     let mut t: ::core::ffi::c_int = a as ::core::ffi::c_int - 1 as ::core::ffi::c_int;
     let mut v8: *mut uint16 = RomPtr_RAM(
         (*(g_rom.offset(
@@ -5618,8 +5481,7 @@ pub unsafe extern "C" fn DrawPauseScreenSpriteAnim(
         r3,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandlePauseScreenPaletteAnimation() {
+pub unsafe fn HandlePauseScreenPaletteAnimation() {
     let mut v2: uint16 = 0;
     let mut j: uint16 = 0;
     let mut v1: uint8 = 0;
@@ -5690,8 +5552,7 @@ pub unsafe extern "C" fn HandlePauseScreenPaletteAnimation() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenSetupReserveMode() {
+pub unsafe fn EquipmentScreenSetupReserveMode() {
     let mut current_block: u64;
     let mut v0: VoidP = 0;
     let mut v5: int16 = 0;
@@ -5882,8 +5743,7 @@ pub unsafe extern "C" fn EquipmentScreenSetupReserveMode() {
         WriteSamusWireframeTilemapAndQueue();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenTransferBG1Tilemap() {
+pub unsafe fn EquipmentScreenTransferBG1Tilemap() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x30 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
@@ -5904,14 +5764,13 @@ pub unsafe extern "C" fn EquipmentScreenTransferBG1Tilemap() {
 }
 static mut kEquipmentScreenCategories: [Option<Func_V>; 4] = unsafe {
     [
-        Some(EquipmentScreenCategory_Tanks as unsafe extern "C" fn() -> ()),
-        Some(EquipmentScreenCategory_Weapons as unsafe extern "C" fn() -> ()),
-        Some(EquipmentScreenCategory_Suit as unsafe extern "C" fn() -> ()),
-        Some(EquipmentScreenCategory_Boots as unsafe extern "C" fn() -> ()),
+        Some(EquipmentScreenCategory_Tanks as unsafe fn() -> ()),
+        Some(EquipmentScreenCategory_Weapons as unsafe fn() -> ()),
+        Some(EquipmentScreenCategory_Suit as unsafe fn() -> ()),
+        Some(EquipmentScreenCategory_Boots as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenMain() {
+pub unsafe fn EquipmentScreenMain() {
     kEquipmentScreenCategories[*((&raw mut g_ram as *mut uint8)
         .offset(0x755 as ::core::ffi::c_int as isize)
         as *mut uint16) as uint8 as usize]
@@ -5922,12 +5781,11 @@ pub unsafe extern "C" fn EquipmentScreenMain() {
 }
 static mut kEquipmentScreenCategory_TanksFuncs: [Option<Func_V>; 2] = unsafe {
     [
-        Some(EquipmentScreenCategory_Tanks_0 as unsafe extern "C" fn() -> ()),
-        Some(EquipmentScreenCategory_Tanks_1 as unsafe extern "C" fn() -> ()),
+        Some(EquipmentScreenCategory_Tanks_0 as unsafe fn() -> ()),
+        Some(EquipmentScreenCategory_Tanks_1 as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenCategory_Tanks() {
+pub unsafe fn EquipmentScreenCategory_Tanks() {
     kEquipmentScreenCategory_TanksFuncs[*((&raw mut g_ram as *mut uint8)
         .offset(0x755 as ::core::ffi::c_int as isize)
         as *mut uint16 as *mut uint8)
@@ -5940,8 +5798,7 @@ pub unsafe extern "C" fn EquipmentScreenCategory_Tanks() {
     EquipmentScreenHandleDpad();
     EquipmentScreenGlowingArrow();
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenHandleDpad() {
+pub unsafe fn EquipmentScreenHandleDpad() {
     let mut r18: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x755 as ::core::ffi::c_int as isize) as *mut uint16);
     if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize) as *mut uint16)
@@ -6004,12 +5861,11 @@ pub unsafe extern "C" fn EquipmentScreenHandleDpad() {
 }
 static mut kEquipmentScreenGlowingArrowFuncs: [Option<Func_V>; 2] = unsafe {
     [
-        Some(EquipmentScreenGlowingArrowAnimated as unsafe extern "C" fn() -> ()),
-        Some(EquipmentScreenGlowingArrowSolidOn as unsafe extern "C" fn() -> ()),
+        Some(EquipmentScreenGlowingArrowAnimated as unsafe fn() -> ()),
+        Some(EquipmentScreenGlowingArrowSolidOn as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenGlowingArrow() {
+pub unsafe fn EquipmentScreenGlowingArrow() {
     if *((&raw mut g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize) as *mut uint16)
         as uint8
         != 0
@@ -6095,8 +5951,7 @@ static mut kEquipmentScreenGlowingArrowPalettes1: [uint16; 32] = [
     0x155 as ::core::ffi::c_int as uint16,
     0x156 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenGlowingArrowAnimated() {
+pub unsafe fn EquipmentScreenGlowingArrowAnimated() {
     if *((&raw mut g_ram as *mut uint8).offset(0x9c0 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         == 1 as ::core::ffi::c_int
@@ -6124,8 +5979,7 @@ pub unsafe extern "C" fn EquipmentScreenGlowingArrowAnimated() {
         EquipmentScreenEnergyArrowGlow_Off();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenGlowingArrowSolidOn() {
+pub unsafe fn EquipmentScreenGlowingArrowSolidOn() {
     *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(107 as ::core::ffi::c_int as isize) = 926 as uint16;
@@ -6134,8 +5988,7 @@ pub unsafe extern "C" fn EquipmentScreenGlowingArrowSolidOn() {
         .offset(102 as ::core::ffi::c_int as isize) = 342 as uint16;
     EquipmentScreenEnergyArrowGlow_On();
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenGlowingArrowSolidOff() {
+pub unsafe fn EquipmentScreenGlowingArrowSolidOff() {
     *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(107 as ::core::ffi::c_int as isize) = 926 as uint16;
@@ -6144,8 +5997,7 @@ pub unsafe extern "C" fn EquipmentScreenGlowingArrowSolidOff() {
         .offset(102 as ::core::ffi::c_int as isize) = 342 as uint16;
     EquipmentScreenEnergyArrowGlow_Off();
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenEnergyArrowGlow_On() {
+pub unsafe fn EquipmentScreenEnergyArrowGlow_On() {
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i < 8 as ::core::ffi::c_int {
         (*((&raw mut g_ram as *mut uint8).offset(0x3800 as ::core::ffi::c_int as isize)
@@ -6175,8 +6027,7 @@ pub unsafe extern "C" fn EquipmentScreenEnergyArrowGlow_On() {
         i_0 += 1;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenEnergyArrowGlow_Off() {
+pub unsafe fn EquipmentScreenEnergyArrowGlow_Off() {
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i < 8 as ::core::ffi::c_int {
         (*((&raw mut g_ram as *mut uint8).offset(0x3800 as ::core::ffi::c_int as isize)
@@ -6218,8 +6069,7 @@ static mut kEquipmentScreenTilemap_AUTO: [uint16; 4] = [
     0x3d58 as ::core::ffi::c_int as uint16,
     0x3d59 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenCategory_Tanks_0() {
+pub unsafe fn EquipmentScreenCategory_Tanks_0() {
     let mut v0: int16 = 0;
     let mut v2: int16 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize) as *mut uint16)
@@ -6287,8 +6137,7 @@ pub unsafe extern "C" fn EquipmentScreenCategory_Tanks_0() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenHudReserveAutoTilemap_On_BUGGY() {
+pub unsafe fn EquipmentScreenHudReserveAutoTilemap_On_BUGGY() {
     let mut v0: uint16 = -(26229 as ::core::ffi::c_int) as uint16;
     if *((&raw mut g_ram as *mut uint8).offset(0x9d6 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
@@ -6315,8 +6164,7 @@ pub unsafe extern "C" fn EquipmentScreenHudReserveAutoTilemap_On_BUGGY() {
         as *mut uint16)
         .offset(73 as ::core::ffi::c_int as isize) = *v1.offset(5 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenHudReserveAutoTilemap_Off() {
+pub unsafe fn EquipmentScreenHudReserveAutoTilemap_Off() {
     *((&raw mut g_ram as *mut uint8).offset(0xc608 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(8 as ::core::ffi::c_int as isize) = 11279 as uint16;
@@ -6337,8 +6185,7 @@ pub unsafe extern "C" fn EquipmentScreenHudReserveAutoTilemap_Off() {
         .offset(73 as ::core::ffi::c_int as isize) = 11279 as uint16;
 }
 static mut kReserveTankEnergyTransferPerFrame: uint16 = 1 as uint16;
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenCategory_Tanks_1() {
+pub unsafe fn EquipmentScreenCategory_Tanks_1() {
     if *((&raw mut g_ram as *mut uint8).offset(0x757 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
     {
@@ -6404,8 +6251,7 @@ pub unsafe extern "C" fn EquipmentScreenCategory_Tanks_1() {
     *((&raw mut g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenCategory_Weapons() {
+pub unsafe fn EquipmentScreenCategory_Weapons() {
     EquipmentScreenCategory_Weapons_MoveButtons();
     let mut R36: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x9a6 as ::core::ffi::c_int as isize) as *mut uint16);
@@ -6421,8 +6267,7 @@ pub unsafe extern "C" fn EquipmentScreenCategory_Weapons() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenCategory_Weapons_MoveButtons() {
+pub unsafe fn EquipmentScreenCategory_Weapons_MoveButtons() {
     let mut r18: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x755 as ::core::ffi::c_int as isize) as *mut uint16);
     if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize) as *mut uint16)
@@ -6503,8 +6348,7 @@ pub unsafe extern "C" fn EquipmentScreenCategory_Weapons_MoveButtons() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenCategory_Weapons_PlazmaSpazerCheck(mut R36: uint16) {
+pub unsafe fn EquipmentScreenCategory_Weapons_PlazmaSpazerCheck(mut R36: uint16) {
     let mut t: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0x9a6 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -6562,8 +6406,7 @@ pub unsafe extern "C" fn EquipmentScreenCategory_Weapons_PlazmaSpazerCheck(mut R
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenCategory_Suit() {
+pub unsafe fn EquipmentScreenCategory_Suit() {
     EquipmentScreenCategory_Suit_MoveResponse();
     if *((&raw mut g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize) as *mut uint16)
         as uint8 as ::core::ffi::c_int
@@ -6572,8 +6415,7 @@ pub unsafe extern "C" fn EquipmentScreenCategory_Suit() {
         EquipmentScreenCategory_ButtonResponse(18 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenCategory_Suit_MoveResponse() {
+pub unsafe fn EquipmentScreenCategory_Suit_MoveResponse() {
     let mut r18: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x755 as ::core::ffi::c_int as isize) as *mut uint16);
     if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize) as *mut uint16)
@@ -6652,8 +6494,7 @@ pub unsafe extern "C" fn EquipmentScreenCategory_Suit_MoveResponse() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenCategory_Boots() {
+pub unsafe fn EquipmentScreenCategory_Boots() {
     EquipmentScreenCategory_Boots_MoveResponse();
     if *((&raw mut g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize) as *mut uint16)
         as uint8 as ::core::ffi::c_int
@@ -6662,8 +6503,7 @@ pub unsafe extern "C" fn EquipmentScreenCategory_Boots() {
         EquipmentScreenCategory_ButtonResponse(18 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenCategory_Boots_MoveResponse() {
+pub unsafe fn EquipmentScreenCategory_Boots_MoveResponse() {
     let mut r18: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x755 as ::core::ffi::c_int as isize) as *mut uint16);
     if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize) as *mut uint16)
@@ -6740,8 +6580,7 @@ pub unsafe extern "C" fn EquipmentScreenCategory_Boots_MoveResponse() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn WriteSamusWireframeTilemapAndQueue() {
+pub unsafe fn WriteSamusWireframeTilemapAndQueue() {
     WriteSamusWireframeTilemap();
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
@@ -6759,8 +6598,7 @@ pub unsafe extern "C" fn WriteSamusWireframeTilemapAndQueue() {
     v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     let fresh63 = v0;
     v0 = v0.wrapping_add(1);
-    *(&raw mut (*(gVramWriteEntry
-        as unsafe extern "C" fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
+    *(&raw mut (*(gVramWriteEntry as unsafe fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
         fresh63 as ::core::ffi::c_int,
     ))
     .size as *mut uint8)
@@ -6769,8 +6607,7 @@ pub unsafe extern "C" fn WriteSamusWireframeTilemapAndQueue() {
     *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16) =
         (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn WriteSamusWireframeTilemap() {
+pub unsafe fn WriteSamusWireframeTilemap() {
     let mut i: uint16 = 0;
     i = 0 as uint16;
     while *((&raw mut g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize)
@@ -6824,8 +6661,7 @@ pub unsafe extern "C" fn WriteSamusWireframeTilemap() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenDrawItemSelector() {
+pub unsafe fn EquipmentScreenDrawItemSelector() {
     if *((&raw mut g_ram as *mut uint8).offset(0x9d4 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         | (*((&raw mut g_ram as *mut uint8).offset(0x9a4 as ::core::ffi::c_int as isize)
@@ -6862,8 +6698,7 @@ pub unsafe extern "C" fn EquipmentScreenDrawItemSelector() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenDisplayReserveTankAmount() {
+pub unsafe fn EquipmentScreenDisplayReserveTankAmount() {
     EquipmentScreenDisplayReserveTankAmount_();
 }
 static mut kEquipmentScreenReserveTank_X: [uint16; 6] = [
@@ -6893,8 +6728,7 @@ static mut kPartialReserveTankSpritemapIds: [uint16; 16] = [
     0x26 as ::core::ffi::c_int as uint16,
     0x27 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenDisplayReserveTankAmount_() {
+pub unsafe fn EquipmentScreenDisplayReserveTankAmount_() {
     let mut r3: uint16 = EquipmentScreenDisplayReserves_PaletteSetup();
     let mut r52: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0x9d4 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -7002,8 +6836,7 @@ pub unsafe extern "C" fn EquipmentScreenDisplayReserveTankAmount_() {
         .cinematic_bg_tilemap[392 as ::core::ffi::c_int as usize] =
         (r42 + 2052 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenDisplayReserves_PaletteSetup() -> uint16 {
+pub unsafe fn EquipmentScreenDisplayReserves_PaletteSetup() -> uint16 {
     if *((&raw mut g_ram as *mut uint8).offset(0x9d6 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -7059,8 +6892,7 @@ pub unsafe extern "C" fn EquipmentScreenDisplayReserves_PaletteSetup() -> uint16
         return 1536 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenMoveToReserveTanks() -> uint16 {
+pub unsafe fn EquipmentScreenMoveToReserveTanks() -> uint16 {
     let mut result: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x9d4 as ::core::ffi::c_int as isize)
         as *mut uint16);
@@ -7074,8 +6906,7 @@ pub unsafe extern "C" fn EquipmentScreenMoveToReserveTanks() -> uint16 {
     }
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenMoveToBeams(mut v0: uint16, mut r18: uint16) {
+pub unsafe fn EquipmentScreenMoveToBeams(mut v0: uint16, mut r18: uint16) {
     let mut v1: int16 = 0;
     let mut current_block_5: u64;
     if *((&raw mut g_ram as *mut uint8).offset(0xa76 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -7135,8 +6966,7 @@ pub unsafe extern "C" fn EquipmentScreenMoveToBeams(mut v0: uint16, mut r18: uin
         _ => {}
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenMoveToBottomOfBeams(mut k: uint16) -> uint16 {
+pub unsafe fn EquipmentScreenMoveToBottomOfBeams(mut k: uint16) -> uint16 {
     if *((&raw mut g_ram as *mut uint8).offset(0xa76 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -7166,8 +6996,7 @@ pub unsafe extern "C" fn EquipmentScreenMoveToBottomOfBeams(mut k: uint16) -> ui
         result;
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenMoveLowerOnSuitsMisc(mut v0: uint16) -> uint16 {
+pub unsafe fn EquipmentScreenMoveLowerOnSuitsMisc(mut v0: uint16) -> uint16 {
     let mut v1: int16 = 0;
     while *(g_rom.offset(
         (((0x82c056 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
@@ -7201,11 +7030,7 @@ pub unsafe extern "C" fn EquipmentScreenMoveLowerOnSuitsMisc(mut v0: uint16) -> 
             as uint16;
     return 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenMoveToScrewOrHigherOnSuits(
-    mut v0: uint16,
-    mut r18: uint16,
-) {
+pub unsafe fn EquipmentScreenMoveToScrewOrHigherOnSuits(mut v0: uint16, mut r18: uint16) {
     while *(g_rom.offset(
         (((0x82c056 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0x82c056 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -7229,11 +7054,7 @@ pub unsafe extern "C" fn EquipmentScreenMoveToScrewOrHigherOnSuits(
         ((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
             | 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenMoveToHighJumpOrLowerInBoots(
-    mut v0: uint16,
-    mut r18: uint16,
-) {
+pub unsafe fn EquipmentScreenMoveToHighJumpOrLowerInBoots(mut v0: uint16, mut r18: uint16) {
     while *(g_rom.offset(
         (((0x82c062 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0x82c062 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -7259,8 +7080,7 @@ pub unsafe extern "C" fn EquipmentScreenMoveToHighJumpOrLowerInBoots(
         ((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
             | 3 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenCategory_Boots_MoveUpInBoots(mut k: uint16) -> uint16 {
+pub unsafe fn EquipmentScreenCategory_Boots_MoveUpInBoots(mut k: uint16) -> uint16 {
     while *(g_rom.offset(
         (((0x82c062 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0x82c062 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -7285,8 +7105,7 @@ pub unsafe extern "C" fn EquipmentScreenCategory_Boots_MoveUpInBoots(mut k: uint
         result;
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EquipmentScreenCategory_ButtonResponse(mut r24: uint16) {
+pub unsafe fn EquipmentScreenCategory_ButtonResponse(mut r24: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & kButton_A as ::core::ffi::c_int
@@ -7362,8 +7181,7 @@ pub unsafe extern "C" fn EquipmentScreenCategory_ButtonResponse(mut r24: uint16)
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawPauseMenuDuringFadeIn() {
+pub unsafe fn DrawPauseMenuDuringFadeIn() {
     if *((&raw mut g_ram as *mut uint8).offset(0x727 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -7375,8 +7193,7 @@ pub unsafe extern "C" fn DrawPauseMenuDuringFadeIn() {
         DisplayMapElevatorDestinations();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn UNKNOWN_sub_82B650() {
+pub unsafe fn UNKNOWN_sub_82B650() {
     if *((&raw mut g_ram as *mut uint8).offset(0x753 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -7406,8 +7223,7 @@ static mut kMap_Criteria_SavePoints: [uint16; 16] = [
     0xfffe as ::core::ffi::c_int as uint16,
     0xfffe as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn DrawMapIcons() {
+pub unsafe fn DrawMapIcons() {
     DrawBossMapIcons(
         9 as uint16,
         addr_kMapIconDataPointers as ::core::ffi::c_int as uint16,
@@ -7448,8 +7264,7 @@ pub unsafe extern "C" fn DrawMapIcons() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawFileSelectMapIcons() {
+pub unsafe fn DrawFileSelectMapIcons() {
     HandlePauseScreenPaletteAnimation();
     DrawBossMapIcons(9 as uint16, 0xc7cb as uint16);
     DrawSimpleMapIcons(0xb as uint16, 0xc7db as uint16, 3584 as uint16);
@@ -7512,8 +7327,7 @@ pub unsafe extern "C" fn DrawFileSelectMapIcons() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawSaveStationMapIcon(mut a: uint16, mut k: uint16, mut r3: uint16) {
+pub unsafe fn DrawSaveStationMapIcon(mut a: uint16, mut k: uint16, mut r3: uint16) {
     static mut kShlBit: [uint8; 8] = [
         1 as ::core::ffi::c_int as uint8,
         2 as ::core::ffi::c_int as uint8,
@@ -7553,8 +7367,7 @@ pub unsafe extern "C" fn DrawSaveStationMapIcon(mut a: uint16, mut k: uint16, mu
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawDebugSaveMapIcons(mut a: uint16, mut k: uint16, mut r3: uint16) {
+pub unsafe fn DrawDebugSaveMapIcons(mut a: uint16, mut k: uint16, mut r3: uint16) {
     let mut R34: uint16 = a;
     let mut R36: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xd8f8 as ::core::ffi::c_int as isize)
@@ -7573,8 +7386,7 @@ pub unsafe extern "C" fn DrawDebugSaveMapIcons(mut a: uint16, mut k: uint16, mut
         DrawMapIconsOfType(v2, R34, R36, r3);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawDebugElevatorMapIcons(mut a: uint16, mut k: uint16, mut r3: uint16) {
+pub unsafe fn DrawDebugElevatorMapIcons(mut a: uint16, mut k: uint16, mut r3: uint16) {
     let mut R34: uint16 = a;
     let mut R36: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xd8f8 as ::core::ffi::c_int as isize)
@@ -7594,8 +7406,7 @@ pub unsafe extern "C" fn DrawDebugElevatorMapIcons(mut a: uint16, mut k: uint16,
         DrawMapIconsOfType(v2, R34, R36, r3);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawSimpleMapIcons(mut a: uint16, mut k: uint16, mut r3: uint16) {
+pub unsafe fn DrawSimpleMapIcons(mut a: uint16, mut k: uint16, mut r3: uint16) {
     let mut R34: uint16 = a;
     let mut v2: uint16 = *(RomPtr_82(
         (k as ::core::ffi::c_int
@@ -7607,13 +7418,7 @@ pub unsafe extern "C" fn DrawSimpleMapIcons(mut a: uint16, mut k: uint16, mut r3
         DrawMapIconsOfType(v2, R34, -(1 as ::core::ffi::c_int) as uint16, r3);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawMapIconsOfType(
-    mut a: uint16,
-    mut r34: uint16,
-    mut r36: uint16,
-    mut r3: uint16,
-) {
+pub unsafe fn DrawMapIconsOfType(mut a: uint16, mut r34: uint16, mut r36: uint16, mut r3: uint16) {
     let mut v3: int8 = 0;
     let mut v4: int16 = 0;
     loop {
@@ -7646,8 +7451,7 @@ pub unsafe extern "C" fn DrawMapIconsOfType(
         a = (a as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CheckIfMapPositionIsExplored(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CheckIfMapPositionIsExplored(mut k: uint16, mut j: uint16) -> uint16 {
     static mut kBits0x80Shr: [uint8; 8] = [
         0x80 as ::core::ffi::c_int as uint8,
         0x40 as ::core::ffi::c_int as uint8,
@@ -7672,8 +7476,7 @@ pub unsafe extern "C" fn CheckIfMapPositionIsExplored(mut k: uint16, mut j: uint
             .offset(r18 as isize) as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawBossMapIcons(mut a: uint16, mut k: uint16) {
+pub unsafe fn DrawBossMapIcons(mut a: uint16, mut k: uint16) {
     let mut bits: ::core::ffi::c_int = *(&raw mut g_ram as *mut uint8)
         .offset(0xd828 as ::core::ffi::c_int as isize)
         .offset(
@@ -7760,8 +7563,7 @@ pub unsafe extern "C" fn DrawBossMapIcons(mut a: uint16, mut k: uint16) {
         v4 = v4.offset(2 as ::core::ffi::c_int as isize);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawMapScrollArrowAndCheckToScroll(mut db: uint8, mut k: uint16) {
+pub unsafe fn DrawMapScrollArrowAndCheckToScroll(mut db: uint8, mut k: uint16) {
     let mut v1: *const uint16 = RomPtrWithBank(db, k as uint16_t) as *const uint16;
     DrawPauseScreenSpriteAnim(
         *v1.offset(2 as ::core::ffi::c_int as isize),
@@ -7781,12 +7583,10 @@ pub unsafe extern "C" fn DrawMapScrollArrowAndCheckToScroll(mut db: uint8, mut k
             as *mut uint16) = *(v2.offset(8 as ::core::ffi::c_int as isize) as *mut uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_82B932() {
+pub unsafe fn sub_82B932() {
     HandleMapScrollArrows();
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleMapScrollArrows() {
+pub unsafe fn HandleMapScrollArrows() {
     if *((&raw mut g_ram as *mut uint8).offset(0x5ac as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         - 24 as ::core::ffi::c_int
@@ -7858,8 +7658,7 @@ pub unsafe extern "C" fn HandleMapScrollArrows() {
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MapScreenDrawSamusPositionIndicator() {
+pub unsafe fn MapScreenDrawSamusPositionIndicator() {
     let mut a: uint16 = UpdateSamusPositionIndicatorAnimation();
     DrawMenuSpritemap(
         a,
@@ -7903,8 +7702,7 @@ static mut kMap_SamusPositionIndicator_SpritemapIds: [uint16; 4] = [
     0x61 as ::core::ffi::c_int as uint16,
     0x60 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn UpdateSamusPositionIndicatorAnimation() -> uint16 {
+pub unsafe fn UpdateSamusPositionIndicatorAnimation() -> uint16 {
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x778 as ::core::ffi::c_int as isize) as *mut uint16);
     if v0 == 0 {
@@ -7935,8 +7733,7 @@ pub unsafe extern "C" fn UpdateSamusPositionIndicatorAnimation() -> uint16 {
         as *mut uint16) as ::core::ffi::c_int
         >> 1 as ::core::ffi::c_int) as usize];
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawBorderAroundSamusData() {
+pub unsafe fn DrawBorderAroundSamusData() {
     DrawMenuSpritemap(
         0x48 as uint16,
         0x80 as uint16,
@@ -7944,8 +7741,7 @@ pub unsafe extern "C" fn DrawBorderAroundSamusData() {
         3584 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawBorderAroundDataCopyMode() {
+pub unsafe fn DrawBorderAroundDataCopyMode() {
     DrawMenuSpritemap(
         0x49 as uint16,
         0x80 as uint16,
@@ -7953,8 +7749,7 @@ pub unsafe extern "C" fn DrawBorderAroundDataCopyMode() {
         3584 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawBorderAroundDataClearMode() {
+pub unsafe fn DrawBorderAroundDataClearMode() {
     DrawMenuSpritemap(
         0x4a as uint16,
         0x7c as uint16,
@@ -7974,8 +7769,7 @@ static mut kDrawMenuSelectionMissile_SpriteMap: [uint16; 4] = [
     0x35 as ::core::ffi::c_int as uint16,
     0x34 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn DrawMenuSelectionMissile() {
+pub unsafe fn DrawMenuSelectionMissile() {
     if *((&raw mut g_ram as *mut uint8).offset(0x198d as ::core::ffi::c_int as isize)
         as *mut uint16)
         != 0
@@ -8019,8 +7813,7 @@ pub unsafe extern "C" fn DrawMenuSelectionMissile() {
         3584 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawFileCopyArrow() {
+pub unsafe fn DrawFileCopyArrow() {
     let mut v0: uint16 = 0;
     if (*((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -8101,8 +7894,7 @@ pub unsafe extern "C" fn DrawFileCopyArrow() {
         512 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DisplayMapElevatorDestinations() {
+pub unsafe fn DisplayMapElevatorDestinations() {
     if *(&raw mut g_ram as *mut uint8)
         .offset(0xd908 as ::core::ffi::c_int as isize)
         .offset(
@@ -8141,8 +7933,7 @@ pub unsafe extern "C" fn DisplayMapElevatorDestinations() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleGameOverBabyMetroid() {
+pub unsafe fn HandleGameOverBabyMetroid() {
     if (*((&raw mut g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
         as *mut EnemyData)
         .offset(0 as ::core::ffi::c_int as isize))
@@ -8159,8 +7950,7 @@ pub unsafe extern "C" fn HandleGameOverBabyMetroid() {
         sub_82BBDD();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallBabyMetroidPlaySfx(mut ea: uint32) {
+pub unsafe fn CallBabyMetroidPlaySfx(mut ea: uint32) {
     match ea {
         8567820 => {
             BabyMetroidPlaySfx0x23();
@@ -8179,8 +7969,7 @@ pub unsafe extern "C" fn CallBabyMetroidPlaySfx(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_82BB7F(mut a: uint16) {
+pub unsafe fn sub_82BB7F(mut a: uint16) {
     let mut current_instruction: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         as *mut EnemyData)
@@ -8238,8 +8027,7 @@ pub unsafe extern "C" fn sub_82BB7F(mut a: uint16) {
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_82BBDD() {
+pub unsafe fn sub_82BBDD() {
     (*((&raw mut g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
         as *mut EnemyData)
         .offset(0 as ::core::ffi::c_int as isize))
@@ -8250,8 +8038,7 @@ pub unsafe extern "C" fn sub_82BBDD() {
     .instruction_timer = 10 as uint16;
     sub_82BB7F(0xa as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawBabyMetroid(mut k: uint16) {
+pub unsafe fn DrawBabyMetroid(mut k: uint16) {
     let mut v1: uint16 =
         *(RomPtr_82(k as uint16_t) as *mut uint16).offset(2 as ::core::ffi::c_int as isize);
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -8276,8 +8063,7 @@ pub unsafe extern "C" fn DrawBabyMetroid(mut k: uint16) {
         2560 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn FinishProcessingGameOverBabyMetroidAsm() {
+pub unsafe fn FinishProcessingGameOverBabyMetroidAsm() {
     let mut t: uint16 = *(RomPtr_82(
         (*((&raw mut g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
             as *mut EnemyData)
@@ -8308,29 +8094,24 @@ pub unsafe extern "C" fn FinishProcessingGameOverBabyMetroidAsm() {
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn BabyMetroidPlaySfx0x23() {
+pub unsafe fn BabyMetroidPlaySfx0x23() {
     QueueSfx3_Max6(0x23 as uint16);
     FinishProcessingGameOverBabyMetroidAsm();
 }
-#[no_mangle]
-pub unsafe extern "C" fn BabyMetroidPlaySfx0x26() {
+pub unsafe fn BabyMetroidPlaySfx0x26() {
     QueueSfx3_Max6(0x26 as uint16);
     FinishProcessingGameOverBabyMetroidAsm();
 }
-#[no_mangle]
-pub unsafe extern "C" fn BabyMetroidPlaySfx0x27() {
+pub unsafe fn BabyMetroidPlaySfx0x27() {
     QueueSfx3_Max6(0x27 as uint16);
     FinishProcessingGameOverBabyMetroidAsm();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CancelSoundEffects() {
+pub unsafe fn CancelSoundEffects() {
     QueueSfx1_Max6(2 as uint16);
     QueueSfx2_Max6(0x71 as uint16);
     QueueSfx3_Max6(1 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueSamusMovementSfx() {
+pub unsafe fn QueueSamusMovementSfx() {
     if *((&raw mut g_ram as *mut uint8).offset(0xb3e as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0xff00 as ::core::ffi::c_int
@@ -8348,14 +8129,12 @@ pub unsafe extern "C" fn QueueSamusMovementSfx() {
     }
     CallSomeSamusCode(0x14 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn AdvancePaletteFadeForAllPalettes_0xc() -> uint8 {
+pub unsafe fn AdvancePaletteFadeForAllPalettes_0xc() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xc402 as ::core::ffi::c_int as isize)
         as *mut uint16) = 12 as uint16;
     return AdvancePaletteFadeForAllPalettes();
 }
-#[no_mangle]
-pub unsafe extern "C" fn AdvancePaletteFade_BgPalette6() -> uint8 {
+pub unsafe fn AdvancePaletteFade_BgPalette6() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xc402 as ::core::ffi::c_int as isize)
         as *mut uint16) = 12 as uint16;
     if *((&raw mut g_ram as *mut uint8).offset(0xc400 as ::core::ffi::c_int as isize)
@@ -8390,8 +8169,7 @@ pub unsafe extern "C" fn AdvancePaletteFade_BgPalette6() -> uint8 {
         return 1 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn AdvanceGradualColorChangeOfPalette(mut k: uint16, mut j: uint16) -> uint8 {
+pub unsafe fn AdvanceGradualColorChangeOfPalette(mut k: uint16, mut j: uint16) -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xc402 as ::core::ffi::c_int as isize)
         as *mut uint16) = 15 as uint16;
     if (15 as ::core::ffi::c_int
@@ -8431,8 +8209,7 @@ pub unsafe extern "C" fn AdvanceGradualColorChangeOfPalette(mut k: uint16, mut j
         return 1 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn AdvancePaletteFadeForAllPalettes() -> uint8 {
+pub unsafe fn AdvancePaletteFadeForAllPalettes() -> uint8 {
     if (*((&raw mut g_ram as *mut uint8).offset(0xc402 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         + 1 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
@@ -8485,8 +8262,7 @@ pub unsafe extern "C" fn AdvancePaletteFadeForAllPalettes() -> uint8 {
         return 1 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalculateNthTransitionColorFromXtoY(
+pub unsafe fn CalculateNthTransitionColorFromXtoY(
     mut a: uint16,
     mut k: uint16,
     mut j: uint16,
@@ -8513,8 +8289,7 @@ pub unsafe extern "C" fn CalculateNthTransitionColorFromXtoY(
         ) as ::core::ffi::c_int)
             << 10 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalculateNthTransitionColorComponentFromXtoY(
+pub unsafe fn CalculateNthTransitionColorComponentFromXtoY(
     mut a: uint16,
     mut k: uint16,
     mut j: uint16,
@@ -8548,14 +8323,12 @@ pub unsafe extern "C" fn CalculateNthTransitionColorComponentFromXtoY(
         as uint16 as ::core::ffi::c_int
         >> 8 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_82DAF7(mut a: uint16) -> uint8 {
+pub unsafe fn sub_82DAF7(mut a: uint16) -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xc402 as ::core::ffi::c_int as isize)
         as *mut uint16) = 12 as uint16;
     return sub_82DB0C(a);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_82DB0C(mut a: uint16) -> uint8 {
+pub unsafe fn sub_82DB0C(mut a: uint16) -> uint8 {
     if (*((&raw mut g_ram as *mut uint8).offset(0xc402 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         + 1 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
@@ -8586,8 +8359,7 @@ pub unsafe extern "C" fn sub_82DB0C(mut a: uint16) -> uint8 {
         return 1 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_82DB41() {
+pub unsafe fn sub_82DB41() {
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xc404 as ::core::ffi::c_int as isize) as *mut uint16);
     loop {
@@ -8627,8 +8399,7 @@ pub unsafe extern "C" fn sub_82DB41() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleSamusOutOfHealthAndGameTile() {
+pub unsafe fn HandleSamusOutOfHealthAndGameTile() {
     if *((&raw mut g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize) as *mut uint16)
         as int16 as ::core::ffi::c_int
         <= 0 as ::core::ffi::c_int
@@ -8709,8 +8480,7 @@ pub unsafe extern "C" fn HandleSamusOutOfHealthAndGameTile() {
             as *mut uint16) = 99 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_27_ReserveTanksAuto() -> CoroutineRet {
+pub unsafe fn GameState_27_ReserveTanksAuto() -> CoroutineRet {
     if *(&raw mut g_ram as *mut uint8).offset(0x612 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
@@ -8729,8 +8499,7 @@ pub unsafe extern "C" fn GameState_27_ReserveTanksAuto() -> CoroutineRet {
     Samus_LowHealthCheck_0();
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn RefillHealthFromReserveTanks() -> uint8 {
+pub unsafe fn RefillHealthFromReserveTanks() -> uint8 {
     let mut current_block: u64;
     if *((&raw mut g_ram as *mut uint8).offset(0x9d6 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
@@ -8797,8 +8566,7 @@ pub unsafe extern "C" fn RefillHealthFromReserveTanks() -> uint8 {
         as *mut uint16) as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_19_SamusNoHealth() -> CoroutineRet {
+pub unsafe fn GameState_19_SamusNoHealth() -> CoroutineRet {
     let mut _coret_: uint8 = GameState_8_MainGameplay() as uint8;
     if _coret_ != 0 {
         return _coret_ as CoroutineRet;
@@ -8859,8 +8627,7 @@ pub unsafe extern "C" fn GameState_19_SamusNoHealth() -> CoroutineRet {
     *fresh109 = (*fresh109).wrapping_add(1);
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_20_SamusNoHealth_BlackOut() -> CoroutineRet {
+pub unsafe fn GameState_20_SamusNoHealth_BlackOut() -> CoroutineRet {
     let mut _coret_: uint8 = GameState_8_MainGameplay() as uint8;
     if _coret_ != 0 {
         return _coret_ as CoroutineRet;
@@ -8918,8 +8685,7 @@ pub unsafe extern "C" fn GameState_20_SamusNoHealth_BlackOut() -> CoroutineRet {
     }
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_21_SamusNoHealth() -> CoroutineRet {
+pub unsafe fn GameState_21_SamusNoHealth() -> CoroutineRet {
     Samus_DrawWhenNotAnimatingOrDying();
     if HasQueuedMusic() == 0 {
         StartSamusDeathAnimation();
@@ -8930,8 +8696,7 @@ pub unsafe extern "C" fn GameState_21_SamusNoHealth() -> CoroutineRet {
     }
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_22_SamusNoHealth_Dying() -> CoroutineRet {
+pub unsafe fn GameState_22_SamusNoHealth_Dying() -> CoroutineRet {
     DrawSamusStartingDeathAnim_();
     let ref mut fresh113 = *((&raw mut g_ram as *mut uint8)
         .offset(0xde8 as ::core::ffi::c_int as isize) as *mut uint16);
@@ -8949,8 +8714,7 @@ pub unsafe extern "C" fn GameState_22_SamusNoHealth_Dying() -> CoroutineRet {
     }
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_23_SamusNoHealth_Flashing() -> CoroutineRet {
+pub unsafe fn GameState_23_SamusNoHealth_Flashing() -> CoroutineRet {
     if HandleSamusDeathSequence() != 0 {
         let ref mut fresh115 = *((&raw mut g_ram as *mut uint8)
             .offset(0x998 as ::core::ffi::c_int as isize)
@@ -8961,8 +8725,7 @@ pub unsafe extern "C" fn GameState_23_SamusNoHealth_Flashing() -> CoroutineRet {
     }
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_24_SamusNoHealth_Explosion() -> CoroutineRet {
+pub unsafe fn GameState_24_SamusNoHealth_Explosion() -> CoroutineRet {
     if GameState_24_SamusNoHealth_Explosion_Helper() != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize)
             as *mut uint16) = 1 as uint16;
@@ -8975,8 +8738,7 @@ pub unsafe extern "C" fn GameState_24_SamusNoHealth_Explosion() -> CoroutineRet 
     }
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_25_SamusNoHealth_BlackOut() -> CoroutineRet {
+pub unsafe fn GameState_25_SamusNoHealth_BlackOut() -> CoroutineRet {
     HandleFadeOut();
     if *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
@@ -8998,8 +8760,7 @@ pub unsafe extern "C" fn GameState_25_SamusNoHealth_BlackOut() -> CoroutineRet {
     }
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoaadDesinationRoomCreBitset() {
+pub unsafe fn LoaadDesinationRoomCreBitset() {
     let mut room_definition_ptr: uint16 = (*get_DoorDef(
         *((&raw mut g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -9011,8 +8772,7 @@ pub unsafe extern "C" fn LoaadDesinationRoomCreBitset() {
     *((&raw mut g_ram as *mut uint8).offset(0x7b3 as ::core::ffi::c_int as isize) as *mut uint16) =
         (*get_RoomDefHeader(room_definition_ptr)).cre_bitset_ as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadDoorHeader() {
+pub unsafe fn LoadDoorHeader() {
     let mut DoorDef: *mut DoorDef = ::core::ptr::null_mut::<DoorDef>();
     let mut samus_distance_from_door: int16 = 0;
     DoorDef = get_DoorDef(
@@ -9052,8 +8812,7 @@ pub unsafe extern "C" fn LoadDoorHeader() {
     *((&raw mut g_ram as *mut uint8).offset(0x92d as ::core::ffi::c_int as isize) as *mut uint16) =
         (t >> 16 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadRoomHeader() {
+pub unsafe fn LoadRoomHeader() {
     let mut RoomDefHeader: *mut RoomDefHeader = ::core::ptr::null_mut::<RoomDefHeader>();
     RoomDefHeader = get_RoomDefHeader(
         *((&raw mut g_ram as *mut uint8).offset(0x79b as ::core::ffi::c_int as isize)
@@ -9098,8 +8857,7 @@ pub unsafe extern "C" fn LoadRoomHeader() {
     *((&raw mut g_ram as *mut uint8).offset(0x7b9 as ::core::ffi::c_int as isize) as *mut uint16) =
         (2 as ::core::ffi::c_int * prod as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadStateHeader() {
+pub unsafe fn LoadStateHeader() {
     let mut RD: *mut RoomDefRoomstate = get_RoomDefRoomstate(
         *((&raw mut g_ram as *mut uint8).offset(0x7bb as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -9136,8 +8894,7 @@ pub unsafe extern "C" fn LoadStateHeader() {
     *((&raw mut g_ram as *mut uint8).offset(0x7df as ::core::ffi::c_int as isize) as *mut uint16) =
         (*RD).main_code_ptr as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn WaitUntilEndOfVblankAndEnableIrq() {
+pub unsafe fn WaitUntilEndOfVblankAndEnableIrq() {
     if *(&raw mut g_ram as *mut uint8).offset(0x84 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
         & 0x30 as ::core::ffi::c_int
@@ -9146,10 +8903,8 @@ pub unsafe extern "C" fn WaitUntilEndOfVblankAndEnableIrq() {
         EnableIrqInterruptsNow();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PointlessFunctionStupidToo() {}
-#[no_mangle]
-pub unsafe extern "C" fn SaveMapExploredifElevator() {
+pub unsafe fn PointlessFunctionStupidToo() {}
+pub unsafe fn SaveMapExploredifElevator() {
     if *((&raw mut g_ram as *mut uint8).offset(0x793 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0xf as ::core::ffi::c_int
@@ -9168,8 +8923,7 @@ pub unsafe extern "C" fn SaveMapExploredifElevator() {
         SaveExploredMapTilesToSaved();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadMapExploredIfElevator() {
+pub unsafe fn LoadMapExploredIfElevator() {
     if (*get_DoorDef(
         *((&raw mut g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -9181,16 +8935,14 @@ pub unsafe extern "C" fn LoadMapExploredIfElevator() {
         LoadMirrorOfExploredMapTiles();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnsureSamusDrawnEachFrame() {
+pub unsafe fn EnsureSamusDrawnEachFrame() {
     if *((&raw mut g_ram as *mut uint8).offset(0xe16 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
     {
         Samus_DrawWhenNotAnimatingOrDying();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadEnemyGfxToVram() {
+pub unsafe fn LoadEnemyGfxToVram() {
     let mut ED: *mut EnemyDef = ::core::ptr::null_mut::<EnemyDef>();
     let mut dst: uint16 = 0x7000 as uint16;
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
@@ -9236,8 +8988,7 @@ pub unsafe extern "C" fn LoadEnemyGfxToVram() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadRoomMusic() {
+pub unsafe fn LoadRoomMusic() {
     if (*((&raw mut g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int)
         < kGameState_40_TransitionToDemo as ::core::ffi::c_int
@@ -9257,8 +9008,7 @@ pub unsafe extern "C" fn LoadRoomMusic() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn UpdateMusicTrackIndex() {
+pub unsafe fn UpdateMusicTrackIndex() {
     if (*((&raw mut g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int)
         < kGameState_40_TransitionToDemo as ::core::ffi::c_int
@@ -9288,8 +9038,7 @@ pub unsafe extern "C" fn UpdateMusicTrackIndex() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadNewMusicTrackIfChanged() {
+pub unsafe fn LoadNewMusicTrackIfChanged() {
     if (*((&raw mut g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int)
         < 0x28 as ::core::ffi::c_int
@@ -9320,10 +9069,8 @@ pub unsafe extern "C" fn LoadNewMusicTrackIfChanged() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NullFunc() {}
-#[no_mangle]
-pub unsafe extern "C" fn PlayRoomMusicTrackAfterAFrames(mut a: uint16) {
+pub unsafe fn NullFunc() {}
+pub unsafe fn PlayRoomMusicTrackAfterAFrames(mut a: uint16) {
     if (*((&raw mut g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int)
         < kGameState_40_TransitionToDemo as ::core::ffi::c_int
@@ -9335,8 +9082,7 @@ pub unsafe extern "C" fn PlayRoomMusicTrackAfterAFrames(mut a: uint16) {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadColorsForSpritesBeamsAndEnemies() {
+pub unsafe fn LoadColorsForSpritesBeamsAndEnemies() {
     let mut j: uint16 = 0;
     let mut k: uint16 = 0;
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
@@ -9385,8 +9131,7 @@ pub unsafe extern "C" fn LoadColorsForSpritesBeamsAndEnemies() {
         k = (k as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallDoorTransitionFunction_Async(mut ea: uint32) -> CoroutineRet {
+pub unsafe fn CallDoorTransitionFunction_Async(mut ea: uint32) -> CoroutineRet {
     match ea {
         8577405 => return DoorTransitionFunction_HandleElevator(),
         8577439 => return DoorTransitionFunction_Wait48frames(),
@@ -9406,16 +9151,14 @@ pub unsafe extern "C" fn CallDoorTransitionFunction_Async(mut ea: uint32) -> Cor
         _ => return Unreachable() as CoroutineRet,
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_9_HitDoorBlock() -> CoroutineRet {
+pub unsafe fn GameState_9_HitDoorBlock() -> CoroutineRet {
     return CallDoorTransitionFunction_Async(
         (*((&raw mut g_ram as *mut uint8).offset(0x99c as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
             | 0x820000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorTransitionFunction_HandleElevator() -> CoroutineRet {
+pub unsafe fn DoorTransitionFunction_HandleElevator() -> CoroutineRet {
     if *((&raw mut g_ram as *mut uint8).offset(0xe16 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
     {
@@ -9443,8 +9186,7 @@ pub unsafe extern "C" fn DoorTransitionFunction_HandleElevator() -> CoroutineRet
         (0x82e19f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return DoorTransitionFunction_Wait48frames();
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorTransitionFunction_Wait48frames() -> CoroutineRet {
+pub unsafe fn DoorTransitionFunction_Wait48frames() -> CoroutineRet {
     let ref mut fresh8 = *((&raw mut g_ram as *mut uint8)
         .offset(0x92f as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh8 = (*fresh8).wrapping_sub(1);
@@ -9462,8 +9204,7 @@ pub unsafe extern "C" fn DoorTransitionFunction_Wait48frames() -> CoroutineRet {
     }
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_10_LoadingNextRoom_Async() -> CoroutineRet {
+pub unsafe fn GameState_10_LoadingNextRoom_Async() -> CoroutineRet {
     *((&raw mut g_ram as *mut uint8).offset(0x797 as ::core::ffi::c_int as isize) as *mut uint16) =
         1 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x795 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -9615,8 +9356,7 @@ pub unsafe extern "C" fn GameState_10_LoadingNextRoom_Async() -> CoroutineRet {
     *fresh10 = (*fresh10).wrapping_add(1);
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameState_11_LoadingNextRoom_Async() -> CoroutineRet {
+pub unsafe fn GameState_11_LoadingNextRoom_Async() -> CoroutineRet {
     let mut _coret_: uint8 = CallDoorTransitionFunction_Async(
         (*((&raw mut g_ram as *mut uint8).offset(0x99c as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -9632,8 +9372,7 @@ pub unsafe extern "C" fn GameState_11_LoadingNextRoom_Async() -> CoroutineRet {
     }
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorTransitionFunction_WaitForSoundsToFinish() -> CoroutineRet {
+pub unsafe fn DoorTransitionFunction_WaitForSoundsToFinish() -> CoroutineRet {
     DetermineWhichEnemiesToProcess();
     EnemyMain();
     DrawSamusEnemiesAndProjectiles();
@@ -9669,8 +9408,7 @@ pub unsafe extern "C" fn DoorTransitionFunction_WaitForSoundsToFinish() -> Corou
     }
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorTransitionFunction_FadeOutScreen() -> CoroutineRet {
+pub unsafe fn DoorTransitionFunction_FadeOutScreen() -> CoroutineRet {
     if AdvancePaletteFadeForAllPalettes_0xc() != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x99c as ::core::ffi::c_int as isize)
             as *mut uint16) =
@@ -9683,8 +9421,7 @@ pub unsafe extern "C" fn DoorTransitionFunction_FadeOutScreen() -> CoroutineRet 
     }
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorTransitionFunction_LoadDoorHeaderEtc() -> CoroutineRet {
+pub unsafe fn DoorTransitionFunction_LoadDoorHeaderEtc() -> CoroutineRet {
     LoadDoorHeader();
     sub_8882AC();
     let ref mut fresh27 = *((&raw mut g_ram as *mut uint8)
@@ -9696,8 +9433,7 @@ pub unsafe extern "C" fn DoorTransitionFunction_LoadDoorHeaderEtc() -> Coroutine
         (0x82e310 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorTransitionFunction_ScrollScreenToAlignment() -> CoroutineRet {
+pub unsafe fn DoorTransitionFunction_ScrollScreenToAlignment() -> CoroutineRet {
     let mut current_block_7: u64;
     if *((&raw mut g_ram as *mut uint8).offset(0x791 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -9762,8 +9498,7 @@ pub unsafe extern "C" fn DoorTransitionFunction_ScrollScreenToAlignment() -> Cor
         (0x82e353 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorTransitionFunction_FixDoorsMovingUp() -> CoroutineRet {
+pub unsafe fn DoorTransitionFunction_FixDoorsMovingUp() -> CoroutineRet {
     if *((&raw mut g_ram as *mut uint8).offset(0x791 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 3 as ::core::ffi::c_int
@@ -9775,8 +9510,7 @@ pub unsafe extern "C" fn DoorTransitionFunction_FixDoorsMovingUp() -> CoroutineR
         (0x82e36e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorTransitionFunction_SetupNewRoom() -> CoroutineRet {
+pub unsafe fn DoorTransitionFunction_SetupNewRoom() -> CoroutineRet {
     SaveMapExploredifElevator();
     LoadRoomHeader();
     LoadStateHeader();
@@ -9787,8 +9521,7 @@ pub unsafe extern "C" fn DoorTransitionFunction_SetupNewRoom() -> CoroutineRet {
         (0x82e38e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorTransitionFunction_SetupScrolling() -> CoroutineRet {
+pub unsafe fn DoorTransitionFunction_SetupScrolling() -> CoroutineRet {
     *((&raw mut g_ram as *mut uint8).offset(0xb5 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -9818,8 +9551,7 @@ pub unsafe extern "C" fn DoorTransitionFunction_SetupScrolling() -> CoroutineRet
         (0x82e3c0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorTransitionFunction_PlaceSamusLoadTiles() -> CoroutineRet {
+pub unsafe fn DoorTransitionFunction_PlaceSamusLoadTiles() -> CoroutineRet {
     let mut v0: uint16 = 0;
     *((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize) as *mut uint16) =
         (*((&raw mut g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
@@ -9907,27 +9639,17 @@ pub unsafe extern "C" fn DoorTransitionFunction_PlaceSamusLoadTiles() -> Corouti
 }
 static mut kUpdateBackgroundCommands: [Option<Func_Y_Y>; 8] = unsafe {
     [
-        Some(UpdateBackgroundCommand_0_Finish as unsafe extern "C" fn(uint16) -> uint16),
-        Some(UpdateBackgroundCommand_2_TransferToVram as unsafe extern "C" fn(uint16) -> uint16),
-        Some(UpdateBackgroundCommand_4_Decompression as unsafe extern "C" fn(uint16) -> uint16),
-        Some(UpdateBackgroundCommand_6_ClearFxTilemap as unsafe extern "C" fn(uint16) -> uint16),
-        Some(
-            UpdateBackgroundCommand_8_TransferToVramAndSetBg3
-                as unsafe extern "C" fn(uint16) -> uint16,
-        ),
-        Some(UpdateBackgroundCommand_A_ClearBg2Tilemap as unsafe extern "C" fn(uint16) -> uint16),
-        Some(
-            UpdateBackgroundCommand_C_ClearKraidBg2Tilemap
-                as unsafe extern "C" fn(uint16) -> uint16,
-        ),
-        Some(
-            UpdateBackgroundCommand_E_DoorDependentTransferToVRAM
-                as unsafe extern "C" fn(uint16) -> uint16,
-        ),
+        Some(UpdateBackgroundCommand_0_Finish as unsafe fn(uint16) -> uint16),
+        Some(UpdateBackgroundCommand_2_TransferToVram as unsafe fn(uint16) -> uint16),
+        Some(UpdateBackgroundCommand_4_Decompression as unsafe fn(uint16) -> uint16),
+        Some(UpdateBackgroundCommand_6_ClearFxTilemap as unsafe fn(uint16) -> uint16),
+        Some(UpdateBackgroundCommand_8_TransferToVramAndSetBg3 as unsafe fn(uint16) -> uint16),
+        Some(UpdateBackgroundCommand_A_ClearBg2Tilemap as unsafe fn(uint16) -> uint16),
+        Some(UpdateBackgroundCommand_C_ClearKraidBg2Tilemap as unsafe fn(uint16) -> uint16),
+        Some(UpdateBackgroundCommand_E_DoorDependentTransferToVRAM as unsafe fn(uint16) -> uint16),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn DoorTransitionFunction_LoadMoreThings_Async() -> CoroutineRet {
+pub unsafe fn DoorTransitionFunction_LoadMoreThings_Async() -> CoroutineRet {
     let mut bg_data_ptr: uint16 = 0;
     let mut _state_variable_: *mut uint8 =
         (&raw mut g_ram as *mut uint8).offset(0x612 as ::core::ffi::c_int as isize);
@@ -10072,8 +9794,7 @@ pub unsafe extern "C" fn DoorTransitionFunction_LoadMoreThings_Async() -> Corout
     *_state_variable_ = 0 as uint8;
     return 0 as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearFxTilemap() {
+pub unsafe fn ClearFxTilemap() {
     let mut i: ::core::ffi::c_int = 959 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         (*((&raw mut g_ram as *mut uint8).offset(0x4000 as ::core::ffi::c_int as isize)
@@ -10086,8 +9807,7 @@ pub unsafe extern "C" fn ClearFxTilemap() {
     }
     CopyToVramNow(0x5880 as uint16, 0x7e4000 as uint32, 0xf00 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearBg2Tilemap() {
+pub unsafe fn ClearBg2Tilemap() {
     let mut i: ::core::ffi::c_int = 1023 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         (*((&raw mut g_ram as *mut uint8).offset(0x4000 as ::core::ffi::c_int as isize)
@@ -10100,8 +9820,7 @@ pub unsafe extern "C" fn ClearBg2Tilemap() {
     }
     CopyToVramNow(0x4800 as uint16, 0x7e4000 as uint32, 0x1000 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearKraidBg2Tilemap() {
+pub unsafe fn ClearKraidBg2Tilemap() {
     let mut i: ::core::ffi::c_int = 1023 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         (*((&raw mut g_ram as *mut uint8).offset(0x4000 as ::core::ffi::c_int as isize)
@@ -10115,14 +9834,10 @@ pub unsafe extern "C" fn ClearKraidBg2Tilemap() {
     CopyToVramNow(0x4000 as uint16, 0x7e4000 as uint32, 0x1000 as uint16);
     CopyToVramNow(0x4800 as uint16, 0x7e4000 as uint32, 0x1000 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn UpdateBackgroundCommand_0_Finish(mut y: uint16) -> uint16 {
+pub unsafe fn UpdateBackgroundCommand_0_Finish(mut y: uint16) -> uint16 {
     return 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn UpdateBackgroundCommand_E_DoorDependentTransferToVRAM(
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn UpdateBackgroundCommand_E_DoorDependentTransferToVRAM(mut j: uint16) -> uint16 {
     if *((&raw mut g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         == *(RomPtr_8F(j as uint16_t) as *mut uint16) as ::core::ffi::c_int
@@ -10134,8 +9849,7 @@ pub unsafe extern "C" fn UpdateBackgroundCommand_E_DoorDependentTransferToVRAM(
         return (j as ::core::ffi::c_int + 9 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn UpdateBackgroundCommand_2_TransferToVram(mut j: uint16) -> uint16 {
+pub unsafe fn UpdateBackgroundCommand_2_TransferToVram(mut j: uint16) -> uint16 {
     let mut v1: *const uint8 = RomPtr_8F(j as uint16_t);
     CopyToVramNow(
         *(v1.offset(3 as ::core::ffi::c_int as isize) as *mut uint16),
@@ -10144,8 +9858,7 @@ pub unsafe extern "C" fn UpdateBackgroundCommand_2_TransferToVram(mut j: uint16)
     );
     return (j as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn UpdateBackgroundCommand_4_Decompression(mut j: uint16) -> uint16 {
+pub unsafe fn UpdateBackgroundCommand_4_Decompression(mut j: uint16) -> uint16 {
     let mut v1: *const uint8 = RomPtr_8F(j as uint16_t);
     DecompressToMem(
         Load24(v1 as *mut LongPtr),
@@ -10156,38 +9869,30 @@ pub unsafe extern "C" fn UpdateBackgroundCommand_4_Decompression(mut j: uint16) 
     );
     return (j as ::core::ffi::c_int + 5 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn UpdateBackgroundCommand_6_ClearFxTilemap(mut j: uint16) -> uint16 {
+pub unsafe fn UpdateBackgroundCommand_6_ClearFxTilemap(mut j: uint16) -> uint16 {
     ClearFxTilemap();
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn UpdateBackgroundCommand_8_TransferToVramAndSetBg3(
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn UpdateBackgroundCommand_8_TransferToVramAndSetBg3(mut j: uint16) -> uint16 {
     j = UpdateBackgroundCommand_2_TransferToVram(j);
     *(&raw mut g_ram as *mut uint8).offset(0x5e as ::core::ffi::c_int as isize) = 2 as uint8;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn UpdateBackgroundCommand_A_ClearBg2Tilemap(mut j: uint16) -> uint16 {
+pub unsafe fn UpdateBackgroundCommand_A_ClearBg2Tilemap(mut j: uint16) -> uint16 {
     ClearBg2Tilemap();
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn UpdateBackgroundCommand_C_ClearKraidBg2Tilemap(mut j: uint16) -> uint16 {
+pub unsafe fn UpdateBackgroundCommand_C_ClearKraidBg2Tilemap(mut j: uint16) -> uint16 {
     ClearKraidBg2Tilemap();
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorTransition_C_HandleAnimTiles() -> CoroutineRet {
+pub unsafe fn DoorTransition_C_HandleAnimTiles() -> CoroutineRet {
     AnimtilesHandler();
     *((&raw mut g_ram as *mut uint8).offset(0x99c as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x82e664 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorTransition_WaitForMusicToClear() -> CoroutineRet {
+pub unsafe fn DoorTransition_WaitForMusicToClear() -> CoroutineRet {
     if HasQueuedMusic() == 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x99c as ::core::ffi::c_int as isize)
             as *mut uint16) =
@@ -10196,8 +9901,7 @@ pub unsafe extern "C" fn DoorTransition_WaitForMusicToClear() -> CoroutineRet {
     }
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorTransition_HandleTransition() -> CoroutineRet {
+pub unsafe fn DoorTransition_HandleTransition() -> CoroutineRet {
     if *((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0xf0 as ::core::ffi::c_int
@@ -10277,8 +9981,7 @@ pub unsafe extern "C" fn DoorTransition_HandleTransition() -> CoroutineRet {
     *fresh37 = (*fresh37 as ::core::ffi::c_int | 0x1f as ::core::ffi::c_int) as uint16;
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DoorTransition_FadeInScreenAndFinish() -> CoroutineRet {
+pub unsafe fn DoorTransition_FadeInScreenAndFinish() -> CoroutineRet {
     AnimtilesHandler();
     DetermineWhichEnemiesToProcess();
     EnemyMain();
@@ -10299,16 +10002,14 @@ pub unsafe extern "C" fn DoorTransition_FadeInScreenAndFinish() -> CoroutineRet 
     }
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadDestinationRoomThings() {
+pub unsafe fn LoadDestinationRoomThings() {
     LoaadDesinationRoomCreBitset();
     LoadDoorHeader();
     LoadRoomHeader();
     LoadStateHeader();
     LoadCRETilesTilesetTilesAndPalette();
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadCRETilesTilesetTilesAndPalette() {
+pub unsafe fn LoadCRETilesTilesetTilesAndPalette() {
     *((&raw mut g_ram as *mut uint8).offset(0xe16 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     WriteRegWord(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint16);
@@ -10336,8 +10037,7 @@ pub unsafe extern "C" fn LoadCRETilesTilesetTilesAndPalette() {
         (&raw mut g_ram as *mut uint8).offset(0xc200 as ::core::ffi::c_int as isize) as *mut uint8,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadLevelDataAndOtherThings() {
+pub unsafe fn LoadLevelDataAndOtherThings() {
     let mut rdf_scroll_ptr: int16 = 0;
     let mut m: uint16 = 0;
     let mut v10: int8 = 0;
@@ -10472,8 +10172,7 @@ pub unsafe extern "C" fn LoadLevelDataAndOtherThings() {
             as *mut uint16) = 2 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnDoorClosingPLM() {
+pub unsafe fn SpawnDoorClosingPLM() {
     if CheckIfColoredDoorCapSpawned() == 0 {
         let mut v0: *const uint16 = RomPtr_8F(
             (2 as ::core::ffi::c_int
@@ -10487,7 +10186,7 @@ pub unsafe extern "C" fn SpawnDoorClosingPLM() {
                 as *mut RoomPlmEntry;
             (*rp).plm_header_ptr_ = *v0 as VoidP;
             *(&raw mut (*rp).x_block as *mut uint16) = *(&raw mut (*(get_DoorDef
-                as unsafe extern "C" fn(uint16) -> *mut DoorDef)(
+                as unsafe fn(uint16) -> *mut DoorDef)(
                 *((&raw mut g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize)
                     as *mut uint16),
             ))
@@ -10497,8 +10196,7 @@ pub unsafe extern "C" fn SpawnDoorClosingPLM() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CheckIfColoredDoorCapSpawned() -> uint8 {
+pub unsafe fn CheckIfColoredDoorCapSpawned() -> uint8 {
     let mut DD: *mut DoorDef = get_DoorDef(
         *((&raw mut g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -10561,26 +10259,19 @@ pub unsafe extern "C" fn CheckIfColoredDoorCapSpawned() -> uint8 {
 }
 static mut kLoadLibraryBackgroundFuncs: [Option<Func_Y_Y>; 8] = unsafe {
     [
-        Some(LoadLibraryBackgroundFunc_0_DONE as unsafe extern "C" fn(uint16) -> uint16),
-        Some(LoadLibraryBackgroundFunc_2_TransferToVram as unsafe extern "C" fn(uint16) -> uint16),
-        Some(LoadLibraryBackgroundFunc_4_Decompress as unsafe extern "C" fn(uint16) -> uint16),
-        Some(LoadLibraryBackgroundFunc_6_ClearFxTilemap as unsafe extern "C" fn(uint16) -> uint16),
+        Some(LoadLibraryBackgroundFunc_0_DONE as unsafe fn(uint16) -> uint16),
+        Some(LoadLibraryBackgroundFunc_2_TransferToVram as unsafe fn(uint16) -> uint16),
+        Some(LoadLibraryBackgroundFunc_4_Decompress as unsafe fn(uint16) -> uint16),
+        Some(LoadLibraryBackgroundFunc_6_ClearFxTilemap as unsafe fn(uint16) -> uint16),
+        Some(LoadLibraryBackgroundFunc_8_TransferToVramAndSetBg3 as unsafe fn(uint16) -> uint16),
+        Some(LoadLibraryBackgroundFunc_A_ClearBG2Tilemap as unsafe fn(uint16) -> uint16),
+        Some(LoadLibraryBackgroundFunc_C_ClearKraidLayer2 as unsafe fn(uint16) -> uint16),
         Some(
-            LoadLibraryBackgroundFunc_8_TransferToVramAndSetBg3
-                as unsafe extern "C" fn(uint16) -> uint16,
-        ),
-        Some(LoadLibraryBackgroundFunc_A_ClearBG2Tilemap as unsafe extern "C" fn(uint16) -> uint16),
-        Some(
-            LoadLibraryBackgroundFunc_C_ClearKraidLayer2 as unsafe extern "C" fn(uint16) -> uint16,
-        ),
-        Some(
-            LoadLibraryBackgroundFunc_E_DoorDependentTransferToVram
-                as unsafe extern "C" fn(uint16) -> uint16,
+            LoadLibraryBackgroundFunc_E_DoorDependentTransferToVram as unsafe fn(uint16) -> uint16,
         ),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn LoadLibraryBackground() {
+pub unsafe fn LoadLibraryBackground() {
     let mut bg_data_ptr: uint16 = 0;
     ClearFXTilemap();
     if *((&raw mut g_ram as *mut uint8).offset(0x1964 as ::core::ffi::c_int as isize)
@@ -10621,14 +10312,10 @@ pub unsafe extern "C" fn LoadLibraryBackground() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadLibraryBackgroundFunc_0_DONE(mut j: uint16) -> uint16 {
+pub unsafe fn LoadLibraryBackgroundFunc_0_DONE(mut j: uint16) -> uint16 {
     return 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadLibraryBackgroundFunc_E_DoorDependentTransferToVram(
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn LoadLibraryBackgroundFunc_E_DoorDependentTransferToVram(mut j: uint16) -> uint16 {
     if *((&raw mut g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         == (*get_LoadBg_E(j)).field_0 as ::core::ffi::c_int
@@ -10640,8 +10327,7 @@ pub unsafe extern "C" fn LoadLibraryBackgroundFunc_E_DoorDependentTransferToVram
         return (j as ::core::ffi::c_int + 9 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadLibraryBackgroundFunc_2_TransferToVram(mut j: uint16) -> uint16 {
+pub unsafe fn LoadLibraryBackgroundFunc_2_TransferToVram(mut j: uint16) -> uint16 {
     let mut LoadBg_28: *mut uint16 = RomPtr_8F(j as uint16_t) as *mut uint16;
     WriteRegWord(
         VMADDL as ::core::ffi::c_int as uint16,
@@ -10661,8 +10347,7 @@ pub unsafe extern "C" fn LoadLibraryBackgroundFunc_2_TransferToVram(mut j: uint1
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
     return (j as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadLibraryBackgroundFunc_4_Decompress(mut j: uint16) -> uint16 {
+pub unsafe fn LoadLibraryBackgroundFunc_4_Decompress(mut j: uint16) -> uint16 {
     let mut p: *const uint8 = RomPtr_8F(j as uint16_t);
     DecompressToMem(
         Load24(p as *mut LongPtr),
@@ -10673,31 +10358,24 @@ pub unsafe extern "C" fn LoadLibraryBackgroundFunc_4_Decompress(mut j: uint16) -
     );
     return (j as ::core::ffi::c_int + 5 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadLibraryBackgroundFunc_6_ClearFxTilemap(mut j: uint16) -> uint16 {
+pub unsafe fn LoadLibraryBackgroundFunc_6_ClearFxTilemap(mut j: uint16) -> uint16 {
     ClearFXTilemap();
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadLibraryBackgroundFunc_A_ClearBG2Tilemap(mut j: uint16) -> uint16 {
+pub unsafe fn LoadLibraryBackgroundFunc_A_ClearBG2Tilemap(mut j: uint16) -> uint16 {
     ClearBG2Tilemap();
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadLibraryBackgroundFunc_C_ClearKraidLayer2(mut j: uint16) -> uint16 {
+pub unsafe fn LoadLibraryBackgroundFunc_C_ClearKraidLayer2(mut j: uint16) -> uint16 {
     ClearBG2Tilemap();
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadLibraryBackgroundFunc_8_TransferToVramAndSetBg3(
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn LoadLibraryBackgroundFunc_8_TransferToVramAndSetBg3(mut j: uint16) -> uint16 {
     j = LoadLibraryBackgroundFunc_2_TransferToVram(j);
     *(&raw mut g_ram as *mut uint8).offset(0x5e as ::core::ffi::c_int as isize) = 2 as uint8;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadLevelScrollAndCre() {
+pub unsafe fn LoadLevelScrollAndCre() {
     let mut rdf_scroll_ptr: int16 = 0;
     let mut m: uint16 = 0;
     let mut v10: int8 = 0;
@@ -10845,8 +10523,7 @@ pub unsafe extern "C" fn LoadLevelScrollAndCre() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CreatePlmsExecuteDoorAsmRoomSetup() {
+pub unsafe fn CreatePlmsExecuteDoorAsmRoomSetup() {
     let mut RoomDefRoomstate: *mut RoomDefRoomstate = ::core::ptr::null_mut::<RoomDefRoomstate>();
     RoomDefRoomstate = get_RoomDefRoomstate(
         *((&raw mut g_ram as *mut uint8).offset(0x7bb as ::core::ffi::c_int as isize)
@@ -10871,23 +10548,22 @@ pub unsafe extern "C" fn CreatePlmsExecuteDoorAsmRoomSetup() {
 }
 static mut kGameOptionsMenuFuncs: [Option<Func_V>; 13] = unsafe {
     [
-        Some(GameOptionsMenuFunc_0 as unsafe extern "C" fn() -> ()),
-        Some(GameOptionsMenu_1_LoadingOptionsScreen as unsafe extern "C" fn() -> ()),
-        Some(GameOptionsMenu_2_FadeInOptionsScreen as unsafe extern "C" fn() -> ()),
-        Some(GameOptionsMenu_3_OptionsScreen as unsafe extern "C" fn() -> ()),
-        Some(GameOptionsMenu_4_StartGame as unsafe extern "C" fn() -> ()),
-        Some(GameOptionsMenu_5_DissolveOutScreen as unsafe extern "C" fn() -> ()),
-        Some(GameOptionsMenu_6_DissolveInScreen as unsafe extern "C" fn() -> ()),
-        Some(GameOptionsMenu_7_ControllerSettings as unsafe extern "C" fn() -> ()),
-        Some(GameOptionsMenu_8_SpecialSettings as unsafe extern "C" fn() -> ()),
-        Some(GameOptionsMenu_9_ScrollControllerSettingsDown as unsafe extern "C" fn() -> ()),
-        Some(GameOptionsMenu_A_ScrollControllerSettingsUp as unsafe extern "C" fn() -> ()),
-        Some(GameOptionsMenu_B_TransitionBackToFileSelect as unsafe extern "C" fn() -> ()),
-        Some(GameOptionsMenu_C_FadeOutOptionsScreenToStart as unsafe extern "C" fn() -> ()),
+        Some(GameOptionsMenuFunc_0 as unsafe fn() -> ()),
+        Some(GameOptionsMenu_1_LoadingOptionsScreen as unsafe fn() -> ()),
+        Some(GameOptionsMenu_2_FadeInOptionsScreen as unsafe fn() -> ()),
+        Some(GameOptionsMenu_3_OptionsScreen as unsafe fn() -> ()),
+        Some(GameOptionsMenu_4_StartGame as unsafe fn() -> ()),
+        Some(GameOptionsMenu_5_DissolveOutScreen as unsafe fn() -> ()),
+        Some(GameOptionsMenu_6_DissolveInScreen as unsafe fn() -> ()),
+        Some(GameOptionsMenu_7_ControllerSettings as unsafe fn() -> ()),
+        Some(GameOptionsMenu_8_SpecialSettings as unsafe fn() -> ()),
+        Some(GameOptionsMenu_9_ScrollControllerSettingsDown as unsafe fn() -> ()),
+        Some(GameOptionsMenu_A_ScrollControllerSettingsUp as unsafe fn() -> ()),
+        Some(GameOptionsMenu_B_TransitionBackToFileSelect as unsafe fn() -> ()),
+        Some(GameOptionsMenu_C_FadeOutOptionsScreenToStart as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn GameState_2_GameOptionsMenu() -> CoroutineRet {
+pub unsafe fn GameState_2_GameOptionsMenu() -> CoroutineRet {
     kGameOptionsMenuFuncs[*((&raw mut g_ram as *mut uint8)
         .offset(0xde2 as ::core::ffi::c_int as isize) as *mut uint16)
         as usize]
@@ -10904,8 +10580,7 @@ pub unsafe extern "C" fn GameState_2_GameOptionsMenu() -> CoroutineRet {
     }
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameOptionsMenuFunc_0() {
+pub unsafe fn GameOptionsMenuFunc_0() {
     HandleFadeOut();
     if *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
@@ -10935,8 +10610,7 @@ pub unsafe extern "C" fn GameOptionsMenuFunc_0() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameOptionsMenu_1_LoadingOptionsScreen() {
+pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen() {
     let mut j: uint16 = 0;
     *(&raw mut g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize) = 0 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 19 as uint8;
@@ -11032,8 +10706,7 @@ pub unsafe extern "C" fn GameOptionsMenu_1_LoadingOptionsScreen() {
     *fresh66 = (*fresh66).wrapping_add(1);
     OptionsMenuFunc4();
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameOptionsMenu_2_FadeInOptionsScreen() {
+pub unsafe fn GameOptionsMenu_2_FadeInOptionsScreen() {
     HandleFadeIn();
     if *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
@@ -11049,8 +10722,7 @@ pub unsafe extern "C" fn GameOptionsMenu_2_FadeInOptionsScreen() {
         *fresh67 = (*fresh67).wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn OptionsMenu_AddToVramQueue() {
+pub unsafe fn OptionsMenu_AddToVramQueue() {
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
     (*gVramWriteEntry(
@@ -11063,8 +10735,7 @@ pub unsafe extern "C" fn OptionsMenu_AddToVramQueue() {
     v0 = (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     let fresh118 = v0;
     v0 = v0.wrapping_add(1);
-    *(&raw mut (*(gVramWriteEntry
-        as unsafe extern "C" fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
+    *(&raw mut (*(gVramWriteEntry as unsafe fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
         fresh118 as ::core::ffi::c_int,
     ))
     .size as *mut uint8)
@@ -11073,8 +10744,7 @@ pub unsafe extern "C" fn OptionsMenu_AddToVramQueue() {
     *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16) =
         (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn OptionsMenuFunc5(mut a: uint16, mut k: uint16, mut j: uint16) {
+pub unsafe fn OptionsMenuFunc5(mut a: uint16, mut k: uint16, mut j: uint16) {
     loop {
         *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
             as *mut Ram3000))
@@ -11097,15 +10767,14 @@ pub unsafe extern "C" fn OptionsMenuFunc5(mut a: uint16, mut k: uint16, mut j: u
 }
 static mut kGameOptionsMenuItemFuncs: [Option<Func_V>; 5] = unsafe {
     [
-        Some(GameOptionsMenuItemFunc_0 as unsafe extern "C" fn() -> ()),
-        Some(GameOptionsMenuItemFunc_2_ToggleJapanese as unsafe extern "C" fn() -> ()),
-        Some(GameOptionsMenuItemFunc_2_ToggleJapanese as unsafe extern "C" fn() -> ()),
-        Some(GameOptionsMenuItemFunc_4 as unsafe extern "C" fn() -> ()),
-        Some(GameOptionsMenuItemFunc_4 as unsafe extern "C" fn() -> ()),
+        Some(GameOptionsMenuItemFunc_0 as unsafe fn() -> ()),
+        Some(GameOptionsMenuItemFunc_2_ToggleJapanese as unsafe fn() -> ()),
+        Some(GameOptionsMenuItemFunc_2_ToggleJapanese as unsafe fn() -> ()),
+        Some(GameOptionsMenuItemFunc_4 as unsafe fn() -> ()),
+        Some(GameOptionsMenuItemFunc_4 as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn GameOptionsMenu_3_OptionsScreen() {
+pub unsafe fn GameOptionsMenu_3_OptionsScreen() {
     if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & kButton_Up as ::core::ffi::c_int
@@ -11159,8 +10828,7 @@ pub unsafe extern "C" fn GameOptionsMenu_3_OptionsScreen() {
             .expect("non-null function pointer")();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameOptionsMenuItemFunc_0() {
+pub unsafe fn GameOptionsMenuItemFunc_0() {
     if *((&raw mut g_ram as *mut uint8).offset(0x5d1 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         != 0
@@ -11183,8 +10851,7 @@ pub unsafe extern "C" fn GameOptionsMenuItemFunc_0() {
             as *mut uint16) = 12 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameOptionsMenuItemFunc_2_ToggleJapanese() {
+pub unsafe fn GameOptionsMenuItemFunc_2_ToggleJapanese() {
     *((&raw mut g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -11193,8 +10860,7 @@ pub unsafe extern "C" fn GameOptionsMenuItemFunc_2_ToggleJapanese() {
             == 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
     OptionsMenuFunc4();
 }
-#[no_mangle]
-pub unsafe extern "C" fn OptionsMenuFunc4() {
+pub unsafe fn OptionsMenuFunc4() {
     if *((&raw mut g_ram as *mut uint8).offset(0x9e2 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -11209,8 +10875,7 @@ pub unsafe extern "C" fn OptionsMenuFunc4() {
         OptionsMenuFunc5(0x400 as uint16, 0x388 as uint16, 0x32 as uint16);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameOptionsMenuItemFunc_4() {
+pub unsafe fn GameOptionsMenuItemFunc_4() {
     *(&raw mut g_ram as *mut uint8).offset(0x57 as ::core::ffi::c_int as isize) = 3 as uint8;
     *((&raw mut g_ram as *mut uint8).offset(0x723 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
@@ -11219,8 +10884,7 @@ pub unsafe extern "C" fn GameOptionsMenuItemFunc_4() {
     *((&raw mut g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize) as *mut uint16) =
         5 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameOptionsMenu_B_TransitionBackToFileSelect() {
+pub unsafe fn GameOptionsMenu_B_TransitionBackToFileSelect() {
     HandleFadeOut();
     if *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
@@ -11239,8 +10903,7 @@ pub unsafe extern "C" fn GameOptionsMenu_B_TransitionBackToFileSelect() {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameOptionsMenu_C_FadeOutOptionsScreenToStart() {
+pub unsafe fn GameOptionsMenu_C_FadeOutOptionsScreenToStart() {
     HandleFadeOut();
     if *(&raw mut g_ram as *mut uint8).offset(0x51 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
@@ -11255,8 +10918,7 @@ pub unsafe extern "C" fn GameOptionsMenu_C_FadeOutOptionsScreenToStart() {
             as *mut uint16) = 4 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameOptionsMenu_4_StartGame() {
+pub unsafe fn GameOptionsMenu_4_StartGame() {
     *((&raw mut g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     if *((&raw mut g_ram as *mut uint8).offset(0x5d1 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -11314,8 +10976,7 @@ pub unsafe extern "C" fn GameOptionsMenu_4_StartGame() {
             as *mut uint16) = 0 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameOptionsMenu_5_DissolveOutScreen() {
+pub unsafe fn GameOptionsMenu_5_DissolveOutScreen() {
     let mut m: uint16 = 0;
     let mut k: uint16 = 0;
     let mut j: uint16 = 0;
@@ -11459,8 +11120,7 @@ pub unsafe extern "C" fn GameOptionsMenu_5_DissolveOutScreen() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameOptionsMenu_6_DissolveInScreen() {
+pub unsafe fn GameOptionsMenu_6_DissolveInScreen() {
     HandleFadeIn();
     if *(&raw mut g_ram as *mut uint8).offset(0x57 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
@@ -11504,13 +11164,12 @@ pub unsafe extern "C" fn GameOptionsMenu_6_DissolveInScreen() {
 }
 static mut kGameOptionsMenuSpecialSettings: [Option<Func_V>; 3] = unsafe {
     [
-        Some(GameOptionsMenuSpecialSettings_0 as unsafe extern "C" fn() -> ()),
-        Some(GameOptionsMenuSpecialSettings_0 as unsafe extern "C" fn() -> ()),
-        Some(GameOptionsMenuSpecialSettings_2 as unsafe extern "C" fn() -> ()),
+        Some(GameOptionsMenuSpecialSettings_0 as unsafe fn() -> ()),
+        Some(GameOptionsMenuSpecialSettings_0 as unsafe fn() -> ()),
+        Some(GameOptionsMenuSpecialSettings_2 as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn GameOptionsMenu_8_SpecialSettings() {
+pub unsafe fn GameOptionsMenu_8_SpecialSettings() {
     if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & kButton_Up as ::core::ffi::c_int
@@ -11567,8 +11226,7 @@ pub unsafe extern "C" fn GameOptionsMenu_8_SpecialSettings() {
         GameOptionsMenuItemFunc_4();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameOptionsMenuSpecialSettings_0() {
+pub unsafe fn GameOptionsMenuSpecialSettings_0() {
     let mut v0: *mut uint8 = RomPtr_RAM(
         *(g_rom.offset(
             (((0x82f0ae as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -11588,8 +11246,7 @@ pub unsafe extern "C" fn GameOptionsMenuSpecialSettings_0() {
     }
     OptionsMenuFunc7();
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameOptionsMenuSpecialSettings_2() {
+pub unsafe fn GameOptionsMenuSpecialSettings_2() {
     *((&raw mut g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     GameOptionsMenuItemFunc_4();
@@ -11606,8 +11263,7 @@ static mut g_word_82F151: [uint16; 4] = [
     0x36e as ::core::ffi::c_int as uint16,
     0x3ae as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn OptionsMenuFunc7() {
+pub unsafe fn OptionsMenuFunc7() {
     let mut v0: uint16 = (4 as ::core::ffi::c_int
         * *((&raw mut g_ram as *mut uint8).offset(0x99e as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int) as uint16;
@@ -11698,8 +11354,7 @@ static mut word_82F204: [uint16; 16] = [
     0x80 as ::core::ffi::c_int as uint16,
     0x80 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn GameOptionsMenu_7_ControllerSettings() {
+pub unsafe fn GameOptionsMenu_7_ControllerSettings() {
     if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & kButton_Up as ::core::ffi::c_int
@@ -11760,15 +11415,15 @@ pub unsafe extern "C" fn GameOptionsMenu_7_ControllerSettings() {
         QueueSfx1_Max6(0x38 as uint16);
         static mut kOptionsMenuControllerFuncs: [Option<Func_V>; 9] = unsafe {
             [
-                Some(OptionsMenuControllerFunc_0 as unsafe extern "C" fn() -> ()),
-                Some(OptionsMenuControllerFunc_0 as unsafe extern "C" fn() -> ()),
-                Some(OptionsMenuControllerFunc_0 as unsafe extern "C" fn() -> ()),
-                Some(OptionsMenuControllerFunc_0 as unsafe extern "C" fn() -> ()),
-                Some(OptionsMenuControllerFunc_0 as unsafe extern "C" fn() -> ()),
-                Some(OptionsMenuControllerFunc_0 as unsafe extern "C" fn() -> ()),
-                Some(OptionsMenuControllerFunc_0 as unsafe extern "C" fn() -> ()),
-                Some(OptionsMenuControllerFunc_7 as unsafe extern "C" fn() -> ()),
-                Some(OptionsMenuControllerFunc_8 as unsafe extern "C" fn() -> ()),
+                Some(OptionsMenuControllerFunc_0 as unsafe fn() -> ()),
+                Some(OptionsMenuControllerFunc_0 as unsafe fn() -> ()),
+                Some(OptionsMenuControllerFunc_0 as unsafe fn() -> ()),
+                Some(OptionsMenuControllerFunc_0 as unsafe fn() -> ()),
+                Some(OptionsMenuControllerFunc_0 as unsafe fn() -> ()),
+                Some(OptionsMenuControllerFunc_0 as unsafe fn() -> ()),
+                Some(OptionsMenuControllerFunc_0 as unsafe fn() -> ()),
+                Some(OptionsMenuControllerFunc_7 as unsafe fn() -> ()),
+                Some(OptionsMenuControllerFunc_8 as unsafe fn() -> ()),
             ]
         };
         kOptionsMenuControllerFuncs[*((&raw mut g_ram as *mut uint8)
@@ -11805,8 +11460,7 @@ pub unsafe extern "C" fn GameOptionsMenu_7_ControllerSettings() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn OptionsMenuControllerFunc_8() {
+pub unsafe fn OptionsMenuControllerFunc_8() {
     if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & (kButton_Start as ::core::ffi::c_int | kButton_A as ::core::ffi::c_int)
@@ -11830,8 +11484,7 @@ pub unsafe extern "C" fn OptionsMenuControllerFunc_8() {
         OptionsMenuFunc6();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn OptionsMenuControllerFunc_7() {
+pub unsafe fn OptionsMenuControllerFunc_7() {
     if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & (kButton_Start as ::core::ffi::c_int | kButton_A as ::core::ffi::c_int)
@@ -11843,8 +11496,7 @@ pub unsafe extern "C" fn OptionsMenuControllerFunc_7() {
         GameOptionsMenuItemFunc_4();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameOptionsMenu_9_ScrollControllerSettingsDown() {
+pub unsafe fn GameOptionsMenu_9_ScrollControllerSettingsDown() {
     let ref mut fresh77 = *((&raw mut g_ram as *mut uint8)
         .offset(0xb3 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh77 = (*fresh77 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
@@ -11856,8 +11508,7 @@ pub unsafe extern "C" fn GameOptionsMenu_9_ScrollControllerSettingsDown() {
             as *mut uint16) = 7 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GameOptionsMenu_A_ScrollControllerSettingsUp() {
+pub unsafe fn GameOptionsMenu_A_ScrollControllerSettingsUp() {
     let ref mut fresh78 = *((&raw mut g_ram as *mut uint8)
         .offset(0xb3 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh78 = (*fresh78 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
@@ -11868,8 +11519,7 @@ pub unsafe extern "C" fn GameOptionsMenu_A_ScrollControllerSettingsUp() {
             as *mut uint16) = 7 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_82F296(mut j: uint16) {
+pub unsafe fn sub_82F296(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -11881,8 +11531,7 @@ pub unsafe extern "C" fn sub_82F296(mut j: uint16) {
         as *mut uint16)
         .offset((v1 + 11 as ::core::ffi::c_int) as isize) = 3584 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn OptionsPreInstr_F2A9(mut v0: uint16) {
+pub unsafe fn OptionsPreInstr_F2A9(mut v0: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         == kGameState_2_GameOptionsMenu as ::core::ffi::c_int
@@ -11933,8 +11582,7 @@ pub unsafe extern "C" fn OptionsPreInstr_F2A9(mut v0: uint16) {
             addr_off_82F4B6 as ::core::ffi::c_int as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_82F34B(mut j: uint16) {
+pub unsafe fn sub_82F34B(mut j: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(
@@ -11943,8 +11591,7 @@ pub unsafe extern "C" fn sub_82F34B(mut j: uint16) {
         ) = 124 as uint16;
     sub_82F369(j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_82F353(mut j: uint16) {
+pub unsafe fn sub_82F353(mut j: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(
@@ -11953,8 +11600,7 @@ pub unsafe extern "C" fn sub_82F353(mut j: uint16) {
         ) = 132 as uint16;
     sub_82F369(j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_82F35B(mut j: uint16) {
+pub unsafe fn sub_82F35B(mut j: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(
@@ -11963,8 +11609,7 @@ pub unsafe extern "C" fn sub_82F35B(mut j: uint16) {
         ) = 128 as uint16;
     sub_82F369(j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_82F363(mut j: uint16) {
+pub unsafe fn sub_82F363(mut j: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(
@@ -11973,8 +11618,7 @@ pub unsafe extern "C" fn sub_82F363(mut j: uint16) {
         ) = 128 as uint16;
     sub_82F369(j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_82F369(mut j: uint16) {
+pub unsafe fn sub_82F369(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1ab7 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -11983,8 +11627,7 @@ pub unsafe extern "C" fn sub_82F369(mut j: uint16) {
         as *mut uint16)
         .offset((v1 + 11 as ::core::ffi::c_int) as isize) = 3584 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn OptionsPreInstr_F376(mut k: uint16) {
+pub unsafe fn OptionsPreInstr_F376(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         != kGameState_2_GameOptionsMenu as ::core::ffi::c_int
@@ -12005,8 +11648,7 @@ pub unsafe extern "C" fn OptionsPreInstr_F376(mut k: uint16) {
             addr_off_82F4B6 as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn OptionsPreInstr_F3A0(mut k: uint16) {
+pub unsafe fn OptionsPreInstr_F3A0(mut k: uint16) {
     match *((&raw mut g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
     {
@@ -12048,8 +11690,7 @@ pub unsafe extern "C" fn OptionsPreInstr_F3A0(mut k: uint16) {
         _ => {}
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn OptionsPreInstr_F3E2(mut k: uint16) {
+pub unsafe fn OptionsPreInstr_F3E2(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         == 6 as ::core::ffi::c_int
@@ -12067,8 +11708,7 @@ pub unsafe extern "C" fn OptionsPreInstr_F3E2(mut k: uint16) {
             -(2890 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_82F404(mut k: uint16) {
+pub unsafe fn sub_82F404(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0xde2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         == 1 as ::core::ffi::c_int
@@ -12083,8 +11723,7 @@ pub unsafe extern "C" fn sub_82F404(mut k: uint16) {
             -(2890 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_82F419(mut j: uint16) {
+pub unsafe fn sub_82F419(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -12096,8 +11735,7 @@ pub unsafe extern "C" fn sub_82F419(mut j: uint16) {
         as *mut uint16)
         .offset((v1 + 11 as ::core::ffi::c_int) as isize) = 3584 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn OptionsPreInstr_F42C(mut k: uint16) {
+pub unsafe fn OptionsPreInstr_F42C(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         != 2 as ::core::ffi::c_int
@@ -12112,8 +11750,7 @@ pub unsafe extern "C" fn OptionsPreInstr_F42C(mut k: uint16) {
             addr_off_82F4B6 as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadControllerOptionsFromControllerBindings() {
+pub unsafe fn LoadControllerOptionsFromControllerBindings() {
     let mut v2: int16 = 0;
     let mut v0: uint16 = 0 as uint16;
     loop {
@@ -12200,8 +11837,7 @@ static mut word_82F575: [Buttons; 9] = [
     kButton_Left,
     kButton_Right,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn OptionsMenuFunc8() -> uint8 {
+pub unsafe fn OptionsMenuFunc8() -> uint8 {
     let mut v0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     let mut v2: ::core::ffi::c_int = 0;
     loop {
@@ -12234,8 +11870,7 @@ static mut g_word_82F6AD: [uint16; 6] = [
     0x1f as ::core::ffi::c_int as uint16,
     0x1f as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn OptionsMenuFunc6() {
+pub unsafe fn OptionsMenuFunc6() {
     let mut v0: uint16 = 0 as uint16;
     let mut v4: uint16 = 0;
     loop {
@@ -12366,8 +12001,7 @@ pub unsafe extern "C" fn OptionsMenuFunc6() {
             g_word_82F6AD[5 as ::core::ffi::c_int as usize];
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn OptionsMenuControllerFunc_0() {
+pub unsafe fn OptionsMenuControllerFunc_0() {
     let mut v0: uint16 = 12 as uint16;
     while word_82F575[(v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize]
         as ::core::ffi::c_uint

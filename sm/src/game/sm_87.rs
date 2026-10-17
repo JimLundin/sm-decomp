@@ -185,7 +185,7 @@ pub const addr_stru_868BDE: Consts_86 = 35806;
 pub const addr_stru_868BD0: Consts_86 = 35792;
 pub const addr_stru_868BC2: Consts_86 = 35778;
 #[inline]
-unsafe extern "C" fn RomPtr_87(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_87(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x870000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 pub const fnAnimtilesInstr_Delete: uint32 = 8880306 as uint32;
@@ -212,20 +212,17 @@ pub const fnAnimtilesInstr_TourianStatueClearState: uint32 = 8880978 as uint32;
 pub const fnAnimtilesInstr_Clear3PaletteColors: uint32 = 8880987 as uint32;
 pub const fnAnimtilesInstr_SpawnPalfxObj: uint32 = 8881010 as uint32;
 pub const fnAnimtilesInstr_Write8PaletteColors: uint32 = 8881023 as uint32;
-#[no_mangle]
-pub unsafe extern "C" fn EnableAnimtiles() {
+pub unsafe fn EnableAnimtiles() {
     let ref mut fresh9 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1ef1 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh9 = (*fresh9 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DisableAnimtiles() {
+pub unsafe fn DisableAnimtiles() {
     let ref mut fresh8 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1ef1 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh8 = (*fresh8 as ::core::ffi::c_int & !(0x8000 as ::core::ffi::c_int)) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearAnimtiles() {
+pub unsafe fn ClearAnimtiles() {
     let mut i: ::core::ffi::c_int = 10 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         *((&raw mut g_ram as *mut uint8).offset(0x1ef5 as ::core::ffi::c_int as isize)
@@ -234,8 +231,7 @@ pub unsafe extern "C" fn ClearAnimtiles() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnAnimtiles(mut j: uint16) {
+pub unsafe fn SpawnAnimtiles(mut j: uint16) {
     let mut v0: uint16 = j;
     let mut v1: uint16 = 10 as uint16;
     while *((&raw mut g_ram as *mut uint8).offset(0x1ef5 as ::core::ffi::c_int as isize)
@@ -272,8 +268,7 @@ pub unsafe extern "C" fn SpawnAnimtiles(mut j: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn AnimtilesHandler() {
+pub unsafe fn AnimtilesHandler() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1ef1 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -296,12 +291,7 @@ pub unsafe extern "C" fn AnimtilesHandler() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallAnimtilesInstr(
-    mut ea: uint32,
-    mut j: uint16,
-    mut k: uint16,
-) -> uint16 {
+pub unsafe fn CallAnimtilesInstr(mut ea: uint32, mut j: uint16, mut k: uint16) -> uint16 {
     match ea {
         8880306 => return AnimtilesInstr_Delete(j, k),
         8880311 => return AnimtilesInstr_Goto(j, k),
@@ -330,8 +320,7 @@ pub unsafe extern "C" fn CallAnimtilesInstr(
         _ => return Unreachable() as uint16,
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessAnimtilesObject() {
+pub unsafe fn ProcessAnimtilesObject() {
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1ef3 as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v1: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
@@ -379,29 +368,22 @@ pub unsafe extern "C" fn ProcessAnimtilesObject() {
             .offset(v6 as isize) = (v3 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn AnimtilesInstr_Delete(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn AnimtilesInstr_Delete(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1ef5 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn AnimtilesInstr_Goto(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn AnimtilesInstr_Goto(mut k: uint16, mut j: uint16) -> uint16 {
     return *(RomPtr_87(j as uint16_t) as *mut uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn AnimtilesInstr_GotoRel(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn AnimtilesInstr_GotoRel(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1f49 as ::core::ffi::c_int as isize)
         as *mut uint16) = j;
     return (j as ::core::ffi::c_int + *RomPtr_87(j as uint16_t) as int8 as ::core::ffi::c_int)
         as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn AnimtilesInstr_DecrementTimerAndGoto(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn AnimtilesInstr_DecrementTimerAndGoto(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh0 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1f01 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -414,11 +396,7 @@ pub unsafe extern "C" fn AnimtilesInstr_DecrementTimerAndGoto(
         return AnimtilesInstr_Goto(k, j);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn AnimtilesInstr_DecrementTimerAndGotoRel(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn AnimtilesInstr_DecrementTimerAndGotoRel(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh2 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1f01 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -431,39 +409,33 @@ pub unsafe extern "C" fn AnimtilesInstr_DecrementTimerAndGotoRel(
         return AnimtilesInstr_GotoRel(k, j);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn AnimtilesInstr_SetTimer(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn AnimtilesInstr_SetTimer(mut k: uint16, mut j: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1f01 as ::core::ffi::c_int as isize) as *mut uint16
         as *mut uint8)
         .offset(k as ::core::ffi::c_int as isize) = *RomPtr_87(j as uint16_t);
     return (j as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn AnimtilesInstr_QueueMusic(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn AnimtilesInstr_QueueMusic(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v2: *const uint8 = RomPtr_87(j as uint16_t);
     QueueMusic_Delayed8(*v2 as uint16);
     return (j as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn AnimtilesInstr_QueueSfx1(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn AnimtilesInstr_QueueSfx1(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v2: *const uint8 = RomPtr_87(j as uint16_t);
     QueueSfx1_Max6(*v2 as uint16);
     return (j as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn AnimtilesInstr_QueueSfx2(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn AnimtilesInstr_QueueSfx2(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v2: *const uint8 = RomPtr_87(j as uint16_t);
     QueueSfx2_Max6(*v2 as uint16);
     return (j as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn AnimtilesInstr_QueueSfx3(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn AnimtilesInstr_QueueSfx3(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v2: *const uint8 = RomPtr_87(j as uint16_t);
     QueueSfx3_Max6(*v2 as uint16);
     return (j as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn AnimtilesInstr_GotoIfBossBitSet(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn AnimtilesInstr_GotoIfBossBitSet(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v2: *const uint8 = RomPtr_87(j as uint16_t);
     let mut v3: uint16 = (j as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16;
     if CheckBossBitForCurArea(*(v2 as *mut uint16) as uint8 as uint16) as ::core::ffi::c_int
@@ -475,17 +447,12 @@ pub unsafe extern "C" fn AnimtilesInstr_GotoIfBossBitSet(mut k: uint16, mut j: u
         return (v3 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn AnimtilesInstr_SetBossBit(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn AnimtilesInstr_SetBossBit(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v2: *const uint8 = RomPtr_87(j as uint16_t);
     SetBossBitForCurArea(*v2 as uint16);
     return (j as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn AnimtilesInstr_GotoIfEventHappened(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn AnimtilesInstr_GotoIfEventHappened(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v2: *const uint16 = RomPtr_87(j as uint16_t) as *const uint16;
     let mut v3: uint16 = (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     if CheckEventHappened(*v2) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
@@ -494,22 +461,18 @@ pub unsafe extern "C" fn AnimtilesInstr_GotoIfEventHappened(
         return (v3 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn AnimtilesInstr_SetEventHappened(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn AnimtilesInstr_SetEventHappened(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v2: *const uint16 = RomPtr_87(j as uint16_t) as *const uint16;
     SetEventHappened(*v2);
     return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn UNUSED_sub_87815A() {
+pub unsafe fn UNUSED_sub_87815A() {
     CallSomeSamusCode(0 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn UNUSED_sub_878162() {
+pub unsafe fn UNUSED_sub_878162() {
     CallSomeSamusCode(1 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn AnimtilesInstr_WaitUntilAreaBossDead_DoubleRet(
+pub unsafe fn AnimtilesInstr_WaitUntilAreaBossDead_DoubleRet(
     mut k: uint16,
     mut j: uint16,
 ) -> uint16 {
@@ -521,11 +484,7 @@ pub unsafe extern "C" fn AnimtilesInstr_WaitUntilAreaBossDead_DoubleRet(
     }
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn AnimtilesInstr_GotoIfBossBitSetInArea(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn AnimtilesInstr_GotoIfBossBitSetInArea(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v2: *const uint8 = RomPtr_87(j as uint16_t);
     let mut v3: uint16 = (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     if *v2 as ::core::ffi::c_int
@@ -540,11 +499,7 @@ pub unsafe extern "C" fn AnimtilesInstr_GotoIfBossBitSetInArea(
         return (v3 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn AnimtilesInstr_SpawnTourianStatueEyeGlow(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn AnimtilesInstr_SpawnTourianStatueEyeGlow(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v2: *const uint16 = RomPtr_87(j as uint16_t) as *const uint16;
     SpawnEprojWithRoomGfx(
         addr_kEproj_TourianStatueEyeGlow as ::core::ffi::c_int as uint16,
@@ -552,11 +507,7 @@ pub unsafe extern "C" fn AnimtilesInstr_SpawnTourianStatueEyeGlow(
     );
     return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn AnimtilesInstr_SpawnTourianStatueSoul(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn AnimtilesInstr_SpawnTourianStatueSoul(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v2: *const uint16 = RomPtr_87(j as uint16_t) as *const uint16;
     SpawnEprojWithRoomGfx(
         addr_kEproj_TourianStatueSoul as ::core::ffi::c_int as uint16,
@@ -564,11 +515,7 @@ pub unsafe extern "C" fn AnimtilesInstr_SpawnTourianStatueSoul(
     );
     return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn AnimtilesInstr_GotoIfTourianStatueBusy(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn AnimtilesInstr_GotoIfTourianStatueBusy(mut k: uint16, mut j: uint16) -> uint16 {
     if *((&raw mut g_ram as *mut uint8).offset(0x1e6f as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -579,22 +526,14 @@ pub unsafe extern "C" fn AnimtilesInstr_GotoIfTourianStatueBusy(
         return AnimtilesInstr_Goto(k, j);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn AnimtilesInstr_TourianStatueSetState(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn AnimtilesInstr_TourianStatueSetState(mut k: uint16, mut j: uint16) -> uint16 {
     let ref mut fresh5 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1e6f as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh5 = (*fresh5 as ::core::ffi::c_int
         | *(RomPtr_87(j as uint16_t) as *mut uint16) as ::core::ffi::c_int) as uint16;
     return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn AnimtilesInstr_TourianStatueClearState(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn AnimtilesInstr_TourianStatueClearState(mut k: uint16, mut j: uint16) -> uint16 {
     let ref mut fresh4 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1e6f as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh4 = (*fresh4 as ::core::ffi::c_int
@@ -602,11 +541,7 @@ pub unsafe extern "C" fn AnimtilesInstr_TourianStatueClearState(
         as uint16;
     return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn AnimtilesInstr_Clear3PaletteColors(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn AnimtilesInstr_Clear3PaletteColors(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v2: ::core::ffi::c_int =
         *(RomPtr_87(j as uint16_t) as *mut uint16) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
@@ -620,17 +555,12 @@ pub unsafe extern "C" fn AnimtilesInstr_Clear3PaletteColors(
         .offset((v2 + 2 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn AnimtilesInstr_SpawnPalfxObj(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn AnimtilesInstr_SpawnPalfxObj(mut k: uint16, mut j: uint16) -> uint16 {
     let mut v2: *const uint16 = RomPtr_87(j as uint16_t) as *const uint16;
     SpawnPalfxObject(*v2);
     return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn AnimtilesInstr_Write8PaletteColors(
-    mut k: uint16,
-    mut j: uint16,
-) -> uint16 {
+pub unsafe fn AnimtilesInstr_Write8PaletteColors(mut k: uint16, mut j: uint16) -> uint16 {
     static mut kAnimtilesInstr_Write8PaletteColors: [uint16; 8] = [
         0x3800 as ::core::ffi::c_int as uint16,
         0x7f58 as ::core::ffi::c_int as uint16,

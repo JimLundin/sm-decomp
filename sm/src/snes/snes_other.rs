@@ -51,8 +51,7 @@ pub struct CartHeader {
 }
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-#[no_mangle]
-pub unsafe extern "C" fn snes_loadRom(
+pub unsafe fn snes_loadRom(
     mut snes: *mut Snes,
     mut data: *const uint8_t,
     mut length: ::core::ffi::c_int,
@@ -195,15 +194,14 @@ pub unsafe extern "C" fn snes_loadRom(
     free(newData as *mut ::core::ffi::c_void);
     return true_0 != 0;
 }
-#[no_mangle]
-pub unsafe extern "C" fn snes_setSamples(
+pub unsafe fn snes_setSamples(
     mut snes: *mut Snes,
     mut sampleData: *mut int16_t,
     mut samplesPerFrame: ::core::ffi::c_int,
 ) {
     dsp_getSamples((*(*snes).apu).dsp, sampleData, samplesPerFrame);
 }
-unsafe extern "C" fn readHeader(
+unsafe fn readHeader(
     mut data: *const uint8_t,
     mut length: ::core::ffi::c_int,
     mut location: ::core::ffi::c_int,

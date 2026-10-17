@@ -379,7 +379,7 @@ pub struct KeyMapHashEnt {
 }
 pub type C2RustUnnamed_4 = ::core::ffi::c_uint;
 #[inline]
-unsafe extern "C" fn atoi(mut __nptr: *const ::core::ffi::c_char) -> ::core::ffi::c_int {
+unsafe fn atoi(mut __nptr: *const ::core::ffi::c_char) -> ::core::ffi::c_int {
     return strtol(
         __nptr,
         NULL as *mut *mut ::core::ffi::c_char,
@@ -388,7 +388,6 @@ unsafe extern "C" fn atoi(mut __nptr: *const ::core::ffi::c_char) -> ::core::ffi
 }
 pub const SDLK_SCANCODE_MASK: ::core::ffi::c_int =
     (1 as ::core::ffi::c_int) << 30 as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut g_config: Config = Config {
     window_width: 0,
     window_height: 0,
@@ -553,7 +552,7 @@ static mut keymap_hash: *mut KeyMapHashEnt =
     ::core::ptr::null::<KeyMapHashEnt>() as *mut KeyMapHashEnt;
 static mut keymap_hash_size: ::core::ffi::c_int = 0;
 static mut has_keynameid: [bool; 24] = [false; 24];
-unsafe extern "C" fn KeyMapHash_Add(mut key: uint16, mut cmd: uint16) -> bool {
+unsafe fn KeyMapHash_Add(mut key: uint16, mut cmd: uint16) -> bool {
     if keymap_hash_size & 0xff as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
         if keymap_hash_size > 10000 as ::core::ffi::c_int {
             Die(b"Too many keys\0" as *const u8 as *const ::core::ffi::c_char);
@@ -587,7 +586,7 @@ unsafe extern "C" fn KeyMapHash_Add(mut key: uint16, mut cmd: uint16) -> bool {
     *cur = (i + 1 as ::core::ffi::c_int) as uint16;
     return true_0 != 0;
 }
-unsafe extern "C" fn KeyMapHash_Find(mut key: uint16) -> ::core::ffi::c_int {
+unsafe fn KeyMapHash_Find(mut key: uint16) -> ::core::ffi::c_int {
     let mut i: ::core::ffi::c_int = keymap_hash_first
         [(key as ::core::ffi::c_int % 255 as ::core::ffi::c_int) as usize]
         as ::core::ffi::c_int;
@@ -601,11 +600,7 @@ unsafe extern "C" fn KeyMapHash_Find(mut key: uint16) -> ::core::ffi::c_int {
     }
     return 0 as ::core::ffi::c_int;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FindCmdForSdlKey(
-    mut code: SDL_Keycode,
-    mut mod_0: SDL_Keymod,
-) -> ::core::ffi::c_int {
+pub unsafe fn FindCmdForSdlKey(mut code: SDL_Keycode, mut mod_0: SDL_Keymod) -> ::core::ffi::c_int {
     if code & !(SDLK_SCANCODE_MASK as SDL_Keycode | 0x1ff as SDL_Keycode) != 0 {
         return 0 as ::core::ffi::c_int;
     }
@@ -654,7 +649,7 @@ pub unsafe extern "C" fn FindCmdForSdlKey(
         as ::core::ffi::c_int;
     return KeyMapHash_Find(key as uint16);
 }
-unsafe extern "C" fn ParseKeyArray(
+unsafe fn ParseKeyArray(
     mut value: *mut ::core::ffi::c_char,
     mut cmd: ::core::ffi::c_int,
     mut size: ::core::ffi::c_int,
@@ -732,7 +727,7 @@ static mut joymap_ents: *mut GamepadMapEnt =
     ::core::ptr::null::<GamepadMapEnt>() as *mut GamepadMapEnt;
 static mut joymap_size: ::core::ffi::c_int = 0;
 static mut has_joypad_controls: bool = false;
-unsafe extern "C" fn CountBits32(mut n: uint32) -> ::core::ffi::c_int {
+unsafe fn CountBits32(mut n: uint32) -> ::core::ffi::c_int {
     let mut count: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while n != 0 as uint32 {
         n &= n.wrapping_sub(1 as uint32);
@@ -740,11 +735,7 @@ unsafe extern "C" fn CountBits32(mut n: uint32) -> ::core::ffi::c_int {
     }
     return count;
 }
-unsafe extern "C" fn GamepadMap_Add(
-    mut button: ::core::ffi::c_int,
-    mut modifiers: uint32,
-    mut cmd: uint16,
-) {
+unsafe fn GamepadMap_Add(mut button: ::core::ffi::c_int, mut modifiers: uint32, mut cmd: uint16) {
     if joymap_size & 0xff as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
         if joymap_size > 1000 as ::core::ffi::c_int {
             Die(b"Too many joypad keys\0" as *const u8 as *const ::core::ffi::c_char);
@@ -782,8 +773,7 @@ unsafe extern "C" fn GamepadMap_Add(
     (*ent).next = *p;
     *p = (i + 1 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FindCmdForGamepadButton(
+pub unsafe fn FindCmdForGamepadButton(
     mut button: ::core::ffi::c_int,
     mut modifiers: uint32,
 ) -> ::core::ffi::c_int {
@@ -798,9 +788,7 @@ pub unsafe extern "C" fn FindCmdForGamepadButton(
     }
     return 0 as ::core::ffi::c_int;
 }
-unsafe extern "C" fn ParseGamepadButtonName(
-    mut value: *mut *const ::core::ffi::c_char,
-) -> ::core::ffi::c_int {
+unsafe fn ParseGamepadButtonName(mut value: *mut *const ::core::ffi::c_char) -> ::core::ffi::c_int {
     let mut s: *const ::core::ffi::c_char = *value;
     static mut kGamepadKeyNames: [*const ::core::ffi::c_char; 19] = [
         b"Back\0" as *const u8 as *const ::core::ffi::c_char,
@@ -873,7 +861,7 @@ static mut kDefaultGamepadCmds: [uint8; 12] = [
     kGamepadBtn_L1 as ::core::ffi::c_int as uint8,
     kGamepadBtn_R1 as ::core::ffi::c_int as uint8,
 ];
-unsafe extern "C" fn ParseGamepadArray(
+unsafe fn ParseGamepadArray(
     mut value: *mut ::core::ffi::c_char,
     mut cmd: ::core::ffi::c_int,
     mut size: ::core::ffi::c_int,
@@ -916,7 +904,7 @@ unsafe extern "C" fn ParseGamepadArray(
         cmd += (cmd != 0 as ::core::ffi::c_int) as ::core::ffi::c_int;
     }
 }
-unsafe extern "C" fn RegisterDefaultKeys() {
+unsafe fn RegisterDefaultKeys() {
     let mut i: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
     while (i as usize)
         < (::core::mem::size_of::<[KeyNameId; 24]>() as usize)
@@ -949,7 +937,7 @@ unsafe extern "C" fn RegisterDefaultKeys() {
         }
     }
 }
-unsafe extern "C" fn GetIniSection(mut s: *const ::core::ffi::c_char) -> ::core::ffi::c_int {
+unsafe fn GetIniSection(mut s: *const ::core::ffi::c_char) -> ::core::ffi::c_int {
     if StringEqualsNoCase(s, b"[KeyMap]\0" as *const u8 as *const ::core::ffi::c_char) {
         return 0 as ::core::ffi::c_int;
     }
@@ -979,11 +967,7 @@ unsafe extern "C" fn GetIniSection(mut s: *const ::core::ffi::c_char) -> ::core:
     }
     return -(1 as ::core::ffi::c_int);
 }
-#[no_mangle]
-pub unsafe extern "C" fn ParseBool(
-    mut value: *const ::core::ffi::c_char,
-    mut result: *mut bool,
-) -> bool {
+pub unsafe fn ParseBool(mut value: *const ::core::ffi::c_char, mut result: *mut bool) -> bool {
     let mut rv: bool = false_0 != 0;
     let fresh2 = value;
     value = value.offset(1);
@@ -1042,7 +1026,7 @@ pub unsafe extern "C" fn ParseBool(
     }
     return rv;
 }
-unsafe extern "C" fn HandleIniConfig(
+unsafe fn HandleIniConfig(
     mut section: ::core::ffi::c_int,
     mut key: *const ::core::ffi::c_char,
     mut value: *mut ::core::ffi::c_char,
@@ -1287,7 +1271,7 @@ unsafe extern "C" fn HandleIniConfig(
     }
     return false_0 != 0;
 }
-unsafe extern "C" fn ParseOneConfigFile(
+unsafe fn ParseOneConfigFile(
     mut filename: *const ::core::ffi::c_char,
     mut depth: ::core::ffi::c_int,
 ) -> bool {
@@ -1371,8 +1355,7 @@ unsafe extern "C" fn ParseOneConfigFile(
     }
     return true_0 != 0;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ParseConfigFile(mut filename: *const ::core::ffi::c_char) {
+pub unsafe fn ParseConfigFile(mut filename: *const ::core::ffi::c_char) {
     g_config.msuvolume = 100 as uint8;
     if !filename.is_null()
         || !ParseOneConfigFile(
@@ -1398,7 +1381,7 @@ pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::
 pub const NULL_0: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-unsafe extern "C" fn run_static_initializers() {
+unsafe fn run_static_initializers() {
     kDefaultKbdControls = [
         0 as ::core::ffi::c_int as uint16,
         ((if SDLK_UP as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
@@ -1978,4 +1961,4 @@ unsafe extern "C" fn run_static_initializers() {
 #[cfg_attr(target_os = "linux", link_section = ".init_array")]
 #[cfg_attr(target_os = "windows", link_section = ".CRT$XIB")]
 #[cfg_attr(target_os = "macos", link_section = "__DATA,__mod_init_func")]
-static INIT_ARRAY: [unsafe extern "C" fn(); 1] = [run_static_initializers];
+static INIT_ARRAY: [unsafe fn(); 1] = [run_static_initializers];

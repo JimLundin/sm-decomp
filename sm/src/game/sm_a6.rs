@@ -896,7 +896,7 @@ pub struct Enemy_Zebetites {
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 #[inline]
-unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
+unsafe fn abs16(mut t: uint16) -> uint16 {
     return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         -(t as ::core::ffi::c_int)
     } else {
@@ -904,25 +904,25 @@ unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
     }) as uint16;
 }
 #[inline]
-unsafe extern "C" fn RomPtr_A0(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_A0(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0xa00000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomPtr_A6(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_A6(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0xa60000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn gOamEnt(mut v: ::core::ffi::c_int) -> *mut OamEnt {
+unsafe fn gOamEnt(mut v: ::core::ffi::c_int) -> *mut OamEnt {
     return (&raw mut g_ram as *mut uint8).offset((0x370 as ::core::ffi::c_int + v) as isize)
         as *mut uint8 as *mut OamEnt;
 }
 #[inline]
-unsafe extern "C" fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
+unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
     return (&raw mut g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
         as *mut uint8 as *mut VramWriteEntry;
 }
 #[inline]
-unsafe extern "C" fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
+unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
     let mut t: uint32 = ((*lo as ::core::ffi::c_int
         + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
         as uint32)
@@ -1027,93 +1027,91 @@ pub const fnZebetites_Func_1: ::core::ffi::c_int = 0xa6fc41 as ::core::ffi::c_in
 pub const fnZebetites_Func_2: ::core::ffi::c_int = 0xa6fc5b as ::core::ffi::c_int;
 pub const fnZebetites_Func_3: ::core::ffi::c_int = 0xa6fc67 as ::core::ffi::c_int;
 #[inline]
-unsafe extern "C" fn gEnemyData(mut o: ::core::ffi::c_int) -> *mut EnemyData {
+unsafe fn gEnemyData(mut o: ::core::ffi::c_int) -> *mut EnemyData {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut EnemyData;
 }
 #[inline]
-unsafe extern "C" fn gEnemySpawnData(mut o: ::core::ffi::c_int) -> *mut EnemySpawnData {
+unsafe fn gEnemySpawnData(mut o: ::core::ffi::c_int) -> *mut EnemySpawnData {
     return (&raw mut g_ram as *mut uint8)
         .offset(0x7000 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut EnemySpawnData;
 }
 #[inline]
-unsafe extern "C" fn gRam8800_Default(mut o: ::core::ffi::c_int) -> *mut Ram8800_Default {
+unsafe fn gRam8800_Default(mut o: ::core::ffi::c_int) -> *mut Ram8800_Default {
     return (&raw mut g_ram as *mut uint8)
         .offset(0x8800 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Ram8800_Default;
 }
 #[inline]
-unsafe extern "C" fn Get_Boulder(mut o: ::core::ffi::c_int) -> *mut Enemy_Boulder {
+unsafe fn Get_Boulder(mut o: ::core::ffi::c_int) -> *mut Enemy_Boulder {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_Boulder;
 }
 #[inline]
-unsafe extern "C" fn Get_CeresDoor(mut o: ::core::ffi::c_int) -> *mut Enemy_CeresDoor {
+unsafe fn Get_CeresDoor(mut o: ::core::ffi::c_int) -> *mut Enemy_CeresDoor {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_CeresDoor;
 }
 #[inline]
-unsafe extern "C" fn Get_CeresRidley(mut o: ::core::ffi::c_int) -> *mut Enemy_CeresRidley {
+unsafe fn Get_CeresRidley(mut o: ::core::ffi::c_int) -> *mut Enemy_CeresRidley {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_CeresRidley;
 }
 #[inline]
-unsafe extern "C" fn Get_CeresSteam(mut o: ::core::ffi::c_int) -> *mut Enemy_CeresSteam {
+unsafe fn Get_CeresSteam(mut o: ::core::ffi::c_int) -> *mut Enemy_CeresSteam {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_CeresSteam;
 }
 #[inline]
-unsafe extern "C" fn Get_FakeKraid(mut o: ::core::ffi::c_int) -> *mut Enemy_FakeKraid {
+unsafe fn Get_FakeKraid(mut o: ::core::ffi::c_int) -> *mut Enemy_FakeKraid {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_FakeKraid;
 }
 #[inline]
-unsafe extern "C" fn Get_FireGeyser(mut o: ::core::ffi::c_int) -> *mut Enemy_FireGeyser {
+unsafe fn Get_FireGeyser(mut o: ::core::ffi::c_int) -> *mut Enemy_FireGeyser {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_FireGeyser;
 }
 #[inline]
-unsafe extern "C" fn Get_MotherBrain(mut o: ::core::ffi::c_int) -> *mut Enemy_MotherBrain {
+unsafe fn Get_MotherBrain(mut o: ::core::ffi::c_int) -> *mut Enemy_MotherBrain {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_MotherBrain;
 }
 #[inline]
-unsafe extern "C" fn Get_NuclearWaffle(mut o: ::core::ffi::c_int) -> *mut Enemy_NuclearWaffle {
+unsafe fn Get_NuclearWaffle(mut o: ::core::ffi::c_int) -> *mut Enemy_NuclearWaffle {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_NuclearWaffle;
 }
 #[inline]
-unsafe extern "C" fn Get_Ridley(mut o: ::core::ffi::c_int) -> *mut Enemy_Ridley {
+unsafe fn Get_Ridley(mut o: ::core::ffi::c_int) -> *mut Enemy_Ridley {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_Ridley;
 }
 #[inline]
-unsafe extern "C" fn Get_RidleysExplosion(
-    mut o: ::core::ffi::c_int,
-) -> *mut Enemy_RidleysExplosion {
+unsafe fn Get_RidleysExplosion(mut o: ::core::ffi::c_int) -> *mut Enemy_RidleysExplosion {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_RidleysExplosion;
 }
 #[inline]
-unsafe extern "C" fn Get_SpikeyPlatform(mut o: ::core::ffi::c_int) -> *mut Enemy_SpikeyPlatform {
+unsafe fn Get_SpikeyPlatform(mut o: ::core::ffi::c_int) -> *mut Enemy_SpikeyPlatform {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_SpikeyPlatform;
 }
 #[inline]
-unsafe extern "C" fn Get_Zebetites(mut o: ::core::ffi::c_int) -> *mut Enemy_Zebetites {
+unsafe fn Get_Zebetites(mut o: ::core::ffi::c_int) -> *mut Enemy_Zebetites {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_Zebetites;
@@ -1278,28 +1276,22 @@ static mut g_word_A6D9ED: [uint16; 8] = [
     0x28 as ::core::ffi::c_int as uint16,
     0x30 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_GrappleReact_NoInteract_A6() {
+pub unsafe fn Enemy_GrappleReact_NoInteract_A6() {
     SwitchEnemyAiToMainAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_GrappleReact_CancelBeam_A6() {
+pub unsafe fn Enemy_GrappleReact_CancelBeam_A6() {
     Enemy_SwitchToFrozenAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalTouchAI_A6() {
+pub unsafe fn Enemy_NormalTouchAI_A6() {
     NormalEnemyTouchAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalShotAI_A6() {
+pub unsafe fn Enemy_NormalShotAI_A6() {
     NormalEnemyShotAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalFrozenAI_A6() {
+pub unsafe fn Enemy_NormalFrozenAI_A6() {
     NormalEnemyFrozenAI();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Boulder_Init() {
+pub unsafe fn Boulder_Init() {
     let mut boulder_parameter_2_high: int16 = 0;
     let mut E: *mut Enemy_Boulder = Get_Boulder(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -1354,8 +1346,7 @@ pub unsafe extern "C" fn Boulder_Init() {
         (*E).boulder_var_01 = 5 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallBoulderFunc(mut ea: uint32) {
+pub unsafe fn CallBoulderFunc(mut ea: uint32) {
     match ea {
         10913690 => {
             Boulder_Func_1();
@@ -1386,8 +1377,7 @@ pub unsafe extern "C" fn CallBoulderFunc(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Boulder_Main() {
+pub unsafe fn Boulder_Main() {
     let mut E: *mut Enemy_Boulder = Get_Boulder(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1396,8 +1386,7 @@ pub unsafe extern "C" fn Boulder_Main() {
         ((*E).boulder_var_A as ::core::ffi::c_int | 0xa60000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Boulder_Func_1() {
+pub unsafe fn Boulder_Func_1() {
     let mut SamusEnemyDelta_Y: int16 = 0;
     let mut v3: int16 = 0;
     let mut SamusEnemyDelta_X: int16 = 0;
@@ -1455,8 +1444,7 @@ pub unsafe extern "C" fn Boulder_Func_1() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Boulder_Func_2() {
+pub unsafe fn Boulder_Func_2() {
     let mut E: *mut Enemy_Boulder = Get_Boulder(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1488,8 +1476,7 @@ pub unsafe extern "C" fn Boulder_Func_2() {
         (*E).boulder_var_C = 0x2000 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Boulder_Func_3() {
+pub unsafe fn Boulder_Func_3() {
     let mut v1: int16 = 0;
     let mut E: *mut Enemy_Boulder = Get_Boulder(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -1531,8 +1518,7 @@ pub unsafe extern "C" fn Boulder_Func_3() {
             (0xa6888b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Boulder_Func_4() {
+pub unsafe fn Boulder_Func_4() {
     let mut E: *mut Enemy_Boulder = Get_Boulder(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1608,8 +1594,7 @@ pub unsafe extern "C" fn Boulder_Func_4() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Boulder_Func_5() {
+pub unsafe fn Boulder_Func_5() {
     let mut E: *mut Enemy_Boulder = Get_Boulder(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1685,10 +1670,8 @@ pub unsafe extern "C" fn Boulder_Func_5() {
     (*E).boulder_var_03 = (*E).base.y_pos;
     (*E).boulder_var_02 = (*E).base.y_subpos;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Boulder_Func_6() {}
-#[no_mangle]
-pub unsafe extern "C" fn Boulder_Func_7(mut j: uint16) {
+pub unsafe fn Boulder_Func_6() {}
+pub unsafe fn Boulder_Func_7(mut j: uint16) {
     let mut E: *mut Enemy_Boulder = Get_Boulder(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1714,8 +1697,7 @@ pub unsafe extern "C" fn Boulder_Func_7(mut j: uint16) {
                 .offset(v3 as isize) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Boulder_Func_8(mut j: uint16) {
+pub unsafe fn Boulder_Func_8(mut j: uint16) {
     let mut E: *mut Enemy_Boulder = Get_Boulder(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1741,8 +1723,7 @@ pub unsafe extern "C" fn Boulder_Func_8(mut j: uint16) {
                 .offset(v3 as isize) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Boulder_Func_9(mut j: uint16) {
+pub unsafe fn Boulder_Func_9(mut j: uint16) {
     let mut E: *mut Enemy_Boulder = Get_Boulder(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1768,8 +1749,7 @@ pub unsafe extern "C" fn Boulder_Func_9(mut j: uint16) {
                 .offset(v3 as isize) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpikeyPlatform_Init() {
+pub unsafe fn SpikeyPlatform_Init() {
     let mut E: *mut Enemy_SpikeyPlatform = Get_SpikeyPlatform(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1806,8 +1786,7 @@ pub unsafe extern "C" fn SpikeyPlatform_Init() {
     (*E).spm_var_00 = spm_parameter_2_low;
     (*E).spm_var_B = spm_parameter_2_low;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpikeyPlatform2ndEnemy_Init() {
+pub unsafe fn SpikeyPlatform2ndEnemy_Init() {
     let mut v0: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0xe54 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -1824,8 +1803,7 @@ pub unsafe extern "C" fn SpikeyPlatform2ndEnemy_Init() {
         .offset((v0 + 93 as ::core::ffi::c_int) as isize) as ::core::ffi::c_int
         + 12 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpikeyPlatform2ndEnemy_Main() {
+pub unsafe fn SpikeyPlatform2ndEnemy_Main() {
     let mut v0: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0xe54 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -1842,8 +1820,7 @@ pub unsafe extern "C" fn SpikeyPlatform2ndEnemy_Main() {
         .offset((v0 + 93 as ::core::ffi::c_int) as isize) as ::core::ffi::c_int
         + 12 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallSpikeyPlatformFunc(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallSpikeyPlatformFunc(mut ea: uint32, mut k: uint16) {
     match ea {
         10914740 => {
             SpikeyPlatform_Func_1();
@@ -1866,8 +1843,7 @@ pub unsafe extern "C" fn CallSpikeyPlatformFunc(mut ea: uint32, mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpikeyPlatform_Main() {
+pub unsafe fn SpikeyPlatform_Main() {
     let mut E: *mut Enemy_SpikeyPlatform = Get_SpikeyPlatform(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1878,8 +1854,7 @@ pub unsafe extern "C" fn SpikeyPlatform_Main() {
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpikeyPlatform_Func_1() {
+pub unsafe fn SpikeyPlatform_Func_1() {
     let mut E: *mut Enemy_SpikeyPlatform = Get_SpikeyPlatform(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1894,8 +1869,7 @@ pub unsafe extern "C" fn SpikeyPlatform_Func_1() {
         (*E).spm_var_A = (0xa68bdc as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpikeyPlatform_Func_2() {
+pub unsafe fn SpikeyPlatform_Func_2() {
     let mut E: *mut Enemy_SpikeyPlatform = Get_SpikeyPlatform(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1952,8 +1926,7 @@ pub unsafe extern "C" fn SpikeyPlatform_Func_2() {
     }
     (*E).spm_var_02 = v4 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpikeyPlatform_Func_3(mut k: uint16) {
+pub unsafe fn SpikeyPlatform_Func_3(mut k: uint16) {
     let mut E: *mut Enemy_SpikeyPlatform = Get_SpikeyPlatform(k as ::core::ffi::c_int);
     let mut v2: uint16 =
         ((*E).spm_var_03 as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16;
@@ -1962,8 +1935,7 @@ pub unsafe extern "C" fn SpikeyPlatform_Func_3(mut k: uint16) {
         (*E).spm_var_A = (0xa68c5d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpikeyPlatform_Func_4() {
+pub unsafe fn SpikeyPlatform_Func_4() {
     let mut E: *mut Enemy_SpikeyPlatform = Get_SpikeyPlatform(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1994,8 +1966,7 @@ pub unsafe extern "C" fn SpikeyPlatform_Func_4() {
             as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpikeyPlatform_Func_5(mut k: uint16) -> uint16 {
+pub unsafe fn SpikeyPlatform_Func_5(mut k: uint16) -> uint16 {
     let mut E: *mut Enemy_SpikeyPlatform = Get_SpikeyPlatform(k as ::core::ffi::c_int);
     let mut v2: uint16 = abs16(
         (*((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
@@ -2036,13 +2007,11 @@ pub unsafe extern "C" fn SpikeyPlatform_Func_5(mut k: uint16) -> uint16 {
     }
     return 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn FireGeyser_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     QueueSfx2_Max6(0x61 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Instr_2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn FireGeyser_Instr_2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2059,8 +2028,7 @@ pub unsafe extern "C" fn FireGeyser_Instr_2(mut k: uint16, mut jp: *const uint16
     (*E).base.x_width = 8 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Instr_3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn FireGeyser_Instr_3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2076,8 +2044,7 @@ pub unsafe extern "C" fn FireGeyser_Instr_3(mut k: uint16, mut jp: *const uint16
     (*E).base.y_height = g_word_A68DE9;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Instr_4(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn FireGeyser_Instr_4(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2093,8 +2060,7 @@ pub unsafe extern "C" fn FireGeyser_Instr_4(mut k: uint16, mut jp: *const uint16
     (*E).base.y_height = g_word_A68DEB;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Instr_5(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn FireGeyser_Instr_5(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2110,8 +2076,7 @@ pub unsafe extern "C" fn FireGeyser_Instr_5(mut k: uint16, mut jp: *const uint16
     (*E).base.y_height = g_word_A68DED;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Instr_6(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn FireGeyser_Instr_6(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2127,8 +2092,7 @@ pub unsafe extern "C" fn FireGeyser_Instr_6(mut k: uint16, mut jp: *const uint16
     (*E).base.y_height = g_word_A68DEF;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Instr_7(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn FireGeyser_Instr_7(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2144,8 +2108,7 @@ pub unsafe extern "C" fn FireGeyser_Instr_7(mut k: uint16, mut jp: *const uint16
     (*E).base.y_height = g_word_A68DF1;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Instr_8(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn FireGeyser_Instr_8(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2161,8 +2124,7 @@ pub unsafe extern "C" fn FireGeyser_Instr_8(mut k: uint16, mut jp: *const uint16
     (*E).base.y_height = g_word_A68DF3;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Instr_9(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn FireGeyser_Instr_9(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2178,11 +2140,7 @@ pub unsafe extern "C" fn FireGeyser_Instr_9(mut k: uint16, mut jp: *const uint16
     (*E).base.y_height = g_word_A68DF5;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Instr_10(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn FireGeyser_Instr_10(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2198,11 +2156,7 @@ pub unsafe extern "C" fn FireGeyser_Instr_10(
     (*E).base.y_height = g_word_A68DF7;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Instr_11(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn FireGeyser_Instr_11(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2218,11 +2172,7 @@ pub unsafe extern "C" fn FireGeyser_Instr_11(
     (*E).base.y_height = g_word_A68DF9;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Instr_12(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn FireGeyser_Instr_12(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2238,11 +2188,7 @@ pub unsafe extern "C" fn FireGeyser_Instr_12(
     (*E).base.y_height = g_word_A68DFB;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Instr_13(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn FireGeyser_Instr_13(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2258,11 +2204,7 @@ pub unsafe extern "C" fn FireGeyser_Instr_13(
     (*E).base.y_height = g_word_A68DFD;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Instr_14(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn FireGeyser_Instr_14(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2278,11 +2220,7 @@ pub unsafe extern "C" fn FireGeyser_Instr_14(
     (*E).base.y_height = g_word_A68DFF;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Instr_15(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn FireGeyser_Instr_15(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2298,11 +2236,7 @@ pub unsafe extern "C" fn FireGeyser_Instr_15(
     (*E).base.y_height = g_word_A68E01;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Instr_16(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn FireGeyser_Instr_16(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2318,11 +2252,7 @@ pub unsafe extern "C" fn FireGeyser_Instr_16(
     (*E).base.y_height = g_word_A68E03;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Instr_17(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn FireGeyser_Instr_17(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2338,11 +2268,7 @@ pub unsafe extern "C" fn FireGeyser_Instr_17(
     (*E).base.y_height = g_word_A68E05;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Instr_18(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn FireGeyser_Instr_18(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2358,11 +2284,7 @@ pub unsafe extern "C" fn FireGeyser_Instr_18(
     (*E).base.y_height = g_word_A68E07;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Instr_19(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn FireGeyser_Instr_19(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2378,11 +2300,7 @@ pub unsafe extern "C" fn FireGeyser_Instr_19(
     (*E).base.y_height = g_word_A68E09;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Instr_20(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn FireGeyser_Instr_20(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2398,11 +2316,7 @@ pub unsafe extern "C" fn FireGeyser_Instr_20(
     (*E).base.y_height = g_word_A68E0B;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Instr_21(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn FireGeyser_Instr_21(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2418,11 +2332,7 @@ pub unsafe extern "C" fn FireGeyser_Instr_21(
     (*E).base.y_height = g_word_A68E0D;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Instr_22(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn FireGeyser_Instr_22(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2438,11 +2348,7 @@ pub unsafe extern "C" fn FireGeyser_Instr_22(
     (*E).base.y_height = g_word_A68E0F;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Instr_23(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn FireGeyser_Instr_23(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2458,11 +2364,7 @@ pub unsafe extern "C" fn FireGeyser_Instr_23(
     (*E).base.y_height = g_word_A68E11;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Instr_24(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn FireGeyser_Instr_24(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2482,8 +2384,7 @@ pub unsafe extern "C" fn FireGeyser_Instr_24(
         ((*E1).base.properties as ::core::ffi::c_int | 0x400 as ::core::ffi::c_int) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Init() {
+pub unsafe fn FireGeyser_Init() {
     let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2496,8 +2397,7 @@ pub unsafe extern "C" fn FireGeyser_Init() {
         (*E).base.x_width = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallFireGeyserFunc(mut ea: uint32) {
+pub unsafe fn CallFireGeyserFunc(mut ea: uint32) {
     match ea {
         10915887 => {
             FireGeyser_Func_1();
@@ -2512,8 +2412,7 @@ pub unsafe extern "C" fn CallFireGeyserFunc(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Main() {
+pub unsafe fn FireGeyser_Main() {
     let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2524,8 +2423,7 @@ pub unsafe extern "C" fn FireGeyser_Main() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Func_1() {
+pub unsafe fn FireGeyser_Func_1() {
     let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2551,8 +2449,7 @@ pub unsafe extern "C" fn FireGeyser_Func_1() {
             & !(0x400 as ::core::ffi::c_int)) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireGeyser_Func_2() {
+pub unsafe fn FireGeyser_Func_2() {
     let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2564,8 +2461,7 @@ pub unsafe extern "C" fn FireGeyser_Func_2() {
         (*E).fgr_var_A = (0xa6902f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NuclearWaffle_Init() {
+pub unsafe fn NuclearWaffle_Init() {
     let mut E: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2666,8 +2562,7 @@ pub unsafe extern "C" fn NuclearWaffle_Init() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallNuclearWaffleFunc(mut ea: uint32) {
+pub unsafe fn CallNuclearWaffleFunc(mut ea: uint32) {
     match ea {
         10917397 => {
             NuclearWaffle_Func_1();
@@ -2682,8 +2577,7 @@ pub unsafe extern "C" fn CallNuclearWaffleFunc(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn NuclearWaffle_Main() {
+pub unsafe fn NuclearWaffle_Main() {
     let mut E: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2692,8 +2586,7 @@ pub unsafe extern "C" fn NuclearWaffle_Main() {
         ((*E).nwe_var_A as ::core::ffi::c_int | 0xa60000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn NuclearWaffle_Func_1() {
+pub unsafe fn NuclearWaffle_Func_1() {
     let mut E: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2727,8 +2620,7 @@ pub unsafe extern "C" fn NuclearWaffle_Func_1() {
             as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NuclearWaffle_Func_2() {
+pub unsafe fn NuclearWaffle_Func_2() {
     let mut E: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2767,8 +2659,7 @@ pub unsafe extern "C" fn NuclearWaffle_Func_2() {
         ((*E).nwe_var_25 as uint32) << 16 as ::core::ffi::c_int | (*E).nwe_var_24 as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn NuclearWaffle_Func_3(mut varE32: uint16) {
+pub unsafe fn NuclearWaffle_Func_3(mut varE32: uint16) {
     let mut E: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2841,8 +2732,7 @@ pub unsafe extern "C" fn NuclearWaffle_Func_3(mut varE32: uint16) {
             as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NuclearWaffle_Func_4(mut varE32: uint16) {
+pub unsafe fn NuclearWaffle_Func_4(mut varE32: uint16) {
     let mut E: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2909,8 +2799,7 @@ pub unsafe extern "C" fn NuclearWaffle_Func_4(mut varE32: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NuclearWaffle_Func_5(mut a: uint16, mut r28_out: *mut uint16) -> uint16 {
+pub unsafe fn NuclearWaffle_Func_5(mut a: uint16, mut r28_out: *mut uint16) -> uint16 {
     *r28_out = 0 as uint16;
     let mut E: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -2944,7 +2833,7 @@ pub unsafe extern "C" fn NuclearWaffle_Func_5(mut a: uint16, mut r28_out: *mut u
     *r28_out = (*r28_out).wrapping_add(1);
     return (*E).nwe_var_2E;
 }
-unsafe extern "C" fn NuclearWaffle_Func_6(mut a: uint16) -> PairU16 {
+unsafe fn NuclearWaffle_Func_6(mut a: uint16) -> PairU16 {
     let mut E: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2995,14 +2884,12 @@ unsafe extern "C" fn NuclearWaffle_Func_6(mut a: uint16) -> PairU16 {
         };
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn NuclearWaffle_Func_7(mut r30: uint16) {
+pub unsafe fn NuclearWaffle_Func_7(mut r30: uint16) {
     if r30 as ::core::ffi::c_int != 2 as ::core::ffi::c_int {
         QueueSfx2_Max6(0x5e as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FakeKraid_Init() {
+pub unsafe fn FakeKraid_Init() {
     let mut v0: uint16 = ((*((&raw mut g_ram as *mut uint8)
         .offset(0x5e5 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -3038,8 +2925,7 @@ pub unsafe extern "C" fn FakeKraid_Init() {
     }
     (*E).base.current_instruction = v2;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FakeKraid_Main() {
+pub unsafe fn FakeKraid_Main() {
     let mut E: *mut Enemy_FakeKraid = Get_FakeKraid(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -3058,8 +2944,7 @@ pub unsafe extern "C" fn FakeKraid_Main() {
         fkd_var_07,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn FakeKraid_Func_1(mut k: uint16, mut j: uint16) {
+pub unsafe fn FakeKraid_Func_1(mut k: uint16, mut j: uint16) {
     let mut ET: *mut Enemy_FakeKraid =
         Get_FakeKraid(k as ::core::ffi::c_int + j as ::core::ffi::c_int);
     let mut fkd_var_03: uint16 = (*ET).fkd_var_03;
@@ -3084,8 +2969,7 @@ pub unsafe extern "C" fn FakeKraid_Func_1(mut k: uint16, mut j: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn FakeKraid_Instr_2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn FakeKraid_Instr_2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut current_block: u64;
     let mut E: *mut Enemy_FakeKraid = Get_FakeKraid(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -3129,8 +3013,7 @@ pub unsafe extern "C" fn FakeKraid_Instr_2(mut k: uint16, mut jp: *const uint16)
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FakeKraid_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn FakeKraid_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_FakeKraid = Get_FakeKraid(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -3172,20 +3055,17 @@ pub unsafe extern "C" fn FakeKraid_Instr_1(mut k: uint16, mut jp: *const uint16)
         return addr_kFakeKraid_Ilist_9A2A as ::core::ffi::c_int as uintptr_t as *const uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn FakeKraid_Instr_3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn FakeKraid_Instr_3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     if CheckIfEnemyIsOnScreen() as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
         QueueSfx2_Max6(0x16 as uint16);
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FakeKraid_Instr_4(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn FakeKraid_Instr_4(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     FakeKraid_InstrHelper_45(k, 0 as uint16, 0xfffc as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FakeKraid_InstrHelper_45(mut k: uint16, mut j: uint16, mut a: uint16) {
+pub unsafe fn FakeKraid_InstrHelper_45(mut k: uint16, mut j: uint16, mut a: uint16) {
     let mut ka: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xe54 as ::core::ffi::c_int as isize) as *mut uint16);
     let mut E: *mut Enemy_FakeKraid = Get_FakeKraid(
@@ -3212,13 +3092,11 @@ pub unsafe extern "C" fn FakeKraid_InstrHelper_45(mut k: uint16, mut j: uint16, 
         addr_kEproj_MiniKraidSpit as ::core::ffi::c_int as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn FakeKraid_Instr_5(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn FakeKraid_Instr_5(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     FakeKraid_InstrHelper_45(k, 8 as uint16, 4 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_A69C0B() {
+pub unsafe fn sub_A69C0B() {
     let mut v0: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -3230,8 +3108,7 @@ pub unsafe extern "C" fn sub_A69C0B() {
     NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy();
     FakeKraid_9C50();
 }
-#[no_mangle]
-pub unsafe extern "C" fn FakeKraid_Touch() {
+pub unsafe fn FakeKraid_Touch() {
     let mut E: *mut Enemy_FakeKraid = Get_FakeKraid(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -3243,8 +3120,7 @@ pub unsafe extern "C" fn FakeKraid_Touch() {
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy();
     FakeKraid_9C50();
 }
-#[no_mangle]
-pub unsafe extern "C" fn FakeKraid_Shot() {
+pub unsafe fn FakeKraid_Shot() {
     let mut E: *mut Enemy_FakeKraid = Get_FakeKraid(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -3256,8 +3132,7 @@ pub unsafe extern "C" fn FakeKraid_Shot() {
     NormalEnemyShotAiSkipDeathAnim_CurEnemy();
     FakeKraid_9C50();
 }
-#[no_mangle]
-pub unsafe extern "C" fn FakeKraid_9C50() {
+pub unsafe fn FakeKraid_9C50() {
     if (*Get_FakeKraid(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -3277,8 +3152,7 @@ pub unsafe extern "C" fn FakeKraid_9C50() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Init() {
+pub unsafe fn CeresRidley_Init() {
     let mut v4: int16 = 0;
     let mut v8: int16 = 0;
     let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int);
@@ -3417,8 +3291,7 @@ pub unsafe extern "C" fn CeresRidley_Init() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallRidleyFunc(mut ea: uint32) {
+pub unsafe fn CallRidleyFunc(mut ea: uint32) {
     match ea {
         10920788 => {
             CeresRidley_Func_2();
@@ -3667,8 +3540,7 @@ pub unsafe extern "C" fn CallRidleyFunc(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Main() {
+pub unsafe fn CeresRidley_Main() {
     let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int);
     (*E).base.health = 0x7fff as uint16;
     CallRidleyFunc(
@@ -3691,8 +3563,7 @@ pub unsafe extern "C" fn CeresRidley_Main() {
         Ridley_A2DC();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_1() {
+pub unsafe fn CeresRidley_Func_1() {
     if *((&raw mut g_ram as *mut uint8).offset(0x5e5 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         >= 0xff00 as ::core::ffi::c_int
@@ -3706,15 +3577,13 @@ pub unsafe extern "C" fn CeresRidley_Func_1() {
                 + 8 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Hurt() {
+pub unsafe fn CeresRidley_Hurt() {
     Ridley_Func_102();
     sub_A6DB2A();
     Ridley_Func_120();
     Ridley_A2DC();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_A2DC() {
+pub unsafe fn Ridley_A2DC() {
     Ridley_Func_49();
     if (*Get_CeresRidley(0 as ::core::ffi::c_int)).cry_var_02 != 0 {
         mov24(
@@ -3726,8 +3595,7 @@ pub unsafe extern "C" fn Ridley_A2DC() {
         Ridley_A2F2();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_A2F2() {
+pub unsafe fn Ridley_A2F2() {
     if *((&raw mut g_ram as *mut uint8).offset(0x93f as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
     {
@@ -3755,14 +3623,12 @@ pub unsafe extern "C" fn Ridley_A2F2() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_2() {
+pub unsafe fn CeresRidley_Func_2() {
     let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int);
     (*E).cry_var_B = 0 as uint16;
     (*E).cry_var_C = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_3() {
+pub unsafe fn CeresRidley_Func_3() {
     let mut v1: int16 = 0;
     if !(*((&raw mut g_ram as *mut uint8).offset(0x797 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -3781,8 +3647,7 @@ pub unsafe extern "C" fn CeresRidley_Func_3() {
         CeresRidley_A377();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_A377() {
+pub unsafe fn CeresRidley_A377() {
     let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int);
     (*E).cry_var_F = (*E).cry_var_F.wrapping_sub(1);
     if (*E).cry_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -3793,8 +3658,7 @@ pub unsafe extern "C" fn CeresRidley_A377() {
         (*E).cry_var_F = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_4() {
+pub unsafe fn CeresRidley_Func_4() {
     let mut v2: int16 = 0;
     let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int);
     if (*E).cry_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -3857,8 +3721,7 @@ pub unsafe extern "C" fn CeresRidley_Func_4() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_5() {
+pub unsafe fn CeresRidley_Func_5() {
     let mut v2: int16 = 0;
     let mut v5: int16 = 0;
     let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int);
@@ -3912,8 +3775,7 @@ pub unsafe extern "C" fn CeresRidley_Func_5() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_6() {
+pub unsafe fn CeresRidley_Func_6() {
     let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int);
     (*E).cry_var_F = (*E).cry_var_F.wrapping_sub(1);
     if (*E).cry_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -3930,8 +3792,7 @@ pub unsafe extern "C" fn CeresRidley_Func_6() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_7() {
+pub unsafe fn CeresRidley_Func_7() {
     let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int);
     if *((&raw mut g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -3978,8 +3839,7 @@ pub unsafe extern "C" fn CeresRidley_Func_7() {
         .offset(0 as ::core::ffi::c_int as isize) = 1 as uint16;
     (*E).cry_var_A = (0xa6a354 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_8(mut a: uint16) -> uint8 {
+pub unsafe fn CeresRidley_Func_8(mut a: uint16) -> uint8 {
     let mut v1: uint16 = *(g_rom.offset(
         (((0xa6a4eb as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0xa6a4eb as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -3992,8 +3852,7 @@ pub unsafe extern "C" fn CeresRidley_Func_8(mut a: uint16) -> uint8 {
     WriteColorsToPalette(0xe2 as uint16, 0xa6 as uint8, v1, 0xe as uint16);
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_9() {
+pub unsafe fn CeresRidley_Func_9() {
     let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int);
     (*E).cry_var_C = ((*E).cry_var_C as ::core::ffi::c_int - 16 as ::core::ffi::c_int) as uint16;
     if (*E).base.y_pos as ::core::ffi::c_int - 112 as ::core::ffi::c_int
@@ -4004,8 +3863,7 @@ pub unsafe extern "C" fn CeresRidley_Func_9() {
         CeresRidley_Func_10();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_10() {
+pub unsafe fn CeresRidley_Func_10() {
     let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int);
     (*E).cry_var_C = ((*E).cry_var_C as ::core::ffi::c_int + 20 as ::core::ffi::c_int) as uint16;
     if (*E).base.y_pos as ::core::ffi::c_int - 80 as ::core::ffi::c_int
@@ -4016,8 +3874,7 @@ pub unsafe extern "C" fn CeresRidley_Func_10() {
         (*E).cry_var_01 = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_11() {
+pub unsafe fn CeresRidley_Func_11() {
     let mut v1: uint16 = 0;
     let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int);
     if (*E).cry_var_0D as ::core::ffi::c_int >= 0x64 as ::core::ffi::c_int {
@@ -4052,8 +3909,7 @@ pub unsafe extern "C" fn CeresRidley_Func_11() {
         (*E).cry_var_00 = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_12() -> uint8 {
+pub unsafe fn CeresRidley_Func_12() -> uint8 {
     let mut rect: Rect16U = Rect16U {
         x: 192 as uint16,
         y: 100 as uint16,
@@ -4063,8 +3919,7 @@ pub unsafe extern "C" fn CeresRidley_Func_12() -> uint8 {
     Ridley_Func_106(0 as uint16, 0 as uint16, rect.x, rect.y);
     return Shitroid_Func_2(0 as uint16, rect);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_13() {
+pub unsafe fn CeresRidley_Func_13() {
     let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int);
     let mut v1: uint16 = abs16((*E).cry_var_C);
     if (v1 as ::core::ffi::c_int) < 0x80 as ::core::ffi::c_int {
@@ -4099,8 +3954,7 @@ pub unsafe extern "C" fn CeresRidley_Func_13() {
         CeresRidley_A7F9();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_A7F9() {
+pub unsafe fn CeresRidley_A7F9() {
     let mut r22: uint16 = (if *((&raw mut g_ram as *mut uint8)
         .offset(0x5e5 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -4128,16 +3982,14 @@ pub unsafe extern "C" fn CeresRidley_A7F9() {
         (*E).cry_var_A = (0xa6a6e8 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_14() {
+pub unsafe fn CeresRidley_Func_14() {
     Ridley_Func_99(addr_kRidley_Ilist_E548 as ::core::ffi::c_int as uint16);
     let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int);
     (*E).cry_var_A = (0xa6a84e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).cry_var_F = 64 as uint16;
     CeresRidley_Func_15();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_15() {
+pub unsafe fn CeresRidley_Func_15() {
     let mut v2: bool = false;
     let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int);
     let mut r18: uint16 = *((&raw mut g_ram as *mut uint8)
@@ -4173,8 +4025,7 @@ pub unsafe extern "C" fn CeresRidley_Func_15() {
         (*E).cry_var_A = (0xa6a6e8 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_16() {
+pub unsafe fn CeresRidley_Func_16() {
     let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int);
     (*E).cry_var_A = (0xa6a8a4 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).cry_var_F = 10 as uint16;
@@ -4184,8 +4035,7 @@ pub unsafe extern "C" fn CeresRidley_Func_16() {
         .offset(1 as ::core::ffi::c_int as isize) = 0 as uint16;
     CeresRidley_Func_17();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_17() {
+pub unsafe fn CeresRidley_Func_17() {
     Ridley_Func_106(0 as uint16, 1 as uint16, 192 as uint16, 80 as uint16);
     let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int);
     if (*E).base.y_pos as ::core::ffi::c_int - 96 as ::core::ffi::c_int
@@ -4197,8 +4047,7 @@ pub unsafe extern "C" fn CeresRidley_Func_17() {
         (*E).cry_var_0A = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_18() {
+pub unsafe fn CeresRidley_Func_18() {
     Ridley_Func_111(
         -(32 as ::core::ffi::c_int) as uint16,
         -(1024 as ::core::ffi::c_int) as uint16,
@@ -4213,8 +4062,7 @@ pub unsafe extern "C" fn CeresRidley_Func_18() {
         (*E).cry_var_F = 36 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_19() {
+pub unsafe fn CeresRidley_Func_19() {
     Ridley_Func_111(
         -(512 as ::core::ffi::c_int) as uint16,
         -(16384 as ::core::ffi::c_int) as uint16,
@@ -4232,8 +4080,7 @@ pub unsafe extern "C" fn CeresRidley_Func_19() {
             .offset(2 as ::core::ffi::c_int as isize) = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_20() {
+pub unsafe fn CeresRidley_Func_20() {
     Ridley_Func_111(
         -(512 as ::core::ffi::c_int) as uint16,
         -(30720 as ::core::ffi::c_int) as uint16,
@@ -4248,8 +4095,7 @@ pub unsafe extern "C" fn CeresRidley_Func_20() {
         (*E).cry_var_F = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_21() {
+pub unsafe fn CeresRidley_Func_21() {
     Ridley_Func_111(
         -(768 as ::core::ffi::c_int) as uint16,
         -(30720 as ::core::ffi::c_int) as uint16,
@@ -4267,8 +4113,7 @@ pub unsafe extern "C" fn CeresRidley_Func_21() {
             .offset(1 as ::core::ffi::c_int as isize) = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_22() {
+pub unsafe fn CeresRidley_Func_22() {
     let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int);
     (*E).cry_var_20 = -(192 as ::core::ffi::c_int) as uint16;
     Ridley_Func_106(
@@ -4284,15 +4129,13 @@ pub unsafe extern "C" fn CeresRidley_Func_22() {
         CeresRidley_A994();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_A994() {
+pub unsafe fn CeresRidley_A994() {
     let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int);
     (*E).cry_var_A = (0xa6a9a0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).cry_var_F = 64 as uint16;
     CeresRidley_Func_23();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_23() {
+pub unsafe fn CeresRidley_Func_23() {
     let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int);
     (*E).cry_var_F = (*E).cry_var_F.wrapping_sub(1);
     if (*E).cry_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -4325,16 +4168,14 @@ pub unsafe extern "C" fn CeresRidley_Func_23() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_24() {
+pub unsafe fn CeresRidley_Func_24() {
     (*Get_CeresRidley(0 as ::core::ffi::c_int)).cry_var_A =
         (0xa6aa4f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x93f as ::core::ffi::c_int as isize) as *mut uint16) =
         1 as uint16;
     CeresRidley_Func_27();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_25() {
+pub unsafe fn CeresRidley_Func_25() {
     SpawnEnemy(
         0xa6 as uint8,
         addr_stru_A6AA2F as ::core::ffi::c_int as uint16,
@@ -4344,12 +4185,10 @@ pub unsafe extern "C" fn CeresRidley_Func_25() {
         addr_stru_A6AA3F as ::core::ffi::c_int as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_26() {
+pub unsafe fn CeresRidley_Func_26() {
     Ridley_Func_61();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_27() {
+pub unsafe fn CeresRidley_Func_27() {
     *(&raw mut g_ram as *mut uint8).offset(0x56 as ::core::ffi::c_int as isize) = 7 as uint8;
     *((&raw mut g_ram as *mut uint8).offset(0x783 as ::core::ffi::c_int as isize) as *mut uint16) =
         1 as uint16;
@@ -4379,14 +4218,12 @@ pub unsafe extern "C" fn CeresRidley_Func_27() {
     (*E).cry_var_30 = 2048 as uint16;
     (*E).cry_var_31 = 1024 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleCeresRidleyGetawayCutscene() {
+pub unsafe fn HandleCeresRidleyGetawayCutscene() {
     if (*Get_CeresRidley(0 as ::core::ffi::c_int)).cry_var_32 == 0 {
         CeresRidley_Func_28();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_28() {
+pub unsafe fn CeresRidley_Func_28() {
     let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int);
     let mut cry_var_33: uint16 = (*E).cry_var_33;
     (*E).cry_var_33 = (cry_var_33 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
@@ -4468,7 +4305,7 @@ pub unsafe extern "C" fn CeresRidley_Func_28() {
         CeresRidley_Func_34();
     };
 }
-unsafe extern "C" fn CeresMult(mut a: uint16, mut b: uint16) -> uint16 {
+unsafe fn CeresMult(mut a: uint16, mut b: uint16) -> uint16 {
     let mut r: uint16 = (abs16(a) as ::core::ffi::c_int * b as ::core::ffi::c_int
         >> 8 as ::core::ffi::c_int) as uint16;
     return (if a as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
@@ -4477,8 +4314,7 @@ unsafe extern "C" fn CeresMult(mut a: uint16, mut b: uint16) -> uint16 {
         r as ::core::ffi::c_int
     }) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_29() {
+pub unsafe fn CeresRidley_Func_29() {
     let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int);
     let mut r18: uint16 = *(&raw mut (*E).cry_var_0A as *mut uint8).offset(
         (::core::mem::size_of::<uint16>() as usize)
@@ -4512,15 +4348,13 @@ pub unsafe extern "C" fn CeresRidley_Func_29() {
             (*E).cry_var_30,
         );
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_AC30(mut a: uint16, mut r20: int16) -> int16 {
+pub unsafe fn CeresRidley_AC30(mut a: uint16, mut r20: int16) -> int16 {
     return (kSinCosTable8bit_Sext[((a as ::core::ffi::c_int & 0xff as ::core::ffi::c_int)
         + 64 as ::core::ffi::c_int) as usize] as ::core::ffi::c_int
         * r20 as ::core::ffi::c_int
         >> 8 as ::core::ffi::c_int) as int16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_33() {
+pub unsafe fn CeresRidley_Func_33() {
     if *((&raw mut g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 3 as ::core::ffi::c_int
@@ -4542,8 +4376,7 @@ pub unsafe extern "C" fn CeresRidley_Func_33() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_34() {
+pub unsafe fn CeresRidley_Func_34() {
     if *((&raw mut g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 7 as ::core::ffi::c_int
@@ -4565,8 +4398,7 @@ pub unsafe extern "C" fn CeresRidley_Func_34() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresRidley_Func_35(mut a: uint16) {
+pub unsafe fn CeresRidley_Func_35(mut a: uint16) {
     WriteColorsToPalette(
         0xa2 as uint16,
         0xa6 as uint8,
@@ -4580,8 +4412,7 @@ pub unsafe extern "C" fn CeresRidley_Func_35(mut a: uint16) {
         0xf as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Main() {
+pub unsafe fn Ridley_Main() {
     let mut v1: int16 = 0;
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     v1 = ((*E).ridley_var_24 as ::core::ffi::c_int - 4 as ::core::ffi::c_int) as int16;
@@ -4609,8 +4440,7 @@ pub unsafe extern "C" fn Ridley_Main() {
     }
     Ridley_Func_100();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_1() {
+pub unsafe fn Ridley_Func_1() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     if (*E).ridley_var_1B as ::core::ffi::c_int | (*E).ridley_var_1E as ::core::ffi::c_int == 0 {
         if Ridley_Func_26(4 as uint16, 4 as uint16) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
@@ -4620,15 +4450,13 @@ pub unsafe extern "C" fn Ridley_Func_1() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_2() {
+pub unsafe fn Ridley_Func_2() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     (*E).ridley_var_24 = 0 as uint16;
     (*E).base.frame_counter = 1 as uint16;
     Ridley_Hurt();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Hurt() {
+pub unsafe fn Ridley_Hurt() {
     let mut current_block: u64;
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     if (*E).base.frame_counter as ::core::ffi::c_int & 1 as ::core::ffi::c_int
@@ -4680,8 +4508,7 @@ pub unsafe extern "C" fn Ridley_Hurt() {
         Ridley_Func_30();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_3() {
+pub unsafe fn Ridley_Func_3() {
     let mut rect: Rect16U = Rect16U {
         x: 64 as uint16,
         y: 256 as uint16,
@@ -4697,22 +4524,19 @@ pub unsafe extern "C" fn Ridley_Func_3() {
         Ridley_Func_3b();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_3b() {
+pub unsafe fn Ridley_Func_3b() {
     let mut r18: uint16 = Ridley_Func_4();
     let mut v0: ::core::ffi::c_int =
         2 as ::core::ffi::c_int * (NextRandom() as ::core::ffi::c_int & 7 as ::core::ffi::c_int);
-    let mut v1: uint16 =
-        *((RomPtr_A6 as unsafe extern "C" fn(uint16_t) -> *const uint8)(r18 as uint16_t)
-            .offset(v0 as isize) as *const uint8 as *mut uint16);
+    let mut v1: uint16 = *((RomPtr_A6 as unsafe fn(uint16_t) -> *const uint8)(r18 as uint16_t)
+        .offset(v0 as isize) as *const uint8 as *mut uint16);
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     (*E).ridley_var_A = v1;
     CallRidleyFunc(
         ((*E).ridley_var_A as ::core::ffi::c_int | 0xa60000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_4() -> uint16 {
+pub unsafe fn Ridley_Func_4() -> uint16 {
     let mut r18: uint16 = 0;
     if *(&raw mut g_ram as *mut uint8).offset(0xa1f as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
@@ -4751,15 +4575,13 @@ pub unsafe extern "C" fn Ridley_Func_4() -> uint16 {
     }
     return r18;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_5() {
+pub unsafe fn Ridley_Func_5() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     (*E).ridley_var_A = (0xa6b3f8 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).ridley_var_F = 128 as uint16;
     Ridley_Func_6();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_6() {
+pub unsafe fn Ridley_Func_6() {
     let mut v2: uint16 = 0;
     let mut rect: Rect16U = Rect16U {
         x: 0,
@@ -4801,8 +4623,7 @@ pub unsafe extern "C" fn Ridley_Func_6() {
         _ => {}
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_7() -> uint16 {
+pub unsafe fn Ridley_Func_7() -> uint16 {
     static mut g_word_A6B439: [uint16; 4] = [
         4 as ::core::ffi::c_int as uint16,
         8 as ::core::ffi::c_int as uint16,
@@ -4811,16 +4632,14 @@ pub unsafe extern "C" fn Ridley_Func_7() -> uint16 {
     ];
     return g_word_A6B439[(*Get_Ridley(0 as ::core::ffi::c_int)).ridley_var_12 as usize];
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_8() {
+pub unsafe fn Ridley_Func_8() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     (*E).ridley_var_A = addr_loc_A6B455 as ::core::ffi::c_int as uint16;
     (*E).ridley_var_00 = 10 as uint16;
     (*E).ridley_var_0A = 0 as uint16;
     Ridley_B455();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_B455() {
+pub unsafe fn Ridley_B455() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     let mut v1: uint16 = 192 as uint16;
     if (*E).ridley_var_10 != 0 {
@@ -4840,8 +4659,7 @@ pub unsafe extern "C" fn Ridley_B455() {
         (*E).ridley_var_0A = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_9() {
+pub unsafe fn Ridley_Func_9() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     if (*E).ridley_var_10 != 0 {
         Ridley_Func_111(32 as uint16, 512 as uint16, 1152 as uint16);
@@ -4862,8 +4680,7 @@ pub unsafe extern "C" fn Ridley_Func_9() {
         (*E).ridley_var_00 = 20 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_10() {
+pub unsafe fn Ridley_Func_10() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     if (*E).ridley_var_10 != 0 {
         Ridley_Func_111(320 as uint16, 0x4000 as uint16, 1280 as uint16);
@@ -4887,8 +4704,7 @@ pub unsafe extern "C" fn Ridley_Func_10() {
             .offset(2 as ::core::ffi::c_int as isize) = 1 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_11() {
+pub unsafe fn Ridley_Func_11() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     if (*E).ridley_var_10 != 0 {
         Ridley_Func_111(512 as uint16, 30720 as uint16, 768 as uint16);
@@ -4909,8 +4725,7 @@ pub unsafe extern "C" fn Ridley_Func_11() {
         (*E).ridley_var_00 = 32 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_12() {
+pub unsafe fn Ridley_Func_12() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     if (*E).ridley_var_10 != 0 {
         Ridley_Func_111(1024 as uint16, 30720 as uint16, 768 as uint16);
@@ -4932,8 +4747,7 @@ pub unsafe extern "C" fn Ridley_Func_12() {
         Ridley_Func_114();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_13() {
+pub unsafe fn Ridley_Func_13() {
     Ridley_Func_111(0 as uint16, 0x8000 as uint16, 448 as uint16);
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     let mut ridley_var_00: uint16 = (*E).ridley_var_00;
@@ -4948,8 +4762,7 @@ pub unsafe extern "C" fn Ridley_Func_13() {
         }) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_14() {
+pub unsafe fn Ridley_Func_14() {
     *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(15 as ::core::ffi::c_int as isize) = 11 as uint16;
@@ -4965,8 +4778,7 @@ pub unsafe extern "C" fn Ridley_Func_14() {
         + 32 as ::core::ffi::c_int) as uint16;
     Ridley_Func_15();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_15() {
+pub unsafe fn Ridley_Func_15() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     if Ridley_Func_17(
         *(g_rom.offset(
@@ -4993,8 +4805,7 @@ pub unsafe extern "C" fn Ridley_Func_15() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_16() {
+pub unsafe fn Ridley_Func_16() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     if Ridley_Func_17(
         *(g_rom.offset(
@@ -5021,8 +4832,7 @@ pub unsafe extern "C" fn Ridley_Func_16() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_17(mut r18: uint16) -> uint8 {
+pub unsafe fn Ridley_Func_17(mut r18: uint16) -> uint8 {
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xafa as ::core::ffi::c_int as isize) as *mut uint16);
     if *((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize) as *mut uint16)
@@ -5056,8 +4866,7 @@ pub unsafe extern "C" fn Ridley_Func_17(mut r18: uint16) -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_18() {
+pub unsafe fn Ridley_Func_18() {
     *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(9 as ::core::ffi::c_int as isize) = 240 as uint16;
@@ -5070,8 +4879,7 @@ pub unsafe extern "C" fn Ridley_Func_18() {
     (*Get_Ridley(0 as ::core::ffi::c_int)).ridley_var_A =
         (0xa6b6a7 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_19() {
+pub unsafe fn Ridley_Func_19() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     if (*E).base.y_pos as ::core::ffi::c_int - 288 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -5097,8 +4905,7 @@ pub unsafe extern "C" fn Ridley_Func_19() {
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_20() {
+pub unsafe fn Ridley_Func_20() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     Ridley_Func_104_0(0 as uint16, 0 as uint16, (*E).base.x_pos, 288 as uint16);
     (*E).ridley_var_F = (*E).ridley_var_F.wrapping_sub(1);
@@ -5116,8 +4923,7 @@ pub unsafe extern "C" fn Ridley_Func_20() {
             + 128 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_21() {
+pub unsafe fn Ridley_Func_21() {
     let mut v1: int16 = 0;
     if Ridley_Func_25() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         Ridley_Func_24();
@@ -5200,8 +5006,7 @@ pub unsafe extern "C" fn Ridley_Func_21() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_22() {
+pub unsafe fn Ridley_Func_22() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     let mut v1: bool = false;
     if Ridley_Func_41() as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 || {
@@ -5233,8 +5038,7 @@ pub unsafe extern "C" fn Ridley_Func_22() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_23() -> uint8 {
+pub unsafe fn Ridley_Func_23() -> uint8 {
     let mut v0: uint8 = (Ridley_Func_103(
         *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -5300,8 +5104,7 @@ pub unsafe extern "C" fn Ridley_Func_23() -> uint8 {
     }
     return v0;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_24() {
+pub unsafe fn Ridley_Func_24() {
     *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(0 as ::core::ffi::c_int as isize) = 1 as uint16;
@@ -5309,8 +5112,7 @@ pub unsafe extern "C" fn Ridley_Func_24() {
         as *mut uint16)
         .offset(10 as ::core::ffi::c_int as isize) = 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_25() -> uint8 {
+pub unsafe fn Ridley_Func_25() -> uint8 {
     if Ridley_Func_40_Carry() as ::core::ffi::c_int & 1 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
@@ -5320,8 +5122,7 @@ pub unsafe extern "C" fn Ridley_Func_25() -> uint8 {
         return 0 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_26(mut k: uint16, mut j: uint16) -> uint8 {
+pub unsafe fn Ridley_Func_26(mut k: uint16, mut j: uint16) -> uint8 {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     let mut rect: Rect16U = Rect16U {
         x: ((*E).base.x_pos as ::core::ffi::c_int
@@ -5347,8 +5148,7 @@ pub unsafe extern "C" fn Ridley_Func_26(mut k: uint16, mut j: uint16) -> uint8 {
     };
     return Ridley_Func_124(rect);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_27() {
+pub unsafe fn Ridley_Func_27() {
     let mut ridley_var_C: int16 = 0;
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     ridley_var_C = (*E).ridley_var_C as int16;
@@ -5365,8 +5165,7 @@ pub unsafe extern "C" fn Ridley_Func_27() {
     (*E).ridley_var_A = (0xa6bb8f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     Ridley_Func_33b();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_28() {
+pub unsafe fn Ridley_Func_28() {
     let mut x_pos: uint16 = 0;
     let mut v4: uint16 = 0;
     let mut current_block: u64;
@@ -5450,8 +5249,7 @@ pub unsafe extern "C" fn Ridley_Func_28() {
     }
     (*E).ridley_var_B = -((*E).ridley_var_B as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_29() {
+pub unsafe fn Ridley_Func_29() {
     let mut v0: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0x5e5 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -5489,9 +5287,8 @@ pub unsafe extern "C" fn Ridley_Func_29() {
             & 0x3fffff as ::core::ffi::c_int) as isize,
     ) as *const uint8 as *mut uint16)
         .offset(v3 as isize);
-    (*E).ridley_var_C =
-        *((RomPtr_A6 as unsafe extern "C" fn(uint16_t) -> *const uint8)(r20 as uint16_t)
-            .offset(v2 as isize) as *const uint8 as *mut uint16);
+    (*E).ridley_var_C = *((RomPtr_A6 as unsafe fn(uint16_t) -> *const uint8)(r20 as uint16_t)
+        .offset(v2 as isize) as *const uint8 as *mut uint16);
     let mut v4: *const uint8 = RomPtr_A6(r18 as uint16_t);
     let mut t: uint16 = *(v4.offset(v2 as isize) as *const uint8 as *mut uint16);
     (*E).ridley_var_B =
@@ -5501,8 +5298,7 @@ pub unsafe extern "C" fn Ridley_Func_29() {
             t as ::core::ffi::c_int
         }) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_30() {
+pub unsafe fn Ridley_Func_30() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     let mut ridley_var_14: uint16 = (*E).ridley_var_14;
     let mut v3: uint16 = 0;
@@ -5559,8 +5355,7 @@ pub unsafe extern "C" fn Ridley_Func_30() {
                     ((*E).ridley_var_1D as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
                 ) as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_31() {
+pub unsafe fn Ridley_Func_31() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     (*E).ridley_var_14 =
         (*((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
@@ -5587,8 +5382,7 @@ pub unsafe extern "C" fn Ridley_Func_31() {
                     ((*E).ridley_var_1D as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
                 ) as ::core::ffi::c_int)) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_32() {
+pub unsafe fn Ridley_Func_32() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     if (*E).ridley_var_25 as ::core::ffi::c_int - 10 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -5615,8 +5409,7 @@ pub unsafe extern "C" fn Ridley_Func_32() {
         Ridley_C53E();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_33() {
+pub unsafe fn Ridley_Func_33() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     let mut v1: uint16 = 0;
     let mut v2: int16 = 0;
@@ -5712,8 +5505,7 @@ pub unsafe extern "C" fn Ridley_Func_33() {
         Ridley_Func_32();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_33b() {
+pub unsafe fn Ridley_Func_33b() {
     let mut v1: int16 = 0;
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     (*E).ridley_var_17 = g_word_A6BBEB[(*E).ridley_var_10 as usize];
@@ -5732,8 +5524,7 @@ pub unsafe extern "C" fn Ridley_Func_33b() {
     (*E).ridley_var_F = 32 as uint16;
     Ridley_Func_34();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_34() {
+pub unsafe fn Ridley_Func_34() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     Ridley_Func_104_0(
         0 as uint16,
@@ -5750,8 +5541,7 @@ pub unsafe extern "C" fn Ridley_Func_34() {
         (*E).ridley_var_F = 32 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_35() {
+pub unsafe fn Ridley_Func_35() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     (*E).ridley_var_F = (*E).ridley_var_F.wrapping_sub(1);
     if (*E).ridley_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -5771,8 +5561,7 @@ pub unsafe extern "C" fn Ridley_Func_35() {
         Ridley_Func_104_0(0 as uint16, 0 as uint16, (*E).ridley_var_17, 256 as uint16);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_36() {
+pub unsafe fn Ridley_Func_36() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     (*E).ridley_var_F = (*E).ridley_var_F.wrapping_sub(1);
     if (*E).ridley_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -5795,8 +5584,7 @@ pub unsafe extern "C" fn Ridley_Func_36() {
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_37() {
+pub unsafe fn Ridley_Func_37() {
     Ridley_Func_31();
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
@@ -5805,8 +5593,7 @@ pub unsafe extern "C" fn Ridley_Func_37() {
     CallSomeSamusCode(0 as uint16);
     Ridley_Func_119(1 as uint8);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_38() {
+pub unsafe fn Ridley_Func_38() {
     *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(2 as ::core::ffi::c_int as isize) = 1 as uint16;
@@ -5827,8 +5614,7 @@ pub unsafe extern "C" fn Ridley_Func_38() {
     CallSomeSamusCode(1 as uint16);
     Ridley_Func_119(0 as uint8);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_39() {
+pub unsafe fn Ridley_Func_39() {
     let mut ridley_var_01: int16 = 0;
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     ridley_var_01 = (*E).ridley_var_01 as int16;
@@ -5890,30 +5676,28 @@ static mut byte_A6BD04: [uint8; 28] = [
     0 as ::core::ffi::c_int as uint8,
     0x80 as ::core::ffi::c_int as uint8,
 ];
-unsafe extern "C" fn Ridley_Func_40_Carry() -> uint8 {
+unsafe fn Ridley_Func_40_Carry() -> uint8 {
     return (byte_A6BD04
         [*(&raw mut g_ram as *mut uint8).offset(0xa1f as ::core::ffi::c_int as isize) as usize]
         as ::core::ffi::c_int
         & 0x80 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
 }
-unsafe extern "C" fn Ridley_Func_40_Sign() -> uint8 {
+unsafe fn Ridley_Func_40_Sign() -> uint8 {
     return (byte_A6BD04
         [*(&raw mut g_ram as *mut uint8).offset(0xa1f as ::core::ffi::c_int as isize) as usize]
         as ::core::ffi::c_int
         & 0x40 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_41() -> uint8 {
+pub unsafe fn Ridley_Func_41() -> uint8 {
     return (*((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         - 352 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_42() {
+pub unsafe fn Ridley_Func_42() {
     let mut ridley_var_01: int16 = 0;
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     ridley_var_01 = (*E).ridley_var_01 as int16;
@@ -5929,8 +5713,7 @@ pub unsafe extern "C" fn Ridley_Func_42() {
             (0xa6bab7 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_43() {
+pub unsafe fn Ridley_Func_43() {
     if *((&raw mut g_ram as *mut uint8).offset(0xcee as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -5968,8 +5751,7 @@ pub unsafe extern "C" fn Ridley_Func_43() {
         }) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_44() {
+pub unsafe fn Ridley_Func_44() {
     Ridley_Func_106(0 as uint16, 1 as uint16, 192 as uint16, 128 as uint16);
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     if (*E).base.x_pos as ::core::ffi::c_int - 192 as ::core::ffi::c_int
@@ -5980,8 +5762,7 @@ pub unsafe extern "C" fn Ridley_Func_44() {
             (0xa6bdbc as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_45() {
+pub unsafe fn Ridley_Func_45() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     (*E).ridley_var_20 = -(192 as ::core::ffi::c_int) as uint16;
     Ridley_Func_106(
@@ -6001,8 +5782,7 @@ pub unsafe extern "C" fn Ridley_Func_45() {
         (*E).ridley_var_F = 21 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_46() {
+pub unsafe fn Ridley_Func_46() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     (*E).ridley_var_F = (*E).ridley_var_F.wrapping_sub(1);
     if (*E).ridley_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -6014,8 +5794,7 @@ pub unsafe extern "C" fn Ridley_Func_46() {
         Ridley_Func_47();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_47() {
+pub unsafe fn Ridley_Func_47() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     Ridley_Func_104_0(
         0 as uint16,
@@ -6039,8 +5818,7 @@ pub unsafe extern "C" fn Ridley_Func_47() {
             (0xa6a971 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_48(mut rect: Rect16U) -> uint8 {
+pub unsafe fn Ridley_Func_48(mut rect: Rect16U) -> uint8 {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     let mut v1: uint16 =
         abs16(((*E).ridley_var_42 as ::core::ffi::c_int - rect.x as ::core::ffi::c_int) as uint16);
@@ -6061,8 +5839,7 @@ pub unsafe extern "C" fn Ridley_Func_48(mut rect: Rect16U) -> uint8 {
     }
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallRidleyFunc_var40(mut ea: uint32) {
+pub unsafe fn CallRidleyFunc_var40(mut ea: uint32) {
     match ea {
         10927772 => {
             Ridley_Func_50();
@@ -6086,39 +5863,34 @@ pub unsafe extern "C" fn CallRidleyFunc_var40(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_49() {
+pub unsafe fn Ridley_Func_49() {
     CallRidleyFunc_var40(
         ((*Get_Ridley(0 as ::core::ffi::c_int)).ridley_var_40 as ::core::ffi::c_int
             | 0xa60000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_50() {
+pub unsafe fn Ridley_Func_50() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     (*E).ridley_var_42 =
         ((*E).base.x_pos as ::core::ffi::c_int - 16 as ::core::ffi::c_int) as uint16;
     (*E).ridley_var_44 =
         ((*E).base.y_pos as ::core::ffi::c_int + 22 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_51() {
+pub unsafe fn Ridley_Func_51() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     (*E).ridley_var_42 =
         ((*E).base.x_pos as ::core::ffi::c_int + 14 as ::core::ffi::c_int) as uint16;
     (*E).ridley_var_44 =
         ((*E).base.y_pos as ::core::ffi::c_int + 66 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_52() {
+pub unsafe fn Ridley_Func_52() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     (*E).ridley_var_45 = 0 as uint16;
     (*E).ridley_var_46 = 0 as uint16;
     (*E).ridley_var_40 = (0xa6bedc as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     Ridley_Func_53();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_53() {
+pub unsafe fn Ridley_Func_53() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     let mut v1: uint16 =
         ((*E).ridley_var_46 as ::core::ffi::c_int + 8 as ::core::ffi::c_int) as uint16;
@@ -6145,8 +5917,7 @@ pub unsafe extern "C" fn Ridley_Func_53() {
         (*E).ridley_var_40 = addr_locret_A6BF19 as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawBabyMetroid_0() {
+pub unsafe fn DrawBabyMetroid_0() {
     let mut v0: ::core::ffi::c_int = BabyMetroid_DBCB_DoubleRetEx(
         (((&raw mut g_ram as *mut uint8).offset(0x7800 as ::core::ffi::c_int as isize)
             as *mut ExtraEnemyRam7800 as *mut uint8)
@@ -6164,8 +5935,7 @@ pub unsafe extern "C" fn DrawBabyMetroid_0() {
         0 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn BabyMetroid_Instr_2(mut k: uint16) -> uint16 {
+pub unsafe fn BabyMetroid_Instr_2(mut k: uint16) -> uint16 {
     if (*Get_Ridley(0 as ::core::ffi::c_int)).ridley_var_46 == 0
         && *((&raw mut g_ram as *mut uint8).offset(0x5e5 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -6177,26 +5947,22 @@ pub unsafe extern "C" fn BabyMetroid_Instr_2(mut k: uint16) -> uint16 {
     QueueSfx3_Max6(0x24 as uint16);
     return (k as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn BabyMetroid_Instr_3(mut k: uint16) -> uint16 {
+pub unsafe fn BabyMetroid_Instr_3(mut k: uint16) -> uint16 {
     let mut v1: uint16 = *(RomPtr_A6(k as uint16_t) as *mut uint16);
     WriteColorsToPalette(0x162 as uint16, 0xa6 as uint8, v1, 0xf as uint16);
     return (k as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn BabyMetroid_Instr_1(mut k: uint16) -> uint16 {
+pub unsafe fn BabyMetroid_Instr_1(mut k: uint16) -> uint16 {
     if (*Get_Ridley(0 as ::core::ffi::c_int)).ridley_var_46 != 0 {
         return BabyMetroid_Goto(k);
     } else {
         return (k as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn BabyMetroid_Goto(mut k: uint16) -> uint16 {
+pub unsafe fn BabyMetroid_Goto(mut k: uint16) -> uint16 {
     return *(RomPtr_A6(k as uint16_t) as *mut uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_54() {
+pub unsafe fn Ridley_Func_54() {
     let mut ridley_var_F: uint16 = (*Get_Ridley(0 as ::core::ffi::c_int)).ridley_var_F;
     if ridley_var_F != 0 {
         match ridley_var_F as ::core::ffi::c_int {
@@ -6227,8 +5993,7 @@ pub unsafe extern "C" fn Ridley_Func_54() {
         Ridley_Func_55();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_55() {
+pub unsafe fn Ridley_Func_55() {
     *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(97 as ::core::ffi::c_int as isize) = *((&raw mut g_ram as *mut uint8)
@@ -6259,8 +6024,7 @@ pub unsafe extern "C" fn Ridley_Func_55() {
     (*E).ridley_var_F = (*E).ridley_var_F.wrapping_add(1);
     Ridley_C08E();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_C08E() {
+pub unsafe fn Ridley_C08E() {
     if ProcessEscapeTimerTileTransfers() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
         (*E).ridley_var_E = -(15106 as ::core::ffi::c_int) as uint16;
@@ -6269,8 +6033,7 @@ pub unsafe extern "C" fn Ridley_C08E() {
         Ridley_C09F();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_C09F() {
+pub unsafe fn Ridley_C09F() {
     if ProcessEscapeTimerTileTransfers() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
         (*E).ridley_var_F = (*E).ridley_var_F.wrapping_add(1);
@@ -6280,8 +6043,7 @@ pub unsafe extern "C" fn Ridley_C09F() {
         QueueMusic_Delayed8(7 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_56() {
+pub unsafe fn Ridley_Func_56() {
     Ridley_Func_61();
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     let fresh16 = (*E).ridley_var_E;
@@ -6304,8 +6066,7 @@ pub unsafe extern "C" fn Ridley_Func_56() {
         (*E).ridley_var_F = (*E).ridley_var_F.wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_57() {
+pub unsafe fn Ridley_Func_57() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     let fresh15 = (*E).ridley_var_E;
     (*E).ridley_var_E = (*E).ridley_var_E.wrapping_sub(1);
@@ -6316,8 +6077,7 @@ pub unsafe extern "C" fn Ridley_Func_57() {
     }
     Ridley_C104();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_C104() {
+pub unsafe fn Ridley_C104() {
     Ridley_Func_61();
     if HandleTypewriterText_Ext(0x3582 as uint16) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
         != 0
@@ -6327,8 +6087,7 @@ pub unsafe extern "C" fn Ridley_C104() {
         (*E).ridley_var_F = (*E).ridley_var_F.wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_58() {
+pub unsafe fn Ridley_Func_58() {
     Ridley_Func_61();
     CeresRidley_Func_2();
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
@@ -6340,8 +6099,7 @@ pub unsafe extern "C" fn Ridley_Func_58() {
         2 as uint16;
     SetBossBitForCurArea(1 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_59() {
+pub unsafe fn Ridley_Func_59() {
     let mut v2: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
@@ -6358,8 +6116,7 @@ pub unsafe extern "C" fn Ridley_Func_59() {
     *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16) =
         (v0 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_60() {
+pub unsafe fn Ridley_Func_60() {
     let mut v1: int16 = 0;
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     v1 = ((*E).ridley_var_39 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as int16;
@@ -6375,8 +6132,7 @@ pub unsafe extern "C" fn Ridley_Func_60() {
         .offset(11 as ::core::ffi::c_int as isize) =
         (abs16((*E).ridley_var_39) as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_61() {
+pub unsafe fn Ridley_Func_61() {
     if *((&raw mut g_ram as *mut uint8).offset(0x797 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         | *((&raw mut g_ram as *mut uint8).offset(0xc400 as ::core::ffi::c_int as isize)
@@ -6428,8 +6184,7 @@ pub unsafe extern "C" fn Ridley_Func_61() {
             .offset((v2 + 2 as ::core::ffi::c_int) as isize);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetupZebesEscapeTypewriter() {
+pub unsafe fn SetupZebesEscapeTypewriter() {
     *((&raw mut g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(157 as ::core::ffi::c_int as isize) = *((&raw mut g_ram as *mut uint8)
@@ -6453,8 +6208,7 @@ pub unsafe extern "C" fn SetupZebesEscapeTypewriter() {
     *((&raw mut g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessEscapeTimerTileTransfers() -> uint8 {
+pub unsafe fn ProcessEscapeTimerTileTransfers() -> uint8 {
     let mut v4: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     let mut v0: *mut EnemyData = gEnemyData(0 as ::core::ffi::c_int);
     let mut ai_var_E: uint16 = (*v0).ai_var_E;
@@ -6481,8 +6235,7 @@ pub unsafe extern "C" fn ProcessEscapeTimerTileTransfers() -> uint8 {
     }
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleTypewriterText_Ext(mut a: uint16) -> uint8 {
+pub unsafe fn HandleTypewriterText_Ext(mut a: uint16) -> uint8 {
     let mut r18: uint16 = a;
     let mut v4: int16 = 0;
     let mut v12: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
@@ -6572,8 +6325,7 @@ pub unsafe extern "C" fn HandleTypewriterText_Ext(mut a: uint16) -> uint8 {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_62() {
+pub unsafe fn Ridley_Func_62() {
     let mut i: ::core::ffi::c_int = 0;
     let mut v3: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     let mut v0: uint16 = addr_stru_A6C3B8 as ::core::ffi::c_int as uint16;
@@ -6596,21 +6348,18 @@ pub unsafe extern "C" fn Ridley_Func_62() {
     *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16) =
         i as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_63() {
+pub unsafe fn Ridley_Func_63() {
     if Ridley_Func_68() as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
         Ridley_C53E();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_C53E() {
+pub unsafe fn Ridley_C53E() {
     Ridley_Func_99(addr_kRidley_Ilist_E6C8 as ::core::ffi::c_int as uint16);
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     (*E).ridley_var_A = (0xa6c551 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).ridley_var_F = 32 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_C551() {
+pub unsafe fn Ridley_C551() {
     Ridley_Func_68();
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     (*E).ridley_var_F = (*E).ridley_var_F.wrapping_sub(1);
@@ -6633,8 +6382,7 @@ pub unsafe extern "C" fn Ridley_C551() {
         Ridley_Func_64();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_64() {
+pub unsafe fn Ridley_Func_64() {
     Ridley_Func_69();
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     (*E).ridley_var_F = (*E).ridley_var_F.wrapping_sub(1);
@@ -6651,8 +6399,7 @@ pub unsafe extern "C" fn Ridley_Func_64() {
         RidleysExplosion_Func_2();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_65() {
+pub unsafe fn Ridley_Func_65() {
     Ridley_Func_69();
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     (*E).ridley_var_02 = 0 as uint16;
@@ -6661,8 +6408,7 @@ pub unsafe extern "C" fn Ridley_Func_65() {
     (*E).ridley_var_A = (0xa6c5c8 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).ridley_var_F = 32 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_66() {
+pub unsafe fn Ridley_Func_66() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     (*E).ridley_var_F = (*E).ridley_var_F.wrapping_sub(1);
     if (*E).ridley_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -6673,8 +6419,7 @@ pub unsafe extern "C" fn Ridley_Func_66() {
         (*E).ridley_var_F = 256 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_67() {
+pub unsafe fn Ridley_Func_67() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     (*E).ridley_var_F = (*E).ridley_var_F.wrapping_sub(1);
     if (*E).ridley_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -6690,8 +6435,7 @@ pub unsafe extern "C" fn Ridley_Func_67() {
         (*E).ridley_var_A = addr_locret_A6C600 as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_68() -> uint8 {
+pub unsafe fn Ridley_Func_68() -> uint8 {
     let mut rect: Rect16U = Rect16U {
         x: 128 as uint16,
         y: 328 as uint16,
@@ -6701,8 +6445,7 @@ pub unsafe extern "C" fn Ridley_Func_68() -> uint8 {
     Ridley_Func_104(0 as uint16, 0 as uint16, 0x10 as uint16, rect.x, rect.y);
     return Shitroid_Func_2(0 as uint16, rect);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_69() {
+pub unsafe fn Ridley_Func_69() {
     let mut v1: int16 = 0;
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     v1 = ((*E).ridley_var_27 as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as int16;
@@ -6736,8 +6479,7 @@ pub unsafe extern "C" fn Ridley_Func_69() {
         (*E).ridley_var_27 = v1 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn RidleysExplosion_Init() {
+pub unsafe fn RidleysExplosion_Init() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -7014,8 +6756,7 @@ pub unsafe extern "C" fn RidleysExplosion_Init() {
             addr_kRidleysExplosion_Ilist_CA47 as ::core::ffi::c_int as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn RidleysExplosion_Main() {
+pub unsafe fn RidleysExplosion_Main() {
     let mut v2: int16 = 0;
     RidleysExplosion_Func_1(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -7047,8 +6788,7 @@ pub unsafe extern "C" fn RidleysExplosion_Main() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn RidleysExplosion_Func_1(mut k: uint16) {
+pub unsafe fn RidleysExplosion_Func_1(mut k: uint16) {
     let mut E: *mut Enemy_RidleysExplosion = Get_RidleysExplosion(k as ::core::ffi::c_int);
     let mut v2: uint16 =
         ((*E).base.frame_counter as ::core::ffi::c_int & 1 as ::core::ffi::c_int) as uint16;
@@ -7063,8 +6803,7 @@ pub unsafe extern "C" fn RidleysExplosion_Func_1(mut k: uint16) {
     }
     (*E).base.properties = v3;
 }
-#[no_mangle]
-pub unsafe extern "C" fn RidleysExplosion_Func_2() {
+pub unsafe fn RidleysExplosion_Func_2() {
     SpawnEnemy(
         0xa6 as uint8,
         addr_stru_A6C9E7 as ::core::ffi::c_int as uint16,
@@ -7114,23 +6853,21 @@ pub unsafe extern "C" fn RidleysExplosion_Func_2() {
         addr_stru_A6CA37 as ::core::ffi::c_int as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn locret_A6CB20() {}
+pub unsafe fn locret_A6CB20() {}
 static mut off_A6CB21: [Option<Func_V>; 9] = unsafe {
     [
-        Some(locret_A6CB20 as unsafe extern "C" fn() -> ()),
-        Some(Ridley_CBC0 as unsafe extern "C" fn() -> ()),
-        Some(Ridley_Func_71 as unsafe extern "C" fn() -> ()),
-        Some(Ridley_Func_72 as unsafe extern "C" fn() -> ()),
-        Some(Ridley_CBC7 as unsafe extern "C" fn() -> ()),
-        Some(Ridley_CBCE as unsafe extern "C" fn() -> ()),
-        Some(Ridley_Func_73 as unsafe extern "C" fn() -> ()),
-        Some(Ridley_Func_74 as unsafe extern "C" fn() -> ()),
-        Some(Ridley_CBD5 as unsafe extern "C" fn() -> ()),
+        Some(locret_A6CB20 as unsafe fn() -> ()),
+        Some(Ridley_CBC0 as unsafe fn() -> ()),
+        Some(Ridley_Func_71 as unsafe fn() -> ()),
+        Some(Ridley_Func_72 as unsafe fn() -> ()),
+        Some(Ridley_CBC7 as unsafe fn() -> ()),
+        Some(Ridley_CBCE as unsafe fn() -> ()),
+        Some(Ridley_Func_73 as unsafe fn() -> ()),
+        Some(Ridley_Func_74 as unsafe fn() -> ()),
+        Some(Ridley_CBD5 as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_70() {
+pub unsafe fn Ridley_Func_70() {
     Ridley_Func_91();
     off_A6CB21[*((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -7150,8 +6887,7 @@ pub unsafe extern "C" fn Ridley_Func_70() {
         Ridley_Func_127();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_71() {
+pub unsafe fn Ridley_Func_71() {
     *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(10 as ::core::ffi::c_int as isize) = 8 as uint16;
@@ -7160,15 +6896,13 @@ pub unsafe extern "C" fn Ridley_Func_71() {
         as *mut uint16)
         .offset(0 as ::core::ffi::c_int as isize) = 3 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_72() {
+pub unsafe fn Ridley_Func_72() {
     *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(10 as ::core::ffi::c_int as isize) = 8 as uint16;
     Ridley_Func_75();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_73() {
+pub unsafe fn Ridley_Func_73() {
     *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(10 as ::core::ffi::c_int as isize) = 3 as uint16;
@@ -7177,8 +6911,7 @@ pub unsafe extern "C" fn Ridley_Func_73() {
         as *mut uint16)
         .offset(0 as ::core::ffi::c_int as isize) = 6 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_74() {
+pub unsafe fn Ridley_Func_74() {
     *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(10 as ::core::ffi::c_int as isize) = 2 as uint16;
@@ -7187,8 +6920,7 @@ pub unsafe extern "C" fn Ridley_Func_74() {
         as *mut uint16)
         .offset(0 as ::core::ffi::c_int as isize) = 7 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_75() {
+pub unsafe fn Ridley_Func_75() {
     if (*Get_Ridley(0 as ::core::ffi::c_int)).ridley_var_10 != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -7234,28 +6966,23 @@ pub unsafe extern "C" fn Ridley_Func_75() {
             .offset(0 as ::core::ffi::c_int as isize) = 4 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_CBC0() {
+pub unsafe fn Ridley_CBC0() {
     Ridley_Func_79();
     Ridley_CBDC();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_CBC7() {
+pub unsafe fn Ridley_CBC7() {
     Ridley_Func_83();
     Ridley_CBDC();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_CBCE() {
+pub unsafe fn Ridley_CBCE() {
     Ridley_Func_84();
     Ridley_CBDC();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_CBD5() {
+pub unsafe fn Ridley_CBD5() {
     Ridley_Func_81();
     Ridley_CBDC();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_CBDC() {
+pub unsafe fn Ridley_CBDC() {
     let mut v0: uint16 = 7 as uint16;
     let mut v1: uint16 = 0 as uint16;
     loop {
@@ -7268,8 +6995,7 @@ pub unsafe extern "C" fn Ridley_CBDC() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_77() {
+pub unsafe fn Ridley_Func_77() {
     let mut v0: ::core::ffi::c_int =
         (*Get_Ridley(0 as ::core::ffi::c_int)).ridley_var_10 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
@@ -7289,8 +7015,7 @@ pub unsafe extern "C" fn Ridley_Func_77() {
     ) as *const uint8 as *mut uint16)
         .offset(v0 as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_78() -> uint8 {
+pub unsafe fn Ridley_Func_78() -> uint8 {
     return (*((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(76 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
@@ -7315,8 +7040,7 @@ pub unsafe extern "C" fn Ridley_Func_78() -> uint8 {
             as uint16 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_79() {
+pub unsafe fn Ridley_Func_79() {
     Ridley_Func_77();
     if Ridley_Func_78() != 0 {
         if Ridley_Func_80_DoubleRet() != 0 {
@@ -7368,8 +7092,7 @@ pub unsafe extern "C" fn Ridley_Func_79() {
             .offset(10 as ::core::ffi::c_int as isize) = v0;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_80_DoubleRet() -> uint8 {
+pub unsafe fn Ridley_Func_80_DoubleRet() -> uint8 {
     let mut current_block: u64;
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     let mut retval: bool = false_0 != 0;
@@ -7433,8 +7156,7 @@ pub unsafe extern "C" fn Ridley_Func_80_DoubleRet() -> uint8 {
         .offset(2 as ::core::ffi::c_int as isize) = 0 as uint16;
     return retval as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_81() {
+pub unsafe fn Ridley_Func_81() {
     Ridley_Func_77();
     if Ridley_Func_78() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         if Ridley_Func_82_DoubleRet() {
@@ -7486,8 +7208,7 @@ pub unsafe extern "C" fn Ridley_Func_81() {
             .offset(10 as ::core::ffi::c_int as isize) = v0;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_82_DoubleRet() -> bool {
+pub unsafe fn Ridley_Func_82_DoubleRet() -> bool {
     if *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(2 as ::core::ffi::c_int as isize)
@@ -7511,8 +7232,7 @@ pub unsafe extern "C" fn Ridley_Func_82_DoubleRet() -> bool {
     }
     return false_0 != 0;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_83() {
+pub unsafe fn Ridley_Func_83() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     Ridley_Func_77();
     if Ridley_Func_78() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
@@ -7614,8 +7334,7 @@ pub unsafe extern "C" fn Ridley_Func_83() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_84() {
+pub unsafe fn Ridley_Func_84() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     Ridley_Func_77();
     if Ridley_Func_78() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
@@ -7754,8 +7473,7 @@ pub unsafe extern "C" fn Ridley_Func_84() {
             .offset(10 as ::core::ffi::c_int as isize) = v1;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_85() {
+pub unsafe fn Ridley_Func_85() {
     *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(21 as ::core::ffi::c_int as isize) =
@@ -7813,8 +7531,7 @@ pub unsafe extern "C" fn Ridley_Func_85() {
             .offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
             | 0x4000 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_86() {
+pub unsafe fn Ridley_Func_86() {
     let mut v1: int16 = 0;
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
@@ -8009,8 +7726,7 @@ pub unsafe extern "C" fn Ridley_Func_86() {
             as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_87() {
+pub unsafe fn Ridley_Func_87() {
     if *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(30 as ::core::ffi::c_int as isize)
@@ -8336,8 +8052,7 @@ pub unsafe extern "C" fn Ridley_Func_87() {
         *fresh10 = (*fresh10 as ::core::ffi::c_int - 128 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_88(mut k: uint16) {
+pub unsafe fn Ridley_Func_88(mut k: uint16) {
     let mut current_block: u64;
     let mut v6: int16 = 0;
     let mut v2: uint16 = 0;
@@ -8636,8 +8351,7 @@ pub unsafe extern "C" fn Ridley_Func_88(mut k: uint16) {
         r18,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_89(mut a: uint16) {
+pub unsafe fn Ridley_Func_89(mut a: uint16) {
     let mut v1: uint16 = 0;
     let mut r18: uint16 = 0;
     let mut r20: uint16 = 0;
@@ -8740,8 +8454,7 @@ pub unsafe extern "C" fn Ridley_Func_89(mut a: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_90(mut out: *mut Point16U) -> uint8 {
+pub unsafe fn Ridley_Func_90(mut out: *mut Point16U) -> uint8 {
     let mut rect: Rect16U = Rect16U {
         x: *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -8837,8 +8550,7 @@ pub unsafe extern "C" fn Ridley_Func_90(mut out: *mut Point16U) -> uint8 {
         .offset(v8 as isize);
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_91() {
+pub unsafe fn Ridley_Func_91() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     if *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -8859,8 +8571,7 @@ pub unsafe extern "C" fn Ridley_Func_91() {
     }
     (*E).ridley_var_0E = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_92() {
+pub unsafe fn Ridley_Func_92() {
     *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(10 as ::core::ffi::c_int as isize) = 1 as uint16;
@@ -8945,8 +8656,7 @@ pub unsafe extern "C" fn Ridley_Func_92() {
         as *mut uint16)
         .offset(76 as ::core::ffi::c_int as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_93(mut j: uint16, mut k: uint16) {
+pub unsafe fn Ridley_Func_93(mut j: uint16, mut k: uint16) {
     let mut dst: *mut uint16 =
         (&raw mut g_ram as *mut uint8).offset(j as ::core::ffi::c_int as isize) as *mut uint16;
     let mut src: *const uint16 = RomPtr_A6(k as uint16_t) as *const uint16;
@@ -8961,16 +8671,13 @@ pub unsafe extern "C" fn Ridley_Func_93(mut j: uint16, mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_94() {
+pub unsafe fn Ridley_Func_94() {
     Ridley_Func_D3DC(0 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_95() {
+pub unsafe fn Ridley_Func_95() {
     Ridley_Func_D3DC(0x8000 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_D3DC(mut a: uint16) {
+pub unsafe fn Ridley_Func_D3DC(mut a: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(16 as ::core::ffi::c_int as isize) = a;
@@ -8993,8 +8700,7 @@ pub unsafe extern "C" fn Ridley_Func_D3DC(mut a: uint16) {
         as *mut uint16)
         .offset(76 as ::core::ffi::c_int as isize) = a;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_96() {
+pub unsafe fn Ridley_Func_96() {
     let mut v0: int16 = 0;
     Ridley_Func_93(
         0x2026 as uint16,
@@ -9024,8 +8730,7 @@ pub unsafe extern "C" fn Ridley_Func_96() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_97() -> uint8 {
+pub unsafe fn Ridley_Func_97() -> uint8 {
     return (*((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(76 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
@@ -9050,8 +8755,7 @@ pub unsafe extern "C" fn Ridley_Func_97() -> uint8 {
             as uint16 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_98() {
+pub unsafe fn Ridley_Func_98() {
     let mut enemy_ptr: uint16 = (*Get_Ridley(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -9063,15 +8767,13 @@ pub unsafe extern "C" fn Ridley_Func_98() {
         *(v1.offset(6 as ::core::ffi::c_int as isize) as *mut uint16),
     ));
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_99(mut a: uint16) {
+pub unsafe fn Ridley_Func_99(mut a: uint16) {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     (*E).base.current_instruction = a;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_100() {
+pub unsafe fn Ridley_Func_100() {
     let mut v0: int16 = 0;
     v0 = 0 as int16;
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
@@ -9092,8 +8794,7 @@ pub unsafe extern "C" fn Ridley_Func_100() {
         Ridley_D495((v0 as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_D495(mut r18: uint16) {
+pub unsafe fn Ridley_D495(mut r18: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0xc400 as ::core::ffi::c_int as isize)
         as *mut uint16)
         == 0
@@ -9107,8 +8808,7 @@ pub unsafe extern "C" fn Ridley_D495(mut r18: uint16) {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_101() {
+pub unsafe fn Ridley_Func_101() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     if (*E).ridley_var_01 as ::core::ffi::c_int != 0
         && (*E).ridley_var_0D as ::core::ffi::c_int >= 0x32 as ::core::ffi::c_int
@@ -9122,8 +8822,7 @@ pub unsafe extern "C" fn Ridley_Func_101() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_102() {
+pub unsafe fn Ridley_Func_102() {
     let mut v0: int16 = 0;
     v0 = 3584 as int16;
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
@@ -9138,8 +8837,7 @@ pub unsafe extern "C" fn Ridley_Func_102() {
     }
     (*E).ridley_var_0C = v0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_103(mut k: uint16, mut j: uint16) -> uint8 {
+pub unsafe fn Ridley_Func_103(mut k: uint16, mut j: uint16) -> uint8 {
     let mut prod: uint16 = Mult8x8(
         (j as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint8,
         *((&raw mut g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
@@ -9154,17 +8852,10 @@ pub unsafe extern "C" fn Ridley_Func_103(mut k: uint16, mut j: uint16) -> uint8 
         & 0xf000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_104_0(
-    mut k: uint16,
-    mut j: uint16,
-    mut r18: uint16,
-    mut r20: uint16,
-) {
+pub unsafe fn Ridley_Func_104_0(mut k: uint16, mut j: uint16, mut r18: uint16, mut r20: uint16) {
     Ridley_Func_104(k, j, 0 as uint16, r18, r20);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_104(
+pub unsafe fn Ridley_Func_104(
     mut k: uint16,
     mut j: uint16,
     mut a: uint16,
@@ -9233,13 +8924,7 @@ pub unsafe extern "C" fn Ridley_Func_104(
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_105(
-    mut k: uint16,
-    mut r18: uint16,
-    mut r24: uint16,
-    mut r26: uint16,
-) {
+pub unsafe fn Ridley_Func_105(mut k: uint16, mut r18: uint16, mut r24: uint16, mut r26: uint16) {
     let mut v2: int16 = 0;
     let mut v4: int16 = 0;
     let mut v6: int16 = 0;
@@ -9298,13 +8983,7 @@ pub unsafe extern "C" fn Ridley_Func_105(
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_106(
-    mut k: uint16,
-    mut j: uint16,
-    mut r18: uint16,
-    mut r20: uint16,
-) {
+pub unsafe fn Ridley_Func_106(mut k: uint16, mut j: uint16, mut r18: uint16, mut r20: uint16) {
     let mut v3: int16 = 0;
     let mut v5: int16 = 0;
     let mut v6: int16 = 0;
@@ -9359,8 +9038,7 @@ pub unsafe extern "C" fn Ridley_Func_106(
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_107(mut k: uint16, mut r18: uint16, mut r24: uint16) {
+pub unsafe fn Ridley_Func_107(mut k: uint16, mut r18: uint16, mut r24: uint16) {
     let mut E: *mut Enemy_Ridley = Get_Ridley(k as ::core::ffi::c_int);
     let mut v2: int16 =
         ((*E).base.x_pos as ::core::ffi::c_int - r18 as ::core::ffi::c_int) as int16;
@@ -9415,8 +9093,7 @@ pub unsafe extern "C" fn Ridley_Func_107(mut k: uint16, mut r18: uint16, mut r24
         }) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_111(mut r18: uint16, mut r20: uint16, mut r22: uint16) {
+pub unsafe fn Ridley_Func_111(mut r18: uint16, mut r20: uint16, mut r22: uint16) {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     if r22 as ::core::ffi::c_int != (*E).ridley_var_0B as ::core::ffi::c_int {
         if (r22 as ::core::ffi::c_int - (*E).ridley_var_0B as ::core::ffi::c_int) as int16
@@ -9476,8 +9153,7 @@ pub unsafe extern "C" fn Ridley_Func_111(mut r18: uint16, mut r20: uint16, mut r
     (*E).ridley_var_B = Math_MultBySin((*E).ridley_var_0B, r18);
     (*E).ridley_var_C = Math_MultByCos((*E).ridley_var_0B, r18);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_112() {
+pub unsafe fn Ridley_Func_112() {
     let mut Ridley: *mut Enemy_Ridley = ::core::ptr::null_mut::<Enemy_Ridley>();
     let mut v1: uint16 = 0;
     let mut v2: *mut Enemy_Ridley = ::core::ptr::null_mut::<Enemy_Ridley>();
@@ -9561,8 +9237,7 @@ pub unsafe extern "C" fn Ridley_Func_112() {
         (*Ridley).ridley_var_1F = 4 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_113(mut k: uint16) {
+pub unsafe fn Ridley_Func_113(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         != 2 as ::core::ffi::c_int
@@ -9590,8 +9265,7 @@ pub unsafe extern "C" fn Ridley_Func_113(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_114() {
+pub unsafe fn Ridley_Func_114() {
     let mut current_block: u64;
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     let mut ridley_var_10: uint16 = (*E).ridley_var_10;
@@ -9624,8 +9298,7 @@ pub unsafe extern "C" fn Ridley_Func_114() {
         _ => {}
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_115() {
+pub unsafe fn Ridley_Func_115() {
     let mut v1: int16 = 0;
     Ridley_Func_116();
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
@@ -9642,8 +9315,7 @@ pub unsafe extern "C" fn Ridley_Func_115() {
         (*E).ridley_var_07 = v2;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_116() {
+pub unsafe fn Ridley_Func_116() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     let mut r18: uint16 = abs16((*E).ridley_var_B);
     let mut v1: uint16 =
@@ -9671,14 +9343,12 @@ pub unsafe extern "C" fn Ridley_Func_116() {
         (*E).ridley_var_08 = 0 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_117() {
+pub unsafe fn Ridley_Func_117() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     (*E).ridley_var_05 = addr_word_A6DA71 as ::core::ffi::c_int as uint16;
     (*E).ridley_var_06 = 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_118() {
+pub unsafe fn Ridley_Func_118() {
     let mut v7: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     let mut v1: uint16 =
@@ -9724,8 +9394,7 @@ pub unsafe extern "C" fn Ridley_Func_118() {
         (*E).ridley_var_05 = (v3 as ::core::ffi::c_int + 6 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_119(mut carry: uint8) {
+pub unsafe fn Ridley_Func_119(mut carry: uint8) {
     let mut v3: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     let mut v1: uint16 = addr_off_A6DAD0 as ::core::ffi::c_int as uint16;
     if carry != 0 {
@@ -9754,8 +9423,7 @@ pub unsafe extern "C" fn Ridley_Func_119(mut carry: uint8) {
         (v2 as ::core::ffi::c_int + 14 as ::core::ffi::c_int) as uint16;
     (*gVramWriteEntry(v2 as ::core::ffi::c_int + 14 as ::core::ffi::c_int)).size = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_120() {
+pub unsafe fn Ridley_Func_120() {
     let mut ridley_var_10: int16 = 0;
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     ridley_var_10 = (*E).ridley_var_10 as int16;
@@ -9776,8 +9444,7 @@ pub unsafe extern "C" fn Ridley_Func_120() {
         );
     sub_A6DC13(v2, (*E).base.x_pos, (*E).base.y_pos, (*E).ridley_var_0C);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_A6DB2A() {
+pub unsafe fn sub_A6DB2A() {
     if (*gEnemyData(0 as ::core::ffi::c_int)).properties as ::core::ffi::c_int
         & kEnemyProps_Invisible as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
@@ -9872,8 +9539,7 @@ pub unsafe extern "C" fn sub_A6DB2A() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_A6DBC2(mut j: uint16, mut x: uint16, mut y: uint16) {
+pub unsafe fn sub_A6DBC2(mut j: uint16, mut x: uint16, mut y: uint16) {
     sub_A6DC13(
         j,
         x,
@@ -9881,8 +9547,7 @@ pub unsafe extern "C" fn sub_A6DBC2(mut j: uint16, mut x: uint16, mut y: uint16)
         (*Get_Ridley(0 as ::core::ffi::c_int)).ridley_var_0C,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallBabyMetroidInstr(mut ea: uint32, mut k: uint16) -> uint16 {
+pub unsafe fn CallBabyMetroidInstr(mut ea: uint32, mut k: uint16) -> uint16 {
     match ea {
         10928073 => return BabyMetroid_Instr_2(k),
         10928097 => return BabyMetroid_Instr_3(k),
@@ -9891,7 +9556,7 @@ pub unsafe extern "C" fn CallBabyMetroidInstr(mut ea: uint32, mut k: uint16) -> 
         _ => return Unreachable() as uint16,
     };
 }
-unsafe extern "C" fn BabyMetroid_DBCB_DoubleRetEx(mut a: uint16) -> ::core::ffi::c_int {
+unsafe fn BabyMetroid_DBCB_DoubleRetEx(mut a: uint16) -> ::core::ffi::c_int {
     let mut current_block: u64;
     let mut st: *mut BabyMetroidExecState = (&raw mut g_ram as *mut uint8).offset(a as isize)
         as *mut uint8 as *mut BabyMetroidExecState;
@@ -9942,13 +9607,7 @@ unsafe extern "C" fn BabyMetroid_DBCB_DoubleRetEx(mut a: uint16) -> ::core::ffi:
     (*st).ip = v2;
     return *v3.offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int;
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_A6DC13(
-    mut j: uint16,
-    mut r18: uint16,
-    mut r20: uint16,
-    mut r22: uint16,
-) {
+pub unsafe fn sub_A6DC13(mut j: uint16, mut r18: uint16, mut r20: uint16, mut r22: uint16) {
     let mut p: *const uint8 = RomPtr_A6(j as uint16_t);
     let mut n: ::core::ffi::c_int = *(p as *mut uint16) as ::core::ffi::c_int;
     p = p.offset(2 as ::core::ffi::c_int as isize);
@@ -9999,8 +9658,7 @@ pub unsafe extern "C" fn sub_A6DC13(
     *((&raw mut g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize) as *mut uint16) =
         idx as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_121() -> uint8 {
+pub unsafe fn Ridley_Func_121() -> uint8 {
     let mut y_pos: int16 = 0;
     let mut v2: int16 = 0;
     let mut x_pos: int16 = 0;
@@ -10037,8 +9695,7 @@ pub unsafe extern "C" fn Ridley_Func_121() -> uint8 {
     }
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_122(mut rect: Rect16U) -> uint16 {
+pub unsafe fn Ridley_Func_122(mut rect: Rect16U) -> uint16 {
     let mut v2: int16 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0xcce as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
@@ -10124,8 +9781,7 @@ pub unsafe extern "C" fn Ridley_Func_122(mut rect: Rect16U) -> uint16 {
     *fresh2 = (*fresh2 as ::core::ffi::c_int | 0x10 as ::core::ffi::c_int) as uint16;
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_123(mut j: uint16) {
+pub unsafe fn Ridley_Func_123(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: uint16 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0xc04 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -10147,8 +9803,7 @@ pub unsafe extern "C" fn Ridley_Func_123(mut j: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0xc04 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(v1 as isize) = v2;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_124(mut rect: Rect16U) -> uint8 {
+pub unsafe fn Ridley_Func_124(mut rect: Rect16U) -> uint8 {
     let mut v0: uint16 = abs16(
         (*((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -10180,16 +9835,13 @@ pub unsafe extern "C" fn Ridley_Func_124(mut rect: Rect16U) -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_A6DF59() {
+pub unsafe fn sub_A6DF59() {
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy();
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_A6DF60() {
+pub unsafe fn sub_A6DF60() {
     Ridley_Func_125();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_125() {
+pub unsafe fn Ridley_Func_125() {
     Ridley_Func_98();
     *((&raw mut g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
         as *mut uint16) = 96 as uint16;
@@ -10206,8 +9858,7 @@ pub unsafe extern "C" fn Ridley_Func_125() {
             .x_pos as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
             >= 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Shot() {
+pub unsafe fn Ridley_Shot() {
     let mut v0: int16 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -10227,12 +9878,10 @@ pub unsafe extern "C" fn Ridley_Shot() {
         (*E).ridley_var_0D = (*E).ridley_var_0D.wrapping_add(1);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Powerbomb() {
+pub unsafe fn Ridley_Powerbomb() {
     NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_126() {
+pub unsafe fn Ridley_Func_126() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     if (*E).base.health == 0
         && (*E).ridley_var_01 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -10245,8 +9894,7 @@ pub unsafe extern "C" fn Ridley_Func_126() {
             (0xa6c538 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_127() {
+pub unsafe fn Ridley_Func_127() {
     let mut rect: Rect16U = Rect16U {
         x: *((&raw mut g_ram as *mut uint8).offset(0x2000 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -10275,8 +9923,7 @@ pub unsafe extern "C" fn Ridley_Func_127() {
                 >= 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_128() {
+pub unsafe fn Ridley_Func_128() {
     let mut E: *mut Enemy_Ridley = Get_Ridley(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -10319,8 +9966,7 @@ pub unsafe extern "C" fn Ridley_Func_128() {
             ((*E).ridley_var_C as ::core::ffi::c_int + r18 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_129() {
+pub unsafe fn Ridley_Func_129() {
     if (*Get_Ridley(0 as ::core::ffi::c_int)).base.properties as ::core::ffi::c_int
         & kEnemyProps_Tangible as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
@@ -10377,19 +10023,16 @@ pub unsafe extern "C" fn Ridley_Func_129() {
         SpawnEprojWithRoomGfx(0xe509 as uint16, v2);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Instr_5(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Ridley_Instr_5(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*Get_Ridley(0 as ::core::ffi::c_int)).ridley_var_0F = 89 as uint16;
     QueueSfx2_Max6(0x59 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Instr_6(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Ridley_Instr_6(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*Get_Ridley(0 as ::core::ffi::c_int)).ridley_var_0F = 0 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Instr_10(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Ridley_Instr_10(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     if *((&raw mut g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         == 2 as ::core::ffi::c_int
@@ -10404,24 +10047,21 @@ pub unsafe extern "C" fn Ridley_Instr_10(mut k: uint16, mut jp: *const uint16) -
     (*Get_Ridley(0 as ::core::ffi::c_int)).ridley_var_00 = 8 as uint16;
     return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Instr_4(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Ridley_Instr_4(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     if (*Get_Ridley(0 as ::core::ffi::c_int)).ridley_var_1B != 0 {
         return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
     } else {
         return *jp.offset(1 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Instr_3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Ridley_Instr_3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     if (*Get_Ridley(0 as ::core::ffi::c_int)).ridley_var_1B != 0 {
         return jp.offset(1 as ::core::ffi::c_int as isize);
     } else {
         return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Instr_2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Ridley_Instr_2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0xb10 as ::core::ffi::c_int as isize) as *mut uint16) =
         *((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
             as *mut uint16);
@@ -10432,16 +10072,14 @@ pub unsafe extern "C" fn Ridley_Instr_2(mut k: uint16, mut jp: *const uint16) ->
         *jp.offset(0 as ::core::ffi::c_int as isize);
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Ridley_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     if (*Get_Ridley(0 as ::core::ffi::c_int)).ridley_var_10 != 0 {
         return *jp.offset(0 as ::core::ffi::c_int as isize) as uintptr_t as *const uint16;
     } else {
         return jp.offset(1 as ::core::ffi::c_int as isize);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Instr_14(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Ridley_Instr_14(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     (*E).base.x_pos = ((*E).base.x_pos as ::core::ffi::c_int
         + *jp.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int)
@@ -10451,37 +10089,31 @@ pub unsafe extern "C" fn Ridley_Instr_14(mut k: uint16, mut jp: *const uint16) -
         as uint16;
     return jp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Instr_9(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Ridley_Instr_9(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*Get_Ridley(0 as ::core::ffi::c_int)).ridley_var_10 = 0 as uint16;
     Ridley_Func_96();
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Instr_7(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Ridley_Instr_7(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*Get_Ridley(0 as ::core::ffi::c_int)).ridley_var_10 = 1 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Instr_8(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Ridley_Instr_8(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*Get_Ridley(0 as ::core::ffi::c_int)).ridley_var_10 = 2 as uint16;
     Ridley_Func_96();
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_131(mut k: uint16) {
+pub unsafe fn Ridley_Func_131(mut k: uint16) {
     Ridley_Func_132(k, 0 as uint16);
     Ridley_Func_132(k, 1 as uint16);
     Ridley_Func_132(k, 2 as uint16);
     Ridley_Func_132(k, 3 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Func_132(mut k: uint16, mut a: uint16) {
+pub unsafe fn Ridley_Func_132(mut k: uint16, mut a: uint16) {
     (*Get_Ridley(0 as ::core::ffi::c_int)).ridley_parameter_1 = a;
     SpawnEprojWithGfx(a, k, addr_stru_869634 as ::core::ffi::c_int as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Instr_11(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Ridley_Instr_11(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v3: uint16 = 0;
     let mut current_block: u64;
     let mut r18: uint16 = 0;
@@ -10554,42 +10186,32 @@ pub unsafe extern "C" fn Ridley_Instr_11(mut k: uint16, mut jp: *const uint16) -
     (*E).ridley_var_1A = Math_MultByCos(0x500 as uint16, r18);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Instr_12(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Ridley_Instr_12(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return Ridley_E90C(k, jp, 0 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Instr_13(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Ridley_Instr_13(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return Ridley_E90C(k, jp, 0xe as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_E90C(
-    mut k: uint16,
-    mut jp: *const uint16,
-    mut a: uint16,
-) -> *const uint16 {
+pub unsafe fn Ridley_E90C(mut k: uint16, mut jp: *const uint16, mut a: uint16) -> *const uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x1995 as ::core::ffi::c_int as isize)
         as *mut uint16) = a;
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     SpawnEprojWithRoomGfx(0x9642 as uint16, (*E).ridley_var_10);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Instr_15(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Ridley_Instr_15(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     (*E).ridley_var_A = (0xa6a6af as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).ridley_var_C = -(352 as ::core::ffi::c_int) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Ridley_Instr_16(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Ridley_Instr_16(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int);
     (*E).ridley_var_A = (0xa6b2f3 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).ridley_var_C = -(352 as ::core::ffi::c_int) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresSteam_Init() {
+pub unsafe fn CeresSteam_Init() {
     let mut E: *mut Enemy_CeresSteam = Get_CeresSteam(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -10618,8 +10240,7 @@ pub unsafe extern "C" fn CeresSteam_Init() {
     ) as *const uint8 as *mut uint16)
         .offset(v1 as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallCeresSteamFunc(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallCeresSteamFunc(mut ea: uint32, mut k: uint16) {
     match ea {
         10940404 => return,
         10940441 => {
@@ -10631,8 +10252,7 @@ pub unsafe extern "C" fn CallCeresSteamFunc(mut ea: uint32, mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresSteam_Main() {
+pub unsafe fn CeresSteam_Main() {
     let mut E: *mut Enemy_CeresSteam = Get_CeresSteam(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -10644,8 +10264,7 @@ pub unsafe extern "C" fn CeresSteam_Main() {
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresSteam_Func_1(mut k: uint16) {
+pub unsafe fn CeresSteam_Func_1(mut k: uint16) {
     let mut E: *mut Enemy_CeresSteam = Get_CeresSteam(k as ::core::ffi::c_int);
     let mut pt: Point16U = CalcCeresSteamPos_Mode7(Point16U {
         x: (*E).base.x_pos,
@@ -10658,8 +10277,7 @@ pub unsafe extern "C" fn CeresSteam_Func_1(mut k: uint16) {
     (*v3).xpos2 = (pt.x as ::core::ffi::c_int - (*E).base.x_pos as ::core::ffi::c_int) as uint16;
     (*v3).ypos2 = (pt.y as ::core::ffi::c_int - (*E).base.y_pos as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresSteam_Touch() {
+pub unsafe fn CeresSteam_Touch() {
     (*Get_CeresSteam(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -10668,16 +10286,14 @@ pub unsafe extern "C" fn CeresSteam_Touch() {
     .health = 0x7fff as uint16;
     NormalEnemyTouchAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresSteam_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn CeresSteam_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_CeresSteam = Get_CeresSteam(k as ::core::ffi::c_int);
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         | (kEnemyProps_Tangible as ::core::ffi::c_int
             | kEnemyProps_Invisible as ::core::ffi::c_int)) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresSteam_Instr_2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn CeresSteam_Instr_2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_CeresSteam = Get_CeresSteam(k as ::core::ffi::c_int);
     let fresh0 = (*E).csm_var_D;
     (*E).csm_var_D = (*E).csm_var_D.wrapping_sub(1);
@@ -10689,15 +10305,13 @@ pub unsafe extern "C" fn CeresSteam_Instr_2(mut k: uint16, mut jp: *const uint16
         RomPtr_A6(*jp.offset(1 as ::core::ffi::c_int as isize) as uint16_t) as *mut uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresSteam_Instr_3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn CeresSteam_Instr_3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_CeresSteam = Get_CeresSteam(k as ::core::ffi::c_int);
     (*E).base.properties =
         ((*E).base.properties as ::core::ffi::c_int & 0xfaff as ::core::ffi::c_int) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresDoor_Instr_6(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn CeresDoor_Instr_6(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_CeresDoor = Get_CeresDoor(k as ::core::ffi::c_int);
     if abs16(
         ((*E).base.x_pos as ::core::ffi::c_int
@@ -10717,8 +10331,7 @@ pub unsafe extern "C" fn CeresDoor_Instr_6(mut k: uint16, mut jp: *const uint16)
         return jp.offset(1 as ::core::ffi::c_int as isize);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresDoor_Instr_4(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn CeresDoor_Instr_4(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     if *((&raw mut g_ram as *mut uint8)
         .offset(0xd828 as ::core::ffi::c_int as isize)
         .offset(
@@ -10733,8 +10346,7 @@ pub unsafe extern "C" fn CeresDoor_Instr_4(mut k: uint16, mut jp: *const uint16)
         return *jp as uintptr_t as *const uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresDoor_Instr_8(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn CeresDoor_Instr_8(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     if *((&raw mut g_ram as *mut uint8).offset(0x93f as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -10743,8 +10355,7 @@ pub unsafe extern "C" fn CeresDoor_Instr_8(mut k: uint16, mut jp: *const uint16)
         return *jp as uintptr_t as *const uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresDoor_Func_6b() {
+pub unsafe fn CeresDoor_Func_6b() {
     if *((&raw mut g_ram as *mut uint8).offset(0x93f as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -10752,51 +10363,43 @@ pub unsafe extern "C" fn CeresDoor_Func_6b() {
             as *mut uint16) = 0x8000 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresSteam_Instr_4(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn CeresSteam_Instr_4(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_CeresSteam = Get_CeresSteam(k as ::core::ffi::c_int);
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         | kEnemyProps_Tangible as ::core::ffi::c_int) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresDoor_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn CeresDoor_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_CeresDoor = Get_CeresDoor(k as ::core::ffi::c_int);
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         & !(kEnemyProps_Tangible as ::core::ffi::c_int)) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresDoor_Instr_3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn CeresDoor_Instr_3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*Get_CeresDoor(k as ::core::ffi::c_int)).cdr_var_B = 1 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresSteam_Instr_5(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn CeresSteam_Instr_5(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_CeresSteam = Get_CeresSteam(k as ::core::ffi::c_int);
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         | kEnemyProps_Invisible as ::core::ffi::c_int) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresDoor_Instr_5(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn CeresDoor_Instr_5(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*Get_CeresDoor(k as ::core::ffi::c_int)).cdr_var_B = 0 as uint16;
     return CeresDoor_Instr_2(k, jp);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresDoor_Instr_2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn CeresDoor_Instr_2(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_CeresDoor = Get_CeresDoor(k as ::core::ffi::c_int);
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         & !(kEnemyProps_Invisible as ::core::ffi::c_int)) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresDoor_Instr_7(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn CeresDoor_Instr_7(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     QueueSfx3_Max6(0x2c as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresDoor_Init() {
+pub unsafe fn CeresDoor_Init() {
     let mut E: *mut Enemy_CeresDoor = Get_CeresDoor(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -10849,8 +10452,7 @@ pub unsafe extern "C" fn CeresDoor_Init() {
     .palette_index = 3584 as uint16;
     WriteColorsToTargetPalette(0xa6 as uint8, 0x1e2 as uint16, v3, 0xf as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresDoor_Func_1(mut k: uint16) {
+pub unsafe fn CeresDoor_Func_1(mut k: uint16) {
     let mut v2: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     if (*Get_CeresDoor(k as ::core::ffi::c_int)).cdr_parameter_1 as ::core::ffi::c_int
         == 2 as ::core::ffi::c_int
@@ -10871,8 +10473,7 @@ pub unsafe extern "C" fn CeresDoor_Func_1(mut k: uint16) {
             as *mut uint16) = (v1 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallCeresDoor(mut ea: uint32) {
+pub unsafe fn CallCeresDoor(mut ea: uint32) {
     let mut k: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xe54 as ::core::ffi::c_int as isize) as *mut uint16);
     match ea {
@@ -10905,8 +10506,7 @@ pub unsafe extern "C" fn CallCeresDoor(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresDoor_Main() {
+pub unsafe fn CeresDoor_Main() {
     let mut E: *mut Enemy_CeresDoor = Get_CeresDoor(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -10915,16 +10515,13 @@ pub unsafe extern "C" fn CeresDoor_Main() {
         ((*E).cdr_var_A as ::core::ffi::c_int | 0xa60000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresDoor_Func_2() {
+pub unsafe fn CeresDoor_Func_2() {
     CeresDoor_F773(0x14 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresDoor_Func_3() {
+pub unsafe fn CeresDoor_Func_3() {
     CeresDoor_F773(0x1d as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresDoor_F773(mut j: uint16) {
+pub unsafe fn CeresDoor_F773(mut j: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x93f as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         >= 2 as ::core::ffi::c_int
@@ -10949,8 +10546,7 @@ pub unsafe extern "C" fn CeresDoor_F773(mut j: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresDoor_Func_4() {
+pub unsafe fn CeresDoor_Func_4() {
     CeresSteam_Instr_5(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -10974,8 +10570,7 @@ pub unsafe extern "C" fn CeresDoor_Func_4() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresDoor_Func_5(mut k: uint16) {
+pub unsafe fn CeresDoor_Func_5(mut k: uint16) {
     CeresDoor_Func_7();
     if *((&raw mut g_ram as *mut uint8).offset(0x93f as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -10989,8 +10584,7 @@ pub unsafe extern "C" fn CeresDoor_Func_5(mut k: uint16) {
         (*E0).cdr_var_F = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresDoor_Func_6(mut k: uint16) {
+pub unsafe fn CeresDoor_Func_6(mut k: uint16) {
     let mut E: *mut Enemy_CeresDoor = Get_CeresDoor(k as ::core::ffi::c_int);
     (*E).cdr_var_D = (*E).cdr_var_D.wrapping_sub(1);
     let mut v3: bool = (*E).cdr_var_D as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -11045,8 +10639,7 @@ pub unsafe extern "C" fn CeresDoor_Func_6(mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresDoor_Func_7() {
+pub unsafe fn CeresDoor_Func_7() {
     CeresDoor_Func_8();
     if *((&raw mut g_ram as *mut uint8).offset(0xc400 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -11064,8 +10657,7 @@ pub unsafe extern "C" fn CeresDoor_Func_7() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CeresDoor_Func_8() {
+pub unsafe fn CeresDoor_Func_8() {
     QueueMode7Transfers(
         0xa6 as uint8,
         *(g_rom.offset(
@@ -11082,8 +10674,7 @@ pub unsafe extern "C" fn CeresDoor_Func_8() {
             ),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Zebetites_Init() {
+pub unsafe fn Zebetites_Init() {
     let mut E: *mut Enemy_Zebetites = Get_Zebetites(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -11163,8 +10754,7 @@ pub unsafe extern "C" fn Zebetites_Init() {
             | kEnemyProps_Deleted as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallZebetitesFunc(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallZebetitesFunc(mut ea: uint32, mut k: uint16) {
     match ea {
         10943553 => {
             Zebetites_Func_1(k);
@@ -11183,8 +10773,7 @@ pub unsafe extern "C" fn CallZebetitesFunc(mut ea: uint32, mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Zebetites_Main() {
+pub unsafe fn Zebetites_Main() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
         as *mut uint16)
         == 0
@@ -11206,8 +10795,7 @@ pub unsafe extern "C" fn Zebetites_Main() {
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Zebetites_Func_1(mut k: uint16) {
+pub unsafe fn Zebetites_Func_1(mut k: uint16) {
     let mut E: *mut Enemy_Zebetites = Get_Zebetites(k as ::core::ffi::c_int);
     if (*E).zebet_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
@@ -11220,8 +10808,7 @@ pub unsafe extern "C" fn Zebetites_Func_1(mut k: uint16) {
         (0xa6fc5b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     Zebetites_Func_2(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Zebetites_Func_2(mut k: uint16) {
+pub unsafe fn Zebetites_Func_2(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x795 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
     {
@@ -11230,8 +10817,7 @@ pub unsafe extern "C" fn Zebetites_Func_2(mut k: uint16) {
         Zebetites_Func_3();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Zebetites_Func_3() {
+pub unsafe fn Zebetites_Func_3() {
     let mut v3: int16 = 0;
     Zebetites_Func_4();
     Zebetites_Func_5();
@@ -11267,8 +10853,7 @@ pub unsafe extern "C" fn Zebetites_Func_3() {
         Zebetites_Func_8();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Zebetites_Func_6() {
+pub unsafe fn Zebetites_Func_6() {
     let mut v1: int16 = 0;
     let mut E: *mut Enemy_Zebetites = Get_Zebetites(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -11290,30 +10875,26 @@ pub unsafe extern "C" fn Zebetites_Func_6() {
         (r18 as ::core::ffi::c_int >> 2 as ::core::ffi::c_int & 1 as ::core::ffi::c_int) as uint8,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Zebetites_Func_7(mut j: uint16, mut a: uint8) {
+pub unsafe fn Zebetites_Func_7(mut j: uint16, mut a: uint8) {
     if a != 0 {
         SetEventHappened(j);
     } else {
         ClearEventHappened(j);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Zebetites_Func_8() {
+pub unsafe fn Zebetites_Func_8() {
     SpawnEnemy(
         0xa6 as uint8,
         addr_stru_A6FCE1 as ::core::ffi::c_int as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Zebetites_Func_9() -> uint16 {
+pub unsafe fn Zebetites_Func_9() -> uint16 {
     return SpawnEnemy(
         0xa6 as uint8,
         addr_stru_A6FCF9 as ::core::ffi::c_int as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Zebetites_Func_5() {
+pub unsafe fn Zebetites_Func_5() {
     let mut v0: uint16 = 0 as uint16;
     let mut E: *mut Enemy_Zebetites = Get_Zebetites(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -11363,8 +10944,7 @@ pub unsafe extern "C" fn Zebetites_Func_5() {
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Zebetites_Func_4() {
+pub unsafe fn Zebetites_Func_4() {
     if *((&raw mut g_ram as *mut uint8).offset(0xc400 as ::core::ffi::c_int as isize)
         as *mut uint16)
         == 0
@@ -11388,12 +10968,10 @@ pub unsafe extern "C" fn Zebetites_Func_4() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Zebetites_Touch() {
+pub unsafe fn Zebetites_Touch() {
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Zebetites_Shot() {
+pub unsafe fn Zebetites_Shot() {
     QueueSfx3_Max6(9 as uint16);
     NormalEnemyShotAiSkipDeathAnim_CurEnemy();
     let mut E: *mut Enemy_Zebetites = Get_Zebetites(

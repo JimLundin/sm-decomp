@@ -47,7 +47,7 @@ pub use crate::types::{
     int32_t, int8, int8_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, FuncXY_V, Func_U8,
     Func_V, Func_V_A, Func_Y_V, HandlerFunc, LongPtr, PairU16, Point16U, VoidP,
 };
-pub type Func_Y_To_PairU16 = unsafe extern "C" fn(uint16) -> PairU16;
+pub type Func_Y_To_PairU16 = unsafe fn(uint16) -> PairU16;
 pub use crate::types::{OamEnt, SamusPose, VramWriteEntry};
 pub const kPose_FC_FaceL_StandTrans_AimDL: SamusPose = 252;
 pub const kPose_FB_FaceR_StandTrans_AimDR: SamusPose = 251;
@@ -618,7 +618,7 @@ pub use crate::types::{
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 #[inline]
-unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
+unsafe fn abs16(mut t: uint16) -> uint16 {
     return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         -(t as ::core::ffi::c_int)
     } else {
@@ -626,39 +626,39 @@ unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
     }) as uint16;
 }
 #[inline]
-unsafe extern "C" fn swap16(mut v: uint16) -> uint16 {
+unsafe fn swap16(mut v: uint16) -> uint16 {
     return ((v as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
         | v as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint16;
 }
 #[inline]
-unsafe extern "C" fn RomPtr_82(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_82(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x820000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomPtr_90(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_90(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x900000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomPtr_91(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_91(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x910000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn gOamEnt(mut v: ::core::ffi::c_int) -> *mut OamEnt {
+unsafe fn gOamEnt(mut v: ::core::ffi::c_int) -> *mut OamEnt {
     return (&raw mut g_ram as *mut uint8).offset((0x370 as ::core::ffi::c_int + v) as isize)
         as *mut uint8 as *mut OamEnt;
 }
 #[inline]
-unsafe extern "C" fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
+unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
     return (&raw mut g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
         as *mut uint8 as *mut VramWriteEntry;
 }
 #[inline]
-unsafe extern "C" fn get_SamusSpeedTableEntry(mut a: uint16) -> *mut SamusSpeedTableEntry {
+unsafe fn get_SamusSpeedTableEntry(mut a: uint16) -> *mut SamusSpeedTableEntry {
     return RomPtr((0x900000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut SamusSpeedTableEntry;
 }
 #[inline]
-unsafe extern "C" fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
+unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
     let mut t: uint32 = ((*lo as ::core::ffi::c_int
         + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
         as uint32)
@@ -667,7 +667,7 @@ unsafe extern "C" fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: 
     *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
 #[inline]
-unsafe extern "C" fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
+unsafe fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
     *lo = t as uint16;
     *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
@@ -891,22 +891,20 @@ static mut kBeamAutoFireCooldowns: [uint8; 12] = [
     0x19 as ::core::ffi::c_int as uint8,
     0x19 as ::core::ffi::c_int as uint8,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn nullsub_12() {}
+pub unsafe fn nullsub_12() {}
 static mut kSamusFxHandlers: [Option<Func_V>; 8] = unsafe {
     [
-        Some(Samus_Animate_NoFx as unsafe extern "C" fn() -> ()),
-        Some(Samus_Animate_LavaFx as unsafe extern "C" fn() -> ()),
-        Some(Samus_Animate_AcidFx as unsafe extern "C" fn() -> ()),
-        Some(Samus_Animate_WaterFx as unsafe extern "C" fn() -> ()),
-        Some(nullsub_12 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_12 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_12 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_12 as unsafe extern "C" fn() -> ()),
+        Some(Samus_Animate_NoFx as unsafe fn() -> ()),
+        Some(Samus_Animate_LavaFx as unsafe fn() -> ()),
+        Some(Samus_Animate_AcidFx as unsafe fn() -> ()),
+        Some(Samus_Animate_WaterFx as unsafe fn() -> ()),
+        Some(nullsub_12 as unsafe fn() -> ()),
+        Some(nullsub_12 as unsafe fn() -> ()),
+        Some(nullsub_12 as unsafe fn() -> ()),
+        Some(nullsub_12 as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Animate() {
+pub unsafe fn Samus_Animate() {
     kSamusFxHandlers[((*((&raw mut g_ram as *mut uint8)
         .offset(0x196e as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -970,8 +968,7 @@ pub unsafe extern "C" fn Samus_Animate() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Animate_NoFx() {
+pub unsafe fn Samus_Animate_NoFx() {
     let mut r18: uint16 = Samus_GetBottom_R18();
     *((&raw mut g_ram as *mut uint8).offset(0xa9c as ::core::ffi::c_int as isize) as *mut uint16) =
         *((&raw mut g_ram as *mut uint8).offset(0xa66 as ::core::ffi::c_int as isize)
@@ -1007,8 +1004,7 @@ pub unsafe extern "C" fn Samus_Animate_NoFx() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Animate_WaterFx() {
+pub unsafe fn Samus_Animate_WaterFx() {
     static mut kSamusPhys_AnimDelayInWater: uint16 = 3 as uint16;
     let mut r18: uint16 = Samus_GetBottom_R18();
     if *((&raw mut g_ram as *mut uint8).offset(0x195e as ::core::ffi::c_int as isize)
@@ -1042,8 +1038,7 @@ pub unsafe extern "C" fn Samus_Animate_WaterFx() {
         Samus_Animate_NoFx();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_SpawnWaterSplash(mut r18: uint16) {
+pub unsafe fn Samus_SpawnWaterSplash(mut r18: uint16) {
     static mut kWaterSplashTypeTable: [uint8; 28] = [
         1 as ::core::ffi::c_int as uint8,
         0 as ::core::ffi::c_int as uint8,
@@ -1130,8 +1125,7 @@ pub unsafe extern "C" fn Samus_SpawnWaterSplash(mut r18: uint16) {
     }
     Samus_SpawnAirBubbles();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_SpawnAirBubbles() {
+pub unsafe fn Samus_SpawnAirBubbles() {
     let mut r20: uint16 = Samus_GetTop_R20();
     if (r20 as ::core::ffi::c_int
         - 24 as ::core::ffi::c_int
@@ -1189,8 +1183,7 @@ pub unsafe extern "C" fn Samus_SpawnAirBubbles() {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Animate_LavaFx() {
+pub unsafe fn Samus_Animate_LavaFx() {
     static mut kSamusPhys_LavaDamagePerFrame: uint16 = 0 as uint16;
     static mut kSamusPhys_LavaSubdamagePerFrame: uint16 = 0x8000 as uint16;
     let mut r18: uint16 = Samus_GetBottom_R18();
@@ -1250,8 +1243,7 @@ pub unsafe extern "C" fn Samus_Animate_LavaFx() {
         Samus_Animate_NoFx();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Animate_AcidFx() {
+pub unsafe fn Samus_Animate_AcidFx() {
     static mut kSamusPhys_AcidSubdamagePerFrame: uint16 = 0x8000 as uint16;
     static mut kSamusPhys_AcidDamagePerFrame: uint16 = 1 as uint16;
     let mut r18: uint16 = Samus_GetBottom_R18();
@@ -1290,8 +1282,7 @@ pub unsafe extern "C" fn Samus_Animate_AcidFx() {
         Samus_Animate_NoFx();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Animate_SubmergedLavaAcid() {
+pub unsafe fn Samus_Animate_SubmergedLavaAcid() {
     static mut kSamusPhys_AnimDelayInAcid: uint16 = 2 as uint16;
     let mut r20: uint16 = Samus_GetTop_R20();
     *((&raw mut g_ram as *mut uint8).offset(0xa9c as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -1397,10 +1388,10 @@ pub unsafe extern "C" fn Samus_Animate_SubmergedLavaAcid() {
             as *mut uint16) = 0 as uint16;
     }
 }
-unsafe extern "C" fn Samus_AnimDelayFunc_0to5(mut jp: *const uint8) -> bool {
+unsafe fn Samus_AnimDelayFunc_0to5(mut jp: *const uint8) -> bool {
     return false_0 != 0;
 }
-unsafe extern "C" fn Samus_AnimDelayFunc_6_GotoStartIfLittleHealth(mut jp: *const uint8) -> bool {
+unsafe fn Samus_AnimDelayFunc_6_GotoStartIfLittleHealth(mut jp: *const uint8) -> bool {
     *((&raw mut g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize) as *mut uint16) =
         (if *((&raw mut g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -1416,7 +1407,7 @@ unsafe extern "C" fn Samus_AnimDelayFunc_6_GotoStartIfLittleHealth(mut jp: *cons
         }) as uint16;
     return true_0 != 0;
 }
-unsafe extern "C" fn Samus_AnimDelayFunc_7(mut jp: *const uint8) -> bool {
+unsafe fn Samus_AnimDelayFunc_7(mut jp: *const uint8) -> bool {
     *((&raw mut g_ram as *mut uint8).offset(0xa58 as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x9094cb as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     let ref mut fresh97 = *((&raw mut g_ram as *mut uint8)
@@ -1424,14 +1415,14 @@ unsafe extern "C" fn Samus_AnimDelayFunc_7(mut jp: *const uint8) -> bool {
     *fresh97 = (*fresh97).wrapping_add(1);
     return true_0 != 0;
 }
-unsafe extern "C" fn Samus_AnimDelayFunc_13_TransToPose(mut jp: *const uint8) -> bool {
+unsafe fn Samus_AnimDelayFunc_13_TransToPose(mut jp: *const uint8) -> bool {
     *((&raw mut g_ram as *mut uint8).offset(0xa2c as ::core::ffi::c_int as isize) as *mut uint16) =
         *jp.offset(1 as ::core::ffi::c_int as isize) as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xa32 as ::core::ffi::c_int as isize) as *mut uint16) =
         3 as uint16;
     return false_0 != 0;
 }
-unsafe extern "C" fn Samus_AnimDelayFunc_8_AutoJumpHack(mut jp: *const uint8) -> bool {
+unsafe fn Samus_AnimDelayFunc_8_AutoJumpHack(mut jp: *const uint8) -> bool {
     if *((&raw mut g_ram as *mut uint8).offset(0xa60 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         == 0x90e91d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -1458,7 +1449,7 @@ unsafe extern "C" fn Samus_AnimDelayFunc_8_AutoJumpHack(mut jp: *const uint8) ->
     }
     return false_0 != 0;
 }
-unsafe extern "C" fn Samus_AnimDelayFunc_9_TransToPose(mut jp: *const uint8) -> bool {
+unsafe fn Samus_AnimDelayFunc_9_TransToPose(mut jp: *const uint8) -> bool {
     if *(jp.offset(1 as ::core::ffi::c_int as isize) as *mut uint16) as ::core::ffi::c_int
         & *((&raw mut g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -1494,7 +1485,7 @@ unsafe extern "C" fn Samus_AnimDelayFunc_9_TransToPose(mut jp: *const uint8) -> 
         3 as uint16;
     return false_0 != 0;
 }
-unsafe extern "C" fn UNUSED_Samus_AnimDelayFunc_10(mut jp: *const uint8) -> bool {
+unsafe fn UNUSED_Samus_AnimDelayFunc_10(mut jp: *const uint8) -> bool {
     if *((&raw mut g_ram as *mut uint8).offset(0xb2e as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         != 0
@@ -1512,9 +1503,7 @@ unsafe extern "C" fn UNUSED_Samus_AnimDelayFunc_10(mut jp: *const uint8) -> bool
         3 as uint16;
     return false_0 != 0;
 }
-unsafe extern "C" fn Samus_AnimDelayFunc_11_SelectDelaySequenceWalljump(
-    mut jp: *const uint8,
-) -> bool {
+unsafe fn Samus_AnimDelayFunc_11_SelectDelaySequenceWalljump(mut jp: *const uint8) -> bool {
     let mut current_block: u64;
     if *((&raw mut g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -1600,7 +1589,7 @@ unsafe extern "C" fn Samus_AnimDelayFunc_11_SelectDelaySequenceWalljump(
     }
     return true_0 != 0;
 }
-unsafe extern "C" fn Samus_AnimDelayFunc_12_TransToPose(mut jp: *const uint8) -> bool {
+unsafe fn Samus_AnimDelayFunc_12_TransToPose(mut jp: *const uint8) -> bool {
     if *(jp.offset(1 as ::core::ffi::c_int as isize) as *mut uint16) as ::core::ffi::c_int
         & *((&raw mut g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -1616,7 +1605,7 @@ unsafe extern "C" fn Samus_AnimDelayFunc_12_TransToPose(mut jp: *const uint8) ->
         3 as uint16;
     return false_0 != 0;
 }
-unsafe extern "C" fn Samus_AnimDelayFunc_14_Goto(mut jp: *const uint8) -> bool {
+unsafe fn Samus_AnimDelayFunc_14_Goto(mut jp: *const uint8) -> bool {
     let ref mut fresh93 = *((&raw mut g_ram as *mut uint8)
         .offset(0xa96 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh93 = (*fresh93 as ::core::ffi::c_int
@@ -1624,38 +1613,32 @@ unsafe extern "C" fn Samus_AnimDelayFunc_14_Goto(mut jp: *const uint8) -> bool {
         as uint16;
     return true_0 != 0;
 }
-unsafe extern "C" fn Samus_AnimDelayFunc_15_GotoStart(mut jp: *const uint8) -> bool {
+unsafe fn Samus_AnimDelayFunc_15_GotoStart(mut jp: *const uint8) -> bool {
     *((&raw mut g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     return true_0 != 0;
 }
 static mut kAnimDelayFuncs: [Option<Func_AnimDelay>; 16] = unsafe {
     [
-        Some(Samus_AnimDelayFunc_0to5 as unsafe extern "C" fn(*const uint8) -> bool),
-        Some(Samus_AnimDelayFunc_0to5 as unsafe extern "C" fn(*const uint8) -> bool),
-        Some(Samus_AnimDelayFunc_0to5 as unsafe extern "C" fn(*const uint8) -> bool),
-        Some(Samus_AnimDelayFunc_0to5 as unsafe extern "C" fn(*const uint8) -> bool),
-        Some(Samus_AnimDelayFunc_0to5 as unsafe extern "C" fn(*const uint8) -> bool),
-        Some(Samus_AnimDelayFunc_0to5 as unsafe extern "C" fn(*const uint8) -> bool),
-        Some(
-            Samus_AnimDelayFunc_6_GotoStartIfLittleHealth
-                as unsafe extern "C" fn(*const uint8) -> bool,
-        ),
-        Some(Samus_AnimDelayFunc_7 as unsafe extern "C" fn(*const uint8) -> bool),
-        Some(Samus_AnimDelayFunc_8_AutoJumpHack as unsafe extern "C" fn(*const uint8) -> bool),
-        Some(Samus_AnimDelayFunc_9_TransToPose as unsafe extern "C" fn(*const uint8) -> bool),
-        Some(UNUSED_Samus_AnimDelayFunc_10 as unsafe extern "C" fn(*const uint8) -> bool),
-        Some(
-            Samus_AnimDelayFunc_11_SelectDelaySequenceWalljump
-                as unsafe extern "C" fn(*const uint8) -> bool,
-        ),
-        Some(Samus_AnimDelayFunc_12_TransToPose as unsafe extern "C" fn(*const uint8) -> bool),
-        Some(Samus_AnimDelayFunc_13_TransToPose as unsafe extern "C" fn(*const uint8) -> bool),
-        Some(Samus_AnimDelayFunc_14_Goto as unsafe extern "C" fn(*const uint8) -> bool),
-        Some(Samus_AnimDelayFunc_15_GotoStart as unsafe extern "C" fn(*const uint8) -> bool),
+        Some(Samus_AnimDelayFunc_0to5 as unsafe fn(*const uint8) -> bool),
+        Some(Samus_AnimDelayFunc_0to5 as unsafe fn(*const uint8) -> bool),
+        Some(Samus_AnimDelayFunc_0to5 as unsafe fn(*const uint8) -> bool),
+        Some(Samus_AnimDelayFunc_0to5 as unsafe fn(*const uint8) -> bool),
+        Some(Samus_AnimDelayFunc_0to5 as unsafe fn(*const uint8) -> bool),
+        Some(Samus_AnimDelayFunc_0to5 as unsafe fn(*const uint8) -> bool),
+        Some(Samus_AnimDelayFunc_6_GotoStartIfLittleHealth as unsafe fn(*const uint8) -> bool),
+        Some(Samus_AnimDelayFunc_7 as unsafe fn(*const uint8) -> bool),
+        Some(Samus_AnimDelayFunc_8_AutoJumpHack as unsafe fn(*const uint8) -> bool),
+        Some(Samus_AnimDelayFunc_9_TransToPose as unsafe fn(*const uint8) -> bool),
+        Some(UNUSED_Samus_AnimDelayFunc_10 as unsafe fn(*const uint8) -> bool),
+        Some(Samus_AnimDelayFunc_11_SelectDelaySequenceWalljump as unsafe fn(*const uint8) -> bool),
+        Some(Samus_AnimDelayFunc_12_TransToPose as unsafe fn(*const uint8) -> bool),
+        Some(Samus_AnimDelayFunc_13_TransToPose as unsafe fn(*const uint8) -> bool),
+        Some(Samus_AnimDelayFunc_14_Goto as unsafe fn(*const uint8) -> bool),
+        Some(Samus_AnimDelayFunc_15_GotoStart as unsafe fn(*const uint8) -> bool),
     ]
 };
-unsafe extern "C" fn Samus_HandleSpeedBoosterAnimDelay(mut jp: *const uint8) -> uint8 {
+unsafe fn Samus_HandleSpeedBoosterAnimDelay(mut jp: *const uint8) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xb3c as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
         || *((&raw mut g_ram as *mut uint8).offset(0x9b6 as ::core::ffi::c_int as isize)
@@ -1749,7 +1732,7 @@ unsafe extern "C" fn Samus_HandleSpeedBoosterAnimDelay(mut jp: *const uint8) -> 
             .offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int) as uint16;
     return 0 as uint8;
 }
-unsafe extern "C" fn Samus_HandleAnimDelay() {
+unsafe fn Samus_HandleAnimDelay() {
     let mut p: *const uint8 = RomPtr_91(
         *(g_rom.offset(
             (((0x91b010 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -1844,38 +1827,37 @@ unsafe extern "C" fn Samus_HandleAnimDelay() {
 }
 static mut kSamusIsBottomDrawnFuncs: [Option<Func_U8>; 28] = unsafe {
     [
-        Some(SamusBottomDrawn_0_Standing as unsafe extern "C" fn() -> uint8),
-        Some(SamusBottomDrawn_1 as unsafe extern "C" fn() -> uint8),
-        Some(SamusBottomDrawn_1 as unsafe extern "C" fn() -> uint8),
-        Some(SamusBottomDrawn_3_SpinJump as unsafe extern "C" fn() -> uint8),
-        Some(SamusBottomDrawn_4 as unsafe extern "C" fn() -> uint8),
-        Some(SamusBottomDrawn_1 as unsafe extern "C" fn() -> uint8),
-        Some(SamusBottomDrawn_1 as unsafe extern "C" fn() -> uint8),
-        Some(SamusBottomDrawn_4 as unsafe extern "C" fn() -> uint8),
-        Some(SamusBottomDrawn_4 as unsafe extern "C" fn() -> uint8),
-        Some(SamusBottomDrawn_4 as unsafe extern "C" fn() -> uint8),
-        Some(SamusBottomDrawn_A_Knockback as unsafe extern "C" fn() -> uint8),
-        Some(SamusBottomDrawn_1 as unsafe extern "C" fn() -> uint8),
-        Some(SamusBottomDrawn_1 as unsafe extern "C" fn() -> uint8),
-        Some(UNUSED_SamusBottomDrawn_D as unsafe extern "C" fn() -> uint8),
-        Some(SamusBottomDrawn_1 as unsafe extern "C" fn() -> uint8),
-        Some(SamusBottomDrawn_F_Transitions as unsafe extern "C" fn() -> uint8),
-        Some(SamusBottomDrawn_1 as unsafe extern "C" fn() -> uint8),
-        Some(SamusBottomDrawn_4 as unsafe extern "C" fn() -> uint8),
-        Some(SamusBottomDrawn_4 as unsafe extern "C" fn() -> uint8),
-        Some(SamusBottomDrawn_4 as unsafe extern "C" fn() -> uint8),
-        Some(SamusBottomDrawn_14_WallJump as unsafe extern "C" fn() -> uint8),
-        Some(SamusBottomDrawn_1 as unsafe extern "C" fn() -> uint8),
-        Some(SamusBottomDrawn_1 as unsafe extern "C" fn() -> uint8),
-        Some(SamusBottomDrawn_1 as unsafe extern "C" fn() -> uint8),
-        Some(SamusBottomDrawn_1 as unsafe extern "C" fn() -> uint8),
-        Some(SamusBottomDrawn_19_DamageBoost as unsafe extern "C" fn() -> uint8),
-        Some(SamusBottomDrawn_1 as unsafe extern "C" fn() -> uint8),
-        Some(SamusBottomDrawn_1B as unsafe extern "C" fn() -> uint8),
+        Some(SamusBottomDrawn_0_Standing as unsafe fn() -> uint8),
+        Some(SamusBottomDrawn_1 as unsafe fn() -> uint8),
+        Some(SamusBottomDrawn_1 as unsafe fn() -> uint8),
+        Some(SamusBottomDrawn_3_SpinJump as unsafe fn() -> uint8),
+        Some(SamusBottomDrawn_4 as unsafe fn() -> uint8),
+        Some(SamusBottomDrawn_1 as unsafe fn() -> uint8),
+        Some(SamusBottomDrawn_1 as unsafe fn() -> uint8),
+        Some(SamusBottomDrawn_4 as unsafe fn() -> uint8),
+        Some(SamusBottomDrawn_4 as unsafe fn() -> uint8),
+        Some(SamusBottomDrawn_4 as unsafe fn() -> uint8),
+        Some(SamusBottomDrawn_A_Knockback as unsafe fn() -> uint8),
+        Some(SamusBottomDrawn_1 as unsafe fn() -> uint8),
+        Some(SamusBottomDrawn_1 as unsafe fn() -> uint8),
+        Some(UNUSED_SamusBottomDrawn_D as unsafe fn() -> uint8),
+        Some(SamusBottomDrawn_1 as unsafe fn() -> uint8),
+        Some(SamusBottomDrawn_F_Transitions as unsafe fn() -> uint8),
+        Some(SamusBottomDrawn_1 as unsafe fn() -> uint8),
+        Some(SamusBottomDrawn_4 as unsafe fn() -> uint8),
+        Some(SamusBottomDrawn_4 as unsafe fn() -> uint8),
+        Some(SamusBottomDrawn_4 as unsafe fn() -> uint8),
+        Some(SamusBottomDrawn_14_WallJump as unsafe fn() -> uint8),
+        Some(SamusBottomDrawn_1 as unsafe fn() -> uint8),
+        Some(SamusBottomDrawn_1 as unsafe fn() -> uint8),
+        Some(SamusBottomDrawn_1 as unsafe fn() -> uint8),
+        Some(SamusBottomDrawn_1 as unsafe fn() -> uint8),
+        Some(SamusBottomDrawn_19_DamageBoost as unsafe fn() -> uint8),
+        Some(SamusBottomDrawn_1 as unsafe fn() -> uint8),
+        Some(SamusBottomDrawn_1B as unsafe fn() -> uint8),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Draw() {
+pub unsafe fn Samus_Draw() {
     let mut v0: PairU16 = PairU16 { k: 0, j: 0 };
     if *((&raw mut g_ram as *mut uint8).offset(0x18aa as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -1948,18 +1930,15 @@ pub unsafe extern "C" fn Samus_Draw() {
     }
     SetSamusTilesDefsForCurAnim();
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusBottomDrawn_1() -> uint8 {
+pub unsafe fn SamusBottomDrawn_1() -> uint8 {
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusBottomDrawn_4() -> uint8 {
+pub unsafe fn SamusBottomDrawn_4() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xaca as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusBottomDrawn_0_Standing() -> uint8 {
+pub unsafe fn SamusBottomDrawn_0_Standing() -> uint8 {
     let mut v1: *mut OamEnt = ::core::ptr::null_mut::<OamEnt>();
     if *((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -1990,8 +1969,7 @@ pub unsafe extern "C" fn SamusBottomDrawn_0_Standing() -> uint8 {
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusBottomDrawn_3_SpinJump() -> uint8 {
+pub unsafe fn SamusBottomDrawn_3_SpinJump() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         == kPose_81_FaceR_Screwattack as ::core::ffi::c_int
@@ -2019,8 +1997,7 @@ pub unsafe extern "C" fn SamusBottomDrawn_3_SpinJump() -> uint8 {
         0 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusBottomDrawn_A_Knockback() -> uint8 {
+pub unsafe fn SamusBottomDrawn_A_Knockback() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         != kPose_D7_FaceR_CrystalFlashEnd as ::core::ffi::c_int
@@ -2039,8 +2016,7 @@ pub unsafe extern "C" fn SamusBottomDrawn_A_Knockback() -> uint8 {
         0 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusBottomDrawn_F_Transitions() -> uint8 {
+pub unsafe fn SamusBottomDrawn_F_Transitions() -> uint8 {
     let mut current_block: u64;
     if *((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -2101,8 +2077,7 @@ pub unsafe extern "C" fn SamusBottomDrawn_F_Transitions() -> uint8 {
         0 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn UNUSED_SamusBottomDrawn_D() -> uint8 {
+pub unsafe fn UNUSED_SamusBottomDrawn_D() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         != kPose_44_FaceL_Turn_Crouch as ::core::ffi::c_int
@@ -2125,8 +2100,7 @@ pub unsafe extern "C" fn UNUSED_SamusBottomDrawn_D() -> uint8 {
         0 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusBottomDrawn_14_WallJump() -> uint8 {
+pub unsafe fn SamusBottomDrawn_14_WallJump() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         - 3 as ::core::ffi::c_int
@@ -2144,8 +2118,7 @@ pub unsafe extern "C" fn SamusBottomDrawn_14_WallJump() -> uint8 {
         0 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusBottomDrawn_19_DamageBoost() -> uint8 {
+pub unsafe fn SamusBottomDrawn_19_DamageBoost() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         - 2 as ::core::ffi::c_int
@@ -2163,8 +2136,7 @@ pub unsafe extern "C" fn SamusBottomDrawn_19_DamageBoost() -> uint8 {
         0 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusBottomDrawn_1B() -> uint8 {
+pub unsafe fn SamusBottomDrawn_1B() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         - kPose_CF_FaceR_Ranintowall_AimUR as ::core::ffi::c_int
@@ -2198,8 +2170,7 @@ pub unsafe extern "C" fn SamusBottomDrawn_1B() -> uint8 {
         0 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_DrawEchoes() {
+pub unsafe fn Samus_DrawEchoes() {
     if *((&raw mut g_ram as *mut uint8).offset(0xaae as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -2338,8 +2309,7 @@ pub unsafe extern "C" fn Samus_DrawEchoes() {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_DrawEcho(mut j: uint16) {
+pub unsafe fn Samus_DrawEcho(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: int16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0xab8 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -2387,8 +2357,7 @@ pub unsafe extern "C" fn Samus_DrawEcho(mut j: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_DrawShinesparkCrashEchoes(mut k: uint16) {
+pub unsafe fn Samus_DrawShinesparkCrashEchoes(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
@@ -2475,8 +2444,7 @@ pub unsafe extern "C" fn Samus_DrawShinesparkCrashEchoes(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_DrawShinesparkCrashEchoProjectiles() {
+pub unsafe fn Samus_DrawShinesparkCrashEchoProjectiles() {
     if *((&raw mut g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
@@ -2498,8 +2466,7 @@ pub unsafe extern "C" fn Samus_DrawShinesparkCrashEchoProjectiles() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_DrawStartingDeathAnim() {
+pub unsafe fn Samus_DrawStartingDeathAnim() {
     let ref mut fresh149 = *((&raw mut g_ram as *mut uint8)
         .offset(0xa94 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh149 = (*fresh149).wrapping_sub(1);
@@ -2517,8 +2484,7 @@ pub unsafe extern "C" fn Samus_DrawStartingDeathAnim() {
     }
     Samus_DrawDuringDeathAnim();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_DrawDuringDeathAnim() {
+pub unsafe fn Samus_DrawDuringDeathAnim() {
     let mut v1: uint16 = (2 as ::core::ffi::c_int
         * *((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int) as uint16;
@@ -2581,8 +2547,7 @@ pub unsafe extern "C" fn Samus_DrawDuringDeathAnim() {
     }
     SetSamusTilesDefsForCurAnim();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_DrawWhenNotAnimatingOrDying() {
+pub unsafe fn Samus_DrawWhenNotAnimatingOrDying() {
     let mut v0: PairU16 = PairU16 { k: 0, j: 0 };
     let mut v2: uint16 = (2 as ::core::ffi::c_int
         * *((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
@@ -2635,17 +2600,16 @@ pub unsafe extern "C" fn Samus_DrawWhenNotAnimatingOrDying() {
 static mut kAtmosphericTypeFuncs: [Option<FuncXY_V>; 8] = unsafe {
     [
         None,
-        Some(AtmosphericTypeFunc_1_FootstepSplash as unsafe extern "C" fn(uint16, uint16) -> ()),
-        Some(AtmosphericTypeFunc_1_FootstepSplash as unsafe extern "C" fn(uint16, uint16) -> ()),
-        Some(AtmosphericTypeFunc_3_DivingSplash as unsafe extern "C" fn(uint16, uint16) -> ()),
-        Some(AtmosphericTypeFunc_4_LavaSurfaceDmg as unsafe extern "C" fn(uint16, uint16) -> ()),
-        Some(AtmosphericTypeFunc_5_Bubbles as unsafe extern "C" fn(uint16, uint16) -> ()),
-        Some(AtmosphericTypeFunc_67_Dust as unsafe extern "C" fn(uint16, uint16) -> ()),
-        Some(AtmosphericTypeFunc_67_Dust as unsafe extern "C" fn(uint16, uint16) -> ()),
+        Some(AtmosphericTypeFunc_1_FootstepSplash as unsafe fn(uint16, uint16) -> ()),
+        Some(AtmosphericTypeFunc_1_FootstepSplash as unsafe fn(uint16, uint16) -> ()),
+        Some(AtmosphericTypeFunc_3_DivingSplash as unsafe fn(uint16, uint16) -> ()),
+        Some(AtmosphericTypeFunc_4_LavaSurfaceDmg as unsafe fn(uint16, uint16) -> ()),
+        Some(AtmosphericTypeFunc_5_Bubbles as unsafe fn(uint16, uint16) -> ()),
+        Some(AtmosphericTypeFunc_67_Dust as unsafe fn(uint16, uint16) -> ()),
+        Some(AtmosphericTypeFunc_67_Dust as unsafe fn(uint16, uint16) -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn HandleAtmosphericEffects() {
+pub unsafe fn HandleAtmosphericEffects() {
     let mut v4: int16 = 0;
     let mut current_block_6: u64;
     let mut i: ::core::ffi::c_int = 6 as ::core::ffi::c_int;
@@ -2757,8 +2721,7 @@ pub unsafe extern "C" fn HandleAtmosphericEffects() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn AtmosphericTypeFunc_1_FootstepSplash(mut k: uint16, mut j: uint16) {
+pub unsafe fn AtmosphericTypeFunc_1_FootstepSplash(mut k: uint16, mut j: uint16) {
     let mut v4: int16 = 0;
     let mut v5: *mut OamEnt = ::core::ptr::null_mut::<OamEnt>();
     let mut v6: int16 = 0;
@@ -2832,8 +2795,7 @@ pub unsafe extern "C" fn AtmosphericTypeFunc_1_FootstepSplash(mut k: uint16, mut
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn AtmosphericTypeFunc_Common(mut j: uint16, mut a: uint16) {
+pub unsafe fn AtmosphericTypeFunc_Common(mut j: uint16, mut a: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0xae4 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(v1 as isize) as ::core::ffi::c_int
@@ -2857,8 +2819,7 @@ pub unsafe extern "C" fn AtmosphericTypeFunc_Common(mut j: uint16, mut a: uint16
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn AtmosphericTypeFunc_3_DivingSplash(mut k: uint16, mut j: uint16) {
+pub unsafe fn AtmosphericTypeFunc_3_DivingSplash(mut k: uint16, mut j: uint16) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut r18: uint16 = *(((&raw mut g_ram as *mut uint8)
         .offset(0xaec as ::core::ffi::c_int as isize) as *mut uint16)
@@ -2873,8 +2834,7 @@ pub unsafe extern "C" fn AtmosphericTypeFunc_3_DivingSplash(mut k: uint16, mut j
         (r18 as ::core::ffi::c_int + 399 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn AtmosphericTypeFunc_4_LavaSurfaceDmg(mut k: uint16, mut j: uint16) {
+pub unsafe fn AtmosphericTypeFunc_4_LavaSurfaceDmg(mut k: uint16, mut j: uint16) {
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v3: uint16 = 0;
     if j as ::core::ffi::c_int & 4 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
@@ -2896,16 +2856,14 @@ pub unsafe extern "C" fn AtmosphericTypeFunc_4_LavaSurfaceDmg(mut k: uint16, mut
     *fresh10 = (*fresh10).wrapping_sub(1);
     AtmosphericTypeFunc_1_FootstepSplash(k, j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn AtmosphericTypeFunc_67_Dust(mut k: uint16, mut j: uint16) {
+pub unsafe fn AtmosphericTypeFunc_67_Dust(mut k: uint16, mut j: uint16) {
     let ref mut fresh11 = *((&raw mut g_ram as *mut uint8)
         .offset(0xae4 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh11 = (*fresh11).wrapping_sub(1);
     AtmosphericTypeFunc_1_FootstepSplash(k, j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn AtmosphericTypeFunc_5_Bubbles(mut k: uint16, mut j: uint16) {
+pub unsafe fn AtmosphericTypeFunc_5_Bubbles(mut k: uint16, mut j: uint16) {
     let mut r18: uint16 = *(((&raw mut g_ram as *mut uint8)
         .offset(0xaec as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
@@ -2917,37 +2875,36 @@ pub unsafe extern "C" fn AtmosphericTypeFunc_5_Bubbles(mut k: uint16, mut j: uin
     );
 }
 static mut kSamus_CalcSpritemapPos: [Option<Func_Y_To_PairU16>; 28] = [
-    Some(Samus_CalcSpritemapPos_Standing as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Crouch as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Default as unsafe extern "C" fn(uint16) -> PairU16),
-    Some(Samus_CalcSpritemapPos_Special as unsafe extern "C" fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Standing as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Default as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Default as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Default as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Default as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Default as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Default as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Default as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Default as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Default as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Default as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Default as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Default as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Default as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Default as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Crouch as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Default as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Default as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Default as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Default as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Default as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Default as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Default as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Default as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Default as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Default as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Default as unsafe fn(uint16) -> PairU16),
+    Some(Samus_CalcSpritemapPos_Special as unsafe fn(uint16) -> PairU16),
 ];
-#[no_mangle]
-pub unsafe extern "C" fn Samus_CalcSpritemapPos(mut k: uint16) -> PairU16 {
+pub unsafe fn Samus_CalcSpritemapPos(mut k: uint16) -> PairU16 {
     let mut v1: PairU16 = PairU16 { k: 0, j: 0 };
     if *((&raw mut g_ram as *mut uint8).offset(0x93f as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -2975,8 +2932,7 @@ pub unsafe extern "C" fn Samus_CalcSpritemapPos(mut k: uint16) -> PairU16 {
     }
     return MakePairU16(v1.k, v1.j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_CalcSpritemapPos_Default(mut j: uint16) -> PairU16 {
+pub unsafe fn Samus_CalcSpritemapPos_Default(mut j: uint16) -> PairU16 {
     let mut v1: ::core::ffi::c_int = *(&raw mut (*(g_rom.offset(
         (((0x91b629 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0x91b629 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -3004,8 +2960,7 @@ pub unsafe extern "C" fn Samus_CalcSpritemapPos_Default(mut j: uint16) -> PairU1
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_CalcSpritemapPos_Standing(mut j: uint16) -> PairU16 {
+pub unsafe fn Samus_CalcSpritemapPos_Standing(mut j: uint16) -> PairU16 {
     static mut g_byte_908D28: [uint8; 16] = [
         3 as ::core::ffi::c_int as uint8,
         6 as ::core::ffi::c_int as uint8,
@@ -3102,8 +3057,7 @@ pub unsafe extern "C" fn Samus_CalcSpritemapPos_Standing(mut j: uint16) -> PairU
     v3 = Samus_CalcSpritemapPos_Default(j);
     return MakePairU16(v3.k, v3.j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_CalcSpritemapPos_Crouch(mut j: uint16) -> PairU16 {
+pub unsafe fn Samus_CalcSpritemapPos_Crouch(mut j: uint16) -> PairU16 {
     static mut byte_908D80: [int8; 24] = [
         -(8 as ::core::ffi::c_int) as int8,
         0 as ::core::ffi::c_int as int8,
@@ -3170,8 +3124,7 @@ pub unsafe extern "C" fn Samus_CalcSpritemapPos_Crouch(mut j: uint16) -> PairU16
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_CalcSpritemapPos_Special(mut j: uint16) -> PairU16 {
+pub unsafe fn Samus_CalcSpritemapPos_Special(mut j: uint16) -> PairU16 {
     static mut byte_908DEF: [int8; 32] = [
         7 as ::core::ffi::c_int as int8,
         5 as ::core::ffi::c_int as int8,
@@ -3248,8 +3201,7 @@ pub unsafe extern "C" fn Samus_CalcSpritemapPos_Special(mut j: uint16) -> PairU1
                 as *mut uint16) as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetLiquidPhysicsType() {
+pub unsafe fn SetLiquidPhysicsType() {
     let mut r18: uint16 = Samus_GetBottom_R18();
     match (*((&raw mut g_ram as *mut uint8).offset(0x196e as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -3302,13 +3254,11 @@ pub unsafe extern "C" fn SetLiquidPhysicsType() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_HandleMovement_X() {
+pub unsafe fn Samus_HandleMovement_X() {
     Samus_HandleExtraRunspeedX();
     Samus_MoveX(Samus_CalcBaseSpeed_X(Samus_DetermineSpeedTableEntryPtr_X()));
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveX(mut amt: int32) {
+pub unsafe fn Samus_MoveX(mut amt: int32) {
     let mut current_block: u64;
     if *((&raw mut g_ram as *mut uint8).offset(0xb4a as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
@@ -3346,8 +3296,7 @@ pub unsafe extern "C" fn Samus_MoveX(mut amt: int32) {
         Samus_MoveRight(amt);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_BombJumpRisingXMovement_() {
+pub unsafe fn Samus_BombJumpRisingXMovement_() {
     let mut current_block: u64;
     let mut amt: int32 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0xa52 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -3387,8 +3336,7 @@ pub unsafe extern "C" fn Samus_BombJumpRisingXMovement_() {
         Samus_MoveRight(amt);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_BombJumpRisingYMovement_() {
+pub unsafe fn Samus_BombJumpRisingYMovement_() {
     if *((&raw mut g_ram as *mut uint8).offset(0xb36 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         == 1 as ::core::ffi::c_int
@@ -3428,8 +3376,7 @@ pub unsafe extern "C" fn Samus_BombJumpRisingYMovement_() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_BombJumpFallingXMovement_() {
+pub unsafe fn Samus_BombJumpFallingXMovement_() {
     let mut amt: int32 = Samus_CalcBaseSpeed_X(Samus_DetermineSpeedTableEntryPtr_X());
     if *((&raw mut g_ram as *mut uint8).offset(0xa62 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -3445,8 +3392,7 @@ pub unsafe extern "C" fn Samus_BombJumpFallingXMovement_() {
         Samus_MoveRight(amt);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_BombJumpFallingYMovement_() {
+pub unsafe fn Samus_BombJumpFallingYMovement_() {
     if *((&raw mut g_ram as *mut uint8).offset(0xb2e as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         - 5 as ::core::ffi::c_int
@@ -3473,8 +3419,7 @@ pub unsafe extern "C" fn Samus_BombJumpFallingYMovement_() {
                 as *mut uint16) as uint32) as int32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_JumpingMovement() {
+pub unsafe fn Samus_JumpingMovement() {
     let mut current_block: u64;
     Samus_HandleExtraRunspeedX();
     if *((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize) as *mut uint16)
@@ -3564,8 +3509,7 @@ pub unsafe extern "C" fn Samus_JumpingMovement() {
     }
     Samus_MoveY_WithSpeedCalc();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_SpinJumpMovement() {
+pub unsafe fn Samus_SpinJumpMovement() {
     let mut current_block: u64;
     static mut g_word_909E9F: uint16 = 8 as uint16;
     Samus_HandleExtraRunspeedX();
@@ -3653,8 +3597,7 @@ pub unsafe extern "C" fn Samus_SpinJumpMovement() {
         Samus_MoveY_WithSpeedCalc();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_CheckStartFalling() {
+pub unsafe fn Samus_CheckStartFalling() {
     if *((&raw mut g_ram as *mut uint8).offset(0xb36 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         == 1 as ::core::ffi::c_int
@@ -3671,8 +3614,7 @@ pub unsafe extern "C" fn Samus_CheckStartFalling() {
             as *mut uint16) = 2 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveY_WithSpeedCalc() {
+pub unsafe fn Samus_MoveY_WithSpeedCalc() {
     let mut amt: int32 = ((*((&raw mut g_ram as *mut uint8)
         .offset(0xb2e as ::core::ffi::c_int as isize) as *mut uint16)
         as uint32)
@@ -3731,8 +3673,7 @@ pub unsafe extern "C" fn Samus_MoveY_WithSpeedCalc() {
         Samus_MoveDown(amt);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_FallingMovement() {
+pub unsafe fn Samus_FallingMovement() {
     Samus_HandleExtraRunspeedX();
     let mut pair: Pair_Bool_Amt =
         Samus_CalcBaseSpeed_NoDecel_X(Samus_DetermineSpeedTableEntryPtr_X());
@@ -3760,8 +3701,7 @@ pub unsafe extern "C" fn Samus_FallingMovement() {
     Samus_CheckStartFalling();
     Samus_MoveY_WithSpeedCalc();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MorphedFallingMovement() {
+pub unsafe fn Samus_MorphedFallingMovement() {
     let mut pair: Pair_Bool_Amt =
         Samus_CalcBaseSpeed_NoDecel_X(Samus_DetermineSpeedTableEntryPtr_X());
     if *((&raw mut g_ram as *mut uint8).offset(0xb4a as ::core::ffi::c_int as isize) as *mut uint16)
@@ -3787,8 +3727,7 @@ pub unsafe extern "C" fn Samus_MorphedFallingMovement() {
     Samus_CheckStartFalling();
     Samus_MoveY_WithSpeedCalc();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MorphedBouncingMovement() {
+pub unsafe fn Samus_MorphedBouncingMovement() {
     let mut pair: Pair_Bool_Amt =
         Samus_CalcBaseSpeed_NoDecel_X(Samus_DetermineSpeedTableEntryPtr_X());
     if *((&raw mut g_ram as *mut uint8).offset(0xb4a as ::core::ffi::c_int as isize) as *mut uint16)
@@ -3846,8 +3785,7 @@ pub unsafe extern "C" fn Samus_MorphedBouncingMovement() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Move_NoSpeedCalc_Y() {
+pub unsafe fn Samus_Move_NoSpeedCalc_Y() {
     let mut amt: int32 = ((*((&raw mut g_ram as *mut uint8)
         .offset(0xb5c as ::core::ffi::c_int as isize) as *mut uint16)
         as uint32)
@@ -3876,8 +3814,7 @@ pub unsafe extern "C" fn Samus_Move_NoSpeedCalc_Y() {
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveExtraY() {
+pub unsafe fn Samus_MoveExtraY() {
     let mut amt: int32 = ((*((&raw mut g_ram as *mut uint8)
         .offset(0xb5c as ::core::ffi::c_int as isize) as *mut uint16)
         as uint32)
@@ -3894,8 +3831,7 @@ pub unsafe extern "C" fn Samus_MoveExtraY() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_CheckAndMoveY() -> uint8 {
+pub unsafe fn Samus_CheckAndMoveY() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xb36 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
     {
@@ -3905,8 +3841,7 @@ pub unsafe extern "C" fn Samus_CheckAndMoveY() -> uint8 {
     Samus_MoveY_WithSpeedCalc();
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveY_Simple_() -> uint8 {
+pub unsafe fn Samus_MoveY_Simple_() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xb36 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
     {
@@ -3916,12 +3851,10 @@ pub unsafe extern "C" fn Samus_MoveY_Simple_() -> uint8 {
     Samus_MoveY_WithSpeedCalc();
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Move_NoBaseSpeed_X() {
+pub unsafe fn Samus_Move_NoBaseSpeed_X() {
     Samus_MoveX(0 as int32);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveLeft(mut amt: int32) {
+pub unsafe fn Samus_MoveLeft(mut amt: int32) {
     amt = -amt;
     let mut cres: CheckEnemyColl_Result = Samus_CheckSolidEnemyColl(amt);
     *((&raw mut g_ram as *mut uint8).offset(0xdd0 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -3954,8 +3887,7 @@ pub unsafe extern "C" fn Samus_MoveLeft(mut amt: int32) {
         Samus_AlignYPosSlope();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveRight(mut amt: int32) {
+pub unsafe fn Samus_MoveRight(mut amt: int32) {
     let mut cres: CheckEnemyColl_Result = Samus_CheckSolidEnemyColl(amt);
     *((&raw mut g_ram as *mut uint8).offset(0xdd0 as ::core::ffi::c_int as isize) as *mut uint16) =
         cres.collision;
@@ -3987,8 +3919,7 @@ pub unsafe extern "C" fn Samus_MoveRight(mut amt: int32) {
         Samus_AlignYPosSlope();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveUp(mut amt: int32) {
+pub unsafe fn Samus_MoveUp(mut amt: int32) {
     *((&raw mut g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize) as *mut uint16) =
         2 as uint16;
     let mut cres: CheckEnemyColl_Result = Samus_CheckSolidEnemyColl(-amt);
@@ -4012,8 +3943,7 @@ pub unsafe extern "C" fn Samus_MoveUp(mut amt: int32) {
         Samus_MoveUp_SetPoseCalcInput();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveDown(mut amt: int32) {
+pub unsafe fn Samus_MoveDown(mut amt: int32) {
     *((&raw mut g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize) as *mut uint16) =
         3 as uint16;
     let mut cres: CheckEnemyColl_Result = Samus_CheckSolidEnemyColl(amt);
@@ -4034,8 +3964,7 @@ pub unsafe extern "C" fn Samus_MoveDown(mut amt: int32) {
         Samus_MoveDown_SetPoseCalcInput();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveHandler_ReleaseFromGrapple() {
+pub unsafe fn Samus_MoveHandler_ReleaseFromGrapple() {
     if *((&raw mut g_ram as *mut uint8).offset(0xb36 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         == 1 as ::core::ffi::c_int
@@ -4087,8 +4016,7 @@ pub unsafe extern "C" fn Samus_MoveHandler_ReleaseFromGrapple() {
             (0x90a337 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_HandleMovement_DrainedCrouching() {
+pub unsafe fn Samus_HandleMovement_DrainedCrouching() {
     Samus_MoveY_WithSpeedCalc();
     if *((&raw mut g_ram as *mut uint8).offset(0xdd0 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
@@ -4106,8 +4034,7 @@ pub unsafe extern "C" fn Samus_HandleMovement_DrainedCrouching() {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallScrollingFinishedHook(mut ea: uint32) {
+pub unsafe fn CallScrollingFinishedHook(mut ea: uint32) {
     match ea {
         9475465 => {
             Samus_ScrollFinishedHook_SporeSpawnFight();
@@ -4118,8 +4045,7 @@ pub unsafe extern "C" fn CallScrollingFinishedHook(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MainScrollingRoutine() {
+pub unsafe fn MainScrollingRoutine() {
     let mut v0: uint16 = 0;
     let mut current_block: u64;
     if *((&raw mut g_ram as *mut uint8).offset(0xcf8 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -4235,8 +4161,7 @@ pub unsafe extern "C" fn MainScrollingRoutine() {
         *((&raw mut g_ram as *mut uint8).offset(0xafc as ::core::ffi::c_int as isize)
             as *mut uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_ScrollFinishedHook_SporeSpawnFight() {
+pub unsafe fn Samus_ScrollFinishedHook_SporeSpawnFight() {
     if *((&raw mut g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         <= 0x1d0 as ::core::ffi::c_int
@@ -4245,8 +4170,7 @@ pub unsafe extern "C" fn Samus_ScrollFinishedHook_SporeSpawnFight() {
             as *mut uint16) = 464 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_HandleScroll_X() {
+pub unsafe fn Samus_HandleScroll_X() {
     static mut kSamus_HandleScroll_X_FaceLeft: [uint16; 4] = [
         0xa0 as ::core::ffi::c_int as uint16,
         0x50 as ::core::ffi::c_int as uint16,
@@ -4341,8 +4265,7 @@ pub unsafe extern "C" fn Samus_HandleScroll_X() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_HandleScroll_Y() {
+pub unsafe fn Samus_HandleScroll_Y() {
     if *((&raw mut g_ram as *mut uint8).offset(0xb14 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         == *((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
@@ -4413,8 +4336,7 @@ pub unsafe extern "C" fn Samus_HandleScroll_Y() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_CalcDistanceMoved_X() {
+pub unsafe fn Samus_CalcDistanceMoved_X() {
     if (*((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         - *((&raw mut g_ram as *mut uint8).offset(0xb10 as ::core::ffi::c_int as isize)
@@ -4464,8 +4386,7 @@ pub unsafe extern "C" fn Samus_CalcDistanceMoved_X() {
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_CalcDistanceMoved_Y() {
+pub unsafe fn Samus_CalcDistanceMoved_Y() {
     if (*((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         - *((&raw mut g_ram as *mut uint8).offset(0xb14 as ::core::ffi::c_int as isize)
@@ -4545,8 +4466,7 @@ static mut kSamus_HandleExtraRunspeedX_Tab5: [uint16; 3] = [
     0 as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn Samus_HandleExtraRunspeedX() {
+pub unsafe fn Samus_HandleExtraRunspeedX() {
     let mut r18: uint16 = 0;
     let mut current_block: u64;
     if *((&raw mut g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -4747,8 +4667,7 @@ pub unsafe extern "C" fn Samus_HandleExtraRunspeedX() {
             as *mut uint16) = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveRight_NoColl(mut amt: int32) {
+pub unsafe fn Samus_MoveRight_NoColl(mut amt: int32) {
     AddToHiLo(
         (&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize) as *mut uint16,
         (&raw mut g_ram as *mut uint8).offset(0xaf8 as ::core::ffi::c_int as isize) as *mut uint16,
@@ -4760,8 +4679,7 @@ pub unsafe extern "C" fn Samus_MoveRight_NoColl(mut amt: int32) {
         amt as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveLeft_NoColl(mut amt: int32) {
+pub unsafe fn Samus_MoveLeft_NoColl(mut amt: int32) {
     AddToHiLo(
         (&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize) as *mut uint16,
         (&raw mut g_ram as *mut uint8).offset(0xaf8 as ::core::ffi::c_int as isize) as *mut uint16,
@@ -4773,8 +4691,7 @@ pub unsafe extern "C" fn Samus_MoveLeft_NoColl(mut amt: int32) {
         -amt as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveDown_NoColl(mut amt: int32) {
+pub unsafe fn Samus_MoveDown_NoColl(mut amt: int32) {
     AddToHiLo(
         (&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize) as *mut uint16,
         (&raw mut g_ram as *mut uint8).offset(0xafc as ::core::ffi::c_int as isize) as *mut uint16,
@@ -4786,8 +4703,7 @@ pub unsafe extern "C" fn Samus_MoveDown_NoColl(mut amt: int32) {
         amt as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveUp_NoColl(mut amt: int32) {
+pub unsafe fn Samus_MoveUp_NoColl(mut amt: int32) {
     AddToHiLo(
         (&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize) as *mut uint16,
         (&raw mut g_ram as *mut uint8).offset(0xafc as ::core::ffi::c_int as isize) as *mut uint16,
@@ -4799,8 +4715,7 @@ pub unsafe extern "C" fn Samus_MoveUp_NoColl(mut amt: int32) {
         -amt as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_InitJump() {
+pub unsafe fn Samus_InitJump() {
     let mut r18: uint16 = 0;
     let mut current_block: u64;
     static mut kSamus_InitJump_Speed_Y: [uint16; 3] = [
@@ -4916,8 +4831,7 @@ pub unsafe extern "C" fn Samus_InitJump() {
     *((&raw mut g_ram as *mut uint8).offset(0xb36 as ::core::ffi::c_int as isize) as *mut uint16) =
         1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_InitWallJump() {
+pub unsafe fn Samus_InitWallJump() {
     let mut r18: uint16 = 0;
     let mut current_block: u64;
     static mut kSamus_InitWallJump_0: [uint16; 3] = [
@@ -5046,8 +4960,7 @@ static mut kSamus_SetSpeedForKnockback_Y_Subspeed: [uint16; 3] = [
     0 as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn Samus_SetSpeedForKnockback_Y() {
+pub unsafe fn Samus_SetSpeedForKnockback_Y() {
     let mut current_block: u64;
     let mut v0: uint16 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -5112,8 +5025,7 @@ pub unsafe extern "C" fn Samus_SetSpeedForKnockback_Y() {
     *((&raw mut g_ram as *mut uint8).offset(0xb36 as ::core::ffi::c_int as isize) as *mut uint16) =
         1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_InitBombJump() {
+pub unsafe fn Samus_InitBombJump() {
     let mut current_block: u64;
     static mut kSamus_InitBombJump_Speed: [uint16; 3] = [
         2 as ::core::ffi::c_int as uint16,
@@ -5188,7 +5100,7 @@ pub unsafe extern "C" fn Samus_InitBombJump() {
     *((&raw mut g_ram as *mut uint8).offset(0xb36 as ::core::ffi::c_int as isize) as *mut uint16) =
         1 as uint16;
 }
-unsafe extern "C" fn IsGreaterThanQuirked(
+unsafe fn IsGreaterThanQuirked(
     mut vhi: uint16,
     mut vlo: uint16,
     mut cmphi: uint16,
@@ -5208,8 +5120,7 @@ unsafe extern "C" fn IsGreaterThanQuirked(
     }
     return false_0 != 0;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_CalcBaseSpeed_X(mut k: uint16) -> int32 {
+pub unsafe fn Samus_CalcBaseSpeed_X(mut k: uint16) -> int32 {
     let mut sste: *mut SamusSpeedTableEntry = get_SamusSpeedTableEntry(k);
     if *((&raw mut g_ram as *mut uint8).offset(0xb4a as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
@@ -5282,7 +5193,7 @@ pub unsafe extern "C" fn Samus_CalcBaseSpeed_X(mut k: uint16) -> int32 {
         | *((&raw mut g_ram as *mut uint8).offset(0xb48 as ::core::ffi::c_int as isize)
             as *mut uint16) as uint32) as int32;
 }
-unsafe extern "C" fn Samus_CalcBaseSpeed_NoDecel_X(mut k: uint16) -> Pair_Bool_Amt {
+unsafe fn Samus_CalcBaseSpeed_NoDecel_X(mut k: uint16) -> Pair_Bool_Amt {
     let mut sste: *mut SamusSpeedTableEntry = get_SamusSpeedTableEntry(k);
     let mut rv: bool = false_0 != 0;
     if *((&raw mut g_ram as *mut uint8).offset(0xb4a as ::core::ffi::c_int as isize) as *mut uint16)
@@ -5362,8 +5273,7 @@ unsafe extern "C" fn Samus_CalcBaseSpeed_NoDecel_X(mut k: uint16) -> Pair_Bool_A
                 as *mut uint16) as uint32) as int32,
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_DetermineSpeedTableEntryPtr_X() -> uint16 {
+pub unsafe fn Samus_DetermineSpeedTableEntryPtr_X() -> uint16 {
     if *((&raw mut g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0x20 as ::core::ffi::c_int
@@ -5409,8 +5319,7 @@ pub unsafe extern "C" fn Samus_DetermineSpeedTableEntryPtr_X() -> uint16 {
             * *(&raw mut g_ram as *mut uint8).offset(0xa1f as ::core::ffi::c_int as isize)
                 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_DetermineGrappleSwingSpeed_X() -> uint16 {
+pub unsafe fn Samus_DetermineGrappleSwingSpeed_X() -> uint16 {
     if *((&raw mut g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0x20 as ::core::ffi::c_int
@@ -5452,8 +5361,7 @@ pub unsafe extern "C" fn Samus_DetermineGrappleSwingSpeed_X() -> uint16 {
     }
     return addr_kSamusSpeedTable_Normal_X as ::core::ffi::c_int as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_DetermineAccel_Y() {
+pub unsafe fn Samus_DetermineAccel_Y() {
     let mut r18: uint16 = 0;
     static mut g_word_909EA1: uint16 = 0x1c00 as uint16;
     static mut g_word_909EA3: uint16 = 0x800 as uint16;
@@ -5510,8 +5418,7 @@ pub unsafe extern "C" fn Samus_DetermineAccel_Y() {
     *((&raw mut g_ram as *mut uint8).offset(0xb34 as ::core::ffi::c_int as isize) as *mut uint16) =
         g_word_909EA7;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_GrappleWallJumpCheck(mut amt: int32) -> uint8 {
+pub unsafe fn Samus_GrappleWallJumpCheck(mut amt: int32) -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xe1c as ::core::ffi::c_int as isize) as *mut uint16) =
         -(1 as ::core::ffi::c_int) as uint16;
     if *(&raw mut g_ram as *mut uint8).offset(0xa1e as ::core::ffi::c_int as isize)
@@ -5555,8 +5462,7 @@ pub unsafe extern "C" fn Samus_GrappleWallJumpCheck(mut amt: int32) -> uint8 {
             as *mut uint16);
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_WallJumpCheck(mut amt: int32) -> uint8 {
+pub unsafe fn Samus_WallJumpCheck(mut amt: int32) -> uint8 {
     let mut current_block: u64;
     let mut cres: CheckEnemyColl_Result = CheckSolidEnemyColl_Result {
         collision: 0,
@@ -5771,43 +5677,41 @@ pub unsafe extern "C" fn Samus_WallJumpCheck(mut amt: int32) -> uint8 {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_07_Unused() {
+pub unsafe fn Samus_Movement_07_Unused() {
     *((&raw mut g_ram as *mut uint8).offset(0xdc6 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
 static mut kSamusMovementHandlers: [Option<HandlerFunc>; 28] = [
-    Some(Samus_Movement_00_Standing as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_01_Running as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_02_NormalJumping as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_03_SpinJumping as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_04_MorphBallOnGround as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_05_Crouching as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_06_Falling as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_07_Unused as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_08_MorphBallFalling as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_09_Unused as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_0A_KnockbackOrCrystalFlashEnding as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_0B_Unused as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_0C_Unused as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_0D_Unused as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_0E_TurningAroundOnGround as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_0F_CrouchingEtcTransition as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_10_Moonwalking as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_11_SpringBallOnGround as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_12_SpringBallInAir as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_13_SpringBallFalling as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_14_WallJumping as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_15_RanIntoWall as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_16_Grappling as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_17_TurningAroundJumping as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_18_TurningAroundFalling as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_19_DamageBoost as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_1A_GrabbedByDraygon as unsafe extern "C" fn() -> ()),
-    Some(Samus_Movement_1B_ShinesparkEtc as unsafe extern "C" fn() -> ()),
+    Some(Samus_Movement_00_Standing as unsafe fn() -> ()),
+    Some(Samus_Movement_01_Running as unsafe fn() -> ()),
+    Some(Samus_Movement_02_NormalJumping as unsafe fn() -> ()),
+    Some(Samus_Movement_03_SpinJumping as unsafe fn() -> ()),
+    Some(Samus_Movement_04_MorphBallOnGround as unsafe fn() -> ()),
+    Some(Samus_Movement_05_Crouching as unsafe fn() -> ()),
+    Some(Samus_Movement_06_Falling as unsafe fn() -> ()),
+    Some(Samus_Movement_07_Unused as unsafe fn() -> ()),
+    Some(Samus_Movement_08_MorphBallFalling as unsafe fn() -> ()),
+    Some(Samus_Movement_09_Unused as unsafe fn() -> ()),
+    Some(Samus_Movement_0A_KnockbackOrCrystalFlashEnding as unsafe fn() -> ()),
+    Some(Samus_Movement_0B_Unused as unsafe fn() -> ()),
+    Some(Samus_Movement_0C_Unused as unsafe fn() -> ()),
+    Some(Samus_Movement_0D_Unused as unsafe fn() -> ()),
+    Some(Samus_Movement_0E_TurningAroundOnGround as unsafe fn() -> ()),
+    Some(Samus_Movement_0F_CrouchingEtcTransition as unsafe fn() -> ()),
+    Some(Samus_Movement_10_Moonwalking as unsafe fn() -> ()),
+    Some(Samus_Movement_11_SpringBallOnGround as unsafe fn() -> ()),
+    Some(Samus_Movement_12_SpringBallInAir as unsafe fn() -> ()),
+    Some(Samus_Movement_13_SpringBallFalling as unsafe fn() -> ()),
+    Some(Samus_Movement_14_WallJumping as unsafe fn() -> ()),
+    Some(Samus_Movement_15_RanIntoWall as unsafe fn() -> ()),
+    Some(Samus_Movement_16_Grappling as unsafe fn() -> ()),
+    Some(Samus_Movement_17_TurningAroundJumping as unsafe fn() -> ()),
+    Some(Samus_Movement_18_TurningAroundFalling as unsafe fn() -> ()),
+    Some(Samus_Movement_19_DamageBoost as unsafe fn() -> ()),
+    Some(Samus_Movement_1A_GrabbedByDraygon as unsafe fn() -> ()),
+    Some(Samus_Movement_1B_ShinesparkEtc as unsafe fn() -> ()),
 ];
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MovementHandler_Normal() {
+pub unsafe fn Samus_MovementHandler_Normal() {
     if *((&raw mut g_ram as *mut uint8).offset(0xa78 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
     {
@@ -5817,8 +5721,7 @@ pub unsafe extern "C" fn Samus_MovementHandler_Normal() {
         Samus_UpdateSpeedEchoPos();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_00_Standing() {
+pub unsafe fn Samus_Movement_00_Standing() {
     if *((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         != 0
@@ -5871,8 +5774,7 @@ pub unsafe extern "C" fn Samus_Movement_00_Standing() {
             as *mut uint16) = 0 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_01_Running() {
+pub unsafe fn Samus_Movement_01_Running() {
     static mut kSamusFootstepFrame: [uint8; 10] = [
         0 as ::core::ffi::c_int as uint8,
         0 as ::core::ffi::c_int as uint8,
@@ -5916,12 +5818,10 @@ pub unsafe extern "C" fn Samus_Movement_01_Running() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_02_NormalJumping() {
+pub unsafe fn Samus_Movement_02_NormalJumping() {
     Samus_JumpingMovement();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_03_SpinJumping() {
+pub unsafe fn Samus_Movement_03_SpinJumping() {
     let mut current_block: u64;
     static mut kSamusPhys_JumpMinYVelAir: uint16 = 0x280 as uint16;
     static mut kSamusPhys_JumpMaxYVelAir: uint16 = 0x500 as uint16;
@@ -6082,8 +5982,7 @@ pub unsafe extern "C" fn Samus_Movement_03_SpinJumping() {
     }
     Samus_SpinJumpMovement();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_04_MorphBallOnGround() {
+pub unsafe fn Samus_Movement_04_MorphBallOnGround() {
     if *((&raw mut g_ram as *mut uint8).offset(0xb4a as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
     {
@@ -6135,8 +6034,7 @@ pub unsafe extern "C" fn Samus_Movement_04_MorphBallOnGround() {
         Samus_Move_NoSpeedCalc_Y();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_05_Crouching() {
+pub unsafe fn Samus_Movement_05_Crouching() {
     Samus_Move_NoBaseSpeed_X();
     Samus_Move_NoSpeedCalc_Y();
     *((&raw mut g_ram as *mut uint8).offset(0xb42 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -6150,8 +6048,7 @@ pub unsafe extern "C" fn Samus_Movement_05_Crouching() {
     *((&raw mut g_ram as *mut uint8).offset(0xb4a as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_06_Falling() {
+pub unsafe fn Samus_Movement_06_Falling() {
     Samus_FallingMovement();
     if (*((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -6184,8 +6081,7 @@ pub unsafe extern "C" fn Samus_Movement_06_Falling() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_08_MorphBallFalling() {
+pub unsafe fn Samus_Movement_08_MorphBallFalling() {
     if *((&raw mut g_ram as *mut uint8).offset(0x8b as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & (kButton_Left as ::core::ffi::c_int | kButton_Right as ::core::ffi::c_int)
@@ -6214,46 +6110,39 @@ pub unsafe extern "C" fn Samus_Movement_08_MorphBallFalling() {
         Samus_MorphedFallingMovement();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_09_Unused() {}
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_0A_KnockbackOrCrystalFlashEnding() {
+pub unsafe fn Samus_Movement_09_Unused() {}
+pub unsafe fn Samus_Movement_0A_KnockbackOrCrystalFlashEnding() {
     *((&raw mut g_ram as *mut uint8).offset(0xdc6 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     Samus_Move_NoSpeedCalc_Y();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_0B_Unused() {
+pub unsafe fn Samus_Movement_0B_Unused() {
     *((&raw mut g_ram as *mut uint8).offset(0xdc6 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_0C_Unused() {
+pub unsafe fn Samus_Movement_0C_Unused() {
     *((&raw mut g_ram as *mut uint8).offset(0xdc6 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_0D_Unused() {}
-#[no_mangle]
-pub unsafe extern "C" fn nullsub_13() {}
+pub unsafe fn Samus_Movement_0D_Unused() {}
+pub unsafe fn nullsub_13() {}
 static mut kSamusCrouchingEtcFuncs: [Option<HandlerFunc>; 12] = unsafe {
     [
-        Some(nullsub_13 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_13 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_13 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_13 as unsafe extern "C" fn() -> ()),
-        Some(SamusCrouchingEtcFunc as unsafe extern "C" fn() -> ()),
-        Some(SamusCrouchingEtcFunc as unsafe extern "C" fn() -> ()),
-        Some(nullsub_13 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_13 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_13 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_13 as unsafe extern "C" fn() -> ()),
-        Some(SamusCrouchingEtcFunc as unsafe extern "C" fn() -> ()),
-        Some(SamusCrouchingEtcFunc as unsafe extern "C" fn() -> ()),
+        Some(nullsub_13 as unsafe fn() -> ()),
+        Some(nullsub_13 as unsafe fn() -> ()),
+        Some(nullsub_13 as unsafe fn() -> ()),
+        Some(nullsub_13 as unsafe fn() -> ()),
+        Some(SamusCrouchingEtcFunc as unsafe fn() -> ()),
+        Some(SamusCrouchingEtcFunc as unsafe fn() -> ()),
+        Some(nullsub_13 as unsafe fn() -> ()),
+        Some(nullsub_13 as unsafe fn() -> ()),
+        Some(nullsub_13 as unsafe fn() -> ()),
+        Some(nullsub_13 as unsafe fn() -> ()),
+        Some(SamusCrouchingEtcFunc as unsafe fn() -> ()),
+        Some(SamusCrouchingEtcFunc as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_0F_CrouchingEtcTransition() {
+pub unsafe fn Samus_Movement_0F_CrouchingEtcTransition() {
     let mut current_block: u64;
     if *((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -6304,15 +6193,13 @@ pub unsafe extern "C" fn Samus_Movement_0F_CrouchingEtcTransition() {
     *((&raw mut g_ram as *mut uint8).offset(0xdc6 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCrouchingEtcFunc() {
+pub unsafe fn SamusCrouchingEtcFunc() {
     *((&raw mut g_ram as *mut uint8).offset(0xa46 as ::core::ffi::c_int as isize) as *mut uint16) =
         3 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xaa4 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_0E_TurningAroundOnGround() {
+pub unsafe fn Samus_Movement_0E_TurningAroundOnGround() {
     Samus_HandleMovement_X();
     Samus_Move_NoSpeedCalc_Y();
     Samus_CancelSpeedBoost();
@@ -6323,13 +6210,11 @@ pub unsafe extern "C" fn Samus_Movement_0E_TurningAroundOnGround() {
     *((&raw mut g_ram as *mut uint8).offset(0xdc6 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_10_Moonwalking() {
+pub unsafe fn Samus_Movement_10_Moonwalking() {
     Samus_HandleMovement_X();
     Samus_Move_NoSpeedCalc_Y();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_11_SpringBallOnGround() {
+pub unsafe fn Samus_Movement_11_SpringBallOnGround() {
     if *((&raw mut g_ram as *mut uint8).offset(0xb4a as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
     {
@@ -6381,8 +6266,7 @@ pub unsafe extern "C" fn Samus_Movement_11_SpringBallOnGround() {
         Samus_Move_NoSpeedCalc_Y();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_12_SpringBallInAir() {
+pub unsafe fn Samus_Movement_12_SpringBallInAir() {
     if *((&raw mut g_ram as *mut uint8).offset(0xb20 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -6391,8 +6275,7 @@ pub unsafe extern "C" fn Samus_Movement_12_SpringBallInAir() {
         Samus_JumpingMovement();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_13_SpringBallFalling() {
+pub unsafe fn Samus_Movement_13_SpringBallFalling() {
     if *((&raw mut g_ram as *mut uint8).offset(0x8b as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & (kButton_Left as ::core::ffi::c_int | kButton_Right as ::core::ffi::c_int)
@@ -6421,8 +6304,7 @@ pub unsafe extern "C" fn Samus_Movement_13_SpringBallFalling() {
         Samus_MorphedFallingMovement();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_14_WallJumping() {
+pub unsafe fn Samus_Movement_14_WallJumping() {
     if *((&raw mut g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         - 23 as ::core::ffi::c_int
@@ -6449,8 +6331,7 @@ pub unsafe extern "C" fn Samus_Movement_14_WallJumping() {
     }
     Samus_JumpingMovement();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_15_RanIntoWall() {
+pub unsafe fn Samus_Movement_15_RanIntoWall() {
     Samus_Move_NoBaseSpeed_X();
     Samus_Move_NoSpeedCalc_Y();
     Samus_CancelSpeedBoost();
@@ -6465,8 +6346,7 @@ pub unsafe extern "C" fn Samus_Movement_15_RanIntoWall() {
     *((&raw mut g_ram as *mut uint8).offset(0xb4a as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_16_Grappling() {
+pub unsafe fn Samus_Movement_16_Grappling() {
     if *((&raw mut g_ram as *mut uint8).offset(0xdc6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         != 5 as ::core::ffi::c_int
@@ -6475,8 +6355,7 @@ pub unsafe extern "C" fn Samus_Movement_16_Grappling() {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_17_TurningAroundJumping() {
+pub unsafe fn Samus_Movement_17_TurningAroundJumping() {
     Samus_HandleMovement_X();
     if Samus_CheckAndMoveY() as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
         Samus_Move_NoSpeedCalc_Y();
@@ -6489,8 +6368,7 @@ pub unsafe extern "C" fn Samus_Movement_17_TurningAroundJumping() {
     *((&raw mut g_ram as *mut uint8).offset(0xdc6 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_18_TurningAroundFalling() {
+pub unsafe fn Samus_Movement_18_TurningAroundFalling() {
     Samus_HandleMovement_X();
     if Samus_CheckAndMoveY() as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
         Samus_Move_NoSpeedCalc_Y();
@@ -6503,17 +6381,14 @@ pub unsafe extern "C" fn Samus_Movement_18_TurningAroundFalling() {
     *((&raw mut g_ram as *mut uint8).offset(0xdc6 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_19_DamageBoost() {
+pub unsafe fn Samus_Movement_19_DamageBoost() {
     Samus_JumpingMovement();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_1A_GrabbedByDraygon() {
+pub unsafe fn Samus_Movement_1A_GrabbedByDraygon() {
     *((&raw mut g_ram as *mut uint8).offset(0xdc6 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Movement_1B_ShinesparkEtc() {
+pub unsafe fn Samus_Movement_1B_ShinesparkEtc() {
     *((&raw mut g_ram as *mut uint8).offset(0xdc6 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
@@ -6537,7 +6412,7 @@ static mut kShr0xFc00: [uint16; 8] = [
     0x3f0 as ::core::ffi::c_int as uint16,
     0x1f8 as ::core::ffi::c_int as uint16,
 ];
-unsafe extern "C" fn MarkMapTileAsExplored(mut r18: uint16, mut r24: uint16) {
+unsafe fn MarkMapTileAsExplored(mut r18: uint16, mut r24: uint16) {
     let mut v0: uint8 = ((r18 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int) as uint16
         as ::core::ffi::c_int
         >> 8 as ::core::ffi::c_int) as uint8;
@@ -6570,8 +6445,7 @@ unsafe extern "C" fn MarkMapTileAsExplored(mut r18: uint16, mut r24: uint16) {
             + v0 as ::core::ffi::c_int
             & 7 as ::core::ffi::c_int) as usize] as ::core::ffi::c_int) as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DisableMinimapAndMarkBossRoomAsExplored() {
+pub unsafe fn DisableMinimapAndMarkBossRoomAsExplored() {
     *((&raw mut g_ram as *mut uint8).offset(0x5f7 as ::core::ffi::c_int as isize) as *mut uint16) =
         1 as uint16;
     let mut v0: uint16 = 0 as uint16;
@@ -6630,10 +6504,8 @@ pub unsafe extern "C" fn DisableMinimapAndMarkBossRoomAsExplored() {
         i += 4 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn InitializeMiniMapBroken() {}
-#[no_mangle]
-pub unsafe extern "C" fn UpdateMinimap() {
+pub unsafe fn InitializeMiniMapBroken() {}
+pub unsafe fn UpdateMinimap() {
     let mut v4: int16 = 0;
     let mut v10: int16 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0x5f7 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -6884,8 +6756,7 @@ pub unsafe extern "C" fn UpdateMinimap() {
     }
     UpdateMinimapInside(r18, r22, r34, r30, r32, r38, r24, r40, r26, r42, r28);
 }
-#[no_mangle]
-pub unsafe extern "C" fn UpdateMinimapInside(
+pub unsafe fn UpdateMinimapInside(
     mut r18: uint16,
     mut r22: uint16,
     mut r34: uint16,
@@ -7063,8 +6934,7 @@ pub unsafe extern "C" fn UpdateMinimapInside(
         *fresh100 = (*fresh100 as ::core::ffi::c_int | 0x1c00 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_HandleCooldown() {
+pub unsafe fn Samus_HandleCooldown() {
     if *((&raw mut g_ram as *mut uint8).offset(0xa78 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -7094,8 +6964,7 @@ pub unsafe extern "C" fn Samus_HandleCooldown() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_CanFireBeam() -> uint8 {
+pub unsafe fn Samus_CanFireBeam() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xcce as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         - 5 as ::core::ffi::c_int
@@ -7114,8 +6983,7 @@ pub unsafe extern "C" fn Samus_CanFireBeam() -> uint8 {
     *fresh6 = (*fresh6).wrapping_add(1);
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_CanFireSuperMissile() -> uint8 {
+pub unsafe fn Samus_CanFireSuperMissile() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0x9d2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         != 2 as ::core::ffi::c_int
@@ -7150,8 +7018,7 @@ pub unsafe extern "C" fn Samus_CanFireSuperMissile() -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn UpdateBeamTilesAndPalette() {
+pub unsafe fn UpdateBeamTilesAndPalette() {
     let mut v0: uint16 = (2 as ::core::ffi::c_int
         * (*((&raw mut g_ram as *mut uint8).offset(0x9a6 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -7173,8 +7040,7 @@ pub unsafe extern "C" fn UpdateBeamTilesAndPalette() {
     v1 = (v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     let fresh155 = v1;
     v1 = v1.wrapping_add(1);
-    *(&raw mut (*(gVramWriteEntry
-        as unsafe extern "C" fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
+    *(&raw mut (*(gVramWriteEntry as unsafe fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
         fresh155 as ::core::ffi::c_int,
     ))
     .size as *mut uint8)
@@ -7185,15 +7051,13 @@ pub unsafe extern "C" fn UpdateBeamTilesAndPalette() {
         (v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     WriteBeamPalette_Y(v0);
 }
-#[no_mangle]
-pub unsafe extern "C" fn WriteBeamPalette_A(mut a: uint16) {
+pub unsafe fn WriteBeamPalette_A(mut a: uint16) {
     WriteBeamPalette_Y(
         (2 as ::core::ffi::c_int * (a as ::core::ffi::c_int & 0xfff as ::core::ffi::c_int))
             as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn WriteBeamPalette_Y(mut j: uint16) {
+pub unsafe fn WriteBeamPalette_Y(mut j: uint16) {
     let mut r0: uint16 = *(g_rom.offset(
         (((0x90c3c9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0x90c3c9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -7219,8 +7083,7 @@ pub unsafe extern "C" fn WriteBeamPalette_Y(mut j: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadProjectilePalette(mut a: uint16) {
+pub unsafe fn LoadProjectilePalette(mut a: uint16) {
     let mut r0: uint16 = *(g_rom.offset(
         (((0x90c3c9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0x90c3c9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -7246,8 +7109,7 @@ pub unsafe extern "C" fn LoadProjectilePalette(mut a: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ResetProjectileData() {
+pub unsafe fn ResetProjectileData() {
     let mut v0: uint16 = 0 as uint16;
     loop {
         let mut v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -7359,8 +7221,7 @@ pub unsafe extern "C" fn ResetProjectileData() {
         SpawnPalfxObject(addr_stru_8DE1F0 as ::core::ffi::c_int as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearProjectile(mut k: uint16) {
+pub unsafe fn ClearProjectile(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0xb64 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(v1 as isize) = 0 as uint16;
@@ -7419,20 +7280,19 @@ pub unsafe extern "C" fn ClearProjectile(mut k: uint16) {
 }
 static mut kKillProjectileFuncs: [Option<Func_Y_V>; 10] = unsafe {
     [
-        Some(KillProjectileFunc_0 as unsafe extern "C" fn(uint16) -> ()),
-        Some(KillProjectileFunc_1 as unsafe extern "C" fn(uint16) -> ()),
-        Some(KillProjectileFunc_2 as unsafe extern "C" fn(uint16) -> ()),
-        Some(KillProjectileFunc_3 as unsafe extern "C" fn(uint16) -> ()),
-        Some(KillProjectileFunc_4 as unsafe extern "C" fn(uint16) -> ()),
-        Some(KillProjectileFunc_4 as unsafe extern "C" fn(uint16) -> ()),
-        Some(KillProjectileFunc_6 as unsafe extern "C" fn(uint16) -> ()),
-        Some(KillProjectileFunc_7 as unsafe extern "C" fn(uint16) -> ()),
-        Some(KillProjectileFunc_8 as unsafe extern "C" fn(uint16) -> ()),
-        Some(KillProjectileFunc_0 as unsafe extern "C" fn(uint16) -> ()),
+        Some(KillProjectileFunc_0 as unsafe fn(uint16) -> ()),
+        Some(KillProjectileFunc_1 as unsafe fn(uint16) -> ()),
+        Some(KillProjectileFunc_2 as unsafe fn(uint16) -> ()),
+        Some(KillProjectileFunc_3 as unsafe fn(uint16) -> ()),
+        Some(KillProjectileFunc_4 as unsafe fn(uint16) -> ()),
+        Some(KillProjectileFunc_4 as unsafe fn(uint16) -> ()),
+        Some(KillProjectileFunc_6 as unsafe fn(uint16) -> ()),
+        Some(KillProjectileFunc_7 as unsafe fn(uint16) -> ()),
+        Some(KillProjectileFunc_8 as unsafe fn(uint16) -> ()),
+        Some(KillProjectileFunc_0 as unsafe fn(uint16) -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn KillProjectile(mut k: uint16) {
+pub unsafe fn KillProjectile(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(v1 as isize) as ::core::ffi::c_int
@@ -7468,8 +7328,7 @@ pub unsafe extern "C" fn KillProjectile(mut k: uint16) {
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         (0x90b169 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn KillProjectileFunc_0(mut j: uint16) {
+pub unsafe fn KillProjectileFunc_0(mut j: uint16) {
     let ref mut fresh132 = *((&raw mut g_ram as *mut uint8)
         .offset(0xb78 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
@@ -7479,8 +7338,7 @@ pub unsafe extern "C" fn KillProjectileFunc_0(mut j: uint16) {
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
             as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn KillProjectileFunc_1(mut j: uint16) {
+pub unsafe fn KillProjectileFunc_1(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh142 = *((&raw mut g_ram as *mut uint8)
         .offset(0xb64 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -7497,8 +7355,7 @@ pub unsafe extern "C" fn KillProjectileFunc_1(mut j: uint16) {
             as *mut uint16)
             .offset(v1 as isize) as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn KillProjectileFunc_2(mut j: uint16) {
+pub unsafe fn KillProjectileFunc_2(mut j: uint16) {
     let ref mut fresh141 = *((&raw mut g_ram as *mut uint8)
         .offset(0xb64 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
@@ -7508,8 +7365,7 @@ pub unsafe extern "C" fn KillProjectileFunc_2(mut j: uint16) {
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
             as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn KillProjectileFunc_3(mut j: uint16) {
+pub unsafe fn KillProjectileFunc_3(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh139 = *((&raw mut g_ram as *mut uint8)
         .offset(0xb64 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -7526,8 +7382,7 @@ pub unsafe extern "C" fn KillProjectileFunc_3(mut j: uint16) {
             as *mut uint16)
             .offset(v1 as isize) as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn KillProjectileFunc_4(mut j: uint16) {
+pub unsafe fn KillProjectileFunc_4(mut j: uint16) {
     let ref mut fresh138 = *((&raw mut g_ram as *mut uint8)
         .offset(0xb78 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
@@ -7537,8 +7392,7 @@ pub unsafe extern "C" fn KillProjectileFunc_4(mut j: uint16) {
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
             as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn KillProjectileFunc_6(mut j: uint16) {
+pub unsafe fn KillProjectileFunc_6(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh136 = *((&raw mut g_ram as *mut uint8)
         .offset(0xb64 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -7555,8 +7409,7 @@ pub unsafe extern "C" fn KillProjectileFunc_6(mut j: uint16) {
             as *mut uint16)
             .offset(v1 as isize) as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn KillProjectileFunc_7(mut j: uint16) {
+pub unsafe fn KillProjectileFunc_7(mut j: uint16) {
     let ref mut fresh135 = *((&raw mut g_ram as *mut uint8)
         .offset(0xb64 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
@@ -7566,8 +7419,7 @@ pub unsafe extern "C" fn KillProjectileFunc_7(mut j: uint16) {
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
             as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn KillProjectileFunc_8(mut j: uint16) {
+pub unsafe fn KillProjectileFunc_8(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh133 = *((&raw mut g_ram as *mut uint8)
         .offset(0xb64 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -7584,8 +7436,7 @@ pub unsafe extern "C" fn KillProjectileFunc_8(mut j: uint16) {
             as *mut uint16)
             .offset(v1 as isize) as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallProjPreInstr(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallProjPreInstr(mut ea: uint32, mut k: uint16) {
     match ea {
         9482601 => return,
         9481971 => {
@@ -7729,8 +7580,7 @@ pub unsafe extern "C" fn CallProjPreInstr(mut ea: uint32, mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleProjectile() {
+pub unsafe fn HandleProjectile() {
     *((&raw mut g_ram as *mut uint8).offset(0xdde as ::core::ffi::c_int as isize) as *mut uint16) =
         18 as uint16;
     let mut i: ::core::ffi::c_int = 18 as ::core::ffi::c_int;
@@ -7783,20 +7633,19 @@ static mut kDirToVelMult16_Y: [int16; 10] = [
 ];
 static mut kProjPreInstr_Beam_Funcs: [Option<Func_Y_V>; 10] = unsafe {
     [
-        Some(ProjPreInstr_Dir0459 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_Dir1368 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_Dir27 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_Dir1368 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_Dir0459 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_Dir0459 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_Dir1368 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_Dir27 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_Dir1368 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_Dir0459 as unsafe extern "C" fn(uint16) -> ()),
+        Some(ProjPreInstr_Dir0459 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_Dir1368 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_Dir27 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_Dir1368 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_Dir0459 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_Dir0459 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_Dir1368 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_Dir27 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_Dir1368 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_Dir0459 as unsafe fn(uint16) -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_Beam_NoWaveBeam(mut k: uint16) {
+pub unsafe fn ProjPreInstr_Beam_NoWaveBeam(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0xc04 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(v1 as isize) as ::core::ffi::c_int
@@ -7842,15 +7691,13 @@ pub unsafe extern "C" fn ProjPreInstr_Beam_NoWaveBeam(mut k: uint16) {
         DeleteProjectileIfFarOffScreen();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_Dir0459(mut k: uint16) {
+pub unsafe fn ProjPreInstr_Dir0459(mut k: uint16) {
     BlockCollNoWaveBeamVert(
         *((&raw mut g_ram as *mut uint8).offset(0xdde as ::core::ffi::c_int as isize)
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_Dir1368(mut k: uint16) {
+pub unsafe fn ProjPreInstr_Dir1368(mut k: uint16) {
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xdde as ::core::ffi::c_int as isize) as *mut uint16);
     if BlockCollNoWaveBeamHoriz(
@@ -7863,8 +7710,7 @@ pub unsafe extern "C" fn ProjPreInstr_Dir1368(mut k: uint16) {
         BlockCollNoWaveBeamVert(v1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_Dir27(mut k: uint16) {
+pub unsafe fn ProjPreInstr_Dir27(mut k: uint16) {
     BlockCollNoWaveBeamHoriz(
         *((&raw mut g_ram as *mut uint8).offset(0xdde as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -7872,20 +7718,19 @@ pub unsafe extern "C" fn ProjPreInstr_Dir27(mut k: uint16) {
 }
 static mut kProjPreInstr_Missile_Funcs: [Option<Func_Y_V>; 10] = unsafe {
     [
-        Some(ProjPreInstr_Missile_Func0459 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_Missile_Func1368 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_Missile_Func27 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_Missile_Func1368 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_Missile_Func0459 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_Missile_Func0459 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_Missile_Func1368 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_Missile_Func27 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_Missile_Func1368 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_Missile_Func0459 as unsafe extern "C" fn(uint16) -> ()),
+        Some(ProjPreInstr_Missile_Func0459 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_Missile_Func1368 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_Missile_Func27 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_Missile_Func1368 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_Missile_Func0459 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_Missile_Func0459 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_Missile_Func1368 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_Missile_Func27 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_Missile_Func1368 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_Missile_Func0459 as unsafe fn(uint16) -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_Missile(mut k: uint16) {
+pub unsafe fn ProjPreInstr_Missile(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0xc04 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(v1 as isize) as ::core::ffi::c_int
@@ -7933,15 +7778,13 @@ pub unsafe extern "C" fn ProjPreInstr_Missile(mut k: uint16) {
         DeleteProjectileIfFarOffScreen();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_Missile_Func0459(mut k: uint16) {
+pub unsafe fn ProjPreInstr_Missile_Func0459(mut k: uint16) {
     BlockCollMissileVert(
         *((&raw mut g_ram as *mut uint8).offset(0xdde as ::core::ffi::c_int as isize)
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_Missile_Func1368(mut k: uint16) {
+pub unsafe fn ProjPreInstr_Missile_Func1368(mut k: uint16) {
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xdde as ::core::ffi::c_int as isize) as *mut uint16);
     if BlockCollMissileHoriz(
@@ -7952,8 +7795,7 @@ pub unsafe extern "C" fn ProjPreInstr_Missile_Func1368(mut k: uint16) {
         BlockCollMissileVert(v1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_Missile_Func27(mut k: uint16) {
+pub unsafe fn ProjPreInstr_Missile_Func27(mut k: uint16) {
     BlockCollMissileHoriz(
         *((&raw mut g_ram as *mut uint8).offset(0xdde as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -7961,20 +7803,19 @@ pub unsafe extern "C" fn ProjPreInstr_Missile_Func27(mut k: uint16) {
 }
 static mut kProjPreInstr_SuperMissile_Funcs: [Option<Func_Y_V>; 10] = unsafe {
     [
-        Some(ProjPreInstr_SuperMissile_Func0459 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_SuperMissile_Func1368 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_SuperMissile_Func27 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_SuperMissile_Func1368 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_SuperMissile_Func0459 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_SuperMissile_Func0459 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_SuperMissile_Func1368 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_SuperMissile_Func27 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_SuperMissile_Func1368 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_SuperMissile_Func0459 as unsafe extern "C" fn(uint16) -> ()),
+        Some(ProjPreInstr_SuperMissile_Func0459 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_SuperMissile_Func1368 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_SuperMissile_Func27 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_SuperMissile_Func1368 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_SuperMissile_Func0459 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_SuperMissile_Func0459 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_SuperMissile_Func1368 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_SuperMissile_Func27 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_SuperMissile_Func1368 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_SuperMissile_Func0459 as unsafe fn(uint16) -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_SuperMissile(mut k: uint16) {
+pub unsafe fn ProjPreInstr_SuperMissile(mut k: uint16) {
     let mut v3: int16 = 0;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0xc04 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -8025,16 +7866,14 @@ pub unsafe extern "C" fn ProjPreInstr_SuperMissile(mut k: uint16) {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_SuperMissile_Func0459(mut k: uint16) {
+pub unsafe fn ProjPreInstr_SuperMissile_Func0459(mut k: uint16) {
     BlockCollMissileVert(
         *((&raw mut g_ram as *mut uint8).offset(0xdde as ::core::ffi::c_int as isize)
             as *mut uint16),
     );
     SuperMissileBlockCollDetect_Y();
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_SuperMissile_Func1368(mut k: uint16) {
+pub unsafe fn ProjPreInstr_SuperMissile_Func1368(mut k: uint16) {
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xdde as ::core::ffi::c_int as isize) as *mut uint16);
     if BlockCollMissileHoriz(
@@ -8049,16 +7888,14 @@ pub unsafe extern "C" fn ProjPreInstr_SuperMissile_Func1368(mut k: uint16) {
         SuperMissileBlockCollDetect_Y();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_SuperMissile_Func27(mut k: uint16) {
+pub unsafe fn ProjPreInstr_SuperMissile_Func27(mut k: uint16) {
     BlockCollMissileHoriz(
         *((&raw mut g_ram as *mut uint8).offset(0xdde as ::core::ffi::c_int as isize)
             as *mut uint16),
     );
     SuperMissileBlockCollDetect_X();
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_Func1(mut k: uint16) {
+pub unsafe fn ProjPreInstr_Func1(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0xc04 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
         as ::core::ffi::c_int
@@ -8081,8 +7918,7 @@ pub unsafe extern "C" fn ProjPreInstr_Func1(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_Bomb(mut k: uint16) {
+pub unsafe fn ProjPreInstr_Bomb(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0xc04 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
         as ::core::ffi::c_int
@@ -8095,8 +7931,7 @@ pub unsafe extern "C" fn ProjPreInstr_Bomb(mut k: uint16) {
         BombOrPowerBomb_Func1(k);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_PowerBomb(mut k: uint16) {
+pub unsafe fn ProjPreInstr_PowerBomb(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0xc04 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
         as ::core::ffi::c_int
@@ -8109,8 +7944,7 @@ pub unsafe extern "C" fn ProjPreInstr_PowerBomb(mut k: uint16) {
         BombOrPowerBomb_Func1(k);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_WavePlasmaEtc(mut k: uint16) {
+pub unsafe fn ProjPreInstr_WavePlasmaEtc(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0xc04 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(v1 as isize) as ::core::ffi::c_int
@@ -8139,8 +7973,7 @@ pub unsafe extern "C" fn ProjPreInstr_WavePlasmaEtc(mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_BeamOrIceWave(mut k: uint16) {
+pub unsafe fn ProjPreInstr_BeamOrIceWave(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0xc04 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(v1 as isize) as ::core::ffi::c_int
@@ -8171,20 +8004,19 @@ pub unsafe extern "C" fn ProjPreInstr_BeamOrIceWave(mut k: uint16) {
 }
 static mut kProjPreInstr_WavePlasmaEtcFuncs: [Option<Func_Y_V>; 10] = unsafe {
     [
-        Some(ProjPreInstr_WavePlasmaEtc_0459 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_WavePlasmaEtc_1368 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_WavePlasmaEtc_27 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_WavePlasmaEtc_1368 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_WavePlasmaEtc_0459 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_WavePlasmaEtc_0459 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_WavePlasmaEtc_1368 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_WavePlasmaEtc_27 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_WavePlasmaEtc_1368 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_WavePlasmaEtc_0459 as unsafe extern "C" fn(uint16) -> ()),
+        Some(ProjPreInstr_WavePlasmaEtc_0459 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_WavePlasmaEtc_1368 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_WavePlasmaEtc_27 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_WavePlasmaEtc_1368 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_WavePlasmaEtc_0459 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_WavePlasmaEtc_0459 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_WavePlasmaEtc_1368 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_WavePlasmaEtc_27 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_WavePlasmaEtc_1368 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_WavePlasmaEtc_0459 as unsafe fn(uint16) -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_Wave_Shared(mut k: uint16) {
+pub unsafe fn ProjPreInstr_Wave_Shared(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: uint16 = (2 as ::core::ffi::c_int
         * (*((&raw mut g_ram as *mut uint8).offset(0xc04 as ::core::ffi::c_int as isize)
@@ -8205,15 +8037,13 @@ pub unsafe extern "C" fn ProjPreInstr_Wave_Shared(mut k: uint16) {
     kProjPreInstr_WavePlasmaEtcFuncs[v3 as usize].expect("non-null function pointer")(v2);
     DeleteProjectileIfFarOffScreen();
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_WavePlasmaEtc_0459(mut k: uint16) {
+pub unsafe fn ProjPreInstr_WavePlasmaEtc_0459(mut k: uint16) {
     BlockCollWaveBeamVert(
         *((&raw mut g_ram as *mut uint8).offset(0xdde as ::core::ffi::c_int as isize)
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_WavePlasmaEtc_1368(mut k: uint16) {
+pub unsafe fn ProjPreInstr_WavePlasmaEtc_1368(mut k: uint16) {
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xdde as ::core::ffi::c_int as isize) as *mut uint16);
     if BlockCollWaveBeamHoriz(
@@ -8226,15 +8056,13 @@ pub unsafe extern "C" fn ProjPreInstr_WavePlasmaEtc_1368(mut k: uint16) {
         BlockCollWaveBeamVert(v1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_WavePlasmaEtc_27(mut k: uint16) {
+pub unsafe fn ProjPreInstr_WavePlasmaEtc_27(mut k: uint16) {
     BlockCollWaveBeamHoriz(
         *((&raw mut g_ram as *mut uint8).offset(0xdde as ::core::ffi::c_int as isize)
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_HyperBeam(mut k: uint16) {
+pub unsafe fn ProjPreInstr_HyperBeam(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0xc04 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
         as ::core::ffi::c_int
@@ -8246,8 +8074,7 @@ pub unsafe extern "C" fn ProjPreInstr_HyperBeam(mut k: uint16) {
         ProjPreInstr_Wave_Shared(k);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeleteProjectileIfFarOffScreen() -> uint8 {
+pub unsafe fn DeleteProjectileIfFarOffScreen() -> uint8 {
     let mut v0: int16 = 0;
     let mut v2: int16 = 0;
     v0 = (*((&raw mut g_ram as *mut uint8).offset(0xb64 as ::core::ffi::c_int as isize)
@@ -8315,8 +8142,7 @@ static mut kInitializeProjectileSpeed_XY_Diag: [uint16; 24] = [
     0x400 as ::core::ffi::c_int as uint16,
     0x2ab as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn SetInitialProjectileSpeed(mut r20: uint16) {
+pub unsafe fn SetInitialProjectileSpeed(mut r20: uint16) {
     let mut v0: ::core::ffi::c_int = r20 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v1: uint16 = (4 as ::core::ffi::c_int
         * (*((&raw mut g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize)
@@ -8352,12 +8178,10 @@ pub unsafe extern "C" fn SetInitialProjectileSpeed(mut r20: uint16) {
     }
     InitializeProjectileSpeed(r20, r22);
 }
-#[no_mangle]
-pub unsafe extern "C" fn InitializeProjectileSpeedOfType(mut r20: uint16) {
+pub unsafe fn InitializeProjectileSpeedOfType(mut r20: uint16) {
     InitializeProjectileSpeed(r20, 0 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn InitializeProjectileSpeed(mut k: uint16, mut r22: uint16) {
+pub unsafe fn InitializeProjectileSpeed(mut k: uint16, mut r22: uint16) {
     let mut r18: uint16 = 0;
     let mut kh: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0xb8c as ::core::ffi::c_int as isize) as *mut uint16)
@@ -8529,8 +8353,7 @@ pub unsafe extern "C" fn InitializeProjectileSpeed(mut k: uint16, mut r22: uint1
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Missile_Func1(mut k: uint16) {
+pub unsafe fn Missile_Func1(mut k: uint16) {
     static mut word_90C301: uint16 = 0x100 as uint16;
     let mut v3: uint16 = 0;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -8596,8 +8419,7 @@ pub unsafe extern "C" fn Missile_Func1(mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn SuperMissileBlockCollDetect_Y() {
+pub unsafe fn SuperMissileBlockCollDetect_Y() {
     let mut v0: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0xdde as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -8724,8 +8546,7 @@ pub unsafe extern "C" fn SuperMissileBlockCollDetect_Y() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Projectile_Func4(mut k: uint16) {
+pub unsafe fn Projectile_Func4(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0xc7c as ::core::ffi::c_int as isize) as *mut uint16
         as *mut uint8)
@@ -8747,8 +8568,7 @@ pub unsafe extern "C" fn Projectile_Func4(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SuperMissileBlockCollDetect_X() {
+pub unsafe fn SuperMissileBlockCollDetect_X() {
     let mut v0: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0xdde as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -8875,29 +8695,25 @@ pub unsafe extern "C" fn SuperMissileBlockCollDetect_X() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjInstr_MoveLeftProjectileTrailDown(mut j: uint16) {
+pub unsafe fn ProjInstr_MoveLeftProjectileTrailDown(mut j: uint16) {
     let ref mut fresh85 = *((&raw mut g_ram as *mut uint8)
         .offset(0xd778 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh85 = (*fresh85).wrapping_add(1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjInstr_MoveRightProjectileTrailDown(mut j: uint16) {
+pub unsafe fn ProjInstr_MoveRightProjectileTrailDown(mut j: uint16) {
     let ref mut fresh84 = *((&raw mut g_ram as *mut uint8)
         .offset(0xd79c as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh84 = (*fresh84).wrapping_add(1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjInstr_MoveLeftProjectileTrailUp(mut j: uint16) {
+pub unsafe fn ProjInstr_MoveLeftProjectileTrailUp(mut j: uint16) {
     let ref mut fresh83 = *((&raw mut g_ram as *mut uint8)
         .offset(0xd778 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh83 = (*fresh83).wrapping_sub(1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnProjectileTrail(mut k: uint16) {
+pub unsafe fn SpawnProjectileTrail(mut k: uint16) {
     let mut v2: int16 = 0;
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xc18 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -8961,8 +8777,7 @@ pub unsafe extern "C" fn SpawnProjectileTrail(mut k: uint16) {
         v4,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallProjInstr(mut ea: uint32, mut j: uint16) {
+pub unsafe fn CallProjInstr(mut ea: uint32, mut j: uint16) {
     match ea {
         9483557 => {
             ProjInstr_MoveLeftProjectileTrailDown(j);
@@ -8981,8 +8796,7 @@ pub unsafe extern "C" fn CallProjInstr(mut ea: uint32, mut j: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleProjectileTrails() {
+pub unsafe fn HandleProjectileTrails() {
     let mut i: ::core::ffi::c_int = 0;
     let mut v10: int16 = 0;
     let mut v11: *mut OamEnt = ::core::ptr::null_mut::<OamEnt>();
@@ -9362,8 +9176,7 @@ pub unsafe extern "C" fn HandleProjectileTrails() {
         k = (k as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HudSelectionHandler_NothingOrPowerBombs() {
+pub unsafe fn HudSelectionHandler_NothingOrPowerBombs() {
     let mut current_block: u64;
     *((&raw mut g_ram as *mut uint8).offset(0xdc2 as ::core::ffi::c_int as isize) as *mut uint16) =
         *((&raw mut g_ram as *mut uint8).offset(0xcd0 as ::core::ffi::c_int as isize)
@@ -9475,8 +9288,7 @@ static mut kProjectileBombPreInstr: [uint16; 12] = [
     fnProjPreInstr_Beam_NoWaveBeam as uint16,
     fnProjPreInstr_WavePlasmaEtc as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn FireUnchargedBeam() {
+pub unsafe fn FireUnchargedBeam() {
     let mut v3: int8 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0xa76 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
@@ -9651,8 +9463,7 @@ static mut kFireChargedBeam_Funcs: [uint16; 12] = [
     fnProjPreInstr_Beam_NoWaveBeam as uint16,
     fnProjPreInstr_WavePlasmaEtc as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn FireChargedBeam() {
+pub unsafe fn FireChargedBeam() {
     if Samus_CanFireBeam() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         let mut v0: uint16 = 0 as uint16;
         while *((&raw mut g_ram as *mut uint8).offset(0xc2c as ::core::ffi::c_int as isize)
@@ -9826,8 +9637,7 @@ static mut kProjectileOriginOffsets4_Y: [int16; 10] = [
     -(16 as ::core::ffi::c_int) as int16,
     -(8 as ::core::ffi::c_int) as int16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn InitProjectilePositionDirection(mut r20: uint16) -> uint8 {
+pub unsafe fn InitProjectilePositionDirection(mut r20: uint16) -> uint8 {
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xa1c as ::core::ffi::c_int as isize) as *mut uint16);
     let mut direction_shots_fired: uint16 = 0;
@@ -9940,8 +9750,7 @@ pub unsafe extern "C" fn InitProjectilePositionDirection(mut r20: uint16) -> uin
         return 0 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleChargingBeamGfxAudio() {
+pub unsafe fn HandleChargingBeamGfxAudio() {
     let mut v1: int16 = 0;
     let mut v4: int16 = 0;
     let mut v9: uint16 = 0;
@@ -10165,8 +9974,7 @@ static mut kProjectileOriginOffsets2_Y: [int16; 10] = [
     -(20 as ::core::ffi::c_int) as int16,
     -(32 as ::core::ffi::c_int) as int16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn DrawFlareAnimationComponent(mut k: uint16) {
+pub unsafe fn DrawFlareAnimationComponent(mut k: uint16) {
     static mut word_93A225: [uint16; 3] = [
         0 as ::core::ffi::c_int as uint16,
         0x1e as ::core::ffi::c_int as uint16,
@@ -10278,8 +10086,7 @@ pub unsafe extern "C" fn DrawFlareAnimationComponent(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearFlareAnimationState() {
+pub unsafe fn ClearFlareAnimationState() {
     *((&raw mut g_ram as *mut uint8).offset(0xcd6 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xcd8 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -10293,8 +10100,7 @@ pub unsafe extern "C" fn ClearFlareAnimationState() {
     *((&raw mut g_ram as *mut uint8).offset(0xce0 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireHyperBeam() {
+pub unsafe fn FireHyperBeam() {
     if Samus_CanFireBeam() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         let mut v0: uint16 = 0 as uint16;
         while *((&raw mut g_ram as *mut uint8).offset(0xc2c as ::core::ffi::c_int as isize)
@@ -10375,20 +10181,19 @@ pub unsafe extern "C" fn FireHyperBeam() {
 }
 static mut kCheckBeamCollByDir: [Option<Func_V>; 10] = unsafe {
     [
-        Some(CheckBeamCollByDir_0459 as unsafe extern "C" fn() -> ()),
-        Some(CheckBeamCollByDir_1368 as unsafe extern "C" fn() -> ()),
-        Some(CheckBeamCollByDir_2 as unsafe extern "C" fn() -> ()),
-        Some(CheckBeamCollByDir_1368 as unsafe extern "C" fn() -> ()),
-        Some(CheckBeamCollByDir_0459 as unsafe extern "C" fn() -> ()),
-        Some(CheckBeamCollByDir_0459 as unsafe extern "C" fn() -> ()),
-        Some(CheckBeamCollByDir_1368 as unsafe extern "C" fn() -> ()),
-        Some(CheckBeamCollByDir_7 as unsafe extern "C" fn() -> ()),
-        Some(CheckBeamCollByDir_1368 as unsafe extern "C" fn() -> ()),
-        Some(CheckBeamCollByDir_0459 as unsafe extern "C" fn() -> ()),
+        Some(CheckBeamCollByDir_0459 as unsafe fn() -> ()),
+        Some(CheckBeamCollByDir_1368 as unsafe fn() -> ()),
+        Some(CheckBeamCollByDir_2 as unsafe fn() -> ()),
+        Some(CheckBeamCollByDir_1368 as unsafe fn() -> ()),
+        Some(CheckBeamCollByDir_0459 as unsafe fn() -> ()),
+        Some(CheckBeamCollByDir_0459 as unsafe fn() -> ()),
+        Some(CheckBeamCollByDir_1368 as unsafe fn() -> ()),
+        Some(CheckBeamCollByDir_7 as unsafe fn() -> ()),
+        Some(CheckBeamCollByDir_1368 as unsafe fn() -> ()),
+        Some(CheckBeamCollByDir_0459 as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn CheckBeamCollByDir(mut k: uint16) {
+pub unsafe fn CheckBeamCollByDir(mut k: uint16) {
     kCheckBeamCollByDir[(*((&raw mut g_ram as *mut uint8)
         .offset(0xc04 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
@@ -10396,15 +10201,13 @@ pub unsafe extern "C" fn CheckBeamCollByDir(mut k: uint16) {
         & 0xf as ::core::ffi::c_int) as usize]
         .expect("non-null function pointer")();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CheckBeamCollByDir_0459() {
+pub unsafe fn CheckBeamCollByDir_0459() {
     BlockCollNoWaveBeamVert(
         *((&raw mut g_ram as *mut uint8).offset(0xdde as ::core::ffi::c_int as isize)
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn CheckBeamCollByDir_1368() {
+pub unsafe fn CheckBeamCollByDir_1368() {
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xdde as ::core::ffi::c_int as isize) as *mut uint16);
     if BlockCollNoWaveBeamHoriz(
@@ -10417,15 +10220,13 @@ pub unsafe extern "C" fn CheckBeamCollByDir_1368() {
         BlockCollNoWaveBeamVert(v0);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CheckBeamCollByDir_2() {
+pub unsafe fn CheckBeamCollByDir_2() {
     BlockCollNoWaveBeamHoriz(
         *((&raw mut g_ram as *mut uint8).offset(0xdde as ::core::ffi::c_int as isize)
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn CheckBeamCollByDir_7() {
+pub unsafe fn CheckBeamCollByDir_7() {
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xdde as ::core::ffi::c_int as isize) as *mut uint16);
     *((&raw mut g_ram as *mut uint8).offset(0xbdc as ::core::ffi::c_int as isize) as *mut uint16)
@@ -10438,20 +10239,19 @@ pub unsafe extern "C" fn CheckBeamCollByDir_7() {
 }
 static mut kWaveBeam_CheckColl_Funcs: [Option<Func_V>; 10] = unsafe {
     [
-        Some(WaveBeam_CheckColl_0459 as unsafe extern "C" fn() -> ()),
-        Some(WaveBeam_CheckColl_1368 as unsafe extern "C" fn() -> ()),
-        Some(WaveBeam_CheckColl_2 as unsafe extern "C" fn() -> ()),
-        Some(WaveBeam_CheckColl_1368 as unsafe extern "C" fn() -> ()),
-        Some(WaveBeam_CheckColl_0459 as unsafe extern "C" fn() -> ()),
-        Some(WaveBeam_CheckColl_0459 as unsafe extern "C" fn() -> ()),
-        Some(WaveBeam_CheckColl_1368 as unsafe extern "C" fn() -> ()),
-        Some(WaveBeam_CheckColl_7 as unsafe extern "C" fn() -> ()),
-        Some(WaveBeam_CheckColl_1368 as unsafe extern "C" fn() -> ()),
-        Some(WaveBeam_CheckColl_0459 as unsafe extern "C" fn() -> ()),
+        Some(WaveBeam_CheckColl_0459 as unsafe fn() -> ()),
+        Some(WaveBeam_CheckColl_1368 as unsafe fn() -> ()),
+        Some(WaveBeam_CheckColl_2 as unsafe fn() -> ()),
+        Some(WaveBeam_CheckColl_1368 as unsafe fn() -> ()),
+        Some(WaveBeam_CheckColl_0459 as unsafe fn() -> ()),
+        Some(WaveBeam_CheckColl_0459 as unsafe fn() -> ()),
+        Some(WaveBeam_CheckColl_1368 as unsafe fn() -> ()),
+        Some(WaveBeam_CheckColl_7 as unsafe fn() -> ()),
+        Some(WaveBeam_CheckColl_1368 as unsafe fn() -> ()),
+        Some(WaveBeam_CheckColl_0459 as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn WaveBeam_CheckColl(mut k: uint16) {
+pub unsafe fn WaveBeam_CheckColl(mut k: uint16) {
     kWaveBeam_CheckColl_Funcs[(*((&raw mut g_ram as *mut uint8)
         .offset(0xc04 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -10460,15 +10260,13 @@ pub unsafe extern "C" fn WaveBeam_CheckColl(mut k: uint16) {
         & 0xf as ::core::ffi::c_int) as usize]
         .expect("non-null function pointer")();
 }
-#[no_mangle]
-pub unsafe extern "C" fn WaveBeam_CheckColl_0459() {
+pub unsafe fn WaveBeam_CheckColl_0459() {
     BlockCollWaveBeamVert(
         *((&raw mut g_ram as *mut uint8).offset(0xdde as ::core::ffi::c_int as isize)
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn WaveBeam_CheckColl_1368() {
+pub unsafe fn WaveBeam_CheckColl_1368() {
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xdde as ::core::ffi::c_int as isize) as *mut uint16);
     if BlockCollWaveBeamHoriz(
@@ -10481,15 +10279,13 @@ pub unsafe extern "C" fn WaveBeam_CheckColl_1368() {
         BlockCollWaveBeamVert(v0);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn WaveBeam_CheckColl_2() {
+pub unsafe fn WaveBeam_CheckColl_2() {
     BlockCollWaveBeamHoriz(
         *((&raw mut g_ram as *mut uint8).offset(0xdde as ::core::ffi::c_int as isize)
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn WaveBeam_CheckColl_7() {
+pub unsafe fn WaveBeam_CheckColl_7() {
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xdde as ::core::ffi::c_int as isize) as *mut uint16);
     *((&raw mut g_ram as *mut uint8).offset(0xbdc as ::core::ffi::c_int as isize) as *mut uint16)
@@ -10500,8 +10296,7 @@ pub unsafe extern "C" fn WaveBeam_CheckColl_7() {
         ) = -(1 as ::core::ffi::c_int) as uint16;
     BlockCollWaveBeamHoriz(v0);
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjectileReflection(mut r20: uint16) {
+pub unsafe fn ProjectileReflection(mut r20: uint16) {
     let mut v0: uint16 = r20;
     let mut v1: ::core::ffi::c_int = r20 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
@@ -10546,8 +10341,7 @@ pub unsafe extern "C" fn ProjectileReflection(mut r20: uint16) {
                 & 0xf as ::core::ffi::c_int) as usize];
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HudSelectionHandler_MissilesOrSuperMissiles() {
+pub unsafe fn HudSelectionHandler_MissilesOrSuperMissiles() {
     let mut current_block: u64;
     if *((&raw mut g_ram as *mut uint8).offset(0x9b2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -10746,8 +10540,7 @@ pub unsafe extern "C" fn HudSelectionHandler_MissilesOrSuperMissiles() {
         .offset(0xcce as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh77 = (*fresh77).wrapping_sub(1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Missile_Func2() {
+pub unsafe fn Missile_Func2() {
     let mut v0: uint16 = 0 as uint16;
     while *((&raw mut g_ram as *mut uint8).offset(0xc2c as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -10809,8 +10602,7 @@ pub unsafe extern "C" fn Missile_Func2() {
         .offset(0xcce as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh67 = (*fresh67).wrapping_add(1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn HudSelectionHandler_MorphBall() {
+pub unsafe fn HudSelectionHandler_MorphBall() {
     if *((&raw mut g_ram as *mut uint8).offset(0x9b2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & *((&raw mut g_ram as *mut uint8).offset(0x8b as ::core::ffi::c_int as isize)
@@ -11008,8 +10800,7 @@ pub unsafe extern "C" fn HudSelectionHandler_MorphBall() {
         Samus_LoadSuitPalette();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HudSelectionHandler_MorphBall_Helper() -> uint8 {
+pub unsafe fn HudSelectionHandler_MorphBall_Helper() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0x1000 as ::core::ffi::c_int
@@ -11049,8 +10840,7 @@ pub unsafe extern "C" fn HudSelectionHandler_MorphBall_Helper() -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HudSelectionHandler_MorphBall_Helper2() -> uint8 {
+pub unsafe fn HudSelectionHandler_MorphBall_Helper2() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0x9b2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
@@ -11091,8 +10881,7 @@ pub unsafe extern "C" fn HudSelectionHandler_MorphBall_Helper2() -> uint8 {
         return 1 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Bomb_Func2() {
+pub unsafe fn Bomb_Func2() {
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xdde as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v1: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
@@ -11121,8 +10910,7 @@ pub unsafe extern "C" fn Bomb_Func2() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PowerBomb_Func3() {
+pub unsafe fn PowerBomb_Func3() {
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xdde as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v1: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
@@ -11175,16 +10963,15 @@ pub unsafe extern "C" fn PowerBomb_Func3() {
 }
 static mut kRunSwitchedToHudHandler: [Option<Func_U8>; 6] = unsafe {
     [
-        Some(SwitchToHudHandler_Nothing as unsafe extern "C" fn() -> uint8),
-        Some(SwitchToHudHandler_Missiles as unsafe extern "C" fn() -> uint8),
-        Some(SwitchToHudHandler_SuperMissiles as unsafe extern "C" fn() -> uint8),
-        Some(SwitchToHudHandler_PowerBombs as unsafe extern "C" fn() -> uint8),
-        Some(SwitchToHudHandler_Grapple as unsafe extern "C" fn() -> uint8),
-        Some(SwitchToHudHandler_Xray as unsafe extern "C" fn() -> uint8),
+        Some(SwitchToHudHandler_Nothing as unsafe fn() -> uint8),
+        Some(SwitchToHudHandler_Missiles as unsafe fn() -> uint8),
+        Some(SwitchToHudHandler_SuperMissiles as unsafe fn() -> uint8),
+        Some(SwitchToHudHandler_PowerBombs as unsafe fn() -> uint8),
+        Some(SwitchToHudHandler_Grapple as unsafe fn() -> uint8),
+        Some(SwitchToHudHandler_Xray as unsafe fn() -> uint8),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn HandleSwitchingHudSelection() {
+pub unsafe fn HandleSwitchingHudSelection() {
     let mut current_block: u64;
     let mut v0: uint16 = 0;
     let mut r22: uint16 = 0 as uint16;
@@ -11292,16 +11079,14 @@ pub unsafe extern "C" fn HandleSwitchingHudSelection() {
             as *mut uint16) = 1 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn SwitchToHudHandler_Nothing() -> uint8 {
+pub unsafe fn SwitchToHudHandler_Nothing() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xcd0 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     ClearFlareAnimationState();
     Samus_LoadSuitPalette();
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SwitchToHudHandler_Missiles() -> uint8 {
+pub unsafe fn SwitchToHudHandler_Missiles() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0x9c6 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
     {
@@ -11313,8 +11098,7 @@ pub unsafe extern "C" fn SwitchToHudHandler_Missiles() -> uint8 {
     Samus_LoadSuitPalette();
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SwitchToHudHandler_SuperMissiles() -> uint8 {
+pub unsafe fn SwitchToHudHandler_SuperMissiles() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0x9ca as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
     {
@@ -11326,8 +11110,7 @@ pub unsafe extern "C" fn SwitchToHudHandler_SuperMissiles() -> uint8 {
     Samus_LoadSuitPalette();
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SwitchToHudHandler_PowerBombs() -> uint8 {
+pub unsafe fn SwitchToHudHandler_PowerBombs() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0x9ce as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
     {
@@ -11339,8 +11122,7 @@ pub unsafe extern "C" fn SwitchToHudHandler_PowerBombs() -> uint8 {
     Samus_LoadSuitPalette();
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SwitchToHudHandler_Grapple() -> uint8 {
+pub unsafe fn SwitchToHudHandler_Grapple() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0x4000 as ::core::ffi::c_int
@@ -11362,8 +11144,7 @@ pub unsafe extern "C" fn SwitchToHudHandler_Grapple() -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SwitchToHudHandler_Xray() -> uint8 {
+pub unsafe fn SwitchToHudHandler_Xray() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -11377,8 +11158,7 @@ pub unsafe extern "C" fn SwitchToHudHandler_Xray() -> uint8 {
     Samus_LoadSuitPalette();
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleArmCannonOpenState() {
+pub unsafe fn HandleArmCannonOpenState() {
     if *(&raw mut g_ram as *mut uint8).offset(0xaa7 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
         != 0
@@ -11401,8 +11181,7 @@ pub unsafe extern "C" fn HandleArmCannonOpenState() {
         )
         .offset(1 as ::core::ffi::c_int as isize) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn UpdateArmCannonIsOpenFlag() -> uint8 {
+pub unsafe fn UpdateArmCannonIsOpenFlag() -> uint8 {
     static mut kFlagShouldArmCannonBeOpen: [int8; 6] = [
         0 as ::core::ffi::c_int as int8,
         1 as ::core::ffi::c_int as int8,
@@ -11439,8 +11218,7 @@ pub unsafe extern "C" fn UpdateArmCannonIsOpenFlag() -> uint8 {
         (r18 as ::core::ffi::c_int | 0x100 as ::core::ffi::c_int) as uint16;
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn AdvanceArmCannonFrame() {
+pub unsafe fn AdvanceArmCannonFrame() {
     if *(&raw mut g_ram as *mut uint8).offset(0xaa6 as ::core::ffi::c_int as isize) != 0 {
         if *((&raw mut g_ram as *mut uint8).offset(0xaa8 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -11477,8 +11255,7 @@ pub unsafe extern "C" fn AdvanceArmCannonFrame() {
     *((&raw mut g_ram as *mut uint8).offset(0xaa6 as ::core::ffi::c_int as isize) as *mut uint16) =
         *(&raw mut g_ram as *mut uint8).offset(0xaa6 as ::core::ffi::c_int as isize) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_ArmCannon_Draw() {
+pub unsafe fn Samus_ArmCannon_Draw() {
     static mut kDrawArmCannon_Char: [uint16; 10] = [
         0x281f as ::core::ffi::c_int as uint16,
         0x281f as ::core::ffi::c_int as uint16,
@@ -11642,8 +11419,7 @@ pub unsafe extern "C" fn Samus_ArmCannon_Draw() {
         v14 = (v14 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
         let fresh15 = v14;
         v14 = v14.wrapping_add(1);
-        *(&raw mut (*(gVramWriteEntry
-            as unsafe extern "C" fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
+        *(&raw mut (*(gVramWriteEntry as unsafe fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
             fresh15 as ::core::ffi::c_int,
         ))
         .size as *mut uint8)
@@ -11654,7 +11430,7 @@ pub unsafe extern "C" fn Samus_ArmCannon_Draw() {
             as *mut uint16) = (v14 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     }
 }
-unsafe extern "C" fn Projectile_SinLookup_Inner(mut k: uint16, mut r24: uint16) -> uint16 {
+unsafe fn Projectile_SinLookup_Inner(mut k: uint16, mut r24: uint16) -> uint16 {
     let mut prod: uint16 = Mult8x8(
         *((&raw const kSinCosTable8bit_Sext as *const int16)
             .offset(64 as ::core::ffi::c_int as isize) as *const int16 as *mut uint8)
@@ -11671,8 +11447,7 @@ unsafe extern "C" fn Projectile_SinLookup_Inner(mut k: uint16, mut r24: uint16) 
     );
     return (r18 as ::core::ffi::c_int + prod as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Projectile_SinLookup(mut j: uint16, mut a: uint16) -> Point16U {
+pub unsafe fn Projectile_SinLookup(mut j: uint16, mut a: uint16) -> Point16U {
     let mut v2: uint16 = 0;
     let mut v4: uint16 = 0;
     let mut r24: uint16 = a;
@@ -11722,22 +11497,21 @@ static mut kCostOfSbaInPowerBombs: [uint16; 12] = [
 ];
 static mut kFireSbaFuncs: [Option<Func_V_A>; 12] = unsafe {
     [
-        Some(FireSba_ClearCarry as unsafe extern "C" fn() -> uint8),
-        Some(FireSba_FireWave as unsafe extern "C" fn() -> uint8),
-        Some(FireSba_FireIce as unsafe extern "C" fn() -> uint8),
-        Some(FireSba_ClearCarry as unsafe extern "C" fn() -> uint8),
-        Some(FireSba_FireSpazer as unsafe extern "C" fn() -> uint8),
-        Some(FireSba_ClearCarry as unsafe extern "C" fn() -> uint8),
-        Some(FireSba_ClearCarry as unsafe extern "C" fn() -> uint8),
-        Some(FireSba_ClearCarry as unsafe extern "C" fn() -> uint8),
-        Some(FireSba_FirePlasma as unsafe extern "C" fn() -> uint8),
-        Some(FireSba_ClearCarry as unsafe extern "C" fn() -> uint8),
-        Some(FireSba_ClearCarry as unsafe extern "C" fn() -> uint8),
-        Some(FireSba_ClearCarry as unsafe extern "C" fn() -> uint8),
+        Some(FireSba_ClearCarry as unsafe fn() -> uint8),
+        Some(FireSba_FireWave as unsafe fn() -> uint8),
+        Some(FireSba_FireIce as unsafe fn() -> uint8),
+        Some(FireSba_ClearCarry as unsafe fn() -> uint8),
+        Some(FireSba_FireSpazer as unsafe fn() -> uint8),
+        Some(FireSba_ClearCarry as unsafe fn() -> uint8),
+        Some(FireSba_ClearCarry as unsafe fn() -> uint8),
+        Some(FireSba_ClearCarry as unsafe fn() -> uint8),
+        Some(FireSba_FirePlasma as unsafe fn() -> uint8),
+        Some(FireSba_ClearCarry as unsafe fn() -> uint8),
+        Some(FireSba_ClearCarry as unsafe fn() -> uint8),
+        Some(FireSba_ClearCarry as unsafe fn() -> uint8),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn FireSba() -> uint8 {
+pub unsafe fn FireSba() -> uint8 {
     let mut v2: int16 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0x9d2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -11771,12 +11545,10 @@ pub unsafe extern "C" fn FireSba() -> uint8 {
     }
     return rv;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireSba_ClearCarry() -> uint8 {
+pub unsafe fn FireSba_ClearCarry() -> uint8 {
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireSba_FireWave() -> uint8 {
+pub unsafe fn FireSba_FireWave() -> uint8 {
     static mut kFireSba_FireWave_X: [int16; 4] = [
         128 as ::core::ffi::c_int as int16,
         128 as ::core::ffi::c_int as int16,
@@ -11851,8 +11623,7 @@ pub unsafe extern "C" fn FireSba_FireWave() -> uint8 {
     QueueSfx1_Max6(0x28 as uint16);
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireSba_FireIce() -> uint8 {
+pub unsafe fn FireSba_FireIce() -> uint8 {
     static mut kIcePlasmaSbaProjectileOriginAngles: [uint16; 8] = [
         0 as ::core::ffi::c_int as uint16,
         0x40 as ::core::ffi::c_int as uint16,
@@ -11924,8 +11695,7 @@ pub unsafe extern "C" fn FireSba_FireIce() -> uint8 {
     QueueSfx1_Max6(0x23 as uint16);
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireSba_FireSpazer() -> uint8 {
+pub unsafe fn FireSba_FireSpazer() -> uint8 {
     static mut kFireSpazer_Timer: [int16; 4] = [
         0 as ::core::ffi::c_int as int16,
         0 as ::core::ffi::c_int as int16,
@@ -12001,8 +11771,7 @@ pub unsafe extern "C" fn FireSba_FireSpazer() -> uint8 {
     QueueSfx1_Max6(0x25 as uint16);
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireSba_FirePlasma() -> uint8 {
+pub unsafe fn FireSba_FirePlasma() -> uint8 {
     static mut kIcePlasmaSbaProjectileOriginAngles: [uint16; 8] = [
         0 as ::core::ffi::c_int as uint16,
         0x40 as ::core::ffi::c_int as uint16,
@@ -12070,8 +11839,7 @@ pub unsafe extern "C" fn FireSba_FirePlasma() -> uint8 {
     QueueSfx1_Max6(0x27 as uint16);
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_IceSba(mut k: uint16) {
+pub unsafe fn ProjPreInstr_IceSba(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0xc04 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(v1 as isize) as ::core::ffi::c_int
@@ -12144,8 +11912,7 @@ pub unsafe extern "C" fn ProjPreInstr_IceSba(mut k: uint16) {
             as *mut uint16) = 0 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_IceSba2(mut k: uint16) {
+pub unsafe fn ProjPreInstr_IceSba2(mut k: uint16) {
     let mut v3: ::core::ffi::c_int = 0;
     let mut pt: Point16U = Point16U { x: 0, y: 0 };
     let mut current_block: u64;
@@ -12247,8 +12014,7 @@ pub unsafe extern "C" fn ProjPreInstr_IceSba2(mut k: uint16) {
         _ => {}
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Projectile_Func7_Shinespark() {
+pub unsafe fn Projectile_Func7_Shinespark() {
     *((&raw mut g_ram as *mut uint8).offset(0xa58 as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x90d068 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xb36 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -12301,8 +12067,7 @@ pub unsafe extern "C" fn Projectile_Func7_Shinespark() {
         ClearFlareAnimationState();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveHandlerShinesparkWindup() {
+pub unsafe fn Samus_MoveHandlerShinesparkWindup() {
     let ref mut fresh124 = *((&raw mut g_ram as *mut uint8)
         .offset(0xaa2 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh124 = (*fresh124).wrapping_sub(1);
@@ -12345,8 +12110,7 @@ pub unsafe extern "C" fn Samus_MoveHandlerShinesparkWindup() {
         QueueSfx3_Max9(0xf as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveHandlerVerticalShinespark() {
+pub unsafe fn Samus_MoveHandlerVerticalShinespark() {
     *((&raw mut g_ram as *mut uint8).offset(0xa6e as ::core::ffi::c_int as isize) as *mut uint16) =
         2 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xa48 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -12372,8 +12136,7 @@ pub unsafe extern "C" fn Samus_MoveHandlerVerticalShinespark() {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveHandler_Shinespark_Diag() {
+pub unsafe fn Samus_MoveHandler_Shinespark_Diag() {
     *((&raw mut g_ram as *mut uint8).offset(0xa6e as ::core::ffi::c_int as isize) as *mut uint16) =
         2 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xa48 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -12400,8 +12163,7 @@ pub unsafe extern "C" fn Samus_MoveHandler_Shinespark_Diag() {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveHandler_Shinespark_Horiz() {
+pub unsafe fn Samus_MoveHandler_Shinespark_Horiz() {
     *((&raw mut g_ram as *mut uint8).offset(0xa6e as ::core::ffi::c_int as isize) as *mut uint16) =
         2 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xa48 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -12427,14 +12189,13 @@ pub unsafe extern "C" fn Samus_MoveHandler_Shinespark_Horiz() {
             as *mut uint16) = 0 as uint16;
     }
 }
-unsafe extern "C" fn Samus_ClampSpeedHi(mut amt: int32, mut val: ::core::ffi::c_int) -> uint32 {
+unsafe fn Samus_ClampSpeedHi(mut amt: int32, mut val: ::core::ffi::c_int) -> uint32 {
     if (amt >> 16 as ::core::ffi::c_int) - val as int32 & 0x8000 as int32 == 0 {
         amt = (val as int32) << 16 as ::core::ffi::c_int | amt & 0xffff as int32;
     }
     return amt as uint32;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_ShinesparkMove_X() {
+pub unsafe fn Samus_ShinesparkMove_X() {
     let mut current_block: u64;
     let mut v4: int16 = 0;
     *((&raw mut g_ram as *mut uint8).offset(0xa68 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -12531,8 +12292,7 @@ pub unsafe extern "C" fn Samus_ShinesparkMove_X() {
             - 15 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_ShinesparkMove_Y() {
+pub unsafe fn Samus_ShinesparkMove_Y() {
     *((&raw mut g_ram as *mut uint8).offset(0xa68 as ::core::ffi::c_int as isize) as *mut uint16) =
         15 as uint16;
     AddToHiLo(
@@ -12594,8 +12354,7 @@ pub unsafe extern "C" fn Samus_ShinesparkMove_Y() {
             + 14 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_EndSuperJump() -> uint8 {
+pub unsafe fn Samus_EndSuperJump() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         - 30 as ::core::ffi::c_int
@@ -12677,13 +12436,12 @@ pub unsafe extern "C" fn Samus_EndSuperJump() -> uint8 {
 }
 static mut kSamus_MoveHandler_ShinesparkCrash: [Option<Func_V>; 3] = unsafe {
     [
-        Some(Samus_MoveHandler_ShinesparkCrash_0 as unsafe extern "C" fn() -> ()),
-        Some(Samus_MoveHandler_ShinesparkCrash_1 as unsafe extern "C" fn() -> ()),
-        Some(Samus_MoveHandler_ShinesparkCrash_2 as unsafe extern "C" fn() -> ()),
+        Some(Samus_MoveHandler_ShinesparkCrash_0 as unsafe fn() -> ()),
+        Some(Samus_MoveHandler_ShinesparkCrash_1 as unsafe fn() -> ()),
+        Some(Samus_MoveHandler_ShinesparkCrash_2 as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveHandler_ShinesparkCrash() {
+pub unsafe fn Samus_MoveHandler_ShinesparkCrash() {
     *((&raw mut g_ram as *mut uint8).offset(0xa68 as ::core::ffi::c_int as isize) as *mut uint16) =
         15 as uint16;
     kSamus_MoveHandler_ShinesparkCrash[*((&raw mut g_ram as *mut uint8)
@@ -12718,8 +12476,7 @@ pub unsafe extern "C" fn Samus_MoveHandler_ShinesparkCrash() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveHandler_ShinesparkCrash_0() {
+pub unsafe fn Samus_MoveHandler_ShinesparkCrash_0() {
     let mut v0: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0xaae as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -12735,8 +12492,7 @@ pub unsafe extern "C" fn Samus_MoveHandler_ShinesparkCrash_0() {
     *((&raw mut g_ram as *mut uint8).offset(0xaae as ::core::ffi::c_int as isize) as *mut uint16) =
         v0;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveHandler_ShinesparkCrash_1() {
+pub unsafe fn Samus_MoveHandler_ShinesparkCrash_1() {
     *((&raw mut g_ram as *mut uint8).offset(0xac0 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(0 as ::core::ffi::c_int as isize) =
         (*(((&raw mut g_ram as *mut uint8).offset(0xab0 as ::core::ffi::c_int as isize)
@@ -12778,8 +12534,7 @@ pub unsafe extern "C" fn Samus_MoveHandler_ShinesparkCrash_1() {
             | 0x200 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveHandler_ShinesparkCrash_2() {
+pub unsafe fn Samus_MoveHandler_ShinesparkCrash_2() {
     let ref mut fresh118 = *((&raw mut g_ram as *mut uint8)
         .offset(0xaae as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh118 = (*fresh118 as ::core::ffi::c_int - 4 as ::core::ffi::c_int) as uint16;
@@ -12802,8 +12557,7 @@ pub unsafe extern "C" fn Samus_MoveHandler_ShinesparkCrash_2() {
             .offset(1 as ::core::ffi::c_int as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveHandler_ShinesparkCrashEchoCircle() {
+pub unsafe fn Samus_MoveHandler_ShinesparkCrashEchoCircle() {
     *((&raw mut g_ram as *mut uint8).offset(0xa68 as ::core::ffi::c_int as isize) as *mut uint16) =
         15 as uint16;
     let ref mut fresh117 = *((&raw mut g_ram as *mut uint8)
@@ -12823,8 +12577,7 @@ pub unsafe extern "C" fn Samus_MoveHandler_ShinesparkCrashEchoCircle() {
             (0x90eb52 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveHandler_ShinesparkCrashFinish() {
+pub unsafe fn Samus_MoveHandler_ShinesparkCrashFinish() {
     static mut kShinesparkCrashFinish_Tab0: [uint8; 12] = [
         0 as ::core::ffi::c_int as uint8,
         0x80 as ::core::ffi::c_int as uint8,
@@ -12951,8 +12704,7 @@ pub unsafe extern "C" fn Samus_MoveHandler_ShinesparkCrashFinish() {
     *((&raw mut g_ram as *mut uint8).offset(0xdee as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_SpeedEcho(mut k: uint16) {
+pub unsafe fn ProjPreInstr_SpeedEcho(mut k: uint16) {
     let mut v3: int16 = 0;
     let mut v4: uint16 = 0;
     let mut v5: int16 = 0;
@@ -13018,8 +12770,7 @@ pub unsafe extern "C" fn ProjPreInstr_SpeedEcho(mut k: uint16) {
         ClearProjectile(k);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Grapple_Func1() {
+pub unsafe fn Grapple_Func1() {
     let mut v0: bool = false;
     if *((&raw mut g_ram as *mut uint8).offset(0x9b2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -13092,8 +12843,7 @@ pub unsafe extern "C" fn Grapple_Func1() {
             (0x9bc856 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Hdmaobj_CrystalFlash() -> uint8 {
+pub unsafe fn Hdmaobj_CrystalFlash() -> uint8 {
     let mut v1: SamusPose = kPose_00_FaceF_Powersuit;
     if *((&raw mut g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -13208,8 +12958,7 @@ pub unsafe extern "C" fn Hdmaobj_CrystalFlash() -> uint8 {
         0 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusMoveHandler_CrystalFlashStart() {
+pub unsafe fn SamusMoveHandler_CrystalFlashStart() {
     let ref mut fresh112 = *((&raw mut g_ram as *mut uint8)
         .offset(0xafa as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh112 = (*fresh112 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
@@ -13249,13 +12998,12 @@ pub unsafe extern "C" fn SamusMoveHandler_CrystalFlashStart() {
 }
 static mut kSamusMoveHandler_CrystalFlashMainFuncs: [Option<Func_V>; 3] = unsafe {
     [
-        Some(SamusMoveHandler_CrystalFlashMain_0 as unsafe extern "C" fn() -> ()),
-        Some(SamusMoveHandler_CrystalFlashMain_1 as unsafe extern "C" fn() -> ()),
-        Some(SamusMoveHandler_CrystalFlashMain_2 as unsafe extern "C" fn() -> ()),
+        Some(SamusMoveHandler_CrystalFlashMain_0 as unsafe fn() -> ()),
+        Some(SamusMoveHandler_CrystalFlashMain_1 as unsafe fn() -> ()),
+        Some(SamusMoveHandler_CrystalFlashMain_2 as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn SamusMoveHandler_CrystalFlashMain() {
+pub unsafe fn SamusMoveHandler_CrystalFlashMain() {
     kSamusMoveHandler_CrystalFlashMainFuncs[*((&raw mut g_ram as *mut uint8)
         .offset(0xdea as ::core::ffi::c_int as isize)
         as *mut uint16) as usize]
@@ -13265,8 +13013,7 @@ pub unsafe extern "C" fn SamusMoveHandler_CrystalFlashMain() {
     *((&raw mut g_ram as *mut uint8).offset(0x18aa as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusMoveHandler_CrystalFlashMain_0() {
+pub unsafe fn SamusMoveHandler_CrystalFlashMain_0() {
     if *((&raw mut g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 7 as ::core::ffi::c_int
@@ -13296,8 +13043,7 @@ pub unsafe extern "C" fn SamusMoveHandler_CrystalFlashMain_0() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusMoveHandler_CrystalFlashMain_1() {
+pub unsafe fn SamusMoveHandler_CrystalFlashMain_1() {
     if *((&raw mut g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 7 as ::core::ffi::c_int
@@ -13327,8 +13073,7 @@ pub unsafe extern "C" fn SamusMoveHandler_CrystalFlashMain_1() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusMoveHandler_CrystalFlashMain_2() {
+pub unsafe fn SamusMoveHandler_CrystalFlashMain_2() {
     if *((&raw mut g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 7 as ::core::ffi::c_int
@@ -13362,8 +13107,7 @@ pub unsafe extern "C" fn SamusMoveHandler_CrystalFlashMain_2() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn kSamusMoveHandler_CrystalFlashFinish() {
+pub unsafe fn kSamusMoveHandler_CrystalFlashFinish() {
     if *((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         != *((&raw mut g_ram as *mut uint8).offset(0xdf0 as ::core::ffi::c_int as isize)
@@ -13396,8 +13140,7 @@ pub unsafe extern "C" fn kSamusMoveHandler_CrystalFlashFinish() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_PlasmaSba(mut k: uint16) {
+pub unsafe fn ProjPreInstr_PlasmaSba(mut k: uint16) {
     let mut v3: int16 = 0;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0xc04 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -13456,8 +13199,7 @@ pub unsafe extern "C" fn ProjPreInstr_PlasmaSba(mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_PlasmaSbaFunc_0(mut j: uint16) {
+pub unsafe fn ProjPreInstr_PlasmaSbaFunc_0(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0xbdc as ::core::ffi::c_int as isize) as *mut uint16)
@@ -13471,8 +13213,7 @@ pub unsafe extern "C" fn ProjPreInstr_PlasmaSbaFunc_0(mut j: uint16) {
             .offset(v1 as isize) = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_PlasmaSbaFunc_1(mut j: uint16) {
+pub unsafe fn ProjPreInstr_PlasmaSbaFunc_1(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0xbdc as ::core::ffi::c_int as isize) as *mut uint16)
@@ -13486,8 +13227,7 @@ pub unsafe extern "C" fn ProjPreInstr_PlasmaSbaFunc_1(mut j: uint16) {
             .offset(v1 as isize) = 2 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_PlasmaSbaFunc_2(mut j: uint16) {
+pub unsafe fn ProjPreInstr_PlasmaSbaFunc_2(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0xb64 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(v1 as isize) as ::core::ffi::c_int
@@ -13560,8 +13300,7 @@ static mut kBombSpread_Tab3: [uint16; 5] = [
     0 as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_SpreadBomb(mut k: uint16) {
+pub unsafe fn ProjPreInstr_SpreadBomb(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0xc04 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(v1 as isize) as ::core::ffi::c_int
@@ -13710,8 +13449,7 @@ pub unsafe extern "C" fn ProjPreInstr_SpreadBomb(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_WaveSba(mut k: uint16) {
+pub unsafe fn ProjPreInstr_WaveSba(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: bool = false;
     let mut v3: bool = false;
@@ -13866,8 +13604,7 @@ pub unsafe extern "C" fn ProjPreInstr_WaveSba(mut k: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0xcd0 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn BombSpread() {
+pub unsafe fn BombSpread() {
     if *((&raw mut g_ram as *mut uint8).offset(0xc72 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
         != 0x90d8f7 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -13957,21 +13694,20 @@ pub unsafe extern "C" fn BombSpread() {
 }
 static mut kProjPreInstr_SpazerSba_FuncsB: [Option<Func_SpazerSba_V>; 3] = unsafe {
     [
-        Some(ProjPreInstr_SpazerSba_FuncB_0 as unsafe extern "C" fn(uint16, uint16) -> ()),
-        Some(ProjPreInstr_SpazerSba_FuncB_1 as unsafe extern "C" fn(uint16, uint16) -> ()),
-        Some(ProjPreInstr_SpazerSba_FuncB_2 as unsafe extern "C" fn(uint16, uint16) -> ()),
+        Some(ProjPreInstr_SpazerSba_FuncB_0 as unsafe fn(uint16, uint16) -> ()),
+        Some(ProjPreInstr_SpazerSba_FuncB_1 as unsafe fn(uint16, uint16) -> ()),
+        Some(ProjPreInstr_SpazerSba_FuncB_2 as unsafe fn(uint16, uint16) -> ()),
     ]
 };
 static mut kProjPreInstr_SpazerSba_FuncsA: [Option<Func_Y_V>; 4] = unsafe {
     [
-        Some(ProjPreInstr_SpazerSba_FuncA_0 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_SpazerSba_FuncA_1 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_SpazerSba_FuncA_2 as unsafe extern "C" fn(uint16) -> ()),
-        Some(ProjPreInstr_SpazerSba_FuncA_3 as unsafe extern "C" fn(uint16) -> ()),
+        Some(ProjPreInstr_SpazerSba_FuncA_0 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_SpazerSba_FuncA_1 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_SpazerSba_FuncA_2 as unsafe fn(uint16) -> ()),
+        Some(ProjPreInstr_SpazerSba_FuncA_3 as unsafe fn(uint16) -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_SpazerSba(mut k: uint16) {
+pub unsafe fn ProjPreInstr_SpazerSba(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0xc04 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(v1 as isize) as ::core::ffi::c_int
@@ -14021,28 +13757,23 @@ pub unsafe extern "C" fn ProjPreInstr_SpazerSba(mut k: uint16) {
             as *mut uint16) = 0 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_SpazerSba_FuncA_0(mut k: uint16) {
+pub unsafe fn ProjPreInstr_SpazerSba_FuncA_0(mut k: uint16) {
     ClearProjectile(k);
     ClearProjectile(4 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_SpazerSba_FuncA_1(mut k: uint16) {
+pub unsafe fn ProjPreInstr_SpazerSba_FuncA_1(mut k: uint16) {
     ClearProjectile(k);
     ClearProjectile(6 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_SpazerSba_FuncA_2(mut k: uint16) {
+pub unsafe fn ProjPreInstr_SpazerSba_FuncA_2(mut k: uint16) {
     ClearProjectile(k);
     ClearProjectile(0 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_SpazerSba_FuncA_3(mut k: uint16) {
+pub unsafe fn ProjPreInstr_SpazerSba_FuncA_3(mut k: uint16) {
     ClearProjectile(k);
     ClearProjectile(2 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_SpazerSba_FuncB_0(mut j: uint16, mut r22: uint16) {
+pub unsafe fn ProjPreInstr_SpazerSba_FuncB_0(mut j: uint16, mut r22: uint16) {
     static mut kProjPreInstr_SpazerSba_Yspeed: [int16; 4] = [
         2 as ::core::ffi::c_int as int16,
         -(2 as ::core::ffi::c_int) as int16,
@@ -14080,8 +13811,7 @@ pub unsafe extern "C" fn ProjPreInstr_SpazerSba_FuncB_0(mut j: uint16, mut r22: 
             .offset(v1 as isize) = 2 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_SpazerSba_FuncB_1(mut j: uint16, mut r22: uint16) {
+pub unsafe fn ProjPreInstr_SpazerSba_FuncB_1(mut j: uint16, mut r22: uint16) {
     static mut kSpazerProjectileYSpeed: [int16; 4] = [
         -(2 as ::core::ffi::c_int) as int16,
         2 as ::core::ffi::c_int as int16,
@@ -14144,8 +13874,7 @@ pub unsafe extern "C" fn ProjPreInstr_SpazerSba_FuncB_1(mut j: uint16, mut r22: 
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_SpazerSba_FuncB_2(mut j: uint16, mut r22: uint16) {
+pub unsafe fn ProjPreInstr_SpazerSba_FuncB_2(mut j: uint16, mut r22: uint16) {
     let mut v2: ::core::ffi::c_int = 0;
     let mut v3: uint16 = 0;
     let mut v1: uint16 = (r22 as ::core::ffi::c_int
@@ -14188,8 +13917,7 @@ pub unsafe extern "C" fn ProjPreInstr_SpazerSba_FuncB_2(mut j: uint16, mut r22: 
         FireEndOfSpazerSba(j);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FireEndOfSpazerSba(mut j: uint16) {
+pub unsafe fn FireEndOfSpazerSba(mut j: uint16) {
     static mut kFireEndOfSpazerSba: [int16; 4] = [
         16 as ::core::ffi::c_int as int16,
         16 as ::core::ffi::c_int as int16,
@@ -14219,8 +13947,7 @@ pub unsafe extern "C" fn FireEndOfSpazerSba(mut j: uint16) {
         InitializeShinesparkEchoOrSpazerSba(j);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_EndOfSpazerSba(mut k: uint16) {
+pub unsafe fn ProjPreInstr_EndOfSpazerSba(mut k: uint16) {
     let mut v3: ::core::ffi::c_int = 0;
     let mut v4: uint16 = 0;
     let mut current_block: u64;
@@ -14281,38 +14008,37 @@ pub unsafe extern "C" fn ProjPreInstr_EndOfSpazerSba(mut k: uint16) {
 }
 static mut kHandleHudSpecificBehaviorAndProjs: [Option<Func_V>; 28] = unsafe {
     [
-        Some(HudSelectionHandler_Normal as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_Normal as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_Normal as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_JumpEtc as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_MorphBall as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_Normal as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_Normal as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_MorphBall as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_MorphBall as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_MorphBall as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_JumpEtc as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_Grappling as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_Grappling as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_JumpEtc as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_TurningAround as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_CrouchEtcTrans as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_Normal as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_MorphBall as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_MorphBall as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_MorphBall as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_JumpEtc as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_Normal as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_Grappling as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_TurningAround as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_TurningAround as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_JumpEtc as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_GrabbedByDraygon as unsafe extern "C" fn() -> ()),
-        Some(HudSelectionHandler_JumpEtc as unsafe extern "C" fn() -> ()),
+        Some(HudSelectionHandler_Normal as unsafe fn() -> ()),
+        Some(HudSelectionHandler_Normal as unsafe fn() -> ()),
+        Some(HudSelectionHandler_Normal as unsafe fn() -> ()),
+        Some(HudSelectionHandler_JumpEtc as unsafe fn() -> ()),
+        Some(HudSelectionHandler_MorphBall as unsafe fn() -> ()),
+        Some(HudSelectionHandler_Normal as unsafe fn() -> ()),
+        Some(HudSelectionHandler_Normal as unsafe fn() -> ()),
+        Some(HudSelectionHandler_MorphBall as unsafe fn() -> ()),
+        Some(HudSelectionHandler_MorphBall as unsafe fn() -> ()),
+        Some(HudSelectionHandler_MorphBall as unsafe fn() -> ()),
+        Some(HudSelectionHandler_JumpEtc as unsafe fn() -> ()),
+        Some(HudSelectionHandler_Grappling as unsafe fn() -> ()),
+        Some(HudSelectionHandler_Grappling as unsafe fn() -> ()),
+        Some(HudSelectionHandler_JumpEtc as unsafe fn() -> ()),
+        Some(HudSelectionHandler_TurningAround as unsafe fn() -> ()),
+        Some(HudSelectionHandler_CrouchEtcTrans as unsafe fn() -> ()),
+        Some(HudSelectionHandler_Normal as unsafe fn() -> ()),
+        Some(HudSelectionHandler_MorphBall as unsafe fn() -> ()),
+        Some(HudSelectionHandler_MorphBall as unsafe fn() -> ()),
+        Some(HudSelectionHandler_MorphBall as unsafe fn() -> ()),
+        Some(HudSelectionHandler_JumpEtc as unsafe fn() -> ()),
+        Some(HudSelectionHandler_Normal as unsafe fn() -> ()),
+        Some(HudSelectionHandler_Grappling as unsafe fn() -> ()),
+        Some(HudSelectionHandler_TurningAround as unsafe fn() -> ()),
+        Some(HudSelectionHandler_TurningAround as unsafe fn() -> ()),
+        Some(HudSelectionHandler_JumpEtc as unsafe fn() -> ()),
+        Some(HudSelectionHandler_GrabbedByDraygon as unsafe fn() -> ()),
+        Some(HudSelectionHandler_JumpEtc as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn Samus_HandleHudSpecificBehaviorAndProjs() {
+pub unsafe fn Samus_HandleHudSpecificBehaviorAndProjs() {
     if *((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         == kPose_00_FaceF_Powersuit as ::core::ffi::c_int
@@ -14334,17 +14060,16 @@ pub unsafe extern "C" fn Samus_HandleHudSpecificBehaviorAndProjs() {
         HandleProjectile();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HudSelectionHandler_Normal() {
+pub unsafe fn HudSelectionHandler_Normal() {
     static mut kHudSelectionHandler_Normal: [Option<Func_V>; 7] = unsafe {
         [
-            Some(HudSelectionHandler_NothingOrPowerBombs as unsafe extern "C" fn() -> ()),
-            Some(HudSelectionHandler_MissilesOrSuperMissiles as unsafe extern "C" fn() -> ()),
-            Some(HudSelectionHandler_MissilesOrSuperMissiles as unsafe extern "C" fn() -> ()),
-            Some(HudSelectionHandler_NothingOrPowerBombs as unsafe extern "C" fn() -> ()),
-            Some(HudSelectionHandler_Grappling as unsafe extern "C" fn() -> ()),
-            Some(HudSelectionHandler_Xray as unsafe extern "C" fn() -> ()),
-            Some(HudSelectionHandler_TurningAround as unsafe extern "C" fn() -> ()),
+            Some(HudSelectionHandler_NothingOrPowerBombs as unsafe fn() -> ()),
+            Some(HudSelectionHandler_MissilesOrSuperMissiles as unsafe fn() -> ()),
+            Some(HudSelectionHandler_MissilesOrSuperMissiles as unsafe fn() -> ()),
+            Some(HudSelectionHandler_NothingOrPowerBombs as unsafe fn() -> ()),
+            Some(HudSelectionHandler_Grappling as unsafe fn() -> ()),
+            Some(HudSelectionHandler_Xray as unsafe fn() -> ()),
+            Some(HudSelectionHandler_TurningAround as unsafe fn() -> ()),
         ]
     };
     let mut v0: uint16 = 0;
@@ -14368,12 +14093,10 @@ pub unsafe extern "C" fn HudSelectionHandler_Normal() {
     kHudSelectionHandler_Normal[(v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize]
         .expect("non-null function pointer")();
 }
-#[no_mangle]
-pub unsafe extern "C" fn HudSelectionHandler_Grappling() {
+pub unsafe fn HudSelectionHandler_Grappling() {
     GrappleBeamHandler();
 }
-#[no_mangle]
-pub unsafe extern "C" fn HudSelectionHandler_TurningAround() {
+pub unsafe fn HudSelectionHandler_TurningAround() {
     if *((&raw mut g_ram as *mut uint8).offset(0xb5e as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -14387,8 +14110,7 @@ pub unsafe extern "C" fn HudSelectionHandler_TurningAround() {
             (0x9bc856 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HudSelectionHandler_CrouchEtcTrans() {
+pub unsafe fn HudSelectionHandler_CrouchEtcTrans() {
     let mut current_block: u64;
     static mut byte_90DDAA: [uint8; 12] = [
         0 as ::core::ffi::c_int as uint8,
@@ -14447,8 +14169,7 @@ pub unsafe extern "C" fn HudSelectionHandler_CrouchEtcTrans() {
         _ => {}
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HudSelectionHandler_JumpEtc() {
+pub unsafe fn HudSelectionHandler_JumpEtc() {
     if *((&raw mut g_ram as *mut uint8).offset(0xd32 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         != 0x9bc4f0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -14459,8 +14180,7 @@ pub unsafe extern "C" fn HudSelectionHandler_JumpEtc() {
         HudSelectionHandler_Normal();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HudSelectionHandler_Xray() {
+pub unsafe fn HudSelectionHandler_Xray() {
     if *((&raw mut g_ram as *mut uint8).offset(0x9b6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & *((&raw mut g_ram as *mut uint8).offset(0x8b as ::core::ffi::c_int as isize)
@@ -14472,8 +14192,7 @@ pub unsafe extern "C" fn HudSelectionHandler_Xray() {
         HudSelectionHandler_NothingOrPowerBombs();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HudSelectionHandler_GrabbedByDraygon() {
+pub unsafe fn HudSelectionHandler_GrabbedByDraygon() {
     if *((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         == kPose_DB as ::core::ffi::c_int | kPose_04_FaceL_AimU as ::core::ffi::c_int
@@ -14485,38 +14204,37 @@ pub unsafe extern "C" fn HudSelectionHandler_GrabbedByDraygon() {
 }
 static mut kSamusHitInterrupts: [Option<Func_U8>; 28] = unsafe {
     [
-        Some(Samus_HitInterrupt_Stand as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_Stand as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_Stand as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_Stand as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_Ball as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_Stand as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_Falling as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_Unused as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_Ball as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_Ball as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_KnockbackGrapple as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_Turning as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_Turning as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_Stand as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_Turning as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_Turning as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_Stand as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_Ball as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_Ball as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_Ball as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_Stand as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_Stand as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_KnockbackGrapple as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_Turning as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_Turning as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_Turning as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_Turning as unsafe extern "C" fn() -> uint8),
-        Some(Samus_HitInterrupt_Shinespark as unsafe extern "C" fn() -> uint8),
+        Some(Samus_HitInterrupt_Stand as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_Stand as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_Stand as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_Stand as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_Ball as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_Stand as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_Falling as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_Unused as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_Ball as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_Ball as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_KnockbackGrapple as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_Turning as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_Turning as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_Stand as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_Turning as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_Turning as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_Stand as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_Ball as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_Ball as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_Ball as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_Stand as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_Stand as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_KnockbackGrapple as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_Turning as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_Turning as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_Turning as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_Turning as unsafe fn() -> uint8),
+        Some(Samus_HitInterrupt_Shinespark as unsafe fn() -> uint8),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn Samus_HitInterruption() {
+pub unsafe fn Samus_HitInterruption() {
     if *((&raw mut g_ram as *mut uint8).offset(0x18aa as ::core::ffi::c_int as isize)
         as *mut uint16)
         != 0
@@ -14600,8 +14318,7 @@ pub unsafe extern "C" fn Samus_HitInterruption() {
         SetupBombJump();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_HitInterrupt_Shinespark() -> uint8 {
+pub unsafe fn Samus_HitInterrupt_Shinespark() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         == kPose_E8_FaceR_Drained_CrouchFalling as ::core::ffi::c_int
@@ -14620,22 +14337,19 @@ pub unsafe extern "C" fn Samus_HitInterrupt_Shinespark() -> uint8 {
         0 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_HitInterrupt_KnockbackGrapple() -> uint8 {
+pub unsafe fn Samus_HitInterrupt_KnockbackGrapple() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xa30 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_HitInterrupt_Turning() -> uint8 {
+pub unsafe fn Samus_HitInterrupt_Turning() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xa30 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xa52 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_HitInterrupt_Falling() -> uint8 {
+pub unsafe fn Samus_HitInterrupt_Falling() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xa5a as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         != 0x90e41b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -14648,8 +14362,7 @@ pub unsafe extern "C" fn Samus_HitInterrupt_Falling() -> uint8 {
         0 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_HitInterrupt_Stand() -> uint8 {
+pub unsafe fn Samus_HitInterrupt_Stand() -> uint8 {
     if *(&raw mut g_ram as *mut uint8).offset(0xa1e as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
         == 4 as ::core::ffi::c_int
@@ -14662,15 +14375,13 @@ pub unsafe extern "C" fn Samus_HitInterrupt_Stand() -> uint8 {
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_HitInterrupt_Ball() -> uint8 {
+pub unsafe fn Samus_HitInterrupt_Ball() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xa2a as ::core::ffi::c_int as isize) as *mut uint16) =
         *((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
             as *mut uint16);
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_HitInterrupt_Unused() -> uint8 {
+pub unsafe fn Samus_HitInterrupt_Unused() -> uint8 {
     if *(&raw mut g_ram as *mut uint8).offset(0xa1e as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
         == 4 as ::core::ffi::c_int
@@ -14685,16 +14396,15 @@ pub unsafe extern "C" fn Samus_HitInterrupt_Unused() -> uint8 {
 }
 static mut kSamus_MoveHandler_Knockback: [Option<Func_V>; 6] = unsafe {
     [
-        Some(Samus_MoveHandler_Knockback_0 as unsafe extern "C" fn() -> ()),
-        Some(Samus_MoveHandler_Knockback_Up as unsafe extern "C" fn() -> ()),
-        Some(Samus_MoveHandler_Knockback_Up as unsafe extern "C" fn() -> ()),
-        Some(Samus_MoveHandler_Knockback_3 as unsafe extern "C" fn() -> ()),
-        Some(Samus_MoveHandler_Knockback_Down as unsafe extern "C" fn() -> ()),
-        Some(Samus_MoveHandler_Knockback_Down as unsafe extern "C" fn() -> ()),
+        Some(Samus_MoveHandler_Knockback_0 as unsafe fn() -> ()),
+        Some(Samus_MoveHandler_Knockback_Up as unsafe fn() -> ()),
+        Some(Samus_MoveHandler_Knockback_Up as unsafe fn() -> ()),
+        Some(Samus_MoveHandler_Knockback_3 as unsafe fn() -> ()),
+        Some(Samus_MoveHandler_Knockback_Down as unsafe fn() -> ()),
+        Some(Samus_MoveHandler_Knockback_Down as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveHandler_Knockback() {
+pub unsafe fn Samus_MoveHandler_Knockback() {
     kSamus_MoveHandler_Knockback[*((&raw mut g_ram as *mut uint8)
         .offset(0xa52 as ::core::ffi::c_int as isize)
         as *mut uint16) as usize]
@@ -14702,29 +14412,24 @@ pub unsafe extern "C" fn Samus_MoveHandler_Knockback() {
     *((&raw mut g_ram as *mut uint8).offset(0xdc6 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveHandler_Knockback_0() {
+pub unsafe fn Samus_MoveHandler_Knockback_0() {
     InvalidInterrupt_Crash();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveHandler_Knockback_Up() {
+pub unsafe fn Samus_MoveHandler_Knockback_Up() {
     Samus_BombJumpRisingXMovement_();
     Samus_MoveY_WithSpeedCalc();
     Samus_ClearMoveVars();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveHandler_Knockback_3() {
+pub unsafe fn Samus_MoveHandler_Knockback_3() {
     Samus_MoveY_WithSpeedCalc();
     Samus_ClearMoveVars();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveHandler_Knockback_Down() {
+pub unsafe fn Samus_MoveHandler_Knockback_Down() {
     Samus_BombJumpRisingXMovement_();
     Samus_Move_NoSpeedCalc_Y();
     Samus_ClearMoveVars();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_ClearMoveVars() {
+pub unsafe fn Samus_ClearMoveVars() {
     if *((&raw mut g_ram as *mut uint8).offset(0xdd0 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -14755,38 +14460,37 @@ pub unsafe extern "C" fn Samus_ClearMoveVars() {
 }
 static mut kSetupBombJump: [Option<Func_U8>; 28] = unsafe {
     [
-        Some(SetupBombJump_StandCrouch as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_1 as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_2 as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_2 as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_4 as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_StandCrouch as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_1 as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_4 as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_4 as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_4 as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_4 as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_1 as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_1 as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_1 as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_2 as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_2 as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_1 as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_4 as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_4 as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_4 as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_1 as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_1 as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_1 as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_2 as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_2 as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_2 as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_1A as unsafe extern "C" fn() -> uint8),
-        Some(SetupBombJump_1A as unsafe extern "C" fn() -> uint8),
+        Some(SetupBombJump_StandCrouch as unsafe fn() -> uint8),
+        Some(SetupBombJump_1 as unsafe fn() -> uint8),
+        Some(SetupBombJump_2 as unsafe fn() -> uint8),
+        Some(SetupBombJump_2 as unsafe fn() -> uint8),
+        Some(SetupBombJump_4 as unsafe fn() -> uint8),
+        Some(SetupBombJump_StandCrouch as unsafe fn() -> uint8),
+        Some(SetupBombJump_1 as unsafe fn() -> uint8),
+        Some(SetupBombJump_4 as unsafe fn() -> uint8),
+        Some(SetupBombJump_4 as unsafe fn() -> uint8),
+        Some(SetupBombJump_4 as unsafe fn() -> uint8),
+        Some(SetupBombJump_4 as unsafe fn() -> uint8),
+        Some(SetupBombJump_1 as unsafe fn() -> uint8),
+        Some(SetupBombJump_1 as unsafe fn() -> uint8),
+        Some(SetupBombJump_1 as unsafe fn() -> uint8),
+        Some(SetupBombJump_2 as unsafe fn() -> uint8),
+        Some(SetupBombJump_2 as unsafe fn() -> uint8),
+        Some(SetupBombJump_1 as unsafe fn() -> uint8),
+        Some(SetupBombJump_4 as unsafe fn() -> uint8),
+        Some(SetupBombJump_4 as unsafe fn() -> uint8),
+        Some(SetupBombJump_4 as unsafe fn() -> uint8),
+        Some(SetupBombJump_1 as unsafe fn() -> uint8),
+        Some(SetupBombJump_1 as unsafe fn() -> uint8),
+        Some(SetupBombJump_1 as unsafe fn() -> uint8),
+        Some(SetupBombJump_2 as unsafe fn() -> uint8),
+        Some(SetupBombJump_2 as unsafe fn() -> uint8),
+        Some(SetupBombJump_2 as unsafe fn() -> uint8),
+        Some(SetupBombJump_1A as unsafe fn() -> uint8),
+        Some(SetupBombJump_1A as unsafe fn() -> uint8),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn SetupBombJump() {
+pub unsafe fn SetupBombJump() {
     if *((&raw mut g_ram as *mut uint8).offset(0xa56 as ::core::ffi::c_int as isize) as *mut uint16
         as *mut uint8)
         .offset(
@@ -14807,8 +14511,7 @@ pub unsafe extern "C" fn SetupBombJump() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetupBombJump_StandCrouch() -> uint8 {
+pub unsafe fn SetupBombJump_StandCrouch() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xa78 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
     {
@@ -14818,8 +14521,7 @@ pub unsafe extern "C" fn SetupBombJump_StandCrouch() -> uint8 {
         0 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetupBombJump_1() -> uint8 {
+pub unsafe fn SetupBombJump_1() -> uint8 {
     if *(&raw mut g_ram as *mut uint8).offset(0xa1e as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
         == 4 as ::core::ffi::c_int
@@ -14832,27 +14534,23 @@ pub unsafe extern "C" fn SetupBombJump_1() -> uint8 {
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetupBombJump_4() -> uint8 {
+pub unsafe fn SetupBombJump_4() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xa2a as ::core::ffi::c_int as isize) as *mut uint16) =
         *((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
             as *mut uint16);
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetupBombJump_2() -> uint8 {
+pub unsafe fn SetupBombJump_2() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xa60 as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x90e913 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return SetupBombJump_1A();
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetupBombJump_1A() -> uint8 {
+pub unsafe fn SetupBombJump_1A() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xa56 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveHandler_BombJumpStart() {
+pub unsafe fn Samus_MoveHandler_BombJumpStart() {
     Samus_InitBombJump();
     *((&raw mut g_ram as *mut uint8).offset(0xa58 as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x90e032 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -14861,14 +14559,13 @@ pub unsafe extern "C" fn Samus_MoveHandler_BombJumpStart() {
 }
 static mut kSamus_MoveHandler_BombJumpMain: [Option<Func_V>; 4] = unsafe {
     [
-        Some(Samus_MoveHandler_Knockback_0 as unsafe extern "C" fn() -> ()),
-        Some(Samus_HorizontalBombJump as unsafe extern "C" fn() -> ()),
-        Some(Samus_VerticalBombJump as unsafe extern "C" fn() -> ()),
-        Some(Samus_HorizontalBombJump as unsafe extern "C" fn() -> ()),
+        Some(Samus_MoveHandler_Knockback_0 as unsafe fn() -> ()),
+        Some(Samus_HorizontalBombJump as unsafe fn() -> ()),
+        Some(Samus_VerticalBombJump as unsafe fn() -> ()),
+        Some(Samus_HorizontalBombJump as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveHandler_BombJumpMain() {
+pub unsafe fn Samus_MoveHandler_BombJumpMain() {
     if *((&raw mut g_ram as *mut uint8).offset(0xa56 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -14880,8 +14577,7 @@ pub unsafe extern "C" fn Samus_MoveHandler_BombJumpMain() {
         Samus_MoveHandler_BombJumpFunc1();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_HorizontalBombJump() {
+pub unsafe fn Samus_HorizontalBombJump() {
     Samus_BombJumpRisingXMovement_();
     Samus_BombJumpRisingYMovement_();
     if *((&raw mut g_ram as *mut uint8).offset(0xb36 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -14897,8 +14593,7 @@ pub unsafe extern "C" fn Samus_HorizontalBombJump() {
         Samus_MoveHandler_BombJumpFunc1();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_VerticalBombJump() {
+pub unsafe fn Samus_VerticalBombJump() {
     Samus_BombJumpRisingYMovement_();
     if *((&raw mut g_ram as *mut uint8).offset(0xb36 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -14913,8 +14608,7 @@ pub unsafe extern "C" fn Samus_VerticalBombJump() {
         Samus_MoveHandler_BombJumpFunc1();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveHandler_BombJumpFunc1() {
+pub unsafe fn Samus_MoveHandler_BombJumpFunc1() {
     *((&raw mut g_ram as *mut uint8).offset(0xa58 as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x90a337 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     if *((&raw mut g_ram as *mut uint8).offset(0xa60 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -14928,8 +14622,7 @@ pub unsafe extern "C" fn Samus_MoveHandler_BombJumpFunc1() {
     *((&raw mut g_ram as *mut uint8).offset(0xa56 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallFrameHandlerGamma(mut ea: uint32) {
+pub unsafe fn CallFrameHandlerGamma(mut ea: uint32) {
     match ea {
         9494683 => {
             Samus_Func1();
@@ -14974,16 +14667,14 @@ pub unsafe extern "C" fn CallFrameHandlerGamma(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn RunFrameHandlerGamma() {
+pub unsafe fn RunFrameHandlerGamma() {
     CallFrameHandlerGamma(
         (*((&raw mut g_ram as *mut uint8).offset(0xa5a as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
             | 0x900000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Func1() {
+pub unsafe fn Samus_Func1() {
     if *((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         == kPose_E9_FaceL_Drained_CrouchFalling as ::core::ffi::c_int
@@ -15006,8 +14697,7 @@ pub unsafe extern "C" fn Samus_Func1() {
             (0x90e90e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Func2() {
+pub unsafe fn Samus_Func2() {
     if *((&raw mut g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         - 8 as ::core::ffi::c_int
@@ -15029,8 +14719,7 @@ pub unsafe extern "C" fn Samus_Func2() {
             as *mut uint16) = 18 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Func3() {
+pub unsafe fn Samus_Func3() {
     if ProcessTimer() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
             as *mut uint16) = kGameState_35_TimeUp as ::core::ffi::c_int as uint16;
@@ -15052,19 +14741,16 @@ pub unsafe extern "C" fn Samus_Func3() {
         DrawTimer();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawTimer_() {
+pub unsafe fn DrawTimer_() {
     DrawTimer();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_SetPushedOutOfCeresRidley() {
+pub unsafe fn Samus_SetPushedOutOfCeresRidley() {
     *((&raw mut g_ram as *mut uint8).offset(0xa58 as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x90e90e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xa5a as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x90e12e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_PushOutOfRidleysWay() {
+pub unsafe fn Samus_PushOutOfRidleysWay() {
     if *(&raw mut g_ram as *mut uint8).offset(0xa1e as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
         == 4 as ::core::ffi::c_int
@@ -15136,13 +14822,12 @@ pub unsafe extern "C" fn Samus_PushOutOfRidleysWay() {
         DrawTimer();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Func4() {
+pub unsafe fn Samus_Func4() {
     static mut off_90E1F7: [Option<Func_V>; 3] = unsafe {
         [
             None,
-            Some(Samus_Func5 as unsafe extern "C" fn() -> ()),
-            Some(Samus_Func6 as unsafe extern "C" fn() -> ()),
+            Some(Samus_Func5 as unsafe fn() -> ()),
+            Some(Samus_Func6 as unsafe fn() -> ()),
         ]
     };
     if *((&raw mut g_ram as *mut uint8).offset(0xa28 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -15169,8 +14854,7 @@ pub unsafe extern "C" fn Samus_Func4() {
         DrawTimer();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Func5() {
+pub unsafe fn Samus_Func5() {
     Samus_BombJumpFallingXMovement_();
     if *((&raw mut g_ram as *mut uint8).offset(0xdd0 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
@@ -15188,8 +14872,7 @@ pub unsafe extern "C" fn Samus_Func5() {
         Samus_BombJumpFallingYMovement_();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Func6() {
+pub unsafe fn Samus_Func6() {
     Samus_BombJumpFallingXMovement_();
     if *((&raw mut g_ram as *mut uint8).offset(0xdd0 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
@@ -15207,8 +14890,7 @@ pub unsafe extern "C" fn Samus_Func6() {
         Samus_BombJumpFallingYMovement_();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_GrabbedByDraygonFrameHandler() {
+pub unsafe fn Samus_GrabbedByDraygonFrameHandler() {
     if *((&raw mut g_ram as *mut uint8).offset(0xd32 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         == 0x9bc77e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -15254,8 +14936,7 @@ pub unsafe extern "C" fn Samus_GrabbedByDraygonFrameHandler() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_SetGrabbedByDraygonPose(mut a: uint16) {
+pub unsafe fn Samus_SetGrabbedByDraygonPose(mut a: uint16) {
     if a as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
         *((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
             as *mut uint16) = kPose_EC_FaceR_Draygon_NoMove_NoAim as ::core::ffi::c_int as uint16;
@@ -15300,12 +14981,10 @@ pub unsafe extern "C" fn Samus_SetGrabbedByDraygonPose(mut a: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0xa32 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_ReleaseFromDraygon_() {
+pub unsafe fn Samus_ReleaseFromDraygon_() {
     Samus_ReleaseFromDraygon();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_ReleaseFromDraygon() {
+pub unsafe fn Samus_ReleaseFromDraygon() {
     if *(&raw mut g_ram as *mut uint8).offset(0xa1e as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
         == 4 as ::core::ffi::c_int
@@ -15366,8 +15045,7 @@ pub unsafe extern "C" fn Samus_ReleaseFromDraygon() {
             & 0xfffd as ::core::ffi::c_int
             | 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Func7() {
+pub unsafe fn Samus_Func7() {
     Samus_BombJumpFallingXMovement_();
     if *((&raw mut g_ram as *mut uint8).offset(0xdd0 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -15394,8 +15072,7 @@ pub unsafe extern "C" fn Samus_Func7() {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Func8() {
+pub unsafe fn Samus_Func8() {
     *((&raw mut g_ram as *mut uint8).offset(0xb2c as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xb2e as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -15405,8 +15082,7 @@ pub unsafe extern "C" fn Samus_Func8() {
     *((&raw mut g_ram as *mut uint8).offset(0xa5a as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x90e90e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Func9() {
+pub unsafe fn Samus_Func9() {
     if *((&raw mut g_ram as *mut uint8).offset(0xb2e as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         - 5 as ::core::ffi::c_int
@@ -15449,7 +15125,7 @@ pub unsafe extern "C" fn Samus_Func9() {
             as *mut uint16) = 4 as uint16;
     }
 }
-unsafe extern "C" fn Samus_ClampSpeed(mut amt: int32) -> int32 {
+unsafe fn Samus_ClampSpeed(mut amt: int32) -> int32 {
     let mut r18: uint16 = (amt >> 16 as ::core::ffi::c_int) as uint16;
     let mut r20: uint16 = amt as uint16;
     let mut v0: int16 = r18 as int16;
@@ -15464,8 +15140,7 @@ unsafe extern "C" fn Samus_ClampSpeed(mut amt: int32) -> int32 {
     }
     return (r18 as int32) << 16 as ::core::ffi::c_int | r20 as int32;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_CalcDisplacementMoveLeft(mut amt: int32) -> int32 {
+pub unsafe fn Samus_CalcDisplacementMoveLeft(mut amt: int32) -> int32 {
     amt = Samus_CalcSpeed_X(amt as uint32) as int32;
     *((&raw mut g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
@@ -15477,8 +15152,7 @@ pub unsafe extern "C" fn Samus_CalcDisplacementMoveLeft(mut amt: int32) -> int32
         .wrapping_sub(amt as uint32) as int32;
     return Samus_ClampSpeed(amt);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_CalcDisplacementMoveRight(mut amt: int32) -> int32 {
+pub unsafe fn Samus_CalcDisplacementMoveRight(mut amt: int32) -> int32 {
     amt = Samus_CalcSpeed_X(amt as uint32) as int32;
     *((&raw mut g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize) as *mut uint16) =
         1 as uint16;
@@ -15491,8 +15165,7 @@ pub unsafe extern "C" fn Samus_CalcDisplacementMoveRight(mut amt: int32) -> int3
     ) as int32 as int32;
     return Samus_ClampSpeed(amt);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_CalcSpeed_X(mut amt: uint32) -> uint32 {
+pub unsafe fn Samus_CalcSpeed_X(mut amt: uint32) -> uint32 {
     amt = amt.wrapping_add(
         (*((&raw mut g_ram as *mut uint8).offset(0xb42 as ::core::ffi::c_int as isize)
             as *mut uint16) as uint32)
@@ -15516,8 +15189,7 @@ pub unsafe extern "C" fn Samus_CalcSpeed_X(mut amt: uint32) -> uint32 {
     );
     return amt;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_ClearXSpeedIfColl() {
+pub unsafe fn Samus_ClearXSpeedIfColl() {
     if *((&raw mut g_ram as *mut uint8).offset(0xdd0 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -15549,8 +15221,7 @@ pub unsafe extern "C" fn Samus_ClearXSpeedIfColl() {
             as *mut uint16) = 0 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveUp_SetPoseCalcInput() {
+pub unsafe fn Samus_MoveUp_SetPoseCalcInput() {
     if *((&raw mut g_ram as *mut uint8).offset(0xdd0 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -15621,8 +15292,7 @@ static mut kSamus_MoveDown_SetPoseCalcInput_Tab1: [uint8; 28] = [
     4 as ::core::ffi::c_int as uint8,
     4 as ::core::ffi::c_int as uint8,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveDown_SetPoseCalcInput() {
+pub unsafe fn Samus_MoveDown_SetPoseCalcInput() {
     if *((&raw mut g_ram as *mut uint8).offset(0xdd0 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -15652,8 +15322,7 @@ pub unsafe extern "C" fn Samus_MoveDown_SetPoseCalcInput() {
             .offset(0xa1f as ::core::ffi::c_int as isize) as usize];
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallFrameHandlerAlfa(mut ea: uint32) {
+pub unsafe fn CallFrameHandlerAlfa(mut ea: uint32) {
     match ea {
         9496213 => {
             Samus_FrameHandlerAlfa_Func11();
@@ -15673,16 +15342,14 @@ pub unsafe extern "C" fn CallFrameHandlerAlfa(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleControllerInputForGamePhysics() {
+pub unsafe fn HandleControllerInputForGamePhysics() {
     CallFrameHandlerAlfa(
         (*((&raw mut g_ram as *mut uint8).offset(0xa42 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
             | 0x900000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_FrameHandlerAlfa_Func11() {
+pub unsafe fn Samus_FrameHandlerAlfa_Func11() {
     *((&raw mut g_ram as *mut uint8).offset(0xa28 as ::core::ffi::c_int as isize) as *mut uint16) =
         -(1 as ::core::ffi::c_int) as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xa2a as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -15703,8 +15370,7 @@ pub unsafe extern "C" fn Samus_FrameHandlerAlfa_Func11() {
     Samus_HandleHudSpecificBehaviorAndProjs();
     Samus_Func10();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_FrameHandlerAlfa_Func12() {
+pub unsafe fn Samus_FrameHandlerAlfa_Func12() {
     *((&raw mut g_ram as *mut uint8).offset(0xa28 as ::core::ffi::c_int as isize) as *mut uint16) =
         -(1 as ::core::ffi::c_int) as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xa2a as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -15735,13 +15401,11 @@ pub unsafe extern "C" fn Samus_FrameHandlerAlfa_Func12() {
     Samus_HandleHudSpecificBehaviorAndProjs();
     Samus_Func10();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_FrameHandlerAlfa_Func13() {
+pub unsafe fn Samus_FrameHandlerAlfa_Func13() {
     HandleProjectile();
     Samus_Func10();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallFrameHandlerBeta(mut ea: uint32) {
+pub unsafe fn CallFrameHandlerBeta(mut ea: uint32) {
     match ea {
         9496357 => {
             Samus_FrameHandlerBeta_Func17();
@@ -15787,16 +15451,14 @@ pub unsafe extern "C" fn CallFrameHandlerBeta(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleSamusMovementAndPause() {
+pub unsafe fn HandleSamusMovementAndPause() {
     CallFrameHandlerBeta(
         (*((&raw mut g_ram as *mut uint8).offset(0xa44 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
             | 0x900000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_FrameHandlerBeta_Func17() {
+pub unsafe fn Samus_FrameHandlerBeta_Func17() {
     *((&raw mut g_ram as *mut uint8).offset(0xa6e as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     RunSamusMovementHandler();
@@ -15811,8 +15473,7 @@ pub unsafe extern "C" fn Samus_FrameHandlerBeta_Func17() {
     Samus_PauseCheck();
     Samus_LowHealthCheck_();
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleDemoRecorder_1() {
+pub unsafe fn HandleDemoRecorder_1() {
     if *((&raw mut g_ram as *mut uint8).offset(0x91 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -15853,8 +15514,7 @@ pub unsafe extern "C" fn HandleDemoRecorder_1() {
             (0x90eb52 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleDemoRecorder_3() {
+pub unsafe fn HandleDemoRecorder_3() {
     if *((&raw mut g_ram as *mut uint8).offset(0x91 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0x80 as ::core::ffi::c_int
@@ -15871,8 +15531,7 @@ pub unsafe extern "C" fn HandleDemoRecorder_3() {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_FrameHandlerBeta_Func14() {
+pub unsafe fn Samus_FrameHandlerBeta_Func14() {
     *((&raw mut g_ram as *mut uint8).offset(0xa6e as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     RunSamusMovementHandler();
@@ -15895,8 +15554,7 @@ pub unsafe extern "C" fn Samus_FrameHandlerBeta_Func14() {
         *((&raw mut g_ram as *mut uint8).offset(0xa92 as ::core::ffi::c_int as isize)
             as *mut uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Func15() {
+pub unsafe fn Samus_Func15() {
     *((&raw mut g_ram as *mut uint8).offset(0xa6e as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     RunSamusMovementHandler();
@@ -15918,8 +15576,7 @@ pub unsafe extern "C" fn Samus_Func15() {
         *((&raw mut g_ram as *mut uint8).offset(0xa92 as ::core::ffi::c_int as isize)
             as *mut uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Func16() {
+pub unsafe fn Samus_Func16() {
     Samus_SetRadius();
     UpdateMinimap();
     Samus_Animate();
@@ -15950,8 +15607,7 @@ pub unsafe extern "C" fn Samus_Func16() {
             (0x90e725 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Func18() {
+pub unsafe fn Samus_Func18() {
     Samus_FrameHandlerBeta_Func17();
     if *((&raw mut g_ram as *mut uint8).offset(0xa5a as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -15964,26 +15620,22 @@ pub unsafe extern "C" fn Samus_Func18() {
             as *mut uint16) = kGameState_35_TimeUp as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetContactDamageIndexAndUpdateMinimap() {
+pub unsafe fn SetContactDamageIndexAndUpdateMinimap() {
     *((&raw mut g_ram as *mut uint8).offset(0xa6e as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     UpdateMinimap();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Func19() {
+pub unsafe fn Samus_Func19() {
     *((&raw mut g_ram as *mut uint8).offset(0xa6e as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     RunSamusMovementHandler();
     UpdateMinimap();
     Samus_Animate();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_LowHealthCheck() {
+pub unsafe fn Samus_LowHealthCheck() {
     Samus_LowHealthCheck_();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallSamusInputHandler(mut ea: uint32) {
+pub unsafe fn CallSamusInputHandler(mut ea: uint32) {
     match ea {
         9496846 => return,
         9496851 => {
@@ -16007,29 +15659,24 @@ pub unsafe extern "C" fn CallSamusInputHandler(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_CallInputHandler() {
+pub unsafe fn Samus_CallInputHandler() {
     CallSamusInputHandler(
         (*((&raw mut g_ram as *mut uint8).offset(0xa60 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
             | 0x900000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_InputHandler_E913() {
+pub unsafe fn Samus_InputHandler_E913() {
     Samus_InputHandler();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Func20_() {
+pub unsafe fn Samus_Func20_() {
     Samus_Func20();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_InputHandler_E91D() {
+pub unsafe fn Samus_InputHandler_E91D() {
     DemoObjectInputHandler();
     Samus_InputHandler();
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleAutoJumpHack() {
+pub unsafe fn HandleAutoJumpHack() {
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x8f as ::core::ffi::c_int as isize) as *mut uint16);
     if *((&raw mut g_ram as *mut uint8).offset(0xaf4 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -16056,8 +15703,7 @@ pub unsafe extern "C" fn HandleAutoJumpHack() {
     *((&raw mut g_ram as *mut uint8).offset(0xa60 as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x90e913 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallSamusMovementHandler(mut ea: uint32) {
+pub unsafe fn CallSamusMovementHandler(mut ea: uint32) {
     match ea {
         9475182 => {
             Samus_MoveHandler_ReleaseFromGrapple();
@@ -16173,16 +15819,14 @@ pub unsafe extern "C" fn CallSamusMovementHandler(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn RunSamusMovementHandler() {
+pub unsafe fn RunSamusMovementHandler() {
     CallSamusMovementHandler(
         (*((&raw mut g_ram as *mut uint8).offset(0xa58 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
             | 0x900000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusMovementType_Xray() {
+pub unsafe fn SamusMovementType_Xray() {
     let mut v0: uint16 = 0;
     if *(&raw mut g_ram as *mut uint8).offset(0xa1f as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
@@ -16258,8 +15902,7 @@ pub unsafe extern "C" fn SamusMovementType_Xray() {
             as *mut uint16) = v0;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_HandlePeriodicDamage() {
+pub unsafe fn Samus_HandlePeriodicDamage() {
     if *((&raw mut g_ram as *mut uint8).offset(0xa78 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -16316,8 +15959,7 @@ pub unsafe extern "C" fn Samus_HandlePeriodicDamage() {
     *((&raw mut g_ram as *mut uint8).offset(0xa50 as ::core::ffi::c_int as isize) as *mut uint16) =
         *fresh129;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_PauseCheck() {
+pub unsafe fn Samus_PauseCheck() {
     if *((&raw mut g_ram as *mut uint8).offset(0xcee as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
         && *((&raw mut g_ram as *mut uint8).offset(0xa78 as ::core::ffi::c_int as isize)
@@ -16345,8 +15987,7 @@ pub unsafe extern "C" fn Samus_PauseCheck() {
             as *mut uint16) = kGameState_12_Pausing as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_LowHealthCheck_() {
+pub unsafe fn Samus_LowHealthCheck_() {
     if *((&raw mut g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         - 31 as ::core::ffi::c_int
@@ -16370,12 +16011,10 @@ pub unsafe extern "C" fn Samus_LowHealthCheck_() {
         QueueSfx3_Max6(1 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_LowHealthCheck_0() {
+pub unsafe fn Samus_LowHealthCheck_0() {
     Samus_LowHealthCheck_();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_JumpCheck() {
+pub unsafe fn Samus_JumpCheck() {
     let mut current_block: u64;
     if *((&raw mut g_ram as *mut uint8).offset(0x9b4 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -16440,8 +16079,7 @@ pub unsafe extern "C" fn Samus_JumpCheck() {
         _ => {}
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Func10() {
+pub unsafe fn Samus_Func10() {
     *((&raw mut g_ram as *mut uint8).offset(0xdaa as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xdac as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -16469,15 +16107,13 @@ pub unsafe extern "C" fn Samus_Func10() {
         as *mut uint16) = *((&raw mut g_ram as *mut uint8)
         .offset(0xa1e as ::core::ffi::c_int as isize) as *mut uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawSamusAndProjectiles() {
+pub unsafe fn DrawSamusAndProjectiles() {
     SamusDrawSprites();
     DrawPlayerExplosions2();
     Samus_JumpCheck();
     Samus_ShootCheck();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallSamusDrawHandler(mut ea: uint32) {
+pub unsafe fn CallSamusDrawHandler(mut ea: uint32) {
     match ea {
         9497426 => {
             SamusDrawHandler_Default();
@@ -16505,8 +16141,7 @@ pub unsafe extern "C" fn CallSamusDrawHandler(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusDrawSprites() {
+pub unsafe fn SamusDrawSprites() {
     HandleArmCannonOpenState();
     CallSamusDrawHandler(
         (*((&raw mut g_ram as *mut uint8).offset(0xa5c as ::core::ffi::c_int as isize)
@@ -16514,13 +16149,11 @@ pub unsafe extern "C" fn SamusDrawSprites() {
             | 0x900000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusDrawHandler_Default() {
+pub unsafe fn SamusDrawHandler_Default() {
     HandleChargingBeamGfxAudio();
     sub_90EB55();
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_90EB55() {
+pub unsafe fn sub_90EB55() {
     if *((&raw mut g_ram as *mut uint8).offset(0xaac as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0xf as ::core::ffi::c_int
@@ -16546,8 +16179,7 @@ pub unsafe extern "C" fn sub_90EB55() {
         Samus_DrawEchoes();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_90EB86() {
+pub unsafe fn sub_90EB86() {
     if *((&raw mut g_ram as *mut uint8).offset(0xd32 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         + 0x37aa as ::core::ffi::c_int
@@ -16612,8 +16244,7 @@ pub unsafe extern "C" fn sub_90EB86() {
     }
     HandleGrappleBeamGfx();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_DrawHandler_EndOfShinespark() {
+pub unsafe fn Samus_DrawHandler_EndOfShinespark() {
     Samus_Draw();
     let mut i: ::core::ffi::c_int = 2 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
@@ -16621,8 +16252,7 @@ pub unsafe extern "C" fn Samus_DrawHandler_EndOfShinespark() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_DrawManyEchoes() {
+pub unsafe fn Samus_DrawManyEchoes() {
     SamusDrawHandler_Default();
     let mut i: ::core::ffi::c_int = 2 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
@@ -16630,8 +16260,7 @@ pub unsafe extern "C" fn Samus_DrawManyEchoes() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusDisplayHandler_UsingElevator() {
+pub unsafe fn SamusDisplayHandler_UsingElevator() {
     if *((&raw mut g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
@@ -16640,12 +16269,10 @@ pub unsafe extern "C" fn SamusDisplayHandler_UsingElevator() {
         SamusDisplayHandler_SamusReceivedFatal();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusDisplayHandler_SamusReceivedFatal() {
+pub unsafe fn SamusDisplayHandler_SamusReceivedFatal() {
     Samus_DrawWhenNotAnimatingOrDying();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_SetRadius() {
+pub unsafe fn Samus_SetRadius() {
     *((&raw mut g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize) as *mut uint16) =
         (*(g_rom.offset(
             (((0x91b629 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -16661,8 +16288,7 @@ pub unsafe extern "C" fn Samus_SetRadius() {
     *((&raw mut g_ram as *mut uint8).offset(0xafe as ::core::ffi::c_int as isize) as *mut uint16) =
         5 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_GetBottom_R18() -> uint16 {
+pub unsafe fn Samus_GetBottom_R18() -> uint16 {
     return (*((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         + (*(g_rom.offset(
@@ -16678,8 +16304,7 @@ pub unsafe extern "C" fn Samus_GetBottom_R18() -> uint16 {
         .y_radius as ::core::ffi::c_int
         - 1 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_GetTop_R20() -> uint16 {
+pub unsafe fn Samus_GetTop_R20() -> uint16 {
     return (*((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         - (*(g_rom.offset(
@@ -16694,8 +16319,7 @@ pub unsafe extern "C" fn Samus_GetTop_R20() -> uint16 {
             ))
         .y_radius as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_AlignBottomWithPrevPose() {
+pub unsafe fn Samus_AlignBottomWithPrevPose() {
     let mut r18: uint16 = (*(g_rom.offset(
         (((0x91b629 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0x91b629 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -16724,8 +16348,7 @@ pub unsafe extern "C" fn Samus_AlignBottomWithPrevPose() {
         .offset(0xb14 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh102 = (*fresh102 as ::core::ffi::c_int + r18 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_UpdateSuitPaletteIndex() {
+pub unsafe fn Samus_UpdateSuitPaletteIndex() {
     if *((&raw mut g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0x20 as ::core::ffi::c_int
@@ -16745,8 +16368,7 @@ pub unsafe extern "C" fn Samus_UpdateSuitPaletteIndex() {
             as *mut uint16) = 0 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MoveSamusWithControlPad() {
+pub unsafe fn MoveSamusWithControlPad() {
     if *((&raw mut g_ram as *mut uint8).offset(0x8b as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0x800 as ::core::ffi::c_int
@@ -16806,8 +16428,7 @@ static mut byte_90ED50: [uint8; 28] = [
     0 as ::core::ffi::c_int as uint8,
     0 as ::core::ffi::c_int as uint8,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn SwappedAmmoRoutine() {
+pub unsafe fn SwappedAmmoRoutine() {
     if byte_90ED50
         [*(&raw mut g_ram as *mut uint8).offset(0xa1f as ::core::ffi::c_int as isize) as usize]
         != 0
@@ -16834,8 +16455,7 @@ pub unsafe extern "C" fn SwappedAmmoRoutine() {
             >> 4 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn UNUSEDsub_90ED6C() {
+pub unsafe fn UNUSEDsub_90ED6C() {
     *((&raw mut g_ram as *mut uint8).offset(0x9c6 as ::core::ffi::c_int as isize) as *mut uint16) =
         *((&raw mut g_ram as *mut uint8).offset(0x9e0 as ::core::ffi::c_int as isize)
             as *mut uint16);
@@ -16857,18 +16477,17 @@ pub unsafe extern "C" fn UNUSEDsub_90ED6C() {
 }
 static mut kSamus_FootstepGraphics: [Option<Func_V>; 8] = unsafe {
     [
-        Some(Samus_FootstepGraphics_Crateria as unsafe extern "C" fn() -> ()),
-        Some(Samus_FootstepGraphics_1 as unsafe extern "C" fn() -> ()),
-        Some(Samus_FootstepGraphics_1 as unsafe extern "C" fn() -> ()),
-        Some(Samus_FootstepGraphics_1 as unsafe extern "C" fn() -> ()),
-        Some(Samus_FootstepGraphics_Maridia as unsafe extern "C" fn() -> ()),
-        Some(Samus_FootstepGraphics_1 as unsafe extern "C" fn() -> ()),
-        Some(Samus_FootstepGraphics_1 as unsafe extern "C" fn() -> ()),
-        Some(Samus_FootstepGraphics_1 as unsafe extern "C" fn() -> ()),
+        Some(Samus_FootstepGraphics_Crateria as unsafe fn() -> ()),
+        Some(Samus_FootstepGraphics_1 as unsafe fn() -> ()),
+        Some(Samus_FootstepGraphics_1 as unsafe fn() -> ()),
+        Some(Samus_FootstepGraphics_1 as unsafe fn() -> ()),
+        Some(Samus_FootstepGraphics_Maridia as unsafe fn() -> ()),
+        Some(Samus_FootstepGraphics_1 as unsafe fn() -> ()),
+        Some(Samus_FootstepGraphics_1 as unsafe fn() -> ()),
+        Some(Samus_FootstepGraphics_1 as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn Samus_FootstepGraphics() {
+pub unsafe fn Samus_FootstepGraphics() {
     kSamus_FootstepGraphics[*((&raw mut g_ram as *mut uint8)
         .offset(0x79f as ::core::ffi::c_int as isize) as *mut uint16)
         as usize]
@@ -16892,8 +16511,7 @@ static mut byte_90EDC9: [uint8; 16] = [
     4 as ::core::ffi::c_int as uint8,
     0 as ::core::ffi::c_int as uint8,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn Samus_FootstepGraphics_Crateria() {
+pub unsafe fn Samus_FootstepGraphics_Crateria() {
     let mut current_block: u64;
     if !(*((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -16952,8 +16570,7 @@ pub unsafe extern "C" fn Samus_FootstepGraphics_Crateria() {
     }
     Samus_FootstepGraphics_1();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_FootstepGraphics_Maridia() {
+pub unsafe fn Samus_FootstepGraphics_Maridia() {
     let mut r18: uint16 = Samus_GetBottom_R18();
     if *((&raw mut g_ram as *mut uint8).offset(0x195e as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -17033,8 +16650,7 @@ pub unsafe extern "C" fn Samus_FootstepGraphics_Maridia() {
     *((&raw mut g_ram as *mut uint8).offset(0xad4 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(1 as ::core::ffi::c_int as isize) = 3 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_FootstepGraphics_1() {
+pub unsafe fn Samus_FootstepGraphics_1() {
     if *((&raw mut g_ram as *mut uint8).offset(0xb3e as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0xff00 as ::core::ffi::c_int
@@ -17126,8 +16742,7 @@ pub unsafe extern "C" fn Samus_FootstepGraphics_1() {
             .offset(1 as ::core::ffi::c_int as isize) = 3 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_UpdateSpeedEchoPos() {
+pub unsafe fn Samus_UpdateSpeedEchoPos() {
     if *((&raw mut g_ram as *mut uint8).offset(0xb3e as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0xff00 as ::core::ffi::c_int
@@ -17168,8 +16783,7 @@ pub unsafe extern "C" fn Samus_UpdateSpeedEchoPos() {
             as *mut uint16) = v2;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_PostGrappleCollisionDetect() {
+pub unsafe fn Samus_PostGrappleCollisionDetect() {
     PostGrappleCollisionDetect_X();
     PostGrappleCollisionDetect_Y();
     if *((&raw mut g_ram as *mut uint8).offset(0xe0a as ::core::ffi::c_int as isize) as *mut uint16)
@@ -17206,8 +16820,7 @@ pub unsafe extern "C" fn Samus_PostGrappleCollisionDetect() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProjPreInstr_UnknownProj8027(mut k: uint16) {
+pub unsafe fn ProjPreInstr_UnknownProj8027(mut k: uint16) {
     static mut kProjPreInstr_UnknownProj8027_X: [int16; 4] = [
         -(4 as ::core::ffi::c_int) as int16,
         -(4 as ::core::ffi::c_int) as int16,
@@ -17288,8 +16901,7 @@ pub unsafe extern "C" fn ProjPreInstr_UnknownProj8027(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Func25_ShineSpark() {
+pub unsafe fn Samus_Func25_ShineSpark() {
     if *((&raw mut g_ram as *mut uint8).offset(0xa68 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
     {
@@ -17308,8 +16920,7 @@ pub unsafe extern "C" fn Samus_Func25_ShineSpark() {
             (0x90f072 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveHandler_F072() {
+pub unsafe fn Samus_MoveHandler_F072() {
     if *((&raw mut g_ram as *mut uint8).offset(0xa68 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
     {
@@ -17323,42 +16934,41 @@ pub unsafe extern "C" fn Samus_MoveHandler_F072() {
 }
 static mut kSamusCodeHandlers: [Option<Func_U8>; 32] = unsafe {
     [
-        Some(SamusCode_00_LockSamus as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_01_UnlockSamus as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_02_ReachCeresElevator as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_03 as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_04 as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_05_SetupDrained as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_06_LockToStation as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_07_SetupForElevator as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_08_SetupForCeresStart as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_08_SetupForZebesStart as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_0A_ClearDrawHandler as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_0B_DrawHandlerDefault as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_0C_UnlockFromMapStation as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_0D_IsGrappleActive as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_0E as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_0F_EnableTimerHandling as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_10 as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_11_SetupForDeath as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_12_SetSuperPaletteFlag1 as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_12_SetSuperPaletteFlag0 as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_14 as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_15_CalledBySuitAcquision as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_16 as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_17_DisableRainbowSamusAndStandUp as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_18 as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_17_FreezeDrainedSamus as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_1A as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_1B_CheckedLockSamus as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_1C as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_1D_ClearSoundInDoor as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_1E as unsafe extern "C" fn() -> uint8),
-        Some(SamusCode_1F as unsafe extern "C" fn() -> uint8),
+        Some(SamusCode_00_LockSamus as unsafe fn() -> uint8),
+        Some(SamusCode_01_UnlockSamus as unsafe fn() -> uint8),
+        Some(SamusCode_02_ReachCeresElevator as unsafe fn() -> uint8),
+        Some(SamusCode_03 as unsafe fn() -> uint8),
+        Some(SamusCode_04 as unsafe fn() -> uint8),
+        Some(SamusCode_05_SetupDrained as unsafe fn() -> uint8),
+        Some(SamusCode_06_LockToStation as unsafe fn() -> uint8),
+        Some(SamusCode_07_SetupForElevator as unsafe fn() -> uint8),
+        Some(SamusCode_08_SetupForCeresStart as unsafe fn() -> uint8),
+        Some(SamusCode_08_SetupForZebesStart as unsafe fn() -> uint8),
+        Some(SamusCode_0A_ClearDrawHandler as unsafe fn() -> uint8),
+        Some(SamusCode_0B_DrawHandlerDefault as unsafe fn() -> uint8),
+        Some(SamusCode_0C_UnlockFromMapStation as unsafe fn() -> uint8),
+        Some(SamusCode_0D_IsGrappleActive as unsafe fn() -> uint8),
+        Some(SamusCode_0E as unsafe fn() -> uint8),
+        Some(SamusCode_0F_EnableTimerHandling as unsafe fn() -> uint8),
+        Some(SamusCode_10 as unsafe fn() -> uint8),
+        Some(SamusCode_11_SetupForDeath as unsafe fn() -> uint8),
+        Some(SamusCode_12_SetSuperPaletteFlag1 as unsafe fn() -> uint8),
+        Some(SamusCode_12_SetSuperPaletteFlag0 as unsafe fn() -> uint8),
+        Some(SamusCode_14 as unsafe fn() -> uint8),
+        Some(SamusCode_15_CalledBySuitAcquision as unsafe fn() -> uint8),
+        Some(SamusCode_16 as unsafe fn() -> uint8),
+        Some(SamusCode_17_DisableRainbowSamusAndStandUp as unsafe fn() -> uint8),
+        Some(SamusCode_18 as unsafe fn() -> uint8),
+        Some(SamusCode_17_FreezeDrainedSamus as unsafe fn() -> uint8),
+        Some(SamusCode_1A as unsafe fn() -> uint8),
+        Some(SamusCode_1B_CheckedLockSamus as unsafe fn() -> uint8),
+        Some(SamusCode_1C as unsafe fn() -> uint8),
+        Some(SamusCode_1D_ClearSoundInDoor as unsafe fn() -> uint8),
+        Some(SamusCode_1E as unsafe fn() -> uint8),
+        Some(SamusCode_1F as unsafe fn() -> uint8),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn CallSomeSamusCode(mut a: uint16) -> uint16 {
+pub unsafe fn CallSomeSamusCode(mut a: uint16) -> uint16 {
     let mut code: uint16 = kSamusCodeHandlers
         [(a as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int) as usize]
         .expect("non-null function pointer")() as uint16;
@@ -17379,8 +16989,7 @@ pub unsafe extern "C" fn CallSomeSamusCode(mut a: uint16) -> uint16 {
         0 as uint16;
     return -(1 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_UpdatePreviousPose() {
+pub unsafe fn Samus_UpdatePreviousPose() {
     *((&raw mut g_ram as *mut uint8).offset(0xa24 as ::core::ffi::c_int as isize) as *mut uint16) =
         *((&raw mut g_ram as *mut uint8).offset(0xa20 as ::core::ffi::c_int as isize)
             as *mut uint16);
@@ -17394,28 +17003,24 @@ pub unsafe extern "C" fn Samus_UpdatePreviousPose() {
         *((&raw mut g_ram as *mut uint8).offset(0xa1e as ::core::ffi::c_int as isize)
             as *mut uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearCarry() -> uint8 {
+pub unsafe fn ClearCarry() -> uint8 {
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_00_LockSamus() -> uint8 {
+pub unsafe fn SamusCode_00_LockSamus() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xa42 as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x90e713 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xa44 as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x90e8dc as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_01_UnlockSamus() -> uint8 {
+pub unsafe fn SamusCode_01_UnlockSamus() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xa42 as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x90e695 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xa44 as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x90e725 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_02_ReachCeresElevator() -> uint8 {
+pub unsafe fn SamusCode_02_ReachCeresElevator() -> uint8 {
     if *(&raw mut g_ram as *mut uint8).offset(0xa1e as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
         == 4 as ::core::ffi::c_int
@@ -17434,8 +17039,7 @@ pub unsafe extern "C" fn SamusCode_02_ReachCeresElevator() -> uint8 {
         60 as uint16;
     return SamusCode_00_LockSamus();
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_03() -> uint8 {
+pub unsafe fn SamusCode_03() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xd32 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         != 0x9bc4f0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -17471,22 +17075,19 @@ pub unsafe extern "C" fn SamusCode_03() -> uint8 {
     Samus_UpdatePreviousPose();
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_04_06_Common() -> uint8 {
+pub unsafe fn SamusCode_04_06_Common() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xcd0 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     ClearFlareAnimationState();
     Samus_LoadSuitPalette();
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_04() -> uint8 {
+pub unsafe fn SamusCode_04() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xb62 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     return SamusCode_04_06_Common();
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_06_LockToStation() -> uint8 {
+pub unsafe fn SamusCode_06_LockToStation() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xa42 as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x90e713 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xa44 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -17501,8 +17102,7 @@ pub unsafe extern "C" fn SamusCode_06_LockToStation() -> uint8 {
     }
     return SamusCode_04_06_Common();
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_07_SetupForElevator() -> uint8 {
+pub unsafe fn SamusCode_07_SetupForElevator() -> uint8 {
     MakeSamusFaceForward();
     *((&raw mut g_ram as *mut uint8).offset(0xa44 as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x90e8ec as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -17516,8 +17116,7 @@ pub unsafe extern "C" fn SamusCode_07_SetupForElevator() -> uint8 {
         0 as uint16;
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_08_SetupForCeresStart() -> uint8 {
+pub unsafe fn SamusCode_08_SetupForCeresStart() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xa42 as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x90e8cd as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xa44 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -17560,8 +17159,7 @@ pub unsafe extern "C" fn SamusCode_08_SetupForCeresStart() -> uint8 {
     PlayRoomMusicTrackAfterAFrames(0x20 as uint16);
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_08_SetupForZebesStart() -> uint8 {
+pub unsafe fn SamusCode_08_SetupForZebesStart() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0x20 as ::core::ffi::c_int
@@ -17593,20 +17191,17 @@ pub unsafe extern "C" fn SamusCode_08_SetupForZebesStart() -> uint8 {
         0 as uint16;
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_0A_ClearDrawHandler() -> uint8 {
+pub unsafe fn SamusCode_0A_ClearDrawHandler() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xa5c as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x90e90e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_0B_DrawHandlerDefault() -> uint8 {
+pub unsafe fn SamusCode_0B_DrawHandlerDefault() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xa5c as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x90eb52 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return SamusCode_01_UnlockSamus();
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_0C_UnlockFromMapStation() -> uint8 {
+pub unsafe fn SamusCode_0C_UnlockFromMapStation() -> uint8 {
     SamusFunc_E633();
     if *((&raw mut g_ram as *mut uint8).offset(0xa44 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -17621,8 +17216,7 @@ pub unsafe extern "C" fn SamusCode_0C_UnlockFromMapStation() -> uint8 {
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_0D_IsGrappleActive() -> uint8 {
+pub unsafe fn SamusCode_0D_IsGrappleActive() -> uint8 {
     return (if *((&raw mut g_ram as *mut uint8).offset(0xd32 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         != 0x9bc4f0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -17632,29 +17226,25 @@ pub unsafe extern "C" fn SamusCode_0D_IsGrappleActive() -> uint8 {
         0 as ::core::ffi::c_int
     }) as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_0D_IsGrappleActive_A() -> uint8 {
+pub unsafe fn SamusCode_0D_IsGrappleActive_A() -> uint8 {
     return (*((&raw mut g_ram as *mut uint8).offset(0xd32 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         != 0x9bc4f0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int)
         as ::core::ffi::c_int as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_0E() -> uint8 {
+pub unsafe fn SamusCode_0E() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xa42 as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x90e695 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xa44 as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x90e8aa as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_0F_EnableTimerHandling() -> uint8 {
+pub unsafe fn SamusCode_0F_EnableTimerHandling() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xa5a as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x90e0e6 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_10() -> uint8 {
+pub unsafe fn SamusCode_10() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xa44 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         != 0x90e8d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -17668,8 +17258,7 @@ pub unsafe extern "C" fn SamusCode_10() -> uint8 {
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_11_15_Common() -> uint8 {
+pub unsafe fn SamusCode_11_15_Common() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xa42 as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x90e713 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xa44 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -17678,13 +17267,11 @@ pub unsafe extern "C" fn SamusCode_11_15_Common() -> uint8 {
         (0x90ec1d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_11_SetupForDeath() -> uint8 {
+pub unsafe fn SamusCode_11_SetupForDeath() -> uint8 {
     DisablePaletteFx();
     return SamusCode_11_15_Common();
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_15_CalledBySuitAcquision() -> uint8 {
+pub unsafe fn SamusCode_15_CalledBySuitAcquision() -> uint8 {
     Samus_UpdatePreviousPose();
     *((&raw mut g_ram as *mut uint8).offset(0xcd0 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
@@ -17692,21 +17279,18 @@ pub unsafe extern "C" fn SamusCode_15_CalledBySuitAcquision() -> uint8 {
     Samus_LoadSuitPalette();
     return SamusCode_11_15_Common();
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_12_SetSuperPaletteFlag1() -> uint8 {
+pub unsafe fn SamusCode_12_SetSuperPaletteFlag1() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xa4a as ::core::ffi::c_int as isize) as *mut uint16) =
         1 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_12_SetSuperPaletteFlag0() -> uint8 {
+pub unsafe fn SamusCode_12_SetSuperPaletteFlag0() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xa4a as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     Samus_LoadSuitPalette();
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_14() -> uint8 {
+pub unsafe fn SamusCode_14() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         - 31 as ::core::ffi::c_int
@@ -17745,14 +17329,12 @@ pub unsafe extern "C" fn SamusCode_14() -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_05_SetupDrained() -> uint8 {
+pub unsafe fn SamusCode_05_SetupDrained() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xa5a as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x90e09b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return Samus_SetupForBeingDrained();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_SetupForBeingDrained() -> uint8 {
+pub unsafe fn Samus_SetupForBeingDrained() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize) as *mut uint16) =
         kPose_54_FaceL_Knockback as ::core::ffi::c_int as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xa9a as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -17770,14 +17352,12 @@ pub unsafe extern "C" fn Samus_SetupForBeingDrained() -> uint8 {
         (0x90e8d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_18() -> uint8 {
+pub unsafe fn SamusCode_18() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xa5a as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x90e0c5 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return Samus_SetupForBeingDrained();
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_16() -> uint8 {
+pub unsafe fn SamusCode_16() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xa4a as ::core::ffi::c_int as isize) as *mut uint16) =
         0x8000 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xace as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -17788,8 +17368,7 @@ pub unsafe extern "C" fn SamusCode_16() -> uint8 {
         0 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_17_DisableRainbowSamusAndStandUp() -> uint8 {
+pub unsafe fn SamusCode_17_DisableRainbowSamusAndStandUp() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xa4a as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xace as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -17805,22 +17384,19 @@ pub unsafe extern "C" fn SamusCode_17_DisableRainbowSamusAndStandUp() -> uint8 {
         13 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_17_FreezeDrainedSamus() -> uint8 {
+pub unsafe fn SamusCode_17_FreezeDrainedSamus() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xa94 as ::core::ffi::c_int as isize) as *mut uint16) =
         1 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize) as *mut uint16) =
         28 as uint16;
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_1A() -> uint8 {
+pub unsafe fn SamusCode_1A() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xa44 as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x90e902 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_1B_CheckedLockSamus() -> uint8 {
+pub unsafe fn SamusCode_1B_CheckedLockSamus() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xa44 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         == 0x90e8d9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -17830,8 +17406,7 @@ pub unsafe extern "C" fn SamusCode_1B_CheckedLockSamus() -> uint8 {
         return SamusCode_00_LockSamus();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_1C() -> uint8 {
+pub unsafe fn SamusCode_1C() -> uint8 {
     let mut current_block_5: u64;
     if *(&raw mut g_ram as *mut uint8).offset(0xa1f as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
@@ -17899,8 +17474,7 @@ pub unsafe extern "C" fn SamusCode_1C() -> uint8 {
     QueueSfx1_Max9(0x33 as uint16);
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_1D_ClearSoundInDoor() -> uint8 {
+pub unsafe fn SamusCode_1D_ClearSoundInDoor() -> uint8 {
     if *(&raw mut g_ram as *mut uint8).offset(0xa1f as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
         == 3 as ::core::ffi::c_int
@@ -17929,8 +17503,7 @@ pub unsafe extern "C" fn SamusCode_1D_ClearSoundInDoor() -> uint8 {
         return 0 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_1E() -> uint8 {
+pub unsafe fn SamusCode_1E() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         == 8 as ::core::ffi::c_int
@@ -17956,8 +17529,7 @@ pub unsafe extern "C" fn SamusCode_1E() -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusCode_1F() -> uint8 {
+pub unsafe fn SamusCode_1F() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xd32 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         != addr_loc_90C4F0 as ::core::ffi::c_int as uint16 as ::core::ffi::c_int
@@ -17990,8 +17562,7 @@ pub unsafe extern "C" fn SamusCode_1F() -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_Func26() -> uint8 {
+pub unsafe fn Samus_Func26() -> uint8 {
     if *(&raw mut g_ram as *mut uint8).offset(0xa1f as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
         != kMovementType_03_SpinJumping as ::core::ffi::c_int
@@ -18013,8 +17584,7 @@ pub unsafe extern "C" fn Samus_Func26() -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_ShootCheck() {
+pub unsafe fn Samus_ShootCheck() {
     let mut current_block: u64;
     if *((&raw mut g_ram as *mut uint8).offset(0xdc0 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int

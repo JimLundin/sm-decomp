@@ -299,7 +299,7 @@ pub const addr_unk_605000: Consts_60 = 20480;
 pub const addr_unk_604C00: Consts_60 = 19456;
 pub const addr_unk_604800: Consts_60 = 18432;
 #[inline]
-unsafe extern "C" fn RomPtr_85(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_85(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x850000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 pub const fnWriteLargeMessageBoxTilemap: uint32 = 8749658 as uint32;
@@ -308,7 +308,6 @@ pub const fnDrawShootButtonAndSetupPpuForLargeMessageBox: uint32 = 8750021 as ui
 pub const fnDrawRunButtonAndSetupPpuForLargeMessageBox: uint32 = 8750028 as uint32;
 pub const fnSetupPpuForSmallMessageBox: uint32 = 8750134 as uint32;
 pub const fnSetupPpuForLargeMessageBox: uint32 = 8750145 as uint32;
-#[no_mangle]
 pub static mut message_box_das0l_value: uint16 = 0;
 static mut kMsgBoxSpecialButtonTilemapOffs: [uint16; 27] = [
     0 as ::core::ffi::c_int as uint16,
@@ -349,7 +348,7 @@ static mut kTileNumbersForButtonLetters: [uint16; 8] = [
     0x38f1 as ::core::ffi::c_int as uint16,
     0x284e as ::core::ffi::c_int as uint16,
 ];
-unsafe extern "C" fn InitializePpuForMessageBoxes() {
+unsafe fn InitializePpuForMessageBoxes() {
     *((&raw mut g_ram as *mut uint8).offset(0x5f9 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     WriteReg(HDMAEN as ::core::ffi::c_int as uint16, 0 as uint8);
@@ -409,7 +408,7 @@ unsafe extern "C" fn InitializePpuForMessageBoxes() {
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
 }
-unsafe extern "C" fn ClearMessageBoxBg3Tilemap() {
+unsafe fn ClearMessageBoxBg3Tilemap() {
     let mut v0: int16 = 0;
     v0 = 1790 as int16;
     loop {
@@ -508,7 +507,7 @@ static mut kSmallMsgBoxTopBottomBorderTilemap: [uint16; 32] = [
     0xe as ::core::ffi::c_int as uint16,
     0xe as ::core::ffi::c_int as uint16,
 ];
-unsafe extern "C" fn WriteMessageTilemap() -> uint16 {
+unsafe fn WriteMessageTilemap() -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0x5a6 as ::core::ffi::c_int as isize) as *mut uint16) =
         112 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x5a4 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -553,9 +552,13 @@ unsafe extern "C" fn WriteMessageTilemap() -> uint16 {
         (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
             as *mut Ram3000))
             .pause_menu_map_tilemap
-            [(v1 as ::core::ffi::c_int + 256 as ::core::ffi::c_int) as usize] =
-            *((RomPtr_85 as unsafe extern "C" fn(uint16_t) -> *const uint8)(r0 as uint16_t)
-                .offset(v2 as isize) as *const uint8 as *mut uint16);
+            [(v1 as ::core::ffi::c_int + 256 as ::core::ffi::c_int) as usize] = *((RomPtr_85
+            as unsafe fn(uint16_t) -> *const uint8)(
+            r0 as uint16_t
+        )
+        .offset(v2 as isize)
+            as *const uint8
+            as *mut uint16);
         v1 = v1.wrapping_add(1);
         v2 = (v2 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
         n -= 1;
@@ -565,7 +568,7 @@ unsafe extern "C" fn WriteMessageTilemap() -> uint16 {
     }
     return v1;
 }
-unsafe extern "C" fn WriteLargeMessageBoxTilemap() {
+unsafe fn WriteLargeMessageBoxTilemap() {
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i != 32 as ::core::ffi::c_int {
         (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
@@ -592,7 +595,7 @@ unsafe extern "C" fn WriteLargeMessageBoxTilemap() {
         }
     }
 }
-unsafe extern "C" fn WriteSmallMessageBoxTilemap() {
+unsafe fn WriteSmallMessageBoxTilemap() {
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i != 32 as ::core::ffi::c_int {
         (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
@@ -619,7 +622,7 @@ unsafe extern "C" fn WriteSmallMessageBoxTilemap() {
         }
     }
 }
-unsafe extern "C" fn CallMsgBoxDraw(mut ea: uint32) {
+unsafe fn CallMsgBoxDraw(mut ea: uint32) {
     match ea {
         8749658 => {
             WriteLargeMessageBoxTilemap();
@@ -634,7 +637,7 @@ unsafe extern "C" fn CallMsgBoxDraw(mut ea: uint32) {
         }
     };
 }
-unsafe extern "C" fn MsgBoxMakeHdmaTable() {
+unsafe fn MsgBoxMakeHdmaTable() {
     *((&raw mut g_ram as *mut uint8).offset(0x5a8 as ::core::ffi::c_int as isize) as *mut uint16) =
         ((31488 as ::core::ffi::c_int
             - *((&raw mut g_ram as *mut uint8).offset(0x5a2 as ::core::ffi::c_int as isize)
@@ -705,7 +708,7 @@ unsafe extern "C" fn MsgBoxMakeHdmaTable() {
         }
     }
 }
-unsafe extern "C" fn SetupMessageBoxBg3YscrollHdma() {
+unsafe fn SetupMessageBoxBg3YscrollHdma() {
     *((&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x3000 as ::core::ffi::c_int as isize)
         as *mut Ram3000))
         .menu
@@ -733,7 +736,7 @@ unsafe extern "C" fn SetupMessageBoxBg3YscrollHdma() {
     MsgBoxMakeHdmaTable();
     WriteReg(HDMAEN as ::core::ffi::c_int as uint16, 0x40 as uint8);
 }
-unsafe extern "C" fn SetupPpuForActiveMessageBox(mut r52: uint16) {
+unsafe fn SetupPpuForActiveMessageBox(mut r52: uint16) {
     SetupMessageBoxBg3YscrollHdma();
     r52 = (r52 as ::core::ffi::c_int + 22528 as ::core::ffi::c_int) as uint16;
     WriteRegWord(VMADDL as ::core::ffi::c_int as uint16, r52);
@@ -755,7 +758,7 @@ unsafe extern "C" fn SetupPpuForActiveMessageBox(mut r52: uint16) {
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
 }
-unsafe extern "C" fn DrawSpecialButtonAndSetupPpuForLargeMessageBox(mut a: uint16) {
+unsafe fn DrawSpecialButtonAndSetupPpuForLargeMessageBox(mut a: uint16) {
     let mut v1: uint16 = 0 as uint16;
     if a as ::core::ffi::c_int & kButton_A as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
         v1 = 2 as uint16;
@@ -800,25 +803,25 @@ unsafe extern "C" fn DrawSpecialButtonAndSetupPpuForLargeMessageBox(mut a: uint1
         [(v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize];
     SetupPpuForActiveMessageBox(416 as uint16);
 }
-unsafe extern "C" fn DrawShootButtonAndSetupPpuForLargeMessageBox() {
+unsafe fn DrawShootButtonAndSetupPpuForLargeMessageBox() {
     DrawSpecialButtonAndSetupPpuForLargeMessageBox(
         *((&raw mut g_ram as *mut uint8).offset(0x9b2 as ::core::ffi::c_int as isize)
             as *mut uint16),
     );
 }
-unsafe extern "C" fn DrawRunButtonAndSetupPpuForLargeMessageBox() {
+unsafe fn DrawRunButtonAndSetupPpuForLargeMessageBox() {
     DrawSpecialButtonAndSetupPpuForLargeMessageBox(
         *((&raw mut g_ram as *mut uint8).offset(0x9b6 as ::core::ffi::c_int as isize)
             as *mut uint16),
     );
 }
-unsafe extern "C" fn SetupPpuForSmallMessageBox() {
+unsafe fn SetupPpuForSmallMessageBox() {
     SetupPpuForActiveMessageBox(448 as uint16);
 }
-unsafe extern "C" fn SetupPpuForLargeMessageBox() {
+unsafe fn SetupPpuForLargeMessageBox() {
     SetupPpuForActiveMessageBox(416 as uint16);
 }
-unsafe extern "C" fn CallMsgBoxModify(mut ea: uint32) {
+unsafe fn CallMsgBoxModify(mut ea: uint32) {
     match ea {
         8750021 => {
             DrawShootButtonAndSetupPpuForLargeMessageBox();
@@ -841,7 +844,7 @@ unsafe extern "C" fn CallMsgBoxModify(mut ea: uint32) {
         }
     };
 }
-unsafe extern "C" fn InitializeMessageBox() {
+unsafe fn InitializeMessageBox() {
     let mut v0: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c1f as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -967,7 +970,7 @@ static mut kSaveConfirmationSelectionTilemap: [uint16; 96] = [
     0xe as ::core::ffi::c_int as uint16,
     0xe as ::core::ffi::c_int as uint16,
 ];
-unsafe extern "C" fn ToggleSaveConfirmationSelection() {
+unsafe fn ToggleSaveConfirmationSelection() {
     let ref mut fresh7 = *((&raw mut g_ram as *mut uint8)
         .offset(0x5f9 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh7 = (*fresh7 as ::core::ffi::c_int ^ 2 as ::core::ffi::c_int) as uint16;
@@ -1013,7 +1016,7 @@ unsafe extern "C" fn ToggleSaveConfirmationSelection() {
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
 }
-unsafe extern "C" fn RestorePpuForMessageBox() {
+unsafe fn RestorePpuForMessageBox() {
     WriteRegWord(
         VMADDL as ::core::ffi::c_int as uint16,
         addr_unk_605880 as ::core::ffi::c_int as uint16,
@@ -1091,7 +1094,7 @@ unsafe extern "C" fn RestorePpuForMessageBox() {
             ),
     );
 }
-unsafe extern "C" fn OpenMessageBox_Async() -> CoroutineRet {
+unsafe fn OpenMessageBox_Async() -> CoroutineRet {
     let mut _state_variable_: *mut uint8 =
         (&raw mut g_ram as *mut uint8).offset(0x615 as ::core::ffi::c_int as isize);
     's_65: {
@@ -1142,7 +1145,7 @@ unsafe extern "C" fn OpenMessageBox_Async() -> CoroutineRet {
     *_state_variable_ = 0 as uint8;
     return 0 as CoroutineRet;
 }
-unsafe extern "C" fn HandleMessageBoxInteraction_Async() -> CoroutineRet {
+unsafe fn HandleMessageBoxInteraction_Async() -> CoroutineRet {
     let mut _state_variable_: *mut uint8 =
         (&raw mut g_ram as *mut uint8).offset(0x615 as ::core::ffi::c_int as isize);
     's_196: {
@@ -1301,7 +1304,7 @@ unsafe extern "C" fn HandleMessageBoxInteraction_Async() -> CoroutineRet {
     *_state_variable_ = 0 as uint8;
     return 0 as CoroutineRet;
 }
-unsafe extern "C" fn CloseMessageBox_Async() -> CoroutineRet {
+unsafe fn CloseMessageBox_Async() -> CoroutineRet {
     let mut _state_variable_: *mut uint8 =
         (&raw mut g_ram as *mut uint8).offset(0x615 as ::core::ffi::c_int as isize);
     's_58: {
@@ -1348,8 +1351,7 @@ unsafe extern "C" fn CloseMessageBox_Async() -> CoroutineRet {
     *_state_variable_ = 0 as uint8;
     return 0 as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DisplayMessageBox_Async(mut a: uint16) -> CoroutineRet {
+pub unsafe fn DisplayMessageBox_Async(mut a: uint16) -> CoroutineRet {
     let mut _state_variable_: *mut uint8 =
         (&raw mut g_ram as *mut uint8).offset(0x614 as ::core::ffi::c_int as isize);
     's_254: {
@@ -1512,8 +1514,7 @@ pub unsafe extern "C" fn DisplayMessageBox_Async(mut a: uint16) -> CoroutineRet 
     *_state_variable_ = 0 as uint8;
     return 0 as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DisplayMessageBox_Poll(mut a: uint16) -> ::core::ffi::c_int {
+pub unsafe fn DisplayMessageBox_Poll(mut a: uint16) -> ::core::ffi::c_int {
     if a as ::core::ffi::c_int
         == *((&raw mut g_ram as *mut uint8).offset(0x1c1f as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -1527,8 +1528,7 @@ pub unsafe extern "C" fn DisplayMessageBox_Poll(mut a: uint16) -> ::core::ffi::c
         a;
     return -(1 as ::core::ffi::c_int);
 }
-#[no_mangle]
-pub unsafe extern "C" fn DisplayMessageBox(mut a: uint16) {
+pub unsafe fn DisplayMessageBox(mut a: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0xdc8 as ::core::ffi::c_int as isize) as *mut uint16) =
         a;
 }

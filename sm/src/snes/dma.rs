@@ -85,18 +85,15 @@ static mut transferLength: [::core::ffi::c_int; 8] = [
     2 as ::core::ffi::c_int,
     4 as ::core::ffi::c_int,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn dma_init(mut snes: *mut Snes) -> *mut Dma {
+pub unsafe fn dma_init(mut snes: *mut Snes) -> *mut Dma {
     let mut dma: *mut Dma = malloc(::core::mem::size_of::<Dma>() as size_t) as *mut Dma;
     (*dma).snes = snes;
     return dma;
 }
-#[no_mangle]
-pub unsafe extern "C" fn dma_free(mut dma: *mut Dma) {
+pub unsafe fn dma_free(mut dma: *mut Dma) {
     free(dma as *mut ::core::ffi::c_void);
 }
-#[no_mangle]
-pub unsafe extern "C" fn dma_reset(mut dma: *mut Dma) {
+pub unsafe fn dma_reset(mut dma: *mut Dma) {
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i < 8 as ::core::ffi::c_int {
         (*dma).channel[i as usize].bAdr = 0xff as uint8_t;
@@ -124,8 +121,7 @@ pub unsafe extern "C" fn dma_reset(mut dma: *mut Dma) {
     (*dma).dmaTimer = 0 as uint32_t;
     (*dma).dmaBusy = false_0 != 0;
 }
-#[no_mangle]
-pub unsafe extern "C" fn dma_saveload(
+pub unsafe fn dma_saveload(
     mut dma: *mut Dma,
     mut func: Option<SaveLoadFunc>,
     mut ctx: *mut ::core::ffi::c_void,
@@ -138,8 +134,7 @@ pub unsafe extern "C" fn dma_saveload(
             .wrapping_sub(8 as size_t),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn dma_read(mut dma: *mut Dma, mut adr: uint16_t) -> uint8_t {
+pub unsafe fn dma_read(mut dma: *mut Dma, mut adr: uint16_t) -> uint8_t {
     let mut c: uint8_t = ((adr as ::core::ffi::c_int & 0x70 as ::core::ffi::c_int)
         >> 4 as ::core::ffi::c_int) as uint8_t;
     match adr as ::core::ffi::c_int & 0xf as ::core::ffi::c_int {
@@ -204,8 +199,7 @@ pub unsafe extern "C" fn dma_read(mut dma: *mut Dma, mut adr: uint16_t) -> uint8
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn dma_write(mut dma: *mut Dma, mut adr: uint16_t, mut val: uint8_t) {
+pub unsafe fn dma_write(mut dma: *mut Dma, mut adr: uint16_t, mut val: uint8_t) {
     let mut c: uint8_t = ((adr as ::core::ffi::c_int & 0x70 as ::core::ffi::c_int)
         >> 4 as ::core::ffi::c_int) as uint8_t;
     match adr as ::core::ffi::c_int & 0xf as ::core::ffi::c_int {
@@ -278,8 +272,7 @@ pub unsafe extern "C" fn dma_write(mut dma: *mut Dma, mut adr: uint16_t, mut val
         _ => {}
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn dma_doDma(mut dma: *mut Dma) {
+pub unsafe fn dma_doDma(mut dma: *mut Dma) {
     if (*dma).dmaTimer > 0 as uint32_t {
         (*dma).dmaTimer = (*dma).dmaTimer.wrapping_sub(2 as uint32_t);
         return;
@@ -338,8 +331,7 @@ pub unsafe extern "C" fn dma_doDma(mut dma: *mut Dma) {
         (*dma).dmaTimer = (*dma).dmaTimer.wrapping_add(8 as uint32_t);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn dma_initHdma(mut dma: *mut Dma) {
+pub unsafe fn dma_initHdma(mut dma: *mut Dma) {
     (*dma).hdmaTimer = 0 as uint16_t;
     let mut hdmaHappened: bool = false_0 != 0;
     let mut current_block_16: u64;
@@ -413,8 +405,7 @@ pub unsafe extern "C" fn dma_initHdma(mut dma: *mut Dma) {
             ((*dma).hdmaTimer as ::core::ffi::c_int + 16 as ::core::ffi::c_int) as uint16_t;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn dma_doHdma(mut dma: *mut Dma) {
+pub unsafe fn dma_doHdma(mut dma: *mut Dma) {
     (*dma).hdmaTimer = 0 as uint16_t;
     let mut hdmaHappened: bool = false_0 != 0;
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -524,7 +515,7 @@ pub unsafe extern "C" fn dma_doHdma(mut dma: *mut Dma) {
             ((*dma).hdmaTimer as ::core::ffi::c_int + 16 as ::core::ffi::c_int) as uint16_t;
     }
 }
-unsafe extern "C" fn dma_transferByte(
+unsafe fn dma_transferByte(
     mut dma: *mut Dma,
     mut aAdr: uint16_t,
     mut aBank: uint8_t,
@@ -550,8 +541,7 @@ unsafe extern "C" fn dma_transferByte(
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn dma_cycle(mut dma: *mut Dma) -> bool {
+pub unsafe fn dma_cycle(mut dma: *mut Dma) -> bool {
     if (*dma).hdmaTimer as ::core::ffi::c_int > 0 as ::core::ffi::c_int {
         (*dma).hdmaTimer =
             ((*dma).hdmaTimer as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16_t;
@@ -562,8 +552,7 @@ pub unsafe extern "C" fn dma_cycle(mut dma: *mut Dma) -> bool {
     }
     return false_0 != 0;
 }
-#[no_mangle]
-pub unsafe extern "C" fn dma_startDma(mut dma: *mut Dma, mut val: uint8_t, mut hdma: bool) {
+pub unsafe fn dma_startDma(mut dma: *mut Dma, mut val: uint8_t, mut hdma: bool) {
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i < 8 as ::core::ffi::c_int {
         if hdma {

@@ -561,18 +561,15 @@ static mut gaussValues: [uint16_t; 512] = [
     0x519 as ::core::ffi::c_int as uint16_t,
     0x519 as ::core::ffi::c_int as uint16_t,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn dsp_init(mut ram: *mut uint8_t) -> *mut Dsp {
+pub unsafe fn dsp_init(mut ram: *mut uint8_t) -> *mut Dsp {
     let mut dsp: *mut Dsp = malloc(::core::mem::size_of::<Dsp>() as size_t) as *mut Dsp;
     (*dsp).apu_ram = ram;
     return dsp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn dsp_free(mut dsp: *mut Dsp) {
+pub unsafe fn dsp_free(mut dsp: *mut Dsp) {
     free(dsp as *mut ::core::ffi::c_void);
 }
-#[no_mangle]
-pub unsafe extern "C" fn dsp_reset(mut dsp: *mut Dsp) {
+pub unsafe fn dsp_reset(mut dsp: *mut Dsp) {
     memset(
         &raw mut (*dsp).ram as *mut uint8_t as *mut ::core::ffi::c_void,
         0 as ::core::ffi::c_int,
@@ -658,8 +655,7 @@ pub unsafe extern "C" fn dsp_reset(mut dsp: *mut Dsp) {
     );
     (*dsp).sampleOffset = 0 as uint16_t;
 }
-#[no_mangle]
-pub unsafe extern "C" fn dsp_saveload(
+pub unsafe fn dsp_saveload(
     mut dsp: *mut Dsp,
     mut func: Option<SaveLoadFunc>,
     mut ctx: *mut ::core::ffi::c_void,
@@ -670,8 +666,7 @@ pub unsafe extern "C" fn dsp_saveload(
         (::core::mem::size_of::<Dsp>() as size_t).wrapping_sub(8 as size_t),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn dsp_cycle(mut dsp: *mut Dsp) {
+pub unsafe fn dsp_cycle(mut dsp: *mut Dsp) {
     let mut totalL: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     let mut totalR: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -731,7 +726,7 @@ pub unsafe extern "C" fn dsp_cycle(mut dsp: *mut Dsp) {
     }
     (*dsp).evenCycle = !(*dsp).evenCycle;
 }
-unsafe extern "C" fn dsp_handleEcho(
+unsafe fn dsp_handleEcho(
     mut dsp: *mut Dsp,
     mut outputL: *mut ::core::ffi::c_int,
     mut outputR: *mut ::core::ffi::c_int,
@@ -887,7 +882,7 @@ unsafe extern "C" fn dsp_handleEcho(
         (*dsp).echoBufferIndex = 0 as uint16_t;
     }
 }
-unsafe extern "C" fn dsp_cycleChannel(mut dsp: *mut Dsp, mut ch: ::core::ffi::c_int) {
+unsafe fn dsp_cycleChannel(mut dsp: *mut Dsp, mut ch: ::core::ffi::c_int) {
     let mut pitch: uint16_t = (*dsp).channel[ch as usize].pitch;
     if ch > 0 as ::core::ffi::c_int
         && (*dsp).channel[ch as usize].pitchModulation as ::core::ffi::c_int != 0
@@ -969,7 +964,7 @@ unsafe extern "C" fn dsp_cycleChannel(mut dsp: *mut Dsp, mut ch: ::core::ffi::c_
         (sample as ::core::ffi::c_int >> 7 as ::core::ffi::c_int) as uint8_t;
     (*dsp).channel[ch as usize].sampleOut = sample;
 }
-unsafe extern "C" fn dsp_handleGain(mut dsp: *mut Dsp, mut ch: ::core::ffi::c_int) {
+unsafe fn dsp_handleGain(mut dsp: *mut Dsp, mut ch: ::core::ffi::c_int) {
     match (*dsp).channel[ch as usize].adsrState as ::core::ffi::c_int {
         0 => {
             let mut rate: uint16_t = (*dsp).channel[ch as usize].adsrRates
@@ -1070,7 +1065,7 @@ unsafe extern "C" fn dsp_handleGain(mut dsp: *mut Dsp, mut ch: ::core::ffi::c_in
         _ => {}
     };
 }
-unsafe extern "C" fn dsp_getSample(
+unsafe fn dsp_getSample(
     mut dsp: *mut Dsp,
     mut ch: ::core::ffi::c_int,
     mut sampleNum: ::core::ffi::c_int,
@@ -1105,7 +1100,7 @@ unsafe extern "C" fn dsp_getSample(
     };
     return (out >> 1 as ::core::ffi::c_int) as int16_t;
 }
-unsafe extern "C" fn dsp_decodeBrr(mut dsp: *mut Dsp, mut ch: ::core::ffi::c_int) {
+unsafe fn dsp_decodeBrr(mut dsp: *mut Dsp, mut ch: ::core::ffi::c_int) {
     (*dsp).channel[ch as usize].decodeBuffer[0 as ::core::ffi::c_int as usize] =
         (*dsp).channel[ch as usize].decodeBuffer[16 as ::core::ffi::c_int as usize];
     (*dsp).channel[ch as usize].decodeBuffer[1 as ::core::ffi::c_int as usize] =
@@ -1209,7 +1204,7 @@ unsafe extern "C" fn dsp_decodeBrr(mut dsp: *mut Dsp, mut ch: ::core::ffi::c_int
     (*dsp).channel[ch as usize].older = older as int16_t;
     (*dsp).channel[ch as usize].old = old as int16_t;
 }
-unsafe extern "C" fn dsp_handleNoise(mut dsp: *mut Dsp) {
+unsafe fn dsp_handleNoise(mut dsp: *mut Dsp) {
     if (*dsp).noiseRate as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
         (*dsp).noiseCounter = (*dsp).noiseCounter.wrapping_add(1);
     }
@@ -1230,12 +1225,10 @@ unsafe extern "C" fn dsp_handleNoise(mut dsp: *mut Dsp) {
         (*dsp).noiseCounter = 0 as uint16_t;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn dsp_read(mut dsp: *mut Dsp, mut adr: uint8_t) -> uint8_t {
+pub unsafe fn dsp_read(mut dsp: *mut Dsp, mut adr: uint8_t) -> uint8_t {
     return (*dsp).ram[adr as usize];
 }
-#[no_mangle]
-pub unsafe extern "C" fn dsp_write(mut dsp: *mut Dsp, mut adr: uint8_t, mut val: uint8_t) {
+pub unsafe fn dsp_write(mut dsp: *mut Dsp, mut adr: uint8_t, mut val: uint8_t) {
     let mut ch: ::core::ffi::c_int = adr as ::core::ffi::c_int >> 4 as ::core::ffi::c_int;
     match adr as ::core::ffi::c_int {
         0 | 16 | 32 | 48 | 64 | 80 | 96 | 112 => {
@@ -1423,8 +1416,7 @@ pub unsafe extern "C" fn dsp_write(mut dsp: *mut Dsp, mut adr: uint8_t, mut val:
     }
     (*dsp).ram[adr as usize] = val;
 }
-#[no_mangle]
-pub unsafe extern "C" fn dsp_getSamples(
+pub unsafe fn dsp_getSamples(
     mut dsp: *mut Dsp,
     mut sampleData: *mut int16_t,
     mut samplesPerFrame: ::core::ffi::c_int,

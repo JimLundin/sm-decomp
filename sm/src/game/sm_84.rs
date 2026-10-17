@@ -475,7 +475,7 @@ pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 #[inline]
-unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
+unsafe fn abs16(mut t: uint16) -> uint16 {
     return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         -(t as ::core::ffi::c_int)
     } else {
@@ -484,7 +484,7 @@ unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
 }
 pub const kCoroutineNone: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 #[inline]
-unsafe extern "C" fn RomPtr_RAM(mut addr: uint16_t) -> *mut uint8 {
+unsafe fn RomPtr_RAM(mut addr: uint16_t) -> *mut uint8 {
     '_c2rust_label: {
         if (addr as ::core::ffi::c_int) < 0x2000 as ::core::ffi::c_int {
         } else {
@@ -499,15 +499,15 @@ unsafe extern "C" fn RomPtr_RAM(mut addr: uint16_t) -> *mut uint8 {
     return (&raw mut g_ram as *mut uint8).offset(addr as ::core::ffi::c_int as isize);
 }
 #[inline]
-unsafe extern "C" fn RomPtr_84(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_84(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x840000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomPtr_8F(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_8F(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x8f0000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomBankBase(mut bank: uint8) -> *const uint8 {
+unsafe fn RomBankBase(mut bank: uint8) -> *const uint8 {
     return RomPtr(
         (((bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) + 0x8000 as ::core::ffi::c_int)
             as uint32_t,
@@ -515,22 +515,22 @@ unsafe extern "C" fn RomBankBase(mut bank: uint8) -> *const uint8 {
     .offset(-(0x8000 as ::core::ffi::c_int as isize));
 }
 #[inline]
-unsafe extern "C" fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
+unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
     return (&raw mut g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
         as *mut uint8 as *mut VramWriteEntry;
 }
 #[inline]
-unsafe extern "C" fn get_RoomDefRoomstate(mut a: uint16) -> *mut RoomDefRoomstate {
+unsafe fn get_RoomDefRoomstate(mut a: uint16) -> *mut RoomDefRoomstate {
     return RomPtr((0x8f0000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut RoomDefRoomstate;
 }
 #[inline]
-unsafe extern "C" fn get_RoomPlmEntry(mut a: uint16) -> *mut RoomPlmEntry {
+unsafe fn get_RoomPlmEntry(mut a: uint16) -> *mut RoomPlmEntry {
     return RomPtr((0x8f0000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut RoomPlmEntry;
 }
 #[inline]
-unsafe extern "C" fn get_PlmHeader_Size4(mut a: uint16) -> *mut PlmHeader_Size4 {
+unsafe fn get_PlmHeader_Size4(mut a: uint16) -> *mut PlmHeader_Size4 {
     return RomPtr((0x840000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut PlmHeader_Size4;
 }
@@ -816,8 +816,7 @@ pub const fnsub_84EEAB: uint32 = 8711851 as uint32;
 pub const fnVariaSuitPickup: uint32 = 9557220 as uint32;
 pub const fnGravitySuitPickup: uint32 = 9557434 as uint32;
 pub const fnPlmPreInstr_Empty4: uint32 = 8686246 as uint32;
-#[no_mangle]
-pub unsafe extern "C" fn SetGoldenTorizoPalette(mut a: uint16) {
+pub unsafe fn SetGoldenTorizoPalette(mut a: uint16) {
     let mut v1: int16 = 0;
     v1 = (*(&raw mut a as *mut uint8).offset(
         (::core::mem::size_of::<uint16>() as usize)
@@ -858,8 +857,7 @@ pub unsafe extern "C" fn SetGoldenTorizoPalette(mut a: uint16) {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadRoomPlmGfx() {
+pub unsafe fn LoadRoomPlmGfx() {
     *((&raw mut g_ram as *mut uint8).offset(0x1c2d as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
     let mut v0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -885,12 +883,10 @@ pub unsafe extern "C" fn LoadRoomPlmGfx() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearSoundsWhenGoingThroughDoor() {
+pub unsafe fn ClearSoundsWhenGoingThroughDoor() {
     CallSomeSamusCode(0x1d as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn UNUSED_sub_848258() {
+pub unsafe fn UNUSED_sub_848258() {
     if (*(&raw mut g_ram as *mut uint8).offset(0xa1f as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int)
         << 8 as ::core::ffi::c_int
@@ -903,12 +899,10 @@ pub unsafe extern "C" fn UNUSED_sub_848258() {
         QueueSfx1_Max15(0x32 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlaySpinJumpSoundIfSpinJumping() {
+pub unsafe fn PlaySpinJumpSoundIfSpinJumping() {
     CallSomeSamusCode(0x1c as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn UNUSED_sub_848278() {
+pub unsafe fn UNUSED_sub_848278() {
     if (*(&raw mut g_ram as *mut uint8).offset(0xa1f as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int)
         << 8 as ::core::ffi::c_int
@@ -921,8 +915,7 @@ pub unsafe extern "C" fn UNUSED_sub_848278() {
         QueueSfx1_Max15(0x30 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalculatePlmBlockCoords(mut k: uint16) {
+pub unsafe fn CalculatePlmBlockCoords(mut k: uint16) {
     let mut t: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0x1c87 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
@@ -941,8 +934,7 @@ pub unsafe extern "C" fn CalculatePlmBlockCoords(mut k: uint16) {
             as *mut uint16) as uint8,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn WriteLevelDataBlockTypeAndBts(mut k: uint16, mut a: uint16) {
+pub unsafe fn WriteLevelDataBlockTypeAndBts(mut k: uint16, mut a: uint16) {
     let mut v2: *mut uint8 = (&raw mut g_ram as *mut uint8)
         .offset((0x10000 as ::core::ffi::c_int + k as ::core::ffi::c_int) as isize)
         as *mut uint8;
@@ -958,8 +950,7 @@ pub unsafe extern "C" fn WriteLevelDataBlockTypeAndBts(mut k: uint16, mut a: uin
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = a as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn WriteRowOfLevelDataBlockAndBTS(
+pub unsafe fn WriteRowOfLevelDataBlockAndBTS(
     mut k: uint16,
     mut arg0: uint16,
     mut arg1: uint16,
@@ -983,8 +974,7 @@ pub unsafe extern "C" fn WriteRowOfLevelDataBlockAndBTS(
         i += 1;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadXrayBlocks() {
+pub unsafe fn LoadXrayBlocks() {
     let mut i: ::core::ffi::c_int = 78 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
@@ -1056,20 +1046,17 @@ pub unsafe extern "C" fn LoadXrayBlocks() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnablePLMs() {
+pub unsafe fn EnablePLMs() {
     let ref mut fresh25 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c23 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh25 = (*fresh25 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DisablePLMs() {
+pub unsafe fn DisablePLMs() {
     let ref mut fresh22 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c23 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh22 = (*fresh22 as ::core::ffi::c_int & !(0x8000 as ::core::ffi::c_int)) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearPLMs() {
+pub unsafe fn ClearPLMs() {
     let mut i: ::core::ffi::c_int = 78 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         *((&raw mut g_ram as *mut uint8).offset(0x1c37 as ::core::ffi::c_int as isize)
@@ -1080,8 +1067,7 @@ pub unsafe extern "C" fn ClearPLMs() {
     *((&raw mut g_ram as *mut uint8).offset(0x1c2d as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnHardcodedPlm(mut p: SpawnHardcodedPlmArgs) {
+pub unsafe fn SpawnHardcodedPlm(mut p: SpawnHardcodedPlmArgs) {
     let mut pp: *mut SpawnHardcodedPlmArgs = &raw mut p;
     let mut v1: uint16 = 78 as uint16;
     while *((&raw mut g_ram as *mut uint8).offset(0x1c37 as ::core::ffi::c_int as isize)
@@ -1138,8 +1124,7 @@ pub unsafe extern "C" fn SpawnHardcodedPlm(mut p: SpawnHardcodedPlmArgs) {
         v1,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnRoomPLM(mut k: uint16) {
+pub unsafe fn SpawnRoomPLM(mut k: uint16) {
     let mut rpe: *mut RoomPlmEntry = ::core::ptr::null_mut::<RoomPlmEntry>();
     let mut x_block: int16 = 0;
     let mut v1: uint16 = 78 as uint16;
@@ -1205,10 +1190,8 @@ pub unsafe extern "C" fn SpawnRoomPLM(mut k: uint16) {
         v1,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_Empty2() {}
-#[no_mangle]
-pub unsafe extern "C" fn SpawnPLM(mut a: uint16) -> uint8 {
+pub unsafe fn PlmPreInstr_Empty2() {}
+pub unsafe fn SpawnPLM(mut a: uint16) -> uint8 {
     let mut v1: uint16 = 78 as uint16;
     while *((&raw mut g_ram as *mut uint8).offset(0x1c37 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -1259,8 +1242,7 @@ pub unsafe extern "C" fn SpawnPLM(mut a: uint16) -> uint8 {
         v1,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmHandler_Async() -> CoroutineRet {
+pub unsafe fn PlmHandler_Async() -> CoroutineRet {
     let mut _state_variable_: *mut uint8 =
         (&raw mut g_ram as *mut uint8).offset(0x613 as ::core::ffi::c_int as isize);
     's_158: {
@@ -1503,7 +1485,7 @@ pub unsafe extern "C" fn PlmHandler_Async() -> CoroutineRet {
     return 0 as CoroutineRet;
 }
 #[inline]
-unsafe extern "C" fn RomPtr_84orRAM(mut addr: uint16_t) -> *mut uint8 {
+unsafe fn RomPtr_84orRAM(mut addr: uint16_t) -> *mut uint8 {
     if addr as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         return RomPtr((0x840000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t)
             as *mut uint8;
@@ -1522,8 +1504,7 @@ unsafe extern "C" fn RomPtr_84orRAM(mut addr: uint16_t) -> *mut uint8 {
         return RomPtr_RAM(addr);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessPlmDrawInstruction(mut v0: uint16) {
+pub unsafe fn ProcessPlmDrawInstruction(mut v0: uint16) {
     let mut v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut p: *mut uint16 = RomPtr_84orRAM(
         *((&raw mut g_ram as *mut uint8).offset(0xde6c as ::core::ffi::c_int as isize)
@@ -1582,8 +1563,7 @@ pub unsafe extern "C" fn ProcessPlmDrawInstruction(mut v0: uint16) {
         p = p.offset(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_Sleep(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
+pub unsafe fn PlmInstr_Sleep(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1d27 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
@@ -1591,34 +1571,27 @@ pub unsafe extern "C" fn PlmInstr_Sleep(mut plmp: *const uint8, mut k: uint16) -
             - 2 as ::core::ffi::c_long) as uint16;
     return ::core::ptr::null::<uint8>();
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_Delete(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
+pub unsafe fn PlmInstr_Delete(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1c37 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return ::core::ptr::null::<uint8>();
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_PreInstr(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
+pub unsafe fn PlmInstr_PreInstr(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1cd7 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(plmp as *mut uint16);
     return plmp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_ClearPreInstr(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_ClearPreInstr(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1cd7 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         (0x8486d0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallPlmInstrFunc(mut ea: uint32) {
+pub unsafe fn CallPlmInstrFunc(mut ea: uint32) {
     match ea {
         9557220 => {
             VariaSuitPickup();
@@ -1633,20 +1606,14 @@ pub unsafe extern "C" fn CallPlmInstrFunc(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_CallFunction(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_CallFunction(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     CallPlmInstrFunc(Load24(plmp as *mut LongPtr));
     return plmp.offset(3 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_Goto(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
+pub unsafe fn PlmInstr_Goto(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     return *(plmp as *mut uint16) as uintptr_t as *const uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_DecrementAndBranchNonzero(
+pub unsafe fn PlmInstr_DecrementAndBranchNonzero(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -1661,18 +1628,13 @@ pub unsafe extern "C" fn PlmInstr_DecrementAndBranchNonzero(
         return PlmInstr_Goto(plmp, k);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_SetTimer(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
+pub unsafe fn PlmInstr_SetTimer(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1d77 as ::core::ffi::c_int as isize) as *mut uint16
         as *mut uint8)
         .offset(k as ::core::ffi::c_int as isize) = *plmp;
     return plmp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_LoadItemPlmGfx(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_LoadItemPlmGfx(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c2d as ::core::ffi::c_int as isize) as *mut uint16);
     *((&raw mut g_ram as *mut uint8).offset(0xdf0c as ::core::ffi::c_int as isize)
@@ -1741,11 +1703,7 @@ pub unsafe extern "C" fn PlmInstr_LoadItemPlmGfx(
     }
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_CopyFromRamToVram(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_CopyFromRamToVram(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v4: *mut VramWriteEntry = gVramWriteEntry(
@@ -1760,38 +1718,25 @@ pub unsafe extern "C" fn PlmInstr_CopyFromRamToVram(
         (v2 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
     return plmp.offset(7 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_GotoIfBossBitSet(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_GotoIfBossBitSet(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     if CheckBossBitForCurArea(*plmp.offset(0 as ::core::ffi::c_int as isize) as uint16) != 0 {
         return PlmInstr_Goto(plmp.offset(1 as ::core::ffi::c_int as isize), k);
     } else {
         return plmp.offset(3 as ::core::ffi::c_int as isize);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_GotoIfEventSet(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_GotoIfEventSet(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     if CheckEventHappened(*(plmp as *mut uint16)) != 0 {
         return PlmInstr_Goto(plmp.offset(2 as ::core::ffi::c_int as isize), k);
     } else {
         return plmp.offset(4 as ::core::ffi::c_int as isize);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_SetEvent(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
+pub unsafe fn PlmInstr_SetEvent(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     SetEventHappened(*(plmp as *mut uint16));
     return plmp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_GotoIfChozoSet(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_GotoIfChozoSet(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     let mut v3: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1dc7 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
@@ -1809,11 +1754,7 @@ pub unsafe extern "C" fn PlmInstr_GotoIfChozoSet(
         return plmp.offset(2 as ::core::ffi::c_int as isize);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_SetRoomChozoBit(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_SetRoomChozoBit(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     let mut v3: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1dc7 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
@@ -1828,11 +1769,7 @@ pub unsafe extern "C" fn PlmInstr_SetRoomChozoBit(
     }
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_GotoIfItemBitSet(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_GotoIfItemBitSet(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1dc7 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
@@ -1850,11 +1787,7 @@ pub unsafe extern "C" fn PlmInstr_GotoIfItemBitSet(
         return plmp.offset(2 as ::core::ffi::c_int as isize);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_SetItemBit(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_SetItemBit(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1dc7 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
@@ -1869,8 +1802,7 @@ pub unsafe extern "C" fn PlmInstr_SetItemBit(
     }
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_PickupBeamAndShowMessage(
+pub unsafe fn PlmInstr_PickupBeamAndShowMessage(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -1896,8 +1828,7 @@ pub unsafe extern "C" fn PlmInstr_PickupBeamAndShowMessage(
     DisplayMessageBox(*plmp.offset(2 as ::core::ffi::c_int as isize) as uint16);
     return plmp.offset(3 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_PickupEquipmentAndShowMessage(
+pub unsafe fn PlmInstr_PickupEquipmentAndShowMessage(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -1912,8 +1843,7 @@ pub unsafe extern "C" fn PlmInstr_PickupEquipmentAndShowMessage(
     DisplayMessageBox(*plmp.offset(2 as ::core::ffi::c_int as isize) as uint16);
     return plmp.offset(3 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_PickupEquipmentAddGrappleShowMessage(
+pub unsafe fn PlmInstr_PickupEquipmentAddGrappleShowMessage(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -1929,8 +1859,7 @@ pub unsafe extern "C" fn PlmInstr_PickupEquipmentAddGrappleShowMessage(
     DisplayMessageBox(5 as uint16);
     return plmp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_PickupEquipmentAddXrayShowMessage(
+pub unsafe fn PlmInstr_PickupEquipmentAddXrayShowMessage(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -1946,8 +1875,7 @@ pub unsafe extern "C" fn PlmInstr_PickupEquipmentAddXrayShowMessage(
     DisplayMessageBox(6 as uint16);
     return plmp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_CollectHealthEnergyTank(
+pub unsafe fn PlmInstr_CollectHealthEnergyTank(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -1962,8 +1890,7 @@ pub unsafe extern "C" fn PlmInstr_CollectHealthEnergyTank(
     DisplayMessageBox(1 as uint16);
     return plmp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_CollectHealthReserveTank(
+pub unsafe fn PlmInstr_CollectHealthReserveTank(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -1983,8 +1910,7 @@ pub unsafe extern "C" fn PlmInstr_CollectHealthReserveTank(
     DisplayMessageBox(0x19 as uint16);
     return plmp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_CollectAmmoMissileTank(
+pub unsafe fn PlmInstr_CollectAmmoMissileTank(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -2000,8 +1926,7 @@ pub unsafe extern "C" fn PlmInstr_CollectAmmoMissileTank(
     DisplayMessageBox(2 as uint16);
     return plmp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_CollectAmmoSuperMissileTank(
+pub unsafe fn PlmInstr_CollectAmmoSuperMissileTank(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -2017,8 +1942,7 @@ pub unsafe extern "C" fn PlmInstr_CollectAmmoSuperMissileTank(
     DisplayMessageBox(3 as uint16);
     return plmp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_CollectAmmoPowerBombTank(
+pub unsafe fn PlmInstr_CollectAmmoPowerBombTank(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -2034,19 +1958,14 @@ pub unsafe extern "C" fn PlmInstr_CollectAmmoPowerBombTank(
     DisplayMessageBox(4 as uint16);
     return plmp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_SetLinkReg(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_SetLinkReg(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xdebc as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(plmp as *mut uint16);
     return plmp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_Call(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
+pub unsafe fn PlmInstr_Call(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xdebc as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
@@ -2054,18 +1973,13 @@ pub unsafe extern "C" fn PlmInstr_Call(mut plmp: *const uint8, mut k: uint16) ->
             + 2 as ::core::ffi::c_long) as uint16;
     return *(plmp as *mut uint16) as uintptr_t as *const uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_Return(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
+pub unsafe fn PlmInstr_Return(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     return *((&raw mut g_ram as *mut uint8).offset(0xdebc as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
         as uintptr_t as *const uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_GotoIfDoorBitSet(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_GotoIfDoorBitSet(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1dc7 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
@@ -2086,8 +2000,7 @@ pub unsafe extern "C" fn PlmInstr_GotoIfDoorBitSet(
         return plmp.offset(2 as ::core::ffi::c_int as isize);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_IncrementDoorHitCounterAndJGE(
+pub unsafe fn PlmInstr_IncrementDoorHitCounterAndJGE(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -2125,8 +2038,7 @@ pub unsafe extern "C" fn PlmInstr_IncrementDoorHitCounterAndJGE(
         .offset(v2 as isize) = addr_PlmPreInstr_Empty4 as ::core::ffi::c_int as uint16;
     return PlmInstr_Goto(plmp.offset(1 as ::core::ffi::c_int as isize), k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_IncrementArgumentAndJGE(
+pub unsafe fn PlmInstr_IncrementArgumentAndJGE(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -2153,8 +2065,7 @@ pub unsafe extern "C" fn PlmInstr_IncrementArgumentAndJGE(
         return plmp.offset(3 as ::core::ffi::c_int as isize);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_SetBTS(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
+pub unsafe fn PlmInstr_SetBTS(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     *(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -2166,11 +2077,7 @@ pub unsafe extern "C" fn PlmInstr_SetBTS(mut plmp: *const uint8, mut k: uint16) 
         ) = *plmp.offset(0 as ::core::ffi::c_int as isize);
     return plmp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_DrawPlmBlock(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_DrawPlmBlock(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v3: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1e17 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -2213,8 +2120,7 @@ pub unsafe extern "C" fn PlmInstr_DrawPlmBlock(
     DrawPlm(v4);
     return ::core::ptr::null::<uint8>();
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_ProcessAirScrollUpdate(
+pub unsafe fn PlmInstr_ProcessAirScrollUpdate(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -2253,8 +2159,7 @@ pub unsafe extern "C" fn PlmInstr_ProcessAirScrollUpdate(
         | 0x3000 as ::core::ffi::c_int) as uint16;
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_ProcessSolidScrollUpdate(
+pub unsafe fn PlmInstr_ProcessSolidScrollUpdate(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -2293,16 +2198,11 @@ pub unsafe extern "C" fn PlmInstr_ProcessSolidScrollUpdate(
         | 0xb000 as ::core::ffi::c_int) as uint16;
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_QueueMusic(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_QueueMusic(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     QueueMusic_Delayed8(*plmp.offset(0 as ::core::ffi::c_int as isize) as uint16);
     return plmp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_ClearMusicQueueAndQueueTrack(
+pub unsafe fn PlmInstr_ClearMusicQueueAndQueueTrack(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -2327,131 +2227,67 @@ pub unsafe extern "C" fn PlmInstr_ClearMusicQueueAndQueueTrack(
     QueueMusic_Delayed8(*plmp.offset(0 as ::core::ffi::c_int as isize) as uint16);
     return plmp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_QueueSfx1_Max6(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_QueueSfx1_Max6(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     QueueSfx1_Max6(*plmp.offset(0 as ::core::ffi::c_int as isize) as uint16);
     return plmp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_QueueSfx2_Max6(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_QueueSfx2_Max6(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     QueueSfx2_Max6(*plmp.offset(0 as ::core::ffi::c_int as isize) as uint16);
     return plmp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_QueueSfx3_Max6(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_QueueSfx3_Max6(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     QueueSfx3_Max6(*plmp.offset(0 as ::core::ffi::c_int as isize) as uint16);
     return plmp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_QueueSfx1_Max15(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_QueueSfx1_Max15(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     QueueSfx1_Max15(*plmp.offset(0 as ::core::ffi::c_int as isize) as uint16);
     return plmp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_QueueSfx2_Max15(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_QueueSfx2_Max15(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     QueueSfx2_Max15(*plmp.offset(0 as ::core::ffi::c_int as isize) as uint16);
     return plmp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_QueueSfx3_Max15(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_QueueSfx3_Max15(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     QueueSfx3_Max15(*plmp.offset(0 as ::core::ffi::c_int as isize) as uint16);
     return plmp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_QueueSfx1_Max3(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_QueueSfx1_Max3(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     QueueSfx1_Max3(*plmp.offset(0 as ::core::ffi::c_int as isize) as uint16);
     return plmp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_QueueSfx2_Max3(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_QueueSfx2_Max3(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     QueueSfx2_Max3(*plmp.offset(0 as ::core::ffi::c_int as isize) as uint16);
     return plmp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_QueueSfx_Max3(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_QueueSfx_Max3(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     QueueSfx3_Max3(*plmp.offset(0 as ::core::ffi::c_int as isize) as uint16);
     return plmp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_QueueSfx1_Max9(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_QueueSfx1_Max9(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     QueueSfx1_Max9(*plmp.offset(0 as ::core::ffi::c_int as isize) as uint16);
     return plmp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_QueueSfx2_Max9(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_QueueSfx2_Max9(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     QueueSfx2_Max9(*plmp.offset(0 as ::core::ffi::c_int as isize) as uint16);
     return plmp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_QueueSfx3_Max9(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_QueueSfx3_Max9(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     QueueSfx3_Max9(*plmp.offset(0 as ::core::ffi::c_int as isize) as uint16);
     return plmp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_QueueSfx1_Max1(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_QueueSfx1_Max1(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     QueueSfx1_Max1(*plmp.offset(0 as ::core::ffi::c_int as isize) as uint16);
     return plmp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_QueueSfx2_Max1(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_QueueSfx2_Max1(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     QueueSfx2_Max1(*plmp.offset(0 as ::core::ffi::c_int as isize) as uint16);
     return plmp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_QueueSfx3_Max1(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_QueueSfx3_Max1(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     QueueSfx3_Max1(*plmp.offset(0 as ::core::ffi::c_int as isize) as uint16);
     return plmp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_ActivateMapStation(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_ActivateMapStation(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     let ref mut fresh41 = *((&raw mut g_ram as *mut uint8)
         .offset(0xd908 as ::core::ffi::c_int as isize)
         .offset(
@@ -2464,8 +2300,7 @@ pub unsafe extern "C" fn PlmInstr_ActivateMapStation(
         1 as uint16;
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_ActivateEnergyStation(
+pub unsafe fn PlmInstr_ActivateEnergyStation(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -2483,8 +2318,7 @@ pub unsafe extern "C" fn PlmInstr_ActivateEnergyStation(
     CallSomeSamusCode(1 as uint16);
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_ActivateMissileStation(
+pub unsafe fn PlmInstr_ActivateMissileStation(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -2502,8 +2336,7 @@ pub unsafe extern "C" fn PlmInstr_ActivateMissileStation(
     CallSomeSamusCode(1 as uint16);
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_ActivateSaveStationAndGotoIfNo(
+pub unsafe fn PlmInstr_ActivateSaveStationAndGotoIfNo(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -2547,11 +2380,7 @@ pub unsafe extern "C" fn PlmInstr_ActivateSaveStationAndGotoIfNo(
     );
     return plmp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_GotoIfSamusNear(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_GotoIfSamusNear(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     CalculatePlmBlockCoords(k);
     let mut v2: uint8 = abs16(
         ((*((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
@@ -2578,7 +2407,7 @@ pub unsafe extern "C" fn PlmInstr_GotoIfSamusNear(
         return plmp.offset(4 as ::core::ffi::c_int as isize);
     };
 }
-unsafe extern "C" fn PartiallyQueueVramForSingleScreenPlm(
+unsafe fn PartiallyQueueVramForSingleScreenPlm(
     mut a: uint16,
     mut k: uint16,
     mut r20: uint16,
@@ -2602,7 +2431,7 @@ unsafe extern "C" fn PartiallyQueueVramForSingleScreenPlm(
         bank: 126 as uint8,
     };
 }
-unsafe extern "C" fn CalculatePlmDrawTilemapVramDst(
+unsafe fn CalculatePlmDrawTilemapVramDst(
     mut k: uint16,
     mut r9: uint16,
     mut r12: uint16,
@@ -2640,8 +2469,7 @@ unsafe extern "C" fn CalculatePlmDrawTilemapVramDst(
     }
     PartiallyQueueVramForSingleScreenPlm(a, k, r20, r28);
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawPlm(mut k: uint16) {
+pub unsafe fn DrawPlm(mut k: uint16) {
     let mut v24: uint16 = 0;
     let mut v26: uint16 = 0;
     let mut v27: uint16 = 0;
@@ -3330,11 +3158,7 @@ pub unsafe extern "C" fn DrawPlm(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_MovePlmDownOneBlock(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_MovePlmDownOneBlock(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     let ref mut fresh39 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c87 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
@@ -3344,24 +3168,18 @@ pub unsafe extern "C" fn PlmInstr_MovePlmDownOneBlock(
                 as *mut uint16) as ::core::ffi::c_int) as uint16;
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_CrumbleBotwoonWall(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_CrumbleBotwoonWall(mut j: uint16) -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xde1c as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 64 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_Scroll_0_1_Blue(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_Scroll_0_1_Blue(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xcd20 as ::core::ffi::c_int as isize)
         as *mut uint16) = 257 as uint16;
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_MovePlmDownOneBlock_0(
+pub unsafe fn PlmInstr_MovePlmDownOneBlock_0(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -3374,16 +3192,14 @@ pub unsafe extern "C" fn PlmInstr_MovePlmDownOneBlock_0(
                 as *mut uint16) as ::core::ffi::c_int) as uint16;
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_ABD6(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
+pub unsafe fn PlmInstr_ABD6(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     let ref mut fresh31 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c87 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh31 = (*fresh31 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_PositionSamusAndInvincible(mut k: uint16) {
+pub unsafe fn PlmPreInstr_PositionSamusAndInvincible(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize) as *mut uint16) =
         *((&raw mut g_ram as *mut uint8).offset(0x1e17 as ::core::ffi::c_int as isize)
@@ -3397,43 +3213,32 @@ pub unsafe extern "C" fn PlmPreInstr_PositionSamusAndInvincible(mut k: uint16) {
         .offset(0x18a8 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh69 = (*fresh69 as ::core::ffi::c_int | 0x10 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_DealDamage_2(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_DealDamage_2(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     let ref mut fresh37 = *((&raw mut g_ram as *mut uint8)
         .offset(0xa50 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh37 = (*fresh37 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_GiveInvincibility(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_GiveInvincibility(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
         as *mut uint16) = 48 as uint16;
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_Draw0x38FramesOfRightTreadmill(
+pub unsafe fn PlmInstr_Draw0x38FramesOfRightTreadmill(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
     WriteRowOfLevelDataBlockAndBTS(k, 0x30ff as uint16, 0x8 as uint16, 0x38 as uint16);
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_Draw0x38FramesOfLeftTreadmill(
+pub unsafe fn PlmInstr_Draw0x38FramesOfLeftTreadmill(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
     WriteRowOfLevelDataBlockAndBTS(k, 0x30ff as uint16, 0x9 as uint16, 0x38 as uint16);
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_GotoIfSamusHealthFull(
+pub unsafe fn PlmInstr_GotoIfSamusHealthFull(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -3447,11 +3252,7 @@ pub unsafe extern "C" fn PlmInstr_GotoIfSamusHealthFull(
     CallSomeSamusCode(1 as uint16);
     return *(plmp as *mut uint16) as uintptr_t as *const uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_GotoIfMissilesFull(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_GotoIfMissilesFull(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0x9c8 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         != *((&raw mut g_ram as *mut uint8).offset(0x9c6 as ::core::ffi::c_int as isize)
@@ -3462,8 +3263,7 @@ pub unsafe extern "C" fn PlmInstr_GotoIfMissilesFull(
     CallSomeSamusCode(1 as uint16);
     return *(plmp as *mut uint16) as uintptr_t as *const uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_PlaceSamusOnSaveStation(
+pub unsafe fn PlmInstr_PlaceSamusOnSaveStation(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -3475,16 +3275,14 @@ pub unsafe extern "C" fn PlmInstr_PlaceSamusOnSaveStation(
     MakeSamusFaceForward();
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_DisplayGameSavedMessageBox(
+pub unsafe fn PlmInstr_DisplayGameSavedMessageBox(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
     DisplayMessageBox(0x18 as uint16);
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_EnableMovementAndSetSaveStationUsed(
+pub unsafe fn PlmInstr_EnableMovementAndSetSaveStationUsed(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -3493,8 +3291,7 @@ pub unsafe extern "C" fn PlmInstr_EnableMovementAndSetSaveStationUsed(
         as *mut uint16) = 1 as uint16;
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_SetrupWreckedShipEntrance(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_SetrupWreckedShipEntrance(mut j: uint16) -> uint8 {
     let mut v2: int16 = 0;
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c87 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -3512,8 +3309,7 @@ pub unsafe extern "C" fn PlmSetup_SetrupWreckedShipEntrance(mut j: uint16) -> ui
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_BTS_Brinstar_0x80_Floorplant(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_BTS_Brinstar_0x80_Floorplant(mut j: uint16) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         + *((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
@@ -3552,8 +3348,7 @@ pub unsafe extern "C" fn PlmSetup_BTS_Brinstar_0x80_Floorplant(mut j: uint16) ->
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_BTS_Brinstar_0x81_Ceilingplant(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_BTS_Brinstar_0x81_Ceilingplant(mut j: uint16) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         - *((&raw mut g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize)
@@ -3591,11 +3386,7 @@ pub unsafe extern "C" fn PlmSetup_BTS_Brinstar_0x81_Ceilingplant(mut j: uint16) 
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ActivateStationIfSamusCannonLinedUp(
-    mut a: uint16,
-    mut j: uint16,
-) -> uint8 {
+pub unsafe fn ActivateStationIfSamusCannonLinedUp(mut a: uint16, mut j: uint16) -> uint8 {
     let mut current_block: u64;
     let mut v2: uint16 = 78 as uint16;
     loop {
@@ -3650,8 +3441,7 @@ pub unsafe extern "C" fn ActivateStationIfSamusCannonLinedUp(
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_B6D3_MapStation(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_B6D3_MapStation(mut j: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c87 as ::core::ffi::c_int as isize)
@@ -3695,8 +3485,7 @@ pub unsafe extern "C" fn PlmSetup_B6D3_MapStation(mut j: uint16) -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_Bts47_MapStationRightAccess(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_Bts47_MapStationRightAccess(mut j: uint16) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0xf as ::core::ffi::c_int
@@ -3723,8 +3512,7 @@ pub unsafe extern "C" fn PlmSetup_Bts47_MapStationRightAccess(mut j: uint16) -> 
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_Bts4_MapStationLeftAccess(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_Bts4_MapStationLeftAccess(mut j: uint16) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0xf as ::core::ffi::c_int
@@ -3751,8 +3539,7 @@ pub unsafe extern "C" fn PlmSetup_Bts4_MapStationLeftAccess(mut j: uint16) -> ui
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_PlmB6DF_EnergyStation(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_PlmB6DF_EnergyStation(mut j: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c87 as ::core::ffi::c_int as isize)
@@ -3783,8 +3570,7 @@ pub unsafe extern "C" fn PlmSetup_PlmB6DF_EnergyStation(mut j: uint16) -> uint8 
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_PlmB6EB_EnergyStation(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_PlmB6EB_EnergyStation(mut j: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c87 as ::core::ffi::c_int as isize)
@@ -3815,8 +3601,7 @@ pub unsafe extern "C" fn PlmSetup_PlmB6EB_EnergyStation(mut j: uint16) -> uint8 
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_B6E3_EnergyStationRightAccess(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_B6E3_EnergyStationRightAccess(mut j: uint16) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0xf as ::core::ffi::c_int
@@ -3848,8 +3633,7 @@ pub unsafe extern "C" fn PlmSetup_B6E3_EnergyStationRightAccess(mut j: uint16) -
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_B6E7_EnergyStationLeftAccess(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_B6E7_EnergyStationLeftAccess(mut j: uint16) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0xf as ::core::ffi::c_int
@@ -3880,8 +3664,7 @@ pub unsafe extern "C" fn PlmSetup_B6E7_EnergyStationLeftAccess(mut j: uint16) ->
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_B6EF_MissileStationRightAccess(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_B6EF_MissileStationRightAccess(mut j: uint16) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0xf as ::core::ffi::c_int
@@ -3912,8 +3695,7 @@ pub unsafe extern "C" fn PlmSetup_B6EF_MissileStationRightAccess(mut j: uint16) 
         j,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_B6F3_MissileStationLeftAccess(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_B6F3_MissileStationLeftAccess(mut j: uint16) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0xf as ::core::ffi::c_int
@@ -3945,14 +3727,12 @@ pub unsafe extern "C" fn PlmSetup_B6F3_MissileStationLeftAccess(mut j: uint16) -
         return 1 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeletePlm(mut j: uint16) {
+pub unsafe fn DeletePlm(mut j: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x1c37 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_B638_Rightwards_Extension(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_B638_Rightwards_Extension(mut j: uint16) -> uint8 {
     WriteLevelDataBlockTypeAndBts(
         *((&raw mut g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -3962,8 +3742,7 @@ pub unsafe extern "C" fn PlmSetup_B638_Rightwards_Extension(mut j: uint16) -> ui
     DeletePlm(j);
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_B63F_Leftwards_Extension(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_B63F_Leftwards_Extension(mut j: uint16) -> uint8 {
     WriteLevelDataBlockTypeAndBts(
         *((&raw mut g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -3973,8 +3752,7 @@ pub unsafe extern "C" fn PlmSetup_B63F_Leftwards_Extension(mut j: uint16) -> uin
     DeletePlm(j);
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_B643_Downwards_Extension(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_B643_Downwards_Extension(mut j: uint16) -> uint8 {
     WriteLevelDataBlockTypeAndBts(
         *((&raw mut g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -3984,8 +3762,7 @@ pub unsafe extern "C" fn PlmSetup_B643_Downwards_Extension(mut j: uint16) -> uin
     DeletePlm(j);
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_B647_Upwards_Extension(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_B647_Upwards_Extension(mut j: uint16) -> uint8 {
     WriteLevelDataBlockTypeAndBts(
         *((&raw mut g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -3995,15 +3772,13 @@ pub unsafe extern "C" fn PlmSetup_B647_Upwards_Extension(mut j: uint16) -> uint8
     DeletePlm(j);
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SkipDebugDrawInstructionsForScrollPlms(mut j: uint16) {
+pub unsafe fn SkipDebugDrawInstructionsForScrollPlms(mut j: uint16) {
     let ref mut fresh18 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1d27 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh18 = (*fresh18 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_B703_ScrollPLM(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_B703_ScrollPLM(mut j: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     WriteLevelDataBlockTypeAndBts(
         *((&raw mut g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
@@ -4017,8 +3792,7 @@ pub unsafe extern "C" fn PlmSetup_B703_ScrollPLM(mut j: uint16) -> uint8 {
     SkipDebugDrawInstructionsForScrollPlms(j);
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_B707_SolidScrollPLM(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_B707_SolidScrollPLM(mut j: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     WriteLevelDataBlockTypeAndBts(
         *((&raw mut g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
@@ -4032,8 +3806,7 @@ pub unsafe extern "C" fn PlmSetup_B707_SolidScrollPLM(mut j: uint16) -> uint8 {
     SkipDebugDrawInstructionsForScrollPlms(j);
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_B6FF_ScrollBlockTouch(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_B6FF_ScrollBlockTouch(mut j: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c87 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -4079,8 +3852,7 @@ pub unsafe extern "C" fn PlmSetup_B6FF_ScrollBlockTouch(mut j: uint16) -> uint8 
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_DeactivatePlm(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_DeactivatePlm(mut j: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c87 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -4093,16 +3865,13 @@ pub unsafe extern "C" fn PlmSetup_DeactivatePlm(mut j: uint16) -> uint8 {
     *fresh15 = (*fresh15 as ::core::ffi::c_int & 0x8fff as ::core::ffi::c_int) as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_ReturnCarryClear(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_ReturnCarryClear(mut j: uint16) -> uint8 {
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_ReturnCarrySet(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_ReturnCarrySet(mut j: uint16) -> uint8 {
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_D094_EnemyBreakableBlock(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_D094_EnemyBreakableBlock(mut j: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c87 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -4115,8 +3884,7 @@ pub unsafe extern "C" fn PlmSetup_D094_EnemyBreakableBlock(mut j: uint16) -> uin
     *fresh14 = (*fresh14 as ::core::ffi::c_int & 0xfff as ::core::ffi::c_int) as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn UNUSED_sub_84B3E3(mut j: uint16) -> uint8 {
+pub unsafe fn UNUSED_sub_84B3E3(mut j: uint16) -> uint8 {
     '_c2rust_label: {
         __assert_fail(
             b"0\0" as *const u8 as *const ::core::ffi::c_char,
@@ -4127,8 +3895,7 @@ pub unsafe extern "C" fn UNUSED_sub_84B3E3(mut j: uint16) -> uint8 {
     };
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_B70F_IcePhysics(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_B70F_IcePhysics(mut j: uint16) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         + *((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
@@ -4151,10 +3918,10 @@ pub unsafe extern "C" fn PlmSetup_B70F_IcePhysics(mut j: uint16) -> uint8 {
 }
 static mut kPlmSetup_QuicksandSurface: [Option<Func_Y_V>; 4] = unsafe {
     [
-        Some(PlmSetup_QuicksandSurface_0 as unsafe extern "C" fn(uint16) -> ()),
-        Some(PlmSetup_QuicksandSurface_1 as unsafe extern "C" fn(uint16) -> ()),
-        Some(PlmSetup_QuicksandSurface_2 as unsafe extern "C" fn(uint16) -> ()),
-        Some(PlmSetup_QuicksandSurface_0 as unsafe extern "C" fn(uint16) -> ()),
+        Some(PlmSetup_QuicksandSurface_0 as unsafe fn(uint16) -> ()),
+        Some(PlmSetup_QuicksandSurface_1 as unsafe fn(uint16) -> ()),
+        Some(PlmSetup_QuicksandSurface_2 as unsafe fn(uint16) -> ()),
+        Some(PlmSetup_QuicksandSurface_0 as unsafe fn(uint16) -> ()),
     ]
 };
 static mut g_word_84B48B: [uint16; 2] = [
@@ -4169,8 +3936,7 @@ static mut g_word_84B493: [uint16; 2] = [
     0x280 as ::core::ffi::c_int as uint16,
     0x380 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_QuicksandSurface(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_QuicksandSurface(mut j: uint16) -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xb3c as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xb3e as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -4206,8 +3972,7 @@ pub unsafe extern "C" fn PlmSetup_QuicksandSurface(mut j: uint16) -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_QuicksandSurface_0(mut j: uint16) {
+pub unsafe fn PlmSetup_QuicksandSurface_0(mut j: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0xb2c as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xb2e as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -4221,8 +3986,7 @@ pub unsafe extern "C" fn PlmSetup_QuicksandSurface_0(mut j: uint16) {
         .offset(1 as ::core::ffi::c_int as isize) as *mut uint16) =
         g_word_84B48F[(j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize];
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_QuicksandSurface_1(mut j: uint16) {
+pub unsafe fn PlmSetup_QuicksandSurface_1(mut j: uint16) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if (g_word_84B493[v1 as usize] as ::core::ffi::c_int)
         < *(((&raw mut g_ram as *mut uint8).offset(0xb2c as ::core::ffi::c_int as isize)
@@ -4246,8 +4010,7 @@ pub unsafe extern "C" fn PlmSetup_QuicksandSurface_1(mut j: uint16) {
         as *mut uint8)
         .offset(1 as ::core::ffi::c_int as isize) as *mut uint16) = g_word_84B48B[v1 as usize];
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_QuicksandSurface_2(mut j: uint16) {
+pub unsafe fn PlmSetup_QuicksandSurface_2(mut j: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0xb5a as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xb5c as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -4259,8 +4022,7 @@ pub unsafe extern "C" fn PlmSetup_QuicksandSurface_2(mut j: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0xaf4 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_B71F_SubmergingQuicksand(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_B71F_SubmergingQuicksand(mut j: uint16) -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xaf4 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xb5a as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -4269,24 +4031,21 @@ pub unsafe extern "C" fn PlmSetup_B71F_SubmergingQuicksand(mut j: uint16) -> uin
         1 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_B723_SandfallsSlow(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_B723_SandfallsSlow(mut j: uint16) -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xb5a as ::core::ffi::c_int as isize) as *mut uint16) =
         0x4000 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xb5c as ::core::ffi::c_int as isize) as *mut uint16) =
         1 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_B727_SandFallsFast(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_B727_SandFallsFast(mut j: uint16) -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xb5a as ::core::ffi::c_int as isize) as *mut uint16) =
         -(16384 as ::core::ffi::c_int) as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xb5c as ::core::ffi::c_int as isize) as *mut uint16) =
         1 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_QuicksandSurfaceB(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_QuicksandSurfaceB(mut j: uint16) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 2 as ::core::ffi::c_int
@@ -4353,8 +4112,7 @@ pub unsafe extern "C" fn PlmSetup_QuicksandSurfaceB(mut j: uint16) -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_B737_SubmergingQuicksand(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_B737_SubmergingQuicksand(mut j: uint16) -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xb2c as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xb2e as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -4365,12 +4123,10 @@ pub unsafe extern "C" fn PlmSetup_B737_SubmergingQuicksand(mut j: uint16) -> uin
         0 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_B73B_B73F_SandFalls(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_B73B_B73F_SandFalls(mut j: uint16) -> uint8 {
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_ClearShitroidInvisibleWall(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_ClearShitroidInvisibleWall(mut j: uint16) -> uint8 {
     let mut v2: int16 = 0;
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c87 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -4393,8 +4149,7 @@ pub unsafe extern "C" fn PlmSetup_ClearShitroidInvisibleWall(mut j: uint16) -> u
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_B767_ClearShitroidInvisibleWall(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_B767_ClearShitroidInvisibleWall(mut j: uint16) -> uint8 {
     let mut v2: int16 = 0;
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c87 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -4421,8 +4176,7 @@ pub unsafe extern "C" fn PlmSetup_B767_ClearShitroidInvisibleWall(mut j: uint16)
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_B76B_SaveStationTrigger(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_B76B_SaveStationTrigger(mut j: uint16) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0x592 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
         && (*((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
@@ -4490,8 +4244,7 @@ pub unsafe extern "C" fn PlmSetup_B76B_SaveStationTrigger(mut j: uint16) -> uint
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_B76F_SaveStation(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_B76F_SaveStation(mut j: uint16) -> uint8 {
     WriteLevelDataBlockTypeAndBts(
         *((&raw mut g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -4500,8 +4253,7 @@ pub unsafe extern "C" fn PlmSetup_B76F_SaveStation(mut j: uint16) -> uint8 {
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_MotherBrainRoomEscapeDoor(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_MotherBrainRoomEscapeDoor(mut j: uint16) -> uint8 {
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c87 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
@@ -4527,8 +4279,7 @@ pub unsafe extern "C" fn PlmSetup_MotherBrainRoomEscapeDoor(mut j: uint16) -> ui
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_B7EB_EnableSoundsIn32Frames(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_B7EB_EnableSoundsIn32Frames(mut j: uint16) -> uint8 {
     let mut v1: uint16 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -4548,8 +4299,7 @@ pub unsafe extern "C" fn PlmSetup_B7EB_EnableSoundsIn32Frames(mut j: uint16) -> 
         (0x84b7dd as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_B7EB_DecTimerEnableSoundsDeletePlm(mut k: uint16) {
+pub unsafe fn PlmPreInstr_B7EB_DecTimerEnableSoundsDeletePlm(mut k: uint16) {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh84 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1d77 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -4564,8 +4314,7 @@ pub unsafe extern "C" fn PlmPreInstr_B7EB_DecTimerEnableSoundsDeletePlm(mut k: u
             .offset(v2 as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_WakeAndLavaIfBoosterCollected(mut k: uint16) {
+pub unsafe fn PlmPreInstr_WakeAndLavaIfBoosterCollected(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x9a4 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0x2000 as ::core::ffi::c_int
@@ -4615,8 +4364,7 @@ pub unsafe extern "C" fn PlmPreInstr_WakeAndLavaIfBoosterCollected(mut k: uint16
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_WakePLMAndStartFxMotionSamusFarLeft(mut k: uint16) {
+pub unsafe fn PlmPreInstr_WakePLMAndStartFxMotionSamusFarLeft(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         <= 0xae0 as ::core::ffi::c_int
@@ -4642,8 +4390,7 @@ pub unsafe extern "C" fn PlmPreInstr_WakePLMAndStartFxMotionSamusFarLeft(mut k: 
             .offset(v1 as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_AdvanceLavaSamusMovesLeft(mut k: uint16) {
+pub unsafe fn PlmPreInstr_AdvanceLavaSamusMovesLeft(mut k: uint16) {
     static mut g_word_84B876: [uint16; 10] = [
         0x72b as ::core::ffi::c_int as uint16,
         0x1bf as ::core::ffi::c_int as uint16,
@@ -4682,8 +4429,7 @@ pub unsafe extern "C" fn PlmPreInstr_AdvanceLavaSamusMovesLeft(mut k: uint16) {
             .offset(v1 as isize) = (v2 as ::core::ffi::c_int + 6 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_SpeedBoosterEscape(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_SpeedBoosterEscape(mut j: uint16) -> uint8 {
     if CheckEventHappened(0x15 as uint16) != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1c37 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -4691,8 +4437,7 @@ pub unsafe extern "C" fn PlmSetup_SpeedBoosterEscape(mut j: uint16) -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_ShaktoolsRoom(mut k: uint16) {
+pub unsafe fn PlmPreInstr_ShaktoolsRoom(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x592 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -4712,8 +4457,7 @@ pub unsafe extern "C" fn PlmPreInstr_ShaktoolsRoom(mut k: uint16) {
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_ShaktoolsRoom(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_ShaktoolsRoom(mut j: uint16) -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xcd20 as ::core::ffi::c_int as isize)
         as *mut uint16) = 1 as uint16;
     *((&raw mut g_ram as *mut uint8)
@@ -4721,8 +4465,7 @@ pub unsafe extern "C" fn PlmSetup_ShaktoolsRoom(mut j: uint16) -> uint8 {
         .offset(2 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) = 0 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn WakePlmIfSamusIsBelowAndRightOfTarget(
+pub unsafe fn WakePlmIfSamusIsBelowAndRightOfTarget(
     mut k: uint16,
     mut x_r18: uint16,
     mut y_r20: uint16,
@@ -4747,14 +4490,12 @@ pub unsafe extern "C" fn WakePlmIfSamusIsBelowAndRightOfTarget(
     }
     return true_0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_OldTourianEscapeShaftEscape(mut k: uint16) {
+pub unsafe fn PlmPreInstr_OldTourianEscapeShaftEscape(mut k: uint16) {
     if WakePlmIfSamusIsBelowAndRightOfTarget(k, 240 as uint16, 2080 as uint16) == 0 {
         SpawnEprojWithRoomGfx(0xb4b1 as uint16, 0 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_EscapeRoomBeforeOldTourianEscapeShaft(mut k: uint16) {
+pub unsafe fn PlmPreInstr_EscapeRoomBeforeOldTourianEscapeShaft(mut k: uint16) {
     if WakePlmIfSamusIsBelowAndRightOfTarget(k, 240 as uint16, 1344 as uint16) == 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x197c as ::core::ffi::c_int as isize)
             as *mut uint16) = -(104 as ::core::ffi::c_int) as uint16;
@@ -4762,12 +4503,10 @@ pub unsafe extern "C" fn PlmPreInstr_EscapeRoomBeforeOldTourianEscapeShaft(mut k
             as *mut uint16) = 16 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_B974(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_B974(mut j: uint16) -> uint8 {
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_B9C1_CrittersEscapeBlock(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_B9C1_CrittersEscapeBlock(mut j: uint16) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(
             (*((&raw mut g_ram as *mut uint8).offset(0xdde as ::core::ffi::c_int as isize)
@@ -4802,16 +4541,14 @@ pub unsafe extern "C" fn PlmSetup_B9C1_CrittersEscapeBlock(mut j: uint16) -> uin
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_SetCrittersEscapedEvent(
+pub unsafe fn PlmInstr_SetCrittersEscapedEvent(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
     SetEventHappened(0xf as uint16);
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_B9ED_CrittersEscapeBlock(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_B9ED_CrittersEscapeBlock(mut j: uint16) -> uint8 {
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c87 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
@@ -4830,8 +4567,7 @@ pub unsafe extern "C" fn PlmSetup_B9ED_CrittersEscapeBlock(mut j: uint16) -> uin
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_84B9F1(mut j: uint16) -> uint8 {
+pub unsafe fn sub_84B9F1(mut j: uint16) -> uint8 {
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c87 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
@@ -4889,8 +4625,7 @@ pub unsafe extern "C" fn sub_84B9F1(mut j: uint16) -> uint8 {
         | 0x8000 as ::core::ffi::c_int) as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_JumpIfSamusHasNoBombs(
+pub unsafe fn PlmInstr_JumpIfSamusHasNoBombs(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -4904,8 +4639,7 @@ pub unsafe extern "C" fn PlmInstr_JumpIfSamusHasNoBombs(
         return *(plmp as *mut uint16) as uintptr_t as *const uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_BB30_CrateriaMainstreetEscape(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_BB30_CrateriaMainstreetEscape(mut j: uint16) -> uint8 {
     if CheckEventHappened(0xf as uint16) == 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1c37 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -4913,19 +4647,14 @@ pub unsafe extern "C" fn PlmSetup_BB30_CrateriaMainstreetEscape(mut j: uint16) -
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_MovePlmRight4Blocks(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_MovePlmRight4Blocks(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     let ref mut fresh36 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c87 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh36 = (*fresh36 as ::core::ffi::c_int + 8 as ::core::ffi::c_int) as uint16;
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_WakePlmIfTriggered(mut k: uint16) {
+pub unsafe fn PlmPreInstr_WakePlmIfTriggered(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0x1d77 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -4950,8 +4679,7 @@ pub unsafe extern "C" fn PlmPreInstr_WakePlmIfTriggered(mut k: uint16) {
             .offset(v1 as isize) = addr_locret_84BB6A as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_WakePlmIfTriggeredOrSamusBelowPlm(mut k: uint16) {
+pub unsafe fn PlmPreInstr_WakePlmIfTriggeredOrSamusBelowPlm(mut k: uint16) {
     CalculatePlmBlockCoords(k);
     if *((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -4990,8 +4718,7 @@ pub unsafe extern "C" fn PlmPreInstr_WakePlmIfTriggeredOrSamusBelowPlm(mut k: ui
             (0x84bba3 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_WakePlmIfTriggeredOrSamusAbovePlm(mut k: uint16) {
+pub unsafe fn PlmPreInstr_WakePlmIfTriggeredOrSamusAbovePlm(mut k: uint16) {
     CalculatePlmBlockCoords(k);
     if *((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -5029,29 +4756,17 @@ pub unsafe extern "C" fn PlmPreInstr_WakePlmIfTriggeredOrSamusAbovePlm(mut k: ui
             .offset(v1 as isize) = addr_locret_84BBDC as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_ClearTrigger(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_ClearTrigger(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1d77 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_SpawnEproj(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_SpawnEproj(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     SpawnEprojWithRoomGfx(*(plmp as *mut uint16), 0 as uint16);
     return plmp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_WakeEprojAtPlmPos(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_WakeEprojAtPlmPos(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     let mut i: ::core::ffi::c_int = 0;
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c87 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -5078,8 +4793,7 @@ pub unsafe extern "C" fn PlmInstr_WakeEprojAtPlmPos(
     *fresh35 = (*fresh35 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     return plmp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_GoToLinkInstrIfShot(mut k: uint16) {
+pub unsafe fn PlmPreInstr_GoToLinkInstrIfShot(mut k: uint16) {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0x1d77 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -5100,8 +4814,7 @@ pub unsafe extern "C" fn PlmPreInstr_GoToLinkInstrIfShot(mut k: uint16) {
             .offset(v2 as isize) = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_GoToLinkInstrIfShotWithPowerBomb(mut k: uint16) {
+pub unsafe fn PlmPreInstr_GoToLinkInstrIfShotWithPowerBomb(mut k: uint16) {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v3: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1d77 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -5128,8 +4841,7 @@ pub unsafe extern "C" fn PlmPreInstr_GoToLinkInstrIfShotWithPowerBomb(mut k: uin
         as *mut uint16)
         .offset(v2 as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_GoToLinkInstrIfShotWithAnyMissile(mut k: uint16) {
+pub unsafe fn PlmPreInstr_GoToLinkInstrIfShotWithAnyMissile(mut k: uint16) {
     let mut v3: int16 = 0;
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1d77 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -5166,8 +4878,7 @@ pub unsafe extern "C" fn PlmPreInstr_GoToLinkInstrIfShotWithAnyMissile(mut k: ui
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_GoToLinkInstrIfShotWithSuperMissile(mut k: uint16) {
+pub unsafe fn PlmPreInstr_GoToLinkInstrIfShotWithSuperMissile(mut k: uint16) {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v3: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1d77 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -5194,8 +4905,7 @@ pub unsafe extern "C" fn PlmPreInstr_GoToLinkInstrIfShotWithSuperMissile(mut k: 
         as *mut uint16)
         .offset(v2 as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_GoToLinkInstruction(mut k: uint16) {
+pub unsafe fn PlmPreInstr_GoToLinkInstruction(mut k: uint16) {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1d77 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -5210,8 +4920,7 @@ pub unsafe extern "C" fn PlmPreInstr_GoToLinkInstruction(mut k: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_PlayDudSound(mut k: uint16) {
+pub unsafe fn PlmPreInstr_PlayDudSound(mut k: uint16) {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0x1d77 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -5224,32 +4933,28 @@ pub unsafe extern "C" fn PlmPreInstr_PlayDudSound(mut k: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_GotoLinkIfBoss1Dead(mut k: uint16) {
+pub unsafe fn PlmPreInstr_GotoLinkIfBoss1Dead(mut k: uint16) {
     if CheckBossBitForCurArea(1 as uint16) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         PlmPreInstr_GoToLinkInstruction(k);
     } else {
         PlmPreInstr_PlayDudSound(k);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_GotoLinkIfMiniBossDead(mut k: uint16) {
+pub unsafe fn PlmPreInstr_GotoLinkIfMiniBossDead(mut k: uint16) {
     if CheckBossBitForCurArea(2 as uint16) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         PlmPreInstr_GoToLinkInstruction(k);
     } else {
         PlmPreInstr_PlayDudSound(k);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_GotoLinkIfTorizoDead(mut k: uint16) {
+pub unsafe fn PlmPreInstr_GotoLinkIfTorizoDead(mut k: uint16) {
     if CheckBossBitForCurArea(4 as uint16) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         PlmPreInstr_GoToLinkInstruction(k);
     } else {
         PlmPreInstr_PlayDudSound(k);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_GotoLinkIfEnemyDeathQuotaOk(mut k: uint16) {
+pub unsafe fn PlmPreInstr_GotoLinkIfEnemyDeathQuotaOk(mut k: uint16) {
     if (*((&raw mut g_ram as *mut uint8).offset(0xe50 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int)
         < *((&raw mut g_ram as *mut uint8).offset(0xe52 as ::core::ffi::c_int as isize)
@@ -5261,8 +4966,7 @@ pub unsafe extern "C" fn PlmPreInstr_GotoLinkIfEnemyDeathQuotaOk(mut k: uint16) 
         PlmPreInstr_GoToLinkInstruction(k);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_GotoLinkIfTourianStatueFinishedProcessing(mut k: uint16) {
+pub unsafe fn PlmPreInstr_GotoLinkIfTourianStatueFinishedProcessing(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x1e6d as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -5273,19 +4977,14 @@ pub unsafe extern "C" fn PlmPreInstr_GotoLinkIfTourianStatueFinishedProcessing(m
         PlmPreInstr_GoToLinkInstruction(k);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_GotoLinkIfCrittersEscaped(mut k: uint16) {
+pub unsafe fn PlmPreInstr_GotoLinkIfCrittersEscaped(mut k: uint16) {
     if CheckEventHappened(0xf as uint16) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         PlmPreInstr_GoToLinkInstruction(k);
     } else {
         PlmPreInstr_PlayDudSound(k);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_SetGreyDoorPreInstr(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_SetGreyDoorPreInstr(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1cd7 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = *(g_rom.offset(
@@ -5304,8 +5003,7 @@ pub unsafe extern "C" fn PlmInstr_SetGreyDoorPreInstr(
         );
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_C806_LeftGreenGateTrigger(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_C806_LeftGreenGateTrigger(mut j: uint16) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(
             (*((&raw mut g_ram as *mut uint8).offset(0xdde as ::core::ffi::c_int as isize)
@@ -5323,8 +5021,7 @@ pub unsafe extern "C" fn PlmSetup_C806_LeftGreenGateTrigger(mut j: uint16) -> ui
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_C80A_RightGreenGateTrigger(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_C80A_RightGreenGateTrigger(mut j: uint16) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(
             (*((&raw mut g_ram as *mut uint8).offset(0xdde as ::core::ffi::c_int as isize)
@@ -5342,8 +5039,7 @@ pub unsafe extern "C" fn PlmSetup_C80A_RightGreenGateTrigger(mut j: uint16) -> u
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_C80E_LeftRedGateTrigger(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_C80E_LeftRedGateTrigger(mut j: uint16) -> uint8 {
     let mut v1: int16 = 0;
     v1 = (*((&raw mut g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -5364,8 +5060,7 @@ pub unsafe extern "C" fn PlmSetup_C80E_LeftRedGateTrigger(mut j: uint16) -> uint
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_C812_RightRedGateTrigger(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_C812_RightRedGateTrigger(mut j: uint16) -> uint8 {
     let mut v1: int16 = 0;
     v1 = (*((&raw mut g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -5386,8 +5081,7 @@ pub unsafe extern "C" fn PlmSetup_C812_RightRedGateTrigger(mut j: uint16) -> uin
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_C822_RightYellowGateTrigger(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_C822_RightYellowGateTrigger(mut j: uint16) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(
             (*((&raw mut g_ram as *mut uint8).offset(0xdde as ::core::ffi::c_int as isize)
@@ -5405,8 +5099,7 @@ pub unsafe extern "C" fn PlmSetup_C822_RightYellowGateTrigger(mut j: uint16) -> 
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_C81E_LeftYellowGateTrigger(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_C81E_LeftYellowGateTrigger(mut j: uint16) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(
             (*((&raw mut g_ram as *mut uint8).offset(0xdde as ::core::ffi::c_int as isize)
@@ -5425,8 +5118,7 @@ pub unsafe extern "C" fn PlmSetup_C81E_LeftYellowGateTrigger(mut j: uint16) -> u
         .offset(v1 as isize) = 0 as uint16;
     return PlmSetup_C822_RightYellowGateTrigger(j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_C81A_RightBlueGateTrigger(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_C81A_RightBlueGateTrigger(mut j: uint16) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(
             (*((&raw mut g_ram as *mut uint8).offset(0xdde as ::core::ffi::c_int as isize)
@@ -5443,8 +5135,7 @@ pub unsafe extern "C" fn PlmSetup_C81A_RightBlueGateTrigger(mut j: uint16) -> ui
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_C816_LeftBlueGateTrigger(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_C816_LeftBlueGateTrigger(mut j: uint16) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(
             (*((&raw mut g_ram as *mut uint8).offset(0xdde as ::core::ffi::c_int as isize)
@@ -5461,8 +5152,7 @@ pub unsafe extern "C" fn PlmSetup_C816_LeftBlueGateTrigger(mut j: uint16) -> uin
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return PlmSetup_C81A_RightBlueGateTrigger(j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_84C63F(mut j: uint16) -> uint8 {
+pub unsafe fn sub_84C63F(mut j: uint16) -> uint8 {
     return sub_84C64C(
         j,
         (*((&raw mut g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
@@ -5472,8 +5162,7 @@ pub unsafe extern "C" fn sub_84C63F(mut j: uint16) -> uint8 {
             + 2 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_84C647(mut j: uint16) -> uint8 {
+pub unsafe fn sub_84C647(mut j: uint16) -> uint8 {
     return sub_84C64C(
         j,
         (*((&raw mut g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
@@ -5483,8 +5172,7 @@ pub unsafe extern "C" fn sub_84C647(mut j: uint16) -> uint8 {
             - 2 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_84C64C(mut j: uint16, mut a: uint16) -> uint8 {
+pub unsafe fn sub_84C64C(mut j: uint16, mut a: uint16) -> uint8 {
     let mut v3: ::core::ffi::c_int = 0;
     let mut current_block: u64;
     let mut v2: uint16 = 78 as uint16;
@@ -5527,8 +5215,7 @@ pub unsafe extern "C" fn sub_84C64C(mut j: uint16, mut a: uint16) -> uint8 {
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetBts0x10FiveStepsDown(mut j: uint16) {
+pub unsafe fn SetBts0x10FiveStepsDown(mut j: uint16) {
     let mut v1: uint16 = SetBtsTo0x10AdvanceRow(
         (*((&raw mut g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -5541,8 +5228,7 @@ pub unsafe extern "C" fn SetBts0x10FiveStepsDown(mut j: uint16) {
     let mut v4: uint16 = SetBtsTo0x10AdvanceRow(v3);
     SetBtsTo0x10AdvanceRow(v4);
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetBtsTo0x10AdvanceRow(mut k: uint16) -> uint16 {
+pub unsafe fn SetBtsTo0x10AdvanceRow(mut k: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(k as isize) as *mut uint8 as *mut uint16) = ((*(&raw mut g_ram as *mut uint8)
@@ -5556,8 +5242,7 @@ pub unsafe extern "C" fn SetBtsTo0x10AdvanceRow(mut k: uint16) -> uint16 {
         as *mut uint16) as ::core::ffi::c_int
         + k as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetBts0x10FiveStepsUp(mut j: uint16) {
+pub unsafe fn SetBts0x10FiveStepsUp(mut j: uint16) {
     let mut v1: uint16 = SetBtsTo0x10AdvanceRowUp(
         (*((&raw mut g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -5570,8 +5255,7 @@ pub unsafe extern "C" fn SetBts0x10FiveStepsUp(mut j: uint16) {
     let mut v4: uint16 = SetBtsTo0x10AdvanceRowUp(v3);
     SetBtsTo0x10AdvanceRowUp(v4);
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetBtsTo0x10AdvanceRowUp(mut k: uint16) -> uint16 {
+pub unsafe fn SetBtsTo0x10AdvanceRowUp(mut k: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(k as isize) as *mut uint8 as *mut uint16) = ((*(&raw mut g_ram as *mut uint8)
@@ -5585,30 +5269,25 @@ pub unsafe extern "C" fn SetBtsTo0x10AdvanceRowUp(mut k: uint16) -> uint16 {
         - *((&raw mut g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_C82A_DownwardsClosedGate(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_C82A_DownwardsClosedGate(mut j: uint16) -> uint8 {
     SpawnEprojWithRoomGfx(0xe659 as uint16, 0 as uint16);
     SetBts0x10FiveStepsDown(j);
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_C832_UpwardsClosedGate(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_C832_UpwardsClosedGate(mut j: uint16) -> uint8 {
     SpawnEprojWithRoomGfx(0xe675 as uint16, 0 as uint16);
     SetBts0x10FiveStepsUp(j);
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_C826_DownwardsOpenGate(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_C826_DownwardsOpenGate(mut j: uint16) -> uint8 {
     SetBts0x10FiveStepsDown(j);
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_C82E_UpwardsOpenGate(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_C82E_UpwardsOpenGate(mut j: uint16) -> uint8 {
     SetBts0x10FiveStepsUp(j);
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_C836_DownwardsGateShootblock(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_C836_DownwardsGateShootblock(mut j: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1d27 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -5665,8 +5344,7 @@ pub unsafe extern "C" fn PlmSetup_C836_DownwardsGateShootblock(mut j: uint16) ->
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_C73A_UpwardsGateShootblock(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_C73A_UpwardsGateShootblock(mut j: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1d27 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -5723,8 +5401,7 @@ pub unsafe extern "C" fn PlmSetup_C73A_UpwardsGateShootblock(mut j: uint16) -> u
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_C794_GreyDoor(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_C794_GreyDoor(mut j: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1e17 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -5751,8 +5428,7 @@ pub unsafe extern "C" fn PlmSetup_C794_GreyDoor(mut j: uint16) -> uint8 {
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_Door_Colored(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_Door_Colored(mut j: uint16) -> uint8 {
     WriteLevelDataBlockTypeAndBts(
         *((&raw mut g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -5761,8 +5437,7 @@ pub unsafe extern "C" fn PlmSetup_Door_Colored(mut j: uint16) -> uint8 {
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_Door_Blue(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_Door_Blue(mut j: uint16) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xdde as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -5797,8 +5472,7 @@ pub unsafe extern "C" fn PlmSetup_Door_Blue(mut j: uint16) -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_Door_Strange(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_Door_Strange(mut j: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c87 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -5832,8 +5506,7 @@ pub unsafe extern "C" fn PlmSetup_Door_Strange(mut j: uint16) -> uint8 {
             | 0x8000 as ::core::ffi::c_int) as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_SetBtsTo1(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
+pub unsafe fn PlmInstr_SetBtsTo1(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     *(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -5845,8 +5518,7 @@ pub unsafe extern "C" fn PlmInstr_SetBtsTo1(mut plmp: *const uint8, mut k: uint1
         ) = 1 as uint8;
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_D028_D02C_Unused(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_D028_D02C_Unused(mut j: uint16) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         == kPose_81_FaceR_Screwattack as ::core::ffi::c_int
@@ -5879,8 +5551,7 @@ pub unsafe extern "C" fn PlmSetup_D028_D02C_Unused(mut j: uint16) -> uint8 {
         return 1 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_RespawningSpeedBoostBlock(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_RespawningSpeedBoostBlock(mut j: uint16) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xb3e as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0xf00 as ::core::ffi::c_int
@@ -5931,8 +5602,7 @@ pub unsafe extern "C" fn PlmSetup_RespawningSpeedBoostBlock(mut j: uint16) -> ui
         return 1 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_RespawningCrumbleBlock(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_RespawningCrumbleBlock(mut j: uint16) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0xf as ::core::ffi::c_int
@@ -5967,8 +5637,7 @@ pub unsafe extern "C" fn PlmSetup_RespawningCrumbleBlock(mut j: uint16) -> uint8
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_RespawningShotBlock(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_RespawningShotBlock(mut j: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c87 as ::core::ffi::c_int as isize)
@@ -5988,8 +5657,7 @@ pub unsafe extern "C" fn PlmSetup_RespawningShotBlock(mut j: uint16) -> uint8 {
         .offset(v2 as isize) = (v3 as ::core::ffi::c_int & 0x8fff as ::core::ffi::c_int) as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_RespawningBombBlock(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_RespawningBombBlock(mut j: uint16) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xb3e as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0xf00 as ::core::ffi::c_int
@@ -6046,8 +5714,7 @@ pub unsafe extern "C" fn PlmSetup_RespawningBombBlock(mut j: uint16) -> uint8 {
         return 1 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_RespawningBombBlock2(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_RespawningBombBlock2(mut j: uint16) -> uint8 {
     let mut v1: int16 = 0;
     v1 = (*((&raw mut g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -6109,8 +5776,7 @@ pub unsafe extern "C" fn PlmSetup_RespawningBombBlock2(mut j: uint16) -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_RespawningPowerBombBlock(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_RespawningPowerBombBlock(mut j: uint16) -> uint8 {
     let mut v1: int16 = 0;
     v1 = (*((&raw mut g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -6152,8 +5818,7 @@ pub unsafe extern "C" fn PlmSetup_RespawningPowerBombBlock(mut j: uint16) -> uin
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_D08C_SuperMissileBlockRespawning(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_D08C_SuperMissileBlockRespawning(mut j: uint16) -> uint8 {
     let mut v1: int16 = 0;
     v1 = (*((&raw mut g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -6195,8 +5860,7 @@ pub unsafe extern "C" fn PlmSetup_D08C_SuperMissileBlockRespawning(mut j: uint16
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_D08C_CrumbleBlock(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_D08C_CrumbleBlock(mut j: uint16) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(
             (*((&raw mut g_ram as *mut uint8).offset(0xdde as ::core::ffi::c_int as isize)
@@ -6212,8 +5876,7 @@ pub unsafe extern "C" fn PlmSetup_D08C_CrumbleBlock(mut j: uint16) -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_D0DC_BreakableGrappleBlock(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_D0DC_BreakableGrappleBlock(mut j: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c87 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -6236,23 +5899,19 @@ pub unsafe extern "C" fn PlmSetup_D0DC_BreakableGrappleBlock(mut j: uint16) -> u
         << 8 as ::core::ffi::c_int) as uint16;
     return 0x41 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_D0D8_SetVFlag(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_D0D8_SetVFlag(mut j: uint16) -> uint8 {
     return 0x41 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_D0D8_ClearVflag(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_D0D8_ClearVflag(mut j: uint16) -> uint8 {
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_D0E8_GiveSamusDamage(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_D0E8_GiveSamusDamage(mut j: uint16) -> uint8 {
     let ref mut fresh4 = *((&raw mut g_ram as *mut uint8)
         .offset(0xa50 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh4 = (*fresh4).wrapping_add(1);
     return 0x41 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_D113_LowerNorfairChozoRoomPlug(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_D113_LowerNorfairChozoRoomPlug(mut j: uint16) -> uint8 {
     let mut a: uint16 = 0 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x10002 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -6265,8 +5924,7 @@ pub unsafe extern "C" fn PlmSetup_D113_LowerNorfairChozoRoomPlug(mut j: uint16) 
         ) = (a as ::core::ffi::c_int & 0xfff as ::core::ffi::c_int) as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_D127(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_D127(mut j: uint16) -> uint8 {
     WriteLevelDataBlockTypeAndBts(
         *((&raw mut g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -6275,8 +5933,7 @@ pub unsafe extern "C" fn PlmSetup_D127(mut j: uint16) -> uint8 {
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_D138(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_D138(mut j: uint16) -> uint8 {
     WriteLevelDataBlockTypeAndBts(
         *((&raw mut g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -6285,17 +5942,12 @@ pub unsafe extern "C" fn PlmSetup_D138(mut j: uint16) -> uint8 {
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_FxBaseYPos_0x2D2(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_FxBaseYPos_0x2D2(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1978 as ::core::ffi::c_int as isize)
         as *mut uint16) = 722 as uint16;
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_DeletePlmAndSpawnTriggerIfBlockDestroyed(mut k: uint16) {
+pub unsafe fn PlmPreInstr_DeletePlmAndSpawnTriggerIfBlockDestroyed(mut k: uint16) {
     let mut prod: uint16 = (8 as ::core::ffi::c_int
         * *((&raw mut g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
             as *mut uint16) as uint8 as ::core::ffi::c_int) as uint16;
@@ -6318,8 +5970,7 @@ pub unsafe extern "C" fn PlmPreInstr_DeletePlmAndSpawnTriggerIfBlockDestroyed(mu
             ) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_D6DA_LowerNorfairChozoHandTrigger(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_D6DA_LowerNorfairChozoHandTrigger(mut j: uint16) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0x9a4 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0x200 as ::core::ffi::c_int
@@ -6366,8 +6017,7 @@ pub unsafe extern "C" fn PlmSetup_D6DA_LowerNorfairChozoHandTrigger(mut j: uint1
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_IncrementRoomArgIfShotBySuperMissile(mut k: uint16) {
+pub unsafe fn PlmPreInstr_IncrementRoomArgIfShotBySuperMissile(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1d77 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -6385,11 +6035,7 @@ pub unsafe extern "C" fn PlmPreInstr_IncrementRoomArgIfShotBySuperMissile(mut k:
         as *mut uint16)
         .offset(v1 as isize) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_GotoIfRoomArgLess(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_GotoIfRoomArgLess(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0x1dc7 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
@@ -6402,8 +6048,7 @@ pub unsafe extern "C" fn PlmInstr_GotoIfRoomArgLess(
             as *const uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_SpawnFourMotherBrainGlass(
+pub unsafe fn PlmInstr_SpawnFourMotherBrainGlass(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -6422,12 +6067,10 @@ pub unsafe extern "C" fn PlmInstr_SpawnFourMotherBrainGlass(
     );
     return plmp.offset(8 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnMotherBrainGlassShatteringShard(mut a: uint16) {
+pub unsafe fn SpawnMotherBrainGlassShatteringShard(mut a: uint16) {
     SpawnEprojWithRoomGfx(0xcefc as uint16, a);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_WakePlmIfSamusHasBombs(mut k: uint16) {
+pub unsafe fn PlmPreInstr_WakePlmIfSamusHasBombs(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x9a4 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0x1000 as ::core::ffi::c_int
@@ -6448,24 +6091,18 @@ pub unsafe extern "C" fn PlmPreInstr_WakePlmIfSamusHasBombs(mut k: uint16) {
             (0x84d356 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_SpawnTorizoStatueBreaking(
+pub unsafe fn PlmInstr_SpawnTorizoStatueBreaking(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
     SpawnEprojWithRoomGfx(0xa993 as uint16, *(plmp as *mut uint16));
     return plmp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_QueueSong1MusicTrack(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_QueueSong1MusicTrack(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     QueueMusic_Delayed8(6 as uint16);
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_TransferWreckedShipChozoSpikesToSlopes(
+pub unsafe fn PlmInstr_TransferWreckedShipChozoSpikesToSlopes(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -6473,8 +6110,7 @@ pub unsafe extern "C" fn PlmInstr_TransferWreckedShipChozoSpikesToSlopes(
     WriteLevelDataBlockTypeAndBts(0x160a as uint16, 0x1013 as uint16);
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_TransferWreckedShipSlopesToChozoSpikes(
+pub unsafe fn PlmInstr_TransferWreckedShipSlopesToChozoSpikes(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -6482,8 +6118,7 @@ pub unsafe extern "C" fn PlmInstr_TransferWreckedShipSlopesToChozoSpikes(
     WriteLevelDataBlockTypeAndBts(0x160a as uint16, 0xa000 as uint16);
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_WakeOnKeyPress(mut k: uint16) {
+pub unsafe fn PlmPreInstr_WakeOnKeyPress(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & (kButton_B as ::core::ffi::c_int
@@ -6510,37 +6145,27 @@ pub unsafe extern "C" fn PlmPreInstr_WakeOnKeyPress(mut k: uint16) {
         *fresh68 = (*fresh68).wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_EnableWaterPhysics(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_EnableWaterPhysics(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     let ref mut fresh34 = *((&raw mut g_ram as *mut uint8)
         .offset(0x197e as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh34 = (*fresh34 as ::core::ffi::c_int & !(4 as ::core::ffi::c_int)) as uint16;
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_SpawnN00bTubeCrackEproj(
+pub unsafe fn PlmInstr_SpawnN00bTubeCrackEproj(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
     SpawnEprojWithRoomGfx(0xd904 as uint16, 0 as uint16);
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_DiagonalEarthquake(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_DiagonalEarthquake(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
         as *mut uint16) = 11 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
         as *mut uint16) = 64 as uint16;
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_Spawn10shardsAnd6n00bs(
+pub unsafe fn PlmInstr_Spawn10shardsAnd6n00bs(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -6610,24 +6235,15 @@ pub unsafe extern "C" fn PlmInstr_Spawn10shardsAnd6n00bs(
     );
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_DisableSamusControls(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_DisableSamusControls(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     CallSomeSamusCode(0 as uint16);
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_EnableSamusControls(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_EnableSamusControls(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     CallSomeSamusCode(1 as uint16);
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_MotherBrainGlass(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_MotherBrainGlass(mut j: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1dc7 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -6640,8 +6256,7 @@ pub unsafe extern "C" fn PlmSetup_MotherBrainGlass(mut j: uint16) -> uint8 {
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_DeletePlmIfAreaTorizoDead(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_DeletePlmIfAreaTorizoDead(mut j: uint16) -> uint8 {
     if CheckBossBitForCurArea(4 as uint16) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x1c37 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -6649,8 +6264,7 @@ pub unsafe extern "C" fn PlmSetup_DeletePlmIfAreaTorizoDead(mut j: uint16) -> ui
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_MakeBllockChozoHandTrigger(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_MakeBllockChozoHandTrigger(mut j: uint16) -> uint8 {
     WriteLevelDataBlockTypeAndBts(
         *((&raw mut g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -6659,8 +6273,7 @@ pub unsafe extern "C" fn PlmSetup_MakeBllockChozoHandTrigger(mut j: uint16) -> u
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_D6F2_WreckedShipChozoHandTrigger(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_D6F2_WreckedShipChozoHandTrigger(mut j: uint16) -> uint8 {
     if CheckBossBitForCurArea(1 as uint16) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
         && *((&raw mut g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -6710,8 +6323,7 @@ pub unsafe extern "C" fn PlmSetup_D6F2_WreckedShipChozoHandTrigger(mut j: uint16
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_D700_MakePlmAirBlock_Unused(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_D700_MakePlmAirBlock_Unused(mut j: uint16) -> uint8 {
     WriteLevelDataBlockTypeAndBts(
         *((&raw mut g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -6720,10 +6332,7 @@ pub unsafe extern "C" fn PlmSetup_D700_MakePlmAirBlock_Unused(mut j: uint16) -> 
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_D704_AlteranateLowerNorfairChozoHand_Unused(
-    mut j: uint16,
-) -> uint8 {
+pub unsafe fn PlmSetup_D704_AlteranateLowerNorfairChozoHand_Unused(mut j: uint16) -> uint8 {
     WriteLevelDataBlockTypeAndBts(
         *((&raw mut g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -6732,8 +6341,7 @@ pub unsafe extern "C" fn PlmSetup_D704_AlteranateLowerNorfairChozoHand_Unused(
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_D708_LowerNorfairChozoBlockUnused(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_D708_LowerNorfairChozoBlockUnused(mut j: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     WriteLevelDataBlockTypeAndBts(
         *((&raw mut g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
@@ -6771,8 +6379,7 @@ pub unsafe extern "C" fn PlmSetup_D708_LowerNorfairChozoBlockUnused(mut j: uint1
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_D70C_NoobTube(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_D70C_NoobTube(mut j: uint16) -> uint8 {
     WriteLevelDataBlockTypeAndBts(
         *((&raw mut g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -6781,8 +6388,7 @@ pub unsafe extern "C" fn PlmSetup_D70C_NoobTube(mut j: uint16) -> uint8 {
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_WakePlmIfRoomArgumentDoorIsSet(mut k: uint16) {
+pub unsafe fn PlmPreInstr_WakePlmIfRoomArgumentDoorIsSet(mut k: uint16) {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut idx: ::core::ffi::c_int = PrepareBitAccess(
         *((&raw mut g_ram as *mut uint8).offset(0x1dc7 as ::core::ffi::c_int as isize)
@@ -6811,8 +6417,7 @@ pub unsafe extern "C" fn PlmPreInstr_WakePlmIfRoomArgumentDoorIsSet(mut k: uint1
             .offset(v3 as isize) = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_ShootEyeDoorProjectileWithProjectileArg(
+pub unsafe fn PlmInstr_ShootEyeDoorProjectileWithProjectileArg(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -6823,8 +6428,7 @@ pub unsafe extern "C" fn PlmInstr_ShootEyeDoorProjectileWithProjectileArg(
     QueueSfx2_Max6(0x4c as uint16);
     return plmp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_SpawnEyeDoorSweatEproj(
+pub unsafe fn PlmInstr_SpawnEyeDoorSweatEproj(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -6834,17 +6438,12 @@ pub unsafe extern "C" fn PlmInstr_SpawnEyeDoorSweatEproj(
     );
     return plmp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_SpawnTwoEyeDoorSmoke(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_SpawnTwoEyeDoorSmoke(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     SpawnEprojWithRoomGfx(0xe517 as uint16, 0x30a as uint16);
     SpawnEprojWithRoomGfx(0xe517 as uint16, 0x30a as uint16);
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_SpawnEyeDoorSmokeProjectile(
+pub unsafe fn PlmInstr_SpawnEyeDoorSmokeProjectile(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -6854,8 +6453,7 @@ pub unsafe extern "C" fn PlmInstr_SpawnEyeDoorSmokeProjectile(
     );
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_MoveUpAndMakeBlueDoorFacingRight(
+pub unsafe fn PlmInstr_MoveUpAndMakeBlueDoorFacingRight(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -6872,8 +6470,7 @@ pub unsafe extern "C" fn PlmInstr_MoveUpAndMakeBlueDoorFacingRight(
     sub_84D7EF(blk);
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_MoveUpAndMakeBlueDoorFacingLeft(
+pub unsafe fn PlmInstr_MoveUpAndMakeBlueDoorFacingLeft(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -6890,8 +6487,7 @@ pub unsafe extern "C" fn PlmInstr_MoveUpAndMakeBlueDoorFacingLeft(
     sub_84D7EF(blk);
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_84D7EF(mut k: uint16) {
+pub unsafe fn sub_84D7EF(mut k: uint16) {
     let mut v1: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0x7a5 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -6912,8 +6508,7 @@ pub unsafe extern "C" fn sub_84D7EF(mut k: uint16) {
         0xd0fd as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_EyeDoorEye(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_EyeDoorEye(mut j: uint16) -> uint8 {
     let mut idx: ::core::ffi::c_int = PrepareBitAccess(
         *((&raw mut g_ram as *mut uint8).offset(0x1dc7 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -6945,8 +6540,7 @@ pub unsafe extern "C" fn PlmSetup_EyeDoorEye(mut j: uint16) -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_EyeDoor(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_EyeDoor(mut j: uint16) -> uint8 {
     let mut idx: ::core::ffi::c_int = PrepareBitAccess(
         *((&raw mut g_ram as *mut uint8).offset(0x1dc7 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -6968,8 +6562,7 @@ pub unsafe extern "C" fn PlmSetup_EyeDoor(mut j: uint16) -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_SetMetroidsClearState_Ev0x10(mut k: uint16) {
+pub unsafe fn PlmPreInstr_SetMetroidsClearState_Ev0x10(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0xe50 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         >= *((&raw mut g_ram as *mut uint8).offset(0xe52 as ::core::ffi::c_int as isize)
@@ -6978,8 +6571,7 @@ pub unsafe extern "C" fn PlmPreInstr_SetMetroidsClearState_Ev0x10(mut k: uint16)
         SetEventHappened(0x10 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_SetMetroidsClearState_Ev0x11(mut k: uint16) {
+pub unsafe fn PlmPreInstr_SetMetroidsClearState_Ev0x11(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0xe50 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         >= *((&raw mut g_ram as *mut uint8).offset(0xe52 as ::core::ffi::c_int as isize)
@@ -6988,8 +6580,7 @@ pub unsafe extern "C" fn PlmPreInstr_SetMetroidsClearState_Ev0x11(mut k: uint16)
         SetEventHappened(0x11 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_SetMetroidsClearState_Ev0x12(mut k: uint16) {
+pub unsafe fn PlmPreInstr_SetMetroidsClearState_Ev0x12(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0xe50 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         >= *((&raw mut g_ram as *mut uint8).offset(0xe52 as ::core::ffi::c_int as isize)
@@ -6998,8 +6589,7 @@ pub unsafe extern "C" fn PlmPreInstr_SetMetroidsClearState_Ev0x12(mut k: uint16)
         SetEventHappened(0x12 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_SetMetroidsClearState_Ev0x13(mut k: uint16) {
+pub unsafe fn PlmPreInstr_SetMetroidsClearState_Ev0x13(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0xe50 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         >= *((&raw mut g_ram as *mut uint8).offset(0xe52 as ::core::ffi::c_int as isize)
@@ -7008,8 +6598,7 @@ pub unsafe extern "C" fn PlmPreInstr_SetMetroidsClearState_Ev0x13(mut k: uint16)
         SetEventHappened(0x13 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_SetMetroidRequiredClearState(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_SetMetroidRequiredClearState(mut j: uint16) -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1cd7 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = *(g_rom.offset(
@@ -7028,8 +6617,7 @@ pub unsafe extern "C" fn PlmSetup_SetMetroidRequiredClearState(mut j: uint16) ->
         );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_GotoLinkIfShotWithSuperMissile(mut k: uint16) {
+pub unsafe fn PlmPreInstr_GotoLinkIfShotWithSuperMissile(mut k: uint16) {
     let mut v1: int16 = 0;
     v1 = (*((&raw mut g_ram as *mut uint8).offset(0x1d77 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -7057,19 +6645,14 @@ pub unsafe extern "C" fn PlmPreInstr_GotoLinkIfShotWithSuperMissile(mut k: uint1
         as *mut uint16)
         .offset(v2 as isize) = 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetPlmVarPtr(mut k: uint16, mut a: uint16) {
+pub unsafe fn SetPlmVarPtr(mut k: uint16, mut a: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(
         *((&raw mut g_ram as *mut uint8).offset(0x1e17 as ::core::ffi::c_int as isize)
             as *mut uint16)
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) as isize,
     ) as *mut uint8 as *mut uint16) = a;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_DamageDraygonTurret(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_DamageDraygonTurret(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     SetPlmVarPtr(k, 1 as uint16);
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c87 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -7084,8 +6667,7 @@ pub unsafe extern "C" fn PlmInstr_DamageDraygonTurret(
     );
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_DamageDraygonTurretFacingDownRight(
+pub unsafe fn PlmInstr_DamageDraygonTurretFacingDownRight(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -7117,8 +6699,7 @@ pub unsafe extern "C" fn PlmInstr_DamageDraygonTurretFacingDownRight(
     );
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_DamageDraygonTurretFacingUpRight(
+pub unsafe fn PlmInstr_DamageDraygonTurretFacingUpRight(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -7143,11 +6724,7 @@ pub unsafe extern "C" fn PlmInstr_DamageDraygonTurretFacingUpRight(
     );
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_DamageDraygonTurret2(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_DamageDraygonTurret2(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     SetPlmVarPtr(k, 1 as uint16);
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1c87 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -7162,8 +6739,7 @@ pub unsafe extern "C" fn PlmInstr_DamageDraygonTurret2(
     );
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_DamageDraygonTurretFacingDownLeft(
+pub unsafe fn PlmInstr_DamageDraygonTurretFacingDownLeft(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -7188,8 +6764,7 @@ pub unsafe extern "C" fn PlmInstr_DamageDraygonTurretFacingDownLeft(
     );
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_DamageDraygonTurretFacingUpLeft(
+pub unsafe fn PlmInstr_DamageDraygonTurretFacingUpLeft(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -7213,8 +6788,7 @@ pub unsafe extern "C" fn PlmInstr_DamageDraygonTurretFacingUpLeft(
     );
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_DraygonCannonFacingRight(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_DraygonCannonFacingRight(mut j: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1e17 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -7238,8 +6812,7 @@ pub unsafe extern "C" fn PlmSetup_DraygonCannonFacingRight(mut j: uint16) -> uin
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_DraygonCannonFacingDiagonalRight(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_DraygonCannonFacingDiagonalRight(mut j: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1e17 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -7270,8 +6843,7 @@ pub unsafe extern "C" fn PlmSetup_DraygonCannonFacingDiagonalRight(mut j: uint16
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_DraygonCannonFacingLeft(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_DraygonCannonFacingLeft(mut j: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1e17 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -7295,8 +6867,7 @@ pub unsafe extern "C" fn PlmSetup_DraygonCannonFacingLeft(mut j: uint16) -> uint
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_DraygonCannonFacingDiagonalLeft(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_DraygonCannonFacingDiagonalLeft(mut j: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1e17 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -7327,8 +6898,7 @@ pub unsafe extern "C" fn PlmSetup_DraygonCannonFacingDiagonalLeft(mut j: uint16)
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmSetup_DraygonCannon(mut j: uint16) -> uint8 {
+pub unsafe fn PlmSetup_DraygonCannon(mut j: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1e17 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -7341,8 +6911,7 @@ pub unsafe extern "C" fn PlmSetup_DraygonCannon(mut j: uint16) -> uint8 {
         .offset(v1 as isize) = 3 as uint16;
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_GotoLinkIfTriggered(mut k: uint16) {
+pub unsafe fn PlmPreInstr_GotoLinkIfTriggered(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *(((&raw mut g_ram as *mut uint8).offset(0x1d77 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -7365,8 +6934,7 @@ pub unsafe extern "C" fn PlmPreInstr_GotoLinkIfTriggered(mut k: uint16) {
             .offset(v1 as isize) = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmPreInstr_WakeIfTriggered(mut k: uint16) {
+pub unsafe fn PlmPreInstr_WakeIfTriggered(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1d77 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -7392,11 +6960,7 @@ pub unsafe extern "C" fn PlmPreInstr_WakeIfTriggered(mut k: uint16) {
             .offset(v1 as isize) = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_DrawItemFrame_Common(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_DrawItemFrame_Common(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0xde1c as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -7415,11 +6979,7 @@ pub unsafe extern "C" fn PlmInstr_DrawItemFrame_Common(
     DrawPlm(v3);
     return ::core::ptr::null::<uint8>();
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_DrawItemFrame0(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_DrawItemFrame0(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xde6c as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = *(g_rom.offset(
@@ -7438,11 +6998,7 @@ pub unsafe extern "C" fn PlmInstr_DrawItemFrame0(
         );
     return PlmInstr_DrawItemFrame_Common(plmp, k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_DrawItemFrame1(
-    mut plmp: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn PlmInstr_DrawItemFrame1(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xde6c as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = *(g_rom.offset(
@@ -7461,8 +7017,7 @@ pub unsafe extern "C" fn PlmInstr_DrawItemFrame1(
         );
     return PlmInstr_DrawItemFrame_Common(plmp, k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_ClearChargeBeamCounter(
+pub unsafe fn PlmInstr_ClearChargeBeamCounter(
     mut plmp: *const uint8,
     mut k: uint16,
 ) -> *const uint8 {
@@ -7470,37 +7025,30 @@ pub unsafe extern "C" fn PlmInstr_ClearChargeBeamCounter(
         0 as uint16;
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PlmInstr_E63B(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
+pub unsafe fn PlmInstr_E63B(mut plmp: *const uint8, mut k: uint16) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x197c as ::core::ffi::c_int as isize)
         as *mut uint16) = -(32 as ::core::ffi::c_int) as uint16;
     return plmp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_84EE4D(mut j: uint16) -> uint8 {
+pub unsafe fn sub_84EE4D(mut j: uint16) -> uint8 {
     return sub_84EE5F(j, 8 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_84EE52(mut j: uint16) -> uint8 {
+pub unsafe fn sub_84EE52(mut j: uint16) -> uint8 {
     return sub_84EE5F(j, 0xa as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_84EE57(mut j: uint16) -> uint8 {
+pub unsafe fn sub_84EE57(mut j: uint16) -> uint8 {
     return sub_84EE5F(j, 0xc as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_84EE5C(mut j: uint16) -> uint8 {
+pub unsafe fn sub_84EE5C(mut j: uint16) -> uint8 {
     return sub_84EE5F(j, 0xe as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_84EE5F(mut j: uint16, mut a: uint16) -> uint8 {
+pub unsafe fn sub_84EE5F(mut j: uint16, mut a: uint16) -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xdf0c as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = a;
     return sub_84EE64(j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_84EE64(mut j: uint16) -> uint8 {
+pub unsafe fn sub_84EE64(mut j: uint16) -> uint8 {
     WriteLevelDataBlockTypeAndBts(
         *((&raw mut g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -7512,31 +7060,25 @@ pub unsafe extern "C" fn sub_84EE64(mut j: uint16) -> uint8 {
     *fresh1 = (*fresh1).wrapping_add(1);
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_84EE77(mut j: uint16) -> uint8 {
+pub unsafe fn sub_84EE77(mut j: uint16) -> uint8 {
     return sub_84EE89(j, 8 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_84EE7C(mut j: uint16) -> uint8 {
+pub unsafe fn sub_84EE7C(mut j: uint16) -> uint8 {
     return sub_84EE89(j, 0xa as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_84EE81(mut j: uint16) -> uint8 {
+pub unsafe fn sub_84EE81(mut j: uint16) -> uint8 {
     return sub_84EE89(j, 0xc as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_84EE86(mut j: uint16) -> uint8 {
+pub unsafe fn sub_84EE86(mut j: uint16) -> uint8 {
     return sub_84EE89(j, 0xe as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_84EE89(mut j: uint16, mut a: uint16) -> uint8 {
+pub unsafe fn sub_84EE89(mut j: uint16, mut a: uint16) -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xdf0c as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = a;
     return sub_84EE8E(j);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_84EE8E(mut j: uint16) -> uint8 {
+pub unsafe fn sub_84EE8E(mut j: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     WriteLevelDataBlockTypeAndBts(
         *((&raw mut g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
@@ -7560,8 +7102,7 @@ pub unsafe extern "C" fn sub_84EE8E(mut j: uint16) -> uint8 {
     *fresh0 = (*fresh0).wrapping_add(1);
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_84EEAB(mut v0: uint16) -> uint8 {
+pub unsafe fn sub_84EEAB(mut v0: uint16) -> uint8 {
     let mut i: ::core::ffi::c_int = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0xa78 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
@@ -7596,8 +7137,7 @@ pub unsafe extern "C" fn sub_84EEAB(mut v0: uint16) -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallPlmHeaderFunc(mut ea: uint32, mut j: uint16) -> uint8 {
+pub unsafe fn CallPlmHeaderFunc(mut ea: uint32, mut j: uint16) -> uint8 {
     match ea {
         8694567 | 8696783 | 8698095 | 8698618 | 8705782 | 8705783 | 8704398 => {
             return 0 as uint8;
@@ -7713,8 +7253,7 @@ pub unsafe extern "C" fn CallPlmHeaderFunc(mut ea: uint32, mut j: uint16) -> uin
         _ => return Unreachable() as uint8,
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallPlmPreInstr(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallPlmPreInstr(mut ea: uint32, mut k: uint16) {
     match ea {
         8684649 => return,
         8708008 => return,
@@ -7881,12 +7420,7 @@ pub unsafe extern "C" fn CallPlmPreInstr(mut ea: uint32, mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallPlmInstr(
-    mut ea: uint32,
-    mut j: *const uint8,
-    mut k: uint16,
-) -> *const uint8 {
+pub unsafe fn CallPlmInstr(mut ea: uint32, mut j: *const uint8, mut k: uint16) -> *const uint8 {
     match ea {
         8685236 => return PlmInstr_Sleep(j, k),
         8685244 => return PlmInstr_Delete(j, k),

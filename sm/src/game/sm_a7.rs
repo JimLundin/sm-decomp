@@ -578,7 +578,7 @@ pub struct Enemy_Dachora {
     pub dachor_parameter_2: uint16,
 }
 #[inline]
-unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
+unsafe fn abs16(mut t: uint16) -> uint16 {
     return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         -(t as ::core::ffi::c_int)
     } else {
@@ -586,27 +586,27 @@ unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
     }) as uint16;
 }
 #[inline]
-unsafe extern "C" fn swap16(mut v: uint16) -> uint16 {
+unsafe fn swap16(mut v: uint16) -> uint16 {
     return ((v as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
         | v as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint16;
 }
 pub const kCoroutineNone: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 #[inline]
-unsafe extern "C" fn RomPtr_A7(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_A7(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0xa70000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
+unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
     return (&raw mut g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
         as *mut uint8 as *mut VramWriteEntry;
 }
 #[inline]
-unsafe extern "C" fn get_EnemyDef_A2(mut a: uint16) -> *mut EnemyDef {
+unsafe fn get_EnemyDef_A2(mut a: uint16) -> *mut EnemyDef {
     return RomPtr((0xa00000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut EnemyDef;
 }
 #[inline]
-unsafe extern "C" fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
+unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
     let mut t: uint32 = ((*lo as ::core::ffi::c_int
         + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
         as uint32)
@@ -615,7 +615,7 @@ unsafe extern "C" fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: 
     *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
 #[inline]
-unsafe extern "C" fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
+unsafe fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
     *lo = t as uint16;
     *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
@@ -778,31 +778,31 @@ pub const fnDachora_Func_8: ::core::ffi::c_int = 0xa7f806 as ::core::ffi::c_int;
 pub const fnDachora_Func_11: ::core::ffi::c_int = 0xa7f935 as ::core::ffi::c_int;
 pub const fnDachora_Func_12: ::core::ffi::c_int = 0xa7f98c as ::core::ffi::c_int;
 #[inline]
-unsafe extern "C" fn gEnemyData(mut o: ::core::ffi::c_int) -> *mut EnemyData {
+unsafe fn gEnemyData(mut o: ::core::ffi::c_int) -> *mut EnemyData {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut EnemyData;
 }
 #[inline]
-unsafe extern "C" fn Get_Dachora(mut o: ::core::ffi::c_int) -> *mut Enemy_Dachora {
+unsafe fn Get_Dachora(mut o: ::core::ffi::c_int) -> *mut Enemy_Dachora {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_Dachora;
 }
 #[inline]
-unsafe extern "C" fn Get_Etecoon(mut o: ::core::ffi::c_int) -> *mut Enemy_Etecoon {
+unsafe fn Get_Etecoon(mut o: ::core::ffi::c_int) -> *mut Enemy_Etecoon {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_Etecoon;
 }
 #[inline]
-unsafe extern "C" fn Get_Kraid(mut o: ::core::ffi::c_int) -> *mut Enemy_Kraid {
+unsafe fn Get_Kraid(mut o: ::core::ffi::c_int) -> *mut Enemy_Kraid {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_Kraid;
 }
 #[inline]
-unsafe extern "C" fn Get_Phantoon(mut o: ::core::ffi::c_int) -> *mut Enemy_Phantoon {
+unsafe fn Get_Phantoon(mut o: ::core::ffi::c_int) -> *mut Enemy_Phantoon {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_Phantoon;
@@ -862,8 +862,7 @@ static mut g_word_A7F4D5: uint16 = 8 as uint16;
 static mut g_word_A7F4D7: uint16 = 0 as uint16;
 static mut g_word_A7F4D9: uint16 = 0 as uint16;
 static mut g_word_A7F4DB: uint16 = 0x1000 as uint16;
-#[no_mangle]
-pub unsafe extern "C" fn CallEnemyInstrExtFunc(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallEnemyInstrExtFunc(mut ea: uint32, mut k: uint16) {
     match ea {
         10997485 => {
             Phantoon_Func_1();
@@ -886,8 +885,7 @@ pub unsafe extern "C" fn CallEnemyInstrExtFunc(mut ea: uint32, mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyInstr_Call_A7(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn EnemyInstr_Call_A7(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     CallEnemyInstrExtFunc(
         (*jp.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
             | 0xa70000 as ::core::ffi::c_int) as uint32,
@@ -895,28 +893,22 @@ pub unsafe extern "C" fn EnemyInstr_Call_A7(mut k: uint16, mut jp: *const uint16
     );
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_GrappleReact_NoInteract_A7() {
+pub unsafe fn Enemy_GrappleReact_NoInteract_A7() {
     SwitchEnemyAiToMainAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_GrappleReact_CancelBeam_A7() {
+pub unsafe fn Enemy_GrappleReact_CancelBeam_A7() {
     Enemy_SwitchToFrozenAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalShotAI_A7() {
+pub unsafe fn Enemy_NormalShotAI_A7() {
     NormalEnemyShotAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalPowerBombAI_SkipDeathAnim_A7() {
+pub unsafe fn Enemy_NormalPowerBombAI_SkipDeathAnim_A7() {
     NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalFrozenAI_A7() {
+pub unsafe fn Enemy_NormalFrozenAI_A7() {
     NormalEnemyFrozenAI();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Instr_9(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Kraid_Instr_9(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     if (((*E).base.health as ::core::ffi::c_int
         - (*E).kraid_healths_8ths[3 as ::core::ffi::c_int as usize] as ::core::ffi::c_int)
@@ -933,27 +925,22 @@ pub unsafe extern "C" fn Kraid_Instr_9(mut k: uint16, mut jp: *const uint16) -> 
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Touch_ArmFoot() {
+pub unsafe fn Kraid_Touch_ArmFoot() {
     NormalEnemyTouchAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Func_1() {
+pub unsafe fn Kraid_Func_1() {
     *((&raw mut g_ram as *mut uint8).offset(0xb58 as ::core::ffi::c_int as isize) as *mut uint16) =
         4 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xb5c as ::core::ffi::c_int as isize) as *mut uint16) =
         -(8 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Touch() {
+pub unsafe fn Kraid_Touch() {
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Shot() {
+pub unsafe fn Kraid_Shot() {
     NormalEnemyShotAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsArm_Touch() {
+pub unsafe fn KraidsArm_Touch() {
     if *((&raw mut g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
         as *mut uint16)
         == 0
@@ -964,20 +951,17 @@ pub unsafe extern "C" fn KraidsArm_Touch() {
         Kraid_Touch();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Arm_Shot(mut j: uint16) {
+pub unsafe fn Kraid_Arm_Shot(mut j: uint16) {
     Kraid_SpawnExplosionEproj(j);
     let ref mut fresh16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xc04 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh16 = (*fresh16 as ::core::ffi::c_int | 0x10 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_A7A92A() {
+pub unsafe fn sub_A7A92A() {
     Kraid_CheckIfDead();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_CheckIfDead() -> uint16 {
+pub unsafe fn Kraid_CheckIfDead() -> uint16 {
     return (*((&raw mut g_ram as *mut uint8)
         .offset(0xd828 as ::core::ffi::c_int as isize)
         .offset(
@@ -987,8 +971,7 @@ pub unsafe extern "C" fn Kraid_CheckIfDead() -> uint16 {
         & 1 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_SetEnemyPropsToDead() {
+pub unsafe fn Kraid_SetEnemyPropsToDead() {
     let mut E: *mut Enemy_Kraid = Get_Kraid(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -997,8 +980,7 @@ pub unsafe extern "C" fn Kraid_SetEnemyPropsToDead() {
         & 0x50ff as ::core::ffi::c_int
         | 0x700 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Init() {
+pub unsafe fn Kraid_Init() {
     let mut v5: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     let mut j: uint16 = 0;
     (*((&raw mut g_ram as *mut uint8).offset(0x604 as ::core::ffi::c_int as isize)
@@ -1158,8 +1140,7 @@ pub unsafe extern "C" fn Kraid_Init() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_SetupGfxWithTilePrioClear(mut r18: uint16) {
+pub unsafe fn Kraid_SetupGfxWithTilePrioClear(mut r18: uint16) {
     DecompressToMem(
         0xb9fa38 as uint32,
         (&raw mut g_ram as *mut uint8).offset(0x4000 as ::core::ffi::c_int as isize),
@@ -1209,8 +1190,7 @@ pub unsafe extern "C" fn Kraid_SetupGfxWithTilePrioClear(mut r18: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsArm_Init() {
+pub unsafe fn KraidsArm_Init() {
     if Kraid_CheckIfDead() != 0 {
         Kraid_SetEnemyPropsToDead();
     } else {
@@ -1224,8 +1204,7 @@ pub unsafe extern "C" fn KraidsArm_Init() {
         (*v0.offset(1 as ::core::ffi::c_int as isize)).ai_var_B = 0 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsTopLint_Init() {
+pub unsafe fn KraidsTopLint_Init() {
     if Kraid_CheckIfDead() != 0 {
         Kraid_SetEnemyPropsToDead();
     } else {
@@ -1242,8 +1221,7 @@ pub unsafe extern "C" fn KraidsTopLint_Init() {
         (*v0.offset(2 as ::core::ffi::c_int as isize)).ai_var_C = 0 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsMiddleLint_Init() {
+pub unsafe fn KraidsMiddleLint_Init() {
     if Kraid_CheckIfDead() != 0 {
         Kraid_SetEnemyPropsToDead();
     } else {
@@ -1260,8 +1238,7 @@ pub unsafe extern "C" fn KraidsMiddleLint_Init() {
             -(16 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsBottomLint_Init() {
+pub unsafe fn KraidsBottomLint_Init() {
     if Kraid_CheckIfDead() != 0 {
         Kraid_SetEnemyPropsToDead();
     } else {
@@ -1278,8 +1255,7 @@ pub unsafe extern "C" fn KraidsBottomLint_Init() {
             -(16 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsFoot_Init() {
+pub unsafe fn KraidsFoot_Init() {
     if Kraid_CheckIfDead() != 0 {
         Kraid_SetEnemyPropsToDead();
     } else {
@@ -1293,8 +1269,7 @@ pub unsafe extern "C" fn KraidsFoot_Init() {
         (*E).kraid_next = 0 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Main() {
+pub unsafe fn Kraid_Main() {
     Kraid_Shot_Mouth();
     Kraid_Palette_Handling();
     Kraid_Shot_Body();
@@ -1316,8 +1291,7 @@ pub unsafe extern "C" fn Kraid_Main() {
         ((*E).kraid_var_A as ::core::ffi::c_int | 0xa70000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_GetsBig_BreakCeilingPlatforms() {
+pub unsafe fn Kraid_GetsBig_BreakCeilingPlatforms() {
     let mut kraid_var_F: uint16 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -1430,8 +1404,7 @@ pub unsafe extern "C" fn Kraid_GetsBig_BreakCeilingPlatforms() {
             (0xa7ad3a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_GetsBig_SetBG2TilemapPrioBits() {
+pub unsafe fn Kraid_GetsBig_SetBG2TilemapPrioBits() {
     let mut v0: uint16 = 0 as uint16;
     loop {
         let ref mut fresh11 = *((&raw mut g_ram as *mut uint8)
@@ -1454,8 +1427,7 @@ pub unsafe extern "C" fn Kraid_GetsBig_SetBG2TilemapPrioBits() {
         (0xa7ad61 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     Kraid_UpdateBg2TilemapTopHalf();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_GetsBig_FinishUpdateBg2Tilemap() {
+pub unsafe fn Kraid_GetsBig_FinishUpdateBg2Tilemap() {
     (*Get_Kraid(0 as ::core::ffi::c_int)).kraid_var_A =
         (0xa7ad8e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     let mut E5: *mut Enemy_Kraid = Get_Kraid(0x140 as ::core::ffi::c_int);
@@ -1472,8 +1444,7 @@ pub unsafe extern "C" fn Kraid_GetsBig_FinishUpdateBg2Tilemap() {
     (*E).base.spritemap_pointer = addr_kKraid_Sprmap_8C6C as ::core::ffi::c_int as uint16;
     Kraid_UpdateBG2TilemapBottomHalf();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_DrawRoomBg() {
+pub unsafe fn Kraid_DrawRoomBg() {
     let mut v3: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     let mut v0: uint16 = 192 as uint16;
     let mut v1: uint16 = 0 as uint16;
@@ -1515,16 +1486,14 @@ pub unsafe extern "C" fn Kraid_DrawRoomBg() {
     *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16) =
         (v2 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_GetsBig_DrawRoomBg() {
+pub unsafe fn Kraid_GetsBig_DrawRoomBg() {
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     (*E).kraid_var_A = (0xa7ae23 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).kraid_var_E = 0 as uint16;
     (*E).kraid_var_F = 0 as uint16;
     Kraid_DrawRoomBg();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_SetLintYAndRandomThinkTimer() {
+pub unsafe fn Kraid_SetLintYAndRandomThinkTimer() {
     let mut v1: int16 = 0;
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     (*Get_Kraid(0x80 as ::core::ffi::c_int)).base.y_pos =
@@ -1545,28 +1514,24 @@ pub unsafe extern "C" fn Kraid_SetLintYAndRandomThinkTimer() {
     }
     (*E).kraid_thinking = ((v1 as ::core::ffi::c_int) << 6 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_GetsBig_Thinking_Setup() {
+pub unsafe fn Kraid_GetsBig_Thinking_Setup() {
     (*Get_Kraid(0 as ::core::ffi::c_int)).kraid_var_A =
         (0xa7aec4 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     Kraid_SetLintYAndRandomThinkTimer();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Mainloop_Thinking_Setup() {
+pub unsafe fn Kraid_Mainloop_Thinking_Setup() {
     (*Get_Kraid(0 as ::core::ffi::c_int)).kraid_var_A =
         (0xa7aea4 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     Kraid_SetLintYAndRandomThinkTimer();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Lints_Enable(mut k: uint16, mut a: uint16) {
+pub unsafe fn Kraid_Lints_Enable(mut k: uint16, mut a: uint16) {
     let mut E: *mut Enemy_Kraid = Get_Kraid(k as ::core::ffi::c_int);
     (*E).kraid_var_F = a;
     (*E).kraid_var_A = (0xa7b923 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).kraid_next = (0xa7b832 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).kraid_var_B = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_GetsBig_FadeInRoomBg() {
+pub unsafe fn Kraid_GetsBig_FadeInRoomBg() {
     if AdvancePaletteFade_BgPalette6() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         Kraid_GetsBig_Thinking_Setup();
         Kraid_Lints_Enable(0x80 as uint16, g_word_A7A916);
@@ -1595,8 +1560,7 @@ pub unsafe extern "C" fn Kraid_GetsBig_FadeInRoomBg() {
         (*E5).base.current_instruction = addr_kKraid_Ilist_8887 as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Mainloop_Thinking() {
+pub unsafe fn Kraid_Mainloop_Thinking() {
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     let mut kraid_thinking: uint16 = (*E).kraid_thinking;
     if kraid_thinking != 0 {
@@ -1617,8 +1581,7 @@ pub unsafe extern "C" fn Kraid_Mainloop_Thinking() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_GetsBig_Thinking() {
+pub unsafe fn Kraid_GetsBig_Thinking() {
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     let mut kraid_thinking: uint16 = (*E).kraid_thinking;
     if kraid_thinking != 0 {
@@ -1639,8 +1602,7 @@ pub unsafe extern "C" fn Kraid_GetsBig_Thinking() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Shot_MouthIsOpen() {
+pub unsafe fn Kraid_Shot_MouthIsOpen() {
     let mut v2: uint16 = 0;
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     if Kraid_ProcessKraidInstr() as ::core::ffi::c_int == 0xffff as ::core::ffi::c_int {
@@ -1668,8 +1630,7 @@ pub unsafe extern "C" fn Kraid_Shot_MouthIsOpen() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_ProcessKraidInstr() -> uint16 {
+pub unsafe fn Kraid_ProcessKraidInstr() -> uint16 {
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     let mut result: uint16 = (*E).kraid_var_C;
     if result != 0 {
@@ -1681,16 +1642,13 @@ pub unsafe extern "C" fn Kraid_ProcessKraidInstr() -> uint16 {
     }
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidInstr_PlayRoarSfx() {
+pub unsafe fn KraidInstr_PlayRoarSfx() {
     QueueSfx2_Max6(0x2d as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidInstr_PlayDyingSfx() {
+pub unsafe fn KraidInstr_PlayDyingSfx() {
     QueueSfx2_Max15(0x2e as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallKraidInstr(mut ea: uint32) {
+pub unsafe fn CallKraidInstr(mut ea: uint32) {
     match ea {
         10989460 => {
             KraidInstr_PlayRoarSfx();
@@ -1705,8 +1663,7 @@ pub unsafe extern "C" fn CallKraidInstr(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_ExecuteInstr() -> uint16 {
+pub unsafe fn Kraid_ExecuteInstr() -> uint16 {
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     loop {
         let mut kraid_var_B: uint16 = (*E).kraid_var_B;
@@ -1741,7 +1698,7 @@ pub unsafe extern "C" fn Kraid_ExecuteInstr() -> uint16 {
                 let fresh0 = v5;
                 v5 = v5.wrapping_add(1);
                 *(&raw mut (*(gVramWriteEntry
-                    as unsafe extern "C" fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
+                    as unsafe fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
                     fresh0 as ::core::ffi::c_int,
                 ))
                 .size as *mut uint8)
@@ -1762,8 +1719,7 @@ pub unsafe extern "C" fn Kraid_ExecuteInstr() -> uint16 {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Shot_Mouth() {
+pub unsafe fn Kraid_Shot_Mouth() {
     let mut v8: uint16 = 0;
     let mut v4: uint16 = 0;
     let mut v5: *const uint8 = ::core::ptr::null::<uint8>();
@@ -1939,8 +1895,7 @@ pub unsafe extern "C" fn Kraid_Shot_Mouth() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_SpawnExplosionEproj(mut k: uint16) {
+pub unsafe fn Kraid_SpawnExplosionEproj(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     eproj_spawn_pt = Point16U {
         x: *((&raw mut g_ram as *mut uint8).offset(0xb64 as ::core::ffi::c_int as isize)
@@ -1966,8 +1921,7 @@ pub unsafe extern "C" fn Kraid_SpawnExplosionEproj(mut k: uint16) {
     );
     QueueSfx1_Max6(0x3d as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Enemy_Touch() {
+pub unsafe fn Kraid_Enemy_Touch() {
     let mut v1: int16 = 0;
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     if (*E).kraid_var_A as ::core::ffi::c_int + 0x3ca0 as ::core::ffi::c_int
@@ -2065,8 +2019,7 @@ pub unsafe extern "C" fn Kraid_Enemy_Touch() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Shot_Body() {
+pub unsafe fn Kraid_Shot_Body() {
     let mut v11: int16 = 0;
     let mut j: uint16 = 0;
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
@@ -2261,8 +2214,7 @@ pub unsafe extern "C" fn Kraid_Shot_Body() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Palette_Handling() {
+pub unsafe fn Kraid_Palette_Handling() {
     let mut current_block: u64;
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     if (*E).base.health as ::core::ffi::c_int - 1 as ::core::ffi::c_int
@@ -2295,8 +2247,7 @@ pub unsafe extern "C" fn Kraid_Palette_Handling() {
     Kraid_HurtFlash_Handling();
     Kraid_HealthBasedPaletteHandling();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_HurtFlash_Handling() {
+pub unsafe fn Kraid_HurtFlash_Handling() {
     let mut v0: uint16 = 0 as uint16;
     if (*Get_Kraid(0 as ::core::ffi::c_int)).kraid_hurt_frame as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
@@ -2327,8 +2278,7 @@ pub unsafe extern "C" fn Kraid_HurtFlash_Handling() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_HealthBasedPaletteHandling() {
+pub unsafe fn Kraid_HealthBasedPaletteHandling() {
     let mut v0: uint16 = 0 as uint16;
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     if (*E).kraid_hurt_frame as ::core::ffi::c_int & 1 as ::core::ffi::c_int
@@ -2383,24 +2333,15 @@ pub unsafe extern "C" fn Kraid_HealthBasedPaletteHandling() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn Kraid_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Instr_DecYpos(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn Kraid_Instr_DecYpos(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Instr_IncrYpos_Shake(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn Kraid_Instr_IncrYpos_Shake(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     (*E).base.y_pos = (*E).base.y_pos.wrapping_add(1);
     *((&raw mut g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
@@ -2409,49 +2350,29 @@ pub unsafe extern "C" fn Kraid_Instr_IncrYpos_Shake(
         as *mut uint16) = 10 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Instr_PlaySound_0x76(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn Kraid_Instr_PlaySound_0x76(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     QueueSfx2_Max6(0x76 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Instr_XposMinus3(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn Kraid_Instr_XposMinus3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     (*E).base.x_pos =
         ((*E).base.x_pos as ::core::ffi::c_int - g_word_A7A91C as ::core::ffi::c_int) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Instr_XposMinus3b(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn Kraid_Instr_XposMinus3b(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     (*E).base.x_pos =
         ((*E).base.x_pos as ::core::ffi::c_int - g_word_A7A91C as ::core::ffi::c_int) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Instr_XposPlus3(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn Kraid_Instr_XposPlus3(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     (*E).base.x_pos =
         ((*E).base.x_pos as ::core::ffi::c_int + g_word_A7A920 as ::core::ffi::c_int) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Instr_MoveHimRight(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn Kraid_Instr_MoveHimRight(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v3: uint16 = 0;
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     if (*E).base.x_pos as ::core::ffi::c_int - 320 as ::core::ffi::c_int
@@ -2478,8 +2399,7 @@ pub unsafe extern "C" fn Kraid_Instr_MoveHimRight(
     }
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_InitEyeGlowing() {
+pub unsafe fn Kraid_InitEyeGlowing() {
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     (*E).kraid_var_A = (0xa7aee4 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).kraid_var_A = (0xa7b6d7 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -2493,8 +2413,7 @@ pub unsafe extern "C" fn Kraid_InitEyeGlowing() {
     .timer;
     Kraid_Shot_GlowHisEye();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Shot_GlowHisEye() {
+pub unsafe fn Kraid_Shot_GlowHisEye() {
     let mut v1: int16 = 0;
     Kraid_ProcessKraidInstr();
     let mut v0: uint16 = 226 as uint16;
@@ -2558,8 +2477,7 @@ pub unsafe extern "C" fn Kraid_Shot_GlowHisEye() {
             (0xa7b73d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Shot_UnglowEye() {
+pub unsafe fn Kraid_Shot_UnglowEye() {
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     let mut v0: uint16 = 14 as uint16;
     let mut health: uint16 = (*E).base.health;
@@ -2646,8 +2564,7 @@ pub unsafe extern "C" fn Kraid_Shot_UnglowEye() {
             .timer;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsArm_Main() {
+pub unsafe fn KraidsArm_Main() {
     let mut r18: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0x915 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -2680,31 +2597,26 @@ pub unsafe extern "C" fn KraidsArm_Main() {
         (*E1).base.instruction_timer = (*E1).base.instruction_timer.wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidLintCommon_Main(mut k: uint16) {
+pub unsafe fn KraidLintCommon_Main(mut k: uint16) {
     Kraid_EnemyTouch_Lint(k);
     let mut v1: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int);
     CallKraidFunc(
         ((*v1).ai_var_A as ::core::ffi::c_int | 0xa70000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsTopLint_Main() {
+pub unsafe fn KraidsTopLint_Main() {
     (*gEnemyData(0x80 as ::core::ffi::c_int)).instruction_timer = 0x7fff as uint16;
     KraidLintCommon_Main(0x80 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsMiddleLint_Main() {
+pub unsafe fn KraidsMiddleLint_Main() {
     (*gEnemyData(0xc0 as ::core::ffi::c_int)).instruction_timer = 0x7fff as uint16;
     KraidLintCommon_Main(0xc0 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsBottomLint_Main() {
+pub unsafe fn KraidsBottomLint_Main() {
     (*gEnemyData(0x100 as ::core::ffi::c_int)).instruction_timer = 0x7fff as uint16;
     KraidLintCommon_Main(0x100 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidLint_ProduceLint(mut k: uint16) {
+pub unsafe fn KraidLint_ProduceLint(mut k: uint16) {
     let mut v1: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int);
     (*v1).properties =
         ((*v1).properties as ::core::ffi::c_int & 0xfaff as ::core::ffi::c_int) as uint16;
@@ -2718,8 +2630,7 @@ pub unsafe extern "C" fn KraidLint_ProduceLint(mut k: uint16) {
         (*v1).ai_preinstr = 30 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidLint_ChargeLint(mut k: uint16) {
+pub unsafe fn KraidLint_ChargeLint(mut k: uint16) {
     let mut E: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int);
     let mut v1: int16 = 0 as int16;
     if (*E).ai_preinstr as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
@@ -2736,8 +2647,7 @@ pub unsafe extern "C" fn KraidLint_ChargeLint(mut k: uint16) {
         QueueSfx3_Max6(0x1f as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidLint_FireLint(mut k: uint16) {
+pub unsafe fn KraidLint_FireLint(mut k: uint16) {
     let mut E: *mut Enemy_Kraid = Get_Kraid(k as ::core::ffi::c_int);
     AddToHiLo(
         &raw mut (*E).base.x_pos,
@@ -2784,8 +2694,7 @@ pub unsafe extern "C" fn KraidLint_FireLint(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidFingernail_WaitForLintXpos(mut k: uint16) {
+pub unsafe fn KraidFingernail_WaitForLintXpos(mut k: uint16) {
     let mut E2: *mut Enemy_Kraid = Get_Kraid(0x80 as ::core::ffi::c_int);
     if (*E2).base.x_pos as ::core::ffi::c_int - 256 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -2797,8 +2706,7 @@ pub unsafe extern "C" fn KraidFingernail_WaitForLintXpos(mut k: uint16) {
             ((*E).base.properties as ::core::ffi::c_int & 0xfaff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidEnemy_HandleFunctionTimer(mut k: uint16) {
+pub unsafe fn KraidEnemy_HandleFunctionTimer(mut k: uint16) {
     let mut E: *mut Enemy_Kraid = Get_Kraid(k as ::core::ffi::c_int);
     if (*E).kraid_var_F as ::core::ffi::c_int != 0 && {
         let fresh6 = (*E).kraid_var_F;
@@ -2808,16 +2716,14 @@ pub unsafe extern "C" fn KraidEnemy_HandleFunctionTimer(mut k: uint16) {
         (*E).kraid_var_A = (*E).kraid_next;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_AlignEnemyToKraid(mut k: uint16) {
+pub unsafe fn Kraid_AlignEnemyToKraid(mut k: uint16) {
     let mut x_pos: uint16 = (*Get_Kraid(0 as ::core::ffi::c_int)).base.x_pos;
     let mut E: *mut Enemy_Kraid = Get_Kraid(k as ::core::ffi::c_int);
     (*E).base.x_pos =
         (x_pos as ::core::ffi::c_int - (*E).base.x_width as ::core::ffi::c_int) as uint16;
     KraidEnemy_HandleFunctionTimer(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidEnemy_DecrementEnemyFunctionTimer() {
+pub unsafe fn KraidEnemy_DecrementEnemyFunctionTimer() {
     let mut E: *mut Enemy_Kraid = Get_Kraid(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2832,18 +2738,15 @@ pub unsafe extern "C" fn KraidEnemy_DecrementEnemyFunctionTimer() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidFoot_FirstPhase_Thinking(mut k: uint16) {
+pub unsafe fn KraidFoot_FirstPhase_Thinking(mut k: uint16) {
     Kraid_HandleFirstPhase();
     KraidEnemy_HandleFunctionTimer(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidEnemy_ProcessInstrEnemyTimer(mut k: uint16) {
+pub unsafe fn KraidEnemy_ProcessInstrEnemyTimer(mut k: uint16) {
     Kraid_ProcessKraidInstr();
     KraidEnemy_HandleFunctionTimer(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_EnemyTouch_Lint(mut k: uint16) {
+pub unsafe fn Kraid_EnemyTouch_Lint(mut k: uint16) {
     let mut E: *mut Enemy_Kraid = Get_Kraid(k as ::core::ffi::c_int);
     if (*E).base.properties as ::core::ffi::c_int & kEnemyProps_Tangible as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
@@ -2941,8 +2844,7 @@ pub unsafe extern "C" fn Kraid_EnemyTouch_Lint(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsFoot_Main() {
+pub unsafe fn KraidsFoot_Main() {
     let mut v3: int16 = 0;
     let mut v0: *mut EnemyData = gEnemyData(0 as ::core::ffi::c_int);
     (*v0.offset(5 as ::core::ffi::c_int as isize)).x_pos = (*v0).x_pos;
@@ -2974,8 +2876,7 @@ pub unsafe extern "C" fn KraidsFoot_Main() {
             | 0xa70000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_SetWalkingBackwards(mut j: uint16, mut a: uint16) {
+pub unsafe fn Kraid_SetWalkingBackwards(mut j: uint16, mut a: uint16) {
     (*Get_Kraid(0 as ::core::ffi::c_int)).kraid_target_x = a;
     let mut E: *mut Enemy_Kraid = Get_Kraid(0x140 as ::core::ffi::c_int);
     (*E).kraid_next = j;
@@ -2983,8 +2884,7 @@ pub unsafe extern "C" fn Kraid_SetWalkingBackwards(mut j: uint16, mut a: uint16)
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.current_instruction = addr_kKraid_Ilist_8887 as ::core::ffi::c_int as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_SetWalkingForwards(mut j: uint16, mut a: uint16) {
+pub unsafe fn Kraid_SetWalkingForwards(mut j: uint16, mut a: uint16) {
     (*Get_Kraid(0 as ::core::ffi::c_int)).kraid_target_x = a;
     let mut E: *mut Enemy_Kraid = Get_Kraid(0x140 as ::core::ffi::c_int);
     (*E).kraid_next = j;
@@ -2992,8 +2892,7 @@ pub unsafe extern "C" fn Kraid_SetWalkingForwards(mut j: uint16, mut a: uint16) 
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.current_instruction = addr_kKraid_Ilist_86F3 as ::core::ffi::c_int as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsFoot_SecondPhase_Thinking() {
+pub unsafe fn KraidsFoot_SecondPhase_Thinking() {
     let mut v4: int16 = 0;
     let mut E5: *mut Enemy_Kraid = Get_Kraid(0x140 as ::core::ffi::c_int);
     let mut v1: uint16 =
@@ -3056,8 +2955,7 @@ pub unsafe extern "C" fn KraidsFoot_SecondPhase_Thinking() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsFoot_SecondPhase_WalkingBackwards() {
+pub unsafe fn KraidsFoot_SecondPhase_WalkingBackwards() {
     let mut E0: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     let mut kraid_target_x: uint16 = (*E0).kraid_target_x;
     if kraid_target_x as ::core::ffi::c_int != (*E0).base.x_pos as ::core::ffi::c_int {
@@ -3080,8 +2978,7 @@ pub unsafe extern "C" fn KraidsFoot_SecondPhase_WalkingBackwards() {
         (*E5).base.current_instruction = addr_kKraid_Ilist_86ED as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsFoot_SecondPhaseSetup_WalkToStartPt() {
+pub unsafe fn KraidsFoot_SecondPhaseSetup_WalkToStartPt() {
     let mut E0: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     let mut kraid_target_x: uint16 = (*E0).kraid_target_x;
     if kraid_target_x as ::core::ffi::c_int != (*E0).base.x_pos as ::core::ffi::c_int {
@@ -3107,12 +3004,10 @@ pub unsafe extern "C" fn KraidsFoot_SecondPhaseSetup_WalkToStartPt() {
         (*E5).base.current_instruction = addr_kKraid_Ilist_86ED as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsFoot_SecondPhase_Init() {
+pub unsafe fn KraidsFoot_SecondPhase_Init() {
     Kraid_SetWalkingBackwards(0xb4 as uint16, 0x160 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsFoot_SecondPhase_WalkForward() {
+pub unsafe fn KraidsFoot_SecondPhase_WalkForward() {
     let mut E0: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     let mut kraid_target_x: uint16 = (*E0).kraid_target_x;
     if ((kraid_target_x as ::core::ffi::c_int - (*E0).base.x_pos as ::core::ffi::c_int) as int16
@@ -3140,8 +3035,7 @@ pub unsafe extern "C" fn KraidsFoot_SecondPhase_WalkForward() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Main_AttackWithMouthOpen() {
+pub unsafe fn Kraid_Main_AttackWithMouthOpen() {
     let mut v3: uint16 = 0;
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     if Kraid_ProcessKraidInstr() as ::core::ffi::c_int == 0xffff as ::core::ffi::c_int {
@@ -3195,8 +3089,7 @@ pub unsafe extern "C" fn Kraid_Main_AttackWithMouthOpen() {
         QueueSfx3_Max6(0x1e as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsGoodFingernail_Touch() {
+pub unsafe fn KraidsGoodFingernail_Touch() {
     let mut v0: uint16 = 0 as uint16;
     printf(b"X undefined\n\0" as *const u8 as *const ::core::ffi::c_char);
     NormalEnemyTouchAi();
@@ -3206,8 +3099,7 @@ pub unsafe extern "C" fn KraidsGoodFingernail_Touch() {
         v0,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsBadFingernail_Touch() {
+pub unsafe fn KraidsBadFingernail_Touch() {
     let mut v0: uint16 = 0 as uint16;
     printf(b"X undefined\n\0" as *const u8 as *const ::core::ffi::c_char);
     NormalEnemyTouchAi();
@@ -3217,8 +3109,7 @@ pub unsafe extern "C" fn KraidsBadFingernail_Touch() {
         v0,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidFingernailInit(mut k: uint16) {
+pub unsafe fn KraidFingernailInit(mut k: uint16) {
     let mut palette_index: uint16 = (*Get_Kraid(0 as ::core::ffi::c_int)).base.palette_index;
     let mut E: *mut Enemy_Kraid = Get_Kraid(k as ::core::ffi::c_int);
     (*E).base.palette_index = palette_index;
@@ -3237,22 +3128,19 @@ pub unsafe extern "C" fn KraidFingernailInit(mut k: uint16) {
     (*E).kraid_var_A = (0xa7b92d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).kraid_var_F = 64 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsGoodFingernail_Init() {
+pub unsafe fn KraidsGoodFingernail_Init() {
     KraidFingernailInit(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsBadFingernail_Init() {
+pub unsafe fn KraidsBadFingernail_Init() {
     KraidFingernailInit(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsGoodFingernail_Main() {
+pub unsafe fn KraidsGoodFingernail_Main() {
     let mut v0: *mut EnemyData = gEnemyData(0 as ::core::ffi::c_int);
     if (*v0).health as ::core::ffi::c_int - 1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0
@@ -3271,8 +3159,7 @@ pub unsafe extern "C" fn KraidsGoodFingernail_Main() {
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsBadFingernail_Main() {
+pub unsafe fn KraidsBadFingernail_Main() {
     let mut v0: *mut EnemyData = gEnemyData(0 as ::core::ffi::c_int);
     if (*v0).health as ::core::ffi::c_int - 1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0
@@ -3291,8 +3178,7 @@ pub unsafe extern "C" fn KraidsBadFingernail_Main() {
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsFingernail_Init() {
+pub unsafe fn KraidsFingernail_Init() {
     let mut v7: uint16 = 0;
     let mut current_block: u64;
     let mut v2: uint16 = 0;
@@ -3399,8 +3285,7 @@ pub unsafe extern "C" fn KraidsFingernail_Init() {
         _ => {}
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsFingernail_Fire(mut k: uint16) {
+pub unsafe fn KraidsFingernail_Fire(mut k: uint16) {
     let mut v1: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int);
     if Enemy_MoveRight_IgnoreSlopes(
         k,
@@ -3469,8 +3354,7 @@ pub unsafe extern "C" fn KraidsFingernail_Fire(mut k: uint16) {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsFoot_PrepareToLungeForward() {
+pub unsafe fn KraidsFoot_PrepareToLungeForward() {
     Kraid_HandleFirstPhase();
     let mut v0: *mut EnemyData = gEnemyData(0 as ::core::ffi::c_int);
     if (*v0.offset(1 as ::core::ffi::c_int as isize)).current_instruction as ::core::ffi::c_int
@@ -3489,8 +3373,7 @@ pub unsafe extern "C" fn KraidsFoot_PrepareToLungeForward() {
         (*v0.offset(5 as ::core::ffi::c_int as isize)).ai_preinstr = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsFoot_FirstPhase_LungeForward() {
+pub unsafe fn KraidsFoot_FirstPhase_LungeForward() {
     Kraid_HandleFirstPhase();
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     if (*E).base.x_pos as ::core::ffi::c_int - 92 as ::core::ffi::c_int
@@ -3517,8 +3400,7 @@ pub unsafe extern "C" fn KraidsFoot_FirstPhase_LungeForward() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn KraidsFoot_FirstPhase_RetreatFromLunge() {
+pub unsafe fn KraidsFoot_FirstPhase_RetreatFromLunge() {
     Kraid_HandleFirstPhase();
     let mut E0: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     if (*E0).base.x_pos as ::core::ffi::c_int - 176 as ::core::ffi::c_int
@@ -3554,8 +3436,7 @@ pub unsafe extern "C" fn KraidsFoot_FirstPhase_RetreatFromLunge() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_HandleFirstPhase() {
+pub unsafe fn Kraid_HandleFirstPhase() {
     let mut E0: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     if (((*E0).base.health as ::core::ffi::c_int
         - (*E0).kraid_healths_8ths[6 as ::core::ffi::c_int as usize] as ::core::ffi::c_int)
@@ -3614,8 +3495,7 @@ pub unsafe extern "C" fn Kraid_HandleFirstPhase() {
             ((*E1).base.properties as ::core::ffi::c_int | 0x400 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_GetsBig_ReleaseCamera() {
+pub unsafe fn Kraid_GetsBig_ReleaseCamera() {
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     (*E).kraid_var_A = (0xa7ac4d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xcd20 as ::core::ffi::c_int as isize)
@@ -3625,24 +3505,21 @@ pub unsafe extern "C" fn Kraid_GetsBig_ReleaseCamera() {
         .offset(2 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) = 257 as uint16;
     (*E).kraid_min_y_pos_eject = 164 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_SpawnPlmToClearCeiling() {
+pub unsafe fn Kraid_SpawnPlmToClearCeiling() {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0x2 as uint8,
         field_1: 0x12 as uint8,
         field_2: 0xb7b7 as VoidP,
     });
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_ClearSomeSpikes() {
+pub unsafe fn Kraid_ClearSomeSpikes() {
     SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
         field_0: 0x5 as uint8,
         field_1: 0x1b as uint8,
         field_2: 0xb7bb as VoidP,
     });
 }
-#[no_mangle]
-pub unsafe extern "C" fn UnpauseHook_Kraid_IsDead() -> CoroutineRet {
+pub unsafe fn UnpauseHook_Kraid_IsDead() -> CoroutineRet {
     static mut unk_A7C21E: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
@@ -3704,8 +3581,7 @@ static mut unk_A7C28D: StartDmaCopy = StartDmaCopy {
     },
     das: 0x800 as VoidP,
 };
-#[no_mangle]
-pub unsafe extern "C" fn UnpauseHook_Kraid_IsAlive() -> CoroutineRet {
+pub unsafe fn UnpauseHook_Kraid_IsAlive() -> CoroutineRet {
     ScreenOff();
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(
@@ -3720,8 +3596,7 @@ pub unsafe extern "C" fn UnpauseHook_Kraid_IsAlive() -> CoroutineRet {
     Kraid_TransferTopHalfToVram();
     return kCoroutineNone as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_TransferTopHalfToVram() {
+pub unsafe fn Kraid_TransferTopHalfToVram() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(
         VMADDH as ::core::ffi::c_int as uint16,
@@ -3744,8 +3619,7 @@ static mut unk_A7C2BD: StartDmaCopy = StartDmaCopy {
     },
     das: 0x400 as VoidP,
 };
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_UnpauseHook_IsSinking() -> CoroutineRet {
+pub unsafe fn Kraid_UnpauseHook_IsSinking() -> CoroutineRet {
     let mut _state_variable_: *mut uint8 =
         (&raw mut g_ram as *mut uint8).offset(0x613 as ::core::ffi::c_int as isize);
     's_100: {
@@ -3890,8 +3764,7 @@ pub unsafe extern "C" fn Kraid_UnpauseHook_IsSinking() -> CoroutineRet {
     *_state_variable_ = 0 as uint8;
     return 0 as CoroutineRet;
 }
-#[no_mangle]
-pub unsafe extern "C" fn PauseHook_Kraid() {
+pub unsafe fn PauseHook_Kraid() {
     let mut v1: ::core::ffi::c_uint = 0;
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x360 as ::core::ffi::c_int as isize) as *mut uint16);
@@ -3941,8 +3814,7 @@ pub unsafe extern "C" fn PauseHook_Kraid() {
     *((&raw mut g_ram as *mut uint8).offset(0x360 as ::core::ffi::c_int as isize) as *mut uint16) =
         (v0 as ::core::ffi::c_int + 9 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Death_Init() {
+pub unsafe fn Kraid_Death_Init() {
     let mut E0: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     if (*E0).kraid_hurt_frame == 0 {
         let mut v0: uint16 = 192 as uint16;
@@ -4024,8 +3896,7 @@ pub unsafe extern "C" fn Kraid_Death_Init() {
         });
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Death_Fadeout() {
+pub unsafe fn Kraid_Death_Fadeout() {
     let mut v3: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     Kraid_ProcessKraidInstr();
     if AdvancePaletteFade_BgPalette6() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
@@ -4072,8 +3943,7 @@ pub unsafe extern "C" fn Kraid_Death_Fadeout() {
             as *mut uint16) = (v2 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Death_UpdateBG2TilemapTopHalf() {
+pub unsafe fn Kraid_Death_UpdateBG2TilemapTopHalf() {
     Kraid_ProcessKraidInstr();
     (*Get_Kraid(0 as ::core::ffi::c_int)).kraid_var_A =
         (0xa7c4c8 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -4088,8 +3958,7 @@ pub unsafe extern "C" fn Kraid_Death_UpdateBG2TilemapTopHalf() {
     (*E4).kraid_var_F = 0x7fff as uint16;
     Kraid_UpdateBg2TilemapTopHalf();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Death_UpdateBG2TilemapBottomHalf() {
+pub unsafe fn Kraid_Death_UpdateBG2TilemapBottomHalf() {
     Kraid_ProcessKraidInstr();
     (*((&raw mut g_ram as *mut uint8).offset(0x604 as ::core::ffi::c_int as isize)
         as *mut LongPtr))
@@ -4116,8 +3985,7 @@ pub unsafe extern "C" fn Kraid_Death_UpdateBG2TilemapBottomHalf() {
     (*E5).kraid_var_A = (0xa7ba2d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     Kraid_UpdateBG2TilemapBottomHalf();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_PlaySoundEveryHalfSecond() {
+pub unsafe fn Kraid_PlaySoundEveryHalfSecond() {
     let ref mut fresh7 = *((&raw mut g_ram as *mut uint8)
         .offset(0x9000 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh7 = (*fresh7).wrapping_sub(1);
@@ -4127,8 +3995,7 @@ pub unsafe extern "C" fn Kraid_PlaySoundEveryHalfSecond() {
             as *mut uint16) = 30 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_HandleSinking() {
+pub unsafe fn Kraid_HandleSinking() {
     let mut v1: int16 = 0;
     let mut v3: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -4200,8 +4067,7 @@ pub unsafe extern "C" fn Kraid_HandleSinking() {
         i += 1;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Death_SinkThroughFloor() {
+pub unsafe fn Kraid_Death_SinkThroughFloor() {
     Kraid_ProcessKraidInstr();
     Kraid_PlaySoundEveryHalfSecond();
     Kraid_HandleSinking();
@@ -4243,8 +4109,7 @@ pub unsafe extern "C" fn Kraid_Death_SinkThroughFloor() {
         Kraid_DrawRoomBg();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_CrumbleLeftPlatform_Left() {
+pub unsafe fn Kraid_CrumbleLeftPlatform_Left() {
     SpawnEprojWithGfx(
         0x70 as uint16,
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -4257,8 +4122,7 @@ pub unsafe extern "C" fn Kraid_CrumbleLeftPlatform_Left() {
         field_2: 0xb7a7 as VoidP,
     });
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_CrumbleRightPlatform_Middle() {
+pub unsafe fn Kraid_CrumbleRightPlatform_Middle() {
     SpawnEprojWithGfx(
         0xf0 as uint16,
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -4271,8 +4135,7 @@ pub unsafe extern "C" fn Kraid_CrumbleRightPlatform_Middle() {
         field_2: 0xb7a7 as VoidP,
     });
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_CrumbleRightPlatform_Left() {
+pub unsafe fn Kraid_CrumbleRightPlatform_Left() {
     SpawnEprojWithGfx(
         0xe0 as uint16,
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -4285,8 +4148,7 @@ pub unsafe extern "C" fn Kraid_CrumbleRightPlatform_Left() {
         field_2: 0xb7af as VoidP,
     });
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_CrumbleLeftPlatform_Right() {
+pub unsafe fn Kraid_CrumbleLeftPlatform_Right() {
     SpawnEprojWithGfx(
         0x90 as uint16,
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -4299,8 +4161,7 @@ pub unsafe extern "C" fn Kraid_CrumbleLeftPlatform_Right() {
         field_2: 0xb7a7 as VoidP,
     });
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_CrumbleLeftPlatform_Middle() {
+pub unsafe fn Kraid_CrumbleLeftPlatform_Middle() {
     SpawnEprojWithGfx(
         0x80 as uint16,
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -4313,8 +4174,7 @@ pub unsafe extern "C" fn Kraid_CrumbleLeftPlatform_Middle() {
         field_2: 0xb7af as VoidP,
     });
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_CrumbleRightPlatform_Right() {
+pub unsafe fn Kraid_CrumbleRightPlatform_Right() {
     SpawnEprojWithGfx(
         0x100 as uint16,
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -4327,8 +4187,7 @@ pub unsafe extern "C" fn Kraid_CrumbleRightPlatform_Right() {
         field_2: 0xb7af as VoidP,
     });
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallKraidSinkTableFunc(mut ea: uint32) {
+pub unsafe fn CallKraidSinkTableFunc(mut ea: uint32) {
     match ea {
         10995345 => {
             Kraid_CrumbleLeftPlatform_Left();
@@ -4360,8 +4219,7 @@ pub unsafe extern "C" fn CallKraidSinkTableFunc(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_FadeInBg_ClearBg2TilemapTopHalf() {
+pub unsafe fn Kraid_FadeInBg_ClearBg2TilemapTopHalf() {
     let mut v2: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     *(&raw mut g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize) = 72 as uint8;
     let mut i: ::core::ffi::c_int = 2046 as ::core::ffi::c_int;
@@ -4386,8 +4244,7 @@ pub unsafe extern "C" fn Kraid_FadeInBg_ClearBg2TilemapTopHalf() {
     (*Get_Kraid(0 as ::core::ffi::c_int)).kraid_var_A =
         (0xa7c751 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_FadeInBg_ClearBg2TilemapBottomHalf() {
+pub unsafe fn Kraid_FadeInBg_ClearBg2TilemapBottomHalf() {
     let mut v1: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
@@ -4404,8 +4261,7 @@ pub unsafe extern "C" fn Kraid_FadeInBg_ClearBg2TilemapBottomHalf() {
     (*Get_Kraid(0 as ::core::ffi::c_int)).kraid_var_A =
         (0xa7c777 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_FadeInBg_LoadBg3Tiles1of4() {
+pub unsafe fn Kraid_FadeInBg_LoadBg3Tiles1of4() {
     let mut v1: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     (*((&raw mut g_ram as *mut uint8).offset(0x604 as ::core::ffi::c_int as isize)
         as *mut LongPtr))
@@ -4425,8 +4281,7 @@ pub unsafe extern "C" fn Kraid_FadeInBg_LoadBg3Tiles1of4() {
     *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16) =
         (v0 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_FadeInBg_LoadBg3Tiles2of4() {
+pub unsafe fn Kraid_FadeInBg_LoadBg3Tiles2of4() {
     let mut v1: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     (*Get_Kraid(0 as ::core::ffi::c_int)).kraid_var_A =
         (0xa7c7c9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -4443,8 +4298,7 @@ pub unsafe extern "C" fn Kraid_FadeInBg_LoadBg3Tiles2of4() {
     *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16) =
         (v0 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_FadeInBg_LoadBg3Tiles3of4() {
+pub unsafe fn Kraid_FadeInBg_LoadBg3Tiles3of4() {
     let mut v1: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     (*Get_Kraid(0 as ::core::ffi::c_int)).kraid_var_A =
         (0xa7c7ef as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -4461,8 +4315,7 @@ pub unsafe extern "C" fn Kraid_FadeInBg_LoadBg3Tiles3of4() {
     *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16) =
         (v0 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_FadeInBg_LoadBg3Tiles4of4() {
+pub unsafe fn Kraid_FadeInBg_LoadBg3Tiles4of4() {
     let mut v1: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     (*Get_Kraid(0 as ::core::ffi::c_int)).kraid_var_A =
         (0xa7c815 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -4479,8 +4332,7 @@ pub unsafe extern "C" fn Kraid_FadeInBg_LoadBg3Tiles4of4() {
     *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16) =
         (v0 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_FadeInBg_FadeInBp6() {
+pub unsafe fn Kraid_FadeInBg_FadeInBp6() {
     let mut v0: int16 = 0;
     if AdvancePaletteFade_BgPalette6() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         QueueMusic_Delayed8(3 as uint16);
@@ -4506,8 +4358,7 @@ pub unsafe extern "C" fn Kraid_FadeInBg_FadeInBp6() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_FadeInBg_SetEnemyDead_KraidWasAlive() {
+pub unsafe fn Kraid_FadeInBg_SetEnemyDead_KraidWasAlive() {
     if Kraid_CheckIfDead() == 0
         || *((&raw mut g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -4516,8 +4367,7 @@ pub unsafe extern "C" fn Kraid_FadeInBg_SetEnemyDead_KraidWasAlive() {
         Kraid_SetEnemyPropsToDead();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_FadeInBg_SetEnemyDead_KraidWasDead() {
+pub unsafe fn Kraid_FadeInBg_SetEnemyDead_KraidWasDead() {
     if Kraid_CheckIfDead() == 0
         || *((&raw mut g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -4528,13 +4378,11 @@ pub unsafe extern "C" fn Kraid_FadeInBg_SetEnemyDead_KraidWasDead() {
     *((&raw mut g_ram as *mut uint8).offset(0x8ff as ::core::ffi::c_int as isize) as *mut uint16) =
         -(1 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_RestrictSamusXtoFirstScreen(mut k: uint16) {
+pub unsafe fn Kraid_RestrictSamusXtoFirstScreen(mut k: uint16) {
     Kraid_RestrictSamusXtoFirstScreen_2();
     KraidEnemy_HandleFunctionTimer(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_UpdateBg2TilemapTopHalf() {
+pub unsafe fn Kraid_UpdateBg2TilemapTopHalf() {
     let mut v1: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
@@ -4552,8 +4400,7 @@ pub unsafe extern "C" fn Kraid_UpdateBg2TilemapTopHalf() {
     *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16) =
         (v0 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_UpdateBG2TilemapBottomHalf() {
+pub unsafe fn Kraid_UpdateBG2TilemapBottomHalf() {
     let mut v1: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
@@ -4572,15 +4419,13 @@ pub unsafe extern "C" fn Kraid_UpdateBG2TilemapBottomHalf() {
     *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16) =
         (v0 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_RaiseKraidThroughFloor(mut k: uint16) {
+pub unsafe fn Kraid_RaiseKraidThroughFloor(mut k: uint16) {
     Kraid_RestrictSamusXtoFirstScreen_2();
     (*Get_Kraid(0 as ::core::ffi::c_int)).kraid_var_A =
         (0xa7c89a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     Kraid_UpdateBg2TilemapTopHalf();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Raise_LoadTilemapBottomAndShake() {
+pub unsafe fn Kraid_Raise_LoadTilemapBottomAndShake() {
     Kraid_RestrictSamusXtoFirstScreen_2();
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     (*E).kraid_var_A = (0xa7c8e0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
@@ -4590,8 +4435,7 @@ pub unsafe extern "C" fn Kraid_Raise_LoadTilemapBottomAndShake() {
     QueueMusic_Delayed8(5 as uint16);
     Kraid_UpdateBG2TilemapBottomHalf();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Raise_SpawnRandomEarthquakeProjs16() {
+pub unsafe fn Kraid_Raise_SpawnRandomEarthquakeProjs16() {
     Kraid_RestrictSamusXtoFirstScreen_2();
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     let mut v1: uint16 =
@@ -4607,8 +4451,7 @@ pub unsafe extern "C" fn Kraid_Raise_SpawnRandomEarthquakeProjs16() {
         (*E).kraid_var_F = 96 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Raise_SpawnRandomEarthquakeProjs8() {
+pub unsafe fn Kraid_Raise_SpawnRandomEarthquakeProjs8() {
     Kraid_RestrictSamusXtoFirstScreen_2();
     let mut E: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int);
     let mut v1: uint16 =
@@ -4624,8 +4467,7 @@ pub unsafe extern "C" fn Kraid_Raise_SpawnRandomEarthquakeProjs8() {
         (*E).kraid_var_F = 288 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_Raise_Handler() {
+pub unsafe fn Kraid_Raise_Handler() {
     Kraid_RestrictSamusXtoFirstScreen_2();
     if *((&raw mut g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -4666,8 +4508,7 @@ pub unsafe extern "C" fn Kraid_Raise_Handler() {
         (*E1).base.instruction_timer = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_SpawnRandomQuakeProjs() {
+pub unsafe fn Kraid_SpawnRandomQuakeProjs() {
     let mut v0: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0x5e5 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -4706,8 +4547,7 @@ pub unsafe extern "C" fn Kraid_SpawnRandomQuakeProjs() {
         v1,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Kraid_RestrictSamusXtoFirstScreen_2() {
+pub unsafe fn Kraid_RestrictSamusXtoFirstScreen_2() {
     if (*((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         - 256 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
@@ -4719,8 +4559,7 @@ pub unsafe extern "C" fn Kraid_RestrictSamusXtoFirstScreen_2() {
             as *mut uint16) = 256 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallKraidFunc(mut ea: uint32) {
+pub unsafe fn CallKraidFunc(mut ea: uint32) {
     let mut k: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xe54 as ::core::ffi::c_int as isize) as *mut uint16);
     match ea {
@@ -4939,8 +4778,7 @@ pub unsafe extern "C" fn CallKraidFunc(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_Init() {
+pub unsafe fn Phantoon_Init() {
     let mut j: int16 = 0;
     let mut k: uint16 = 0;
     let mut i: ::core::ffi::c_int = 4094 as ::core::ffi::c_int;
@@ -4996,8 +4834,7 @@ pub unsafe extern "C" fn Phantoon_Init() {
     );
     Phantoon2_Init();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon2_Init() {
+pub unsafe fn Phantoon2_Init() {
     let mut v6: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -5018,8 +4855,7 @@ pub unsafe extern "C" fn Phantoon2_Init() {
     (*v7.offset(3 as ::core::ffi::c_int as isize)).parameter_1 = 0 as uint16;
     (*v7.offset(3 as ::core::ffi::c_int as isize)).ai_var_C = -(1 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_Main() {
+pub unsafe fn Phantoon_Main() {
     Phantoon_Func_2(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -5063,8 +4899,7 @@ pub unsafe extern "C" fn Phantoon_Main() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_Func_1() {
+pub unsafe fn Phantoon_Func_1() {
     QueueSfx2_Max6(
         *(g_rom.offset(
             (((0xa7cded as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -5092,8 +4927,7 @@ pub unsafe extern "C" fn Phantoon_Func_1() {
     *((&raw mut g_ram as *mut uint8).offset(0x9032 as ::core::ffi::c_int as isize)
         as *mut uint16) = v0;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_Func_2(mut k: uint16) {
+pub unsafe fn Phantoon_Func_2(mut k: uint16) {
     if k == 0
         && *((&raw mut g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -5122,8 +4956,7 @@ pub unsafe extern "C" fn Phantoon_Func_2(mut k: uint16) {
                 == 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_Func_3(mut amt: int32) -> uint8 {
+pub unsafe fn Phantoon_Func_3(mut amt: int32) -> uint8 {
     let mut E: *mut Enemy_Phantoon = Get_Phantoon(0xc0 as ::core::ffi::c_int);
     let mut r18: uint16 = amt as uint16;
     let mut r20: uint16 = (amt >> 16 as ::core::ffi::c_int) as uint16;
@@ -5151,8 +4984,7 @@ pub unsafe extern "C" fn Phantoon_Func_3(mut amt: int32) -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_Func_4(mut k: uint16) {
+pub unsafe fn Phantoon_Func_4(mut k: uint16) {
     SpawnEprojWithGfx(
         0 as uint16,
         k,
@@ -5160,8 +4992,7 @@ pub unsafe extern "C" fn Phantoon_Func_4(mut k: uint16) {
     );
     QueueSfx3_Max6(0x1d as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_Func_5(mut k: uint16) {
+pub unsafe fn Phantoon_Func_5(mut k: uint16) {
     let mut i: ::core::ffi::c_int = 7 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         SpawnEprojWithGfx(
@@ -5173,8 +5004,7 @@ pub unsafe extern "C" fn Phantoon_Func_5(mut k: uint16) {
     }
     QueueSfx3_Max6(0x28 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_Func_6(mut k: uint16, mut a: uint16) {
+pub unsafe fn Phantoon_Func_6(mut k: uint16, mut a: uint16) {
     let mut v2: int16 = 0;
     let mut v3: int16 = 0;
     v2 = *(g_rom.offset(
@@ -5206,8 +5036,7 @@ pub unsafe extern "C" fn Phantoon_Func_6(mut k: uint16, mut a: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_Func_7(mut k: uint16) {
+pub unsafe fn Phantoon_Func_7(mut k: uint16) {
     let mut E: *mut Enemy_Phantoon =
         Get_Phantoon(k as ::core::ffi::c_int + 192 as ::core::ffi::c_int);
     let mut v3: bool = (*E).phant_var_B as ::core::ffi::c_int == 1 as ::core::ffi::c_int;
@@ -5273,8 +5102,7 @@ pub unsafe extern "C" fn Phantoon_Func_7(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_StartTrackingSamusAndInitEyeTimer() {
+pub unsafe fn Phantoon_StartTrackingSamusAndInitEyeTimer() {
     (*Get_Phantoon(0x80 as ::core::ffi::c_int)).phant_var_A = 0 as uint16;
     let mut E: *mut Enemy_Phantoon = Get_Phantoon(0 as ::core::ffi::c_int);
     (*E).base.instruction_timer = 1 as uint16;
@@ -5292,8 +5120,7 @@ pub unsafe extern "C" fn Phantoon_StartTrackingSamusAndInitEyeTimer() {
     (*E1).base.instruction_timer = 1 as uint16;
     (*E1).base.current_instruction = addr_kKraid_Ilist_CC9D as ::core::ffi::c_int as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_PickPatternForRound2() {
+pub unsafe fn Phantoon_PickPatternForRound2() {
     let mut v4: int16 = 0;
     let mut E: *mut Enemy_Phantoon = Get_Phantoon(0 as ::core::ffi::c_int);
     (*E).phant_var_E = 60 as uint16;
@@ -5346,8 +5173,7 @@ pub unsafe extern "C" fn Phantoon_PickPatternForRound2() {
             (0xa7d5e7 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_AdjustSpeedAndMoveInFigure8() {
+pub unsafe fn Phantoon_AdjustSpeedAndMoveInFigure8() {
     if (*Get_Phantoon(0x40 as ::core::ffi::c_int)).phant_var_C != 0 {
         Phantoon_AdjustSpeedRightSideClockwise();
         Phantoon_MoveInFigure8_RightSideClockwise(
@@ -5362,8 +5188,7 @@ pub unsafe extern "C" fn Phantoon_AdjustSpeedAndMoveInFigure8() {
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_AdjustSpeedLeftSideClockwise() {
+pub unsafe fn Phantoon_AdjustSpeedLeftSideClockwise() {
     let mut E: *mut Enemy_Phantoon = Get_Phantoon(0 as ::core::ffi::c_int);
     let mut phant_var_D: uint16 = (*E).phant_var_D;
     if phant_var_D != 0 {
@@ -5416,8 +5241,7 @@ pub unsafe extern "C" fn Phantoon_AdjustSpeedLeftSideClockwise() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_AdjustSpeedRightSideClockwise() {
+pub unsafe fn Phantoon_AdjustSpeedRightSideClockwise() {
     let mut E: *mut Enemy_Phantoon = Get_Phantoon(0 as ::core::ffi::c_int);
     let mut phant_var_D: uint16 = (*E).phant_var_D;
     if phant_var_D != 0 {
@@ -5472,8 +5296,7 @@ pub unsafe extern "C" fn Phantoon_AdjustSpeedRightSideClockwise() {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_MoveInFigure8_LeftSideClockwise(mut j: uint16, mut r20: uint16) {
+pub unsafe fn Phantoon_MoveInFigure8_LeftSideClockwise(mut j: uint16, mut r20: uint16) {
     let mut E: *mut Enemy_Phantoon = Get_Phantoon(0 as ::core::ffi::c_int);
     let mut n: ::core::ffi::c_int = (*E).phant_var_C as ::core::ffi::c_int;
     while n != 0 {
@@ -5497,8 +5320,7 @@ pub unsafe extern "C" fn Phantoon_MoveInFigure8_LeftSideClockwise(mut j: uint16,
         n -= 1;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_MoveInFigure8_RightSideClockwise(mut j: uint16, mut r20: uint16) {
+pub unsafe fn Phantoon_MoveInFigure8_RightSideClockwise(mut j: uint16, mut r20: uint16) {
     let mut E: *mut Enemy_Phantoon = Get_Phantoon(0 as ::core::ffi::c_int);
     let mut n: ::core::ffi::c_int =
         -((*E).phant_var_C as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int;
@@ -5520,8 +5342,7 @@ pub unsafe extern "C" fn Phantoon_MoveInFigure8_RightSideClockwise(mut j: uint16
         n -= 1;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_MoveInSwoopingPattern(mut k: uint16) {
+pub unsafe fn Phantoon_MoveInSwoopingPattern(mut k: uint16) {
     let mut phant_var_E: int16 = 0;
     let mut v4: uint16 = 0;
     let mut v5: uint16 = 0;
@@ -5626,8 +5447,7 @@ pub unsafe extern "C" fn Phantoon_MoveInSwoopingPattern(mut k: uint16) {
         (*E0).base.y_pos = 216 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_BeginSwoopingPattern(mut k: uint16) {
+pub unsafe fn Phantoon_BeginSwoopingPattern(mut k: uint16) {
     let mut E2: *mut Enemy_Phantoon = Get_Phantoon(0x80 as ::core::ffi::c_int);
     (*E2).phant_var_C = 1024 as uint16;
     (*E2).phant_var_D = 1024 as uint16;
@@ -5636,8 +5456,7 @@ pub unsafe extern "C" fn Phantoon_BeginSwoopingPattern(mut k: uint16) {
     (*E).phant_var_F = (0xa7d678 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).phant_var_E = 360 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_ChangeEyeSpriteBasedOnSamusDist() {
+pub unsafe fn Phantoon_ChangeEyeSpriteBasedOnSamusDist() {
     let mut v0: uint16 = (2 as ::core::ffi::c_int
         * DetermineDirectionOfSamusFromEnemy() as ::core::ffi::c_int)
         as uint16;
@@ -5650,8 +5469,7 @@ pub unsafe extern "C" fn Phantoon_ChangeEyeSpriteBasedOnSamusDist() {
     ) as *const uint8 as *mut uint16)
         .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_StartDeathSequence(mut k: uint16) {
+pub unsafe fn Phantoon_StartDeathSequence(mut k: uint16) {
     let mut v3: int16 = 0;
     let mut E: *mut Enemy_Phantoon = Get_Phantoon(k as ::core::ffi::c_int);
     if (*E).phant_var_F as ::core::ffi::c_int
@@ -5686,8 +5504,7 @@ pub unsafe extern "C" fn Phantoon_StartDeathSequence(mut k: uint16) {
     *fresh29 = (*fresh29 as ::core::ffi::c_int | 0x4000 as ::core::ffi::c_int) as uint16;
     (*Get_Phantoon(0xc0 as ::core::ffi::c_int)).phant_parameter_2 = 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_FadeOut(mut a: uint16) {
+pub unsafe fn Phantoon_FadeOut(mut a: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
@@ -5702,8 +5519,7 @@ pub unsafe extern "C" fn Phantoon_FadeOut(mut a: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_FadeIn(mut a: uint16) {
+pub unsafe fn Phantoon_FadeIn(mut a: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
@@ -5718,8 +5534,7 @@ pub unsafe extern "C" fn Phantoon_FadeIn(mut a: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_Spawn8FireballsInCircleAtStart(mut k: uint16) {
+pub unsafe fn Phantoon_Spawn8FireballsInCircleAtStart(mut k: uint16) {
     let mut EK: *mut Enemy_Phantoon = Get_Phantoon(k as ::core::ffi::c_int);
     let mut v2: bool = (*EK).phant_var_E as ::core::ffi::c_int == 1 as ::core::ffi::c_int;
     (*EK).phant_var_E = (*EK).phant_var_E.wrapping_sub(1);
@@ -5752,8 +5567,7 @@ pub unsafe extern "C" fn Phantoon_Spawn8FireballsInCircleAtStart(mut k: uint16) 
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_WaitBetweenSpawningAndSpinningFireballs(mut k: uint16) {
+pub unsafe fn Phantoon_WaitBetweenSpawningAndSpinningFireballs(mut k: uint16) {
     let mut E: *mut Enemy_Phantoon = Get_Phantoon(k as ::core::ffi::c_int);
     let mut v2: bool = (*E).phant_var_E as ::core::ffi::c_int == 1 as ::core::ffi::c_int;
     (*E).phant_var_E = (*E).phant_var_E.wrapping_sub(1);
@@ -5766,8 +5580,7 @@ pub unsafe extern "C" fn Phantoon_WaitBetweenSpawningAndSpinningFireballs(mut k:
             (0xa7d508 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_SpawnFireballsBeforeFight(mut k: uint16) {
+pub unsafe fn Phantoon_SpawnFireballsBeforeFight(mut k: uint16) {
     let mut EK: *mut Enemy_Phantoon = Get_Phantoon(k as ::core::ffi::c_int);
     let mut v3: bool = (*EK).phant_var_E as ::core::ffi::c_int == 1 as ::core::ffi::c_int;
     (*EK).phant_var_E = (*EK).phant_var_E.wrapping_sub(1);
@@ -5790,8 +5603,7 @@ pub unsafe extern "C" fn Phantoon_SpawnFireballsBeforeFight(mut k: uint16) {
         QueueMusic_Delayed8(5 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_WavyFadeIn(mut k: uint16) {
+pub unsafe fn Phantoon_WavyFadeIn(mut k: uint16) {
     Phantoon_FadeIn(0xc as uint16);
     if Phantoon_Func_3(
         ((g_word_A7CD9D as uint32) << 16 as ::core::ffi::c_int | g_word_A7CD9B as uint32) as int32,
@@ -5813,8 +5625,7 @@ pub unsafe extern "C" fn Phantoon_WavyFadeIn(mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_PickPatternForRound1(mut k: uint16) {
+pub unsafe fn Phantoon_PickPatternForRound1(mut k: uint16) {
     let mut EK: *mut Enemy_Phantoon = Get_Phantoon(k as ::core::ffi::c_int);
     let mut v2: bool = (*EK).phant_var_E as ::core::ffi::c_int == 1 as ::core::ffi::c_int;
     (*EK).phant_var_E = (*EK).phant_var_E.wrapping_sub(1);
@@ -5854,8 +5665,7 @@ pub unsafe extern "C" fn Phantoon_PickPatternForRound1(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_MovePhantoonInFigure8ThenOpenEye(mut k: uint16) {
+pub unsafe fn Phantoon_MovePhantoonInFigure8ThenOpenEye(mut k: uint16) {
     Phantoon_AdjustSpeedAndMoveInFigure8();
     Phantoon_Func_7(k);
     let mut E: *mut Enemy_Phantoon = Get_Phantoon(0x40 as ::core::ffi::c_int);
@@ -5872,8 +5682,7 @@ pub unsafe extern "C" fn Phantoon_MovePhantoonInFigure8ThenOpenEye(mut k: uint16
         Phantoon_Func_5(k);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_EyeFollowsSamusUntilTimerRunsOut(mut k: uint16) {
+pub unsafe fn Phantoon_EyeFollowsSamusUntilTimerRunsOut(mut k: uint16) {
     let mut EK: *mut Enemy_Phantoon = Get_Phantoon(k as ::core::ffi::c_int);
     let mut v2: bool = (*EK).phant_var_E as ::core::ffi::c_int == 1 as ::core::ffi::c_int;
     (*EK).phant_var_E = (*EK).phant_var_E.wrapping_sub(1);
@@ -5905,8 +5714,7 @@ pub unsafe extern "C" fn Phantoon_EyeFollowsSamusUntilTimerRunsOut(mut k: uint16
     }
     Phantoon_ChangeEyeSpriteBasedOnSamusDist();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_BecomesSolidAndBodyVuln(mut v0: uint16) {
+pub unsafe fn Phantoon_BecomesSolidAndBodyVuln(mut v0: uint16) {
     Phantoon_ChangeEyeSpriteBasedOnSamusDist();
     let ref mut fresh21 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1988 as ::core::ffi::c_int as isize) as *mut uint16);
@@ -5916,8 +5724,7 @@ pub unsafe extern "C" fn Phantoon_BecomesSolidAndBodyVuln(mut v0: uint16) {
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.current_instruction = addr_kKraid_Ilist_CC47 as ::core::ffi::c_int as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_IsSwooping(mut k: uint16) {
+pub unsafe fn Phantoon_IsSwooping(mut k: uint16) {
     Phantoon_ChangeEyeSpriteBasedOnSamusDist();
     Phantoon_MoveInSwoopingPattern(k);
     let mut EK: *mut Enemy_Phantoon = Get_Phantoon(k as ::core::ffi::c_int);
@@ -5945,8 +5752,7 @@ pub unsafe extern "C" fn Phantoon_IsSwooping(mut k: uint16) {
             0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_FadeoutWithSwoop(mut k: uint16) {
+pub unsafe fn Phantoon_FadeoutWithSwoop(mut k: uint16) {
     Phantoon_MoveInSwoopingPattern(k);
     Phantoon_FadeOut(0xc as uint16);
     if (*Get_Phantoon(0x40 as ::core::ffi::c_int)).phant_var_F != 0 {
@@ -5956,8 +5762,7 @@ pub unsafe extern "C" fn Phantoon_FadeoutWithSwoop(mut k: uint16) {
         (*E).phant_var_E = 120 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_WaitAfterFadeOut(mut k: uint16) {
+pub unsafe fn Phantoon_WaitAfterFadeOut(mut k: uint16) {
     let mut E: *mut Enemy_Phantoon = Get_Phantoon(k as ::core::ffi::c_int);
     let mut v2: bool = (*E).phant_var_E as ::core::ffi::c_int == 1 as ::core::ffi::c_int;
     (*E).phant_var_E = (*E).phant_var_E.wrapping_sub(1);
@@ -5968,8 +5773,7 @@ pub unsafe extern "C" fn Phantoon_WaitAfterFadeOut(mut k: uint16) {
             (0xa7d6e2 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_MoveLeftOrRightAndPickEyeOpenPatt(mut k: uint16) {
+pub unsafe fn Phantoon_MoveLeftOrRightAndPickEyeOpenPatt(mut k: uint16) {
     let mut E: *mut Enemy_Phantoon = Get_Phantoon(0 as ::core::ffi::c_int);
     if NextRandom() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
         (*E).phant_var_A = 136 as uint16;
@@ -5989,16 +5793,14 @@ pub unsafe extern "C" fn Phantoon_MoveLeftOrRightAndPickEyeOpenPatt(mut k: uint1
         (0xa7d72d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E1).phant_var_F = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_FadeInBeforeFigure8(mut k: uint16) {
+pub unsafe fn Phantoon_FadeInBeforeFigure8(mut k: uint16) {
     Phantoon_FadeIn(0xc as uint16);
     if (*Get_Phantoon(0x40 as ::core::ffi::c_int)).phant_var_F != 0 {
         (*Get_Phantoon(0 as ::core::ffi::c_int)).phant_var_F =
             (0xa7d5e7 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_BecomeSolidAfterRainingFireballs(mut k: uint16) {
+pub unsafe fn Phantoon_BecomeSolidAfterRainingFireballs(mut k: uint16) {
     let mut E1: *mut Enemy_Phantoon = Get_Phantoon(0x40 as ::core::ffi::c_int);
     (*E1).phant_var_F = 0 as uint16;
     let ref mut fresh20 = *((&raw mut g_ram as *mut uint8)
@@ -6012,8 +5814,7 @@ pub unsafe extern "C" fn Phantoon_BecomeSolidAfterRainingFireballs(mut k: uint16
     (*Get_Phantoon(k as ::core::ffi::c_int)).phant_var_F =
         (0xa7d767 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_FadeInDuringFireballRain(mut k: uint16) {
+pub unsafe fn Phantoon_FadeInDuringFireballRain(mut k: uint16) {
     Phantoon_FadeIn(1 as uint16);
     if (*Get_Phantoon(0x40 as ::core::ffi::c_int)).phant_var_F != 0 {
         let mut E: *mut Enemy_Phantoon = Get_Phantoon(0 as ::core::ffi::c_int);
@@ -6025,8 +5826,7 @@ pub unsafe extern "C" fn Phantoon_FadeInDuringFireballRain(mut k: uint16) {
         (*E).phant_var_E = 90 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_FollowSamusWithEyeDuringFireballRain(mut k: uint16) {
+pub unsafe fn Phantoon_FollowSamusWithEyeDuringFireballRain(mut k: uint16) {
     let mut EK: *mut Enemy_Phantoon = Get_Phantoon(k as ::core::ffi::c_int);
     let mut v2: bool = (*EK).phant_var_E as ::core::ffi::c_int == 1 as ::core::ffi::c_int;
     (*EK).phant_var_E = (*EK).phant_var_E.wrapping_sub(1);
@@ -6060,8 +5860,7 @@ pub unsafe extern "C" fn Phantoon_FollowSamusWithEyeDuringFireballRain(mut k: ui
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_FadeOutDuringFireballRain(mut k: uint16) {
+pub unsafe fn Phantoon_FadeOutDuringFireballRain(mut k: uint16) {
     Phantoon_FadeOut(0xc as uint16);
     if (*Get_Phantoon(0x40 as ::core::ffi::c_int)).phant_var_F != 0 {
         let mut E: *mut Enemy_Phantoon = Get_Phantoon(k as ::core::ffi::c_int);
@@ -6076,8 +5875,7 @@ pub unsafe extern "C" fn Phantoon_FadeOutDuringFireballRain(mut k: uint16) {
             .offset((NextRandom() as ::core::ffi::c_int & 7 as ::core::ffi::c_int) as isize);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_SpawnRainingFireballs(mut k: uint16) {
+pub unsafe fn Phantoon_SpawnRainingFireballs(mut k: uint16) {
     let mut EK: *mut Enemy_Phantoon = Get_Phantoon(k as ::core::ffi::c_int);
     let mut v2: bool = (*EK).phant_var_E as ::core::ffi::c_int == 1 as ::core::ffi::c_int;
     (*EK).phant_var_E = (*EK).phant_var_E.wrapping_sub(1);
@@ -6116,8 +5914,7 @@ pub unsafe extern "C" fn Phantoon_SpawnRainingFireballs(mut k: uint16) {
         Phantoon_Func_6(k, a);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_FadeOutBeforeFirstFireballRain(mut k: uint16) {
+pub unsafe fn Phantoon_FadeOutBeforeFirstFireballRain(mut k: uint16) {
     Phantoon_FadeOut(0xc as uint16);
     Phantoon_AdjustSpeedAndMoveInFigure8();
     Phantoon_Func_7(k);
@@ -6141,8 +5938,7 @@ pub unsafe extern "C" fn Phantoon_FadeOutBeforeFirstFireballRain(mut k: uint16) 
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_FadeOutBeforeEnrage(mut k: uint16) {
+pub unsafe fn Phantoon_FadeOutBeforeEnrage(mut k: uint16) {
     Phantoon_FadeOut(0xc as uint16);
     if (*Get_Phantoon(0x40 as ::core::ffi::c_int)).phant_var_F != 0 {
         let mut E: *mut Enemy_Phantoon = Get_Phantoon(k as ::core::ffi::c_int);
@@ -6151,8 +5947,7 @@ pub unsafe extern "C" fn Phantoon_FadeOutBeforeEnrage(mut k: uint16) {
         (*E).phant_var_E = 120 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_MoveEnragedPhantoonToTopCenter(mut k: uint16) {
+pub unsafe fn Phantoon_MoveEnragedPhantoonToTopCenter(mut k: uint16) {
     let mut E: *mut Enemy_Phantoon = Get_Phantoon(k as ::core::ffi::c_int);
     let mut v2: bool = (*E).phant_var_E as ::core::ffi::c_int == 1 as ::core::ffi::c_int;
     (*E).phant_var_E = (*E).phant_var_E.wrapping_sub(1);
@@ -6167,8 +5962,7 @@ pub unsafe extern "C" fn Phantoon_MoveEnragedPhantoonToTopCenter(mut k: uint16) 
         (*Get_Phantoon(0x40 as ::core::ffi::c_int)).phant_var_F = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_FadeInEnragedPhantoon(mut k: uint16) {
+pub unsafe fn Phantoon_FadeInEnragedPhantoon(mut k: uint16) {
     Phantoon_FadeIn(0xc as uint16);
     let mut E: *mut Enemy_Phantoon = Get_Phantoon(0x40 as ::core::ffi::c_int);
     if (*E).phant_var_F != 0 {
@@ -6178,8 +5972,7 @@ pub unsafe extern "C" fn Phantoon_FadeInEnragedPhantoon(mut k: uint16) {
         (*E).phant_var_F = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_Enraged(mut k: uint16) {
+pub unsafe fn Phantoon_Enraged(mut k: uint16) {
     let mut v5: int16 = 0;
     let mut v8: int16 = 0;
     let mut E: *mut Enemy_Phantoon = Get_Phantoon(k as ::core::ffi::c_int);
@@ -6236,8 +6029,7 @@ pub unsafe extern "C" fn Phantoon_Enraged(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_FadeoutAfterEnrage(mut k: uint16) {
+pub unsafe fn Phantoon_FadeoutAfterEnrage(mut k: uint16) {
     Phantoon_FadeOut(0xc as uint16);
     if (*Get_Phantoon(0x40 as ::core::ffi::c_int)).phant_var_F != 0 {
         let mut E: *mut Enemy_Phantoon = Get_Phantoon(k as ::core::ffi::c_int);
@@ -6246,8 +6038,7 @@ pub unsafe extern "C" fn Phantoon_FadeoutAfterEnrage(mut k: uint16) {
         (*E).phant_var_E = 120 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_CompleteSwoopAfterFatalShot(mut k: uint16) {
+pub unsafe fn Phantoon_CompleteSwoopAfterFatalShot(mut k: uint16) {
     Phantoon_ChangeEyeSpriteBasedOnSamusDist();
     Phantoon_MoveInSwoopingPattern(k);
     let mut x_pos: uint16 = (*Get_Phantoon(0 as ::core::ffi::c_int)).base.x_pos;
@@ -6260,8 +6051,7 @@ pub unsafe extern "C" fn Phantoon_CompleteSwoopAfterFatalShot(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_DyingPhantoonFadeInOut(mut k: uint16) {
+pub unsafe fn Phantoon_DyingPhantoonFadeInOut(mut k: uint16) {
     let mut E1: *mut Enemy_Phantoon = Get_Phantoon(0x40 as ::core::ffi::c_int);
     if (*E1).phant_var_C as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 as ::core::ffi::c_int
     {
@@ -6288,8 +6078,7 @@ pub unsafe extern "C" fn Phantoon_DyingPhantoonFadeInOut(mut k: uint16) {
         (*Get_Phantoon(0 as ::core::ffi::c_int)).phant_var_A = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_DyingPhantoonExplosions(mut k: uint16) {
+pub unsafe fn Phantoon_DyingPhantoonExplosions(mut k: uint16) {
     let mut EK: *mut Enemy_Phantoon = Get_Phantoon(k as ::core::ffi::c_int);
     let mut v2: bool = (*EK).phant_var_E as ::core::ffi::c_int == 1 as ::core::ffi::c_int;
     (*EK).phant_var_E = (*EK).phant_var_E.wrapping_sub(1);
@@ -6361,8 +6150,7 @@ pub unsafe extern "C" fn Phantoon_DyingPhantoonExplosions(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_WavyDyingPhantoonAndCry(mut k: uint16) {
+pub unsafe fn Phantoon_WavyDyingPhantoonAndCry(mut k: uint16) {
     let mut Phantoon: *mut Enemy_Phantoon = ::core::ptr::null_mut::<Enemy_Phantoon>();
     sub_88E487(1 as uint16, g_word_A7CDA3);
     (*Get_Phantoon(0xc0 as ::core::ffi::c_int)).phant_var_D = 0 as uint16;
@@ -6382,8 +6170,7 @@ pub unsafe extern "C" fn Phantoon_WavyDyingPhantoonAndCry(mut k: uint16) {
     (*Get_Phantoon(0xc0 as ::core::ffi::c_int)).base.properties = v2;
     QueueSfx2_Max6(0x7e as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_DyingFadeOut(mut k: uint16) {
+pub unsafe fn Phantoon_DyingFadeOut(mut k: uint16) {
     Phantoon_Func_3(
         ((g_word_A7CDA1 as uint32) << 16 as ::core::ffi::c_int | g_word_A7CD9F as uint32) as int32,
     );
@@ -6416,8 +6203,7 @@ pub unsafe extern "C" fn Phantoon_DyingFadeOut(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_AlmostDead(mut k: uint16) {
+pub unsafe fn Phantoon_AlmostDead(mut k: uint16) {
     *(&raw mut g_ram as *mut uint8).offset(0x57 as ::core::ffi::c_int as isize) = 0 as uint8;
     let mut E1: *mut Enemy_Phantoon = Get_Phantoon(0x40 as ::core::ffi::c_int);
     (*E1).phant_parameter_1 = 0 as uint16;
@@ -6452,8 +6238,7 @@ pub unsafe extern "C" fn Phantoon_AlmostDead(mut k: uint16) {
     v5 = (v5 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     let fresh19 = v5;
     v5 = v5.wrapping_add(1);
-    *(&raw mut (*(gVramWriteEntry
-        as unsafe extern "C" fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
+    *(&raw mut (*(gVramWriteEntry as unsafe fn(::core::ffi::c_int) -> *mut VramWriteEntry)(
         fresh19 as ::core::ffi::c_int,
     ))
     .size as *mut uint8)
@@ -6462,8 +6247,7 @@ pub unsafe extern "C" fn Phantoon_AlmostDead(mut k: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16) =
         (v5 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_Dead(mut k: uint16) {
+pub unsafe fn Phantoon_Dead(mut k: uint16) {
     let mut EK: *mut Enemy_Phantoon = Get_Phantoon(k as ::core::ffi::c_int);
     if (*EK).phant_var_E != 0 {
         (*EK).phant_var_E = (*EK).phant_var_E.wrapping_sub(1);
@@ -6503,8 +6287,7 @@ pub unsafe extern "C" fn Phantoon_Dead(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_Func_8() -> uint8 {
+pub unsafe fn Phantoon_Func_8() -> uint8 {
     let mut E: *mut Enemy_Phantoon = Get_Phantoon(0x40 as ::core::ffi::c_int);
     if ((*E).phant_var_D as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16
         as ::core::ffi::c_int
@@ -6539,8 +6322,7 @@ pub unsafe extern "C" fn Phantoon_Func_8() -> uint8 {
         return 1 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_SetColorBasedOnHp() -> uint8 {
+pub unsafe fn Phantoon_SetColorBasedOnHp() -> uint8 {
     let mut Entry: PairU16 = PairU16 { k: 0, j: 0 };
     let mut E: *mut Enemy_Phantoon = Get_Phantoon(0x40 as ::core::ffi::c_int);
     if ((*E).phant_var_D as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16
@@ -6581,8 +6363,7 @@ pub unsafe extern "C" fn Phantoon_SetColorBasedOnHp() -> uint8 {
         return 1 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_SetColorBasedOnHp_FindEntry(mut k: uint16) -> PairU16 {
+pub unsafe fn Phantoon_SetColorBasedOnHp_FindEntry(mut k: uint16) -> PairU16 {
     let mut r24: uint16 = k;
     let mut r18: uint16 = 312 as uint16;
     let mut r20: uint16 = 312 as uint16;
@@ -6616,8 +6397,7 @@ pub unsafe extern "C" fn Phantoon_SetColorBasedOnHp_FindEntry(mut k: uint16) -> 
     ) as *const uint16;
     return MakePairU16(r24, *v1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_Func_9() -> uint8 {
+pub unsafe fn Phantoon_Func_9() -> uint8 {
     let mut E: *mut Enemy_Phantoon = Get_Phantoon(0x40 as ::core::ffi::c_int);
     if ((*E).phant_var_D as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16
         as ::core::ffi::c_int
@@ -6650,8 +6430,7 @@ pub unsafe extern "C" fn Phantoon_Func_9() -> uint8 {
         return 1 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_Func_10_CalculateNthTransitionColorFromXtoY(
+pub unsafe fn Phantoon_Func_10_CalculateNthTransitionColorFromXtoY(
     mut a: uint16,
     mut k: uint16,
     mut j: uint16,
@@ -6678,8 +6457,7 @@ pub unsafe extern "C" fn Phantoon_Func_10_CalculateNthTransitionColorFromXtoY(
         ) as ::core::ffi::c_int)
             << 10 as ::core::ffi::c_int)) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_CalculateNthTransitionColorComponentFromXtoY(
+pub unsafe fn Phantoon_CalculateNthTransitionColorComponentFromXtoY(
     mut a: uint16,
     mut k: uint16,
     mut j: uint16,
@@ -6711,16 +6489,14 @@ pub unsafe extern "C" fn Phantoon_CalculateNthTransitionColorComponentFromXtoY(
         as ::core::ffi::c_int
         >> 8 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_Hurt() {
+pub unsafe fn Phantoon_Hurt() {
     let mut Entry: PairU16 = PairU16 { k: 0, j: 0 };
     let mut E0: *mut Enemy_Phantoon = Get_Phantoon(0 as ::core::ffi::c_int);
     if !((*E0).base.flash_timer as ::core::ffi::c_int == 8 as ::core::ffi::c_int) {
         if (*E0).base.frame_counter as ::core::ffi::c_int & 2 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
         {
-            if *(&raw mut (*(Get_Phantoon
-                as unsafe extern "C" fn(::core::ffi::c_int) -> *mut Enemy_Phantoon)(
+            if *(&raw mut (*(Get_Phantoon as unsafe fn(::core::ffi::c_int) -> *mut Enemy_Phantoon)(
                 0x80 as ::core::ffi::c_int,
             ))
             .phant_parameter_2 as *mut uint8)
@@ -6734,8 +6510,7 @@ pub unsafe extern "C" fn Phantoon_Hurt() {
                 return;
             }
         } else {
-            if *(&raw mut (*(Get_Phantoon
-                as unsafe extern "C" fn(::core::ffi::c_int) -> *mut Enemy_Phantoon)(
+            if *(&raw mut (*(Get_Phantoon as unsafe fn(::core::ffi::c_int) -> *mut Enemy_Phantoon)(
                 0x80 as ::core::ffi::c_int,
             ))
             .phant_parameter_2 as *mut uint8)
@@ -6785,12 +6560,10 @@ pub unsafe extern "C" fn Phantoon_Hurt() {
     (*E3).phant_parameter_2 = *(&raw mut (*E3).phant_parameter_2 as *mut uint8)
         .offset(0 as ::core::ffi::c_int as isize) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_Touch() {
+pub unsafe fn Phantoon_Touch() {
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Phantoon_Shot() {
+pub unsafe fn Phantoon_Shot() {
     let mut E2_0: *mut Enemy_Phantoon = ::core::ptr::null_mut::<Enemy_Phantoon>();
     let mut v9: uint16 = 0;
     let mut current_block: u64;
@@ -6961,8 +6734,7 @@ pub unsafe extern "C" fn Phantoon_Shot() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Init() {
+pub unsafe fn Etecoon_Init() {
     let mut E: *mut Enemy_Etecoon = Get_Etecoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -6976,8 +6748,7 @@ pub unsafe extern "C" fn Etecoon_Init() {
     (*E).etecoon_var_F = (0xa7e9af as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).etecoon_var_E = -(1 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Main() {
+pub unsafe fn Etecoon_Main() {
     let mut E: *mut Enemy_Etecoon = Get_Etecoon(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -6996,8 +6767,7 @@ pub unsafe extern "C" fn Etecoon_Main() {
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Func_1(mut k: uint16) {
+pub unsafe fn Etecoon_Func_1(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
         as *mut uint16)
         != 0
@@ -7011,8 +6781,7 @@ pub unsafe extern "C" fn Etecoon_Func_1(mut k: uint16) {
             + 128 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Func_2(mut k: uint16) -> uint8 {
+pub unsafe fn Etecoon_Func_2(mut k: uint16) -> uint8 {
     let mut E: *mut Enemy_Etecoon = Get_Etecoon(k as ::core::ffi::c_int);
     return Enemy_MoveRight_IgnoreSlopes(
         k,
@@ -7020,8 +6789,7 @@ pub unsafe extern "C" fn Etecoon_Func_2(mut k: uint16) -> uint8 {
             as int32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Func_3(mut k: uint16) -> uint8 {
+pub unsafe fn Etecoon_Func_3(mut k: uint16) -> uint8 {
     let mut E: *mut Enemy_Etecoon = Get_Etecoon(k as ::core::ffi::c_int);
     let mut amt: int32 = (((*E).etecoon_var_A as uint32) << 16 as ::core::ffi::c_int
         | (*E).etecoon_var_B as uint32) as int32;
@@ -7041,8 +6809,7 @@ pub unsafe extern "C" fn Etecoon_Func_3(mut k: uint16) -> uint8 {
     }
     return Enemy_MoveDown(k, amt);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Func_4(mut k: uint16) {
+pub unsafe fn Etecoon_Func_4(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x797 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
     {
@@ -7075,8 +6842,7 @@ pub unsafe extern "C" fn Etecoon_Func_4(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Func_5(mut k: uint16) {
+pub unsafe fn Etecoon_Func_5(mut k: uint16) {
     let mut E: *mut Enemy_Etecoon = Get_Etecoon(k as ::core::ffi::c_int);
     let mut v2: bool = (*E).etecoon_var_E as ::core::ffi::c_int == 1 as ::core::ffi::c_int;
     (*E).etecoon_var_E = (*E).etecoon_var_E.wrapping_sub(1);
@@ -7100,8 +6866,7 @@ pub unsafe extern "C" fn Etecoon_Func_5(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Func_6(mut k: uint16) {
+pub unsafe fn Etecoon_Func_6(mut k: uint16) {
     if Etecoon_Func_3(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         let mut E: *mut Enemy_Etecoon = Get_Etecoon(k as ::core::ffi::c_int);
         if (*E).etecoon_var_A as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -7142,8 +6907,7 @@ pub unsafe extern "C" fn Etecoon_Func_6(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Func_7(mut k: uint16) {
+pub unsafe fn Etecoon_Func_7(mut k: uint16) {
     let mut E: *mut Enemy_Etecoon = Get_Etecoon(k as ::core::ffi::c_int);
     let mut v2: bool = (*E).etecoon_var_E as ::core::ffi::c_int == 1 as ::core::ffi::c_int;
     (*E).etecoon_var_E = (*E).etecoon_var_E.wrapping_sub(1);
@@ -7168,8 +6932,7 @@ pub unsafe extern "C" fn Etecoon_Func_7(mut k: uint16) {
         (*E).etecoon_var_B = g_word_A7E902;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Func_8(mut k: uint16) {
+pub unsafe fn Etecoon_Func_8(mut k: uint16) {
     if Etecoon_Func_2(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         let mut E: *mut Enemy_Etecoon = Get_Etecoon(k as ::core::ffi::c_int);
         (*E).etecoon_var_C = g_word_A7E908;
@@ -7181,8 +6944,7 @@ pub unsafe extern "C" fn Etecoon_Func_8(mut k: uint16) {
         (*E).etecoon_parameter_1 = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Func_9(mut k: uint16) {
+pub unsafe fn Etecoon_Func_9(mut k: uint16) {
     if EnemyFunc_BBBF(
         k,
         ((32 as ::core::ffi::c_int as uint32) << 16 as ::core::ffi::c_int
@@ -7198,8 +6960,7 @@ pub unsafe extern "C" fn Etecoon_Func_9(mut k: uint16) {
         Etecoon_Func_2(k);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Func_10(mut k: uint16) {
+pub unsafe fn Etecoon_Func_10(mut k: uint16) {
     Etecoon_Func_1(k);
     if Etecoon_Func_2(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         let mut E: *mut Enemy_Etecoon = Get_Etecoon(k as ::core::ffi::c_int);
@@ -7241,8 +7002,7 @@ pub unsafe extern "C" fn Etecoon_Func_10(mut k: uint16) {
         (*E_0).etecoon_var_B = g_word_A7E902;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Func_11(mut k: uint16) {
+pub unsafe fn Etecoon_Func_11(mut k: uint16) {
     Etecoon_Func_1(k);
     let mut E: *mut Enemy_Etecoon = Get_Etecoon(k as ::core::ffi::c_int);
     let mut v2: bool = (*E).etecoon_var_E as ::core::ffi::c_int == 1 as ::core::ffi::c_int;
@@ -7270,13 +7030,12 @@ pub unsafe extern "C" fn Etecoon_Func_11(mut k: uint16) {
 }
 static mut funcs_A2A79: [Option<Func_Y_V>; 3] = unsafe {
     [
-        Some(Etecoon_Func_13 as unsafe extern "C" fn(uint16) -> ()),
-        Some(Etecoon_Func_14 as unsafe extern "C" fn(uint16) -> ()),
-        Some(Etecoon_Func_15 as unsafe extern "C" fn(uint16) -> ()),
+        Some(Etecoon_Func_13 as unsafe fn(uint16) -> ()),
+        Some(Etecoon_Func_14 as unsafe fn(uint16) -> ()),
+        Some(Etecoon_Func_15 as unsafe fn(uint16) -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Func_12(mut k: uint16) {
+pub unsafe fn Etecoon_Func_12(mut k: uint16) {
     let mut E: *mut Enemy_Etecoon = Get_Etecoon(k as ::core::ffi::c_int);
     let mut v2: bool = (*E).etecoon_var_E as ::core::ffi::c_int == 1 as ::core::ffi::c_int;
     (*E).etecoon_var_E = (*E).etecoon_var_E.wrapping_sub(1);
@@ -7293,24 +7052,21 @@ pub unsafe extern "C" fn Etecoon_Func_12(mut k: uint16) {
             .instruction_timer = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Func_13(mut j: uint16) {
+pub unsafe fn Etecoon_Func_13(mut j: uint16) {
     let mut E: *mut Enemy_Etecoon = Get_Etecoon(j as ::core::ffi::c_int);
     (*E).etecoon_var_F = (0xa7ec97 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).base.current_instruction = addr_stru_A7E828 as ::core::ffi::c_int as uint16;
     (*E).etecoon_var_C = g_word_A7E90C;
     (*E).etecoon_var_D = g_word_A7E90E;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Func_14(mut j: uint16) {
+pub unsafe fn Etecoon_Func_14(mut j: uint16) {
     let mut E: *mut Enemy_Etecoon = Get_Etecoon(j as ::core::ffi::c_int);
     (*E).etecoon_var_F = (0xa7ecbb as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).base.current_instruction = addr_stru_A7E880 as ::core::ffi::c_int as uint16;
     (*E).etecoon_var_C = g_word_A7E908;
     (*E).etecoon_var_D = g_word_A7E90A;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Func_15(mut j: uint16) {
+pub unsafe fn Etecoon_Func_15(mut j: uint16) {
     let mut E: *mut Enemy_Etecoon = Get_Etecoon(j as ::core::ffi::c_int);
     (*E).etecoon_var_F = (0xa7ed75 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     (*E).base.current_instruction =
@@ -7318,8 +7074,7 @@ pub unsafe extern "C" fn Etecoon_Func_15(mut j: uint16) {
     (*E).etecoon_var_C = g_word_A7E908;
     (*E).etecoon_var_D = g_word_A7E90A;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Func_16(mut k: uint16) {
+pub unsafe fn Etecoon_Func_16(mut k: uint16) {
     Etecoon_Func_2(k);
     let mut E: *mut Enemy_Etecoon = Get_Etecoon(k as ::core::ffi::c_int);
     if (*E).base.x_pos as ::core::ffi::c_int - 537 as ::core::ffi::c_int
@@ -7333,8 +7088,7 @@ pub unsafe extern "C" fn Etecoon_Func_16(mut k: uint16) {
         (*E).base.current_instruction = addr_kEtecoon_Ilist_E854 as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Func_17(mut k: uint16) {
+pub unsafe fn Etecoon_Func_17(mut k: uint16) {
     Etecoon_Func_2(k);
     let mut E: *mut Enemy_Etecoon = Get_Etecoon(k as ::core::ffi::c_int);
     if (*E).base.x_pos as ::core::ffi::c_int - 600 as ::core::ffi::c_int
@@ -7348,8 +7102,7 @@ pub unsafe extern "C" fn Etecoon_Func_17(mut k: uint16) {
         (*E).base.current_instruction = addr_kEtecoon_Ilist_E854 as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Func_18(mut k: uint16) {
+pub unsafe fn Etecoon_Func_18(mut k: uint16) {
     Etecoon_Func_2(k);
     let mut E: *mut Enemy_Etecoon = Get_Etecoon(k as ::core::ffi::c_int);
     if (*E).base.x_pos as ::core::ffi::c_int - 600 as ::core::ffi::c_int
@@ -7364,8 +7117,7 @@ pub unsafe extern "C" fn Etecoon_Func_18(mut k: uint16) {
         (*E).base.current_instruction = addr_stru_A7E898 as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Func_19(mut k: uint16) {
+pub unsafe fn Etecoon_Func_19(mut k: uint16) {
     Etecoon_Func_2(k);
     Etecoon_Func_3(k);
     let mut E: *mut Enemy_Etecoon = Get_Etecoon(k as ::core::ffi::c_int);
@@ -7379,8 +7131,7 @@ pub unsafe extern "C" fn Etecoon_Func_19(mut k: uint16) {
             (0xa7ed2a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Func_20(mut k: uint16) {
+pub unsafe fn Etecoon_Func_20(mut k: uint16) {
     Etecoon_Func_2(k);
     let mut E: *mut Enemy_Etecoon = Get_Etecoon(k as ::core::ffi::c_int);
     if (*E).base.x_pos as ::core::ffi::c_int - 840 as ::core::ffi::c_int
@@ -7395,8 +7146,7 @@ pub unsafe extern "C" fn Etecoon_Func_20(mut k: uint16) {
         (*E).etecoon_var_B = g_word_A7E906;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Func_21(mut k: uint16) {
+pub unsafe fn Etecoon_Func_21(mut k: uint16) {
     Etecoon_Func_2(k);
     if Etecoon_Func_3(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         let mut E: *mut Enemy_Etecoon = Get_Etecoon(k as ::core::ffi::c_int);
@@ -7407,8 +7157,7 @@ pub unsafe extern "C" fn Etecoon_Func_21(mut k: uint16) {
             (0xa7edc7 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Func_22(mut k: uint16) {
+pub unsafe fn Etecoon_Func_22(mut k: uint16) {
     Etecoon_Func_1(k);
     if Etecoon_Func_3(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         let mut E: *mut Enemy_Etecoon = Get_Etecoon(k as ::core::ffi::c_int);
@@ -7439,8 +7188,7 @@ pub unsafe extern "C" fn Etecoon_Func_22(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Func_23(mut k: uint16) {
+pub unsafe fn Etecoon_Func_23(mut k: uint16) {
     Etecoon_Func_1(k);
     let mut E: *mut Enemy_Etecoon = Get_Etecoon(k as ::core::ffi::c_int);
     let mut v2: bool = (*E).etecoon_var_E as ::core::ffi::c_int == 1 as ::core::ffi::c_int;
@@ -7486,8 +7234,7 @@ pub unsafe extern "C" fn Etecoon_Func_23(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Func_24(mut k: uint16) {
+pub unsafe fn Etecoon_Func_24(mut k: uint16) {
     Etecoon_Func_1(k);
     let mut E: *mut Enemy_Etecoon = Get_Etecoon(k as ::core::ffi::c_int);
     let mut v2: bool = (*E).etecoon_var_E as ::core::ffi::c_int == 1 as ::core::ffi::c_int;
@@ -7520,8 +7267,7 @@ pub unsafe extern "C" fn Etecoon_Func_24(mut k: uint16) {
         (*E).base.instruction_timer = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Func_25(mut k: uint16) {
+pub unsafe fn Etecoon_Func_25(mut k: uint16) {
     Etecoon_Func_2(k);
     let mut E: *mut Enemy_Etecoon = Get_Etecoon(k as ::core::ffi::c_int);
     if (*E).base.x_pos as ::core::ffi::c_int - 600 as ::core::ffi::c_int
@@ -7534,8 +7280,7 @@ pub unsafe extern "C" fn Etecoon_Func_25(mut k: uint16) {
         (*E).base.current_instruction = addr_stru_A7E898 as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Etecoon_Func_26(mut k: uint16) {
+pub unsafe fn Etecoon_Func_26(mut k: uint16) {
     Etecoon_Func_2(k);
     if Etecoon_Func_3(k) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         let mut E: *mut Enemy_Etecoon = Get_Etecoon(k as ::core::ffi::c_int);
@@ -7549,8 +7294,7 @@ pub unsafe extern "C" fn Etecoon_Func_26(mut k: uint16) {
         (*E).base.current_instruction = addr_stru_A7E828 as ::core::ffi::c_int as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Dachora_Init() {
+pub unsafe fn Dachora_Init() {
     let mut dachor_parameter_1: int16 = 0;
     let mut E: *mut Enemy_Dachora = Get_Dachora(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -7586,8 +7330,7 @@ pub unsafe extern "C" fn Dachora_Init() {
             (0xa7f570 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Dachora_Main() {
+pub unsafe fn Dachora_Main() {
     let mut E: *mut Enemy_Dachora = Get_Dachora(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -7596,8 +7339,7 @@ pub unsafe extern "C" fn Dachora_Main() {
         ((*E).dachor_var_F as ::core::ffi::c_int | 0xa70000 as ::core::ffi::c_int) as uint32,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Dachora_Func_1(mut j: uint16, mut k: uint16) {
+pub unsafe fn Dachora_Func_1(mut j: uint16, mut k: uint16) {
     let mut E: *mut Enemy_Dachora = Get_Dachora(k as ::core::ffi::c_int);
     let mut v3: uint16 = swap16((*E).base.palette_index);
     memcpy(
@@ -7615,8 +7357,7 @@ pub unsafe extern "C" fn Dachora_Func_1(mut j: uint16, mut k: uint16) {
         32 as size_t,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn Dachora_Func_2(mut k: uint16) {
+pub unsafe fn Dachora_Func_2(mut k: uint16) {
     Enemy_MoveDown(
         k,
         ((1 as ::core::ffi::c_int as uint32) << 16 as ::core::ffi::c_int
@@ -7640,8 +7381,7 @@ pub unsafe extern "C" fn Dachora_Func_2(mut k: uint16) {
         QueueSfx2_Max15(0x1d as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Dachora_Func_3(mut k: uint16) {
+pub unsafe fn Dachora_Func_3(mut k: uint16) {
     let mut E: *mut Enemy_Dachora = Get_Dachora(k as ::core::ffi::c_int);
     let fresh2 = (*E).dachor_var_A;
     (*E).dachor_var_A = (*E).dachor_var_A.wrapping_sub(1);
@@ -7661,8 +7401,7 @@ pub unsafe extern "C" fn Dachora_Func_3(mut k: uint16) {
         (*E).dachor_var_E = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Dachora_Func_4(mut k: uint16) {
+pub unsafe fn Dachora_Func_4(mut k: uint16) {
     let mut amt: int32 = -Dachora_Func_6(k);
     let mut E: *mut Enemy_Dachora = Get_Dachora(k as ::core::ffi::c_int);
     if Enemy_MoveRight_IgnoreSlopes(k, amt) as ::core::ffi::c_int != 0 || {
@@ -7682,8 +7421,7 @@ pub unsafe extern "C" fn Dachora_Func_4(mut k: uint16) {
         Dachora_Func_1(addr_kDachora_Palette as ::core::ffi::c_int as uint16, k);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Dachora_Func_5(mut k: uint16) {
+pub unsafe fn Dachora_Func_5(mut k: uint16) {
     let mut amt: int32 = Dachora_Func_6(k);
     let mut E: *mut Enemy_Dachora = Get_Dachora(k as ::core::ffi::c_int);
     if Enemy_MoveRight_IgnoreSlopes(k, amt) != 0 {
@@ -7716,8 +7454,7 @@ pub unsafe extern "C" fn Dachora_Func_5(mut k: uint16) {
     (*E).dachor_var_B = 0 as uint16;
     (*E).base.instruction_timer = 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Dachora_Func_6(mut k: uint16) -> int32 {
+pub unsafe fn Dachora_Func_6(mut k: uint16) -> int32 {
     let mut E: *mut Enemy_Dachora = Get_Dachora(k as ::core::ffi::c_int);
     if ((*E).dachor_var_A as ::core::ffi::c_int - g_word_A7F4D5 as ::core::ffi::c_int) as int16
         as ::core::ffi::c_int
@@ -7787,8 +7524,7 @@ pub unsafe extern "C" fn Dachora_Func_6(mut k: uint16) -> int32 {
     return (((*E).dachor_var_A as uint32) << 16 as ::core::ffi::c_int | (*E).dachor_var_B as uint32)
         as int32;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Dachora_Func_7(mut k: uint16) {
+pub unsafe fn Dachora_Func_7(mut k: uint16) {
     Dachora_Func_10(k);
     let mut E: *mut Enemy_Dachora = Get_Dachora(k as ::core::ffi::c_int);
     let fresh3 = (*E).dachor_var_A;
@@ -7855,8 +7591,7 @@ pub unsafe extern "C" fn Dachora_Func_7(mut k: uint16) {
             .instruction_timer = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Dachora_Func_8(mut k: uint16) {
+pub unsafe fn Dachora_Func_8(mut k: uint16) {
     Dachora_Func_10(k);
     Dachora_Func_9(k);
     let mut E: *mut Enemy_Dachora = Get_Dachora(k as ::core::ffi::c_int);
@@ -7900,8 +7635,7 @@ pub unsafe extern "C" fn Dachora_Func_8(mut k: uint16) {
         QueueSfx2_Max6(0x3c as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Dachora_Func_9(mut k: uint16) {
+pub unsafe fn Dachora_Func_9(mut k: uint16) {
     let mut EK: *mut Enemy_Dachora = Get_Dachora(k as ::core::ffi::c_int);
     let mut E1: *mut Enemy_Dachora =
         Get_Dachora(k as ::core::ffi::c_int + 64 as ::core::ffi::c_int);
@@ -7942,8 +7676,7 @@ pub unsafe extern "C" fn Dachora_Func_9(mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Dachora_Func_10(mut k: uint16) {
+pub unsafe fn Dachora_Func_10(mut k: uint16) {
     let mut E: *mut Enemy_Dachora = Get_Dachora(k as ::core::ffi::c_int);
     Dachora_Func_1(
         *(g_rom.offset(
@@ -7968,8 +7701,7 @@ pub unsafe extern "C" fn Dachora_Func_10(mut k: uint16) {
         (*E).dachor_var_E = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Dachora_Func_11(mut k: uint16) {
+pub unsafe fn Dachora_Func_11(mut k: uint16) {
     let mut E: *mut Enemy_Dachora = Get_Dachora(k as ::core::ffi::c_int);
     AddToHiLo(
         &raw mut (*E).dachor_var_A,
@@ -8003,8 +7735,7 @@ pub unsafe extern "C" fn Dachora_Func_11(mut k: uint16) {
         (*E).dachor_var_B = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Dachora_Func_12(mut k: uint16) {
+pub unsafe fn Dachora_Func_12(mut k: uint16) {
     let mut current_block: u64;
     let mut E: *mut Enemy_Dachora = Get_Dachora(k as ::core::ffi::c_int);
     let mut dachor_var_D: uint16 = (*E).dachor_var_D;

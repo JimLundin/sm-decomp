@@ -196,58 +196,56 @@ pub use crate::types::Consts_AD;
 pub const addr_kTurnOffLightsForShitroidDeath: Consts_AD = 61999;
 pub use crate::types::{Enemy_MotherBrain, Func_CalcHdma, Ram8000_Default, SpawnHardcodedPlmArgs};
 #[inline]
-unsafe extern "C" fn __CFADD__uint16(mut x: uint16, mut y: uint16) -> bool {
+unsafe fn __CFADD__uint16(mut x: uint16, mut y: uint16) -> bool {
     return x as ::core::ffi::c_int
         > (x as ::core::ffi::c_int + y as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int;
 }
 #[inline]
-unsafe extern "C" fn RomPtr_AD(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_AD(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0xad0000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 pub const fnMotherBrainBody_FakeDeath_Descent_0_Pause: ::core::ffi::c_int =
     0xa9881d as ::core::ffi::c_int;
 #[inline]
-unsafe extern "C" fn gEnemyData(mut o: ::core::ffi::c_int) -> *mut EnemyData {
+unsafe fn gEnemyData(mut o: ::core::ffi::c_int) -> *mut EnemyData {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut EnemyData;
 }
 #[inline]
-unsafe extern "C" fn gRam8000_Default(mut o: ::core::ffi::c_int) -> *mut Ram8000_Default {
+unsafe fn gRam8000_Default(mut o: ::core::ffi::c_int) -> *mut Ram8000_Default {
     return (&raw mut g_ram as *mut uint8)
         .offset(0x8000 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Ram8000_Default;
 }
 #[inline]
-unsafe extern "C" fn Get_MotherBrain(mut o: ::core::ffi::c_int) -> *mut Enemy_MotherBrain {
+unsafe fn Get_MotherBrain(mut o: ::core::ffi::c_int) -> *mut Enemy_MotherBrain {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_MotherBrain;
 }
-#[no_mangle]
-pub unsafe extern "C" fn nullsub_341() {}
+pub unsafe fn nullsub_341() {}
 static mut funcs_BE56D: [Option<Func_V>; 16] = unsafe {
     [
-        Some(MotherBrain_CalcHdma_Down as unsafe extern "C" fn() -> ()),
-        Some(MotherBrain_CalcHdma_BeamAimedRight2 as unsafe extern "C" fn() -> ()),
+        Some(MotherBrain_CalcHdma_Down as unsafe fn() -> ()),
+        Some(MotherBrain_CalcHdma_BeamAimedRight2 as unsafe fn() -> ()),
         None,
         None,
         None,
-        Some(MotherBrain_CalcHdma_BeamAimedUp as unsafe extern "C" fn() -> ()),
-        Some(MotherBrain_CalcHdma_BeamAimedUp as unsafe extern "C" fn() -> ()),
+        Some(MotherBrain_CalcHdma_BeamAimedUp as unsafe fn() -> ()),
+        Some(MotherBrain_CalcHdma_BeamAimedUp as unsafe fn() -> ()),
         None,
         None,
         None,
-        Some(MotherBrain_CalcHdma_BeamAimedUp as unsafe extern "C" fn() -> ()),
-        Some(nullsub_341 as unsafe extern "C" fn() -> ()),
-        Some(MotherBrain_CalcHdma_Down as unsafe extern "C" fn() -> ()),
+        Some(MotherBrain_CalcHdma_BeamAimedUp as unsafe fn() -> ()),
+        Some(nullsub_341 as unsafe fn() -> ()),
+        Some(MotherBrain_CalcHdma_Down as unsafe fn() -> ()),
         None,
         None,
-        Some(MotherBrain_CalcHdma_Down as unsafe extern "C" fn() -> ()),
+        Some(MotherBrain_CalcHdma_Down as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_CalcHdma() {
+pub unsafe fn MotherBrain_CalcHdma() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     let mut E1: *mut Enemy_MotherBrain = Get_MotherBrain(0x40 as ::core::ffi::c_int);
     let mut r18: uint16 = (*(&raw mut (*E).mbn_var_33 as *mut uint8).offset(
@@ -276,8 +274,7 @@ pub unsafe extern "C" fn MotherBrain_CalcHdma() {
         >> 6 as ::core::ffi::c_int;
     funcs_BE56D[i as usize].expect("non-null function pointer")();
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_CalcHdma_BeamAimedRight2() {
+pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight2() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     MotherBrain_CalcHdma_BeamAimedRight((*E).mbn_var_3C, (*E).mbn_var_3E);
     *((&raw mut g_ram as *mut uint8).offset(0x9c00 as ::core::ffi::c_int as isize)
@@ -311,8 +308,7 @@ pub unsafe extern "C" fn MotherBrain_CalcHdma_BeamAimedRight2() {
         .offset(0x9c00 as ::core::ffi::c_int as isize)
         .offset(12 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_CalcHdma_BeamAimedRight(mut r22: uint16, mut r24: uint16) {
+pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(mut r22: uint16, mut r24: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x9d00 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(0 as ::core::ffi::c_int as isize) = 255 as uint16;
@@ -408,14 +404,13 @@ pub unsafe extern "C" fn MotherBrain_CalcHdma_BeamAimedRight(mut r22: uint16, mu
 }
 static mut off_ADE024: [Option<Func_CalcHdma>; 4] = unsafe {
     [
-        Some(MotherBrain_CalcHdma_Up_UpRight as unsafe extern "C" fn(uint16, uint16) -> ()),
-        Some(MotherBrain_CalcHdma_Up_Up as unsafe extern "C" fn(uint16, uint16) -> ()),
+        Some(MotherBrain_CalcHdma_Up_UpRight as unsafe fn(uint16, uint16) -> ()),
+        Some(MotherBrain_CalcHdma_Up_Up as unsafe fn(uint16, uint16) -> ()),
         None,
-        Some(MotherBrain_CalcHdma_Up_UpLeft as unsafe extern "C" fn(uint16, uint16) -> ()),
+        Some(MotherBrain_CalcHdma_Up_UpLeft as unsafe fn(uint16, uint16) -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_CalcHdma_BeamAimedUp() {
+pub unsafe fn MotherBrain_CalcHdma_BeamAimedUp() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     off_ADE024[((*E).mbn_var_3A as ::core::ffi::c_int >> 6 as ::core::ffi::c_int
         & 2 as ::core::ffi::c_int
@@ -491,8 +486,7 @@ pub unsafe extern "C" fn MotherBrain_CalcHdma_BeamAimedUp() {
             .offset(12 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) = 0 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_CalcHdma_Up_UpRight(mut r22: uint16, mut r24: uint16) {
+pub unsafe fn MotherBrain_CalcHdma_Up_UpRight(mut r22: uint16, mut r24: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x9d00 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(0 as ::core::ffi::c_int as isize) = 255 as uint16;
@@ -554,8 +548,7 @@ pub unsafe extern "C" fn MotherBrain_CalcHdma_Up_UpRight(mut r22: uint16, mut r2
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_CalcHdma_Up_Up(mut r22: uint16, mut r24: uint16) {
+pub unsafe fn MotherBrain_CalcHdma_Up_Up(mut r22: uint16, mut r24: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x9d00 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(0 as ::core::ffi::c_int as isize) = 255 as uint16;
@@ -617,8 +610,7 @@ pub unsafe extern "C" fn MotherBrain_CalcHdma_Up_Up(mut r22: uint16, mut r24: ui
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_CalcHdma_Up_UpLeft(mut r22: uint16, mut r24: uint16) {
+pub unsafe fn MotherBrain_CalcHdma_Up_UpLeft(mut r22: uint16, mut r24: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x9d00 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(0 as ::core::ffi::c_int as isize) = 255 as uint16;
@@ -681,14 +673,13 @@ pub unsafe extern "C" fn MotherBrain_CalcHdma_Up_UpLeft(mut r22: uint16, mut r24
 }
 static mut g_off_ADE20E: [Option<Func_CalcHdma>; 4] = unsafe {
     [
-        Some(MotherBrain_CalcHdma_Down_DownRight as unsafe extern "C" fn(uint16, uint16) -> ()),
+        Some(MotherBrain_CalcHdma_Down_DownRight as unsafe fn(uint16, uint16) -> ()),
         None,
-        Some(MotherBrain_CalcHdma_Down_Down as unsafe extern "C" fn(uint16, uint16) -> ()),
-        Some(MotherBrain_CalcHdma_Down_DownLeft as unsafe extern "C" fn(uint16, uint16) -> ()),
+        Some(MotherBrain_CalcHdma_Down_Down as unsafe fn(uint16, uint16) -> ()),
+        Some(MotherBrain_CalcHdma_Down_DownLeft as unsafe fn(uint16, uint16) -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_CalcHdma_Down() {
+pub unsafe fn MotherBrain_CalcHdma_Down() {
     let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int);
     g_off_ADE20E[((*E).mbn_var_3A as ::core::ffi::c_int >> 6 as ::core::ffi::c_int
         & 2 as ::core::ffi::c_int
@@ -726,8 +717,7 @@ pub unsafe extern "C" fn MotherBrain_CalcHdma_Down() {
         .offset(0x9c00 as ::core::ffi::c_int as isize)
         .offset(12 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_CalcHdma_Down_DownRight(mut r22: uint16, mut r24: uint16) {
+pub unsafe fn MotherBrain_CalcHdma_Down_DownRight(mut r22: uint16, mut r24: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x9d00 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(0 as ::core::ffi::c_int as isize) = 255 as uint16;
@@ -796,8 +786,7 @@ pub unsafe extern "C" fn MotherBrain_CalcHdma_Down_DownRight(mut r22: uint16, mu
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_CalcHdma_Down_Down(mut r22: uint16, mut r24: uint16) {
+pub unsafe fn MotherBrain_CalcHdma_Down_Down(mut r22: uint16, mut r24: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x9d00 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(0 as ::core::ffi::c_int as isize) = 255 as uint16;
@@ -866,8 +855,7 @@ pub unsafe extern "C" fn MotherBrain_CalcHdma_Down_Down(mut r22: uint16, mut r24
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_CalcHdma_Down_DownLeft(mut r22: uint16, mut r24: uint16) {
+pub unsafe fn MotherBrain_CalcHdma_Down_DownLeft(mut r22: uint16, mut r24: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x9d00 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(0 as ::core::ffi::c_int as isize) = 255 as uint16;
@@ -937,8 +925,7 @@ pub unsafe extern "C" fn MotherBrain_CalcHdma_Down_DownLeft(mut r22: uint16, mut
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_SealWall() {
+pub unsafe fn MotherBrain_SealWall() {
     eproj_spawn_pt = Point16U {
         x: 248 as uint16,
         y: 72 as uint16,
@@ -968,8 +955,7 @@ pub unsafe extern "C" fn MotherBrain_SealWall() {
     (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_A =
         (0xa9881d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_HealthBasedPaletteHandling() {
+pub unsafe fn MotherBrain_HealthBasedPaletteHandling() {
     if (*Get_MotherBrain(0 as ::core::ffi::c_int)).mbn_var_1F as ::core::ffi::c_int
         >= 2 as ::core::ffi::c_int
     {
@@ -1022,8 +1008,7 @@ pub unsafe extern "C" fn MotherBrain_HealthBasedPaletteHandling() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_FadePalToBlack(mut a: uint16) -> uint8 {
+pub unsafe fn MotherBrain_FadePalToBlack(mut a: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = a as ::core::ffi::c_int;
     if *(g_rom.offset(
         (((0xade9e8 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
@@ -1051,8 +1036,7 @@ pub unsafe extern "C" fn MotherBrain_FadePalToBlack(mut a: uint16) -> uint8 {
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_FadeToGray_FakeDeath(mut a: uint16) -> uint8 {
+pub unsafe fn MotherBrain_FadeToGray_FakeDeath(mut a: uint16) -> uint8 {
     let mut v1: uint16 = *(g_rom.offset(
         (((0xaded8a as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0xaded8a as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -1065,8 +1049,7 @@ pub unsafe extern "C" fn MotherBrain_FadeToGray_FakeDeath(mut a: uint16) -> uint
         return 1 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_FadeFromGray_FakeDeath(mut a: uint16) -> uint8 {
+pub unsafe fn MotherBrain_FadeFromGray_FakeDeath(mut a: uint16) -> uint8 {
     let mut v1: uint16 = *(g_rom.offset(
         (((0xaded9c as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0xaded9c as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -1079,13 +1062,11 @@ pub unsafe extern "C" fn MotherBrain_FadeFromGray_FakeDeath(mut a: uint16) -> ui
         return 1 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_EEF6(mut a: uint16) -> uint8 {
+pub unsafe fn MotherBrain_EEF6(mut a: uint16) -> uint8 {
     WriteColorsToPalette(0x122 as uint16, 0xad as uint8, a, 3 as uint16);
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_FadeFromGray_Drained(mut a: uint16) -> uint8 {
+pub unsafe fn MotherBrain_FadeFromGray_Drained(mut a: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = a as ::core::ffi::c_int;
     if *(g_rom.offset(
         (((0xaded9c as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
@@ -1117,8 +1098,7 @@ pub unsafe extern "C" fn MotherBrain_FadeFromGray_Drained(mut a: uint16) -> uint
             as *mut uint16);
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_FadeToGray_Drained(mut a: uint16) -> uint8 {
+pub unsafe fn MotherBrain_FadeToGray_Drained(mut a: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = a as ::core::ffi::c_int;
     if *(g_rom.offset(
         (((0xadef87 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
@@ -1150,8 +1130,7 @@ pub unsafe extern "C" fn MotherBrain_FadeToGray_Drained(mut a: uint16) -> uint8 
             as *mut uint16);
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_FadeToGray_RealDeath(mut a: uint16) -> uint8 {
+pub unsafe fn MotherBrain_FadeToGray_RealDeath(mut a: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = a as ::core::ffi::c_int;
     if *(g_rom.offset(
         (((0xadf107 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
@@ -1177,8 +1156,7 @@ pub unsafe extern "C" fn MotherBrain_FadeToGray_RealDeath(mut a: uint16) -> uint
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn TurnOffLightsForShitroidDeath() {
+pub unsafe fn TurnOffLightsForShitroidDeath() {
     WriteColorsToPalette(
         0x62 as uint16,
         0xad as uint8,
@@ -1192,8 +1170,7 @@ pub unsafe extern "C" fn TurnOffLightsForShitroidDeath() {
         14 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrain_Phase3_TurnLightsBackOn(mut a: uint16) -> uint8 {
+pub unsafe fn MotherBrain_Phase3_TurnLightsBackOn(mut a: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = a as ::core::ffi::c_int;
     if *(g_rom.offset(
         (((0xadf273 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
@@ -1220,16 +1197,14 @@ pub unsafe extern "C" fn MotherBrain_Phase3_TurnLightsBackOn(mut a: uint16) -> u
     );
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnableEarthquakeAframes(mut a: uint16) {
+pub unsafe fn EnableEarthquakeAframes(mut a: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
         as *mut uint16) = a;
     *((&raw mut g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
         as *mut uint16) = 20 as uint16;
     QueueSfx2_Max6(0x25 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleMotherBrainBodyFlickering() {
+pub unsafe fn HandleMotherBrainBodyFlickering() {
     let mut v0: *mut EnemyData = gEnemyData(0 as ::core::ffi::c_int);
     if (*v0).frame_counter as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         let ref mut fresh0 = *((&raw mut g_ram as *mut uint8)

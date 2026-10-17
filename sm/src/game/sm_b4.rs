@@ -6,14 +6,13 @@ pub use crate::types::{
     uint32_t, uint8, uint8_t,
 };
 #[inline]
-unsafe extern "C" fn RomPtr_B4(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_B4(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0xb40000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 pub const fnSpriteObject_Instr_RepeatLast: uint32 = 11844848 as uint32;
 pub const fnSpriteObject_Instr_Terminate: uint32 = 11844871 as uint32;
 pub const fnSpriteObject_Instr_Goto: uint32 = 11844882 as uint32;
-#[no_mangle]
-pub unsafe extern "C" fn CreateSpriteAtPos(
+pub unsafe fn CreateSpriteAtPos(
     mut x_r18: uint16,
     mut y_r20: uint16,
     mut ilist_r22: uint16,
@@ -66,8 +65,7 @@ pub unsafe extern "C" fn CreateSpriteAtPos(
         .offset(v1 as isize) = *(RomPtr_B4(v2 as uint16_t) as *mut uint16);
     return v0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallSpriteObjectInstr(mut ea: uint32) {
+pub unsafe fn CallSpriteObjectInstr(mut ea: uint32) {
     match ea {
         11844848 => {
             SpriteObject_Instr_RepeatLast();
@@ -86,8 +84,7 @@ pub unsafe extern "C" fn CallSpriteObjectInstr(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleSpriteObjects() {
+pub unsafe fn HandleSpriteObjects() {
     let mut v1: uint16 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0x185e as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -174,8 +171,7 @@ pub unsafe extern "C" fn HandleSpriteObjects() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpriteObject_Instr_RepeatLast() {
+pub unsafe fn SpriteObject_Instr_RepeatLast() {
     let mut v2: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0x1844 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -188,8 +184,7 @@ pub unsafe extern "C" fn SpriteObject_Instr_RepeatLast() {
         as *mut uint16)
         .offset(v2 as isize) = 0x7fff as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpriteObject_Instr_Terminate() {
+pub unsafe fn SpriteObject_Instr_Terminate() {
     *((&raw mut g_ram as *mut uint8).offset(0xef78 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(
@@ -198,8 +193,7 @@ pub unsafe extern "C" fn SpriteObject_Instr_Terminate() {
                 >> 1 as ::core::ffi::c_int) as isize,
         ) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpriteObject_Instr_Goto() {
+pub unsafe fn SpriteObject_Instr_Goto() {
     let mut v2: uint16 = *(RomPtr_B4(
         *((&raw mut g_ram as *mut uint8).offset(0xef78 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -225,8 +219,7 @@ pub unsafe extern "C" fn SpriteObject_Instr_Goto() {
                 >> 1 as ::core::ffi::c_int) as isize,
         ) = *(RomPtr_B4(v2 as uint16_t) as *mut uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawSpriteObjects() {
+pub unsafe fn DrawSpriteObjects() {
     let mut i: ::core::ffi::c_int = 62 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
@@ -299,8 +292,7 @@ pub unsafe extern "C" fn DrawSpriteObjects() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearSpriteObjects() {
+pub unsafe fn ClearSpriteObjects() {
     let mut v0: ::core::ffi::c_int = 1022 as ::core::ffi::c_int;
     loop {
         *((&raw mut g_ram as *mut uint8).offset(0xef78 as ::core::ffi::c_int as isize)

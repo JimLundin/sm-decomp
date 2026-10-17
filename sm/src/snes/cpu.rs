@@ -285,14 +285,13 @@ static mut cyclesPerOpcode: [::core::ffi::c_int; 256] = [
     7 as ::core::ffi::c_int,
     5 as ::core::ffi::c_int,
 ];
-unsafe extern "C" fn cpu_read(mut cpu: *mut Cpu, mut adr: uint32_t) -> uint8_t {
+unsafe fn cpu_read(mut cpu: *mut Cpu, mut adr: uint32_t) -> uint8_t {
     return snes_cpuRead((*cpu).mem as *mut Snes, adr);
 }
-unsafe extern "C" fn cpu_write(mut cpu: *mut Cpu, mut adr: uint32_t, mut val: uint8_t) {
+unsafe fn cpu_write(mut cpu: *mut Cpu, mut adr: uint32_t, mut val: uint8_t) {
     snes_cpuWrite((*cpu).mem as *mut Snes, adr, val);
 }
-#[no_mangle]
-pub unsafe extern "C" fn cpu_init(
+pub unsafe fn cpu_init(
     mut mem: *mut ::core::ffi::c_void,
     mut memType: ::core::ffi::c_int,
 ) -> *mut Cpu {
@@ -306,12 +305,10 @@ pub unsafe extern "C" fn cpu_init(
     (*cpu).memType = memType as uint8_t;
     return cpu;
 }
-#[no_mangle]
-pub unsafe extern "C" fn cpu_free(mut cpu: *mut Cpu) {
+pub unsafe fn cpu_free(mut cpu: *mut Cpu) {
     free(cpu as *mut ::core::ffi::c_void);
 }
-#[no_mangle]
-pub unsafe extern "C" fn cpu_reset(mut cpu: *mut Cpu) {
+pub unsafe fn cpu_reset(mut cpu: *mut Cpu) {
     (*cpu).a = 0 as uint16_t;
     (*cpu).x = 0 as uint16_t;
     (*cpu).y = 0 as uint16_t;
@@ -337,8 +334,7 @@ pub unsafe extern "C" fn cpu_reset(mut cpu: *mut Cpu) {
     (*cpu).stopped = false_0 != 0;
     (*cpu).cyclesUsed = 0 as uint8_t;
 }
-#[no_mangle]
-pub unsafe extern "C" fn cpu_saveload(
+pub unsafe fn cpu_saveload(
     mut cpu: *mut Cpu,
     mut func: Option<SaveLoadFunc>,
     mut ctx: *mut ::core::ffi::c_void,
@@ -350,8 +346,7 @@ pub unsafe extern "C" fn cpu_saveload(
     );
     (*cpu).spBreakpoint = 0 as uint16_t;
 }
-#[no_mangle]
-pub unsafe extern "C" fn cpu_runOpcode(mut cpu: *mut Cpu) -> ::core::ffi::c_int {
+pub unsafe fn cpu_runOpcode(mut cpu: *mut Cpu) -> ::core::ffi::c_int {
     (*cpu).cyclesUsed = 0 as uint8_t;
     if (*cpu).stopped {
         return 1 as ::core::ffi::c_int;
@@ -372,7 +367,7 @@ pub unsafe extern "C" fn cpu_runOpcode(mut cpu: *mut Cpu) -> ::core::ffi::c_int 
     cpu_doOpcode(cpu, opcode);
     return (*cpu).cyclesUsed as ::core::ffi::c_int;
 }
-unsafe extern "C" fn cpu_readOpcode(mut cpu: *mut Cpu) -> uint8_t {
+unsafe fn cpu_readOpcode(mut cpu: *mut Cpu) -> uint8_t {
     let fresh0 = (*cpu).pc;
     (*cpu).pc = (*cpu).pc.wrapping_add(1);
     return cpu_read(
@@ -381,14 +376,13 @@ unsafe extern "C" fn cpu_readOpcode(mut cpu: *mut Cpu) -> uint8_t {
             | fresh0 as ::core::ffi::c_int) as uint32_t,
     );
 }
-unsafe extern "C" fn cpu_readOpcodeWord(mut cpu: *mut Cpu) -> uint16_t {
+unsafe fn cpu_readOpcodeWord(mut cpu: *mut Cpu) -> uint16_t {
     let mut low: uint8_t = cpu_readOpcode(cpu);
     return (low as ::core::ffi::c_int
         | (cpu_readOpcode(cpu) as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
         as uint16_t;
 }
-#[no_mangle]
-pub unsafe extern "C" fn cpu_getFlags(mut cpu: *mut Cpu) -> uint8_t {
+pub unsafe fn cpu_getFlags(mut cpu: *mut Cpu) -> uint8_t {
     let mut val: uint8_t = (((*cpu).n as ::core::ffi::c_int) << 7 as ::core::ffi::c_int) as uint8_t;
     val = (val as ::core::ffi::c_int | ((*cpu).v as ::core::ffi::c_int) << 6 as ::core::ffi::c_int)
         as uint8_t;
@@ -405,8 +399,7 @@ pub unsafe extern "C" fn cpu_getFlags(mut cpu: *mut Cpu) -> uint8_t {
     val = (val as ::core::ffi::c_int | (*cpu).c as ::core::ffi::c_int) as uint8_t;
     return val;
 }
-#[no_mangle]
-pub unsafe extern "C" fn cpu_setFlags(mut cpu: *mut Cpu, mut val: uint8_t) {
+pub unsafe fn cpu_setFlags(mut cpu: *mut Cpu, mut val: uint8_t) {
     (*cpu).n = val as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0;
     (*cpu).v = val as ::core::ffi::c_int & 0x40 as ::core::ffi::c_int != 0;
     (*cpu).mf = val as ::core::ffi::c_int & 0x20 as ::core::ffi::c_int != 0;
@@ -426,7 +419,7 @@ pub unsafe extern "C" fn cpu_setFlags(mut cpu: *mut Cpu, mut val: uint8_t) {
         (*cpu).y = ((*cpu).y as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint16_t;
     }
 }
-unsafe extern "C" fn cpu_setZN(mut cpu: *mut Cpu, mut value: uint16_t, mut byte: bool) {
+unsafe fn cpu_setZN(mut cpu: *mut Cpu, mut value: uint16_t, mut byte: bool) {
     if byte {
         (*cpu).z =
             value as ::core::ffi::c_int & 0xff as ::core::ffi::c_int == 0 as ::core::ffi::c_int;
@@ -436,14 +429,14 @@ unsafe extern "C" fn cpu_setZN(mut cpu: *mut Cpu, mut value: uint16_t, mut byte:
         (*cpu).n = value as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0;
     };
 }
-unsafe extern "C" fn cpu_doBranch(mut cpu: *mut Cpu, mut value: uint8_t, mut check: bool) {
+unsafe fn cpu_doBranch(mut cpu: *mut Cpu, mut value: uint8_t, mut check: bool) {
     if check {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
         (*cpu).pc =
             ((*cpu).pc as ::core::ffi::c_int + value as int8_t as ::core::ffi::c_int) as uint16_t;
     }
 }
-unsafe extern "C" fn cpu_pullByte(mut cpu: *mut Cpu) -> uint8_t {
+unsafe fn cpu_pullByte(mut cpu: *mut Cpu) -> uint8_t {
     (*cpu).sp = (*cpu).sp.wrapping_add(1);
     if (*cpu).e {
         (*cpu).sp = ((*cpu).sp as ::core::ffi::c_int & 0xff as ::core::ffi::c_int
@@ -451,7 +444,7 @@ unsafe extern "C" fn cpu_pullByte(mut cpu: *mut Cpu) -> uint8_t {
     }
     return cpu_read(cpu, (*cpu).sp as uint32_t);
 }
-unsafe extern "C" fn cpu_pushByte(mut cpu: *mut Cpu, mut value: uint8_t) {
+unsafe fn cpu_pushByte(mut cpu: *mut Cpu, mut value: uint8_t) {
     cpu_write(cpu, (*cpu).sp as uint32_t, value);
     (*cpu).sp = (*cpu).sp.wrapping_sub(1);
     if (*cpu).e {
@@ -459,13 +452,13 @@ unsafe extern "C" fn cpu_pushByte(mut cpu: *mut Cpu, mut value: uint8_t) {
             | 0x100 as ::core::ffi::c_int) as uint16_t;
     }
 }
-unsafe extern "C" fn cpu_pullWord(mut cpu: *mut Cpu) -> uint16_t {
+unsafe fn cpu_pullWord(mut cpu: *mut Cpu) -> uint16_t {
     let mut value: uint8_t = cpu_pullByte(cpu);
     return (value as ::core::ffi::c_int
         | (cpu_pullByte(cpu) as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
         as uint16_t;
 }
-unsafe extern "C" fn cpu_pushWord(mut cpu: *mut Cpu, mut value: uint16_t) {
+unsafe fn cpu_pushWord(mut cpu: *mut Cpu, mut value: uint16_t) {
     cpu_pushByte(
         cpu,
         (value as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint8_t,
@@ -475,17 +468,13 @@ unsafe extern "C" fn cpu_pushWord(mut cpu: *mut Cpu, mut value: uint16_t) {
         (value as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint8_t,
     );
 }
-unsafe extern "C" fn cpu_readWord(
-    mut cpu: *mut Cpu,
-    mut adrl: uint32_t,
-    mut adrh: uint32_t,
-) -> uint16_t {
+unsafe fn cpu_readWord(mut cpu: *mut Cpu, mut adrl: uint32_t, mut adrh: uint32_t) -> uint16_t {
     let mut value: uint8_t = cpu_read(cpu, adrl);
     return (value as ::core::ffi::c_int
         | (cpu_read(cpu, adrh) as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
         as uint16_t;
 }
-unsafe extern "C" fn cpu_writeWord(
+unsafe fn cpu_writeWord(
     mut cpu: *mut Cpu,
     mut adrl: uint32_t,
     mut adrh: uint32_t,
@@ -516,7 +505,7 @@ unsafe extern "C" fn cpu_writeWord(
         );
     };
 }
-unsafe extern "C" fn cpu_doInterrupt(mut cpu: *mut Cpu, mut irq: bool) {
+unsafe fn cpu_doInterrupt(mut cpu: *mut Cpu, mut irq: bool) {
     cpu_pushByte(cpu, (*cpu).k);
     cpu_pushWord(cpu, (*cpu).pc);
     cpu_pushByte(cpu, cpu_getFlags(cpu));
@@ -530,11 +519,7 @@ unsafe extern "C" fn cpu_doInterrupt(mut cpu: *mut Cpu, mut irq: bool) {
         (*cpu).pc = cpu_readWord(cpu, 0xffea as uint32_t, 0xffeb as uint32_t);
     };
 }
-unsafe extern "C" fn cpu_adrImm(
-    mut cpu: *mut Cpu,
-    mut low: *mut uint32_t,
-    mut xFlag: bool,
-) -> uint32_t {
+unsafe fn cpu_adrImm(mut cpu: *mut Cpu, mut low: *mut uint32_t, mut xFlag: bool) -> uint32_t {
     if xFlag as ::core::ffi::c_int != 0 && (*cpu).xf as ::core::ffi::c_int != 0
         || !xFlag && (*cpu).mf as ::core::ffi::c_int != 0
     {
@@ -554,7 +539,7 @@ unsafe extern "C" fn cpu_adrImm(
             | fresh3 as ::core::ffi::c_int) as uint32_t;
     };
 }
-unsafe extern "C" fn cpu_adrDp(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> uint32_t {
+unsafe fn cpu_adrDp(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> uint32_t {
     let mut adr: uint8_t = cpu_readOpcode(cpu);
     if (*cpu).dp as ::core::ffi::c_int & 0xff as ::core::ffi::c_int != 0 {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
@@ -564,7 +549,7 @@ unsafe extern "C" fn cpu_adrDp(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> uin
     return ((*cpu).dp as ::core::ffi::c_int + adr as ::core::ffi::c_int + 1 as ::core::ffi::c_int
         & 0xffff as ::core::ffi::c_int) as uint32_t;
 }
-unsafe extern "C" fn cpu_adrDpx(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> uint32_t {
+unsafe fn cpu_adrDpx(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> uint32_t {
     let mut adr: uint8_t = cpu_readOpcode(cpu);
     if (*cpu).dp as ::core::ffi::c_int & 0xff as ::core::ffi::c_int != 0 {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
@@ -579,7 +564,7 @@ unsafe extern "C" fn cpu_adrDpx(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> ui
         + 1 as ::core::ffi::c_int
         & 0xffff as ::core::ffi::c_int) as uint32_t;
 }
-unsafe extern "C" fn cpu_adrDpy(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> uint32_t {
+unsafe fn cpu_adrDpy(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> uint32_t {
     let mut adr: uint8_t = cpu_readOpcode(cpu);
     if (*cpu).dp as ::core::ffi::c_int & 0xff as ::core::ffi::c_int != 0 {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
@@ -594,7 +579,7 @@ unsafe extern "C" fn cpu_adrDpy(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> ui
         + 1 as ::core::ffi::c_int
         & 0xffff as ::core::ffi::c_int) as uint32_t;
 }
-unsafe extern "C" fn cpu_adrIdp(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> uint32_t {
+unsafe fn cpu_adrIdp(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> uint32_t {
     let mut adr: uint8_t = cpu_readOpcode(cpu);
     if (*cpu).dp as ::core::ffi::c_int & 0xff as ::core::ffi::c_int != 0 {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
@@ -613,7 +598,7 @@ unsafe extern "C" fn cpu_adrIdp(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> ui
         + 1 as ::core::ffi::c_int
         & 0xffffff as ::core::ffi::c_int) as uint32_t;
 }
-unsafe extern "C" fn cpu_adrIdx(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> uint32_t {
+unsafe fn cpu_adrIdx(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> uint32_t {
     let mut adr: uint8_t = cpu_readOpcode(cpu);
     if (*cpu).dp as ::core::ffi::c_int & 0xff as ::core::ffi::c_int != 0 {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
@@ -637,11 +622,7 @@ unsafe extern "C" fn cpu_adrIdx(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> ui
         + 1 as ::core::ffi::c_int
         & 0xffffff as ::core::ffi::c_int) as uint32_t;
 }
-unsafe extern "C" fn cpu_adrIdy(
-    mut cpu: *mut Cpu,
-    mut low: *mut uint32_t,
-    mut write: bool,
-) -> uint32_t {
+unsafe fn cpu_adrIdy(mut cpu: *mut Cpu, mut low: *mut uint32_t, mut write: bool) -> uint32_t {
     let mut adr: uint8_t = cpu_readOpcode(cpu);
     if (*cpu).dp as ::core::ffi::c_int & 0xff as ::core::ffi::c_int != 0 {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
@@ -671,7 +652,7 @@ unsafe extern "C" fn cpu_adrIdy(
         + 1 as ::core::ffi::c_int
         & 0xffffff as ::core::ffi::c_int) as uint32_t;
 }
-unsafe extern "C" fn cpu_adrIdl(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> uint32_t {
+unsafe fn cpu_adrIdl(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> uint32_t {
     let mut adr: uint8_t = cpu_readOpcode(cpu);
     if (*cpu).dp as ::core::ffi::c_int & 0xff as ::core::ffi::c_int != 0 {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
@@ -692,7 +673,7 @@ unsafe extern "C" fn cpu_adrIdl(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> ui
     *low = pointer;
     return pointer.wrapping_add(1 as uint32_t) & 0xffffff as uint32_t;
 }
-unsafe extern "C" fn cpu_adrIly(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> uint32_t {
+unsafe fn cpu_adrIly(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> uint32_t {
     let mut adr: uint8_t = cpu_readOpcode(cpu);
     if (*cpu).dp as ::core::ffi::c_int & 0xff as ::core::ffi::c_int != 0 {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
@@ -716,14 +697,14 @@ unsafe extern "C" fn cpu_adrIly(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> ui
         .wrapping_add(1 as uint32_t)
         & 0xffffff as uint32_t;
 }
-unsafe extern "C" fn cpu_adrSr(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> uint32_t {
+unsafe fn cpu_adrSr(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> uint32_t {
     let mut adr: uint8_t = cpu_readOpcode(cpu);
     *low = ((*cpu).sp as ::core::ffi::c_int + adr as ::core::ffi::c_int
         & 0xffff as ::core::ffi::c_int) as uint32_t;
     return ((*cpu).sp as ::core::ffi::c_int + adr as ::core::ffi::c_int + 1 as ::core::ffi::c_int
         & 0xffff as ::core::ffi::c_int) as uint32_t;
 }
-unsafe extern "C" fn cpu_adrIsy(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> uint32_t {
+unsafe fn cpu_adrIsy(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> uint32_t {
     let mut adr: uint8_t = cpu_readOpcode(cpu);
     let mut pointer: uint16_t = cpu_readWord(
         cpu,
@@ -742,7 +723,7 @@ unsafe extern "C" fn cpu_adrIsy(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> ui
         + 1 as ::core::ffi::c_int
         & 0xffffff as ::core::ffi::c_int) as uint32_t;
 }
-unsafe extern "C" fn cpu_adrAbs(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> uint32_t {
+unsafe fn cpu_adrAbs(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> uint32_t {
     let mut adr: uint16_t = cpu_readOpcodeWord(cpu);
     *low = ((((*cpu).db as ::core::ffi::c_int) << 16 as ::core::ffi::c_int)
         + adr as ::core::ffi::c_int) as uint32_t;
@@ -751,11 +732,7 @@ unsafe extern "C" fn cpu_adrAbs(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> ui
         + 1 as ::core::ffi::c_int
         & 0xffffff as ::core::ffi::c_int) as uint32_t;
 }
-unsafe extern "C" fn cpu_adrAbx(
-    mut cpu: *mut Cpu,
-    mut low: *mut uint32_t,
-    mut write: bool,
-) -> uint32_t {
+unsafe fn cpu_adrAbx(mut cpu: *mut Cpu, mut low: *mut uint32_t, mut write: bool) -> uint32_t {
     let mut adr: uint16_t = cpu_readOpcodeWord(cpu);
     if write as ::core::ffi::c_int != 0
         && (!(*cpu).xf
@@ -775,11 +752,7 @@ unsafe extern "C" fn cpu_adrAbx(
         + 1 as ::core::ffi::c_int
         & 0xffffff as ::core::ffi::c_int) as uint32_t;
 }
-unsafe extern "C" fn cpu_adrAby(
-    mut cpu: *mut Cpu,
-    mut low: *mut uint32_t,
-    mut write: bool,
-) -> uint32_t {
+unsafe fn cpu_adrAby(mut cpu: *mut Cpu, mut low: *mut uint32_t, mut write: bool) -> uint32_t {
     let mut adr: uint16_t = cpu_readOpcodeWord(cpu);
     if write as ::core::ffi::c_int != 0
         && (!(*cpu).xf
@@ -799,13 +772,13 @@ unsafe extern "C" fn cpu_adrAby(
         + 1 as ::core::ffi::c_int
         & 0xffffff as ::core::ffi::c_int) as uint32_t;
 }
-unsafe extern "C" fn cpu_adrAbl(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> uint32_t {
+unsafe fn cpu_adrAbl(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> uint32_t {
     let mut adr: uint32_t = cpu_readOpcodeWord(cpu) as uint32_t;
     adr |= ((cpu_readOpcode(cpu) as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) as uint32_t;
     *low = adr;
     return adr.wrapping_add(1 as uint32_t) & 0xffffff as uint32_t;
 }
-unsafe extern "C" fn cpu_adrAlx(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> uint32_t {
+unsafe fn cpu_adrAlx(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> uint32_t {
     let mut adr: uint32_t = cpu_readOpcodeWord(cpu) as uint32_t;
     adr |= ((cpu_readOpcode(cpu) as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) as uint32_t;
     *low = adr.wrapping_add((*cpu).x as uint32_t) & 0xffffff as uint32_t;
@@ -814,7 +787,7 @@ unsafe extern "C" fn cpu_adrAlx(mut cpu: *mut Cpu, mut low: *mut uint32_t) -> ui
         .wrapping_add(1 as uint32_t)
         & 0xffffff as uint32_t;
 }
-unsafe extern "C" fn cpu_adrIax(mut cpu: *mut Cpu) -> uint16_t {
+unsafe fn cpu_adrIax(mut cpu: *mut Cpu) -> uint16_t {
     let mut adr: uint16_t = cpu_readOpcodeWord(cpu);
     return cpu_readWord(
         cpu,
@@ -826,7 +799,7 @@ unsafe extern "C" fn cpu_adrIax(mut cpu: *mut Cpu) -> uint16_t {
                 & 0xffff as ::core::ffi::c_int) as uint32_t,
     );
 }
-unsafe extern "C" fn cpu_and(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
+unsafe fn cpu_and(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
     if (*cpu).mf {
         let mut value: uint8_t = cpu_read(cpu, low);
         (*cpu).a = ((*cpu).a as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int
@@ -840,7 +813,7 @@ unsafe extern "C" fn cpu_and(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uin
     }
     cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
 }
-unsafe extern "C" fn cpu_ora(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
+unsafe fn cpu_ora(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
     if (*cpu).mf {
         let mut value: uint8_t = cpu_read(cpu, low);
         (*cpu).a = ((*cpu).a as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int
@@ -853,7 +826,7 @@ unsafe extern "C" fn cpu_ora(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uin
     }
     cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
 }
-unsafe extern "C" fn cpu_eor(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
+unsafe fn cpu_eor(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
     if (*cpu).mf {
         let mut value: uint8_t = cpu_read(cpu, low);
         (*cpu).a = ((*cpu).a as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int
@@ -866,7 +839,7 @@ unsafe extern "C" fn cpu_eor(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uin
     }
     cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
 }
-unsafe extern "C" fn cpu_adc(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
+unsafe fn cpu_adc(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
     if (*cpu).mf {
         let mut value: uint8_t = cpu_read(cpu, low);
         let mut result: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -942,7 +915,7 @@ unsafe extern "C" fn cpu_adc(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uin
     }
     cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
 }
-unsafe extern "C" fn cpu_sbc(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
+unsafe fn cpu_sbc(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
     if (*cpu).mf {
         let mut value: uint8_t =
             (cpu_read(cpu, low) as ::core::ffi::c_int ^ 0xff as ::core::ffi::c_int) as uint8_t;
@@ -1036,7 +1009,7 @@ unsafe extern "C" fn cpu_sbc(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uin
     }
     cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
 }
-unsafe extern "C" fn cpu_cmp(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
+unsafe fn cpu_cmp(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
     let mut result: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     if (*cpu).mf {
         let mut value: uint8_t =
@@ -1056,7 +1029,7 @@ unsafe extern "C" fn cpu_cmp(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uin
     }
     cpu_setZN(cpu, result as uint16_t, (*cpu).mf);
 }
-unsafe extern "C" fn cpu_cpx(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
+unsafe fn cpu_cpx(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
     let mut result: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     if (*cpu).xf {
         let mut value: uint8_t =
@@ -1076,7 +1049,7 @@ unsafe extern "C" fn cpu_cpx(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uin
     }
     cpu_setZN(cpu, result as uint16_t, (*cpu).xf);
 }
-unsafe extern "C" fn cpu_cpy(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
+unsafe fn cpu_cpy(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
     let mut result: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     if (*cpu).xf {
         let mut value: uint8_t =
@@ -1096,7 +1069,7 @@ unsafe extern "C" fn cpu_cpy(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uin
     }
     cpu_setZN(cpu, result as uint16_t, (*cpu).xf);
 }
-unsafe extern "C" fn cpu_bit(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
+unsafe fn cpu_bit(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
     if (*cpu).mf {
         let mut value: uint8_t = cpu_read(cpu, low);
         let mut result: uint8_t = ((*cpu).a as ::core::ffi::c_int
@@ -1115,7 +1088,7 @@ unsafe extern "C" fn cpu_bit(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uin
         (*cpu).v = value_0 as ::core::ffi::c_int & 0x4000 as ::core::ffi::c_int != 0;
     };
 }
-unsafe extern "C" fn cpu_lda(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
+unsafe fn cpu_lda(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
     if (*cpu).mf {
         (*cpu).a = ((*cpu).a as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int
             | cpu_read(cpu, low) as ::core::ffi::c_int) as uint16_t;
@@ -1125,7 +1098,7 @@ unsafe extern "C" fn cpu_lda(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uin
     }
     cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
 }
-unsafe extern "C" fn cpu_ldx(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
+unsafe fn cpu_ldx(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
     if (*cpu).xf {
         (*cpu).x = cpu_read(cpu, low) as uint16_t;
     } else {
@@ -1134,7 +1107,7 @@ unsafe extern "C" fn cpu_ldx(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uin
     }
     cpu_setZN(cpu, (*cpu).x, (*cpu).xf);
 }
-unsafe extern "C" fn cpu_ldy(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
+unsafe fn cpu_ldy(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
     if (*cpu).xf {
         (*cpu).y = cpu_read(cpu, low) as uint16_t;
     } else {
@@ -1143,7 +1116,7 @@ unsafe extern "C" fn cpu_ldy(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uin
     }
     cpu_setZN(cpu, (*cpu).y, (*cpu).xf);
 }
-unsafe extern "C" fn cpu_sta(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
+unsafe fn cpu_sta(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
     if (*cpu).mf {
         cpu_write(cpu, low, (*cpu).a as uint8_t);
     } else {
@@ -1151,7 +1124,7 @@ unsafe extern "C" fn cpu_sta(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uin
         cpu_writeWord(cpu, low, high, (*cpu).a, false_0 != 0);
     };
 }
-unsafe extern "C" fn cpu_stx(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
+unsafe fn cpu_stx(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
     if (*cpu).xf {
         cpu_write(cpu, low, (*cpu).x as uint8_t);
     } else {
@@ -1159,7 +1132,7 @@ unsafe extern "C" fn cpu_stx(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uin
         cpu_writeWord(cpu, low, high, (*cpu).x, false_0 != 0);
     };
 }
-unsafe extern "C" fn cpu_sty(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
+unsafe fn cpu_sty(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
     if (*cpu).xf {
         cpu_write(cpu, low, (*cpu).y as uint8_t);
     } else {
@@ -1167,7 +1140,7 @@ unsafe extern "C" fn cpu_sty(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uin
         cpu_writeWord(cpu, low, high, (*cpu).y, false_0 != 0);
     };
 }
-unsafe extern "C" fn cpu_stz(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
+unsafe fn cpu_stz(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
     if (*cpu).mf {
         cpu_write(cpu, low, 0 as uint8_t);
     } else {
@@ -1175,7 +1148,7 @@ unsafe extern "C" fn cpu_stz(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uin
         cpu_writeWord(cpu, low, high, 0 as uint16_t, false_0 != 0);
     };
 }
-unsafe extern "C" fn cpu_ror(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
+unsafe fn cpu_ror(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
     let mut carry: bool = false_0 != 0;
     let mut result: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     if (*cpu).mf {
@@ -1196,7 +1169,7 @@ unsafe extern "C" fn cpu_ror(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uin
     cpu_setZN(cpu, result as uint16_t, (*cpu).mf);
     (*cpu).c = carry;
 }
-unsafe extern "C" fn cpu_rol(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
+unsafe fn cpu_rol(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
     let mut result: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     if (*cpu).mf {
         result = (cpu_read(cpu, low) as ::core::ffi::c_int) << 1 as ::core::ffi::c_int
@@ -1213,7 +1186,7 @@ unsafe extern "C" fn cpu_rol(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uin
     }
     cpu_setZN(cpu, result as uint16_t, (*cpu).mf);
 }
-unsafe extern "C" fn cpu_lsr(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
+unsafe fn cpu_lsr(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
     let mut result: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     if (*cpu).mf {
         let mut value: uint8_t = cpu_read(cpu, low);
@@ -1230,7 +1203,7 @@ unsafe extern "C" fn cpu_lsr(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uin
     }
     cpu_setZN(cpu, result as uint16_t, (*cpu).mf);
 }
-unsafe extern "C" fn cpu_asl(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
+unsafe fn cpu_asl(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
     let mut result: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     if (*cpu).mf {
         result = (cpu_read(cpu, low) as ::core::ffi::c_int) << 1 as ::core::ffi::c_int;
@@ -1245,7 +1218,7 @@ unsafe extern "C" fn cpu_asl(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uin
     }
     cpu_setZN(cpu, result as uint16_t, (*cpu).mf);
 }
-unsafe extern "C" fn cpu_inc(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
+unsafe fn cpu_inc(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
     let mut result: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     if (*cpu).mf {
         result = cpu_read(cpu, low) as ::core::ffi::c_int + 1 as ::core::ffi::c_int;
@@ -1258,7 +1231,7 @@ unsafe extern "C" fn cpu_inc(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uin
     }
     cpu_setZN(cpu, result as uint16_t, (*cpu).mf);
 }
-unsafe extern "C" fn cpu_dec(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
+unsafe fn cpu_dec(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
     let mut result: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     if (*cpu).mf {
         result = cpu_read(cpu, low) as ::core::ffi::c_int - 1 as ::core::ffi::c_int;
@@ -1271,7 +1244,7 @@ unsafe extern "C" fn cpu_dec(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uin
     }
     cpu_setZN(cpu, result as uint16_t, (*cpu).mf);
 }
-unsafe extern "C" fn cpu_tsb(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
+unsafe fn cpu_tsb(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
     if (*cpu).mf {
         let mut value: uint8_t = cpu_read(cpu, low);
         (*cpu).z = (*cpu).a as ::core::ffi::c_int
@@ -1300,7 +1273,7 @@ unsafe extern "C" fn cpu_tsb(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uin
         );
     };
 }
-unsafe extern "C" fn cpu_trb(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
+unsafe fn cpu_trb(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t) {
     if (*cpu).mf {
         let mut value: uint8_t = cpu_read(cpu, low);
         (*cpu).z = (*cpu).a as ::core::ffi::c_int
@@ -1329,14 +1302,10 @@ unsafe extern "C" fn cpu_trb(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uin
         );
     };
 }
-#[no_mangle]
 pub static mut pc_hist: [uint32_t; 8] = [0; 8];
-#[no_mangle]
 pub static mut pc_hist_ctr: uint32_t = 0;
-#[no_mangle]
 pub static mut pc_bp: uint32_t = 0 as uint32_t;
-#[no_mangle]
-pub unsafe extern "C" fn DumpCpuHistory() {
+pub unsafe fn DumpCpuHistory() {
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i < 8 as ::core::ffi::c_int {
         printf(
@@ -1346,7 +1315,7 @@ pub unsafe extern "C" fn DumpCpuHistory() {
         i += 1;
     }
 }
-unsafe extern "C" fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t) {
+unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t) {
     let mut cur_pc: uint32 = (((*cpu).k as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
         | (*cpu).pc as ::core::ffi::c_int - 1 as ::core::ffi::c_int)
         as uint32;

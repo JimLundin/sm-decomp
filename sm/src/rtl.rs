@@ -339,17 +339,13 @@ pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 pub const SEEK_SET: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 pub const SEEK_END: ::core::ffi::c_int = 2 as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut g_ram: [uint8; 131072] = [0; 131072];
-#[no_mangle]
 pub static mut g_sram: *mut uint8 = ::core::ptr::null::<uint8>() as *mut uint8;
-#[no_mangle]
 pub static mut g_rom: *const uint8 = ::core::ptr::null::<uint8>();
 static mut g_rtl_memory_ptr: *mut uint8 = ::core::ptr::null::<uint8>() as *mut uint8;
 static mut g_rtl_runframe: Option<RunFrameFunc> = None;
 static mut g_rtl_syncall: Option<SyncAllFunc> = None;
-#[no_mangle]
-pub unsafe extern "C" fn RtlSetupEmuCallbacks(
+pub unsafe fn RtlSetupEmuCallbacks(
     mut emu_ram: *mut uint8,
     mut func: Option<RunFrameFunc>,
     mut sync_all: Option<SyncAllFunc>,
@@ -358,12 +354,12 @@ pub unsafe extern "C" fn RtlSetupEmuCallbacks(
     g_rtl_runframe = func;
     g_rtl_syncall = sync_all;
 }
-unsafe extern "C" fn RtlSynchronizeWholeState() {
+unsafe fn RtlSynchronizeWholeState() {
     if g_rtl_syncall.is_some() {
-        ::core::mem::transmute::<_, fn()>(g_rtl_syncall.expect("non-null function pointer"))();
+        g_rtl_syncall.expect("non-null function pointer")();
     }
 }
-unsafe extern "C" fn RtlSyncMemoryRegion(mut ptr: *mut ::core::ffi::c_void, mut n: size_t) {
+unsafe fn RtlSyncMemoryRegion(mut ptr: *mut ::core::ffi::c_void, mut n: size_t) {
     let mut data: *mut uint8 = ptr as *mut uint8;
     '_c2rust_label: {
         if data >= &raw mut g_ram as *mut uint8
@@ -390,24 +386,21 @@ unsafe extern "C" fn RtlSyncMemoryRegion(mut ptr: *mut ::core::ffi::c_void, mut 
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ByteArray_AppendVl(mut arr: *mut ByteArray, mut v: uint32) {
+pub unsafe fn ByteArray_AppendVl(mut arr: *mut ByteArray, mut v: uint32) {
     while v >= 255 as uint32 {
         ByteArray_AppendByte(arr, 255 as uint8);
         v = v.wrapping_sub(255 as uint32);
     }
     ByteArray_AppendByte(arr, v as uint8);
 }
-#[no_mangle]
-pub unsafe extern "C" fn saveFunc(
+pub unsafe fn saveFunc(
     mut ctx_in: *mut ::core::ffi::c_void,
     mut data: *mut ::core::ffi::c_void,
     mut data_size: size_t,
 ) {
     ByteArray_AppendData(ctx_in as *mut ByteArray, data as *mut uint8, data_size);
 }
-#[no_mangle]
-pub unsafe extern "C" fn loadFunc(
+pub unsafe fn loadFunc(
     mut ctx: *mut ::core::ffi::c_void,
     mut data: *mut ::core::ffi::c_void,
     mut data_size: size_t,
@@ -429,10 +422,7 @@ pub unsafe extern "C" fn loadFunc(
     memcpy(data, (*st).p as *const ::core::ffi::c_void, data_size);
     (*st).p = (*st).p.offset(data_size as isize);
 }
-unsafe extern "C" fn LoadSnesState(
-    mut func: Option<SaveLoadFunc>,
-    mut ctx: *mut ::core::ffi::c_void,
-) {
+unsafe fn LoadSnesState(mut func: Option<SaveLoadFunc>, mut ctx: *mut ::core::ffi::c_void) {
     snes_saveload(g_snes as *mut Snes, func, ctx);
     (*(*g_snes).cpu).e = false_0 != 0;
     let mut next: uint32 =
@@ -461,10 +451,7 @@ unsafe extern "C" fn LoadSnesState(
     }
     RtlSynchronizeWholeState();
 }
-unsafe extern "C" fn SaveSnesState(
-    mut func: Option<SaveLoadFunc>,
-    mut ctx: *mut ::core::ffi::c_void,
-) {
+unsafe fn SaveSnesState(mut func: Option<SaveLoadFunc>, mut ctx: *mut ::core::ffi::c_void) {
     snes_saveload(g_snes as *mut Snes, func, ctx);
 }
 static mut state_recorder: StateRecorder = StateRecorder {
@@ -489,8 +476,7 @@ static mut state_recorder: StateRecorder = StateRecorder {
         capacity: 0,
     },
 };
-#[no_mangle]
-pub unsafe extern "C" fn StateRecorder_Init(mut sr: *mut StateRecorder) {
+pub unsafe fn StateRecorder_Init(mut sr: *mut StateRecorder) {
     ByteArray_Destroy(&raw mut (*sr).log);
     ByteArray_Destroy(&raw mut (*sr).base_snapshot);
     memset(
@@ -499,8 +485,7 @@ pub unsafe extern "C" fn StateRecorder_Init(mut sr: *mut StateRecorder) {
         ::core::mem::size_of::<StateRecorder>() as size_t,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn StateRecorder_RecordCmd(mut sr: *mut StateRecorder, mut cmd: uint8) {
+pub unsafe fn StateRecorder_RecordCmd(mut sr: *mut StateRecorder, mut cmd: uint8) {
     let mut frames: ::core::ffi::c_int = (*sr).frames_since_last as ::core::ffi::c_int;
     (*sr).frames_since_last = 0 as uint32;
     let mut x: ::core::ffi::c_int = if (cmd as ::core::ffi::c_int) < 0xc0 as ::core::ffi::c_int {
@@ -516,8 +501,7 @@ pub unsafe extern "C" fn StateRecorder_RecordCmd(mut sr: *mut StateRecorder, mut
         ByteArray_AppendVl(&raw mut (*sr).log, (frames - x) as uint32);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn StateRecorder_Record(mut sr: *mut StateRecorder, mut inputs: uint16) {
+pub unsafe fn StateRecorder_Record(mut sr: *mut StateRecorder, mut inputs: uint16) {
     let mut diff: uint16 =
         (inputs as ::core::ffi::c_int ^ (*sr).last_inputs as ::core::ffi::c_int) as uint16;
     if diff as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
@@ -533,8 +517,7 @@ pub unsafe extern "C" fn StateRecorder_Record(mut sr: *mut StateRecorder, mut in
     (*sr).frames_since_last = (*sr).frames_since_last.wrapping_add(1);
     (*sr).total_frames = (*sr).total_frames.wrapping_add(1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn StateRecorder_RecordPatchByte(
+pub unsafe fn StateRecorder_RecordPatchByte(
     mut sr: *mut StateRecorder,
     mut addr: uint32,
     mut value: *const uint8,
@@ -585,18 +568,12 @@ pub unsafe extern "C" fn StateRecorder_RecordPatchByte(
         i += 1;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ReadFromFile(
-    mut f: *mut FILE,
-    mut data: *mut ::core::ffi::c_void,
-    mut n: size_t,
-) {
+pub unsafe fn ReadFromFile(mut f: *mut FILE, mut data: *mut ::core::ffi::c_void, mut n: size_t) {
     if fread(data, 1 as size_t, n, f) as size_t != n {
         Die(b"fread failed\n\0" as *const u8 as *const ::core::ffi::c_char);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn RtlReset(mut mode: ::core::ffi::c_int) {
+pub unsafe fn RtlReset(mut mode: ::core::ffi::c_int) {
     snes_frame_counter = 0 as ::core::ffi::c_int;
     snes_reset(g_snes as *mut Snes, true_0 != 0);
     if mode & 1 as ::core::ffi::c_int == 0 {
@@ -615,15 +592,13 @@ pub unsafe extern "C" fn RtlReset(mut mode: ::core::ffi::c_int) {
         StateRecorder_Init(&raw mut state_recorder);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GetFileSize(mut f: *mut FILE) -> ::core::ffi::c_int {
+pub unsafe fn GetFileSize(mut f: *mut FILE) -> ::core::ffi::c_int {
     fseek(f, 0 as ::core::ffi::c_long, SEEK_END);
     let mut r: ::core::ffi::c_int = ftell(f) as ::core::ffi::c_int;
     fseek(f, 0 as ::core::ffi::c_long, SEEK_SET);
     return r;
 }
-#[no_mangle]
-pub unsafe extern "C" fn StateRecorder_Load(
+pub unsafe fn StateRecorder_Load(
     mut sr: *mut StateRecorder,
     mut f: *mut FILE,
     mut replay_mode: bool,
@@ -722,7 +697,7 @@ pub unsafe extern "C" fn StateRecorder_Load(
             LoadSnesState(
                 Some(
                     loadFunc
-                        as unsafe extern "C" fn(
+                        as unsafe fn(
                             *mut ::core::ffi::c_void,
                             *mut ::core::ffi::c_void,
                             size_t,
@@ -787,11 +762,7 @@ pub unsafe extern "C" fn StateRecorder_Load(
         LoadSnesState(
             Some(
                 loadFunc
-                    as unsafe extern "C" fn(
-                        *mut ::core::ffi::c_void,
-                        *mut ::core::ffi::c_void,
-                        size_t,
-                    ) -> (),
+                    as unsafe fn(*mut ::core::ffi::c_void, *mut ::core::ffi::c_void, size_t) -> (),
             ),
             &raw mut state_0 as *mut ::core::ffi::c_void,
         );
@@ -817,8 +788,7 @@ pub unsafe extern "C" fn StateRecorder_Load(
     }
     RtlUpdateSnesPatchForBugfix();
 }
-#[no_mangle]
-pub unsafe extern "C" fn StateRecorder_Save(
+pub unsafe fn StateRecorder_Save(
     mut sr: *mut StateRecorder,
     mut f: *mut FILE,
     mut saving_with_bug: bool,
@@ -848,12 +818,7 @@ pub unsafe extern "C" fn StateRecorder_Save(
     };
     SaveSnesState(
         Some(
-            saveFunc
-                as unsafe extern "C" fn(
-                    *mut ::core::ffi::c_void,
-                    *mut ::core::ffi::c_void,
-                    size_t,
-                ) -> (),
+            saveFunc as unsafe fn(*mut ::core::ffi::c_void, *mut ::core::ffi::c_void, size_t) -> (),
         ),
         &raw mut arr as *mut ::core::ffi::c_void,
     );
@@ -912,18 +877,12 @@ pub unsafe extern "C" fn StateRecorder_Save(
     );
     ByteArray_Destroy(&raw mut arr);
 }
-#[no_mangle]
-pub unsafe extern "C" fn StateRecorder_ClearKeyLog(mut sr: *mut StateRecorder) {
+pub unsafe fn StateRecorder_ClearKeyLog(mut sr: *mut StateRecorder) {
     printf(b"Clearing key log!\n\0" as *const u8 as *const ::core::ffi::c_char);
     (*sr).base_snapshot.size = 0 as size_t;
     SaveSnesState(
         Some(
-            saveFunc
-                as unsafe extern "C" fn(
-                    *mut ::core::ffi::c_void,
-                    *mut ::core::ffi::c_void,
-                    size_t,
-                ) -> (),
+            saveFunc as unsafe fn(*mut ::core::ffi::c_void, *mut ::core::ffi::c_void, size_t) -> (),
         ),
         &raw mut (*sr).base_snapshot as *mut ::core::ffi::c_void,
     );
@@ -969,8 +928,7 @@ pub unsafe extern "C" fn StateRecorder_ClearKeyLog(mut sr: *mut StateRecorder) {
     ByteArray_Destroy(&raw mut old_log);
     (*sr).frames_since_last = 0 as uint32;
 }
-#[no_mangle]
-pub unsafe extern "C" fn StateRecorder_ReadNextReplayState(mut sr: *mut StateRecorder) -> uint16 {
+pub unsafe fn StateRecorder_ReadNextReplayState(mut sr: *mut StateRecorder) -> uint16 {
     '_c2rust_label: {
         if (*sr).replay_mode {
         } else {
@@ -1087,8 +1045,7 @@ pub unsafe extern "C" fn StateRecorder_ReadNextReplayState(mut sr: *mut StateRec
     }
     return (*sr).last_inputs;
 }
-#[no_mangle]
-pub unsafe extern "C" fn StateRecorder_StopReplay(mut sr: *mut StateRecorder) {
+pub unsafe fn StateRecorder_StopReplay(mut sr: *mut StateRecorder) {
     if !(*sr).replay_mode {
         return;
     }
@@ -1096,16 +1053,13 @@ pub unsafe extern "C" fn StateRecorder_StopReplay(mut sr: *mut StateRecorder) {
     (*sr).total_frames = (*sr).replay_frame_counter;
     (*sr).log.size = (*sr).replay_pos_last_complete as size_t;
 }
-#[no_mangle]
-pub unsafe extern "C" fn RtlClearKeyLog() {
+pub unsafe fn RtlClearKeyLog() {
     StateRecorder_ClearKeyLog(&raw mut state_recorder);
 }
-#[no_mangle]
-pub unsafe extern "C" fn RtlStopReplay() {
+pub unsafe fn RtlStopReplay() {
     StateRecorder_StopReplay(&raw mut state_recorder);
 }
-#[no_mangle]
-pub unsafe extern "C" fn RtlRunFrame(mut inputs: ::core::ffi::c_int) -> bool {
+pub unsafe fn RtlRunFrame(mut inputs: ::core::ffi::c_int) -> bool {
     if inputs & 0x30 as ::core::ffi::c_int == 0x30 as ::core::ffi::c_int {
         inputs ^= 0x30 as ::core::ffi::c_int;
     }
@@ -1162,11 +1116,7 @@ pub unsafe extern "C" fn RtlRunFrame(mut inputs: ::core::ffi::c_int) -> bool {
     RtlPushApuState();
     return is_replay;
 }
-#[no_mangle]
-pub unsafe extern "C" fn RtlSaveSnapshot(
-    mut filename: *const ::core::ffi::c_char,
-    mut saving_with_bug: bool,
-) {
+pub unsafe fn RtlSaveSnapshot(mut filename: *const ::core::ffi::c_char, mut saving_with_bug: bool) {
     let mut f: *mut FILE =
         fopen(filename, b"wb\0" as *const u8 as *const ::core::ffi::c_char) as *mut FILE;
     RtlApuLock();
@@ -1184,8 +1134,7 @@ static mut kBugSaves: [*const ::core::ffi::c_char; 7] = [
     b"Before Ridley\0" as *const u8 as *const ::core::ffi::c_char,
     b"Enter Mother Brain\0" as *const u8 as *const ::core::ffi::c_char,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn RtlSaveLoad(mut cmd: ::core::ffi::c_int, mut slot: ::core::ffi::c_int) {
+pub unsafe fn RtlSaveLoad(mut cmd: ::core::ffi::c_int, mut slot: ::core::ffi::c_int) {
     let mut name: [::core::ffi::c_char; 128] = [0; 128];
     if slot >= 256 as ::core::ffi::c_int {
         let mut i: ::core::ffi::c_int = slot - 256 as ::core::ffi::c_int;
@@ -1290,30 +1239,25 @@ pub unsafe extern "C" fn RtlSaveLoad(mut cmd: ::core::ffi::c_int, mut slot: ::co
         RtlSaveSnapshot(&raw mut name as *mut ::core::ffi::c_char, false_0 != 0);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn MemCpy(
+pub unsafe fn MemCpy(
     mut dst: *mut ::core::ffi::c_void,
     mut src: *const ::core::ffi::c_void,
     mut size: ::core::ffi::c_int,
 ) {
     memcpy(dst, src, size as size_t);
 }
-#[no_mangle]
-pub unsafe extern "C" fn MakePairU16(mut k: uint16, mut j: uint16) -> PairU16 {
+pub unsafe fn MakePairU16(mut k: uint16, mut j: uint16) -> PairU16 {
     let mut r: PairU16 = PairU16 { k: k, j: j };
     return r;
 }
-#[no_mangle]
-pub unsafe extern "C" fn mov24(mut a: *mut LongPtr, mut d: uint32) {
+pub unsafe fn mov24(mut a: *mut LongPtr, mut d: uint32) {
     (*a).addr = (d & 0xffff as uint32) as VoidP;
     (*a).bank = (d >> 16 as ::core::ffi::c_int) as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Load24(mut src: *const LongPtr) -> uint32 {
+pub unsafe fn Load24(mut src: *const LongPtr) -> uint32 {
     return *(src as *mut uint32) & 0xffffff as uint32;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Unreachable() -> bool {
+pub unsafe fn Unreachable() -> bool {
     printf(b"Unreachable!\n\0" as *const u8 as *const ::core::ffi::c_char);
     '_c2rust_label: {
         __assert_fail(
@@ -1326,8 +1270,7 @@ pub unsafe extern "C" fn Unreachable() -> bool {
     g_ram[0x1ffff as ::core::ffi::c_int as usize] = 1 as uint8;
     return false_0 != 0;
 }
-#[no_mangle]
-pub unsafe extern "C" fn RomPtr(mut addr: uint32_t) -> *const uint8 {
+pub unsafe fn RomPtr(mut addr: uint32_t) -> *const uint8 {
     if addr & 0x8000 as uint32_t == 0 {
         printf(
             b"RomPtr - Invalid access 0x%x!\n\0" as *const u8 as *const ::core::ffi::c_char,
@@ -1341,36 +1284,30 @@ pub unsafe extern "C" fn RomPtr(mut addr: uint32_t) -> *const uint8 {
             & 0x3fffff as uint32_t) as isize,
     ) as *const uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn WriteReg(mut reg: uint16, mut value: uint8) {
+pub unsafe fn WriteReg(mut reg: uint16, mut value: uint8) {
     snes_write(g_snes as *mut Snes, reg as uint32_t, value as uint8_t);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Mult8x8(mut a: uint8, mut b: uint8) -> uint16 {
+pub unsafe fn Mult8x8(mut a: uint8, mut b: uint8) -> uint16 {
     return (a as ::core::ffi::c_int * b as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SnesDivide(mut a: uint16, mut b: uint8) -> uint16 {
+pub unsafe fn SnesDivide(mut a: uint16, mut b: uint8) -> uint16 {
     return (if b as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
         0xffff as ::core::ffi::c_int
     } else {
         a as ::core::ffi::c_int / b as ::core::ffi::c_int
     }) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SnesModulus(mut a: uint16, mut b: uint8) -> uint16 {
+pub unsafe fn SnesModulus(mut a: uint16, mut b: uint8) -> uint16 {
     return (if b as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
         a as ::core::ffi::c_int
     } else {
         a as ::core::ffi::c_int % b as ::core::ffi::c_int
     }) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ReadReg(mut reg: uint16) -> uint8 {
+pub unsafe fn ReadReg(mut reg: uint16) -> uint8 {
     return snes_read(g_snes as *mut Snes, reg as uint32_t) as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ReadRegWord(mut reg: uint16) -> uint16 {
+pub unsafe fn ReadRegWord(mut reg: uint16) -> uint16 {
     let mut rv: uint16_t = ReadReg(reg) as uint16_t;
     rv = (rv as ::core::ffi::c_int
         | (ReadReg((reg as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16)
@@ -1378,8 +1315,7 @@ pub unsafe extern "C" fn ReadRegWord(mut reg: uint16) -> uint16 {
             << 8 as ::core::ffi::c_int) as uint16_t;
     return rv as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn WriteRegWord(mut reg: uint16, mut value: uint16) {
+pub unsafe fn WriteRegWord(mut reg: uint16, mut value: uint16) {
     WriteReg(reg, value as uint8);
     WriteReg(
         (reg as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16,
@@ -1391,8 +1327,7 @@ static mut g_apu_write_ents: [ApuWriteEnt; 16] = [ApuWriteEnt { ports: [0; 4] };
 static mut g_apu_time_since_empty: uint8 = 0;
 static mut g_apu_write_ent_pos: uint8 = 0;
 static mut g_apu_queue_size: uint8 = 0;
-#[no_mangle]
-pub unsafe extern "C" fn RtlApuWrite(mut adr: uint32, mut val: uint8) {
+pub unsafe fn RtlApuWrite(mut adr: uint32, mut val: uint8) {
     '_c2rust_label: {
         if adr >= APUI00 as ::core::ffi::c_int as uint32
             && adr <= APUI03 as ::core::ffi::c_int as uint32
@@ -1417,7 +1352,7 @@ pub unsafe extern "C" fn RtlApuWrite(mut adr: uint32, mut val: uint8) {
         g_apu_write.ports[(adr & 0x3 as uint32) as usize] = val;
     }
 }
-unsafe extern "C" fn IsFrameEmpty(mut w: *mut ApuWriteEnt) -> bool {
+unsafe fn IsFrameEmpty(mut w: *mut ApuWriteEnt) -> bool {
     return (*w).ports[0 as ::core::ffi::c_int as usize] as ::core::ffi::c_int
         == 255 as ::core::ffi::c_int
         && (*w).ports[1 as ::core::ffi::c_int as usize] as ::core::ffi::c_int
@@ -1427,8 +1362,7 @@ unsafe extern "C" fn IsFrameEmpty(mut w: *mut ApuWriteEnt) -> bool {
         && (*w).ports[3 as ::core::ffi::c_int as usize] as ::core::ffi::c_int
             == 255 as ::core::ffi::c_int;
 }
-#[no_mangle]
-pub unsafe extern "C" fn RtlPushApuState() {
+pub unsafe fn RtlPushApuState() {
     RtlApuLock();
     if *((&raw mut g_ram as *mut uint8).offset(0x617 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
@@ -1480,7 +1414,7 @@ pub unsafe extern "C" fn RtlPushApuState() {
     }
     RtlApuUnlock();
 }
-unsafe extern "C" fn RtlPopApuState_Locked() {
+unsafe fn RtlPopApuState_Locked() {
     if *((&raw mut g_ram as *mut uint8).offset(0x617 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -1508,7 +1442,7 @@ unsafe extern "C" fn RtlPopApuState_Locked() {
         }
     }
 }
-unsafe extern "C" fn RtlResetApuQueue() {
+unsafe fn RtlResetApuQueue() {
     g_apu_queue_size = 0 as uint8;
     g_apu_time_since_empty = g_apu_queue_size;
     g_apu_write_ent_pos = g_apu_time_since_empty;
@@ -1518,14 +1452,13 @@ unsafe extern "C" fn RtlResetApuQueue() {
         ::core::mem::size_of::<ApuWriteEnt>() as size_t,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn RtlApuUpload(mut p: *const uint8) {
+pub unsafe fn RtlApuUpload(mut p: *const uint8) {
     RtlApuLock();
     RtlResetApuQueue();
     SpcPlayer_Upload(g_spc_player as *mut SpcPlayer, p as *const uint8_t);
     RtlApuUnlock();
 }
-unsafe extern "C" fn RtlRestoreMusicAfterLoad_Locked(mut is_reset: bool) {
+unsafe fn RtlRestoreMusicAfterLoad_Locked(mut is_reset: bool) {
     if g_use_my_apu_code {
         memcpy(
             &raw mut (*g_spc_player).ram as *mut uint8 as *mut ::core::ffi::c_void,
@@ -1544,7 +1477,7 @@ unsafe extern "C" fn RtlRestoreMusicAfterLoad_Locked(mut is_reset: bool) {
     }
     RtlResetApuQueue();
 }
-unsafe extern "C" fn RtlSaveMusicStateToRam_Locked() {
+unsafe fn RtlSaveMusicStateToRam_Locked() {
     if g_use_my_apu_code {
         let mut spc_player: *mut SpcPlayer = g_spc_player as *mut SpcPlayer;
         let mut i: ::core::ffi::c_int = g_apu_queue_size as ::core::ffi::c_int;
@@ -1576,8 +1509,7 @@ unsafe extern "C" fn RtlSaveMusicStateToRam_Locked() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn RtlRenderAudio(
+pub unsafe fn RtlRenderAudio(
     mut audio_buffer: *mut int16,
     mut samples: ::core::ffi::c_int,
     mut channels: ::core::ffi::c_int,
@@ -1614,8 +1546,7 @@ pub unsafe extern "C" fn RtlRenderAudio(
     }
     RtlApuUnlock();
 }
-#[no_mangle]
-pub unsafe extern "C" fn RtlCheat(mut c: ::core::ffi::c_char) {
+pub unsafe fn RtlCheat(mut c: ::core::ffi::c_char) {
     if c as ::core::ffi::c_int == 'w' as i32 {
         *((&raw mut g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize)
             as *mut uint16) = *((&raw mut g_ram as *mut uint8)
@@ -1666,8 +1597,7 @@ pub unsafe extern "C" fn RtlCheat(mut c: ::core::ffi::c_char) {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn RtlReadSram() {
+pub unsafe fn RtlReadSram() {
     let mut f: *mut FILE = fopen(
         b"saves/sm.srm\0" as *const u8 as *const ::core::ffi::c_char,
         b"rb\0" as *const u8 as *const ::core::ffi::c_char,
@@ -1695,8 +1625,7 @@ pub unsafe extern "C" fn RtlReadSram() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn RtlWriteSram() {
+pub unsafe fn RtlWriteSram() {
     rename(
         b"saves/sm.srm\0" as *const u8 as *const ::core::ffi::c_char,
         b"saves/sm.srm.bak\0" as *const u8 as *const ::core::ffi::c_char,

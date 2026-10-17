@@ -341,7 +341,7 @@ pub struct Enemy_SpacePirates {
     pub sps_var_3F: uint16,
 }
 #[inline]
-unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
+unsafe fn abs16(mut t: uint16) -> uint16 {
     return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         -(t as ::core::ffi::c_int)
     } else {
@@ -349,16 +349,16 @@ unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
     }) as uint16;
 }
 #[inline]
-unsafe extern "C" fn RomPtr_A0(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_A0(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0xa00000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn get_EnemyDef_A2(mut a: uint16) -> *mut EnemyDef {
+unsafe fn get_EnemyDef_A2(mut a: uint16) -> *mut EnemyDef {
     return RomPtr((0xa00000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut EnemyDef;
 }
 #[inline]
-unsafe extern "C" fn get_Vulnerability(mut a: uint16) -> *mut Vulnerability {
+unsafe fn get_Vulnerability(mut a: uint16) -> *mut Vulnerability {
     return RomPtr((0xb40000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut Vulnerability;
 }
@@ -386,31 +386,27 @@ pub const fnWalkingSpacePirates_FD44: uint32 = 11730244 as uint32;
 pub const fnWalkingSpacePirates_FDCE: uint32 = 11730382 as uint32;
 pub const fnnullsub_282: uint32 = 11730506 as uint32;
 #[inline]
-unsafe extern "C" fn gEnemyData(mut o: ::core::ffi::c_int) -> *mut EnemyData {
+unsafe fn gEnemyData(mut o: ::core::ffi::c_int) -> *mut EnemyData {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut EnemyData;
 }
 #[inline]
-unsafe extern "C" fn Get_SpacePirates(mut o: ::core::ffi::c_int) -> *mut Enemy_SpacePirates {
+unsafe fn Get_SpacePirates(mut o: ::core::ffi::c_int) -> *mut Enemy_SpacePirates {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_SpacePirates;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_GrappleReact_CancelBeam_B2() {
+pub unsafe fn Enemy_GrappleReact_CancelBeam_B2() {
     Enemy_SwitchToFrozenAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalFrozenAI_B2() {
+pub unsafe fn Enemy_NormalFrozenAI_B2() {
     NormalEnemyFrozenAI();
 }
-#[no_mangle]
-pub unsafe extern "C" fn WalkingSpacePirates_Powerbomb() {
+pub unsafe fn WalkingSpacePirates_Powerbomb() {
     NormalEnemyPowerBombAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn WalkingSpacePirates_Touch() {
+pub unsafe fn WalkingSpacePirates_Touch() {
     if (*Get_SpacePirates(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -422,8 +418,7 @@ pub unsafe extern "C" fn WalkingSpacePirates_Touch() {
         NormalEnemyTouchAi();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn WalkingSpacePirates_Shot() {
+pub unsafe fn WalkingSpacePirates_Shot() {
     if (*Get_SpacePirates(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -437,8 +432,7 @@ pub unsafe extern "C" fn WalkingSpacePirates_Shot() {
         NormalEnemyShotAi();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn WalkingSpacePirates_8789() {
+pub unsafe fn WalkingSpacePirates_8789() {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -462,8 +456,7 @@ pub unsafe extern "C" fn WalkingSpacePirates_8789() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn WalkingSpacePirates_87C8() {
+pub unsafe fn WalkingSpacePirates_87C8() {
     let mut r18: uint16 = 0;
     let mut enemy_ptr: uint16 = 0;
     let mut vulnerability_ptr: uint16 = 0;
@@ -566,8 +559,7 @@ pub unsafe extern "C" fn WalkingSpacePirates_87C8() {
     }
     WalkingSpacePirates_8789();
 }
-#[no_mangle]
-pub unsafe extern "C" fn WalkingSpacePirates_883E() {
+pub unsafe fn WalkingSpacePirates_883E() {
     if (*Get_SpacePirates(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -633,8 +625,7 @@ pub unsafe extern "C" fn WalkingSpacePirates_883E() {
     ProjectileReflection(v0);
     QueueSfx2_Max6(0x66 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Instr_MovePixelsDownAndChangeDirFaceRight(
+pub unsafe fn SpacePirates_Instr_MovePixelsDownAndChangeDirFaceRight(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
@@ -657,8 +648,7 @@ pub unsafe extern "C" fn SpacePirates_Instr_MovePixelsDownAndChangeDirFaceRight(
     }
     return addr_kSpacePirates_Ilist_ED36 as ::core::ffi::c_int as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Instr_MovePixelsDownAndChangeDirFaceLeft(
+pub unsafe fn SpacePirates_Instr_MovePixelsDownAndChangeDirFaceLeft(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
@@ -681,8 +671,7 @@ pub unsafe extern "C" fn SpacePirates_Instr_MovePixelsDownAndChangeDirFaceLeft(
     }
     return addr_off_B2EDAC as ::core::ffi::c_int as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Instr_RandomNewDirFaceR(
+pub unsafe fn SpacePirates_Instr_RandomNewDirFaceR(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
@@ -698,8 +687,7 @@ pub unsafe extern "C" fn SpacePirates_Instr_RandomNewDirFaceR(
     }
     return result as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Instr_RandomNewDirFaceL(
+pub unsafe fn SpacePirates_Instr_RandomNewDirFaceL(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
@@ -715,8 +703,7 @@ pub unsafe extern "C" fn SpacePirates_Instr_RandomNewDirFaceL(
     }
     return result as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Instr_PrepareWallJumpR(
+pub unsafe fn SpacePirates_Instr_PrepareWallJumpR(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
@@ -733,8 +720,7 @@ pub unsafe extern "C" fn SpacePirates_Instr_PrepareWallJumpR(
     (*E).sps_var_F = 64 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Instr_PrepareWallJumpL(
+pub unsafe fn SpacePirates_Instr_PrepareWallJumpL(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
@@ -751,11 +737,7 @@ pub unsafe extern "C" fn SpacePirates_Instr_PrepareWallJumpL(
     (*E).sps_var_F = 192 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Instr_FireLaserL(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn SpacePirates_Instr_FireLaserL(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -774,11 +756,7 @@ pub unsafe extern "C" fn SpacePirates_Instr_FireLaserL(
     );
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Instr_FireLaserR(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn SpacePirates_Instr_FireLaserR(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -794,8 +772,7 @@ pub unsafe extern "C" fn SpacePirates_Instr_FireLaserR(
     );
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Instr_SetEnemyFunc(
+pub unsafe fn SpacePirates_Instr_SetEnemyFunc(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
@@ -806,16 +783,11 @@ pub unsafe extern "C" fn SpacePirates_Instr_SetEnemyFunc(
     .sps_var_A = *jp.offset(0 as ::core::ffi::c_int as isize);
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Instr_PlaySfx(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn SpacePirates_Instr_PlaySfx(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     QueueSfx2_Max6(0x66 as uint16);
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn WallSpacePirates_Init() {
+pub unsafe fn WallSpacePirates_Init() {
     let mut v0: uint16 = addr_kSpacePirates_Ilist_ED36 as ::core::ffi::c_int as uint16;
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -860,8 +832,7 @@ pub unsafe extern "C" fn WallSpacePirates_Init() {
     }
     (*E).base.x_pos = v3;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallSpacePiratesEnemyFunc(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallSpacePiratesEnemyFunc(mut ea: uint32, mut k: uint16) {
     match ea {
         11698251 => return,
         11726900 => {
@@ -948,8 +919,7 @@ pub unsafe extern "C" fn CallSpacePiratesEnemyFunc(mut ea: uint32, mut k: uint16
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn WallSpacePirates_Main() {
+pub unsafe fn WallSpacePirates_Main() {
     let mut v0: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -960,8 +930,7 @@ pub unsafe extern "C" fn WallSpacePirates_Main() {
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Func_1(mut k: uint16) {
+pub unsafe fn SpacePirates_Func_1(mut k: uint16) {
     if IsSamusWithinEnemy_Y(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -977,8 +946,7 @@ pub unsafe extern "C" fn SpacePirates_Func_1(mut k: uint16) {
         (*E).base.instruction_timer = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Func_2(mut k: uint16) {
+pub unsafe fn SpacePirates_Func_2(mut k: uint16) {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1016,8 +984,7 @@ pub unsafe extern "C" fn SpacePirates_Func_2(mut k: uint16) {
         (*E).base.x_pos = v2;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Func_3(mut k: uint16) {
+pub unsafe fn SpacePirates_Func_3(mut k: uint16) {
     if IsSamusWithinEnemy_Y(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -1033,8 +1000,7 @@ pub unsafe extern "C" fn SpacePirates_Func_3(mut k: uint16) {
         (*E).base.instruction_timer = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Func_4(mut k: uint16) {
+pub unsafe fn SpacePirates_Func_4(mut k: uint16) {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1072,11 +1038,7 @@ pub unsafe extern "C" fn SpacePirates_Func_4(mut k: uint16) {
         (*E).base.x_pos = v2;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Instr_20(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn SpacePirates_Instr_20(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*Get_SpacePirates(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1085,27 +1047,18 @@ pub unsafe extern "C" fn SpacePirates_Instr_20(
     .palette_index = *jp.offset(0 as ::core::ffi::c_int as isize);
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Instr_16(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn SpacePirates_Instr_16(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     QueueSfx2_Max6(*jp.offset(0 as ::core::ffi::c_int as isize));
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_B2F554() {
+pub unsafe fn sub_B2F554() {
     (*gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
     ))
     .instruction_timer = 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Instr_15(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn SpacePirates_Instr_15(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1124,11 +1077,7 @@ pub unsafe extern "C" fn SpacePirates_Instr_15(
     );
     return jp.offset(3 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Instr_18(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn SpacePirates_Instr_18(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1146,8 +1095,7 @@ pub unsafe extern "C" fn SpacePirates_Instr_18(
     }) as uint16;
     return (*E).sps_var_C as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_B2F5B3() {
+pub unsafe fn sub_B2F5B3() {
     let mut v0: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1164,16 +1112,11 @@ pub unsafe extern "C" fn sub_B2F5B3() {
         addr_kSpacePirates_Ilist_F32E as ::core::ffi::c_int
     }) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Instr_17(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn SpacePirates_Instr_17(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*Get_SpacePirates(k as ::core::ffi::c_int)).sps_var_00 = 0 as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn NinjaSpacePirates_Init() {
+pub unsafe fn NinjaSpacePirates_Init() {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1254,8 +1197,7 @@ pub unsafe extern "C" fn NinjaSpacePirates_Init() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NinjaSpacePirates_Main() {
+pub unsafe fn NinjaSpacePirates_Main() {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1266,8 +1208,7 @@ pub unsafe extern "C" fn NinjaSpacePirates_Main() {
             as *mut uint16),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Func_5(mut k: uint16) {
+pub unsafe fn SpacePirates_Func_5(mut k: uint16) {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1296,14 +1237,12 @@ pub unsafe extern "C" fn SpacePirates_Func_5(mut k: uint16) {
         (*E).base.instruction_timer = 1 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Func_6(mut k: uint16) {
+pub unsafe fn SpacePirates_Func_6(mut k: uint16) {
     if SpacePirates_Func_8() == 0 && SpacePirates_Func_10() == 0 && SpacePirates_Func_9() == 0 {
         SpacePirates_Func_7(k);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Func_7(mut k: uint16) {
+pub unsafe fn SpacePirates_Func_7(mut k: uint16) {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(k as ::core::ffi::c_int);
     if (*E).base.frame_counter as ::core::ffi::c_int & 0x3f as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
@@ -1334,8 +1273,7 @@ pub unsafe extern "C" fn SpacePirates_Func_7(mut k: uint16) {
         (*E).base.instruction_timer = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Func_8() -> uint16 {
+pub unsafe fn SpacePirates_Func_8() -> uint16 {
     let mut v0: uint16 = 8 as uint16;
     while *((&raw mut g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -1384,8 +1322,7 @@ pub unsafe extern "C" fn SpacePirates_Func_8() -> uint16 {
     (*E).base.instruction_timer = 1 as uint16;
     return 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Func_9() -> uint16 {
+pub unsafe fn SpacePirates_Func_9() -> uint16 {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1408,8 +1345,7 @@ pub unsafe extern "C" fn SpacePirates_Func_9() -> uint16 {
     (*E).base.instruction_timer = 1 as uint16;
     return 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Func_10() -> uint16 {
+pub unsafe fn SpacePirates_Func_10() -> uint16 {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1444,8 +1380,7 @@ pub unsafe extern "C" fn SpacePirates_Func_10() -> uint16 {
     (*E).base.instruction_timer = 1 as uint16;
     return 1 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Func_11(mut k: uint16) {
+pub unsafe fn SpacePirates_Func_11(mut k: uint16) {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(k as ::core::ffi::c_int);
     (*E).base.x_pos = ((*E).base.x_pos as ::core::ffi::c_int
         - *(&raw mut (*E).sps_var_00 as *mut uint8).offset(
@@ -1463,8 +1398,7 @@ pub unsafe extern "C" fn SpacePirates_Func_11(mut k: uint16) {
         (*E).sps_var_A = (0xb2f84c as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Func_12(mut k: uint16) {
+pub unsafe fn SpacePirates_Func_12(mut k: uint16) {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(k as ::core::ffi::c_int);
     (*E).base.x_pos = ((*E).base.x_pos as ::core::ffi::c_int
         - *(&raw mut (*E).sps_var_00 as *mut uint8).offset(
@@ -1486,8 +1420,7 @@ pub unsafe extern "C" fn SpacePirates_Func_12(mut k: uint16) {
         SpacePirates_FB11(k);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Func_13(mut k: uint16) {
+pub unsafe fn SpacePirates_Func_13(mut k: uint16) {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(k as ::core::ffi::c_int);
     (*E).base.x_pos = ((*E).base.x_pos as ::core::ffi::c_int
         + *(&raw mut (*E).sps_var_00 as *mut uint8).offset(
@@ -1505,8 +1438,7 @@ pub unsafe extern "C" fn SpacePirates_Func_13(mut k: uint16) {
         (*E).sps_var_A = (0xb2f8c5 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Func_14(mut k: uint16) {
+pub unsafe fn SpacePirates_Func_14(mut k: uint16) {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(k as ::core::ffi::c_int);
     (*E).base.x_pos = ((*E).base.x_pos as ::core::ffi::c_int
         + *(&raw mut (*E).sps_var_00 as *mut uint8).offset(
@@ -1528,14 +1460,12 @@ pub unsafe extern "C" fn SpacePirates_Func_14(mut k: uint16) {
         SpacePirates_FB11(k);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Func_15(mut k: uint16) {
+pub unsafe fn SpacePirates_Func_15(mut k: uint16) {
     if SpacePirates_Func_8() == 0 && SpacePirates_Func_10() == 0 {
         SpacePirates_Func_16();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Func_16() {
+pub unsafe fn SpacePirates_Func_16() {
     let mut v3: int16 = 0;
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -1570,11 +1500,7 @@ pub unsafe extern "C" fn SpacePirates_Func_16() {
         (*E).base.instruction_timer = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Instr_19(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn SpacePirates_Instr_19(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(k as ::core::ffi::c_int);
     (*E).sps_var_00 = 1536 as uint16;
     (*E).sps_var_03 = ((*E).sps_var_D as ::core::ffi::c_int
@@ -1583,8 +1509,7 @@ pub unsafe extern "C" fn SpacePirates_Instr_19(
             >> 1 as ::core::ffi::c_int)) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_F985(mut k: uint16) {
+pub unsafe fn SpacePirates_F985(mut k: uint16) {
     let mut v2: int16 = 0;
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(k as ::core::ffi::c_int);
     (*E).base.y_pos = ((*E).base.y_pos as ::core::ffi::c_int
@@ -1603,8 +1528,7 @@ pub unsafe extern "C" fn SpacePirates_F985(mut k: uint16) {
         (*E).sps_var_00 = 1536 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_F9C1(mut k: uint16) {
+pub unsafe fn SpacePirates_F9C1(mut k: uint16) {
     let mut v2: int16 = 0;
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(k as ::core::ffi::c_int);
     (*E).base.x_pos = ((*E).base.x_pos as ::core::ffi::c_int - 5 as ::core::ffi::c_int) as uint16;
@@ -1635,8 +1559,7 @@ pub unsafe extern "C" fn SpacePirates_F9C1(mut k: uint16) {
         SpacePirates_FB11(k);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_FA15(mut k: uint16) {
+pub unsafe fn SpacePirates_FA15(mut k: uint16) {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(k as ::core::ffi::c_int);
     let mut v2: uint16 =
         ((*E).base.x_pos as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
@@ -1652,11 +1575,7 @@ pub unsafe extern "C" fn SpacePirates_FA15(mut k: uint16) {
         (*E).sps_var_A = (0xb2804b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Instr_21(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn SpacePirates_Instr_21(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(k as ::core::ffi::c_int);
     (*E).sps_var_00 = 1536 as uint16;
     (*E).sps_var_03 = ((*E).sps_var_E as ::core::ffi::c_int
@@ -1665,8 +1584,7 @@ pub unsafe extern "C" fn SpacePirates_Instr_21(
             >> 1 as ::core::ffi::c_int)) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_FA59(mut k: uint16) {
+pub unsafe fn SpacePirates_FA59(mut k: uint16) {
     let mut v2: int16 = 0;
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(k as ::core::ffi::c_int);
     (*E).base.y_pos = ((*E).base.y_pos as ::core::ffi::c_int
@@ -1685,8 +1603,7 @@ pub unsafe extern "C" fn SpacePirates_FA59(mut k: uint16) {
         (*E).sps_var_00 = 1536 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_FA95(mut k: uint16) {
+pub unsafe fn SpacePirates_FA95(mut k: uint16) {
     let mut v2: int16 = 0;
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(k as ::core::ffi::c_int);
     (*E).base.x_pos = ((*E).base.x_pos as ::core::ffi::c_int + 5 as ::core::ffi::c_int) as uint16;
@@ -1717,8 +1634,7 @@ pub unsafe extern "C" fn SpacePirates_FA95(mut k: uint16) {
         SpacePirates_FB11(k);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_FAE9(mut k: uint16) {
+pub unsafe fn SpacePirates_FAE9(mut k: uint16) {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(k as ::core::ffi::c_int);
     let mut v2: uint16 =
         ((*E).base.x_pos as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
@@ -1734,8 +1650,7 @@ pub unsafe extern "C" fn SpacePirates_FAE9(mut k: uint16) {
         (*E).sps_var_A = (0xb2804b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_FB11(mut k: uint16) {
+pub unsafe fn SpacePirates_FB11(mut k: uint16) {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(k as ::core::ffi::c_int);
     CreateSpriteAtPos(
         ((*E).base.x_pos as ::core::ffi::c_int - 8 as ::core::ffi::c_int) as uint16,
@@ -1750,11 +1665,7 @@ pub unsafe extern "C" fn SpacePirates_FB11(mut k: uint16) {
         0 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Instr_12(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn SpacePirates_Instr_12(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1772,11 +1683,7 @@ pub unsafe extern "C" fn SpacePirates_Instr_12(
     );
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Instr_14(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn SpacePirates_Instr_14(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1794,11 +1701,7 @@ pub unsafe extern "C" fn SpacePirates_Instr_14(
     );
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Instr_11(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn SpacePirates_Instr_11(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*Get_SpacePirates(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1806,11 +1709,7 @@ pub unsafe extern "C" fn SpacePirates_Instr_11(
     .sps_var_A = *jp.offset(0 as ::core::ffi::c_int as isize);
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpacePirates_Instr_13(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn SpacePirates_Instr_13(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     if IsSamusWithinEnemy_Y(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -1848,8 +1747,7 @@ pub unsafe extern "C" fn SpacePirates_Instr_13(
         return addr_kSpacePirates_Ilist_FBE6 as ::core::ffi::c_int as uintptr_t as *const uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn WalkingSpacePirates_Init() {
+pub unsafe fn WalkingSpacePirates_Init() {
     let mut v0: uint16 = addr_kSpacePirates_Ilist_FB64 as ::core::ffi::c_int as uint16;
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -1867,8 +1765,7 @@ pub unsafe extern "C" fn WalkingSpacePirates_Init() {
     (*E).sps_var_E = ((*E).base.x_pos as ::core::ffi::c_int
         - (*E).sps_parameter_2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn WalkingSpacePirates_Main() {
+pub unsafe fn WalkingSpacePirates_Main() {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1884,8 +1781,7 @@ pub unsafe extern "C" fn WalkingSpacePirates_Main() {
         WalkingSpacePirates_FE4B();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn WalkingSpacePirates_FD44() {
+pub unsafe fn WalkingSpacePirates_FD44() {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -1946,8 +1842,7 @@ pub unsafe extern "C" fn WalkingSpacePirates_FD44() {
         (*E).base.instruction_timer = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn WalkingSpacePirates_FDCE() {
+pub unsafe fn WalkingSpacePirates_FDCE() {
     let mut E: *mut Enemy_SpacePirates = Get_SpacePirates(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -2000,8 +1895,7 @@ pub unsafe extern "C" fn WalkingSpacePirates_FDCE() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn WalkingSpacePirates_FE4B() {
+pub unsafe fn WalkingSpacePirates_FE4B() {
     let mut v0: uint16 = 8 as uint16;
     while *((&raw mut g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize)
         as *mut uint16)

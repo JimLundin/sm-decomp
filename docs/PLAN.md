@@ -251,6 +251,15 @@ every step makes the next one easier.
    declarations unchanged. Any% 129,712 frames, zero failures (182.99s);
    format and library/frontend metadata builds pass. Extern blocks 54 -> 40,
    Rust lines 271,116 -> 269,432; other counters unchanged.
+   ABI batch applied: 6,870 Rust function definitions and 1,587 callback/type
+   occurrences now use Rust ABI; 6,790 unnecessary `no_mangle` removed.
+   Callback tables/casts converted together, three callback transmutes now
+   direct calls. Real SDL/OpenGL/libc/DLL boundaries remain C ABI; unused
+   variadic `StrFmt` remains until stable cleanup. Any% 129,712 frames, zero
+   failures (186.61s); format and library/frontend metadata builds pass.
+   C ABI export counter 5,833 -> 3; no_mangle 6,795 -> 5; Rust lines 269,432
+   -> 261,547; other counters unchanged. Final-source Linux validation
+   pending before marking item 2 done.
 3. Replace the hand-written SDL/OpenGL FFI with the `sdl2` crate (or similar)
    and drop `extern_types`; then move `rust-toolchain.toml` to stable.
 4. Globals: gather `static mut` game state behind one `Game` struct passed by

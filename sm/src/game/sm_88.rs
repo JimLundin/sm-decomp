@@ -670,21 +670,21 @@ pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 #[inline]
-unsafe extern "C" fn swap16(mut v: uint16) -> uint16 {
+unsafe fn swap16(mut v: uint16) -> uint16 {
     return ((v as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
         | v as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint16;
 }
 #[inline]
-unsafe extern "C" fn __CFADD__uint8(mut x: uint8, mut y: uint8) -> bool {
+unsafe fn __CFADD__uint8(mut x: uint8, mut y: uint8) -> bool {
     return x as ::core::ffi::c_int
         > (x as ::core::ffi::c_int + y as ::core::ffi::c_int) as uint8 as ::core::ffi::c_int;
 }
 #[inline]
-unsafe extern "C" fn RomPtr_88(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_88(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x880000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomBankBase(mut bank: uint8) -> *const uint8 {
+unsafe fn RomBankBase(mut bank: uint8) -> *const uint8 {
     return RomPtr(
         (((bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) + 0x8000 as ::core::ffi::c_int)
             as uint32_t,
@@ -692,12 +692,12 @@ unsafe extern "C" fn RomBankBase(mut bank: uint8) -> *const uint8 {
     .offset(-(0x8000 as ::core::ffi::c_int as isize));
 }
 #[inline]
-unsafe extern "C" fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
+unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
     return (&raw mut g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
         as *mut uint8 as *mut VramWriteEntry;
 }
 #[inline]
-unsafe extern "C" fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
+unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
     let mut t: uint32 = ((*lo as ::core::ffi::c_int
         + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
         as uint32)
@@ -706,7 +706,7 @@ unsafe extern "C" fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: 
     *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
 #[inline]
-unsafe extern "C" fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
+unsafe fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
     *lo = t as uint16;
     *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
@@ -835,12 +835,10 @@ pub const fnHdmaobjPreInstr_XraySetup: uint32 = 9556607 as uint32;
 pub const fnXray_SetupStage8_SetBackdropColor: uint32 = 9556668 as uint32;
 pub const fnInitializeSuitPickupHdma: uint32 = 9557650 as uint32;
 pub const fnnullsub_309: uint32 = 10785852 as uint32;
-#[no_mangle]
-pub unsafe extern "C" fn nullsub_9(mut j: uint16) -> uint16 {
+pub unsafe fn nullsub_9(mut j: uint16) -> uint16 {
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn InitializeLayerBlending() {
+pub unsafe fn InitializeLayerBlending() {
     *(&raw mut g_ram as *mut uint8).offset(0x60 as ::core::ffi::c_int as isize) = 0 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x61 as ::core::ffi::c_int as isize) = 0 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x62 as ::core::ffi::c_int as isize) = 0 as uint8;
@@ -851,55 +849,46 @@ pub unsafe extern "C" fn InitializeLayerBlending() {
     *(&raw mut g_ram as *mut uint8).offset(0x6e as ::core::ffi::c_int as isize) = 2 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) = 51 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LayerBlendFunc_4_PhantoonIntro(mut j: uint16) -> uint16 {
+pub unsafe fn LayerBlendFunc_4_PhantoonIntro(mut j: uint16) -> uint16 {
     *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 17 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 4 as uint8;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LayerBlendFunc_6(mut j: uint16) -> uint16 {
+pub unsafe fn LayerBlendFunc_6(mut j: uint16) -> uint16 {
     *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 20 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) = 39 as uint8;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LayerBlendFunc_8(mut j: uint16) -> uint16 {
+pub unsafe fn LayerBlendFunc_8(mut j: uint16) -> uint16 {
     *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 20 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) = 34 as uint8;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LayerBlendFunc_A(mut j: uint16) -> uint16 {
+pub unsafe fn LayerBlendFunc_A(mut j: uint16) -> uint16 {
     *(&raw mut g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) = 50 as uint8;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LayerBlendFunc_C(mut j: uint16) -> uint16 {
+pub unsafe fn LayerBlendFunc_C(mut j: uint16) -> uint16 {
     *(&raw mut g_ram as *mut uint8).offset(0x6e as ::core::ffi::c_int as isize) = 0 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) =
         -(94 as ::core::ffi::c_int) as uint8;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn nullsub_10(mut j: uint16) -> uint16 {
+pub unsafe fn nullsub_10(mut j: uint16) -> uint16 {
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LayerBlendFunc_10(mut j: uint16) -> uint16 {
+pub unsafe fn LayerBlendFunc_10(mut j: uint16) -> uint16 {
     *(&raw mut g_ram as *mut uint8).offset(0x61 as ::core::ffi::c_int as isize) = 2 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x62 as ::core::ffi::c_int as isize) = 32 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x6d as ::core::ffi::c_int as isize) = 4 as uint8;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LayerBlendFunc_14(mut j: uint16) -> uint16 {
+pub unsafe fn LayerBlendFunc_14(mut j: uint16) -> uint16 {
     *(&raw mut g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) =
         -(77 as ::core::ffi::c_int) as uint8;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LayerBlendFunc_16(mut j: uint16) -> uint16 {
+pub unsafe fn LayerBlendFunc_16(mut j: uint16) -> uint16 {
     *(&raw mut j as *mut uint8).offset(0 as ::core::ffi::c_int as isize) = 4 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 17 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 6 as uint8;
@@ -907,23 +896,20 @@ pub unsafe extern "C" fn LayerBlendFunc_16(mut j: uint16) -> uint16 {
         -(79 as ::core::ffi::c_int) as uint8;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LayerBlendFunc_1A(mut j: uint16) -> uint16 {
+pub unsafe fn LayerBlendFunc_1A(mut j: uint16) -> uint16 {
     *(&raw mut j as *mut uint8).offset(0 as ::core::ffi::c_int as isize) = 4 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 21 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 2 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) = 53 as uint8;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LayerBlendFunc_1C(mut j: uint16) -> uint16 {
+pub unsafe fn LayerBlendFunc_1C(mut j: uint16) -> uint16 {
     *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 21 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 2 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) = 85 as uint8;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LayerBlendFunc_18(mut j: uint16) -> uint16 {
+pub unsafe fn LayerBlendFunc_18(mut j: uint16) -> uint16 {
     j = 2 as uint16;
     if *(&raw mut g_ram as *mut uint8).offset(0x84 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
@@ -936,17 +922,14 @@ pub unsafe extern "C" fn LayerBlendFunc_18(mut j: uint16) -> uint16 {
     }
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn nullsub_11(mut j: uint16) -> uint16 {
+pub unsafe fn nullsub_11(mut j: uint16) -> uint16 {
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LayerBlendFunc_26(mut j: uint16) -> uint16 {
+pub unsafe fn LayerBlendFunc_26(mut j: uint16) -> uint16 {
     *(&raw mut g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) = 119 as uint8;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LayerBlendFunc_28(mut j: uint16) -> uint16 {
+pub unsafe fn LayerBlendFunc_28(mut j: uint16) -> uint16 {
     *(&raw mut g_ram as *mut uint8).offset(0x6e as ::core::ffi::c_int as isize) = 0 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) =
         -(77 as ::core::ffi::c_int) as uint8;
@@ -967,8 +950,7 @@ pub unsafe extern "C" fn LayerBlendFunc_28(mut j: uint16) -> uint16 {
     }
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LayerBlendFunc_2A(mut j: uint16) -> uint16 {
+pub unsafe fn LayerBlendFunc_2A(mut j: uint16) -> uint16 {
     *(&raw mut g_ram as *mut uint8).offset(0x6e as ::core::ffi::c_int as isize) = 0 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) =
         -(77 as ::core::ffi::c_int) as uint8;
@@ -989,31 +971,26 @@ pub unsafe extern "C" fn LayerBlendFunc_2A(mut j: uint16) -> uint16 {
     }
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LayerBlendFunc_2C(mut j: uint16) -> uint16 {
+pub unsafe fn LayerBlendFunc_2C(mut j: uint16) -> uint16 {
     *(&raw mut g_ram as *mut uint8).offset(0x6e as ::core::ffi::c_int as isize) = 0 as uint8;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LayerBlendFunc_2E(mut j: uint16) -> uint16 {
+pub unsafe fn LayerBlendFunc_2E(mut j: uint16) -> uint16 {
     *(&raw mut g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) =
         -(77 as ::core::ffi::c_int) as uint8;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LayerBlendFunc_32(mut j: uint16) -> uint16 {
+pub unsafe fn LayerBlendFunc_32(mut j: uint16) -> uint16 {
     *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 68 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) =
         -(78 as ::core::ffi::c_int) as uint8;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LayerBlendFunc_34(mut j: uint16) -> uint16 {
+pub unsafe fn LayerBlendFunc_34(mut j: uint16) -> uint16 {
     j = 6 as uint16;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LayerBlendFunc_24(mut j: uint16) -> uint16 {
+pub unsafe fn LayerBlendFunc_24(mut j: uint16) -> uint16 {
     *(&raw mut g_ram as *mut uint8).offset(0x60 as ::core::ffi::c_int as isize) = 0 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x61 as ::core::ffi::c_int as isize) = 2 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x62 as ::core::ffi::c_int as isize) = 32 as uint8;
@@ -1025,8 +1002,7 @@ pub unsafe extern "C" fn LayerBlendFunc_24(mut j: uint16) -> uint16 {
     *(&raw mut g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) = 51 as uint8;
     return j;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleLayerBlendingXrayCanShowBlocks() {
+pub unsafe fn HandleLayerBlendingXrayCanShowBlocks() {
     *(&raw mut g_ram as *mut uint8).offset(0x60 as ::core::ffi::c_int as isize) =
         -(56 as ::core::ffi::c_int) as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x61 as ::core::ffi::c_int as isize) = 8 as uint8;
@@ -1042,8 +1018,7 @@ pub unsafe extern "C" fn HandleLayerBlendingXrayCanShowBlocks() {
             & 0x80 as ::core::ffi::c_int
             | 0x73 as ::core::ffi::c_int) as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleLayerBlendingXrayCantShowBlocks() {
+pub unsafe fn HandleLayerBlendingXrayCantShowBlocks() {
     *(&raw mut g_ram as *mut uint8).offset(0x60 as ::core::ffi::c_int as isize) = 0 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x61 as ::core::ffi::c_int as isize) = 8 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x62 as ::core::ffi::c_int as isize) = 0x80 as uint8;
@@ -1064,8 +1039,7 @@ pub unsafe extern "C" fn HandleLayerBlendingXrayCantShowBlocks() {
         *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 17 as uint8;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleLayerBlendingXrayFirefleaRoom() {
+pub unsafe fn HandleLayerBlendingXrayFirefleaRoom() {
     *(&raw mut g_ram as *mut uint8).offset(0x60 as ::core::ffi::c_int as isize) = 0 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x61 as ::core::ffi::c_int as isize) = 8 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x62 as ::core::ffi::c_int as isize) = 0x80 as uint8;
@@ -1077,8 +1051,7 @@ pub unsafe extern "C" fn HandleLayerBlendingXrayFirefleaRoom() {
     *(&raw mut g_ram as *mut uint8).offset(0x71 as ::core::ffi::c_int as isize) =
         -(77 as ::core::ffi::c_int) as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LayerBlendPowerBombFunc_0() {
+pub unsafe fn LayerBlendPowerBombFunc_0() {
     *(&raw mut g_ram as *mut uint8).offset(0x60 as ::core::ffi::c_int as isize) = 0 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x61 as ::core::ffi::c_int as isize) = 8 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x62 as ::core::ffi::c_int as isize) = 0x80 as uint8;
@@ -1089,8 +1062,7 @@ pub unsafe extern "C" fn LayerBlendPowerBombFunc_0() {
     *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 19 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 4 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LayerBlendPowerBombFunc_4() {
+pub unsafe fn LayerBlendPowerBombFunc_4() {
     *(&raw mut g_ram as *mut uint8).offset(0x60 as ::core::ffi::c_int as isize) = 0x80 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x61 as ::core::ffi::c_int as isize) = 8 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x62 as ::core::ffi::c_int as isize) = 0x80 as uint8;
@@ -1101,8 +1073,7 @@ pub unsafe extern "C" fn LayerBlendPowerBombFunc_4() {
     *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 17 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 6 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LayerBlendPowerBombFunc_6() {
+pub unsafe fn LayerBlendPowerBombFunc_6() {
     *(&raw mut g_ram as *mut uint8).offset(0x60 as ::core::ffi::c_int as isize) = 0 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x61 as ::core::ffi::c_int as isize) = 8 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x62 as ::core::ffi::c_int as isize) = 0x80 as uint8;
@@ -1115,37 +1086,36 @@ pub unsafe extern "C" fn LayerBlendPowerBombFunc_6() {
 }
 static mut kLayerBlendFuncTable: [Option<Func_Y_Y>; 27] = unsafe {
     [
-        Some(nullsub_9 as unsafe extern "C" fn(uint16) -> uint16),
-        Some(nullsub_9 as unsafe extern "C" fn(uint16) -> uint16),
-        Some(LayerBlendFunc_4_PhantoonIntro as unsafe extern "C" fn(uint16) -> uint16),
-        Some(LayerBlendFunc_6 as unsafe extern "C" fn(uint16) -> uint16),
-        Some(LayerBlendFunc_8 as unsafe extern "C" fn(uint16) -> uint16),
-        Some(LayerBlendFunc_A as unsafe extern "C" fn(uint16) -> uint16),
-        Some(LayerBlendFunc_C as unsafe extern "C" fn(uint16) -> uint16),
-        Some(nullsub_10 as unsafe extern "C" fn(uint16) -> uint16),
-        Some(LayerBlendFunc_10 as unsafe extern "C" fn(uint16) -> uint16),
-        Some(LayerBlendFunc_10 as unsafe extern "C" fn(uint16) -> uint16),
-        Some(LayerBlendFunc_14 as unsafe extern "C" fn(uint16) -> uint16),
-        Some(LayerBlendFunc_16 as unsafe extern "C" fn(uint16) -> uint16),
-        Some(LayerBlendFunc_18 as unsafe extern "C" fn(uint16) -> uint16),
-        Some(LayerBlendFunc_1A as unsafe extern "C" fn(uint16) -> uint16),
-        Some(LayerBlendFunc_1C as unsafe extern "C" fn(uint16) -> uint16),
-        Some(LayerBlendFunc_18 as unsafe extern "C" fn(uint16) -> uint16),
-        Some(nullsub_11 as unsafe extern "C" fn(uint16) -> uint16),
-        Some(LayerBlendFunc_14 as unsafe extern "C" fn(uint16) -> uint16),
-        Some(LayerBlendFunc_24 as unsafe extern "C" fn(uint16) -> uint16),
-        Some(LayerBlendFunc_26 as unsafe extern "C" fn(uint16) -> uint16),
-        Some(LayerBlendFunc_28 as unsafe extern "C" fn(uint16) -> uint16),
-        Some(LayerBlendFunc_2A as unsafe extern "C" fn(uint16) -> uint16),
-        Some(LayerBlendFunc_2C as unsafe extern "C" fn(uint16) -> uint16),
-        Some(LayerBlendFunc_2E as unsafe extern "C" fn(uint16) -> uint16),
-        Some(LayerBlendFunc_18 as unsafe extern "C" fn(uint16) -> uint16),
-        Some(LayerBlendFunc_32 as unsafe extern "C" fn(uint16) -> uint16),
-        Some(LayerBlendFunc_34 as unsafe extern "C" fn(uint16) -> uint16),
+        Some(nullsub_9 as unsafe fn(uint16) -> uint16),
+        Some(nullsub_9 as unsafe fn(uint16) -> uint16),
+        Some(LayerBlendFunc_4_PhantoonIntro as unsafe fn(uint16) -> uint16),
+        Some(LayerBlendFunc_6 as unsafe fn(uint16) -> uint16),
+        Some(LayerBlendFunc_8 as unsafe fn(uint16) -> uint16),
+        Some(LayerBlendFunc_A as unsafe fn(uint16) -> uint16),
+        Some(LayerBlendFunc_C as unsafe fn(uint16) -> uint16),
+        Some(nullsub_10 as unsafe fn(uint16) -> uint16),
+        Some(LayerBlendFunc_10 as unsafe fn(uint16) -> uint16),
+        Some(LayerBlendFunc_10 as unsafe fn(uint16) -> uint16),
+        Some(LayerBlendFunc_14 as unsafe fn(uint16) -> uint16),
+        Some(LayerBlendFunc_16 as unsafe fn(uint16) -> uint16),
+        Some(LayerBlendFunc_18 as unsafe fn(uint16) -> uint16),
+        Some(LayerBlendFunc_1A as unsafe fn(uint16) -> uint16),
+        Some(LayerBlendFunc_1C as unsafe fn(uint16) -> uint16),
+        Some(LayerBlendFunc_18 as unsafe fn(uint16) -> uint16),
+        Some(nullsub_11 as unsafe fn(uint16) -> uint16),
+        Some(LayerBlendFunc_14 as unsafe fn(uint16) -> uint16),
+        Some(LayerBlendFunc_24 as unsafe fn(uint16) -> uint16),
+        Some(LayerBlendFunc_26 as unsafe fn(uint16) -> uint16),
+        Some(LayerBlendFunc_28 as unsafe fn(uint16) -> uint16),
+        Some(LayerBlendFunc_2A as unsafe fn(uint16) -> uint16),
+        Some(LayerBlendFunc_2C as unsafe fn(uint16) -> uint16),
+        Some(LayerBlendFunc_2E as unsafe fn(uint16) -> uint16),
+        Some(LayerBlendFunc_18 as unsafe fn(uint16) -> uint16),
+        Some(LayerBlendFunc_32 as unsafe fn(uint16) -> uint16),
+        Some(LayerBlendFunc_34 as unsafe fn(uint16) -> uint16),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn LayerBlendingHandler() {
+pub unsafe fn LayerBlendingHandler() {
     let mut v0: uint16 = 0 as uint16;
     let mut v1: uint8 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1986 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -1188,14 +1158,13 @@ pub unsafe extern "C" fn LayerBlendingHandler() {
 }
 static mut kLayerBlendPowerBombFuncs: [Option<Func_V>; 4] = unsafe {
     [
-        Some(LayerBlendPowerBombFunc_0 as unsafe extern "C" fn() -> ()),
-        Some(LayerBlendPowerBombFunc_0 as unsafe extern "C" fn() -> ()),
-        Some(LayerBlendPowerBombFunc_4 as unsafe extern "C" fn() -> ()),
-        Some(LayerBlendPowerBombFunc_6 as unsafe extern "C" fn() -> ()),
+        Some(LayerBlendPowerBombFunc_0 as unsafe fn() -> ()),
+        Some(LayerBlendPowerBombFunc_0 as unsafe fn() -> ()),
+        Some(LayerBlendPowerBombFunc_4 as unsafe fn() -> ()),
+        Some(LayerBlendPowerBombFunc_6 as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn HandleLayerBlendingPowerBomb(mut j: uint16) {
+pub unsafe fn HandleLayerBlendingPowerBomb(mut j: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x79b as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         == addr_kRoom_a66a as ::core::ffi::c_int
@@ -1205,26 +1174,22 @@ pub unsafe extern "C" fn HandleLayerBlendingPowerBomb(mut j: uint16) {
     kLayerBlendPowerBombFuncs[(j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize]
         .expect("non-null function pointer")();
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnableHdmaObjects() {
+pub unsafe fn EnableHdmaObjects() {
     let ref mut fresh31 = *((&raw mut g_ram as *mut uint8)
         .offset(0x18b0 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh31 = (*fresh31 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DisableHdmaObjects() {
+pub unsafe fn DisableHdmaObjects() {
     let ref mut fresh30 = *((&raw mut g_ram as *mut uint8)
         .offset(0x18b0 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh30 = (*fresh30 as ::core::ffi::c_int & !(0x8000 as ::core::ffi::c_int)) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn WaitUntilEndOfVblankAndClearHdma() {
+pub unsafe fn WaitUntilEndOfVblankAndClearHdma() {
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(HDMAEN as ::core::ffi::c_int as uint16, 0 as uint8);
     sub_8882AC();
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_8882AC() {
+pub unsafe fn sub_8882AC() {
     *(&raw mut g_ram as *mut uint8).offset(0x85 as ::core::ffi::c_int as isize) = 0 as uint8;
     let mut i: ::core::ffi::c_int = 10 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
@@ -1234,8 +1199,7 @@ pub unsafe extern "C" fn sub_8882AC() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn InitializeSpecialEffectsForNewRoom() {
+pub unsafe fn InitializeSpecialEffectsForNewRoom() {
     *((&raw mut g_ram as *mut uint8).offset(0x607 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x609 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -1411,7 +1375,7 @@ pub unsafe extern "C" fn InitializeSpecialEffectsForNewRoom() {
     *(&raw mut g_ram as *mut uint8).offset(0x5a as ::core::ffi::c_int as isize) = 90 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x5b as ::core::ffi::c_int as isize) = 90 as uint8;
 }
-unsafe extern "C" fn SpawnHdmaObjectInner(
+unsafe fn SpawnHdmaObjectInner(
     mut k: uint16,
     mut p: *mut uint16,
     mut r18: uint16,
@@ -1459,11 +1423,7 @@ unsafe extern "C" fn SpawnHdmaObjectInner(
     );
     return k;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnHdmaObject(
-    mut db: uint8,
-    mut p: *const ::core::ffi::c_void,
-) -> uint16 {
+pub unsafe fn SpawnHdmaObject(mut db: uint8, mut p: *const ::core::ffi::c_void) -> uint16 {
     let mut r18: uint16 = 1024 as uint16;
     let mut r20: uint16 = 32 as uint16;
     let mut v3: uint16 = 0 as uint16;
@@ -1493,11 +1453,7 @@ pub unsafe extern "C" fn SpawnHdmaObject(
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnHdmaObjectToSlot0xA(
-    mut db: uint8,
-    mut p: *const ::core::ffi::c_void,
-) {
+pub unsafe fn SpawnHdmaObjectToSlot0xA(mut db: uint8, mut p: *const ::core::ffi::c_void) {
     SpawnHdmaObjectInner(
         0xa as uint16,
         p as *mut uint16,
@@ -1506,8 +1462,7 @@ pub unsafe extern "C" fn SpawnHdmaObjectToSlot0xA(
         ((db as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaObjectHandler() {
+pub unsafe fn HdmaObjectHandler() {
     let mut v1: int8 = 0;
     HandleMusicQueue();
     if *((&raw mut g_ram as *mut uint8).offset(0xa78 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -1570,8 +1525,7 @@ pub unsafe extern "C" fn HdmaObjectHandler() {
         LayerBlendingHandler();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstructionHandler(mut k: uint8) {
+pub unsafe fn HdmaobjInstructionHandler(mut k: uint8) {
     let mut kh: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     CallHdmaobjPreInstr(
         ((*((&raw mut g_ram as *mut uint8).offset(0x18fc as ::core::ffi::c_int as isize)
@@ -1626,18 +1580,13 @@ pub unsafe extern "C" fn HdmaobjInstructionHandler(mut k: uint8) {
             as ::core::ffi::c_long as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstr_Delete(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
+pub unsafe fn HdmaobjInstr_Delete(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x18b4 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     return ::core::ptr::null::<uint8>();
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstr_SetPreInstr(
-    mut k: uint16,
-    mut hdp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn HdmaobjInstr_SetPreInstr(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x18f0 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
@@ -1647,19 +1596,14 @@ pub unsafe extern "C" fn HdmaobjInstr_SetPreInstr(
         .offset(k as ::core::ffi::c_int as isize) = *hdp.offset(2 as ::core::ffi::c_int as isize);
     return hdp.offset(3 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstr_ClearPreInstr(
-    mut k: uint16,
-    mut hdp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn HdmaobjInstr_ClearPreInstr(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x18f0 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         addr_locret_88858A as ::core::ffi::c_int as uint16;
     return hdp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallHdmaobjInstrFunc(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallHdmaobjInstrFunc(mut ea: uint32, mut k: uint16) {
     match ea {
         8948500 => {
             Hdmaobj_PreExplodeWhite();
@@ -1741,30 +1685,17 @@ pub unsafe extern "C" fn CallHdmaobjInstrFunc(mut ea: uint32, mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstr_CallFarFunc(
-    mut k: uint16,
-    mut hdp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn HdmaobjInstr_CallFarFunc(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
     CallHdmaobjInstrFunc(Load24(hdp as *mut LongPtr), k);
     return hdp.offset(3 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstr_Goto(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
+pub unsafe fn HdmaobjInstr_Goto(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
     return *(hdp as *mut uint16) as uintptr_t as *const uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstr_GotoRel(
-    mut k: uint16,
-    mut hdp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn HdmaobjInstr_GotoRel(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
     return hdp.offset(*hdp as int8 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstr_DecrementAndGoto(
-    mut k: uint16,
-    mut hdp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn HdmaobjInstr_DecrementAndGoto(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh63 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1908 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -1777,8 +1708,7 @@ pub unsafe extern "C" fn HdmaobjInstr_DecrementAndGoto(
         return *(hdp as *mut uint16) as uintptr_t as *const uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstr_DecrementAndGotoRel(
+pub unsafe fn HdmaobjInstr_DecrementAndGotoRel(
     mut k: uint16,
     mut hdp: *const uint8,
 ) -> *const uint8 {
@@ -1794,21 +1724,13 @@ pub unsafe extern "C" fn HdmaobjInstr_DecrementAndGotoRel(
         return hdp.offset(*hdp as int8 as ::core::ffi::c_int as isize);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstr_SetTimer(
-    mut k: uint16,
-    mut hdp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn HdmaobjInstr_SetTimer(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1908 as ::core::ffi::c_int as isize) as *mut uint16
         as *mut uint8)
         .offset(k as ::core::ffi::c_int as isize) = *hdp;
     return hdp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstr_SetHdmaControl(
-    mut k: uint16,
-    mut hdp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn HdmaobjInstr_SetHdmaControl(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
     WriteReg(
         (*(((&raw mut g_ram as *mut uint8).offset(0x18c0 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -1820,11 +1742,7 @@ pub unsafe extern "C" fn HdmaobjInstr_SetHdmaControl(
     );
     return hdp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstr_SetHdmaTarget(
-    mut k: uint16,
-    mut hdp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn HdmaobjInstr_SetHdmaTarget(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
     WriteReg(
         (*(((&raw mut g_ram as *mut uint8).offset(0x18c0 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -1836,22 +1754,14 @@ pub unsafe extern "C" fn HdmaobjInstr_SetHdmaTarget(
     );
     return hdp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstr_SetHdmaTablePtr(
-    mut k: uint16,
-    mut hdp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn HdmaobjInstr_SetHdmaTablePtr(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x18d8 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         *(hdp as *mut uint16);
     return hdp.offset(2 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstr_SetHdmaTableBank(
-    mut k: uint16,
-    mut hdp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn HdmaobjInstr_SetHdmaTableBank(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
     WriteReg(
         (*(((&raw mut g_ram as *mut uint8).offset(0x18c0 as ::core::ffi::c_int as isize)
             as *mut uint16)
@@ -1863,8 +1773,7 @@ pub unsafe extern "C" fn HdmaobjInstr_SetHdmaTableBank(
     );
     return hdp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstr_SetIndirectHdmaDataBank(
+pub unsafe fn HdmaobjInstr_SetIndirectHdmaDataBank(
     mut k: uint16,
     mut hdp: *const uint8,
 ) -> *const uint8 {
@@ -1879,8 +1788,7 @@ pub unsafe extern "C" fn HdmaobjInstr_SetIndirectHdmaDataBank(
     );
     return hdp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstr_Sleep(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
+pub unsafe fn HdmaobjInstr_Sleep(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
     let mut base: *const uint8 = RomBankBase(
         *((&raw mut g_ram as *mut uint8).offset(0x18c0 as ::core::ffi::c_int as isize)
             as *mut uint16 as *mut uint8)
@@ -1893,8 +1801,7 @@ pub unsafe extern "C" fn HdmaobjInstr_Sleep(mut k: uint16, mut hdp: *const uint8
         (hdp.offset_from(base) as ::core::ffi::c_long - 2 as ::core::ffi::c_long) as uint16;
     return ::core::ptr::null::<uint8>();
 }
-#[no_mangle]
-pub unsafe extern "C" fn RaiseOrLowerFx() -> uint8 {
+pub unsafe fn RaiseOrLowerFx() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0x197a as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -1974,8 +1881,7 @@ pub unsafe extern "C" fn RaiseOrLowerFx() -> uint8 {
             >= v0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_XrayFunc0_NoBeam(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_XrayFunc0_NoBeam(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x9b6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & *((&raw mut g_ram as *mut uint8).offset(0x8b as ::core::ffi::c_int as isize)
@@ -1992,8 +1898,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_XrayFunc0_NoBeam(mut k: uint16) {
             as *mut uint16) = 3 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_XrayFunc1_BeamWidening(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_XrayFunc1_BeamWidening(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x9b6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & *((&raw mut g_ram as *mut uint8).offset(0x8b as ::core::ffi::c_int as isize)
@@ -2039,8 +1944,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_XrayFunc1_BeamWidening(mut k: uint16) {
             as *mut uint16) = 3 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_XrayFunc2_FullBeam(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_XrayFunc2_FullBeam(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x9b6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & *((&raw mut g_ram as *mut uint8).offset(0x8b as ::core::ffi::c_int as isize)
@@ -2056,8 +1960,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_XrayFunc2_FullBeam(mut k: uint16) {
         *fresh135 = (*fresh135).wrapping_add(1);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleMovingXrayUpDown() {
+pub unsafe fn HandleMovingXrayUpDown() {
     if *((&raw mut g_ram as *mut uint8).offset(0x9aa as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & *((&raw mut g_ram as *mut uint8).offset(0x8b as ::core::ffi::c_int as isize)
@@ -2074,8 +1977,7 @@ pub unsafe extern "C" fn HandleMovingXrayUpDown() {
         MoveXrayDown();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MoveXrayUp() {
+pub unsafe fn MoveXrayUp() {
     let mut v0: bool = false;
     let mut v1: int16 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0xa82 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -2166,8 +2068,7 @@ pub unsafe extern "C" fn MoveXrayUp() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn MoveXrayDown() {
+pub unsafe fn MoveXrayDown() {
     let mut v0: int16 = 0;
     let mut v1: bool = false;
     if *((&raw mut g_ram as *mut uint8).offset(0xa82 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -2269,8 +2170,7 @@ pub unsafe extern "C" fn MoveXrayDown() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalculateXrayHdmaTable() {
+pub unsafe fn CalculateXrayHdmaTable() {
     let mut v0: int16 = 0;
     if *(&raw mut g_ram as *mut uint8).offset(0xa1e as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
@@ -2366,8 +2266,7 @@ pub unsafe extern "C" fn CalculateXrayHdmaTable() {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_XrayFunc3_DeactivateBeam(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_XrayFunc3_DeactivateBeam(mut k: uint16) {
     let mut v1: int16 = 0;
     let mut v4: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     mov24(
@@ -2452,8 +2351,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_XrayFunc3_DeactivateBeam(mut k: uint16)
         *fresh134 = (*fresh134).wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_XrayFunc4_DeactivateBeam(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_XrayFunc4_DeactivateBeam(mut k: uint16) {
     let mut v1: int16 = 0;
     let mut v3: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     v1 = 4096 as int16;
@@ -2501,8 +2399,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_XrayFunc4_DeactivateBeam(mut k: uint16)
         *fresh132 = (*fresh132).wrapping_add(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_XrayFunc5_DeactivateBeam(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_XrayFunc5_DeactivateBeam(mut k: uint16) {
     let mut v1: int16 = 0;
     v1 = 4096 as int16;
     if *((&raw mut g_ram as *mut uint8).offset(0x196e as ::core::ffi::c_int as isize)
@@ -2591,16 +2488,15 @@ pub unsafe extern "C" fn HdmaobjPreInstr_XrayFunc5_DeactivateBeam(mut k: uint16)
 }
 static mut kHdmaobjPreInstr_XrayFuncs: [Option<Func_Y_V>; 6] = unsafe {
     [
-        Some(HdmaobjPreInstr_XrayFunc0_NoBeam as unsafe extern "C" fn(uint16) -> ()),
-        Some(HdmaobjPreInstr_XrayFunc1_BeamWidening as unsafe extern "C" fn(uint16) -> ()),
-        Some(HdmaobjPreInstr_XrayFunc2_FullBeam as unsafe extern "C" fn(uint16) -> ()),
-        Some(HdmaobjPreInstr_XrayFunc3_DeactivateBeam as unsafe extern "C" fn(uint16) -> ()),
-        Some(HdmaobjPreInstr_XrayFunc4_DeactivateBeam as unsafe extern "C" fn(uint16) -> ()),
-        Some(HdmaobjPreInstr_XrayFunc5_DeactivateBeam as unsafe extern "C" fn(uint16) -> ()),
+        Some(HdmaobjPreInstr_XrayFunc0_NoBeam as unsafe fn(uint16) -> ()),
+        Some(HdmaobjPreInstr_XrayFunc1_BeamWidening as unsafe fn(uint16) -> ()),
+        Some(HdmaobjPreInstr_XrayFunc2_FullBeam as unsafe fn(uint16) -> ()),
+        Some(HdmaobjPreInstr_XrayFunc3_DeactivateBeam as unsafe fn(uint16) -> ()),
+        Some(HdmaobjPreInstr_XrayFunc4_DeactivateBeam as unsafe fn(uint16) -> ()),
+        Some(HdmaobjPreInstr_XrayFunc5_DeactivateBeam as unsafe fn(uint16) -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_Xray(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_Xray(mut k: uint16) {
     let mut v1: int16 = 0;
     v1 = 4096 as int16;
     if *((&raw mut g_ram as *mut uint8).offset(0x196e as ::core::ffi::c_int as isize)
@@ -2636,8 +2532,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_Xray(mut k: uint16) {
                 as *mut uint16) as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnPowerBombExplosion() {
+pub unsafe fn SpawnPowerBombExplosion() {
     if *((&raw mut g_ram as *mut uint8).offset(0xa78 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -2672,8 +2567,7 @@ static mut kPowerBombPreExplosionRadiusAccel: uint16 = 0x80 as uint16;
 static mut g_word_888B96: uint16 = 3 as uint16;
 static mut kPowerBombExplosionRadiusSpeed: uint16 = 0 as uint16;
 static mut kPowerBombExplosionRadiusAccel: uint16 = 0x30 as uint16;
-#[no_mangle]
-pub unsafe extern "C" fn Hdmaobj_PreExplodeWhite() {
+pub unsafe fn Hdmaobj_PreExplodeWhite() {
     *(&raw mut g_ram as *mut uint8).offset(0xc606 as ::core::ffi::c_int as isize) =
         -(1 as ::core::ffi::c_int) as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0xc607 as ::core::ffi::c_int as isize) = 0 as uint8;
@@ -2682,25 +2576,21 @@ pub unsafe extern "C" fn Hdmaobj_PreExplodeWhite() {
     *((&raw mut g_ram as *mut uint8).offset(0xcf0 as ::core::ffi::c_int as isize) as *mut uint16) =
         kPowerBombPreExplosionRadiusSpeed;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Hdmaobj_PreExplodeYellow() {
+pub unsafe fn Hdmaobj_PreExplodeYellow() {
     *((&raw mut g_ram as *mut uint8).offset(0xcf2 as ::core::ffi::c_int as isize) as *mut uint16) =
         addr_byte_889F06 as ::core::ffi::c_int as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Hdmaobj_ExplodeYellow() {
+pub unsafe fn Hdmaobj_ExplodeYellow() {
     *((&raw mut g_ram as *mut uint8).offset(0xcea as ::core::ffi::c_int as isize) as *mut uint16) =
         1024 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xcf0 as ::core::ffi::c_int as isize) as *mut uint16) =
         kPowerBombExplosionRadiusSpeed;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Hdmaobj_ExplodeWhite() {
+pub unsafe fn Hdmaobj_ExplodeWhite() {
     *((&raw mut g_ram as *mut uint8).offset(0xcf2 as ::core::ffi::c_int as isize) as *mut uint16) =
         addr_kPowerBombExplosionShapeDef0 as ::core::ffi::c_int as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Hdmaobj_CleanUpTryCrystalFlash(mut v0: uint16) {
+pub unsafe fn Hdmaobj_CleanUpTryCrystalFlash(mut v0: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         != *((&raw mut g_ram as *mut uint8).offset(0xce2 as ::core::ffi::c_int as isize)
@@ -2729,14 +2619,12 @@ pub unsafe extern "C" fn Hdmaobj_CleanUpTryCrystalFlash(mut v0: uint16) {
         0 as uint16;
     CallSomeSamusCode(0x1e as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_PowerBombExplode_SetWindowConf(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_PowerBombExplode_SetWindowConf(mut k: uint16) {
     let ref mut fresh129 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1986 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh129 = (*fresh129 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_PowerBombExplode_Stage5_Afterglow(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_PowerBombExplode_Stage5_Afterglow(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x592 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -2828,8 +2716,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_PowerBombExplode_Stage5_Afterglow(mut k
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalculatePowerBombHdma_LeftOfScreen(mut k: uint16, mut j: *const uint8) {
+pub unsafe fn CalculatePowerBombHdma_LeftOfScreen(mut k: uint16, mut j: *const uint8) {
     loop {
         let mut w: uint8 = *j;
         let mut c: uint8 = *((&raw mut g_ram as *mut uint8)
@@ -2857,8 +2744,7 @@ pub unsafe extern "C" fn CalculatePowerBombHdma_LeftOfScreen(mut k: uint16, mut 
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalculatePowerBombHdma_OnScreen(mut k: uint16, mut j: *const uint8) {
+pub unsafe fn CalculatePowerBombHdma_OnScreen(mut k: uint16, mut j: *const uint8) {
     loop {
         let mut w: uint8 = *j;
         if w == 0 {
@@ -2890,8 +2776,7 @@ pub unsafe extern "C" fn CalculatePowerBombHdma_OnScreen(mut k: uint16, mut j: *
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalculatePowerBombHdma_RightOfScreen(mut k: uint16, mut j: *const uint8) {
+pub unsafe fn CalculatePowerBombHdma_RightOfScreen(mut k: uint16, mut j: *const uint8) {
     loop {
         let mut w: uint8 = *j;
         if (*((&raw mut g_ram as *mut uint8).offset(0xce6 as ::core::ffi::c_int as isize)
@@ -2922,8 +2807,7 @@ pub unsafe extern "C" fn CalculatePowerBombHdma_RightOfScreen(mut k: uint16, mut
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalculatePowerBombHdmaObjectTablePtrs(mut k: uint16) {
+pub unsafe fn CalculatePowerBombHdmaObjectTablePtrs(mut k: uint16) {
     let mut v1: uint16 = 0;
     if (*((&raw mut g_ram as *mut uint8).offset(0xce2 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -2981,8 +2865,7 @@ pub unsafe extern "C" fn CalculatePowerBombHdmaObjectTablePtrs(mut k: uint16) {
         as uint16;
 }
 static mut k_out: uint16 = 0;
-#[no_mangle]
-pub unsafe extern "C" fn CalculatePowerBombHdmaScaled_LeftOfScreen(
+pub unsafe fn CalculatePowerBombHdmaScaled_LeftOfScreen(
     mut k: uint16,
     mut j: uint16,
     mut multval: uint8,
@@ -3047,8 +2930,7 @@ pub unsafe extern "C" fn CalculatePowerBombHdmaScaled_LeftOfScreen(
     return ((v6 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | v7 as ::core::ffi::c_int)
         as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalculatePowerBombHdmaScaled_OnScreen(
+pub unsafe fn CalculatePowerBombHdmaScaled_OnScreen(
     mut k: uint16,
     mut j: uint16,
     mut multval: uint8,
@@ -3120,8 +3002,7 @@ pub unsafe extern "C" fn CalculatePowerBombHdmaScaled_OnScreen(
     return ((v6 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | v9 as ::core::ffi::c_int)
         as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalculatePowerBombHdmaScaled_RightOfScreen(
+pub unsafe fn CalculatePowerBombHdmaScaled_RightOfScreen(
     mut k: uint16,
     mut j: uint16,
     mut multval: uint8,
@@ -3193,8 +3074,7 @@ pub unsafe extern "C" fn CalculatePowerBombHdmaScaled_RightOfScreen(
     return ((v9 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | v8 as ::core::ffi::c_int)
         as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_PowerBombExplode_ExplosionYellow(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionYellow(mut k: uint16) {
     let mut v2: uint16 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0x592 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -3347,8 +3227,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_PowerBombExplode_ExplosionYellow(mut k:
             .offset(v7 as isize) = 0 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_PowerBombExplode_ExplosionWhite(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionWhite(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x592 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -3458,8 +3337,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_PowerBombExplode_ExplosionWhite(mut k: 
             + kPowerBombExplosionRadiusAccel as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalculatePowerBombHdmaTablePointers(mut v0: uint16) {
+pub unsafe fn CalculatePowerBombHdmaTablePointers(mut v0: uint16) {
     let mut v1: uint16 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0x592 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -3518,8 +3396,7 @@ pub unsafe extern "C" fn CalculatePowerBombHdmaTablePointers(mut v0: uint16) {
             as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_PowerBombExplode_PreExplosionWhite(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionWhite(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x592 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -3699,8 +3576,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_PowerBombExplode_PreExplosionWhite(mut 
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_PowerBombExplode_PreExplosionYellow(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionYellow(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x592 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -3808,8 +3684,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_PowerBombExplode_PreExplosionYellow(mut
             as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnCrystalFlashHdmaObjs() {
+pub unsafe fn SpawnCrystalFlashHdmaObjs() {
     *((&raw mut g_ram as *mut uint8).offset(0x592 as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x888000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     static mut unk_88A2B0: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
@@ -3831,8 +3706,7 @@ pub unsafe extern "C" fn SpawnCrystalFlashHdmaObjs() {
         &raw const unk_88A2B8 as *const ::core::ffi::c_void,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn CrystalFlashSetupPart1() {
+pub unsafe fn CrystalFlashSetupPart1() {
     *(&raw mut g_ram as *mut uint8).offset(0xc606 as ::core::ffi::c_int as isize) =
         -(1 as ::core::ffi::c_int) as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0xc607 as ::core::ffi::c_int as isize) = 0 as uint8;
@@ -3842,15 +3716,13 @@ pub unsafe extern "C" fn CrystalFlashSetupPart1() {
         kPowerBombPreExplosionRadiusSpeed;
     QueueSfx1_Max6(1 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CrystalFlashSetupPart2() {
+pub unsafe fn CrystalFlashSetupPart2() {
     *((&raw mut g_ram as *mut uint8).offset(0xcea as ::core::ffi::c_int as isize) as *mut uint16) =
         1024 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xcf0 as ::core::ffi::c_int as isize) as *mut uint16) =
         kPowerBombExplosionRadiusSpeed;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CrystalFlashCleanup(mut k: uint16) {
+pub unsafe fn CrystalFlashCleanup(mut k: uint16) {
     let mut v0: uint16 = k;
     *((&raw mut g_ram as *mut uint8).offset(0xcee as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
@@ -3868,8 +3740,7 @@ pub unsafe extern "C" fn CrystalFlashCleanup(mut k: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0xcea as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_CrystalFlash_CustomLayerBlend(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_CrystalFlash_CustomLayerBlend(mut k: uint16) {
     *(&raw mut g_ram as *mut uint8).offset(0x60 as ::core::ffi::c_int as isize) = 0 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x61 as ::core::ffi::c_int as isize) = 8 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x62 as ::core::ffi::c_int as isize) = 0x80 as uint8;
@@ -3878,8 +3749,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_CrystalFlash_CustomLayerBlend(mut k: ui
     *(&raw mut g_ram as *mut uint8).offset(0x6c as ::core::ffi::c_int as isize) = 0 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x6d as ::core::ffi::c_int as isize) = 4 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_CrystalFlash_Stage2_AfterGlow(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage2_AfterGlow(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x592 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -3977,8 +3847,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_CrystalFlash_Stage2_AfterGlow(mut k: ui
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalculateCrystalFlashHdmaObjectTablePtrs(mut k: uint16) {
+pub unsafe fn CalculateCrystalFlashHdmaObjectTablePtrs(mut k: uint16) {
     let mut v1: uint16 = 0;
     if (*((&raw mut g_ram as *mut uint8).offset(0xce2 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -4033,8 +3902,7 @@ pub unsafe extern "C" fn CalculateCrystalFlashHdmaObjectTablePtrs(mut k: uint16)
         + addr_kIndirectHdmaTable_PowerBombExplodeRight as ::core::ffi::c_int)
         as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalculateCrystalFlashHdmaDataTablesScaled_LeftOfScreen(
+pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_LeftOfScreen(
     mut k: uint16,
     mut j: uint16,
 ) -> uint16 {
@@ -4103,8 +3971,7 @@ pub unsafe extern "C" fn CalculateCrystalFlashHdmaDataTablesScaled_LeftOfScreen(
     return ((right as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | left as ::core::ffi::c_int)
         as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalculateCrystalFlashHdmaDataTablesScaled_OnScreen(
+pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_OnScreen(
     mut k: uint16,
     mut j: uint16,
 ) -> uint16 {
@@ -4174,8 +4041,7 @@ pub unsafe extern "C" fn CalculateCrystalFlashHdmaDataTablesScaled_OnScreen(
     return ((right as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | left as ::core::ffi::c_int)
         as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalculateCrystalFlashHdmaDataTablesScaled_RightOfScreen(
+pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_RightOfScreen(
     mut k: uint16,
     mut j: uint16,
 ) -> uint16 {
@@ -4244,8 +4110,7 @@ pub unsafe extern "C" fn CalculateCrystalFlashHdmaDataTablesScaled_RightOfScreen
     return ((right as ::core::ffi::c_int) << 8 as ::core::ffi::c_int | left as ::core::ffi::c_int)
         as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_CrystalFlash_Stage1_Explosion(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage1_Explosion(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x592 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -4382,8 +4247,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_CrystalFlash_Stage1_Explosion(mut k: ui
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn FxTypeFunc_22_ScrollingSky() {
+pub unsafe fn FxTypeFunc_22_ScrollingSky() {
     *((&raw mut g_ram as *mut uint8).offset(0x195e as ::core::ffi::c_int as isize)
         as *mut uint16) = 1248 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x196e as ::core::ffi::c_int as isize)
@@ -4417,7 +4281,7 @@ pub unsafe extern "C" fn FxTypeFunc_22_ScrollingSky() {
     );
     HdmaobjPreInstr_FxType22_BG3Yscroll(0 as uint16);
 }
-unsafe extern "C" fn SetupSomeHdmaTablesBG3(
+unsafe fn SetupSomeHdmaTablesBG3(
     mut r24: uint16,
     mut r0: uint16,
     mut r3: uint16,
@@ -4442,12 +4306,12 @@ unsafe extern "C" fn SetupSomeHdmaTablesBG3(
         + 32 as ::core::ffi::c_int) as uint16;
     let mut v2: uint16 = 0 as uint16;
     while ((v1 as ::core::ffi::c_int
-        - *((RomPtr_88 as unsafe extern "C" fn(uint16_t) -> *const uint8)(r0 as uint16_t)
-            .offset(v2 as isize) as *const uint8 as *mut uint16) as ::core::ffi::c_int)
-        as int16 as ::core::ffi::c_int)
+        - *((RomPtr_88 as unsafe fn(uint16_t) -> *const uint8)(r0 as uint16_t).offset(v2 as isize)
+            as *const uint8 as *mut uint16) as ::core::ffi::c_int) as int16
+        as ::core::ffi::c_int)
         < 0 as ::core::ffi::c_int
         || (v1 as ::core::ffi::c_int
-            - *((RomPtr_88 as unsafe extern "C" fn(uint16_t) -> *const uint8)(r9 as uint16_t)
+            - *((RomPtr_88 as unsafe fn(uint16_t) -> *const uint8)(r9 as uint16_t)
                 .offset(v2 as isize) as *const uint8 as *mut uint16)
                 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
             >= 0 as ::core::ffi::c_int
@@ -4469,15 +4333,15 @@ unsafe extern "C" fn SetupSomeHdmaTablesBG3(
     *((&raw mut g_ram as *mut uint8)
         .offset(0x9c00 as ::core::ffi::c_int as isize)
         .offset(3 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) =
-        (*((RomPtr_88 as unsafe extern "C" fn(uint16_t) -> *const uint8)(r3 as uint16_t)
-            .offset(v2 as isize) as *const uint8 as *mut uint16) as ::core::ffi::c_int
+        (*((RomPtr_88 as unsafe fn(uint16_t) -> *const uint8)(r3 as uint16_t).offset(v2 as isize)
+            as *const uint8 as *mut uint16) as ::core::ffi::c_int
             - v3 as ::core::ffi::c_int) as uint16;
     *((&raw mut g_ram as *mut uint8)
         .offset(0x9c00 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) = (R22_
         as ::core::ffi::c_int
-        + *((RomPtr_88 as unsafe extern "C" fn(uint16_t) -> *const uint8)(r6 as uint16_t)
-            .offset(v2 as isize) as *const uint8 as *mut uint16) as ::core::ffi::c_int
+        + *((RomPtr_88 as unsafe fn(uint16_t) -> *const uint8)(r6 as uint16_t).offset(v2 as isize)
+            as *const uint8 as *mut uint16) as ::core::ffi::c_int
         - *((&raw mut g_ram as *mut uint8).offset(0x598 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int)
         as uint16;
@@ -4500,12 +4364,12 @@ unsafe extern "C" fn SetupSomeHdmaTablesBG3(
             break;
         }
         while ((r18 as ::core::ffi::c_int
-            - *((RomPtr_88 as unsafe extern "C" fn(uint16_t) -> *const uint8)(r0 as uint16_t)
+            - *((RomPtr_88 as unsafe fn(uint16_t) -> *const uint8)(r0 as uint16_t)
                 .offset(v2 as isize) as *const uint8 as *mut uint16)
                 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int
             || (r18 as ::core::ffi::c_int
-                - *((RomPtr_88 as unsafe extern "C" fn(uint16_t) -> *const uint8)(r9 as uint16_t)
+                - *((RomPtr_88 as unsafe fn(uint16_t) -> *const uint8)(r9 as uint16_t)
                     .offset(v2 as isize) as *const uint8 as *mut uint16)
                     as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
                 >= 0 as ::core::ffi::c_int
@@ -4519,14 +4383,18 @@ unsafe extern "C" fn SetupSomeHdmaTablesBG3(
         }
         *((&raw mut g_ram as *mut uint8)
             .offset(0x9c00 as ::core::ffi::c_int as isize)
-            .offset(v0 as isize) as *mut uint8 as *mut uint16) =
-            *((RomPtr_88 as unsafe extern "C" fn(uint16_t) -> *const uint8)(r3 as uint16_t)
-                .offset(v2 as isize) as *const uint8 as *mut uint16);
+            .offset(v0 as isize) as *mut uint8 as *mut uint16) = *((RomPtr_88
+            as unsafe fn(uint16_t) -> *const uint8)(
+            r3 as uint16_t
+        )
+        .offset(v2 as isize)
+            as *const uint8
+            as *mut uint16);
         *((&raw mut g_ram as *mut uint8)
             .offset(0x9c00 as ::core::ffi::c_int as isize)
             .offset((v0 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize)
             as *mut uint8 as *mut uint16) =
-            (*((RomPtr_88 as unsafe extern "C" fn(uint16_t) -> *const uint8)(r6 as uint16_t)
+            (*((RomPtr_88 as unsafe fn(uint16_t) -> *const uint8)(r6 as uint16_t)
                 .offset(v2 as isize) as *const uint8 as *mut uint16)
                 as ::core::ffi::c_int
                 - *((&raw mut g_ram as *mut uint8).offset(0x598 as ::core::ffi::c_int as isize)
@@ -4534,8 +4402,7 @@ unsafe extern "C" fn SetupSomeHdmaTablesBG3(
     }
     return v0;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_FxType22_BG3Yscroll(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_FxType22_BG3Yscroll(mut k: uint16) {
     DamageSamusInTopRow();
     k = SetupSomeHdmaTablesBG3(
         78 as uint16,
@@ -4548,11 +4415,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_FxType22_BG3Yscroll(mut k: uint16) {
         .offset(0x9c00 as ::core::ffi::c_int as isize)
         .offset(k as isize) as *mut uint8 as *mut uint16) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstr_SetFlagB(
-    mut k: uint16,
-    mut hdp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn HdmaobjInstr_SetFlagB(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1920 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 1 as uint16;
@@ -4576,8 +4439,7 @@ static mut g_word_88C46E: [int16; 16] = [
     -(1 as ::core::ffi::c_int) as int16,
     0 as ::core::ffi::c_int as int16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_BG3Xscroll(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_BG3Xscroll(mut k: uint16) {
     let mut v8: int16 = 0;
     let mut v9: int16 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -4760,8 +4622,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_BG3Xscroll(mut k: uint16) {
         .offset((v7 as ::core::ffi::c_int + 3 as ::core::ffi::c_int) as isize) as *mut uint8
         as *mut uint16) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaFunc_A786(
+pub unsafe fn HdmaFunc_A786(
     mut k: uint16,
     mut r18: uint16,
     mut r20: uint16,
@@ -4848,8 +4709,7 @@ static mut unk_88A80B: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
     field_1: 0xf as uint8,
     addr: 0xad89 as VoidP,
 };
-#[no_mangle]
-pub unsafe extern "C" fn FxTypeFunc_20() {
+pub unsafe fn FxTypeFunc_20() {
     let ref mut fresh47 =
         *(&raw mut g_ram as *mut uint8).offset(0x91b as ::core::ffi::c_int as isize);
     *fresh47 = (*fresh47 as ::core::ffi::c_int | 1 as ::core::ffi::c_int) as uint8;
@@ -4865,8 +4725,7 @@ pub unsafe extern "C" fn FxTypeFunc_20() {
     *((&raw mut g_ram as *mut uint8).offset(0x59c as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomSetupAsm_ScrollingSkyOcean() {
+pub unsafe fn RoomSetupAsm_ScrollingSkyOcean() {
     *(&raw mut g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize) = 74 as uint8;
     SpawnHdmaObject(
         0x88 as uint8,
@@ -4877,8 +4736,7 @@ pub unsafe extern "C" fn RoomSetupAsm_ScrollingSkyOcean() {
     *((&raw mut g_ram as *mut uint8).offset(0x59c as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DamageSamusInTopRow() {
+pub unsafe fn DamageSamusInTopRow() {
     if ((*((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         - *((&raw mut g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize)
@@ -4896,8 +4754,7 @@ pub unsafe extern "C" fn DamageSamusInTopRow() {
             as *mut uint16) = 8 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_SkyLandBG2XscrollInner(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_SkyLandBG2XscrollInner(mut k: uint16) {
     let mut i: uint16 = 0;
     let mut r24: uint16 = 0 as uint16;
     *(&raw mut g_ram as *mut uint8).offset(0x59 as ::core::ffi::c_int as isize) = 74 as uint8;
@@ -5081,24 +4938,21 @@ pub unsafe extern "C" fn HdmaobjPreInstr_SkyLandBG2XscrollInner(mut k: uint16) {
         .offset((v6 as ::core::ffi::c_int + 3 as ::core::ffi::c_int) as isize) as *mut uint8
         as *mut uint16) = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_SkyLandBG2Xscroll(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_SkyLandBG2Xscroll(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0xa78 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
     {
         HdmaobjPreInstr_SkyLandBG2XscrollInner(k);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_SkyLandBG2Xscroll2(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_SkyLandBG2Xscroll2(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0xa78 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
     {
         HdmaobjPreInstr_SkyLandBG2XscrollInner(k);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomMainAsm_ScrollingSky(mut src: *const uint16) {
+pub unsafe fn RoomMainAsm_ScrollingSky(mut src: *const uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0xa78 as ::core::ffi::c_int as isize) as *mut uint16)
         != 0
     {
@@ -5172,14 +5026,12 @@ pub unsafe extern "C" fn RoomMainAsm_ScrollingSky(mut src: *const uint16) {
             as *mut uint16) = (v0 as ::core::ffi::c_int + 28 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_ScrollingSkyLand() {
+pub unsafe fn RoomCode_ScrollingSkyLand() {
     RoomMainAsm_ScrollingSky(
         RomPtr_88(addr_off_88AD9C as ::core::ffi::c_int as uint16_t) as *const uint16
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomMainAsm_ScrollingSkyOcean() {
+pub unsafe fn RoomMainAsm_ScrollingSkyOcean() {
     RoomMainAsm_ScrollingSky(
         RomPtr_88(addr_off_88ADA6 as ::core::ffi::c_int as uint16_t) as *const uint16
     );
@@ -5211,8 +5063,7 @@ static mut kFirefleaDarknessShades: [uint16; 6] = [
     0x1800 as ::core::ffi::c_int as uint16,
     0x1900 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn FxTypeFunc_24() {
+pub unsafe fn FxTypeFunc_24() {
     *((&raw mut g_ram as *mut uint8).offset(0x1778 as ::core::ffi::c_int as isize)
         as *mut uint16) = 6 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x177a as ::core::ffi::c_int as isize)
@@ -5234,8 +5085,7 @@ pub unsafe extern "C" fn FxTypeFunc_24() {
     *((&raw mut g_ram as *mut uint8).offset(0x1782 as ::core::ffi::c_int as isize)
         as *mut uint16) = kFirefleaFlashingShades[0 as ::core::ffi::c_int as usize];
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_FirefleaBG3XScroll(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_FirefleaBG3XScroll(mut k: uint16) {
     let mut v2: int8 = 0;
     let mut v1: uint16 = 0;
     *((&raw mut g_ram as *mut uint8).offset(0x1986 as ::core::ffi::c_int as isize)
@@ -5299,8 +5149,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_FirefleaBG3XScroll(mut k: uint16) {
             (v2 as ::core::ffi::c_int | 0x20 as ::core::ffi::c_int) as uint8;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ExpandingContractingHdmaEffect() {
+pub unsafe fn ExpandingContractingHdmaEffect() {
     let ref mut fresh32 = *((&raw mut g_ram as *mut uint8)
         .offset(0x59a as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh32 = (*fresh32).wrapping_add(1);
@@ -5424,8 +5273,7 @@ static mut g_word_88B256: [uint16; 17] = [
     1 as ::core::ffi::c_int as uint16,
     0x8000 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn HandleEarthquakeSoundEffect() {
+pub unsafe fn HandleEarthquakeSoundEffect() {
     let mut v1: int16 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0x609 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -5483,8 +5331,7 @@ static mut unk_88B2B9: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
     field_1: 0x10 as uint8,
     addr: 0xc3f0 as VoidP,
 };
-#[no_mangle]
-pub unsafe extern "C" fn FxTypeFunc_2_Lava() {
+pub unsafe fn FxTypeFunc_2_Lava() {
     *((&raw mut g_ram as *mut uint8).offset(0x196c as ::core::ffi::c_int as isize)
         as *mut uint16) = (0x88b343 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x1962 as ::core::ffi::c_int as isize)
@@ -5501,8 +5348,7 @@ pub unsafe extern "C" fn FxTypeFunc_2_Lava() {
     SpawnBG3ScrollHdmaObject();
     SpawnAnimtiles(addr_kAnimtiles_Lava as ::core::ffi::c_int as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn FxTypeFunc_4_Acid() {
+pub unsafe fn FxTypeFunc_4_Acid() {
     *((&raw mut g_ram as *mut uint8).offset(0x196c as ::core::ffi::c_int as isize)
         as *mut uint16) = (0x88b343 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x1962 as ::core::ffi::c_int as isize)
@@ -5519,8 +5365,7 @@ pub unsafe extern "C" fn FxTypeFunc_4_Acid() {
     SpawnBG3ScrollHdmaObject();
     SpawnAnimtiles(addr_kAnimtiles_Acid as ::core::ffi::c_int as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn FxHandleTide() {
+pub unsafe fn FxHandleTide() {
     let mut v2: uint16 = 0;
     let mut v5: uint16 = 0;
     if (*(((&raw mut g_ram as *mut uint8).offset(0x197c as ::core::ffi::c_int as isize)
@@ -5615,8 +5460,7 @@ pub unsafe extern "C" fn FxHandleTide() {
             as *mut uint16) = v5;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FxRisingFunction_LavaAcid() {
+pub unsafe fn FxRisingFunction_LavaAcid() {
     if *((&raw mut g_ram as *mut uint8).offset(0x197c as ::core::ffi::c_int as isize)
         as *mut uint16)
         != 0
@@ -5655,8 +5499,7 @@ pub unsafe extern "C" fn FxRisingFunction_LavaAcid() {
         return;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FxRisingFunction_LavaAcid_WaitToRise() {
+pub unsafe fn FxRisingFunction_LavaAcid_WaitToRise() {
     HandleEarthquakeSoundEffect();
     *((&raw mut g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
         as *mut uint16) = 21 as uint16;
@@ -5672,8 +5515,7 @@ pub unsafe extern "C" fn FxRisingFunction_LavaAcid_WaitToRise() {
             (0x88b382 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FxRisingFunction_LavaAcid_Raising() {
+pub unsafe fn FxRisingFunction_LavaAcid_Raising() {
     HandleEarthquakeSoundEffect();
     *((&raw mut g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
         as *mut uint16) = 21 as uint16;
@@ -5688,15 +5530,13 @@ pub unsafe extern "C" fn FxRisingFunction_LavaAcid_Raising() {
             (0x88b343 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstr_B3A9(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
+pub unsafe fn HdmaobjInstr_B3A9(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x192c as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 112 as uint16;
     return hdp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallFxRisingFunc(mut ea: uint32) {
+pub unsafe fn CallFxRisingFunc(mut ea: uint32) {
     match ea {
         8958787 => {
             FxRisingFunction_LavaAcid();
@@ -5737,8 +5577,7 @@ static mut kLavaSoundEffects: [uint8; 8] = [
     0x12 as ::core::ffi::c_int as uint8,
     0x13 as ::core::ffi::c_int as uint8,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_LavaAcidBG3YScroll(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_LavaAcidBG3YScroll(mut k: uint16) {
     let mut current_block: u64;
     let mut v2: int16 = 0;
     let mut v3: int16 = 0;
@@ -5901,18 +5740,13 @@ pub unsafe extern "C" fn HdmaobjPreInstr_LavaAcidBG3YScroll(mut k: uint16) {
         return;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstr_SetFlagB_Copy(
-    mut k: uint16,
-    mut hdp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn HdmaobjInstr_SetFlagB_Copy(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1920 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 1 as uint16;
     return hdp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_LavaAcidBG2YScroll(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_LavaAcidBG2YScroll(mut k: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x9c44 as ::core::ffi::c_int as isize)
         as *mut uint16) = *((&raw mut g_ram as *mut uint8)
         .offset(0xb7 as ::core::ffi::c_int as isize) as *mut uint16);
@@ -5947,8 +5781,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_LavaAcidBG2YScroll(mut k: uint16) {
             & 0xf as ::core::ffi::c_int)
         + 0xc0b1 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Handle_LavaAcidBG2YScroll_Func1(mut v0: uint16) {
+pub unsafe fn Handle_LavaAcidBG2YScroll_Func1(mut v0: uint16) {
     WriteReg(
         (*((&raw mut g_ram as *mut uint8).offset(0x18c0 as ::core::ffi::c_int as isize)
             as *mut uint16 as *mut uint8)
@@ -5971,8 +5804,7 @@ pub unsafe extern "C" fn Handle_LavaAcidBG2YScroll_Func1(mut v0: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Handle_LavaAcidBG2YScroll_Func2(mut v0: uint16) {
+pub unsafe fn Handle_LavaAcidBG2YScroll_Func2(mut v0: uint16) {
     WriteReg(
         (*((&raw mut g_ram as *mut uint8).offset(0x18c0 as ::core::ffi::c_int as isize)
             as *mut uint16 as *mut uint8)
@@ -6030,8 +5862,7 @@ pub unsafe extern "C" fn Handle_LavaAcidBG2YScroll_Func2(mut v0: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Handle_LavaAcidBG2YScroll_Func3(mut v0: uint16) {
+pub unsafe fn Handle_LavaAcidBG2YScroll_Func3(mut v0: uint16) {
     WriteReg(
         (*((&raw mut g_ram as *mut uint8).offset(0x18c0 as ::core::ffi::c_int as isize)
             as *mut uint16 as *mut uint8)
@@ -6109,8 +5940,7 @@ static mut unk_88C41F: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
     field_1: 0xf as uint8,
     addr: 0xd847 as VoidP,
 };
-#[no_mangle]
-pub unsafe extern "C" fn FxTypeFunc_6_Water() {
+pub unsafe fn FxTypeFunc_6_Water() {
     *((&raw mut g_ram as *mut uint8).offset(0x196c as ::core::ffi::c_int as isize)
         as *mut uint16) = (0x88c428 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x195e as ::core::ffi::c_int as isize)
@@ -6132,8 +5962,7 @@ pub unsafe extern "C" fn FxTypeFunc_6_Water() {
     }
     SpawnBG3ScrollHdmaObject();
 }
-#[no_mangle]
-pub unsafe extern "C" fn FxRisingFunction_C428_WaterNormal() {
+pub unsafe fn FxRisingFunction_C428_WaterNormal() {
     if *((&raw mut g_ram as *mut uint8).offset(0x197c as ::core::ffi::c_int as isize)
         as *mut uint16)
         != 0
@@ -6172,8 +6001,7 @@ pub unsafe extern "C" fn FxRisingFunction_C428_WaterNormal() {
         return;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FxRisingFunction_WaterWaitToRise() {
+pub unsafe fn FxRisingFunction_WaterWaitToRise() {
     let ref mut fresh46 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1980 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh46 = (*fresh46).wrapping_sub(1);
@@ -6183,8 +6011,7 @@ pub unsafe extern "C" fn FxRisingFunction_WaterWaitToRise() {
             (0x88c458 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FxRisingFunction_WaterRising() {
+pub unsafe fn FxRisingFunction_WaterRising() {
     if RaiseOrLowerFx() as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0x196c as ::core::ffi::c_int as isize)
             as *mut uint16) =
@@ -6193,18 +6020,13 @@ pub unsafe extern "C" fn FxRisingFunction_WaterRising() {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstr_SetFlagB_Copy2(
-    mut k: uint16,
-    mut hdp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn HdmaobjInstr_SetFlagB_Copy2(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1920 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 1 as uint16;
     return hdp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallFxRisingFunction(mut ea: uint32) {
+pub unsafe fn CallFxRisingFunction(mut ea: uint32) {
     match ea {
         8958787 => {
             FxRisingFunction_LavaAcid();
@@ -6235,8 +6057,7 @@ pub unsafe extern "C" fn CallFxRisingFunction(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_WaterBG3XScroll(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_WaterBG3XScroll(mut k: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x1986 as ::core::ffi::c_int as isize)
         as *mut uint16) = *((&raw mut g_ram as *mut uint8)
         .offset(0x1984 as ::core::ffi::c_int as isize) as *mut uint16);
@@ -6373,18 +6194,13 @@ pub unsafe extern "C" fn HdmaobjPreInstr_WaterBG3XScroll(mut k: uint16) {
                 & 0x3ff as ::core::ffi::c_int)
             + 0xc645 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstr_SetFlagB_Copy3(
-    mut k: uint16,
-    mut hdp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn HdmaobjInstr_SetFlagB_Copy3(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1920 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 1 as uint16;
     return hdp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_WaterBG2XScroll(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll(mut k: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x9c44 as ::core::ffi::c_int as isize)
         as *mut uint16) = *((&raw mut g_ram as *mut uint8)
         .offset(0xb5 as ::core::ffi::c_int as isize) as *mut uint16);
@@ -6436,8 +6252,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_WaterBG2XScroll(mut k: uint16) {
         + 0xcf46 as ::core::ffi::c_int)
         as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_WaterBG2XScroll_Func2(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll_Func2(mut k: uint16) {
     let mut v1: ::core::ffi::c_int = k as uint8 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let ref mut fresh96 = *((&raw mut g_ram as *mut uint8)
         .offset(0x1920 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -6493,8 +6308,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_WaterBG2XScroll_Func2(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_WaterBG2XScroll_Func1(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll_Func1(mut k: uint16) {
     let mut v1: uint8 = 30 as uint8;
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xb5 as ::core::ffi::c_int as isize) as *mut uint16);
@@ -6511,8 +6325,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_WaterBG2XScroll_Func1(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnBG3ScrollHdmaObject() {
+pub unsafe fn SpawnBG3ScrollHdmaObject() {
     static mut unk_88D869: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x43 as uint8,
         field_1: 0x11 as uint8,
@@ -6523,8 +6336,7 @@ pub unsafe extern "C" fn SpawnBG3ScrollHdmaObject() {
         &raw const unk_88D869 as *const ::core::ffi::c_void,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn FxTypeFunc_28_CeresRidley() {
+pub unsafe fn FxTypeFunc_28_CeresRidley() {
     static mut unk_88D8E2: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x40 as uint8,
         field_1: 0x5 as uint8,
@@ -6544,13 +6356,11 @@ pub unsafe extern "C" fn FxTypeFunc_28_CeresRidley() {
         &raw const unk_88D8EA as *const ::core::ffi::c_void,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_88D916() {
+pub unsafe fn sub_88D916() {
     *((&raw mut g_ram as *mut uint8).offset(0x7eb as ::core::ffi::c_int as isize) as *mut uint16) =
         9 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FxTypeFunc_CeresElevator() {
+pub unsafe fn FxTypeFunc_CeresElevator() {
     static mut unk_88D92C: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x40 as uint8,
         field_1: 0x5 as uint8,
@@ -6561,17 +6371,12 @@ pub unsafe extern "C" fn FxTypeFunc_CeresElevator() {
         &raw const unk_88D92C as *const ::core::ffi::c_void,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstr_SetVideoMode1(
-    mut k: uint16,
-    mut hdp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn HdmaobjInstr_SetVideoMode1(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x7eb as ::core::ffi::c_int as isize) as *mut uint16) =
         9 as uint16;
     return hdp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FxTypeFunc_A_Rain() {
+pub unsafe fn FxTypeFunc_A_Rain() {
     static mut unk_88D95C: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x43 as uint8,
         field_1: 0x11 as uint8,
@@ -6585,11 +6390,7 @@ pub unsafe extern "C" fn FxTypeFunc_A_Rain() {
     SpawnBG3ScrollHdmaObject();
     SpawnAnimtiles(addr_kAnimtiles_Rain as ::core::ffi::c_int as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstr_1938_RandomNumber(
-    mut k: uint16,
-    mut hdp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn HdmaobjInstr_1938_RandomNumber(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x1938 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = *(g_rom.offset(
@@ -6608,8 +6409,7 @@ pub unsafe extern "C" fn HdmaobjInstr_1938_RandomNumber(
         );
     return hdp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_RainBg3Scroll(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_RainBg3Scroll(mut k: uint16) {
     *(&raw mut g_ram as *mut uint8).offset(0x5b as ::core::ffi::c_int as isize) = 92 as uint8;
     *((&raw mut g_ram as *mut uint8).offset(0x1986 as ::core::ffi::c_int as isize)
         as *mut uint16) = *((&raw mut g_ram as *mut uint8)
@@ -6674,8 +6474,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_RainBg3Scroll(mut k: uint16) {
             as *mut uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FxTypeFunc_8_Spores() {
+pub unsafe fn FxTypeFunc_8_Spores() {
     *(&raw mut g_ram as *mut uint8).offset(0x5b as ::core::ffi::c_int as isize) = 92 as uint8;
     static mut unk_88DA1D: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x42 as uint8,
@@ -6689,8 +6488,7 @@ pub unsafe extern "C" fn FxTypeFunc_8_Spores() {
     SpawnBG3ScrollHdmaObject();
     SpawnAnimtiles(addr_kAnimtiles_Spores as ::core::ffi::c_int as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_SporesBG3Xscroll(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_SporesBG3Xscroll(mut k: uint16) {
     *(&raw mut g_ram as *mut uint8).offset(0x5b as ::core::ffi::c_int as isize) = 92 as uint8;
     *((&raw mut g_ram as *mut uint8).offset(0x1986 as ::core::ffi::c_int as isize)
         as *mut uint16) = *((&raw mut g_ram as *mut uint8)
@@ -6740,8 +6538,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_SporesBG3Xscroll(mut k: uint16) {
             .offset(v1 as isize);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FxTypeFunc_C() {
+pub unsafe fn FxTypeFunc_C() {
     *(&raw mut g_ram as *mut uint8).offset(0x5b as ::core::ffi::c_int as isize) = 92 as uint8;
     static mut unk_88DB14: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x43 as uint8,
@@ -6753,8 +6550,7 @@ pub unsafe extern "C" fn FxTypeFunc_C() {
         &raw const unk_88DB14 as *const ::core::ffi::c_void,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_FogBG3Scroll(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_FogBG3Scroll(mut k: uint16) {
     *(&raw mut g_ram as *mut uint8).offset(0x5b as ::core::ffi::c_int as isize) = 92 as uint8;
     *((&raw mut g_ram as *mut uint8).offset(0x1986 as ::core::ffi::c_int as isize)
         as *mut uint16) = *((&raw mut g_ram as *mut uint8)
@@ -6800,8 +6596,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_FogBG3Scroll(mut k: uint16) {
         *fresh93 = (*fresh93 as ::core::ffi::c_int + 80 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn FxTypeFunc_26_TourianEntranceStatue() {
+pub unsafe fn FxTypeFunc_26_TourianEntranceStatue() {
     static mut unk_88DBBA: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x42 as uint8,
         field_1: 0x11 as uint8,
@@ -6837,8 +6632,7 @@ pub unsafe extern "C" fn FxTypeFunc_26_TourianEntranceStatue() {
     );
     SpawnBG3ScrollHdmaObject();
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_88DBCB(mut k: uint16) {
+pub unsafe fn sub_88DBCB(mut k: uint16) {
     *(&raw mut (*((&raw mut g_ram as *mut uint8).offset(0x9e00 as ::core::ffi::c_int as isize)
         as *mut ExpandingSquareTransitionHdma)
         .offset(0 as ::core::ffi::c_int as isize))
@@ -6850,8 +6644,7 @@ pub unsafe extern "C" fn sub_88DBCB(mut k: uint16) {
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
             as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_CheckLotsOfEventsHappened(mut v0: uint16) {
+pub unsafe fn HdmaobjPreInstr_CheckLotsOfEventsHappened(mut v0: uint16) {
     if CheckEventHappened(6 as uint16) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         if CheckEventHappened(7 as uint16) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
             if CheckEventHappened(8 as uint16) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
@@ -6901,8 +6694,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_CheckLotsOfEventsHappened(mut v0: uint1
     }
     sub_88DBCB(v0);
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_DC23(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_DC23(mut k: uint16) {
     let mut v0: uint16 = k;
     HandleEarthquakeSoundEffect();
     *((&raw mut g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
@@ -6943,8 +6735,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_DC23(mut k: uint16) {
     }
     sub_88DBCB(v0);
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_DC69(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_DC69(mut k: uint16) {
     HandleEarthquakeSoundEffect();
     *((&raw mut g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
         as *mut uint16) = 13 as uint16;
@@ -6987,16 +6778,14 @@ pub unsafe extern "C" fn HdmaobjPreInstr_DC69(mut k: uint16) {
         sub_88DBCB(k);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_DCBA(mut v0: uint16) {
+pub unsafe fn HdmaobjPreInstr_DCBA(mut v0: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x1e6d as ::core::ffi::c_int as isize)
         as *mut uint16) = 0x8000 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xcd20 as ::core::ffi::c_int as isize)
         as *mut uint16) = 514 as uint16;
     sub_88DBCB(v0);
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstr_GotoIfEventHappened(
+pub unsafe fn HdmaobjInstr_GotoIfEventHappened(
     mut k: uint16,
     mut hdp: *const uint8,
 ) -> *const uint8 {
@@ -7029,8 +6818,7 @@ pub unsafe extern "C" fn HdmaobjInstr_GotoIfEventHappened(
         return hdp.offset(2 as ::core::ffi::c_int as isize);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnBombTorizoHaze() {
+pub unsafe fn SpawnBombTorizoHaze() {
     static mut unk_88DD36: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x2 as uint8,
         field_1: 0x32 as uint8,
@@ -7050,13 +6838,11 @@ pub unsafe extern "C" fn SpawnBombTorizoHaze() {
         &raw const unk_88DD3E as *const ::core::ffi::c_void,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_BombTorizoHazeColorMathBgColor(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_BombTorizoHazeColorMathBgColor(mut k: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x1986 as ::core::ffi::c_int as isize)
         as *mut uint16) = 44 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn FxTypeFunc_2C_Haze() {
+pub unsafe fn FxTypeFunc_2C_Haze() {
     static mut unk_88DDD4: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x40 as uint8,
         field_1: 0x32 as uint8,
@@ -7079,16 +6865,13 @@ pub unsafe extern "C" fn FxTypeFunc_2C_Haze() {
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_HazeColorMathSubscreen_CeresRidleyAlive(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_CeresRidleyAlive(mut k: uint16) {
     sub_88DE18(k, 0x80 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_HazeColorMathSubscreen_CeresRidleyDead(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_CeresRidleyDead(mut k: uint16) {
     sub_88DE18(k, 0x20 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_88DE18(mut k: uint16, mut a: uint16) {
+pub unsafe fn sub_88DE18(mut k: uint16, mut a: uint16) {
     let mut v2: ::core::ffi::c_int = k as uint8 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1920 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -7107,8 +6890,7 @@ pub unsafe extern "C" fn sub_88DE18(mut k: uint16, mut a: uint16) {
         HdmaobjPreInstr_HazeColorMathSubscreen_FadingIn(k);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_HazeColorMathSubscreen_FadingIn(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_FadingIn(mut k: uint16) {
     let mut v1: int8 = 0;
     *(&raw mut g_ram as *mut uint8)
         .offset(0x74 as ::core::ffi::c_int as isize)
@@ -7162,8 +6944,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_HazeColorMathSubscreen_FadingIn(mut k: 
         *fresh84 = (*fresh84).wrapping_add(1);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_HazeColorMathSubscreen_FadedIn(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_FadedIn(mut k: uint16) {
     *(&raw mut g_ram as *mut uint8)
         .offset(0x74 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 32 as uint8;
@@ -7185,8 +6966,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_HazeColorMathSubscreen_FadedIn(mut k: u
             (0x88de96 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_HazeColorMathSubscreen_FadingOut(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_FadingOut(mut k: uint16) {
     let mut v1: int8 = 0;
     *(&raw mut g_ram as *mut uint8)
         .offset(0x74 as ::core::ffi::c_int as isize)
@@ -7249,29 +7029,25 @@ static mut unk_88DF4A: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
     field_1: 0x12 as uint8,
     addr: 0xdf77 as VoidP,
 };
-#[no_mangle]
-pub unsafe extern "C" fn sub_88DF34() {
+pub unsafe fn sub_88DF34() {
     SpawnHdmaObject(
         0x88 as uint8,
         &raw const unk_88DF38 as *const ::core::ffi::c_void,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_88DF3D() {
+pub unsafe fn sub_88DF3D() {
     SpawnHdmaObject(
         0x88 as uint8,
         &raw const unk_88DF41 as *const ::core::ffi::c_void,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_88DF46() {
+pub unsafe fn sub_88DF46() {
     SpawnHdmaObject(
         0x88 as uint8,
         &raw const unk_88DF4A as *const ::core::ffi::c_void,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_DF94(mut v0: uint16) {
+pub unsafe fn HdmaobjPreInstr_DF94(mut v0: uint16) {
     let mut v1: int16 = 0;
     if (*((&raw mut g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
         as *mut EnemyData)
@@ -7359,17 +7135,16 @@ pub unsafe extern "C" fn HdmaobjPreInstr_DF94(mut v0: uint16) {
 }
 static mut off_88E04E: [Option<Func_U8>; 7] = unsafe {
     [
-        Some(VariaSuitPickup_0_LightBeamAppears as unsafe extern "C" fn() -> uint8),
-        Some(VariaSuitPickup_1 as unsafe extern "C" fn() -> uint8),
-        Some(VariaSuitPickup_2_LightBeamWidens as unsafe extern "C" fn() -> uint8),
-        Some(VariaSuitPickup_3 as unsafe extern "C" fn() -> uint8),
-        Some(VariaSuitPickup_4_LightBeamShrinks as unsafe extern "C" fn() -> uint8),
-        Some(VariaSuitPickup_5_LightBeamDissipates as unsafe extern "C" fn() -> uint8),
-        Some(VariaSuitPickup_6 as unsafe extern "C" fn() -> uint8),
+        Some(VariaSuitPickup_0_LightBeamAppears as unsafe fn() -> uint8),
+        Some(VariaSuitPickup_1 as unsafe fn() -> uint8),
+        Some(VariaSuitPickup_2_LightBeamWidens as unsafe fn() -> uint8),
+        Some(VariaSuitPickup_3 as unsafe fn() -> uint8),
+        Some(VariaSuitPickup_4_LightBeamShrinks as unsafe fn() -> uint8),
+        Some(VariaSuitPickup_5_LightBeamDissipates as unsafe fn() -> uint8),
+        Some(VariaSuitPickup_6 as unsafe fn() -> uint8),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_VariaSuitPickup(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_VariaSuitPickup(mut k: uint16) {
     if off_88E04E[*((&raw mut g_ram as *mut uint8).offset(0xdec as ::core::ffi::c_int as isize)
         as *mut uint16) as usize]
         .expect("non-null function pointer")() as ::core::ffi::c_int
@@ -7394,17 +7169,16 @@ pub unsafe extern "C" fn HdmaobjPreInstr_VariaSuitPickup(mut k: uint16) {
 }
 static mut off_88E084: [Option<Func_U8>; 7] = unsafe {
     [
-        Some(VariaSuitPickup_0_LightBeamAppears as unsafe extern "C" fn() -> uint8),
-        Some(VariaSuitPickup_1 as unsafe extern "C" fn() -> uint8),
-        Some(VariaSuitPickup_2_LightBeamWidens as unsafe extern "C" fn() -> uint8),
-        Some(GravitySuitPickup_3 as unsafe extern "C" fn() -> uint8),
-        Some(VariaSuitPickup_4_LightBeamShrinks as unsafe extern "C" fn() -> uint8),
-        Some(VariaSuitPickup_5_LightBeamDissipates as unsafe extern "C" fn() -> uint8),
-        Some(GravitySuitPickup_6 as unsafe extern "C" fn() -> uint8),
+        Some(VariaSuitPickup_0_LightBeamAppears as unsafe fn() -> uint8),
+        Some(VariaSuitPickup_1 as unsafe fn() -> uint8),
+        Some(VariaSuitPickup_2_LightBeamWidens as unsafe fn() -> uint8),
+        Some(GravitySuitPickup_3 as unsafe fn() -> uint8),
+        Some(VariaSuitPickup_4_LightBeamShrinks as unsafe fn() -> uint8),
+        Some(VariaSuitPickup_5_LightBeamDissipates as unsafe fn() -> uint8),
+        Some(GravitySuitPickup_6 as unsafe fn() -> uint8),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_GravitySuitPickup(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_GravitySuitPickup(mut k: uint16) {
     if off_88E084[*((&raw mut g_ram as *mut uint8).offset(0xdec as ::core::ffi::c_int as isize)
         as *mut uint16) as usize]
         .expect("non-null function pointer")() as ::core::ffi::c_int
@@ -7428,8 +7202,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_GravitySuitPickup(mut k: uint16) {
     }
 }
 static mut g_word_88E0D5: uint16 = 0x7878 as uint16;
-#[no_mangle]
-pub unsafe extern "C" fn VariaSuitPickup_0_LightBeamAppears() -> uint8 {
+pub unsafe fn VariaSuitPickup_0_LightBeamAppears() -> uint8 {
     let mut v0: int16 = 0;
     let mut v3: int16 = 0;
     let ref mut fresh15 = *((&raw mut g_ram as *mut uint8)
@@ -7476,8 +7249,7 @@ pub unsafe extern "C" fn VariaSuitPickup_0_LightBeamAppears() -> uint8 {
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn VariaSuitPickup_1() -> uint8 {
+pub unsafe fn VariaSuitPickup_1() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xdee as ::core::ffi::c_int as isize) as *mut uint16
         as *mut uint8)
         .offset(0 as ::core::ffi::c_int as isize) = (*((&raw mut g_ram as *mut uint8)
@@ -7530,8 +7302,7 @@ pub unsafe extern "C" fn VariaSuitPickup_1() -> uint8 {
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn VariaSuitPickup_2_LightBeamWidens() -> uint8 {
+pub unsafe fn VariaSuitPickup_2_LightBeamWidens() -> uint8 {
     let mut v1: int8 = 0;
     let mut v2: int16 = 0;
     let mut v4: int8 = 0;
@@ -7749,8 +7520,7 @@ pub unsafe extern "C" fn VariaSuitPickup_2_LightBeamWidens() -> uint8 {
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn VariaSuitPickup_4_LightBeamShrinks() -> uint8 {
+pub unsafe fn VariaSuitPickup_4_LightBeamShrinks() -> uint8 {
     if *(&raw mut g_ram as *mut uint8).offset(0xdf3 as ::core::ffi::c_int as isize) != 0 {
         AdvanceSuitPickupColorMathToBlue();
     } else {
@@ -7819,8 +7589,7 @@ pub unsafe extern "C" fn VariaSuitPickup_4_LightBeamShrinks() -> uint8 {
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn VariaSuitPickup_5_LightBeamDissipates() -> uint8 {
+pub unsafe fn VariaSuitPickup_5_LightBeamDissipates() -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xdee as ::core::ffi::c_int as isize) as *mut uint16
         as *mut uint8)
         .offset(0 as ::core::ffi::c_int as isize) = (*((&raw mut g_ram as *mut uint8)
@@ -7854,13 +7623,11 @@ pub unsafe extern "C" fn VariaSuitPickup_5_LightBeamDissipates() -> uint8 {
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn VariaSuitPickup_6() -> uint8 {
+pub unsafe fn VariaSuitPickup_6() -> uint8 {
     QueueMusic_Delayed8(3 as uint16);
     return GravitySuitPickup_6();
 }
-#[no_mangle]
-pub unsafe extern "C" fn GravitySuitPickup_6() -> uint8 {
+pub unsafe fn GravitySuitPickup_6() -> uint8 {
     *(&raw mut g_ram as *mut uint8)
         .offset(0x74 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 0x80 as uint8;
@@ -7908,8 +7675,7 @@ pub unsafe extern "C" fn GravitySuitPickup_6() -> uint8 {
     CallSomeSamusCode(0xb as uint16);
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn AdvanceSuitPickupColorMathSubscreenToWhite() -> uint8 {
+pub unsafe fn AdvanceSuitPickupColorMathSubscreenToWhite() -> uint8 {
     if *(&raw mut g_ram as *mut uint8).offset(0xdf0 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
         != 63 as ::core::ffi::c_int
@@ -7963,8 +7729,7 @@ pub unsafe extern "C" fn AdvanceSuitPickupColorMathSubscreenToWhite() -> uint8 {
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn AdvanceSuitPickupColorMathToOrange() -> uint8 {
+pub unsafe fn AdvanceSuitPickupColorMathToOrange() -> uint8 {
     if *(&raw mut g_ram as *mut uint8).offset(0xdf0 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
         != 63 as ::core::ffi::c_int
@@ -7991,8 +7756,7 @@ pub unsafe extern "C" fn AdvanceSuitPickupColorMathToOrange() -> uint8 {
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn VariaSuitPickup_3() -> uint8 {
+pub unsafe fn VariaSuitPickup_3() -> uint8 {
     let ref mut fresh22 = *((&raw mut g_ram as *mut uint8)
         .offset(0x9a2 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh22 = (*fresh22 as ::core::ffi::c_int | 1 as ::core::ffi::c_int) as uint16;
@@ -8021,8 +7785,7 @@ pub unsafe extern "C" fn VariaSuitPickup_3() -> uint8 {
     *fresh24 = (*fresh24).wrapping_add(1);
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GravitySuitPickup_3() -> uint8 {
+pub unsafe fn GravitySuitPickup_3() -> uint8 {
     let ref mut fresh9 = *((&raw mut g_ram as *mut uint8)
         .offset(0x9a2 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh9 = (*fresh9 as ::core::ffi::c_int | 0x20 as ::core::ffi::c_int) as uint16;
@@ -8051,8 +7814,7 @@ pub unsafe extern "C" fn GravitySuitPickup_3() -> uint8 {
     *fresh11 = (*fresh11).wrapping_add(1);
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn AdvanceSuitPickupColorMathToBlue() -> uint8 {
+pub unsafe fn AdvanceSuitPickupColorMathToBlue() -> uint8 {
     if *(&raw mut g_ram as *mut uint8).offset(0xdf0 as ::core::ffi::c_int as isize)
         as ::core::ffi::c_int
         != 48 as ::core::ffi::c_int
@@ -8079,8 +7841,7 @@ pub unsafe extern "C" fn AdvanceSuitPickupColorMathToBlue() -> uint8 {
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_E449(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_E449(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x1988 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & 0x4000 as ::core::ffi::c_int
@@ -8128,8 +7889,7 @@ static mut unk_88E4A0: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
     field_1: 0xf as uint8,
     addr: 0xe4a8 as VoidP,
 };
-#[no_mangle]
-pub unsafe extern "C" fn sub_88E487(mut v0: uint16, mut r22: uint16) {
+pub unsafe fn sub_88E487(mut v0: uint16, mut r22: uint16) {
     (*((&raw mut g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
         as *mut EnemyData)
         .offset(2 as ::core::ffi::c_int as isize))
@@ -8151,8 +7911,7 @@ pub unsafe extern "C" fn sub_88E487(mut v0: uint16, mut r22: uint16) {
         &raw const unk_88E4A0 as *const ::core::ffi::c_void,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstr_E4BD(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
+pub unsafe fn HdmaobjInstr_E4BD(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
     let mut v2: ::core::ffi::c_uint = 0;
     let mut v3: ::core::ffi::c_uint = 0;
     let mut v4: ::core::ffi::c_uint = 0;
@@ -8280,8 +8039,7 @@ pub unsafe extern "C" fn HdmaobjInstr_E4BD(mut k: uint16, mut hdp: *const uint8)
         .offset(v6 as isize) = 0 as uint16;
     return hdp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_E567(mut v0: uint16) {
+pub unsafe fn HdmaobjPreInstr_E567(mut v0: uint16) {
     let mut v7: int16 = 0;
     let mut j: uint16 = 0;
     let mut v8: uint16 = 0;
@@ -8553,22 +8311,19 @@ static mut unk_88E74C: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
     field_1: 0x26 as uint8,
     addr: 0xe751 as VoidP,
 };
-#[no_mangle]
-pub unsafe extern "C" fn MotherBrainRisingHdmaObject() -> uint16 {
+pub unsafe fn MotherBrainRisingHdmaObject() -> uint16 {
     return SpawnHdmaObject(
         0x88 as uint8,
         &raw const unk_88E722 as *const ::core::ffi::c_void,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnMotherBrainRainbowBeamHdma() -> uint16 {
+pub unsafe fn SpawnMotherBrainRainbowBeamHdma() -> uint16 {
     return SpawnHdmaObject(
         0x88 as uint8,
         &raw const unk_88E74C as *const ::core::ffi::c_void,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn InitializeRainbowBeam() {
+pub unsafe fn InitializeRainbowBeam() {
     *(&raw mut g_ram as *mut uint8)
         .offset(0x74 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 32 as uint8;
@@ -8601,8 +8356,7 @@ pub unsafe extern "C" fn InitializeRainbowBeam() {
         .offset(2 as ::core::ffi::c_int as isize) = 0 as uint16;
     MotherBrain_CalculateRainbowBeamHdma();
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_E7BC(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_E7BC(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         == 19 as ::core::ffi::c_int
@@ -8626,8 +8380,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_E7BC(mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_88E7ED() {
+pub unsafe fn sub_88E7ED() {
     let mut v0: uint16 = *(g_rom.offset(
         (((0x88e833 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0x88e833 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -8690,8 +8443,7 @@ pub unsafe extern "C" fn sub_88E7ED() {
             & 0x1f as ::core::ffi::c_int
             | 0x80 as ::core::ffi::c_int) as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnMorphBallEyeBeamHdma() {
+pub unsafe fn SpawnMorphBallEyeBeamHdma() {
     static mut unk_88E8E4: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x41 as uint8,
         field_1: 0x26 as uint8,
@@ -8702,8 +8454,7 @@ pub unsafe extern "C" fn SpawnMorphBallEyeBeamHdma() {
         &raw const unk_88E8E4 as *const ::core::ffi::c_void,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstr_InitMorphBallEyeBeamHdma(
+pub unsafe fn HdmaobjInstr_InitMorphBallEyeBeamHdma(
     mut k: uint16,
     mut hdp: *const uint8,
 ) -> *const uint8 {
@@ -8779,8 +8530,7 @@ pub unsafe extern "C" fn HdmaobjInstr_InitMorphBallEyeBeamHdma(
         as *mut uint16) = 0 as uint16;
     return hdp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn sub_88E987(mut v0: uint16) {
+pub unsafe fn sub_88E987(mut v0: uint16) {
     let mut v3: uint16 = v0;
     let mut r18: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
@@ -8861,8 +8611,7 @@ pub unsafe extern "C" fn sub_88E987(mut v0: uint16) {
         as *mut uint16 as *mut uint8)
         .offset(v3 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_E9E6(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_E9E6(mut k: uint16) {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1986 as ::core::ffi::c_int as isize)
         as *mut uint16) = 16 as uint16;
@@ -8909,8 +8658,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_E9E6(mut k: uint16) {
     }
     sub_88E987(k);
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_EA3C(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_EA3C(mut k: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x1986 as ::core::ffi::c_int as isize)
         as *mut uint16) = 16 as uint16;
     if (*((&raw mut g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
@@ -8976,8 +8724,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_EA3C(mut k: uint16) {
             .offset(v1 as isize) = 1 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_EACB(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_EACB(mut k: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x1986 as ::core::ffi::c_int as isize)
         as *mut uint16) = 16 as uint16;
     if *((&raw mut g_ram as *mut uint8).offset(0x1914 as ::core::ffi::c_int as isize) as *mut uint16
@@ -9079,8 +8826,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_EACB(mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnTitleScreenGradientObjs() {
+pub unsafe fn SpawnTitleScreenGradientObjs() {
     static mut unk_88EB6B: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0 as uint8,
         field_1: 0x31 as uint8,
@@ -9100,8 +8846,7 @@ pub unsafe extern "C" fn SpawnTitleScreenGradientObjs() {
         &raw const unk_88EB6B as *const ::core::ffi::c_void,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInsr_ConfigTitleSequenceGradientHDMA(
+pub unsafe fn HdmaobjInsr_ConfigTitleSequenceGradientHDMA(
     mut k: uint16,
     mut hdp: *const uint8,
 ) -> *const uint8 {
@@ -9109,8 +8854,7 @@ pub unsafe extern "C" fn HdmaobjInsr_ConfigTitleSequenceGradientHDMA(
     ConfigureTitleSequenceGradientHDMA();
     return hdp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_Backdrop_TitleSequenceGradient(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_Backdrop_TitleSequenceGradient(mut k: uint16) {
     ConfigureTitleSequenceGradientHDMA();
     if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -9130,8 +8874,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_Backdrop_TitleSequenceGradient(mut k: u
             .offset(v1 as isize) = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_ColorMathControlB_TitleGradient(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_ColorMathControlB_TitleGradient(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         == 0x8b9b68 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -9150,8 +8893,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_ColorMathControlB_TitleGradient(mut k: 
             .offset(v1 as isize) = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnIntroCutsceneCrossfadeHdma() {
+pub unsafe fn SpawnIntroCutsceneCrossfadeHdma() {
     static mut unk_88EBFB: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0 as uint8,
         field_1: 0x31 as uint8,
@@ -9162,8 +8904,7 @@ pub unsafe extern "C" fn SpawnIntroCutsceneCrossfadeHdma() {
         &raw const unk_88EBFB as *const ::core::ffi::c_void,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_IntroCutsceneCrossfade(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_IntroCutsceneCrossfade(mut k: uint16) {
     if *((&raw mut g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
@@ -9183,8 +8924,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_IntroCutsceneCrossfade(mut k: uint16) {
             .offset(v1 as isize) = 1 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CinematicFunction_Intro_Func133() {
+pub unsafe fn CinematicFunction_Intro_Func133() {
     let mut v0: ::core::ffi::c_uint = 0;
     let mut v1: ::core::ffi::c_uint = 0;
     *((&raw mut g_ram as *mut uint8).offset(0xd9c as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -9237,11 +8977,7 @@ pub unsafe extern "C" fn CinematicFunction_Intro_Func133() {
         &raw const unk_88EC82 as *const ::core::ffi::c_void,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjInstr_EC9F_ClearVars(
-    mut k: uint16,
-    mut hdp: *const uint8,
-) -> *const uint8 {
+pub unsafe fn HdmaobjInstr_EC9F_ClearVars(mut k: uint16, mut hdp: *const uint8) -> *const uint8 {
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut g_ram as *mut uint8).offset(0x1914 as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -9257,8 +8993,7 @@ pub unsafe extern "C" fn HdmaobjInstr_EC9F_ClearVars(
         .offset(v2 as isize) = 0 as uint16;
     return hdp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn HdmaobjPreInstr_ECB6(mut k: uint16) {
+pub unsafe fn HdmaobjPreInstr_ECB6(mut k: uint16) {
     let mut v7: int16 = 0;
     let mut v8: uint16 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0xd9c as ::core::ffi::c_int as isize) as *mut uint16)
@@ -9412,8 +9147,7 @@ pub unsafe extern "C" fn HdmaobjPreInstr_ECB6(mut k: uint16) {
             .offset(v2 as isize) = 1 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallHdmaobjPreInstr(mut ea: uint32, mut k: uint16) {
+pub unsafe fn CallHdmaobjPreInstr(mut ea: uint32, mut k: uint16) {
     match ea {
         8491739 => return,
         8946872 => return,
@@ -9644,12 +9378,7 @@ pub unsafe extern "C" fn CallHdmaobjPreInstr(mut ea: uint32, mut k: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallHdmaobjInstr(
-    mut ea: uint32,
-    mut k: uint16,
-    mut j: *const uint8,
-) -> *const uint8 {
+pub unsafe fn CallHdmaobjInstr(mut ea: uint32, mut k: uint16, mut j: *const uint8) -> *const uint8 {
     match ea {
         8969006 => return j,
         8947049 => return HdmaobjInstr_Delete(k, j),

@@ -57,17 +57,11 @@ pub const __ASSERT_FUNCTION: [::core::ffi::c_char; 43] = unsafe {
     )
 };
 #[inline]
-unsafe extern "C" fn IntMin(
-    mut a: ::core::ffi::c_int,
-    mut b: ::core::ffi::c_int,
-) -> ::core::ffi::c_int {
+unsafe fn IntMin(mut a: ::core::ffi::c_int, mut b: ::core::ffi::c_int) -> ::core::ffi::c_int {
     return if a < b { a } else { b };
 }
 #[inline]
-unsafe extern "C" fn IntMax(
-    mut a: ::core::ffi::c_int,
-    mut b: ::core::ffi::c_int,
-) -> ::core::ffi::c_int {
+unsafe fn IntMax(mut a: ::core::ffi::c_int, mut b: ::core::ffi::c_int) -> ::core::ffi::c_int {
     return if a > b { a } else { b };
 }
 static mut layersPerMode: [[::core::ffi::c_int; 12]; 10] = [
@@ -438,18 +432,15 @@ static mut spriteSizes: [[::core::ffi::c_int; 2]; 8] = [
     [16 as ::core::ffi::c_int, 32 as ::core::ffi::c_int],
     [16 as ::core::ffi::c_int, 32 as ::core::ffi::c_int],
 ];
-#[no_mangle]
-pub unsafe extern "C" fn ppu_init(mut snes: *mut Snes) -> *mut Ppu {
+pub unsafe fn ppu_init(mut snes: *mut Snes) -> *mut Ppu {
     let mut ppu: *mut Ppu = malloc(::core::mem::size_of::<Ppu>() as size_t) as *mut Ppu;
     (*ppu).snes = snes;
     return ppu;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ppu_free(mut ppu: *mut Ppu) {
+pub unsafe fn ppu_free(mut ppu: *mut Ppu) {
     free(ppu as *mut ::core::ffi::c_void);
 }
-#[no_mangle]
-pub unsafe extern "C" fn ppu_copy(mut ppu: *mut Ppu, mut ppu_src: *mut Ppu) {
+pub unsafe fn ppu_copy(mut ppu: *mut Ppu, mut ppu_src: *mut Ppu) {
     let mut snes: *mut Snes = (*ppu).snes;
     let mut pitch: size_t = (*ppu).renderPitch as size_t;
     let mut renderBuffer: *mut uint8_t = (*ppu).renderBuffer;
@@ -462,8 +453,7 @@ pub unsafe extern "C" fn ppu_copy(mut ppu: *mut Ppu, mut ppu_src: *mut Ppu) {
     (*ppu).renderPitch = pitch as uint32_t;
     (*ppu).snes = snes;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ppu_reset(mut ppu: *mut Ppu) {
+pub unsafe fn ppu_reset(mut ppu: *mut Ppu) {
     let mut snes: *mut Snes = (*ppu).snes;
     let mut pitch: size_t = (*ppu).renderPitch as size_t;
     let mut renderBuffer: *mut uint8_t = (*ppu).renderBuffer;
@@ -593,8 +583,7 @@ pub unsafe extern "C" fn ppu_reset(mut ppu: *mut Ppu) {
     (*ppu).ppu1openBus = 0 as uint8_t;
     (*ppu).ppu2openBus = 0 as uint8_t;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ppu_saveload(
+pub unsafe fn ppu_saveload(
     mut ppu: *mut Ppu,
     mut func: Option<SaveLoadFunc>,
     mut ctx: *mut ::core::ffi::c_void,
@@ -605,8 +594,7 @@ pub unsafe extern "C" fn ppu_saveload(
         (67313 as size_t).wrapping_sub(8 as size_t),
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn PpuBeginDrawing(
+pub unsafe fn PpuBeginDrawing(
     mut ppu: *mut Ppu,
     mut pixels: *mut uint8_t,
     mut pitch: size_t,
@@ -615,13 +603,11 @@ pub unsafe extern "C" fn PpuBeginDrawing(
     (*ppu).renderPitch = pitch as uint as uint32_t;
     (*ppu).renderBuffer = pixels;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ppu_checkOverscan(mut ppu: *mut Ppu) -> bool {
+pub unsafe fn ppu_checkOverscan(mut ppu: *mut Ppu) -> bool {
     (*ppu).frameOverscan = (*ppu).overscan;
     return (*ppu).frameOverscan;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ppu_handleVblank(mut ppu: *mut Ppu) {
+pub unsafe fn ppu_handleVblank(mut ppu: *mut Ppu) {
     if !(*ppu).forcedBlank {
         (*ppu).oamAdr = (*ppu).oamAdrWritten;
         (*ppu).oamInHigh = (*ppu).oamInHighWritten;
@@ -630,7 +616,7 @@ pub unsafe extern "C" fn ppu_handleVblank(mut ppu: *mut Ppu) {
     (*ppu).frameInterlace = (*ppu).interlace;
 }
 #[inline]
-unsafe extern "C" fn ClearBackdrop(mut buf: *mut PpuPixelPrioBufs) {
+unsafe fn ClearBackdrop(mut buf: *mut PpuPixelPrioBufs) {
     let mut i: size_t = 0 as size_t;
     while i
         != (::core::mem::size_of::<[PpuZbufType; 256]>() as usize)
@@ -641,8 +627,7 @@ unsafe extern "C" fn ClearBackdrop(mut buf: *mut PpuPixelPrioBufs) {
         i = i.wrapping_add(4 as size_t);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ppu_runLine(mut ppu: *mut Ppu, mut line: ::core::ffi::c_int) {
+pub unsafe fn ppu_runLine(mut ppu: *mut Ppu, mut line: ::core::ffi::c_int) {
     if line == 0 as ::core::ffi::c_int {
         (*ppu).mosaicStartLine = 1 as uint8_t;
         (*ppu).rangeOver = false_0 != 0;
@@ -693,11 +678,7 @@ pub unsafe extern "C" fn ppu_runLine(mut ppu: *mut Ppu, mut line: ::core::ffi::c
         }
     };
 }
-unsafe extern "C" fn PpuWindows_Clear(
-    mut win: *mut PpuWindows,
-    mut ppu: *mut Ppu,
-    mut layer: uint,
-) {
+unsafe fn PpuWindows_Clear(mut win: *mut PpuWindows, mut ppu: *mut Ppu, mut layer: uint) {
     (*win).edges[0 as ::core::ffi::c_int as usize] = -if layer != 2 as uint {
         (*ppu).extraLeftCur as ::core::ffi::c_int
     } else {
@@ -712,7 +693,7 @@ unsafe extern "C" fn PpuWindows_Clear(
     (*win).nr = 1 as uint8;
     (*win).bits = 0 as uint8;
 }
-unsafe extern "C" fn PpuWindows_Calc(mut win: *mut PpuWindows, mut ppu: *mut Ppu, mut layer: uint) {
+unsafe fn PpuWindows_Calc(mut win: *mut PpuWindows, mut ppu: *mut Ppu, mut layer: uint) {
     let mut winflags: uint32 = (*ppu).windowsel as uint32 >> layer.wrapping_mul(4 as uint);
     let mut nr: uint = 1 as uint;
     let mut window_right: ::core::ffi::c_int = 256 as ::core::ffi::c_int
@@ -839,7 +820,7 @@ unsafe extern "C" fn PpuWindows_Calc(mut win: *mut PpuWindows, mut ppu: *mut Ppu
     }
     (*win).bits = (w1_bits as ::core::ffi::c_int | w2_bits as ::core::ffi::c_int) as uint8;
 }
-unsafe extern "C" fn PpuDrawBackground_4bpp(
+unsafe fn PpuDrawBackground_4bpp(
     mut ppu: *mut Ppu,
     mut y: uint,
     mut sub: bool,
@@ -1435,7 +1416,7 @@ unsafe extern "C" fn PpuDrawBackground_4bpp(
         windex = windex.wrapping_add(1);
     }
 }
-unsafe extern "C" fn PpuDrawBackground_2bpp(
+unsafe fn PpuDrawBackground_2bpp(
     mut ppu: *mut Ppu,
     mut y: uint,
     mut sub: bool,
@@ -1912,7 +1893,7 @@ unsafe extern "C" fn PpuDrawBackground_2bpp(
         windex = windex.wrapping_add(1);
     }
 }
-unsafe extern "C" fn PpuDrawBackground_mode7(
+unsafe fn PpuDrawBackground_mode7(
     mut ppu: *mut Ppu,
     mut y: uint,
     mut sub: bool,
@@ -2159,12 +2140,7 @@ unsafe extern "C" fn PpuDrawBackground_mode7(
         windex = windex.wrapping_add(1);
     }
 }
-unsafe extern "C" fn PpuDrawSprites(
-    mut ppu: *mut Ppu,
-    mut y: uint,
-    mut sub: uint,
-    mut clear_backdrop: bool,
-) {
+unsafe fn PpuDrawSprites(mut ppu: *mut Ppu, mut y: uint, mut sub: uint, mut clear_backdrop: bool) {
     let mut layer: ::core::ffi::c_int = 4 as ::core::ffi::c_int;
     if (*ppu).screenEnabled[sub as usize] as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << layer
         == 0
@@ -2225,11 +2201,7 @@ unsafe extern "C" fn PpuDrawSprites(
         windex = windex.wrapping_add(1);
     }
 }
-unsafe extern "C" fn PpuDrawBackgrounds(
-    mut ppu: *mut Ppu,
-    mut y: ::core::ffi::c_int,
-    mut sub: bool,
-) {
+unsafe fn PpuDrawBackgrounds(mut ppu: *mut Ppu, mut y: ::core::ffi::c_int, mut sub: bool) {
     if (*ppu).mode as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
         if (*ppu).lineHasSprites {
             PpuDrawSprites(ppu, y as uint, sub as uint, true_0 != 0);
@@ -2307,7 +2279,7 @@ unsafe extern "C" fn PpuDrawBackgrounds(
         }
     };
 }
-unsafe extern "C" fn PpuDrawWholeLine(mut ppu: *mut Ppu, mut y: uint) {
+unsafe fn PpuDrawWholeLine(mut ppu: *mut Ppu, mut y: uint) {
     if (*ppu).forcedBlank {
         let mut dst: *mut uint8 = (*ppu).renderBuffer.offset(
             (y as uint32_t)
@@ -2527,11 +2499,7 @@ unsafe extern "C" fn PpuDrawWholeLine(mut ppu: *mut Ppu, mut y: uint) {
         }
     }
 }
-unsafe extern "C" fn ppu_handlePixel(
-    mut ppu: *mut Ppu,
-    mut x: ::core::ffi::c_int,
-    mut y: ::core::ffi::c_int,
-) {
+unsafe fn ppu_handlePixel(mut ppu: *mut Ppu, mut x: ::core::ffi::c_int, mut y: ::core::ffi::c_int) {
     let mut r: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     let mut r2: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     let mut g: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -2678,7 +2646,7 @@ unsafe extern "C" fn ppu_handlePixel(
             / 15 as ::core::ffi::c_int) as uint8;
     *pixelBuffer.offset(3 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-unsafe extern "C" fn ppu_getPixel(
+unsafe fn ppu_getPixel(
     mut ppu: *mut Ppu,
     mut x: ::core::ffi::c_int,
     mut y: ::core::ffi::c_int,
@@ -2817,7 +2785,7 @@ unsafe extern "C" fn ppu_getPixel(
     }
     return layer;
 }
-unsafe extern "C" fn ppu_handleOPT(
+unsafe fn ppu_handleOPT(
     mut ppu: *mut Ppu,
     mut layer: ::core::ffi::c_int,
     mut lx: *mut ::core::ffi::c_int,
@@ -2882,7 +2850,7 @@ unsafe extern "C" fn ppu_handleOPT(
         }
     }
 }
-unsafe extern "C" fn ppu_getOffsetValue(
+unsafe fn ppu_getOffsetValue(
     mut ppu: *mut Ppu,
     mut col: ::core::ffi::c_int,
     mut row: ::core::ffi::c_int,
@@ -2926,7 +2894,7 @@ unsafe extern "C" fn ppu_getOffsetValue(
     }
     return (*ppu).vram[(tilemapAdr as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int) as usize];
 }
-unsafe extern "C" fn ppu_getPixelForBgLayer(
+unsafe fn ppu_getPixelForBgLayer(
     mut ppu: *mut Ppu,
     mut x: ::core::ffi::c_int,
     mut y: ::core::ffi::c_int,
@@ -3075,7 +3043,7 @@ unsafe extern "C" fn ppu_getPixelForBgLayer(
         paletteSize * paletteNum + pixel
     };
 }
-unsafe extern "C" fn ppu_calculateMode7Starts(mut ppu: *mut Ppu, mut y: ::core::ffi::c_int) {
+unsafe fn ppu_calculateMode7Starts(mut ppu: *mut Ppu, mut y: ::core::ffi::c_int) {
     let mut hScroll: ::core::ffi::c_int =
         (((*ppu).m7matrix[6 as ::core::ffi::c_int as usize] as ::core::ffi::c_int)
             << 3 as ::core::ffi::c_int) as int16_t as ::core::ffi::c_int
@@ -3134,7 +3102,7 @@ unsafe extern "C" fn ppu_calculateMode7Starts(mut ppu: *mut Ppu, mut y: ::core::
             & !(63 as ::core::ffi::c_int))
         + (yCenter << 8 as ::core::ffi::c_int)) as int32_t;
 }
-unsafe extern "C" fn ppu_getPixelForMode7(
+unsafe fn ppu_getPixelForMode7(
     mut ppu: *mut Ppu,
     mut x: ::core::ffi::c_int,
     mut layer: ::core::ffi::c_int,
@@ -3187,7 +3155,7 @@ unsafe extern "C" fn ppu_getPixelForMode7(
     }
     return pixel as ::core::ffi::c_int;
 }
-unsafe extern "C" fn ppu_getWindowState(
+unsafe fn ppu_getWindowState(
     mut ppu: *mut Ppu,
     mut layer: ::core::ffi::c_int,
     mut x: ::core::ffi::c_int,
@@ -3238,7 +3206,7 @@ unsafe extern "C" fn ppu_getWindowState(
     }
     return false_0 != 0;
 }
-unsafe extern "C" fn ppu_evaluateSprites(mut ppu: *mut Ppu, mut line: ::core::ffi::c_int) -> bool {
+unsafe fn ppu_evaluateSprites(mut ppu: *mut Ppu, mut line: ::core::ffi::c_int) -> bool {
     let mut index: uint8_t = (if (*ppu).objPriority as ::core::ffi::c_int != 0 {
         (*ppu).oamAdr as ::core::ffi::c_int & 0xfe as ::core::ffi::c_int
     } else {
@@ -3419,7 +3387,7 @@ unsafe extern "C" fn ppu_evaluateSprites(mut ppu: *mut Ppu, mut line: ::core::ff
     }
     return tilesFound != 0 as ::core::ffi::c_int;
 }
-unsafe extern "C" fn ppu_getVramRemap(mut ppu: *mut Ppu) -> uint16_t {
+unsafe fn ppu_getVramRemap(mut ppu: *mut Ppu) -> uint16_t {
     let mut adr: uint16_t = (*ppu).vramPointer;
     match (*ppu).vramRemapMode as ::core::ffi::c_int {
         0 => return adr,
@@ -3448,8 +3416,7 @@ unsafe extern "C" fn ppu_getVramRemap(mut ppu: *mut Ppu) -> uint16_t {
     }
     return adr;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ppu_read(mut ppu: *mut Ppu, mut adr: uint8_t) -> uint8_t {
+pub unsafe fn ppu_read(mut ppu: *mut Ppu, mut adr: uint8_t) -> uint8_t {
     match adr as ::core::ffi::c_int {
         4 | 20 | 36 | 5 | 21 | 37 | 6 | 22 | 38 | 8 | 24 | 40 | 9 | 25 | 41 | 10 | 26 | 42 => {
             return (*ppu).ppu1openBus
@@ -3612,8 +3579,7 @@ pub unsafe extern "C" fn ppu_read(mut ppu: *mut Ppu, mut adr: uint8_t) -> uint8_
         _ => return (*(*ppu).snes).openBus,
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn ppu_write(mut ppu: *mut Ppu, mut adr: uint8_t, mut val: uint8_t) {
+pub unsafe fn ppu_write(mut ppu: *mut Ppu, mut adr: uint8_t, mut val: uint8_t) {
     let mut current_block_164: u64;
     match adr as ::core::ffi::c_int {
         0 => {
@@ -4060,8 +4026,7 @@ pub unsafe extern "C" fn ppu_write(mut ppu: *mut Ppu, mut adr: uint8_t, mut val:
         _ => {}
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn PpuGetCurrentRenderScale(
+pub unsafe fn PpuGetCurrentRenderScale(
     mut ppu: *mut Ppu,
     mut render_flags: uint32_t,
 ) -> ::core::ffi::c_int {

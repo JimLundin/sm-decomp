@@ -87,21 +87,18 @@ static mut bootRom: [uint8_t; 64] = [
     0xc0 as ::core::ffi::c_int as uint8_t,
     0xff as ::core::ffi::c_int as uint8_t,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn apu_init() -> *mut Apu {
+pub unsafe fn apu_init() -> *mut Apu {
     let mut apu: *mut Apu = malloc(::core::mem::size_of::<Apu>() as size_t) as *mut Apu;
     (*apu).spc = spc_init(apu as *mut Apu);
     (*apu).dsp = dsp_init(&raw mut (*apu).ram as *mut uint8_t);
     return apu;
 }
-#[no_mangle]
-pub unsafe extern "C" fn apu_free(mut apu: *mut Apu) {
+pub unsafe fn apu_free(mut apu: *mut Apu) {
     spc_free((*apu).spc);
     dsp_free((*apu).dsp);
     free(apu as *mut ::core::ffi::c_void);
 }
-#[no_mangle]
-pub unsafe extern "C" fn apu_reset(mut apu: *mut Apu) {
+pub unsafe fn apu_reset(mut apu: *mut Apu) {
     (*apu).romReadable = true_0 != 0;
     spc_reset((*apu).spc);
     dsp_reset((*apu).dsp);
@@ -134,8 +131,7 @@ pub unsafe extern "C" fn apu_reset(mut apu: *mut Apu) {
     (*apu).cpuCyclesLeft = 7 as uint8_t;
     (*apu).c2rust_unnamed.hist.count = 0 as uint32_t;
 }
-#[no_mangle]
-pub unsafe extern "C" fn apu_saveload(
+pub unsafe fn apu_saveload(
     mut apu: *mut Apu,
     mut func: Option<SaveLoadFunc>,
     mut ctx: *mut ::core::ffi::c_void,
@@ -150,10 +146,8 @@ pub unsafe extern "C" fn apu_saveload(
     dsp_saveload((*apu).dsp, func, ctx);
     spc_saveload((*apu).spc, func, ctx);
 }
-#[no_mangle]
 pub static mut g_debug_apu_cycles: bool = false;
-#[no_mangle]
-pub unsafe extern "C" fn apu_cycle(mut apu: *mut Apu) {
+pub unsafe fn apu_cycle(mut apu: *mut Apu) {
     if (*apu).cpuCyclesLeft as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
         if g_debug_apu_cycles {
             let mut line: [::core::ffi::c_char; 80] = [0; 80];
@@ -193,8 +187,7 @@ pub unsafe extern "C" fn apu_cycle(mut apu: *mut Apu) {
     }
     (*apu).cycles = (*apu).cycles.wrapping_add(1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn apu_cpuRead(mut apu: *mut Apu, mut adr: uint16_t) -> uint8_t {
+pub unsafe fn apu_cpuRead(mut apu: *mut Apu, mut adr: uint16_t) -> uint8_t {
     match adr as ::core::ffi::c_int {
         240 | 241 | 250 | 251 | 252 => return 0 as uint8_t,
         242 => return (*apu).dspAdr,
@@ -225,8 +218,7 @@ pub unsafe extern "C" fn apu_cpuRead(mut apu: *mut Apu, mut adr: uint16_t) -> ui
     }
     return (*apu).ram[adr as usize];
 }
-#[no_mangle]
-pub unsafe extern "C" fn apu_cpuWrite(mut apu: *mut Apu, mut adr: uint16_t, mut val: uint8_t) {
+pub unsafe fn apu_cpuWrite(mut apu: *mut Apu, mut adr: uint16_t, mut val: uint8_t) {
     match adr as ::core::ffi::c_int {
         241 => {
             let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;

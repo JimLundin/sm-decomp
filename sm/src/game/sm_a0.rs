@@ -638,11 +638,11 @@ pub struct EnemyBlockCollInfo {
     pub ebci_r30: uint16,
     pub ebci_r32: uint16,
 }
-pub type Func_EnemyBlockCollInfo_U8 = unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8;
+pub type Func_EnemyBlockCollInfo_U8 = unsafe fn(*mut EnemyBlockCollInfo) -> uint8;
 pub use crate::types::Point32;
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 #[inline]
-unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
+unsafe fn abs16(mut t: uint16) -> uint16 {
     return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         -(t as ::core::ffi::c_int)
     } else {
@@ -650,17 +650,17 @@ unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
     }) as uint16;
 }
 #[inline]
-unsafe extern "C" fn swap16(mut v: uint16) -> uint16 {
+unsafe fn swap16(mut v: uint16) -> uint16 {
     return ((v as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
         | v as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint16;
 }
 #[inline]
-unsafe extern "C" fn __CFADD__uint16(mut x: uint16, mut y: uint16) -> bool {
+unsafe fn __CFADD__uint16(mut x: uint16, mut y: uint16) -> bool {
     return x as ::core::ffi::c_int
         > (x as ::core::ffi::c_int + y as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int;
 }
 #[inline]
-unsafe extern "C" fn RomPtr_RAM(mut addr: uint16_t) -> *mut uint8 {
+unsafe fn RomPtr_RAM(mut addr: uint16_t) -> *mut uint8 {
     '_c2rust_label: {
         if (addr as ::core::ffi::c_int) < 0x2000 as ::core::ffi::c_int {
         } else {
@@ -675,26 +675,26 @@ unsafe extern "C" fn RomPtr_RAM(mut addr: uint16_t) -> *mut uint8 {
     return (&raw mut g_ram as *mut uint8).offset(addr as ::core::ffi::c_int as isize);
 }
 #[inline]
-unsafe extern "C" fn RomPtr_86(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_86(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x860000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomPtr_A1(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_A1(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0xa10000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomPtr_B4(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_B4(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0xb40000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomPtrWithBank(mut bank: uint8, mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtrWithBank(mut bank: uint8, mut addr: uint16_t) -> *const uint8 {
     return RomPtr(
         ((bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int | addr as ::core::ffi::c_int)
             as uint32_t,
     );
 }
 #[inline]
-unsafe extern "C" fn RomBankBase(mut bank: uint8) -> *const uint8 {
+unsafe fn RomBankBase(mut bank: uint8) -> *const uint8 {
     return RomPtr(
         (((bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) + 0x8000 as ::core::ffi::c_int)
             as uint32_t,
@@ -702,46 +702,46 @@ unsafe extern "C" fn RomBankBase(mut bank: uint8) -> *const uint8 {
     .offset(-(0x8000 as ::core::ffi::c_int as isize));
 }
 #[inline]
-unsafe extern "C" fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
+unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int) -> *mut VramWriteEntry {
     return (&raw mut g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
         as *mut uint8 as *mut VramWriteEntry;
 }
 #[inline]
-unsafe extern "C" fn get_EnemyDef_A2(mut a: uint16) -> *mut EnemyDef {
+unsafe fn get_EnemyDef_A2(mut a: uint16) -> *mut EnemyDef {
     return RomPtr((0xa00000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut EnemyDef;
 }
 #[inline]
-unsafe extern "C" fn get_EnemyTileset(mut a: uint16) -> *mut EnemyTileset {
+unsafe fn get_EnemyTileset(mut a: uint16) -> *mut EnemyTileset {
     return RomPtr((0xb40000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut EnemyTileset;
 }
 #[inline]
-unsafe extern "C" fn get_EprojDef(mut a: uint16) -> *mut EprojDef {
+unsafe fn get_EprojDef(mut a: uint16) -> *mut EprojDef {
     return RomPtr((0x860000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut EprojDef;
 }
 #[inline]
-unsafe extern "C" fn get_Vulnerability(mut a: uint16) -> *mut Vulnerability {
+unsafe fn get_Vulnerability(mut a: uint16) -> *mut Vulnerability {
     return RomPtr((0xb40000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut Vulnerability;
 }
 #[inline]
-unsafe extern "C" fn get_ExtendedSpriteMap(mut db: uint8, mut a: uint16) -> *mut ExtendedSpriteMap {
+unsafe fn get_ExtendedSpriteMap(mut db: uint8, mut a: uint16) -> *mut ExtendedSpriteMap {
     return RomPtr(
         ((db as ::core::ffi::c_int) << 16 as ::core::ffi::c_int | a as ::core::ffi::c_int)
             as uint32_t,
     ) as *mut ExtendedSpriteMap;
 }
 #[inline]
-unsafe extern "C" fn get_EnemyPopulation(mut db: uint8, mut a: uint16) -> *mut EnemyPopulation {
+unsafe fn get_EnemyPopulation(mut db: uint8, mut a: uint16) -> *mut EnemyPopulation {
     return RomPtr(
         ((db as ::core::ffi::c_int) << 16 as ::core::ffi::c_int | a as ::core::ffi::c_int)
             as uint32_t,
     ) as *mut EnemyPopulation;
 }
 #[inline]
-unsafe extern "C" fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
+unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
     let mut t: uint32 = ((*lo as ::core::ffi::c_int
         + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
         as uint32)
@@ -1895,125 +1895,89 @@ pub const fnEscapeDachora_Instr_4: uint32 = 11791063 as uint32;
 pub const fnEscapeDachora_Init: uint32 = 11791077 as uint32;
 pub const fnnullsub_54: uint32 = 11791130 as uint32;
 #[inline]
-unsafe extern "C" fn gEnemyData(mut o: ::core::ffi::c_int) -> *mut EnemyData {
+unsafe fn gEnemyData(mut o: ::core::ffi::c_int) -> *mut EnemyData {
     return (&raw mut g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut EnemyData;
 }
 #[inline]
-unsafe extern "C" fn gEnemySpawnData(mut o: ::core::ffi::c_int) -> *mut EnemySpawnData {
+unsafe fn gEnemySpawnData(mut o: ::core::ffi::c_int) -> *mut EnemySpawnData {
     return (&raw mut g_ram as *mut uint8)
         .offset(0x7000 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut EnemySpawnData;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_GrappleReact_NoInteract_A0() {
+pub unsafe fn Enemy_GrappleReact_NoInteract_A0() {
     SwitchEnemyAiToMainAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_GrappleReact_SamusLatchesOn_A0() {
+pub unsafe fn Enemy_GrappleReact_SamusLatchesOn_A0() {
     SamusLatchesOnWithGrapple();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_GrappleReact_KillEnemy_A0() {
+pub unsafe fn Enemy_GrappleReact_KillEnemy_A0() {
     EnemyGrappleDeath();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_GrappleReact_CancelBeam_A0() {
+pub unsafe fn Enemy_GrappleReact_CancelBeam_A0() {
     Enemy_SwitchToFrozenAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_GrappleReact_SamusLatchesNoInvinc_A0() {
+pub unsafe fn Enemy_GrappleReact_SamusLatchesNoInvinc_A0() {
     SamusLatchesOnWithGrappleNoInvinc();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_GrappleReact_SamusLatchesParalyze_A0() {
+pub unsafe fn Enemy_GrappleReact_SamusLatchesParalyze_A0() {
     SamusLatchesOnWithGrappleParalyze();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_GrappleReact_HurtSamus_A0() {
+pub unsafe fn Enemy_GrappleReact_HurtSamus_A0() {
     SamusHurtFromGrapple();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalTouchAI_A0() {
+pub unsafe fn Enemy_NormalTouchAI_A0() {
     NormalEnemyTouchAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalTouchAI_SkipDeathAnim_A0() {
+pub unsafe fn Enemy_NormalTouchAI_SkipDeathAnim_A0() {
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalShotAI_A0() {
+pub unsafe fn Enemy_NormalShotAI_A0() {
     NormalEnemyShotAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalShotAI_SkipSomeParts_A0() {
+pub unsafe fn Enemy_NormalShotAI_SkipSomeParts_A0() {
     NormalEnemyShotAiSkipDeathAnim_CurEnemy();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalPowerBombAI_A0() {
+pub unsafe fn Enemy_NormalPowerBombAI_A0() {
     NormalEnemyPowerBombAi();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalPowerBombAI_SkipDeathAnim_A0() {
+pub unsafe fn Enemy_NormalPowerBombAI_SkipDeathAnim_A0() {
     NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy();
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_NormalFrozenAI() {
+pub unsafe fn Enemy_NormalFrozenAI() {
     NormalEnemyFrozenAI();
 }
-#[no_mangle]
-pub unsafe extern "C" fn CreateADudShot() {
+pub unsafe fn CreateADudShot() {
     CreateDudShot();
 }
-#[no_mangle]
-pub unsafe extern "C" fn func_nullsub_169() {}
-#[no_mangle]
-pub unsafe extern "C" fn func_nullsub_170() {}
-#[no_mangle]
-pub unsafe extern "C" fn EnemyInstr_SetAiPreInstr(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn func_nullsub_169() {}
+pub unsafe fn func_nullsub_170() {}
+pub unsafe fn EnemyInstr_SetAiPreInstr(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*gEnemyData(k as ::core::ffi::c_int)).ai_preinstr =
         *jp.offset(0 as ::core::ffi::c_int as isize);
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyInstr_ClearAiPreInstr(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn EnemyInstr_ClearAiPreInstr(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*gEnemyData(k as ::core::ffi::c_int)).ai_preinstr =
         (0xa0807b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn func_nullsub_171() {}
-#[no_mangle]
-pub unsafe extern "C" fn EnemyInstr_StopScript(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn func_nullsub_171() {}
+pub unsafe fn EnemyInstr_StopScript(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int);
     (*v2).properties = ((*v2).properties as ::core::ffi::c_int
         | kEnemyProps_Deleted as ::core::ffi::c_int) as uint16;
     return ::core::ptr::null::<uint16>();
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyInstr_Goto(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn EnemyInstr_Goto(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return *jp as uintptr_t as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyInstr_GotoRel(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn EnemyInstr_GotoRel(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return (jp as *mut uint8).offset(*(jp as *mut int8) as ::core::ffi::c_int as isize)
         as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyInstr_DecTimerAndGoto(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn EnemyInstr_DecTimerAndGoto(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int);
     let fresh1 = (*v2).timer;
     (*v2).timer = (*v2).timer.wrapping_sub(1);
@@ -2023,11 +1987,7 @@ pub unsafe extern "C" fn EnemyInstr_DecTimerAndGoto(
         return EnemyInstr_Goto(k, jp);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyInstr_DecTimerAndGotoRel(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn EnemyInstr_DecTimerAndGotoRel(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v2: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int);
     let ref mut fresh44 =
         *(&raw mut (*v2).timer as *mut uint8).offset(0 as ::core::ffi::c_int as isize);
@@ -2039,23 +1999,14 @@ pub unsafe extern "C" fn EnemyInstr_DecTimerAndGotoRel(
         return EnemyInstr_GotoRel(k, jp);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyInstr_SetTimer(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn EnemyInstr_SetTimer(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     (*gEnemyData(k as ::core::ffi::c_int)).timer = *jp;
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyInstr_Skip2bytes(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn EnemyInstr_Skip2bytes(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyInstr_Sleep(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub unsafe fn EnemyInstr_Sleep(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut ED: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int);
     let mut base_ptr: *const uint8 = RomBankBase((*ED).bank);
     (*ED).current_instruction = (jp as *const uint8)
@@ -2063,11 +2014,7 @@ pub unsafe extern "C" fn EnemyInstr_Sleep(mut k: uint16, mut jp: *const uint16) 
         .offset_from(base_ptr) as ::core::ffi::c_long as uint16;
     return ::core::ptr::null::<uint16>();
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyInstr_WaitNframes(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn EnemyInstr_WaitNframes(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut ED: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int);
     let mut base_ptr: *const uint8 = RomBankBase((*ED).bank);
     (*ED).instruction_timer = *jp.offset(0 as ::core::ffi::c_int as isize);
@@ -2076,11 +2023,7 @@ pub unsafe extern "C" fn EnemyInstr_WaitNframes(
         .offset_from(base_ptr) as ::core::ffi::c_long as uint16;
     return ::core::ptr::null::<uint16>();
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyInstr_CopyToVram(
-    mut k: uint16,
-    mut jp: *const uint16,
-) -> *const uint16 {
+pub unsafe fn EnemyInstr_CopyToVram(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     let mut v4: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     let mut v2: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
@@ -2098,8 +2041,7 @@ pub unsafe extern "C" fn EnemyInstr_CopyToVram(
         (v2 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
     return (jp as uintptr_t).wrapping_add(7 as ::core::ffi::c_int as uintptr_t) as *const uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyInstr_EnableOffScreenProcessing(
+pub unsafe fn EnemyInstr_EnableOffScreenProcessing(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
@@ -2108,8 +2050,7 @@ pub unsafe extern "C" fn EnemyInstr_EnableOffScreenProcessing(
         ((*v2).properties as ::core::ffi::c_int | 0x800 as ::core::ffi::c_int) as uint16;
     return jp;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyInstr_DisableOffScreenProcessing(
+pub unsafe fn EnemyInstr_DisableOffScreenProcessing(
     mut k: uint16,
     mut jp: *const uint16,
 ) -> *const uint16 {
@@ -2264,8 +2205,7 @@ static mut kRoomShakes: [uint16; 144] = [
     3 as ::core::ffi::c_int as uint16,
     3 as ::core::ffi::c_int as uint16,
 ];
-#[no_mangle]
-pub unsafe extern "C" fn HandleRoomShaking() {
+pub unsafe fn HandleRoomShaking() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         != 0
@@ -2352,8 +2292,7 @@ pub unsafe extern "C" fn HandleRoomShaking() {
         .offset(0x1842 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh41 = (*fresh41).wrapping_add(1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn SetAllEnemiesToShakeFor2Frames() {
+pub unsafe fn SetAllEnemiesToShakeFor2Frames() {
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     loop {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
@@ -2373,8 +2312,7 @@ pub unsafe extern "C" fn SetAllEnemiesToShakeFor2Frames() {
         i += 2 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallEnemyGfxDrawHook(mut ea: uint32) {
+pub unsafe fn CallEnemyGfxDrawHook(mut ea: uint32) {
     match ea {
         10518604 => return,
         10738444 => {
@@ -2420,8 +2358,7 @@ pub unsafe extern "C" fn CallEnemyGfxDrawHook(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawSamusEnemiesAndProjectiles() {
+pub unsafe fn DrawSamusEnemiesAndProjectiles() {
     DrawSpriteObjects();
     DrawBombAndProjectileExplosions();
     DrawLowPriorityEprojs();
@@ -2478,8 +2415,7 @@ pub unsafe extern "C" fn DrawSamusEnemiesAndProjectiles() {
             as *mut LongPtr,
     ));
 }
-#[no_mangle]
-pub unsafe extern "C" fn RecordEnemySpawnData(mut j: uint16) {
+pub unsafe fn RecordEnemySpawnData(mut j: uint16) {
     let mut v2: *mut EnemySpawnData = ::core::ptr::null_mut::<EnemySpawnData>();
     let mut v5: *mut EnemySpawnData = ::core::ptr::null_mut::<EnemySpawnData>();
     let mut v1: *mut EnemyData = gEnemyData(j as ::core::ffi::c_int);
@@ -2521,8 +2457,7 @@ pub unsafe extern "C" fn RecordEnemySpawnData(mut j: uint16) {
     *((&raw mut (*v5).name as *mut uint8).offset(10 as ::core::ffi::c_int as isize) as *mut uint8
         as *mut uint16) = R28;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadEnemies() {
+pub unsafe fn LoadEnemies() {
     *((&raw mut g_ram as *mut uint8).offset(0x185e as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
     (*((&raw mut g_ram as *mut uint8).offset(0x178c as ::core::ffi::c_int as isize)
@@ -2547,8 +2482,7 @@ pub unsafe extern "C" fn LoadEnemies() {
         as *mut uint16) = 0 as uint16;
     ClearSpriteObjects();
 }
-#[no_mangle]
-pub unsafe extern "C" fn ClearEnemyDataAndProcessEnemySet() {
+pub unsafe fn ClearEnemyDataAndProcessEnemySet() {
     memset(
         (&raw mut g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
             as *mut ::core::ffi::c_void,
@@ -2564,8 +2498,7 @@ pub unsafe extern "C" fn ClearEnemyDataAndProcessEnemySet() {
         ProcessEnemyTilesets();
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn InitializeEnemies() {
+pub unsafe fn InitializeEnemies() {
     memset(
         (&raw mut g_ram as *mut uint8).offset(0x7000 as ::core::ffi::c_int as isize) as *mut uint8
             as *mut ::core::ffi::c_void,
@@ -2667,8 +2600,7 @@ pub unsafe extern "C" fn InitializeEnemies() {
     *((&raw mut g_ram as *mut uint8).offset(0xe52 as ::core::ffi::c_int as isize) as *mut uint16) =
         *RomPtr_A1(v4 as uint16_t).offset(2 as ::core::ffi::c_int as isize) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadEnemyGfxIndexes(mut k: uint16, mut j: uint16) {
+pub unsafe fn LoadEnemyGfxIndexes(mut k: uint16, mut j: uint16) {
     let mut E: *mut EnemyData = gEnemyData(j as ::core::ffi::c_int);
     let mut ES: *mut EnemySpawnData = gEnemySpawnData(j as ::core::ffi::c_int);
     let mut e: uint16 = *((&raw mut g_ram as *mut uint8)
@@ -2700,8 +2632,7 @@ pub unsafe extern "C" fn LoadEnemyGfxIndexes(mut k: uint16, mut j: uint16) {
         e = (e as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadEnemyTileData() {
+pub unsafe fn LoadEnemyTileData() {
     let mut i: ::core::ffi::c_int = 510 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         (*gEnemySpawnData(i)).some_flag = *(g_rom.offset(
@@ -2753,8 +2684,7 @@ pub unsafe extern "C" fn LoadEnemyTileData() {
             as *mut uint16) = 0 as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn TransferEnemyTilesToVramAndInit() {
+pub unsafe fn TransferEnemyTilesToVramAndInit() {
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xe7c as ::core::ffi::c_int as isize) as *mut uint16);
     if *((&raw mut g_ram as *mut uint8).offset(0xe7c as ::core::ffi::c_int as isize) as *mut uint16)
@@ -2812,8 +2742,7 @@ pub unsafe extern "C" fn TransferEnemyTilesToVramAndInit() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessEnemyTilesets() {
+pub unsafe fn ProcessEnemyTilesets() {
     *((&raw mut g_ram as *mut uint8).offset(0xe7a as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     let mut r30: uint16 = 2048 as uint16;
@@ -2918,8 +2847,7 @@ pub unsafe extern "C" fn ProcessEnemyTilesets() {
         ET = ET.offset(1);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn DetermineWhichEnemiesToProcess() {
+pub unsafe fn DetermineWhichEnemiesToProcess() {
     let ref mut fresh18 = *((&raw mut g_ram as *mut uint8)
         .offset(0xe46 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh18 = (*fresh18).wrapping_add(1);
@@ -3137,8 +3065,7 @@ pub unsafe extern "C" fn DetermineWhichEnemiesToProcess() {
             ) = -(1 as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallEnemyAi(mut ea: uint32) {
+pub unsafe fn CallEnemyAi(mut ea: uint32) {
     match ea {
         10649605 => {
             Enemy_GrappleReact_SamusLatchesOn_A2();
@@ -4789,8 +4716,7 @@ pub unsafe extern "C" fn CallEnemyAi(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallEnemyPreInstr(mut ea: uint32) {
+pub unsafe fn CallEnemyPreInstr(mut ea: uint32) {
     let mut k: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xe54 as ::core::ffi::c_int as isize) as *mut uint16);
     match ea {
@@ -5542,12 +5468,7 @@ pub unsafe extern "C" fn CallEnemyPreInstr(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallEnemyInstr(
-    mut ea: uint32,
-    mut k: uint16,
-    mut j: *const uint16,
-) -> *const uint16 {
+pub unsafe fn CallEnemyInstr(mut ea: uint32, mut k: uint16, mut j: *const uint16) -> *const uint16 {
     match ea {
         10649837 => return EnemyInstr_Goto(k, j),
         10649872 => return EnemyInstr_DecTimerAndGoto(k, j),
@@ -6021,8 +5942,7 @@ pub unsafe extern "C" fn CallEnemyInstr(
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyMain() {
+pub unsafe fn EnemyMain() {
     let mut ED: *mut EnemyDef = ::core::ptr::null_mut::<EnemyDef>();
     let mut v6: int16 = 0;
     let mut v8: int8 = 0;
@@ -6257,8 +6177,7 @@ pub unsafe extern "C" fn EnemyMain() {
         as *mut uint16)
         .offset(3 as ::core::ffi::c_int as isize) = -(1 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DecrementSamusTimers() {
+pub unsafe fn DecrementSamusTimers() {
     if *((&raw mut g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
         as *mut uint16)
         != 0
@@ -6293,8 +6212,7 @@ pub unsafe extern "C" fn DecrementSamusTimers() {
         as *mut uint16)
         .offset(0 as ::core::ffi::c_int as isize) = -(1 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnEnemyDrops(mut a: uint16, mut k: uint16, mut varE20: uint16) {
+pub unsafe fn SpawnEnemyDrops(mut a: uint16, mut k: uint16, mut varE20: uint16) {
     eproj_spawn_varE24 = a;
     SpawnEprojWithGfx(
         varE20,
@@ -6302,8 +6220,7 @@ pub unsafe extern "C" fn SpawnEnemyDrops(mut a: uint16, mut k: uint16, mut varE2
         addr_kEproj_Pickup as ::core::ffi::c_int as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn DeleteEnemyAndConnectedEnemies() {
+pub unsafe fn DeleteEnemyAndConnectedEnemies() {
     let mut v0: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -6329,8 +6246,7 @@ pub unsafe extern "C" fn DeleteEnemyAndConnectedEnemies() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SpawnEnemy(mut db: uint8, mut k: uint16) -> uint16 {
+pub unsafe fn SpawnEnemy(mut db: uint8, mut k: uint16) -> uint16 {
     let mut current_block: u64;
     let mut varE20: uint16 = k;
     let mut cur_enemy_index_backup: uint16 = *((&raw mut g_ram as *mut uint8)
@@ -6471,8 +6387,7 @@ pub unsafe extern "C" fn SpawnEnemy(mut db: uint8, mut k: uint16) -> uint16 {
         _ => return 0xffff as uint16,
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn DrawOneEnemy() {
+pub unsafe fn DrawOneEnemy() {
     let mut varE34: uint16 = (2 as ::core::ffi::c_int
         * (*gEnemyData(
             *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -6499,8 +6414,7 @@ pub unsafe extern "C" fn DrawOneEnemy() {
         .offset((varE34 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh21 = (*fresh21 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn WriteEnemyOams() {
+pub unsafe fn WriteEnemyOams() {
     let mut palette_index: VoidP = 0;
     let mut E: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -6621,8 +6535,7 @@ pub unsafe extern "C" fn WriteEnemyOams() {
         DrawSpritemapWithBaseTile((*E).bank, (*E).spritemap_pointer, x, y, r3, r0);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn NormalEnemyFrozenAI() {
+pub unsafe fn NormalEnemyFrozenAI() {
     let mut v0: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -6641,8 +6554,7 @@ pub unsafe extern "C" fn NormalEnemyFrozenAI() {
         (*v0).frozen_timer = v1;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessExtendedTilemap(mut db: uint8, mut r22: uint16) {
+pub unsafe fn ProcessExtendedTilemap(mut db: uint8, mut r22: uint16) {
     let mut p: *const uint8 = RomPtrWithBank(
         db,
         (r22 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16_t,
@@ -6667,8 +6579,7 @@ pub unsafe extern "C" fn ProcessExtendedTilemap(mut db: uint8, mut r22: uint16) 
         .offset(0xe1e as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh22 = (*fresh22).wrapping_add(1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn QueueEnemyBG2TilemapTransfers() {
+pub unsafe fn QueueEnemyBG2TilemapTransfers() {
     let mut v0: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     if *((&raw mut g_ram as *mut uint8).offset(0xe1e as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -6700,8 +6611,7 @@ pub unsafe extern "C" fn QueueEnemyBG2TilemapTransfers() {
     *((&raw mut g_ram as *mut uint8).offset(0xe1e as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyCollisionHandler() {
+pub unsafe fn EnemyCollisionHandler() {
     if (*gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -6719,10 +6629,8 @@ pub unsafe extern "C" fn EnemyCollisionHandler() {
         EnemySamusCollHandler();
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn func_nullsub_4() {}
-#[no_mangle]
-pub unsafe extern "C" fn SamusProjectileInteractionHandler() {
+pub unsafe fn func_nullsub_4() {}
+pub unsafe fn SamusProjectileInteractionHandler() {
     *((&raw mut g_ram as *mut uint8).offset(0xf378 as ::core::ffi::c_int as isize)
         as *mut uint16) = 10 as uint16;
     if *((&raw mut g_ram as *mut uint8).offset(0x18ae as ::core::ffi::c_int as isize)
@@ -6908,8 +6816,7 @@ pub unsafe extern "C" fn SamusProjectileInteractionHandler() {
         pidx += 1;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojSamusCollDetect() {
+pub unsafe fn EprojSamusCollDetect() {
     *((&raw mut g_ram as *mut uint8).offset(0xf378 as ::core::ffi::c_int as isize)
         as *mut uint16) = 11 as uint16;
     if *((&raw mut g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
@@ -6982,8 +6889,7 @@ pub unsafe extern "C" fn EprojSamusCollDetect() {
         i -= 1;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleEprojCollWithSamus(mut k: uint16) {
+pub unsafe fn HandleEprojCollWithSamus(mut k: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
         as *mut uint16) = 96 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x18aa as ::core::ffi::c_int as isize)
@@ -7028,8 +6934,7 @@ pub unsafe extern "C" fn HandleEprojCollWithSamus(mut k: uint16) {
                 .offset(v3 as isize) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
             >= 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojProjCollDet() {
+pub unsafe fn EprojProjCollDet() {
     *((&raw mut g_ram as *mut uint8).offset(0xf378 as ::core::ffi::c_int as isize)
         as *mut uint16) = 12 as uint16;
     if *((&raw mut g_ram as *mut uint8).offset(0xcce as ::core::ffi::c_int as isize) as *mut uint16)
@@ -7106,8 +7011,7 @@ pub unsafe extern "C" fn EprojProjCollDet() {
         i -= 1;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleEprojCollWithProj(mut k: uint16, mut j: uint16) {
+pub unsafe fn HandleEprojCollWithProj(mut k: uint16, mut j: uint16) {
     let mut i: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(i as isize) as ::core::ffi::c_int
@@ -7168,8 +7072,7 @@ pub unsafe extern "C" fn HandleEprojCollWithProj(mut k: uint16, mut j: uint16) {
         *fresh31 = (*fresh31 as ::core::ffi::c_int & 0xfff as ::core::ffi::c_int) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallHitboxTouch(mut ea: uint32) {
+pub unsafe fn CallHitboxTouch(mut ea: uint32) {
     match ea {
         10518563 => {
             Enemy_NormalTouchAI_A0();
@@ -7240,8 +7143,7 @@ pub unsafe extern "C" fn CallHitboxTouch(mut ea: uint32) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallHitboxShot(mut ea: uint32, mut j: uint16) {
+pub unsafe fn CallHitboxShot(mut ea: uint32, mut j: uint16) {
     match ea {
         10518573 => {
             Enemy_NormalShotAI_A0();
@@ -7338,8 +7240,7 @@ pub unsafe extern "C" fn CallHitboxShot(mut ea: uint32, mut j: uint16) {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemySamusCollHandler_Multibox() {
+pub unsafe fn EnemySamusCollHandler_Multibox() {
     let mut E: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -7440,8 +7341,7 @@ pub unsafe extern "C" fn EnemySamusCollHandler_Multibox() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojCollHandler_Multibox() {
+pub unsafe fn EprojCollHandler_Multibox() {
     let mut E: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -7607,8 +7507,7 @@ pub unsafe extern "C" fn EprojCollHandler_Multibox() {
         pidx += 1;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyBombCollHandler_Multibox() {
+pub unsafe fn EnemyBombCollHandler_Multibox() {
     let mut E: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -7758,8 +7657,7 @@ pub unsafe extern "C" fn EnemyBombCollHandler_Multibox() {
         pidx += 1;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleBeam_CollDetect_Enemy() -> PairU16 {
+pub unsafe fn GrappleBeam_CollDetect_Enemy() -> PairU16 {
     let mut grapple_ai: VoidP = 0;
     let mut E: *mut EnemyData = ::core::ptr::null_mut::<EnemyData>();
     CallSomeSamusCode(0xd as uint16);
@@ -7871,8 +7769,7 @@ pub unsafe extern "C" fn GrappleBeam_CollDetect_Enemy() -> PairU16 {
         j: enemy_ptr,
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn SwitchEnemyAiToMainAi() {
+pub unsafe fn SwitchEnemyAiToMainAi() {
     let mut E: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -7882,8 +7779,7 @@ pub unsafe extern "C" fn SwitchEnemyAiToMainAi() {
     (*E).frozen_timer = 0 as uint16;
     (*E).shake_timer = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusLatchesOnWithGrapple() {
+pub unsafe fn SamusLatchesOnWithGrapple() {
     let mut E: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -7904,8 +7800,7 @@ pub unsafe extern "C" fn SamusLatchesOnWithGrapple() {
         (*E).ai_handler_bits = 0 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyGrappleDeath() {
+pub unsafe fn EnemyGrappleDeath() {
     (*gEnemySpawnData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -7922,16 +7817,14 @@ pub unsafe extern "C" fn EnemyGrappleDeath() {
     ))
     .ai_handler_bits = 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_SwitchToFrozenAi() {
+pub unsafe fn Enemy_SwitchToFrozenAi() {
     (*gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
     ))
     .ai_handler_bits = 4 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusLatchesOnWithGrappleNoInvinc() {
+pub unsafe fn SamusLatchesOnWithGrappleNoInvinc() {
     let mut E: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -7951,8 +7844,7 @@ pub unsafe extern "C" fn SamusLatchesOnWithGrappleNoInvinc() {
     *((&raw mut g_ram as *mut uint8).offset(0xd0c as ::core::ffi::c_int as isize) as *mut uint16) =
         (*E).y_pos;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusLatchesOnWithGrappleParalyze() {
+pub unsafe fn SamusLatchesOnWithGrappleParalyze() {
     let mut E: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -7967,16 +7859,14 @@ pub unsafe extern "C" fn SamusLatchesOnWithGrappleParalyze() {
     (*E).extra_properties =
         ((*E).extra_properties as ::core::ffi::c_int | 1 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SamusHurtFromGrapple() {
+pub unsafe fn SamusHurtFromGrapple() {
     (*gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
     ))
     .ai_handler_bits = 4 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemySamusCollHandler() {
+pub unsafe fn EnemySamusCollHandler() {
     let mut E: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -8044,8 +7934,7 @@ pub unsafe extern "C" fn EnemySamusCollHandler() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EprojCollHandler() {
+pub unsafe fn EprojCollHandler() {
     let mut E: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -8147,8 +8036,7 @@ pub unsafe extern "C" fn EprojCollHandler() {
         pidx += 1;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyBombCollHandler() {
+pub unsafe fn EnemyBombCollHandler() {
     let mut E: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -8223,8 +8111,7 @@ pub unsafe extern "C" fn EnemyBombCollHandler() {
         pidx += 1;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessEnemyPowerBombInteraction() {
+pub unsafe fn ProcessEnemyPowerBombInteraction() {
     *((&raw mut g_ram as *mut uint8).offset(0xf378 as ::core::ffi::c_int as isize)
         as *mut uint16) = 5 as uint16;
     let mut rx: uint16 = *((&raw mut g_ram as *mut uint8)
@@ -8291,8 +8178,7 @@ pub unsafe extern "C" fn ProcessEnemyPowerBombInteraction() {
         i -= 0x40 as ::core::ffi::c_int;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyDeathAnimation(mut k: uint16, mut a: uint16) {
+pub unsafe fn EnemyDeathAnimation(mut k: uint16, mut a: uint16) {
     let mut E: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -8326,8 +8212,7 @@ pub unsafe extern "C" fn EnemyDeathAnimation(mut k: uint16, mut a: uint16) {
         .offset(0xe50 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh0 = (*fresh0).wrapping_add(1);
 }
-#[no_mangle]
-pub unsafe extern "C" fn RinkasDeathAnimation(mut a: uint16) {
+pub unsafe fn RinkasDeathAnimation(mut a: uint16) {
     let mut E: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -8353,8 +8238,7 @@ pub unsafe extern "C" fn RinkasDeathAnimation(mut a: uint16) {
         (*E).bank = 0xa3 as uint8;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn SuitDamageDivision(mut a: uint16) -> uint16 {
+pub unsafe fn SuitDamageDivision(mut a: uint16) -> uint16 {
     if *((&raw mut g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 0x20 as ::core::ffi::c_int
@@ -8371,8 +8255,7 @@ pub unsafe extern "C" fn SuitDamageDivision(mut a: uint16) -> uint16 {
     }
     return a;
 }
-#[no_mangle]
-pub unsafe extern "C" fn NormalEnemyTouchAi() {
+pub unsafe fn NormalEnemyTouchAi() {
     NormalEnemyTouchAiSkipDeathAnim();
     if (*gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -8393,12 +8276,10 @@ pub unsafe extern "C" fn NormalEnemyTouchAi() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NormalEnemyTouchAiSkipDeathAnim_CurEnemy() {
+pub unsafe fn NormalEnemyTouchAiSkipDeathAnim_CurEnemy() {
     NormalEnemyTouchAiSkipDeathAnim();
 }
-#[no_mangle]
-pub unsafe extern "C" fn NormalEnemyTouchAiSkipDeathAnim() {
+pub unsafe fn NormalEnemyTouchAiSkipDeathAnim() {
     let mut E: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -8457,7 +8338,7 @@ pub unsafe extern "C" fn NormalEnemyTouchAiSkipDeathAnim() {
         addr_stru_B4EC1C as ::core::ffi::c_int
     }) as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xe40 as ::core::ffi::c_int as isize) as *mut uint16) =
-        *(&raw mut (*(get_Vulnerability as unsafe extern "C" fn(uint16) -> *mut Vulnerability)(
+        *(&raw mut (*(get_Vulnerability as unsafe fn(uint16) -> *mut Vulnerability)(
             (r20 as ::core::ffi::c_int + vp as ::core::ffi::c_int) as uint16,
         ))
         .power as *mut uint16);
@@ -8498,8 +8379,7 @@ pub unsafe extern "C" fn NormalEnemyTouchAiSkipDeathAnim() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NormalEnemyPowerBombAi() {
+pub unsafe fn NormalEnemyPowerBombAi() {
     NormalEnemyPowerBombAiSkipDeathAnim();
     if (*gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -8520,12 +8400,10 @@ pub unsafe extern "C" fn NormalEnemyPowerBombAi() {
         );
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy() {
+pub unsafe fn NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy() {
     NormalEnemyPowerBombAiSkipDeathAnim();
 }
-#[no_mangle]
-pub unsafe extern "C" fn NormalEnemyPowerBombAiSkipDeathAnim() {
+pub unsafe fn NormalEnemyPowerBombAiSkipDeathAnim() {
     let mut EnemyDef_A2: *mut EnemyDef = ::core::ptr::null_mut::<EnemyDef>();
     let mut hurt_ai_time: int16 = 0;
     let mut v0: *mut EnemyData = gEnemyData(
@@ -8580,8 +8458,7 @@ pub unsafe extern "C" fn NormalEnemyPowerBombAiSkipDeathAnim() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NormalEnemyShotAi() {
+pub unsafe fn NormalEnemyShotAi() {
     let mut varE2E: uint16 = NormalEnemyShotAiSkipDeathAnim();
     let mut E: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
@@ -8624,12 +8501,10 @@ pub unsafe extern "C" fn NormalEnemyShotAi() {
         EnemyDeathAnimation((*E).enemy_ptr, death_anim);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NormalEnemyShotAiSkipDeathAnim_CurEnemy() {
+pub unsafe fn NormalEnemyShotAiSkipDeathAnim_CurEnemy() {
     NormalEnemyShotAiSkipDeathAnim();
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyFunc_A6B4_UsedBySporeSpawn() {
+pub unsafe fn EnemyFunc_A6B4_UsedBySporeSpawn() {
     let mut varE2E: uint16 = NormalEnemyShotAiSkipDeathAnim();
     if varE2E != 0 {
         let mut ED: *mut EnemyData = gEnemyData(
@@ -8639,8 +8514,7 @@ pub unsafe extern "C" fn EnemyFunc_A6B4_UsedBySporeSpawn() {
         CreateSpriteAtPos((*ED).x_pos, (*ED).y_pos, 55 as uint16, 0 as uint16);
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn NormalEnemyShotAiSkipDeathAnim() -> uint16 {
+pub unsafe fn NormalEnemyShotAiSkipDeathAnim() -> uint16 {
     let mut ttt: uint32 = 0;
     let mut r42: uint16 = 0;
     let mut current_block: u64;
@@ -8866,8 +8740,7 @@ pub unsafe extern "C" fn NormalEnemyShotAiSkipDeathAnim() -> uint16 {
     QueueSfx1_Max3(0x3d as uint16);
     return varE2E;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CreateDudShot() {
+pub unsafe fn CreateDudShot() {
     let mut v0: ::core::ffi::c_int = *((&raw mut g_ram as *mut uint8)
         .offset(0x18a6 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int;
@@ -8890,8 +8763,7 @@ pub unsafe extern "C" fn CreateDudShot() {
         );
     *fresh13 = (*fresh13 as ::core::ffi::c_int | 0x10 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_CheckSolidEnemyColl(mut amt: int32) -> CheckEnemyColl_Result {
+pub unsafe fn Samus_CheckSolidEnemyColl(mut amt: int32) -> CheckEnemyColl_Result {
     let mut current_block: u64;
     let mut v18: int16 = 0;
     let mut r18: uint16 = (amt >> 16 as ::core::ffi::c_int) as uint16;
@@ -9285,8 +9157,7 @@ pub unsafe extern "C" fn Samus_CheckSolidEnemyColl(mut amt: int32) -> CheckEnemy
         amt: amt,
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CheckIfEnemyTouchesSamus(mut k: uint16) -> uint16 {
+pub unsafe fn CheckIfEnemyTouchesSamus(mut k: uint16) -> uint16 {
     let mut E: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int);
     let mut i: uint16 = abs16(
         (*((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
@@ -9326,8 +9197,7 @@ pub unsafe extern "C" fn CheckIfEnemyTouchesSamus(mut k: uint16) -> uint16 {
     }
     return 0 as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyFunc_AC67(mut k: uint16) -> uint16 {
+pub unsafe fn EnemyFunc_AC67(mut k: uint16) -> uint16 {
     let mut E: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int);
     let mut i: uint16 = abs16(
         (*((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
@@ -9365,8 +9235,7 @@ pub unsafe extern "C" fn EnemyFunc_AC67(mut k: uint16) -> uint16 {
         return 0 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyFunc_ACA8(mut base_pt: Point16U, mut samus_pt: Point16U) -> PairU16 {
+pub unsafe fn EnemyFunc_ACA8(mut base_pt: Point16U, mut samus_pt: Point16U) -> PairU16 {
     let mut varE3C: uint16 =
         (samus_pt.x as ::core::ffi::c_int - base_pt.x as ::core::ffi::c_int) as uint16;
     let mut result: uint16 = abs16(varE3C);
@@ -9395,8 +9264,7 @@ pub unsafe extern "C" fn EnemyFunc_ACA8(mut base_pt: Point16U, mut samus_pt: Poi
         j: 0 as uint16,
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn CheckIfEnemyIsOnScreen() -> uint16 {
+pub unsafe fn CheckIfEnemyIsOnScreen() -> uint16 {
     let mut v0: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -9420,8 +9288,7 @@ pub unsafe extern "C" fn CheckIfEnemyIsOnScreen() -> uint16 {
             - (*v0).y_pos as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyFunc_ADA3(mut a: uint16) -> uint16 {
+pub unsafe fn EnemyFunc_ADA3(mut a: uint16) -> uint16 {
     let mut E: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -9447,8 +9314,7 @@ pub unsafe extern "C" fn EnemyFunc_ADA3(mut a: uint16) -> uint16 {
             - (*E).y_pos as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyWithNormalSpritesIsOffScreen() -> uint16 {
+pub unsafe fn EnemyWithNormalSpritesIsOffScreen() -> uint16 {
     let mut E: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -9473,8 +9339,7 @@ pub unsafe extern "C" fn EnemyWithNormalSpritesIsOffScreen() -> uint16 {
             - (*E).y_pos as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
             < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn DetermineDirectionOfSamusFromEnemy() -> uint16 {
+pub unsafe fn DetermineDirectionOfSamusFromEnemy() -> uint16 {
     if IsSamusWithinEnemy_Y(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16),
@@ -9537,20 +9402,17 @@ pub unsafe extern "C" fn DetermineDirectionOfSamusFromEnemy() -> uint16 {
         return 3 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn GetSamusEnemyDelta_Y(mut k: uint16) -> uint16 {
+pub unsafe fn GetSamusEnemyDelta_Y(mut k: uint16) -> uint16 {
     return (*((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         - (*gEnemyData(k as ::core::ffi::c_int)).y_pos as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn GetSamusEnemyDelta_X(mut k: uint16) -> uint16 {
+pub unsafe fn GetSamusEnemyDelta_X(mut k: uint16) -> uint16 {
     return (*((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         - (*gEnemyData(k as ::core::ffi::c_int)).x_pos as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn IsSamusWithinEnemy_Y(mut k: uint16, mut a: uint16) -> uint16 {
+pub unsafe fn IsSamusWithinEnemy_Y(mut k: uint16, mut a: uint16) -> uint16 {
     return (((SubtractThenAbs16(
         (*gEnemyData(k as ::core::ffi::c_int)).y_pos,
         *((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
@@ -9559,8 +9421,7 @@ pub unsafe extern "C" fn IsSamusWithinEnemy_Y(mut k: uint16, mut a: uint16) -> u
         - a as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
         < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn IsSamusWithinEnemy_X(mut k: uint16, mut a: uint16) -> uint16 {
+pub unsafe fn IsSamusWithinEnemy_X(mut k: uint16, mut a: uint16) -> uint16 {
     return (((SubtractThenAbs16(
         (*gEnemyData(k as ::core::ffi::c_int)).x_pos,
         *((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
@@ -9569,31 +9430,27 @@ pub unsafe extern "C" fn IsSamusWithinEnemy_X(mut k: uint16, mut a: uint16) -> u
         - a as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
         < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SignExtend8(mut a: uint16) -> uint16 {
+pub unsafe fn SignExtend8(mut a: uint16) -> uint16 {
     return (if a as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0 {
         a as ::core::ffi::c_int | 0xff00 as ::core::ffi::c_int
     } else {
         a as ::core::ffi::c_int
     }) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Mult32(mut a: uint16) -> uint16 {
+pub unsafe fn Mult32(mut a: uint16) -> uint16 {
     return (32 as ::core::ffi::c_int * a as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Abs16(mut a: uint16) -> uint16 {
+pub unsafe fn Abs16(mut a: uint16) -> uint16 {
     return (if a as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
         -(a as ::core::ffi::c_int)
     } else {
         a as ::core::ffi::c_int
     }) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SubtractThenAbs16(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn SubtractThenAbs16(mut k: uint16, mut j: uint16) -> uint16 {
     return Abs16((j as ::core::ffi::c_int - k as ::core::ffi::c_int) as uint16);
 }
-unsafe extern "C" fn SineMult8bitInner(mut varE32: uint16, mut varE34: uint16) -> uint32 {
+unsafe fn SineMult8bitInner(mut varE32: uint16, mut varE34: uint16) -> uint32 {
     let mut mult: uint16 = Mult8x8(
         *(g_rom.offset(
             (((0xa0b143 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
@@ -9612,36 +9469,31 @@ unsafe extern "C" fn SineMult8bitInner(mut varE32: uint16, mut varE34: uint16) -
     }
     return (a as uint32) << 16 as ::core::ffi::c_int | b as uint32;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CosineMult8bit(mut a: uint16, mut varE32: uint16) -> uint16 {
+pub unsafe fn CosineMult8bit(mut a: uint16, mut varE32: uint16) -> uint16 {
     return (SineMult8bitInner(
         varE32,
         (a as ::core::ffi::c_int + 64 as ::core::ffi::c_int) as uint8 as uint16,
     ) >> 16 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn SineMult8bit(mut a: uint16, mut varE32: uint16) -> uint16 {
+pub unsafe fn SineMult8bit(mut a: uint16, mut varE32: uint16) -> uint16 {
     return (SineMult8bitInner(
         varE32,
         (a as ::core::ffi::c_int + 0x80 as ::core::ffi::c_int) as uint8 as uint16,
     ) >> 16 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CosineMult8bitFull(mut a: uint16, mut varE32: uint16) -> uint32 {
+pub unsafe fn CosineMult8bitFull(mut a: uint16, mut varE32: uint16) -> uint32 {
     return SineMult8bitInner(
         varE32,
         (a as ::core::ffi::c_int + 64 as ::core::ffi::c_int) as uint8 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn SineMult8bitFull(mut a: uint16, mut varE32: uint16) -> uint32 {
+pub unsafe fn SineMult8bitFull(mut a: uint16, mut varE32: uint16) -> uint32 {
     return SineMult8bitInner(
         varE32,
         (a as ::core::ffi::c_int + 0x80 as ::core::ffi::c_int) as uint8 as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn ConvertAngleToXy(mut r18: uint16, mut r20: uint16) -> Point32 {
+pub unsafe fn ConvertAngleToXy(mut r18: uint16, mut r20: uint16) -> Point32 {
     let mut ss: uint32 = (*(g_rom.offset(
         (((0xa0b7ee as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0xa0b7ee as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -9664,8 +9516,7 @@ pub unsafe extern "C" fn ConvertAngleToXy(mut r18: uint16, mut r20: uint16) -> P
         * r20 as ::core::ffi::c_int) as uint32;
     return Point32 { x: ss, y: tt };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyFunc_B691(mut varE20: uint16, mut pt: Point32) {
+pub unsafe fn EnemyFunc_B691(mut varE20: uint16, mut pt: Point32) {
     let mut E: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -9693,16 +9544,14 @@ pub unsafe extern "C" fn EnemyFunc_B691(mut varE20: uint16, mut pt: Point32) {
         AddToHiLo(&raw mut (*E).y_pos, &raw mut (*E).y_subpos, pt.y);
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyFunc_Divide(mut a: uint32, mut b: uint32) -> uint32 {
+pub unsafe fn EnemyFunc_Divide(mut a: uint32, mut b: uint32) -> uint32 {
     return if a != 0 {
         b.wrapping_div(a)
     } else {
         0 as uint32
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyFunc_B7A1() {
+pub unsafe fn EnemyFunc_B7A1() {
     let mut yd: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0xafa as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -9750,8 +9599,7 @@ pub unsafe extern "C" fn EnemyFunc_B7A1() {
             })) as uint16;
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_ItemDrop_MiniKraid(mut k: uint16) {
+pub unsafe fn Enemy_ItemDrop_MiniKraid(mut k: uint16) {
     let mut n: ::core::ffi::c_int = 4 as ::core::ffi::c_int;
     loop {
         eproj_spawn_pt.x = (*((&raw mut g_ram as *mut uint8)
@@ -9778,8 +9626,7 @@ pub unsafe extern "C" fn Enemy_ItemDrop_MiniKraid(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_ItemDrop_LowerNorfairSpacePirate(mut k: uint16) {
+pub unsafe fn Enemy_ItemDrop_LowerNorfairSpacePirate(mut k: uint16) {
     let mut n: ::core::ffi::c_int = 5 as ::core::ffi::c_int;
     loop {
         eproj_spawn_pt.x = (*((&raw mut g_ram as *mut uint8)
@@ -9806,8 +9653,7 @@ pub unsafe extern "C" fn Enemy_ItemDrop_LowerNorfairSpacePirate(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_ItemDrop_Metroid(mut k: uint16) {
+pub unsafe fn Enemy_ItemDrop_Metroid(mut k: uint16) {
     let mut n: ::core::ffi::c_int = 5 as ::core::ffi::c_int;
     loop {
         eproj_spawn_pt.x = (*((&raw mut g_ram as *mut uint8)
@@ -9834,8 +9680,7 @@ pub unsafe extern "C" fn Enemy_ItemDrop_Metroid(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_ItemDrop_Ridley(mut k: uint16) {
+pub unsafe fn Enemy_ItemDrop_Ridley(mut k: uint16) {
     let mut n: ::core::ffi::c_int = 16 as ::core::ffi::c_int;
     loop {
         eproj_spawn_pt.x = ((NextRandom() as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int)
@@ -9857,8 +9702,7 @@ pub unsafe extern "C" fn Enemy_ItemDrop_Ridley(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_ItemDrop_Crocomire(mut k: uint16) {
+pub unsafe fn Enemy_ItemDrop_Crocomire(mut k: uint16) {
     let mut n: ::core::ffi::c_int = 16 as ::core::ffi::c_int;
     loop {
         eproj_spawn_pt.x = ((NextRandom() as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int)
@@ -9880,8 +9724,7 @@ pub unsafe extern "C" fn Enemy_ItemDrop_Crocomire(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_ItemDrop_Phantoon(mut k: uint16) {
+pub unsafe fn Enemy_ItemDrop_Phantoon(mut k: uint16) {
     let mut n: ::core::ffi::c_int = 16 as ::core::ffi::c_int;
     loop {
         eproj_spawn_pt.x = ((NextRandom() as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int)
@@ -9903,8 +9746,7 @@ pub unsafe extern "C" fn Enemy_ItemDrop_Phantoon(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_ItemDrop_Botwoon(mut k: uint16) {
+pub unsafe fn Enemy_ItemDrop_Botwoon(mut k: uint16) {
     let mut n: ::core::ffi::c_int = 16 as ::core::ffi::c_int;
     loop {
         eproj_spawn_pt.x = ((NextRandom() as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int)
@@ -9926,8 +9768,7 @@ pub unsafe extern "C" fn Enemy_ItemDrop_Botwoon(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_ItemDrop_Kraid(mut k: uint16) {
+pub unsafe fn Enemy_ItemDrop_Kraid(mut k: uint16) {
     let mut n: ::core::ffi::c_int = 16 as ::core::ffi::c_int;
     loop {
         eproj_spawn_pt.x =
@@ -9949,8 +9790,7 @@ pub unsafe extern "C" fn Enemy_ItemDrop_Kraid(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_ItemDrop_BombTorizo(mut k: uint16) {
+pub unsafe fn Enemy_ItemDrop_BombTorizo(mut k: uint16) {
     let mut n: ::core::ffi::c_int = 16 as ::core::ffi::c_int;
     loop {
         eproj_spawn_pt.x = ((NextRandom() as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int)
@@ -9972,8 +9812,7 @@ pub unsafe extern "C" fn Enemy_ItemDrop_BombTorizo(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_ItemDrop_GoldenTorizo(mut k: uint16) {
+pub unsafe fn Enemy_ItemDrop_GoldenTorizo(mut k: uint16) {
     let mut n: ::core::ffi::c_int = 16 as ::core::ffi::c_int;
     loop {
         eproj_spawn_pt.x =
@@ -9995,8 +9834,7 @@ pub unsafe extern "C" fn Enemy_ItemDrop_GoldenTorizo(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_ItemDrop_SporeSpawn(mut k: uint16) {
+pub unsafe fn Enemy_ItemDrop_SporeSpawn(mut k: uint16) {
     let mut n: ::core::ffi::c_int = 16 as ::core::ffi::c_int;
     loop {
         eproj_spawn_pt.x = ((NextRandom() as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int)
@@ -10018,8 +9856,7 @@ pub unsafe extern "C" fn Enemy_ItemDrop_SporeSpawn(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_ItemDrop_Draygon(mut k: uint16) {
+pub unsafe fn Enemy_ItemDrop_Draygon(mut k: uint16) {
     let mut n: ::core::ffi::c_int = 16 as ::core::ffi::c_int;
     loop {
         eproj_spawn_pt.x =
@@ -10041,8 +9878,7 @@ pub unsafe extern "C" fn Enemy_ItemDrop_Draygon(mut k: uint16) {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn CompareDistToSamus_X(mut k: uint16, mut a: uint16) -> uint8 {
+pub unsafe fn CompareDistToSamus_X(mut k: uint16, mut a: uint16) -> uint8 {
     let mut i: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int);
     return (abs16(
         (*((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
@@ -10051,8 +9887,7 @@ pub unsafe extern "C" fn CompareDistToSamus_X(mut k: uint16, mut a: uint16) -> u
     ) as ::core::ffi::c_int
         >= a as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CompareDistToSamus_Y(mut k: uint16, mut a: uint16) -> uint8 {
+pub unsafe fn CompareDistToSamus_Y(mut k: uint16, mut a: uint16) -> uint8 {
     let mut i: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int);
     return (abs16(
         (*((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
@@ -10061,8 +9896,7 @@ pub unsafe extern "C" fn CompareDistToSamus_Y(mut k: uint16, mut a: uint16) -> u
     ) as ::core::ffi::c_int
         >= a as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyFunc_BBBF(mut k: uint16, mut amt: int32) -> uint8 {
+pub unsafe fn EnemyFunc_BBBF(mut k: uint16, mut amt: int32) -> uint8 {
     let mut E: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int);
     let mut R26: uint16 = ((*E).y_pos as ::core::ffi::c_int - (*E).y_height as ::core::ffi::c_int
         & 0xfff0 as ::core::ffi::c_int) as uint16;
@@ -10109,8 +9943,7 @@ pub unsafe extern "C" fn EnemyFunc_BBBF(mut k: uint16, mut amt: int32) -> uint8 
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyFunc_BC76(mut k: uint16, mut amt: int32) -> uint8 {
+pub unsafe fn EnemyFunc_BC76(mut k: uint16, mut amt: int32) -> uint8 {
     let mut E: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int);
     let mut R26: uint16 = ((*E).x_pos as ::core::ffi::c_int - (*E).x_width as ::core::ffi::c_int
         & 0xfff0 as ::core::ffi::c_int) as uint16;
@@ -10153,8 +9986,7 @@ pub unsafe extern "C" fn EnemyFunc_BC76(mut k: uint16, mut amt: int32) -> uint8 
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyFunc_BF8A(mut k: uint16, mut a: uint16, mut amt: int32) -> uint8 {
+pub unsafe fn EnemyFunc_BF8A(mut k: uint16, mut a: uint16, mut amt: int32) -> uint8 {
     let mut v4: uint16 = 0;
     let mut E: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int);
     let mut R26: uint16 = ((*E).x_pos as ::core::ffi::c_int - (*E).x_width as ::core::ffi::c_int
@@ -10201,8 +10033,7 @@ pub unsafe extern "C" fn EnemyFunc_BF8A(mut k: uint16, mut a: uint16, mut amt: i
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalculateAngleOfSamusFromEproj(mut k: uint16) -> uint16 {
+pub unsafe fn CalculateAngleOfSamusFromEproj(mut k: uint16) -> uint16 {
     let mut j: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     return CalculateAngleFromXY(
         (*((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
@@ -10217,8 +10048,7 @@ pub unsafe extern "C" fn CalculateAngleOfSamusFromEproj(mut k: uint16) -> uint16
                 .offset(j as isize) as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalculateAngleOfSamusFromEnemy(mut k: uint16) -> uint16 {
+pub unsafe fn CalculateAngleOfSamusFromEnemy(mut k: uint16) -> uint16 {
     let mut E: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int);
     return CalculateAngleFromXY(
         (*((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
@@ -10229,8 +10059,7 @@ pub unsafe extern "C" fn CalculateAngleOfSamusFromEnemy(mut k: uint16) -> uint16
             - (*E).y_pos as ::core::ffi::c_int) as uint16,
     );
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalculateAngleOfEnemyXfromEnemyY(mut k: uint16, mut j: uint16) -> uint16 {
+pub unsafe fn CalculateAngleOfEnemyXfromEnemyY(mut k: uint16, mut j: uint16) -> uint16 {
     let mut Ek: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int);
     let mut Ej: *mut EnemyData = gEnemyData(j as ::core::ffi::c_int);
     return CalculateAngleFromXY(
@@ -10238,55 +10067,54 @@ pub unsafe extern "C" fn CalculateAngleOfEnemyXfromEnemyY(mut k: uint16, mut j: 
         ((*Ek).y_pos as ::core::ffi::c_int - (*Ej).y_pos as ::core::ffi::c_int) as uint16,
     );
 }
-unsafe extern "C" fn CalculateAngleFromXY_0(mut div: uint16) -> uint8 {
+unsafe fn CalculateAngleFromXY_0(mut div: uint16) -> uint8 {
     return ((div as ::core::ffi::c_int >> 3 as ::core::ffi::c_int) + 64 as ::core::ffi::c_int)
         as uint8;
 }
-unsafe extern "C" fn CalculateAngleFromXY_1(mut div: uint16) -> uint8 {
+unsafe fn CalculateAngleFromXY_1(mut div: uint16) -> uint8 {
     return (0x80 as ::core::ffi::c_int - (div as ::core::ffi::c_int >> 3 as ::core::ffi::c_int))
         as uint8;
 }
-unsafe extern "C" fn CalculateAngleFromXY_2(mut div: uint16) -> uint8 {
+unsafe fn CalculateAngleFromXY_2(mut div: uint16) -> uint8 {
     return (div as ::core::ffi::c_int >> 3 as ::core::ffi::c_int) as uint8;
 }
-unsafe extern "C" fn CalculateAngleFromXY_3(mut div: uint16) -> uint8 {
+unsafe fn CalculateAngleFromXY_3(mut div: uint16) -> uint8 {
     return (64 as ::core::ffi::c_int - (div as ::core::ffi::c_int >> 3 as ::core::ffi::c_int))
         as uint8;
 }
-unsafe extern "C" fn CalculateAngleFromXY_4(mut div: uint16) -> uint8 {
+unsafe fn CalculateAngleFromXY_4(mut div: uint16) -> uint8 {
     return ((div as ::core::ffi::c_int >> 3 as ::core::ffi::c_int) + 0x80 as ::core::ffi::c_int)
         as uint8;
 }
-unsafe extern "C" fn CalculateAngleFromXY_5(mut div: uint16) -> uint8 {
+unsafe fn CalculateAngleFromXY_5(mut div: uint16) -> uint8 {
     return (-(64 as ::core::ffi::c_int) - (div as ::core::ffi::c_int >> 3 as ::core::ffi::c_int))
         as uint8;
 }
-unsafe extern "C" fn CalculateAngleFromXY_6(mut div: uint16) -> uint8 {
+unsafe fn CalculateAngleFromXY_6(mut div: uint16) -> uint8 {
     return ((div as ::core::ffi::c_int >> 3 as ::core::ffi::c_int) - 64 as ::core::ffi::c_int)
         as uint8;
 }
-unsafe extern "C" fn CalculateAngleFromXY_7(mut div: uint16) -> uint8 {
+unsafe fn CalculateAngleFromXY_7(mut div: uint16) -> uint8 {
     return (0 as ::core::ffi::c_int - (div as ::core::ffi::c_int >> 3 as ::core::ffi::c_int))
         as uint8;
 }
 static mut funcs_758EE: [Option<CalculateAngleFromXYFunc>; 4] = unsafe {
     [
-        Some(CalculateAngleFromXY_1 as unsafe extern "C" fn(uint16) -> uint8),
-        Some(CalculateAngleFromXY_2 as unsafe extern "C" fn(uint16) -> uint8),
-        Some(CalculateAngleFromXY_4 as unsafe extern "C" fn(uint16) -> uint8),
-        Some(CalculateAngleFromXY_7 as unsafe extern "C" fn(uint16) -> uint8),
+        Some(CalculateAngleFromXY_1 as unsafe fn(uint16) -> uint8),
+        Some(CalculateAngleFromXY_2 as unsafe fn(uint16) -> uint8),
+        Some(CalculateAngleFromXY_4 as unsafe fn(uint16) -> uint8),
+        Some(CalculateAngleFromXY_7 as unsafe fn(uint16) -> uint8),
     ]
 };
 static mut funcs_7587D: [Option<CalculateAngleFromXYFunc>; 4] = unsafe {
     [
-        Some(CalculateAngleFromXY_0 as unsafe extern "C" fn(uint16) -> uint8),
-        Some(CalculateAngleFromXY_3 as unsafe extern "C" fn(uint16) -> uint8),
-        Some(CalculateAngleFromXY_5 as unsafe extern "C" fn(uint16) -> uint8),
-        Some(CalculateAngleFromXY_6 as unsafe extern "C" fn(uint16) -> uint8),
+        Some(CalculateAngleFromXY_0 as unsafe fn(uint16) -> uint8),
+        Some(CalculateAngleFromXY_3 as unsafe fn(uint16) -> uint8),
+        Some(CalculateAngleFromXY_5 as unsafe fn(uint16) -> uint8),
+        Some(CalculateAngleFromXY_6 as unsafe fn(uint16) -> uint8),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn CalculateAngleFromXY(mut x_r18: uint16, mut y_r20: uint16) -> uint16 {
+pub unsafe fn CalculateAngleFromXY(mut x_r18: uint16, mut y_r20: uint16) -> uint16 {
     let mut idx: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     if x_r18 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
         idx += 2 as ::core::ffi::c_int;
@@ -10310,8 +10138,7 @@ pub unsafe extern "C" fn CalculateAngleFromXY(mut x_r18: uint16, mut y_r20: uint
         return funcs_758EE[idx as usize].expect("non-null function pointer")(div_0) as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn IsEnemyLeavingScreen(mut k: uint16) -> uint8 {
+pub unsafe fn IsEnemyLeavingScreen(mut k: uint16) -> uint8 {
     let mut x_pos: int16 = 0;
     let mut v3: int16 = 0;
     let mut E: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int);
@@ -10332,8 +10159,7 @@ pub unsafe extern "C" fn IsEnemyLeavingScreen(mut k: uint16) -> uint8 {
     }
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn ProcessEnemyInstructions() {
+pub unsafe fn ProcessEnemyInstructions() {
     let mut E: *mut EnemyData = gEnemyData(
         *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int,
@@ -10394,13 +10220,13 @@ pub unsafe extern "C" fn ProcessEnemyInstructions() {
         }
     }
 }
-unsafe extern "C" fn ClearCarry_13(mut ebci: *mut EnemyBlockCollInfo) -> uint8 {
+unsafe fn ClearCarry_13(mut ebci: *mut EnemyBlockCollInfo) -> uint8 {
     return 0 as uint8;
 }
-unsafe extern "C" fn SetCarry_4(mut ebci: *mut EnemyBlockCollInfo) -> uint8 {
+unsafe fn SetCarry_4(mut ebci: *mut EnemyBlockCollInfo) -> uint8 {
     return 1 as uint8;
 }
-unsafe extern "C" fn EnemyBlockCollReact_Spike(mut ebci: *mut EnemyBlockCollInfo) -> uint8 {
+unsafe fn EnemyBlockCollReact_Spike(mut ebci: *mut EnemyBlockCollInfo) -> uint8 {
     let mut v0: uint16 = *(g_rom.offset(
         (((0xa0c2da as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
             | 0xa0c2da as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
@@ -10421,7 +10247,7 @@ unsafe extern "C" fn EnemyBlockCollReact_Spike(mut ebci: *mut EnemyBlockCollInfo
     SpawnPLM(v0);
     return 0 as uint8;
 }
-unsafe extern "C" fn EnemyBlockCollHorizReact_Slope(mut ebci: *mut EnemyBlockCollInfo) -> uint8 {
+unsafe fn EnemyBlockCollHorizReact_Slope(mut ebci: *mut EnemyBlockCollInfo) -> uint8 {
     if *(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -10454,7 +10280,7 @@ unsafe extern "C" fn EnemyBlockCollHorizReact_Slope(mut ebci: *mut EnemyBlockCol
         );
     };
 }
-unsafe extern "C" fn EnemyBlockCollVertReact_Slope(mut ebci: *mut EnemyBlockCollInfo) -> uint8 {
+unsafe fn EnemyBlockCollVertReact_Slope(mut ebci: *mut EnemyBlockCollInfo) -> uint8 {
     if *(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -10502,7 +10328,7 @@ static mut byte_A0C435: [uint8; 20] = [
     0x82 as ::core::ffi::c_int as uint8,
     0x83 as ::core::ffi::c_int as uint8,
 ];
-unsafe extern "C" fn EnemyBlockCollHorizReact_Slope_Square(
+unsafe fn EnemyBlockCollHorizReact_Slope_Square(
     mut ebci: *mut EnemyBlockCollInfo,
     mut k: uint16,
     mut a: uint16,
@@ -10572,7 +10398,7 @@ unsafe extern "C" fn EnemyBlockCollHorizReact_Slope_Square(
         0 as ::core::ffi::c_int
     }) < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
 }
-unsafe extern "C" fn EnemyBlockCollVertReact_Slope_Square(
+unsafe fn EnemyBlockCollVertReact_Slope_Square(
     mut ebci: *mut EnemyBlockCollInfo,
     mut a: uint16,
     mut k: uint16,
@@ -10642,9 +10468,7 @@ unsafe extern "C" fn EnemyBlockCollVertReact_Slope_Square(
         0 as ::core::ffi::c_int
     }) < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
 }
-unsafe extern "C" fn EnemyBlockCollHorizReact_Slope_NonSquare(
-    mut ebci: *mut EnemyBlockCollInfo,
-) -> uint8 {
+unsafe fn EnemyBlockCollHorizReact_Slope_NonSquare(mut ebci: *mut EnemyBlockCollInfo) -> uint8 {
     if (*ebci).ebci_r32 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
     {
@@ -10678,9 +10502,7 @@ unsafe extern "C" fn EnemyBlockCollHorizReact_Slope_NonSquare(
     }
     return 0 as uint8;
 }
-unsafe extern "C" fn EnemyBlockCollVertReact_Slope_NonSquare(
-    mut ebci: *mut EnemyBlockCollInfo,
-) -> uint8 {
+unsafe fn EnemyBlockCollVertReact_Slope_NonSquare(mut ebci: *mut EnemyBlockCollInfo) -> uint8 {
     let mut v3: int16 = 0;
     let mut v5: int16 = 0;
     let mut v6: int16 = 0;
@@ -10809,7 +10631,7 @@ unsafe extern "C" fn EnemyBlockCollVertReact_Slope_NonSquare(
         }
     };
 }
-unsafe extern "C" fn EnemyBlockCollReact_HorizExt(mut ebci: *mut EnemyBlockCollInfo) -> uint8 {
+unsafe fn EnemyBlockCollReact_HorizExt(mut ebci: *mut EnemyBlockCollInfo) -> uint8 {
     let mut t: uint8 = *(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -10825,7 +10647,7 @@ unsafe extern "C" fn EnemyBlockCollReact_HorizExt(mut ebci: *mut EnemyBlockCollI
     }
     return 0 as uint8;
 }
-unsafe extern "C" fn EnemyBlockCollReact_VertExt(mut ebci: *mut EnemyBlockCollInfo) -> uint8 {
+unsafe fn EnemyBlockCollReact_VertExt(mut ebci: *mut EnemyBlockCollInfo) -> uint8 {
     if *(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -10850,19 +10672,16 @@ unsafe extern "C" fn EnemyBlockCollReact_VertExt(mut ebci: *mut EnemyBlockCollIn
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_MoveRight_SlopesAsWalls(mut k: uint16, mut amt: int32) -> uint8 {
+pub unsafe fn Enemy_MoveRight_SlopesAsWalls(mut k: uint16, mut amt: int32) -> uint8 {
     return Enemy_MoveRight_IgnoreSlopes_Inner(k, amt, 0x4000 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_MoveRight_ProcessSlopes(mut k: uint16, mut amt: int32) -> uint8 {
+pub unsafe fn Enemy_MoveRight_ProcessSlopes(mut k: uint16, mut amt: int32) -> uint8 {
     return Enemy_MoveRight_IgnoreSlopes_Inner(k, amt, 0x8000 as uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_MoveRight_IgnoreSlopes(mut k: uint16, mut amt: int32) -> uint8 {
+pub unsafe fn Enemy_MoveRight_IgnoreSlopes(mut k: uint16, mut amt: int32) -> uint8 {
     return Enemy_MoveRight_IgnoreSlopes_Inner(k, amt, 0 as uint16);
 }
-unsafe extern "C" fn Enemy_MoveRight_IgnoreSlopes_Inner(
+unsafe fn Enemy_MoveRight_IgnoreSlopes_Inner(
     mut k: uint16,
     mut amount32: int32,
     mut r32: uint16,
@@ -10947,8 +10766,7 @@ unsafe extern "C" fn Enemy_MoveRight_IgnoreSlopes_Inner(
         return 1 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Enemy_MoveDown(mut k: uint16, mut amount32: int32) -> uint8 {
+pub unsafe fn Enemy_MoveDown(mut k: uint16, mut amount32: int32) -> uint8 {
     let mut v6: int16 = 0;
     let mut v5: uint16 = 0;
     if amount32 == 0 {
@@ -11026,33 +10844,25 @@ pub unsafe extern "C" fn Enemy_MoveDown(mut k: uint16, mut amount32: int32) -> u
 }
 static mut off_A0C859: [Option<Func_EnemyBlockCollInfo_U8>; 16] = unsafe {
     [
-        Some(ClearCarry_13 as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
-        Some(
-            EnemyBlockCollHorizReact_Slope
-                as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8,
-        ),
-        Some(ClearCarry_13 as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
-        Some(ClearCarry_13 as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
-        Some(ClearCarry_13 as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
-        Some(
-            EnemyBlockCollReact_HorizExt as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8,
-        ),
-        Some(ClearCarry_13 as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
-        Some(ClearCarry_13 as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
-        Some(SetCarry_4 as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
-        Some(SetCarry_4 as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
-        Some(EnemyBlockCollReact_Spike as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
-        Some(SetCarry_4 as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
-        Some(SetCarry_4 as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
-        Some(EnemyBlockCollReact_VertExt as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
-        Some(SetCarry_4 as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
-        Some(SetCarry_4 as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(ClearCarry_13 as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(EnemyBlockCollHorizReact_Slope as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(ClearCarry_13 as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(ClearCarry_13 as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(ClearCarry_13 as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(EnemyBlockCollReact_HorizExt as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(ClearCarry_13 as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(ClearCarry_13 as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(SetCarry_4 as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(SetCarry_4 as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(EnemyBlockCollReact_Spike as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(SetCarry_4 as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(SetCarry_4 as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(EnemyBlockCollReact_VertExt as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(SetCarry_4 as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(SetCarry_4 as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
     ]
 };
-unsafe extern "C" fn EnemyBlockCollReact_Horiz(
-    mut ebci: *mut EnemyBlockCollInfo,
-    mut k: uint16,
-) -> uint8 {
+unsafe fn EnemyBlockCollReact_Horiz(mut ebci: *mut EnemyBlockCollInfo, mut k: uint16) -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize) as *mut uint16) =
         (k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
     let mut rv: uint8 = 0 as uint8;
@@ -11075,32 +10885,25 @@ unsafe extern "C" fn EnemyBlockCollReact_Horiz(
 }
 static mut off_A0C88D: [Option<Func_EnemyBlockCollInfo_U8>; 16] = unsafe {
     [
-        Some(ClearCarry_13 as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
-        Some(
-            EnemyBlockCollVertReact_Slope as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8,
-        ),
-        Some(ClearCarry_13 as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
-        Some(ClearCarry_13 as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
-        Some(ClearCarry_13 as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
-        Some(
-            EnemyBlockCollReact_HorizExt as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8,
-        ),
-        Some(ClearCarry_13 as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
-        Some(ClearCarry_13 as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
-        Some(SetCarry_4 as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
-        Some(SetCarry_4 as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
-        Some(EnemyBlockCollReact_Spike as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
-        Some(SetCarry_4 as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
-        Some(SetCarry_4 as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
-        Some(EnemyBlockCollReact_VertExt as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
-        Some(SetCarry_4 as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
-        Some(SetCarry_4 as unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(ClearCarry_13 as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(EnemyBlockCollVertReact_Slope as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(ClearCarry_13 as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(ClearCarry_13 as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(ClearCarry_13 as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(EnemyBlockCollReact_HorizExt as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(ClearCarry_13 as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(ClearCarry_13 as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(SetCarry_4 as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(SetCarry_4 as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(EnemyBlockCollReact_Spike as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(SetCarry_4 as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(SetCarry_4 as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(EnemyBlockCollReact_VertExt as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(SetCarry_4 as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
+        Some(SetCarry_4 as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
     ]
 };
-unsafe extern "C" fn EnemyBlockCollReact_Vert(
-    mut ebci: *mut EnemyBlockCollInfo,
-    mut k: uint16,
-) -> uint8 {
+unsafe fn EnemyBlockCollReact_Vert(mut ebci: *mut EnemyBlockCollInfo, mut k: uint16) -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize) as *mut uint16) =
         (k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
     let mut rv: uint8 = 0 as uint8;
@@ -11121,8 +10924,7 @@ unsafe extern "C" fn EnemyBlockCollReact_Vert(
     }
     return rv;
 }
-#[no_mangle]
-pub unsafe extern "C" fn CalculateBlockContainingPixelPos(mut xpos: uint16, mut ypos: uint16) {
+pub unsafe fn CalculateBlockContainingPixelPos(mut xpos: uint16, mut ypos: uint16) {
     let mut prod: uint16 = Mult8x8(
         (ypos as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint8,
         *((&raw mut g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
@@ -11132,8 +10934,7 @@ pub unsafe extern "C" fn CalculateBlockContainingPixelPos(mut xpos: uint16, mut 
         (prod as ::core::ffi::c_int + (xpos as ::core::ffi::c_int >> 4 as ::core::ffi::c_int))
             as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn EnemyFunc_C8AD(mut k: uint16) -> uint8 {
+pub unsafe fn EnemyFunc_C8AD(mut k: uint16) -> uint8 {
     let mut result: uint8 = 0 as uint8;
     let mut E: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int);
     CalculateBlockContainingPixelPos(

@@ -76,16 +76,15 @@ pub const kGameState_2_GameOptionsMenu: GameState = 2;
 pub const kGameState_1_OpeningCinematic: GameState = 1;
 pub const kGameState_0_Reset: GameState = 0;
 #[inline]
-unsafe extern "C" fn RomPtr_83(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_83(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x830000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn get_FxDef(mut a: uint16) -> *mut FxDef {
+unsafe fn get_FxDef(mut a: uint16) -> *mut FxDef {
     return RomPtr((0x830000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut FxDef;
 }
-#[no_mangle]
-pub unsafe extern "C" fn LoadFxEntry(mut v0: uint16) {
+pub unsafe fn LoadFxEntry(mut v0: uint16) {
     let mut FD: *mut FxDef = get_FxDef(
         (*((&raw mut g_ram as *mut uint8).offset(0x7cd as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -145,37 +144,35 @@ pub unsafe extern "C" fn LoadFxEntry(mut v0: uint16) {
             .offset(27 as ::core::ffi::c_int as isize) = 0 as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn nullsub_106() {}
+pub unsafe fn nullsub_106() {}
 static mut kFxTypeFuncPtrs: [Option<Func_V>; 23] = unsafe {
     [
-        Some(nullsub_106 as unsafe extern "C" fn() -> ()),
-        Some(FxTypeFunc_2_Lava as unsafe extern "C" fn() -> ()),
-        Some(FxTypeFunc_4_Acid as unsafe extern "C" fn() -> ()),
-        Some(FxTypeFunc_6_Water as unsafe extern "C" fn() -> ()),
-        Some(FxTypeFunc_8_Spores as unsafe extern "C" fn() -> ()),
-        Some(FxTypeFunc_A_Rain as unsafe extern "C" fn() -> ()),
-        Some(FxTypeFunc_C as unsafe extern "C" fn() -> ()),
-        Some(nullsub_106 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_106 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_106 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_106 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_106 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_106 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_106 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_106 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_106 as unsafe extern "C" fn() -> ()),
-        Some(FxTypeFunc_20 as unsafe extern "C" fn() -> ()),
-        Some(FxTypeFunc_22_ScrollingSky as unsafe extern "C" fn() -> ()),
-        Some(FxTypeFunc_24 as unsafe extern "C" fn() -> ()),
-        Some(FxTypeFunc_26_TourianEntranceStatue as unsafe extern "C" fn() -> ()),
-        Some(FxTypeFunc_28_CeresRidley as unsafe extern "C" fn() -> ()),
-        Some(FxTypeFunc_CeresElevator as unsafe extern "C" fn() -> ()),
-        Some(FxTypeFunc_2C_Haze as unsafe extern "C" fn() -> ()),
+        Some(nullsub_106 as unsafe fn() -> ()),
+        Some(FxTypeFunc_2_Lava as unsafe fn() -> ()),
+        Some(FxTypeFunc_4_Acid as unsafe fn() -> ()),
+        Some(FxTypeFunc_6_Water as unsafe fn() -> ()),
+        Some(FxTypeFunc_8_Spores as unsafe fn() -> ()),
+        Some(FxTypeFunc_A_Rain as unsafe fn() -> ()),
+        Some(FxTypeFunc_C as unsafe fn() -> ()),
+        Some(nullsub_106 as unsafe fn() -> ()),
+        Some(nullsub_106 as unsafe fn() -> ()),
+        Some(nullsub_106 as unsafe fn() -> ()),
+        Some(nullsub_106 as unsafe fn() -> ()),
+        Some(nullsub_106 as unsafe fn() -> ()),
+        Some(nullsub_106 as unsafe fn() -> ()),
+        Some(nullsub_106 as unsafe fn() -> ()),
+        Some(nullsub_106 as unsafe fn() -> ()),
+        Some(nullsub_106 as unsafe fn() -> ()),
+        Some(FxTypeFunc_20 as unsafe fn() -> ()),
+        Some(FxTypeFunc_22_ScrollingSky as unsafe fn() -> ()),
+        Some(FxTypeFunc_24 as unsafe fn() -> ()),
+        Some(FxTypeFunc_26_TourianEntranceStatue as unsafe fn() -> ()),
+        Some(FxTypeFunc_28_CeresRidley as unsafe fn() -> ()),
+        Some(FxTypeFunc_CeresElevator as unsafe fn() -> ()),
+        Some(FxTypeFunc_2C_Haze as unsafe fn() -> ()),
     ]
 };
-#[no_mangle]
-pub unsafe extern "C" fn LoadFXHeader() {
+pub unsafe fn LoadFXHeader() {
     let mut entry_ptr: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x7cd as ::core::ffi::c_int as isize)
         as *mut uint16);
@@ -312,8 +309,7 @@ pub unsafe extern "C" fn LoadFXHeader() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn RoomCode_CeresElevatorShaft() {
+pub unsafe fn RoomCode_CeresElevatorShaft() {
     let mut v1: int16 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0x93f as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int

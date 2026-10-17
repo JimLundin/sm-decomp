@@ -308,7 +308,7 @@ pub struct CollInfo {
     pub ci_r38: uint16,
     pub ci_r40: uint16,
 }
-pub type Func_CollInfo_U8 = unsafe extern "C" fn(*mut CollInfo) -> uint8;
+pub type Func_CollInfo_U8 = unsafe fn(*mut CollInfo) -> uint8;
 pub use crate::types::Pair_Bool_Amt;
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -317,12 +317,12 @@ pub struct PostGrappleCollInfo {
     pub pgci_r28: uint16,
     pub pgci_r32: uint16,
 }
-pub type Func_PostGrappleCollInfo_U16 = unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16;
+pub type Func_PostGrappleCollInfo_U16 = unsafe fn(*mut PostGrappleCollInfo) -> uint16;
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 #[inline]
-unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
+unsafe fn abs16(mut t: uint16) -> uint16 {
     return (if t as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         -(t as ::core::ffi::c_int)
     } else {
@@ -330,25 +330,25 @@ unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {
     }) as uint16;
 }
 #[inline]
-unsafe extern "C" fn RomPtr_8F(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_8F(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x8f0000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn RomPtr_94(mut addr: uint16_t) -> *const uint8 {
+unsafe fn RomPtr_94(mut addr: uint16_t) -> *const uint8 {
     return RomPtr((0x940000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
 }
 #[inline]
-unsafe extern "C" fn gOamEnt(mut v: ::core::ffi::c_int) -> *mut OamEnt {
+unsafe fn gOamEnt(mut v: ::core::ffi::c_int) -> *mut OamEnt {
     return (&raw mut g_ram as *mut uint8).offset((0x370 as ::core::ffi::c_int + v) as isize)
         as *mut uint8 as *mut OamEnt;
 }
 #[inline]
-unsafe extern "C" fn get_DoorDef(mut a: uint16) -> *mut DoorDef {
+unsafe fn get_DoorDef(mut a: uint16) -> *mut DoorDef {
     return RomPtr((0x830000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
         as *mut DoorDef;
 }
 #[inline]
-unsafe extern "C" fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
+unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
     let mut t: uint32 = ((*lo as ::core::ffi::c_int
         + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
         as uint32)
@@ -357,7 +357,7 @@ unsafe extern "C" fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: 
     *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
 #[inline]
-unsafe extern "C" fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
+unsafe fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
     *lo = t as uint16;
     *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
@@ -365,7 +365,6 @@ pub const fnDoorTransitionFunction_HandleElevator: ::core::ffi::c_int =
     0x82e17d as ::core::ffi::c_int;
 pub const fnGrappleInstr_Goto: uint32 = 9744628 as uint32;
 pub const fnGrappleBeam_Func2: ::core::ffi::c_int = 0x9bc8c5 as ::core::ffi::c_int;
-#[no_mangle]
 pub static mut cur_coll_amt32: *mut int32 = ::core::ptr::null::<int32>() as *mut int32;
 static mut kAlignPos_Tab1: [uint8; 512] = [
     16 as ::core::ffi::c_int as uint8,
@@ -1483,7 +1482,7 @@ static mut kBlockColl_Horiz_Slope_NonSquare_Tab: [uint16; 64] = [
     0x6000 as ::core::ffi::c_int as uint16,
     0x50 as ::core::ffi::c_int as uint16,
 ];
-unsafe extern "C" fn PostGrappleColl_Horiz_Slope_NonSquare(
+unsafe fn PostGrappleColl_Horiz_Slope_NonSquare(
     mut pgci: *mut PostGrappleCollInfo,
     mut k: uint16,
 ) -> uint16 {
@@ -1593,7 +1592,7 @@ unsafe extern "C" fn PostGrappleColl_Horiz_Slope_NonSquare(
         }) as uint16;
     };
 }
-unsafe extern "C" fn PostGrappleColl_Vert_Slope_NonSquare(
+unsafe fn PostGrappleColl_Vert_Slope_NonSquare(
     mut pgci: *mut PostGrappleCollInfo,
     mut k: uint16,
 ) -> uint16 {
@@ -1708,7 +1707,7 @@ unsafe extern "C" fn PostGrappleColl_Vert_Slope_NonSquare(
         -(1 as ::core::ffi::c_int)
     }) as uint16;
 }
-unsafe extern "C" fn PostGrappleColl_Horiz_Slope_Square(
+unsafe fn PostGrappleColl_Horiz_Slope_Square(
     mut pgci: *mut PostGrappleCollInfo,
     mut k: uint16,
 ) -> uint16 {
@@ -1783,7 +1782,7 @@ unsafe extern "C" fn PostGrappleColl_Horiz_Slope_Square(
             ^ 7 as ::core::ffi::c_int) as uint16;
     };
 }
-unsafe extern "C" fn PostGrappleColl_Vertical_Slope_Square(
+unsafe fn PostGrappleColl_Vertical_Slope_Square(
     mut pgci: *mut PostGrappleCollInfo,
     mut k: uint16,
 ) -> uint16 {
@@ -1858,10 +1857,10 @@ unsafe extern "C" fn PostGrappleColl_Vertical_Slope_Square(
             ^ 7 as ::core::ffi::c_int) as uint16;
     };
 }
-unsafe extern "C" fn ClearCarry_0(mut pgci: *mut PostGrappleCollInfo) -> uint16 {
+unsafe fn ClearCarry_0(mut pgci: *mut PostGrappleCollInfo) -> uint16 {
     return -(1 as ::core::ffi::c_int) as uint16;
 }
-unsafe extern "C" fn PostGrappleColl_Horiz_Slope(mut pgci: *mut PostGrappleCollInfo) -> uint16 {
+unsafe fn PostGrappleColl_Horiz_Slope(mut pgci: *mut PostGrappleCollInfo) -> uint16 {
     if (*(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -1884,10 +1883,10 @@ unsafe extern "C" fn PostGrappleColl_Horiz_Slope(mut pgci: *mut PostGrappleCollI
         );
     };
 }
-unsafe extern "C" fn PostGrappleColl_Horiz_Solid(mut pgci: *mut PostGrappleCollInfo) -> uint16 {
+unsafe fn PostGrappleColl_Horiz_Solid(mut pgci: *mut PostGrappleCollInfo) -> uint16 {
     return ((*pgci).pgci_r32 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int) as uint16;
 }
-unsafe extern "C" fn PostGrappleColl_Vert_Slope(mut pgci: *mut PostGrappleCollInfo) -> uint16 {
+unsafe fn PostGrappleColl_Vert_Slope(mut pgci: *mut PostGrappleCollInfo) -> uint16 {
     if (*(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -1910,89 +1909,50 @@ unsafe extern "C" fn PostGrappleColl_Vert_Slope(mut pgci: *mut PostGrappleCollIn
         );
     };
 }
-unsafe extern "C" fn PostGrappleColl_Vert_Solid(mut pgci: *mut PostGrappleCollInfo) -> uint16 {
+unsafe fn PostGrappleColl_Vert_Solid(mut pgci: *mut PostGrappleCollInfo) -> uint16 {
     return ((*pgci).pgci_r32 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int) as uint16;
 }
 static mut kPostGrappleColl_Horiz: [Option<Func_PostGrappleCollInfo_U16>; 16] = unsafe {
     [
-        Some(ClearCarry_0 as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16),
-        Some(
-            PostGrappleColl_Horiz_Slope as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16,
-        ),
-        Some(ClearCarry_0 as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16),
-        Some(ClearCarry_0 as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16),
-        Some(ClearCarry_0 as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16),
-        Some(ClearCarry_0 as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16),
-        Some(ClearCarry_0 as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16),
-        Some(ClearCarry_0 as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16),
-        Some(
-            PostGrappleColl_Horiz_Solid as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Horiz_Solid as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Horiz_Solid as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Horiz_Solid as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Horiz_Solid as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Horiz_Solid as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Horiz_Solid as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Horiz_Solid as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16,
-        ),
+        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(PostGrappleColl_Horiz_Slope as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(PostGrappleColl_Horiz_Solid as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(PostGrappleColl_Horiz_Solid as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(PostGrappleColl_Horiz_Solid as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(PostGrappleColl_Horiz_Solid as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(PostGrappleColl_Horiz_Solid as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(PostGrappleColl_Horiz_Solid as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(PostGrappleColl_Horiz_Solid as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(PostGrappleColl_Horiz_Solid as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
     ]
 };
 static mut kPostGrappleColl_Vert: [Option<Func_PostGrappleCollInfo_U16>; 16] = unsafe {
     [
-        Some(ClearCarry_0 as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16),
-        Some(
-            PostGrappleColl_Vert_Slope as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16,
-        ),
-        Some(ClearCarry_0 as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16),
-        Some(ClearCarry_0 as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16),
-        Some(ClearCarry_0 as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16),
-        Some(ClearCarry_0 as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16),
-        Some(ClearCarry_0 as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16),
-        Some(ClearCarry_0 as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16),
-        Some(
-            PostGrappleColl_Vert_Solid as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Vert_Solid as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Vert_Solid as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Vert_Solid as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Vert_Solid as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Vert_Solid as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Vert_Solid as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Vert_Solid as unsafe extern "C" fn(*mut PostGrappleCollInfo) -> uint16,
-        ),
+        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(PostGrappleColl_Vert_Slope as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(PostGrappleColl_Vert_Solid as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(PostGrappleColl_Vert_Solid as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(PostGrappleColl_Vert_Solid as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(PostGrappleColl_Vert_Solid as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(PostGrappleColl_Vert_Solid as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(PostGrappleColl_Vert_Solid as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(PostGrappleColl_Vert_Solid as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
+        Some(PostGrappleColl_Vert_Solid as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
     ]
 };
-unsafe extern "C" fn PostGrappleColl_Horiz(
-    mut pgci: *mut PostGrappleCollInfo,
-    mut k: uint16,
-) -> uint16 {
+unsafe fn PostGrappleColl_Horiz(mut pgci: *mut PostGrappleCollInfo, mut k: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize) as *mut uint16) =
         (k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
     return kPostGrappleColl_Horiz[((*((&raw mut g_ram as *mut uint8)
@@ -2004,10 +1964,7 @@ unsafe extern "C" fn PostGrappleColl_Horiz(
         >> 12 as ::core::ffi::c_int) as usize]
         .expect("non-null function pointer")(pgci);
 }
-unsafe extern "C" fn PostGrappleColl_Vert(
-    mut pgci: *mut PostGrappleCollInfo,
-    mut k: uint16,
-) -> uint16 {
+unsafe fn PostGrappleColl_Vert(mut pgci: *mut PostGrappleCollInfo, mut k: uint16) -> uint16 {
     *((&raw mut g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize) as *mut uint16) =
         (k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
     return kPostGrappleColl_Vert[((*((&raw mut g_ram as *mut uint8)
@@ -2019,7 +1976,7 @@ unsafe extern "C" fn PostGrappleColl_Vert(
         >> 12 as ::core::ffi::c_int) as usize]
         .expect("non-null function pointer")(pgci);
 }
-unsafe extern "C" fn PostGrappleCollisionDetect_Right() {
+unsafe fn PostGrappleCollisionDetect_Right() {
     let mut v0: int16 = 0;
     let mut v2: int16 = 0;
     *((&raw mut g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -2079,7 +2036,7 @@ unsafe extern "C" fn PostGrappleCollisionDetect_Right() {
         }
     }
 }
-unsafe extern "C" fn PostGrappleCollisionDetect_Left() {
+unsafe fn PostGrappleCollisionDetect_Left() {
     let mut v0: int16 = 0;
     let mut v2: int16 = 0;
     *((&raw mut g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -2142,7 +2099,7 @@ unsafe extern "C" fn PostGrappleCollisionDetect_Left() {
         }
     }
 }
-unsafe extern "C" fn PostGrappleCollisionDetect_Down() {
+unsafe fn PostGrappleCollisionDetect_Down() {
     let mut v0: int16 = 0;
     let mut v2: int16 = 0;
     *((&raw mut g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -2199,7 +2156,7 @@ unsafe extern "C" fn PostGrappleCollisionDetect_Down() {
         }
     }
 }
-unsafe extern "C" fn PostGrappleCollisionDetect_Up() {
+unsafe fn PostGrappleCollisionDetect_Up() {
     let mut v0: int16 = 0;
     let mut v2: int16 = 0;
     *((&raw mut g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -2259,17 +2216,15 @@ unsafe extern "C" fn PostGrappleCollisionDetect_Up() {
         }
     }
 }
-#[no_mangle]
-pub unsafe extern "C" fn PostGrappleCollisionDetect_X() {
+pub unsafe fn PostGrappleCollisionDetect_X() {
     PostGrappleCollisionDetect_Right();
     PostGrappleCollisionDetect_Left();
 }
-#[no_mangle]
-pub unsafe extern "C" fn PostGrappleCollisionDetect_Y() {
+pub unsafe fn PostGrappleCollisionDetect_Y() {
     PostGrappleCollisionDetect_Down();
     PostGrappleCollisionDetect_Up();
 }
-unsafe extern "C" fn BlockColl_Horiz_Slope_NonSquare(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockColl_Horiz_Slope_NonSquare(mut ci: *mut CollInfo) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0x1e77 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & 0x80 as ::core::ffi::c_int
@@ -2307,7 +2262,7 @@ unsafe extern "C" fn BlockColl_Horiz_Slope_NonSquare(mut ci: *mut CollInfo) -> u
     }
     return 0 as uint8;
 }
-unsafe extern "C" fn BlockColl_Vert_Slope_NonSquare(mut ci: *mut CollInfo, mut k: uint16) -> uint8 {
+unsafe fn BlockColl_Vert_Slope_NonSquare(mut ci: *mut CollInfo, mut k: uint16) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
@@ -2434,8 +2389,7 @@ unsafe extern "C" fn BlockColl_Vert_Slope_NonSquare(mut ci: *mut CollInfo, mut k
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_AlignYPosSlope() {
+pub unsafe fn Samus_AlignYPosSlope() {
     if *((&raw mut g_ram as *mut uint8).offset(0xa46 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
         & 2 as ::core::ffi::c_int
@@ -2592,7 +2546,7 @@ pub unsafe extern "C" fn Samus_AlignYPosSlope() {
         }
     }
 }
-unsafe extern "C" fn BlockColl_Horiz_Slope_Square(
+unsafe fn BlockColl_Horiz_Slope_Square(
     mut ci: *mut CollInfo,
     mut a: uint16,
     mut k: uint16,
@@ -2683,7 +2637,7 @@ unsafe extern "C" fn BlockColl_Horiz_Slope_Square(
     }
     return 1 as uint8;
 }
-unsafe extern "C" fn BlockColl_Vert_Slope_Square(
+unsafe fn BlockColl_Vert_Slope_Square(
     mut ci: *mut CollInfo,
     mut a: uint16,
     mut k: uint16,
@@ -2777,7 +2731,7 @@ unsafe extern "C" fn BlockColl_Vert_Slope_Square(
         return 1 as uint8;
     };
 }
-unsafe extern "C" fn BlockColl_SpikeBlock_BTS0() {
+unsafe fn BlockColl_SpikeBlock_BTS0() {
     if (*((&raw mut g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         != 3 as ::core::ffi::c_int
@@ -2803,7 +2757,7 @@ unsafe extern "C" fn BlockColl_SpikeBlock_BTS0() {
                 != 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
     }
 }
-unsafe extern "C" fn BlockColl_SpikeBlock_BTS1() {
+unsafe fn BlockColl_SpikeBlock_BTS1() {
     if *((&raw mut g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
         as *mut uint16)
         == 0
@@ -2825,7 +2779,7 @@ unsafe extern "C" fn BlockColl_SpikeBlock_BTS1() {
                 != 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
     }
 }
-unsafe extern "C" fn BlockColl_SpikeBlock_BTS3() {
+unsafe fn BlockColl_SpikeBlock_BTS3() {
     if *((&raw mut g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
         as *mut uint16)
         == 0
@@ -2847,10 +2801,10 @@ unsafe extern "C" fn BlockColl_SpikeBlock_BTS3() {
                 != 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
     }
 }
-unsafe extern "C" fn ClearCarry_4(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn ClearCarry_4(mut ci: *mut CollInfo) -> uint8 {
     return 0 as uint8;
 }
-unsafe extern "C" fn BlockColl_Horiz_SolidShootGrappleBlock(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockColl_Horiz_SolidShootGrappleBlock(mut ci: *mut CollInfo) -> uint8 {
     if (*ci).ci_r18_r20 < 0 as int32 {
         let mut v2: int16 = (*((&raw mut g_ram as *mut uint8)
             .offset(0xafe as ::core::ffi::c_int as isize)
@@ -2881,7 +2835,7 @@ unsafe extern "C" fn BlockColl_Horiz_SolidShootGrappleBlock(mut ci: *mut CollInf
         return 1 as uint8;
     };
 }
-unsafe extern "C" fn BlockColl_Vert_SolidShootGrappleBlock(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockColl_Vert_SolidShootGrappleBlock(mut ci: *mut CollInfo) -> uint8 {
     if (*ci).ci_r18_r20 < 0 as int32 {
         let mut v2: int16 = (*((&raw mut g_ram as *mut uint8)
             .offset(0xb00 as ::core::ffi::c_int as isize)
@@ -2912,7 +2866,7 @@ unsafe extern "C" fn BlockColl_Vert_SolidShootGrappleBlock(mut ci: *mut CollInfo
         return 1 as uint8;
     };
 }
-unsafe extern "C" fn BlockColl_Horiz_Slope(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockColl_Horiz_Slope(mut ci: *mut CollInfo) -> uint8 {
     let mut v0: uint16 = (*(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -2937,7 +2891,7 @@ unsafe extern "C" fn BlockColl_Horiz_Slope(mut ci: *mut CollInfo) -> uint8 {
         ) as uint16;
     return BlockColl_Horiz_Slope_NonSquare(ci);
 }
-unsafe extern "C" fn BlockColl_Vert_Slope(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockColl_Vert_Slope(mut ci: *mut CollInfo) -> uint8 {
     let mut v0: uint16 = (*(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -2966,34 +2920,34 @@ unsafe extern "C" fn BlockColl_Vert_Slope(mut ci: *mut CollInfo) -> uint8 {
             as *mut uint16),
     );
 }
-unsafe extern "C" fn ClearCarry_5(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn ClearCarry_5(mut ci: *mut CollInfo) -> uint8 {
     return 0 as uint8;
 }
-unsafe extern "C" fn BlockColl_Vert_SpikeAir(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockColl_Vert_SpikeAir(mut ci: *mut CollInfo) -> uint8 {
     return 0 as uint8;
 }
-unsafe extern "C" fn SetCarry_Spikeblk() {}
+unsafe fn SetCarry_Spikeblk() {}
 static mut kBlockColl_SpikeBlock: [Option<Func_V>; 16] = unsafe {
     [
-        Some(BlockColl_SpikeBlock_BTS0 as unsafe extern "C" fn() -> ()),
-        Some(BlockColl_SpikeBlock_BTS1 as unsafe extern "C" fn() -> ()),
-        Some(SetCarry_Spikeblk as unsafe extern "C" fn() -> ()),
-        Some(BlockColl_SpikeBlock_BTS3 as unsafe extern "C" fn() -> ()),
-        Some(SetCarry_Spikeblk as unsafe extern "C" fn() -> ()),
-        Some(SetCarry_Spikeblk as unsafe extern "C" fn() -> ()),
-        Some(SetCarry_Spikeblk as unsafe extern "C" fn() -> ()),
-        Some(SetCarry_Spikeblk as unsafe extern "C" fn() -> ()),
-        Some(SetCarry_Spikeblk as unsafe extern "C" fn() -> ()),
-        Some(SetCarry_Spikeblk as unsafe extern "C" fn() -> ()),
-        Some(SetCarry_Spikeblk as unsafe extern "C" fn() -> ()),
-        Some(SetCarry_Spikeblk as unsafe extern "C" fn() -> ()),
-        Some(SetCarry_Spikeblk as unsafe extern "C" fn() -> ()),
-        Some(SetCarry_Spikeblk as unsafe extern "C" fn() -> ()),
-        Some(SetCarry_Spikeblk as unsafe extern "C" fn() -> ()),
-        Some(SetCarry_Spikeblk as unsafe extern "C" fn() -> ()),
+        Some(BlockColl_SpikeBlock_BTS0 as unsafe fn() -> ()),
+        Some(BlockColl_SpikeBlock_BTS1 as unsafe fn() -> ()),
+        Some(SetCarry_Spikeblk as unsafe fn() -> ()),
+        Some(BlockColl_SpikeBlock_BTS3 as unsafe fn() -> ()),
+        Some(SetCarry_Spikeblk as unsafe fn() -> ()),
+        Some(SetCarry_Spikeblk as unsafe fn() -> ()),
+        Some(SetCarry_Spikeblk as unsafe fn() -> ()),
+        Some(SetCarry_Spikeblk as unsafe fn() -> ()),
+        Some(SetCarry_Spikeblk as unsafe fn() -> ()),
+        Some(SetCarry_Spikeblk as unsafe fn() -> ()),
+        Some(SetCarry_Spikeblk as unsafe fn() -> ()),
+        Some(SetCarry_Spikeblk as unsafe fn() -> ()),
+        Some(SetCarry_Spikeblk as unsafe fn() -> ()),
+        Some(SetCarry_Spikeblk as unsafe fn() -> ()),
+        Some(SetCarry_Spikeblk as unsafe fn() -> ()),
+        Some(SetCarry_Spikeblk as unsafe fn() -> ()),
     ]
 };
-unsafe extern "C" fn BlockColl_Horiz_SpikeBlock(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockColl_Horiz_SpikeBlock(mut ci: *mut CollInfo) -> uint8 {
     kBlockColl_SpikeBlock[*(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -3003,7 +2957,7 @@ unsafe extern "C" fn BlockColl_Horiz_SpikeBlock(mut ci: *mut CollInfo) -> uint8 
         .expect("non-null function pointer")();
     return BlockColl_Horiz_SolidShootGrappleBlock(ci);
 }
-unsafe extern "C" fn BlockColl_Vert_SpikeBlock(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockColl_Vert_SpikeBlock(mut ci: *mut CollInfo) -> uint8 {
     kBlockColl_SpikeBlock[*(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -3013,7 +2967,7 @@ unsafe extern "C" fn BlockColl_Vert_SpikeBlock(mut ci: *mut CollInfo) -> uint8 {
         .expect("non-null function pointer")();
     return BlockColl_Vert_SolidShootGrappleBlock(ci);
 }
-unsafe extern "C" fn BlockColl_Horiz_SpecialAir(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockColl_Horiz_SpecialAir(mut ci: *mut CollInfo) -> uint8 {
     let mut v0: uint8 = *(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -3050,7 +3004,7 @@ unsafe extern "C" fn BlockColl_Horiz_SpecialAir(mut ci: *mut CollInfo) -> uint8 
         return 0 as uint8;
     };
 }
-unsafe extern "C" fn BlockColl_Vert_SpecialAir(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockColl_Vert_SpecialAir(mut ci: *mut CollInfo) -> uint8 {
     let mut v0: uint8 = *(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -3087,7 +3041,7 @@ unsafe extern "C" fn BlockColl_Vert_SpecialAir(mut ci: *mut CollInfo) -> uint8 {
         return 0 as uint8;
     };
 }
-unsafe extern "C" fn BlockColl_Horiz_SpecialBlock(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockColl_Horiz_SpecialBlock(mut ci: *mut CollInfo) -> uint8 {
     let mut v0: uint8 = *(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -3132,7 +3086,7 @@ unsafe extern "C" fn BlockColl_Horiz_SpecialBlock(mut ci: *mut CollInfo) -> uint
         return v1;
     };
 }
-unsafe extern "C" fn BlockColl_Vert_SpecialBlock(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockColl_Vert_SpecialBlock(mut ci: *mut CollInfo) -> uint8 {
     let mut v0: uint8 = *(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -3177,7 +3131,7 @@ unsafe extern "C" fn BlockColl_Vert_SpecialBlock(mut ci: *mut CollInfo) -> uint8
         return v1;
     };
 }
-unsafe extern "C" fn BlockColl_Horiz_BombableAir(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockColl_Horiz_BombableAir(mut ci: *mut CollInfo) -> uint8 {
     let mut v0: uint8 = *(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -3197,7 +3151,7 @@ unsafe extern "C" fn BlockColl_Horiz_BombableAir(mut ci: *mut CollInfo) -> uint8
     }
     return 0 as uint8;
 }
-unsafe extern "C" fn BlockColl_Vert_BombableAir(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockColl_Vert_BombableAir(mut ci: *mut CollInfo) -> uint8 {
     let mut v0: uint8 = *(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -3217,7 +3171,7 @@ unsafe extern "C" fn BlockColl_Vert_BombableAir(mut ci: *mut CollInfo) -> uint8 
     }
     return 0 as uint8;
 }
-unsafe extern "C" fn BlockColl_Horiz_BombBlock(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockColl_Horiz_BombBlock(mut ci: *mut CollInfo) -> uint8 {
     let mut v0: uint8 = *(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -3243,7 +3197,7 @@ unsafe extern "C" fn BlockColl_Horiz_BombBlock(mut ci: *mut CollInfo) -> uint8 {
         return v1;
     };
 }
-unsafe extern "C" fn BlockColl_Vert_BombBlock(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockColl_Vert_BombBlock(mut ci: *mut CollInfo) -> uint8 {
     let mut v0: uint8 = *(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -3269,8 +3223,7 @@ unsafe extern "C" fn BlockColl_Vert_BombBlock(mut ci: *mut CollInfo) -> uint8 {
         return v1;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn BlockColl_Horiz_Door(mut ci: *mut CollInfo) -> uint8 {
+pub unsafe fn BlockColl_Horiz_Door(mut ci: *mut CollInfo) -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x99c as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x82e17d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     let mut door_bts: uint8 = *(&raw mut g_ram as *mut uint8)
@@ -3305,8 +3258,7 @@ pub unsafe extern "C" fn BlockColl_Horiz_Door(mut ci: *mut CollInfo) -> uint8 {
         return 0 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn BlockColl_Vert_Door(mut ci: *mut CollInfo) -> uint8 {
+pub unsafe fn BlockColl_Vert_Door(mut ci: *mut CollInfo) -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0x99c as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x82e17d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     let mut door_bts: uint8 = *(&raw mut g_ram as *mut uint8)
@@ -3341,7 +3293,7 @@ pub unsafe extern "C" fn BlockColl_Vert_Door(mut ci: *mut CollInfo) -> uint8 {
         return 0 as uint8;
     };
 }
-unsafe extern "C" fn BlockReact_HorizExt(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockReact_HorizExt(mut ci: *mut CollInfo) -> uint8 {
     if *(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -3364,7 +3316,7 @@ unsafe extern "C" fn BlockReact_HorizExt(mut ci: *mut CollInfo) -> uint8 {
     }
     return 0 as uint8;
 }
-unsafe extern "C" fn BlockReact_VertExt(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockReact_VertExt(mut ci: *mut CollInfo) -> uint8 {
     if *(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -3389,7 +3341,7 @@ unsafe extern "C" fn BlockReact_VertExt(mut ci: *mut CollInfo) -> uint8 {
     }
     return 0 as uint8;
 }
-unsafe extern "C" fn Samus_GetYposSpan() -> uint16 {
+unsafe fn Samus_GetYposSpan() -> uint16 {
     let mut r26: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0xafa as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -3405,7 +3357,7 @@ unsafe extern "C" fn Samus_GetYposSpan() -> uint16 {
         >> 4 as ::core::ffi::c_int) as uint16;
     return r26;
 }
-unsafe extern "C" fn Samus_GetXposSpan() -> uint16 {
+unsafe fn Samus_GetXposSpan() -> uint16 {
     let mut r26: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0xaf6 as ::core::ffi::c_int as isize) as *mut uint16)
         as ::core::ffi::c_int
@@ -3423,51 +3375,45 @@ unsafe extern "C" fn Samus_GetXposSpan() -> uint16 {
 }
 static mut kBlockColl_Horiz_CheckColl: [Option<Func_CollInfo_U8>; 16] = unsafe {
     [
-        Some(ClearCarry_4 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockColl_Horiz_Slope as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(ClearCarry_5 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockColl_Horiz_SpecialAir as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(ClearCarry_4 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockReact_HorizExt as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(ClearCarry_4 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockColl_Horiz_BombableAir as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(
-            BlockColl_Horiz_SolidShootGrappleBlock as unsafe extern "C" fn(*mut CollInfo) -> uint8,
-        ),
-        Some(BlockColl_Horiz_Door as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockColl_Horiz_SpikeBlock as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockColl_Horiz_SpecialBlock as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(
-            BlockColl_Horiz_SolidShootGrappleBlock as unsafe extern "C" fn(*mut CollInfo) -> uint8,
-        ),
-        Some(BlockReact_VertExt as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(
-            BlockColl_Horiz_SolidShootGrappleBlock as unsafe extern "C" fn(*mut CollInfo) -> uint8,
-        ),
-        Some(BlockColl_Horiz_BombBlock as unsafe extern "C" fn(*mut CollInfo) -> uint8),
+        Some(ClearCarry_4 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockColl_Horiz_Slope as unsafe fn(*mut CollInfo) -> uint8),
+        Some(ClearCarry_5 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockColl_Horiz_SpecialAir as unsafe fn(*mut CollInfo) -> uint8),
+        Some(ClearCarry_4 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockReact_HorizExt as unsafe fn(*mut CollInfo) -> uint8),
+        Some(ClearCarry_4 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockColl_Horiz_BombableAir as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockColl_Horiz_SolidShootGrappleBlock as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockColl_Horiz_Door as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockColl_Horiz_SpikeBlock as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockColl_Horiz_SpecialBlock as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockColl_Horiz_SolidShootGrappleBlock as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockReact_VertExt as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockColl_Horiz_SolidShootGrappleBlock as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockColl_Horiz_BombBlock as unsafe fn(*mut CollInfo) -> uint8),
     ]
 };
 static mut kBlockColl_Vert_CheckColl: [Option<Func_CollInfo_U8>; 16] = unsafe {
     [
-        Some(ClearCarry_4 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockColl_Vert_Slope as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockColl_Vert_SpikeAir as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockColl_Vert_SpecialAir as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(ClearCarry_4 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockReact_HorizExt as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(ClearCarry_4 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockColl_Vert_BombableAir as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockColl_Vert_SolidShootGrappleBlock as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockColl_Vert_Door as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockColl_Vert_SpikeBlock as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockColl_Vert_SpecialBlock as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockColl_Vert_SolidShootGrappleBlock as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockReact_VertExt as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockColl_Vert_SolidShootGrappleBlock as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockColl_Vert_BombBlock as unsafe extern "C" fn(*mut CollInfo) -> uint8),
+        Some(ClearCarry_4 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockColl_Vert_Slope as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockColl_Vert_SpikeAir as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockColl_Vert_SpecialAir as unsafe fn(*mut CollInfo) -> uint8),
+        Some(ClearCarry_4 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockReact_HorizExt as unsafe fn(*mut CollInfo) -> uint8),
+        Some(ClearCarry_4 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockColl_Vert_BombableAir as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockColl_Vert_SolidShootGrappleBlock as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockColl_Vert_Door as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockColl_Vert_SpikeBlock as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockColl_Vert_SpecialBlock as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockColl_Vert_SolidShootGrappleBlock as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockReact_VertExt as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockColl_Vert_SolidShootGrappleBlock as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockColl_Vert_BombBlock as unsafe fn(*mut CollInfo) -> uint8),
     ]
 };
-unsafe extern "C" fn BlockColl_Horiz_CheckColl(mut ci: *mut CollInfo, mut k: uint16) -> uint8 {
+unsafe fn BlockColl_Horiz_CheckColl(mut ci: *mut CollInfo, mut k: uint16) -> uint8 {
     let mut rv: uint8 = 0;
     *((&raw mut g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize) as *mut uint16) =
         (k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
@@ -3490,7 +3436,7 @@ unsafe extern "C" fn BlockColl_Horiz_CheckColl(mut ci: *mut CollInfo, mut k: uin
     cur_coll_amt32 = ::core::ptr::null_mut::<int32>();
     return rv;
 }
-unsafe extern "C" fn BlockColl_Vert_CheckColl(mut ci: *mut CollInfo, mut k: uint16) -> uint8 {
+unsafe fn BlockColl_Vert_CheckColl(mut ci: *mut CollInfo, mut k: uint16) -> uint8 {
     let mut rv: uint8 = 0;
     *((&raw mut g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize) as *mut uint16) =
         (k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
@@ -3513,7 +3459,7 @@ unsafe extern "C" fn BlockColl_Vert_CheckColl(mut ci: *mut CollInfo, mut k: uint
     cur_coll_amt32 = ::core::ptr::null_mut::<int32>();
     return rv;
 }
-unsafe extern "C" fn BlockColl_Handle_Horiz(mut amt: int32) -> Pair_Bool_Amt {
+unsafe fn BlockColl_Handle_Horiz(mut amt: int32) -> Pair_Bool_Amt {
     let mut r28: uint16 = Samus_GetYposSpan();
     let mut prod: uint16 = Mult8x8(
         ((*((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
@@ -3577,7 +3523,7 @@ unsafe extern "C" fn BlockColl_Handle_Horiz(mut amt: int32) -> Pair_Bool_Amt {
         amt: ci.ci_r18_r20,
     };
 }
-unsafe extern "C" fn BlockColl_Handle_Vert_LeftToRight(mut amt: int32) -> Pair_Bool_Amt {
+unsafe fn BlockColl_Handle_Vert_LeftToRight(mut amt: int32) -> Pair_Bool_Amt {
     let mut r28: uint16 = Samus_GetXposSpan();
     let mut v0: uint16 = ((amt as uint32).wrapping_add(
         (*((&raw mut g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
@@ -3643,7 +3589,7 @@ unsafe extern "C" fn BlockColl_Handle_Vert_LeftToRight(mut amt: int32) -> Pair_B
         amt: ci.ci_r18_r20,
     };
 }
-unsafe extern "C" fn BlockColl_Handle_Vert_RightToLeft(mut amt: int32) -> Pair_Bool_Amt {
+unsafe fn BlockColl_Handle_Vert_RightToLeft(mut amt: int32) -> Pair_Bool_Amt {
     let mut r28: uint16 = Samus_GetXposSpan();
     let mut r26: uint16 = 0 as uint16;
     let mut v0: uint16 = ((amt as uint32).wrapping_add(
@@ -3710,8 +3656,7 @@ unsafe extern "C" fn BlockColl_Handle_Vert_RightToLeft(mut amt: int32) -> Pair_B
         amt: ci.ci_r18_r20,
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn WallJumpBlockCollDetect(mut amt: int32) -> int32 {
+pub unsafe fn WallJumpBlockCollDetect(mut amt: int32) -> int32 {
     let ref mut fresh15 = *((&raw mut g_ram as *mut uint8)
         .offset(0xb02 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh15 = (*fresh15 as ::core::ffi::c_int | 0xf as ::core::ffi::c_int) as uint16;
@@ -3726,7 +3671,7 @@ pub unsafe extern "C" fn WallJumpBlockCollDetect(mut amt: int32) -> int32 {
         -pair.amt
     };
 }
-unsafe extern "C" fn CollDetectDueToPoseChange_SingleBlock(mut amt: int32) -> int32 {
+unsafe fn CollDetectDueToPoseChange_SingleBlock(mut amt: int32) -> int32 {
     let ref mut fresh11 = *((&raw mut g_ram as *mut uint8)
         .offset(0xb02 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh11 = (*fresh11 as ::core::ffi::c_int | 0xf as ::core::ffi::c_int) as uint16;
@@ -3750,8 +3695,7 @@ unsafe extern "C" fn CollDetectDueToPoseChange_SingleBlock(mut amt: int32) -> in
         -pair.amt
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_CollDetectChangedPose(mut amt: int32) -> int32 {
+pub unsafe fn Samus_CollDetectChangedPose(mut amt: int32) -> int32 {
     if abs16((amt >> 16 as ::core::ffi::c_int) as uint16) as ::core::ffi::c_int
         & 0xfff8 as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
@@ -3770,8 +3714,7 @@ pub unsafe extern "C" fn Samus_CollDetectChangedPose(mut amt: int32) -> int32 {
     }
     return CollDetectDueToPoseChange_SingleBlock(amt_backup);
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveRight_NoSolidColl(mut amt: int32) -> int32 {
+pub unsafe fn Samus_MoveRight_NoSolidColl(mut amt: int32) -> int32 {
     let mut pair: Pair_Bool_Amt = Pair_Bool_Amt {
         flag: false,
         amt: 0,
@@ -3791,8 +3734,7 @@ pub unsafe extern "C" fn Samus_MoveRight_NoSolidColl(mut amt: int32) -> int32 {
     );
     return amt;
 }
-#[no_mangle]
-pub unsafe extern "C" fn Samus_MoveDown_NoSolidColl(mut amt: int32) -> int32 {
+pub unsafe fn Samus_MoveDown_NoSolidColl(mut amt: int32) -> int32 {
     if amt != 0 {
         *((&raw mut g_ram as *mut uint8).offset(0xdba as ::core::ffi::c_int as isize)
             as *mut uint16) = 0 as uint16;
@@ -3833,17 +3775,17 @@ pub unsafe extern "C" fn Samus_MoveDown_NoSolidColl(mut amt: int32) -> int32 {
     );
     return amt;
 }
-unsafe extern "C" fn BlockInsideReact_Slope(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockInsideReact_Slope(mut ci: *mut CollInfo) -> uint8 {
     return 0 as uint8;
 }
-unsafe extern "C" fn BlockInsideReact_ShootableAir(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockInsideReact_ShootableAir(mut ci: *mut CollInfo) -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xa6c as ::core::ffi::c_int as isize) as *mut uint16) =
         (addr_kSamusSpeedTable_Normal_X as ::core::ffi::c_int + 12 as ::core::ffi::c_int) as uint16;
     return 0 as uint8;
 }
-unsafe extern "C" fn ClearCarry_8() {}
-unsafe extern "C" fn nullsub_165() {}
-unsafe extern "C" fn BlockInsideReact_SpikeAir_BTS2() {
+unsafe fn ClearCarry_8() {}
+unsafe fn nullsub_165() {}
+unsafe fn BlockInsideReact_SpikeAir_BTS2() {
     if *((&raw mut g_ram as *mut uint8).offset(0xa6e as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
         && *((&raw mut g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
@@ -3871,25 +3813,25 @@ unsafe extern "C" fn BlockInsideReact_SpikeAir_BTS2() {
 }
 static mut kBlockInsideReact_SpikeAir: [Option<Func_V>; 16] = unsafe {
     [
-        Some(ClearCarry_8 as unsafe extern "C" fn() -> ()),
-        Some(ClearCarry_8 as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpikeAir_BTS2 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_165 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_165 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_165 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_165 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_165 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_165 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_165 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_165 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_165 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_165 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_165 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_165 as unsafe extern "C" fn() -> ()),
-        Some(nullsub_165 as unsafe extern "C" fn() -> ()),
+        Some(ClearCarry_8 as unsafe fn() -> ()),
+        Some(ClearCarry_8 as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpikeAir_BTS2 as unsafe fn() -> ()),
+        Some(nullsub_165 as unsafe fn() -> ()),
+        Some(nullsub_165 as unsafe fn() -> ()),
+        Some(nullsub_165 as unsafe fn() -> ()),
+        Some(nullsub_165 as unsafe fn() -> ()),
+        Some(nullsub_165 as unsafe fn() -> ()),
+        Some(nullsub_165 as unsafe fn() -> ()),
+        Some(nullsub_165 as unsafe fn() -> ()),
+        Some(nullsub_165 as unsafe fn() -> ()),
+        Some(nullsub_165 as unsafe fn() -> ()),
+        Some(nullsub_165 as unsafe fn() -> ()),
+        Some(nullsub_165 as unsafe fn() -> ()),
+        Some(nullsub_165 as unsafe fn() -> ()),
+        Some(nullsub_165 as unsafe fn() -> ()),
     ]
 };
-unsafe extern "C" fn BlockInsideReact_SpikeAir(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockInsideReact_SpikeAir(mut ci: *mut CollInfo) -> uint8 {
     kBlockInsideReact_SpikeAir[*(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -3899,16 +3841,16 @@ unsafe extern "C" fn BlockInsideReact_SpikeAir(mut ci: *mut CollInfo) -> uint8 {
         .expect("non-null function pointer")();
     return 0 as uint8;
 }
-unsafe extern "C" fn BlockInsideReact_Special_(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockInsideReact_Special_(mut ci: *mut CollInfo) -> uint8 {
     *((&raw mut g_ram as *mut uint8).offset(0xa6c as ::core::ffi::c_int as isize) as *mut uint16) =
         (addr_kSamusSpeedTable_Normal_X as ::core::ffi::c_int + 12 as ::core::ffi::c_int) as uint16;
     return 0 as uint8;
 }
-unsafe extern "C" fn BlockInsideReact_SpecialAir_Default() {
+unsafe fn BlockInsideReact_SpecialAir_Default() {
     *((&raw mut g_ram as *mut uint8).offset(0xa6c as ::core::ffi::c_int as isize) as *mut uint16) =
         (addr_kSamusSpeedTable_Normal_X as ::core::ffi::c_int + 12 as ::core::ffi::c_int) as uint16;
 }
-unsafe extern "C" fn BlockInsideReact_SpecialAir_8() {
+unsafe fn BlockInsideReact_SpecialAir_8() {
     if (*((&raw mut g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         != 3 as ::core::ffi::c_int
@@ -3925,7 +3867,7 @@ unsafe extern "C" fn BlockInsideReact_SpecialAir_8() {
     *((&raw mut g_ram as *mut uint8).offset(0xa6c as ::core::ffi::c_int as isize) as *mut uint16) =
         (addr_kSamusSpeedTable_Normal_X as ::core::ffi::c_int + 12 as ::core::ffi::c_int) as uint16;
 }
-unsafe extern "C" fn BlockInsideReact_SpecialAir_9() {
+unsafe fn BlockInsideReact_SpecialAir_9() {
     if (*((&raw mut g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         != 3 as ::core::ffi::c_int
@@ -3942,7 +3884,7 @@ unsafe extern "C" fn BlockInsideReact_SpecialAir_9() {
     *((&raw mut g_ram as *mut uint8).offset(0xa6c as ::core::ffi::c_int as isize) as *mut uint16) =
         (addr_kSamusSpeedTable_Normal_X as ::core::ffi::c_int + 12 as ::core::ffi::c_int) as uint16;
 }
-unsafe extern "C" fn BlockInsideReact_SpecialAir_10() {
+unsafe fn BlockInsideReact_SpecialAir_10() {
     *((&raw mut g_ram as *mut uint8).offset(0xb56 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xb58 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -3950,7 +3892,7 @@ unsafe extern "C" fn BlockInsideReact_SpecialAir_10() {
     *((&raw mut g_ram as *mut uint8).offset(0xa6c as ::core::ffi::c_int as isize) as *mut uint16) =
         (addr_kSamusSpeedTable_Normal_X as ::core::ffi::c_int + 12 as ::core::ffi::c_int) as uint16;
 }
-unsafe extern "C" fn BlockInsideReact_SpecialAir_11() {
+unsafe fn BlockInsideReact_SpecialAir_11() {
     *((&raw mut g_ram as *mut uint8).offset(0xb56 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xb58 as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -3958,7 +3900,7 @@ unsafe extern "C" fn BlockInsideReact_SpecialAir_11() {
     *((&raw mut g_ram as *mut uint8).offset(0xa6c as ::core::ffi::c_int as isize) as *mut uint16) =
         (addr_kSamusSpeedTable_Normal_X as ::core::ffi::c_int + 12 as ::core::ffi::c_int) as uint16;
 }
-unsafe extern "C" fn BlockInsideReact_SpecialAir_70() {
+unsafe fn BlockInsideReact_SpecialAir_70() {
     if *((&raw mut g_ram as *mut uint8).offset(0x1e73 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         == 1 as ::core::ffi::c_int
@@ -3978,89 +3920,89 @@ static mut g_off_949B06: [uint16; 8] = [
 ];
 static mut off_949966: [Option<Func_V>; 80] = unsafe {
     [
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_8 as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_9 as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_10 as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_11 as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_70 as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe extern "C" fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_8 as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_9 as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_10 as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_11 as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_70 as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
+        Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
     ]
 };
-unsafe extern "C" fn BlockInsideReact_SpecialAir(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockInsideReact_SpecialAir(mut ci: *mut CollInfo) -> uint8 {
     let mut v0: uint8 = *(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -4084,26 +4026,25 @@ unsafe extern "C" fn BlockInsideReact_SpecialAir(mut ci: *mut CollInfo) -> uint8
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn BlockInsideDetection() {
+pub unsafe fn BlockInsideDetection() {
     static mut kSamus_BlockInsideDetection: [Option<Func_CollInfo_U8>; 16] = unsafe {
         [
-            Some(BlockInsideReact_ShootableAir as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockInsideReact_Slope as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockInsideReact_SpikeAir as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockInsideReact_SpecialAir as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockInsideReact_ShootableAir as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReact_HorizExt as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockInsideReact_ShootableAir as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockInsideReact_ShootableAir as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockInsideReact_Special_ as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockInsideReact_Special_ as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockInsideReact_Special_ as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockInsideReact_Special_ as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockInsideReact_Special_ as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReact_VertExt as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockInsideReact_Special_ as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockInsideReact_Special_ as unsafe extern "C" fn(*mut CollInfo) -> uint8),
+            Some(BlockInsideReact_ShootableAir as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockInsideReact_Slope as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockInsideReact_SpikeAir as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockInsideReact_SpecialAir as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockInsideReact_ShootableAir as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReact_HorizExt as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockInsideReact_ShootableAir as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockInsideReact_ShootableAir as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockInsideReact_Special_ as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockInsideReact_Special_ as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockInsideReact_Special_ as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockInsideReact_Special_ as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockInsideReact_Special_ as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReact_VertExt as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockInsideReact_Special_ as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockInsideReact_Special_ as unsafe fn(*mut CollInfo) -> uint8),
         ]
     };
     *((&raw mut g_ram as *mut uint8).offset(0xb4c as ::core::ffi::c_int as isize) as *mut uint16) =
@@ -4268,12 +4209,7 @@ pub unsafe extern "C" fn BlockInsideDetection() {
         }
     }
 }
-unsafe extern "C" fn CalculateBlockAt(
-    mut r26: uint16,
-    mut r28: uint16,
-    mut r30: uint16,
-    mut r32: uint16,
-) {
+unsafe fn CalculateBlockAt(mut r26: uint16, mut r28: uint16, mut r30: uint16, mut r32: uint16) {
     let mut v0: int16 = 0;
     let mut v1: int16 = 0;
     let mut temp_collision_DD4: uint16 = 0;
@@ -4365,7 +4301,7 @@ static mut kBlockFunc_9C73_Tab1: [int8; 18] = [
     0 as ::core::ffi::c_int as int8,
     -(1 as ::core::ffi::c_int) as int8,
 ];
-unsafe extern "C" fn BlockFunc_9C73(mut v0: uint16) -> uint16 {
+unsafe fn BlockFunc_9C73(mut v0: uint16) -> uint16 {
     let mut v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0xc18 as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(v1 as isize) as ::core::ffi::c_int
@@ -4394,8 +4330,7 @@ unsafe extern "C" fn BlockFunc_9C73(mut v0: uint16) -> uint16 {
             as uint16;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn BombOrPowerBomb_Func1(mut v0: uint16) {
+pub unsafe fn BombOrPowerBomb_Func1(mut v0: uint16) {
     let mut v2: int16 = 0;
     let mut v3: int16 = 0;
     let mut temp_collision_DD2: uint16 = BlockFunc_9C73(v0);
@@ -4458,14 +4393,14 @@ pub unsafe extern "C" fn BombOrPowerBomb_Func1(mut v0: uint16) {
         }
     }
 }
-unsafe extern "C" fn BlockColl_GetBlockIndexAbove(mut k: uint16) -> uint16 {
+unsafe fn BlockColl_GetBlockIndexAbove(mut k: uint16) -> uint16 {
     return (k as ::core::ffi::c_int
         - *((&raw mut g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
         - *((&raw mut g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int) as uint16;
 }
-unsafe extern "C" fn BlockColl_GetBlockIndexRight(mut k: uint16) -> uint16 {
+unsafe fn BlockColl_GetBlockIndexRight(mut k: uint16) -> uint16 {
     return (*((&raw mut g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         * 2 as ::core::ffi::c_int
@@ -4473,10 +4408,10 @@ unsafe extern "C" fn BlockColl_GetBlockIndexRight(mut k: uint16) -> uint16 {
         + 1 as ::core::ffi::c_int
         + 1 as ::core::ffi::c_int) as uint16;
 }
-unsafe extern "C" fn BlockColl_GetBlockIndexLeft(mut k: uint16) -> uint16 {
+unsafe fn BlockColl_GetBlockIndexLeft(mut k: uint16) -> uint16 {
     return (k as ::core::ffi::c_int - 4 as ::core::ffi::c_int) as uint16;
 }
-unsafe extern "C" fn BlockColl_GetBlockIndexBelow(mut k: uint16) -> uint16 {
+unsafe fn BlockColl_GetBlockIndexBelow(mut k: uint16) -> uint16 {
     return (*((&raw mut g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         * 2 as ::core::ffi::c_int
@@ -4484,7 +4419,7 @@ unsafe extern "C" fn BlockColl_GetBlockIndexBelow(mut k: uint16) -> uint16 {
         + 1 as ::core::ffi::c_int
         + 1 as ::core::ffi::c_int) as uint16;
 }
-unsafe extern "C" fn BlockColl_BombExplosion(mut ci: *mut CollInfo, mut k: uint16) {
+unsafe fn BlockColl_BombExplosion(mut ci: *mut CollInfo, mut k: uint16) {
     let mut v2: int16 = 0;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut g_ram as *mut uint8).offset(0xc7c as ::core::ffi::c_int as isize) as *mut uint16)
@@ -4526,13 +4461,13 @@ unsafe extern "C" fn BlockColl_BombExplosion(mut ci: *mut CollInfo, mut k: uint1
         }
     }
 }
-unsafe extern "C" fn ClearCarry_9(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn ClearCarry_9(mut ci: *mut CollInfo) -> uint8 {
     return 0 as uint8;
 }
-unsafe extern "C" fn SetCarry_0(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn SetCarry_0(mut ci: *mut CollInfo) -> uint8 {
     return 1 as uint8;
 }
-unsafe extern "C" fn sub_949D5D(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn sub_949D5D(mut ci: *mut CollInfo) -> uint8 {
     if (*(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -4547,7 +4482,7 @@ unsafe extern "C" fn sub_949D5D(mut ci: *mut CollInfo) -> uint8 {
         return BlockShotReactVert_Slope_NonSquare(ci);
     };
 }
-unsafe extern "C" fn BlockBombedReact_Special(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockBombedReact_Special(mut ci: *mut CollInfo) -> uint8 {
     let mut v0: uint8 = *(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -4569,7 +4504,7 @@ unsafe extern "C" fn BlockBombedReact_Special(mut ci: *mut CollInfo) -> uint8 {
     }
     return 1 as uint8;
 }
-unsafe extern "C" fn BlockReact_ShootableAir(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockReact_ShootableAir(mut ci: *mut CollInfo) -> uint8 {
     let mut v0: uint8 = *(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -4586,7 +4521,7 @@ unsafe extern "C" fn BlockReact_ShootableAir(mut ci: *mut CollInfo) -> uint8 {
     }
     return 0 as uint8;
 }
-unsafe extern "C" fn BlockReact_Shootable(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockReact_Shootable(mut ci: *mut CollInfo) -> uint8 {
     let mut v0: uint8 = *(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -4613,7 +4548,7 @@ unsafe extern "C" fn BlockReact_Shootable(mut ci: *mut CollInfo) -> uint8 {
     }
     return 1 as uint8;
 }
-unsafe extern "C" fn BlockReact_BombableAir(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockReact_BombableAir(mut ci: *mut CollInfo) -> uint8 {
     let mut kBlockShotBombGrappleReact_BombableBlockPlm: *mut uint16 =
         RomPtr_94(0xa012 as uint16_t) as *mut uint16;
     let mut v0: uint8 = *(&raw mut g_ram as *mut uint8)
@@ -4627,7 +4562,7 @@ unsafe extern "C" fn BlockReact_BombableAir(mut ci: *mut CollInfo) -> uint8 {
     }
     return 0 as uint8;
 }
-unsafe extern "C" fn BlockReact_BombableBlock(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockReact_BombableBlock(mut ci: *mut CollInfo) -> uint8 {
     let mut kBlockShotBombGrappleReact_BombableBlockPlm: *mut uint16 =
         RomPtr_94(0xa012 as uint16_t) as *mut uint16;
     let mut v0: uint8 = *(&raw mut g_ram as *mut uint8)
@@ -4643,25 +4578,25 @@ unsafe extern "C" fn BlockReact_BombableBlock(mut ci: *mut CollInfo) -> uint8 {
 }
 static mut kBlockBombedReact: [Option<Func_CollInfo_U8>; 16] = unsafe {
     [
-        Some(ClearCarry_9 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(ClearCarry_9 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(ClearCarry_9 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(ClearCarry_9 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockReact_ShootableAir as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockReact_HorizExt as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(ClearCarry_9 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockReact_BombableAir as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(SetCarry_0 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(SetCarry_0 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(SetCarry_0 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockBombedReact_Special as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockReact_Shootable as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockReact_VertExt as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(SetCarry_0 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockReact_BombableBlock as unsafe extern "C" fn(*mut CollInfo) -> uint8),
+        Some(ClearCarry_9 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(ClearCarry_9 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(ClearCarry_9 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(ClearCarry_9 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockReact_ShootableAir as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockReact_HorizExt as unsafe fn(*mut CollInfo) -> uint8),
+        Some(ClearCarry_9 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockReact_BombableAir as unsafe fn(*mut CollInfo) -> uint8),
+        Some(SetCarry_0 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(SetCarry_0 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(SetCarry_0 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockBombedReact_Special as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockReact_Shootable as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockReact_VertExt as unsafe fn(*mut CollInfo) -> uint8),
+        Some(SetCarry_0 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockReact_BombableBlock as unsafe fn(*mut CollInfo) -> uint8),
     ]
 };
-unsafe extern "C" fn BlockBombedReact(mut ci: *mut CollInfo, mut v0: uint16) {
+unsafe fn BlockBombedReact(mut ci: *mut CollInfo, mut v0: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize) as *mut uint16) =
         (v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
     while kBlockBombedReact[((*((&raw mut g_ram as *mut uint8)
@@ -4678,7 +4613,7 @@ unsafe extern "C" fn BlockBombedReact(mut ci: *mut CollInfo, mut v0: uint16) {
         != 0
     {}
 }
-unsafe extern "C" fn BlockFunc_A06A(mut k: uint16) {
+unsafe fn BlockFunc_A06A(mut k: uint16) {
     let mut v2: int16 = 0;
     let mut v3: int16 = 0;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -4782,7 +4717,7 @@ unsafe extern "C" fn BlockFunc_A06A(mut k: uint16) {
         );
     };
 }
-unsafe extern "C" fn BlockFunc_A0F4(
+unsafe fn BlockFunc_A0F4(
     mut a: uint16,
     mut r22: uint16,
     mut r24: uint16,
@@ -4821,12 +4756,7 @@ unsafe extern "C" fn BlockFunc_A0F4(
         }
     }
 }
-unsafe extern "C" fn BlockFunc_A11A(
-    mut a: uint16,
-    mut r24: uint16,
-    mut r26: uint16,
-    mut r28: uint16,
-) {
+unsafe fn BlockFunc_A11A(mut a: uint16, mut r24: uint16, mut r26: uint16, mut r28: uint16) {
     let mut RegWord: uint16 = Mult8x8(
         a as uint8,
         *((&raw mut g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
@@ -4862,7 +4792,7 @@ unsafe extern "C" fn BlockFunc_A11A(
         }
     }
 }
-unsafe extern "C" fn BlockShotReactHoriz_Slope(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockShotReactHoriz_Slope(mut ci: *mut CollInfo) -> uint8 {
     if (*(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -4888,7 +4818,7 @@ unsafe extern "C" fn BlockShotReactHoriz_Slope(mut ci: *mut CollInfo) -> uint8 {
         return BlockShotReactVert_Slope_NonSquare(ci);
     };
 }
-unsafe extern "C" fn BlockShotReactVert_Slope(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockShotReactVert_Slope(mut ci: *mut CollInfo) -> uint8 {
     if (*(&raw mut g_ram as *mut uint8)
         .offset(0x16402 as ::core::ffi::c_int as isize)
         .offset(
@@ -4914,25 +4844,25 @@ unsafe extern "C" fn BlockShotReactVert_Slope(mut ci: *mut CollInfo) -> uint8 {
         return BlockShotReactHoriz_Slope_NonSquare(ci);
     };
 }
-unsafe extern "C" fn BlockShotReactHoriz(mut ci: *mut CollInfo, mut k: uint16) -> uint8 {
+unsafe fn BlockShotReactHoriz(mut ci: *mut CollInfo, mut k: uint16) -> uint8 {
     static mut kBlockShotReactHoriz: [Option<Func_CollInfo_U8>; 16] = unsafe {
         [
-            Some(ClearCarry_9 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockShotReactHoriz_Slope as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(ClearCarry_9 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(ClearCarry_9 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReact_ShootableAir as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReact_HorizExt as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(ClearCarry_9 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReact_BombableAir as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarry_0 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarry_0 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarry_0 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarry_0 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReact_Shootable as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReact_VertExt as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarry_0 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReact_BombableBlock as unsafe extern "C" fn(*mut CollInfo) -> uint8),
+            Some(ClearCarry_9 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockShotReactHoriz_Slope as unsafe fn(*mut CollInfo) -> uint8),
+            Some(ClearCarry_9 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(ClearCarry_9 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReact_ShootableAir as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReact_HorizExt as unsafe fn(*mut CollInfo) -> uint8),
+            Some(ClearCarry_9 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReact_BombableAir as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarry_0 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarry_0 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarry_0 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarry_0 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReact_Shootable as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReact_VertExt as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarry_0 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReact_BombableBlock as unsafe fn(*mut CollInfo) -> uint8),
         ]
     };
     let mut v1: uint8 = 0;
@@ -4964,25 +4894,25 @@ unsafe extern "C" fn BlockShotReactHoriz(mut ci: *mut CollInfo, mut k: uint16) -
     }
     return v1;
 }
-unsafe extern "C" fn BlockShotReactVert(mut ci: *mut CollInfo, mut k: uint16) -> uint8 {
+unsafe fn BlockShotReactVert(mut ci: *mut CollInfo, mut k: uint16) -> uint8 {
     static mut kBlockShotReactVert: [Option<Func_CollInfo_U8>; 16] = unsafe {
         [
-            Some(ClearCarry_9 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockShotReactVert_Slope as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(ClearCarry_9 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(ClearCarry_9 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReact_ShootableAir as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReact_HorizExt as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(ClearCarry_9 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReact_BombableAir as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarry_0 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarry_0 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarry_0 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarry_0 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReact_Shootable as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReact_VertExt as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarry_0 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReact_BombableBlock as unsafe extern "C" fn(*mut CollInfo) -> uint8),
+            Some(ClearCarry_9 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockShotReactVert_Slope as unsafe fn(*mut CollInfo) -> uint8),
+            Some(ClearCarry_9 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(ClearCarry_9 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReact_ShootableAir as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReact_HorizExt as unsafe fn(*mut CollInfo) -> uint8),
+            Some(ClearCarry_9 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReact_BombableAir as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarry_0 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarry_0 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarry_0 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarry_0 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReact_Shootable as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReact_VertExt as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarry_0 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReact_BombableBlock as unsafe fn(*mut CollInfo) -> uint8),
         ]
     };
     let mut v1: uint8 = 0;
@@ -5014,7 +4944,7 @@ unsafe extern "C" fn BlockShotReactVert(mut ci: *mut CollInfo, mut k: uint16) ->
     }
     return v1;
 }
-unsafe extern "C" fn BlockGetSomePos1(mut k: uint16) -> uint16 {
+unsafe fn BlockGetSomePos1(mut k: uint16) -> uint16 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut r38: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0xb78 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -5033,7 +4963,7 @@ unsafe extern "C" fn BlockGetSomePos1(mut k: uint16) -> uint16 {
         - r38 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
         >> 4 as ::core::ffi::c_int) as uint16;
 }
-unsafe extern "C" fn BlockGetSomePos2(mut k: uint16) -> uint16 {
+unsafe fn BlockGetSomePos2(mut k: uint16) -> uint16 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut r38: uint16 = (*((&raw mut g_ram as *mut uint8)
         .offset(0xb64 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -5052,8 +4982,7 @@ unsafe extern "C" fn BlockGetSomePos2(mut k: uint16) -> uint16 {
         - r38 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
         >> 4 as ::core::ffi::c_int) as uint16;
 }
-#[no_mangle]
-pub unsafe extern "C" fn BlockCollNoWaveBeamHoriz(mut k: uint16) -> uint8 {
+pub unsafe fn BlockCollNoWaveBeamHoriz(mut k: uint16) -> uint8 {
     let mut v7: uint16 = 0;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut amt: int32 = (*((&raw mut g_ram as *mut uint8)
@@ -5144,8 +5073,7 @@ pub unsafe extern "C" fn BlockCollNoWaveBeamHoriz(mut k: uint16) -> uint8 {
     KillProjectile(k);
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn BlockCollNoWaveBeamVert(mut k: uint16) -> uint8 {
+pub unsafe fn BlockCollNoWaveBeamVert(mut k: uint16) -> uint8 {
     let mut v7: uint16 = 0;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut amt: int32 = (*((&raw mut g_ram as *mut uint8)
@@ -5233,8 +5161,7 @@ pub unsafe extern "C" fn BlockCollNoWaveBeamVert(mut k: uint16) -> uint8 {
     KillProjectile(k);
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn BlockCollWaveBeamHoriz(mut k: uint16) -> uint8 {
+pub unsafe fn BlockCollWaveBeamHoriz(mut k: uint16) -> uint8 {
     let mut v7: uint16 = 0;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut amt: int32 = (*((&raw mut g_ram as *mut uint8)
@@ -5336,8 +5263,7 @@ pub unsafe extern "C" fn BlockCollWaveBeamHoriz(mut k: uint16) -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn BlockCollWaveBeamVert(mut k: uint16) -> uint8 {
+pub unsafe fn BlockCollWaveBeamVert(mut k: uint16) -> uint8 {
     let mut v7: uint16 = 0;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut amt: int32 = (*((&raw mut g_ram as *mut uint8)
@@ -5437,8 +5363,7 @@ pub unsafe extern "C" fn BlockCollWaveBeamVert(mut k: uint16) -> uint8 {
     }
     return 0 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn BlockCollMissileHoriz(mut k: uint16) -> uint8 {
+pub unsafe fn BlockCollMissileHoriz(mut k: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut amt: int32 = (*((&raw mut g_ram as *mut uint8)
         .offset(0xbdc as ::core::ffi::c_int as isize) as *mut uint16)
@@ -5497,8 +5422,7 @@ pub unsafe extern "C" fn BlockCollMissileHoriz(mut k: uint16) -> uint8 {
     KillProjectile(k);
     return 1 as uint8;
 }
-#[no_mangle]
-pub unsafe extern "C" fn BlockCollMissileVert(mut k: uint16) -> uint8 {
+pub unsafe fn BlockCollMissileVert(mut k: uint16) -> uint8 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut amt: int32 = (*((&raw mut g_ram as *mut uint8)
         .offset(0xbf0 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -5555,7 +5479,7 @@ pub unsafe extern "C" fn BlockCollMissileVert(mut k: uint16) -> uint8 {
     KillProjectile(k);
     return 1 as uint8;
 }
-unsafe extern "C" fn BlockShotReact_Slope_NonSquare(
+unsafe fn BlockShotReact_Slope_NonSquare(
     mut ci: *mut CollInfo,
     mut j: uint16,
     mut k: uint16,
@@ -5608,7 +5532,7 @@ unsafe extern "C" fn BlockShotReact_Slope_NonSquare(
         return 0 as uint8;
     };
 }
-unsafe extern "C" fn BlockShotReactVert_Slope_NonSquare(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockShotReactVert_Slope_NonSquare(mut ci: *mut CollInfo) -> uint8 {
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xdc4 as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
@@ -5630,7 +5554,7 @@ unsafe extern "C" fn BlockShotReactVert_Slope_NonSquare(mut ci: *mut CollInfo) -
         return 0 as uint8;
     };
 }
-unsafe extern "C" fn BlockShotReactHoriz_Slope_NonSquare(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockShotReactHoriz_Slope_NonSquare(mut ci: *mut CollInfo) -> uint8 {
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xdc4 as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
@@ -5652,26 +5576,25 @@ unsafe extern "C" fn BlockShotReactHoriz_Slope_NonSquare(mut ci: *mut CollInfo) 
         return 0 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn BlockCollSpreadBomb(mut k: uint16) -> uint8 {
+pub unsafe fn BlockCollSpreadBomb(mut k: uint16) -> uint8 {
     static mut kBlockCollSpreadBomb: [Option<Func_CollInfo_U8>; 16] = unsafe {
         [
-            Some(ClearCarry_9 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(sub_949D5D as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(ClearCarry_9 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(ClearCarry_9 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarry_0 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReact_HorizExt as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(ClearCarry_9 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(ClearCarry_9 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarry_0 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarry_0 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarry_0 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarry_0 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarry_0 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReact_VertExt as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarry_0 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarry_0 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
+            Some(ClearCarry_9 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(sub_949D5D as unsafe fn(*mut CollInfo) -> uint8),
+            Some(ClearCarry_9 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(ClearCarry_9 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarry_0 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReact_HorizExt as unsafe fn(*mut CollInfo) -> uint8),
+            Some(ClearCarry_9 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(ClearCarry_9 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarry_0 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarry_0 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarry_0 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarry_0 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarry_0 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReact_VertExt as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarry_0 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarry_0 as unsafe fn(*mut CollInfo) -> uint8),
         ]
     };
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -5725,7 +5648,7 @@ pub unsafe extern "C" fn BlockCollSpreadBomb(mut k: uint16) -> uint8 {
     }
     return rv;
 }
-unsafe extern "C" fn BlockShotReactVert_Slope_Square(
+unsafe fn BlockShotReactVert_Slope_Square(
     mut ci: *mut CollInfo,
     mut a: uint16,
     mut k: uint16,
@@ -5825,7 +5748,7 @@ unsafe extern "C" fn BlockShotReactVert_Slope_Square(
     return (kTab948E54[v2 as usize] as ::core::ffi::c_int != 0 as ::core::ffi::c_int)
         as ::core::ffi::c_int as uint8;
 }
-unsafe extern "C" fn BlockShotReactHoriz_Slope_Square(
+unsafe fn BlockShotReactHoriz_Slope_Square(
     mut ci: *mut CollInfo,
     mut a: uint16,
     mut k: uint16,
@@ -5947,13 +5870,13 @@ unsafe extern "C" fn BlockShotReactHoriz_Slope_Square(
     return (kTab948E54[v2 as usize] as ::core::ffi::c_int != 0 as ::core::ffi::c_int)
         as ::core::ffi::c_int as uint8;
 }
-unsafe extern "C" fn ClearCarryZero(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn ClearCarryZero(mut ci: *mut CollInfo) -> uint8 {
     return 0 as uint8;
 }
-unsafe extern "C" fn SetCarryClearOvf(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn SetCarryClearOvf(mut ci: *mut CollInfo) -> uint8 {
     return 1 as uint8;
 }
-unsafe extern "C" fn BlockReactGrapple_GrappleBlock(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockReactGrapple_GrappleBlock(mut ci: *mut CollInfo) -> uint8 {
     static mut kBlockReactGrapple_GrappleBlockPlm: [uint16; 4] = [
         0xd0d8 as ::core::ffi::c_int as uint16,
         0xd0dc as ::core::ffi::c_int as uint16,
@@ -5984,7 +5907,7 @@ unsafe extern "C" fn BlockReactGrapple_GrappleBlock(mut ci: *mut CollInfo) -> ui
         );
     };
 }
-unsafe extern "C" fn BlockReactGrapple_SpikeBlock(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockReactGrapple_SpikeBlock(mut ci: *mut CollInfo) -> uint8 {
     static mut kBlockReactGrapple_SpikeBlockPlm: [uint16; 16] = [
         0xd0e4 as ::core::ffi::c_int as uint16,
         0xd0e4 as ::core::ffi::c_int as uint16,
@@ -6024,8 +5947,7 @@ unsafe extern "C" fn BlockReactGrapple_SpikeBlock(mut ci: *mut CollInfo) -> uint
         );
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn BlockCollGrappleBeam() -> uint8 {
+pub unsafe fn BlockCollGrappleBeam() -> uint8 {
     let mut grapple_vel_x: int32 = (*((&raw mut g_ram as *mut uint8)
         .offset(0xd22 as ::core::ffi::c_int as isize)
         as *mut uint16) as int16 as int32)
@@ -6121,27 +6043,26 @@ pub unsafe extern "C" fn BlockCollGrappleBeam() -> uint8 {
     }
     return result;
 }
-#[no_mangle]
-pub unsafe extern "C" fn BlockReactGrapple() -> uint8 {
+pub unsafe fn BlockReactGrapple() -> uint8 {
     let mut v0: int16 = 0;
     static mut kBlockReactGrapple: [Option<Func_CollInfo_U8>; 16] = unsafe {
         [
-            Some(ClearCarryZero as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarryClearOvf as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(ClearCarryZero as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(ClearCarryZero as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReact_ShootableAir as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReact_HorizExt as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(ClearCarryZero as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReact_BombableAir as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarryClearOvf as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarryClearOvf as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReactGrapple_SpikeBlock as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarryClearOvf as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReact_Shootable as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReact_VertExt as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReactGrapple_GrappleBlock as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReact_BombableBlock as unsafe extern "C" fn(*mut CollInfo) -> uint8),
+            Some(ClearCarryZero as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarryClearOvf as unsafe fn(*mut CollInfo) -> uint8),
+            Some(ClearCarryZero as unsafe fn(*mut CollInfo) -> uint8),
+            Some(ClearCarryZero as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReact_ShootableAir as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReact_HorizExt as unsafe fn(*mut CollInfo) -> uint8),
+            Some(ClearCarryZero as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReact_BombableAir as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarryClearOvf as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarryClearOvf as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReactGrapple_SpikeBlock as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarryClearOvf as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReact_Shootable as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReact_VertExt as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReactGrapple_GrappleBlock as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReact_BombableBlock as unsafe fn(*mut CollInfo) -> uint8),
         ]
     };
     let mut prod: uint16 = Mult8x8(
@@ -6184,7 +6105,6 @@ pub unsafe extern "C" fn BlockReactGrapple() -> uint8 {
     }
     return rv;
 }
-#[no_mangle]
 pub static mut kSinCosTable8bit_Sext: [int16; 320] = [
     -(256 as ::core::ffi::c_int) as int16,
     -(255 as ::core::ffi::c_int) as int16,
@@ -6507,7 +6427,7 @@ pub static mut kSinCosTable8bit_Sext: [int16; 320] = [
     -(12 as ::core::ffi::c_int) as int16,
     -(6 as ::core::ffi::c_int) as int16,
 ];
-unsafe extern "C" fn BlockFunc_A957(mut tmpD82: uint16, mut tmpD84: uint16) {
+unsafe fn BlockFunc_A957(mut tmpD82: uint16, mut tmpD84: uint16) {
     let mut v5: int16 = 0;
     let mut v7: int16 = 0;
     let mut v0: uint16 = tmpD82;
@@ -6616,31 +6536,31 @@ unsafe extern "C" fn BlockFunc_A957(mut tmpD82: uint16, mut tmpD84: uint16) {
     *((&raw mut g_ram as *mut uint8).offset(0xd96 as ::core::ffi::c_int as isize) as *mut uint16) =
         (v8 as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint8 as uint16;
 }
-unsafe extern "C" fn ClearCarry_10(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn ClearCarry_10(mut ci: *mut CollInfo) -> uint8 {
     return 0 as uint8;
 }
-unsafe extern "C" fn SetCarry_3(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn SetCarry_3(mut ci: *mut CollInfo) -> uint8 {
     return 1 as uint8;
 }
-unsafe extern "C" fn BlockReact_AA64() -> uint8 {
+unsafe fn BlockReact_AA64() -> uint8 {
     static mut kBlockReactLut_AB90_0: [Option<Func_CollInfo_U8>; 16] = unsafe {
         [
-            Some(ClearCarry_10 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarry_3 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReact_AA64_SpikeAir as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(ClearCarry_10 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(ClearCarry_10 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReact_HorizExt as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(ClearCarry_10 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(ClearCarry_10 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarry_3 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarry_3 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReact_AA64_SpikeBlock as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarry_3 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarry_3 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(BlockReact_VertExt as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarry_3 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-            Some(SetCarry_3 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
+            Some(ClearCarry_10 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarry_3 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReact_AA64_SpikeAir as unsafe fn(*mut CollInfo) -> uint8),
+            Some(ClearCarry_10 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(ClearCarry_10 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReact_HorizExt as unsafe fn(*mut CollInfo) -> uint8),
+            Some(ClearCarry_10 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(ClearCarry_10 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarry_3 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarry_3 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReact_AA64_SpikeBlock as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarry_3 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarry_3 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(BlockReact_VertExt as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarry_3 as unsafe fn(*mut CollInfo) -> uint8),
+            Some(SetCarry_3 as unsafe fn(*mut CollInfo) -> uint8),
         ]
     };
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
@@ -6699,7 +6619,7 @@ static mut g_word_94AAF7: [uint16; 16] = [
     0 as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
 ];
-unsafe extern "C" fn BlockReact_AA64_SpikeAir(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockReact_AA64_SpikeAir(mut ci: *mut CollInfo) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
         as *mut uint16)
         != 0
@@ -6749,7 +6669,7 @@ static mut g_word_94AB70: [uint16; 16] = [
     0 as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
 ];
-unsafe extern "C" fn BlockReact_AA64_SpikeBlock(mut ci: *mut CollInfo) -> uint8 {
+unsafe fn BlockReact_AA64_SpikeBlock(mut ci: *mut CollInfo) -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
         as *mut uint16)
         != 0
@@ -6783,25 +6703,25 @@ unsafe extern "C" fn BlockReact_AA64_SpikeBlock(mut ci: *mut CollInfo) -> uint8 
 }
 static mut kBlockReactLut_AB90: [Option<Func_CollInfo_U8>; 16] = unsafe {
     [
-        Some(ClearCarry_10 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(SetCarry_3 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockReact_AA64_SpikeAir as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(ClearCarry_10 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(ClearCarry_10 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockReact_HorizExt as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(ClearCarry_10 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(ClearCarry_10 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(SetCarry_3 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(SetCarry_3 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockReact_AA64_SpikeBlock as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(SetCarry_3 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(SetCarry_3 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(BlockReact_VertExt as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(SetCarry_3 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
-        Some(SetCarry_3 as unsafe extern "C" fn(*mut CollInfo) -> uint8),
+        Some(ClearCarry_10 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(SetCarry_3 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockReact_AA64_SpikeAir as unsafe fn(*mut CollInfo) -> uint8),
+        Some(ClearCarry_10 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(ClearCarry_10 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockReact_HorizExt as unsafe fn(*mut CollInfo) -> uint8),
+        Some(ClearCarry_10 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(ClearCarry_10 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(SetCarry_3 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(SetCarry_3 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockReact_AA64_SpikeBlock as unsafe fn(*mut CollInfo) -> uint8),
+        Some(SetCarry_3 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(SetCarry_3 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(BlockReact_VertExt as unsafe fn(*mut CollInfo) -> uint8),
+        Some(SetCarry_3 as unsafe fn(*mut CollInfo) -> uint8),
+        Some(SetCarry_3 as unsafe fn(*mut CollInfo) -> uint8),
     ]
 };
-unsafe extern "C" fn BlockFunc_ABB0() -> uint8 {
+unsafe fn BlockFunc_ABB0() -> uint8 {
     let mut rv: uint8 = 0;
     let mut v0: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xd94 as ::core::ffi::c_int as isize) as *mut uint16);
@@ -6840,7 +6760,7 @@ unsafe extern "C" fn BlockFunc_ABB0() -> uint8 {
     }
     return rv;
 }
-unsafe extern "C" fn BlockFunc_ABE6(mut tmpD82: uint16) -> uint8 {
+unsafe fn BlockFunc_ABE6(mut tmpD82: uint16) -> uint8 {
     let mut v0: uint8 = 0;
     *((&raw mut g_ram as *mut uint8).offset(0xd98 as ::core::ffi::c_int as isize) as *mut uint16) =
         6 as uint16;
@@ -6866,8 +6786,7 @@ unsafe extern "C" fn BlockFunc_ABE6(mut tmpD82: uint16) -> uint8 {
     }
     return v0;
 }
-#[no_mangle]
-pub unsafe extern "C" fn BlockFunc_AC11() {
+pub unsafe fn BlockFunc_AC11() {
     let mut grapple_beam_tmpD82: uint16 = (2 as ::core::ffi::c_int
         * *(&raw mut g_ram as *mut uint8).offset(0xcfb as ::core::ffi::c_int as isize)
             as ::core::ffi::c_int) as uint16;
@@ -6882,8 +6801,7 @@ pub unsafe extern "C" fn BlockFunc_AC11() {
         *((&raw mut g_ram as *mut uint8).offset(0xd92 as ::core::ffi::c_int as isize)
             as *mut uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn BlockFunc_AC31() -> uint8 {
+pub unsafe fn BlockFunc_AC31() -> uint8 {
     if *((&raw mut g_ram as *mut uint8).offset(0xd00 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
     {
@@ -6954,8 +6872,7 @@ pub unsafe extern "C" fn BlockFunc_AC31() -> uint8 {
         return 0 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleMovementAndCollForSamusGrapple() -> uint8 {
+pub unsafe fn HandleMovementAndCollForSamusGrapple() -> uint8 {
     let mut v2: uint16 = 0;
     let mut v5: uint16 = 0;
     let mut current_block: u64;
@@ -7332,8 +7249,7 @@ pub unsafe extern "C" fn HandleMovementAndCollForSamusGrapple() -> uint8 {
         }
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn BlockFunc_AEE3() -> uint8 {
+pub unsafe fn BlockFunc_AEE3() -> uint8 {
     if (*((&raw mut g_ram as *mut uint8).offset(0xd26 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         ^ *((&raw mut g_ram as *mut uint8).offset(0xcfa as ::core::ffi::c_int as isize)
@@ -7361,8 +7277,7 @@ pub unsafe extern "C" fn BlockFunc_AEE3() -> uint8 {
         return 1 as uint8;
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn GrappleFunc_AF87() {
+pub unsafe fn GrappleFunc_AF87() {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
@@ -7396,18 +7311,16 @@ pub unsafe extern "C" fn GrappleFunc_AF87() {
         i -= 8 as ::core::ffi::c_int;
     }
 }
-unsafe extern "C" fn GrappleInstr_Goto(mut j: uint16) -> uint16 {
+unsafe fn GrappleInstr_Goto(mut j: uint16) -> uint16 {
     return *(RomPtr_94(j as uint16_t) as *mut uint16);
 }
-#[no_mangle]
-pub unsafe extern "C" fn CallGrappleInstr(mut ea: uint32, mut j: uint16) -> uint16 {
+pub unsafe fn CallGrappleInstr(mut ea: uint32, mut j: uint16) -> uint16 {
     match ea {
         9744628 => return GrappleInstr_Goto(j),
         _ => return Unreachable() as uint16,
     };
 }
-#[no_mangle]
-pub unsafe extern "C" fn HandleGrappleBeamGfx() {
+pub unsafe fn HandleGrappleBeamGfx() {
     let mut v1: ::core::ffi::c_int = CalculateAngleFromXY(
         (*((&raw mut g_ram as *mut uint8).offset(0xd08 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
@@ -7536,7 +7449,7 @@ pub unsafe extern "C" fn HandleGrappleBeamGfx() {
         DrawGrappleOams3();
     }
 }
-unsafe extern "C" fn DrawGrappleOams(mut x_r20: uint16, mut y_r24: uint16, mut chr_r38: uint16) {
+unsafe fn DrawGrappleOams(mut x_r20: uint16, mut y_r24: uint16, mut chr_r38: uint16) {
     let mut v1: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x590 as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v2: *mut OamEnt = gOamEnt(
@@ -7549,7 +7462,7 @@ unsafe extern "C" fn DrawGrappleOams(mut x_r20: uint16, mut y_r24: uint16, mut c
     *((&raw mut g_ram as *mut uint8).offset(0x590 as ::core::ffi::c_int as isize) as *mut uint16) =
         (v1 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
 }
-unsafe extern "C" fn DrawGrappleOams3() {
+unsafe fn DrawGrappleOams3() {
     let mut idx: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0x590 as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v2: *mut OamEnt = gOamEnt(idx as ::core::ffi::c_int);
