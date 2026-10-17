@@ -73,11 +73,18 @@ Keep it this small. Add a crate only when the game code itself needs one.
 Nothing else should start until this works, because it is how every later
 change is judged.
 
-1. **Run it once by hand.** Put the ROM in `rom/sm.smc`, run
+1. **Run it once.** Put the ROM in `rom/sm.smc`, run
    `cargo run --release -- rom/sm.smc` from the repo root, play a minute and
    confirm no `Verify failure!` lines. Linux or WSL first. If anything
    differs from what snesrev's C build did, that is a transpile bug: fix it
    before anything else.
+   Interactive play and WSL are unavailable on the current Windows machine;
+   Cargo's build script is denied execution (OS error 5). Use the automated
+   3,600-frame smoke run followed by any% in Linux GitHub Actions instead.
+   The private `sm-decomp-private-archive-20261017` repo supplies its ROM and
+   calls this repo's `.github/workflows/verify.yml`; logs stay private and
+   no ROM, save state or image is uploaded. ROM restored locally from that
+   archive to gitignored `rom/sm.smc`; expected SHA-1 confirmed.
 2. **Headless verify mode.** Add `sm verify <rom> <inputs> [--frames N]`:
    no window, no audio, unthrottled, `RM_BOTH`. It feeds one recorded
    controller word per game frame through the same path as `RtlRunFrame`,
@@ -154,3 +161,7 @@ code is the source of truth.
 | lines of Rust | 278,936 |
 
 Phase 1 adds: failing frames per movie (target 0).
+
+Headless verification adds one unsafe diagnostic function and runner source
+lines; gameplay residue counters are unchanged. Baseline pending the first
+Linux Actions run.

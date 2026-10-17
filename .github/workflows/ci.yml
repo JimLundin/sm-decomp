@@ -9,8 +9,8 @@ permissions:
 
 jobs:
   build:
-    # No ROM is available here, so CI only proves the game builds and is
-    # formatted. The verify run against the original ROM happens locally.
+    # Public CI checks build/format. verify.yml is called from the private
+    # ROM archive so verification never publishes ROM data or save states.
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4

@@ -3338,6 +3338,9 @@ pub unsafe extern "C" fn DrawFrameToPpu() {
 }
 #[no_mangle]
 pub unsafe extern "C" fn SaveBugSnapshot() {
+    if VERIFY_ACTIVE {
+        return;
+    }
     if !g_debug_flag && g_got_mismatch_count == 0 as ::core::ffi::c_int {
         let mut buffer: [::core::ffi::c_char; 64] = [0; 64];
         snprintf(
@@ -3349,6 +3352,38 @@ pub unsafe extern "C" fn SaveBugSnapshot() {
         RtlSaveSnapshot(&raw mut buffer as *mut ::core::ffi::c_char, true_0 != 0);
     }
     g_got_mismatch_count = 5 as ::core::ffi::c_int * 60 as ::core::ffi::c_int;
+}
+// Set only by the single-threaded headless runner. The interactive oracle
+// retains its existing recovery and snapshot behaviour.
+pub static mut VERIFY_ACTIVE: bool = false;
+pub static mut VERIFY_FAILURES: u64 = 0;
+
+unsafe fn report_first_verify_failure() {
+    eprintln!("First failing frame: {} (zero-based)", snes_frame_counter);
+    let mine = &*(&raw const g_snapshot_mine);
+    let theirs = &*(&raw const g_snapshot_theirs);
+    for (addr, (&actual, &expected)) in mine.ram.iter().zip(&theirs.ram).enumerate() {
+        if actual == expected {
+            continue;
+        }
+        let var = crate::ram_map::RAM_VARS
+            .iter()
+            .rev()
+            .find(|var| var.addr <= addr as u32);
+        if let Some(var) = var {
+            eprintln!(
+                "RAM ${:06X} ({}+${:X}): ${actual:02X} != ${expected:02X}",
+                0x7e0000 + addr,
+                var.name,
+                addr as u32 - var.addr
+            );
+        } else {
+            eprintln!(
+                "RAM ${:06X}: ${actual:02X} != ${expected:02X}",
+                0x7e0000 + addr
+            );
+        }
+    }
 }
 #[no_mangle]
 pub unsafe extern "C" fn RunOneFrameOfGame_Both() {
@@ -3372,6 +3407,12 @@ pub unsafe extern "C" fn RunOneFrameOfGame_Both() {
             &raw mut g_snapshot_before,
         );
         if g_fail {
+            if VERIFY_ACTIVE {
+                VERIFY_FAILURES += 1;
+                if VERIFY_FAILURES == 1 {
+                    report_first_verify_failure();
+                }
+            }
             g_fail = false_0 != 0;
             printf(b"Verify failure!\n\0" as *const u8 as *const ::core::ffi::c_char);
             (*g_snes).ppu = (*g_snes).snes_ppu;

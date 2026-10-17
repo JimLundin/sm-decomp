@@ -9,6 +9,7 @@
 #![feature(extern_types)]
 #[allow(unused_imports)]
 use ::sm as _;
+mod verify;
 extern "C" {
     pub type _IO_wide_data;
     pub type _IO_codecvt;
@@ -3318,6 +3319,9 @@ pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 pub fn main() {
+    if std::env::args().nth(1).as_deref() == Some("verify") {
+        ::std::process::exit(verify::run());
+    }
     let mut args_strings: Vec<Vec<u8>> = ::std::env::args()
         .map(|arg| {
             ::std::ffi::CString::new(arg)

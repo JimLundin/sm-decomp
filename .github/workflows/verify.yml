@@ -1,0 +1,70 @@
+name: Verify
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: Public sm-decomp revision to verify
+        type: string
+        default: main
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    # The caller's token can read its own private ROM archive. No ROM, state
+    # or screenshot is uploaded as an artifact or placed in the public repo.
+    if: github.repository == 'JimLundin/sm-decomp-private-archive-20261017'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: private-rom
+          sparse-checkout: rom
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: JimLundin/sm-decomp
+          ref: ${{ inputs.ref }}
+          path: game
+          persist-credentials: false
+      - name: Install SDL2 and toolchain
+        working-directory: game
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsdl2-dev
+          rustup show
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: game
+      - name: Format and build
+        working-directory: game
+        run: |
+          cargo fmt --check
+          cargo build --release --locked
+          sh tools/progress.sh
+      - name: Prepare ROM and any% inputs
+        working-directory: game
+        run: |
+          cp ../private-rom/rom/sm.sfc rom/sm.smc
+          python3 - <<'PY'
+          import hashlib, io, pathlib, tomllib, urllib.request, zipfile
+          rom = pathlib.Path('rom/sm.smc').read_bytes()
+          assert hashlib.sha1(rom).hexdigest() == 'da957f0d63d14cb441d215462904c4fa8519c613', 'wrong ROM'
+          movie = tomllib.loads(pathlib.Path('movies/manifest.toml').read_text())['movies'][0]
+          data = urllib.request.urlopen(movie['download'], timeout=60).read()
+          with zipfile.ZipFile(io.BytesIO(data)) as archive:
+              if 'input' not in archive.namelist():
+                  data = archive.read(next(name for name in archive.namelist() if name.endswith('.lsmv')))
+          assert hashlib.sha256(data).hexdigest() == movie['sha256'], 'wrong movie'
+          pathlib.Path('movies', movie['file']).write_bytes(data)
+          PY
+          python3 tools/movie_inputs.py movies/super-metroid-any-3653.lsmv movies/any.inputs --rom rom/sm.smc
+      - name: Verify first minute
+        working-directory: game
+        run: timeout 120 target/release/sm verify rom/sm.smc movies/any.inputs --frames 3600
+      - name: Verify full any% movie
+        working-directory: game
+        run: timeout 1200 target/release/sm verify rom/sm.smc movies/any.inputs
