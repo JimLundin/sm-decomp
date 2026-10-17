@@ -626,6 +626,23 @@ jump reaches the pedestal. Contact, not shooting, collects the item.
 Next: extend collect-jump.inputs right through 9F11 into 9F64 and collect
 the first missiles at X736/Y656; then return toward the bomb room. Preserve
 the verified route and use separate worker directories for further trials.
+Parallel coverage work now has six independent assignments: first missiles,
+return to Parlor, an alternate Crateria/Parlor branch, room-aligned TAS input
+timing, bomb-route geometry, and Waver/boss access. Replay workers own
+separate target directories and cap their trial processes at two each;
+the parent validates useful prefixes with the standard oracle.
+The Morph return passage is a normal shootable block at X1216/Y704
+(BTS 04): crouch fire opens it, Morph rolls underneath, and a fresh jump
+clears the floor lip. target/missile-route/door-hop.inputs now passes the
+current standard verifier: 30,465 frames, zero failures (58.49s), thirteen
+rooms, nine enemy definitions. Final room is 9F11; missiles remain 0/0.
+Its first-missile exit is lower left, not upper right: shoot the shaft's
+floor blocks and descend to the door at Y352..415 into 9F64. The upper-right
+door is red and leads elsewhere. Return will require climbing this shaft.
+Linux format/release build and all four replays pass on the current source
+90889612: https://github.com/JimLundin/sm-decomp/actions/runs/39077183059.
+Direct rustfmt checks pass; local Cargo is still denied by the managed
+Windows policy. Progress counters are unchanged; source has not changed.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
