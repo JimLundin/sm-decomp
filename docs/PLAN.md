@@ -87,6 +87,18 @@ change is judged.
    to archived status. Manual `.github/workflows/verify.yml` runs publicly
    using gzip/base64 ROM chunks in encrypted Actions secrets. Only comparison
    diagnostics are printed; no ROM, save state or image is uploaded.
+   Stopped after one hour of investigation on 2026-10-17, per AGENTS.md.
+   Linux release build and formatting pass. Real-ROM smoke crashes on frame
+   0 before comparison completes: invalid LoROM read `$96:2000` in the
+   decompressor's `LDA $0000,X` at `$80:B185` (PC advanced to `$80:B188`).
+   Registers: A=$0080, X=$2000, Y=$C84D, SP=$1FF1, DP=$0000, DB=$96;
+   direct-page $44..$50 is FB 09 FF 00 20 00 00 00 00 00 7F 00 00.
+   `snes_loadRom` already resets hardware; missing reset is ruled out.
+   Absolute-X address arithmetic looks correct; source scratch pointer
+   $47..$48 is already $2000. Root cause remains unresolved. Next diagnostic
+   step: trace decompressor source setup and writes to $47..$49 during boot.
+   Latest run: https://github.com/JimLundin/sm-decomp/actions/runs/39058480660.
+   No baseline count exists and the full any% replay has not run.
 2. **Headless verify mode.** Add `sm verify <rom> <inputs> [--frames N]`:
    no window, no audio, unthrottled, `RM_BOTH`. It feeds one recorded
    controller word per game frame through the same path as `RtlRunFrame`,
@@ -193,5 +205,7 @@ code is the source of truth.
 Phase 1 adds: failing frames per movie (target 0).
 
 Headless verification adds one unsafe diagnostic function and runner source
-lines; gameplay residue counters are unchanged. Baseline pending the first
-Linux Actions run.
+lines; gameplay residue counters are unchanged. Baseline blocked by the
+frame-0 crash described above. Any%, low% and 100% inputs have been imported
+locally (129,712 / 167,797 / 222,788 frames) and checked against manifest
+hashes and ROM identity; all movie files remain ignored.
