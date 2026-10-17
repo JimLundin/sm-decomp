@@ -13,14 +13,8 @@ extern "C" {
 }
 pub use crate::types::{
     __int16_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, uint16, uint16_t, uint32,
-    uint32_t, uint8, uint8_t, VoidP,
+    uint32_t, uint8, uint8_t, Point16U, VoidP,
 };
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Point16U {
-    pub x: uint16,
-    pub y: uint16,
-}
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct ProjectileDamagesAndInstrPtr {
@@ -33,16 +27,7 @@ pub struct ProjectileDataTable {
     pub damage: uint16,
     pub instr_ptrs: [uint16; 10],
 }
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct ProjectileInstr {
-    pub timer: uint16,
-    pub spritemap_ptr: VoidP,
-    pub x_radius: uint8,
-    pub y_radius: uint8,
-    pub field_6: uint16,
-}
-pub use crate::types::ProjectileType;
+pub use crate::types::{ProjectileInstr, ProjectileType};
 pub const kProjectileType_DontInteractWithSamus: ProjectileType = 32768;
 pub const kProjectileType_TypeMask: ProjectileType = 3840;
 pub const kProjectileType_MissileExplosion: ProjectileType = 2048;

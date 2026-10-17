@@ -176,6 +176,10 @@ every step makes the next one easier.
    Any% passes 129,712 frames with zero failures (182.10s); format and direct
    library/frontend metadata builds pass. Rust lines now 278,552; other
    counters unchanged. Local Cargo build still encounters the ASR block.
+   Gameplay data batch applied: 205 repeated struct/union definitions and
+   three collision-result aliases consolidated without layout changes.
+   Any%: 129,712 frames, zero failures; format and normal library/frontend
+   metadata builds pass. Rust lines now 275,862; other counters unchanged.
    This touches `rtl.rs` and game banks 80, 81, 82, 84, 86, 88, 8b, 8f, 90,
    91, 94, 9b, a0, a2, a3, a4, a5, a6, a7, a8, a9, b2 (only the types each
    already defines). Keep all fields, `Copy`/`Clone`, and representation exact:

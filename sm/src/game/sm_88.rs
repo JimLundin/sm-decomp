@@ -261,43 +261,7 @@ pub const OAMADDH: SnesRegs = 8451;
 pub const OAMADDL: SnesRegs = 8450;
 pub const OBSEL: SnesRegs = 8449;
 pub const INIDISP: SnesRegs = 8448;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct EnemyData {
-    pub enemy_ptr: uint16,
-    pub x_pos: uint16,
-    pub x_subpos: uint16,
-    pub y_pos: uint16,
-    pub y_subpos: uint16,
-    pub x_width: uint16,
-    pub y_height: uint16,
-    pub properties: uint16,
-    pub extra_properties: uint16,
-    pub ai_handler_bits: uint16,
-    pub health: uint16,
-    pub spritemap_pointer: uint16,
-    pub timer: uint16,
-    pub current_instruction: uint16,
-    pub instruction_timer: uint16,
-    pub palette_index: uint16,
-    pub vram_tiles_index: uint16,
-    pub layer: uint16,
-    pub flash_timer: uint16,
-    pub frozen_timer: uint16,
-    pub invincibility_timer: uint16,
-    pub shake_timer: uint16,
-    pub frame_counter: uint16,
-    pub bank: uint8,
-    pub field_2F: uint8,
-    pub ai_var_A: uint16,
-    pub ai_var_B: uint16,
-    pub ai_var_C: uint16,
-    pub ai_var_D: uint16,
-    pub ai_var_E: uint16,
-    pub ai_preinstr: uint16,
-    pub parameter_1: uint16,
-    pub parameter_2: uint16,
-}
+pub use crate::types::EnemyData;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct HdmaScrollEntry {
@@ -306,14 +270,7 @@ pub struct HdmaScrollEntry {
     pub scroll_speed: uint16,
     pub hdma_data_table_entry: VoidP,
 }
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct SpawnHdmaObject_Args {
-    pub field_0: uint8,
-    pub field_1: uint8,
-    pub addr: VoidP,
-}
-pub use crate::types::SamusPose;
+pub use crate::types::{SamusPose, SpawnHdmaObject_Args};
 pub const kPose_FC_FaceL_StandTrans_AimDL: SamusPose = 252;
 pub const kPose_FB_FaceR_StandTrans_AimDR: SamusPose = 251;
 pub const kPose_FA_FaceL_StandTrans_AimUL: SamusPose = 250;
@@ -526,32 +483,7 @@ pub const kPose_03_FaceR_AimU: SamusPose = 3;
 pub const kPose_02_FaceL_Normal: SamusPose = 2;
 pub const kPose_01_FaceR_Normal: SamusPose = 1;
 pub const kPose_00_FaceF_Powersuit: SamusPose = 0;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct ExpandingSquareTransitionHdma {
-    pub field_0: uint8,
-    pub field_1: uint8,
-    pub field_2: uint8,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Ram4000_Backups {
-    pub field_0: [uint8; 256],
-    pub backup_of_vram_0x5880_msgbox: [uint16; 896],
-    pub field_800: [uint8; 2048],
-    pub backup_of_0x3e00_in_kraid_pause: [uint8; 1024],
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub union Ram4000 {
-    pub xray_tilemaps: [uint16; 6144],
-    pub bg2_tilemap: [uint16; 2048],
-    pub decomp_buffer_kraid: [uint16; 1024],
-    pub bg2_room_select_map_tilemap: [uint16; 1024],
-    pub intro_japanese_text_tiles: [uint16; 768],
-    pub backups: Ram4000_Backups,
-}
-pub use crate::types::Consts_86;
+pub use crate::types::{Consts_86, ExpandingSquareTransitionHdma, Ram4000, Ram4000_Backups};
 pub const addr_kEproj_Sparks: Consts_86 = 62616;
 pub const addr_kEproj_EnemyDeathExplosion: Consts_86 = 62277;
 pub const addr_kEproj_Pickup: Consts_86 = 62263;
@@ -761,13 +693,7 @@ pub const addr_kRoom_b32e: Consts_8F = 45870;
 pub const addr_kRoom_a66a: Consts_8F = 42602;
 pub const addr_kRoom_9804: Consts_8F = 38916;
 pub const addr_kRoom_96ba: Consts_8F = 38586;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct SpawnHardcodedPlmArgs {
-    pub field_0: uint8,
-    pub field_1: uint8,
-    pub field_2: VoidP,
-}
+pub use crate::types::SpawnHardcodedPlmArgs;
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;

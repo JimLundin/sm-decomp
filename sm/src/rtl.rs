@@ -89,14 +89,8 @@ extern "C" {
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __off64_t, __off_t, __uint16_t, __uint32_t, __uint8_t, int16,
     int16_t, int32_t, int8_t, size_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, LongPtr,
-    VoidP,
+    PairU16, VoidP,
 };
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct PairU16 {
-    pub k: uint16,
-    pub j: uint16,
-}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct _IO_FILE {

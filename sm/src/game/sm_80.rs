@@ -289,29 +289,7 @@ pub struct SamusTileAnimationTileDefs {
     pub part1_size: uint16,
     pub part2_size: uint16,
 }
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Mode7VramWriteQueue {
-    pub field_0: uint8,
-    pub field_1: uint16,
-    pub gap3: [uint8; 2],
-    pub field_5: uint16,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct RoomDefHeader {
-    pub semiunique_room_number: uint8,
-    pub area_index_: uint8,
-    pub x_coordinate_on_map: uint8,
-    pub y_coordinate_on_map: uint8,
-    pub width: uint8,
-    pub height: uint8,
-    pub up_scroller_: uint8,
-    pub down_scroller_: uint8,
-    pub cre_bitset_: uint8,
-    pub ptr_to_doorout: VoidP,
-}
-pub use crate::types::GameState;
+pub use crate::types::{GameState, Mode7VramWriteQueue, RoomDefHeader};
 pub const kGameState_44_TransitionFromDemo: GameState = 44;
 pub const kGameState_43_TransitionFromDemo: GameState = 43;
 pub const kGameState_42_PlayingDemo: GameState = 42;
@@ -370,54 +348,9 @@ pub const kButton_A: Buttons = 128;
 pub const kButton_X: Buttons = 64;
 pub const kButton_L: Buttons = 32;
 pub const kButton_R: Buttons = 16;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct StartDmaCopy {
-    pub chan: uint8,
-    pub dmap: uint8,
-    pub bbad: uint8,
-    pub a1: LongPtr,
-    pub das: VoidP,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct VramReadQueueEnt {
-    pub vram_target: uint16,
-    pub dma_parameters: uint16,
-    pub src: LongPtr,
-    pub size: uint16,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct TileTable {
-    pub top_left: uint16,
-    pub top_right: uint16,
-    pub bottom_left: uint16,
-    pub bottom_right: uint16,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct TileTables {
-    pub tables: [TileTable; 1024],
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Ram4000_Backups {
-    pub field_0: [uint8; 256],
-    pub backup_of_vram_0x5880_msgbox: [uint16; 896],
-    pub field_800: [uint8; 2048],
-    pub backup_of_0x3e00_in_kraid_pause: [uint8; 1024],
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub union Ram4000 {
-    pub xray_tilemaps: [uint16; 6144],
-    pub bg2_tilemap: [uint16; 2048],
-    pub decomp_buffer_kraid: [uint16; 1024],
-    pub bg2_room_select_map_tilemap: [uint16; 1024],
-    pub intro_japanese_text_tiles: [uint16; 768],
-    pub backups: Ram4000_Backups,
-}
+pub use crate::types::{
+    Ram4000, Ram4000_Backups, StartDmaCopy, TileTable, TileTables, VramReadQueueEnt,
+};
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct Mode7CgvmWriteQueue {
@@ -446,13 +379,7 @@ pub const addrl_kDigitTilesetsWeapon: Consts_80 = 8429011;
 pub const addrl_kDigitTilesetsHealth: Consts_80 = 8428991;
 pub const addr_kHudTilemaps_Missiles: Consts_80 = 39331;
 pub const addr_kHudTilemaps_AutoReserve: Consts_80 = 39307;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct SpawnHardcodedPlmArgs {
-    pub field_0: uint8,
-    pub field_1: uint8,
-    pub field_2: VoidP,
-}
+pub use crate::types::SpawnHardcodedPlmArgs;
 #[inline]
 unsafe extern "C" fn swap16(mut v: uint16) -> uint16 {
     return ((v as ::core::ffi::c_int) << 8 as ::core::ffi::c_int

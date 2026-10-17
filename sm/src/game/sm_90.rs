@@ -90,21 +90,9 @@ extern "C" {
 }
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
-    int32_t, int8, int8_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, LongPtr, VoidP,
+    int32_t, int8, int8_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, FuncXY_V, Func_U8,
+    Func_V, Func_V_A, Func_Y_V, HandlerFunc, LongPtr, PairU16, Point16U, VoidP,
 };
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct PairU16 {
-    pub k: uint16,
-    pub j: uint16,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Point16U {
-    pub x: uint16,
-    pub y: uint16,
-}
-pub use crate::types::{FuncXY_V, Func_U8, Func_V, Func_V_A, Func_Y_V, HandlerFunc};
 pub type Func_Y_To_PairU16 = unsafe extern "C" fn(uint16) -> PairU16;
 pub use crate::types::{OamEnt, SamusPose, VramWriteEntry};
 pub const kPose_FC_FaceL_StandTrans_AimDL: SamusPose = 252;
@@ -323,18 +311,7 @@ pub use crate::types::LiquidPhysicsType;
 pub const kLiquidPhysicsType_LavaAcid: LiquidPhysicsType = 2;
 pub const kLiquidPhysicsType_Water: LiquidPhysicsType = 1;
 pub const kLiquidPhysicsType_Air: LiquidPhysicsType = 0;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct SamusPoseParams {
-    pub pose_x_dir: uint8,
-    pub movement_type: uint8,
-    pub new_pose_unless_buttons: uint8,
-    pub direction_shots_fired: uint8,
-    pub y_offset_to_gfx: uint8,
-    pub field_5: uint8,
-    pub y_radius: uint8,
-    pub field_7: uint8,
-}
+pub use crate::types::SamusPoseParams;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct SamusSpeedTableEntry {
@@ -680,20 +657,10 @@ pub const addr_stru_909F3D: Consts_90 = 40765;
 pub const addr_stru_909F31: Consts_90 = 40753;
 pub const addr_stru_909F25: Consts_90 = 40741;
 pub const addr_loc_908029: Consts_90 = 32809;
-pub type CheckEnemyColl_Result = CheckSolidEnemyColl_Result;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct CheckSolidEnemyColl_Result {
-    pub collision: uint16,
-    pub amt: int32,
-}
-pub use crate::types::{Func_AnimDelay, Func_SpazerSba_V};
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Pair_Bool_Amt {
-    pub flag: bool,
-    pub amt: int32,
-}
+pub use crate::types::{
+    CheckEnemyColl_Result, CheckSolidEnemyColl_Result, Func_AnimDelay, Func_SpazerSba_V,
+    Pair_Bool_Amt,
+};
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 #[inline]

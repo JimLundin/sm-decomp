@@ -1102,182 +1102,13 @@ extern "C" {
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
     int32_t, int8, int8_t, size_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, uintptr_t,
-    LongPtr, VoidP,
+    EnemyData, LongPtr, PairU16, Point16U, VoidP, VramWriteEntry,
 };
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct PairU16 {
-    pub k: uint16,
-    pub j: uint16,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Point16U {
-    pub x: uint16,
-    pub y: uint16,
-}
-pub use crate::types::VramWriteEntry;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct EnemyData {
-    pub enemy_ptr: uint16,
-    pub x_pos: uint16,
-    pub x_subpos: uint16,
-    pub y_pos: uint16,
-    pub y_subpos: uint16,
-    pub x_width: uint16,
-    pub y_height: uint16,
-    pub properties: uint16,
-    pub extra_properties: uint16,
-    pub ai_handler_bits: uint16,
-    pub health: uint16,
-    pub spritemap_pointer: uint16,
-    pub timer: uint16,
-    pub current_instruction: uint16,
-    pub instruction_timer: uint16,
-    pub palette_index: uint16,
-    pub vram_tiles_index: uint16,
-    pub layer: uint16,
-    pub flash_timer: uint16,
-    pub frozen_timer: uint16,
-    pub invincibility_timer: uint16,
-    pub shake_timer: uint16,
-    pub frame_counter: uint16,
-    pub bank: uint8,
-    pub field_2F: uint8,
-    pub ai_var_A: uint16,
-    pub ai_var_B: uint16,
-    pub ai_var_C: uint16,
-    pub ai_var_D: uint16,
-    pub ai_var_E: uint16,
-    pub ai_preinstr: uint16,
-    pub parameter_1: uint16,
-    pub parameter_2: uint16,
-}
 pub const addr_kEnemyDef_DAFF: Consts_A0 = 56063;
 pub const addr_kEproj_EnemyDeathExplosion: Consts_86 = 62277;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct EnemySpawnData {
-    pub some_flag: uint16,
-    pub cause_of_death: uint16,
-    pub field_4: uint16,
-    pub vram_tiles_index: uint16,
-    pub palette_index: uint16,
-    pub field_A: uint16,
-    pub field_C: uint16,
-    pub field_E: uint16,
-    pub xpos2: uint16,
-    pub ypos2: uint16,
-    pub field_14: uint16,
-    pub field_16: uint16,
-    pub field_18: uint16,
-    pub field_1A: uint16,
-    pub field_1C: uint16,
-    pub id: uint16,
-    pub x_pos: uint16,
-    pub y_pos: uint16,
-    pub init_param: uint16,
-    pub properties: uint16,
-    pub extra_properties: uint16,
-    pub param_1: uint16,
-    pub param_2: uint16,
-    pub name: [uint8; 18],
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Vulnerability {
-    pub power: uint8,
-    pub wave: uint8,
-    pub ice: uint8,
-    pub ice_wave: uint8,
-    pub spazer: uint8,
-    pub spazer_wave: uint8,
-    pub spazer_ice: uint8,
-    pub spazer_ice_wave: uint8,
-    pub plasma: uint8,
-    pub plasma_wave: uint8,
-    pub plasma_ice: uint8,
-    pub plasma_ice_wave: uint8,
-    pub missile: uint8,
-    pub super_missile: uint8,
-    pub bomb: uint8,
-    pub power_bomb: uint8,
-    pub speed_booster: uint8,
-    pub shinespark: uint8,
-    pub screw_attack: uint8,
-    pub charged_beam: uint8,
-    pub pseudo_screw_attack: uint8,
-    pub field_15: uint8,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct EnemyDef {
-    pub tile_data_size: uint16,
-    pub palette_ptr: VoidP,
-    pub health: uint16,
-    pub damage: uint16,
-    pub x_radius: uint16,
-    pub y_radius: uint16,
-    pub bank: uint8,
-    pub hurt_ai_time: uint8,
-    pub hurt_sfx: uint16,
-    pub boss_fight_value: uint16,
-    pub ai_init: VoidP,
-    pub num_parts: uint16,
-    pub field_16: uint16,
-    pub main_ai: VoidP,
-    pub grapple_ai: VoidP,
-    pub hurt_ai: VoidP,
-    pub frozen_ai: VoidP,
-    pub time_is_frozen_ai: VoidP,
-    pub death_anim: uint16,
-    pub field_24: uint16,
-    pub field_26: uint16,
-    pub powerbomb_reaction: VoidP,
-    pub field_2A: VoidP,
-    pub field_2C: uint16,
-    pub field_2E: uint16,
-    pub touch_ai: VoidP,
-    pub shot_ai: VoidP,
-    pub field_34: VoidP,
-    pub tile_data: LongPtr,
-    pub layer: uint8,
-    pub item_drop_chances_ptr: VoidP,
-    pub vulnerability_ptr: VoidP,
-    pub name_ptr: VoidP,
-}
+pub use crate::types::{EnemyDef, EnemySpawnData, Vulnerability};
 pub const kEnemyProps_Deleted: EnemyProps = 512;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct EprojDef {
-    pub init_code_ptr: VoidP,
-    pub pre_instr_ptr: VoidP,
-    pub instr_list: VoidP,
-    pub radius: uint16,
-    pub properties: uint16,
-    pub hit_instruction_list: VoidP,
-    pub shot_instruction_list: VoidP,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct ExtendedSpriteMap {
-    pub xpos: uint16,
-    pub ypos: uint16,
-    pub spritemap: VoidP,
-    pub hitbox_ptr_: VoidP,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Hitbox {
-    pub left: uint16,
-    pub top: uint16,
-    pub right: uint16,
-    pub bottom: uint16,
-    pub func_ptr: VoidP,
-    pub func_ptrA: VoidP,
-}
-pub use crate::types::EnemyProps;
+pub use crate::types::{EnemyProps, EprojDef, ExtendedSpriteMap, Hitbox};
 pub const kEnemyProps_RespawnIfKilled: EnemyProps = 16384;
 pub const kEnemyProps_DisableSamusColl: EnemyProps = 8192;
 pub const kEnemyProps_BlockPlasmaBeam: EnemyProps = 4096;
@@ -1296,13 +1127,7 @@ pub struct EnemyPopulation {
     pub parameter1: uint16,
     pub parameter2: uint16,
 }
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct EnemyTileset {
-    pub enemy_def: VoidP,
-    pub vram_dst: uint16,
-}
-pub use crate::types::EnemyAiBits;
+pub use crate::types::{EnemyAiBits, EnemyTileset};
 pub const kEnemyAiBits_Frozen: EnemyAiBits = 4;
 pub const kEnemyAiBits_Hurt: EnemyAiBits = 2;
 pub const kEnemyAiBits_Grapple: EnemyAiBits = 1;
@@ -1563,14 +1388,9 @@ pub const addr_stru_B4EC1C: Consts_B4 = 60444;
 pub const addr_asc_B4DD89: Consts_B4 = 56713;
 pub const addr_kSpriteObject_Ilist_C4B6: Consts_B4 = 50358;
 pub const addr_kSpriteObject_Ilist_C3BA: Consts_B4 = 50106;
-pub use crate::types::CalculateAngleFromXYFunc;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct CheckSolidEnemyColl_Result {
-    pub collision: uint16,
-    pub amt: int32,
-}
-pub type CheckEnemyColl_Result = CheckSolidEnemyColl_Result;
+pub use crate::types::{
+    CalculateAngleFromXYFunc, CheckEnemyColl_Result, CheckSolidEnemyColl_Result,
+};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct PositionAndWidth {
@@ -1592,12 +1412,7 @@ pub struct EnemyBlockCollInfo {
     pub ebci_r32: uint16,
 }
 pub type Func_EnemyBlockCollInfo_U8 = unsafe extern "C" fn(*mut EnemyBlockCollInfo) -> uint8;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Point32 {
-    pub x: uint32,
-    pub y: uint32,
-}
+pub use crate::types::Point32;
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 #[inline]
 unsafe extern "C" fn abs16(mut t: uint16) -> uint16 {

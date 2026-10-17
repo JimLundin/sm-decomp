@@ -364,14 +364,7 @@ pub const OAMADDH: SnesRegs = 8451;
 pub const OAMADDL: SnesRegs = 8450;
 pub const OBSEL: SnesRegs = 8449;
 pub const INIDISP: SnesRegs = 8448;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct RoomPlmEntry {
-    pub plm_header_ptr_: VoidP,
-    pub x_block: uint8,
-    pub y_block: uint8,
-    pub plm_room_argument: uint16,
-}
+pub use crate::types::RoomPlmEntry;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct PlmHeader_Size6 {
@@ -379,63 +372,14 @@ pub struct PlmHeader_Size6 {
     pub instr_list_1_ptr: VoidP,
     pub instr_list_2_ptr: VoidP,
 }
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct EnemyData {
-    pub enemy_ptr: uint16,
-    pub x_pos: uint16,
-    pub x_subpos: uint16,
-    pub y_pos: uint16,
-    pub y_subpos: uint16,
-    pub x_width: uint16,
-    pub y_height: uint16,
-    pub properties: uint16,
-    pub extra_properties: uint16,
-    pub ai_handler_bits: uint16,
-    pub health: uint16,
-    pub spritemap_pointer: uint16,
-    pub timer: uint16,
-    pub current_instruction: uint16,
-    pub instruction_timer: uint16,
-    pub palette_index: uint16,
-    pub vram_tiles_index: uint16,
-    pub layer: uint16,
-    pub flash_timer: uint16,
-    pub frozen_timer: uint16,
-    pub invincibility_timer: uint16,
-    pub shake_timer: uint16,
-    pub frame_counter: uint16,
-    pub bank: uint8,
-    pub field_2F: uint8,
-    pub ai_var_A: uint16,
-    pub ai_var_B: uint16,
-    pub ai_var_C: uint16,
-    pub ai_var_D: uint16,
-    pub ai_var_E: uint16,
-    pub ai_preinstr: uint16,
-    pub parameter_1: uint16,
-    pub parameter_2: uint16,
-}
+pub use crate::types::EnemyData;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct LoadBg_E {
     pub field_0: uint16,
     pub field_2: uint16,
 }
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct DoorDef {
-    pub room_definition_ptr: VoidP,
-    pub door_bitflags: uint8,
-    pub door_orientation: uint8,
-    pub x_pos_plm: uint8,
-    pub y_pos_plm: uint8,
-    pub x_pos_in_room: uint8,
-    pub y_pos_in_room: uint8,
-    pub samus_distance_from_door: uint16,
-    pub door_setup_code: VoidP,
-}
-pub use crate::types::SamusPose;
+pub use crate::types::{DoorDef, SamusPose};
 pub const kPose_FC_FaceL_StandTrans_AimDL: SamusPose = 252;
 pub const kPose_FB_FaceR_StandTrans_AimDR: SamusPose = 251;
 pub const kPose_FA_FaceL_StandTrans_AimUL: SamusPose = 250;
@@ -648,27 +592,7 @@ pub const kPose_03_FaceR_AimU: SamusPose = 3;
 pub const kPose_02_FaceL_Normal: SamusPose = 2;
 pub const kPose_01_FaceR_Normal: SamusPose = 1;
 pub const kPose_00_FaceF_Powersuit: SamusPose = 0;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct EnemyTileset {
-    pub enemy_def: VoidP,
-    pub vram_dst: uint16,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct RoomDefHeader {
-    pub semiunique_room_number: uint8,
-    pub area_index_: uint8,
-    pub x_coordinate_on_map: uint8,
-    pub y_coordinate_on_map: uint8,
-    pub width: uint8,
-    pub height: uint8,
-    pub up_scroller_: uint8,
-    pub down_scroller_: uint8,
-    pub cre_bitset_: uint8,
-    pub ptr_to_doorout: VoidP,
-}
-pub use crate::types::GameState;
+pub use crate::types::{EnemyTileset, GameState, RoomDefHeader};
 pub const kGameState_44_TransitionFromDemo: GameState = 44;
 pub const kGameState_43_TransitionFromDemo: GameState = 43;
 pub const kGameState_42_PlayingDemo: GameState = 42;
@@ -739,61 +663,10 @@ pub struct TileSet {
     pub tiles_ptr: LongPtr,
     pub palette_ptr: LongPtr,
 }
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct RoomDefRoomstate {
-    pub compressed_room_map_ptr: LongPtr,
-    pub graphics_set: uint8,
-    pub music_track: uint8,
-    pub music_control: uint8,
-    pub room_layer3_fx_ptr: VoidP,
-    pub enemy_population_ptr_: VoidP,
-    pub enemy_tilesets_ptr: VoidP,
-    pub vertical_screen_nudge_limit: uint16,
-    pub rdf_scroll_ptr: VoidP,
-    pub xray_special_casing_ptr: VoidP,
-    pub main_code_ptr: VoidP,
-    pub room_plm_header_ptr: VoidP,
-    pub bg_data_ptr: VoidP,
-    pub room_setup_code: VoidP,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct StartDmaCopy {
-    pub chan: uint8,
-    pub dmap: uint8,
-    pub bbad: uint8,
-    pub a1: LongPtr,
-    pub das: VoidP,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct ExpandingSquareTransitionHdma {
-    pub field_0: uint8,
-    pub field_1: uint8,
-    pub field_2: uint8,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct MapIconDataPointers {
-    pub crateria: VoidP,
-    pub brinstar: VoidP,
-    pub norfair: VoidP,
-    pub wrecked_ship: VoidP,
-    pub maraidia: VoidP,
-    pub tourian: VoidP,
-    pub ceres: VoidP,
-    pub debug: VoidP,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct MapScrollArrowData {
-    pub xpos: uint16,
-    pub ypos: uint16,
-    pub pause_screen_animation_id: uint16,
-    pub joypad_input: uint16,
-    pub map_scroll_dir: uint16,
-}
+pub use crate::types::{
+    ExpandingSquareTransitionHdma, MapIconDataPointers, MapScrollArrowData, RoomDefRoomstate,
+    StartDmaCopy,
+};
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct DemoRoomData {
@@ -833,109 +706,10 @@ pub struct FileCopyArrowStuff {
     pub xpos: uint16,
     pub ypos: uint16,
 }
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct EnemyDef {
-    pub tile_data_size: uint16,
-    pub palette_ptr: VoidP,
-    pub health: uint16,
-    pub damage: uint16,
-    pub x_radius: uint16,
-    pub y_radius: uint16,
-    pub bank: uint8,
-    pub hurt_ai_time: uint8,
-    pub hurt_sfx: uint16,
-    pub boss_fight_value: uint16,
-    pub ai_init: VoidP,
-    pub num_parts: uint16,
-    pub field_16: uint16,
-    pub main_ai: VoidP,
-    pub grapple_ai: VoidP,
-    pub hurt_ai: VoidP,
-    pub frozen_ai: VoidP,
-    pub time_is_frozen_ai: VoidP,
-    pub death_anim: uint16,
-    pub field_24: uint16,
-    pub field_26: uint16,
-    pub powerbomb_reaction: VoidP,
-    pub field_2A: VoidP,
-    pub field_2C: uint16,
-    pub field_2E: uint16,
-    pub touch_ai: VoidP,
-    pub shot_ai: VoidP,
-    pub field_34: VoidP,
-    pub tile_data: LongPtr,
-    pub layer: uint8,
-    pub item_drop_chances_ptr: VoidP,
-    pub vulnerability_ptr: VoidP,
-    pub name_ptr: VoidP,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Ram3000_MsgBox {
-    pub pad: [uint8; 188],
-    pub msg_box_anim_y_radius_neg: [uint16; 30],
-    pub msg_box_anim_y_radius: [uint16; 30],
-    pub field_134: [uint8; 204],
-    pub tilemap: [uint16; 192],
-    pub indirect_hdma: [uint8; 7],
-    pub field_387: [uint8; 99],
-    pub backup_of_enabled_hdma_channels: uint8,
-    pub backup_of_bg3_tilemap_and_size: uint16,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Ram3000_Misc {
-    pub field_0: [uint8; 472],
-    pub pause_screen_samus_witeframe_tilemap: [uint16; 264],
-    pub field_3E8: [uint8; 24],
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Ram3000_Menu {
-    pub field_0: [uint8; 768],
-    pub palette_backup_in_menu: [uint16; 256],
-    pub backup_of_io_registers_in_gameover: [uint8; 54],
-    pub field_536: [uint8; 202],
-    pub menu_tilemap: [uint8; 512],
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub union Ram3800 {
-    pub cinematic_bg_tilemap: [uint16; 1024],
-    pub equipment_screen_bg1_tilemap: [uint16; 1024],
-    pub debug_game_over_tilemap: [uint16; 1024],
-    pub cleared_message_box_bg3_tilemap: [uint16; 1024],
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Ram4000_Backups {
-    pub field_0: [uint8; 256],
-    pub backup_of_vram_0x5880_msgbox: [uint16; 896],
-    pub field_800: [uint8; 2048],
-    pub backup_of_0x3e00_in_kraid_pause: [uint8; 1024],
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub union Ram4000 {
-    pub xray_tilemaps: [uint16; 6144],
-    pub bg2_tilemap: [uint16; 2048],
-    pub decomp_buffer_kraid: [uint16; 1024],
-    pub bg2_room_select_map_tilemap: [uint16; 1024],
-    pub intro_japanese_text_tiles: [uint16; 768],
-    pub backups: Ram4000_Backups,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub union Ram3000 {
-    pub pause_menu_map_tilemap: [uint16; 1024],
-    pub cinematic_bg_tilemap: [uint16; 1024],
-    pub msgbox: Ram3000_MsgBox,
-    pub msgbox_y_scroll_hdma: [uint8; 240],
-    pub misc: Ram3000_Misc,
-    pub menu: Ram3000_Menu,
-}
-pub use crate::types::Consts_60;
+pub use crate::types::{
+    Consts_60, EnemyDef, Ram3000, Ram3000_Menu, Ram3000_Misc, Ram3000_MsgBox, Ram3800, Ram4000,
+    Ram4000_Backups,
+};
 pub const addr_unk_606300: Consts_60 = 25344;
 pub const addr_unk_6061F0: Consts_60 = 25072;
 pub const addr_unk_605BE0: Consts_60 = 23520;

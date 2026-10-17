@@ -53,16 +53,8 @@ extern "C" {
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
     int32_t, int8, int8_t, size_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, Func_U8,
-    Func_V, LongPtr, VoidP, VramWriteEntry,
+    Func_V, LongPtr, SamusPose, SpawnHdmaObject_Args, VoidP, VramWriteEntry,
 };
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct SpawnHdmaObject_Args {
-    pub field_0: uint8,
-    pub field_1: uint8,
-    pub addr: VoidP,
-}
-pub use crate::types::SamusPose;
 pub const kPose_FC_FaceL_StandTrans_AimDL: SamusPose = 252;
 pub const kPose_FB_FaceR_StandTrans_AimDR: SamusPose = 251;
 pub const kPose_FA_FaceL_StandTrans_AimUL: SamusPose = 250;
@@ -275,19 +267,7 @@ pub const kPose_03_FaceR_AimU: SamusPose = 3;
 pub const kPose_02_FaceL_Normal: SamusPose = 2;
 pub const kPose_01_FaceR_Normal: SamusPose = 1;
 pub const kPose_00_FaceF_Powersuit: SamusPose = 0;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct SamusPoseParams {
-    pub pose_x_dir: uint8,
-    pub movement_type: uint8,
-    pub new_pose_unless_buttons: uint8,
-    pub direction_shots_fired: uint8,
-    pub y_offset_to_gfx: uint8,
-    pub field_5: uint8,
-    pub y_radius: uint8,
-    pub field_7: uint8,
-}
-pub use crate::types::SamusMovementType;
+pub use crate::types::{SamusMovementType, SamusPoseParams};
 pub const kMovementType_1B_ShinesparkEtc: SamusMovementType = 27;
 pub const kMovementType_1A_GrabbedByDraygon: SamusMovementType = 26;
 pub const kMovementType_19_DamageBoost: SamusMovementType = 25;
@@ -413,46 +393,9 @@ pub const kButton_A: Buttons = 128;
 pub const kButton_X: Buttons = 64;
 pub const kButton_L: Buttons = 32;
 pub const kButton_R: Buttons = 16;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct VramReadQueueEnt {
-    pub vram_target: uint16,
-    pub dma_parameters: uint16,
-    pub src: LongPtr,
-    pub size: uint16,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct TileTable {
-    pub top_left: uint16,
-    pub top_right: uint16,
-    pub bottom_left: uint16,
-    pub bottom_right: uint16,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct TileTables {
-    pub tables: [TileTable; 1024],
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Ram4000_Backups {
-    pub field_0: [uint8; 256],
-    pub backup_of_vram_0x5880_msgbox: [uint16; 896],
-    pub field_800: [uint8; 2048],
-    pub backup_of_0x3e00_in_kraid_pause: [uint8; 1024],
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub union Ram4000 {
-    pub xray_tilemaps: [uint16; 6144],
-    pub bg2_tilemap: [uint16; 2048],
-    pub decomp_buffer_kraid: [uint16; 1024],
-    pub bg2_room_select_map_tilemap: [uint16; 1024],
-    pub intro_japanese_text_tiles: [uint16; 768],
-    pub backups: Ram4000_Backups,
-}
-pub use crate::types::Consts_8D;
+pub use crate::types::{
+    Consts_8D, Ram4000, Ram4000_Backups, TileTable, TileTables, VramReadQueueEnt,
+};
 pub const addr_kPalfx_FFD5: Consts_8D = 65493;
 pub const addr_kPalfx_FFD1: Consts_8D = 65489;
 pub const addr_kPalfx_FFCD: Consts_8D = 65485;
@@ -518,13 +461,7 @@ pub const addr_word_9BA120: Consts_9B = 41248;
 pub const addr_kSamusPalette_GravitySuit: Consts_9B = 38912;
 pub const addr_kSamusPalette_VariaSuit: Consts_9B = 38176;
 pub const addr_kSamusPalette_PowerSuit: Consts_9B = 37888;
-pub type CheckEnemyColl_Result = CheckSolidEnemyColl_Result;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct CheckSolidEnemyColl_Result {
-    pub collision: uint16,
-    pub amt: int32,
-}
+pub use crate::types::{CheckEnemyColl_Result, CheckSolidEnemyColl_Result};
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct XrayHdmaCtx {

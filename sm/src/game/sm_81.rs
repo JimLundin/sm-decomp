@@ -259,65 +259,7 @@ pub const OAMADDH: SnesRegs = 8451;
 pub const OAMADDL: SnesRegs = 8450;
 pub const OBSEL: SnesRegs = 8449;
 pub const INIDISP: SnesRegs = 8448;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct EnemyData {
-    pub enemy_ptr: uint16,
-    pub x_pos: uint16,
-    pub x_subpos: uint16,
-    pub y_pos: uint16,
-    pub y_subpos: uint16,
-    pub x_width: uint16,
-    pub y_height: uint16,
-    pub properties: uint16,
-    pub extra_properties: uint16,
-    pub ai_handler_bits: uint16,
-    pub health: uint16,
-    pub spritemap_pointer: uint16,
-    pub timer: uint16,
-    pub current_instruction: uint16,
-    pub instruction_timer: uint16,
-    pub palette_index: uint16,
-    pub vram_tiles_index: uint16,
-    pub layer: uint16,
-    pub flash_timer: uint16,
-    pub frozen_timer: uint16,
-    pub invincibility_timer: uint16,
-    pub shake_timer: uint16,
-    pub frame_counter: uint16,
-    pub bank: uint8,
-    pub field_2F: uint8,
-    pub ai_var_A: uint16,
-    pub ai_var_B: uint16,
-    pub ai_var_C: uint16,
-    pub ai_var_D: uint16,
-    pub ai_var_E: uint16,
-    pub ai_preinstr: uint16,
-    pub parameter_1: uint16,
-    pub parameter_2: uint16,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct SpawnHdmaObject_Args {
-    pub field_0: uint8,
-    pub field_1: uint8,
-    pub addr: VoidP,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct RoomDefHeader {
-    pub semiunique_room_number: uint8,
-    pub area_index_: uint8,
-    pub x_coordinate_on_map: uint8,
-    pub y_coordinate_on_map: uint8,
-    pub width: uint8,
-    pub height: uint8,
-    pub up_scroller_: uint8,
-    pub down_scroller_: uint8,
-    pub cre_bitset_: uint8,
-    pub ptr_to_doorout: VoidP,
-}
-pub use crate::types::GameState;
+pub use crate::types::{EnemyData, GameState, RoomDefHeader, SpawnHdmaObject_Args};
 pub const kGameState_44_TransitionFromDemo: GameState = 44;
 pub const kGameState_43_TransitionFromDemo: GameState = 43;
 pub const kGameState_42_PlayingDemo: GameState = 42;
@@ -376,34 +318,7 @@ pub const kButton_A: Buttons = 128;
 pub const kButton_X: Buttons = 64;
 pub const kButton_L: Buttons = 32;
 pub const kButton_R: Buttons = 16;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct StartDmaCopy {
-    pub chan: uint8,
-    pub dmap: uint8,
-    pub bbad: uint8,
-    pub a1: LongPtr,
-    pub das: VoidP,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct ExpandingSquareTransitionHdma {
-    pub field_0: uint8,
-    pub field_1: uint8,
-    pub field_2: uint8,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct MapIconDataPointers {
-    pub crateria: VoidP,
-    pub brinstar: VoidP,
-    pub norfair: VoidP,
-    pub wrecked_ship: VoidP,
-    pub maraidia: VoidP,
-    pub tourian: VoidP,
-    pub ceres: VoidP,
-    pub debug: VoidP,
-}
+pub use crate::types::{ExpandingSquareTransitionHdma, MapIconDataPointers, StartDmaCopy};
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct ExpandingSquareVels {
@@ -416,73 +331,10 @@ pub struct ExpandingSquareVels {
     pub bottom_subvel: uint16,
     pub bottom_vel: uint16,
 }
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct MapScrollArrowData {
-    pub xpos: uint16,
-    pub ypos: uint16,
-    pub pause_screen_animation_id: uint16,
-    pub joypad_input: uint16,
-    pub map_scroll_dir: uint16,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Ram3000_MsgBox {
-    pub pad: [uint8; 188],
-    pub msg_box_anim_y_radius_neg: [uint16; 30],
-    pub msg_box_anim_y_radius: [uint16; 30],
-    pub field_134: [uint8; 204],
-    pub tilemap: [uint16; 192],
-    pub indirect_hdma: [uint8; 7],
-    pub field_387: [uint8; 99],
-    pub backup_of_enabled_hdma_channels: uint8,
-    pub backup_of_bg3_tilemap_and_size: uint16,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Ram3000_Misc {
-    pub field_0: [uint8; 472],
-    pub pause_screen_samus_witeframe_tilemap: [uint16; 264],
-    pub field_3E8: [uint8; 24],
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Ram3000_Menu {
-    pub field_0: [uint8; 768],
-    pub palette_backup_in_menu: [uint16; 256],
-    pub backup_of_io_registers_in_gameover: [uint8; 54],
-    pub field_536: [uint8; 202],
-    pub menu_tilemap: [uint8; 512],
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Ram4000_Backups {
-    pub field_0: [uint8; 256],
-    pub backup_of_vram_0x5880_msgbox: [uint16; 896],
-    pub field_800: [uint8; 2048],
-    pub backup_of_0x3e00_in_kraid_pause: [uint8; 1024],
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub union Ram4000 {
-    pub xray_tilemaps: [uint16; 6144],
-    pub bg2_tilemap: [uint16; 2048],
-    pub decomp_buffer_kraid: [uint16; 1024],
-    pub bg2_room_select_map_tilemap: [uint16; 1024],
-    pub intro_japanese_text_tiles: [uint16; 768],
-    pub backups: Ram4000_Backups,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub union Ram3000 {
-    pub pause_menu_map_tilemap: [uint16; 1024],
-    pub cinematic_bg_tilemap: [uint16; 1024],
-    pub msgbox: Ram3000_MsgBox,
-    pub msgbox_y_scroll_hdma: [uint8; 240],
-    pub misc: Ram3000_Misc,
-    pub menu: Ram3000_Menu,
-}
-pub use crate::types::Consts_81;
+pub use crate::types::{
+    Consts_81, MapScrollArrowData, Ram3000, Ram3000_Menu, Ram3000_Misc, Ram3000_MsgBox, Ram4000,
+    Ram4000_Backups,
+};
 pub const addr_kAreaSelectBackgroundTilemaps: Consts_81 = 48922;
 pub const addr_kAreaSelectForegroundTilemap: Consts_81 = 46874;
 pub const addr_kMenuTilemap_DataCleared: Consts_81 = 46810;

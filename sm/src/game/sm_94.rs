@@ -14,23 +14,9 @@ extern "C" {
 }
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
-    int32_t, int8, int8_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, Func_V, OamEnt,
-    VoidP,
+    int32_t, int8, int8_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, DoorDef, Func_V,
+    OamEnt, SamusPose, VoidP,
 };
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct DoorDef {
-    pub room_definition_ptr: VoidP,
-    pub door_bitflags: uint8,
-    pub door_orientation: uint8,
-    pub x_pos_plm: uint8,
-    pub y_pos_plm: uint8,
-    pub x_pos_in_room: uint8,
-    pub y_pos_in_room: uint8,
-    pub samus_distance_from_door: uint16,
-    pub door_setup_code: VoidP,
-}
-pub use crate::types::SamusPose;
 pub const kPose_FC_FaceL_StandTrans_AimDL: SamusPose = 252;
 pub const kPose_FB_FaceR_StandTrans_AimDR: SamusPose = 251;
 pub const kPose_FA_FaceL_StandTrans_AimUL: SamusPose = 250;
@@ -331,12 +317,7 @@ pub struct CollInfo {
     pub ci_r40: uint16,
 }
 pub type Func_CollInfo_U8 = unsafe extern "C" fn(*mut CollInfo) -> uint8;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Pair_Bool_Amt {
-    pub flag: bool,
-    pub amt: int32,
-}
+pub use crate::types::Pair_Bool_Amt;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct PostGrappleCollInfo {

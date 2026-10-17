@@ -71,52 +71,7 @@ pub struct XraySpecialCasing {
     pub y_block: uint8,
     pub level_data_block: uint16,
 }
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct RoomPlmEntry {
-    pub plm_header_ptr_: VoidP,
-    pub x_block: uint8,
-    pub y_block: uint8,
-    pub plm_room_argument: uint16,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct EnemyData {
-    pub enemy_ptr: uint16,
-    pub x_pos: uint16,
-    pub x_subpos: uint16,
-    pub y_pos: uint16,
-    pub y_subpos: uint16,
-    pub x_width: uint16,
-    pub y_height: uint16,
-    pub properties: uint16,
-    pub extra_properties: uint16,
-    pub ai_handler_bits: uint16,
-    pub health: uint16,
-    pub spritemap_pointer: uint16,
-    pub timer: uint16,
-    pub current_instruction: uint16,
-    pub instruction_timer: uint16,
-    pub palette_index: uint16,
-    pub vram_tiles_index: uint16,
-    pub layer: uint16,
-    pub flash_timer: uint16,
-    pub frozen_timer: uint16,
-    pub invincibility_timer: uint16,
-    pub shake_timer: uint16,
-    pub frame_counter: uint16,
-    pub bank: uint8,
-    pub field_2F: uint8,
-    pub ai_var_A: uint16,
-    pub ai_var_B: uint16,
-    pub ai_var_C: uint16,
-    pub ai_var_D: uint16,
-    pub ai_var_E: uint16,
-    pub ai_preinstr: uint16,
-    pub parameter_1: uint16,
-    pub parameter_2: uint16,
-}
-pub use crate::types::SamusPose;
+pub use crate::types::{EnemyData, RoomPlmEntry, SamusPose};
 pub const kPose_FC_FaceL_StandTrans_AimDL: SamusPose = 252;
 pub const kPose_FB_FaceR_StandTrans_AimDR: SamusPose = 251;
 pub const kPose_FA_FaceL_StandTrans_AimUL: SamusPose = 250;
@@ -342,38 +297,7 @@ pub const kButton_A: Buttons = 128;
 pub const kButton_X: Buttons = 64;
 pub const kButton_L: Buttons = 32;
 pub const kButton_R: Buttons = 16;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct RoomDefRoomstate {
-    pub compressed_room_map_ptr: LongPtr,
-    pub graphics_set: uint8,
-    pub music_track: uint8,
-    pub music_control: uint8,
-    pub room_layer3_fx_ptr: VoidP,
-    pub enemy_population_ptr_: VoidP,
-    pub enemy_tilesets_ptr: VoidP,
-    pub vertical_screen_nudge_limit: uint16,
-    pub rdf_scroll_ptr: VoidP,
-    pub xray_special_casing_ptr: VoidP,
-    pub main_code_ptr: VoidP,
-    pub room_plm_header_ptr: VoidP,
-    pub bg_data_ptr: VoidP,
-    pub room_setup_code: VoidP,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct TileTable {
-    pub top_left: uint16,
-    pub top_right: uint16,
-    pub bottom_left: uint16,
-    pub bottom_right: uint16,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct TileTables {
-    pub tables: [TileTable; 1024],
-}
-pub use crate::types::Consts_60;
+pub use crate::types::{Consts_60, RoomDefRoomstate, TileTable, TileTables};
 pub const addr_unk_606300: Consts_60 = 25344;
 pub const addr_unk_6061F0: Consts_60 = 25072;
 pub const addr_unk_605BE0: Consts_60 = 23520;
@@ -573,13 +497,7 @@ pub const addr_stru_868BEC: Consts_86 = 35820;
 pub const addr_stru_868BDE: Consts_86 = 35806;
 pub const addr_stru_868BD0: Consts_86 = 35792;
 pub const addr_stru_868BC2: Consts_86 = 35778;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct SpawnHardcodedPlmArgs {
-    pub field_0: uint8,
-    pub field_1: uint8,
-    pub field_2: VoidP,
-}
+pub use crate::types::SpawnHardcodedPlmArgs;
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;

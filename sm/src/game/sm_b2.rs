@@ -34,89 +34,9 @@ extern "C" {
 }
 pub use crate::types::{
     __int16_t, __int32_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32, int32_t,
-    uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, uintptr_t, LongPtr, VoidP,
+    uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, uintptr_t, EnemyBase, EnemyData, LongPtr,
+    Point16U, ProjectileType, Rect16U, VoidP,
 };
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Point16U {
-    pub x: uint16,
-    pub y: uint16,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Rect16U {
-    pub x: uint16,
-    pub y: uint16,
-    pub w: uint16,
-    pub h: uint16,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct EnemyData {
-    pub enemy_ptr: uint16,
-    pub x_pos: uint16,
-    pub x_subpos: uint16,
-    pub y_pos: uint16,
-    pub y_subpos: uint16,
-    pub x_width: uint16,
-    pub y_height: uint16,
-    pub properties: uint16,
-    pub extra_properties: uint16,
-    pub ai_handler_bits: uint16,
-    pub health: uint16,
-    pub spritemap_pointer: uint16,
-    pub timer: uint16,
-    pub current_instruction: uint16,
-    pub instruction_timer: uint16,
-    pub palette_index: uint16,
-    pub vram_tiles_index: uint16,
-    pub layer: uint16,
-    pub flash_timer: uint16,
-    pub frozen_timer: uint16,
-    pub invincibility_timer: uint16,
-    pub shake_timer: uint16,
-    pub frame_counter: uint16,
-    pub bank: uint8,
-    pub field_2F: uint8,
-    pub ai_var_A: uint16,
-    pub ai_var_B: uint16,
-    pub ai_var_C: uint16,
-    pub ai_var_D: uint16,
-    pub ai_var_E: uint16,
-    pub ai_preinstr: uint16,
-    pub parameter_1: uint16,
-    pub parameter_2: uint16,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct EnemyBase {
-    pub enemy_ptr: uint16,
-    pub x_pos: uint16,
-    pub x_subpos: uint16,
-    pub y_pos: uint16,
-    pub y_subpos: uint16,
-    pub x_width: uint16,
-    pub y_height: uint16,
-    pub properties: uint16,
-    pub extra_properties: uint16,
-    pub ai_handler_bits: uint16,
-    pub health: uint16,
-    pub spritemap_pointer: uint16,
-    pub timer: uint16,
-    pub current_instruction: uint16,
-    pub instruction_timer: uint16,
-    pub palette_index: uint16,
-    pub vram_tiles_index: uint16,
-    pub layer: uint16,
-    pub flash_timer: uint16,
-    pub frozen_timer: uint16,
-    pub invincibility_timer: uint16,
-    pub shake_timer: uint16,
-    pub frame_counter: uint16,
-    pub bank: uint8,
-    pub field_2F: uint8,
-}
-pub use crate::types::ProjectileType;
 pub const kProjectileType_DontInteractWithSamus: ProjectileType = 32768;
 pub const kProjectileType_TypeMask: ProjectileType = 3840;
 pub const kProjectileType_MissileExplosion: ProjectileType = 2048;
@@ -125,70 +45,7 @@ pub const kProjectileType_Bomb: ProjectileType = 1280;
 pub const kProjectileType_PowerBomb: ProjectileType = 768;
 pub const kProjectileType_SuperMissile: ProjectileType = 512;
 pub const kProjectileType_Missile: ProjectileType = 256;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Vulnerability {
-    pub power: uint8,
-    pub wave: uint8,
-    pub ice: uint8,
-    pub ice_wave: uint8,
-    pub spazer: uint8,
-    pub spazer_wave: uint8,
-    pub spazer_ice: uint8,
-    pub spazer_ice_wave: uint8,
-    pub plasma: uint8,
-    pub plasma_wave: uint8,
-    pub plasma_ice: uint8,
-    pub plasma_ice_wave: uint8,
-    pub missile: uint8,
-    pub super_missile: uint8,
-    pub bomb: uint8,
-    pub power_bomb: uint8,
-    pub speed_booster: uint8,
-    pub shinespark: uint8,
-    pub screw_attack: uint8,
-    pub charged_beam: uint8,
-    pub pseudo_screw_attack: uint8,
-    pub field_15: uint8,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct EnemyDef {
-    pub tile_data_size: uint16,
-    pub palette_ptr: VoidP,
-    pub health: uint16,
-    pub damage: uint16,
-    pub x_radius: uint16,
-    pub y_radius: uint16,
-    pub bank: uint8,
-    pub hurt_ai_time: uint8,
-    pub hurt_sfx: uint16,
-    pub boss_fight_value: uint16,
-    pub ai_init: VoidP,
-    pub num_parts: uint16,
-    pub field_16: uint16,
-    pub main_ai: VoidP,
-    pub grapple_ai: VoidP,
-    pub hurt_ai: VoidP,
-    pub frozen_ai: VoidP,
-    pub time_is_frozen_ai: VoidP,
-    pub death_anim: uint16,
-    pub field_24: uint16,
-    pub field_26: uint16,
-    pub powerbomb_reaction: VoidP,
-    pub field_2A: VoidP,
-    pub field_2C: uint16,
-    pub field_2E: uint16,
-    pub touch_ai: VoidP,
-    pub shot_ai: VoidP,
-    pub field_34: VoidP,
-    pub tile_data: LongPtr,
-    pub layer: uint8,
-    pub item_drop_chances_ptr: VoidP,
-    pub vulnerability_ptr: VoidP,
-    pub name_ptr: VoidP,
-}
-pub use crate::types::Consts_86;
+pub use crate::types::{Consts_86, EnemyDef, Vulnerability};
 pub const addr_kEproj_Sparks: Consts_86 = 62616;
 pub const addr_kEproj_EnemyDeathExplosion: Consts_86 = 62277;
 pub const addr_kEproj_Pickup: Consts_86 = 62263;

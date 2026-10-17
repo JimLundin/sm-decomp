@@ -74,15 +74,8 @@ extern "C" {
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
     int32_t, int8, int8_t, size_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t,
-    CoroutineRet, LongPtr, VoidP,
+    CoroutineRet, Func_V, LongPtr, OamEnt, Point16U, SnesRegs, VoidP, VramWriteEntry,
 };
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Point16U {
-    pub x: uint16,
-    pub y: uint16,
-}
-pub use crate::types::{Func_V, OamEnt, SnesRegs, VramWriteEntry};
 pub const MIRR7: SnesRegs = 17279;
 pub const UNUSED7: SnesRegs = 17275;
 pub const NTRL7: SnesRegs = 17274;
@@ -511,15 +504,7 @@ pub const kPose_03_FaceR_AimU: SamusPose = 3;
 pub const kPose_02_FaceL_Normal: SamusPose = 2;
 pub const kPose_01_FaceR_Normal: SamusPose = 1;
 pub const kPose_00_FaceF_Powersuit: SamusPose = 0;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Mode7VramWriteQueue {
-    pub field_0: uint8,
-    pub field_1: uint16,
-    pub gap3: [uint8; 2],
-    pub field_5: uint16,
-}
-pub use crate::types::GameState;
+pub use crate::types::{GameState, Mode7VramWriteQueue};
 pub const kGameState_44_TransitionFromDemo: GameState = 44;
 pub const kGameState_43_TransitionFromDemo: GameState = 43;
 pub const kGameState_42_PlayingDemo: GameState = 42;
@@ -578,81 +563,10 @@ pub const kButton_A: Buttons = 128;
 pub const kButton_X: Buttons = 64;
 pub const kButton_L: Buttons = 32;
 pub const kButton_R: Buttons = 16;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct StartDmaCopy {
-    pub chan: uint8,
-    pub dmap: uint8,
-    pub bbad: uint8,
-    pub a1: LongPtr,
-    pub das: VoidP,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Ram3000_MsgBox {
-    pub pad: [uint8; 188],
-    pub msg_box_anim_y_radius_neg: [uint16; 30],
-    pub msg_box_anim_y_radius: [uint16; 30],
-    pub field_134: [uint8; 204],
-    pub tilemap: [uint16; 192],
-    pub indirect_hdma: [uint8; 7],
-    pub field_387: [uint8; 99],
-    pub backup_of_enabled_hdma_channels: uint8,
-    pub backup_of_bg3_tilemap_and_size: uint16,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Ram3000_Misc {
-    pub field_0: [uint8; 472],
-    pub pause_screen_samus_witeframe_tilemap: [uint16; 264],
-    pub field_3E8: [uint8; 24],
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Ram3000_Menu {
-    pub field_0: [uint8; 768],
-    pub palette_backup_in_menu: [uint16; 256],
-    pub backup_of_io_registers_in_gameover: [uint8; 54],
-    pub field_536: [uint8; 202],
-    pub menu_tilemap: [uint8; 512],
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub union Ram3800 {
-    pub cinematic_bg_tilemap: [uint16; 1024],
-    pub equipment_screen_bg1_tilemap: [uint16; 1024],
-    pub debug_game_over_tilemap: [uint16; 1024],
-    pub cleared_message_box_bg3_tilemap: [uint16; 1024],
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Ram4000_Backups {
-    pub field_0: [uint8; 256],
-    pub backup_of_vram_0x5880_msgbox: [uint16; 896],
-    pub field_800: [uint8; 2048],
-    pub backup_of_0x3e00_in_kraid_pause: [uint8; 1024],
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub union Ram4000 {
-    pub xray_tilemaps: [uint16; 6144],
-    pub bg2_tilemap: [uint16; 2048],
-    pub decomp_buffer_kraid: [uint16; 1024],
-    pub bg2_room_select_map_tilemap: [uint16; 1024],
-    pub intro_japanese_text_tiles: [uint16; 768],
-    pub backups: Ram4000_Backups,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub union Ram3000 {
-    pub pause_menu_map_tilemap: [uint16; 1024],
-    pub cinematic_bg_tilemap: [uint16; 1024],
-    pub msgbox: Ram3000_MsgBox,
-    pub msgbox_y_scroll_hdma: [uint8; 240],
-    pub misc: Ram3000_Misc,
-    pub menu: Ram3000_Menu,
-}
-pub use crate::types::Consts_60;
+pub use crate::types::{
+    Consts_60, Ram3000, Ram3000_Menu, Ram3000_Misc, Ram3000_MsgBox, Ram3800, Ram4000,
+    Ram4000_Backups, StartDmaCopy,
+};
 pub const addr_unk_606300: Consts_60 = 25344;
 pub const addr_unk_6061F0: Consts_60 = 25072;
 pub const addr_unk_605BE0: Consts_60 = 23520;

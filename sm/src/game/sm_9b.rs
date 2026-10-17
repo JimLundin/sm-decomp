@@ -40,21 +40,8 @@ extern "C" {
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
     int32_t, int8, int8_t, size_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, LongPtr,
-    VoidP,
+    PairU16, Point16U, SamusPose, VoidP, VramWriteEntry,
 };
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct PairU16 {
-    pub k: uint16,
-    pub j: uint16,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Point16U {
-    pub x: uint16,
-    pub y: uint16,
-}
-pub use crate::types::{SamusPose, VramWriteEntry};
 pub const kPose_FC_FaceL_StandTrans_AimDL: SamusPose = 252;
 pub const kPose_FB_FaceR_StandTrans_AimDR: SamusPose = 251;
 pub const kPose_FA_FaceL_StandTrans_AimUL: SamusPose = 250;
@@ -267,19 +254,7 @@ pub const kPose_03_FaceR_AimU: SamusPose = 3;
 pub const kPose_02_FaceL_Normal: SamusPose = 2;
 pub const kPose_01_FaceR_Normal: SamusPose = 1;
 pub const kPose_00_FaceF_Powersuit: SamusPose = 0;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct SamusPoseParams {
-    pub pose_x_dir: uint8,
-    pub movement_type: uint8,
-    pub new_pose_unless_buttons: uint8,
-    pub direction_shots_fired: uint8,
-    pub y_offset_to_gfx: uint8,
-    pub field_5: uint8,
-    pub y_radius: uint8,
-    pub field_7: uint8,
-}
-pub use crate::types::SamusMovementType;
+pub use crate::types::{SamusMovementType, SamusPoseParams};
 pub const kMovementType_1B_ShinesparkEtc: SamusMovementType = 27;
 pub const kMovementType_1A_GrabbedByDraygon: SamusMovementType = 26;
 pub const kMovementType_19_DamageBoost: SamusMovementType = 25;

@@ -69,23 +69,8 @@ extern "C" {
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
     int32_t, int8, int8_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, uintptr_t,
-    CoroutineRet, LongPtr, VoidP,
+    CoroutineRet, Func_V, LongPtr, OamEnt, Point16U, Rect16U, SnesRegs, VoidP, VramWriteEntry,
 };
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Point16U {
-    pub x: uint16,
-    pub y: uint16,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Rect16U {
-    pub x: uint16,
-    pub y: uint16,
-    pub w: uint16,
-    pub h: uint16,
-}
-pub use crate::types::{Func_V, OamEnt, SnesRegs, VramWriteEntry};
 pub const MIRR7: SnesRegs = 17279;
 pub const UNUSED7: SnesRegs = 17275;
 pub const NTRL7: SnesRegs = 17274;
@@ -294,73 +279,7 @@ pub const OAMADDH: SnesRegs = 8451;
 pub const OAMADDL: SnesRegs = 8450;
 pub const OBSEL: SnesRegs = 8449;
 pub const INIDISP: SnesRegs = 8448;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct EnemyData {
-    pub enemy_ptr: uint16,
-    pub x_pos: uint16,
-    pub x_subpos: uint16,
-    pub y_pos: uint16,
-    pub y_subpos: uint16,
-    pub x_width: uint16,
-    pub y_height: uint16,
-    pub properties: uint16,
-    pub extra_properties: uint16,
-    pub ai_handler_bits: uint16,
-    pub health: uint16,
-    pub spritemap_pointer: uint16,
-    pub timer: uint16,
-    pub current_instruction: uint16,
-    pub instruction_timer: uint16,
-    pub palette_index: uint16,
-    pub vram_tiles_index: uint16,
-    pub layer: uint16,
-    pub flash_timer: uint16,
-    pub frozen_timer: uint16,
-    pub invincibility_timer: uint16,
-    pub shake_timer: uint16,
-    pub frame_counter: uint16,
-    pub bank: uint8,
-    pub field_2F: uint8,
-    pub ai_var_A: uint16,
-    pub ai_var_B: uint16,
-    pub ai_var_C: uint16,
-    pub ai_var_D: uint16,
-    pub ai_var_E: uint16,
-    pub ai_preinstr: uint16,
-    pub parameter_1: uint16,
-    pub parameter_2: uint16,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct EnemyBase {
-    pub enemy_ptr: uint16,
-    pub x_pos: uint16,
-    pub x_subpos: uint16,
-    pub y_pos: uint16,
-    pub y_subpos: uint16,
-    pub x_width: uint16,
-    pub y_height: uint16,
-    pub properties: uint16,
-    pub extra_properties: uint16,
-    pub ai_handler_bits: uint16,
-    pub health: uint16,
-    pub spritemap_pointer: uint16,
-    pub timer: uint16,
-    pub current_instruction: uint16,
-    pub instruction_timer: uint16,
-    pub palette_index: uint16,
-    pub vram_tiles_index: uint16,
-    pub layer: uint16,
-    pub flash_timer: uint16,
-    pub frozen_timer: uint16,
-    pub invincibility_timer: uint16,
-    pub shake_timer: uint16,
-    pub frame_counter: uint16,
-    pub bank: uint8,
-    pub field_2F: uint8,
-}
-pub use crate::types::EnemyProps;
+pub use crate::types::{EnemyBase, EnemyData, EnemyProps};
 pub const kEnemyProps_RespawnIfKilled: EnemyProps = 16384;
 pub const kEnemyProps_DisableSamusColl: EnemyProps = 8192;
 pub const kEnemyProps_BlockPlasmaBeam: EnemyProps = 4096;
@@ -368,30 +287,7 @@ pub const kEnemyProps_ProcessedOffscreen: EnemyProps = 2048;
 pub const kEnemyProps_Tangible: EnemyProps = 1024;
 pub const kEnemyProps_Deleted: EnemyProps = 512;
 pub const kEnemyProps_Invisible: EnemyProps = 256;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Ram7800_Kraid {
-    pub kraid_next: uint16,
-    pub field_2: uint16,
-    pub field_4: uint16,
-    pub kraid_thinking: uint16,
-    pub kraid_min_y_pos_eject: uint16,
-    pub kraid_mouth_flags: uint16,
-    pub kraid_healths_8ths: [uint16; 8],
-    pub field_1C: uint16,
-    pub kraid_target_x: uint16,
-    pub kraid_healths_4ths: [uint16; 4],
-    pub field_28: uint16,
-    pub kraid_hurt_frame: uint16,
-    pub kraid_hurt_frame_timer: uint16,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub union ExtraEnemyRam7800 {
-    pub kraid: Ram7800_Kraid,
-    pub pad: [uint8; 64],
-}
-pub use crate::types::Consts_86;
+pub use crate::types::{Consts_86, ExtraEnemyRam7800, Ram7800_Kraid};
 pub const addr_kEproj_Sparks: Consts_86 = 62616;
 pub const addr_kEproj_EnemyDeathExplosion: Consts_86 = 62277;
 pub const addr_kEproj_Pickup: Consts_86 = 62263;
@@ -770,98 +666,14 @@ pub use crate::types::Consts_B7;
 pub const addr_kMotherBrain_Misc_TileData: Consts_B7 = 52736;
 pub const addr_kDeadMonsters_TileData: Consts_B7 = 49152;
 pub const addr_kDeadTorizo_TileData: Consts_B7 = 43008;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct SpawnHardcodedPlmArgs {
-    pub field_0: uint8,
-    pub field_1: uint8,
-    pub field_2: VoidP,
-}
+pub use crate::types::SpawnHardcodedPlmArgs;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct MotherBrainInstrExecState {
     pub ip: uint16,
     pub timer: uint16,
 }
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Enemy_MotherBrain {
-    pub base: EnemyBase,
-    pub mbn_var_A: uint16,
-    pub mbn_var_B: uint16,
-    pub mbn_var_C: uint16,
-    pub mbn_var_D: uint16,
-    pub mbn_var_E: uint16,
-    pub mbn_var_F: uint16,
-    pub mbn_parameter_1: uint16,
-    pub mbn_parameter_2: uint16,
-    pub pad1: [uint8; 26696],
-    pub mbn_var_00: uint16,
-    pub mbn_var_01: uint16,
-    pub mbn_var_02: uint16,
-    pub mbn_var_03: uint16,
-    pub mbn_var_04: uint16,
-    pub mbn_var_05: uint16,
-    pub mbn_var_06: uint16,
-    pub mbn_var_07: uint16,
-    pub mbn_var_08: uint16,
-    pub mbn_var_09: uint16,
-    pub mbn_var_0A: uint16,
-    pub mbn_var_0B: uint16,
-    pub mbn_var_0C: uint16,
-    pub mbn_var_0D: uint16,
-    pub mbn_var_0E: uint16,
-    pub mbn_var_0F: uint16,
-    pub mbn_var_10: uint16,
-    pub mbn_var_11: uint16,
-    pub mbn_var_12: uint16,
-    pub mbn_var_13: uint16,
-    pub mbn_var_14: uint16,
-    pub mbn_var_15: uint16,
-    pub mbn_var_16: uint16,
-    pub mbn_var_17: uint16,
-    pub mbn_var_18: uint16,
-    pub mbn_var_19: uint16,
-    pub mbn_var_1A: uint16,
-    pub mbn_var_1B: uint16,
-    pub mbn_var_1C: uint16,
-    pub mbn_var_1D: uint16,
-    pub mbn_var_1E: uint16,
-    pub mbn_var_1F: uint16,
-    pub pad2: [uint8; 1984],
-    pub mbn_var_20: uint16,
-    pub mbn_var_21: uint16,
-    pub mbn_var_22: uint16,
-    pub mbn_var_23: uint16,
-    pub mbn_var_24: uint16,
-    pub mbn_var_25: uint16,
-    pub mbn_var_26: uint16,
-    pub mbn_var_27: uint16,
-    pub mbn_var_28: uint16,
-    pub mbn_var_29: uint16,
-    pub mbn_var_2A: uint16,
-    pub mbn_var_2B: uint16,
-    pub mbn_var_2C: uint16,
-    pub mbn_var_2D: uint16,
-    pub mbn_var_2E: uint16,
-    pub mbn_var_2F: uint16,
-    pub mbn_var_30: uint16,
-    pub mbn_var_31: uint16,
-    pub mbn_var_32: uint16,
-    pub mbn_var_33: uint16,
-    pub mbn_var_34: uint16,
-    pub mbn_var_35: uint16,
-    pub mbn_var_36: uint16,
-    pub mbn_var_37: uint16,
-    pub mbn_var_38: uint16,
-    pub mbn_var_39: uint16,
-    pub mbn_var_3A: uint16,
-    pub mbn_var_3B: uint16,
-    pub mbn_var_3C: uint16,
-    pub mbn_var_3D: uint16,
-    pub mbn_var_3E: uint16,
-    pub mbn_var_3F: uint16,
-}
+pub use crate::types::Enemy_MotherBrain;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Enemy_Shitroid {

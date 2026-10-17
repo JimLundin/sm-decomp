@@ -245,80 +245,13 @@ pub const OAMADDH: SnesRegs = 8451;
 pub const OAMADDL: SnesRegs = 8450;
 pub const OBSEL: SnesRegs = 8449;
 pub const INIDISP: SnesRegs = 8448;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct EnemyData {
-    pub enemy_ptr: uint16,
-    pub x_pos: uint16,
-    pub x_subpos: uint16,
-    pub y_pos: uint16,
-    pub y_subpos: uint16,
-    pub x_width: uint16,
-    pub y_height: uint16,
-    pub properties: uint16,
-    pub extra_properties: uint16,
-    pub ai_handler_bits: uint16,
-    pub health: uint16,
-    pub spritemap_pointer: uint16,
-    pub timer: uint16,
-    pub current_instruction: uint16,
-    pub instruction_timer: uint16,
-    pub palette_index: uint16,
-    pub vram_tiles_index: uint16,
-    pub layer: uint16,
-    pub flash_timer: uint16,
-    pub frozen_timer: uint16,
-    pub invincibility_timer: uint16,
-    pub shake_timer: uint16,
-    pub frame_counter: uint16,
-    pub bank: uint8,
-    pub field_2F: uint8,
-    pub ai_var_A: uint16,
-    pub ai_var_B: uint16,
-    pub ai_var_C: uint16,
-    pub ai_var_D: uint16,
-    pub ai_var_E: uint16,
-    pub ai_preinstr: uint16,
-    pub parameter_1: uint16,
-    pub parameter_2: uint16,
-}
+pub use crate::types::EnemyData;
 #[derive(Copy, Clone)]
 #[repr(C, packed)]
 pub struct RoomDefStateSelect_E6E5_Finish {
     pub code_ptr: VoidP,
 }
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct DoorDef {
-    pub room_definition_ptr: VoidP,
-    pub door_bitflags: uint8,
-    pub door_orientation: uint8,
-    pub x_pos_plm: uint8,
-    pub y_pos_plm: uint8,
-    pub x_pos_in_room: uint8,
-    pub y_pos_in_room: uint8,
-    pub samus_distance_from_door: uint16,
-    pub door_setup_code: VoidP,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct RoomDefRoomstate {
-    pub compressed_room_map_ptr: LongPtr,
-    pub graphics_set: uint8,
-    pub music_track: uint8,
-    pub music_control: uint8,
-    pub room_layer3_fx_ptr: VoidP,
-    pub enemy_population_ptr_: VoidP,
-    pub enemy_tilesets_ptr: VoidP,
-    pub vertical_screen_nudge_limit: uint16,
-    pub rdf_scroll_ptr: VoidP,
-    pub xray_special_casing_ptr: VoidP,
-    pub main_code_ptr: VoidP,
-    pub room_plm_header_ptr: VoidP,
-    pub bg_data_ptr: VoidP,
-    pub room_setup_code: VoidP,
-}
-pub use crate::types::Consts_86;
+pub use crate::types::{Consts_86, DoorDef, RoomDefRoomstate};
 pub const addr_kEproj_Sparks: Consts_86 = 62616;
 pub const addr_kEproj_EnemyDeathExplosion: Consts_86 = 62277;
 pub const addr_kEproj_Pickup: Consts_86 = 62263;
@@ -503,13 +436,7 @@ pub const addr_kAnimtiles_Acid: Consts_87 = 33481;
 pub const addr_kAnimtiles_Lava: Consts_87 = 33451;
 pub const addr_kAnimtiles_WreckedShipTradmillLeft: Consts_87 = 33403;
 pub const addr_kAnimtiles_WreckedShipTradmillRight: Consts_87 = 33397;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct SpawnHardcodedPlmArgs {
-    pub field_0: uint8,
-    pub field_1: uint8,
-    pub field_2: VoidP,
-}
+pub use crate::types::SpawnHardcodedPlmArgs;
 pub const kCoroutineNone: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 #[inline]
 unsafe extern "C" fn RomPtr_8F(mut addr: uint16_t) -> *const uint8 {

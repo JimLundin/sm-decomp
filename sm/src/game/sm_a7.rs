@@ -61,21 +61,8 @@ extern "C" {
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
     int32_t, int8, int8_t, size_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, uintptr_t,
-    CoroutineRet, LongPtr, VoidP,
+    CoroutineRet, Func_Y_V, LongPtr, PairU16, Point16U, SnesRegs, VoidP, VramWriteEntry,
 };
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct PairU16 {
-    pub k: uint16,
-    pub j: uint16,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Point16U {
-    pub x: uint16,
-    pub y: uint16,
-}
-pub use crate::types::{Func_Y_V, SnesRegs, VramWriteEntry};
 pub const MIRR7: SnesRegs = 17279;
 pub const UNUSED7: SnesRegs = 17275;
 pub const NTRL7: SnesRegs = 17274;
@@ -284,98 +271,9 @@ pub const OAMADDH: SnesRegs = 8451;
 pub const OAMADDL: SnesRegs = 8450;
 pub const OBSEL: SnesRegs = 8449;
 pub const INIDISP: SnesRegs = 8448;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct EnemyData {
-    pub enemy_ptr: uint16,
-    pub x_pos: uint16,
-    pub x_subpos: uint16,
-    pub y_pos: uint16,
-    pub y_subpos: uint16,
-    pub x_width: uint16,
-    pub y_height: uint16,
-    pub properties: uint16,
-    pub extra_properties: uint16,
-    pub ai_handler_bits: uint16,
-    pub health: uint16,
-    pub spritemap_pointer: uint16,
-    pub timer: uint16,
-    pub current_instruction: uint16,
-    pub instruction_timer: uint16,
-    pub palette_index: uint16,
-    pub vram_tiles_index: uint16,
-    pub layer: uint16,
-    pub flash_timer: uint16,
-    pub frozen_timer: uint16,
-    pub invincibility_timer: uint16,
-    pub shake_timer: uint16,
-    pub frame_counter: uint16,
-    pub bank: uint8,
-    pub field_2F: uint8,
-    pub ai_var_A: uint16,
-    pub ai_var_B: uint16,
-    pub ai_var_C: uint16,
-    pub ai_var_D: uint16,
-    pub ai_var_E: uint16,
-    pub ai_preinstr: uint16,
-    pub parameter_1: uint16,
-    pub parameter_2: uint16,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct EnemyBase {
-    pub enemy_ptr: uint16,
-    pub x_pos: uint16,
-    pub x_subpos: uint16,
-    pub y_pos: uint16,
-    pub y_subpos: uint16,
-    pub x_width: uint16,
-    pub y_height: uint16,
-    pub properties: uint16,
-    pub extra_properties: uint16,
-    pub ai_handler_bits: uint16,
-    pub health: uint16,
-    pub spritemap_pointer: uint16,
-    pub timer: uint16,
-    pub current_instruction: uint16,
-    pub instruction_timer: uint16,
-    pub palette_index: uint16,
-    pub vram_tiles_index: uint16,
-    pub layer: uint16,
-    pub flash_timer: uint16,
-    pub frozen_timer: uint16,
-    pub invincibility_timer: uint16,
-    pub shake_timer: uint16,
-    pub frame_counter: uint16,
-    pub bank: uint8,
-    pub field_2F: uint8,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct SpawnHdmaObject_Args {
-    pub field_0: uint8,
-    pub field_1: uint8,
-    pub addr: VoidP,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct ExtendedSpriteMap {
-    pub xpos: uint16,
-    pub ypos: uint16,
-    pub spritemap: VoidP,
-    pub hitbox_ptr_: VoidP,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Hitbox {
-    pub left: uint16,
-    pub top: uint16,
-    pub right: uint16,
-    pub bottom: uint16,
-    pub func_ptr: VoidP,
-    pub func_ptrA: VoidP,
-}
-pub use crate::types::EnemyProps;
+pub use crate::types::{
+    EnemyBase, EnemyData, EnemyProps, ExtendedSpriteMap, Hitbox, SpawnHdmaObject_Args,
+};
 pub const kEnemyProps_RespawnIfKilled: EnemyProps = 16384;
 pub const kEnemyProps_DisableSamusColl: EnemyProps = 8192;
 pub const kEnemyProps_BlockPlasmaBeam: EnemyProps = 4096;
@@ -404,79 +302,9 @@ pub struct KraidSinkTable {
     pub field_2: uint16,
     pub field_4: VoidP,
 }
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct StartDmaCopy {
-    pub chan: uint8,
-    pub dmap: uint8,
-    pub bbad: uint8,
-    pub a1: LongPtr,
-    pub das: VoidP,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct VramReadQueueEnt {
-    pub vram_target: uint16,
-    pub dma_parameters: uint16,
-    pub src: LongPtr,
-    pub size: uint16,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct EnemyDef {
-    pub tile_data_size: uint16,
-    pub palette_ptr: VoidP,
-    pub health: uint16,
-    pub damage: uint16,
-    pub x_radius: uint16,
-    pub y_radius: uint16,
-    pub bank: uint8,
-    pub hurt_ai_time: uint8,
-    pub hurt_sfx: uint16,
-    pub boss_fight_value: uint16,
-    pub ai_init: VoidP,
-    pub num_parts: uint16,
-    pub field_16: uint16,
-    pub main_ai: VoidP,
-    pub grapple_ai: VoidP,
-    pub hurt_ai: VoidP,
-    pub frozen_ai: VoidP,
-    pub time_is_frozen_ai: VoidP,
-    pub death_anim: uint16,
-    pub field_24: uint16,
-    pub field_26: uint16,
-    pub powerbomb_reaction: VoidP,
-    pub field_2A: VoidP,
-    pub field_2C: uint16,
-    pub field_2E: uint16,
-    pub touch_ai: VoidP,
-    pub shot_ai: VoidP,
-    pub field_34: VoidP,
-    pub tile_data: LongPtr,
-    pub layer: uint8,
-    pub item_drop_chances_ptr: VoidP,
-    pub vulnerability_ptr: VoidP,
-    pub name_ptr: VoidP,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Ram4000_Backups {
-    pub field_0: [uint8; 256],
-    pub backup_of_vram_0x5880_msgbox: [uint16; 896],
-    pub field_800: [uint8; 2048],
-    pub backup_of_0x3e00_in_kraid_pause: [uint8; 1024],
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub union Ram4000 {
-    pub xray_tilemaps: [uint16; 6144],
-    pub bg2_tilemap: [uint16; 2048],
-    pub decomp_buffer_kraid: [uint16; 1024],
-    pub bg2_room_select_map_tilemap: [uint16; 1024],
-    pub intro_japanese_text_tiles: [uint16; 768],
-    pub backups: Ram4000_Backups,
-}
-pub use crate::types::Consts_86;
+pub use crate::types::{
+    Consts_86, EnemyDef, Ram4000, Ram4000_Backups, StartDmaCopy, VramReadQueueEnt,
+};
 pub const addr_kEproj_Sparks: Consts_86 = 62616;
 pub const addr_kEproj_EnemyDeathExplosion: Consts_86 = 62277;
 pub const addr_kEproj_Pickup: Consts_86 = 62263;
@@ -712,13 +540,7 @@ pub const addr_kKraid_Ilist_86F3: Consts_A7 = 34547;
 pub const addr_kKraid_Ilist_86ED: Consts_A7 = 34541;
 pub const addr_kKraid_Ilist_86E7: Consts_A7 = 34535;
 pub const addr_kSpritemap_Nothing_A7: Consts_A7 = 32845;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct SpawnHardcodedPlmArgs {
-    pub field_0: uint8,
-    pub field_1: uint8,
-    pub field_2: VoidP,
-}
+pub use crate::types::SpawnHardcodedPlmArgs;
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Enemy_Phantoon {

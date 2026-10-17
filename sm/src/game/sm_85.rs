@@ -293,72 +293,10 @@ pub const kButton_A: Buttons = 128;
 pub const kButton_X: Buttons = 64;
 pub const kButton_L: Buttons = 32;
 pub const kButton_R: Buttons = 16;
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Ram3000_MsgBox {
-    pub pad: [uint8; 188],
-    pub msg_box_anim_y_radius_neg: [uint16; 30],
-    pub msg_box_anim_y_radius: [uint16; 30],
-    pub field_134: [uint8; 204],
-    pub tilemap: [uint16; 192],
-    pub indirect_hdma: [uint8; 7],
-    pub field_387: [uint8; 99],
-    pub backup_of_enabled_hdma_channels: uint8,
-    pub backup_of_bg3_tilemap_and_size: uint16,
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Ram3000_Misc {
-    pub field_0: [uint8; 472],
-    pub pause_screen_samus_witeframe_tilemap: [uint16; 264],
-    pub field_3E8: [uint8; 24],
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Ram3000_Menu {
-    pub field_0: [uint8; 768],
-    pub palette_backup_in_menu: [uint16; 256],
-    pub backup_of_io_registers_in_gameover: [uint8; 54],
-    pub field_536: [uint8; 202],
-    pub menu_tilemap: [uint8; 512],
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub union Ram3800 {
-    pub cinematic_bg_tilemap: [uint16; 1024],
-    pub equipment_screen_bg1_tilemap: [uint16; 1024],
-    pub debug_game_over_tilemap: [uint16; 1024],
-    pub cleared_message_box_bg3_tilemap: [uint16; 1024],
-}
-#[derive(Copy, Clone)]
-#[repr(C, packed)]
-pub struct Ram4000_Backups {
-    pub field_0: [uint8; 256],
-    pub backup_of_vram_0x5880_msgbox: [uint16; 896],
-    pub field_800: [uint8; 2048],
-    pub backup_of_0x3e00_in_kraid_pause: [uint8; 1024],
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub union Ram4000 {
-    pub xray_tilemaps: [uint16; 6144],
-    pub bg2_tilemap: [uint16; 2048],
-    pub decomp_buffer_kraid: [uint16; 1024],
-    pub bg2_room_select_map_tilemap: [uint16; 1024],
-    pub intro_japanese_text_tiles: [uint16; 768],
-    pub backups: Ram4000_Backups,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub union Ram3000 {
-    pub pause_menu_map_tilemap: [uint16; 1024],
-    pub cinematic_bg_tilemap: [uint16; 1024],
-    pub msgbox: Ram3000_MsgBox,
-    pub msgbox_y_scroll_hdma: [uint8; 240],
-    pub misc: Ram3000_Misc,
-    pub menu: Ram3000_Menu,
-}
-pub use crate::types::Consts_60;
+pub use crate::types::{
+    Consts_60, Ram3000, Ram3000_Menu, Ram3000_Misc, Ram3000_MsgBox, Ram3800, Ram4000,
+    Ram4000_Backups,
+};
 pub const addr_unk_606300: Consts_60 = 25344;
 pub const addr_unk_6061F0: Consts_60 = 25072;
 pub const addr_unk_605BE0: Consts_60 = 23520;
