@@ -59,6 +59,11 @@ pub struct Game {
 }
 // Initialize the large RAM and oracle snapshots directly on the heap.
 impl Game {
+    /// Current enemy slot offset ($7E:0E54 in ram_map).
+    pub fn cur_enemy_index(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xe54], self.g_ram[0xe55]])
+    }
+
     /// Preserve the original zero initialization, including RM_BOTH (0).
     pub fn new() -> Box<Self> {
         let mut storage = Box::<Self>::new_uninit();

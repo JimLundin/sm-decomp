@@ -17,6 +17,27 @@ turn it into good Rust without changing what it does.
 
 Everything that existed before is in the branch `archive/pre-transpile-2026-10-17`.
 
+## Workspace discipline
+
+Work directly on `main`, one focused, verified commit at a time. Finish with
+a clean working tree; do not leave speculative branches, worktrees, stashes
+or uncommitted edits. Create a working branch only when the user requests it,
+and remove it when its work is integrated or explicitly retired.
+
+Keep the C implementation out of the checkout, including ignored copies and
+old build directories. `sm/src` is the maintained implementation; the
+transpile notes are historical provenance, not a regeneration workflow.
+Keep only current build outputs in `target/` and the ignored ROM/movie inputs
+needed for verification. Remove obsolete scratch and restart artifacts.
+
+Workspace audit (2026-10-17): `main` was clean and synchronized with origin;
+no C game source, extra worktrees or stashes were present. The retired local
+`restart/playable-baseline` branch had history outside the pre-transpile
+archive, so its tip is preserved as the tag
+`archive/restart-playable-baseline-2026-10-17` before removing the branch.
+Old scratch/restart artifacts, draft refactors and dependency source caches
+were removed from the checkout. The documented archive branch stays intact.
+
 ## The oracle
 
 The binary contains two complete implementations of each frame:
@@ -350,6 +371,18 @@ metadata builds pass. Local Cargo remains ASR-denied; Linux validation will
 run on this commit. Raw RAM offsets -6, c_int cast lines -34, Rust lines -41;
 all other counters unchanged. Next: name Waver's RAM fields and accessors,
 then remove its raw-pointer access without holding RAM borrows across calls.
+Waver RAM view applied: fields named for velocity, animation and sine phase;
+reads/writes use little-endian bytes and offsets from the unchanged struct
+layout. Current enemy index has a named accessor matching ram_map $0E54.
+No typed RAM pointers remain in Waver; borrows end before movement/dispatch
+calls, preserving the original slot even when the current index changes.
+The instruction callback is safe. Layout audit confirms size 64 and all
+field offsets; format, core/frontend metadata and full any% pass (129,712
+frames, zero failures, 186.03s). Unsafe functions -2, raw RAM offsets -1,
+c_int cast lines -1; Rust lines +102 provide safe field accessors and explicit
+borrow scopes. Linux stable validation is pending on this commit.
+Next: move Waver into a readable subsystem module and finish its ROM-read
+boundary, then choose the next enemy/subsystem.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
