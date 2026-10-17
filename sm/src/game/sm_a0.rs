@@ -2059,7 +2059,7 @@ pub unsafe fn EnemyInstr_DisableOffScreenProcessing(
         ((*v2).properties as ::core::ffi::c_int & !(0x800 as ::core::ffi::c_int)) as uint16;
     return jp;
 }
-static mut kRoomShakes: [uint16; 144] = [
+static kRoomShakes: [uint16; 144] = [
     1 as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
@@ -10098,7 +10098,7 @@ unsafe fn CalculateAngleFromXY_7(mut div: uint16) -> uint8 {
     return (0 as ::core::ffi::c_int - (div as ::core::ffi::c_int >> 3 as ::core::ffi::c_int))
         as uint8;
 }
-static mut funcs_758EE: [Option<CalculateAngleFromXYFunc>; 4] = unsafe {
+static funcs_758EE: [Option<CalculateAngleFromXYFunc>; 4] = unsafe {
     [
         Some(CalculateAngleFromXY_1 as unsafe fn(uint16) -> uint8),
         Some(CalculateAngleFromXY_2 as unsafe fn(uint16) -> uint8),
@@ -10106,7 +10106,7 @@ static mut funcs_758EE: [Option<CalculateAngleFromXYFunc>; 4] = unsafe {
         Some(CalculateAngleFromXY_7 as unsafe fn(uint16) -> uint8),
     ]
 };
-static mut funcs_7587D: [Option<CalculateAngleFromXYFunc>; 4] = unsafe {
+static funcs_7587D: [Option<CalculateAngleFromXYFunc>; 4] = unsafe {
     [
         Some(CalculateAngleFromXY_0 as unsafe fn(uint16) -> uint8),
         Some(CalculateAngleFromXY_3 as unsafe fn(uint16) -> uint8),
@@ -10306,7 +10306,7 @@ unsafe fn EnemyBlockCollVertReact_Slope(mut ebci: *mut EnemyBlockCollInfo) -> ui
         );
     };
 }
-static mut byte_A0C435: [uint8; 20] = [
+static byte_A0C435: [uint8; 20] = [
     0 as ::core::ffi::c_int as uint8,
     1 as ::core::ffi::c_int as uint8,
     0x82 as ::core::ffi::c_int as uint8,
@@ -10842,7 +10842,7 @@ pub unsafe fn Enemy_MoveDown(mut k: uint16, mut amount32: int32) -> uint8 {
         return 1 as uint8;
     };
 }
-static mut off_A0C859: [Option<Func_EnemyBlockCollInfo_U8>; 16] = unsafe {
+static off_A0C859: [Option<Func_EnemyBlockCollInfo_U8>; 16] = unsafe {
     [
         Some(ClearCarry_13 as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
         Some(EnemyBlockCollHorizReact_Slope as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
@@ -10883,7 +10883,7 @@ unsafe fn EnemyBlockCollReact_Horiz(mut ebci: *mut EnemyBlockCollInfo, mut k: ui
     }
     return rv;
 }
-static mut off_A0C88D: [Option<Func_EnemyBlockCollInfo_U8>; 16] = unsafe {
+static off_A0C88D: [Option<Func_EnemyBlockCollInfo_U8>; 16] = unsafe {
     [
         Some(ClearCarry_13 as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),
         Some(EnemyBlockCollVertReact_Slope as unsafe fn(*mut EnemyBlockCollInfo) -> uint8),

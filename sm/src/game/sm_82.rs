@@ -1347,7 +1347,7 @@ pub unsafe fn LoadStdBG3andSpriteTilesClearTilemaps() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x40 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8282F8: StartDmaCopy = StartDmaCopy {
+    static unk_8282F8: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -1362,7 +1362,7 @@ pub unsafe fn LoadStdBG3andSpriteTilesClearTilemaps() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_828318: StartDmaCopy = StartDmaCopy {
+    static unk_828318: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -1377,7 +1377,7 @@ pub unsafe fn LoadStdBG3andSpriteTilesClearTilemaps() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x50 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_828338: StartDmaCopy = StartDmaCopy {
+    static unk_828338: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -1392,7 +1392,7 @@ pub unsafe fn LoadStdBG3andSpriteTilesClearTilemaps() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x58 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_828358: StartDmaCopy = StartDmaCopy {
+    static unk_828358: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -2002,7 +2002,7 @@ pub unsafe fn DemoRoom_SetBrinstarBossBits() {
         .offset(0xd828 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-static mut kGameStateFuncs: [Option<Func_V_Coroutine>; 45] = unsafe {
+static kGameStateFuncs: [Option<Func_V_Coroutine>; 45] = unsafe {
     [
         Some(GameState_0_Reset_Async as unsafe fn() -> CoroutineRet),
         Some(GameState_1_OpeningCinematic as unsafe fn() -> CoroutineRet),
@@ -2160,7 +2160,7 @@ pub unsafe fn GameState_5_FileSelectMap() -> CoroutineRet {
     FileSelectMap();
     return kCoroutineNone as CoroutineRet;
 }
-static mut kSfxHandlers: [Option<Func_Y_V>; 5] = unsafe {
+static kSfxHandlers: [Option<Func_Y_V>; 5] = unsafe {
     [
         Some(SfxHandlers_0_SendToApu as unsafe fn(uint16) -> ()),
         Some(SfxHandlers_1_WaitForAck as unsafe fn(uint16) -> ()),
@@ -2862,7 +2862,7 @@ pub unsafe fn RestoreBG2TilemapFromPauseScreen() {
             << 8 as ::core::ffi::c_int) as uint16,
     );
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_828DAE: StartDmaCopy = StartDmaCopy {
+    static unk_828DAE: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -2981,7 +2981,7 @@ pub unsafe fn LoadPauseMenuTilesAndClearBG2() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_828E8B: StartDmaCopy = StartDmaCopy {
+    static unk_828E8B: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -2996,7 +2996,7 @@ pub unsafe fn LoadPauseMenuTilesAndClearBG2() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x20 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_828EAB: StartDmaCopy = StartDmaCopy {
+    static unk_828EAB: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -3011,7 +3011,7 @@ pub unsafe fn LoadPauseMenuTilesAndClearBG2() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x40 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_828ECB: StartDmaCopy = StartDmaCopy {
+    static unk_828ECB: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -3028,7 +3028,7 @@ pub unsafe fn LoadPauseScreenBaseTilemaps() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x38 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_828EF0: StartDmaCopy = StartDmaCopy {
+    static unk_828EF0: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -3043,7 +3043,7 @@ pub unsafe fn LoadPauseScreenBaseTilemaps() {
     WriteReg(WMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(WMADDM as ::core::ffi::c_int as uint16, 0x34 as uint8);
     WriteReg(WMADDH as ::core::ffi::c_int as uint16, 0x7e as uint8);
-    static mut unk_828F10: StartDmaCopy = StartDmaCopy {
+    static unk_828F10: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 0 as uint8,
         bbad: 0x80 as uint8,
@@ -3058,7 +3058,7 @@ pub unsafe fn LoadPauseScreenBaseTilemaps() {
     WriteReg(WMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(WMADDM as ::core::ffi::c_int as uint16, 0x38 as uint8);
     WriteReg(WMADDH as ::core::ffi::c_int as uint16, 0x7e as uint8);
-    static mut unk_828F30: StartDmaCopy = StartDmaCopy {
+    static unk_828F30: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 0 as uint8,
         bbad: 0x80 as uint8,
@@ -3282,7 +3282,7 @@ pub unsafe fn GameState_15_Paused_Async() -> CoroutineRet {
     HandlePauseScreenPaletteAnimation();
     return kCoroutineNone as CoroutineRet;
 }
-static mut kPauseMenuFuncs: [Option<Func_V>; 8] = unsafe {
+static kPauseMenuFuncs: [Option<Func_V>; 8] = unsafe {
     [
         Some(PauseMenu_0_MapScreen as unsafe fn() -> ()),
         Some(PauseMenu_1_EquipmentScreen as unsafe fn() -> ()),
@@ -3466,7 +3466,7 @@ pub unsafe fn PauseMenu_4_MapToEquipment_FadeIn() {
             as *mut uint16) = v0;
     }
 }
-static mut kMapScrollingFuncs: [Option<Func_V>; 5] = unsafe {
+static kMapScrollingFuncs: [Option<Func_V>; 5] = unsafe {
     [
         Some(MapScrolling_0_None as unsafe fn() -> ()),
         Some(MapScrolling_1_Left as unsafe fn() -> ()),
@@ -3497,7 +3497,7 @@ pub unsafe fn MapScrolling_GetSpeedIndex() -> uint16 {
     }
     return result;
 }
-static mut kMapScrollingSpeedTable: [uint16; 32] = [
+static kMapScrollingSpeedTable: [uint16; 32] = [
     0 as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
@@ -3698,7 +3698,7 @@ pub unsafe fn LoadPauseMenuMapTilemapAndAreaLabel() {
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x30 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
     LoadPauseMenuMapTilemap();
-    static mut unk_8293E9: StartDmaCopy = StartDmaCopy {
+    static unk_8293E9: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -4115,7 +4115,7 @@ pub unsafe fn SetupMapScrollingForPauseMenu(mut a: uint16) {
         }
     }
 }
-static mut k0x80Shr: [uint8; 8] = [
+static k0x80Shr: [uint8; 8] = [
     0x80 as ::core::ffi::c_int as uint8,
     0x40 as ::core::ffi::c_int as uint8,
     0x20 as ::core::ffi::c_int as uint8,
@@ -4125,7 +4125,7 @@ static mut k0x80Shr: [uint8; 8] = [
     2 as ::core::ffi::c_int as uint8,
     1 as ::core::ffi::c_int as uint8,
 ];
-static mut k0x80Shr_0: [uint8; 8] = [
+static k0x80Shr_0: [uint8; 8] = [
     0x80 as ::core::ffi::c_int as uint8,
     0x40 as ::core::ffi::c_int as uint8,
     0x20 as ::core::ffi::c_int as uint8,
@@ -4617,7 +4617,7 @@ pub unsafe fn ClearSamusBeamTiles() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_82A2D4: StartDmaCopy = StartDmaCopy {
+    static unk_82A2D4: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -4901,15 +4901,15 @@ pub unsafe fn HandlePauseScreenLrInput() {
         _ => {}
     };
 }
-static mut kPauseLrButtonPressedHighlight_Spritemap: [uint16; 2] = [
+static kPauseLrButtonPressedHighlight_Spritemap: [uint16; 2] = [
     0x28 as ::core::ffi::c_int as uint16,
     0x29 as ::core::ffi::c_int as uint16,
 ];
-static mut kPauseLrButtonPressedHighlight_Y: [uint16; 2] = [
+static kPauseLrButtonPressedHighlight_Y: [uint16; 2] = [
     0x18 as ::core::ffi::c_int as uint16,
     0xe8 as ::core::ffi::c_int as uint16,
 ];
-static mut kPauseLrButtonPressedHighlight_X: [uint16; 2] = [
+static kPauseLrButtonPressedHighlight_X: [uint16; 2] = [
     0xd0 as ::core::ffi::c_int as uint16,
     0xd0 as ::core::ffi::c_int as uint16,
 ];
@@ -4982,7 +4982,7 @@ pub unsafe fn HighlightPauseScreenButton() {
         DrawMenuSpritemap(0x2b as uint16, 0x90 as uint16, 0xd0 as uint16, 0 as uint16);
     }
 }
-static mut kSetPauseScreenButtonLabelPalettes_Funcs: [Option<Func_V>; 3] = unsafe {
+static kSetPauseScreenButtonLabelPalettes_Funcs: [Option<Func_V>; 3] = unsafe {
     [
         Some(SetPauseScreenButtonLabelPalettes_0 as unsafe fn() -> ()),
         Some(SetPauseScreenButtonLabelPalettes_1 as unsafe fn() -> ()),
@@ -5747,7 +5747,7 @@ pub unsafe fn EquipmentScreenTransferBG1Tilemap() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x30 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_82AC3B: StartDmaCopy = StartDmaCopy {
+    static unk_82AC3B: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -5762,7 +5762,7 @@ pub unsafe fn EquipmentScreenTransferBG1Tilemap() {
     *((&raw mut g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-static mut kEquipmentScreenCategories: [Option<Func_V>; 4] = unsafe {
+static kEquipmentScreenCategories: [Option<Func_V>; 4] = unsafe {
     [
         Some(EquipmentScreenCategory_Tanks as unsafe fn() -> ()),
         Some(EquipmentScreenCategory_Weapons as unsafe fn() -> ()),
@@ -5779,7 +5779,7 @@ pub unsafe fn EquipmentScreenMain() {
     EquipmentScreenDisplayReserveTankAmount();
     WriteSamusWireframeTilemapAndQueue();
 }
-static mut kEquipmentScreenCategory_TanksFuncs: [Option<Func_V>; 2] = unsafe {
+static kEquipmentScreenCategory_TanksFuncs: [Option<Func_V>; 2] = unsafe {
     [
         Some(EquipmentScreenCategory_Tanks_0 as unsafe fn() -> ()),
         Some(EquipmentScreenCategory_Tanks_1 as unsafe fn() -> ()),
@@ -5859,7 +5859,7 @@ pub unsafe fn EquipmentScreenHandleDpad() {
         }
     }
 }
-static mut kEquipmentScreenGlowingArrowFuncs: [Option<Func_V>; 2] = unsafe {
+static kEquipmentScreenGlowingArrowFuncs: [Option<Func_V>; 2] = unsafe {
     [
         Some(EquipmentScreenGlowingArrowAnimated as unsafe fn() -> ()),
         Some(EquipmentScreenGlowingArrowSolidOn as unsafe fn() -> ()),
@@ -5883,7 +5883,7 @@ pub unsafe fn EquipmentScreenGlowingArrow() {
             .expect("non-null function pointer")();
     };
 }
-static mut kEquipmentScreenGlowingArrowPalettes0: [uint16; 32] = [
+static kEquipmentScreenGlowingArrowPalettes0: [uint16; 32] = [
     0x39e as ::core::ffi::c_int as uint16,
     0x77d as ::core::ffi::c_int as uint16,
     0xb5c as ::core::ffi::c_int as uint16,
@@ -5917,7 +5917,7 @@ static mut kEquipmentScreenGlowingArrowPalettes0: [uint16; 32] = [
     0x77d as ::core::ffi::c_int as uint16,
     0x39e as ::core::ffi::c_int as uint16,
 ];
-static mut kEquipmentScreenGlowingArrowPalettes1: [uint16; 32] = [
+static kEquipmentScreenGlowingArrowPalettes1: [uint16; 32] = [
     0x156 as ::core::ffi::c_int as uint16,
     0x155 as ::core::ffi::c_int as uint16,
     0x554 as ::core::ffi::c_int as uint16,
@@ -6057,13 +6057,13 @@ pub unsafe fn EquipmentScreenEnergyArrowGlow_Off() {
         i_0 += 1;
     }
 }
-static mut kEquipmentScreenTilemap_MANUAL: [uint16; 4] = [
+static kEquipmentScreenTilemap_MANUAL: [uint16; 4] = [
     0x3d46 as ::core::ffi::c_int as uint16,
     0x3d47 as ::core::ffi::c_int as uint16,
     0x3d48 as ::core::ffi::c_int as uint16,
     0x3d49 as ::core::ffi::c_int as uint16,
 ];
-static mut kEquipmentScreenTilemap_AUTO: [uint16; 4] = [
+static kEquipmentScreenTilemap_AUTO: [uint16; 4] = [
     0x3d56 as ::core::ffi::c_int as uint16,
     0x3d57 as ::core::ffi::c_int as uint16,
     0x3d58 as ::core::ffi::c_int as uint16,
@@ -6184,7 +6184,7 @@ pub unsafe fn EquipmentScreenHudReserveAutoTilemap_Off() {
         as *mut uint16)
         .offset(73 as ::core::ffi::c_int as isize) = 11279 as uint16;
 }
-static mut kReserveTankEnergyTransferPerFrame: uint16 = 1 as uint16;
+static kReserveTankEnergyTransferPerFrame: uint16 = 1 as uint16;
 pub unsafe fn EquipmentScreenCategory_Tanks_1() {
     if *((&raw mut g_ram as *mut uint8).offset(0x757 as ::core::ffi::c_int as isize) as *mut uint16)
         == 0
@@ -6701,7 +6701,7 @@ pub unsafe fn EquipmentScreenDrawItemSelector() {
 pub unsafe fn EquipmentScreenDisplayReserveTankAmount() {
     EquipmentScreenDisplayReserveTankAmount_();
 }
-static mut kEquipmentScreenReserveTank_X: [uint16; 6] = [
+static kEquipmentScreenReserveTank_X: [uint16; 6] = [
     0x18 as ::core::ffi::c_int as uint16,
     0x20 as ::core::ffi::c_int as uint16,
     0x28 as ::core::ffi::c_int as uint16,
@@ -6709,8 +6709,8 @@ static mut kEquipmentScreenReserveTank_X: [uint16; 6] = [
     0x38 as ::core::ffi::c_int as uint16,
     0x40 as ::core::ffi::c_int as uint16,
 ];
-static mut kEquipmentScreenReserveTank_Y: uint16 = 0x60 as uint16;
-static mut kPartialReserveTankSpritemapIds: [uint16; 16] = [
+static kEquipmentScreenReserveTank_Y: uint16 = 0x60 as uint16;
+static kPartialReserveTankSpritemapIds: [uint16; 16] = [
     0x20 as ::core::ffi::c_int as uint16,
     0x21 as ::core::ffi::c_int as uint16,
     0x22 as ::core::ffi::c_int as uint16,
@@ -7205,7 +7205,7 @@ pub unsafe fn UNKNOWN_sub_82B650() {
         EquipmentScreenDisplayReserveTankAmount();
     };
 }
-static mut kMap_Criteria_SavePoints: [uint16; 16] = [
+static kMap_Criteria_SavePoints: [uint16; 16] = [
     0xd8 as ::core::ffi::c_int as uint16,
     0x28 as ::core::ffi::c_int as uint16,
     0x90 as ::core::ffi::c_int as uint16,
@@ -7328,7 +7328,7 @@ pub unsafe fn DrawFileSelectMapIcons() {
     }
 }
 pub unsafe fn DrawSaveStationMapIcon(mut a: uint16, mut k: uint16, mut r3: uint16) {
-    static mut kShlBit: [uint8; 8] = [
+    static kShlBit: [uint8; 8] = [
         1 as ::core::ffi::c_int as uint8,
         2 as ::core::ffi::c_int as uint8,
         4 as ::core::ffi::c_int as uint8,
@@ -7452,7 +7452,7 @@ pub unsafe fn DrawMapIconsOfType(mut a: uint16, mut r34: uint16, mut r36: uint16
     }
 }
 pub unsafe fn CheckIfMapPositionIsExplored(mut k: uint16, mut j: uint16) -> uint16 {
-    static mut kBits0x80Shr: [uint8; 8] = [
+    static kBits0x80Shr: [uint8; 8] = [
         0x80 as ::core::ffi::c_int as uint8,
         0x40 as ::core::ffi::c_int as uint8,
         0x20 as ::core::ffi::c_int as uint8,
@@ -7690,13 +7690,13 @@ pub unsafe fn MapScreenDrawSamusPositionIndicator() {
         3584 as uint16,
     );
 }
-static mut kMap_SamusPositionIndicator_Delays: [uint16; 4] = [
+static kMap_SamusPositionIndicator_Delays: [uint16; 4] = [
     8 as ::core::ffi::c_int as uint16,
     4 as ::core::ffi::c_int as uint16,
     8 as ::core::ffi::c_int as uint16,
     4 as ::core::ffi::c_int as uint16,
 ];
-static mut kMap_SamusPositionIndicator_SpritemapIds: [uint16; 4] = [
+static kMap_SamusPositionIndicator_SpritemapIds: [uint16; 4] = [
     0x5f as ::core::ffi::c_int as uint16,
     0x60 as ::core::ffi::c_int as uint16,
     0x61 as ::core::ffi::c_int as uint16,
@@ -7757,13 +7757,13 @@ pub unsafe fn DrawBorderAroundDataClearMode() {
         3584 as uint16,
     );
 }
-static mut kDrawMenuSelectionMissile_Enable: [uint16; 4] = [
+static kDrawMenuSelectionMissile_Enable: [uint16; 4] = [
     8 as ::core::ffi::c_int as uint16,
     8 as ::core::ffi::c_int as uint16,
     8 as ::core::ffi::c_int as uint16,
     8 as ::core::ffi::c_int as uint16,
 ];
-static mut kDrawMenuSelectionMissile_SpriteMap: [uint16; 4] = [
+static kDrawMenuSelectionMissile_SpriteMap: [uint16; 4] = [
     0x37 as ::core::ffi::c_int as uint16,
     0x36 as ::core::ffi::c_int as uint16,
     0x35 as ::core::ffi::c_int as uint16,
@@ -9637,7 +9637,7 @@ pub unsafe fn DoorTransitionFunction_PlaceSamusLoadTiles() -> CoroutineRet {
         (0x82e4a9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return kCoroutineNone as CoroutineRet;
 }
-static mut kUpdateBackgroundCommands: [Option<Func_Y_Y>; 8] = unsafe {
+static kUpdateBackgroundCommands: [Option<Func_Y_Y>; 8] = unsafe {
     [
         Some(UpdateBackgroundCommand_0_Finish as unsafe fn(uint16) -> uint16),
         Some(UpdateBackgroundCommand_2_TransferToVram as unsafe fn(uint16) -> uint16),
@@ -10257,7 +10257,7 @@ pub unsafe fn CheckIfColoredDoorCapSpawned() -> uint8 {
         .offset(v5 as isize) = (*get_PlmHeader_Size6(v8)).instr_list_2_ptr as uint16;
     return 1 as uint8;
 }
-static mut kLoadLibraryBackgroundFuncs: [Option<Func_Y_Y>; 8] = unsafe {
+static kLoadLibraryBackgroundFuncs: [Option<Func_Y_Y>; 8] = unsafe {
     [
         Some(LoadLibraryBackgroundFunc_0_DONE as unsafe fn(uint16) -> uint16),
         Some(LoadLibraryBackgroundFunc_2_TransferToVram as unsafe fn(uint16) -> uint16),
@@ -10546,7 +10546,7 @@ pub unsafe fn CreatePlmsExecuteDoorAsmRoomSetup() {
             as *mut uint16) = 2 as uint16;
     }
 }
-static mut kGameOptionsMenuFuncs: [Option<Func_V>; 13] = unsafe {
+static kGameOptionsMenuFuncs: [Option<Func_V>; 13] = unsafe {
     [
         Some(GameOptionsMenuFunc_0 as unsafe fn() -> ()),
         Some(GameOptionsMenu_1_LoadingOptionsScreen as unsafe fn() -> ()),
@@ -10624,7 +10624,7 @@ pub unsafe fn GameOptionsMenu_1_LoadingOptionsScreen() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x58 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_82EC3D: StartDmaCopy = StartDmaCopy {
+    static unk_82EC3D: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -10765,7 +10765,7 @@ pub unsafe fn OptionsMenuFunc5(mut a: uint16, mut k: uint16, mut j: uint16) {
         }
     }
 }
-static mut kGameOptionsMenuItemFuncs: [Option<Func_V>; 5] = unsafe {
+static kGameOptionsMenuItemFuncs: [Option<Func_V>; 5] = unsafe {
     [
         Some(GameOptionsMenuItemFunc_0 as unsafe fn() -> ()),
         Some(GameOptionsMenuItemFunc_2_ToggleJapanese as unsafe fn() -> ()),
@@ -11162,7 +11162,7 @@ pub unsafe fn GameOptionsMenu_6_DissolveInScreen() {
         }
     }
 }
-static mut kGameOptionsMenuSpecialSettings: [Option<Func_V>; 3] = unsafe {
+static kGameOptionsMenuSpecialSettings: [Option<Func_V>; 3] = unsafe {
     [
         Some(GameOptionsMenuSpecialSettings_0 as unsafe fn() -> ()),
         Some(GameOptionsMenuSpecialSettings_0 as unsafe fn() -> ()),
@@ -11251,13 +11251,13 @@ pub unsafe fn GameOptionsMenuSpecialSettings_2() {
         0 as uint16;
     GameOptionsMenuItemFunc_4();
 }
-static mut g_word_82F149: [uint16; 4] = [
+static g_word_82F149: [uint16; 4] = [
     0x1e0 as ::core::ffi::c_int as uint16,
     0x220 as ::core::ffi::c_int as uint16,
     0x360 as ::core::ffi::c_int as uint16,
     0x3a0 as ::core::ffi::c_int as uint16,
 ];
-static mut g_word_82F151: [uint16; 4] = [
+static g_word_82F151: [uint16; 4] = [
     0x1ee as ::core::ffi::c_int as uint16,
     0x22e as ::core::ffi::c_int as uint16,
     0x36e as ::core::ffi::c_int as uint16,
@@ -11336,7 +11336,7 @@ pub unsafe fn OptionsMenuFunc7() {
         );
     };
 }
-static mut word_82F204: [uint16; 16] = [
+static word_82F204: [uint16; 16] = [
     0x20 as ::core::ffi::c_int as uint16,
     0x20 as ::core::ffi::c_int as uint16,
     0x20 as ::core::ffi::c_int as uint16,
@@ -11413,7 +11413,7 @@ pub unsafe fn GameOptionsMenu_7_ControllerSettings() {
         != 0
     {
         QueueSfx1_Max6(0x38 as uint16);
-        static mut kOptionsMenuControllerFuncs: [Option<Func_V>; 9] = unsafe {
+        static kOptionsMenuControllerFuncs: [Option<Func_V>; 9] = unsafe {
             [
                 Some(OptionsMenuControllerFunc_0 as unsafe fn() -> ()),
                 Some(OptionsMenuControllerFunc_0 as unsafe fn() -> ()),
@@ -11826,7 +11826,7 @@ pub unsafe fn LoadControllerOptionsFromControllerBindings() {
         }
     }
 }
-static mut word_82F575: [Buttons; 9] = [
+static word_82F575: [Buttons; 9] = [
     kButton_X,
     kButton_A,
     kButton_B,
@@ -11862,7 +11862,7 @@ pub unsafe fn OptionsMenuFunc8() -> uint8 {
     }
     return 0 as uint8;
 }
-static mut g_word_82F6AD: [uint16; 6] = [
+static g_word_82F6AD: [uint16; 6] = [
     0 as ::core::ffi::c_int as uint16,
     0xe as ::core::ffi::c_int as uint16,
     0xe as ::core::ffi::c_int as uint16,

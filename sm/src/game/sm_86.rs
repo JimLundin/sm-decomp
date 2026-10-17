@@ -1539,7 +1539,7 @@ unsafe fn EprojColl_85AD(mut eci: *mut EprojCollInfo) -> uint8 {
         );
     };
 }
-static mut unk_868729: [uint8; 20] = [
+static unk_868729: [uint8; 20] = [
     0 as ::core::ffi::c_int as uint8,
     1 as ::core::ffi::c_int as uint8,
     0x82 as ::core::ffi::c_int as uint8,
@@ -2069,7 +2069,7 @@ unsafe fn EprojColl_874E(mut eci: *mut EprojCollInfo) -> uint8 {
         }
     };
 }
-static mut kEprojBlockCollisition_FuncA: [Option<Func_EprojCollInfo_U8>; 16] = unsafe {
+static kEprojBlockCollisition_FuncA: [Option<Func_EprojCollInfo_U8>; 16] = unsafe {
     [
         Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
         Some(EprojColl_858E as unsafe fn(*mut EprojCollInfo) -> uint8),
@@ -2089,7 +2089,7 @@ static mut kEprojBlockCollisition_FuncA: [Option<Func_EprojCollInfo_U8>; 16] = u
         Some(EprojColl_SetCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
     ]
 };
-static mut kEprojBlockCollisition_FuncB: [Option<Func_EprojCollInfo_U8>; 16] = unsafe {
+static kEprojBlockCollisition_FuncB: [Option<Func_EprojCollInfo_U8>; 16] = unsafe {
     [
         Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo) -> uint8),
         Some(EprojColl_85AD as unsafe fn(*mut EprojCollInfo) -> uint8),
@@ -2994,7 +2994,7 @@ unsafe fn EprojInit_CrocomireSpikeWallPieces(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = -(30720 as ::core::ffi::c_int) as uint16;
 }
-static mut CrocomireSpikeWallPieces_Tab2: [uint16; 18] = [
+static CrocomireSpikeWallPieces_Tab2: [uint16; 18] = [
     0 as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
     0xff0 as ::core::ffi::c_int as uint16,
@@ -3014,7 +3014,7 @@ static mut CrocomireSpikeWallPieces_Tab2: [uint16; 18] = [
     0x440 as ::core::ffi::c_int as uint16,
     0x220 as ::core::ffi::c_int as uint16,
 ];
-static mut CrocomireSpikeWallPieces_Tab1: [uint16; 18] = [
+static CrocomireSpikeWallPieces_Tab1: [uint16; 18] = [
     0 as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
     0xff00 as ::core::ffi::c_int as uint16,
@@ -3034,7 +3034,7 @@ static mut CrocomireSpikeWallPieces_Tab1: [uint16; 18] = [
     0x4400 as ::core::ffi::c_int as uint16,
     0x2200 as ::core::ffi::c_int as uint16,
 ];
-static mut CrocomireSpikeWallPieces_Tab3: [int8; 36] = [
+static CrocomireSpikeWallPieces_Tab3: [int8; 36] = [
     0 as ::core::ffi::c_int as int8,
     0 as ::core::ffi::c_int as int8,
     0 as ::core::ffi::c_int as int8,
@@ -3378,13 +3378,13 @@ pub unsafe fn SetAreaDependentEprojPropertiesEx(mut k: uint16, mut j: uint16) {
         as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = v2;
 }
-static mut kEprojInit_9634_Xvel: [int16; 4] = [
+static kEprojInit_9634_Xvel: [int16; 4] = [
     -(0x200 as ::core::ffi::c_int) as int16,
     -(0x1f0 as ::core::ffi::c_int) as int16,
     -(0x1bc as ::core::ffi::c_int) as int16,
     -(0x16a as ::core::ffi::c_int) as int16,
 ];
-static mut kEprojInit_9634_Yvel: [int16; 4] = [
+static kEprojInit_9634_Yvel: [int16; 4] = [
     0 as ::core::ffi::c_int as int16,
     0x88 as ::core::ffi::c_int as int16,
     0xfc as ::core::ffi::c_int as int16,
@@ -3812,7 +3812,7 @@ pub unsafe fn EprojInstr_980E(mut k: uint16, mut epjp: *const uint8) -> *const u
     );
     return epjp;
 }
-static mut byte_8698B4: [uint8; 16] = [
+static byte_8698B4: [uint8; 16] = [
     0x10 as ::core::ffi::c_int as uint8,
     0x20 as ::core::ffi::c_int as uint8,
     0x30 as ::core::ffi::c_int as uint8,
@@ -3830,7 +3830,7 @@ static mut byte_8698B4: [uint8; 16] = [
     0x90 as ::core::ffi::c_int as uint8,
     0x80 as ::core::ffi::c_int as uint8,
 ];
-static mut byte_8698F7: [uint8; 9] = [
+static byte_8698F7: [uint8; 9] = [
     0x30 as ::core::ffi::c_int as uint8,
     0x44 as ::core::ffi::c_int as uint8,
     0x58 as ::core::ffi::c_int as uint8,
@@ -3841,7 +3841,7 @@ static mut byte_8698F7: [uint8; 9] = [
     0xbc as ::core::ffi::c_int as uint8,
     0xd0 as ::core::ffi::c_int as uint8,
 ];
-static mut byte_869979: [uint8; 8] = [
+static byte_869979: [uint8; 8] = [
     0 as ::core::ffi::c_int as uint8,
     0x20 as ::core::ffi::c_int as uint8,
     0x40 as ::core::ffi::c_int as uint8,
@@ -4148,7 +4148,7 @@ pub unsafe fn EprojPreInstr_PhantoonStartingFireballs2(mut k: uint16) {
         }
     }
 }
-static mut word_869A3E: [uint16; 3] = [
+static word_869A3E: [uint16; 3] = [
     0xfd00 as ::core::ffi::c_int as uint16,
     0xfe00 as ::core::ffi::c_int as uint16,
     0xff00 as ::core::ffi::c_int as uint16,
@@ -4773,7 +4773,7 @@ pub unsafe fn EprojPreInit_MiniKraidSpit(mut k: uint16) {
             .offset(v1 as isize) = v2 as uint16;
     };
 }
-static mut kEprojInit_MiniKraidSpikes_Tab0: [int16; 3] = [
+static kEprojInit_MiniKraidSpikes_Tab0: [int16; 3] = [
     -(2 as ::core::ffi::c_int) as int16,
     12 as ::core::ffi::c_int as int16,
     24 as ::core::ffi::c_int as int16,
@@ -4827,7 +4827,7 @@ pub unsafe fn EprojPreInstr_MiniKraidSpikes(mut k: uint16) {
     }
 }
 unsafe fn EprojInit_WalkingLavaSeahorseFireball(mut j: uint16) {
-    static mut word_869EF9: [int16; 3] = [
+    static word_869EF9: [int16; 3] = [
         -(0x100 as ::core::ffi::c_int) as int16,
         0 as ::core::ffi::c_int as int16,
         0x100 as ::core::ffi::c_int as int16,
@@ -5165,7 +5165,7 @@ pub unsafe fn EprojPreInstr_PirateClawThrownRight(mut k: uint16) {
             .offset(v1 as isize) = 0 as uint16;
     }
 }
-static mut word_86A2D6: [int16; 6] = [
+static word_86A2D6: [int16; 6] = [
     64 as ::core::ffi::c_int as int16,
     72 as ::core::ffi::c_int as int16,
     80 as ::core::ffi::c_int as int16,
@@ -5512,7 +5512,7 @@ unsafe fn EprojInit_A977(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 0 as uint16;
 }
-static mut kEprojInit_BombTorizoExplosiveSwipe_Tab0: [int16; 11] = [
+static kEprojInit_BombTorizoExplosiveSwipe_Tab0: [int16; 11] = [
     -(30 as ::core::ffi::c_int) as int16,
     -(40 as ::core::ffi::c_int) as int16,
     -(47 as ::core::ffi::c_int) as int16,
@@ -5525,7 +5525,7 @@ static mut kEprojInit_BombTorizoExplosiveSwipe_Tab0: [int16; 11] = [
     -(31 as ::core::ffi::c_int) as int16,
     -(21 as ::core::ffi::c_int) as int16,
 ];
-static mut kEprojInit_BombTorizoExplosiveSwipe_Tab1: [int16; 11] = [
+static kEprojInit_BombTorizoExplosiveSwipe_Tab1: [int16; 11] = [
     -(52 as ::core::ffi::c_int) as int16,
     -(28 as ::core::ffi::c_int) as int16,
     -(11 as ::core::ffi::c_int) as int16,
@@ -5538,7 +5538,7 @@ static mut kEprojInit_BombTorizoExplosiveSwipe_Tab1: [int16; 11] = [
     9 as ::core::ffi::c_int as int16,
     20 as ::core::ffi::c_int as int16,
 ];
-static mut kEprojInit_BombTorizoStatueBreaking_Xpos: [int16; 16] = [
+static kEprojInit_BombTorizoStatueBreaking_Xpos: [int16; 16] = [
     8 as ::core::ffi::c_int as int16,
     0x18 as ::core::ffi::c_int as int16,
     -(8 as ::core::ffi::c_int) as int16,
@@ -5556,7 +5556,7 @@ static mut kEprojInit_BombTorizoStatueBreaking_Xpos: [int16; 16] = [
     8 as ::core::ffi::c_int as int16,
     -(8 as ::core::ffi::c_int) as int16,
 ];
-static mut kEprojInit_BombTorizoStatueBreaking_Ypos: [int16; 8] = [
+static kEprojInit_BombTorizoStatueBreaking_Ypos: [int16; 8] = [
     -(8 as ::core::ffi::c_int) as int16,
     -(8 as ::core::ffi::c_int) as int16,
     8 as ::core::ffi::c_int as int16,
@@ -5566,7 +5566,7 @@ static mut kEprojInit_BombTorizoStatueBreaking_Ypos: [int16; 8] = [
     0x18 as ::core::ffi::c_int as int16,
     0x18 as ::core::ffi::c_int as int16,
 ];
-static mut kEprojInit_BombTorizoStatueBreaking_Yvel: [int16; 8] = [
+static kEprojInit_BombTorizoStatueBreaking_Yvel: [int16; 8] = [
     256 as ::core::ffi::c_int as int16,
     256 as ::core::ffi::c_int as int16,
     256 as ::core::ffi::c_int as int16,
@@ -5576,7 +5576,7 @@ static mut kEprojInit_BombTorizoStatueBreaking_Yvel: [int16; 8] = [
     256 as ::core::ffi::c_int as int16,
     256 as ::core::ffi::c_int as int16,
 ];
-static mut kEprojInit_BombTorizoStatueBreaking_F: [int16; 8] = [
+static kEprojInit_BombTorizoStatueBreaking_F: [int16; 8] = [
     16 as ::core::ffi::c_int as int16,
     16 as ::core::ffi::c_int as int16,
     16 as ::core::ffi::c_int as int16,
@@ -5586,7 +5586,7 @@ static mut kEprojInit_BombTorizoStatueBreaking_F: [int16; 8] = [
     16 as ::core::ffi::c_int as int16,
     16 as ::core::ffi::c_int as int16,
 ];
-static mut kEprojInit_BombTorizoLowHealthExplode_X: [int16; 6] = [
+static kEprojInit_BombTorizoLowHealthExplode_X: [int16; 6] = [
     0 as ::core::ffi::c_int as int16,
     12 as ::core::ffi::c_int as int16,
     -(12 as ::core::ffi::c_int) as int16,
@@ -5594,7 +5594,7 @@ static mut kEprojInit_BombTorizoLowHealthExplode_X: [int16; 6] = [
     16 as ::core::ffi::c_int as int16,
     -(16 as ::core::ffi::c_int) as int16,
 ];
-static mut kEprojInit_BombTorizoLowHealthExplode_Y: [int16; 6] = [
+static kEprojInit_BombTorizoLowHealthExplode_Y: [int16; 6] = [
     -(8 as ::core::ffi::c_int) as int16,
     -(8 as ::core::ffi::c_int) as int16,
     -(8 as ::core::ffi::c_int) as int16,
@@ -6584,7 +6584,7 @@ pub unsafe fn sub_86B13E(mut k: uint16, mut epjp: *const uint8) -> *const uint8 
         addr_off_86B14B as ::core::ffi::c_int
     }) as uintptr_t as *const uint8;
 }
-static mut word_86B205: [int16; 2] = [
+static word_86B205: [int16; 2] = [
     -(0x1e as ::core::ffi::c_int) as int16,
     0x1e as ::core::ffi::c_int as int16,
 ];
@@ -6951,7 +6951,7 @@ pub unsafe fn Eproj_DeleteIfYposOutside(mut k: uint16) {
             .offset(v1 as isize) = 0 as uint16;
     }
 }
-static mut word_86B65B: [int16; 20] = [
+static word_86B65B: [int16; 20] = [
     -(16 as ::core::ffi::c_int) as int16,
     16 as ::core::ffi::c_int as int16,
     -(96 as ::core::ffi::c_int) as int16,
@@ -7008,7 +7008,7 @@ unsafe fn EprojInit_EyeDoorProjectile(mut j: uint16) {
             * *((&raw mut g_ram as *mut uint8).offset(0x1c2b as ::core::ffi::c_int as isize)
                 as *mut uint16) as ::core::ffi::c_int) as uint16;
 }
-static mut word_86B6B1: [int16; 4] = [
+static word_86B6B1: [int16; 4] = [
     -(64 as ::core::ffi::c_int) as int16,
     512 as ::core::ffi::c_int as int16,
     64 as ::core::ffi::c_int as int16,
@@ -7178,19 +7178,19 @@ unsafe fn EprojInit_TourianStatueUnlockingParticleWaterSplash(mut j: uint16) {
         as *mut uint16) as ::core::ffi::c_int
         - 4 as ::core::ffi::c_int) as uint16;
 }
-static mut kEprojInit_TourianStatueEyeGlow_X: [uint16; 4] = [
+static kEprojInit_TourianStatueEyeGlow_X: [uint16; 4] = [
     0x84 as ::core::ffi::c_int as uint16,
     0x7a as ::core::ffi::c_int as uint16,
     0x9e as ::core::ffi::c_int as uint16,
     0x68 as ::core::ffi::c_int as uint16,
 ];
-static mut kEprojInit_TourianStatueEyeGlow_Y: [uint16; 4] = [
+static kEprojInit_TourianStatueEyeGlow_Y: [uint16; 4] = [
     0x90 as ::core::ffi::c_int as uint16,
     0x51 as ::core::ffi::c_int as uint16,
     0x80 as ::core::ffi::c_int as uint16,
     0x72 as ::core::ffi::c_int as uint16,
 ];
-static mut kEprojInit_TourianStatueEyeGlow_Colors: [uint16; 16] = [
+static kEprojInit_TourianStatueEyeGlow_Colors: [uint16; 16] = [
     0x6bff as ::core::ffi::c_int as uint16,
     0x33b as ::core::ffi::c_int as uint16,
     0x216 as ::core::ffi::c_int as uint16,
@@ -7786,7 +7786,7 @@ pub unsafe fn Eproj_NorfairLavaquakeRocks_Func3(mut k: uint16) {
             << 8 as ::core::ffi::c_int) as uint32,
     );
 }
-static mut kEprojInit_ShaktoolAttackMiddleBackCircle_X: [int16; 8] = [
+static kEprojInit_ShaktoolAttackMiddleBackCircle_X: [int16; 8] = [
     0 as ::core::ffi::c_int as int16,
     12 as ::core::ffi::c_int as int16,
     16 as ::core::ffi::c_int as int16,
@@ -7796,7 +7796,7 @@ static mut kEprojInit_ShaktoolAttackMiddleBackCircle_X: [int16; 8] = [
     -(16 as ::core::ffi::c_int) as int16,
     -(12 as ::core::ffi::c_int) as int16,
 ];
-static mut kEprojInit_ShaktoolAttackMiddleBackCircle_Y: [int16; 8] = [
+static kEprojInit_ShaktoolAttackMiddleBackCircle_Y: [int16; 8] = [
     -(16 as ::core::ffi::c_int) as int16,
     -(12 as ::core::ffi::c_int) as int16,
     0 as ::core::ffi::c_int as int16,
@@ -7882,7 +7882,7 @@ pub unsafe fn EprojPreInstr_BE12(mut k: uint16) {
             .offset(v1 as isize) = 0 as uint16;
     };
 }
-static mut kEprojInit_MotherBrainRoomTurrets_X: [int16; 12] = [
+static kEprojInit_MotherBrainRoomTurrets_X: [int16; 12] = [
     0x398 as ::core::ffi::c_int as int16,
     0x348 as ::core::ffi::c_int as int16,
     0x328 as ::core::ffi::c_int as int16,
@@ -7896,7 +7896,7 @@ static mut kEprojInit_MotherBrainRoomTurrets_X: [int16; 12] = [
     0x108 as ::core::ffi::c_int as int16,
     0xe8 as ::core::ffi::c_int as int16,
 ];
-static mut EprojInit_MotherBrainRoomTurrets_Y: [int16; 12] = [
+static EprojInit_MotherBrainRoomTurrets_Y: [int16; 12] = [
     0x30 as ::core::ffi::c_int as int16,
     0x40 as ::core::ffi::c_int as int16,
     0x40 as ::core::ffi::c_int as int16,
@@ -7961,7 +7961,7 @@ unsafe fn EprojInit_MotherBrainRoomTurrets(mut j: uint16) {
     Eproj_SetXvelRandom(j);
     Eproj_SetYvelRandom(j);
 }
-static mut kEproj_MotherBrainRoomTurretBullets_X: [int16; 8] = [
+static kEproj_MotherBrainRoomTurretBullets_X: [int16; 8] = [
     -(17 as ::core::ffi::c_int) as int16,
     -(12 as ::core::ffi::c_int) as int16,
     0 as ::core::ffi::c_int as int16,
@@ -7971,7 +7971,7 @@ static mut kEproj_MotherBrainRoomTurretBullets_X: [int16; 8] = [
     0 as ::core::ffi::c_int as int16,
     -(12 as ::core::ffi::c_int) as int16,
 ];
-static mut kEproj_MotherBrainRoomTurretBullets_Y: [int16; 8] = [
+static kEproj_MotherBrainRoomTurretBullets_Y: [int16; 8] = [
     -(9 as ::core::ffi::c_int) as int16,
     3 as ::core::ffi::c_int as int16,
     7 as ::core::ffi::c_int as int16,
@@ -7981,7 +7981,7 @@ static mut kEproj_MotherBrainRoomTurretBullets_Y: [int16; 8] = [
     -(21 as ::core::ffi::c_int) as int16,
     -(19 as ::core::ffi::c_int) as int16,
 ];
-static mut kEproj_MotherBrainRoomTurretBullets_Xvel: [int16; 8] = [
+static kEproj_MotherBrainRoomTurretBullets_Xvel: [int16; 8] = [
     -(704 as ::core::ffi::c_int) as int16,
     -(498 as ::core::ffi::c_int) as int16,
     0 as ::core::ffi::c_int as int16,
@@ -7991,7 +7991,7 @@ static mut kEproj_MotherBrainRoomTurretBullets_Xvel: [int16; 8] = [
     0 as ::core::ffi::c_int as int16,
     -(498 as ::core::ffi::c_int) as int16,
 ];
-static mut kEproj_MotherBrainRoomTurretBullets_Yvel: [int16; 8] = [
+static kEproj_MotherBrainRoomTurretBullets_Yvel: [int16; 8] = [
     0 as ::core::ffi::c_int as int16,
     498 as ::core::ffi::c_int as int16,
     704 as ::core::ffi::c_int as int16,
@@ -8255,7 +8255,7 @@ pub unsafe fn EprojPreInstr_MotherBrainRoomTurretBullets(mut k: uint16) {
             ) = 0 as uint16;
     }
 }
-static mut kMotherBrainsBomb_Yaccel: [int16; 10] = [
+static kMotherBrainsBomb_Yaccel: [int16; 10] = [
     7 as ::core::ffi::c_int as int16,
     0x10 as ::core::ffi::c_int as int16,
     0x20 as ::core::ffi::c_int as int16,
@@ -9162,7 +9162,7 @@ unsafe fn EprojInit_MotherBrainRainbowBeam(mut j: uint16) {
         .offset(v1 as isize) = 0 as uint16;
     EprojPreInstr_MotherBrainRainbowBeam(j);
 }
-static mut kEprojInit_MotherBrainsDrool: [int16; 12] = [
+static kEprojInit_MotherBrainsDrool: [int16; 12] = [
     6 as ::core::ffi::c_int as int16,
     0x14 as ::core::ffi::c_int as int16,
     0xe as ::core::ffi::c_int as int16,
@@ -9341,7 +9341,7 @@ pub unsafe fn EprojPreInstr_MotherBrainsRainbowBeamExplosion(mut k: uint16) {
             .offset(v1 as isize) as ::core::ffi::c_int) as uint16;
 }
 unsafe fn EprojInit_MotherBrainEscapeDoorParticles(mut j: uint16) {
-    static mut kEprojInit_MotherBrainEscapeDoorParticles_X: [int16; 16] = [
+    static kEprojInit_MotherBrainEscapeDoorParticles_X: [int16; 16] = [
         0 as ::core::ffi::c_int as int16,
         -(0x20 as ::core::ffi::c_int) as int16,
         0 as ::core::ffi::c_int as int16,
@@ -9359,7 +9359,7 @@ unsafe fn EprojInit_MotherBrainEscapeDoorParticles(mut j: uint16) {
         0 as ::core::ffi::c_int as int16,
         0x18 as ::core::ffi::c_int as int16,
     ];
-    static mut kEprojInit_MotherBrainEscapeDoorParticles_Xvel: [int16; 16] = [
+    static kEprojInit_MotherBrainEscapeDoorParticles_Xvel: [int16; 16] = [
         0x500 as ::core::ffi::c_int as int16,
         -(0x200 as ::core::ffi::c_int) as int16,
         0x500 as ::core::ffi::c_int as int16,
@@ -9639,12 +9639,12 @@ pub unsafe fn MotherBrainTubeFallingFunc_Falling(mut k: uint16) {
         );
     }
 }
-static mut kEprojInit_MotherBrainGlassShatteringShard_X: [int16; 3] = [
+static kEprojInit_MotherBrainGlassShatteringShard_X: [int16; 3] = [
     8 as ::core::ffi::c_int as int16,
     -(40 as ::core::ffi::c_int) as int16,
     -(16 as ::core::ffi::c_int) as int16,
 ];
-static mut kEprojInit_MotherBrainGlassShatteringShard_Y: [int16; 3] = [
+static kEprojInit_MotherBrainGlassShatteringShard_Y: [int16; 3] = [
     32 as ::core::ffi::c_int as int16,
     32 as ::core::ffi::c_int as int16,
     32 as ::core::ffi::c_int as int16,
@@ -10001,7 +10001,7 @@ pub unsafe fn EprojPreInstr_KagosBugs(mut k: uint16) {
             (0x86d0eb as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
-static mut word_86D082: uint16 = 0xe0 as uint16;
+static word_86D082: uint16 = 0xe0 as uint16;
 pub unsafe fn EprojPreInstr_D0EC(mut k: uint16) {
     let mut current_block: u64;
     EprojPreInstr_KagosBugs_Func1(k);
@@ -10081,8 +10081,8 @@ pub unsafe fn EprojPreInstr_D128(mut v0: uint16) {
         *fresh70 = (*fresh70 as ::core::ffi::c_int + word_86D082 as ::core::ffi::c_int) as uint16;
     };
 }
-static mut g_word_86D086: uint16 = 0x200 as uint16;
-static mut g_word_86D084: uint16 = 0x30 as uint16;
+static g_word_86D086: uint16 = 0x200 as uint16;
+static g_word_86D084: uint16 = 0x30 as uint16;
 pub unsafe fn EprojInstr_D15C(mut k: uint16, mut epjp: *const uint8) -> *const uint8 {
     EprojPreInstr_KagosBugs_Func1(k);
     EprojPreInstr_KagosBugs_Func2(k);
@@ -10194,7 +10194,7 @@ unsafe fn EprojInit_MaridiaFloatersSpikes(mut j: uint16) {
         .offset(0x1993 as ::core::ffi::c_int as isize)
         as *mut uint16);
 }
-static mut word_86D21A: [int16; 8] = [
+static word_86D21A: [int16; 8] = [
     0 as ::core::ffi::c_int as int16,
     32 as ::core::ffi::c_int as int16,
     32 as ::core::ffi::c_int as int16,
@@ -10204,7 +10204,7 @@ static mut word_86D21A: [int16; 8] = [
     -(32 as ::core::ffi::c_int) as int16,
     -(32 as ::core::ffi::c_int) as int16,
 ];
-static mut word_86D22A: [int16; 8] = [
+static word_86D22A: [int16; 8] = [
     -(32 as ::core::ffi::c_int) as int16,
     -(32 as ::core::ffi::c_int) as int16,
     0 as ::core::ffi::c_int as int16,
@@ -10475,7 +10475,7 @@ unsafe fn EprojInit_N00bTubeCrack(mut j: uint16) {
             as *mut uint16) as ::core::ffi::c_int
         + 48 as ::core::ffi::c_int) as uint16;
 }
-static mut kEprojInit_N00bTubeShards_X: [int16; 10] = [
+static kEprojInit_N00bTubeShards_X: [int16; 10] = [
     -(56 as ::core::ffi::c_int) as int16,
     -(64 as ::core::ffi::c_int) as int16,
     -(20 as ::core::ffi::c_int) as int16,
@@ -10487,7 +10487,7 @@ static mut kEprojInit_N00bTubeShards_X: [int16; 10] = [
     0 as ::core::ffi::c_int as int16,
     -(8 as ::core::ffi::c_int) as int16,
 ];
-static mut kEprojInit_N00bTubeShards_Y: [int16; 10] = [
+static kEprojInit_N00bTubeShards_Y: [int16; 10] = [
     8 as ::core::ffi::c_int as int16,
     -(12 as ::core::ffi::c_int) as int16,
     -(26 as ::core::ffi::c_int) as int16,
@@ -10499,7 +10499,7 @@ static mut kEprojInit_N00bTubeShards_Y: [int16; 10] = [
     -(24 as ::core::ffi::c_int) as int16,
     16 as ::core::ffi::c_int as int16,
 ];
-static mut kEprojInit_N00bTubeShards_Xvel: [int16; 10] = [
+static kEprojInit_N00bTubeShards_Xvel: [int16; 10] = [
     -(384 as ::core::ffi::c_int) as int16,
     -(384 as ::core::ffi::c_int) as int16,
     -(160 as ::core::ffi::c_int) as int16,
@@ -10511,7 +10511,7 @@ static mut kEprojInit_N00bTubeShards_Xvel: [int16; 10] = [
     0 as ::core::ffi::c_int as int16,
     -(64 as ::core::ffi::c_int) as int16,
 ];
-static mut kEprojInit_N00bTubeShards_Yvel: [int16; 10] = [
+static kEprojInit_N00bTubeShards_Yvel: [int16; 10] = [
     320 as ::core::ffi::c_int as int16,
     -(256 as ::core::ffi::c_int) as int16,
     -(416 as ::core::ffi::c_int) as int16,
@@ -10565,7 +10565,7 @@ unsafe fn EprojInit_N00bTubeShards(mut j: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = kEprojInit_N00bTubeShards_Yvel[v1 as usize] as uint16;
 }
-static mut kEprojInit_N00bTubeReleasedAirBubbles_X: [uint16; 6] = [
+static kEprojInit_N00bTubeReleasedAirBubbles_X: [uint16; 6] = [
     40 as ::core::ffi::c_int as uint16,
     80 as ::core::ffi::c_int as uint16,
     104 as ::core::ffi::c_int as uint16,
@@ -10573,7 +10573,7 @@ static mut kEprojInit_N00bTubeReleasedAirBubbles_X: [uint16; 6] = [
     152 as ::core::ffi::c_int as uint16,
     184 as ::core::ffi::c_int as uint16,
 ];
-static mut kEprojInit_N00bTubeReleasedAirBubbles_Y: [uint16; 6] = [
+static kEprojInit_N00bTubeReleasedAirBubbles_Y: [uint16; 6] = [
     80 as ::core::ffi::c_int as uint16,
     72 as ::core::ffi::c_int as uint16,
     84 as ::core::ffi::c_int as uint16,
@@ -10931,7 +10931,7 @@ pub unsafe fn EprojPreInstr_SpikeShootingPlantSpikes_9_MoveX2Y2(mut k: uint16) {
     EprojPreInstr_SpikeShootingPlantSpikes_MoveX2(k);
     EprojPreInstr_SpikeShootingPlantSpikes_MoveY2(k);
 }
-static mut kEprojPreInstr_SpikeShootingPlantSpikes: [Option<Func_Y_V>; 10] = unsafe {
+static kEprojPreInstr_SpikeShootingPlantSpikes: [Option<Func_Y_V>; 10] = unsafe {
     [
         Some(EprojPreInstr_SpikeShootingPlantSpikes_0_MoveX1 as unsafe fn(uint16) -> ()),
         Some(EprojPreInstr_SpikeShootingPlantSpikes_1_MoveY1 as unsafe fn(uint16) -> ()),
@@ -11169,7 +11169,7 @@ unsafe fn EprojInit_Spores(mut j: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = 512 as uint16;
 }
-static mut word_86DCB9: [int16; 5] = [
+static word_86DCB9: [int16; 5] = [
     -(64 as ::core::ffi::c_int) as int16,
     -(56 as ::core::ffi::c_int) as int16,
     -(48 as ::core::ffi::c_int) as int16,
@@ -11214,7 +11214,7 @@ pub unsafe fn sub_86DCC3(mut v0: uint16) {
         .offset(0 as ::core::ffi::c_int as isize))
     .x_pos;
 }
-static mut kEprojInit_SporeSpawners_X: [int16; 4] = [
+static kEprojInit_SporeSpawners_X: [int16; 4] = [
     0x20 as ::core::ffi::c_int as int16,
     0x60 as ::core::ffi::c_int as int16,
     0xa0 as ::core::ffi::c_int as int16,
@@ -12678,7 +12678,7 @@ unsafe fn EprojInit_EnemyDeathExplosion(mut j: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = 1 as uint16;
 }
-static mut off_86F0AD: [Option<Func_V>; 7] = unsafe {
+static off_86F0AD: [Option<Func_V>; 7] = unsafe {
     [
         None,
         Some(Eproj_Pickup_SmallHealth as unsafe fn() -> ()),
@@ -12885,7 +12885,7 @@ pub unsafe fn Eproj_Pickup_SuperMissiles() {
     Samus_RestoreSuperMissiles(1 as uint16);
     QueueSfx2_Max1(4 as uint16);
 }
-static mut byte_86F25E: [uint8; 6] = [
+static byte_86F25E: [uint8; 6] = [
     1 as ::core::ffi::c_int as uint8,
     2 as ::core::ffi::c_int as uint8,
     4 as ::core::ffi::c_int as uint8,
@@ -13105,7 +13105,7 @@ pub unsafe fn RespawnEnemy(mut v0: uint16) {
     );
 }
 unsafe fn EprojInit_Sparks(mut j: uint16) {
-    static mut word_86F3D4: [uint16; 14] = [
+    static word_86F3D4: [uint16; 14] = [
         0xffff as ::core::ffi::c_int as uint16,
         0xb800 as ::core::ffi::c_int as uint16,
         0xffff as ::core::ffi::c_int as uint16,

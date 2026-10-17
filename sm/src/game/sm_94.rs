@@ -366,7 +366,7 @@ pub const fnDoorTransitionFunction_HandleElevator: ::core::ffi::c_int =
 pub const fnGrappleInstr_Goto: uint32 = 9744628 as uint32;
 pub const fnGrappleBeam_Func2: ::core::ffi::c_int = 0x9bc8c5 as ::core::ffi::c_int;
 pub static mut cur_coll_amt32: *mut int32 = ::core::ptr::null::<int32>() as *mut int32;
-static mut kAlignPos_Tab1: [uint8; 512] = [
+static kAlignPos_Tab1: [uint8; 512] = [
     16 as ::core::ffi::c_int as uint8,
     16 as ::core::ffi::c_int as uint8,
     16 as ::core::ffi::c_int as uint8,
@@ -880,7 +880,7 @@ static mut kAlignPos_Tab1: [uint8; 512] = [
     0 as ::core::ffi::c_int as uint8,
     0 as ::core::ffi::c_int as uint8,
 ];
-static mut kAlignYPos_Tab0: [uint8; 512] = [
+static kAlignYPos_Tab0: [uint8; 512] = [
     8 as ::core::ffi::c_int as uint8,
     8 as ::core::ffi::c_int as uint8,
     8 as ::core::ffi::c_int as uint8,
@@ -1394,7 +1394,7 @@ static mut kAlignYPos_Tab0: [uint8; 512] = [
     0 as ::core::ffi::c_int as uint8,
     0 as ::core::ffi::c_int as uint8,
 ];
-static mut kTab948E54: [uint8; 20] = [
+static kTab948E54: [uint8; 20] = [
     0 as ::core::ffi::c_int as uint8,
     0 as ::core::ffi::c_int as uint8,
     0x80 as ::core::ffi::c_int as uint8,
@@ -1416,7 +1416,7 @@ static mut kTab948E54: [uint8; 20] = [
     0x80 as ::core::ffi::c_int as uint8,
     0x80 as ::core::ffi::c_int as uint8,
 ];
-static mut kBlockColl_Horiz_Slope_NonSquare_Tab: [uint16; 64] = [
+static kBlockColl_Horiz_Slope_NonSquare_Tab: [uint16; 64] = [
     0 as ::core::ffi::c_int as uint16,
     0x100 as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
@@ -1912,7 +1912,7 @@ unsafe fn PostGrappleColl_Vert_Slope(mut pgci: *mut PostGrappleCollInfo) -> uint
 unsafe fn PostGrappleColl_Vert_Solid(mut pgci: *mut PostGrappleCollInfo) -> uint16 {
     return ((*pgci).pgci_r32 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int) as uint16;
 }
-static mut kPostGrappleColl_Horiz: [Option<Func_PostGrappleCollInfo_U16>; 16] = unsafe {
+static kPostGrappleColl_Horiz: [Option<Func_PostGrappleCollInfo_U16>; 16] = unsafe {
     [
         Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
         Some(PostGrappleColl_Horiz_Slope as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
@@ -1932,7 +1932,7 @@ static mut kPostGrappleColl_Horiz: [Option<Func_PostGrappleCollInfo_U16>; 16] = 
         Some(PostGrappleColl_Horiz_Solid as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
     ]
 };
-static mut kPostGrappleColl_Vert: [Option<Func_PostGrappleCollInfo_U16>; 16] = unsafe {
+static kPostGrappleColl_Vert: [Option<Func_PostGrappleCollInfo_U16>; 16] = unsafe {
     [
         Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
         Some(PostGrappleColl_Vert_Slope as unsafe fn(*mut PostGrappleCollInfo) -> uint16),
@@ -2927,7 +2927,7 @@ unsafe fn BlockColl_Vert_SpikeAir(mut ci: *mut CollInfo) -> uint8 {
     return 0 as uint8;
 }
 unsafe fn SetCarry_Spikeblk() {}
-static mut kBlockColl_SpikeBlock: [Option<Func_V>; 16] = unsafe {
+static kBlockColl_SpikeBlock: [Option<Func_V>; 16] = unsafe {
     [
         Some(BlockColl_SpikeBlock_BTS0 as unsafe fn() -> ()),
         Some(BlockColl_SpikeBlock_BTS1 as unsafe fn() -> ()),
@@ -3373,7 +3373,7 @@ unsafe fn Samus_GetXposSpan() -> uint16 {
         >> 4 as ::core::ffi::c_int) as uint16;
     return r26;
 }
-static mut kBlockColl_Horiz_CheckColl: [Option<Func_CollInfo_U8>; 16] = unsafe {
+static kBlockColl_Horiz_CheckColl: [Option<Func_CollInfo_U8>; 16] = unsafe {
     [
         Some(ClearCarry_4 as unsafe fn(*mut CollInfo) -> uint8),
         Some(BlockColl_Horiz_Slope as unsafe fn(*mut CollInfo) -> uint8),
@@ -3393,7 +3393,7 @@ static mut kBlockColl_Horiz_CheckColl: [Option<Func_CollInfo_U8>; 16] = unsafe {
         Some(BlockColl_Horiz_BombBlock as unsafe fn(*mut CollInfo) -> uint8),
     ]
 };
-static mut kBlockColl_Vert_CheckColl: [Option<Func_CollInfo_U8>; 16] = unsafe {
+static kBlockColl_Vert_CheckColl: [Option<Func_CollInfo_U8>; 16] = unsafe {
     [
         Some(ClearCarry_4 as unsafe fn(*mut CollInfo) -> uint8),
         Some(BlockColl_Vert_Slope as unsafe fn(*mut CollInfo) -> uint8),
@@ -3811,7 +3811,7 @@ unsafe fn BlockInsideReact_SpikeAir_BTS2() {
     *((&raw mut g_ram as *mut uint8).offset(0xa6c as ::core::ffi::c_int as isize) as *mut uint16) =
         (addr_kSamusSpeedTable_Normal_X as ::core::ffi::c_int + 12 as ::core::ffi::c_int) as uint16;
 }
-static mut kBlockInsideReact_SpikeAir: [Option<Func_V>; 16] = unsafe {
+static kBlockInsideReact_SpikeAir: [Option<Func_V>; 16] = unsafe {
     [
         Some(ClearCarry_8 as unsafe fn() -> ()),
         Some(ClearCarry_8 as unsafe fn() -> ()),
@@ -3908,7 +3908,7 @@ unsafe fn BlockInsideReact_SpecialAir_70() {
         SpawnPLM(addr_kPlmHeader_B6FF as ::core::ffi::c_int as uint16);
     }
 }
-static mut g_off_949B06: [uint16; 8] = [
+static g_off_949B06: [uint16; 8] = [
     0x9a06 as ::core::ffi::c_int as uint16,
     0x9a26 as ::core::ffi::c_int as uint16,
     0x9a46 as ::core::ffi::c_int as uint16,
@@ -3918,7 +3918,7 @@ static mut g_off_949B06: [uint16; 8] = [
     0x9ac6 as ::core::ffi::c_int as uint16,
     0x9ae6 as ::core::ffi::c_int as uint16,
 ];
-static mut off_949966: [Option<Func_V>; 80] = unsafe {
+static off_949966: [Option<Func_V>; 80] = unsafe {
     [
         Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
         Some(BlockInsideReact_SpecialAir_Default as unsafe fn() -> ()),
@@ -4027,7 +4027,7 @@ unsafe fn BlockInsideReact_SpecialAir(mut ci: *mut CollInfo) -> uint8 {
     return 0 as uint8;
 }
 pub unsafe fn BlockInsideDetection() {
-    static mut kSamus_BlockInsideDetection: [Option<Func_CollInfo_U8>; 16] = unsafe {
+    static kSamus_BlockInsideDetection: [Option<Func_CollInfo_U8>; 16] = unsafe {
         [
             Some(BlockInsideReact_ShootableAir as unsafe fn(*mut CollInfo) -> uint8),
             Some(BlockInsideReact_Slope as unsafe fn(*mut CollInfo) -> uint8),
@@ -4243,7 +4243,7 @@ unsafe fn CalculateBlockAt(mut r26: uint16, mut r28: uint16, mut r30: uint16, mu
             as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
     };
 }
-static mut kBlockFunc_9C73_Tab0: [uint8; 36] = [
+static kBlockFunc_9C73_Tab0: [uint8; 36] = [
     3 as ::core::ffi::c_int as uint8,
     20 as ::core::ffi::c_int as uint8,
     0 as ::core::ffi::c_int as uint8,
@@ -4281,7 +4281,7 @@ static mut kBlockFunc_9C73_Tab0: [uint8; 36] = [
     100 as ::core::ffi::c_int as uint8,
     1 as ::core::ffi::c_int as uint8,
 ];
-static mut kBlockFunc_9C73_Tab1: [int8; 18] = [
+static kBlockFunc_9C73_Tab1: [int8; 18] = [
     0 as ::core::ffi::c_int as int8,
     0 as ::core::ffi::c_int as int8,
     10 as ::core::ffi::c_int as int8,
@@ -4576,7 +4576,7 @@ unsafe fn BlockReact_BombableBlock(mut ci: *mut CollInfo) -> uint8 {
     }
     return 1 as uint8;
 }
-static mut kBlockBombedReact: [Option<Func_CollInfo_U8>; 16] = unsafe {
+static kBlockBombedReact: [Option<Func_CollInfo_U8>; 16] = unsafe {
     [
         Some(ClearCarry_9 as unsafe fn(*mut CollInfo) -> uint8),
         Some(ClearCarry_9 as unsafe fn(*mut CollInfo) -> uint8),
@@ -4845,7 +4845,7 @@ unsafe fn BlockShotReactVert_Slope(mut ci: *mut CollInfo) -> uint8 {
     };
 }
 unsafe fn BlockShotReactHoriz(mut ci: *mut CollInfo, mut k: uint16) -> uint8 {
-    static mut kBlockShotReactHoriz: [Option<Func_CollInfo_U8>; 16] = unsafe {
+    static kBlockShotReactHoriz: [Option<Func_CollInfo_U8>; 16] = unsafe {
         [
             Some(ClearCarry_9 as unsafe fn(*mut CollInfo) -> uint8),
             Some(BlockShotReactHoriz_Slope as unsafe fn(*mut CollInfo) -> uint8),
@@ -4895,7 +4895,7 @@ unsafe fn BlockShotReactHoriz(mut ci: *mut CollInfo, mut k: uint16) -> uint8 {
     return v1;
 }
 unsafe fn BlockShotReactVert(mut ci: *mut CollInfo, mut k: uint16) -> uint8 {
-    static mut kBlockShotReactVert: [Option<Func_CollInfo_U8>; 16] = unsafe {
+    static kBlockShotReactVert: [Option<Func_CollInfo_U8>; 16] = unsafe {
         [
             Some(ClearCarry_9 as unsafe fn(*mut CollInfo) -> uint8),
             Some(BlockShotReactVert_Slope as unsafe fn(*mut CollInfo) -> uint8),
@@ -5577,7 +5577,7 @@ unsafe fn BlockShotReactHoriz_Slope_NonSquare(mut ci: *mut CollInfo) -> uint8 {
     };
 }
 pub unsafe fn BlockCollSpreadBomb(mut k: uint16) -> uint8 {
-    static mut kBlockCollSpreadBomb: [Option<Func_CollInfo_U8>; 16] = unsafe {
+    static kBlockCollSpreadBomb: [Option<Func_CollInfo_U8>; 16] = unsafe {
         [
             Some(ClearCarry_9 as unsafe fn(*mut CollInfo) -> uint8),
             Some(sub_949D5D as unsafe fn(*mut CollInfo) -> uint8),
@@ -5877,7 +5877,7 @@ unsafe fn SetCarryClearOvf(mut ci: *mut CollInfo) -> uint8 {
     return 1 as uint8;
 }
 unsafe fn BlockReactGrapple_GrappleBlock(mut ci: *mut CollInfo) -> uint8 {
-    static mut kBlockReactGrapple_GrappleBlockPlm: [uint16; 4] = [
+    static kBlockReactGrapple_GrappleBlockPlm: [uint16; 4] = [
         0xd0d8 as ::core::ffi::c_int as uint16,
         0xd0dc as ::core::ffi::c_int as uint16,
         0xd0e0 as ::core::ffi::c_int as uint16,
@@ -5908,7 +5908,7 @@ unsafe fn BlockReactGrapple_GrappleBlock(mut ci: *mut CollInfo) -> uint8 {
     };
 }
 unsafe fn BlockReactGrapple_SpikeBlock(mut ci: *mut CollInfo) -> uint8 {
-    static mut kBlockReactGrapple_SpikeBlockPlm: [uint16; 16] = [
+    static kBlockReactGrapple_SpikeBlockPlm: [uint16; 16] = [
         0xd0e4 as ::core::ffi::c_int as uint16,
         0xd0e4 as ::core::ffi::c_int as uint16,
         0xd0e4 as ::core::ffi::c_int as uint16,
@@ -6045,7 +6045,7 @@ pub unsafe fn BlockCollGrappleBeam() -> uint8 {
 }
 pub unsafe fn BlockReactGrapple() -> uint8 {
     let mut v0: int16 = 0;
-    static mut kBlockReactGrapple: [Option<Func_CollInfo_U8>; 16] = unsafe {
+    static kBlockReactGrapple: [Option<Func_CollInfo_U8>; 16] = unsafe {
         [
             Some(ClearCarryZero as unsafe fn(*mut CollInfo) -> uint8),
             Some(SetCarryClearOvf as unsafe fn(*mut CollInfo) -> uint8),
@@ -6105,7 +6105,7 @@ pub unsafe fn BlockReactGrapple() -> uint8 {
     }
     return rv;
 }
-pub static mut kSinCosTable8bit_Sext: [int16; 320] = [
+pub static kSinCosTable8bit_Sext: [int16; 320] = [
     -(256 as ::core::ffi::c_int) as int16,
     -(255 as ::core::ffi::c_int) as int16,
     -(255 as ::core::ffi::c_int) as int16,
@@ -6543,7 +6543,7 @@ unsafe fn SetCarry_3(mut ci: *mut CollInfo) -> uint8 {
     return 1 as uint8;
 }
 unsafe fn BlockReact_AA64() -> uint8 {
-    static mut kBlockReactLut_AB90_0: [Option<Func_CollInfo_U8>; 16] = unsafe {
+    static kBlockReactLut_AB90_0: [Option<Func_CollInfo_U8>; 16] = unsafe {
         [
             Some(ClearCarry_10 as unsafe fn(*mut CollInfo) -> uint8),
             Some(SetCarry_3 as unsafe fn(*mut CollInfo) -> uint8),
@@ -6601,7 +6601,7 @@ unsafe fn BlockReact_AA64() -> uint8 {
     }
     return rv;
 }
-static mut g_word_94AAF7: [uint16; 16] = [
+static g_word_94AAF7: [uint16; 16] = [
     0 as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
     0x10 as ::core::ffi::c_int as uint16,
@@ -6651,7 +6651,7 @@ unsafe fn BlockReact_AA64_SpikeAir(mut ci: *mut CollInfo) -> uint8 {
     }
     return 0 as uint8;
 }
-static mut g_word_94AB70: [uint16; 16] = [
+static g_word_94AB70: [uint16; 16] = [
     60 as ::core::ffi::c_int as uint16,
     16 as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
@@ -6701,7 +6701,7 @@ unsafe fn BlockReact_AA64_SpikeBlock(mut ci: *mut CollInfo) -> uint8 {
     }
     return 1 as uint8;
 }
-static mut kBlockReactLut_AB90: [Option<Func_CollInfo_U8>; 16] = unsafe {
+static kBlockReactLut_AB90: [Option<Func_CollInfo_U8>; 16] = unsafe {
     [
         Some(ClearCarry_10 as unsafe fn(*mut CollInfo) -> uint8),
         Some(SetCarry_3 as unsafe fn(*mut CollInfo) -> uint8),

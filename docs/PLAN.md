@@ -297,6 +297,12 @@ every step makes the next one easier.
 4. Globals: gather `static mut` game state behind one `Game` struct passed by
    `&mut`, keeping `g_ram` as the 128 KiB array it is (RAM layout must stay
    byte-identical for the oracle comparison and for save states).
+   Immutable-table precursor applied: 755 read-only gameplay statics now
+   immutable `static`, preserving storage identity, types and initializers.
+   Eight mutable scratch fields and the outer demo pointer table excluded.
+   Any% 129,712 frames, zero failures (185.67s); format and frontend/core
+   metadata builds pass. Progress counters unchanged (they count unsafe
+   functions/RAM offsets, not mutable statics). Stable local Cargo blocked.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 

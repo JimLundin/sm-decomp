@@ -418,7 +418,7 @@ unsafe fn Get_PipeBug(mut o: ::core::ffi::c_int) -> *mut Enemy_PipeBug {
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_PipeBug;
 }
-static mut g_word_B39E77: [int16; 3] = [
+static g_word_B39E77: [int16; 3] = [
     2 as ::core::ffi::c_int as int16,
     3 as ::core::ffi::c_int as int16,
     4 as ::core::ffi::c_int as int16,

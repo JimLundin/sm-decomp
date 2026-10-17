@@ -3265,7 +3265,7 @@ pub unsafe fn DisableIrqInterrupts() {
         .offset(0x84 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh41 = (*fresh41 as ::core::ffi::c_int & !(0x30 as ::core::ffi::c_int)) as uint16;
 }
-static mut kIrqHandlers: [Option<Func_V>; 14] = unsafe {
+static kIrqHandlers: [Option<Func_V>; 14] = unsafe {
     [
         Some(IrqHandler_0_Nothing as unsafe fn() -> ()),
         Some(IrqHandler_2_DisableIRQ as unsafe fn() -> ()),
@@ -3289,7 +3289,7 @@ pub unsafe fn Vector_IRQ() {
         >> 1 as ::core::ffi::c_int) as usize]
         .expect("non-null function pointer")();
 }
-static mut kHudTilemaps_Row1to3: [uint16; 96] = [
+static kHudTilemaps_Row1to3: [uint16; 96] = [
     0x2c0f as ::core::ffi::c_int as uint16,
     0x2c0f as ::core::ffi::c_int as uint16,
     0x2c0f as ::core::ffi::c_int as uint16,
@@ -3387,7 +3387,7 @@ static mut kHudTilemaps_Row1to3: [uint16; 96] = [
     0x2c16 as ::core::ffi::c_int as uint16,
     0x2c1e as ::core::ffi::c_int as uint16,
 ];
-static mut kHudTilemaps_Missiles: [uint16; 22] = [
+static kHudTilemaps_Missiles: [uint16; 22] = [
     0x344b as ::core::ffi::c_int as uint16,
     0x3449 as ::core::ffi::c_int as uint16,
     0x744b as ::core::ffi::c_int as uint16,
@@ -3511,7 +3511,7 @@ pub unsafe fn InitializeHud() {
         addr_unk_605800 as ::core::ffi::c_int as uint16,
     );
     WriteRegWord(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint16);
-    static mut unk_809A8F: StartDmaCopy = StartDmaCopy {
+    static unk_809A8F: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -3613,7 +3613,7 @@ pub unsafe fn InitializeHud() {
     );
     HandleHudTilemap();
 }
-static mut kEnergyTankIconTilemapOffsets: [uint16; 14] = [
+static kEnergyTankIconTilemapOffsets: [uint16; 14] = [
     0x42 as ::core::ffi::c_int as uint16,
     0x44 as ::core::ffi::c_int as uint16,
     0x46 as ::core::ffi::c_int as uint16,
@@ -3864,7 +3864,7 @@ pub unsafe fn HandleHudTilemap() {
     *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16) =
         (v5 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
-static mut kHudItemTilemapOffsets: [uint16; 5] = [
+static kHudItemTilemapOffsets: [uint16; 5] = [
     0x14 as ::core::ffi::c_int as uint16,
     0x1c as ::core::ffi::c_int as uint16,
     0x22 as ::core::ffi::c_int as uint16,
@@ -4012,7 +4012,7 @@ pub unsafe fn DrawTwoHudDigits(mut addr: uint32, mut a: uint16, mut k: uint16) {
                 as uint32_t,
         )) as *mut uint16);
 }
-static mut kTimerProcessFuncs: [Option<Func_U8>; 7] = unsafe {
+static kTimerProcessFuncs: [Option<Func_U8>; 7] = unsafe {
     [
         Some(ProcessTimer_Empty as unsafe fn() -> uint8),
         Some(ProcessTimer_CeresStart as unsafe fn() -> uint8),
@@ -4166,7 +4166,7 @@ pub unsafe fn DecrementDecimal(mut number: *mut uint8, mut value: uint8) -> bool
     return result < 0x100 as ::core::ffi::c_int;
 }
 pub unsafe fn ProcessTimer_Decrement() -> uint8 {
-    static mut kTimerCentisecondDecrements: [uint8; 128] = [
+    static kTimerCentisecondDecrements: [uint8; 128] = [
         1 as ::core::ffi::c_int as uint8,
         2 as ::core::ffi::c_int as uint8,
         2 as ::core::ffi::c_int as uint8,
@@ -6344,7 +6344,7 @@ pub unsafe fn FixDoorsMovingUp() {
     *fresh67 = (*fresh67).wrapping_add(1);
     DoorTransition_Up();
 }
-static mut kDoorTransitionSetupFuncs: [Option<Func_V>; 4] = unsafe {
+static kDoorTransitionSetupFuncs: [Option<Func_V>; 4] = unsafe {
     [
         Some(DoorTransitionScrollingSetup_Right as unsafe fn() -> ()),
         Some(DoorTransitionScrollingSetup_Left as unsafe fn() -> ()),
@@ -6491,7 +6491,7 @@ pub unsafe fn UpdateBgScrollOffsets() {
             - *((&raw mut g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize)
                 as *mut uint16) as ::core::ffi::c_int) as uint16;
 }
-static mut kDoorTransitionFuncs: [Option<Func_U8>; 4] = unsafe {
+static kDoorTransitionFuncs: [Option<Func_U8>; 4] = unsafe {
     [
         Some(DoorTransition_Right as unsafe fn() -> uint8),
         Some(DoorTransition_Left as unsafe fn() -> uint8),

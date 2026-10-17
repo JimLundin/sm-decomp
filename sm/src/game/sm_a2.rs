@@ -1928,16 +1928,16 @@ unsafe fn SetHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut t: uint32) {
     *lo = t as uint16;
     *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
-static mut g_word_A28D50: uint16 = 0x30 as uint16;
-static mut g_word_A28D52: uint16 = 1 as uint16;
-static mut g_word_A28D5E: uint16 = 3 as uint16;
-static mut g_word_A28D60: uint16 = 0x1e8 as uint16;
-static mut g_word_A28D62: uint16 = 7 as uint16;
-static mut g_word_A28D64: uint16 = 0x1e as uint16;
-static mut g_word_A28D66: uint16 = 4 as uint16;
-static mut g_word_A28D68: uint16 = 0xfffd as uint16;
-static mut g_word_A28D6A: uint16 = 3 as uint16;
-static mut g_word_A28E80: [int16; 48] = [
+static g_word_A28D50: uint16 = 0x30 as uint16;
+static g_word_A28D52: uint16 = 1 as uint16;
+static g_word_A28D5E: uint16 = 3 as uint16;
+static g_word_A28D60: uint16 = 0x1e8 as uint16;
+static g_word_A28D62: uint16 = 7 as uint16;
+static g_word_A28D64: uint16 = 0x1e as uint16;
+static g_word_A28D66: uint16 = 4 as uint16;
+static g_word_A28D68: uint16 = 0xfffd as uint16;
+static g_word_A28D6A: uint16 = 3 as uint16;
+static g_word_A28E80: [int16; 48] = [
     -(16 as ::core::ffi::c_int) as int16,
     -(16 as ::core::ffi::c_int) as int16,
     -(16 as ::core::ffi::c_int) as int16,
@@ -2081,7 +2081,7 @@ pub unsafe fn BouncingGoofball_Func1(mut k: uint16) {
     (*E).bgl_var_02 = 1 as uint16;
     (*E).bgl_var_04 = 1 as uint16;
 }
-static mut off_A28718: [Option<Func_V>; 2] = unsafe {
+static off_A28718: [Option<Func_V>; 2] = unsafe {
     [
         Some(BouncingGoofball_State0 as unsafe fn() -> ()),
         Some(BouncingGoofball_State1 as unsafe fn() -> ()),
@@ -4082,7 +4082,7 @@ pub unsafe fn SpikeShootingPlant_Instr_A0A7(mut k: uint16, mut jp: *const uint16
     );
     return jp.offset(1 as ::core::ffi::c_int as isize);
 }
-static mut off_A2A3D3: [Option<Func_V>; 7] = unsafe {
+static off_A2A3D3: [Option<Func_V>; 7] = unsafe {
     [
         Some(MaridiaSpikeyShell_1 as unsafe fn() -> ()),
         Some(MaridiaSpikeyShell_2 as unsafe fn() -> ()),
@@ -8480,7 +8480,7 @@ pub unsafe fn TimedShutter_Func_4(mut k: uint16) {
     };
 }
 pub unsafe fn TimedShutter_Func_Null() {}
-static mut off_A2EB1A: [Option<Func_V>; 5] = unsafe {
+static off_A2EB1A: [Option<Func_V>; 5] = unsafe {
     [
         Some(TimedShutter_Func_6 as unsafe fn() -> ()),
         Some(TimedShutter_Func_7 as unsafe fn() -> ()),
@@ -8584,7 +8584,7 @@ pub unsafe fn TimedShutter_Func_9() {
     }
 }
 pub unsafe fn TimedShutter_Func_Null2() {}
-static mut off_A2EC3A: [Option<Func_V>; 5] = unsafe {
+static off_A2EC3A: [Option<Func_V>; 5] = unsafe {
     [
         Some(TimedShutter_Func_11 as unsafe fn() -> ()),
         Some(TimedShutter_Func_12 as unsafe fn() -> ()),
@@ -8927,7 +8927,7 @@ pub unsafe fn RisingFallingPlatform_Main() {
         }
     }
 }
-static mut off_A2EDFB: [Option<Func_V>; 5] = unsafe {
+static off_A2EDFB: [Option<Func_V>; 5] = unsafe {
     [
         Some(RisingFallingPlatform_Func_3 as unsafe fn() -> ()),
         Some(RisingFallingPlatform_Func_4 as unsafe fn() -> ()),
@@ -9321,7 +9321,7 @@ pub unsafe fn HorizontalShootableShutter_Main() {
     (*E).rfpm_var_16 = *((&raw mut g_ram as *mut uint8).offset(0xaf8 as ::core::ffi::c_int as isize)
         as *mut uint16);
 }
-static mut off_A2F107: [Option<Func_V>; 5] = unsafe {
+static off_A2F107: [Option<Func_V>; 5] = unsafe {
     [
         Some(HorizontalShootableShutter_Func_3 as unsafe fn() -> ()),
         Some(HorizontalShootableShutter_Func_4 as unsafe fn() -> ()),

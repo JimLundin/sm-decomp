@@ -1523,38 +1523,38 @@ unsafe fn Get_ShitroidInCutscene(mut o: ::core::ffi::c_int) -> *mut Enemy_Shitro
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_ShitroidInCutscene;
 }
-static mut g_word_A98B5D: [uint16; 5] = [
+static g_word_A98B5D: [uint16; 5] = [
     0x10 as ::core::ffi::c_int as uint16,
     0x10 as ::core::ffi::c_int as uint16,
     8 as ::core::ffi::c_int as uint16,
     8 as ::core::ffi::c_int as uint16,
     0x10 as ::core::ffi::c_int as uint16,
 ];
-static mut g_word_A98B67: [uint16; 5] = [
+static g_word_A98B67: [uint16; 5] = [
     0x20 as ::core::ffi::c_int as uint16,
     0x20 as ::core::ffi::c_int as uint16,
     0x18 as ::core::ffi::c_int as uint16,
     0x18 as ::core::ffi::c_int as uint16,
     0x20 as ::core::ffi::c_int as uint16,
 ];
-static mut g_word_A98B71: [uint16; 5] = [
+static g_word_A98B71: [uint16; 5] = [
     0xf8 as ::core::ffi::c_int as uint16,
     0xf8 as ::core::ffi::c_int as uint16,
     0xf0 as ::core::ffi::c_int as uint16,
     0xf0 as ::core::ffi::c_int as uint16,
     0xf6 as ::core::ffi::c_int as uint16,
 ];
-static mut g_word_A98C61: [uint16; 4] = [
+static g_word_A98C61: [uint16; 4] = [
     0xfff8 as ::core::ffi::c_int as uint16,
     2 as ::core::ffi::c_int as uint16,
     0xfffc as ::core::ffi::c_int as uint16,
     6 as ::core::ffi::c_int as uint16,
 ];
-static mut g_byte_A98F7D: [uint8; 2] = [
+static g_byte_A98F7D: [uint8; 2] = [
     9 as ::core::ffi::c_int as uint8,
     0x12 as ::core::ffi::c_int as uint8,
 ];
-static mut g_word_A98F7F: [uint16; 8] = [
+static g_word_A98F7F: [uint16; 8] = [
     0x3d as ::core::ffi::c_int as uint16,
     0x54 as ::core::ffi::c_int as uint16,
     0x20 as ::core::ffi::c_int as uint16,
@@ -1564,19 +1564,19 @@ static mut g_word_A98F7F: [uint16; 8] = [
     0x67 as ::core::ffi::c_int as uint16,
     0x29 as ::core::ffi::c_int as uint16,
 ];
-static mut g_word_A993BB: [int16; 4] = [
+static g_word_A993BB: [int16; 4] = [
     0 as ::core::ffi::c_int as int16,
     -(1 as ::core::ffi::c_int) as int16,
     0 as ::core::ffi::c_int as int16,
     1 as ::core::ffi::c_int as int16,
 ];
-static mut g_word_A993C3: [int16; 4] = [
+static g_word_A993C3: [int16; 4] = [
     0 as ::core::ffi::c_int as int16,
     1 as ::core::ffi::c_int as int16,
     -(1 as ::core::ffi::c_int) as int16,
     1 as ::core::ffi::c_int as int16,
 ];
-static mut g_word_A99E0F: [uint16; 13] = [
+static g_word_A99E0F: [uint16; 13] = [
     0x6f as ::core::ffi::c_int as uint16,
     0x6f as ::core::ffi::c_int as uint16,
     0x6f as ::core::ffi::c_int as uint16,
@@ -1591,7 +1591,7 @@ static mut g_word_A99E0F: [uint16; 13] = [
     0x6f as ::core::ffi::c_int as uint16,
     0x6f as ::core::ffi::c_int as uint16,
 ];
-static mut g_word_A9B393: [uint16; 8] = [
+static g_word_A9B393: [uint16; 8] = [
     8 as ::core::ffi::c_int as uint16,
     0x6c as ::core::ffi::c_int as uint16,
     0x18 as ::core::ffi::c_int as uint16,
@@ -1601,7 +1601,7 @@ static mut g_word_A9B393: [uint16; 8] = [
     0x18 as ::core::ffi::c_int as uint16,
     0x74 as ::core::ffi::c_int as uint16,
 ];
-static mut g_byte_A9B546: [uint8; 8] = [
+static g_byte_A9B546: [uint8; 8] = [
     0 as ::core::ffi::c_int as uint8,
     1 as ::core::ffi::c_int as uint8,
     1 as ::core::ffi::c_int as uint8,
@@ -1611,7 +1611,7 @@ static mut g_byte_A9B546: [uint8; 8] = [
     0 as ::core::ffi::c_int as uint8,
     0 as ::core::ffi::c_int as uint8,
 ];
-static mut g_byte_A9B5A1: [uint8; 8] = [
+static g_byte_A9B5A1: [uint8; 8] = [
     2 as ::core::ffi::c_int as uint8,
     1 as ::core::ffi::c_int as uint8,
     1 as ::core::ffi::c_int as uint8,
@@ -1621,7 +1621,7 @@ static mut g_byte_A9B5A1: [uint8; 8] = [
     0 as ::core::ffi::c_int as uint8,
     0 as ::core::ffi::c_int as uint8,
 ];
-static mut g_word_A9B72C: [int16; 28] = [
+static g_word_A9B72C: [int16; 28] = [
     -(1 as ::core::ffi::c_int) as int16,
     -(17 as ::core::ffi::c_int) as int16,
     0 as ::core::ffi::c_int as int16,
@@ -1651,7 +1651,7 @@ static mut g_word_A9B72C: [int16; 28] = [
     -(1 as ::core::ffi::c_int) as int16,
     -(1 as ::core::ffi::c_int) as int16,
 ];
-static mut g_word_A9BCA6: [int16; 8] = [
+static g_word_A9BCA6: [int16; 8] = [
     -(8 as ::core::ffi::c_int) as int16,
     6 as ::core::ffi::c_int as int16,
     -(4 as ::core::ffi::c_int) as int16,
@@ -1661,7 +1661,7 @@ static mut g_word_A9BCA6: [int16; 8] = [
     8 as ::core::ffi::c_int as int16,
     0 as ::core::ffi::c_int as int16,
 ];
-static mut g_word_A9BCB6: [int16; 8] = [
+static g_word_A9BCB6: [int16; 8] = [
     -(7 as ::core::ffi::c_int) as int16,
     2 as ::core::ffi::c_int as int16,
     5 as ::core::ffi::c_int as int16,
@@ -1671,7 +1671,7 @@ static mut g_word_A9BCB6: [int16; 8] = [
     -(6 as ::core::ffi::c_int) as int16,
     7 as ::core::ffi::c_int as int16,
 ];
-static mut g_byte_A9BEEE: [uint8; 16] = [
+static g_byte_A9BEEE: [uint8; 16] = [
     2 as ::core::ffi::c_int as uint8,
     0 as ::core::ffi::c_int as uint8,
     2 as ::core::ffi::c_int as uint8,
@@ -1689,7 +1689,7 @@ static mut g_byte_A9BEEE: [uint8; 16] = [
     10 as ::core::ffi::c_int as uint8,
     0 as ::core::ffi::c_int as uint8,
 ];
-static mut g_word_A9BEFE: [uint16; 8] = [
+static g_word_A9BEFE: [uint16; 8] = [
     0x500 as ::core::ffi::c_int as uint16,
     0x500 as ::core::ffi::c_int as uint16,
     0x200 as ::core::ffi::c_int as uint16,
@@ -1699,7 +1699,7 @@ static mut g_word_A9BEFE: [uint16; 8] = [
     0x40 as ::core::ffi::c_int as uint16,
     0x40 as ::core::ffi::c_int as uint16,
 ];
-static mut g_word_A9C049: [int16; 8] = [
+static g_word_A9C049: [int16; 8] = [
     0x10 as ::core::ffi::c_int as int16,
     0x10 as ::core::ffi::c_int as int16,
     0x20 as ::core::ffi::c_int as int16,
@@ -1709,8 +1709,8 @@ static mut g_word_A9C049: [int16; 8] = [
     0x40 as ::core::ffi::c_int as int16,
     0x40 as ::core::ffi::c_int as int16,
 ];
-static mut g_word_A9C544: uint16 = 1 as uint16;
-static mut g_byte_A9F56A: [int8; 16] = [
+static g_word_A9C544: uint16 = 1 as uint16;
+static g_byte_A9F56A: [int8; 16] = [
     0x10 as ::core::ffi::c_int as int8,
     0xf as ::core::ffi::c_int as int8,
     0xe as ::core::ffi::c_int as int8,
@@ -5493,7 +5493,7 @@ pub unsafe fn MotherBomb_FiringLaser_FinishAttack() {
         MotherBrain_Body_Phase2_Thinking();
     }
 }
-static mut off_A9B887: [Option<Func_V>; 4] = unsafe {
+static off_A9B887: [Option<Func_V>; 4] = unsafe {
     [
         Some(MotherBomb_FiringDeathBeam_0 as unsafe fn() -> ()),
         Some(MotherBomb_FiringDeathBeam_1 as unsafe fn() -> ()),

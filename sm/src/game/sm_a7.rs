@@ -807,34 +807,34 @@ unsafe fn Get_Phantoon(mut o: ::core::ffi::c_int) -> *mut Enemy_Phantoon {
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_Phantoon;
 }
-static mut g_word_A7A916: uint16 = 0x120 as uint16;
-static mut g_word_A7A918: uint16 = 0xa0 as uint16;
-static mut g_word_A7A91A: uint16 = 0x40 as uint16;
-static mut g_word_A7A91C: uint16 = 3 as uint16;
-static mut g_word_A7A920: uint16 = 3 as uint16;
-static mut g_word_A7A922: uint16 = 4 as uint16;
-static mut g_word_A7A926: uint16 = 0x8000 as uint16;
-static mut g_word_A7A928: uint16 = 3 as uint16;
-static mut g_word_A7CD73: uint16 = 0x600 as uint16;
-static mut g_word_A7CD75: uint16 = 0 as uint16;
-static mut g_word_A7CD77: uint16 = 0x1000 as uint16;
-static mut g_word_A7CD79: uint16 = 0 as uint16;
-static mut g_word_A7CD7B: uint16 = 2 as uint16;
-static mut g_word_A7CD7D: uint16 = 7 as uint16;
-static mut g_word_A7CD7F: uint16 = 0 as uint16;
-static mut g_word_A7CD81: uint16 = 0x600 as uint16;
-static mut g_word_A7CD83: uint16 = 0 as uint16;
-static mut g_word_A7CD85: uint16 = 0x1000 as uint16;
-static mut g_word_A7CD87: uint16 = 0 as uint16;
-static mut g_word_A7CD89: uint16 = 0xfffe as uint16;
-static mut g_word_A7CD8B: uint16 = 0xfff9 as uint16;
-static mut g_word_A7CD8D: uint16 = 0 as uint16;
-static mut g_word_A7CD9B: uint16 = 0x40 as uint16;
-static mut g_word_A7CD9D: uint16 = 0xc00 as uint16;
-static mut g_word_A7CD9F: uint16 = 0x100 as uint16;
-static mut g_word_A7CDA1: uint16 = 0xf000 as uint16;
-static mut g_word_A7CDA3: uint16 = 8 as uint16;
-static mut g_byte_A7CDA5: [uint8; 8] = [
+static g_word_A7A916: uint16 = 0x120 as uint16;
+static g_word_A7A918: uint16 = 0xa0 as uint16;
+static g_word_A7A91A: uint16 = 0x40 as uint16;
+static g_word_A7A91C: uint16 = 3 as uint16;
+static g_word_A7A920: uint16 = 3 as uint16;
+static g_word_A7A922: uint16 = 4 as uint16;
+static g_word_A7A926: uint16 = 0x8000 as uint16;
+static g_word_A7A928: uint16 = 3 as uint16;
+static g_word_A7CD73: uint16 = 0x600 as uint16;
+static g_word_A7CD75: uint16 = 0 as uint16;
+static g_word_A7CD77: uint16 = 0x1000 as uint16;
+static g_word_A7CD79: uint16 = 0 as uint16;
+static g_word_A7CD7B: uint16 = 2 as uint16;
+static g_word_A7CD7D: uint16 = 7 as uint16;
+static g_word_A7CD7F: uint16 = 0 as uint16;
+static g_word_A7CD81: uint16 = 0x600 as uint16;
+static g_word_A7CD83: uint16 = 0 as uint16;
+static g_word_A7CD85: uint16 = 0x1000 as uint16;
+static g_word_A7CD87: uint16 = 0 as uint16;
+static g_word_A7CD89: uint16 = 0xfffe as uint16;
+static g_word_A7CD8B: uint16 = 0xfff9 as uint16;
+static g_word_A7CD8D: uint16 = 0 as uint16;
+static g_word_A7CD9B: uint16 = 0x40 as uint16;
+static g_word_A7CD9D: uint16 = 0xc00 as uint16;
+static g_word_A7CD9F: uint16 = 0x100 as uint16;
+static g_word_A7CDA1: uint16 = 0xf000 as uint16;
+static g_word_A7CDA3: uint16 = 8 as uint16;
+static g_byte_A7CDA5: [uint8; 8] = [
     6 as ::core::ffi::c_int as uint8,
     6 as ::core::ffi::c_int as uint8,
     8 as ::core::ffi::c_int as uint8,
@@ -844,24 +844,24 @@ static mut g_byte_A7CDA5: [uint8; 8] = [
     6 as ::core::ffi::c_int as uint8,
     8 as ::core::ffi::c_int as uint8,
 ];
-static mut g_word_A7E900: uint16 = 0xfffd as uint16;
-static mut g_word_A7E902: uint16 = 0 as uint16;
-static mut g_word_A7E906: uint16 = 0 as uint16;
-static mut g_word_A7E904: uint16 = 0xfffc as uint16;
-static mut g_word_A7E908: uint16 = 2 as uint16;
-static mut g_word_A7E90A: uint16 = 0 as uint16;
-static mut g_word_A7E90C: uint16 = 0xfffe as uint16;
-static mut g_word_A7E90E: uint16 = 0 as uint16;
-static mut g_word_A7E910: uint16 = 0x40 as uint16;
-static mut g_word_A7F4C9: uint16 = 0x60 as uint16;
-static mut g_word_A7F4CD: uint16 = 0x78 as uint16;
-static mut g_word_A7F4CF: uint16 = 0x3c as uint16;
-static mut g_word_A7F4D1: uint16 = 1 as uint16;
-static mut g_word_A7F4D3: uint16 = 8 as uint16;
-static mut g_word_A7F4D5: uint16 = 8 as uint16;
-static mut g_word_A7F4D7: uint16 = 0 as uint16;
-static mut g_word_A7F4D9: uint16 = 0 as uint16;
-static mut g_word_A7F4DB: uint16 = 0x1000 as uint16;
+static g_word_A7E900: uint16 = 0xfffd as uint16;
+static g_word_A7E902: uint16 = 0 as uint16;
+static g_word_A7E906: uint16 = 0 as uint16;
+static g_word_A7E904: uint16 = 0xfffc as uint16;
+static g_word_A7E908: uint16 = 2 as uint16;
+static g_word_A7E90A: uint16 = 0 as uint16;
+static g_word_A7E90C: uint16 = 0xfffe as uint16;
+static g_word_A7E90E: uint16 = 0 as uint16;
+static g_word_A7E910: uint16 = 0x40 as uint16;
+static g_word_A7F4C9: uint16 = 0x60 as uint16;
+static g_word_A7F4CD: uint16 = 0x78 as uint16;
+static g_word_A7F4CF: uint16 = 0x3c as uint16;
+static g_word_A7F4D1: uint16 = 1 as uint16;
+static g_word_A7F4D3: uint16 = 8 as uint16;
+static g_word_A7F4D5: uint16 = 8 as uint16;
+static g_word_A7F4D7: uint16 = 0 as uint16;
+static g_word_A7F4D9: uint16 = 0 as uint16;
+static g_word_A7F4DB: uint16 = 0x1000 as uint16;
 pub unsafe fn CallEnemyInstrExtFunc(mut ea: uint32, mut k: uint16) {
     match ea {
         10997485 => {
@@ -3520,7 +3520,7 @@ pub unsafe fn Kraid_ClearSomeSpikes() {
     });
 }
 pub unsafe fn UnpauseHook_Kraid_IsDead() -> CoroutineRet {
-    static mut unk_A7C21E: StartDmaCopy = StartDmaCopy {
+    static unk_A7C21E: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -3530,7 +3530,7 @@ pub unsafe fn UnpauseHook_Kraid_IsDead() -> CoroutineRet {
         },
         das: 0x200 as VoidP,
     };
-    static mut unk_A7C23E: StartDmaCopy = StartDmaCopy {
+    static unk_A7C23E: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -3561,7 +3561,7 @@ pub unsafe fn UnpauseHook_Kraid_IsDead() -> CoroutineRet {
     Kraid_TransferTopHalfToVram();
     return kCoroutineNone as CoroutineRet;
 }
-static mut unk_A7C26B: StartDmaCopy = StartDmaCopy {
+static unk_A7C26B: StartDmaCopy = StartDmaCopy {
     chan: 1 as uint8,
     dmap: 1 as uint8,
     bbad: 0x18 as uint8,
@@ -3571,7 +3571,7 @@ static mut unk_A7C26B: StartDmaCopy = StartDmaCopy {
     },
     das: 0x400 as VoidP,
 };
-static mut unk_A7C28D: StartDmaCopy = StartDmaCopy {
+static unk_A7C28D: StartDmaCopy = StartDmaCopy {
     chan: 1 as uint8,
     dmap: 1 as uint8,
     bbad: 0x18 as uint8,
@@ -3609,7 +3609,7 @@ pub unsafe fn Kraid_TransferTopHalfToVram() {
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
     ScreenOn();
 }
-static mut unk_A7C2BD: StartDmaCopy = StartDmaCopy {
+static unk_A7C2BD: StartDmaCopy = StartDmaCopy {
     chan: 1 as uint8,
     dmap: 1 as uint8,
     bbad: 0x18 as uint8,
@@ -4823,7 +4823,7 @@ pub unsafe fn Phantoon_Init() {
     let mut E0: *mut Enemy_Phantoon = Get_Phantoon(0 as ::core::ffi::c_int);
     (*E0).base.properties = ((*E0).base.properties as ::core::ffi::c_int
         | kEnemyProps_Tangible as ::core::ffi::c_int) as uint16;
-    static mut unk_A7CE51: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_A7CE51: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x1 as uint8,
         field_1: 0x14 as uint8,
         addr: 0xce96 as VoidP,
@@ -7028,7 +7028,7 @@ pub unsafe fn Etecoon_Func_11(mut k: uint16) {
         (*E).etecoon_var_B = g_word_A7E902;
     }
 }
-static mut funcs_A2A79: [Option<Func_Y_V>; 3] = unsafe {
+static funcs_A2A79: [Option<Func_Y_V>; 3] = unsafe {
     [
         Some(Etecoon_Func_13 as unsafe fn(uint16) -> ()),
         Some(Etecoon_Func_14 as unsafe fn(uint16) -> ()),

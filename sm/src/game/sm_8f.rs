@@ -1157,7 +1157,7 @@ pub unsafe fn RoomCode_GenRandomExplodes_4th() {
     }
 }
 pub unsafe fn RoomCode_GenRandomExplodes(mut x_r18: uint16, mut y_r20: uint16) {
-    static mut kRoomCode_GenRandomExplodes_Sprite: [uint8; 8] = [
+    static kRoomCode_GenRandomExplodes_Sprite: [uint8; 8] = [
         3 as ::core::ffi::c_int as uint8,
         3 as ::core::ffi::c_int as uint8,
         9 as ::core::ffi::c_int as uint8,
@@ -1167,7 +1167,7 @@ pub unsafe fn RoomCode_GenRandomExplodes(mut x_r18: uint16, mut y_r20: uint16) {
         18 as ::core::ffi::c_int as uint8,
         21 as ::core::ffi::c_int as uint8,
     ];
-    static mut kRoomCode_GenRandomExplodes_Sfx: [uint8; 8] = [
+    static kRoomCode_GenRandomExplodes_Sfx: [uint8; 8] = [
         0x24 as ::core::ffi::c_int as uint8,
         0 as ::core::ffi::c_int as uint8,
         0 as ::core::ffi::c_int as uint8,
@@ -1635,7 +1635,7 @@ pub unsafe fn DoorCode_CeresElevatorShaft_2() {
 pub unsafe fn RoomCode_CeresElevatorShaft_() {
     RoomCode_CeresElevatorShaft();
 }
-static mut kRoomCode_SpawnCeresFallingDebris_Tab: [uint16; 16] = [
+static kRoomCode_SpawnCeresFallingDebris_Tab: [uint16; 16] = [
     0x50 as ::core::ffi::c_int as uint16,
     0x60 as ::core::ffi::c_int as uint16,
     0x70 as ::core::ffi::c_int as uint16,
@@ -2408,7 +2408,7 @@ pub unsafe fn RoomCode_CrocomireShaking() {
         }
     }
 }
-static mut kRoomCode_RidleyRoomShaking_X: [int16; 8] = [
+static kRoomCode_RidleyRoomShaking_X: [int16; 8] = [
     0 as ::core::ffi::c_int as int16,
     2 as ::core::ffi::c_int as int16,
     2 as ::core::ffi::c_int as int16,
@@ -2418,7 +2418,7 @@ static mut kRoomCode_RidleyRoomShaking_X: [int16; 8] = [
     -(2 as ::core::ffi::c_int) as int16,
     -(2 as ::core::ffi::c_int) as int16,
 ];
-static mut kRoomCode_RidleyRoomShaking_Y: [int16; 8] = [
+static kRoomCode_RidleyRoomShaking_Y: [int16; 8] = [
     -(2 as ::core::ffi::c_int) as int16,
     -(2 as ::core::ffi::c_int) as int16,
     0 as ::core::ffi::c_int as int16,

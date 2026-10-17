@@ -580,7 +580,7 @@ pub const fnXray_Func9: ::core::ffi::c_int = 0x91cf4e as ::core::ffi::c_int;
 pub const fnXray_Func10: uint32 = 9555810 as uint32;
 pub const fnXray_Func11: ::core::ffi::c_int = 0x91cf6f as ::core::ffi::c_int;
 pub const fnGrappleBeamFunc_Inactive: ::core::ffi::c_int = 0x9bc4f0 as ::core::ffi::c_int;
-static mut kSamusInputHandlers: [Option<Func_V>; 28] = unsafe {
+static kSamusInputHandlers: [Option<Func_V>; 28] = unsafe {
     [
         Some(Samus_Input_00_Standing as unsafe fn() -> ()),
         Some(Samus_Input_01_Running as unsafe fn() -> ()),
@@ -945,7 +945,7 @@ pub unsafe fn Samus_Pose_CancelGrapple() {
         .new_pose_unless_buttons as uint16;
     };
 }
-static mut kSamus_Pose_Func2_Tab: [uint8; 28] = [
+static kSamus_Pose_Func2_Tab: [uint8; 28] = [
     2 as ::core::ffi::c_int as uint8,
     1 as ::core::ffi::c_int as uint8,
     1 as ::core::ffi::c_int as uint8,
@@ -1295,7 +1295,7 @@ pub unsafe fn DemoInstr_Func3(mut k: uint16, mut j: uint16) -> uint16 {
         (0x90e90e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     return j;
 }
-static mut kDemoSetFuncPtrs_0: [Option<Func_V>; 6] = unsafe {
+static kDemoSetFuncPtrs_0: [Option<Func_V>; 6] = unsafe {
     [
         Some(DemoSetFunc_0 as unsafe fn() -> ()),
         Some(DemoSetFunc_1 as unsafe fn() -> ()),
@@ -1305,7 +1305,7 @@ static mut kDemoSetFuncPtrs_0: [Option<Func_V>; 6] = unsafe {
         Some(DemoSetFunc_3 as unsafe fn() -> ()),
     ]
 };
-static mut kDemoSetFuncPtrs_1: [Option<Func_V>; 6] = unsafe {
+static kDemoSetFuncPtrs_1: [Option<Func_V>; 6] = unsafe {
     [
         Some(DemoSetFunc_2 as unsafe fn() -> ()),
         Some(DemoSetFunc_2 as unsafe fn() -> ()),
@@ -1315,7 +1315,7 @@ static mut kDemoSetFuncPtrs_1: [Option<Func_V>; 6] = unsafe {
         Some(DemoSetFunc_4 as unsafe fn() -> ()),
     ]
 };
-static mut kDemoSetFuncPtrs_2: [Option<Func_V>; 6] = unsafe {
+static kDemoSetFuncPtrs_2: [Option<Func_V>; 6] = unsafe {
     [
         Some(DemoSetFunc_2 as unsafe fn() -> ()),
         Some(DemoSetFunc_5 as unsafe fn() -> ()),
@@ -1325,7 +1325,7 @@ static mut kDemoSetFuncPtrs_2: [Option<Func_V>; 6] = unsafe {
         Some(DemoSetFunc_1 as unsafe fn() -> ()),
     ]
 };
-static mut kDemoSetFuncPtrs_3: [Option<Func_V>; 5] = unsafe {
+static kDemoSetFuncPtrs_3: [Option<Func_V>; 5] = unsafe {
     [
         Some(DemoSetFunc_6 as unsafe fn() -> ()),
         Some(DemoSetFunc_2 as unsafe fn() -> ()),
@@ -2091,7 +2091,7 @@ pub unsafe fn CalculateXrayHdmaTableInner(
         v3 = 4 as ::core::ffi::c_int;
     }
     if off_screen {
-        static mut kXrayHdmaFuncs: [Option<XrayHdma0Func>; 5] = unsafe {
+        static kXrayHdmaFuncs: [Option<XrayHdma0Func>; 5] = unsafe {
             [
                 Some(XrayHdmaFunc_BeamAimedR as unsafe fn(*mut XrayHdmaCtx) -> ()),
                 Some(XrayHdmaFunc_BeamAimedU as unsafe fn(*mut XrayHdmaCtx) -> ()),
@@ -2103,7 +2103,7 @@ pub unsafe fn CalculateXrayHdmaTableInner(
         kXrayHdmaFuncs[(v3 >> 1 as ::core::ffi::c_int) as usize]
             .expect("non-null function pointer")(&raw mut ctx as *mut XrayHdmaCtx);
     } else {
-        static mut kXrayHdmaOnScreen_Funcs: [Option<XrayHdma0Func>; 5] = unsafe {
+        static kXrayHdmaOnScreen_Funcs: [Option<XrayHdma0Func>; 5] = unsafe {
             [
                 Some(XrayHdmaOnScreen_BeamAimedR as unsafe fn(*mut XrayHdmaCtx) -> ()),
                 Some(XrayHdmaOnScreen_BeamAimedU as unsafe fn(*mut XrayHdmaCtx) -> ()),
@@ -3374,7 +3374,7 @@ pub unsafe fn VariaSuitPickup() {
             as *mut uint16) as ::core::ffi::c_int
             + 136 as ::core::ffi::c_int) as uint16;
     QueueSfx2_Max6(0x56 as uint16);
-    static mut unk_91D59B: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_91D59B: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x41 as uint8,
         field_1: 0x26 as uint8,
         addr: 0xd5a2 as VoidP,
@@ -3465,7 +3465,7 @@ pub unsafe fn GravitySuitPickup() {
             as *mut uint16) as ::core::ffi::c_int
             + 136 as ::core::ffi::c_int) as uint16;
     QueueSfx2_Max6(0x56 as uint16);
-    static mut unk_91D673: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_91D673: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x41 as uint8,
         field_1: 0x26 as uint8,
         addr: 0xd67a as VoidP,
@@ -3512,7 +3512,7 @@ pub unsafe fn InitializeSuitPickupHdma() {
     *((&raw mut g_ram as *mut uint8).offset(0xa91 as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
 }
-static mut off_91D72D: [Option<Func_U8>; 11] = unsafe {
+static off_91D72D: [Option<Func_U8>; 11] = unsafe {
     [
         Some(Samus_HandleScrewAttackSpeedBoostingPals as unsafe fn() -> uint8),
         Some(Samus_SpeedBoosterShinePals as unsafe fn() -> uint8),
@@ -4791,12 +4791,12 @@ pub unsafe fn Samus_RestorePowerBombs(mut a: uint16) {
     }
 }
 pub unsafe fn Samus_Initialize() {
-    static mut word_909EAF: uint16 = 0 as uint16;
-    static mut word_909EAD: uint16 = 1 as uint16;
-    static mut word_909EB3: uint16 = 0 as uint16;
-    static mut word_909EB1: uint16 = 1 as uint16;
-    static mut word_909EA1: uint16 = 0x1c00 as uint16;
-    static mut word_909EA7: uint16 = 0 as uint16;
+    static word_909EAF: uint16 = 0 as uint16;
+    static word_909EAD: uint16 = 1 as uint16;
+    static word_909EB3: uint16 = 0 as uint16;
+    static word_909EB1: uint16 = 1 as uint16;
+    static word_909EA1: uint16 = 0x1c00 as uint16;
+    static word_909EA7: uint16 = 0 as uint16;
     let mut r18: uint16 = *((&raw mut g_ram as *mut uint8)
         .offset(0xde0 as ::core::ffi::c_int as isize) as *mut uint16);
     let mut v0: uint16 = 0xe0b as uint16;
@@ -4968,7 +4968,7 @@ pub unsafe fn Samus_Initialize() {
             as *mut uint16);
 }
 pub unsafe fn Xray_Initialize() -> uint8 {
-    static mut byte_91E291: [uint8; 28] = [
+    static byte_91E291: [uint8; 28] = [
         1 as ::core::ffi::c_int as uint8,
         1 as ::core::ffi::c_int as uint8,
         0 as ::core::ffi::c_int as uint8,
@@ -5298,7 +5298,7 @@ pub unsafe fn MakeSamusFaceForward() {
         0 as uint16;
     Samus_LoadSuitPalette();
 }
-static mut kSomeMotherBrainScripts: [Option<Func_U8>; 5] = unsafe {
+static kSomeMotherBrainScripts: [Option<Func_U8>; 5] = unsafe {
     [
         Some(SomeMotherBrainScripts_0 as unsafe fn() -> uint8),
         Some(SomeMotherBrainScripts_1 as unsafe fn() -> uint8),
@@ -5502,7 +5502,7 @@ pub unsafe fn SomeMotherBrainScripts_4() -> uint8 {
     return 1 as uint8;
 }
 pub unsafe fn nullsub_17() {}
-static mut off_91E6E1: [Option<Func_V>; 28] = unsafe {
+static off_91E6E1: [Option<Func_V>; 28] = unsafe {
     [
         Some(SamusFunc_E633_0 as unsafe fn() -> ()),
         Some(nullsub_17 as unsafe fn() -> ()),
@@ -5843,7 +5843,7 @@ pub unsafe fn SamusFunc_E633_20() {
     };
 }
 pub unsafe fn nullsub_18() {}
-static mut kSamus_HandleTransFromBlockColl: [Option<Func_V>; 6] = unsafe {
+static kSamus_HandleTransFromBlockColl: [Option<Func_V>; 6] = unsafe {
     [
         Some(nullsub_18 as unsafe fn() -> ()),
         Some(Samus_HandleTransFromBlockColl_1 as unsafe fn() -> ()),
@@ -5880,7 +5880,7 @@ pub unsafe fn Samus_HandleTransFromBlockColl_4() {
 pub unsafe fn nullsub_18_U8() -> uint8 {
     return 0 as uint8;
 }
-static mut off_91E951: [Option<Func_U8>; 6] = unsafe {
+static off_91E951: [Option<Func_U8>; 6] = unsafe {
     [
         Some(Samus_HandleTransFromBlockColl_1_0 as unsafe fn() -> uint8),
         Some(Samus_HandleTransFromBlockColl_1_1 as unsafe fn() -> uint8),
@@ -6336,7 +6336,7 @@ pub unsafe fn nullsub_19() {}
 pub unsafe fn nullsub_20() {}
 pub unsafe fn nullsub_21() {}
 pub unsafe fn nullsub_22() {}
-static mut kSamus_HandleTransitionsA: [Option<Func_V>; 9] = unsafe {
+static kSamus_HandleTransitionsA: [Option<Func_V>; 9] = unsafe {
     [
         Some(nullsub_18 as unsafe fn() -> ()),
         Some(Samus_HandleTransitionsA_1 as unsafe fn() -> ()),
@@ -6349,7 +6349,7 @@ static mut kSamus_HandleTransitionsA: [Option<Func_V>; 9] = unsafe {
         Some(Samus_HandleTransitionsA_8 as unsafe fn() -> ()),
     ]
 };
-static mut kSamus_HandleTransitionsB: [Option<Func_V>; 11] = unsafe {
+static kSamus_HandleTransitionsB: [Option<Func_V>; 11] = unsafe {
     [
         Some(nullsub_18 as unsafe fn() -> ()),
         Some(Samus_HandleTransitionsB_1 as unsafe fn() -> ()),
@@ -6364,7 +6364,7 @@ static mut kSamus_HandleTransitionsB: [Option<Func_V>; 11] = unsafe {
         Some(Samus_HandleTransitionsB_10 as unsafe fn() -> ()),
     ]
 };
-static mut kSamus_HandleTransitionsC: [Option<Func_V>; 9] = unsafe {
+static kSamus_HandleTransitionsC: [Option<Func_V>; 9] = unsafe {
     [
         Some(nullsub_18 as unsafe fn() -> ()),
         Some(Samus_HandleTransitionsC_1 as unsafe fn() -> ()),
@@ -6554,7 +6554,7 @@ pub unsafe fn Samus_HandleTransitionsA_2() {
         0 as uint16;
     Samus_CancelSpeedBoost();
 }
-static mut word_91ED36: [uint16; 12] = [
+static word_91ED36: [uint16; 12] = [
     5 as ::core::ffi::c_int as uint16,
     5 as ::core::ffi::c_int as uint16,
     9 as ::core::ffi::c_int as uint16,
@@ -6652,7 +6652,7 @@ pub unsafe fn Samus_HandleTransitionsA_7() {
         _ => {}
     };
 }
-static mut kSamus_HandleTransitionsB_1: [Option<Func_U8>; 28] = unsafe {
+static kSamus_HandleTransitionsB_1: [Option<Func_U8>; 28] = unsafe {
     [
         Some(Samus_HandleTransitionsB_1_0 as unsafe fn() -> uint8),
         Some(Samus_HandleTransitionsB_1_0 as unsafe fn() -> uint8),
@@ -7065,7 +7065,7 @@ pub unsafe fn Samus_HandleTransitionsB_9B() {
     );
 }
 pub unsafe fn nullsub_23() {}
-static mut kSamus_HandleTransitionsA_5: [Option<Func_V>; 7] = unsafe {
+static kSamus_HandleTransitionsA_5: [Option<Func_V>; 7] = unsafe {
     [
         Some(sub_91EFC3 as unsafe fn() -> ()),
         Some(Samus_HandleTransitionsA_5_1 as unsafe fn() -> ()),
@@ -7115,7 +7115,7 @@ pub unsafe fn sub_91EFC3() {}
 pub unsafe fn sub_91EFC3_rv() -> uint8 {
     return 0 as uint8;
 }
-static mut kSamus_HandleTransitionsA_5_1: [Option<Func_U8>; 6] = unsafe {
+static kSamus_HandleTransitionsA_5_1: [Option<Func_U8>; 6] = unsafe {
     [
         Some(Samus_HandleTransitionsA_5_1_0 as unsafe fn() -> uint8),
         Some(Samus_MorphBallBounceNoSpringballTrans as unsafe fn() -> uint8),
@@ -7214,7 +7214,7 @@ pub unsafe fn HandleLandingSoundEffectsAndGfx() {
     }
     HandleLandingGraphics();
 }
-static mut off_91F0AE: [Option<Func_V>; 8] = unsafe {
+static off_91F0AE: [Option<Func_V>; 8] = unsafe {
     [
         Some(HandleLandingGraphics_Crateria as unsafe fn() -> ()),
         Some(HandleLandingGraphics_Brinstar as unsafe fn() -> ()),
@@ -7237,7 +7237,7 @@ pub unsafe fn HandleLandingGraphics_Ceres() {
     *((&raw mut g_ram as *mut uint8).offset(0xaec as ::core::ffi::c_int as isize) as *mut uint16)
         .offset(3 as ::core::ffi::c_int as isize) = 0 as uint16;
 }
-static mut g_byte_91F0F3: [uint8; 17] = [
+static g_byte_91F0F3: [uint8; 17] = [
     1 as ::core::ffi::c_int as uint8,
     0 as ::core::ffi::c_int as uint8,
     0 as ::core::ffi::c_int as uint8,
@@ -7499,8 +7499,8 @@ pub unsafe fn Samus_HandleTransitionsA_5_1_0() -> uint8 {
     }
     return 0 as uint8;
 }
-static mut g_word_909EB5: uint16 = 1 as uint16;
-static mut g_word_909EB7: uint16 = 0 as uint16;
+static g_word_909EB5: uint16 = 1 as uint16;
+static g_word_909EB7: uint16 = 0 as uint16;
 pub unsafe fn Samus_MorphBallBounceNoSpringballTrans() -> uint8 {
     let mut v0: int16 = 0;
     v0 = (2 as ::core::ffi::c_int
@@ -7851,7 +7851,7 @@ pub unsafe fn SamusFunc_F433() {
         Samus_LoadSuitPalette();
     }
 }
-static mut off_91F4A2: [Option<Func_U8>; 28] = unsafe {
+static off_91F4A2: [Option<Func_U8>; 28] = unsafe {
     [
         Some(SamusFunc_F468_Standing as unsafe fn() -> uint8),
         Some(SamusFunc_F468_Running as unsafe fn() -> uint8),
@@ -8418,7 +8418,7 @@ pub unsafe fn SamusFunc_F468_SpinJump() -> uint8 {
         }
     };
 }
-static mut off_91F790: [Option<Func_U8>; 12] = unsafe {
+static off_91F790: [Option<Func_U8>; 12] = unsafe {
     [
         Some(Samus_CrouchTrans as unsafe fn() -> uint8),
         Some(Samus_CrouchTrans as unsafe fn() -> uint8),
@@ -8434,7 +8434,7 @@ static mut off_91F790: [Option<Func_U8>; 12] = unsafe {
         Some(Samus_StandOrUnmorphTrans as unsafe fn() -> uint8),
     ]
 };
-static mut off_91F7A8: [Option<Func_U8>; 4] = unsafe {
+static off_91F7A8: [Option<Func_U8>; 4] = unsafe {
     [
         Some(Samus_MorphTrans as unsafe fn() -> uint8),
         Some(Samus_MorphTrans as unsafe fn() -> uint8),
@@ -8942,7 +8942,7 @@ pub unsafe fn SamusFunc_F468_WallJumping() -> uint8 {
         - 6 as ::core::ffi::c_int) as uint16;
     return 0 as uint8;
 }
-static mut kSamusFunc_F468_Shinespark: [uint16; 6] = [
+static kSamusFunc_F468_Shinespark: [uint16; 6] = [
     fnSamus_MoveHandler_Shinespark_Horiz as uint16,
     fnSamus_MoveHandler_Shinespark_Horiz as uint16,
     fnSamus_MoveHandlerVerticalShinespark as uint16,
@@ -8984,8 +8984,8 @@ pub unsafe fn SamusFunc_F468_Shinespark() -> uint8 {
     }
     return 0 as uint8;
 }
-static mut kSamusPhys_AnimDelayInWater: uint16 = 3 as uint16;
-static mut kSamusPhys_AnimDelayInAcid: uint16 = 2 as uint16;
+static kSamusPhys_AnimDelayInWater: uint16 = 3 as uint16;
+static kSamusPhys_AnimDelayInAcid: uint16 = 2 as uint16;
 pub unsafe fn Samus_SetAnimationFrameIfPoseChanged() {
     let mut t: uint16 = 0;
     if *((&raw mut g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize) as *mut uint16)
@@ -9097,7 +9097,7 @@ pub unsafe fn SamusFunc_EC80() {
 }
 pub unsafe fn nullsub_24() {}
 pub unsafe fn nullsub_25() {}
-static mut kHandleJumpTrans: [Option<Func_V>; 28] = unsafe {
+static kHandleJumpTrans: [Option<Func_V>; 28] = unsafe {
     [
         Some(nullsub_24 as unsafe fn() -> ()),
         Some(nullsub_24 as unsafe fn() -> ()),
@@ -9363,7 +9363,7 @@ pub unsafe fn Samus_Func20() {
             as *mut uint16);
     };
 }
-static mut off_91FE8A: [Option<Func_U8>; 4] = unsafe {
+static off_91FE8A: [Option<Func_U8>; 4] = unsafe {
     [
         Some(HandleCollDueToChangedPose_Solid_NoColl as unsafe fn() -> uint8),
         Some(HandleCollDueToChangedPose_Solid_CollAbove as unsafe fn() -> uint8),
@@ -9371,7 +9371,7 @@ static mut off_91FE8A: [Option<Func_U8>; 4] = unsafe {
         Some(HandleCollDueToChangedPose_Solid_CollBoth as unsafe fn() -> uint8),
     ]
 };
-static mut off_91FE92: [Option<Func_U8>; 4] = unsafe {
+static off_91FE92: [Option<Func_U8>; 4] = unsafe {
     [
         Some(HandleCollDueToChangedPose_Block_NoColl as unsafe fn() -> uint8),
         Some(HandleCollDueToChangedPose_Block_CollAbove as unsafe fn() -> uint8),

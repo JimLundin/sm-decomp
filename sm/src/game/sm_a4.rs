@@ -392,15 +392,15 @@ unsafe fn Get_Crocomire(mut o: ::core::ffi::c_int) -> *mut Enemy_Crocomire {
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_Crocomire;
 }
-static mut g_word_A48692: uint16 = 8 as uint16;
-static mut g_word_A48694: uint16 = 8 as uint16;
-static mut g_word_A48698: uint16 = 2 as uint16;
-static mut g_word_A4869A: uint16 = 1 as uint16;
-static mut g_word_A4869C: uint16 = 3 as uint16;
-static mut g_word_A4869E: uint16 = 3 as uint16;
-static mut g_word_A486A0: uint16 = 8 as uint16;
-static mut g_word_A486A2: uint16 = 0x300 as uint16;
-static mut g_word_A486A4: uint16 = 0x640 as uint16;
+static g_word_A48692: uint16 = 8 as uint16;
+static g_word_A48694: uint16 = 8 as uint16;
+static g_word_A48698: uint16 = 2 as uint16;
+static g_word_A4869A: uint16 = 1 as uint16;
+static g_word_A4869C: uint16 = 3 as uint16;
+static g_word_A4869E: uint16 = 3 as uint16;
+static g_word_A486A0: uint16 = 8 as uint16;
+static g_word_A486A2: uint16 = 0x300 as uint16;
+static g_word_A486A4: uint16 = 0x640 as uint16;
 pub unsafe fn Enemy_GrappleReact_SamusLatchesOn_A4() {
     SamusLatchesOnWithGrapple();
 }
@@ -420,7 +420,7 @@ pub unsafe fn Crocomire_Hurt() {
     );
     Crocomire_Func_31();
 }
-static mut off_A486B3: [Option<CrocomireFunc>; 21] = unsafe {
+static off_A486B3: [Option<CrocomireFunc>; 21] = unsafe {
     [
         Some(Crocomire_Func_2 as unsafe fn(uint16, *const uint16) -> *const uint16),
         Some(Crocomire_Func_3 as unsafe fn(uint16, *const uint16) -> *const uint16),
@@ -1087,7 +1087,7 @@ pub unsafe fn Crocomire_8BA4() {
     };
 }
 pub unsafe fn nullsub_305() {}
-static mut off_A48C14: [Option<Func_V>; 45] = unsafe {
+static off_A48C14: [Option<Func_V>; 45] = unsafe {
     [
         Some(Crocomire_Func_28 as unsafe fn() -> ()),
         Some(Crocomire_Func_52 as unsafe fn() -> ()),
@@ -2426,7 +2426,7 @@ pub unsafe fn Crocomire_9506() {
     Crocomire_950F();
 }
 pub unsafe fn Crocomire_950F() {
-    static mut unk_A49559: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_A49559: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x42 as uint8,
         field_1: 0x10 as uint8,
         addr: 0x9563 as VoidP,
@@ -2682,7 +2682,7 @@ pub unsafe fn Crocomire_Func_66() {
         (v2 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
     Crocomire_9BB3();
 }
-static mut kCrocoEraseLineMasks: [uint8; 8] = [
+static kCrocoEraseLineMasks: [uint8; 8] = [
     0x7f as ::core::ffi::c_int as uint8,
     0xbf as ::core::ffi::c_int as uint8,
     0xdf as ::core::ffi::c_int as uint8,

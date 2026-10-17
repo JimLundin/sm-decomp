@@ -428,7 +428,7 @@ unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
     *lo = t as uint16;
     *hi = (t >> 16 as ::core::ffi::c_int) as uint16;
 }
-static mut kFileSelectMap_AreaIndexes: [uint16; 6] = [
+static kFileSelectMap_AreaIndexes: [uint16; 6] = [
     0 as ::core::ffi::c_int as uint16,
     3 as ::core::ffi::c_int as uint16,
     5 as ::core::ffi::c_int as uint16,
@@ -1367,7 +1367,7 @@ pub unsafe fn LoadInitialMenuTiles() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_818DF1: StartDmaCopy = StartDmaCopy {
+    static unk_818DF1: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -1382,7 +1382,7 @@ pub unsafe fn LoadInitialMenuTiles() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x30 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_818E11: StartDmaCopy = StartDmaCopy {
+    static unk_818E11: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -1397,7 +1397,7 @@ pub unsafe fn LoadInitialMenuTiles() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_818E31: StartDmaCopy = StartDmaCopy {
+    static unk_818E31: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -1412,7 +1412,7 @@ pub unsafe fn LoadInitialMenuTiles() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x40 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_818E51: StartDmaCopy = StartDmaCopy {
+    static unk_818E51: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -1556,7 +1556,7 @@ pub unsafe fn GameOverMenu_5_Continue() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x40 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_819093: StartDmaCopy = StartDmaCopy {
+    static unk_819093: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -1574,7 +1574,7 @@ pub unsafe fn GameOverMenu_5_Continue() {
         0 as uint16;
     RestorePalettesAndIoAfterDebugGameover();
 }
-static mut kGameOverMenuFuncs: [Option<Func_V>; 8] = unsafe {
+static kGameOverMenuFuncs: [Option<Func_V>; 8] = unsafe {
     [
         Some(GameOverMenu_0_FadeOutConfigGfx as unsafe fn() -> ()),
         Some(GameOverMenu_1_Init as unsafe fn() -> ()),
@@ -1806,12 +1806,12 @@ pub unsafe fn GameOverMenu_1_Init() {
     DisableHdmaObjects();
     WaitUntilEndOfVblankAndClearHdma();
     EnableHdmaObjects();
-    static mut unk_819254: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_819254: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0 as uint8,
         field_1: 0x32 as uint8,
         addr: 0x927d as VoidP,
     };
-    static mut unk_81925C: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_81925C: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0 as uint8,
         field_1: 0x31 as uint8,
         addr: 0x928d as VoidP,
@@ -1850,7 +1850,7 @@ pub unsafe fn GameOverMenu_2_PlayMusic() {
         QueueMusic_Delayed8(4 as uint16);
     }
 }
-static mut kFileSelectMenuFuncs: [Option<Func_V>; 34] = unsafe {
+static kFileSelectMenuFuncs: [Option<Func_V>; 34] = unsafe {
     [
         Some(FileSelectMenu_0_FadeOutConfigGfx as unsafe fn() -> ()),
         Some(FileSelectMenu_1_LoadFileSelectMenuBG2 as unsafe fn() -> ()),
@@ -2024,7 +2024,7 @@ pub unsafe fn FileSelectMenu_15_FadeOutToMain() {
         *fresh48 = (*fresh48).wrapping_add(1);
     }
 }
-static mut kMenuSelectionMissileXY: [uint16; 12] = [
+static kMenuSelectionMissileXY: [uint16; 12] = [
     0x30 as ::core::ffi::c_int as uint16,
     0xe as ::core::ffi::c_int as uint16,
     0x58 as ::core::ffi::c_int as uint16,
@@ -2286,7 +2286,7 @@ pub unsafe fn QueueTransferOfMenuTilemapToVramBG1() {
     *((&raw mut g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16) =
         (v0 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
 }
-static mut kBitShl: [uint8; 3] = [
+static kBitShl: [uint8; 3] = [
     1 as ::core::ffi::c_int as uint8,
     2 as ::core::ffi::c_int as uint8,
     4 as ::core::ffi::c_int as uint8,
@@ -2407,7 +2407,7 @@ pub unsafe fn FileSelectMenu_8() {
     };
 }
 pub unsafe fn SetFileCopyMenuSelectionMissilePosition() {
-    static mut kFileCopyMissileY: [uint16; 4] = [
+    static kFileCopyMissileY: [uint16; 4] = [
         72 as ::core::ffi::c_int as uint16,
         104 as ::core::ffi::c_int as uint16,
         136 as ::core::ffi::c_int as uint16,
@@ -2519,7 +2519,7 @@ pub unsafe fn DrawFileCopySelectDestinationSaveFileInfo() {
 }
 pub unsafe fn FileSelectMenu_10_FileCopySelectDest() {
     let mut current_block: u64;
-    static mut kFileCopySelectDest_MissileY: [uint16; 4] = [
+    static kFileCopySelectDest_MissileY: [uint16; 4] = [
         72 as ::core::ffi::c_int as uint16,
         104 as ::core::ffi::c_int as uint16,
         136 as ::core::ffi::c_int as uint16,
@@ -2914,7 +2914,7 @@ pub unsafe fn HandleFileCopyArrowPalette() {
     }
 }
 pub unsafe fn FileSelectMenu_13_FileCopyDoIt() {
-    static mut kBitShl_16bit: [uint16; 3] = [
+    static kBitShl_16bit: [uint16; 3] = [
         1 as ::core::ffi::c_int as uint16,
         2 as ::core::ffi::c_int as uint16,
         4 as ::core::ffi::c_int as uint16,
@@ -3102,7 +3102,7 @@ pub unsafe fn InitFileSelectMenuFileClear() {
     SetFileClearMenuMissilePos();
 }
 pub unsafe fn FileSelectMenu_22_FileClearSelectSlot() {
-    static mut kBitShl_: [uint8; 3] = [
+    static kBitShl_: [uint8; 3] = [
         1 as ::core::ffi::c_int as uint8,
         2 as ::core::ffi::c_int as uint8,
         4 as ::core::ffi::c_int as uint8,
@@ -3230,7 +3230,7 @@ pub unsafe fn FileSelectMenu_22_FileClearSelectSlot() {
     *fresh57 = (*fresh57 as ::core::ffi::c_int + 5 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn SetFileClearMenuMissilePos() {
-    static mut kFileClear_MissileY: [uint16; 4] = [
+    static kFileClear_MissileY: [uint16; 4] = [
         72 as ::core::ffi::c_int as uint16,
         104 as ::core::ffi::c_int as uint16,
         136 as ::core::ffi::c_int as uint16,
@@ -3355,7 +3355,7 @@ pub unsafe fn FileSelectMenu_24_FileClearConfirm() {
         .offset(5 as ::core::ffi::c_int as isize) = 94 as uint16;
 }
 pub unsafe fn FileSelectMenu_25_FileClearDoClear() {
-    static mut kBitShl_Not: [uint16; 3] = [
+    static kBitShl_Not: [uint16; 3] = [
         0xfffe as ::core::ffi::c_int as uint16,
         0xfffd as ::core::ffi::c_int as uint16,
         0xfffb as ::core::ffi::c_int as uint16,
@@ -3575,7 +3575,7 @@ pub unsafe fn DrawFileSelectSlotSamusHelmet(mut k: uint16) {
         * *((&raw mut g_ram as *mut uint8).offset(0x1997 as ::core::ffi::c_int as isize)
             as *mut uint16)
             .offset(v5 as isize) as ::core::ffi::c_int) as uint16;
-    static mut kDrawFileSlotHelmet_Spritemaps: [uint16; 9] = [
+    static kDrawFileSlotHelmet_Spritemaps: [uint16; 9] = [
         0x2c as ::core::ffi::c_int as uint16,
         0x2d as ::core::ffi::c_int as uint16,
         0x2e as ::core::ffi::c_int as uint16,
@@ -3598,7 +3598,7 @@ pub unsafe fn DrawFileSelectSlotSamusHelmet(mut k: uint16) {
         3584 as uint16,
     );
 }
-static mut kFileSelectMapFuncs: [Option<Func_V>; 23] = unsafe {
+static kFileSelectMapFuncs: [Option<Func_V>; 23] = unsafe {
     [
         Some(FileSelectMap_0 as unsafe fn() -> ()),
         Some(FileSelectMap_1 as unsafe fn() -> ()),
@@ -4438,7 +4438,7 @@ pub unsafe fn FileSelectMap_1() {
 pub unsafe fn sub_81A3D1(mut k: uint16) {
     LoadActiveAreaMapForegroundColors(k);
 }
-static mut kActiveAreaMapForegroundColors: [uint16; 6] = [
+static kActiveAreaMapForegroundColors: [uint16; 6] = [
     0 as ::core::ffi::c_int as uint16,
     0xa as ::core::ffi::c_int as uint16,
     0x10 as ::core::ffi::c_int as uint16,
@@ -4446,7 +4446,7 @@ static mut kActiveAreaMapForegroundColors: [uint16; 6] = [
     0x24 as ::core::ffi::c_int as uint16,
     0x2a as ::core::ffi::c_int as uint16,
 ];
-static mut kInactiveAreaMapForegroundColors: [uint16; 6] = [
+static kInactiveAreaMapForegroundColors: [uint16; 6] = [
     0x30 as ::core::ffi::c_int as uint16,
     0x3a as ::core::ffi::c_int as uint16,
     0x40 as ::core::ffi::c_int as uint16,
@@ -4746,7 +4746,7 @@ pub unsafe fn SetupInitialExpandingSquareHDMA() {
     WriteReg(A2A3H as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(NTRL3 as ::core::ffi::c_int as uint16, 0 as uint8);
 }
-static mut kExpandingSquareTransitionSpeed: uint8 = 4 as uint8;
+static kExpandingSquareTransitionSpeed: uint8 = 4 as uint8;
 pub unsafe fn FileSelectMap_5_ExpandingSquare() {
     let mut v5: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     DrawAreaSelectMapLabels();
@@ -5153,7 +5153,7 @@ pub unsafe fn SwitchActiveFileSelectMapArea(mut R28: uint16) {
             as *mut uint16) as usize],
     );
 }
-static mut kAreaSelectMapLabelPositions: [uint16; 12] = [
+static kAreaSelectMapLabelPositions: [uint16; 12] = [
     0x5b as ::core::ffi::c_int as uint16,
     0x32 as ::core::ffi::c_int as uint16,
     0x2a as ::core::ffi::c_int as uint16,
@@ -5249,7 +5249,7 @@ pub unsafe fn DrawAreaSelectMapLabels() {
         i += 1;
     }
 }
-static mut kRoomSelectMapExpandingSquareTimers: [uint16; 6] = [
+static kRoomSelectMapExpandingSquareTimers: [uint16; 6] = [
     0x33 as ::core::ffi::c_int as uint16,
     0x35 as ::core::ffi::c_int as uint16,
     0x2d as ::core::ffi::c_int as uint16,

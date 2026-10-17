@@ -3916,7 +3916,7 @@ pub unsafe fn PlmSetup_B70F_IcePhysics(mut j: uint16) -> uint8 {
     }
     return 0 as uint8;
 }
-static mut kPlmSetup_QuicksandSurface: [Option<Func_Y_V>; 4] = unsafe {
+static kPlmSetup_QuicksandSurface: [Option<Func_Y_V>; 4] = unsafe {
     [
         Some(PlmSetup_QuicksandSurface_0 as unsafe fn(uint16) -> ()),
         Some(PlmSetup_QuicksandSurface_1 as unsafe fn(uint16) -> ()),
@@ -3924,15 +3924,15 @@ static mut kPlmSetup_QuicksandSurface: [Option<Func_Y_V>; 4] = unsafe {
         Some(PlmSetup_QuicksandSurface_0 as unsafe fn(uint16) -> ()),
     ]
 };
-static mut g_word_84B48B: [uint16; 2] = [
+static g_word_84B48B: [uint16; 2] = [
     0x200 as ::core::ffi::c_int as uint16,
     0x200 as ::core::ffi::c_int as uint16,
 ];
-static mut g_word_84B48F: [uint16; 2] = [
+static g_word_84B48F: [uint16; 2] = [
     0x120 as ::core::ffi::c_int as uint16,
     0x100 as ::core::ffi::c_int as uint16,
 ];
-static mut g_word_84B493: [uint16; 2] = [
+static g_word_84B493: [uint16; 2] = [
     0x280 as ::core::ffi::c_int as uint16,
     0x380 as ::core::ffi::c_int as uint16,
 ];
@@ -4391,7 +4391,7 @@ pub unsafe fn PlmPreInstr_WakePLMAndStartFxMotionSamusFarLeft(mut k: uint16) {
     }
 }
 pub unsafe fn PlmPreInstr_AdvanceLavaSamusMovesLeft(mut k: uint16) {
-    static mut g_word_84B876: [uint16; 10] = [
+    static g_word_84B876: [uint16; 10] = [
         0x72b as ::core::ffi::c_int as uint16,
         0x1bf as ::core::ffi::c_int as uint16,
         0xff50 as ::core::ffi::c_int as uint16,

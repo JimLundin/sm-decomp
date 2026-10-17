@@ -561,7 +561,7 @@ pub unsafe fn AnimtilesInstr_SpawnPalfxObj(mut k: uint16, mut j: uint16) -> uint
     return (j as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn AnimtilesInstr_Write8PaletteColors(mut k: uint16, mut j: uint16) -> uint16 {
-    static mut kAnimtilesInstr_Write8PaletteColors: [uint16; 8] = [
+    static kAnimtilesInstr_Write8PaletteColors: [uint16; 8] = [
         0x3800 as ::core::ffi::c_int as uint16,
         0x7f58 as ::core::ffi::c_int as uint16,
         0x6ed5 as ::core::ffi::c_int as uint16,

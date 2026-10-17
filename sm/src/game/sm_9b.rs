@@ -366,7 +366,7 @@ pub const fnGrappleBeamFunc_Cancel: ::core::ffi::c_int = 0x9bc856 as ::core::ffi
 pub const fnGrappleBeam_Func2: ::core::ffi::c_int = 0x9bc8c5 as ::core::ffi::c_int;
 pub const fnGrappleBeamFunc_C9CE: ::core::ffi::c_int = 0x9bc9ce as ::core::ffi::c_int;
 pub const fnGrappleBeamFunc_ReleaseFromSwing: ::core::ffi::c_int = 0x9bcb8b as ::core::ffi::c_int;
-static mut kDeathAnimationFrames: [uint8; 28] = [
+static kDeathAnimationFrames: [uint8; 28] = [
     5 as ::core::ffi::c_int as uint8,
     5 as ::core::ffi::c_int as uint8,
     5 as ::core::ffi::c_int as uint8,
@@ -396,26 +396,26 @@ static mut kDeathAnimationFrames: [uint8; 28] = [
     5 as ::core::ffi::c_int as uint8,
     5 as ::core::ffi::c_int as uint8,
 ];
-static mut g_word_9BC118: uint16 = 24 as uint16;
-static mut g_word_9BC11A: uint16 = 0xc as uint16;
-static mut g_word_9BC11C: uint16 = 5 as uint16;
-static mut g_word_9BC11E: uint16 = 0x480 as uint16;
-static mut g_word_9BC120: uint16 = 0x300 as uint16;
-static mut g_word_9BB7BF: [uint16; 5] = [
+static g_word_9BC118: uint16 = 24 as uint16;
+static g_word_9BC11A: uint16 = 0xc as uint16;
+static g_word_9BC11C: uint16 = 5 as uint16;
+static g_word_9BC11E: uint16 = 0x480 as uint16;
+static g_word_9BC120: uint16 = 0x300 as uint16;
+static g_word_9BB7BF: [uint16; 5] = [
     0x8400 as ::core::ffi::c_int as uint16,
     0x8800 as ::core::ffi::c_int as uint16,
     0x8c00 as ::core::ffi::c_int as uint16,
     0x9000 as ::core::ffi::c_int as uint16,
     0x8000 as ::core::ffi::c_int as uint16,
 ];
-static mut g_word_9BB7C9: [uint16; 5] = [
+static g_word_9BB7C9: [uint16; 5] = [
     0x6200 as ::core::ffi::c_int as uint16,
     0x6400 as ::core::ffi::c_int as uint16,
     0x6600 as ::core::ffi::c_int as uint16,
     0x6800 as ::core::ffi::c_int as uint16,
     0x6000 as ::core::ffi::c_int as uint16,
 ];
-static mut kShadesOfWhite: [uint16; 22] = [
+static kShadesOfWhite: [uint16; 22] = [
     0x421 as ::core::ffi::c_int as uint16,
     0xc63 as ::core::ffi::c_int as uint16,
     0x14a5 as ::core::ffi::c_int as uint16,
@@ -439,7 +439,7 @@ static mut kShadesOfWhite: [uint16; 22] = [
     0x7bde as ::core::ffi::c_int as uint16,
     0x7fff as ::core::ffi::c_int as uint16,
 ];
-static mut kIsGrappleBannedForMovementType: [uint8; 28] = [
+static kIsGrappleBannedForMovementType: [uint8; 28] = [
     0 as ::core::ffi::c_int as uint8,
     0 as ::core::ffi::c_int as uint8,
     0 as ::core::ffi::c_int as uint8,

@@ -225,7 +225,7 @@ unsafe fn Get_MotherBrain(mut o: ::core::ffi::c_int) -> *mut Enemy_MotherBrain {
         .offset(o as isize) as *mut Enemy_MotherBrain;
 }
 pub unsafe fn nullsub_341() {}
-static mut funcs_BE56D: [Option<Func_V>; 16] = unsafe {
+static funcs_BE56D: [Option<Func_V>; 16] = unsafe {
     [
         Some(MotherBrain_CalcHdma_Down as unsafe fn() -> ()),
         Some(MotherBrain_CalcHdma_BeamAimedRight2 as unsafe fn() -> ()),
@@ -402,7 +402,7 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(mut r22: uint16, mut r24: uint
         }
     }
 }
-static mut off_ADE024: [Option<Func_CalcHdma>; 4] = unsafe {
+static off_ADE024: [Option<Func_CalcHdma>; 4] = unsafe {
     [
         Some(MotherBrain_CalcHdma_Up_UpRight as unsafe fn(uint16, uint16) -> ()),
         Some(MotherBrain_CalcHdma_Up_Up as unsafe fn(uint16, uint16) -> ()),
@@ -671,7 +671,7 @@ pub unsafe fn MotherBrain_CalcHdma_Up_UpLeft(mut r22: uint16, mut r24: uint16) {
         }
     }
 }
-static mut g_off_ADE20E: [Option<Func_CalcHdma>; 4] = unsafe {
+static g_off_ADE20E: [Option<Func_CalcHdma>; 4] = unsafe {
     [
         Some(MotherBrain_CalcHdma_Down_DownRight as unsafe fn(uint16, uint16) -> ()),
         None,

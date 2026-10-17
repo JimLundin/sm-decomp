@@ -1116,73 +1116,73 @@ unsafe fn Get_Zebetites(mut o: ::core::ffi::c_int) -> *mut Enemy_Zebetites {
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_Zebetites;
 }
-static mut g_word_A686F1: [uint16; 2] = [
+static g_word_A686F1: [uint16; 2] = [
     0x1000 as ::core::ffi::c_int as uint16,
     0x1800 as ::core::ffi::c_int as uint16,
 ];
-static mut g_word_A68DBB: uint16 = 5 as uint16;
-static mut g_word_A68DBD: uint16 = 0xa as uint16;
-static mut g_word_A68DBF: uint16 = 0xf as uint16;
-static mut g_word_A68DC1: uint16 = 0x14 as uint16;
-static mut g_word_A68DC3: uint16 = 0x19 as uint16;
-static mut g_word_A68DC5: uint16 = 0x1e as uint16;
-static mut g_word_A68DC7: uint16 = 0x23 as uint16;
-static mut g_word_A68DC9: uint16 = 0x28 as uint16;
-static mut g_word_A68DCB: uint16 = 0x2d as uint16;
-static mut g_word_A68DCD: uint16 = 0x32 as uint16;
-static mut g_word_A68DCF: uint16 = 0x37 as uint16;
-static mut g_word_A68DD1: uint16 = 0x3c as uint16;
-static mut g_word_A68DD3: uint16 = 0x41 as uint16;
-static mut g_word_A68DD5: uint16 = 0x46 as uint16;
-static mut g_word_A68DD7: uint16 = 0x4b as uint16;
-static mut g_word_A68DD9: uint16 = 0x50 as uint16;
-static mut g_word_A68DDB: uint16 = 0x55 as uint16;
-static mut g_word_A68DDD: uint16 = 0x5a as uint16;
-static mut g_word_A68DDF: uint16 = 0x5f as uint16;
-static mut g_word_A68DE1: uint16 = 0x64 as uint16;
-static mut g_word_A68DE3: uint16 = 0x69 as uint16;
-static mut g_word_A68DE5: uint16 = 0x6e as uint16;
-static mut g_word_A68DE7: uint16 = 0x18 as uint16;
-static mut g_word_A68DE9: uint16 = 0x18 as uint16;
-static mut g_word_A68DEB: uint16 = 0x18 as uint16;
-static mut g_word_A68DED: uint16 = 0x18 as uint16;
-static mut g_word_A68DEF: uint16 = 0x18 as uint16;
-static mut g_word_A68DF1: uint16 = 0x18 as uint16;
-static mut g_word_A68DF3: uint16 = 0x18 as uint16;
-static mut g_word_A68DF5: uint16 = 0x18 as uint16;
-static mut g_word_A68DF7: uint16 = 0x18 as uint16;
-static mut g_word_A68DF9: uint16 = 0x18 as uint16;
-static mut g_word_A68DFB: uint16 = 0x18 as uint16;
-static mut g_word_A68DFD: uint16 = 0x18 as uint16;
-static mut g_word_A68DFF: uint16 = 0x18 as uint16;
-static mut g_word_A68E01: uint16 = 0x18 as uint16;
-static mut g_word_A68E03: uint16 = 0x18 as uint16;
-static mut g_word_A68E05: uint16 = 0x18 as uint16;
-static mut g_word_A68E07: uint16 = 0x18 as uint16;
-static mut g_word_A68E09: uint16 = 0x18 as uint16;
-static mut g_word_A68E0B: uint16 = 0x14 as uint16;
-static mut g_word_A68E0D: uint16 = 0x10 as uint16;
-static mut g_word_A68E0F: uint16 = 0xc as uint16;
-static mut g_word_A68E11: uint16 = 8 as uint16;
-static mut g_word_A695F6: [uint16; 4] = [
+static g_word_A68DBB: uint16 = 5 as uint16;
+static g_word_A68DBD: uint16 = 0xa as uint16;
+static g_word_A68DBF: uint16 = 0xf as uint16;
+static g_word_A68DC1: uint16 = 0x14 as uint16;
+static g_word_A68DC3: uint16 = 0x19 as uint16;
+static g_word_A68DC5: uint16 = 0x1e as uint16;
+static g_word_A68DC7: uint16 = 0x23 as uint16;
+static g_word_A68DC9: uint16 = 0x28 as uint16;
+static g_word_A68DCB: uint16 = 0x2d as uint16;
+static g_word_A68DCD: uint16 = 0x32 as uint16;
+static g_word_A68DCF: uint16 = 0x37 as uint16;
+static g_word_A68DD1: uint16 = 0x3c as uint16;
+static g_word_A68DD3: uint16 = 0x41 as uint16;
+static g_word_A68DD5: uint16 = 0x46 as uint16;
+static g_word_A68DD7: uint16 = 0x4b as uint16;
+static g_word_A68DD9: uint16 = 0x50 as uint16;
+static g_word_A68DDB: uint16 = 0x55 as uint16;
+static g_word_A68DDD: uint16 = 0x5a as uint16;
+static g_word_A68DDF: uint16 = 0x5f as uint16;
+static g_word_A68DE1: uint16 = 0x64 as uint16;
+static g_word_A68DE3: uint16 = 0x69 as uint16;
+static g_word_A68DE5: uint16 = 0x6e as uint16;
+static g_word_A68DE7: uint16 = 0x18 as uint16;
+static g_word_A68DE9: uint16 = 0x18 as uint16;
+static g_word_A68DEB: uint16 = 0x18 as uint16;
+static g_word_A68DED: uint16 = 0x18 as uint16;
+static g_word_A68DEF: uint16 = 0x18 as uint16;
+static g_word_A68DF1: uint16 = 0x18 as uint16;
+static g_word_A68DF3: uint16 = 0x18 as uint16;
+static g_word_A68DF5: uint16 = 0x18 as uint16;
+static g_word_A68DF7: uint16 = 0x18 as uint16;
+static g_word_A68DF9: uint16 = 0x18 as uint16;
+static g_word_A68DFB: uint16 = 0x18 as uint16;
+static g_word_A68DFD: uint16 = 0x18 as uint16;
+static g_word_A68DFF: uint16 = 0x18 as uint16;
+static g_word_A68E01: uint16 = 0x18 as uint16;
+static g_word_A68E03: uint16 = 0x18 as uint16;
+static g_word_A68E05: uint16 = 0x18 as uint16;
+static g_word_A68E07: uint16 = 0x18 as uint16;
+static g_word_A68E09: uint16 = 0x18 as uint16;
+static g_word_A68E0B: uint16 = 0x14 as uint16;
+static g_word_A68E0D: uint16 = 0x10 as uint16;
+static g_word_A68E0F: uint16 = 0xc as uint16;
+static g_word_A68E11: uint16 = 8 as uint16;
+static g_word_A695F6: [uint16; 4] = [
     0x190 as ::core::ffi::c_int as uint16,
     0xf0 as ::core::ffi::c_int as uint16,
     0xf0 as ::core::ffi::c_int as uint16,
     0x190 as ::core::ffi::c_int as uint16,
 ];
-static mut g_word_A695FE: [uint16; 4] = [
+static g_word_A695FE: [uint16; 4] = [
     0xffe8 as ::core::ffi::c_int as uint16,
     0xfff4 as ::core::ffi::c_int as uint16,
     0x18 as ::core::ffi::c_int as uint16,
     0xc as ::core::ffi::c_int as uint16,
 ];
-static mut g_word_A69606: [uint16; 4] = [
+static g_word_A69606: [uint16; 4] = [
     0x180 as ::core::ffi::c_int as uint16,
     0x100 as ::core::ffi::c_int as uint16,
     0x100 as ::core::ffi::c_int as uint16,
     0x180 as ::core::ffi::c_int as uint16,
 ];
-static mut g_word_A69A48: [uint16; 8] = [
+static g_word_A69A48: [uint16; 8] = [
     0xfe00 as ::core::ffi::c_int as uint16,
     0xfb00 as ::core::ffi::c_int as uint16,
     0xfc00 as ::core::ffi::c_int as uint16,
@@ -1192,18 +1192,18 @@ static mut g_word_A69A48: [uint16; 8] = [
     0x400 as ::core::ffi::c_int as uint16,
     0xfb00 as ::core::ffi::c_int as uint16,
 ];
-static mut g_word_A6B288: uint16 = 8 as uint16;
-static mut g_word_A6BBEB: [uint16; 3] = [
+static g_word_A6B288: uint16 = 8 as uint16;
+static g_word_A6BBEB: [uint16; 3] = [
     0x40 as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
     0xd0 as ::core::ffi::c_int as uint16,
 ];
-static mut g_word_A6BC62: [uint16; 3] = [
+static g_word_A6BC62: [uint16; 3] = [
     0xb0 as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
     0x50 as ::core::ffi::c_int as uint16,
 ];
-static mut g_word_A6C66E: [int16; 20] = [
+static g_word_A6C66E: [int16; 20] = [
     -(24 as ::core::ffi::c_int) as int16,
     -(24 as ::core::ffi::c_int) as int16,
     -(20 as ::core::ffi::c_int) as int16,
@@ -1225,12 +1225,12 @@ static mut g_word_A6C66E: [int16; 20] = [
     19 as ::core::ffi::c_int as int16,
     19 as ::core::ffi::c_int as int16,
 ];
-static mut g_word_A6CF54: [int16; 3] = [
+static g_word_A6CF54: [int16; 3] = [
     0x20 as ::core::ffi::c_int as int16,
     0 as ::core::ffi::c_int as int16,
     -(0x20 as ::core::ffi::c_int) as int16,
 ];
-static mut g_byte_A6D61F: [uint8; 16] = [
+static g_byte_A6D61F: [uint8; 16] = [
     0x10 as ::core::ffi::c_int as uint8,
     0xf as ::core::ffi::c_int as uint8,
     0xe as ::core::ffi::c_int as uint8,
@@ -1248,7 +1248,7 @@ static mut g_byte_A6D61F: [uint8; 16] = [
     2 as ::core::ffi::c_int as uint8,
     1 as ::core::ffi::c_int as uint8,
 ];
-static mut g_byte_A6D712: [uint8; 16] = [
+static g_byte_A6D712: [uint8; 16] = [
     0x10 as ::core::ffi::c_int as uint8,
     0xf as ::core::ffi::c_int as uint8,
     0xe as ::core::ffi::c_int as uint8,
@@ -1266,7 +1266,7 @@ static mut g_byte_A6D712: [uint8; 16] = [
     2 as ::core::ffi::c_int as uint8,
     1 as ::core::ffi::c_int as uint8,
 ];
-static mut g_word_A6D9ED: [uint16; 8] = [
+static g_word_A6D9ED: [uint16; 8] = [
     0xc as ::core::ffi::c_int as uint16,
     0xe as ::core::ffi::c_int as uint16,
     0x10 as ::core::ffi::c_int as uint16,
@@ -3603,7 +3603,7 @@ pub unsafe fn Ridley_A2F2() {
     }
     let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0x40 as ::core::ffi::c_int);
     if (*E).cry_var_B != 0 {
-        static mut g_word_A6A321: [int16; 4] = [
+        static g_word_A6A321: [int16; 4] = [
             0 as ::core::ffi::c_int as int16,
             -(1024 as ::core::ffi::c_int) as int16,
             -(4 as ::core::ffi::c_int) as int16,
@@ -4624,7 +4624,7 @@ pub unsafe fn Ridley_Func_6() {
     };
 }
 pub unsafe fn Ridley_Func_7() -> uint16 {
-    static mut g_word_A6B439: [uint16; 4] = [
+    static g_word_A6B439: [uint16; 4] = [
         4 as ::core::ffi::c_int as uint16,
         8 as ::core::ffi::c_int as uint16,
         0xa as ::core::ffi::c_int as uint16,
@@ -5646,7 +5646,7 @@ pub unsafe fn Ridley_Func_39() {
         }
     }
 }
-static mut byte_A6BD04: [uint8; 28] = [
+static byte_A6BD04: [uint8; 28] = [
     0x80 as ::core::ffi::c_int as uint8,
     0x80 as ::core::ffi::c_int as uint8,
     0x80 as ::core::ffi::c_int as uint8,
@@ -6854,7 +6854,7 @@ pub unsafe fn RidleysExplosion_Func_2() {
     );
 }
 pub unsafe fn locret_A6CB20() {}
-static mut off_A6CB21: [Option<Func_V>; 9] = unsafe {
+static off_A6CB21: [Option<Func_V>; 9] = unsafe {
     [
         Some(locret_A6CB20 as unsafe fn() -> ()),
         Some(Ridley_CBC0 as unsafe fn() -> ()),

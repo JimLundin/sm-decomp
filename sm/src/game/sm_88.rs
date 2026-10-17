@@ -1084,7 +1084,7 @@ pub unsafe fn LayerBlendPowerBombFunc_6() {
     *(&raw mut g_ram as *mut uint8).offset(0x69 as ::core::ffi::c_int as isize) = 19 as uint8;
     *(&raw mut g_ram as *mut uint8).offset(0x6b as ::core::ffi::c_int as isize) = 4 as uint8;
 }
-static mut kLayerBlendFuncTable: [Option<Func_Y_Y>; 27] = unsafe {
+static kLayerBlendFuncTable: [Option<Func_Y_Y>; 27] = unsafe {
     [
         Some(nullsub_9 as unsafe fn(uint16) -> uint16),
         Some(nullsub_9 as unsafe fn(uint16) -> uint16),
@@ -1156,7 +1156,7 @@ pub unsafe fn LayerBlendingHandler() {
         HandleLayerBlendingPowerBomb(v0);
     };
 }
-static mut kLayerBlendPowerBombFuncs: [Option<Func_V>; 4] = unsafe {
+static kLayerBlendPowerBombFuncs: [Option<Func_V>; 4] = unsafe {
     [
         Some(LayerBlendPowerBombFunc_0 as unsafe fn() -> ()),
         Some(LayerBlendPowerBombFunc_0 as unsafe fn() -> ()),
@@ -1474,12 +1474,12 @@ pub unsafe fn HdmaObjectHandler() {
     {
         *((&raw mut g_ram as *mut uint8).offset(0x592 as ::core::ffi::c_int as isize)
             as *mut uint16) = 0x8000 as uint16;
-        static mut unk_8884D5: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+        static unk_8884D5: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
             field_0: 0x40 as uint8,
             field_1: 0x28 as uint8,
             addr: 0x8ace as VoidP,
         };
-        static mut unk_8884DD: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+        static unk_8884DD: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
             field_0: 0x40 as uint8,
             field_1: 0x29 as uint8,
             addr: 0x8b80 as VoidP,
@@ -2486,7 +2486,7 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc5_DeactivateBeam(mut k: uint16) {
         }
     }
 }
-static mut kHdmaobjPreInstr_XrayFuncs: [Option<Func_Y_V>; 6] = unsafe {
+static kHdmaobjPreInstr_XrayFuncs: [Option<Func_Y_V>; 6] = unsafe {
     [
         Some(HdmaobjPreInstr_XrayFunc0_NoBeam as unsafe fn(uint16) -> ()),
         Some(HdmaobjPreInstr_XrayFunc1_BeamWidening as unsafe fn(uint16) -> ()),
@@ -2542,12 +2542,12 @@ pub unsafe fn SpawnPowerBombExplosion() {
         QueueSfx1_Max15(1 as uint16);
         *((&raw mut g_ram as *mut uint8).offset(0x592 as ::core::ffi::c_int as isize)
             as *mut uint16) = 0x8000 as uint16;
-        static mut unk_888ABA: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+        static unk_888ABA: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
             field_0: 0x40 as uint8,
             field_1: 0x28 as uint8,
             addr: 0x8ace as VoidP,
         };
-        static mut unk_888AC2: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+        static unk_888AC2: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
             field_0: 0x40 as uint8,
             field_1: 0x29 as uint8,
             addr: 0x8b80 as VoidP,
@@ -2562,11 +2562,11 @@ pub unsafe fn SpawnPowerBombExplosion() {
         );
     };
 }
-static mut kPowerBombPreExplosionRadiusSpeed: uint16 = 0x3000 as uint16;
-static mut kPowerBombPreExplosionRadiusAccel: uint16 = 0x80 as uint16;
-static mut g_word_888B96: uint16 = 3 as uint16;
-static mut kPowerBombExplosionRadiusSpeed: uint16 = 0 as uint16;
-static mut kPowerBombExplosionRadiusAccel: uint16 = 0x30 as uint16;
+static kPowerBombPreExplosionRadiusSpeed: uint16 = 0x3000 as uint16;
+static kPowerBombPreExplosionRadiusAccel: uint16 = 0x80 as uint16;
+static g_word_888B96: uint16 = 3 as uint16;
+static kPowerBombExplosionRadiusSpeed: uint16 = 0 as uint16;
+static kPowerBombExplosionRadiusAccel: uint16 = 0x30 as uint16;
 pub unsafe fn Hdmaobj_PreExplodeWhite() {
     *(&raw mut g_ram as *mut uint8).offset(0xc606 as ::core::ffi::c_int as isize) =
         -(1 as ::core::ffi::c_int) as uint8;
@@ -3687,12 +3687,12 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionYellow(mut k: uint16)
 pub unsafe fn SpawnCrystalFlashHdmaObjs() {
     *((&raw mut g_ram as *mut uint8).offset(0x592 as ::core::ffi::c_int as isize) as *mut uint16) =
         (0x888000 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    static mut unk_88A2B0: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_88A2B0: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x40 as uint8,
         field_1: 0x28 as uint8,
         addr: 0xa2bd as VoidP,
     };
-    static mut unk_88A2B8: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_88A2B8: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x40 as uint8,
         field_1: 0x29 as uint8,
         addr: 0xa32a as VoidP,
@@ -4252,17 +4252,17 @@ pub unsafe fn FxTypeFunc_22_ScrollingSky() {
         as *mut uint16) = 1248 as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0x196e as ::core::ffi::c_int as isize)
         as *mut uint16) = 6 as uint16;
-    static mut unk_88A62E: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_88A62E: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x2 as uint8,
         field_1: 0x12 as uint8,
         addr: 0xad63 as VoidP,
     };
-    static mut unk_88A636: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_88A636: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x42 as uint8,
         field_1: 0x11 as uint8,
         addr: 0xad4e as VoidP,
     };
-    static mut unk_88A63E: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_88A63E: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x42 as uint8,
         field_1: 0xd as uint8,
         addr: 0xad39 as VoidP,
@@ -4421,7 +4421,7 @@ pub unsafe fn HdmaobjInstr_SetFlagB(mut k: uint16, mut hdp: *const uint8) -> *co
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 1 as uint16;
     return hdp;
 }
-static mut g_word_88C46E: [int16; 16] = [
+static g_word_88C46E: [int16; 16] = [
     0 as ::core::ffi::c_int as int16,
     1 as ::core::ffi::c_int as int16,
     1 as ::core::ffi::c_int as int16,
@@ -4699,12 +4699,12 @@ pub unsafe fn HdmaFunc_A786(
     }
     return r18;
 }
-static mut unk_88A7EF: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+static unk_88A7EF: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
     field_0: 0x42 as uint8,
     field_1: 0xf as uint8,
     addr: 0xad76 as VoidP,
 };
-static mut unk_88A80B: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+static unk_88A80B: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
     field_0: 0x42 as uint8,
     field_1: 0xf as uint8,
     addr: 0xad89 as VoidP,
@@ -5036,12 +5036,12 @@ pub unsafe fn RoomMainAsm_ScrollingSkyOcean() {
         RomPtr_88(addr_off_88ADA6 as ::core::ffi::c_int as uint16_t) as *const uint16
     );
 }
-static mut unk_88B08C: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+static unk_88B08C: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
     field_0: 0x42 as uint8,
     field_1: 0x11 as uint8,
     addr: 0xb0ac as VoidP,
 };
-static mut kFirefleaFlashingShades: [uint16; 12] = [
+static kFirefleaFlashingShades: [uint16; 12] = [
     0 as ::core::ffi::c_int as uint16,
     0x100 as ::core::ffi::c_int as uint16,
     0x200 as ::core::ffi::c_int as uint16,
@@ -5055,7 +5055,7 @@ static mut kFirefleaFlashingShades: [uint16; 12] = [
     0x200 as ::core::ffi::c_int as uint16,
     0x100 as ::core::ffi::c_int as uint16,
 ];
-static mut kFirefleaDarknessShades: [uint16; 6] = [
+static kFirefleaDarknessShades: [uint16; 6] = [
     0 as ::core::ffi::c_int as uint16,
     0x600 as ::core::ffi::c_int as uint16,
     0xc00 as ::core::ffi::c_int as uint16,
@@ -5254,7 +5254,7 @@ pub unsafe fn ExpandingContractingHdmaEffect() {
         }
     }
 }
-static mut g_word_88B256: [uint16; 17] = [
+static g_word_88B256: [uint16; 17] = [
     0x46 as ::core::ffi::c_int as uint16,
     1 as ::core::ffi::c_int as uint16,
     0x46 as ::core::ffi::c_int as uint16,
@@ -5311,22 +5311,22 @@ pub unsafe fn HandleEarthquakeSoundEffect() {
             as *mut uint16) = (v0 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
     }
 }
-static mut unk_88B289: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+static unk_88B289: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
     field_0: 0x42 as uint8,
     field_1: 0x12 as uint8,
     addr: 0xc3e1 as VoidP,
 };
-static mut unk_88B291: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+static unk_88B291: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
     field_0: 0x42 as uint8,
     field_1: 0x10 as uint8,
     addr: 0xc3f0 as VoidP,
 };
-static mut unk_88B2B1: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+static unk_88B2B1: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
     field_0: 0x42 as uint8,
     field_1: 0x12 as uint8,
     addr: 0xc3e1 as VoidP,
 };
-static mut unk_88B2B9: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+static unk_88B2B9: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
     field_0: 0x42 as uint8,
     field_1: 0x10 as uint8,
     addr: 0xc3f0 as VoidP,
@@ -5567,7 +5567,7 @@ pub unsafe fn CallFxRisingFunc(mut ea: uint32) {
         }
     };
 }
-static mut kLavaSoundEffects: [uint8; 8] = [
+static kLavaSoundEffects: [uint8; 8] = [
     0x12 as ::core::ffi::c_int as uint8,
     0x13 as ::core::ffi::c_int as uint8,
     0x14 as ::core::ffi::c_int as uint8,
@@ -5930,12 +5930,12 @@ pub unsafe fn Handle_LavaAcidBG2YScroll_Func3(mut v0: uint16) {
         }
     }
 }
-static mut unk_88C40F: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+static unk_88C40F: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
     field_0: 0x42 as uint8,
     field_1: 0x11 as uint8,
     addr: 0xd856 as VoidP,
 };
-static mut unk_88C41F: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+static unk_88C41F: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
     field_0: 0x42 as uint8,
     field_1: 0xf as uint8,
     addr: 0xd847 as VoidP,
@@ -6326,7 +6326,7 @@ pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll_Func1(mut k: uint16) {
     }
 }
 pub unsafe fn SpawnBG3ScrollHdmaObject() {
-    static mut unk_88D869: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_88D869: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x43 as uint8,
         field_1: 0x11 as uint8,
         addr: 0xd8d0 as VoidP,
@@ -6337,12 +6337,12 @@ pub unsafe fn SpawnBG3ScrollHdmaObject() {
     );
 }
 pub unsafe fn FxTypeFunc_28_CeresRidley() {
-    static mut unk_88D8E2: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_88D8E2: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x40 as uint8,
         field_1: 0x5 as uint8,
         addr: 0xd906 as VoidP,
     };
-    static mut unk_88D8EA: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_88D8EA: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0 as uint8,
         field_1: 0x2c as uint8,
         addr: 0xd91d as VoidP,
@@ -6361,7 +6361,7 @@ pub unsafe fn sub_88D916() {
         9 as uint16;
 }
 pub unsafe fn FxTypeFunc_CeresElevator() {
-    static mut unk_88D92C: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_88D92C: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x40 as uint8,
         field_1: 0x5 as uint8,
         addr: 0xd939 as VoidP,
@@ -6377,7 +6377,7 @@ pub unsafe fn HdmaobjInstr_SetVideoMode1(mut k: uint16, mut hdp: *const uint8) -
     return hdp;
 }
 pub unsafe fn FxTypeFunc_A_Rain() {
-    static mut unk_88D95C: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_88D95C: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x43 as uint8,
         field_1: 0x11 as uint8,
         addr: 0xd96c as VoidP,
@@ -6476,7 +6476,7 @@ pub unsafe fn HdmaobjPreInstr_RainBg3Scroll(mut k: uint16) {
 }
 pub unsafe fn FxTypeFunc_8_Spores() {
     *(&raw mut g_ram as *mut uint8).offset(0x5b as ::core::ffi::c_int as isize) = 92 as uint8;
-    static mut unk_88DA1D: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_88DA1D: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x42 as uint8,
         field_1: 0x11 as uint8,
         addr: 0xda2d as VoidP,
@@ -6540,7 +6540,7 @@ pub unsafe fn HdmaobjPreInstr_SporesBG3Xscroll(mut k: uint16) {
 }
 pub unsafe fn FxTypeFunc_C() {
     *(&raw mut g_ram as *mut uint8).offset(0x5b as ::core::ffi::c_int as isize) = 92 as uint8;
-    static mut unk_88DB14: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_88DB14: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x43 as uint8,
         field_1: 0x11 as uint8,
         addr: 0xdb19 as VoidP,
@@ -6597,12 +6597,12 @@ pub unsafe fn HdmaobjPreInstr_FogBG3Scroll(mut k: uint16) {
     }
 }
 pub unsafe fn FxTypeFunc_26_TourianEntranceStatue() {
-    static mut unk_88DBBA: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_88DBBA: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x42 as uint8,
         field_1: 0x11 as uint8,
         addr: 0xd856 as VoidP,
     };
-    static mut unk_88DBC2: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_88DBC2: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x42 as uint8,
         field_1: 0x10 as uint8,
         addr: 0xdcfa as VoidP,
@@ -6819,12 +6819,12 @@ pub unsafe fn HdmaobjInstr_GotoIfEventHappened(
     };
 }
 pub unsafe fn SpawnBombTorizoHaze() {
-    static mut unk_88DD36: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_88DD36: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x2 as uint8,
         field_1: 0x32 as uint8,
         addr: 0xdd4a as VoidP,
     };
-    static mut unk_88DD3E: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_88DD3E: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0 as uint8,
         field_1: 0x32 as uint8,
         addr: 0xdd62 as VoidP,
@@ -6843,12 +6843,12 @@ pub unsafe fn HdmaobjPreInstr_BombTorizoHazeColorMathBgColor(mut k: uint16) {
         as *mut uint16) = 44 as uint16;
 }
 pub unsafe fn FxTypeFunc_2C_Haze() {
-    static mut unk_88DDD4: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_88DDD4: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x40 as uint8,
         field_1: 0x32 as uint8,
         addr: 0xded3 as VoidP,
     };
-    static mut unk_88DDDD: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_88DDDD: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x40 as uint8,
         field_1: 0x32 as uint8,
         addr: 0xdeeb as VoidP,
@@ -7014,17 +7014,17 @@ pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_FadingOut(mut k: uint16) {
         *fresh83 = (*fresh83).wrapping_sub(1);
     }
 }
-static mut unk_88DF38: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+static unk_88DF38: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
     field_0: 0 as uint8,
     field_1: 0x2c as uint8,
     addr: 0xdf4f as VoidP,
 };
-static mut unk_88DF41: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+static unk_88DF41: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
     field_0: 0 as uint8,
     field_1: 0x2c as uint8,
     addr: 0xdf6b as VoidP,
 };
-static mut unk_88DF4A: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+static unk_88DF4A: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
     field_0: 0x2 as uint8,
     field_1: 0x12 as uint8,
     addr: 0xdf77 as VoidP,
@@ -7133,7 +7133,7 @@ pub unsafe fn HdmaobjPreInstr_DF94(mut v0: uint16) {
             .offset(v3 as isize) = addr_word_88DF71 as ::core::ffi::c_int as uint16;
     };
 }
-static mut off_88E04E: [Option<Func_U8>; 7] = unsafe {
+static off_88E04E: [Option<Func_U8>; 7] = unsafe {
     [
         Some(VariaSuitPickup_0_LightBeamAppears as unsafe fn() -> uint8),
         Some(VariaSuitPickup_1 as unsafe fn() -> uint8),
@@ -7167,7 +7167,7 @@ pub unsafe fn HdmaobjPreInstr_VariaSuitPickup(mut k: uint16) {
             as *mut uint16) = 18 as uint16;
     }
 }
-static mut off_88E084: [Option<Func_U8>; 7] = unsafe {
+static off_88E084: [Option<Func_U8>; 7] = unsafe {
     [
         Some(VariaSuitPickup_0_LightBeamAppears as unsafe fn() -> uint8),
         Some(VariaSuitPickup_1 as unsafe fn() -> uint8),
@@ -7201,7 +7201,7 @@ pub unsafe fn HdmaobjPreInstr_GravitySuitPickup(mut k: uint16) {
             as *mut uint16) = 18 as uint16;
     }
 }
-static mut g_word_88E0D5: uint16 = 0x7878 as uint16;
+static g_word_88E0D5: uint16 = 0x7878 as uint16;
 pub unsafe fn VariaSuitPickup_0_LightBeamAppears() -> uint8 {
     let mut v0: int16 = 0;
     let mut v3: int16 = 0;
@@ -7884,7 +7884,7 @@ pub unsafe fn HdmaobjPreInstr_E449(mut k: uint16) {
             as *mut uint16) = 4 as uint16;
     };
 }
-static mut unk_88E4A0: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+static unk_88E4A0: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
     field_0: 0x42 as uint8,
     field_1: 0xf as uint8,
     addr: 0xe4a8 as VoidP,
@@ -8301,12 +8301,12 @@ pub unsafe fn HdmaobjPreInstr_E567(mut v0: uint16) {
             .offset(v1 as isize) = 1 as uint16;
     };
 }
-static mut unk_88E722: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+static unk_88E722: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
     field_0: 0 as uint8,
     field_1: 0x2c as uint8,
     addr: 0xe727 as VoidP,
 };
-static mut unk_88E74C: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+static unk_88E74C: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
     field_0: 0x41 as uint8,
     field_1: 0x26 as uint8,
     addr: 0xe751 as VoidP,
@@ -8444,7 +8444,7 @@ pub unsafe fn sub_88E7ED() {
             | 0x80 as ::core::ffi::c_int) as uint8;
 }
 pub unsafe fn SpawnMorphBallEyeBeamHdma() {
-    static mut unk_88E8E4: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_88E8E4: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x41 as uint8,
         field_1: 0x26 as uint8,
         addr: 0xe8ec as VoidP,
@@ -8827,12 +8827,12 @@ pub unsafe fn HdmaobjPreInstr_EACB(mut k: uint16) {
     };
 }
 pub unsafe fn SpawnTitleScreenGradientObjs() {
-    static mut unk_88EB6B: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_88EB6B: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0 as uint8,
         field_1: 0x31 as uint8,
         addr: 0xeb85 as VoidP,
     };
-    static mut unk_88EB63: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_88EB63: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0 as uint8,
         field_1: 0x32 as uint8,
         addr: 0xeb73 as VoidP,
@@ -8894,7 +8894,7 @@ pub unsafe fn HdmaobjPreInstr_ColorMathControlB_TitleGradient(mut k: uint16) {
     }
 }
 pub unsafe fn SpawnIntroCutsceneCrossfadeHdma() {
-    static mut unk_88EBFB: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_88EBFB: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0 as uint8,
         field_1: 0x31 as uint8,
         addr: 0xec03 as VoidP,
@@ -8967,7 +8967,7 @@ pub unsafe fn CinematicFunction_Intro_Func133() {
         -(26496 as ::core::ffi::c_int) as uint16;
     *((&raw mut g_ram as *mut uint8).offset(0xd8e as ::core::ffi::c_int as isize) as *mut uint16) =
         0 as uint16;
-    static mut unk_88EC82: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
+    static unk_88EC82: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x42 as uint8,
         field_1: 0x11 as uint8,
         addr: 0xec8a as VoidP,

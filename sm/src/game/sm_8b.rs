@@ -2599,7 +2599,7 @@ pub unsafe fn CalcSinMult(mut k: uint16, mut r24: uint16) -> uint16 {
             .offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
             * r24 as uint8 as ::core::ffi::c_int) as uint16;
 }
-static mut kMoveUnusedSpritesMasks: [uint16; 8] = [
+static kMoveUnusedSpritesMasks: [uint16; 8] = [
     0x5555 as ::core::ffi::c_int as uint16,
     0x5554 as ::core::ffi::c_int as uint16,
     0x5550 as ::core::ffi::c_int as uint16,
@@ -2967,7 +2967,7 @@ pub unsafe fn InitializeIoDisplayLogo_Async() -> CoroutineRet {
                 WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
                 WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8);
                 WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-                static mut unk_8B92B9: StartDmaCopy = StartDmaCopy {
+                static unk_8B92B9: StartDmaCopy = StartDmaCopy {
                     chan: 1 as uint8,
                     dmap: 1 as uint8,
                     bbad: 0x18 as uint8,
@@ -4317,7 +4317,7 @@ pub unsafe fn HandleCinematicsTransitions_3() {
             (0x8b9f29 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-static mut off_8B9A7B: [Option<Func_V>; 4] = unsafe {
+static off_8B9A7B: [Option<Func_V>; 4] = unsafe {
     [
         None,
         Some(HandleCinematicsTransitions_1 as unsafe fn() -> ()),
@@ -4392,7 +4392,7 @@ pub unsafe fn LoadTitleSequenceGraphics() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8B9BFF: StartDmaCopy = StartDmaCopy {
+    static unk_8B9BFF: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 0 as uint8,
         bbad: 0x19 as uint8,
@@ -4418,7 +4418,7 @@ pub unsafe fn LoadTitleSequenceGraphics() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8);
-    static mut unk_8B9C37: StartDmaCopy = StartDmaCopy {
+    static unk_8B9C37: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 0 as uint8,
         bbad: 0x18 as uint8,
@@ -4433,7 +4433,7 @@ pub unsafe fn LoadTitleSequenceGraphics() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8B9C57: StartDmaCopy = StartDmaCopy {
+    static unk_8B9C57: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -4971,7 +4971,7 @@ pub unsafe fn PlayBabyMetroidCry3(mut k: uint16, mut j: uint16) -> uint16 {
     QueueSfx3_Max6(0x27 as uint16);
     return j;
 }
-static mut kCinematicPal1: [uint16; 16] = [
+static kCinematicPal1: [uint16; 16] = [
     0x1000 as ::core::ffi::c_int as uint16,
     0x6bf5 as ::core::ffi::c_int as uint16,
     0x2e41 as ::core::ffi::c_int as uint16,
@@ -4989,7 +4989,7 @@ static mut kCinematicPal1: [uint16; 16] = [
     0x7fff as ::core::ffi::c_int as uint16,
     0x5ee0 as ::core::ffi::c_int as uint16,
 ];
-static mut kCinematicPal2: [uint16; 16] = [
+static kCinematicPal2: [uint16; 16] = [
     0x3800 as ::core::ffi::c_int as uint16,
     0x6bf5 as ::core::ffi::c_int as uint16,
     0x6e1 as ::core::ffi::c_int as uint16,
@@ -5007,7 +5007,7 @@ static mut kCinematicPal2: [uint16; 16] = [
     0x7fff as ::core::ffi::c_int as uint16,
     0x5ee0 as ::core::ffi::c_int as uint16,
 ];
-static mut kCinematicPal3: [uint16; 16] = [
+static kCinematicPal3: [uint16; 16] = [
     0x3800 as ::core::ffi::c_int as uint16,
     0x77f8 as ::core::ffi::c_int as uint16,
     0x1344 as ::core::ffi::c_int as uint16,
@@ -5025,7 +5025,7 @@ static mut kCinematicPal3: [uint16; 16] = [
     0x7fff as ::core::ffi::c_int as uint16,
     0x6b43 as ::core::ffi::c_int as uint16,
 ];
-static mut kCinematicPal4: [uint16; 16] = [
+static kCinematicPal4: [uint16; 16] = [
     0x3800 as ::core::ffi::c_int as uint16,
     0x7ffb as ::core::ffi::c_int as uint16,
     0x1fa7 as ::core::ffi::c_int as uint16,
@@ -5200,7 +5200,7 @@ pub unsafe fn CinematicFunction_Intro_Initial() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BA469: StartDmaCopy = StartDmaCopy {
+    static unk_8BA469: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -5215,7 +5215,7 @@ pub unsafe fn CinematicFunction_Intro_Initial() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x40 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BA489: StartDmaCopy = StartDmaCopy {
+    static unk_8BA489: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -5230,7 +5230,7 @@ pub unsafe fn CinematicFunction_Intro_Initial() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x48 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BA4A9: StartDmaCopy = StartDmaCopy {
+    static unk_8BA4A9: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -5245,7 +5245,7 @@ pub unsafe fn CinematicFunction_Intro_Initial() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x4c as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BA4C9: StartDmaCopy = StartDmaCopy {
+    static unk_8BA4C9: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -5260,7 +5260,7 @@ pub unsafe fn CinematicFunction_Intro_Initial() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x50 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BA4E9: StartDmaCopy = StartDmaCopy {
+    static unk_8BA4E9: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -5275,7 +5275,7 @@ pub unsafe fn CinematicFunction_Intro_Initial() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BA509: StartDmaCopy = StartDmaCopy {
+    static unk_8BA509: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -5290,7 +5290,7 @@ pub unsafe fn CinematicFunction_Intro_Initial() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x6e as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BA529: StartDmaCopy = StartDmaCopy {
+    static unk_8BA529: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -5482,7 +5482,7 @@ pub unsafe fn CinematicFunc_Intro_SetupTextPage2() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0x80 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x41 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BA689: StartDmaCopy = StartDmaCopy {
+    static unk_8BA689: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -5755,7 +5755,7 @@ pub unsafe fn CinematicSprInstr_SpawnMetroidEggParticles(mut k: uint16, mut j: u
     QueueSfx2_Max6(0xb as uint16);
     return j;
 }
-static mut kSetSomeStuffForSpriteObject_6_Tab: [int16; 12] = [
+static kSetSomeStuffForSpriteObject_6_Tab: [int16; 12] = [
     0x5c as ::core::ffi::c_int as int16,
     0x58 as ::core::ffi::c_int as int16,
     0x63 as ::core::ffi::c_int as int16,
@@ -5796,7 +5796,7 @@ pub unsafe fn SetSomeStuffForSpriteObject_6(mut j: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = 3584 as uint16;
 }
-static mut kSetSomeStuffForSpriteObject_7_Tab0: [int16; 12] = [
+static kSetSomeStuffForSpriteObject_7_Tab0: [int16; 12] = [
     -(1 as ::core::ffi::c_int) as int16,
     0x4000 as ::core::ffi::c_int as int16,
     0 as ::core::ffi::c_int as int16,
@@ -5810,7 +5810,7 @@ static mut kSetSomeStuffForSpriteObject_7_Tab0: [int16; 12] = [
     0 as ::core::ffi::c_int as int16,
     0x2000 as ::core::ffi::c_int as int16,
 ];
-static mut kSetSomeStuffForSpriteObject_7_Tab1: [uint16; 82] = [
+static kSetSomeStuffForSpriteObject_7_Tab1: [uint16; 82] = [
     0xfffe as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
     0xfffe as ::core::ffi::c_int as uint16,
@@ -6000,7 +6000,7 @@ pub unsafe fn SetSomeStuffForSpriteObject_8(mut j: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = 3584 as uint16;
 }
-static mut kSetSomeStuffForSpriteObject_9_Tab0: [int16; 10] = [
+static kSetSomeStuffForSpriteObject_9_Tab0: [int16; 10] = [
     -(1 as ::core::ffi::c_int) as int16,
     0 as ::core::ffi::c_int as int16,
     -(1 as ::core::ffi::c_int) as int16,
@@ -6012,7 +6012,7 @@ static mut kSetSomeStuffForSpriteObject_9_Tab0: [int16; 10] = [
     -(1 as ::core::ffi::c_int) as int16,
     -(0x8000 as ::core::ffi::c_int) as int16,
 ];
-static mut kSetSomeStuffForSpriteObject_9_Tab2: [int16; 124] = [
+static kSetSomeStuffForSpriteObject_9_Tab2: [int16; 124] = [
     -(2 as ::core::ffi::c_int) as int16,
     0 as ::core::ffi::c_int as int16,
     -(2 as ::core::ffi::c_int) as int16,
@@ -6138,7 +6138,7 @@ static mut kSetSomeStuffForSpriteObject_9_Tab2: [int16; 124] = [
     5 as ::core::ffi::c_int as int16,
     -(0x2000 as ::core::ffi::c_int) as int16,
 ];
-static mut kSetSomeStuffForSpriteObject_9_Tab1: [int16; 138] = [
+static kSetSomeStuffForSpriteObject_9_Tab1: [int16; 138] = [
     -(3 as ::core::ffi::c_int) as int16,
     0 as ::core::ffi::c_int as int16,
     -(3 as ::core::ffi::c_int) as int16,
@@ -8026,13 +8026,13 @@ pub unsafe fn CinematicFunction_Intro_Func40() {
         *fresh59 = (*fresh59 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
     };
 }
-static mut kCinematicFunction_Intro_Func42_Tab0: [uint16; 4] = [
+static kCinematicFunction_Intro_Func42_Tab0: [uint16; 4] = [
     0x70 as ::core::ffi::c_int as uint16,
     0xc0 as ::core::ffi::c_int as uint16,
     0x80 as ::core::ffi::c_int as uint16,
     0xe8 as ::core::ffi::c_int as uint16,
 ];
-static mut kCinematicFunction_Intro_Func42_Tab1: [uint16; 4] = [
+static kCinematicFunction_Intro_Func42_Tab1: [uint16; 4] = [
     0x50 as ::core::ffi::c_int as uint16,
     0x40 as ::core::ffi::c_int as uint16,
     0x38 as ::core::ffi::c_int as uint16,
@@ -8131,7 +8131,7 @@ pub unsafe fn CinematicFunction_Intro_Func44(mut k: uint16) {
         as *mut uint16)
         .offset(v1 as isize) = addr_off_8BCE53 as ::core::ffi::c_int as uint16;
 }
-static mut kCinematicFunction_Intro_Func45_Tab0: [uint16; 4] = [
+static kCinematicFunction_Intro_Func45_Tab0: [uint16; 4] = [
     0 as ::core::ffi::c_int as uint16,
     0xffff as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
@@ -8187,21 +8187,21 @@ pub unsafe fn CinematicFunction_Intro_Func45(mut k: uint16) {
             .offset(v1 as isize) = addr_off_8BCE53 as ::core::ffi::c_int as uint16;
     }
 }
-static mut kCinematicFunction_Intro_Func46_Tab0: [uint16; 5] = [
+static kCinematicFunction_Intro_Func46_Tab0: [uint16; 5] = [
     0 as ::core::ffi::c_int as uint16,
     0x10 as ::core::ffi::c_int as uint16,
     0xfff0 as ::core::ffi::c_int as uint16,
     0xfff8 as ::core::ffi::c_int as uint16,
     8 as ::core::ffi::c_int as uint16,
 ];
-static mut kCinematicFunction_Intro_Func46_Tab1: [uint16; 5] = [
+static kCinematicFunction_Intro_Func46_Tab1: [uint16; 5] = [
     0 as ::core::ffi::c_int as uint16,
     0xfff0 as ::core::ffi::c_int as uint16,
     8 as ::core::ffi::c_int as uint16,
     0xfff0 as ::core::ffi::c_int as uint16,
     8 as ::core::ffi::c_int as uint16,
 ];
-static mut kCinematicFunction_Intro_Func46_Tab2: [uint16; 5] = [
+static kCinematicFunction_Intro_Func46_Tab2: [uint16; 5] = [
     1 as ::core::ffi::c_int as uint16,
     0x10 as ::core::ffi::c_int as uint16,
     0x20 as ::core::ffi::c_int as uint16,
@@ -8235,17 +8235,17 @@ pub unsafe fn CinematicFunction_Intro_Func46(mut j: uint16) {
         as *mut uint16)
         .offset(v2 as isize) = 2560 as uint16;
 }
-static mut kCinematicFunction_Intro_Func47_Tab0: [uint16; 3] = [
+static kCinematicFunction_Intro_Func47_Tab0: [uint16; 3] = [
     0x10 as ::core::ffi::c_int as uint16,
     0xfff0 as ::core::ffi::c_int as uint16,
     0xfff0 as ::core::ffi::c_int as uint16,
 ];
-static mut kCinematicFunction_Intro_Func47_Tab1: [uint16; 3] = [
+static kCinematicFunction_Intro_Func47_Tab1: [uint16; 3] = [
     0 as ::core::ffi::c_int as uint16,
     4 as ::core::ffi::c_int as uint16,
     0xfff8 as ::core::ffi::c_int as uint16,
 ];
-static mut kCinematicFunction_Intro_Func47_Tab2: [uint16; 3] = [
+static kCinematicFunction_Intro_Func47_Tab2: [uint16; 3] = [
     1 as ::core::ffi::c_int as uint16,
     8 as ::core::ffi::c_int as uint16,
     0x10 as ::core::ffi::c_int as uint16,
@@ -8688,7 +8688,7 @@ pub unsafe fn CinematicFunction_Intro_Func54() {
     );
     WriteRegWord(VMADDL as ::core::ffi::c_int as uint16, 0 as uint16);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BBD04: StartDmaCopy = StartDmaCopy {
+    static unk_8BBD04: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 0 as uint8,
         bbad: 0x19 as uint8,
@@ -8712,7 +8712,7 @@ pub unsafe fn CinematicFunction_Intro_Func54() {
     }
     WriteRegWord(VMADDL as ::core::ffi::c_int as uint16, 0 as uint16);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8);
-    static mut unk_8BBD3C: StartDmaCopy = StartDmaCopy {
+    static unk_8BBD3C: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 0 as uint8,
         bbad: 0x18 as uint8,
@@ -8726,7 +8726,7 @@ pub unsafe fn CinematicFunction_Intro_Func54() {
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
     WriteRegWord(VMADDL as ::core::ffi::c_int as uint16, 0x6000 as uint16);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BBD5C: StartDmaCopy = StartDmaCopy {
+    static unk_8BBD5C: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -9274,7 +9274,7 @@ pub unsafe fn CinematicFunctionBlackoutFromCeres() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BC19C: StartDmaCopy = StartDmaCopy {
+    static unk_8BC19C: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 0 as uint8,
         bbad: 0x19 as uint8,
@@ -9300,7 +9300,7 @@ pub unsafe fn CinematicFunctionBlackoutFromCeres() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8);
-    static mut unk_8BC1D4: StartDmaCopy = StartDmaCopy {
+    static unk_8BC1D4: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 0 as uint8,
         bbad: 0x18 as uint8,
@@ -9315,7 +9315,7 @@ pub unsafe fn CinematicFunctionBlackoutFromCeres() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BC1F4: StartDmaCopy = StartDmaCopy {
+    static unk_8BC1F4: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -9330,7 +9330,7 @@ pub unsafe fn CinematicFunctionBlackoutFromCeres() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BC214: StartDmaCopy = StartDmaCopy {
+    static unk_8BC214: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -9539,21 +9539,21 @@ pub unsafe fn CinematicSprInstr_SpawnCeresExplosions1(mut k: uint16, mut j: uint
     );
     return j;
 }
-static mut kCinematicFunction_Intro_Func78_Tab0: [uint16; 5] = [
+static kCinematicFunction_Intro_Func78_Tab0: [uint16; 5] = [
     1 as ::core::ffi::c_int as uint16,
     16 as ::core::ffi::c_int as uint16,
     32 as ::core::ffi::c_int as uint16,
     48 as ::core::ffi::c_int as uint16,
     64 as ::core::ffi::c_int as uint16,
 ];
-static mut kCinematicFunction_Intro_Func78_Tab1: [int16; 5] = [
+static kCinematicFunction_Intro_Func78_Tab1: [int16; 5] = [
     16 as ::core::ffi::c_int as int16,
     -(16 as ::core::ffi::c_int) as int16,
     16 as ::core::ffi::c_int as int16,
     -(16 as ::core::ffi::c_int) as int16,
     0 as ::core::ffi::c_int as int16,
 ];
-static mut kCinematicFunction_Intro_Func78_Tab2: [int16; 5] = [
+static kCinematicFunction_Intro_Func78_Tab2: [int16; 5] = [
     -(16 as ::core::ffi::c_int) as int16,
     16 as ::core::ffi::c_int as int16,
     16 as ::core::ffi::c_int as int16,
@@ -9630,7 +9630,7 @@ pub unsafe fn CinematicSprPreInstr_C489(mut k: uint16) {
         }
     };
 }
-static mut g_word_8BC4EB: [int16; 16] = [
+static g_word_8BC4EB: [int16; 16] = [
     14 as ::core::ffi::c_int as int16,
     -(8 as ::core::ffi::c_int) as int16,
     8 as ::core::ffi::c_int as int16,
@@ -9648,19 +9648,19 @@ static mut g_word_8BC4EB: [int16; 16] = [
     -(8 as ::core::ffi::c_int) as int16,
     -(16 as ::core::ffi::c_int) as int16,
 ];
-static mut kCinematicFunction_Intro_Func81_Tab0: [int16; 4] = [
+static kCinematicFunction_Intro_Func81_Tab0: [int16; 4] = [
     1 as ::core::ffi::c_int as int16,
     4 as ::core::ffi::c_int as int16,
     8 as ::core::ffi::c_int as int16,
     16 as ::core::ffi::c_int as int16,
 ];
-static mut kCinematicFunction_Intro_Func81_Tab1: [int16; 4] = [
+static kCinematicFunction_Intro_Func81_Tab1: [int16; 4] = [
     8 as ::core::ffi::c_int as int16,
     12 as ::core::ffi::c_int as int16,
     -(8 as ::core::ffi::c_int) as int16,
     -(12 as ::core::ffi::c_int) as int16,
 ];
-static mut kCinematicFunction_Intro_Func81_Tab2: [int16; 4] = [
+static kCinematicFunction_Intro_Func81_Tab2: [int16; 4] = [
     -(4 as ::core::ffi::c_int) as int16,
     8 as ::core::ffi::c_int as int16,
     -(10 as ::core::ffi::c_int) as int16,
@@ -9919,7 +9919,7 @@ pub unsafe fn CinematicFunction_Intro_Func86() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0 as uint8);
-    static mut unk_8BC6E4: StartDmaCopy = StartDmaCopy {
+    static unk_8BC6E4: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 0 as uint8,
         bbad: 0x18 as uint8,
@@ -9934,7 +9934,7 @@ pub unsafe fn CinematicFunction_Intro_Func86() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x5c as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BC704: StartDmaCopy = StartDmaCopy {
+    static unk_8BC704: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -9949,7 +9949,7 @@ pub unsafe fn CinematicFunction_Intro_Func86() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BC724: StartDmaCopy = StartDmaCopy {
+    static unk_8BC724: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -10564,7 +10564,7 @@ pub unsafe fn CinematicFunctionEscapeFromCebes() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BD4FC: StartDmaCopy = StartDmaCopy {
+    static unk_8BD4FC: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -10579,7 +10579,7 @@ pub unsafe fn CinematicFunctionEscapeFromCebes() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x20 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BD51C: StartDmaCopy = StartDmaCopy {
+    static unk_8BD51C: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -10594,7 +10594,7 @@ pub unsafe fn CinematicFunctionEscapeFromCebes() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BD53C: StartDmaCopy = StartDmaCopy {
+    static unk_8BD53C: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -10609,7 +10609,7 @@ pub unsafe fn CinematicFunctionEscapeFromCebes() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BD55C: StartDmaCopy = StartDmaCopy {
+    static unk_8BD55C: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 0 as uint8,
         bbad: 0x19 as uint8,
@@ -10791,7 +10791,7 @@ pub unsafe fn CinematicFunction_Intro_Func112() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BD746: StartDmaCopy = StartDmaCopy {
+    static unk_8BD746: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -10806,7 +10806,7 @@ pub unsafe fn CinematicFunction_Intro_Func112() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x20 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BD766: StartDmaCopy = StartDmaCopy {
+    static unk_8BD766: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -10825,7 +10825,7 @@ pub unsafe fn CinematicFunction_Intro_Func112() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BD79B: StartDmaCopy = StartDmaCopy {
+    static unk_8BD79B: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 0 as uint8,
         bbad: 0x19 as uint8,
@@ -10907,7 +10907,7 @@ pub unsafe fn CinematicFunction_Intro_Func115() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BD84C: StartDmaCopy = StartDmaCopy {
+    static unk_8BD84C: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -10922,7 +10922,7 @@ pub unsafe fn CinematicFunction_Intro_Func115() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x20 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BD86C: StartDmaCopy = StartDmaCopy {
+    static unk_8BD86C: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -10941,7 +10941,7 @@ pub unsafe fn CinematicFunction_Intro_Func115() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BD8A1: StartDmaCopy = StartDmaCopy {
+    static unk_8BD8A1: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 0 as uint8,
         bbad: 0x19 as uint8,
@@ -10956,7 +10956,7 @@ pub unsafe fn CinematicFunction_Intro_Func115() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x40 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BD8C1: StartDmaCopy = StartDmaCopy {
+    static unk_8BD8C1: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -10971,7 +10971,7 @@ pub unsafe fn CinematicFunction_Intro_Func115() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x70 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BD8E1: StartDmaCopy = StartDmaCopy {
+    static unk_8BD8E1: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -10986,7 +10986,7 @@ pub unsafe fn CinematicFunction_Intro_Func115() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x74 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BD901: StartDmaCopy = StartDmaCopy {
+    static unk_8BD901: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -11001,7 +11001,7 @@ pub unsafe fn CinematicFunction_Intro_Func115() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x78 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BD921: StartDmaCopy = StartDmaCopy {
+    static unk_8BD921: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -11016,7 +11016,7 @@ pub unsafe fn CinematicFunction_Intro_Func115() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x7c as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BD941: StartDmaCopy = StartDmaCopy {
+    static unk_8BD941: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -11031,7 +11031,7 @@ pub unsafe fn CinematicFunction_Intro_Func115() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x50 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BD961: StartDmaCopy = StartDmaCopy {
+    static unk_8BD961: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -11226,7 +11226,7 @@ pub unsafe fn CinematicFunction_Intro_Func117() {
             as *mut uint16) = 0 as uint16;
     }
 }
-static mut kCinematicFunction_Intro_Func118_Tab0: [uint16; 16] = [
+static kCinematicFunction_Intro_Func118_Tab0: [uint16; 16] = [
     0 as ::core::ffi::c_int as uint16,
     0x800 as ::core::ffi::c_int as uint16,
     0x1000 as ::core::ffi::c_int as uint16,
@@ -11244,7 +11244,7 @@ static mut kCinematicFunction_Intro_Func118_Tab0: [uint16; 16] = [
     0x7000 as ::core::ffi::c_int as uint16,
     0x7800 as ::core::ffi::c_int as uint16,
 ];
-static mut kCinematicFunction_Intro_Func118_Tab1: [uint16; 16] = [
+static kCinematicFunction_Intro_Func118_Tab1: [uint16; 16] = [
     0 as ::core::ffi::c_int as uint16,
     0x800 as ::core::ffi::c_int as uint16,
     0x1000 as ::core::ffi::c_int as uint16,
@@ -11506,7 +11506,7 @@ pub unsafe fn CinematicFunction_Intro_Func122() {
             as *mut uint16) = 8 as uint16;
     }
 }
-static mut kCinematicFunction_Intro_Func121_Tab0: [uint16; 32] = [
+static kCinematicFunction_Intro_Func121_Tab0: [uint16; 32] = [
     0 as ::core::ffi::c_int as uint16,
     0x8000 as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
@@ -11591,7 +11591,7 @@ pub unsafe fn CinematicFunction_Intro_Func121() {
             (0x8bdd42 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     }
 }
-static mut kCinematicFunction_Intro_Func123_Tab0: [uint16; 16] = [
+static kCinematicFunction_Intro_Func123_Tab0: [uint16; 16] = [
     1 as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
     1 as ::core::ffi::c_int as uint16,
@@ -11658,7 +11658,7 @@ pub unsafe fn CinematicFunction_Intro_Func123() {
         }
     }
 }
-static mut g_word_8BDE43: [uint16; 16] = [
+static g_word_8BDE43: [uint16; 16] = [
     0 as ::core::ffi::c_int as uint16,
     0x6f7b as ::core::ffi::c_int as uint16,
     0x4a52 as ::core::ffi::c_int as uint16,
@@ -11813,7 +11813,7 @@ pub unsafe fn CinematicFunction_Intro_Func126() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x20 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BDF39: StartDmaCopy = StartDmaCopy {
+    static unk_8BDF39: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -11828,7 +11828,7 @@ pub unsafe fn CinematicFunction_Intro_Func126() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x24 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BDF59: StartDmaCopy = StartDmaCopy {
+    static unk_8BDF59: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -11843,7 +11843,7 @@ pub unsafe fn CinematicFunction_Intro_Func126() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x40 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BDF79: StartDmaCopy = StartDmaCopy {
+    static unk_8BDF79: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -11858,7 +11858,7 @@ pub unsafe fn CinematicFunction_Intro_Func126() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x60 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BDF99: StartDmaCopy = StartDmaCopy {
+    static unk_8BDF99: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -11873,7 +11873,7 @@ pub unsafe fn CinematicFunction_Intro_Func126() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x50 as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BDFB9: StartDmaCopy = StartDmaCopy {
+    static unk_8BDFB9: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -11888,7 +11888,7 @@ pub unsafe fn CinematicFunction_Intro_Func126() {
     WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
     WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0x4c as uint8);
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-    static mut unk_8BDFD9: StartDmaCopy = StartDmaCopy {
+    static unk_8BDFD9: StartDmaCopy = StartDmaCopy {
         chan: 1 as uint8,
         dmap: 1 as uint8,
         bbad: 0x18 as uint8,
@@ -11917,7 +11917,7 @@ pub unsafe fn CinematicFunction_Intro_Func126() {
         WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
         WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
         WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-        static mut unk_8BE027: StartDmaCopy = StartDmaCopy {
+        static unk_8BE027: StartDmaCopy = StartDmaCopy {
             chan: 1 as uint8,
             dmap: 1 as uint8,
             bbad: 0x18 as uint8,
@@ -11933,7 +11933,7 @@ pub unsafe fn CinematicFunction_Intro_Func126() {
         WriteReg(VMADDL as ::core::ffi::c_int as uint16, 0 as uint8);
         WriteReg(VMADDH as ::core::ffi::c_int as uint16, 0 as uint8);
         WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-        static mut unk_8BE04B: StartDmaCopy = StartDmaCopy {
+        static unk_8BE04B: StartDmaCopy = StartDmaCopy {
             chan: 1 as uint8,
             dmap: 1 as uint8,
             bbad: 0x18 as uint8,

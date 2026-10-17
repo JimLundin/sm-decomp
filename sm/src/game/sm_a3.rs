@@ -1274,13 +1274,13 @@ unsafe fn Get_WreckedShipOrangeZoomer(
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_WreckedShipOrangeZoomer;
 }
-static mut g_word_A3A76D: [int16; 4] = [
+static g_word_A3A76D: [int16; 4] = [
     2 as ::core::ffi::c_int as int16,
     0 as ::core::ffi::c_int as int16,
     -(2 as ::core::ffi::c_int) as int16,
     0 as ::core::ffi::c_int as int16,
 ];
-static mut g_word_A3A775: [int16; 4] = [
+static g_word_A3A775: [int16; 4] = [
     0 as ::core::ffi::c_int as int16,
     -(2 as ::core::ffi::c_int) as int16,
     0 as ::core::ffi::c_int as int16,
@@ -2147,7 +2147,7 @@ pub unsafe fn Elevator_Init() {
         Elevator_Func_4();
     }
 }
-static mut off_A39540: [Option<Func_V>; 4] = unsafe {
+static off_A39540: [Option<Func_V>; 4] = unsafe {
     [
         Some(Elevator_Func_1 as unsafe fn() -> ()),
         Some(Elevator_Func_2 as unsafe fn() -> ()),
@@ -2456,13 +2456,13 @@ pub unsafe fn PlatformThatFalls_Init(mut k: uint16, mut j: uint16) {
             .wrapping_sub(1 as usize) as isize,
     ) as uint16;
 }
-static mut off_A39C97: [Option<Func_V>; 2] = unsafe {
+static off_A39C97: [Option<Func_V>; 2] = unsafe {
     [
         Some(PlatformThatFallsWithSamus_Func_1 as unsafe fn() -> ()),
         Some(PlatformThatFallsWithSamus_Func_2 as unsafe fn() -> ()),
     ]
 };
-static mut off_A39C9B: [Option<Func_V>; 2] = unsafe {
+static off_A39C9B: [Option<Func_V>; 2] = unsafe {
     [
         Some(PlatformThatFallsWithSamus_Func_3 as unsafe fn() -> ()),
         Some(PlatformThatFallsWithSamus_Func_4 as unsafe fn() -> ()),
@@ -3481,7 +3481,7 @@ pub unsafe fn Mochtroid_Init() {
     );
     (*E).mochtr_var_F = 0 as uint16;
 }
-static mut off_A3A7A4: [Option<Func_V>; 3] = unsafe {
+static off_A3A7A4: [Option<Func_V>; 3] = unsafe {
     [
         Some(Mochtroid_Func_1 as unsafe fn() -> ()),
         Some(Mochtroid_Func_3 as unsafe fn() -> ()),
@@ -7074,7 +7074,7 @@ pub unsafe fn Metroid_Hurt() {
         *fresh11 = (*fresh11 as ::core::ffi::c_int & 0xf1ff as ::core::ffi::c_int) as uint16;
     };
 }
-static mut off_A3EC09: [Option<Func_Y_V>; 4] = unsafe {
+static off_A3EC09: [Option<Func_Y_V>; 4] = unsafe {
     [
         Some(Metroid_Func_1 as unsafe fn(uint16) -> ()),
         Some(Metroid_Func_2 as unsafe fn(uint16) -> ()),

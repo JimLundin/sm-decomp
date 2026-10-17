@@ -309,7 +309,7 @@ pub const fnDrawRunButtonAndSetupPpuForLargeMessageBox: uint32 = 8750028 as uint
 pub const fnSetupPpuForSmallMessageBox: uint32 = 8750134 as uint32;
 pub const fnSetupPpuForLargeMessageBox: uint32 = 8750145 as uint32;
 pub static mut message_box_das0l_value: uint16 = 0;
-static mut kMsgBoxSpecialButtonTilemapOffs: [uint16; 27] = [
+static kMsgBoxSpecialButtonTilemapOffs: [uint16; 27] = [
     0 as ::core::ffi::c_int as uint16,
     0x12a as ::core::ffi::c_int as uint16,
     0x12a as ::core::ffi::c_int as uint16,
@@ -338,7 +338,7 @@ static mut kMsgBoxSpecialButtonTilemapOffs: [uint16; 27] = [
     0 as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
 ];
-static mut kTileNumbersForButtonLetters: [uint16; 8] = [
+static kTileNumbersForButtonLetters: [uint16; 8] = [
     0x28e0 as ::core::ffi::c_int as uint16,
     0x3ce1 as ::core::ffi::c_int as uint16,
     0x2cf7 as ::core::ffi::c_int as uint16,
@@ -439,7 +439,7 @@ unsafe fn ClearMessageBoxBg3Tilemap() {
     WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8);
 }
-static mut kLargeMsgBoxTopBottomBorderTilemap: [uint16; 32] = [
+static kLargeMsgBoxTopBottomBorderTilemap: [uint16; 32] = [
     0xe as ::core::ffi::c_int as uint16,
     0xe as ::core::ffi::c_int as uint16,
     0xe as ::core::ffi::c_int as uint16,
@@ -473,7 +473,7 @@ static mut kLargeMsgBoxTopBottomBorderTilemap: [uint16; 32] = [
     0xe as ::core::ffi::c_int as uint16,
     0xe as ::core::ffi::c_int as uint16,
 ];
-static mut kSmallMsgBoxTopBottomBorderTilemap: [uint16; 32] = [
+static kSmallMsgBoxTopBottomBorderTilemap: [uint16; 32] = [
     0xe as ::core::ffi::c_int as uint16,
     0xe as ::core::ffi::c_int as uint16,
     0xe as ::core::ffi::c_int as uint16,
@@ -872,7 +872,7 @@ unsafe fn InitializeMessageBox() {
             | 0x850000 as ::core::ffi::c_int) as uint32,
     );
 }
-static mut kSaveConfirmationSelectionTilemap: [uint16; 96] = [
+static kSaveConfirmationSelectionTilemap: [uint16; 96] = [
     0xe as ::core::ffi::c_int as uint16,
     0xe as ::core::ffi::c_int as uint16,
     0xe as ::core::ffi::c_int as uint16,

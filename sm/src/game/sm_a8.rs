@@ -1429,29 +1429,29 @@ unsafe fn Get_YappingMaw(mut o: ::core::ffi::c_int) -> *mut Enemy_YappingMaw {
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_YappingMaw;
 }
-static mut g_word_A890CA: [int16; 4] = [
+static g_word_A890CA: [int16; 4] = [
     -(8 as ::core::ffi::c_int) as int16,
     8 as ::core::ffi::c_int as int16,
     0 as ::core::ffi::c_int as int16,
     0 as ::core::ffi::c_int as int16,
 ];
-static mut g_word_A890D2: [int16; 4] = [
+static g_word_A890D2: [int16; 4] = [
     0 as ::core::ffi::c_int as int16,
     0 as ::core::ffi::c_int as int16,
     -(8 as ::core::ffi::c_int) as int16,
     8 as ::core::ffi::c_int as int16,
 ];
-static mut g_word_A89050: uint16 = 0x80 as uint16;
-static mut g_word_A89052: uint16 = 0xb0 as uint16;
-static mut g_word_A89054: uint16 = 0x80 as uint16;
-static mut g_word_A89056: uint16 = 0x80 as uint16;
-static mut g_word_A89A9C: uint16 = 0x10 as uint16;
-static mut g_word_A89A9E: uint16 = 0x40 as uint16;
-static mut g_word_A89AA0: uint16 = 0x1800 as uint16;
-static mut g_word_A89AA2: uint16 = 1 as uint16;
-static mut g_word_A89AA4: uint16 = 0x78 as uint16;
-static mut g_word_A89AA6: uint16 = 0x78 as uint16;
-static mut g_word_A89AA8: [uint16; 18] = [
+static g_word_A89050: uint16 = 0x80 as uint16;
+static g_word_A89052: uint16 = 0xb0 as uint16;
+static g_word_A89054: uint16 = 0x80 as uint16;
+static g_word_A89056: uint16 = 0x80 as uint16;
+static g_word_A89A9C: uint16 = 0x10 as uint16;
+static g_word_A89A9E: uint16 = 0x40 as uint16;
+static g_word_A89AA0: uint16 = 0x1800 as uint16;
+static g_word_A89AA2: uint16 = 1 as uint16;
+static g_word_A89AA4: uint16 = 0x78 as uint16;
+static g_word_A89AA6: uint16 = 0x78 as uint16;
+static g_word_A89AA8: [uint16; 18] = [
     0xffc0 as ::core::ffi::c_int as uint16,
     0xffc0 as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
@@ -1471,7 +1471,7 @@ static mut g_word_A89AA8: [uint16; 18] = [
     0x40 as ::core::ffi::c_int as uint16,
     0x40 as ::core::ffi::c_int as uint16,
 ];
-static mut g_word_A89ACC: [uint16; 17] = [
+static g_word_A89ACC: [uint16; 17] = [
     1 as ::core::ffi::c_int as uint16,
     8 as ::core::ffi::c_int as uint16,
     1 as ::core::ffi::c_int as uint16,
@@ -1490,7 +1490,7 @@ static mut g_word_A89ACC: [uint16; 17] = [
     5 as ::core::ffi::c_int as uint16,
     0xffff as ::core::ffi::c_int as uint16,
 ];
-static mut kWreckedShipGhost_Palette: [uint16; 16] = [
+static kWreckedShipGhost_Palette: [uint16; 16] = [
     0x3800 as ::core::ffi::c_int as uint16,
     0x57ff as ::core::ffi::c_int as uint16,
     0x42f7 as ::core::ffi::c_int as uint16,
@@ -1508,20 +1508,20 @@ static mut kWreckedShipGhost_Palette: [uint16; 16] = [
     0xea as ::core::ffi::c_int as uint16,
     0x45 as ::core::ffi::c_int as uint16,
 ];
-static mut g_word_A89D32: uint16 = 1 as uint16;
-static mut g_word_A89D34: uint16 = 1 as uint16;
-static mut g_word_A8C277: [int16; 3] = [
+static g_word_A89D32: uint16 = 1 as uint16;
+static g_word_A89D34: uint16 = 1 as uint16;
+static g_word_A8C277: [int16; 3] = [
     -(12 as ::core::ffi::c_int) as int16,
     -(16 as ::core::ffi::c_int) as int16,
     -(20 as ::core::ffi::c_int) as int16,
 ];
-static mut g_word_A8C27D: [int16; 3] = [
+static g_word_A8C27D: [int16; 3] = [
     -(20 as ::core::ffi::c_int) as int16,
     -(16 as ::core::ffi::c_int) as int16,
     -(12 as ::core::ffi::c_int) as int16,
 ];
-static mut g_word_A8C19F: uint16 = 0x40 as uint16;
-static mut g_word_A8C1A1: [uint16; 12] = [
+static g_word_A8C19F: uint16 = 0x40 as uint16;
+static g_word_A8C1A1: [uint16; 12] = [
     0 as ::core::ffi::c_int as uint16,
     1 as ::core::ffi::c_int as uint16,
     2 as ::core::ffi::c_int as uint16,
@@ -1535,15 +1535,15 @@ static mut g_word_A8C1A1: [uint16; 12] = [
     0xfffe as ::core::ffi::c_int as uint16,
     0xffff as ::core::ffi::c_int as uint16,
 ];
-static mut g_word_A8C1B9: uint16 = 0 as uint16;
-static mut g_word_A8C1BB: uint16 = 0 as uint16;
-static mut g_word_A8C1BD: uint16 = 0 as uint16;
-static mut g_word_A8C1BF: uint16 = 0 as uint16;
-static mut g_word_A8C1C1: uint16 = 1 as uint16;
-static mut g_word_A8C1C3: uint16 = 0 as uint16;
-static mut g_word_A8C1C5: uint16 = 0xffff as uint16;
-static mut g_word_A8C1C7: uint16 = 0x8000 as uint16;
-static mut g_word_A8CCC1: [int16; 31] = [
+static g_word_A8C1B9: uint16 = 0 as uint16;
+static g_word_A8C1BB: uint16 = 0 as uint16;
+static g_word_A8C1BD: uint16 = 0 as uint16;
+static g_word_A8C1BF: uint16 = 0 as uint16;
+static g_word_A8C1C1: uint16 = 1 as uint16;
+static g_word_A8C1C3: uint16 = 0 as uint16;
+static g_word_A8C1C5: uint16 = 0xffff as uint16;
+static g_word_A8C1C7: uint16 = 0x8000 as uint16;
+static g_word_A8CCC1: [int16; 31] = [
     0x1f as ::core::ffi::c_int as int16,
     0x18 as ::core::ffi::c_int as int16,
     0xf as ::core::ffi::c_int as int16,
@@ -1576,7 +1576,7 @@ static mut g_word_A8CCC1: [int16; 31] = [
     0x10 as ::core::ffi::c_int as int16,
     -(1 as ::core::ffi::c_int) as int16,
 ];
-static mut g_word_A8D871: [int16; 10] = [
+static g_word_A8D871: [int16; 10] = [
     0xc0 as ::core::ffi::c_int as int16,
     0xe0 as ::core::ffi::c_int as int16,
     0 as ::core::ffi::c_int as int16,
@@ -1588,7 +1588,7 @@ static mut g_word_A8D871: [int16; 10] = [
     0xa0 as ::core::ffi::c_int as int16,
     0xc0 as ::core::ffi::c_int as int16,
 ];
-static mut g_word_A8D885: [int16; 8] = [
+static g_word_A8D885: [int16; 8] = [
     0x3ff as ::core::ffi::c_int as int16,
     0x4ff as ::core::ffi::c_int as int16,
     0x5ff as ::core::ffi::c_int as int16,
@@ -1598,7 +1598,7 @@ static mut g_word_A8D885: [int16; 8] = [
     0x9ff as ::core::ffi::c_int as int16,
     0xaff as ::core::ffi::c_int as int16,
 ];
-static mut g_word_A8D895: [int16; 26] = [
+static g_word_A8D895: [int16; 26] = [
     3 as ::core::ffi::c_int as int16,
     1 as ::core::ffi::c_int as int16,
     4 as ::core::ffi::c_int as int16,
@@ -1626,12 +1626,12 @@ static mut g_word_A8D895: [int16; 26] = [
     0xf as ::core::ffi::c_int as int16,
     6 as ::core::ffi::c_int as int16,
 ];
-static mut g_word_A8DCC7: uint16 = 0x50 as uint16;
-static mut g_word_A8DCCB: uint16 = 0x70 as uint16;
-static mut g_word_A8F180: uint16 = 0x60 as uint16;
-static mut g_word_A8F182: uint16 = 0xe000 as uint16;
-static mut g_word_A8F184: uint16 = 0 as uint16;
-static mut g_byte_A8F186: uint8 = 0x30 as uint8;
+static g_word_A8DCC7: uint16 = 0x50 as uint16;
+static g_word_A8DCCB: uint16 = 0x70 as uint16;
+static g_word_A8F180: uint16 = 0x60 as uint16;
+static g_word_A8F182: uint16 = 0xe000 as uint16;
+static g_word_A8F184: uint16 = 0 as uint16;
+static g_byte_A8F186: uint8 = 0x30 as uint8;
 pub unsafe fn Enemy_GrappleReact_NoInteract_A8() {
     SwitchEnemyAiToMainAi();
 }
@@ -4159,7 +4159,7 @@ pub unsafe fn NorfairLavaMan_Instr_3(mut k: uint16, mut jp: *const uint16) -> *c
     .nlmn_var_04 = 256 as uint16;
     return jp;
 }
-static mut g_off_A8AF4F: [Option<Func_V>; 3] = unsafe {
+static g_off_A8AF4F: [Option<Func_V>; 3] = unsafe {
     [
         Some(NorfairLavaMan_Func_1 as unsafe fn() -> ()),
         Some(NorfairLavaMan_Func_2 as unsafe fn() -> ()),

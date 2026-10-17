@@ -613,10 +613,10 @@ unsafe fn Get_Torizo(mut o: ::core::ffi::c_int) -> *mut Enemy_Torizo {
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_Torizo;
 }
-static mut g_word_AAB096: uint16 = 6 as uint16;
-static mut g_word_AAB098: uint16 = 5 as uint16;
-static mut g_word_AAB09A: uint16 = 3 as uint16;
-static mut g_word_AAC3EE: [int16; 16] = [
+static g_word_AAB096: uint16 = 6 as uint16;
+static g_word_AAB098: uint16 = 5 as uint16;
+static g_word_AAB09A: uint16 = 3 as uint16;
+static g_word_AAC3EE: [int16; 16] = [
     -(9 as ::core::ffi::c_int) as int16,
     -(6 as ::core::ffi::c_int) as int16,
     -(7 as ::core::ffi::c_int) as int16,
@@ -634,7 +634,7 @@ static mut g_word_AAC3EE: [int16; 16] = [
     0 as ::core::ffi::c_int as int16,
     0 as ::core::ffi::c_int as int16,
 ];
-static mut g_word_AAC40E: [int16; 8] = [
+static g_word_AAC40E: [int16; 8] = [
     0 as ::core::ffi::c_int as int16,
     -(6 as ::core::ffi::c_int) as int16,
     -(6 as ::core::ffi::c_int) as int16,
@@ -644,7 +644,7 @@ static mut g_word_AAC40E: [int16; 8] = [
     0 as ::core::ffi::c_int as int16,
     0 as ::core::ffi::c_int as int16,
 ];
-static mut g_word_AAC440: [int16; 16] = [
+static g_word_AAC440: [int16; 16] = [
     -(9 as ::core::ffi::c_int) as int16,
     -(6 as ::core::ffi::c_int) as int16,
     -(7 as ::core::ffi::c_int) as int16,
@@ -662,7 +662,7 @@ static mut g_word_AAC440: [int16; 16] = [
     0 as ::core::ffi::c_int as int16,
     0 as ::core::ffi::c_int as int16,
 ];
-static mut g_word_AAC460: [int16; 8] = [
+static g_word_AAC460: [int16; 8] = [
     0 as ::core::ffi::c_int as int16,
     -(6 as ::core::ffi::c_int) as int16,
     -(6 as ::core::ffi::c_int) as int16,
@@ -672,7 +672,7 @@ static mut g_word_AAC460: [int16; 8] = [
     0 as ::core::ffi::c_int as int16,
     0 as ::core::ffi::c_int as int16,
 ];
-static mut g_word_AAC4BD: [int16; 20] = [
+static g_word_AAC4BD: [int16; 20] = [
     -(5 as ::core::ffi::c_int) as int16,
     0 as ::core::ffi::c_int as int16,
     -(5 as ::core::ffi::c_int) as int16,
@@ -694,7 +694,7 @@ static mut g_word_AAC4BD: [int16; 20] = [
     17 as ::core::ffi::c_int as int16,
     18 as ::core::ffi::c_int as int16,
 ];
-static mut g_word_AAC532: [int16; 20] = [
+static g_word_AAC532: [int16; 20] = [
     -(5 as ::core::ffi::c_int) as int16,
     0 as ::core::ffi::c_int as int16,
     -(5 as ::core::ffi::c_int) as int16,
@@ -716,27 +716,27 @@ static mut g_word_AAC532: [int16; 20] = [
     0x11 as ::core::ffi::c_int as int16,
     0x12 as ::core::ffi::c_int as int16,
 ];
-static mut g_word_AAC95F: [int16; 2] = [
+static g_word_AAC95F: [int16; 2] = [
     0xdb as ::core::ffi::c_int as int16,
     0x1a8 as ::core::ffi::c_int as int16,
 ];
-static mut g_word_AAC963: [int16; 2] = [
+static g_word_AAC963: [int16; 2] = [
     0xb3 as ::core::ffi::c_int as int16,
     0x90 as ::core::ffi::c_int as int16,
 ];
-static mut g_word_AAC96B: [int16; 2] = [
+static g_word_AAC96B: [int16; 2] = [
     0x2800 as ::core::ffi::c_int as int16,
     0x2800 as ::core::ffi::c_int as int16,
 ];
-static mut g_word_AAC96F: [int16; 2] = [
+static g_word_AAC96F: [int16; 2] = [
     0x12 as ::core::ffi::c_int as int16,
     0x12 as ::core::ffi::c_int as int16,
 ];
-static mut g_word_AAC973: [int16; 2] = [
+static g_word_AAC973: [int16; 2] = [
     0x30 as ::core::ffi::c_int as int16,
     0x29 as ::core::ffi::c_int as int16,
 ];
-static mut kTorizo_Palette: [uint16; 16] = [
+static kTorizo_Palette: [uint16; 16] = [
     0x3800 as ::core::ffi::c_int as uint16,
     0x3ff as ::core::ffi::c_int as uint16,
     0x33b as ::core::ffi::c_int as uint16,
@@ -754,7 +754,7 @@ static mut kTorizo_Palette: [uint16; 16] = [
     0x1580 as ::core::ffi::c_int as uint16,
     0x1580 as ::core::ffi::c_int as uint16,
 ];
-static mut kTorizo_Palettes_1: [uint16; 16] = [
+static kTorizo_Palettes_1: [uint16; 16] = [
     0x3800 as ::core::ffi::c_int as uint16,
     0x2df as ::core::ffi::c_int as uint16,
     0x1d7 as ::core::ffi::c_int as uint16,
@@ -772,7 +772,7 @@ static mut kTorizo_Palettes_1: [uint16; 16] = [
     0x145 as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
 ];
-static mut kTorizo_Palettes_2: [uint16; 16] = [
+static kTorizo_Palettes_2: [uint16; 16] = [
     0x3800 as ::core::ffi::c_int as uint16,
     0x679f as ::core::ffi::c_int as uint16,
     0x5299 as ::core::ffi::c_int as uint16,
@@ -790,7 +790,7 @@ static mut kTorizo_Palettes_2: [uint16; 16] = [
     0x5d35 as ::core::ffi::c_int as uint16,
     0xc63 as ::core::ffi::c_int as uint16,
 ];
-static mut kTorizo_Palettes_3: [uint16; 16] = [
+static kTorizo_Palettes_3: [uint16; 16] = [
     0x3800 as ::core::ffi::c_int as uint16,
     0x4aba as ::core::ffi::c_int as uint16,
     0x35b2 as ::core::ffi::c_int as uint16,
@@ -808,7 +808,7 @@ static mut kTorizo_Palettes_3: [uint16; 16] = [
     0x4113 as ::core::ffi::c_int as uint16,
     0xc63 as ::core::ffi::c_int as uint16,
 ];
-static mut kTorizo_Palettes_4: [uint16; 16] = [
+static kTorizo_Palettes_4: [uint16; 16] = [
     0x3800 as ::core::ffi::c_int as uint16,
     0x56ba as ::core::ffi::c_int as uint16,
     0x41b2 as ::core::ffi::c_int as uint16,
@@ -826,7 +826,7 @@ static mut kTorizo_Palettes_4: [uint16; 16] = [
     0xf5 as ::core::ffi::c_int as uint16,
     0xc63 as ::core::ffi::c_int as uint16,
 ];
-static mut kTorizo_Palettes_5: [uint16; 16] = [
+static kTorizo_Palettes_5: [uint16; 16] = [
     0x3800 as ::core::ffi::c_int as uint16,
     0x4215 as ::core::ffi::c_int as uint16,
     0x2d0d as ::core::ffi::c_int as uint16,
@@ -844,7 +844,7 @@ static mut kTorizo_Palettes_5: [uint16; 16] = [
     0x4113 as ::core::ffi::c_int as uint16,
     0xc63 as ::core::ffi::c_int as uint16,
 ];
-static mut kTorizo_Palettes_6: [uint16; 16] = [
+static kTorizo_Palettes_6: [uint16; 16] = [
     0x3800 as ::core::ffi::c_int as uint16,
     0x6ab5 as ::core::ffi::c_int as uint16,
     0x49b0 as ::core::ffi::c_int as uint16,
@@ -862,7 +862,7 @@ static mut kTorizo_Palettes_6: [uint16; 16] = [
     0x1883 as ::core::ffi::c_int as uint16,
     0xc66 as ::core::ffi::c_int as uint16,
 ];
-static mut kTorizo_Palettes_7: [uint16; 16] = [
+static kTorizo_Palettes_7: [uint16; 16] = [
     0x3800 as ::core::ffi::c_int as uint16,
     0x5610 as ::core::ffi::c_int as uint16,
     0x350b as ::core::ffi::c_int as uint16,
@@ -880,7 +880,7 @@ static mut kTorizo_Palettes_7: [uint16; 16] = [
     0x4d10 as ::core::ffi::c_int as uint16,
     0xc63 as ::core::ffi::c_int as uint16,
 ];
-static mut kTorizo_Palettes_8: [uint16; 16] = [
+static kTorizo_Palettes_8: [uint16; 16] = [
     0x3800 as ::core::ffi::c_int as uint16,
     0x4bbe as ::core::ffi::c_int as uint16,
     0x6b9 as ::core::ffi::c_int as uint16,
@@ -898,7 +898,7 @@ static mut kTorizo_Palettes_8: [uint16; 16] = [
     0x5920 as ::core::ffi::c_int as uint16,
     0x43 as ::core::ffi::c_int as uint16,
 ];
-static mut kTorizo_Palettes_10: [uint16; 16] = [
+static kTorizo_Palettes_10: [uint16; 16] = [
     0x3800 as ::core::ffi::c_int as uint16,
     0x3719 as ::core::ffi::c_int as uint16,
     0x214 as ::core::ffi::c_int as uint16,
@@ -916,7 +916,7 @@ static mut kTorizo_Palettes_10: [uint16; 16] = [
     0x4480 as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
 ];
-static mut g_word_AAD59A: [int16; 20] = [
+static g_word_AAD59A: [int16; 20] = [
     -(5 as ::core::ffi::c_int) as int16,
     0 as ::core::ffi::c_int as int16,
     -(5 as ::core::ffi::c_int) as int16,
@@ -938,7 +938,7 @@ static mut g_word_AAD59A: [int16; 20] = [
     17 as ::core::ffi::c_int as int16,
     18 as ::core::ffi::c_int as int16,
 ];
-static mut g_word_AADEE9: [uint16; 7] = [
+static g_word_AADEE9: [uint16; 7] = [
     0 as ::core::ffi::c_int as uint16,
     0x20 as ::core::ffi::c_int as uint16,
     0x60 as ::core::ffi::c_int as uint16,
@@ -947,7 +947,7 @@ static mut g_word_AADEE9: [uint16; 7] = [
     0x1a0 as ::core::ffi::c_int as uint16,
     0x1e0 as ::core::ffi::c_int as uint16,
 ];
-static mut kChozoStatue_Palette: [uint16; 16] = [
+static kChozoStatue_Palette: [uint16; 16] = [
     0x3800 as ::core::ffi::c_int as uint16,
     0x633f as ::core::ffi::c_int as uint16,
     0x4a9f as ::core::ffi::c_int as uint16,
@@ -965,7 +965,7 @@ static mut kChozoStatue_Palette: [uint16; 16] = [
     0x7fff as ::core::ffi::c_int as uint16,
     0 as ::core::ffi::c_int as uint16,
 ];
-static mut kChozoStatue_Palettes: [int16; 16] = [
+static kChozoStatue_Palettes: [int16; 16] = [
     0x3800 as ::core::ffi::c_int as int16,
     0x633f as ::core::ffi::c_int as int16,
     0x4a9f as ::core::ffi::c_int as int16,
@@ -983,7 +983,7 @@ static mut kChozoStatue_Palettes: [int16; 16] = [
     0x5294 as ::core::ffi::c_int as int16,
     0 as ::core::ffi::c_int as int16,
 ];
-static mut kChozoStatue_Palettes2: [int16; 16] = [
+static kChozoStatue_Palettes2: [int16; 16] = [
     0x3800 as ::core::ffi::c_int as int16,
     0x633f as ::core::ffi::c_int as int16,
     0x4a9f as ::core::ffi::c_int as int16,
@@ -1001,7 +1001,7 @@ static mut kChozoStatue_Palettes2: [int16; 16] = [
     0x73df as ::core::ffi::c_int as int16,
     0x43 as ::core::ffi::c_int as int16,
 ];
-static mut kChozoStatue_Palettes3: [int16; 16] = [
+static kChozoStatue_Palettes3: [int16; 16] = [
     0x3800 as ::core::ffi::c_int as int16,
     0x633f as ::core::ffi::c_int as int16,
     0x4a9f as ::core::ffi::c_int as int16,
