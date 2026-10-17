@@ -180,6 +180,13 @@ every step makes the next one easier.
    three collision-result aliases consolidated without layout changes.
    Any%: 129,712 frames, zero failures; format and normal library/frontend
    metadata builds pass. Rust lines now 275,862; other counters unchanged.
+   Hardware/music batch applied: 229 repeated definitions now share 22
+   types, including `ApuHistory` (retaining original local public aliases).
+   Any%: 129,712 frames, zero failures; layout audit, format and normal
+   library/frontend metadata builds pass. Rust lines now 271,490; other
+   counters unchanged. Windows frontend linking additionally needs the
+   existing DLL host's CRT adaptations (`stderr`, `__assert_fail`); defer
+   that distinct platform fix to item 3.
    This touches `rtl.rs` and game banks 80, 81, 82, 84, 86, 88, 8b, 8f, 90,
    91, 94, 9b, a0, a2, a3, a4, a5, a6, a7, a8, a9, b2 (only the types each
    already defines). Keep all fields, `Copy`/`Clone`, and representation exact:

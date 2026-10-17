@@ -8,68 +8,9 @@ extern "C" {
     ) -> *mut ::core::ffi::c_void;
 }
 pub use crate::types::{
-    __int16_t, __int8_t, __uint16_t, __uint8_t, int16_t, int8_t, size_t, uint16_t, uint8_t,
-    SaveLoadFunc,
+    __int16_t, __int8_t, __uint16_t, __uint8_t, int16_t, int8_t, size_t, uint16_t, uint8_t, Dsp,
+    DspChannel, SaveLoadFunc,
 };
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct Dsp {
-    pub apu_ram: *mut uint8_t,
-    pub ram: [uint8_t; 128],
-    pub channel: [DspChannel; 8],
-    pub dirPage: uint16_t,
-    pub evenCycle: bool,
-    pub mute: bool,
-    pub reset: bool,
-    pub masterVolumeL: int8_t,
-    pub masterVolumeR: int8_t,
-    pub noiseSample: int16_t,
-    pub noiseRate: uint16_t,
-    pub noiseCounter: uint16_t,
-    pub echoWrites: bool,
-    pub echoVolumeL: int8_t,
-    pub echoVolumeR: int8_t,
-    pub feedbackVolume: int8_t,
-    pub echoBufferAdr: uint16_t,
-    pub echoDelay: uint16_t,
-    pub echoRemain: uint16_t,
-    pub echoBufferIndex: uint16_t,
-    pub firBufferIndex: uint8_t,
-    pub firValues: [int8_t; 8],
-    pub firBufferL: [int16_t; 8],
-    pub firBufferR: [int16_t; 8],
-    pub sampleBuffer: [int16_t; 1068],
-    pub sampleOffset: uint16_t,
-}
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct DspChannel {
-    pub pitch: uint16_t,
-    pub pitchCounter: uint16_t,
-    pub pitchModulation: bool,
-    pub decodeBuffer: [int16_t; 19],
-    pub srcn: uint8_t,
-    pub decodeOffset: uint16_t,
-    pub previousFlags: uint8_t,
-    pub old: int16_t,
-    pub older: int16_t,
-    pub useNoise: bool,
-    pub adsrRates: [uint16_t; 4],
-    pub rateCounter: uint16_t,
-    pub adsrState: uint8_t,
-    pub sustainLevel: uint16_t,
-    pub useGain: bool,
-    pub gainMode: uint8_t,
-    pub directGain: bool,
-    pub gainValue: uint16_t,
-    pub gain: uint16_t,
-    pub keyOn: bool,
-    pub keyOff: bool,
-    pub sampleOut: int16_t,
-    pub volumeL: int8_t,
-    pub volumeR: int8_t,
-    pub echoEnable: bool,
-}
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 static mut rateValues: [::core::ffi::c_int; 32] = [
