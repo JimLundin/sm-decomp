@@ -582,6 +582,29 @@ Next: extend the verified controller route from the Zebes landing site to
 rooms containing Waver and then other gameplay, measuring actual reach.
 Retain the useful inputs and active builds; independent workers use
 separate target directories and never clean another worker's files.
+Zebes route extended: target/zebes-route/bottom-right.inputs passes the
+standard trace DLL for 25,350 frames, zero failures (35.20s). Ten rooms
+are reached, including Parlor 92FD, old Mother Brain shaft 96BA and 975C;
+six enemy definitions observed. Final position is X171/Y187 in 975C.
+The ship landing sequence remains scripted after gameplay state 8 starts;
+wait for control before moving west. Parlor descent follows its staggered
+platforms; its bottom is a blue hatch, not an elevator. Jump then hold
+Down+jump+shoot (04C0) to open it, then fall through. A fresh sideways jump
+clears the arrival platform in 96BA; alternating movement descends the shaft.
+Nearest Waver routes both need bombs: landing site's upper-left exit to
+92B3 is sealed at X496..623/Y592..655; Parlor's upper-left exit to 990D
+is sealed at X240..271/Y112..159. Their room graphs alone did not prove
+physical accessibility. No gameplay or gate was changed to reach them.
+Next normal route: 975C -> 97B5, fresh Down on the actual elevator ->
+9E9F (Morph Ball X1104/Y656, equipment 0004), right through 9F11 ->
+9F64 bottom-left arrival, first missiles X736/Y656. Return to Parlor's
+middle-right exit -> 9879, open the red door with missiles -> 9804
+(bombs X192/Y160, equipment 1000). Then return to a Waver room.
+Extra ignored target/zebes-route/corridor-jump.inputs progresses to
+X299/Y187 in 975C (25,755 frames, zero failures, probe host); validate
+that continuation with the standard verifier next. This pass stops at
+the item's hour limit. Source/progress counters unchanged; useful inputs
+and build outputs retained, working tree clean after this plan update.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
