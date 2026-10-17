@@ -643,6 +643,21 @@ Linux format/release build and all four replays pass on the current source
 90889612: https://github.com/JimLundin/sm-decomp/actions/runs/39077183059.
 Direct rustfmt checks pass; local Cargo is still denied by the managed
 Windows policy. Progress counters are unchanged; source has not changed.
+First-missile input tuning stops at the item's hour limit. Shooting down
+through 9F11's floor reaches Y315; target/missile-route/hall-left.inputs
+passes its probe for 31,430 frames, zero failures, ending X133/Y395 near
+the lower-left exit. A full-height left jump lands too high, X85/Y315
+(lower-door.inputs, 31,635/0). Next attempt needs a short left jump with
+early release to clear the door lip without landing on the upper ledge.
+No missile pickup is proved yet; active route inputs are retained.
+Room-aligned original TAS trials also stop without wider coverage: landing
+inputs at original 16038 reach Parlor but return; Parlor inputs 16458/16482
+stall at X1077/Y171 even with aim taps removed and the first jump extended;
+post-Morph inputs 18563/18700 leave the wrong side or stop at X1211/Y699.
+All eight trials pass with zero failures (29,462..33,238 frames), but room
+alignment alone does not reproduce the original movement setup. Useful
+inputs and logs remain in target/movie-sync; further unchanged splices are
+deferred. Independent normal-input room and return-route work continues.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
