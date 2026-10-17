@@ -1,3 +1,4 @@
+use crate::game_state::Game;
 extern "C" {
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
@@ -659,11 +660,13 @@ pub unsafe fn dsp_saveload(
     mut dsp: *mut Dsp,
     mut func: Option<SaveLoadFunc>,
     mut ctx: *mut ::core::ffi::c_void,
+    game: &mut Game,
 ) {
     func.expect("non-null function pointer")(
         ctx,
         &raw mut (*dsp).ram as *mut ::core::ffi::c_void,
         (::core::mem::size_of::<Dsp>() as size_t).wrapping_sub(8 as size_t),
+        game,
     );
 }
 pub unsafe fn dsp_cycle(mut dsp: *mut Dsp) {

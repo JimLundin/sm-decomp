@@ -1,3 +1,4 @@
+use crate::game_state::Game;
 use crate::host::Die;
 use crate::snes::cpu::DumpCpuHistory;
 extern "C" {
@@ -47,11 +48,13 @@ pub unsafe fn cart_saveload(
     mut cart: *mut Cart,
     mut func: Option<SaveLoadFunc>,
     mut ctx: *mut ::core::ffi::c_void,
+    game: &mut Game,
 ) {
     func.expect("non-null function pointer")(
         ctx,
         (*cart).ram as *mut ::core::ffi::c_void,
         (*cart).ramSize as size_t,
+        game,
     );
 }
 pub unsafe fn cart_load(
@@ -87,7 +90,12 @@ pub unsafe fn cart_load(
         romSize as size_t,
     );
 }
-pub unsafe fn cart_read(mut cart: *mut Cart, mut bank: uint8_t, mut adr: uint16_t) -> uint8_t {
+pub unsafe fn cart_read(
+    mut cart: *mut Cart,
+    mut bank: uint8_t,
+    mut adr: uint16_t,
+    game: &mut Game,
+) -> uint8_t {
     match (*cart).type_0 as ::core::ffi::c_int {
         0 => {
             '_c2rust_label: {
@@ -101,7 +109,7 @@ pub unsafe fn cart_read(mut cart: *mut Cart, mut bank: uint8_t, mut adr: uint16_
             };
             return (*(*cart).snes).openBus;
         }
-        1 => return cart_readLorom(cart, bank, adr),
+        1 => return cart_readLorom(cart, bank, adr, game),
         2 => return cart_readHirom(cart, bank, adr),
         _ => {}
     }
@@ -132,7 +140,12 @@ pub unsafe fn cart_write(
         0 | _ => {}
     };
 }
-unsafe fn cart_readLorom(mut cart: *mut Cart, mut bank: uint8_t, mut adr: uint16_t) -> uint8_t {
+unsafe fn cart_readLorom(
+    mut cart: *mut Cart,
+    mut bank: uint8_t,
+    mut adr: uint16_t,
+    game: &mut Game,
+) -> uint8_t {
     let original_bank = bank;
     if (bank as ::core::ffi::c_int >= 0x70 as ::core::ffi::c_int
         && (bank as ::core::ffi::c_int) < 0x7e as ::core::ffi::c_int
@@ -165,7 +178,7 @@ unsafe fn cart_readLorom(mut cart: *mut Cart, mut bank: uint8_t, mut adr: uint16
     let cpu = &*snes.cpu;
     eprintln!(
         "Invalid LoROM read ${original_bank:02X}:{adr:04X}, frame {}: PC ${:02X}:{:04X} A ${:04X} X ${:04X} Y ${:04X} SP ${:04X} DP ${:04X} DB ${:02X}",
-        crate::snes::snes::snes_frame_counter,
+        game.snes_frame_counter,
         cpu.k, cpu.pc, cpu.a, cpu.x, cpu.y, cpu.sp, cpu.dp, cpu.db,
     );
     eprintln!(
@@ -178,7 +191,7 @@ unsafe fn cart_readLorom(mut cart: *mut Cart, mut bank: uint8_t, mut adr: uint16
         *value = *snes.ram.add(usize::from(address));
     }
     eprintln!("Direct page $44..$50: {direct_page:02X?}");
-    DumpCpuHistory();
+    DumpCpuHistory(game);
     Die(b"The game crashed in cart_readLorom\0" as *const u8 as *const ::core::ffi::c_char);
     return (*(*cart).snes).openBus;
 }

@@ -1,12 +1,12 @@
 //! Windows headless host, built directly with rustc and loaded by Python.
-//! Each process runs exactly one replay: the game owns global mutable state.
+//! Each process runs one replay with explicitly owned Game state.
 #![allow(non_snake_case, non_upper_case_globals, dead_code)]
 
+use sm::game_state::Game;
 use std::ffi::{c_char, c_int, c_void, CStr};
 use std::sync::atomic::{AtomicBool, Ordering};
 
 mod verify;
-use sm::host::{g_debug_flag, g_got_mismatch_count, g_new_ppu, g_other_image, g_spc_player};
 
 static mut g_pixels: [u8; 245760] = [0; 245760];
 static mut g_my_pixels: [u8; 245760] = [0; 245760];
@@ -20,12 +20,12 @@ extern "C" {
     fn __acrt_iob_func(index: u32) -> *mut c_void;
 }
 
-unsafe fn initialize_verify_audio() -> Result<(), String> {
-    g_spc_player = sm::spc_player::SpcPlayer_Create();
-    if g_spc_player.is_null() {
+unsafe fn initialize_verify_audio(game: &mut Game) -> Result<(), String> {
+    game.g_spc_player = sm::spc_player::SpcPlayer_Create();
+    if game.g_spc_player.is_null() {
         return Err("unable to initialize sound driver".into());
     }
-    sm::spc_player::SpcPlayer_Initialize(g_spc_player);
+    sm::spc_player::SpcPlayer_Initialize(game.g_spc_player);
     Ok(())
 }
 
@@ -67,6 +67,9 @@ pub unsafe extern "C" fn sm_verify(
     inputs: *const c_char,
     frames: u64,
 ) -> c_int {
+    let mut owned_game = sm::game_state::Game::new();
+    let game = &mut *owned_game;
+
     if STARTED.swap(true, Ordering::SeqCst) {
         eprintln!("verify: use a separate Python process for each replay");
         return 2;
@@ -76,10 +79,10 @@ pub unsafe extern "C" fn sm_verify(
         return 2;
     }
     sm::host::install_host_hooks(sm::host::HostHooks {
-            die: host_die,
-            warning: host_warning,
-            apu_lock: host_apu_lock,
-            apu_unlock: host_apu_unlock,
+        die: host_die,
+        warning: host_warning,
+        apu_lock: host_apu_lock,
+        apu_unlock: host_apu_unlock,
     });
     stderr = __acrt_iob_func(2);
     let mut args = Vec::new();
@@ -95,5 +98,5 @@ pub unsafe extern "C" fn sm_verify(
     if frames != 0 {
         args.extend(["--frames".to_owned(), frames.to_string()]);
     }
-    verify::run_args(&args)
+    verify::run_args(&args, game)
 }

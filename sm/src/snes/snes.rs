@@ -1,3 +1,4 @@
+use crate::game_state::Game;
 use crate::rtl::RtlApuWrite;
 use crate::snes::apu::{apu_cycle, apu_free, apu_init, apu_reset, apu_saveload};
 use crate::snes::cart::{cart_free, cart_init, cart_read, cart_reset, cart_saveload, cart_write};
@@ -36,7 +37,7 @@ pub use crate::types::{
 };
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-pub static mut snes_frame_counter: ::core::ffi::c_int = 0;
+
 pub unsafe fn snes_init(mut ram: *mut uint8_t) -> *mut Snes {
     let mut snes: *mut Snes = malloc(::core::mem::size_of::<Snes>() as size_t) as *mut Snes;
     (*snes).ram = ram;
@@ -68,34 +69,38 @@ pub unsafe fn snes_saveload(
     mut snes: *mut Snes,
     mut func: Option<SaveLoadFunc>,
     mut ctx: *mut ::core::ffi::c_void,
+    game: &mut Game,
 ) {
-    cpu_saveload((*snes).cpu, func, ctx);
-    apu_saveload((*snes).apu, func, ctx);
-    dma_saveload((*snes).dma, func, ctx);
-    ppu_saveload((*snes).ppu, func, ctx);
-    cart_saveload((*snes).cart, func, ctx);
+    cpu_saveload((*snes).cpu, func, ctx, game);
+    apu_saveload((*snes).apu, func, ctx, game);
+    dma_saveload((*snes).dma, func, ctx, game);
+    ppu_saveload((*snes).ppu, func, ctx, game);
+    cart_saveload((*snes).cart, func, ctx, game);
     func.expect("non-null function pointer")(
         ctx,
         &raw mut (*snes).hPos as *mut ::core::ffi::c_void,
         (145 as size_t)
             .wrapping_add(1 as size_t)
             .wrapping_sub(92 as size_t),
+        game,
     );
     func.expect("non-null function pointer")(
         ctx,
         (*snes).ram as *mut ::core::ffi::c_void,
         0x20000 as ::core::ffi::c_int as size_t,
+        game,
     );
     func.expect("non-null function pointer")(
         ctx,
         &raw mut (*snes).ramAdr as *mut ::core::ffi::c_void,
         4 as size_t,
+        game,
     );
     (*snes).runningWhichVersion = 0 as uint8_t;
 }
-pub unsafe fn snes_reset(mut snes: *mut Snes, mut hard: bool) {
+pub unsafe fn snes_reset(mut snes: *mut Snes, mut hard: bool, game: &mut Game) {
     cart_reset((*snes).cart);
-    cpu_reset((*snes).cpu);
+    cpu_reset((*snes).cpu, game);
     apu_reset((*snes).apu);
     dma_reset((*snes).dma);
     ppu_reset((*snes).my_ppu);
@@ -139,13 +144,13 @@ pub unsafe fn snes_reset(mut snes: *mut Snes, mut hard: bool) {
     (*snes).fastMem = false_0 != 0;
     (*snes).openBus = 0 as uint8_t;
 }
-pub unsafe fn snes_handle_pos_stuff(mut snes: *mut Snes) {
+pub unsafe fn snes_handle_pos_stuff(mut snes: *mut Snes, game: &mut Game) {
     if (*snes).hPos as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
         let mut startingVblank: bool = false_0 != 0;
         if (*snes).vPos as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
             (*snes).inVblank = false_0 != 0;
             (*snes).inNmi = false_0 != 0;
-            dma_initHdma((*snes).dma);
+            dma_initHdma((*snes).dma, game);
         } else if (*snes).vPos as ::core::ffi::c_int == 225 as ::core::ffi::c_int {
             startingVblank = !ppu_checkOverscan((*snes).ppu);
         } else if (*snes).vPos as ::core::ffi::c_int == 240 as ::core::ffi::c_int {
@@ -164,11 +169,11 @@ pub unsafe fn snes_handle_pos_stuff(mut snes: *mut Snes) {
         }
     } else if (*snes).hPos as ::core::ffi::c_int == 512 as ::core::ffi::c_int {
         if !(*snes).inVblank && !(*snes).disableRender {
-            ppu_runLine((*snes).ppu, (*snes).vPos as ::core::ffi::c_int);
+            ppu_runLine((*snes).ppu, (*snes).vPos as ::core::ffi::c_int, game);
         }
     } else if (*snes).hPos as ::core::ffi::c_int == 1024 as ::core::ffi::c_int {
         if !(*snes).inVblank {
-            dma_doHdma((*snes).dma);
+            dma_doHdma((*snes).dma, game);
         }
     }
     (*snes).hPos = ((*snes).hPos as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16_t;
@@ -181,19 +186,19 @@ pub unsafe fn snes_handle_pos_stuff(mut snes: *mut Snes) {
         }
     }
 }
-pub unsafe fn snes_catchupApu(mut snes: *mut Snes) {
+pub unsafe fn snes_catchupApu(mut snes: *mut Snes, game: &mut Game) {
     if (*snes).apuCatchupCycles > 10000 as ::core::ffi::c_int as ::core::ffi::c_double {
         (*snes).apuCatchupCycles = 10000 as ::core::ffi::c_int as ::core::ffi::c_double;
     }
     let mut catchupCycles: ::core::ffi::c_int = (*snes).apuCatchupCycles as ::core::ffi::c_int;
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i < catchupCycles {
-        apu_cycle((*snes).apu);
+        apu_cycle((*snes).apu, game);
         i += 1;
     }
     (*snes).apuCatchupCycles -= catchupCycles as ::core::ffi::c_double;
 }
-pub unsafe fn snes_readBBus(mut snes: *mut Snes, mut adr: uint8_t) -> uint8_t {
+pub unsafe fn snes_readBBus(mut snes: *mut Snes, mut adr: uint8_t, game: &mut Game) -> uint8_t {
     if (adr as ::core::ffi::c_int) < 0x40 as ::core::ffi::c_int {
         return ppu_read((*snes).ppu, adr);
     }
@@ -208,7 +213,7 @@ pub unsafe fn snes_readBBus(mut snes: *mut Snes, mut adr: uint8_t) -> uint8_t {
             );
         };
         (*snes).apuCatchupCycles = 32 as ::core::ffi::c_int as ::core::ffi::c_double;
-        snes_catchupApu(snes);
+        snes_catchupApu(snes, game);
         return (*(*snes).apu).outPorts
             [(adr as ::core::ffi::c_int & 0x3 as ::core::ffi::c_int) as usize];
     }
@@ -229,7 +234,12 @@ pub unsafe fn snes_readBBus(mut snes: *mut Snes, mut adr: uint8_t) -> uint8_t {
     };
     return (*snes).openBus;
 }
-pub unsafe fn snes_writeBBus(mut snes: *mut Snes, mut adr: uint8_t, mut val: uint8_t) {
+pub unsafe fn snes_writeBBus(
+    mut snes: *mut Snes,
+    mut adr: uint8_t,
+    mut val: uint8_t,
+    game: &mut Game,
+) {
     if (adr as ::core::ffi::c_int) < 0x40 as ::core::ffi::c_int {
         ppu_write((*snes).ppu, adr, val);
         return;
@@ -238,6 +248,7 @@ pub unsafe fn snes_writeBBus(mut snes: *mut Snes, mut adr: uint8_t, mut val: uin
         RtlApuWrite(
             (0x2100 as ::core::ffi::c_int + adr as ::core::ffi::c_int) as uint32_t,
             val,
+            game,
         );
         return;
     }
@@ -341,7 +352,7 @@ unsafe fn snes_readReg(mut snes: *mut Snes, mut adr: uint16_t) -> uint8_t {
         _ => return (*snes).openBus,
     };
 }
-unsafe fn snes_writeReg(mut snes: *mut Snes, mut adr: uint16_t, mut val: uint8_t) {
+unsafe fn snes_writeReg(mut snes: *mut Snes, mut adr: uint16_t, mut val: uint8_t, game: &mut Game) {
     match adr as ::core::ffi::c_int {
         16896 => {
             (*snes).autoJoyRead = val as ::core::ffi::c_int & 0x1 as ::core::ffi::c_int != 0;
@@ -416,12 +427,12 @@ unsafe fn snes_writeReg(mut snes: *mut Snes, mut adr: uint16_t, mut val: uint8_t
                     << 16 as ::core::ffi::c_int
                     | (*(*snes).dma).channel[1 as ::core::ffi::c_int as usize].aAdr
                         as ::core::ffi::c_int) as uint32_t;
-                let mut data: ::core::ffi::c_int = snes_read(snes, t) as ::core::ffi::c_int
-                    | (snes_read(snes, t.wrapping_add(1 as uint32_t)) as ::core::ffi::c_int)
+                let mut data: ::core::ffi::c_int = snes_read(snes, t, game) as ::core::ffi::c_int
+                    | (snes_read(snes, t.wrapping_add(1 as uint32_t), game) as ::core::ffi::c_int)
                         << 8 as ::core::ffi::c_int;
             }
             dma_startDma((*snes).dma, val, false_0 != 0);
-            while dma_cycle((*snes).dma) {}
+            while dma_cycle((*snes).dma, game) {}
         }
         16908 => {
             dma_startDma((*snes).dma, val, true_0 != 0);
@@ -432,7 +443,7 @@ unsafe fn snes_writeReg(mut snes: *mut Snes, mut adr: uint16_t, mut val: uint8_t
         _ => {}
     };
 }
-pub unsafe fn snes_read(mut snes: *mut Snes, mut adr: uint32_t) -> uint8_t {
+pub unsafe fn snes_read(mut snes: *mut Snes, mut adr: uint32_t, game: &mut Game) -> uint8_t {
     let mut bank: uint8_t = (adr >> 16 as ::core::ffi::c_int) as uint8_t;
     adr &= 0xffff as uint32_t;
     if bank as ::core::ffi::c_int == 0x7e as ::core::ffi::c_int
@@ -452,7 +463,7 @@ pub unsafe fn snes_read(mut snes: *mut Snes, mut adr: uint32_t) -> uint8_t {
             return *(*snes).ram.offset(adr as isize);
         }
         if adr >= 0x2100 as uint32_t && adr < 0x2200 as uint32_t {
-            return snes_readBBus(snes, (adr & 0xff as uint32_t) as uint8_t);
+            return snes_readBBus(snes, (adr & 0xff as uint32_t) as uint8_t, game);
         }
         if adr == 0x4016 as uint32_t || adr == 0x4017 as uint32_t {
             '_c2rust_label: {
@@ -474,13 +485,13 @@ pub unsafe fn snes_read(mut snes: *mut Snes, mut adr: uint32_t) -> uint8_t {
             return dma_read((*snes).dma, adr as uint16_t);
         }
     }
-    return cart_read((*snes).cart, bank, adr as uint16_t);
+    return cart_read((*snes).cart, bank, adr as uint16_t, game);
 }
-pub unsafe fn LogWrite(mut snes: *mut Snes, mut adr: uint32_t, mut val: uint8_t) {
+pub unsafe fn LogWrite(mut snes: *mut Snes, mut adr: uint32_t, mut val: uint8_t, game: &mut Game) {
     printf(
         b"@%d: Write to 0x%x = 0x%.2x: 0x%x: r18=0x%x: r20=0x%x: a = 0x%x, x = 0x%x, y = 0x%x, c = %d\n\0"
             as *const u8 as *const ::core::ffi::c_char,
-        snes_frame_counter,
+        game.snes_frame_counter,
         adr,
         val as ::core::ffi::c_int,
         ((*(*snes).cpu).k as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
@@ -497,7 +508,12 @@ pub unsafe fn LogWrite(mut snes: *mut Snes, mut adr: uint32_t, mut val: uint8_t)
         (*(*snes).cpu).c as ::core::ffi::c_int,
     );
 }
-pub unsafe fn snes_write(mut snes: *mut Snes, mut adr: uint32_t, mut val: uint8_t) {
+pub unsafe fn snes_write(
+    mut snes: *mut Snes,
+    mut adr: uint32_t,
+    mut val: uint8_t,
+    game: &mut Game,
+) {
     let mut bank: uint8_t = (adr >> 16 as ::core::ffi::c_int) as uint8_t;
     adr &= 0xffff as uint32_t;
     if bank as ::core::ffi::c_int == 0x7e as ::core::ffi::c_int
@@ -508,7 +524,7 @@ pub unsafe fn snes_write(mut snes: *mut Snes, mut adr: uint32_t, mut val: uint8_
             | adr;
         *(*snes).ram.offset(addr as isize) = val;
         if addr == 0xfffff as uint32_t {
-            LogWrite(snes, adr, val);
+            LogWrite(snes, adr, val, game);
         }
     }
     if (bank as ::core::ffi::c_int) < 0x40 as ::core::ffi::c_int
@@ -518,14 +534,14 @@ pub unsafe fn snes_write(mut snes: *mut Snes, mut adr: uint32_t, mut val: uint8_
         if adr < 0x2000 as uint32_t {
             *(*snes).ram.offset(adr as isize) = val;
             if adr == 0xfffff as uint32_t {
-                LogWrite(snes, adr, val);
+                LogWrite(snes, adr, val, game);
             }
         }
         if adr >= 0x2100 as uint32_t && adr < 0x2200 as uint32_t {
-            snes_writeBBus(snes, (adr & 0xff as uint32_t) as uint8_t, val);
+            snes_writeBBus(snes, (adr & 0xff as uint32_t) as uint8_t, val, game);
         }
         if adr >= 0x4200 as uint32_t && adr < 0x4220 as uint32_t {
-            snes_writeReg(snes, adr as uint16_t, val);
+            snes_writeReg(snes, adr as uint16_t, val, game);
         }
         if adr >= 0x4300 as uint32_t && adr < 0x4380 as uint32_t {
             dma_write((*snes).dma, adr as uint16_t, val);
@@ -533,15 +549,20 @@ pub unsafe fn snes_write(mut snes: *mut Snes, mut adr: uint32_t, mut val: uint8_
     }
     cart_write((*snes).cart, bank, adr as uint16_t, val);
 }
-pub unsafe fn snes_cpuRead(mut snes: *mut Snes, mut adr: uint32_t) -> uint8_t {
+pub unsafe fn snes_cpuRead(mut snes: *mut Snes, mut adr: uint32_t, game: &mut Game) -> uint8_t {
     (*snes).cpuMemOps = (*snes).cpuMemOps.wrapping_add(1);
     (*snes).cpuCyclesLeft =
         ((*snes).cpuCyclesLeft as ::core::ffi::c_int + 8 as ::core::ffi::c_int) as uint8_t;
-    return snes_read(snes, adr);
+    return snes_read(snes, adr, game);
 }
-pub unsafe fn snes_cpuWrite(mut snes: *mut Snes, mut adr: uint32_t, mut val: uint8_t) {
+pub unsafe fn snes_cpuWrite(
+    mut snes: *mut Snes,
+    mut adr: uint32_t,
+    mut val: uint8_t,
+    game: &mut Game,
+) {
     (*snes).cpuMemOps = (*snes).cpuMemOps.wrapping_add(1);
     (*snes).cpuCyclesLeft =
         ((*snes).cpuCyclesLeft as ::core::ffi::c_int + 8 as ::core::ffi::c_int) as uint8_t;
-    snes_write(snes, adr, val);
+    snes_write(snes, adr, val, game);
 }

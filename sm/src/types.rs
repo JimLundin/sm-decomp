@@ -1,5 +1,6 @@
 //! Shared byte-compatible gameplay, hardware and music types.
 
+use crate::game_state::Game;
 pub type uint8 = u8;
 pub type uint16 = u16;
 pub type VoidP = uint16;
@@ -30,7 +31,7 @@ pub struct VramWriteEntry {
 
 pub type Buttons = ::core::ffi::c_uint;
 
-pub type CalculateAngleFromXYFunc = unsafe fn(uint16) -> uint8;
+pub type CalculateAngleFromXYFunc = unsafe fn(uint16, &mut Game) -> uint8;
 
 pub type Consts_60 = ::core::ffi::c_uint;
 
@@ -100,7 +101,7 @@ pub type Consts_B7 = ::core::ffi::c_uint;
 
 pub type CoroutineRet = uint8_t;
 
-pub type CrocomireFunc = unsafe fn(uint16, *const uint16) -> *const uint16;
+pub type CrocomireFunc = unsafe fn(uint16, *const uint16, &mut Game) -> *const uint16;
 
 pub type DspReg = ::core::ffi::c_uint;
 
@@ -108,25 +109,25 @@ pub type EnemyAiBits = ::core::ffi::c_uint;
 
 pub type EnemyProps = ::core::ffi::c_uint;
 
-pub type FuncXY_V = unsafe fn(uint16, uint16) -> ();
+pub type FuncXY_V = unsafe fn(uint16, uint16, &mut Game) -> ();
 
-pub type Func_AnimDelay = unsafe fn(*const uint8) -> bool;
+pub type Func_AnimDelay = unsafe fn(*const uint8, &mut Game) -> bool;
 
-pub type Func_CalcHdma = unsafe fn(uint16, uint16) -> ();
+pub type Func_CalcHdma = unsafe fn(uint16, uint16, &mut Game) -> ();
 
-pub type Func_SpazerSba_V = unsafe fn(uint16, uint16) -> ();
+pub type Func_SpazerSba_V = unsafe fn(uint16, uint16, &mut Game) -> ();
 
-pub type Func_U8 = unsafe fn() -> uint8;
+pub type Func_U8 = unsafe fn(&mut Game) -> uint8;
 
-pub type Func_V = unsafe fn() -> ();
+pub type Func_V = unsafe fn(&mut Game) -> ();
 
-pub type Func_V_A = unsafe fn() -> uint8;
+pub type Func_V_A = unsafe fn(&mut Game) -> uint8;
 
-pub type Func_V_Coroutine = unsafe fn() -> CoroutineRet;
+pub type Func_V_Coroutine = unsafe fn(&mut Game) -> CoroutineRet;
 
-pub type Func_Y_V = unsafe fn(uint16) -> ();
+pub type Func_Y_V = unsafe fn(uint16, &mut Game) -> ();
 
-pub type Func_Y_Y = unsafe fn(uint16) -> uint16;
+pub type Func_Y_Y = unsafe fn(uint16, &mut Game) -> uint16;
 
 pub type GLDEBUGPROC = Option<
     unsafe extern "C" fn(
@@ -176,7 +177,7 @@ pub type GLushort = ::core::ffi::c_ushort;
 
 pub type GameState = ::core::ffi::c_uint;
 
-pub type HandlerFunc = unsafe fn() -> ();
+pub type HandlerFunc = unsafe fn(&mut Game) -> ();
 
 pub type LiquidPhysicsType = ::core::ffi::c_uint;
 
@@ -188,7 +189,7 @@ pub type PpuZbufType = uint16_t;
 
 pub type ProjectileType = ::core::ffi::c_uint;
 
-pub type RunFrameFunc = unsafe fn(uint16, ::core::ffi::c_int) -> ();
+pub type RunFrameFunc = unsafe fn(uint16, ::core::ffi::c_int, &mut Game) -> ();
 
 pub type RunMode = ::core::ffi::c_uint;
 
@@ -227,7 +228,8 @@ pub type SamusMovementType = ::core::ffi::c_uint;
 
 pub type SamusPose = ::core::ffi::c_uint;
 
-pub type SaveLoadFunc = unsafe fn(*mut ::core::ffi::c_void, *mut ::core::ffi::c_void, size_t) -> ();
+pub type SaveLoadFunc =
+    unsafe fn(*mut ::core::ffi::c_void, *mut ::core::ffi::c_void, size_t, &mut Game) -> ();
 
 pub type Sint16 = int16_t;
 
@@ -237,7 +239,7 @@ pub type Sint64 = int64_t;
 
 pub type SnesRegs = ::core::ffi::c_uint;
 
-pub type SyncAllFunc = unsafe fn() -> ();
+pub type SyncAllFunc = unsafe fn(&mut Game) -> ();
 
 pub type Uint16 = uint16_t;
 
@@ -1768,17 +1770,18 @@ pub struct GlslUniforms {
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct RendererFuncs {
-    pub Initialize: Option<unsafe fn(*mut SDL_Window) -> bool>,
-    pub Destroy: Option<unsafe fn() -> ()>,
+    pub Initialize: Option<unsafe fn(*mut SDL_Window, &mut Game) -> bool>,
+    pub Destroy: Option<unsafe fn(&mut Game) -> ()>,
     pub BeginDraw: Option<
         unsafe fn(
             ::core::ffi::c_int,
             ::core::ffi::c_int,
             *mut *mut uint8,
             *mut ::core::ffi::c_int,
+            &mut Game,
         ) -> (),
     >,
-    pub EndDraw: Option<unsafe fn() -> ()>,
+    pub EndDraw: Option<unsafe fn(&mut Game) -> ()>,
 }
 
 #[repr(C)]

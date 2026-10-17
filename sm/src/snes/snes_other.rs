@@ -1,3 +1,4 @@
+use crate::game_state::Game;
 use crate::snes::cart::cart_load;
 use crate::snes::dsp::dsp_getSamples;
 use crate::snes::snes::snes_reset;
@@ -55,6 +56,7 @@ pub unsafe fn snes_loadRom(
     mut snes: *mut Snes,
     mut data: *const uint8_t,
     mut length: ::core::ffi::c_int,
+    game: &mut Game,
 ) -> bool {
     if length < 0x8000 as ::core::ffi::c_int {
         printf(
@@ -190,7 +192,7 @@ pub unsafe fn snes_loadRom(
             0 as uint32_t
         }) as ::core::ffi::c_int,
     );
-    snes_reset(snes, true_0 != 0);
+    snes_reset(snes, true_0 != 0, game);
     free(newData as *mut ::core::ffi::c_void);
     return true_0 != 0;
 }

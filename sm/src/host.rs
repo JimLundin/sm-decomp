@@ -5,12 +5,6 @@ use std::sync::OnceLock;
 
 use crate::spc_player::SpcPlayer;
 
-pub static mut g_spc_player: *mut SpcPlayer = std::ptr::null_mut();
-pub static mut g_got_mismatch_count: c_int = 0;
-pub static mut g_other_image: bool = false;
-pub static mut g_debug_flag: bool = false;
-pub static mut g_new_ppu: bool = true;
-
 #[derive(Copy, Clone)]
 pub struct HostHooks {
     pub die: unsafe fn(*const c_char),

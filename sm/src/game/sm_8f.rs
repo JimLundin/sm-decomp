@@ -13,7 +13,8 @@ use crate::game::sm_90::CallSomeSamusCode;
 use crate::game::sm_94::Samus_MoveDown_NoSolidColl;
 use crate::game::sm_a6::HandleCeresRidleyGetawayCutscene;
 use crate::game::sm_b4::CreateSpriteAtPos;
-use crate::rtl::{g_ram, mov24, Mult8x8, RomPtr, Unreachable, WriteReg};
+use crate::game_state::Game;
+use crate::rtl::{mov24, Mult8x8, RomPtr, Unreachable, WriteReg};
 extern "C" {
     fn strcpy(
         __dest: *mut ::core::ffi::c_char,
@@ -427,23 +428,35 @@ pub const addr_kAnimtiles_WreckedShipTradmillRight: Consts_87 = 33397;
 pub use crate::types::SpawnHardcodedPlmArgs;
 pub const kCoroutineNone: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 #[inline]
-unsafe fn RomPtr_8F(mut addr: uint16_t) -> *const uint8 {
-    return RomPtr((0x8f0000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t);
+unsafe fn RomPtr_8F(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
+    return RomPtr(
+        (0x8f0000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t,
+        game,
+    );
 }
 #[inline]
-unsafe fn get_DoorDef(mut a: uint16) -> *mut DoorDef {
-    return RomPtr((0x830000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
-        as *mut DoorDef;
+unsafe fn get_DoorDef(mut a: uint16, game: &mut Game) -> *mut DoorDef {
+    return RomPtr(
+        (0x830000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t,
+        game,
+    ) as *mut DoorDef;
 }
 #[inline]
-unsafe fn get_RoomDefRoomstate(mut a: uint16) -> *mut RoomDefRoomstate {
-    return RomPtr((0x8f0000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
-        as *mut RoomDefRoomstate;
+unsafe fn get_RoomDefRoomstate(mut a: uint16, game: &mut Game) -> *mut RoomDefRoomstate {
+    return RomPtr(
+        (0x8f0000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t,
+        game,
+    ) as *mut RoomDefRoomstate;
 }
 #[inline]
-unsafe fn get_RoomDefStateSelect_E6E5_Finish(mut a: uint16) -> *mut RoomDefStateSelect_E6E5_Finish {
-    return RomPtr((0x8f0000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
-        as *mut RoomDefStateSelect_E6E5_Finish;
+unsafe fn get_RoomDefStateSelect_E6E5_Finish(
+    mut a: uint16,
+    game: &mut Game,
+) -> *mut RoomDefStateSelect_E6E5_Finish {
+    return RomPtr(
+        (0x8f0000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t,
+        game,
+    ) as *mut RoomDefStateSelect_E6E5_Finish;
 }
 pub const fnRoomSetup_AfterSavingAnimals: uint32 = 9408916 as uint32;
 pub const fnRoomSetup_AutoDestroyWallAfterEscape: uint32 = 9408937 as uint32;
@@ -584,517 +597,545 @@ pub const fnRoomDefStateSelect_MorphBallMissiles: uint32 = 9430610 as uint32;
 pub const fnRoomDefStateSelect_PowerBombs: uint32 = 9430633 as uint32;
 pub const fnRoomCode_CrocomireShaking: uint32 = 9431245 as uint32;
 pub const fnRoomCode_RidleyRoomShaking: uint32 = 9431376 as uint32;
-pub unsafe fn RoomSetup_AfterSavingAnimals() {
-    SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
-        field_0: 0x3d as uint8,
-        field_1: 0xb as uint8,
-        field_2: 0xbb30 as VoidP,
-    });
-    *((&raw mut g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
+pub unsafe fn RoomSetup_AfterSavingAnimals(game: &mut Game) {
+    SpawnHardcodedPlm(
+        SpawnHardcodedPlmArgs {
+            field_0: 0x3d as uint8,
+            field_1: 0xb as uint8,
+            field_2: 0xbb30 as VoidP,
+        },
+        game,
+    );
+    *((&raw mut game.g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
         as *mut uint16) = 24 as uint16;
-    *((&raw mut g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
         as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
 }
-pub unsafe fn RoomSetup_AutoDestroyWallAfterEscape() {
-    SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
-        field_0: 0x10 as uint8,
-        field_1: 0x87 as uint8,
-        field_2: 0xb964 as VoidP,
-    });
+pub unsafe fn RoomSetup_AutoDestroyWallAfterEscape(game: &mut Game) {
+    SpawnHardcodedPlm(
+        SpawnHardcodedPlmArgs {
+            field_0: 0x10 as uint8,
+            field_1: 0x87 as uint8,
+            field_2: 0xb964 as VoidP,
+        },
+        game,
+    );
 }
-pub unsafe fn RoomSetup_TurnWallIntoShotblocks() {
-    SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
-        field_0: 0xf as uint8,
-        field_1: 0xa as uint8,
-        field_2: 0xb9ed as VoidP,
-    });
+pub unsafe fn RoomSetup_TurnWallIntoShotblocks(game: &mut Game) {
+    SpawnHardcodedPlm(
+        SpawnHardcodedPlmArgs {
+            field_0: 0xf as uint8,
+            field_1: 0xa as uint8,
+            field_2: 0xb9ed as VoidP,
+        },
+        game,
+    );
 }
-pub unsafe fn RoomSetup_ShakeDuringEscape() {
-    *((&raw mut g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
+pub unsafe fn RoomSetup_ShakeDuringEscape(game: &mut Game) {
+    *((&raw mut game.g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
         as *mut uint16) = 6 as uint16;
-    *((&raw mut g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
         as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
-    FxTypeFunc_20();
+    FxTypeFunc_20(game);
 }
-pub unsafe fn RoomSetup_ScrollingSkyLand() {
-    FxTypeFunc_20();
+pub unsafe fn RoomSetup_ScrollingSkyLand(game: &mut Game) {
+    FxTypeFunc_20(game);
 }
-pub unsafe fn RoomSetup_ScrollingSkyOcean() {
-    RoomSetupAsm_ScrollingSkyOcean();
+pub unsafe fn RoomSetup_ScrollingSkyOcean(game: &mut Game) {
+    RoomSetupAsm_ScrollingSkyOcean(game);
 }
-pub unsafe fn RoomSetup_RunStatueUnlockAnims() {
-    SpawnAnimtiles(addr_kAnimtiles_TourianStatue_Kraid as ::core::ffi::c_int as uint16);
-    SpawnAnimtiles(addr_kAnimtiles_TourianStatue_Phantoon as ::core::ffi::c_int as uint16);
-    SpawnAnimtiles(addr_kAnimtiles_TourianStatue_Draygon as ::core::ffi::c_int as uint16);
-    SpawnAnimtiles(addr_kAnimtiles_TourianStatue_Ridley as ::core::ffi::c_int as uint16);
+pub unsafe fn RoomSetup_RunStatueUnlockAnims(game: &mut Game) {
+    SpawnAnimtiles(
+        addr_kAnimtiles_TourianStatue_Kraid as ::core::ffi::c_int as uint16,
+        game,
+    );
+    SpawnAnimtiles(
+        addr_kAnimtiles_TourianStatue_Phantoon as ::core::ffi::c_int as uint16,
+        game,
+    );
+    SpawnAnimtiles(
+        addr_kAnimtiles_TourianStatue_Draygon as ::core::ffi::c_int as uint16,
+        game,
+    );
+    SpawnAnimtiles(
+        addr_kAnimtiles_TourianStatue_Ridley as ::core::ffi::c_int as uint16,
+        game,
+    );
 }
-pub unsafe fn DoorCode_StartWreckedShipTreadmillWest() {
-    SpawnAnimtiles(addr_kAnimtiles_WreckedShipTradmillRight as ::core::ffi::c_int as uint16);
-    SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
-        field_0: 0x4 as uint8,
-        field_1: 0x9 as uint8,
-        field_2: 0xb64b as VoidP,
-    });
+pub unsafe fn DoorCode_StartWreckedShipTreadmillWest(game: &mut Game) {
+    SpawnAnimtiles(
+        addr_kAnimtiles_WreckedShipTradmillRight as ::core::ffi::c_int as uint16,
+        game,
+    );
+    SpawnHardcodedPlm(
+        SpawnHardcodedPlmArgs {
+            field_0: 0x4 as uint8,
+            field_1: 0x9 as uint8,
+            field_2: 0xb64b as VoidP,
+        },
+        game,
+    );
 }
-pub unsafe fn DoorCode_Scroll6_Green() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_Scroll6_Green(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(6 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-pub unsafe fn DoorCode_Scroll0_Blue() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_Scroll0_Blue(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_Scroll13_Blue() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_Scroll13_Blue(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(19 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_Scroll_4Blue_8Green() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_Scroll_4Blue_8Green(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(8 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-pub unsafe fn DoorCode_Scroll_8toB_Red() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_Scroll_8toB_Red(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(8 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(9 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(10 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(11 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-pub unsafe fn DoorCode_Scroll_LotsRed() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_Scroll_LotsRed(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(3 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(5 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(11 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(12 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(13 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(17 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-pub unsafe fn DoorCode_Scroll_1_4_Green() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_Scroll_1_4_Green(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 2 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-pub unsafe fn DoorCode_Scroll_2_Blue() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_Scroll_2_Blue(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_Scroll_17_Blue() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_Scroll_17_Blue(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(23 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_Scroll_4_Blue() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_Scroll_4_Blue(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_Scroll_6_Green() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_Scroll_6_Green(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(6 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-pub unsafe fn DoorCode_Scroll_3_Green() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_Scroll_3_Green(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(3 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_0() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_0(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(24 as ::core::ffi::c_int as isize) = 2 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(28 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_1() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_1(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(5 as ::core::ffi::c_int as isize) = 1 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(6 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_2() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_2(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(29 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_3() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_3(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 2 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(3 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_4() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_4(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_5() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_5(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(11 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_6() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_6(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(28 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(29 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_7() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_7(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_8() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_8(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(32 as ::core::ffi::c_int as isize) = 2 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(36 as ::core::ffi::c_int as isize) = 2 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(37 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_9() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_9(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_10() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_10(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_11() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_11(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(6 as ::core::ffi::c_int as isize) = 2 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(7 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_12() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_12(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 1 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_13() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_13(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 1 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(3 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_14() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_14(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_15() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_15(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 1 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(3 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_16() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_16(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 2 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_17() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_17(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_18() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_18(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(15 as ::core::ffi::c_int as isize) = 2 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(18 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_19() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_19(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(6 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_20() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_20(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 2 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_21() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_21(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_22() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_22(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(3 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(6 as ::core::ffi::c_int as isize) = 1 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(7 as ::core::ffi::c_int as isize) = 1 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(8 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_23() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_23(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 1 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 1 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(3 as ::core::ffi::c_int as isize) = 1 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 2 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(6 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_24() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_24(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 1 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_25() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_25(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_26() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_26(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(10 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_27() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_27(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 1 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_28() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_28(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 2 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_29() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_29(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(6 as ::core::ffi::c_int as isize) = 1 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(7 as ::core::ffi::c_int as isize) = 1 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(8 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_30() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_30(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(3 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_31() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_31(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(7 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_32() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_32(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_33() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_33(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(3 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_34() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_34(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 1 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_35() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_35(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 1 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(3 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_36() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_36(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_37() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_37(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 1 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 1 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_38() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_38(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 1 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(3 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_39() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_39(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_40() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_40(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 1 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_41() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_41(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(24 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_42() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_42(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(3 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_43() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_43(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(14 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-pub unsafe fn RoomCode_ScrollingSkyLand_() {
-    RoomCode_ScrollingSkyLand();
+pub unsafe fn RoomCode_ScrollingSkyLand_(game: &mut Game) {
+    RoomCode_ScrollingSkyLand(game);
 }
-pub unsafe fn RoomCode_ScrollingSkyOcean_() {
-    RoomMainAsm_ScrollingSkyOcean();
+pub unsafe fn RoomCode_ScrollingSkyOcean_(game: &mut Game) {
+    RoomMainAsm_ScrollingSkyOcean(game);
 }
-pub unsafe fn RoomCode_GenRandomExplodes_Nonblank() {
-    if *((&raw mut g_ram as *mut uint8).offset(0xa78 as ::core::ffi::c_int as isize) as *mut uint16)
+pub unsafe fn RoomCode_GenRandomExplodes_Nonblank(game: &mut Game) {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xa78 as ::core::ffi::c_int as isize)
+        as *mut uint16)
         == 0
-        && *((&raw mut g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize)
+        && *((&raw mut game.g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
             & 1 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
     {
-        let mut Random: uint16 = NextRandom();
-        let mut x: uint16 = (*((&raw mut g_ram as *mut uint8)
+        let mut Random: uint16 = NextRandom(game);
+        let mut x: uint16 = (*((&raw mut game.g_ram as *mut uint8)
             .offset(0x911 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
             + Random as uint8 as ::core::ffi::c_int) as uint16;
-        let mut y: uint16 = (*((&raw mut g_ram as *mut uint8)
+        let mut y: uint16 = (*((&raw mut game.g_ram as *mut uint8)
             .offset(0x915 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
             + *(&raw mut Random as *mut uint8).offset(
@@ -1104,10 +1145,10 @@ pub unsafe fn RoomCode_GenRandomExplodes_Nonblank() {
             ) as ::core::ffi::c_int) as uint16;
         let mut prod: uint16 = Mult8x8(
             (y as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint8,
-            *((&raw mut g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
+            *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
                 as *mut uint16) as uint8,
         );
-        if *((&raw mut g_ram as *mut uint8).offset(0x10002 as ::core::ffi::c_int as isize)
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x10002 as ::core::ffi::c_int as isize)
             as *mut uint16)
             .offset(
                 (prod as ::core::ffi::c_int + (x as ::core::ffi::c_int >> 4 as ::core::ffi::c_int))
@@ -1116,47 +1157,49 @@ pub unsafe fn RoomCode_GenRandomExplodes_Nonblank() {
             & 0x3ff as ::core::ffi::c_int
             != 255 as ::core::ffi::c_int
         {
-            RoomCode_GenRandomExplodes(x, y);
+            RoomCode_GenRandomExplodes(x, y, game);
         }
     }
 }
-pub unsafe fn RoomCode_ScrollingSkyLand_Shakes() {
-    RoomCode_ScrollingSkyLand();
-    RoomCode_GenRandomExplodes_Nonblank();
-    let ref mut fresh17 = *((&raw mut g_ram as *mut uint8)
+pub unsafe fn RoomCode_ScrollingSkyLand_Shakes(game: &mut Game) {
+    RoomCode_ScrollingSkyLand(game);
+    RoomCode_GenRandomExplodes_Nonblank(game);
+    let ref mut fresh17 = *((&raw mut game.g_ram as *mut uint8)
         .offset(0x1840 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh17 = (*fresh17 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
 }
-pub unsafe fn RoomCode_ExplodeShakes() {
-    RoomCode_GenRandomExplodes_Nonblank();
-    let ref mut fresh16 = *((&raw mut g_ram as *mut uint8)
+pub unsafe fn RoomCode_ExplodeShakes(game: &mut Game) {
+    RoomCode_GenRandomExplodes_Nonblank(game);
+    let ref mut fresh16 = *((&raw mut game.g_ram as *mut uint8)
         .offset(0x1840 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh16 = (*fresh16 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
 }
-pub unsafe fn RoomCode_GenRandomExplodes_4th() {
-    if *((&raw mut g_ram as *mut uint8).offset(0xa78 as ::core::ffi::c_int as isize) as *mut uint16)
+pub unsafe fn RoomCode_GenRandomExplodes_4th(game: &mut Game) {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xa78 as ::core::ffi::c_int as isize)
+        as *mut uint16)
         == 0
-        && *((&raw mut g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize)
+        && *((&raw mut game.g_ram as *mut uint8).offset(0x5b6 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
             & 3 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int
     {
-        let mut Random: uint16 = NextRandom();
+        let mut Random: uint16 = NextRandom(game);
         RoomCode_GenRandomExplodes(
-            (*((&raw mut g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
+            (*((&raw mut game.g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
                 as *mut uint16) as ::core::ffi::c_int
                 + Random as uint8 as ::core::ffi::c_int) as uint16,
-            (*((&raw mut g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize)
+            (*((&raw mut game.g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize)
                 as *mut uint16) as ::core::ffi::c_int
                 + *(&raw mut Random as *mut uint8).offset(
                     (::core::mem::size_of::<uint16>() as usize)
                         .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                         .wrapping_sub(1 as usize) as isize,
                 ) as ::core::ffi::c_int) as uint16,
+            game,
         );
     }
 }
-pub unsafe fn RoomCode_GenRandomExplodes(mut x_r18: uint16, mut y_r20: uint16) {
+pub unsafe fn RoomCode_GenRandomExplodes(mut x_r18: uint16, mut y_r20: uint16, game: &mut Game) {
     static kRoomCode_GenRandomExplodes_Sprite: [uint8; 8] = [
         3 as ::core::ffi::c_int as uint8,
         3 as ::core::ffi::c_int as uint8,
@@ -1177,11 +1220,12 @@ pub unsafe fn RoomCode_GenRandomExplodes(mut x_r18: uint16, mut y_r20: uint16) {
         0 as ::core::ffi::c_int as uint8,
         0 as ::core::ffi::c_int as uint8,
     ];
-    let mut v1: uint16 = (NextRandom() as ::core::ffi::c_int & 0xf as ::core::ffi::c_int) as uint16;
+    let mut v1: uint16 =
+        (NextRandom(game) as ::core::ffi::c_int & 0xf as ::core::ffi::c_int) as uint16;
     if (v1 as ::core::ffi::c_int) < 8 as ::core::ffi::c_int {
         let mut v2: uint16 = kRoomCode_GenRandomExplodes_Sfx[v1 as usize] as uint16;
         if v2 != 0 {
-            QueueSfx2_Max6(v2);
+            QueueSfx2_Max6(v2, game);
         }
     }
     CreateSpriteAtPos(
@@ -1190,450 +1234,475 @@ pub unsafe fn RoomCode_GenRandomExplodes(mut x_r18: uint16, mut y_r20: uint16) {
         kRoomCode_GenRandomExplodes_Sprite
             [(v1 as ::core::ffi::c_int & 7 as ::core::ffi::c_int) as usize] as uint16,
         0 as uint16,
+        game,
     );
 }
-pub unsafe fn RoomCode_ScrollRightDachora() {
-    if *(&raw mut g_ram as *mut uint8)
+pub unsafe fn RoomCode_ScrollRightDachora(game: &mut Game) {
+    if *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(11 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
         == 2 as ::core::ffi::c_int
-        && (*((&raw mut g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize)
+        && (*((&raw mut game.g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int)
             < 0x500 as ::core::ffi::c_int
-        && (*((&raw mut g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
+        && (*((&raw mut game.g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int)
             < 0x380 as ::core::ffi::c_int
     {
-        let ref mut fresh15 = *((&raw mut g_ram as *mut uint8)
+        let ref mut fresh15 = *((&raw mut game.g_ram as *mut uint8)
             .offset(0x911 as ::core::ffi::c_int as isize)
             as *mut uint16);
         *fresh15 = (*fresh15 as ::core::ffi::c_int
-            + ((*((&raw mut g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
+            + ((*((&raw mut game.g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
                 as *mut uint16) as ::core::ffi::c_int
                 >= 0x380 as ::core::ffi::c_int) as ::core::ffi::c_int
                 + 3 as ::core::ffi::c_int)) as uint16;
     }
 }
-pub unsafe fn RoomCode_8FC8C8() {
+pub unsafe fn RoomCode_8FC8C8(game: &mut Game) {
     SpawnEprojWithRoomGfx(
         addr_kEproj_PrePhantomRoom as ::core::ffi::c_int as uint16,
         0 as uint16,
+        game,
     );
 }
-pub unsafe fn RoomCode_SetupShaktoolRoomPlm() {
-    SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
-        field_0: 0 as uint8,
-        field_1: 0 as uint8,
-        field_2: 0xb8eb as VoidP,
-    });
+pub unsafe fn RoomCode_SetupShaktoolRoomPlm(game: &mut Game) {
+    SpawnHardcodedPlm(
+        SpawnHardcodedPlmArgs {
+            field_0: 0 as uint8,
+            field_1: 0 as uint8,
+            field_2: 0xb8eb as VoidP,
+        },
+        game,
+    );
 }
-pub unsafe fn RoomCode_SetPauseCodeForDraygon() {
+pub unsafe fn RoomCode_SetPauseCodeForDraygon(game: &mut Game) {
     mov24(
-        (&raw mut g_ram as *mut uint8).offset(0x601 as ::core::ffi::c_int as isize) as *mut LongPtr,
+        (&raw mut game.g_ram as *mut uint8).offset(0x601 as ::core::ffi::c_int as isize)
+            as *mut LongPtr,
         fnPauseHook_DraygonRoom as uint32,
     );
     mov24(
-        (&raw mut g_ram as *mut uint8).offset(0x604 as ::core::ffi::c_int as isize) as *mut LongPtr,
+        (&raw mut game.g_ram as *mut uint8).offset(0x604 as ::core::ffi::c_int as isize)
+            as *mut LongPtr,
         fnUnpauseHook_DraygonRoom as uint32,
     );
 }
-pub unsafe fn PauseHook_DraygonRoom() {
-    *((&raw mut g_ram as *mut uint8).offset(0xa7 as ::core::ffi::c_int as isize) as *mut uint16) =
-        4 as uint16;
+pub unsafe fn PauseHook_DraygonRoom(game: &mut Game) {
+    *((&raw mut game.g_ram as *mut uint8).offset(0xa7 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 4 as uint16;
 }
-pub unsafe fn UnpauseHook_DraygonRoom() -> CoroutineRet {
-    if *((&raw mut g_ram as *mut uint8).offset(0x18b4 as ::core::ffi::c_int as isize)
+pub unsafe fn UnpauseHook_DraygonRoom(game: &mut Game) -> CoroutineRet {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x18b4 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
         == 8 as ::core::ffi::c_int
     {
-        *((&raw mut g_ram as *mut uint8).offset(0xa7 as ::core::ffi::c_int as isize)
+        *((&raw mut game.g_ram as *mut uint8).offset(0xa7 as ::core::ffi::c_int as isize)
             as *mut uint16) = 12 as uint16;
     }
     return kCoroutineNone as CoroutineRet;
 }
-pub unsafe fn RoomCode_SetCollectedMap() {
-    let mut v0: uint16 = (*((&raw mut g_ram as *mut uint8)
+pub unsafe fn RoomCode_SetCollectedMap(game: &mut Game) {
+    let mut v0: uint16 = (*((&raw mut game.g_ram as *mut uint8)
         .offset(0xd908 as ::core::ffi::c_int as isize)
         .offset(
-            *((&raw mut g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
+            *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
                 as *mut uint16) as isize,
         ) as *mut uint8 as *mut uint16) as ::core::ffi::c_int
         | 1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut g_ram as *mut uint8)
+    *((&raw mut game.g_ram as *mut uint8)
         .offset(0xd908 as ::core::ffi::c_int as isize)
         .offset(
-            *((&raw mut g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
+            *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
                 as *mut uint16) as isize,
         ) as *mut uint8 as *mut uint16) = v0;
-    *((&raw mut g_ram as *mut uint8).offset(0x789 as ::core::ffi::c_int as isize) as *mut uint16) =
-        v0;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x789 as ::core::ffi::c_int as isize)
+        as *mut uint16) = v0;
 }
-pub unsafe fn RoomCode_SetZebesTimebombEvent() {
-    SetEventHappened(0xe as uint16);
-    *((&raw mut g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
+pub unsafe fn RoomCode_SetZebesTimebombEvent(game: &mut Game) {
+    SetEventHappened(0xe as uint16, game);
+    *((&raw mut game.g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
         as *mut uint16) = 18 as uint16;
-    *((&raw mut g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
         as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
 }
-pub unsafe fn RoomCode_SetLightHorizRoomShake() {
-    *((&raw mut g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
+pub unsafe fn RoomCode_SetLightHorizRoomShake(game: &mut Game) {
+    *((&raw mut game.g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
         as *mut uint16) = 18 as uint16;
-    *((&raw mut g_ram as *mut uint8)
+    *((&raw mut game.g_ram as *mut uint8)
         .offset(0x7e1 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) = 18 as uint16;
-    *((&raw mut g_ram as *mut uint8).offset(0x7e1 as ::core::ffi::c_int as isize) as *mut uint16) =
-        0 as uint16;
-    *((&raw mut g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
+    *((&raw mut game.g_ram as *mut uint8).offset(0x7e1 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
         as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
 }
-pub unsafe fn RoomCode_SetMediumHorizRoomShake() {
-    *((&raw mut g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
+pub unsafe fn RoomCode_SetMediumHorizRoomShake(game: &mut Game) {
+    *((&raw mut game.g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
         as *mut uint16) = 21 as uint16;
-    *((&raw mut g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
         as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
 }
-pub unsafe fn RoomCode_Escape4_SetMediumHorizRoomShake() {
-    SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
-        field_0: 0x10 as uint8,
-        field_1: 0x10 as uint8,
-        field_2: 0xb968 as VoidP,
-    });
-    *((&raw mut g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
+pub unsafe fn RoomCode_Escape4_SetMediumHorizRoomShake(game: &mut Game) {
+    SpawnHardcodedPlm(
+        SpawnHardcodedPlmArgs {
+            field_0: 0x10 as uint8,
+            field_1: 0x10 as uint8,
+            field_2: 0xb968 as VoidP,
+        },
+        game,
+    );
+    *((&raw mut game.g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
         as *mut uint16) = 21 as uint16;
-    *((&raw mut g_ram as *mut uint8)
+    *((&raw mut game.g_ram as *mut uint8)
         .offset(0x7e1 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) = 21 as uint16;
-    *((&raw mut g_ram as *mut uint8).offset(0x7e1 as ::core::ffi::c_int as isize) as *mut uint16) =
-        0 as uint16;
-    *((&raw mut g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
+    *((&raw mut game.g_ram as *mut uint8).offset(0x7e1 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1840 as ::core::ffi::c_int as isize)
         as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
 }
-pub unsafe fn RoomCode_SetCeresDoorSolid() {
-    SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
-        field_0: 0xf as uint8,
-        field_1: 0x26 as uint8,
-        field_2: 0xba48 as VoidP,
-    });
-    FxTypeFunc_2C_Haze();
+pub unsafe fn RoomCode_SetCeresDoorSolid(game: &mut Game) {
+    SpawnHardcodedPlm(
+        SpawnHardcodedPlmArgs {
+            field_0: 0xf as uint8,
+            field_1: 0x26 as uint8,
+            field_2: 0xba48 as VoidP,
+        },
+        game,
+    );
+    FxTypeFunc_2C_Haze(game);
 }
-pub unsafe fn RoomCode_CeresColorMathHdma() {
-    FxTypeFunc_2C_Haze();
+pub unsafe fn RoomCode_CeresColorMathHdma(game: &mut Game) {
+    FxTypeFunc_2C_Haze(game);
 }
-pub unsafe fn RoomCode_CeresColorMathHdma_BgBase() {
-    *(&raw mut g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize) = 102 as uint8;
-    FxTypeFunc_2C_Haze();
-    *((&raw mut g_ram as *mut uint8).offset(0x7eb as ::core::ffi::c_int as isize) as *mut uint16) =
-        9 as uint16;
+pub unsafe fn RoomCode_CeresColorMathHdma_BgBase(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8).offset(0x5d as ::core::ffi::c_int as isize) = 102 as uint8;
+    FxTypeFunc_2C_Haze(game);
+    *((&raw mut game.g_ram as *mut uint8).offset(0x7eb as ::core::ffi::c_int as isize)
+        as *mut uint16) = 9 as uint16;
 }
-pub unsafe fn DoorCode_StartWreckedSkipTreadmill_East() {
-    SpawnAnimtiles(addr_kAnimtiles_WreckedShipTradmillLeft as ::core::ffi::c_int as uint16);
-    SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
-        field_0: 0x4 as uint8,
-        field_1: 0x9 as uint8,
-        field_2: 0xb64f as VoidP,
-    });
+pub unsafe fn DoorCode_StartWreckedSkipTreadmill_East(game: &mut Game) {
+    SpawnAnimtiles(
+        addr_kAnimtiles_WreckedShipTradmillLeft as ::core::ffi::c_int as uint16,
+        game,
+    );
+    SpawnHardcodedPlm(
+        SpawnHardcodedPlmArgs {
+            field_0: 0x4 as uint8,
+            field_1: 0x9 as uint8,
+            field_2: 0xb64f as VoidP,
+        },
+        game,
+    );
 }
-pub unsafe fn DoorCode_SetScroll_44() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_44(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_45() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_45(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_46() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_46(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(3 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_47() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_47(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(41 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_48() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_48(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(40 as ::core::ffi::c_int as isize) = 2 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(46 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_49() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_49(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(6 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(7 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(8 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(9 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(10 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(11 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-pub unsafe fn DoorCode_SetupElevatubeFromSouth() {
-    *((&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetupElevatubeFromSouth(game: &mut Game) {
+    *((&raw mut game.g_ram as *mut uint8)
         .offset(0x7e1 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) =
         -(256 as ::core::ffi::c_int) as uint16;
-    *((&raw mut g_ram as *mut uint8)
+    *((&raw mut game.g_ram as *mut uint8)
         .offset(0x7e1 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) = 2496 as uint16;
-    *((&raw mut g_ram as *mut uint8)
+    *((&raw mut game.g_ram as *mut uint8)
         .offset(0x7e1 as ::core::ffi::c_int as isize)
         .offset(6 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) =
         -(32 as ::core::ffi::c_int) as uint16;
-    CallSomeSamusCode(0 as uint16);
-    SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
-        field_0: 0x1 as uint8,
-        field_1: 0 as uint8,
-        field_2: 0xb8f9 as VoidP,
-    });
+    CallSomeSamusCode(0 as uint16, game);
+    SpawnHardcodedPlm(
+        SpawnHardcodedPlmArgs {
+            field_0: 0x1 as uint8,
+            field_1: 0 as uint8,
+            field_2: 0xb8f9 as VoidP,
+        },
+        game,
+    );
 }
-pub unsafe fn DoorCode_SetupElevatubeFromNorth() {
-    *((&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetupElevatubeFromNorth(game: &mut Game) {
+    *((&raw mut game.g_ram as *mut uint8)
         .offset(0x7e1 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) = 256 as uint16;
     strcpy(
-        (&raw mut g_ram as *mut uint8)
+        (&raw mut game.g_ram as *mut uint8)
             .offset(0x7e1 as ::core::ffi::c_int as isize)
             .offset(2 as ::core::ffi::c_int as isize) as *mut uint8
             as *mut ::core::ffi::c_char,
         b"@\0" as *const u8 as *const ::core::ffi::c_char,
     );
     strcpy(
-        (&raw mut g_ram as *mut uint8)
+        (&raw mut game.g_ram as *mut uint8)
             .offset(0x7e1 as ::core::ffi::c_int as isize)
             .offset(6 as ::core::ffi::c_int as isize) as *mut uint8
             as *mut ::core::ffi::c_char,
         b" \0" as *const u8 as *const ::core::ffi::c_char,
     );
-    CallSomeSamusCode(0 as uint16);
-    SpawnHardcodedPlm(SpawnHardcodedPlmArgs {
-        field_0: 0x1 as uint8,
-        field_1: 0 as uint8,
-        field_2: 0xb8f9 as VoidP,
-    });
+    CallSomeSamusCode(0 as uint16, game);
+    SpawnHardcodedPlm(
+        SpawnHardcodedPlmArgs {
+            field_0: 0x1 as uint8,
+            field_1: 0 as uint8,
+            field_2: 0xb8f9 as VoidP,
+        },
+        game,
+    );
 }
-pub unsafe fn RoomCode_Elevatube() {
+pub unsafe fn RoomCode_Elevatube(game: &mut Game) {
     let mut v0: uint16 = 0;
-    *((&raw mut g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize) as *mut uint16) =
-        128 as uint16;
-    *((&raw mut g_ram as *mut uint8).offset(0xaf8 as ::core::ffi::c_int as isize) as *mut uint16) =
-        0 as uint16;
-    let mut amt: int32 = (*((&raw mut g_ram as *mut uint8)
+    *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 128 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0xaf8 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    let mut amt: int32 = (*((&raw mut game.g_ram as *mut uint8)
         .offset(0x7e1 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) as *mut uint8
         as *mut uint16) as int16 as int32)
         << 8 as ::core::ffi::c_int;
     v0 = ((amt as uint32).wrapping_add(
-        *((&raw mut g_ram as *mut uint8).offset(0x7e1 as ::core::ffi::c_int as isize)
+        *((&raw mut game.g_ram as *mut uint8).offset(0x7e1 as ::core::ffi::c_int as isize)
             as *mut uint32),
     ) >> 16 as ::core::ffi::c_int) as uint16;
-    let ref mut fresh13 = *((&raw mut g_ram as *mut uint8)
+    let ref mut fresh13 = *((&raw mut game.g_ram as *mut uint8)
         .offset(0x7e1 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh13 = (*fresh13 as ::core::ffi::c_int + amt as ::core::ffi::c_int) as uint16;
-    *((&raw mut g_ram as *mut uint8)
+    *((&raw mut game.g_ram as *mut uint8)
         .offset(0x7e1 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16) = v0;
-    Samus_MoveDown_NoSolidColl(amt);
-    if ((*((&raw mut g_ram as *mut uint8)
+    Samus_MoveDown_NoSolidColl(amt, game);
+    if ((*((&raw mut game.g_ram as *mut uint8)
         .offset(0x7e1 as ::core::ffi::c_int as isize)
         .offset(6 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16)
         as ::core::ffi::c_int
-        + *((&raw mut g_ram as *mut uint8)
+        + *((&raw mut game.g_ram as *mut uint8)
             .offset(0x7e1 as ::core::ffi::c_int as isize)
             .offset(4 as ::core::ffi::c_int as isize) as *mut uint8 as *mut uint16)
             as ::core::ffi::c_int
         + 3616 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int)
         < 0x1c41 as ::core::ffi::c_int
     {
-        let ref mut fresh14 = *((&raw mut g_ram as *mut uint8)
+        let ref mut fresh14 = *((&raw mut game.g_ram as *mut uint8)
             .offset(0x7e1 as ::core::ffi::c_int as isize)
             .offset(4 as ::core::ffi::c_int as isize) as *mut uint8
             as *mut uint16);
         *fresh14 = (*fresh14 as ::core::ffi::c_int
-            + *((&raw mut g_ram as *mut uint8)
+            + *((&raw mut game.g_ram as *mut uint8)
                 .offset(0x7e1 as ::core::ffi::c_int as isize)
                 .offset(6 as ::core::ffi::c_int as isize) as *mut uint8
                 as *mut uint16) as ::core::ffi::c_int) as uint16;
     }
 }
-pub unsafe fn DoorCode_ResetElevatubeNorthExit() {
-    CallSomeSamusCode(1 as uint16);
+pub unsafe fn DoorCode_ResetElevatubeNorthExit(game: &mut Game) {
+    CallSomeSamusCode(1 as uint16, game);
 }
-pub unsafe fn DoorCode_ResetElevatubeSouthExit() {
-    *((&raw mut g_ram as *mut uint8).offset(0xcd20 as ::core::ffi::c_int as isize)
+pub unsafe fn DoorCode_ResetElevatubeSouthExit(game: &mut Game) {
+    *((&raw mut game.g_ram as *mut uint8).offset(0xcd20 as ::core::ffi::c_int as isize)
         as *mut uint16) = 514 as uint16;
-    CallSomeSamusCode(1 as uint16);
+    CallSomeSamusCode(1 as uint16, game);
 }
-pub unsafe fn DoorCode_SetScroll_50() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_50(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(10 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(11 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn UNUSED_DoorCode_SetScroll_51() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn UNUSED_DoorCode_SetScroll_51(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(17 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(16 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn UNUSED_DoorCode_SetScroll_52() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn UNUSED_DoorCode_SetScroll_52(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_53() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_53(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_54() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_54(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_55() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_55(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(9 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(10 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_56() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_56(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_57() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_57(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_58() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_58(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(6 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_59() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_59(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_60() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_60(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_61() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_61(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(4 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(7 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_62() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_62(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 0 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 1 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_63() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_63(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 2 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_64() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_64(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(0 as ::core::ffi::c_int as isize) = 2 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(1 as ::core::ffi::c_int as isize) = 2 as uint8;
 }
-pub unsafe fn DoorCode_SetScroll_65() {
-    *(&raw mut g_ram as *mut uint8)
+pub unsafe fn DoorCode_SetScroll_65(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(24 as ::core::ffi::c_int as isize) = 1 as uint8;
-    *(&raw mut g_ram as *mut uint8)
+    *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20 as ::core::ffi::c_int as isize)
         .offset(25 as ::core::ffi::c_int as isize) = 0 as uint8;
 }
-pub unsafe fn DoorCode_CeresElevatorShaft() {
-    *(&raw mut g_ram as *mut uint8).offset(0x56 as ::core::ffi::c_int as isize) = 7 as uint8;
-    WriteReg(BGMODE as ::core::ffi::c_int as uint16, 7 as uint8);
-    *((&raw mut g_ram as *mut uint8).offset(0x78 as ::core::ffi::c_int as isize) as *mut uint16) =
-        256 as uint16;
-    *((&raw mut g_ram as *mut uint8).offset(0x7e as ::core::ffi::c_int as isize) as *mut uint16) =
-        256 as uint16;
-    *((&raw mut g_ram as *mut uint8).offset(0x7a as ::core::ffi::c_int as isize) as *mut uint16) =
-        0 as uint16;
-    *((&raw mut g_ram as *mut uint8).offset(0x7c as ::core::ffi::c_int as isize) as *mut uint16) =
-        0 as uint16;
-    *((&raw mut g_ram as *mut uint8).offset(0x80 as ::core::ffi::c_int as isize) as *mut uint16) =
-        128 as uint16;
-    *((&raw mut g_ram as *mut uint8).offset(0x82 as ::core::ffi::c_int as isize) as *mut uint16) =
-        1008 as uint16;
-    *((&raw mut g_ram as *mut uint8).offset(0x783 as ::core::ffi::c_int as isize) as *mut uint16) =
-        1 as uint16;
+pub unsafe fn DoorCode_CeresElevatorShaft(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8).offset(0x56 as ::core::ffi::c_int as isize) = 7 as uint8;
+    WriteReg(BGMODE as ::core::ffi::c_int as uint16, 7 as uint8, game);
+    *((&raw mut game.g_ram as *mut uint8).offset(0x78 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 256 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x7e as ::core::ffi::c_int as isize)
+        as *mut uint16) = 256 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x7a as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x7c as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x80 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 128 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x82 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 1008 as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x783 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 1 as uint16;
     strcpy(
-        (&raw mut g_ram as *mut uint8).offset(0x7e1 as ::core::ffi::c_int as isize)
+        (&raw mut game.g_ram as *mut uint8).offset(0x7e1 as ::core::ffi::c_int as isize)
             as *mut ::core::ffi::c_char,
         b"\"\0" as *const u8 as *const ::core::ffi::c_char,
     );
     strcpy(
-        (&raw mut g_ram as *mut uint8)
+        (&raw mut game.g_ram as *mut uint8)
             .offset(0x7e1 as ::core::ffi::c_int as isize)
             .offset(2 as ::core::ffi::c_int as isize) as *mut uint8
             as *mut ::core::ffi::c_char,
         b"<\0" as *const u8 as *const ::core::ffi::c_char,
     );
 }
-pub unsafe fn DoorCode_CeresElevatorShaft_2() {
-    *(&raw mut g_ram as *mut uint8).offset(0x56 as ::core::ffi::c_int as isize) = 9 as uint8;
-    *((&raw mut g_ram as *mut uint8).offset(0x783 as ::core::ffi::c_int as isize) as *mut uint16) =
-        0 as uint16;
+pub unsafe fn DoorCode_CeresElevatorShaft_2(game: &mut Game) {
+    *(&raw mut game.g_ram as *mut uint8).offset(0x56 as ::core::ffi::c_int as isize) = 9 as uint8;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x783 as ::core::ffi::c_int as isize)
+        as *mut uint16) = 0 as uint16;
 }
-pub unsafe fn RoomCode_CeresElevatorShaft_() {
-    RoomCode_CeresElevatorShaft();
+pub unsafe fn RoomCode_CeresElevatorShaft_(game: &mut Game) {
+    RoomCode_CeresElevatorShaft(game);
 }
 static kRoomCode_SpawnCeresFallingDebris_Tab: [uint16; 16] = [
     0x50 as ::core::ffi::c_int as uint16,
@@ -1653,27 +1722,27 @@ static kRoomCode_SpawnCeresFallingDebris_Tab: [uint16; 16] = [
     0x170 as ::core::ffi::c_int as uint16,
     0x190 as ::core::ffi::c_int as uint16,
 ];
-pub unsafe fn RoomCode_SpawnCeresFallingDebris() {
-    if *((&raw mut g_ram as *mut uint8).offset(0x93f as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
+pub unsafe fn RoomCode_SpawnCeresFallingDebris(game: &mut Game) {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x93f as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
         != 0
         && {
-            let ref mut fresh12 = *((&raw mut g_ram as *mut uint8)
+            let ref mut fresh12 = *((&raw mut game.g_ram as *mut uint8)
                 .offset(0x7e1 as ::core::ffi::c_int as isize)
                 as *mut uint16);
             *fresh12 = (*fresh12).wrapping_sub(1);
-            (*((&raw mut g_ram as *mut uint8).offset(0x7e1 as ::core::ffi::c_int as isize)
+            (*((&raw mut game.g_ram as *mut uint8).offset(0x7e1 as ::core::ffi::c_int as isize)
                 as *mut int16) as ::core::ffi::c_int)
                 < 0 as ::core::ffi::c_int
         }
     {
-        *(&raw mut g_ram as *mut uint8)
+        *(&raw mut game.g_ram as *mut uint8)
             .offset(0x7e1 as ::core::ffi::c_int as isize)
             .offset(0 as ::core::ffi::c_int as isize) = 8 as uint8;
-        *(&raw mut g_ram as *mut uint8)
+        *(&raw mut game.g_ram as *mut uint8)
             .offset(0x7e1 as ::core::ffi::c_int as isize)
             .offset(1 as ::core::ffi::c_int as isize) = 0 as uint8;
-        let mut v0: uint16 = (if *((&raw mut g_ram as *mut uint8)
+        let mut v0: uint16 = (if *((&raw mut game.g_ram as *mut uint8)
             .offset(0x5e5 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
@@ -1685,31 +1754,33 @@ pub unsafe fn RoomCode_SpawnCeresFallingDebris() {
         }) as uint16;
         SpawnEprojWithRoomGfx(
             v0,
-            kRoomCode_SpawnCeresFallingDebris_Tab[(*((&raw mut g_ram as *mut uint8)
+            kRoomCode_SpawnCeresFallingDebris_Tab[(*((&raw mut game.g_ram as *mut uint8)
                 .offset(0x5e5 as ::core::ffi::c_int as isize)
                 as *mut uint16)
                 as ::core::ffi::c_int
                 & 0xf as ::core::ffi::c_int)
                 as usize],
+            game,
         );
     }
 }
-pub unsafe fn RoomCode_HandleCeresRidleyGetaway() {
-    if *((&raw mut g_ram as *mut uint8).offset(0x93f as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
+pub unsafe fn RoomCode_HandleCeresRidleyGetaway(game: &mut Game) {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x93f as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
         != 0
     {
-        HandleCeresRidleyGetawayCutscene();
+        HandleCeresRidleyGetawayCutscene(game);
     }
 }
-pub unsafe fn RoomCode_ShakeScreenHorizDiag() {
+pub unsafe fn RoomCode_ShakeScreenHorizDiag(game: &mut Game) {
     let mut v0: uint16 = 0;
     let mut current_block_3: u64;
-    if *((&raw mut g_ram as *mut uint8).offset(0x7e1 as ::core::ffi::c_int as isize) as *mut uint16)
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x7e1 as ::core::ffi::c_int as isize)
+        as *mut uint16)
         != 0
     {
-        let ref mut fresh11 = *((&raw mut g_ram as *mut uint8)
+        let ref mut fresh11 = *((&raw mut game.g_ram as *mut uint8)
             .offset(0x7e1 as ::core::ffi::c_int as isize)
             as *mut uint16);
         *fresh11 = (*fresh11).wrapping_sub(1);
@@ -1719,9 +1790,9 @@ pub unsafe fn RoomCode_ShakeScreenHorizDiag() {
         } else {
             current_block_3 = 11006700562992250127;
         }
-    } else if (NextRandom() as ::core::ffi::c_int) < 0x200 as ::core::ffi::c_int {
+    } else if (NextRandom(game) as ::core::ffi::c_int) < 0x200 as ::core::ffi::c_int {
         strcpy(
-            (&raw mut g_ram as *mut uint8).offset(0x7e1 as ::core::ffi::c_int as isize)
+            (&raw mut game.g_ram as *mut uint8).offset(0x7e1 as ::core::ffi::c_int as isize)
                 as *mut ::core::ffi::c_char,
             b"*\0" as *const u8 as *const ::core::ffi::c_char,
         );
@@ -1732,20 +1803,21 @@ pub unsafe fn RoomCode_ShakeScreenHorizDiag() {
     }
     match current_block_3 {
         10175730460759437497 => {
-            *((&raw mut g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
+            *((&raw mut game.g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
                 as *mut uint16) = v0;
         }
         _ => {}
     }
-    RoomCode_GenRandomExplodes_4th();
+    RoomCode_GenRandomExplodes_4th(game);
 }
-pub unsafe fn RoomCode_ShakeScreenHorizDiagStrong() {
+pub unsafe fn RoomCode_ShakeScreenHorizDiagStrong(game: &mut Game) {
     let mut v0: int16 = 0;
     let mut current_block_3: u64;
-    if *((&raw mut g_ram as *mut uint8).offset(0x7e1 as ::core::ffi::c_int as isize) as *mut uint16)
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x7e1 as ::core::ffi::c_int as isize)
+        as *mut uint16)
         != 0
     {
-        let ref mut fresh10 = *((&raw mut g_ram as *mut uint8)
+        let ref mut fresh10 = *((&raw mut game.g_ram as *mut uint8)
             .offset(0x7e1 as ::core::ffi::c_int as isize)
             as *mut uint16);
         *fresh10 = (*fresh10).wrapping_sub(1);
@@ -1755,9 +1827,9 @@ pub unsafe fn RoomCode_ShakeScreenHorizDiagStrong() {
         } else {
             current_block_3 = 11006700562992250127;
         }
-    } else if (NextRandom() as ::core::ffi::c_int) < 0x180 as ::core::ffi::c_int {
+    } else if (NextRandom(game) as ::core::ffi::c_int) < 0x180 as ::core::ffi::c_int {
         strcpy(
-            (&raw mut g_ram as *mut uint8).offset(0x7e1 as ::core::ffi::c_int as isize)
+            (&raw mut game.g_ram as *mut uint8).offset(0x7e1 as ::core::ffi::c_int as isize)
                 as *mut ::core::ffi::c_char,
             b"*\0" as *const u8 as *const ::core::ffi::c_char,
         );
@@ -1768,574 +1840,587 @@ pub unsafe fn RoomCode_ShakeScreenHorizDiagStrong() {
     }
     match current_block_3 {
         1544504899801662111 => {
-            *((&raw mut g_ram as *mut uint8)
+            *((&raw mut game.g_ram as *mut uint8)
                 .offset(0x7e1 as ::core::ffi::c_int as isize)
                 .offset(2 as ::core::ffi::c_int as isize) as *mut uint8
                 as *mut uint16) = v0 as uint16;
         }
         _ => {}
     }
-    *((&raw mut g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((&raw mut g_ram as *mut uint8)
+    *((&raw mut game.g_ram as *mut uint8).offset(0x183e as ::core::ffi::c_int as isize)
+        as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
         .offset(0x7e1 as ::core::ffi::c_int as isize)
         .offset(2 as ::core::ffi::c_int as isize) as *mut uint8
         as *mut uint16);
-    RoomCode_GenRandomExplodes_4th();
+    RoomCode_GenRandomExplodes_4th(game);
 }
-pub unsafe fn CallRoomDefStateSelect(mut ea: uint32, mut k: uint16) -> uint16 {
+pub unsafe fn CallRoomDefStateSelect(mut ea: uint32, mut k: uint16, game: &mut Game) -> uint16 {
     match ea {
-        9430502 => return RoomDefStateSelect_Finish(k),
-        9430527 => return RoomDefStateSelect_TourianBoss01(k),
-        9430546 => return RoomDefStateSelect_IsEventSet(k),
-        9430569 => return RoomDefStateSelect_IsBossDead(k),
-        9430610 => return RoomDefStateSelect_MorphBallMissiles(k),
-        9430633 => return RoomDefStateSelect_PowerBombs(k),
-        _ => return Unreachable() as uint16,
+        9430502 => return RoomDefStateSelect_Finish(k, game),
+        9430527 => return RoomDefStateSelect_TourianBoss01(k, game),
+        9430546 => return RoomDefStateSelect_IsEventSet(k, game),
+        9430569 => return RoomDefStateSelect_IsBossDead(k, game),
+        9430610 => return RoomDefStateSelect_MorphBallMissiles(k, game),
+        9430633 => return RoomDefStateSelect_PowerBombs(k, game),
+        _ => return Unreachable(game) as uint16,
     };
 }
-pub unsafe fn HandleRoomDefStateSelect(mut k: uint16) {
+pub unsafe fn HandleRoomDefStateSelect(mut k: uint16, game: &mut Game) {
     let mut v1: uint16 = (k as ::core::ffi::c_int + 11 as ::core::ffi::c_int) as uint16;
     loop {
         let mut event_pointer: uint16 =
-            (*get_RoomDefStateSelect_E6E5_Finish(v1)).code_ptr as uint16;
+            (*get_RoomDefStateSelect_E6E5_Finish(v1, game)).code_ptr as uint16;
         v1 = CallRoomDefStateSelect(
             (event_pointer as ::core::ffi::c_int | 0x8f0000 as ::core::ffi::c_int) as uint32,
             (v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16,
+            game,
         );
         if !(v1 != 0) {
             break;
         }
     }
 }
-pub unsafe fn RoomDefStateSelect_Finish(mut k: uint16) -> uint16 {
-    *((&raw mut g_ram as *mut uint8).offset(0x7bb as ::core::ffi::c_int as isize) as *mut uint16) =
-        k;
+pub unsafe fn RoomDefStateSelect_Finish(mut k: uint16, game: &mut Game) -> uint16 {
+    *((&raw mut game.g_ram as *mut uint8).offset(0x7bb as ::core::ffi::c_int as isize)
+        as *mut uint16) = k;
     return 0 as uint16;
 }
-pub unsafe fn RoomDefStateSelect_TourianBoss01(mut k: uint16) -> uint16 {
-    if CheckBossBitForCurArea(1 as uint16) as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
+pub unsafe fn RoomDefStateSelect_TourianBoss01(mut k: uint16, game: &mut Game) -> uint16 {
+    if CheckBossBitForCurArea(1 as uint16, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
+        == 0
+    {
         return (k as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     }
-    let mut v1: *const uint16 = RomPtr_8F(k as uint16_t) as *const uint16;
-    return RoomDefStateSelect_Finish(*v1);
+    let mut v1: *const uint16 = RomPtr_8F(k as uint16_t, game) as *const uint16;
+    return RoomDefStateSelect_Finish(*v1, game);
 }
-pub unsafe fn RoomDefStateSelect_IsEventSet(mut k: uint16) -> uint16 {
-    let mut v1: *const uint8 = RomPtr_8F(k as uint16_t);
-    if CheckEventHappened(*v1 as uint16) != 0 {
+pub unsafe fn RoomDefStateSelect_IsEventSet(mut k: uint16, game: &mut Game) -> uint16 {
+    let mut v1: *const uint8 = RomPtr_8F(k as uint16_t, game);
+    if CheckEventHappened(*v1 as uint16, game) != 0 {
         return RoomDefStateSelect_Finish(
             *(v1.offset(1 as ::core::ffi::c_int as isize) as *mut uint16),
+            game,
         );
     } else {
         return (k as ::core::ffi::c_int + 3 as ::core::ffi::c_int) as uint16;
     };
 }
-pub unsafe fn RoomDefStateSelect_IsBossDead(mut k: uint16) -> uint16 {
-    let mut v1: *const uint8 = RomPtr_8F(k as uint16_t);
-    if CheckBossBitForCurArea(*v1 as uint16) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
+pub unsafe fn RoomDefStateSelect_IsBossDead(mut k: uint16, game: &mut Game) -> uint16 {
+    let mut v1: *const uint8 = RomPtr_8F(k as uint16_t, game);
+    if CheckBossBitForCurArea(*v1 as uint16, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
+        != 0
+    {
         return RoomDefStateSelect_Finish(
             *(v1.offset(1 as ::core::ffi::c_int as isize) as *mut uint16),
+            game,
         );
     } else {
         return (k as ::core::ffi::c_int + 3 as ::core::ffi::c_int) as uint16;
     };
 }
-pub unsafe fn RoomDefStateSelect_MorphBallMissiles(mut k: uint16) -> uint16 {
-    if *((&raw mut g_ram as *mut uint8).offset(0x9a4 as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
+pub unsafe fn RoomDefStateSelect_MorphBallMissiles(mut k: uint16, game: &mut Game) -> uint16 {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x9a4 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
         & 4 as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
-        || *((&raw mut g_ram as *mut uint8).offset(0x9c8 as ::core::ffi::c_int as isize)
+        || *((&raw mut game.g_ram as *mut uint8).offset(0x9c8 as ::core::ffi::c_int as isize)
             as *mut uint16)
             == 0
     {
         return (k as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     }
-    let mut v1: *const uint16 = RomPtr_8F(k as uint16_t) as *const uint16;
-    return RoomDefStateSelect_Finish(*v1);
+    let mut v1: *const uint16 = RomPtr_8F(k as uint16_t, game) as *const uint16;
+    return RoomDefStateSelect_Finish(*v1, game);
 }
-pub unsafe fn RoomDefStateSelect_PowerBombs(mut k: uint16) -> uint16 {
-    if *((&raw mut g_ram as *mut uint8).offset(0x9d0 as ::core::ffi::c_int as isize) as *mut uint16)
+pub unsafe fn RoomDefStateSelect_PowerBombs(mut k: uint16, game: &mut Game) -> uint16 {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x9d0 as ::core::ffi::c_int as isize)
+        as *mut uint16)
         == 0
     {
         return (k as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     }
-    let mut v1: *const uint16 = RomPtr_8F(k as uint16_t) as *const uint16;
-    return RoomDefStateSelect_Finish(*v1);
+    let mut v1: *const uint16 = RomPtr_8F(k as uint16_t, game) as *const uint16;
+    return RoomDefStateSelect_Finish(*v1, game);
 }
-pub unsafe fn CallRoomSetupCode(mut ea: uint32) {
+pub unsafe fn CallRoomSetupCode(mut ea: uint32, game: &mut Game) {
     match ea {
         9408916 => {
-            RoomSetup_AfterSavingAnimals();
+            RoomSetup_AfterSavingAnimals(game);
             return;
         }
         9408937 => {
-            RoomSetup_AutoDestroyWallAfterEscape();
+            RoomSetup_AutoDestroyWallAfterEscape(game);
             return;
         }
         9408946 => {
-            RoomSetup_TurnWallIntoShotblocks();
+            RoomSetup_TurnWallIntoShotblocks(game);
             return;
         }
         9408957 => {
-            RoomSetup_ShakeDuringEscape();
+            RoomSetup_ShakeDuringEscape(game);
             return;
         }
         9408969 => {
-            RoomSetup_ScrollingSkyLand();
+            RoomSetup_ScrollingSkyLand(game);
             return;
         }
         9408974 => {
-            RoomSetup_ScrollingSkyOcean();
+            RoomSetup_ScrollingSkyOcean(game);
             return;
         }
         9408983 => {
-            RoomSetup_RunStatueUnlockAnims();
+            RoomSetup_RunStatueUnlockAnims(game);
             return;
         }
         9423048 => {
-            RoomCode_8FC8C8();
+            RoomCode_8FC8C8(game);
             return;
         }
         9423059 => {
-            RoomCode_SetupShaktoolRoomPlm();
+            RoomCode_SetupShaktoolRoomPlm(game);
             return;
         }
         9423069 => {
-            RoomCode_SetPauseCodeForDraygon();
+            RoomCode_SetPauseCodeForDraygon(game);
             return;
         }
         9423114 => {
-            RoomCode_SetCollectedMap();
+            RoomCode_SetCollectedMap(game);
             return;
         }
         9408955 | 9408956 | 9408979 | 9408980 | 9408981 | 9408982 | 9409012 | 9409013 | 9409014
         | 9409015 | 9423047 | 9423056 | 9423057 | 9423058 | 9423068 | 9423134 => return,
         9423135 => {
-            RoomCode_SetZebesTimebombEvent();
+            RoomCode_SetZebesTimebombEvent(game);
             return;
         }
         9423155 => {
-            RoomCode_SetLightHorizRoomShake();
+            RoomCode_SetLightHorizRoomShake(game);
             return;
         }
         9423174 => {
-            RoomCode_SetMediumHorizRoomShake();
+            RoomCode_SetMediumHorizRoomShake(game);
             return;
         }
         9423187 => {
-            RoomCode_Escape4_SetMediumHorizRoomShake();
+            RoomCode_Escape4_SetMediumHorizRoomShake(game);
             return;
         }
         9423214 => {
-            RoomCode_SetCeresDoorSolid();
+            RoomCode_SetCeresDoorSolid(game);
             return;
         }
         9423222 => {
-            RoomCode_CeresColorMathHdma();
+            RoomCode_CeresColorMathHdma(game);
             return;
         }
         9423227 => {
-            RoomCode_CeresColorMathHdma_BgBase();
+            RoomCode_CeresColorMathHdma_BgBase(game);
             return;
         }
         _ => {
-            Unreachable();
+            Unreachable(game);
         }
     };
 }
-pub unsafe fn RunRoomSetupCode() {
+pub unsafe fn RunRoomSetupCode(game: &mut Game) {
     let mut RoomDefRoomstate: *mut RoomDefRoomstate = ::core::ptr::null_mut::<RoomDefRoomstate>();
     RoomDefRoomstate = get_RoomDefRoomstate(
-        *((&raw mut g_ram as *mut uint8).offset(0x7bb as ::core::ffi::c_int as isize)
+        *((&raw mut game.g_ram as *mut uint8).offset(0x7bb as ::core::ffi::c_int as isize)
             as *mut uint16),
+        game,
     );
     if (*RoomDefRoomstate).room_setup_code != 0 {
         CallRoomSetupCode(
             ((*RoomDefRoomstate).room_setup_code as ::core::ffi::c_int
                 | 0x8f0000 as ::core::ffi::c_int) as uint32,
+            game,
         );
     }
 }
-pub unsafe fn CallDoorDefSetupCode(mut ea: uint32) {
+pub unsafe fn CallDoorDefSetupCode(mut ea: uint32, game: &mut Game) {
     match ea {
         9419121 => {
-            DoorCode_StartWreckedShipTreadmillWest();
+            DoorCode_StartWreckedShipTreadmillWest(game);
             return;
         }
         9419137 => {
-            DoorCode_Scroll6_Green();
+            DoorCode_Scroll6_Green(game);
             return;
         }
         9419148 => {
-            DoorCode_Scroll0_Blue();
+            DoorCode_Scroll0_Blue(game);
             return;
         }
         9419159 => {
-            DoorCode_Scroll13_Blue();
+            DoorCode_Scroll13_Blue(game);
             return;
         }
         9419170 => {
-            DoorCode_Scroll_4Blue_8Green();
+            DoorCode_Scroll_4Blue_8Green(game);
             return;
         }
         9419187 => {
-            DoorCode_Scroll_8toB_Red();
+            DoorCode_Scroll_8toB_Red(game);
             return;
         }
         9419210 => {
-            DoorCode_Scroll_LotsRed();
+            DoorCode_Scroll_LotsRed(game);
             return;
         }
         9419249 => {
-            DoorCode_Scroll_1_4_Green();
+            DoorCode_Scroll_1_4_Green(game);
             return;
         }
         9419264 => {
-            DoorCode_Scroll_2_Blue();
+            DoorCode_Scroll_2_Blue(game);
             return;
         }
         9419275 => {
-            DoorCode_Scroll_17_Blue();
+            DoorCode_Scroll_17_Blue(game);
             return;
         }
         9419286 => {
-            DoorCode_Scroll_4_Blue();
+            DoorCode_Scroll_4_Blue(game);
             return;
         }
         9419297 => {
-            DoorCode_Scroll_6_Green();
+            DoorCode_Scroll_6_Green(game);
             return;
         }
         9419308 => {
-            DoorCode_Scroll_3_Green();
+            DoorCode_Scroll_3_Green(game);
             return;
         }
         9420039 => {
-            DoorCode_SetScroll_0();
+            DoorCode_SetScroll_0(game);
             return;
         }
         9420054 => {
-            DoorCode_SetScroll_1();
+            DoorCode_SetScroll_1(game);
             return;
         }
         9420069 => {
-            DoorCode_SetScroll_2();
+            DoorCode_SetScroll_2(game);
             return;
         }
         9420080 => {
-            DoorCode_SetScroll_3();
+            DoorCode_SetScroll_3(game);
             return;
         }
         9420095 => {
-            DoorCode_SetScroll_4();
+            DoorCode_SetScroll_4(game);
             return;
         }
         9420112 => {
-            DoorCode_SetScroll_5();
+            DoorCode_SetScroll_5(game);
             return;
         }
         9420123 => {
-            DoorCode_SetScroll_6();
+            DoorCode_SetScroll_6(game);
             return;
         }
         9420140 => {
-            DoorCode_SetScroll_7();
+            DoorCode_SetScroll_7(game);
             return;
         }
         9420151 => {
-            DoorCode_SetScroll_8();
+            DoorCode_SetScroll_8(game);
             return;
         }
         9420170 => {
-            DoorCode_SetScroll_9();
+            DoorCode_SetScroll_9(game);
             return;
         }
         9420181 => {
-            DoorCode_SetScroll_10();
+            DoorCode_SetScroll_10(game);
             return;
         }
         9420192 => {
-            DoorCode_SetScroll_11();
+            DoorCode_SetScroll_11(game);
             return;
         }
         9420207 => {
-            DoorCode_SetScroll_12();
+            DoorCode_SetScroll_12(game);
             return;
         }
         9420224 => {
-            DoorCode_SetScroll_13();
+            DoorCode_SetScroll_13(game);
             return;
         }
         9420241 => {
-            DoorCode_SetScroll_14();
+            DoorCode_SetScroll_14(game);
             return;
         }
         9420258 => {
-            DoorCode_SetScroll_15();
+            DoorCode_SetScroll_15(game);
             return;
         }
         9420273 => {
-            DoorCode_SetScroll_16();
+            DoorCode_SetScroll_16(game);
             return;
         }
         9420288 => {
-            DoorCode_SetScroll_17();
+            DoorCode_SetScroll_17(game);
             return;
         }
         9420299 => {
-            DoorCode_SetScroll_18();
+            DoorCode_SetScroll_18(game);
             return;
         }
         9420314 => {
-            DoorCode_SetScroll_19();
+            DoorCode_SetScroll_19(game);
             return;
         }
         9420325 => {
-            DoorCode_SetScroll_20();
+            DoorCode_SetScroll_20(game);
             return;
         }
         9420342 => {
-            DoorCode_SetScroll_21();
+            DoorCode_SetScroll_21(game);
             return;
         }
         9420702 => {
-            DoorCode_SetScroll_22();
+            DoorCode_SetScroll_22(game);
             return;
         }
         9420731 => {
-            DoorCode_SetScroll_23();
+            DoorCode_SetScroll_23(game);
             return;
         }
         9420762 => {
-            DoorCode_SetScroll_24();
+            DoorCode_SetScroll_24(game);
             return;
         }
         9420777 => {
-            DoorCode_SetScroll_25();
+            DoorCode_SetScroll_25(game);
             return;
         }
         9420794 => {
-            DoorCode_SetScroll_26();
+            DoorCode_SetScroll_26(game);
             return;
         }
         9420822 => {
-            DoorCode_SetScroll_28();
+            DoorCode_SetScroll_28(game);
             return;
         }
         9420837 => {
-            DoorCode_SetScroll_29();
+            DoorCode_SetScroll_29(game);
             return;
         }
         9420858 => {
-            DoorCode_SetScroll_30();
+            DoorCode_SetScroll_30(game);
             return;
         }
         9420875 => {
-            DoorCode_SetScroll_31();
+            DoorCode_SetScroll_31(game);
             return;
         }
         9420886 => {
-            DoorCode_SetScroll_32();
+            DoorCode_SetScroll_32(game);
             return;
         }
         9420903 => {
-            DoorCode_SetScroll_33();
+            DoorCode_SetScroll_33(game);
             return;
         }
         9420920 => {
-            DoorCode_SetScroll_34();
+            DoorCode_SetScroll_34(game);
             return;
         }
         9420937 => {
-            DoorCode_SetScroll_35();
+            DoorCode_SetScroll_35(game);
             return;
         }
         9420962 => {
-            DoorCode_SetScroll_36();
+            DoorCode_SetScroll_36(game);
             return;
         }
         9420973 => {
-            DoorCode_SetScroll_37();
+            DoorCode_SetScroll_37(game);
             return;
         }
         9420994 => {
-            DoorCode_SetScroll_38();
+            DoorCode_SetScroll_38(game);
             return;
         }
         9421011 => {
-            DoorCode_SetScroll_39();
+            DoorCode_SetScroll_39(game);
             return;
         }
         9421022 => {
-            DoorCode_SetScroll_40();
+            DoorCode_SetScroll_40(game);
             return;
         }
         9421039 => {
-            DoorCode_SetScroll_41();
+            DoorCode_SetScroll_41(game);
             return;
         }
         9421050 => {
-            DoorCode_SetScroll_42();
+            DoorCode_SetScroll_42(game);
             return;
         }
         9421067 => {
-            DoorCode_SetScroll_43();
+            DoorCode_SetScroll_43(game);
             return;
         }
         9429464 => {
-            DoorCode_StartWreckedSkipTreadmill_East();
+            DoorCode_StartWreckedSkipTreadmill_East(game);
             return;
         }
         9429480 => {
-            DoorCode_SetScroll_44();
+            DoorCode_SetScroll_44(game);
             return;
         }
         9429491 => {
-            DoorCode_SetScroll_45();
+            DoorCode_SetScroll_45(game);
             return;
         }
         9429502 => {
-            DoorCode_SetScroll_46();
+            DoorCode_SetScroll_46(game);
             return;
         }
         9429519 => {
-            DoorCode_SetScroll_47();
+            DoorCode_SetScroll_47(game);
             return;
         }
         9429530 => {
-            DoorCode_SetScroll_48();
+            DoorCode_SetScroll_48(game);
             return;
         }
         9429545 => {
-            DoorCode_SetScroll_49();
+            DoorCode_SetScroll_49(game);
             return;
         }
         9429612 => {
-            DoorCode_SetupElevatubeFromSouth();
+            DoorCode_SetupElevatubeFromSouth(game);
             return;
         }
         9429649 => {
-            DoorCode_SetupElevatubeFromNorth();
+            DoorCode_SetupElevatubeFromNorth(game);
             return;
         }
         9429761 => {
-            DoorCode_ResetElevatubeNorthExit();
+            DoorCode_ResetElevatubeNorthExit(game);
             return;
         }
         9429769 => {
-            DoorCode_ResetElevatubeSouthExit();
+            DoorCode_ResetElevatubeSouthExit(game);
             return;
         }
         9429784 => {
-            DoorCode_SetScroll_50();
+            DoorCode_SetScroll_50(game);
             return;
         }
         9429829 => {
-            DoorCode_SetScroll_53();
+            DoorCode_SetScroll_53(game);
             return;
         }
         9429846 => {
-            DoorCode_SetScroll_54();
+            DoorCode_SetScroll_54(game);
             return;
         }
         9429863 => {
-            DoorCode_SetScroll_55();
+            DoorCode_SetScroll_55(game);
             return;
         }
         9429880 => {
-            DoorCode_SetScroll_56();
+            DoorCode_SetScroll_56(game);
             return;
         }
         9429901 => {
-            DoorCode_SetScroll_57();
+            DoorCode_SetScroll_57(game);
             return;
         }
         9429912 => {
-            DoorCode_SetScroll_58();
+            DoorCode_SetScroll_58(game);
             return;
         }
         9429923 => {
-            DoorCode_SetScroll_59();
+            DoorCode_SetScroll_59(game);
             return;
         }
         9429945 => {
-            DoorCode_SetScroll_61();
+            DoorCode_SetScroll_61(game);
             return;
         }
         9429960 => {
-            DoorCode_SetScroll_62();
+            DoorCode_SetScroll_62(game);
             return;
         }
         9429977 => {
-            DoorCode_SetScroll_63();
+            DoorCode_SetScroll_63(game);
             return;
         }
         9430208 => {
-            DoorCode_SetScroll_64();
+            DoorCode_SetScroll_64(game);
             return;
         }
         9430223 => {
-            DoorCode_SetScroll_65();
+            DoorCode_SetScroll_65(game);
             return;
         }
         9430240 => {
-            DoorCode_CeresElevatorShaft();
+            DoorCode_CeresElevatorShaft(game);
             return;
         }
         9430291 => {
-            DoorCode_CeresElevatorShaft_2();
+            DoorCode_CeresElevatorShaft_2(game);
             return;
         }
         _ => {
-            Unreachable();
+            Unreachable(game);
         }
     };
 }
-pub unsafe fn RunDoorSetupCode() {
+pub unsafe fn RunDoorSetupCode(game: &mut Game) {
     let mut DD: *mut DoorDef = get_DoorDef(
-        *((&raw mut g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize)
+        *((&raw mut game.g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize)
             as *mut uint16),
+        game,
     );
     if (*DD).door_setup_code != 0 {
         CallDoorDefSetupCode(
             ((*DD).door_setup_code as ::core::ffi::c_int | 0x8f0000 as ::core::ffi::c_int)
                 as uint32,
+            game,
         );
     }
 }
-pub unsafe fn RoomCode_CrocomireShaking() {
+pub unsafe fn RoomCode_CrocomireShaking(game: &mut Game) {
     let mut ai_var_D: uint16 = 0;
-    if (*((&raw mut g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
         as *mut EnemyData)
         .offset(0 as ::core::ffi::c_int as isize))
     .properties as ::core::ffi::c_int
         & 0x200 as ::core::ffi::c_int
         == 0 as ::core::ffi::c_int
     {
-        if (*((&raw mut g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
+        if (*((&raw mut game.g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
             as *mut EnemyData)
             .offset(0 as ::core::ffi::c_int as isize))
         .ai_var_A as ::core::ffi::c_int
             == 64 as ::core::ffi::c_int
         {
-            *((&raw mut g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
-                as *mut uint16) =
-                ((*((&raw mut g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
-                    as *mut EnemyData)
-                    .offset(1 as ::core::ffi::c_int as isize))
-                .ai_var_D as ::core::ffi::c_int
-                    + *((&raw mut g_ram as *mut uint8).offset(0x91f as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int
-                    + *((&raw mut g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int) as uint16;
-        } else if (*((&raw mut g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
-            as *mut EnemyData)
+            *((&raw mut game.g_ram as *mut uint8).offset(0xb3 as ::core::ffi::c_int as isize)
+                as *mut uint16) = ((*((&raw mut game.g_ram as *mut uint8)
+                .offset(0xf78 as ::core::ffi::c_int as isize)
+                as *mut EnemyData)
+                .offset(1 as ::core::ffi::c_int as isize))
+            .ai_var_D as ::core::ffi::c_int
+                + *((&raw mut game.g_ram as *mut uint8).offset(0x91f as ::core::ffi::c_int as isize)
+                    as *mut uint16) as ::core::ffi::c_int
+                + *((&raw mut game.g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize)
+                    as *mut uint16) as ::core::ffi::c_int)
+                as uint16;
+        } else if (*((&raw mut game.g_ram as *mut uint8)
+            .offset(0xf78 as ::core::ffi::c_int as isize) as *mut EnemyData)
             .offset(0 as ::core::ffi::c_int as isize))
         .ai_var_B as ::core::ffi::c_int
             & 0x400 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
         {
-            let fresh5 = &raw mut (*((&raw mut g_ram as *mut uint8)
+            let fresh5 = &raw mut (*((&raw mut game.g_ram as *mut uint8)
                 .offset(0xf78 as ::core::ffi::c_int as isize)
                 as *mut EnemyData)
                 .offset(1 as ::core::ffi::c_int as isize))
@@ -2345,62 +2430,62 @@ pub unsafe fn RoomCode_CrocomireShaking() {
                 & 0x8000 as ::core::ffi::c_int
                 != 0
             {
-                ai_var_D = ((*((&raw mut g_ram as *mut uint8)
+                ai_var_D = ((*((&raw mut game.g_ram as *mut uint8)
                     .offset(0xf78 as ::core::ffi::c_int as isize)
                     as *mut EnemyData)
                     .offset(1 as ::core::ffi::c_int as isize))
                 .ai_var_D as ::core::ffi::c_int
                     - 2 as ::core::ffi::c_int
-                        * ((*((&raw mut g_ram as *mut uint8)
+                        * ((*((&raw mut game.g_ram as *mut uint8)
                             .offset(0xf78 as ::core::ffi::c_int as isize)
                             as *mut EnemyData)
                             .offset(1 as ::core::ffi::c_int as isize))
                         .ai_var_D as ::core::ffi::c_int
                             + 7 as ::core::ffi::c_int)) as uint16;
             } else {
-                ai_var_D = (*((&raw mut g_ram as *mut uint8)
+                ai_var_D = (*((&raw mut game.g_ram as *mut uint8)
                     .offset(0xf78 as ::core::ffi::c_int as isize)
                     as *mut EnemyData)
                     .offset(1 as ::core::ffi::c_int as isize))
                 .ai_var_D;
             }
-            let ref mut fresh6 = *((&raw mut g_ram as *mut uint8)
+            let ref mut fresh6 = *((&raw mut game.g_ram as *mut uint8)
                 .offset(0xb3 as ::core::ffi::c_int as isize)
                 as *mut uint16);
             *fresh6 = (*fresh6 as ::core::ffi::c_int + ai_var_D as ::core::ffi::c_int) as uint16;
-            *((&raw mut g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize)
+            *((&raw mut game.g_ram as *mut uint8).offset(0xb7 as ::core::ffi::c_int as isize)
                 as *mut uint16) =
                 (ai_var_D as ::core::ffi::c_int - 48 as ::core::ffi::c_int) as uint16;
-        } else if (*((&raw mut g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
-            as *mut EnemyData)
+        } else if (*((&raw mut game.g_ram as *mut uint8)
+            .offset(0xf78 as ::core::ffi::c_int as isize) as *mut EnemyData)
             .offset(0 as ::core::ffi::c_int as isize))
         .ai_var_C as ::core::ffi::c_int
             == 34 as ::core::ffi::c_int
-            && (*((&raw mut g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
+            && (*((&raw mut game.g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
                 as *mut EnemyData)
                 .offset(0 as ::core::ffi::c_int as isize))
             .ai_var_D as ::core::ffi::c_int
                 != 0
         {
-            let fresh7 = &raw mut (*((&raw mut g_ram as *mut uint8)
+            let fresh7 = &raw mut (*((&raw mut game.g_ram as *mut uint8)
                 .offset(0xf78 as ::core::ffi::c_int as isize)
                 as *mut EnemyData)
                 .offset(0 as ::core::ffi::c_int as isize))
             .ai_var_D;
             fresh7.write_unaligned(fresh7.read_unaligned().wrapping_sub(1));
-            if (*((&raw mut g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
+            if (*((&raw mut game.g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
                 as *mut EnemyData)
                 .offset(0 as ::core::ffi::c_int as isize))
             .ai_var_D as ::core::ffi::c_int
                 & 1 as ::core::ffi::c_int
                 != 0 as ::core::ffi::c_int
             {
-                let ref mut fresh8 = *((&raw mut g_ram as *mut uint8)
+                let ref mut fresh8 = *((&raw mut game.g_ram as *mut uint8)
                     .offset(0x911 as ::core::ffi::c_int as isize)
                     as *mut uint16);
                 *fresh8 = (*fresh8 as ::core::ffi::c_int - 4 as ::core::ffi::c_int) as uint16;
             } else {
-                let ref mut fresh9 = *((&raw mut g_ram as *mut uint8)
+                let ref mut fresh9 = *((&raw mut game.g_ram as *mut uint8)
                     .offset(0x911 as ::core::ffi::c_int as isize)
                     as *mut uint16);
                 *fresh9 = (*fresh9 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
@@ -2428,44 +2513,44 @@ static kRoomCode_RidleyRoomShaking_Y: [int16; 8] = [
     0 as ::core::ffi::c_int as int16,
     -(2 as ::core::ffi::c_int) as int16,
 ];
-pub unsafe fn RoomCode_RidleyRoomShaking() {
-    let mut ai_var_A: uint16 = (*((&raw mut g_ram as *mut uint8)
+pub unsafe fn RoomCode_RidleyRoomShaking(game: &mut Game) {
+    let mut ai_var_A: uint16 = (*((&raw mut game.g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         as *mut EnemyData)
         .offset(4 as ::core::ffi::c_int as isize))
     .ai_var_A;
-    if (*((&raw mut g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0xf78 as ::core::ffi::c_int as isize)
         as *mut EnemyData)
         .offset(4 as ::core::ffi::c_int as isize))
     .ai_var_A
         != 0
     {
-        let fresh0 = &raw mut (*((&raw mut g_ram as *mut uint8)
+        let fresh0 = &raw mut (*((&raw mut game.g_ram as *mut uint8)
             .offset(0xf78 as ::core::ffi::c_int as isize)
             as *mut EnemyData)
             .offset(4 as ::core::ffi::c_int as isize))
         .ai_var_A;
         fresh0.write_unaligned(fresh0.read_unaligned().wrapping_sub(1));
         let mut v1: ::core::ffi::c_int = ai_var_A as ::core::ffi::c_int - 1 as ::core::ffi::c_int;
-        let ref mut fresh1 = *((&raw mut g_ram as *mut uint8)
+        let ref mut fresh1 = *((&raw mut game.g_ram as *mut uint8)
             .offset(0xb1 as ::core::ffi::c_int as isize)
             as *mut uint16);
         *fresh1 = (*fresh1 as ::core::ffi::c_int
             + kRoomCode_RidleyRoomShaking_X[v1 as usize] as ::core::ffi::c_int)
             as uint16;
-        let ref mut fresh2 = *((&raw mut g_ram as *mut uint8)
+        let ref mut fresh2 = *((&raw mut game.g_ram as *mut uint8)
             .offset(0xb5 as ::core::ffi::c_int as isize)
             as *mut uint16);
         *fresh2 = (*fresh2 as ::core::ffi::c_int
             + kRoomCode_RidleyRoomShaking_X[v1 as usize] as ::core::ffi::c_int)
             as uint16;
-        let ref mut fresh3 = *((&raw mut g_ram as *mut uint8)
+        let ref mut fresh3 = *((&raw mut game.g_ram as *mut uint8)
             .offset(0xb3 as ::core::ffi::c_int as isize)
             as *mut uint16);
         *fresh3 = (*fresh3 as ::core::ffi::c_int
             + kRoomCode_RidleyRoomShaking_Y[v1 as usize] as ::core::ffi::c_int)
             as uint16;
-        let ref mut fresh4 = *((&raw mut g_ram as *mut uint8)
+        let ref mut fresh4 = *((&raw mut game.g_ram as *mut uint8)
             .offset(0xb7 as ::core::ffi::c_int as isize)
             as *mut uint16);
         *fresh4 = (*fresh4 as ::core::ffi::c_int
@@ -2473,78 +2558,80 @@ pub unsafe fn RoomCode_RidleyRoomShaking() {
             as uint16;
     }
 }
-pub unsafe fn CallRoomCode(mut ea: uint32) {
+pub unsafe fn CallRoomCode(mut ea: uint32, game: &mut Game) {
     match ea {
         9421078 => {
-            RoomCode_ScrollingSkyLand_();
+            RoomCode_ScrollingSkyLand_(game);
             return;
         }
         9421083 => {
-            RoomCode_ScrollingSkyOcean_();
+            RoomCode_ScrollingSkyOcean_(game);
             return;
         }
         9421088 => {
-            RoomCode_ScrollingSkyLand_Shakes();
+            RoomCode_ScrollingSkyLand_Shakes(game);
             return;
         }
         9421092 => {
-            RoomCode_ExplodeShakes();
+            RoomCode_ExplodeShakes(game);
             return;
         }
         9421286 => {
-            RoomCode_ScrollRightDachora();
+            RoomCode_ScrollRightDachora(game);
             return;
         }
         9429686 => {
-            RoomCode_Elevatube();
+            RoomCode_Elevatube(game);
             return;
         }
         9430303 => {
-            RoomCode_CeresElevatorShaft_();
+            RoomCode_CeresElevatorShaft_(game);
             return;
         }
         9430308 => return,
         9430309 => {
-            RoomCode_SpawnCeresFallingDebris();
+            RoomCode_SpawnCeresFallingDebris(game);
             return;
         }
         9430385 => {
-            RoomCode_HandleCeresRidleyGetaway();
+            RoomCode_HandleCeresRidleyGetaway(game);
             return;
         }
         9430396 => {
-            RoomCode_ShakeScreenHorizDiag();
+            RoomCode_ShakeScreenHorizDiag(game);
             return;
         }
         9430432 => {
-            RoomCode_GenRandomExplodes_4th();
+            RoomCode_GenRandomExplodes_4th(game);
             return;
         }
         9430436 => {
-            RoomCode_ShakeScreenHorizDiagStrong();
+            RoomCode_ShakeScreenHorizDiagStrong(game);
             return;
         }
         9431245 => {
-            RoomCode_CrocomireShaking();
+            RoomCode_CrocomireShaking(game);
             return;
         }
         9431376 => {
-            RoomCode_RidleyRoomShaking();
+            RoomCode_RidleyRoomShaking(game);
             return;
         }
         _ => {
-            Unreachable();
+            Unreachable(game);
         }
     };
 }
-pub unsafe fn RunRoomMainCode() {
-    if *((&raw mut g_ram as *mut uint8).offset(0x7df as ::core::ffi::c_int as isize) as *mut uint16)
+pub unsafe fn RunRoomMainCode(game: &mut Game) {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x7df as ::core::ffi::c_int as isize)
+        as *mut uint16)
         != 0
     {
         CallRoomCode(
-            (*((&raw mut g_ram as *mut uint8).offset(0x7df as ::core::ffi::c_int as isize)
+            (*((&raw mut game.g_ram as *mut uint8).offset(0x7df as ::core::ffi::c_int as isize)
                 as *mut uint16) as ::core::ffi::c_int
                 | 0x8f0000 as ::core::ffi::c_int) as uint32,
+            game,
         );
     }
 }

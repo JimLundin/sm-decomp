@@ -8,6 +8,7 @@
 )]
 #[allow(unused_imports)]
 use ::sm as _;
+use sm::game_state::{Game, GameOwner};
 mod verify;
 pub use sdl2_sys::{
     SDL_AudioDeviceEvent, SDL_AudioSpec, SDL_CloseAudioDevice, SDL_CommonEvent,
@@ -33,10 +34,8 @@ pub use sdl2_sys::{
     SDL_UserEvent, SDL_WindowEvent, SDL_bool, SDL_memset, SDL_mutex,
 };
 use sm::config::{g_config, FindCmdForGamepadButton, FindCmdForSdlKey, ParseConfigFile};
-use sm::cpu_infra::{g_snes, SnesInit};
-use sm::host::{
-    g_debug_flag, g_got_mismatch_count, g_new_ppu, g_other_image, g_spc_player, Die, Warning,
-};
+use sm::cpu_infra::SnesInit;
+use sm::host::{Die, Warning};
 use sm::platform::opengl::OpenGLRenderer_Create;
 use sm::rtl::{
     RtlCheat, RtlClearKeyLog, RtlReadSram, RtlRenderAudio, RtlReset, RtlRunFrame, RtlSaveLoad,
@@ -1234,8 +1233,9 @@ pub unsafe fn RtlDrawPpuFrame(
     mut pixel_buffer: *mut uint8,
     mut pitch: size_t,
     mut render_flags: uint32,
+    game: &mut Game,
 ) {
-    let mut ppu_pixels: *mut uint8 = if g_other_image as ::core::ffi::c_int != 0 {
+    let mut ppu_pixels: *mut uint8 = if game.g_other_image as ::core::ffi::c_int != 0 {
         &raw mut g_my_pixels as *mut uint8
     } else {
         &raw mut g_pixels as *mut uint8
@@ -1252,9 +1252,9 @@ pub unsafe fn RtlDrawPpuFrame(
         y = y.wrapping_add(1);
     }
 }
-unsafe fn DrawPpuFrameWithPerf() {
+unsafe fn DrawPpuFrameWithPerf(game: &mut Game) {
     let mut render_scale: ::core::ffi::c_int =
-        PpuGetCurrentRenderScale((*g_snes).ppu, g_ppu_render_flags as uint32_t);
+        PpuGetCurrentRenderScale((*game.g_snes).ppu, g_ppu_render_flags as uint32_t);
     let mut pixel_buffer: *mut uint8 = ::core::ptr::null_mut::<uint8>();
     let mut pitch: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     g_renderer_funcs
@@ -1264,6 +1264,7 @@ unsafe fn DrawPpuFrameWithPerf() {
         g_snes_height * render_scale,
         &raw mut pixel_buffer,
         &raw mut pitch,
+        game,
     );
     if g_display_perf as ::core::ffi::c_int != 0
         || g_config.display_perf_title as ::core::ffi::c_int != 0
@@ -1272,7 +1273,12 @@ unsafe fn DrawPpuFrameWithPerf() {
         static mut average: ::core::ffi::c_float = 0.;
         static mut history_pos: ::core::ffi::c_int = 0;
         let mut before: uint64 = SDL_GetPerformanceCounter() as uint64;
-        RtlDrawPpuFrame(pixel_buffer, pitch as size_t, g_ppu_render_flags as uint32);
+        RtlDrawPpuFrame(
+            pixel_buffer,
+            pitch as size_t,
+            g_ppu_render_flags as uint32,
+            game,
+        );
         let mut after: uint64 = SDL_GetPerformanceCounter() as uint64;
         let mut v: ::core::ffi::c_float = (SDL_GetPerformanceFrequency() as ::core::ffi::c_double
             / after.wrapping_sub(before) as ::core::ffi::c_double)
@@ -1283,7 +1289,12 @@ unsafe fn DrawPpuFrameWithPerf() {
         g_curr_fps = (average * (1.0f32 / 64 as ::core::ffi::c_int as ::core::ffi::c_float))
             as ::core::ffi::c_int;
     } else {
-        RtlDrawPpuFrame(pixel_buffer, pitch as size_t, g_ppu_render_flags as uint32);
+        RtlDrawPpuFrame(
+            pixel_buffer,
+            pitch as size_t,
+            g_ppu_render_flags as uint32,
+            game,
+        );
     }
     if g_display_perf {
         RenderNumber(
@@ -1293,15 +1304,15 @@ unsafe fn DrawPpuFrameWithPerf() {
             (render_scale == 4 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8,
         );
     }
-    if g_got_mismatch_count != 0 {
+    if game.g_got_mismatch_count != 0 {
         RenderNumber(
             pixel_buffer.offset((pitch * render_scale) as isize),
             pitch as size_t,
-            g_got_mismatch_count,
+            game.g_got_mismatch_count,
             (render_scale == 4 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8,
         );
     }
-    g_renderer_funcs.EndDraw.expect("non-null function pointer")();
+    g_renderer_funcs.EndDraw.expect("non-null function pointer")(game);
 }
 static mut g_audio_mutex: *mut SDL_mutex = ::core::ptr::null::<SDL_mutex>() as *mut SDL_mutex;
 static mut g_audiobuffer_cur: *mut uint8 = ::core::ptr::null::<uint8>() as *mut uint8;
@@ -1310,17 +1321,17 @@ static mut g_audiobuffer: *mut uint8 = ::core::ptr::null::<uint8>() as *mut uint
 static mut g_frames_per_block: ::core::ffi::c_int = 0;
 static mut g_audio_channels: uint8 = 0;
 static mut g_audio_device: SDL_AudioDeviceID = 0;
-unsafe fn initialize_verify_audio() -> Result<(), String> {
+unsafe fn initialize_verify_audio(game: &mut Game) -> Result<(), String> {
     g_audio_mutex = SDL_CreateMutex();
     if g_audio_mutex.is_null() {
         return Err("unable to create audio mutex".into());
     }
-    g_spc_player = SpcPlayer_Create();
-    if g_spc_player.is_null() {
+    game.g_spc_player = SpcPlayer_Create();
+    if game.g_spc_player.is_null() {
         SDL_DestroyMutex(g_audio_mutex);
         return Err("unable to initialize sound driver".into());
     }
-    SpcPlayer_Initialize(g_spc_player);
+    SpcPlayer_Initialize(game.g_spc_player);
     Ok(())
 }
 
@@ -1339,55 +1350,59 @@ unsafe extern "C" fn AudioCallback(
     mut stream: *mut Uint8,
     mut len: ::core::ffi::c_int,
 ) {
-    if SDL_LockMutex(g_audio_mutex) != 0 {
-        Die(b"Mutex lock failed!\0" as *const u8 as *const ::core::ffi::c_char);
-    }
-    while len != 0 as ::core::ffi::c_int {
-        if g_audiobuffer_end.offset_from(g_audiobuffer_cur) as ::core::ffi::c_long
-            == 0 as ::core::ffi::c_long
-        {
-            RtlRenderAudio(
-                g_audiobuffer as *mut int16,
-                g_frames_per_block,
-                g_audio_channels as ::core::ffi::c_int,
-            );
-            g_audiobuffer_cur = g_audiobuffer;
-            g_audiobuffer_end = g_audiobuffer.offset(
-                ((g_frames_per_block * g_audio_channels as ::core::ffi::c_int) as usize)
-                    .wrapping_mul(::core::mem::size_of::<int16>() as usize)
-                    as isize,
-            );
+    let owner = &*(userdata as *const GameOwner);
+    owner.with(|game| {
+        if SDL_LockMutex(g_audio_mutex) != 0 {
+            Die(b"Mutex lock failed!\0" as *const u8 as *const ::core::ffi::c_char);
         }
-        let mut n: ::core::ffi::c_int = IntMin(
-            len,
-            g_audiobuffer_end.offset_from(g_audiobuffer_cur) as ::core::ffi::c_long
-                as ::core::ffi::c_int,
-        );
-        if g_sdl_audio_mixer_volume == SDL_MIX_MAXVOLUME {
-            memcpy(
-                stream as *mut ::core::ffi::c_void,
-                g_audiobuffer_cur as *const ::core::ffi::c_void,
-                n as size_t,
+        while len != 0 as ::core::ffi::c_int {
+            if g_audiobuffer_end.offset_from(g_audiobuffer_cur) as ::core::ffi::c_long
+                == 0 as ::core::ffi::c_long
+            {
+                RtlRenderAudio(
+                    g_audiobuffer as *mut int16,
+                    g_frames_per_block,
+                    g_audio_channels as ::core::ffi::c_int,
+                    game,
+                );
+                g_audiobuffer_cur = g_audiobuffer;
+                g_audiobuffer_end = g_audiobuffer.offset(
+                    ((g_frames_per_block * g_audio_channels as ::core::ffi::c_int) as usize)
+                        .wrapping_mul(::core::mem::size_of::<int16>() as usize)
+                        as isize,
+                );
+            }
+            let mut n: ::core::ffi::c_int = IntMin(
+                len,
+                g_audiobuffer_end.offset_from(g_audiobuffer_cur) as ::core::ffi::c_long
+                    as ::core::ffi::c_int,
             );
-        } else {
-            SDL_memset(
-                stream as *mut ::core::ffi::c_void,
-                0 as ::core::ffi::c_int,
-                n as size_t,
-            );
-            SDL_MixAudioFormat(
-                stream,
-                g_audiobuffer_cur,
-                AUDIO_S16 as SDL_AudioFormat,
-                n as Uint32,
-                g_sdl_audio_mixer_volume,
-            );
+            if g_sdl_audio_mixer_volume == SDL_MIX_MAXVOLUME {
+                memcpy(
+                    stream as *mut ::core::ffi::c_void,
+                    g_audiobuffer_cur as *const ::core::ffi::c_void,
+                    n as size_t,
+                );
+            } else {
+                SDL_memset(
+                    stream as *mut ::core::ffi::c_void,
+                    0 as ::core::ffi::c_int,
+                    n as size_t,
+                );
+                SDL_MixAudioFormat(
+                    stream,
+                    g_audiobuffer_cur,
+                    AUDIO_S16 as SDL_AudioFormat,
+                    n as Uint32,
+                    g_sdl_audio_mixer_volume,
+                );
+            }
+            g_audiobuffer_cur = g_audiobuffer_cur.offset(n as isize);
+            stream = stream.offset(n as isize);
+            len -= n;
         }
-        g_audiobuffer_cur = g_audiobuffer_cur.offset(n as isize);
-        stream = stream.offset(n as isize);
-        len -= n;
-    }
-    SDL_UnlockMutex(g_audio_mutex);
+        SDL_UnlockMutex(g_audio_mutex);
+    });
 }
 static mut g_renderer: *mut SDL_Renderer = ::core::ptr::null::<SDL_Renderer>() as *mut SDL_Renderer;
 static mut g_texture: *mut SDL_Texture = ::core::ptr::null::<SDL_Texture>() as *mut SDL_Texture;
@@ -1397,7 +1412,7 @@ static mut g_sdl_renderer_rect: SDL_Rect = SDL_Rect {
     w: 0,
     h: 0,
 };
-unsafe fn SdlRenderer_Init(mut window: *mut SDL_Window) -> bool {
+unsafe fn SdlRenderer_Init(mut window: *mut SDL_Window, game: &mut Game) -> bool {
     if !g_config.shader.is_null() {
         fprintf(
             stderr,
@@ -1465,7 +1480,7 @@ unsafe fn SdlRenderer_Init(mut window: *mut SDL_Window) -> bool {
     }
     return true_0 != 0;
 }
-unsafe fn SdlRenderer_Destroy() {
+unsafe fn SdlRenderer_Destroy(game: &mut Game) {
     SDL_DestroyTexture(g_texture);
     SDL_DestroyRenderer(g_renderer);
 }
@@ -1474,6 +1489,7 @@ unsafe fn SdlRenderer_BeginDraw(
     mut height: ::core::ffi::c_int,
     mut pixels: *mut *mut uint8,
     mut pitch: *mut ::core::ffi::c_int,
+    game: &mut Game,
 ) {
     g_sdl_renderer_rect.w = width;
     g_sdl_renderer_rect.h = height;
@@ -1491,7 +1507,7 @@ unsafe fn SdlRenderer_BeginDraw(
         return;
     }
 }
-unsafe fn SdlRenderer_EndDraw() {
+unsafe fn SdlRenderer_EndDraw(game: &mut Game) {
     SDL_UnlockTexture(g_texture);
     SDL_RenderClear(g_renderer);
     SDL_RenderCopy(
@@ -1503,8 +1519,8 @@ unsafe fn SdlRenderer_EndDraw() {
     SDL_RenderPresent(g_renderer);
 }
 static mut kSdlRendererFuncs: RendererFuncs = RendererFuncs {
-    Initialize: Some(SdlRenderer_Init as unsafe fn(*mut SDL_Window) -> bool),
-    Destroy: Some(SdlRenderer_Destroy as unsafe fn() -> ()),
+    Initialize: Some(SdlRenderer_Init as unsafe fn(*mut SDL_Window, &mut Game) -> bool),
+    Destroy: Some(SdlRenderer_Destroy as unsafe fn(&mut Game) -> ()),
     BeginDraw: Some(
         SdlRenderer_BeginDraw
             as unsafe fn(
@@ -1512,13 +1528,15 @@ static mut kSdlRendererFuncs: RendererFuncs = RendererFuncs {
                 ::core::ffi::c_int,
                 *mut *mut uint8,
                 *mut ::core::ffi::c_int,
+                &mut Game,
             ) -> (),
     ),
-    EndDraw: Some(SdlRenderer_EndDraw as unsafe fn() -> ()),
+    EndDraw: Some(SdlRenderer_EndDraw as unsafe fn(&mut Game) -> ()),
 };
 unsafe fn main_0(
     mut argc: ::core::ffi::c_int,
     mut argv: *mut *mut ::core::ffi::c_char,
+    owner: &GameOwner,
 ) -> ::core::ffi::c_int {
     argc -= 1;
     argv = argv.offset(1);
@@ -1541,7 +1559,7 @@ unsafe fn main_0(
             b"--debug\0" as *const u8 as *const ::core::ffi::c_char,
         ) == 0 as ::core::ffi::c_int
     {
-        g_debug_flag = true_0 != 0;
+        owner.with(|game| game.g_debug_flag = true_0 != 0);
         argc -= 1 as ::core::ffi::c_int;
         argv = argv.offset(1 as ::core::ffi::c_int as isize);
     }
@@ -1621,7 +1639,7 @@ unsafe fn main_0(
         } else {
             b"sm.smc\0" as *const u8 as *const ::core::ffi::c_char
         };
-    let mut snes: *mut Snes = SnesInit(filename);
+    let mut snes: *mut Snes = owner.with(|game| SnesInit(filename, game));
     if snes.is_null() {
         let mut buf: [::core::ffi::c_char; 256] = [0; 256];
         snprintf(
@@ -1661,18 +1679,19 @@ unsafe fn main_0(
         ),
         NULL,
     );
-    if !g_renderer_funcs
-        .Initialize
-        .expect("non-null function pointer")(window)
-    {
+    if !owner.with(|game| {
+        g_renderer_funcs
+            .Initialize
+            .expect("non-null function pointer")(window, game)
+    }) {
         return 1 as ::core::ffi::c_int;
     }
     g_audio_mutex = SDL_CreateMutex();
     if g_audio_mutex.is_null() {
         Die(b"No mutex\0" as *const u8 as *const ::core::ffi::c_char);
     }
-    g_spc_player = SpcPlayer_Create() as *mut SpcPlayer;
-    SpcPlayer_Initialize(g_spc_player as *mut SpcPlayer);
+    owner.with(|game| game.g_spc_player = SpcPlayer_Create() as *mut SpcPlayer);
+    owner.with(|game| SpcPlayer_Initialize(game.g_spc_player as *mut SpcPlayer));
     let mut enable_audio: bool = true_0 != 0;
     if enable_audio {
         let mut want: SDL_AudioSpec = SDL_AudioSpec {
@@ -1684,7 +1703,7 @@ unsafe fn main_0(
             padding: 0,
             size: 0,
             callback: None,
-            userdata: ::core::ptr::null_mut::<::core::ffi::c_void>(),
+            userdata: owner as *const GameOwner as *mut ::core::ffi::c_void,
         };
         let mut have: SDL_AudioSpec = SDL_AudioSpec {
             freq: 0,
@@ -1695,7 +1714,7 @@ unsafe fn main_0(
             padding: 0,
             size: 0,
             callback: None,
-            userdata: ::core::ptr::null_mut::<::core::ffi::c_void>(),
+            userdata: owner as *const GameOwner as *mut ::core::ffi::c_void,
         };
         want.freq = 44100 as ::core::ffi::c_int;
         want.format = AUDIO_S16 as SDL_AudioFormat;
@@ -1746,17 +1765,20 @@ unsafe fn main_0(
         b"saves\0" as *const u8 as *const ::core::ffi::c_char,
         0o755 as __mode_t,
     );
-    RtlReadSram();
+    owner.with(|game| RtlReadSram(game));
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i < SDL_NumJoysticks() {
         OpenOneGamepad(i);
         i += 1;
     }
     if g_config.autosave {
-        HandleCommand(
-            (kKeys_Load as ::core::ffi::c_int + 0 as ::core::ffi::c_int) as uint32,
-            true_0 != 0,
-        );
+        owner.with(|game| {
+            HandleCommand(
+                (kKeys_Load as ::core::ffi::c_int + 0 as ::core::ffi::c_int) as uint32,
+                true_0 != 0,
+                game,
+            )
+        });
     }
     let mut running: bool = true_0 != 0;
     let mut lastTick: uint32 = SDL_GetTicks() as uint32;
@@ -1772,20 +1794,27 @@ unsafe fn main_0(
                     OpenOneGamepad(event.cdevice.which as ::core::ffi::c_int);
                 }
                 1616 => {
-                    HandleGamepadAxisInput(
-                        event.caxis.which as ::core::ffi::c_int,
-                        event.caxis.axis as ::core::ffi::c_int,
-                        event.caxis.value as ::core::ffi::c_int,
-                    );
+                    owner.with(|game| {
+                        HandleGamepadAxisInput(
+                            event.caxis.which as ::core::ffi::c_int,
+                            event.caxis.axis as ::core::ffi::c_int,
+                            event.caxis.value as ::core::ffi::c_int,
+                            game,
+                        )
+                    });
                 }
                 1617 | 1618 => {
                     let mut b: ::core::ffi::c_int =
                         RemapSdlButton(event.cbutton.button as ::core::ffi::c_int);
                     if b >= 0 as ::core::ffi::c_int {
-                        HandleGamepadInput(
-                            b,
-                            event.type_ == SDL_CONTROLLERBUTTONDOWN as ::core::ffi::c_int as Uint32,
-                        );
+                        owner.with(|game| {
+                            HandleGamepadInput(
+                                b,
+                                event.type_
+                                    == SDL_CONTROLLERBUTTONDOWN as ::core::ffi::c_int as Uint32,
+                                game,
+                            )
+                        });
                     }
                 }
                 1027 => {
@@ -1828,18 +1857,24 @@ unsafe fn main_0(
                     }
                 }
                 768 => {
-                    HandleInput(
-                        event.key.keysym.sym as ::core::ffi::c_int,
-                        event.key.keysym.mod_ as ::core::ffi::c_int,
-                        true_0 != 0,
-                    );
+                    owner.with(|game| {
+                        HandleInput(
+                            event.key.keysym.sym as ::core::ffi::c_int,
+                            event.key.keysym.mod_ as ::core::ffi::c_int,
+                            true_0 != 0,
+                            game,
+                        )
+                    });
                 }
                 769 => {
-                    HandleInput(
-                        event.key.keysym.sym as ::core::ffi::c_int,
-                        event.key.keysym.mod_ as ::core::ffi::c_int,
-                        false_0 != 0,
-                    );
+                    owner.with(|game| {
+                        HandleInput(
+                            event.key.keysym.sym as ::core::ffi::c_int,
+                            event.key.keysym.mod_ as ::core::ffi::c_int,
+                            false_0 != 0,
+                            game,
+                        )
+                    });
                 }
                 256 => {
                     running = false_0 != 0;
@@ -1861,22 +1896,27 @@ unsafe fn main_0(
                 g_gamepad_buttons = 0 as uint8;
             }
             inputs |= g_gamepad_buttons as ::core::ffi::c_int;
-            let mut is_replay: uint8 = RtlRunFrame(inputs) as uint8;
+            let mut is_replay: uint8 = owner.with(|game| RtlRunFrame(inputs, game)) as uint8;
             frameCtr = frameCtr.wrapping_add(1);
-            (*g_snes).disableRender = g_turbo as ::core::ffi::c_int
-                ^ is_replay as ::core::ffi::c_int & g_replay_turbo as ::core::ffi::c_int
-                != 0
-                && frameCtr
-                    & (if g_turbo as ::core::ffi::c_int != 0 {
-                        0xf as ::core::ffi::c_int
-                    } else {
-                        0x7f as ::core::ffi::c_int
-                    }) as uint32
-                    != 0 as uint32;
-            if !(*g_snes).disableRender {
-                DrawPpuFrameWithPerf();
-            }
-            let mut want_bug_in_title: bool = g_got_mismatch_count != 0 as ::core::ffi::c_int;
+            let (want_bug_in_title, disable_render) = owner.with(|game| {
+                (*game.g_snes).disableRender = g_turbo as ::core::ffi::c_int
+                    ^ is_replay as ::core::ffi::c_int & g_replay_turbo as ::core::ffi::c_int
+                    != 0
+                    && frameCtr
+                        & (if g_turbo as ::core::ffi::c_int != 0 {
+                            0xf as ::core::ffi::c_int
+                        } else {
+                            0x7f as ::core::ffi::c_int
+                        }) as uint32
+                        != 0 as uint32;
+                if !(*game.g_snes).disableRender {
+                    DrawPpuFrameWithPerf(game);
+                }
+                (
+                    game.g_got_mismatch_count != 0 as ::core::ffi::c_int,
+                    (*game.g_snes).disableRender,
+                )
+            });
             if want_bug_in_title as ::core::ffi::c_int != has_bug_in_title as ::core::ffi::c_int {
                 has_bug_in_title = want_bug_in_title;
                 let mut title: [::core::ffi::c_char; 60] = [0; 60];
@@ -1899,7 +1939,7 @@ unsafe fn main_0(
                 }
             }
             curTick = SDL_GetTicks() as uint32;
-            if !(*g_snes).disableRender && !g_config.disable_frame_delay {
+            if !disable_render && !g_config.disable_frame_delay {
                 static mut delays: [uint8; 3] = [
                     17 as ::core::ffi::c_int as uint8,
                     17 as ::core::ffi::c_int as uint8,
@@ -1921,16 +1961,19 @@ unsafe fn main_0(
         }
     }
     if g_config.autosave {
-        HandleCommand(
-            (kKeys_Save as ::core::ffi::c_int + 0 as ::core::ffi::c_int) as uint32,
-            true_0 != 0,
-        );
+        owner.with(|game| {
+            HandleCommand(
+                (kKeys_Save as ::core::ffi::c_int + 0 as ::core::ffi::c_int) as uint32,
+                true_0 != 0,
+                game,
+            )
+        });
     }
     SDL_PauseAudioDevice(g_audio_device, 1 as ::core::ffi::c_int);
     SDL_CloseAudioDevice(g_audio_device);
     SDL_DestroyMutex(g_audio_mutex);
     free(g_audiobuffer as *mut ::core::ffi::c_void);
-    g_renderer_funcs.Destroy.expect("non-null function pointer")();
+    owner.with(|game| g_renderer_funcs.Destroy.expect("non-null function pointer")(game));
     SDL_DestroyWindow(window as *mut SDL_Window);
     SDL_Quit();
     return 0 as ::core::ffi::c_int;
@@ -2137,7 +2180,7 @@ unsafe fn RenderNumber(
         i += 8 as ::core::ffi::c_int * 4 as ::core::ffi::c_int;
     }
 }
-unsafe fn HandleCommand(mut j: uint32, mut pressed: bool) {
+unsafe fn HandleCommand(mut j: uint32, mut pressed: bool, game: &mut Game) {
     if j <= kKeys_Controls_Last as ::core::ffi::c_int as uint32 {
         static mut kKbdRemap: [uint8; 13] = [
             0 as ::core::ffi::c_int as uint8,
@@ -2174,16 +2217,19 @@ unsafe fn HandleCommand(mut j: uint32, mut pressed: bool) {
         RtlSaveLoad(
             kSaveLoad_Load as ::core::ffi::c_int,
             j.wrapping_sub(kKeys_Load as ::core::ffi::c_int as uint32) as ::core::ffi::c_int,
+            game,
         );
     } else if j <= kKeys_Save_Last as ::core::ffi::c_int as uint32 {
         RtlSaveLoad(
             kSaveLoad_Save as ::core::ffi::c_int,
             j.wrapping_sub(kKeys_Save as ::core::ffi::c_int as uint32) as ::core::ffi::c_int,
+            game,
         );
     } else if j <= kKeys_Replay_Last as ::core::ffi::c_int as uint32 {
         RtlSaveLoad(
             kSaveLoad_Replay as ::core::ffi::c_int,
             j.wrapping_sub(kKeys_Replay as ::core::ffi::c_int as uint32) as ::core::ffi::c_int,
+            game,
         );
     } else if j <= kKeys_LoadRef_Last as ::core::ffi::c_int as uint32 {
         RtlSaveLoad(
@@ -2192,6 +2238,7 @@ unsafe fn HandleCommand(mut j: uint32, mut pressed: bool) {
                 .wrapping_add(j)
                 .wrapping_sub(kKeys_LoadRef as ::core::ffi::c_int as uint32)
                 as ::core::ffi::c_int,
+            game,
         );
     } else if j <= kKeys_ReplayRef_Last as ::core::ffi::c_int as uint32 {
         RtlSaveLoad(
@@ -2200,23 +2247,24 @@ unsafe fn HandleCommand(mut j: uint32, mut pressed: bool) {
                 .wrapping_add(j)
                 .wrapping_sub(kKeys_ReplayRef as ::core::ffi::c_int as uint32)
                 as ::core::ffi::c_int,
+            game,
         );
     } else {
         match j {
             113 => {
-                RtlCheat('w' as i32 as ::core::ffi::c_char);
+                RtlCheat('w' as i32 as ::core::ffi::c_char, game);
             }
             114 => {
-                RtlCheat('q' as i32 as ::core::ffi::c_char);
+                RtlCheat('q' as i32 as ::core::ffi::c_char, game);
             }
             115 => {
-                g_other_image = !g_other_image;
+                game.g_other_image = !game.g_other_image;
             }
             116 => {
-                RtlClearKeyLog();
+                RtlClearKeyLog(game);
             }
             117 => {
-                RtlStopReplay();
+                RtlStopReplay(game);
             }
             118 => {
                 g_win_flags ^= SDL_WINDOW_FULLSCREEN_DESKTOP as ::core::ffi::c_int as uint32;
@@ -2229,7 +2277,7 @@ unsafe fn HandleCommand(mut j: uint32, mut pressed: bool) {
                 SDL_ShowCursor(g_cursor as ::core::ffi::c_int);
             }
             119 => {
-                RtlReset(1 as ::core::ffi::c_int);
+                RtlReset(1 as ::core::ffi::c_int, game);
             }
             120 => {
                 g_paused = (g_paused == 0) as ::core::ffi::c_int as uint8;
@@ -2252,7 +2300,8 @@ unsafe fn HandleCommand(mut j: uint32, mut pressed: bool) {
             }
             127 => {
                 g_ppu_render_flags ^= kPpuRenderFlags_NewRenderer as ::core::ffi::c_int;
-                g_new_ppu = g_ppu_render_flags & kPpuRenderFlags_NewRenderer as ::core::ffi::c_int
+                game.g_new_ppu = g_ppu_render_flags
+                    & kPpuRenderFlags_NewRenderer as ::core::ffi::c_int
                     != 0 as ::core::ffi::c_int;
             }
             128 | 129 => {
@@ -2280,10 +2329,11 @@ unsafe fn HandleInput(
     mut keyCode: ::core::ffi::c_int,
     mut keyMod: ::core::ffi::c_int,
     mut pressed: bool,
+    game: &mut Game,
 ) {
     let mut j: ::core::ffi::c_int = FindCmdForSdlKey(keyCode as SDL_Keycode, keyMod as SDL_Keymod);
     if j != 0 as ::core::ffi::c_int {
-        HandleCommand(j as uint32, pressed);
+        HandleCommand(j as uint32, pressed, game);
     }
 }
 unsafe fn OpenOneGamepad(mut i: ::core::ffi::c_int) {
@@ -2319,7 +2369,7 @@ unsafe fn RemapSdlButton(mut button: ::core::ffi::c_int) -> ::core::ffi::c_int {
         _ => return -(1 as ::core::ffi::c_int),
     };
 }
-unsafe fn HandleGamepadInput(mut button: ::core::ffi::c_int, mut pressed: bool) {
+unsafe fn HandleGamepadInput(mut button: ::core::ffi::c_int, mut pressed: bool, game: &mut Game) {
     if (g_gamepad_modifiers & ((1 as ::core::ffi::c_int) << button) as uint32 != 0)
         as ::core::ffi::c_int
         == pressed as ::core::ffi::c_int
@@ -2332,7 +2382,7 @@ unsafe fn HandleGamepadInput(mut button: ::core::ffi::c_int, mut pressed: bool) 
             FindCmdForGamepadButton(button, g_gamepad_modifiers) as uint16;
     }
     if g_gamepad_last_cmd[button as usize] as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
-        HandleCommand(g_gamepad_last_cmd[button as usize] as uint32, pressed);
+        HandleCommand(g_gamepad_last_cmd[button as usize] as uint32, pressed, game);
     }
 }
 unsafe fn HandleVolumeAdjustment(mut volume_adjustment: ::core::ffi::c_int) {
@@ -2374,6 +2424,7 @@ unsafe fn HandleGamepadAxisInput(
     mut gamepad_id: ::core::ffi::c_int,
     mut axis: ::core::ffi::c_int,
     mut value: ::core::ffi::c_int,
+    game: &mut Game,
 ) {
     static mut last_gamepad_id: ::core::ffi::c_int = 0;
     static mut last_x: ::core::ffi::c_int = 0;
@@ -2439,6 +2490,7 @@ unsafe fn HandleGamepadAxisInput(
                     kGamepadBtn_R2 as ::core::ffi::c_int
                 },
                 value >= 12000 as ::core::ffi::c_int,
+                game,
             );
         }
     }
@@ -2521,6 +2573,8 @@ pub unsafe extern "C" fn __assert_fail(
 }
 
 pub fn main() {
+    let owner = GameOwner::new();
+
     #[cfg(windows)]
     unsafe {
         stderr = __acrt_iob_func(2);
@@ -2532,7 +2586,7 @@ pub fn main() {
         apu_unlock: host_apu_unlock,
     });
     if std::env::args().nth(1).as_deref() == Some("verify") {
-        ::std::process::exit(verify::run());
+        ::std::process::exit(owner.with(|game| verify::run(game)));
     }
     let mut args_strings: Vec<Vec<u8>> = ::std::env::args()
         .map(|arg| {
@@ -2550,6 +2604,7 @@ pub fn main() {
         ::std::process::exit(main_0(
             (args_ptrs.len() - 1) as ::core::ffi::c_int,
             args_ptrs.as_mut_ptr() as *mut *mut ::core::ffi::c_char,
+            &owner,
         ) as i32)
     }
 }

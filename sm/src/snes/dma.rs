@@ -1,4 +1,5 @@
-use crate::cpu_infra::g_fail;
+use crate::game_state::Game;
+
 use crate::snes::snes::{snes_read, snes_readBBus, snes_write, snes_writeBBus};
 extern "C" {
     fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
@@ -125,6 +126,7 @@ pub unsafe fn dma_saveload(
     mut dma: *mut Dma,
     mut func: Option<SaveLoadFunc>,
     mut ctx: *mut ::core::ffi::c_void,
+    game: &mut Game,
 ) {
     func.expect("non-null function pointer")(
         ctx,
@@ -132,6 +134,7 @@ pub unsafe fn dma_saveload(
         (225 as size_t)
             .wrapping_add(7 as size_t)
             .wrapping_sub(8 as size_t),
+        game,
     );
 }
 pub unsafe fn dma_read(mut dma: *mut Dma, mut adr: uint16_t) -> uint8_t {
@@ -272,7 +275,7 @@ pub unsafe fn dma_write(mut dma: *mut Dma, mut adr: uint16_t, mut val: uint8_t) 
         _ => {}
     };
 }
-pub unsafe fn dma_doDma(mut dma: *mut Dma) {
+pub unsafe fn dma_doDma(mut dma: *mut Dma, game: &mut Game) {
     if (*dma).dmaTimer > 0 as uint32_t {
         (*dma).dmaTimer = (*dma).dmaTimer.wrapping_sub(2 as uint32_t);
         return;
@@ -292,14 +295,14 @@ pub unsafe fn dma_doDma(mut dma: *mut Dma) {
     if !(*dma).channel[i as usize].fromB
         && (*dma).channel[i as usize].aBank as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0
         && (*dma).channel[i as usize].aAdr as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0
-        && !g_fail
+        && !game.g_fail
     {
         printf(
             b"Warning! DMA from addr 0x%x\n\0" as *const u8 as *const ::core::ffi::c_char,
             ((*dma).channel[i as usize].aBank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
                 | (*dma).channel[i as usize].aAdr as ::core::ffi::c_int,
         );
-        g_fail = true_0 != 0;
+        game.g_fail = true_0 != 0;
     }
     let fresh0 = (*dma).channel[i as usize].offIndex;
     (*dma).channel[i as usize].offIndex = (*dma).channel[i as usize].offIndex.wrapping_add(1);
@@ -311,6 +314,7 @@ pub unsafe fn dma_doDma(mut dma: *mut Dma) {
             + bAdrOffsets[(*dma).channel[i as usize].mode as usize][fresh0 as usize])
             as uint8_t,
         (*dma).channel[i as usize].fromB,
+        game,
     );
     (*dma).channel[i as usize].offIndex = ((*dma).channel[i as usize].offIndex
         as ::core::ffi::c_int
@@ -331,7 +335,7 @@ pub unsafe fn dma_doDma(mut dma: *mut Dma) {
         (*dma).dmaTimer = (*dma).dmaTimer.wrapping_add(8 as uint32_t);
     }
 }
-pub unsafe fn dma_initHdma(mut dma: *mut Dma) {
+pub unsafe fn dma_initHdma(mut dma: *mut Dma, game: &mut Game) {
     (*dma).hdmaTimer = 0 as uint16_t;
     let mut hdmaHappened: bool = false_0 != 0;
     let mut current_block_16: u64;
@@ -350,6 +354,7 @@ pub unsafe fn dma_initHdma(mut dma: *mut Dma) {
                 (((*dma).channel[i as usize].aBank as ::core::ffi::c_int)
                     << 16 as ::core::ffi::c_int
                     | fresh1 as ::core::ffi::c_int) as uint32_t,
+                game,
             );
             if (*dma).channel[i as usize].repCount as ::core::ffi::c_int == 0 as ::core::ffi::c_int
             {
@@ -367,6 +372,7 @@ pub unsafe fn dma_initHdma(mut dma: *mut Dma) {
                         (((*dma).channel[i as usize].aBank as ::core::ffi::c_int)
                             << 16 as ::core::ffi::c_int
                             | fresh2 as ::core::ffi::c_int) as uint32_t,
+                        game,
                     ) as uint16_t;
                     let fresh3 = (*dma).channel[i as usize].tableAdr;
                     (*dma).channel[i as usize].tableAdr =
@@ -379,6 +385,7 @@ pub unsafe fn dma_initHdma(mut dma: *mut Dma) {
                                     << 16 as ::core::ffi::c_int
                                     | fresh3 as ::core::ffi::c_int)
                                     as uint32_t,
+                                game,
                             ) as ::core::ffi::c_int)
                                 << 8 as ::core::ffi::c_int) as uint16_t;
                     (*dma).hdmaTimer = ((*dma).hdmaTimer as ::core::ffi::c_int
@@ -405,7 +412,7 @@ pub unsafe fn dma_initHdma(mut dma: *mut Dma) {
             ((*dma).hdmaTimer as ::core::ffi::c_int + 16 as ::core::ffi::c_int) as uint16_t;
     }
 }
-pub unsafe fn dma_doHdma(mut dma: *mut Dma) {
+pub unsafe fn dma_doHdma(mut dma: *mut Dma, game: &mut Game) {
     (*dma).hdmaTimer = 0 as uint16_t;
     let mut hdmaHappened: bool = false_0 != 0;
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -436,6 +443,7 @@ pub unsafe fn dma_doHdma(mut dma: *mut Dma) {
                                 + bAdrOffsets[(*dma).channel[i as usize].mode as usize][j as usize])
                                 as uint8_t,
                             (*dma).channel[i as usize].fromB,
+                            game,
                         );
                     } else {
                         let fresh5 = (*dma).channel[i as usize].tableAdr;
@@ -449,6 +457,7 @@ pub unsafe fn dma_doHdma(mut dma: *mut Dma) {
                                 + bAdrOffsets[(*dma).channel[i as usize].mode as usize][j as usize])
                                 as uint8_t,
                             (*dma).channel[i as usize].fromB,
+                            game,
                         );
                     }
                     j += 1;
@@ -472,6 +481,7 @@ pub unsafe fn dma_doHdma(mut dma: *mut Dma) {
                     (((*dma).channel[i as usize].aBank as ::core::ffi::c_int)
                         << 16 as ::core::ffi::c_int
                         | fresh6 as ::core::ffi::c_int) as uint32_t,
+                    game,
                 );
                 if (*dma).channel[i as usize].indirect {
                     let fresh7 = (*dma).channel[i as usize].tableAdr;
@@ -482,6 +492,7 @@ pub unsafe fn dma_doHdma(mut dma: *mut Dma) {
                         (((*dma).channel[i as usize].aBank as ::core::ffi::c_int)
                             << 16 as ::core::ffi::c_int
                             | fresh7 as ::core::ffi::c_int) as uint32_t,
+                        game,
                     ) as uint16_t;
                     let fresh8 = (*dma).channel[i as usize].tableAdr;
                     (*dma).channel[i as usize].tableAdr =
@@ -494,6 +505,7 @@ pub unsafe fn dma_doHdma(mut dma: *mut Dma) {
                                     << 16 as ::core::ffi::c_int
                                     | fresh8 as ::core::ffi::c_int)
                                     as uint32_t,
+                                game,
                             ) as ::core::ffi::c_int)
                                 << 8 as ::core::ffi::c_int) as uint16_t;
                     (*dma).hdmaTimer = ((*dma).hdmaTimer as ::core::ffi::c_int
@@ -521,13 +533,15 @@ unsafe fn dma_transferByte(
     mut aBank: uint8_t,
     mut bAdr: uint8_t,
     mut fromB: bool,
+    game: &mut Game,
 ) {
     if fromB {
         snes_write(
             (*dma).snes,
             ((aBank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int | aAdr as ::core::ffi::c_int)
                 as uint32_t,
-            snes_readBBus((*dma).snes, bAdr),
+            snes_readBBus((*dma).snes, bAdr, game),
+            game,
         );
     } else {
         snes_writeBBus(
@@ -537,17 +551,19 @@ unsafe fn dma_transferByte(
                 (*dma).snes,
                 ((aBank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
                     | aAdr as ::core::ffi::c_int) as uint32_t,
+                game,
             ),
+            game,
         );
     };
 }
-pub unsafe fn dma_cycle(mut dma: *mut Dma) -> bool {
+pub unsafe fn dma_cycle(mut dma: *mut Dma, game: &mut Game) -> bool {
     if (*dma).hdmaTimer as ::core::ffi::c_int > 0 as ::core::ffi::c_int {
         (*dma).hdmaTimer =
             ((*dma).hdmaTimer as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16_t;
         return true_0 != 0;
     } else if (*dma).dmaBusy {
-        dma_doDma(dma);
+        dma_doDma(dma, game);
         return true_0 != 0;
     }
     return false_0 != 0;

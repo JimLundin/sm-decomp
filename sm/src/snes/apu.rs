@@ -1,3 +1,4 @@
+use crate::game_state::Game;
 use crate::snes::dsp::{
     dsp_cycle, dsp_free, dsp_init, dsp_read, dsp_reset, dsp_saveload, dsp_write,
 };
@@ -135,6 +136,7 @@ pub unsafe fn apu_saveload(
     mut apu: *mut Apu,
     mut func: Option<SaveLoadFunc>,
     mut ctx: *mut ::core::ffi::c_void,
+    game: &mut Game,
 ) {
     func.expect("non-null function pointer")(
         ctx,
@@ -142,14 +144,15 @@ pub unsafe fn apu_saveload(
         (65586 as size_t)
             .wrapping_add(6 as size_t)
             .wrapping_sub(16 as size_t),
+        game,
     );
-    dsp_saveload((*apu).dsp, func, ctx);
-    spc_saveload((*apu).spc, func, ctx);
+    dsp_saveload((*apu).dsp, func, ctx, game);
+    spc_saveload((*apu).spc, func, ctx, game);
 }
-pub static mut g_debug_apu_cycles: bool = false;
-pub unsafe fn apu_cycle(mut apu: *mut Apu) {
+
+pub unsafe fn apu_cycle(mut apu: *mut Apu, game: &mut Game) {
     if (*apu).cpuCyclesLeft as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-        if g_debug_apu_cycles {
+        if game.g_debug_apu_cycles {
             let mut line: [::core::ffi::c_char; 80] = [0; 80];
             getProcessorStateSpc(apu, &raw mut line as *mut ::core::ffi::c_char);
             puts(&raw mut line as *mut ::core::ffi::c_char);

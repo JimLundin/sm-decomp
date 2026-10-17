@@ -5,9 +5,8 @@
 //! of this project. Everything here is now maintained Rust; the plan for making
 //! it idiomatic without changing behaviour is in `docs/PLAN.md`.
 //!
-//! Modules still link to each other by symbol name (`extern "C"` blocks plus
-//! `#[no_mangle]`), exactly as the C translation units did. Replacing those
-//! with ordinary `use` paths is part of phase 2 of the plan.
+//! Gameplay and runtime state is owned by `game_state::Game` and passed
+//! explicitly through Rust calls; C ABI remains at external boundaries.
 #![allow(dead_code)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
@@ -93,3 +92,5 @@ pub mod util;
 
 /// Runtime globals and callbacks supplied by the frontend.
 pub mod host;
+
+pub mod game_state;

@@ -1,11 +1,12 @@
 use crate::game::sm_80::Vector_IRQ;
 use crate::game::sm_82::RunOneFrameOfGame;
-use crate::host::{g_debug_flag, g_got_mismatch_count, g_other_image};
-use crate::rtl::{g_ram, g_rom, g_sram, RomPtr, RtlSaveSnapshot, RtlSetupEmuCallbacks, WriteReg};
+use crate::game_state::Game;
+
+use crate::rtl::{RomPtr, RtlSaveSnapshot, RtlSetupEmuCallbacks, WriteReg};
 use crate::snes::apu::apu_cycle;
 use crate::snes::cpu::{cpu_getFlags, cpu_runOpcode, cpu_setFlags};
 use crate::snes::dma::dma_doDma;
-use crate::snes::snes::{snes_frame_counter, snes_handle_pos_stuff, snes_init};
+use crate::snes::snes::{snes_handle_pos_stuff, snes_init};
 use crate::snes::snes_other::snes_loadRom;
 use crate::tracing::getProcessorStateCpu;
 pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data};
@@ -294,77 +295,20 @@ pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 #[inline]
-unsafe fn get_ProjectileInstr(mut a: uint16) -> *mut ProjectileInstr {
-    return RomPtr((0x930000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t)
-        as *mut ProjectileInstr;
+unsafe fn get_ProjectileInstr(mut a: uint16, game: &mut Game) -> *mut ProjectileInstr {
+    return RomPtr(
+        (0x930000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t,
+        game,
+    ) as *mut ProjectileInstr;
 }
 #[inline]
-unsafe fn Get_Botwoon(mut o: ::core::ffi::c_int) -> *mut Enemy_Botwoon {
-    return (&raw mut g_ram as *mut uint8)
+unsafe fn Get_Botwoon(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_Botwoon {
+    return (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)
         .offset(o as isize) as *mut Enemy_Botwoon;
 }
-pub static mut g_runmode: uint8 = RM_BOTH as ::core::ffi::c_int as uint8;
-pub static mut g_snes: *mut Snes = ::core::ptr::null::<Snes>() as *mut Snes;
-pub static mut g_cpu: *mut Cpu = ::core::ptr::null::<Cpu>() as *mut Cpu;
-pub static mut g_calling_asm_from_c: bool = false;
-pub static mut g_calling_asm_from_c_ret: ::core::ffi::c_int = 0;
-pub static mut g_fail: bool = false;
-pub static mut g_use_my_apu_code: bool = true_0 != 0;
-static mut g_snapshot_mine: Snapshot = Snapshot {
-    a: 0,
-    x: 0,
-    y: 0,
-    sp: 0,
-    dp: 0,
-    pc: 0,
-    k: 0,
-    db: 0,
-    flags: 0,
-    vTimer: 0,
-    ram: [0; 131072],
-    vram: [0; 32768],
-    sram: [0; 8192],
-    oam: [0; 288],
-};
-static mut g_snapshot_theirs: Snapshot = Snapshot {
-    a: 0,
-    x: 0,
-    y: 0,
-    sp: 0,
-    dp: 0,
-    pc: 0,
-    k: 0,
-    db: 0,
-    flags: 0,
-    vTimer: 0,
-    ram: [0; 131072],
-    vram: [0; 32768],
-    sram: [0; 8192],
-    oam: [0; 288],
-};
-static mut g_snapshot_before: Snapshot = Snapshot {
-    a: 0,
-    x: 0,
-    y: 0,
-    sp: 0,
-    dp: 0,
-    pc: 0,
-    k: 0,
-    db: 0,
-    flags: 0,
-    vTimer: 0,
-    ram: [0; 131072],
-    vram: [0; 32768],
-    sram: [0; 8192],
-    oam: [0; 288],
-};
-static mut hookmode: uint32 = 0;
-static mut hookcnt: uint32 = 0;
-static mut hookadr: uint32 = 0;
-static mut hook_orgbyte: [uint8; 1024] = [0; 1024];
-static mut hook_fixbug_orgbyte: [uint8; 1024] = [0; 1024];
-pub unsafe fn Call(mut addr: uint32) {
+
+pub unsafe fn Call(mut addr: uint32, game: &mut Game) {
     '_c2rust_label: {
         if addr & 0x8000 as uint32 != 0 {
         } else {
@@ -382,30 +326,31 @@ pub unsafe fn Call(mut addr: uint32) {
         0 as uint16,
         0 as uint16,
         0 as ::core::ffi::c_int,
+        game,
     );
 }
-pub unsafe fn SnesRomPtr(mut v: uint32) -> *mut uint8_t {
-    return RomPtr(v as uint32_t) as *mut uint8_t;
+pub unsafe fn SnesRomPtr(mut v: uint32, game: &mut Game) -> *mut uint8_t {
+    return RomPtr(v as uint32_t, game) as *mut uint8_t;
 }
-pub unsafe fn ProcessHook(mut v: uint32) -> bool {
-    let mut rombyte: *mut uint8_t = SnesRomPtr(v);
-    match hookmode {
+pub unsafe fn ProcessHook(mut v: uint32, game: &mut Game) -> bool {
+    let mut rombyte: *mut uint8_t = SnesRomPtr(v, game);
+    match game.hookmode {
         0 => {
-            let fresh2 = hookcnt;
-            hookcnt = hookcnt.wrapping_add(1);
-            *rombyte = hook_orgbyte[fresh2 as usize] as uint8_t;
+            let fresh2 = game.hookcnt;
+            game.hookcnt = game.hookcnt.wrapping_add(1);
+            *rombyte = game.hook_orgbyte[fresh2 as usize] as uint8_t;
             return false_0 != 0;
         }
         1 => {
-            let fresh3 = hookcnt;
-            hookcnt = hookcnt.wrapping_add(1);
-            hook_orgbyte[fresh3 as usize] = *rombyte as uint8;
+            let fresh3 = game.hookcnt;
+            game.hookcnt = game.hookcnt.wrapping_add(1);
+            game.hook_orgbyte[fresh3 as usize] = *rombyte as uint8;
             *rombyte = 0 as uint8_t;
             return false_0 != 0;
         }
         2 => {
-            if v == hookadr {
-                hookmode = 3 as uint32;
+            if v == game.hookadr {
+                game.hookmode = 3 as uint32;
                 return true_0 != 0;
             }
             return false_0 != 0;
@@ -414,22 +359,22 @@ pub unsafe fn ProcessHook(mut v: uint32) -> bool {
     }
     return false_0 != 0;
 }
-pub unsafe fn FixBugHook(mut addr: uint32) -> bool {
-    match hookmode {
+pub unsafe fn FixBugHook(mut addr: uint32, game: &mut Game) -> bool {
+    match game.hookmode {
         1 => {
-            let mut rombyte: *mut uint8_t = SnesRomPtr(addr);
-            let fresh0 = hookcnt;
-            hookcnt = hookcnt.wrapping_add(1);
-            hook_fixbug_orgbyte[fresh0 as usize] = *rombyte as uint8;
+            let mut rombyte: *mut uint8_t = SnesRomPtr(addr, game);
+            let fresh0 = game.hookcnt;
+            game.hookcnt = game.hookcnt.wrapping_add(1);
+            game.hook_fixbug_orgbyte[fresh0 as usize] = *rombyte as uint8;
             *rombyte = 0 as uint8_t;
             return false_0 != 0;
         }
         2 => {
-            if addr == hookadr {
-                hookmode = 3 as uint32;
+            if addr == game.hookadr {
+                game.hookmode = 3 as uint32;
                 return true_0 != 0;
             }
-            hookcnt = hookcnt.wrapping_add(1);
+            game.hookcnt = game.hookcnt.wrapping_add(1);
             return false_0 != 0;
         }
         _ => {}
@@ -593,66 +538,74 @@ static mut kPatchedCarrys: [uint32; 155] = [
     0xa48ca1 as ::core::ffi::c_int as uint32,
     0xa48ca4 as ::core::ffi::c_int as uint32,
 ];
-static mut kPatchedCarrysOrg: [uint8; 155] = [0; 155];
-pub unsafe fn PatchBugs(mut mode: uint32, mut addr: uint32) -> uint32 {
-    hookmode = mode;
-    hookadr = addr;
-    hookcnt = 0 as uint32;
-    if FixBugHook(0x86ef35 as uint32) {
-        (*g_cpu).x = (*g_cpu).y;
-    } else if FixBugHook(0x86ef45 as uint32) {
-        (*g_cpu).z = (*g_cpu).a as ::core::ffi::c_int == 0 as ::core::ffi::c_int;
-    } else if FixBugHook(0x818ab8 as uint32) {
-        if (*g_cpu).y as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-            (*g_cpu).pc = 0x8b1f as uint16_t;
+
+pub unsafe fn PatchBugs(mut mode: uint32, mut addr: uint32, game: &mut Game) -> uint32 {
+    game.hookmode = mode;
+    game.hookadr = addr;
+    game.hookcnt = 0 as uint32;
+    if FixBugHook(0x86ef35 as uint32, game) {
+        (*game.g_cpu).x = (*game.g_cpu).y;
+    } else if FixBugHook(0x86ef45 as uint32, game) {
+        (*game.g_cpu).z = (*game.g_cpu).a as ::core::ffi::c_int == 0 as ::core::ffi::c_int;
+    } else if FixBugHook(0x818ab8 as uint32, game) {
+        if (*game.g_cpu).y as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+            (*game.g_cpu).pc = 0x8b1f as uint16_t;
         }
-    } else if FixBugHook(0xa794ba as uint32) {
-        (*g_cpu).y = (*g_cpu).x;
-    } else if FixBugHook(0xa7b968 as uint32) {
-        (*g_cpu).x = *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
+    } else if FixBugHook(0xa794ba as uint32, game) {
+        (*game.g_cpu).y = (*game.g_cpu).x;
+    } else if FixBugHook(0xa7b968 as uint32, game) {
+        (*game.g_cpu).x = *((&raw mut game.g_ram as *mut uint8)
+            .offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as uint16_t;
-    } else if FixBugHook(0xa7b963 as uint32) {
-        (*g_cpu).x = *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
+    } else if FixBugHook(0xa7b963 as uint32, game) {
+        (*game.g_cpu).x = *((&raw mut game.g_ram as *mut uint8)
+            .offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as uint16_t;
-    } else if FixBugHook(0xa496c8 as uint32) {
-        (*g_cpu).a = 0 as uint16_t;
-    } else if FixBugHook(0x9085aa as uint32) {
-        (*g_cpu).a = *((&raw mut g_ram as *mut uint8).offset(0xb3e as ::core::ffi::c_int as isize)
+    } else if FixBugHook(0xa496c8 as uint32, game) {
+        (*game.g_cpu).a = 0 as uint16_t;
+    } else if FixBugHook(0x9085aa as uint32, game) {
+        (*game.g_cpu).a = *((&raw mut game.g_ram as *mut uint8)
+            .offset(0xb3e as ::core::ffi::c_int as isize)
             as *mut uint16) as uint16_t;
-    } else if FixBugHook(0xa29044 as uint32) as ::core::ffi::c_int != 0
-        || FixBugHook(0xa2905d as uint32) as ::core::ffi::c_int != 0
+    } else if FixBugHook(0xa29044 as uint32, game) as ::core::ffi::c_int != 0
+        || FixBugHook(0xa2905d as uint32, game) as ::core::ffi::c_int != 0
     {
-        (*g_cpu).c = (*g_cpu).a as ::core::ffi::c_int == 0 as ::core::ffi::c_int;
-    } else if FixBugHook(0xa29051 as uint32) {
-        (*g_cpu).a = (*g_cpu).a.wrapping_sub(1);
-    } else if FixBugHook(0xa5931c as uint32) {
-        (*g_cpu).x = *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
+        (*game.g_cpu).c = (*game.g_cpu).a as ::core::ffi::c_int == 0 as ::core::ffi::c_int;
+    } else if FixBugHook(0xa29051 as uint32, game) {
+        (*game.g_cpu).a = (*game.g_cpu).a.wrapping_sub(1);
+    } else if FixBugHook(0xa5931c as uint32, game) {
+        (*game.g_cpu).x = *((&raw mut game.g_ram as *mut uint8)
+            .offset(0xe54 as ::core::ffi::c_int as isize)
             as *mut uint16) as uint16_t;
-    } else if FixBugHook(0x80ada4 as uint32) {
-        (*g_cpu).a = *((&raw mut g_ram as *mut uint8).offset(0x919 as ::core::ffi::c_int as isize)
+    } else if FixBugHook(0x80ada4 as uint32, game) {
+        (*game.g_cpu).a = *((&raw mut game.g_ram as *mut uint8)
+            .offset(0x919 as ::core::ffi::c_int as isize)
             as *mut uint16) as uint16_t;
-    } else if FixBugHook(0x80add9 as uint32) {
-        (*g_cpu).a = *((&raw mut g_ram as *mut uint8).offset(0x919 as ::core::ffi::c_int as isize)
+    } else if FixBugHook(0x80add9 as uint32, game) {
+        (*game.g_cpu).a = *((&raw mut game.g_ram as *mut uint8)
+            .offset(0x919 as ::core::ffi::c_int as isize)
             as *mut uint16) as uint16_t;
-    } else if FixBugHook(0x80ad4d as uint32) {
-        (*g_cpu).a = *((&raw mut g_ram as *mut uint8).offset(0x917 as ::core::ffi::c_int as isize)
+    } else if FixBugHook(0x80ad4d as uint32, game) {
+        (*game.g_cpu).a = *((&raw mut game.g_ram as *mut uint8)
+            .offset(0x917 as ::core::ffi::c_int as isize)
             as *mut uint16) as uint16_t;
-    } else if FixBugHook(0x80ad77 as uint32) {
-        (*g_cpu).a = *((&raw mut g_ram as *mut uint8).offset(0x917 as ::core::ffi::c_int as isize)
+    } else if FixBugHook(0x80ad77 as uint32, game) {
+        (*game.g_cpu).a = *((&raw mut game.g_ram as *mut uint8)
+            .offset(0x917 as ::core::ffi::c_int as isize)
             as *mut uint16) as uint16_t;
-    } else if FixBugHook(0x9381db as uint32) {
-        let mut k: ::core::ffi::c_int = (*g_cpu).x as ::core::ffi::c_int;
+    } else if FixBugHook(0x9381db as uint32, game) {
+        let mut k: ::core::ffi::c_int = (*game.g_cpu).x as ::core::ffi::c_int;
         let mut ip: ::core::ffi::c_int =
-            *((&raw mut g_ram as *mut uint8).offset(0xc40 as ::core::ffi::c_int as isize)
+            *((&raw mut game.g_ram as *mut uint8).offset(0xc40 as ::core::ffi::c_int as isize)
                 as *mut uint16)
                 .offset((k >> 1 as ::core::ffi::c_int) as isize) as ::core::ffi::c_int;
-        let mut delta: ::core::ffi::c_int = if *((&raw mut g_ram as *mut uint8)
+        let mut delta: ::core::ffi::c_int = if *((&raw mut game.g_ram as *mut uint8)
             .offset(0xc54 as ::core::ffi::c_int as isize)
             as *mut uint16)
             .offset((k >> 1 as ::core::ffi::c_int) as isize)
             as ::core::ffi::c_int
             == 1 as ::core::ffi::c_int
-            && (*get_ProjectileInstr(ip as uint16)).timer as ::core::ffi::c_int
+            && (*get_ProjectileInstr(ip as uint16, game)).timer as ::core::ffi::c_int
                 & 0x8000 as ::core::ffi::c_int
                 == 0
         {
@@ -660,104 +613,105 @@ pub unsafe fn PatchBugs(mut mode: uint32, mut addr: uint32) -> uint32 {
         } else {
             -(8 as ::core::ffi::c_int)
         };
-        (*g_cpu).a =
-            ((*g_cpu).a as ::core::ffi::c_int + (8 as ::core::ffi::c_int + delta)) as uint16_t;
-    } else if FixBugHook(0x86b701 as uint32) {
-        (*g_cpu).x = (*g_cpu).y;
-    } else if FixBugHook(0x8fc1b0 as uint32) {
-        (*g_cpu).x = (*g_cpu).a;
-    } else if !FixBugHook(0x80804f as uint32) {
-        if FixBugHook(0x829325 as uint32) {
-            (*g_cpu).db = 0x82 as uint8_t;
-        } else if FixBugHook(0x848acd as uint32) {
-            (*g_cpu).a = 0 as uint16_t;
-        } else if FixBugHook(0xa7ceb2 as uint32) {
-            (*g_cpu).x = *((&raw mut g_ram as *mut uint8)
+        (*game.g_cpu).a =
+            ((*game.g_cpu).a as ::core::ffi::c_int + (8 as ::core::ffi::c_int + delta)) as uint16_t;
+    } else if FixBugHook(0x86b701 as uint32, game) {
+        (*game.g_cpu).x = (*game.g_cpu).y;
+    } else if FixBugHook(0x8fc1b0 as uint32, game) {
+        (*game.g_cpu).x = (*game.g_cpu).a;
+    } else if !FixBugHook(0x80804f as uint32, game) {
+        if FixBugHook(0x829325 as uint32, game) {
+            (*game.g_cpu).db = 0x82 as uint8_t;
+        } else if FixBugHook(0x848acd as uint32, game) {
+            (*game.g_cpu).a = 0 as uint16_t;
+        } else if FixBugHook(0xa7ceb2 as uint32, game) {
+            (*game.g_cpu).x = *((&raw mut game.g_ram as *mut uint8)
                 .offset(0xe54 as ::core::ffi::c_int as isize)
                 as *mut uint16) as uint16_t;
-        } else if FixBugHook(0x91cd44 as uint32) {
-            if (*g_cpu).x as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-                (*g_cpu).pc = 0xcd52 as uint16_t;
+        } else if FixBugHook(0x91cd44 as uint32, game) {
+            if (*game.g_cpu).x as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+                (*game.g_cpu).pc = 0xcd52 as uint16_t;
             }
-        } else if FixBugHook(0x82afd3 as uint32) {
-            if *((&raw mut g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
+        } else if FixBugHook(0x82afd3 as uint32, game) {
+            if *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
                 as *mut uint16) as uint8 as ::core::ffi::c_int
                 != 1 as ::core::ffi::c_int
             {
                 return 0x82afd9 as uint32;
             }
-        } else if FixBugHook(0x82b0cd as uint32) {
-            if *((&raw mut g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
+        } else if FixBugHook(0x82b0cd as uint32, game) {
+            if *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
                 as *mut uint16) as uint8 as ::core::ffi::c_int
                 != 2 as ::core::ffi::c_int
             {
                 return 0x82afd9 as uint32;
             }
-        } else if FixBugHook(0x82b15b as uint32) {
-            if *((&raw mut g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
+        } else if FixBugHook(0x82b15b as uint32, game) {
+            if *((&raw mut game.g_ram as *mut uint8).offset(0x755 as ::core::ffi::c_int as isize)
                 as *mut uint16) as uint8 as ::core::ffi::c_int
                 != 3 as ::core::ffi::c_int
             {
                 return 0x82afd9 as uint32;
             }
-        } else if FixBugHook(0xa2d38c as uint32) {
-            (*g_cpu).x = *((&raw mut g_ram as *mut uint8)
+        } else if FixBugHook(0xa2d38c as uint32, game) {
+            (*game.g_cpu).x = *((&raw mut game.g_ram as *mut uint8)
                 .offset(0xe54 as ::core::ffi::c_int as isize)
                 as *mut uint16) as uint16_t;
-        } else if FixBugHook(0xa4970f as uint32) {
-            (*g_cpu).a =
-                ((*g_cpu).a as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint16_t;
-            (*g_cpu).y = ((*g_cpu).x as ::core::ffi::c_int & 0x7 as ::core::ffi::c_int) as uint16_t;
-        } else if FixBugHook(0xa496e0 as uint32) {
-            if (*g_cpu).x as ::core::ffi::c_int > 48 as ::core::ffi::c_int {
-                *((&raw mut g_ram as *mut uint8).offset(0x690 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = (*g_cpu).x as uint16;
-                (*g_cpu).mf = 0 as ::core::ffi::c_int != 0;
+        } else if FixBugHook(0xa4970f as uint32, game) {
+            (*game.g_cpu).a =
+                ((*game.g_cpu).a as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint16_t;
+            (*game.g_cpu).y =
+                ((*game.g_cpu).x as ::core::ffi::c_int & 0x7 as ::core::ffi::c_int) as uint16_t;
+        } else if FixBugHook(0xa496e0 as uint32, game) {
+            if (*game.g_cpu).x as ::core::ffi::c_int > 48 as ::core::ffi::c_int {
+                *((&raw mut game.g_ram as *mut uint8).offset(0x690 as ::core::ffi::c_int as isize)
+                    as *mut uint16) = (*game.g_cpu).x as uint16;
+                (*game.g_cpu).mf = 0 as ::core::ffi::c_int != 0;
                 return 0xa497ce as uint32;
             }
-        } else if FixBugHook(0x91da89 as uint32) {
-            if *((&raw mut g_ram as *mut uint8).offset(0xace as ::core::ffi::c_int as isize)
+        } else if FixBugHook(0x91da89 as uint32, game) {
+            if *((&raw mut game.g_ram as *mut uint8).offset(0xace as ::core::ffi::c_int as isize)
                 as *mut uint16) as ::core::ffi::c_int
                 > 6 as ::core::ffi::c_int
             {
-                *((&raw mut g_ram as *mut uint8).offset(0xace as ::core::ffi::c_int as isize)
+                *((&raw mut game.g_ram as *mut uint8).offset(0xace as ::core::ffi::c_int as isize)
                     as *mut uint16) = 6 as uint16;
             }
-        } else if FixBugHook(0x828d56 as uint32) {
-            WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8);
-        } else if FixBugHook(0x88afcf as uint32) {
-            if (*g_cpu).a as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
-                (*g_cpu).a = 0 as uint16_t;
+        } else if FixBugHook(0x828d56 as uint32, game) {
+            WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
+        } else if FixBugHook(0x88afcf as uint32, game) {
+            if (*game.g_cpu).a as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
+                (*game.g_cpu).a = 0 as uint16_t;
             }
-        } else if FixBugHook(0x88aff2 as uint32) {
-            if ((*g_cpu).a as ::core::ffi::c_int) < 256 as ::core::ffi::c_int {
-                (*g_cpu).a = 256 as uint16_t;
+        } else if FixBugHook(0x88aff2 as uint32, game) {
+            if ((*game.g_cpu).a as ::core::ffi::c_int) < 256 as ::core::ffi::c_int {
+                (*game.g_cpu).a = 256 as uint16_t;
             }
-        } else if FixBugHook(0x8189bd as uint32) {
-            if (*g_cpu).y as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+        } else if FixBugHook(0x8189bd as uint32, game) {
+            if (*game.g_cpu).y as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
                 return 0x818a35 as uint32;
             }
-        } else if FixBugHook(0xa29bc1 as uint32) {
-            (*g_cpu).a = 1 as uint16_t;
-        } else if FixBugHook(0x82e910 as uint32) {
-            *((&raw mut g_ram as *mut uint8).offset(22 as ::core::ffi::c_int as isize) as *mut uint8
-                as *mut uint16) = 0 as uint16;
-        } else if FixBugHook(0x90a4c8 as uint32) {
-            *((&raw mut g_ram as *mut uint8).offset(18 as ::core::ffi::c_int as isize) as *mut uint8
-                as *mut uint16) = 0 as uint16;
-        } else if FixBugHook(0xa99f60 as uint32) {
-            *((&raw mut g_ram as *mut uint8).offset(22 as ::core::ffi::c_int as isize) as *mut uint8
-                as *mut uint16) = 1 as uint16;
-        } else if FixBugHook(0x94a85b as uint32) {
+        } else if FixBugHook(0xa29bc1 as uint32, game) {
+            (*game.g_cpu).a = 1 as uint16_t;
+        } else if FixBugHook(0x82e910 as uint32, game) {
+            *((&raw mut game.g_ram as *mut uint8).offset(22 as ::core::ffi::c_int as isize)
+                as *mut uint8 as *mut uint16) = 0 as uint16;
+        } else if FixBugHook(0x90a4c8 as uint32, game) {
+            *((&raw mut game.g_ram as *mut uint8).offset(18 as ::core::ffi::c_int as isize)
+                as *mut uint8 as *mut uint16) = 0 as uint16;
+        } else if FixBugHook(0xa99f60 as uint32, game) {
+            *((&raw mut game.g_ram as *mut uint8).offset(22 as ::core::ffi::c_int as isize)
+                as *mut uint8 as *mut uint16) = 1 as uint16;
+        } else if FixBugHook(0x94a85b as uint32, game) {
             memset(
-                (&raw mut g_ram as *mut uint8).offset(0xd82 as ::core::ffi::c_int as isize)
+                (&raw mut game.g_ram as *mut uint8).offset(0xd82 as ::core::ffi::c_int as isize)
                     as *mut ::core::ffi::c_void,
                 0 as ::core::ffi::c_int,
                 8 as size_t,
             );
-        } else if FixBugHook(0xa0a35c as uint32) {
-            *((&raw mut g_ram as *mut uint8).offset(18 as ::core::ffi::c_int as isize)
-                as *mut uint16) = *((&raw mut g_ram as *mut uint8)
+        } else if FixBugHook(0xa0a35c as uint32, game) {
+            *((&raw mut game.g_ram as *mut uint8).offset(18 as ::core::ffi::c_int as isize)
+                as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
                 .offset(0xcea as ::core::ffi::c_int as isize)
                 as *mut uint16 as *mut uint8)
                 .offset(
@@ -765,76 +719,78 @@ pub unsafe fn PatchBugs(mut mode: uint32, mut addr: uint32) -> uint32 {
                         .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                         .wrapping_sub(1 as usize) as isize,
                 ) as uint16;
-            *((&raw mut g_ram as *mut uint8).offset(20 as ::core::ffi::c_int as isize)
-                as *mut uint16) = (*((&raw mut g_ram as *mut uint8)
+            *((&raw mut game.g_ram as *mut uint8).offset(20 as ::core::ffi::c_int as isize)
+                as *mut uint16) = (*((&raw mut game.g_ram as *mut uint8)
                 .offset(18 as ::core::ffi::c_int as isize)
                 as *mut uint16) as ::core::ffi::c_int
-                + (*((&raw mut g_ram as *mut uint8).offset(18 as ::core::ffi::c_int as isize)
+                + (*((&raw mut game.g_ram as *mut uint8).offset(18 as ::core::ffi::c_int as isize)
                     as *mut uint16) as ::core::ffi::c_int
                     >> 1 as ::core::ffi::c_int)
                 >> 1 as ::core::ffi::c_int) as uint16;
-        } else if FixBugHook(0xa7b049 as uint32) {
-            (*g_cpu).x = 0 as uint16_t;
-        } else if FixBugHook(0xa5a018 as uint32) {
-            *((&raw mut g_ram as *mut uint8).offset(0xe24 as ::core::ffi::c_int as isize)
+        } else if FixBugHook(0xa7b049 as uint32, game) {
+            (*game.g_cpu).x = 0 as uint16_t;
+        } else if FixBugHook(0xa5a018 as uint32, game) {
+            *((&raw mut game.g_ram as *mut uint8).offset(0xe24 as ::core::ffi::c_int as isize)
                 as *mut uint16) = 0 as uint16;
-        } else if FixBugHook(0xb39ddb as uint32) {
+        } else if FixBugHook(0xb39ddb as uint32, game) {
             let mut E: *mut Enemy_Botwoon = Get_Botwoon(
-                *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
+                *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
                     as *mut uint16) as ::core::ffi::c_int,
+                game,
             );
-            *((&raw mut g_ram as *mut uint8).offset(18 as ::core::ffi::c_int as isize)
+            *((&raw mut game.g_ram as *mut uint8).offset(18 as ::core::ffi::c_int as isize)
                 as *mut uint16) = ((*E).base.x_pos as ::core::ffi::c_int
                 - (*E).botwoon_var_56 as ::core::ffi::c_int)
                 as uint16;
-            *((&raw mut g_ram as *mut uint8).offset(20 as ::core::ffi::c_int as isize)
+            *((&raw mut game.g_ram as *mut uint8).offset(20 as ::core::ffi::c_int as isize)
                 as *mut uint16) = ((*E).base.y_pos as ::core::ffi::c_int
                 - (*E).botwoon_var_57 as ::core::ffi::c_int)
                 as uint16;
-        } else if FixBugHook(0xb39e13 as uint32) {
+        } else if FixBugHook(0xb39e13 as uint32, game) {
             let mut E_0: *mut Enemy_Botwoon = Get_Botwoon(
-                *((&raw mut g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
+                *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
                     as *mut uint16) as ::core::ffi::c_int,
+                game,
             );
             (*E_0).botwoon_var_45 = ((*E_0).botwoon_var_45 as ::core::ffi::c_int
-                + (*((&raw mut g_ram as *mut uint8).offset(22 as ::core::ffi::c_int as isize)
+                + (*((&raw mut game.g_ram as *mut uint8).offset(22 as ::core::ffi::c_int as isize)
                     as *mut uint16) as ::core::ffi::c_int
                     - (*E_0).botwoon_var_45 as ::core::ffi::c_int) as int8
                     as ::core::ffi::c_int
                     * 3 as ::core::ffi::c_int
                     / 4 as ::core::ffi::c_int) as uint8
                 as uint16;
-            *((&raw mut g_ram as *mut uint8).offset(22 as ::core::ffi::c_int as isize)
+            *((&raw mut game.g_ram as *mut uint8).offset(22 as ::core::ffi::c_int as isize)
                 as *mut uint16) = (*E_0).botwoon_var_45;
         }
     }
     return 0 as uint32;
 }
-pub unsafe fn RunPatchBugHook(mut addr: uint32) -> ::core::ffi::c_int {
-    let mut new_pc: uint32 = PatchBugs(2 as uint32, addr);
-    if hookmode == 3 as uint32 {
+pub unsafe fn RunPatchBugHook(mut addr: uint32, game: &mut Game) -> ::core::ffi::c_int {
+    let mut new_pc: uint32 = PatchBugs(2 as uint32, addr, game);
+    if game.hookmode == 3 as uint32 {
         if new_pc == 0 as uint32 {
-            return hook_fixbug_orgbyte[hookcnt as usize] as ::core::ffi::c_int;
+            return game.hook_fixbug_orgbyte[game.hookcnt as usize] as ::core::ffi::c_int;
         } else {
-            (*g_cpu).k = (new_pc >> 16 as ::core::ffi::c_int) as uint8_t;
-            (*g_cpu).pc = (new_pc & 0xffff as uint32).wrapping_add(1 as uint32) as uint16_t;
-            return *SnesRomPtr(new_pc) as ::core::ffi::c_int;
+            (*game.g_cpu).k = (new_pc >> 16 as ::core::ffi::c_int) as uint8_t;
+            (*game.g_cpu).pc = (new_pc & 0xffff as uint32).wrapping_add(1 as uint32) as uint16_t;
+            return *SnesRomPtr(new_pc, game) as ::core::ffi::c_int;
         }
     }
     return -(1 as ::core::ffi::c_int);
 }
-pub unsafe fn CpuOpcodeHook(mut addr: uint32) -> ::core::ffi::c_int {
+pub unsafe fn CpuOpcodeHook(mut addr: uint32, game: &mut Game) -> ::core::ffi::c_int {
     let mut i: size_t = 0 as size_t;
     while i
         != (::core::mem::size_of::<[uint32; 155]>() as usize)
             .wrapping_div(::core::mem::size_of::<uint32>() as usize)
     {
         if addr == kPatchedCarrys[i as usize] {
-            return kPatchedCarrysOrg[i as usize] as ::core::ffi::c_int;
+            return game.kPatchedCarrysOrg[i as usize] as ::core::ffi::c_int;
         }
         i = i.wrapping_add(1);
     }
-    let mut i_0: ::core::ffi::c_int = RunPatchBugHook(addr);
+    let mut i_0: ::core::ffi::c_int = RunPatchBugHook(addr, game);
     if i_0 >= 0 as ::core::ffi::c_int {
         return i_0;
     }
@@ -848,10 +804,10 @@ pub unsafe fn CpuOpcodeHook(mut addr: uint32) -> ::core::ffi::c_int {
     };
     return 0 as ::core::ffi::c_int;
 }
-pub unsafe fn HookedFunctionRts(mut is_long: ::core::ffi::c_int) -> bool {
-    if g_calling_asm_from_c {
-        g_calling_asm_from_c_ret = is_long;
-        g_calling_asm_from_c = false_0 != 0;
+pub unsafe fn HookedFunctionRts(mut is_long: ::core::ffi::c_int, game: &mut Game) -> bool {
+    if game.g_calling_asm_from_c {
+        game.g_calling_asm_from_c_ret = is_long;
+        game.g_calling_asm_from_c = false_0 != 0;
         return false_0 != 0;
     }
     '_c2rust_label: {
@@ -864,9 +820,14 @@ pub unsafe fn HookedFunctionRts(mut is_long: ::core::ffi::c_int) -> bool {
     };
     return false_0 != 0;
 }
-unsafe fn VerifySnapshotsEq(mut b: *mut Snapshot, mut a: *mut Snapshot, mut prev: *mut Snapshot) {
+unsafe fn VerifySnapshotsEq(
+    mut b: *mut Snapshot,
+    mut a: *mut Snapshot,
+    mut prev: *mut Snapshot,
+    game: &mut Game,
+) {
     // Keep checking every frame, but bound headless logs to the first failure.
-    let report_details = !VERIFY_ACTIVE || VERIFY_FAILURES == 0;
+    let report_details = !game.VERIFY_ACTIVE || game.VERIFY_FAILURES == 0;
     memcpy(
         (&raw mut (*b).ram as *mut uint8).offset(0 as ::core::ffi::c_int as isize) as *mut uint8
             as *mut ::core::ffi::c_void,
@@ -1174,13 +1135,13 @@ unsafe fn VerifySnapshotsEq(mut b: *mut Snapshot, mut a: *mut Snapshot, mut prev
         0x20000 as ::core::ffi::c_int as size_t,
     ) != 0
     {
-        g_fail = true_0 != 0;
+        game.g_fail = true_0 != 0;
         if report_details {
             fprintf(
                 stderr,
                 b"@%d: Memory compare failed (mine != theirs, prev):\n\0" as *const u8
                     as *const ::core::ffi::c_char,
-                snes_frame_counter,
+                game.snes_frame_counter,
             );
             let mut j: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
             let mut i: size_t = 0 as size_t;
@@ -1229,7 +1190,7 @@ unsafe fn VerifySnapshotsEq(mut b: *mut Snapshot, mut a: *mut Snapshot, mut prev
                 i = i.wrapping_add(1);
             }
             if j != 0 {
-                g_fail = true_0 != 0;
+                game.g_fail = true_0 != 0;
             }
             fprintf(
                 stderr,
@@ -1244,13 +1205,13 @@ unsafe fn VerifySnapshotsEq(mut b: *mut Snapshot, mut a: *mut Snapshot, mut prev
         0x2000 as size_t,
     ) != 0
     {
-        g_fail = true_0 != 0;
+        game.g_fail = true_0 != 0;
         if report_details {
             fprintf(
                 stderr,
                 b"@%d: SRAM compare failed (mine != theirs, prev):\n\0" as *const u8
                     as *const ::core::ffi::c_char,
-                snes_frame_counter,
+                game.snes_frame_counter,
             );
             let mut j_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
             let mut i_0: size_t = 0 as size_t;
@@ -1299,7 +1260,7 @@ unsafe fn VerifySnapshotsEq(mut b: *mut Snapshot, mut a: *mut Snapshot, mut prev
                 i_0 = i_0.wrapping_add(1);
             }
             if j_0 != 0 {
-                g_fail = true_0 != 0;
+                game.g_fail = true_0 != 0;
             }
             fprintf(
                 stderr,
@@ -1314,13 +1275,13 @@ unsafe fn VerifySnapshotsEq(mut b: *mut Snapshot, mut a: *mut Snapshot, mut prev
         (::core::mem::size_of::<uint16>() as size_t).wrapping_mul(0x8000 as size_t),
     ) != 0
     {
-        g_fail = true_0 != 0;
+        game.g_fail = true_0 != 0;
         if report_details {
             fprintf(
                 stderr,
                 b"@%d: VRAM compare failed (mine != theirs, prev):\n\0" as *const u8
                     as *const ::core::ffi::c_char,
-                snes_frame_counter,
+                game.snes_frame_counter,
             );
             let mut i_1: size_t = 0 as size_t;
             let mut j_1: size_t = 0 as size_t;
@@ -1337,7 +1298,7 @@ unsafe fn VerifySnapshotsEq(mut b: *mut Snapshot, mut a: *mut Snapshot, mut prev
                         (*a).vram[i_1 as usize] as ::core::ffi::c_int,
                         (*prev).vram[i_1 as usize] as ::core::ffi::c_int,
                     );
-                    g_fail = true_0 != 0;
+                    game.g_fail = true_0 != 0;
                     j_1 = j_1.wrapping_add(1);
                     if j_1 >= 32 as size_t {
                         break;
@@ -1353,13 +1314,13 @@ unsafe fn VerifySnapshotsEq(mut b: *mut Snapshot, mut a: *mut Snapshot, mut prev
         (::core::mem::size_of::<uint16>() as size_t).wrapping_mul(0x120 as size_t),
     ) != 0
     {
-        g_fail = true_0 != 0;
+        game.g_fail = true_0 != 0;
         if report_details {
             fprintf(
                 stderr,
                 b"@%d: VRAM OAM compare failed (mine != theirs, prev):\n\0" as *const u8
                     as *const ::core::ffi::c_char,
-                snes_frame_counter,
+                game.snes_frame_counter,
             );
             let mut i_2: size_t = 0 as size_t;
             let mut j_2: size_t = 0 as size_t;
@@ -1376,7 +1337,7 @@ unsafe fn VerifySnapshotsEq(mut b: *mut Snapshot, mut a: *mut Snapshot, mut prev
                         (*a).oam[i_2 as usize] as ::core::ffi::c_int,
                         (*prev).oam[i_2 as usize] as ::core::ffi::c_int,
                     );
-                    g_fail = true_0 != 0;
+                    game.g_fail = true_0 != 0;
                     j_2 = j_2.wrapping_add(1);
                     if j_2 >= 16 as size_t {
                         break;
@@ -1387,8 +1348,8 @@ unsafe fn VerifySnapshotsEq(mut b: *mut Snapshot, mut a: *mut Snapshot, mut prev
         }
     }
 }
-unsafe fn MakeSnapshot(mut s: *mut Snapshot) {
-    let mut c: *mut Cpu = g_cpu;
+unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
+    let mut c: *mut Cpu = game.g_cpu;
     (*s).a = (*c).a as uint16;
     (*s).x = (*c).x as uint16;
     (*s).y = (*c).y as uint16;
@@ -1398,30 +1359,30 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot) {
     (*s).pc = (*c).pc as uint16;
     (*s).k = (*c).k as uint8;
     (*s).flags = cpu_getFlags(c) as uint8;
-    (*s).vTimer = (*g_snes).vTimer;
+    (*s).vTimer = (*game.g_snes).vTimer;
     memcpy(
         &raw mut (*s).ram as *mut uint8 as *mut ::core::ffi::c_void,
-        (*g_snes).ram as *const ::core::ffi::c_void,
+        (*game.g_snes).ram as *const ::core::ffi::c_void,
         0x20000 as ::core::ffi::c_int as size_t,
     );
     memcpy(
         &raw mut (*s).sram as *mut uint8 as *mut ::core::ffi::c_void,
-        (*(*g_snes).cart).ram as *const ::core::ffi::c_void,
-        (*(*g_snes).cart).ramSize as size_t,
+        (*(*game.g_snes).cart).ram as *const ::core::ffi::c_void,
+        (*(*game.g_snes).cart).ramSize as size_t,
     );
     memcpy(
         &raw mut (*s).vram as *mut uint16 as *mut ::core::ffi::c_void,
-        &raw mut (*(*g_snes).ppu).vram as *mut uint16_t as *const ::core::ffi::c_void,
+        &raw mut (*(*game.g_snes).ppu).vram as *mut uint16_t as *const ::core::ffi::c_void,
         (::core::mem::size_of::<uint16>() as size_t).wrapping_mul(0x8000 as size_t),
     );
     memcpy(
         &raw mut (*s).oam as *mut uint16 as *mut ::core::ffi::c_void,
-        &raw mut (*(*g_snes).ppu).oam as *mut uint16_t as *const ::core::ffi::c_void,
+        &raw mut (*(*game.g_snes).ppu).oam as *mut uint16_t as *const ::core::ffi::c_void,
         (::core::mem::size_of::<uint16>() as size_t).wrapping_mul(0x120 as size_t),
     );
 }
-unsafe fn RestoreSnapshot(mut s: *mut Snapshot) {
-    let mut c: *mut Cpu = g_cpu;
+unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
+    let mut c: *mut Cpu = game.g_cpu;
     (*c).a = (*s).a as uint16_t;
     (*c).x = (*s).x as uint16_t;
     (*c).y = (*s).y as uint16_t;
@@ -1430,25 +1391,25 @@ unsafe fn RestoreSnapshot(mut s: *mut Snapshot) {
     (*c).db = (*s).db as uint8_t;
     (*c).pc = (*s).pc as uint16_t;
     (*c).k = (*s).k as uint8_t;
-    (*g_snes).vTimer = (*s).vTimer;
+    (*game.g_snes).vTimer = (*s).vTimer;
     cpu_setFlags(c, (*s).flags as uint8_t);
     memcpy(
-        (*g_snes).ram as *mut ::core::ffi::c_void,
+        (*game.g_snes).ram as *mut ::core::ffi::c_void,
         &raw mut (*s).ram as *mut uint8 as *const ::core::ffi::c_void,
         0x20000 as ::core::ffi::c_int as size_t,
     );
     memcpy(
-        (*(*g_snes).cart).ram as *mut ::core::ffi::c_void,
+        (*(*game.g_snes).cart).ram as *mut ::core::ffi::c_void,
         &raw mut (*s).sram as *mut uint8 as *const ::core::ffi::c_void,
         0x2000 as size_t,
     );
     memcpy(
-        &raw mut (*(*g_snes).ppu).vram as *mut uint16_t as *mut ::core::ffi::c_void,
+        &raw mut (*(*game.g_snes).ppu).vram as *mut uint16_t as *mut ::core::ffi::c_void,
         &raw mut (*s).vram as *mut uint16 as *const ::core::ffi::c_void,
         (::core::mem::size_of::<uint16>() as size_t).wrapping_mul(0x8000 as size_t),
     );
     memcpy(
-        &raw mut (*(*g_snes).ppu).oam as *mut uint16_t as *mut ::core::ffi::c_void,
+        &raw mut (*(*game.g_snes).ppu).oam as *mut uint16_t as *mut ::core::ffi::c_void,
         &raw mut (*s).oam as *mut uint16 as *const ::core::ffi::c_void,
         (::core::mem::size_of::<uint16>() as size_t).wrapping_mul(0x120 as size_t),
     );
@@ -1459,54 +1420,59 @@ pub unsafe fn RunAsmCode(
     mut x: uint16,
     mut y: uint16,
     mut flags: ::core::ffi::c_int,
+    game: &mut Game,
 ) -> ::core::ffi::c_int {
-    let mut org_sp: uint16 = (*g_cpu).sp as uint16;
-    let mut org_pc: uint16 = (*g_cpu).pc as uint16;
-    let mut org_b: uint8 = (*g_cpu).db as uint8;
-    let mut org_dp: uint16 = (*g_cpu).dp as uint16;
+    let mut org_sp: uint16 = (*game.g_cpu).sp as uint16;
+    let mut org_pc: uint16 = (*game.g_cpu).pc as uint16;
+    let mut org_b: uint8 = (*game.g_cpu).db as uint8;
+    let mut org_dp: uint16 = (*game.g_cpu).dp as uint16;
     printf(b"RunAsmCode!\n\0" as *const u8 as *const ::core::ffi::c_char);
-    g_ram[0x1ffff as ::core::ffi::c_int as usize] = 1 as uint8;
-    let mut dc: bool = (*g_snes).debug_cycles;
-    (*g_cpu).db = (pc >> 16 as ::core::ffi::c_int) as uint8_t;
-    (*g_cpu).a = a as uint16_t;
-    (*g_cpu).x = x as uint16_t;
-    (*g_cpu).y = y as uint16_t;
-    (*g_cpu).spBreakpoint = (*g_cpu).sp;
-    (*g_cpu).k = (pc >> 16 as ::core::ffi::c_int) as uint8_t;
-    (*g_cpu).pc = (pc & 0xffff as uint32) as uint16_t;
-    (*g_cpu).mf = flags & 1 as ::core::ffi::c_int != 0;
-    (*g_cpu).xf = (flags & 2 as ::core::ffi::c_int) >> 1 as ::core::ffi::c_int != 0;
-    g_calling_asm_from_c = true_0 != 0;
-    while g_calling_asm_from_c {
-        let mut pc_0: uint32 = (((*(*g_snes).cpu).k as ::core::ffi::c_int)
-            << 16 as ::core::ffi::c_int
-            | (*(*g_snes).cpu).pc as ::core::ffi::c_int) as uint32;
-        if (*g_snes).debug_cycles {
+    game.g_ram[0x1ffff as ::core::ffi::c_int as usize] = 1 as uint8;
+    let mut dc: bool = (*game.g_snes).debug_cycles;
+    (*game.g_cpu).db = (pc >> 16 as ::core::ffi::c_int) as uint8_t;
+    (*game.g_cpu).a = a as uint16_t;
+    (*game.g_cpu).x = x as uint16_t;
+    (*game.g_cpu).y = y as uint16_t;
+    (*game.g_cpu).spBreakpoint = (*game.g_cpu).sp;
+    (*game.g_cpu).k = (pc >> 16 as ::core::ffi::c_int) as uint8_t;
+    (*game.g_cpu).pc = (pc & 0xffff as uint32) as uint16_t;
+    (*game.g_cpu).mf = flags & 1 as ::core::ffi::c_int != 0;
+    (*game.g_cpu).xf = (flags & 2 as ::core::ffi::c_int) >> 1 as ::core::ffi::c_int != 0;
+    game.g_calling_asm_from_c = true_0 != 0;
+    while game.g_calling_asm_from_c {
+        let mut pc_0: uint32 =
+            (((*(*game.g_snes).cpu).k as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
+                | (*(*game.g_snes).cpu).pc as ::core::ffi::c_int) as uint32;
+        if (*game.g_snes).debug_cycles {
             let mut line: [::core::ffi::c_char; 80] = [0; 80];
-            getProcessorStateCpu(g_snes, &raw mut line as *mut ::core::ffi::c_char);
+            getProcessorStateCpu(game.g_snes, &raw mut line as *mut ::core::ffi::c_char, game);
             puts(&raw mut line as *mut ::core::ffi::c_char);
             line[0 as ::core::ffi::c_int as usize] = 0 as ::core::ffi::c_char;
         }
-        cpu_runOpcode(g_cpu);
-        while (*(*g_snes).dma).dmaBusy {
-            dma_doDma((*g_snes).dma);
+        cpu_runOpcode(game.g_cpu, game);
+        while (*(*game.g_snes).dma).dmaBusy {
+            dma_doDma((*game.g_snes).dma, game);
         }
         if flags & 1 as ::core::ffi::c_int != 0 {
             let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
             while i < 10 as ::core::ffi::c_int {
-                apu_cycle((*g_snes).apu);
+                apu_cycle((*game.g_snes).apu, game);
                 i += 1;
             }
         }
     }
-    (*g_cpu).dp = org_dp as uint16_t;
-    (*g_cpu).sp = org_sp as uint16_t;
-    (*g_cpu).db = org_b as uint8_t;
-    (*g_cpu).pc = org_pc as uint16_t;
-    (*g_snes).debug_cycles = dc;
-    return g_calling_asm_from_c_ret;
+    (*game.g_cpu).dp = org_dp as uint16_t;
+    (*game.g_cpu).sp = org_sp as uint16_t;
+    (*game.g_cpu).db = org_b as uint8_t;
+    (*game.g_cpu).pc = org_pc as uint16_t;
+    (*game.g_snes).debug_cycles = dc;
+    return game.g_calling_asm_from_c_ret;
 }
-unsafe fn loadRom(mut name: *const ::core::ffi::c_char, mut snes: *mut Snes) -> bool {
+unsafe fn loadRom(
+    mut name: *const ::core::ffi::c_char,
+    mut snes: *mut Snes,
+    game: &mut Game,
+) -> bool {
     let mut length: size_t = 0 as size_t;
     let mut file: *mut uint8_t = ::core::ptr::null_mut::<uint8_t>();
     file = ReadWholeFile(name, &raw mut length) as *mut uint8_t;
@@ -1514,23 +1480,29 @@ unsafe fn loadRom(mut name: *const ::core::ffi::c_char, mut snes: *mut Snes) -> 
         puts(b"Failed to read file\0" as *const u8 as *const ::core::ffi::c_char);
         return false_0 != 0;
     }
-    let mut result: bool = snes_loadRom(snes as *mut Snes, file, length as ::core::ffi::c_int);
+    let mut result: bool =
+        snes_loadRom(snes as *mut Snes, file, length as ::core::ffi::c_int, game);
     free(file as *mut ::core::ffi::c_void);
     return result;
 }
-pub unsafe fn PatchBytes(mut addr: uint32, mut value: *const uint8, mut n: size_t) {
+pub unsafe fn PatchBytes(
+    mut addr: uint32,
+    mut value: *const uint8,
+    mut n: size_t,
+    game: &mut Game,
+) {
     let mut i: size_t = 0 as size_t;
     while i != n {
-        *SnesRomPtr(addr).offset(i as isize) = *value.offset(i as isize) as uint8_t;
+        *SnesRomPtr(addr, game).offset(i as isize) = *value.offset(i as isize) as uint8_t;
         i = i.wrapping_add(1);
     }
 }
-pub unsafe fn FixupCarry(mut addr: uint32) {
-    *SnesRomPtr(addr) = 0 as uint8_t;
+pub unsafe fn FixupCarry(mut addr: uint32, game: &mut Game) {
+    *SnesRomPtr(addr, game) = 0 as uint8_t;
 }
-pub static mut currently_installed_bug_fix_counter: uint16 = 0;
-pub unsafe fn RtlUpdateSnesPatchForBugfix() {
-    currently_installed_bug_fix_counter = *((&raw mut g_ram as *mut uint8)
+
+pub unsafe fn RtlUpdateSnesPatchForBugfix(game: &mut Game) {
+    game.currently_installed_bug_fix_counter = *((&raw mut game.g_ram as *mut uint8)
         .offset(0xc2 as ::core::ffi::c_int as isize)
         as *mut uint16);
     let mut t: [uint8; 4] = [
@@ -1543,6 +1515,7 @@ pub unsafe fn RtlUpdateSnesPatchForBugfix() {
         0x8584a3 as uint32,
         &raw mut t as *mut uint8,
         ::core::mem::size_of::<[uint8; 4]>() as size_t,
+        game,
     );
     let mut t_0: [uint8; 14] = [
         0x20 as ::core::ffi::c_int as uint8,
@@ -1555,7 +1528,7 @@ pub unsafe fn RtlUpdateSnesPatchForBugfix() {
         0xc2 as ::core::ffi::c_int as uint8,
         0x30 as ::core::ffi::c_int as uint8,
         0xa5 as ::core::ffi::c_int as uint8,
-        (if (*((&raw mut g_ram as *mut uint8).offset(0xc2 as ::core::ffi::c_int as isize)
+        (if (*((&raw mut game.g_ram as *mut uint8).offset(0xc2 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int)
             < 1 as ::core::ffi::c_int
         {
@@ -1571,6 +1544,7 @@ pub unsafe fn RtlUpdateSnesPatchForBugfix() {
         0x859650 as uint32,
         &raw mut t_0 as *mut uint8,
         ::core::mem::size_of::<[uint8; 14]>() as size_t,
+        game,
     );
     let mut t_1: [uint8; 2] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -1580,35 +1554,47 @@ pub unsafe fn RtlUpdateSnesPatchForBugfix() {
         0x8584cc as uint32,
         &raw mut t_1 as *mut uint8,
         ::core::mem::size_of::<[uint8; 2]>() as size_t,
+        game,
     );
 }
-pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
-    g_snes = snes_init(&raw mut g_ram as *mut uint8_t) as *mut Snes;
-    g_cpu = (*g_snes).cpu;
-    let mut loaded: bool = loadRom(filename, g_snes);
+pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char, game: &mut Game) -> *mut Snes {
+    game.g_snes = snes_init(&raw mut game.g_ram as *mut uint8_t) as *mut Snes;
+    game.g_cpu = (*game.g_snes).cpu;
+    let mut loaded: bool = loadRom(filename, game.g_snes, game);
     if !loaded {
         return ::core::ptr::null_mut::<Snes>();
     }
-    g_sram = (*(*g_snes).cart).ram as *mut uint8;
-    g_rom = (*(*g_snes).cart).rom;
+    game.g_sram = (*(*game.g_snes).cart).ram as *mut uint8;
+    game.g_rom = (*(*game.g_snes).cart).rom;
     RtlSetupEmuCallbacks(
         ::core::ptr::null_mut::<uint8>(),
-        Some(RtlRunFrameCompare as unsafe fn(uint16, ::core::ffi::c_int) -> ()),
+        Some(RtlRunFrameCompare as unsafe fn(uint16, ::core::ffi::c_int, &mut Game) -> ()),
         None,
+        game,
     );
-    *(&raw mut g_ram as *mut uint8).offset(0x611 as ::core::ffi::c_int as isize) = 1 as uint8;
+    *(&raw mut game.g_ram as *mut uint8).offset(0x611 as ::core::ffi::c_int as isize) = 1 as uint8;
     let mut t: [uint8; 3] = [
         0x20 as ::core::ffi::c_int as uint8,
         0xf as ::core::ffi::c_int as uint8,
         0xf7 as ::core::ffi::c_int as uint8,
     ];
-    PatchBytes(0x82896b as uint32, &raw mut t as *mut uint8, 3 as size_t);
+    PatchBytes(
+        0x82896b as uint32,
+        &raw mut t as *mut uint8,
+        3 as size_t,
+        game,
+    );
     let mut t_0: [uint8; 3] = [
         0x7c as ::core::ffi::c_int as uint8,
         0x81 as ::core::ffi::c_int as uint8,
         0x89 as ::core::ffi::c_int as uint8,
     ];
-    PatchBytes(0x82f70f as uint32, &raw mut t_0 as *mut uint8, 3 as size_t);
+    PatchBytes(
+        0x82f70f as uint32,
+        &raw mut t_0 as *mut uint8,
+        3 as size_t,
+        game,
+    );
     let mut t_1: [uint8; 2] = [
         0x5f as ::core::ffi::c_int as uint8,
         0xf7 as ::core::ffi::c_int as uint8,
@@ -1617,6 +1603,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x8ba362 as uint32,
         &raw mut t_1 as *mut uint8,
         ::core::mem::size_of::<[uint8; 2]>() as size_t,
+        game,
     );
     let mut t_2: [uint8; 5] = [
         0xc2 as ::core::ffi::c_int as uint8,
@@ -1629,12 +1616,18 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x8bf760 as uint32,
         &raw mut t_2 as *mut uint8,
         ::core::mem::size_of::<[uint8; 5]>() as size_t,
+        game,
     );
     let mut t_3: [uint8; 2] = [
         0xa as ::core::ffi::c_int as uint8,
         0xa as ::core::ffi::c_int as uint8,
     ];
-    PatchBytes(0x8584b2 as uint32, &raw mut t_3 as *mut uint8, 2 as size_t);
+    PatchBytes(
+        0x8584b2 as uint32,
+        &raw mut t_3 as *mut uint8,
+        2 as size_t,
+        game,
+    );
     let mut t_4: [uint8; 9] = [
         0xc0 as ::core::ffi::c_int as uint8,
         0 as ::core::ffi::c_int as uint8,
@@ -1650,6 +1643,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x84efd3 as uint32,
         &raw mut t_4 as *mut uint8,
         ::core::mem::size_of::<[uint8; 9]>() as size_t,
+        game,
     );
     let mut t_5: [uint8; 2] = [
         0xd3 as ::core::ffi::c_int as uint8,
@@ -1659,6 +1653,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x848243 as uint32,
         &raw mut t_5 as *mut uint8,
         ::core::mem::size_of::<[uint8; 2]>() as size_t,
+        game,
     );
     let mut t_6: [uint8; 6] = [
         0xac as ::core::ffi::c_int as uint8,
@@ -1672,6 +1667,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x86f4a6 as uint32,
         &raw mut t_6 as *mut uint8,
         ::core::mem::size_of::<[uint8; 6]>() as size_t,
+        game,
     );
     let mut t_7: [uint8; 2] = [
         0xa6 as ::core::ffi::c_int as uint8,
@@ -1681,6 +1677,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x8685bd as uint32,
         &raw mut t_7 as *mut uint8,
         ::core::mem::size_of::<[uint8; 2]>() as size_t,
+        game,
     );
     let mut t_8: [uint8; 16] = [
         0xc2 as ::core::ffi::c_int as uint8,
@@ -1704,6 +1701,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x82f713 as uint32,
         &raw mut t_8 as *mut uint8,
         ::core::mem::size_of::<[uint8; 16]>() as size_t,
+        game,
     );
     let mut t_9: [uint8; 4] = [
         0x58 as ::core::ffi::c_int as uint8,
@@ -1715,6 +1713,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x828944 as uint32,
         &raw mut t_9 as *mut uint8,
         ::core::mem::size_of::<[uint8; 4]>() as size_t,
+        game,
     );
     let mut t_10: [uint8; 2] = [
         0x28 as ::core::ffi::c_int as uint8,
@@ -1724,6 +1723,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x82897a as uint32,
         &raw mut t_10 as *mut uint8,
         ::core::mem::size_of::<[uint8; 2]>() as size_t,
+        game,
     );
     let mut t_11: [uint8; 7] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -1738,6 +1738,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x80945c as uint32,
         &raw mut t_11 as *mut uint8,
         ::core::mem::size_of::<[uint8; 7]>() as size_t,
+        game,
     );
     let mut t_12: [uint8; 8] = [
         0xbc as ::core::ffi::c_int as uint8,
@@ -1753,6 +1754,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0xa8b237 as uint32,
         &raw mut t_12 as *mut uint8,
         ::core::mem::size_of::<[uint8; 8]>() as size_t,
+        game,
     );
     let mut t_13: [uint8; 6] = [
         0x49 as ::core::ffi::c_int as uint8,
@@ -1766,6 +1768,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0xa2904b as uint32,
         &raw mut t_13 as *mut uint8,
         ::core::mem::size_of::<[uint8; 6]>() as size_t,
+        game,
     );
     let mut t_14: [uint8; 6] = [
         0x49 as ::core::ffi::c_int as uint8,
@@ -1779,12 +1782,14 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0xa29065 as uint32,
         &raw mut t_14 as *mut uint8,
         ::core::mem::size_of::<[uint8; 6]>() as size_t,
+        game,
     );
     let mut t_15: [uint8; 1] = [0x6b as ::core::ffi::c_int as uint8];
     PatchBytes(
         0xa0896f as uint32,
         &raw mut t_15 as *mut uint8,
         ::core::mem::size_of::<[uint8; 1]>() as size_t,
+        game,
     );
     let mut t_16: [uint8; 3] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -1795,12 +1800,14 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0xa98c12 as uint32,
         &raw mut t_16 as *mut uint8,
         ::core::mem::size_of::<[uint8; 3]>() as size_t,
+        game,
     );
     let mut t_17: [uint8; 1] = [0x60 as ::core::ffi::c_int as uint8];
     PatchBytes(
         0x8085f6 as uint32,
         &raw mut t_17 as *mut uint8,
         ::core::mem::size_of::<[uint8; 1]>() as size_t,
+        game,
     );
     let mut t_18: [uint8; 10] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -1818,6 +1825,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x80843c as uint32,
         &raw mut t_18 as *mut uint8,
         ::core::mem::size_of::<[uint8; 10]>() as size_t,
+        game,
     );
     let mut t_19: [uint8; 10] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -1835,6 +1843,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x808475 as uint32,
         &raw mut t_19 as *mut uint8,
         ::core::mem::size_of::<[uint8; 10]>() as size_t,
+        game,
     );
     let mut t_20: [uint8; 10] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -1852,6 +1861,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x808525 as uint32,
         &raw mut t_20 as *mut uint8,
         ::core::mem::size_of::<[uint8; 10]>() as size_t,
+        game,
     );
     let mut t_21: [uint8; 4] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -1863,6 +1873,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x8882a1 as uint32,
         &raw mut t_21 as *mut uint8,
         ::core::mem::size_of::<[uint8; 4]>() as size_t,
+        game,
     );
     let mut t_22: [uint8; 4] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -1874,6 +1885,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x828533 as uint32,
         &raw mut t_22 as *mut uint8,
         ::core::mem::size_of::<[uint8; 4]>() as size_t,
+        game,
     );
     let mut t_23: [uint8; 4] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -1885,6 +1897,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x80837b as uint32,
         &raw mut t_23 as *mut uint8,
         ::core::mem::size_of::<[uint8; 4]>() as size_t,
+        game,
     );
     let mut t_24: [uint8; 4] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -1896,6 +1909,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x80838e as uint32,
         &raw mut t_24 as *mut uint8,
         ::core::mem::size_of::<[uint8; 4]>() as size_t,
+        game,
     );
     let mut t_25: [uint8; 4] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -1907,6 +1921,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x82df6c as uint32,
         &raw mut t_25 as *mut uint8,
         ::core::mem::size_of::<[uint8; 4]>() as size_t,
+        game,
     );
     let mut t_26: [uint8; 4] = [
         0x20 as ::core::ffi::c_int as uint8,
@@ -1918,6 +1933,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x80d000 as uint32,
         &raw mut t_26 as *mut uint8,
         ::core::mem::size_of::<[uint8; 4]>() as size_t,
+        game,
     );
     let mut t_27: [uint8; 5] = [
         0x22 as ::core::ffi::c_int as uint8,
@@ -1930,6 +1946,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x82e02c as uint32,
         &raw mut t_27 as *mut uint8,
         ::core::mem::size_of::<[uint8; 5]>() as size_t,
+        game,
     );
     let mut t_28: [uint8; 5] = [
         0x22 as ::core::ffi::c_int as uint8,
@@ -1942,6 +1959,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x82e06b as uint32,
         &raw mut t_28 as *mut uint8,
         ::core::mem::size_of::<[uint8; 5]>() as size_t,
+        game,
     );
     let mut t_29: [uint8; 5] = [
         0x22 as ::core::ffi::c_int as uint8,
@@ -1954,6 +1972,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x82e50d as uint32,
         &raw mut t_29 as *mut uint8,
         ::core::mem::size_of::<[uint8; 5]>() as size_t,
+        game,
     );
     let mut t_30: [uint8; 5] = [
         0x22 as ::core::ffi::c_int as uint8,
@@ -1966,6 +1985,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x82e609 as uint32,
         &raw mut t_30 as *mut uint8,
         ::core::mem::size_of::<[uint8; 5]>() as size_t,
+        game,
     );
     let mut t_31: [uint8; 5] = [
         0x22 as ::core::ffi::c_int as uint8,
@@ -1978,6 +1998,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x82e526 as uint32,
         &raw mut t_31 as *mut uint8,
         ::core::mem::size_of::<[uint8; 5]>() as size_t,
+        game,
     );
     let mut t_32: [uint8; 10] = [
         0x22 as ::core::ffi::c_int as uint8,
@@ -1995,6 +2016,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x80d004 as uint32,
         &raw mut t_32 as *mut uint8,
         ::core::mem::size_of::<[uint8; 10]>() as size_t,
+        game,
     );
     let mut t_33: [uint8; 4] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -2006,6 +2028,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x82e540 as uint32,
         &raw mut t_33 as *mut uint8,
         ::core::mem::size_of::<[uint8; 4]>() as size_t,
+        game,
     );
     let mut t_34: [uint8; 4] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -2017,6 +2040,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x8bc11e as uint32,
         &raw mut t_34 as *mut uint8,
         ::core::mem::size_of::<[uint8; 4]>() as size_t,
+        game,
     );
     let mut t_35: [uint8; 4] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -2028,6 +2052,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x8bd487 as uint32,
         &raw mut t_35 as *mut uint8,
         ::core::mem::size_of::<[uint8; 4]>() as size_t,
+        game,
     );
     let mut t_36: [uint8; 3] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -2038,6 +2063,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x858148 as uint32,
         &raw mut t_36 as *mut uint8,
         ::core::mem::size_of::<[uint8; 3]>() as size_t,
+        game,
     );
     let mut t_37: [uint8; 3] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -2048,6 +2074,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x8581b2 as uint32,
         &raw mut t_37 as *mut uint8,
         ::core::mem::size_of::<[uint8; 3]>() as size_t,
+        game,
     );
     let mut t_38: [uint8; 8] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -2063,6 +2090,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x8581ea as uint32,
         &raw mut t_38 as *mut uint8,
         ::core::mem::size_of::<[uint8; 8]>() as size_t,
+        game,
     );
     let mut t_39: [uint8; 3] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -2073,6 +2101,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x858203 as uint32,
         &raw mut t_39 as *mut uint8,
         ::core::mem::size_of::<[uint8; 3]>() as size_t,
+        game,
     );
     let mut t_40: [uint8; 8] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -2088,6 +2117,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x858236 as uint32,
         &raw mut t_40 as *mut uint8,
         ::core::mem::size_of::<[uint8; 8]>() as size_t,
+        game,
     );
     let mut t_41: [uint8; 11] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -2106,6 +2136,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x8582b8 as uint32,
         &raw mut t_41 as *mut uint8,
         ::core::mem::size_of::<[uint8; 11]>() as size_t,
+        game,
     );
     let mut t_42: [uint8; 3] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -2116,6 +2147,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x858321 as uint32,
         &raw mut t_42 as *mut uint8,
         ::core::mem::size_of::<[uint8; 3]>() as size_t,
+        game,
     );
     let mut t_43: [uint8; 8] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -2131,6 +2163,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x85835a as uint32,
         &raw mut t_43 as *mut uint8,
         ::core::mem::size_of::<[uint8; 8]>() as size_t,
+        game,
     );
     let mut t_44: [uint8; 3] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -2141,6 +2174,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x858532 as uint32,
         &raw mut t_44 as *mut uint8,
         ::core::mem::size_of::<[uint8; 3]>() as size_t,
+        game,
     );
     let mut t_45: [uint8; 8] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -2156,6 +2190,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x85856b as uint32,
         &raw mut t_45 as *mut uint8,
         ::core::mem::size_of::<[uint8; 8]>() as size_t,
+        game,
     );
     let mut t_46: [uint8; 3] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -2166,6 +2201,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x858096 as uint32,
         &raw mut t_46 as *mut uint8,
         ::core::mem::size_of::<[uint8; 3]>() as size_t,
+        game,
     );
     let mut t_47: [uint8; 3] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -2176,6 +2212,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x8580b4 as uint32,
         &raw mut t_47 as *mut uint8,
         ::core::mem::size_of::<[uint8; 3]>() as size_t,
+        game,
     );
     let mut t_48: [uint8; 3] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -2186,6 +2223,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x8580dc as uint32,
         &raw mut t_48 as *mut uint8,
         ::core::mem::size_of::<[uint8; 3]>() as size_t,
+        game,
     );
     let mut t_49: [uint8; 3] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -2196,6 +2234,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x8580f2 as uint32,
         &raw mut t_49 as *mut uint8,
         ::core::mem::size_of::<[uint8; 3]>() as size_t,
+        game,
     );
     let mut t_50: [uint8; 3] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -2206,6 +2245,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x85861c as uint32,
         &raw mut t_50 as *mut uint8,
         ::core::mem::size_of::<[uint8; 3]>() as size_t,
+        game,
     );
     let mut t_51: [uint8; 3] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -2216,6 +2256,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x858651 as uint32,
         &raw mut t_51 as *mut uint8,
         ::core::mem::size_of::<[uint8; 3]>() as size_t,
+        game,
     );
     let mut t_52: [uint8; 4] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -2227,6 +2268,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x858692 as uint32,
         &raw mut t_52 as *mut uint8,
         ::core::mem::size_of::<[uint8; 4]>() as size_t,
+        game,
     );
     let mut t_53: [uint8; 4] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -2238,6 +2280,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x858696 as uint32,
         &raw mut t_53 as *mut uint8,
         ::core::mem::size_of::<[uint8; 4]>() as size_t,
+        game,
     );
     let mut t_54: [uint8; 6] = [
         0x8 as ::core::ffi::c_int as uint8,
@@ -2251,6 +2294,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x859660 as uint32,
         &raw mut t_54 as *mut uint8,
         ::core::mem::size_of::<[uint8; 6]>() as size_t,
+        game,
     );
     let mut t_55: [uint8; 3] = [
         0x20 as ::core::ffi::c_int as uint8,
@@ -2261,6 +2305,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x8583ba as uint32,
         &raw mut t_55 as *mut uint8,
         ::core::mem::size_of::<[uint8; 3]>() as size_t,
+        game,
     );
     let mut t_56: [uint8; 17] = [
         0x22 as ::core::ffi::c_int as uint8,
@@ -2285,6 +2330,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x859670 as uint32,
         &raw mut t_56 as *mut uint8,
         ::core::mem::size_of::<[uint8; 17]>() as size_t,
+        game,
     );
     let mut t_57: [uint8; 20] = [
         0xcd as ::core::ffi::c_int as uint8,
@@ -2312,6 +2358,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x859681 as uint32,
         &raw mut t_57 as *mut uint8,
         ::core::mem::size_of::<[uint8; 20]>() as size_t,
+        game,
     );
     let mut t_58: [uint8; 4] = [
         0x5c as ::core::ffi::c_int as uint8,
@@ -2323,6 +2370,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0xa2ab22 as uint32,
         &raw mut t_58 as *mut uint8,
         ::core::mem::size_of::<[uint8; 4]>() as size_t,
+        game,
     );
     let mut t_59: [uint8; 17] = [
         0x22 as ::core::ffi::c_int as uint8,
@@ -2347,6 +2395,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x8596a0 as uint32,
         &raw mut t_59 as *mut uint8,
         ::core::mem::size_of::<[uint8; 17]>() as size_t,
+        game,
     );
     let mut t_60: [uint8; 4] = [
         0x22 as ::core::ffi::c_int as uint8,
@@ -2358,6 +2407,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x828b65 as uint32,
         &raw mut t_60 as *mut uint8,
         ::core::mem::size_of::<[uint8; 4]>() as size_t,
+        game,
     );
     let mut t_61: [uint8; 10] = [
         0x20 as ::core::ffi::c_int as uint8,
@@ -2375,6 +2425,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x8596c0 as uint32,
         &raw mut t_61 as *mut uint8,
         ::core::mem::size_of::<[uint8; 10]>() as size_t,
+        game,
     );
     let mut t_62: [uint8; 3] = [
         0x20 as ::core::ffi::c_int as uint8,
@@ -2385,6 +2436,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x8580e5 as uint32,
         &raw mut t_62 as *mut uint8,
         ::core::mem::size_of::<[uint8; 3]>() as size_t,
+        game,
     );
     let mut t_63: [uint8; 25] = [
         0xad as ::core::ffi::c_int as uint8,
@@ -2417,6 +2469,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x84efdc as uint32,
         &raw mut t_63 as *mut uint8,
         ::core::mem::size_of::<[uint8; 25]>() as size_t,
+        game,
     );
     let mut t_64: [uint8; 3] = [
         0xf4 as ::core::ffi::c_int as uint8,
@@ -2427,6 +2480,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x8485f7 as uint32,
         &raw mut t_64 as *mut uint8,
         ::core::mem::size_of::<[uint8; 3]>() as size_t,
+        game,
     );
     let mut t_65: [uint8; 8] = [
         0x8 as ::core::ffi::c_int as uint8,
@@ -2442,6 +2496,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x859695 as uint32,
         &raw mut t_65 as *mut uint8,
         ::core::mem::size_of::<[uint8; 8]>() as size_t,
+        game,
     );
     let mut t_66: [uint8; 4] = [
         0x8d as ::core::ffi::c_int as uint8,
@@ -2453,6 +2508,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x858080 as uint32,
         &raw mut t_66 as *mut uint8,
         ::core::mem::size_of::<[uint8; 4]>() as size_t,
+        game,
     );
     let mut t_67: [uint8; 18] = [
         0x22 as ::core::ffi::c_int as uint8,
@@ -2478,6 +2534,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x84f000 as uint32,
         &raw mut t_67 as *mut uint8,
         ::core::mem::size_of::<[uint8; 18]>() as size_t,
+        game,
     );
     let mut t_68: [uint8; 4] = [
         0x5c as ::core::ffi::c_int as uint8,
@@ -2489,6 +2546,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x848cf6 as uint32,
         &raw mut t_68 as *mut uint8,
         ::core::mem::size_of::<[uint8; 4]>() as size_t,
+        game,
     );
     let mut t_69: [uint8; 7] = [
         0xa9 as ::core::ffi::c_int as uint8,
@@ -2503,6 +2561,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x81f000 as uint32,
         &raw mut t_69 as *mut uint8,
         ::core::mem::size_of::<[uint8; 7]>() as size_t,
+        game,
     );
     let mut t_70: [uint8; 4] = [
         0x5c as ::core::ffi::c_int as uint8,
@@ -2514,6 +2573,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x819027 as uint32,
         &raw mut t_70 as *mut uint8,
         ::core::mem::size_of::<[uint8; 4]>() as size_t,
+        game,
     );
     let mut t_71: [uint8; 4] = [
         0x5c as ::core::ffi::c_int as uint8,
@@ -2525,6 +2585,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x819112 as uint32,
         &raw mut t_71 as *mut uint8,
         ::core::mem::size_of::<[uint8; 4]>() as size_t,
+        game,
     );
     let mut t_72: [uint8; 4] = [
         0x5c as ::core::ffi::c_int as uint8,
@@ -2536,6 +2597,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x8194e9 as uint32,
         &raw mut t_72 as *mut uint8,
         ::core::mem::size_of::<[uint8; 4]>() as size_t,
+        game,
     );
     let mut t_73: [uint8; 4] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -2547,13 +2609,15 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x8095e1 as uint32,
         &raw mut t_73 as *mut uint8,
         ::core::mem::size_of::<[uint8; 4]>() as size_t,
+        game,
     );
-    if g_use_my_apu_code {
+    if game.g_use_my_apu_code {
         let mut t_74: [uint8; 1] = [0x60 as ::core::ffi::c_int as uint8];
         PatchBytes(
             0x808028 as uint32,
             &raw mut t_74 as *mut uint8,
             ::core::mem::size_of::<[uint8; 1]>() as size_t,
+            game,
         );
     }
     let mut t_75: [uint8; 4] = [
@@ -2566,6 +2630,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x828a59 as uint32,
         &raw mut t_75 as *mut uint8,
         ::core::mem::size_of::<[uint8; 4]>() as size_t,
+        game,
     );
     let mut t_76: [uint8; 3] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -2576,6 +2641,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x828a72 as uint32,
         &raw mut t_76 as *mut uint8,
         ::core::mem::size_of::<[uint8; 3]>() as size_t,
+        game,
     );
     let mut t_77: [uint8; 4] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -2587,12 +2653,14 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x828a80 as uint32,
         &raw mut t_77 as *mut uint8,
         ::core::mem::size_of::<[uint8; 4]>() as size_t,
+        game,
     );
     let mut t_78: [uint8; 1] = [0x6 as ::core::ffi::c_int as uint8];
     PatchBytes(
         0x828a67 as uint32,
         &raw mut t_78 as *mut uint8,
         ::core::mem::size_of::<[uint8; 1]>() as size_t,
+        game,
     );
     let mut t_79: [uint8; 2] = [
         0 as ::core::ffi::c_int as uint8,
@@ -2602,6 +2670,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x82831e as uint32,
         &raw mut t_79 as *mut uint8,
         ::core::mem::size_of::<[uint8; 2]>() as size_t,
+        game,
     );
     let mut t_80: [uint8; 2] = [
         0xa5 as ::core::ffi::c_int as uint8,
@@ -2611,6 +2680,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x91c234 as uint32,
         &raw mut t_80 as *mut uint8,
         ::core::mem::size_of::<[uint8; 2]>() as size_t,
+        game,
     );
     let mut t_81: [uint8; 4] = [
         0x18 as ::core::ffi::c_int as uint8,
@@ -2622,6 +2692,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0x809af3 as uint32,
         &raw mut t_81 as *mut uint8,
         ::core::mem::size_of::<[uint8; 4]>() as size_t,
+        game,
     );
     let mut t_82: [uint8; 23] = [
         0xa5 as ::core::ffi::c_int as uint8,
@@ -2652,6 +2723,7 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0xa7ff82 as uint32,
         &raw mut t_82 as *mut uint8,
         ::core::mem::size_of::<[uint8; 23]>() as size_t,
+        game,
     );
     let mut t_83: [uint8; 4] = [
         0x22 as ::core::ffi::c_int as uint8,
@@ -2663,17 +2735,18 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         0xa7b03a as uint32,
         &raw mut t_83 as *mut uint8,
         ::core::mem::size_of::<[uint8; 4]>() as size_t,
+        game,
     );
-    RtlUpdateSnesPatchForBugfix();
+    RtlUpdateSnesPatchForBugfix(game);
     let mut i: size_t = 0 as size_t;
     while i
         != (::core::mem::size_of::<[uint32; 155]>() as usize)
             .wrapping_div(::core::mem::size_of::<uint32>() as usize)
     {
-        let mut t_84: uint8 = *SnesRomPtr(kPatchedCarrys[i as usize]);
+        let mut t_84: uint8 = *SnesRomPtr(kPatchedCarrys[i as usize], game);
         if t_84 != 0 {
-            kPatchedCarrysOrg[i as usize] = t_84;
-            FixupCarry(kPatchedCarrys[i as usize]);
+            game.kPatchedCarrysOrg[i as usize] = t_84;
+            FixupCarry(kPatchedCarrys[i as usize], game);
         } else {
             printf(
                 b"0x%x double patched!\n\0" as *const u8 as *const ::core::ffi::c_char,
@@ -2682,8 +2755,8 @@ pub unsafe fn SnesInit(mut filename: *const ::core::ffi::c_char) -> *mut Snes {
         }
         i = i.wrapping_add(1);
     }
-    PatchBugs(1 as uint32, 0 as uint32);
-    return g_snes;
+    PatchBugs(1 as uint32, 0 as uint32, game);
+    return game.g_snes;
 }
 pub unsafe fn DebugGameOverMenu() {
     '_c2rust_label: {
@@ -2695,56 +2768,56 @@ pub unsafe fn DebugGameOverMenu() {
         );
     };
 }
-pub unsafe fn RunCpuUntilPC(mut pc1: uint32, mut pc2: uint32) -> uint32 {
+pub unsafe fn RunCpuUntilPC(mut pc1: uint32, mut pc2: uint32, game: &mut Game) -> uint32 {
     loop {
-        if (*g_snes).debug_cycles {
+        if (*game.g_snes).debug_cycles {
             let mut line: [::core::ffi::c_char; 80] = [0; 80];
-            getProcessorStateCpu(g_snes, &raw mut line as *mut ::core::ffi::c_char);
+            getProcessorStateCpu(game.g_snes, &raw mut line as *mut ::core::ffi::c_char, game);
             puts(&raw mut line as *mut ::core::ffi::c_char);
         }
-        cpu_runOpcode(g_cpu);
-        let mut addr: uint32 = (((*(*g_snes).cpu).k as ::core::ffi::c_int)
-            << 16 as ::core::ffi::c_int
-            | (*(*g_snes).cpu).pc as ::core::ffi::c_int) as uint32;
+        cpu_runOpcode(game.g_cpu, game);
+        let mut addr: uint32 =
+            (((*(*game.g_snes).cpu).k as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
+                | (*(*game.g_snes).cpu).pc as ::core::ffi::c_int) as uint32;
         if addr == pc1 || addr == pc2 {
             return addr;
         }
     }
 }
-pub unsafe fn RunOneFrameOfGame_Emulated() {
-    let mut bug_fix_bak: uint16 = *((&raw mut g_ram as *mut uint8)
+pub unsafe fn RunOneFrameOfGame_Emulated(game: &mut Game) {
+    let mut bug_fix_bak: uint16 = *((&raw mut game.g_ram as *mut uint8)
         .offset(0xc2 as ::core::ffi::c_int as isize)
         as *mut uint16);
-    RunCpuUntilPC(0x808343 as uint32, 0x85813c as uint32);
-    (*(*g_snes).cpu).nmiWanted = true_0 != 0;
-    RunCpuUntilPC(0x80834a as uint32, 0x858142 as uint32);
-    *((&raw mut g_ram as *mut uint8).offset(0xc2 as ::core::ffi::c_int as isize) as *mut uint16) =
-        bug_fix_bak;
+    RunCpuUntilPC(0x808343 as uint32, 0x85813c as uint32, game);
+    (*(*game.g_snes).cpu).nmiWanted = true_0 != 0;
+    RunCpuUntilPC(0x80834a as uint32, 0x858142 as uint32, game);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xc2 as ::core::ffi::c_int as isize)
+        as *mut uint16) = bug_fix_bak;
 }
-pub unsafe fn DrawFrameToPpu() {
-    (*g_snes).vPos = 0 as uint16_t;
-    (*g_snes).hPos = (*g_snes).vPos;
-    while !(*(*g_snes).cpu).nmiWanted {
+pub unsafe fn DrawFrameToPpu(game: &mut Game) {
+    (*game.g_snes).vPos = 0 as uint16_t;
+    (*game.g_snes).hPos = (*game.g_snes).vPos;
+    while !(*(*game.g_snes).cpu).nmiWanted {
         loop {
-            snes_handle_pos_stuff(g_snes as *mut Snes);
-            if !((*g_snes).hPos as ::core::ffi::c_int != 0 as ::core::ffi::c_int) {
+            snes_handle_pos_stuff(game.g_snes as *mut Snes, game);
+            if !((*game.g_snes).hPos as ::core::ffi::c_int != 0 as ::core::ffi::c_int) {
                 break;
             }
         }
-        if (*g_snes).vIrqEnabled as ::core::ffi::c_int != 0
-            && (*g_snes).vPos as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-                == (*g_snes).vTimer as ::core::ffi::c_int
+        if (*game.g_snes).vIrqEnabled as ::core::ffi::c_int != 0
+            && (*game.g_snes).vPos as ::core::ffi::c_int - 1 as ::core::ffi::c_int
+                == (*game.g_snes).vTimer as ::core::ffi::c_int
         {
-            Vector_IRQ();
+            Vector_IRQ(game);
         }
     }
-    (*(*g_snes).cpu).nmiWanted = false_0 != 0;
+    (*(*game.g_snes).cpu).nmiWanted = false_0 != 0;
 }
-pub unsafe fn SaveBugSnapshot() {
-    if VERIFY_ACTIVE {
+pub unsafe fn SaveBugSnapshot(game: &mut Game) {
+    if game.VERIFY_ACTIVE {
         return;
     }
-    if !g_debug_flag && g_got_mismatch_count == 0 as ::core::ffi::c_int {
+    if !game.g_debug_flag && game.g_got_mismatch_count == 0 as ::core::ffi::c_int {
         let mut buffer: [::core::ffi::c_char; 64] = [0; 64];
         snprintf(
             &raw mut buffer as *mut ::core::ffi::c_char,
@@ -2752,19 +2825,24 @@ pub unsafe fn SaveBugSnapshot() {
             b"saves/bug-%d.sav\0" as *const u8 as *const ::core::ffi::c_char,
             time(::core::ptr::null_mut::<time_t>()) as ::core::ffi::c_int,
         );
-        RtlSaveSnapshot(&raw mut buffer as *mut ::core::ffi::c_char, true_0 != 0);
+        RtlSaveSnapshot(
+            &raw mut buffer as *mut ::core::ffi::c_char,
+            true_0 != 0,
+            game,
+        );
     }
-    g_got_mismatch_count = 5 as ::core::ffi::c_int * 60 as ::core::ffi::c_int;
+    game.g_got_mismatch_count = 5 as ::core::ffi::c_int * 60 as ::core::ffi::c_int;
 }
 // Set only by the single-threaded headless runner. The interactive oracle
 // retains its existing recovery and snapshot behaviour.
-pub static mut VERIFY_ACTIVE: bool = false;
-pub static mut VERIFY_FAILURES: u64 = 0;
 
-unsafe fn report_first_verify_failure() {
-    eprintln!("First failing frame: {} (zero-based)", snes_frame_counter);
-    let mine = &*(&raw const g_snapshot_mine);
-    let theirs = &*(&raw const g_snapshot_theirs);
+unsafe fn report_first_verify_failure(game: &mut Game) {
+    eprintln!(
+        "First failing frame: {} (zero-based)",
+        game.snes_frame_counter
+    );
+    let mine = &*(&raw const game.g_snapshot_mine);
+    let theirs = &*(&raw const game.g_snapshot_theirs);
     let mut differing_bytes = 0usize;
     for (addr, (&actual, &expected)) in mine.ram.iter().zip(&theirs.ram).enumerate() {
         if actual == expected {
@@ -2794,94 +2872,100 @@ unsafe fn report_first_verify_failure() {
     }
     eprintln!("RAM: {differing_bytes} differing bytes (showing at most 64)");
 }
-pub unsafe fn RunOneFrameOfGame_Both() {
-    (*g_snes).ppu = (*g_snes).snes_ppu;
-    MakeSnapshot(&raw mut g_snapshot_before);
+pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
+    (*game.g_snes).ppu = (*game.g_snes).snes_ppu;
+    MakeSnapshot(&raw mut game.g_snapshot_before, game);
     loop {
-        (*g_snes).runningWhichVersion = 1 as uint8_t;
-        RunOneFrameOfGame_Emulated();
-        DrawFrameToPpu();
-        MakeSnapshot(&raw mut g_snapshot_theirs);
-        (*g_snes).ppu = (*g_snes).my_ppu;
-        RestoreSnapshot(&raw mut g_snapshot_before);
-        (*g_snes).runningWhichVersion = 2 as uint8_t;
-        RunOneFrameOfGame();
-        DrawFrameToPpu();
-        MakeSnapshot(&raw mut g_snapshot_mine);
-        (*g_snes).runningWhichVersion = 0xff as uint8_t;
+        (*game.g_snes).runningWhichVersion = 1 as uint8_t;
+        RunOneFrameOfGame_Emulated(game);
+        DrawFrameToPpu(game);
+        MakeSnapshot(&raw mut game.g_snapshot_theirs, game);
+        (*game.g_snes).ppu = (*game.g_snes).my_ppu;
+        RestoreSnapshot(&raw mut game.g_snapshot_before, game);
+        (*game.g_snes).runningWhichVersion = 2 as uint8_t;
+        RunOneFrameOfGame(game);
+        DrawFrameToPpu(game);
+        MakeSnapshot(&raw mut game.g_snapshot_mine, game);
+        (*game.g_snes).runningWhichVersion = 0xff as uint8_t;
         VerifySnapshotsEq(
-            &raw mut g_snapshot_mine,
-            &raw mut g_snapshot_theirs,
-            &raw mut g_snapshot_before,
+            &raw mut game.g_snapshot_mine,
+            &raw mut game.g_snapshot_theirs,
+            &raw mut game.g_snapshot_before,
+            game,
         );
-        if g_fail {
-            if VERIFY_ACTIVE {
-                VERIFY_FAILURES += 1;
-                if VERIFY_FAILURES == 1 {
-                    report_first_verify_failure();
+        if game.g_fail {
+            if game.VERIFY_ACTIVE {
+                game.VERIFY_FAILURES += 1;
+                if game.VERIFY_FAILURES == 1 {
+                    report_first_verify_failure(game);
                 }
             }
-            g_fail = false_0 != 0;
-            if !VERIFY_ACTIVE || VERIFY_FAILURES == 1 {
+            game.g_fail = false_0 != 0;
+            if !game.VERIFY_ACTIVE || game.VERIFY_FAILURES == 1 {
                 printf(b"Verify failure!\n\0" as *const u8 as *const ::core::ffi::c_char);
             }
-            (*g_snes).ppu = (*g_snes).snes_ppu;
-            RestoreSnapshot(&raw mut g_snapshot_before);
-            if g_debug_flag {
+            (*game.g_snes).ppu = (*game.g_snes).snes_ppu;
+            RestoreSnapshot(&raw mut game.g_snapshot_before, game);
+            if game.g_debug_flag {
                 continue;
             }
-            SaveBugSnapshot();
-            RunOneFrameOfGame_Emulated();
+            SaveBugSnapshot(game);
+            RunOneFrameOfGame_Emulated(game);
             break;
         } else {
-            (*g_snes).ppu = (*g_snes).snes_ppu;
-            RestoreSnapshot(&raw mut g_snapshot_theirs);
+            (*game.g_snes).ppu = (*game.g_snes).snes_ppu;
+            RestoreSnapshot(&raw mut game.g_snapshot_theirs, game);
             break;
         }
     }
-    (*g_snes).ppu = if g_other_image as ::core::ffi::c_int != 0 {
-        (*g_snes).my_ppu
+    (*game.g_snes).ppu = if game.g_other_image as ::core::ffi::c_int != 0 {
+        (*game.g_snes).my_ppu
     } else {
-        (*g_snes).snes_ppu
+        (*game.g_snes).snes_ppu
     };
-    (*g_snes).runningWhichVersion = 0 as uint8_t;
-    if *((&raw mut g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
+    (*game.g_snes).runningWhichVersion = 0 as uint8_t;
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
         == 0xffff as ::core::ffi::c_int
     {
-        (*(*g_snes).cpu).k = 0x80 as uint8_t;
-        (*(*g_snes).cpu).pc = 0x8462 as uint16_t;
-        *(&raw mut g_ram as *mut uint8).offset(0x611 as ::core::ffi::c_int as isize) = 3 as uint8;
+        (*(*game.g_snes).cpu).k = 0x80 as uint8_t;
+        (*(*game.g_snes).cpu).pc = 0x8462 as uint16_t;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x611 as ::core::ffi::c_int as isize) =
+            3 as uint8;
     }
-    if *((&raw mut g_ram as *mut uint8).offset(0x727 as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x727 as ::core::ffi::c_int as isize)
+        as *mut uint16) as ::core::ffi::c_int
         & 0xff00 as ::core::ffi::c_int
         != 0
     {
         printf(b"MENU INDEX TOO BIG!\n\0" as *const u8 as *const ::core::ffi::c_char);
-        SaveBugSnapshot();
-        let ref mut fresh1 = *((&raw mut g_ram as *mut uint8)
+        SaveBugSnapshot(game);
+        let ref mut fresh1 = *((&raw mut game.g_ram as *mut uint8)
             .offset(0x727 as ::core::ffi::c_int as isize)
             as *mut uint16);
         *fresh1 = (*fresh1 as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint16;
     }
-    if g_got_mismatch_count != 0 {
-        g_got_mismatch_count -= 1;
+    if game.g_got_mismatch_count != 0 {
+        game.g_got_mismatch_count -= 1;
     }
 }
-pub unsafe fn RtlRunFrameCompare(mut input: uint16, mut run_what: ::core::ffi::c_int) {
-    (*(*g_snes).input1).currentState = input as uint16_t;
-    if g_runmode as ::core::ffi::c_int == RM_THEIRS as ::core::ffi::c_int {
-        RunOneFrameOfGame_Emulated();
-        DrawFrameToPpu();
-    } else if g_runmode as ::core::ffi::c_int == RM_MINE as ::core::ffi::c_int {
-        g_use_my_apu_code = true_0 != 0;
-        (*g_snes).runningWhichVersion = 0xff as uint8_t;
-        RunOneFrameOfGame();
-        DrawFrameToPpu();
-        (*g_snes).runningWhichVersion = 0 as uint8_t;
+pub unsafe fn RtlRunFrameCompare(
+    mut input: uint16,
+    mut run_what: ::core::ffi::c_int,
+    game: &mut Game,
+) {
+    (*(*game.g_snes).input1).currentState = input as uint16_t;
+    if game.g_runmode as ::core::ffi::c_int == RM_THEIRS as ::core::ffi::c_int {
+        RunOneFrameOfGame_Emulated(game);
+        DrawFrameToPpu(game);
+    } else if game.g_runmode as ::core::ffi::c_int == RM_MINE as ::core::ffi::c_int {
+        game.g_use_my_apu_code = true_0 != 0;
+        (*game.g_snes).runningWhichVersion = 0xff as uint8_t;
+        RunOneFrameOfGame(game);
+        DrawFrameToPpu(game);
+        (*game.g_snes).runningWhichVersion = 0 as uint8_t;
     } else {
-        g_use_my_apu_code = true_0 != 0;
-        RunOneFrameOfGame_Both();
+        game.g_use_my_apu_code = true_0 != 0;
+        RunOneFrameOfGame_Both(game);
     };
 }

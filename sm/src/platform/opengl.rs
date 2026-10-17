@@ -1,4 +1,5 @@
 use crate::config::g_config;
+use crate::game_state::Game;
 use crate::host::Die;
 use crate::platform::glsl_shader::{GlslShader_CreateFromFile, GlslShader_Render};
 pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data, SDL_Window};
@@ -139,7 +140,7 @@ unsafe extern "C" fn MessageCallback(
         Die(b"OpenGL error!\n\0" as *const u8 as *const ::core::ffi::c_char);
     }
 }
-unsafe fn OpenGLRenderer_Init(mut window: *mut SDL_Window) -> bool {
+unsafe fn OpenGLRenderer_Init(mut window: *mut SDL_Window, game: &mut Game) -> bool {
     g_window = window;
     let mut context: SDL_GLContext = SDL_GL_CreateContext(window as *mut SDL_Window);
     SDL_GL_SetSwapInterval(1 as ::core::ffi::c_int);
@@ -268,12 +269,13 @@ unsafe fn OpenGLRenderer_Init(mut window: *mut SDL_Window) -> bool {
     }
     return true_0 != 0;
 }
-unsafe fn OpenGLRenderer_Destroy() {}
+unsafe fn OpenGLRenderer_Destroy(game: &mut Game) {}
 unsafe fn OpenGLRenderer_BeginDraw(
     mut width: ::core::ffi::c_int,
     mut height: ::core::ffi::c_int,
     mut pixels: *mut *mut uint8,
     mut pitch: *mut ::core::ffi::c_int,
+    game: &mut Game,
 ) {
     let mut size: ::core::ffi::c_int = width * height;
     if size as size_t > g_screen_buffer_size {
@@ -286,7 +288,7 @@ unsafe fn OpenGLRenderer_BeginDraw(
     *pixels = g_screen_buffer;
     *pitch = width * 4 as ::core::ffi::c_int;
 }
-unsafe fn OpenGLRenderer_EndDraw() {
+unsafe fn OpenGLRenderer_EndDraw(game: &mut Game) {
     let mut drawable_width: ::core::ffi::c_int = 0;
     let mut drawable_height: ::core::ffi::c_int = 0;
     SDL_GL_GetDrawableSize(
@@ -378,8 +380,8 @@ unsafe fn OpenGLRenderer_EndDraw() {
     SDL_GL_SwapWindow(g_window as *mut SDL_Window);
 }
 static mut kOpenGLRendererFuncs: RendererFuncs = RendererFuncs {
-    Initialize: Some(OpenGLRenderer_Init as unsafe fn(*mut SDL_Window) -> bool),
-    Destroy: Some(OpenGLRenderer_Destroy as unsafe fn() -> ()),
+    Initialize: Some(OpenGLRenderer_Init as unsafe fn(*mut SDL_Window, &mut Game) -> bool),
+    Destroy: Some(OpenGLRenderer_Destroy as unsafe fn(&mut Game) -> ()),
     BeginDraw: Some(
         OpenGLRenderer_BeginDraw
             as unsafe fn(
@@ -387,9 +389,10 @@ static mut kOpenGLRendererFuncs: RendererFuncs = RendererFuncs {
                 ::core::ffi::c_int,
                 *mut *mut uint8,
                 *mut ::core::ffi::c_int,
+                &mut Game,
             ) -> (),
     ),
-    EndDraw: Some(OpenGLRenderer_EndDraw as unsafe fn() -> ()),
+    EndDraw: Some(OpenGLRenderer_EndDraw as unsafe fn(&mut Game) -> ()),
 };
 pub unsafe fn OpenGLRenderer_Create(mut funcs: *mut RendererFuncs) {
     SDL_GL_SetAttribute(

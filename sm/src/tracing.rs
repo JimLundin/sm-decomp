@@ -1,3 +1,4 @@
+use crate::game_state::Game;
 use crate::snes::apu::apu_cpuRead;
 use crate::snes::snes::snes_read;
 extern "C" {
@@ -1305,10 +1306,14 @@ static mut opcodeTypeSpc: [::core::ffi::c_int; 256] = [
     3 as ::core::ffi::c_int,
     0 as ::core::ffi::c_int,
 ];
-pub unsafe fn getProcessorStateCpu(mut snes: *mut Snes, mut line: *mut ::core::ffi::c_char) {
+pub unsafe fn getProcessorStateCpu(
+    mut snes: *mut Snes,
+    mut line: *mut ::core::ffi::c_char,
+    game: &mut Game,
+) {
     let mut disLine: [::core::ffi::c_char; 14] =
         ::core::mem::transmute::<[u8; 14], [::core::ffi::c_char; 14]>(*b"             \0");
-    getDisassemblyCpu(snes, &raw mut disLine as *mut ::core::ffi::c_char);
+    getDisassemblyCpu(snes, &raw mut disLine as *mut ::core::ffi::c_char, game);
     sprintf(
         line,
         b"CPU %02x:%04x %s A:%04x X:%04x Y:%04x SP:%04x DP:%04x DB:%02x %c %c%c%c%c%c%c%c%c\0"
@@ -1425,21 +1430,34 @@ pub unsafe fn getProcessorStateSpc(mut apu: *mut Apu, mut line: *mut ::core::ffi
         },
     );
 }
-unsafe fn getDisassemblyCpu(mut snes: *mut Snes, mut line: *mut ::core::ffi::c_char) {
+unsafe fn getDisassemblyCpu(
+    mut snes: *mut Snes,
+    mut line: *mut ::core::ffi::c_char,
+    game: &mut Game,
+) {
     let mut adr: uint32_t = ((*(*snes).cpu).pc as ::core::ffi::c_int
         | ((*(*snes).cpu).k as ::core::ffi::c_int) << 16 as ::core::ffi::c_int)
         as uint32_t;
-    let mut opcode: uint8_t = snes_read(snes, adr);
-    let mut byte: uint8_t = snes_read(snes, adr.wrapping_add(1 as uint32_t) & 0xffffff as uint32_t);
-    let mut byte2: uint8_t =
-        snes_read(snes, adr.wrapping_add(2 as uint32_t) & 0xffffff as uint32_t);
+    let mut opcode: uint8_t = snes_read(snes, adr, game);
+    let mut byte: uint8_t = snes_read(
+        snes,
+        adr.wrapping_add(1 as uint32_t) & 0xffffff as uint32_t,
+        game,
+    );
+    let mut byte2: uint8_t = snes_read(
+        snes,
+        adr.wrapping_add(2 as uint32_t) & 0xffffff as uint32_t,
+        game,
+    );
     let mut word: uint16_t = ((byte2 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
         | byte as ::core::ffi::c_int) as uint16_t;
-    let mut longv: uint32_t =
-        ((snes_read(snes, adr.wrapping_add(3 as uint32_t) & 0xffffff as uint32_t)
-            as ::core::ffi::c_int)
-            << 16 as ::core::ffi::c_int
-            | word as ::core::ffi::c_int) as uint32_t;
+    let mut longv: uint32_t = ((snes_read(
+        snes,
+        adr.wrapping_add(3 as uint32_t) & 0xffffff as uint32_t,
+        game,
+    ) as ::core::ffi::c_int)
+        << 16 as ::core::ffi::c_int
+        | word as ::core::ffi::c_int) as uint32_t;
     let mut rel: uint16_t = ((*(*snes).cpu).pc as ::core::ffi::c_int
         + 2 as ::core::ffi::c_int
         + byte as int8_t as ::core::ffi::c_int) as uint16_t;

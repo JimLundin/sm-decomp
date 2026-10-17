@@ -294,7 +294,8 @@ every step makes the next one easier.
    Linux stable format/release build, smoke and full any% passed on
    `aaa80120`; no failing frames. Final Windows-only CRT source rerun:
    https://github.com/JimLundin/sm-decomp/actions/runs/39067855970.
-4. Globals: gather `static mut` game state behind one `Game` struct passed by
+4. **Globals ? implementation complete, Linux validation pending.** Gather
+   `static mut` game state behind one `Game` struct passed by
    `&mut`, keeping `g_ram` as the 128 KiB array it is (RAM layout must stay
    byte-identical for the oracle comparison and for save states).
    Immutable-table precursor applied: 755 read-only gameplay statics now
@@ -308,6 +309,22 @@ every step makes the next one easier.
    existing unchecked entry offset. Any% 129,712 frames, zero failures;
    format and library/frontend metadata builds pass. Rust lines -1; other
    progress counters unchanged.
+   Explicit ownership applied: all 49 mutable gameplay/runtime/oracle fields
+   now live in heap-allocated `game_state::Game`, passed through 6,294 Rust
+   functions and their callback tables by `&mut`. `g_ram` remains exactly
+   `[u8; 131072]`; hardware and save-state operations retain backing pointers
+   and byte ranges. The frontend supplies a mutex-protected `GameOwner` via
+   SDL audio userdata, borrows only around individual operations, and closes
+   the audio device before releasing it. Existing audio-lock hooks remain.
+   Any% completes 129,712 frames with zero failures; final format and real
+   frontend/core metadata builds pass. Local Cargo remains denied by ASR;
+   Linux stable release validation is pending on the committed source.
+   Raw RAM-offset lines 23,718 -> 23,710; no_mangle 6 -> 5; other ABI/unsafe
+   counters unchanged. c_int cast lines 89,830 -> 89,884 and Rust lines
+   249,212 -> 259,878 because explicit context expands calls and rustfmt
+   wraps existing expressions. No casts or gameplay algorithms were added.
+   Remaining mutable core statics are read-only hardware/music/debug tables,
+   to make immutable in a separate mechanical change.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 

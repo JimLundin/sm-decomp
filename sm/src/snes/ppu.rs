@@ -1,4 +1,5 @@
-use crate::host::g_new_ppu;
+use crate::game_state::Game;
+
 extern "C" {
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
@@ -587,11 +588,13 @@ pub unsafe fn ppu_saveload(
     mut ppu: *mut Ppu,
     mut func: Option<SaveLoadFunc>,
     mut ctx: *mut ::core::ffi::c_void,
+    game: &mut Game,
 ) {
     func.expect("non-null function pointer")(
         ctx,
         &raw mut (*ppu).vram as *mut ::core::ffi::c_void,
         (67313 as size_t).wrapping_sub(8 as size_t),
+        game,
     );
 }
 pub unsafe fn PpuBeginDrawing(
@@ -627,7 +630,7 @@ unsafe fn ClearBackdrop(mut buf: *mut PpuPixelPrioBufs) {
         i = i.wrapping_add(4 as size_t);
     }
 }
-pub unsafe fn ppu_runLine(mut ppu: *mut Ppu, mut line: ::core::ffi::c_int) {
+pub unsafe fn ppu_runLine(mut ppu: *mut Ppu, mut line: ::core::ffi::c_int, game: &mut Game) {
     if line == 0 as ::core::ffi::c_int {
         (*ppu).mosaicStartLine = 1 as uint8_t;
         (*ppu).rangeOver = false_0 != 0;
@@ -664,7 +667,7 @@ pub unsafe fn ppu_runLine(mut ppu: *mut Ppu, mut line: ::core::ffi::c_int) {
         ClearBackdrop(&raw mut (*ppu).objBuffer);
         (*ppu).lineHasSprites = !(*ppu).forcedBlank
             && ppu_evaluateSprites(ppu, line - 1 as ::core::ffi::c_int) as ::core::ffi::c_int != 0;
-        if g_new_ppu {
+        if game.g_new_ppu {
             PpuDrawWholeLine(ppu, line as uint);
         } else {
             if (*ppu).mode as ::core::ffi::c_int == 7 as ::core::ffi::c_int {
