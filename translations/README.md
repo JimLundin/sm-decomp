@@ -1,8 +1,9 @@
 # Translated actor source candidates
 
-Eight complete actor scopes, 159 definitions, are translated and unverified.
-All eight sources are registered as restart library targets. No production runtime
-registration or native adapter is provided. The six Cargo manifests are preserved exactly;
+Nine complete actor scopes, 191 definitions, are translated and unverified.
+Eight sources are registered as restart library targets; Yapping Maw is pending.
+No production runtime registration or native adapter is provided.
+The seven Cargo manifests are preserved exactly;
 Skree and Rinka are standalone std-only modules without Cargo manifests.
 No compilation, test or native execution verdict is asserted here.
 
@@ -25,6 +26,7 @@ are preserved; original contribution licensing does not replace them.
 | Bouncing Goofball (10) | Init, Func1, Main, State0/State1, SamusCloseX, Func2/Func3, Instr_88C5/88C6 | bouncing-goofball/src/lib.rs |
 | Mini Crocomire (14) | Instr_897E/8990/899D, Init, Main, Func1..4, PreInstr5/6, Func7..9 | mini-crocomire/src/lib.rs |
 | MiniDraygon/Evir (25) | Instr_1..4, Init, Main, Func_1..13, CallMiniDraygonFunc, Touch/Powerbomb/Shot, EvirProjectile_Init/Main | minidraygon/src/lib.rs |
+| Yapping Maw (32) | Instr_1..7, Init/Main, Func_1..19, Touch/Shot/Frozen, CallYappingMawFunc | yapping-maw/src/lib.rs |
 
 Each execute seam uses exact 128KiB canonical WRAM, explicit little-endian
 words and aligned enemy slots, immutable caller-authenticated ROM and typed

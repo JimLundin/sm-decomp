@@ -6,8 +6,10 @@ Existing root/restart translations and their historical verification are separat
 
 ## Landed source
 
-Eight complete scopes, **159 recovered-C definitions**, are published on `main`.
-All eight have restart workspace library targets. Library registration enables checks; production runtime dispatch,
+Nine complete source scopes, **191 recovered-C definitions**, are prepared in
+this source batch; eight scopes/159 definitions are already published on `main`.
+Eight have restart workspace library targets; Yapping Maw registration is pending.
+Library registration enables checks; production runtime dispatch,
 native adapters and gameplay parity remain unfinished.
 
 | Scope | Definitions | Source | Restart library target | Gameplay verification |
@@ -20,6 +22,7 @@ native adapters and gameplay parity remain unfinished.
 | Bouncing Goofball | 10 | [Published](../translations/bouncing-goofball/src/lib.rs) | Registered | Pending |
 | Mini Crocomire | 14 | [Published](../translations/mini-crocomire/src/lib.rs) | Registered | Pending |
 | MiniDraygon/Evir | 25 | [Published](../translations/minidraygon/src/lib.rs) | Registered | Pending |
+| Yapping Maw | 32 | [Source batch](../translations/yapping-maw/src/lib.rs) | Pending | Pending |
 
 Source batch commits: `ca9522f` (six scopes, 120 definitions), then `1a71f28`
 (eight scopes, 159 definitions and six library targets). The latter preserves
@@ -29,17 +32,16 @@ the reviewed gameplay source bytes. See [scope and acceptance details](../transl
 
 | Scope | Full boundary | Status |
 | --- | ---: | --- |
-| Yapping Maw | 32 definitions | Translation in progress |
 | KiHunter and linked Wings | 30 definitions | Translation in progress |
 
-The active 62 definitions are excluded from completed totals until complete
+The active 30 definitions are excluded from completed totals until complete
 source is frozen, independently reviewed and published. Shared projectile and
 native-service implementations reused by these scopes are not counted again.
 
 ## Burndown and acceptance
 
 The new source backlog moved from zero to six published scopes (120 definitions),
-then eight (159). There is no reconciled count of all remaining unimplemented
+then eight (159), with nine (191) prepared in this source batch. There is no reconciled count of all remaining unimplemented
 gameplay scopes, so a whole-game percentage or completion date is not supported.
 
 The current process translates whole scopes first and verifies coherent batches
