@@ -1,11 +1,12 @@
+use crate::snes::apu::apu_cpuRead;
+use crate::snes::snes::snes_read;
 extern "C" {
     fn sprintf(
         __s: *mut ::core::ffi::c_char,
         __format: *const ::core::ffi::c_char,
         ...
     ) -> ::core::ffi::c_int;
-    fn apu_cpuRead(apu: *mut Apu, adr: uint16_t) -> uint8_t;
-    fn snes_read(snes: *mut Snes, adr: uint32_t) -> uint8_t;
+
 }
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16_t, int32_t, int8_t,

@@ -1,3 +1,22 @@
+use crate::game::sm_80::{
+    InvalidInterrupt_Crash, QueueSfx1_Max6, QueueSfx1_Max9, QueueSfx2_Max6, QueueSfx3_Max6,
+    QueueSfx3_Max9,
+};
+use crate::game::sm_84::{DisablePLMs, EnablePLMs, LoadXrayBlocks};
+use crate::game::sm_86::{DisableEprojs, EnableEprojs};
+use crate::game::sm_87::{DisableAnimtiles, EnableAnimtiles};
+use crate::game::sm_88::SpawnHdmaObject;
+use crate::game::sm_8d::{DisablePaletteFx, EnablePaletteFx, SpawnPalfxObject};
+use crate::game::sm_90::{
+    CallSomeSamusCode, LoadProjectilePalette, Projectile_Func7_Shinespark,
+    Samus_AlignBottomWithPrevPose, Samus_GetBottom_R18, Samus_GetTop_R20, Samus_InitJump,
+    Samus_InitWallJump, Samus_SetSpeedForKnockback_Y, UpdateBeamTilesAndPalette,
+    WriteBeamPalette_A,
+};
+use crate::game::sm_94::{Samus_CollDetectChangedPose, Samus_MoveRight_NoSolidColl};
+use crate::game::sm_9b::{GrappleBeamFunc_BD95, GrappleBeamFunc_BEEB};
+use crate::game::sm_a0::Samus_CheckSolidEnemyColl;
+use crate::rtl::{g_ram, g_rom, mov24, Mult8x8, RomPtr, Unreachable};
 extern "C" {
     fn __assert_fail(
         __assertion: *const ::core::ffi::c_char,
@@ -10,45 +29,7 @@ extern "C" {
         __src: *const ::core::ffi::c_void,
         __n: size_t,
     ) -> *mut ::core::ffi::c_void;
-    static mut g_ram: [uint8; 131072];
-    static mut g_rom: *const uint8;
-    fn mov24(dst: *mut LongPtr, src: uint32);
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn Mult8x8(a: uint8, b: uint8) -> uint16;
-    fn InvalidInterrupt_Crash();
-    fn QueueSfx1_Max6(a: uint16);
-    fn QueueSfx1_Max9(a: uint16);
-    fn QueueSfx2_Max6(a: uint16);
-    fn QueueSfx3_Max6(a: uint16);
-    fn QueueSfx3_Max9(a: uint16);
-    fn DisablePLMs();
-    fn EnablePLMs();
-    fn LoadXrayBlocks();
-    fn DisableEprojs();
-    fn EnableEprojs();
-    fn DisableAnimtiles();
-    fn EnableAnimtiles();
-    fn SpawnHdmaObject(db: uint8, p: *const ::core::ffi::c_void) -> uint16;
-    fn DisablePaletteFx();
-    fn EnablePaletteFx();
-    fn SpawnPalfxObject(j: uint16);
-    fn CallSomeSamusCode(a: uint16) -> uint16;
-    fn LoadProjectilePalette(a: uint16);
-    fn Projectile_Func7_Shinespark();
-    fn Samus_AlignBottomWithPrevPose();
-    fn Samus_GetTop_R20() -> uint16;
-    fn Samus_GetBottom_R18() -> uint16;
-    fn Samus_InitJump();
-    fn Samus_InitWallJump();
-    fn Samus_SetSpeedForKnockback_Y();
-    fn UpdateBeamTilesAndPalette();
-    fn WriteBeamPalette_A(a: uint16);
-    fn Samus_CollDetectChangedPose(amt: int32) -> int32;
-    fn Samus_MoveRight_NoSolidColl(amt: int32) -> int32;
-    fn GrappleBeamFunc_BD95();
-    fn GrappleBeamFunc_BEEB();
-    fn Samus_CheckSolidEnemyColl(amt: int32) -> CheckEnemyColl_Result;
+
 }
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,

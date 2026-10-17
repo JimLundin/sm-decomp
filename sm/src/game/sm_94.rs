@@ -1,17 +1,9 @@
-extern "C" {
-    static mut g_ram: [uint8; 131072];
-    static mut g_rom: *const uint8;
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn Mult8x8(a: uint8, b: uint8) -> uint16;
-    fn SnesDivide(a: uint16, b: uint8) -> uint16;
-    fn SnesModulus(a: uint16, b: uint8) -> uint16;
-    fn CheckBossBitForCurArea(a: uint16) -> uint8;
-    fn Multiply16x16(a: uint16, j: uint16) -> uint32;
-    fn SpawnPLM(a: uint16) -> uint8;
-    fn KillProjectile(k: uint16);
-    fn CalculateAngleFromXY(x_r18: uint16, y_r20: uint16) -> uint16;
-}
+use crate::game::sm_80::{CheckBossBitForCurArea, Multiply16x16};
+use crate::game::sm_84::SpawnPLM;
+use crate::game::sm_90::KillProjectile;
+use crate::game::sm_a0::CalculateAngleFromXY;
+use crate::rtl::{g_ram, g_rom, Mult8x8, RomPtr, SnesDivide, SnesModulus, Unreachable};
+
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
     int32_t, int8, int8_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, DoorDef, Func_V,

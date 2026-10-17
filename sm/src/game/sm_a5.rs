@@ -1,3 +1,23 @@
+use crate::game::sm_80::{NextRandom, QueueMusic_Delayed8, QueueSfx2_Max6, QueueSfx3_Max6};
+use crate::game::sm_84::SpawnHardcodedPlm;
+use crate::game::sm_86::{eproj_spawn_pt, SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
+use crate::game::sm_88::{sub_88DF34, SpawnBG3ScrollHdmaObject};
+use crate::game::sm_90::{
+    CallSomeSamusCode, DisableMinimapAndMarkBossRoomAsExplored, Samus_ReleaseFromDraygon_,
+    Samus_SetGrabbedByDraygonPose,
+};
+use crate::game::sm_91::Samus_DealDamage;
+use crate::game::sm_a0::{
+    Abs16, CalculateAngleFromXY, ConvertAngleToXy, CosineMult8bit, EnemyFunc_A6B4_UsedBySporeSpawn,
+    EnemyFunc_B691, EnemyFunc_B7A1, EnemyFunc_Divide, Enemy_ItemDrop_Draygon,
+    Enemy_ItemDrop_SporeSpawn, Enemy_SwitchToFrozenAi, NormalEnemyFrozenAI,
+    NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy, NormalEnemyShotAi,
+    NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi,
+    NormalEnemyTouchAiSkipDeathAnim_CurEnemy, SignExtend8, SineMult8bit, SuitDamageDivision,
+    SwitchEnemyAiToMainAi,
+};
+use crate::game::sm_b4::CreateSpriteAtPos;
+use crate::rtl::{g_ram, g_rom, RomPtr, Unreachable};
 extern "C" {
     fn memcpy(
         __dest: *mut ::core::ffi::c_void,
@@ -5,52 +25,7 @@ extern "C" {
         __n: size_t,
     ) -> *mut ::core::ffi::c_void;
     fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
-    static mut g_ram: [uint8; 131072];
-    static mut g_rom: *const uint8;
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn NextRandom() -> uint16;
-    fn QueueMusic_Delayed8(a: uint16);
-    fn QueueSfx2_Max6(a: uint16);
-    fn QueueSfx3_Max6(a: uint16);
-    fn SpawnHardcodedPlm(p: SpawnHardcodedPlmArgs);
-    static mut eproj_spawn_pt: Point16U;
-    fn SpawnEprojWithGfx(a: uint16, k: uint16, j: uint16);
-    fn SpawnEprojWithRoomGfx(j: uint16, a: uint16);
-    fn SpawnBG3ScrollHdmaObject();
-    fn sub_88DF34();
-    fn CallSomeSamusCode(a: uint16) -> uint16;
-    fn DisableMinimapAndMarkBossRoomAsExplored();
-    fn Samus_ReleaseFromDraygon_();
-    fn Samus_SetGrabbedByDraygonPose(a: uint16);
-    fn Samus_DealDamage(a: uint16);
-    fn Abs16(a: uint16) -> uint16;
-    fn CalculateAngleFromXY(x_r18: uint16, y_r20: uint16) -> uint16;
-    fn SignExtend8(a: uint16) -> uint16;
-    fn SineMult8bit(a: uint16, varE32: uint16) -> uint16;
-    fn CosineMult8bit(a: uint16, varE32: uint16) -> uint16;
-    fn SuitDamageDivision(a: uint16) -> uint16;
-    fn ConvertAngleToXy(r18: uint16, r20: uint16) -> Point32;
-    fn EnemyFunc_A6B4_UsedBySporeSpawn();
-    fn EnemyFunc_B691(varE20: uint16, pt: Point32);
-    fn EnemyFunc_Divide(a: uint32, b: uint32) -> uint32;
-    fn EnemyFunc_B7A1();
-    fn Enemy_ItemDrop_Draygon(k: uint16);
-    fn Enemy_ItemDrop_SporeSpawn(k: uint16);
-    fn Enemy_SwitchToFrozenAi();
-    fn NormalEnemyFrozenAI();
-    fn NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy();
-    fn NormalEnemyShotAi();
-    fn NormalEnemyShotAiSkipDeathAnim_CurEnemy();
-    fn NormalEnemyTouchAi();
-    fn NormalEnemyTouchAiSkipDeathAnim_CurEnemy();
-    fn SwitchEnemyAiToMainAi();
-    fn CreateSpriteAtPos(
-        x_r18: uint16,
-        y_r20: uint16,
-        ilist_r22: uint16,
-        pal_r24: uint16,
-    ) -> uint16;
+
 }
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,

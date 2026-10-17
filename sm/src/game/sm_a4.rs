@@ -1,3 +1,14 @@
+use crate::game::sm_80::{QueueMusic_Delayed8, QueueSfx2_Max6, QueueSfx3_Max6};
+use crate::game::sm_84::SpawnHardcodedPlm;
+use crate::game::sm_86::{eproj_spawn_pt, ClearEprojs, SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
+use crate::game::sm_88::SpawnHdmaObject;
+use crate::game::sm_90::DisableMinimapAndMarkBossRoomAsExplored;
+use crate::game::sm_a0::{
+    Enemy_ItemDrop_Crocomire, Enemy_MoveRight_IgnoreSlopes, NormalEnemyFrozenAI, NormalEnemyShotAi,
+    NormalEnemyTouchAi, SamusLatchesOnWithGrapple,
+};
+use crate::game::sm_b4::CreateSpriteAtPos;
+use crate::rtl::{g_ram, g_rom, RomPtr};
 extern "C" {
     fn __assert_fail(
         __assertion: *const ::core::ffi::c_char,
@@ -5,31 +16,7 @@ extern "C" {
         __line: ::core::ffi::c_uint,
         __function: *const ::core::ffi::c_char,
     ) -> !;
-    static mut g_ram: [uint8; 131072];
-    static mut g_rom: *const uint8;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn QueueMusic_Delayed8(a: uint16);
-    fn QueueSfx2_Max6(a: uint16);
-    fn QueueSfx3_Max6(a: uint16);
-    fn SpawnHardcodedPlm(p: SpawnHardcodedPlmArgs);
-    static mut eproj_spawn_pt: Point16U;
-    fn ClearEprojs();
-    fn SpawnEprojWithGfx(a: uint16, k: uint16, j: uint16);
-    fn SpawnEprojWithRoomGfx(j: uint16, a: uint16);
-    fn SpawnHdmaObject(db: uint8, p: *const ::core::ffi::c_void) -> uint16;
-    fn DisableMinimapAndMarkBossRoomAsExplored();
-    fn Enemy_MoveRight_IgnoreSlopes(k: uint16, amt: int32) -> uint8;
-    fn Enemy_ItemDrop_Crocomire(k: uint16);
-    fn NormalEnemyFrozenAI();
-    fn NormalEnemyShotAi();
-    fn NormalEnemyTouchAi();
-    fn SamusLatchesOnWithGrapple();
-    fn CreateSpriteAtPos(
-        x_r18: uint16,
-        y_r20: uint16,
-        ilist_r22: uint16,
-        pal_r24: uint16,
-    ) -> uint16;
+
 }
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,

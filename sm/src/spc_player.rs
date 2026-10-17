@@ -1,3 +1,4 @@
+use crate::snes::dsp::{dsp_cycle, dsp_init, dsp_reset, dsp_write};
 extern "C" {
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
     fn __assert_fail(
@@ -17,10 +18,7 @@ extern "C" {
         __c: ::core::ffi::c_int,
         __n: size_t,
     ) -> *mut ::core::ffi::c_void;
-    fn dsp_init(ram: *mut uint8_t) -> *mut Dsp;
-    fn dsp_reset(dsp: *mut Dsp);
-    fn dsp_cycle(dsp: *mut Dsp);
-    fn dsp_write(dsp: *mut Dsp, adr: uint8_t, val: uint8_t);
+
 }
 pub use crate::types::{
     __int16_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16_t, int8_t, size_t, uint16,

@@ -1,24 +1,14 @@
-extern "C" {
-    static mut g_ram: [uint8; 131072];
-    static mut g_rom: *const uint8;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn SpawnAnimtiles(j: uint16);
-    fn FxTypeFunc_20();
-    fn FxTypeFunc_22_ScrollingSky();
-    fn FxTypeFunc_24();
-    fn FxTypeFunc_26_TourianEntranceStatue();
-    fn FxTypeFunc_28_CeresRidley();
-    fn FxTypeFunc_2C_Haze();
-    fn FxTypeFunc_2_Lava();
-    fn FxTypeFunc_4_Acid();
-    fn FxTypeFunc_6_Water();
-    fn FxTypeFunc_8_Spores();
-    fn FxTypeFunc_A_Rain();
-    fn FxTypeFunc_C();
-    fn FxTypeFunc_CeresElevator();
-    fn SpawnPalfxObject(j: uint16);
-    fn CallSomeSamusCode(a: uint16) -> uint16;
-}
+use crate::game::sm_87::SpawnAnimtiles;
+use crate::game::sm_88::{
+    FxTypeFunc_20, FxTypeFunc_22_ScrollingSky, FxTypeFunc_24, FxTypeFunc_26_TourianEntranceStatue,
+    FxTypeFunc_28_CeresRidley, FxTypeFunc_2C_Haze, FxTypeFunc_2_Lava, FxTypeFunc_4_Acid,
+    FxTypeFunc_6_Water, FxTypeFunc_8_Spores, FxTypeFunc_A_Rain, FxTypeFunc_C,
+    FxTypeFunc_CeresElevator,
+};
+use crate::game::sm_8d::SpawnPalfxObject;
+use crate::game::sm_90::CallSomeSamusCode;
+use crate::rtl::{g_ram, g_rom, RomPtr};
+
 pub use crate::types::{
     __int16_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, uint16, uint16_t, uint32_t,
     uint8, uint8_t, Func_V,

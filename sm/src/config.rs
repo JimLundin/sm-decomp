@@ -1,5 +1,10 @@
 use crate::host::Die;
 pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data};
+use crate::util::{
+    NextDelim, NextLineStripComments, NextPossiblyQuotedString, ReadWholeFile,
+    ReplaceFilenameWithNewPath, SkipPrefix, SplitKeyValue, StringEqualsNoCase,
+    StringStartsWithNoCase,
+};
 extern "C" {
 
     fn strtol(
@@ -16,27 +21,7 @@ extern "C" {
         ...
     ) -> ::core::ffi::c_int;
     fn SDL_GetKeyFromName(name: *const ::core::ffi::c_char) -> SDL_Keycode;
-    fn ReadWholeFile(name: *const ::core::ffi::c_char, length: *mut size_t) -> *mut uint8;
-    fn NextDelim(
-        s: *mut *mut ::core::ffi::c_char,
-        sep: ::core::ffi::c_int,
-    ) -> *mut ::core::ffi::c_char;
-    fn NextLineStripComments(s: *mut *mut ::core::ffi::c_char) -> *mut ::core::ffi::c_char;
-    fn NextPossiblyQuotedString(s: *mut *mut ::core::ffi::c_char) -> *mut ::core::ffi::c_char;
-    fn SplitKeyValue(p: *mut ::core::ffi::c_char) -> *mut ::core::ffi::c_char;
-    fn StringEqualsNoCase(a: *const ::core::ffi::c_char, b: *const ::core::ffi::c_char) -> bool;
-    fn StringStartsWithNoCase(
-        a: *const ::core::ffi::c_char,
-        b: *const ::core::ffi::c_char,
-    ) -> *const ::core::ffi::c_char;
-    fn SkipPrefix(
-        big: *const ::core::ffi::c_char,
-        little: *const ::core::ffi::c_char,
-    ) -> *const ::core::ffi::c_char;
-    fn ReplaceFilenameWithNewPath(
-        old_path: *const ::core::ffi::c_char,
-        new_path: *const ::core::ffi::c_char,
-    ) -> *mut ::core::ffi::c_char;
+
 }
 pub use crate::types::{
     _IO_lock_t, __int32_t, __off64_t, __off_t, __uint16_t, __uint32_t, __uint8_t, int32_t, size_t,

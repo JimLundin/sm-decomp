@@ -1,3 +1,312 @@
+use crate::game::sm_80::{
+    NextRandom, QueueSfx1_Max3, QueueSfx1_Max6, QueueSfx2_Max1, QueueSfx2_Max3, QueueSfx3_Max3,
+};
+use crate::game::sm_81::{
+    DrawSpritemapWithBaseTile, DrawSpritemapWithBaseTile2, DrawSpritemapWithBaseTileOffscreen,
+};
+use crate::game::sm_84::SpawnPLM;
+use crate::game::sm_86::{
+    eproj_spawn_pt, eproj_spawn_varE24, DrawHighPriorityEprojs, DrawLowPriorityEprojs,
+    SpawnEprojWithGfx,
+};
+use crate::game::sm_90::{CallSomeSamusCode, DrawSamusAndProjectiles};
+use crate::game::sm_91::Samus_DealDamage;
+use crate::game::sm_93::DrawBombAndProjectileExplosions;
+use crate::game::sm_a2::{
+    BouncingGoofball_Init, BouncingGoofball_Instr_88C5, BouncingGoofball_Instr_88C6,
+    BouncingGoofball_Main, EnemyInstr_Rio_Instr_1, Enemy_GrappleReact_CancelBeam_A2,
+    Enemy_GrappleReact_KillEnemy_A2, Enemy_GrappleReact_SamusLatchesOn_A2, Enemy_NormalFrozenAI_A2,
+    Enemy_NormalShotAI_A2, Enemy_NormalTouchAI_A2, Flies_4, Flies_5, Flies_6, Flies_7, Flies_Init,
+    Flies_Main, Gripper_Init, Gripper_Main, GunshipBottom_Init, GunshipTop_10, GunshipTop_11,
+    GunshipTop_12, GunshipTop_13, GunshipTop_14, GunshipTop_15, GunshipTop_16, GunshipTop_17,
+    GunshipTop_18, GunshipTop_19, GunshipTop_20, GunshipTop_21, GunshipTop_3, GunshipTop_4,
+    GunshipTop_5, GunshipTop_6, GunshipTop_7, GunshipTop_8, GunshipTop_9, GunshipTop_Init,
+    GunshipTop_Main, HirisingSlowfalling_Init, HirisingSlowfalling_Main,
+    HorizontalShootableShutter_Init, HorizontalShootableShutter_Main,
+    HorizontalShootableShutter_Powerbomb, HorizontalShootableShutter_Shot,
+    HorizontalShootableShutter_Touch, JetPowerRipper_Init, JetPowerRipper_Main,
+    JetPowerRipper_Shot, LavaSeahorse_Func_1, LavaSeahorse_Func_2, LavaSeahorse_Func_3,
+    LavaSeahorse_Func_4, LavaSeahorse_Func_5, LavaSeahorse_Init, LavaSeahorse_Instr_E5FB,
+    LavaSeahorse_Main, LavaSeahorse_Powerbomb, LavaSeahorse_Shot, LavaSeahorse_Touch,
+    LavaquakeRocks_Init, LavaquakeRocks_Main, LowerNorfairRio_Func_1, LowerNorfairRio_Func_2,
+    LowerNorfairRio_Func_3, LowerNorfairRio_Func_4, LowerNorfairRio_Func_5, LowerNorfairRio_Func_6,
+    LowerNorfairRio_Init, LowerNorfairRio_Instr_C6D2, LowerNorfairRio_Instr_C6DD,
+    LowerNorfairRio_Instr_C6E8, LowerNorfairRio_Main, MaridiaBeybladeTurtle_Init,
+    MaridiaBeybladeTurtle_Instr_9381, MaridiaBeybladeTurtle_Instr_9412,
+    MaridiaBeybladeTurtle_Instr_9447, MaridiaBeybladeTurtle_Instr_9451,
+    MaridiaBeybladeTurtle_Instr_946B, MaridiaBeybladeTurtle_Instr_9485,
+    MaridiaBeybladeTurtle_Instr_94A1, MaridiaBeybladeTurtle_Instr_94C7,
+    MaridiaBeybladeTurtle_Instr_94D1, MaridiaBeybladeTurtle_Main, MaridiaBeybladeTurtle_Touch,
+    MaridiaLargeSnail_Func_12, MaridiaLargeSnail_Func_7, MaridiaLargeSnail_Func_8,
+    MaridiaLargeSnail_Init, MaridiaLargeSnail_Instr_CB6B, MaridiaLargeSnail_Instr_CCB3,
+    MaridiaLargeSnail_Instr_CCBE, MaridiaLargeSnail_Instr_CCC9, MaridiaLargeSnail_Main,
+    MaridiaLargeSnail_Shot, MaridiaLargeSnail_Touch, MaridiaSpikeyShell_Init,
+    MaridiaSpikeyShell_Instr_A56D, MaridiaSpikeyShell_Instr_A571, MaridiaSpikeyShell_Main,
+    MaridiaSpikeyShell_Shot, MiniCrocomire_Init, MiniCrocomire_Instr_897E,
+    MiniCrocomire_Instr_8990, MiniCrocomire_Instr_899D, MiniCrocomire_Main,
+    MiniCrocomire_PreInstr5, MiniCrocomire_PreInstr6, MiniMaridiaBeybladeTurtle_Init,
+    MiniMaridiaBeybladeTurtle_Main, MiniMaridiaBeybladeTurtle_Shot,
+    MiniMaridiaBeybladeTurtle_Touch, NorfairErraticFireball_Init, NorfairErraticFireball_Main,
+    NorfairLavajumpingEnemy_Func_1, NorfairLavajumpingEnemy_Func_2, NorfairLavajumpingEnemy_Func_3,
+    NorfairLavajumpingEnemy_Func_4, NorfairLavajumpingEnemy_Func_5, NorfairLavajumpingEnemy_Init,
+    NorfairLavajumpingEnemy_Instr_BE8E, NorfairLavajumpingEnemy_Main, NorfairRio_Func_1,
+    NorfairRio_Func_2, NorfairRio_Func_3, NorfairRio_Func_4, NorfairRio_Func_5, NorfairRio_Func_6,
+    NorfairRio_Init, NorfairRio_Instr_C1C9, NorfairRio_Instr_C1D4, NorfairRio_Instr_C1DF,
+    NorfairRio_Instr_C1EA, NorfairRio_Instr_C1F5, NorfairRio_Instr_C200, NorfairRio_Instr_C20B,
+    NorfairRio_Instr_C216, NorfairRio_Instr_C221, NorfairRio_Instr_C22C, NorfairRio_Instr_C237,
+    NorfairRio_Main, Rinka_Frozen, Rinka_Init, Rinka_Instr_B9B3, Rinka_Instr_B9BD,
+    Rinka_Instr_B9C7, Rinka_Main, Rinka_Powerbomb, Rinka_Shot, Rinka_Touch, Rio_Init, Rio_Main,
+    Ripper_Init, Ripper_Main, RisingFallingPlatform_Init, RisingFallingPlatform_Main,
+    RisingFallingPlatform_Powerbomb, RisingFallingPlatform_Shot, RisingFallingPlatform_Touch,
+    ShootableShutter_Init, ShootableShutter_Shot, SpikeShootingPlant_2, SpikeShootingPlant_3,
+    SpikeShootingPlant_Init, SpikeShootingPlant_Instr_9F2A, SpikeShootingPlant_Instr_A095,
+    SpikeShootingPlant_Instr_A0A7, SpikeShootingPlant_Main, ThinHoppingBlobs_Init,
+    ThinHoppingBlobs_Main, TimedShutter_Init, TimedShutter_Main,
+};
+use crate::game::sm_a3::{
+    sub_A3E168, Bang_Func_10, Bang_Func_11, Bang_Func_6, Bang_Func_7, Bang_Func_8, Bang_Init,
+    Bang_Instr_1, Bang_Instr_2, Bang_Main, Bang_Shot, BigEyeBugs_Init, Crab_Init, Elevator_Frozen,
+    Elevator_Init, Enemy_GrappleReact_CancelBeam_A3, Enemy_GrappleReact_KillEnemy_A3,
+    Enemy_GrappleReact_NoInteract_A3, Enemy_NormalFrozenAI_A3, Enemy_NormalShotAI_A3,
+    Enemy_NormalTouchAI_A3, FastMovingSlowSinkingPlatform_Init, FastMovingSlowSinkingPlatform_Shot,
+    FireZoomer_Func_1, FireZoomer_Func_2, FireZoomer_Func_3, FireZoomer_Init, Fireflea_Init,
+    Fireflea_Main, Fireflea_Powerbomb, Fireflea_Shot, Fireflea_Touch, MaridiaFish_Init,
+    MaridiaFish_Instr_1, MaridiaFish_Instr_2, MaridiaFish_Instr_3, MaridiaFish_Main,
+    MaridiaRefillCandy_Init, MaridiaRefillCandy_Instr_1, MaridiaRefillCandy_Instr_2,
+    MaridiaRefillCandy_Instr_3, MaridiaRefillCandy_Main, MaridiaSnail_CFB7, MaridiaSnail_CFBD,
+    MaridiaSnail_CFCE, MaridiaSnail_CFD4, MaridiaSnail_CFE5, MaridiaSnail_CFEB, MaridiaSnail_CFFC,
+    MaridiaSnail_Func_15, MaridiaSnail_Func_7, MaridiaSnail_Func_9, MaridiaSnail_Init,
+    MaridiaSnail_Instr_1, MaridiaSnail_Instr_2, MaridiaSnail_Instr_3, MaridiaSnail_Instr_4,
+    MaridiaSnail_Instr_5, MaridiaSnail_Main, MaridiaSnail_Shot, MaridiaSnail_Touch, Metalee_Init,
+    Metalee_Instr_1, Metalee_Main, Metalee_Shot, Metroid_Frozen, Metroid_Hurt, Metroid_Init,
+    Metroid_Instr_1, Metroid_Instr_2, Metroid_Main, Metroid_Powerbomb, Metroid_Shot, Metroid_Touch,
+    Mochtroid_Init, Mochtroid_Main, Mochtroid_Shot, Mochtroid_Touch, NorfairSlowFireball_Init,
+    PlatformThatFallsWithSamus_Init, PlatformThatFallsWithSamus_Instr_1,
+    PlatformThatFallsWithSamus_Instr_2, PlatformThatFallsWithSamus_Instr_3,
+    PlatformThatFallsWithSamus_Instr_4, PlatformThatFallsWithSamus_Main, Reflec_Func_1,
+    Reflec_Init, Reflec_Instr_1, Reflec_Shot, Roach_Init, Roach_Main, Sidehopper_Func_1,
+    Sidehopper_Init, Sidehopper_Instr_1, Sidehopper_Main, Skree_Init, Skree_Instr_1, Skree_Main,
+    Skree_Shot, Slug_Init, StoneZoomer_Init, StoneZoomer_Main, Waver_Init, Waver_Instr_1,
+    Waver_Main, WreckedShipOrangeZoomer_Func_1, WreckedShipOrangeZoomer_Func_2,
+    WreckedShipOrangeZoomer_Init, WreckedShipOrangeZoomer_Main, Zoomer_Instr_SetPreinstr,
+};
+use crate::game::sm_a4::{
+    CrocomireTongue_Init, CrocomireTongue_Main, Crocomire_Func_1, Crocomire_Func_92,
+    Crocomire_Func_93, Crocomire_Func_94, Crocomire_Func_95, Crocomire_Hurt, Crocomire_Init,
+    Crocomire_Instr_1, Crocomire_Instr_10, Crocomire_Instr_11, Crocomire_Instr_12,
+    Crocomire_Instr_13, Crocomire_Instr_14, Crocomire_Instr_15, Crocomire_Instr_16,
+    Crocomire_Instr_17, Crocomire_Instr_18, Crocomire_Instr_19, Crocomire_Instr_2,
+    Crocomire_Instr_20, Crocomire_Instr_21, Crocomire_Instr_22, Crocomire_Instr_23,
+    Crocomire_Instr_24, Crocomire_Instr_25, Crocomire_Instr_26, Crocomire_Instr_27,
+    Crocomire_Instr_3, Crocomire_Instr_4, Crocomire_Instr_5, Crocomire_Instr_6, Crocomire_Instr_7,
+    Crocomire_Instr_8, Crocomire_Instr_9, Crocomire_Main, Crocomire_Powerbomb,
+    Enemy_GrappleReact_SamusLatchesOn_A4, Enemy_NormalFrozenAI_A4, Enemy_NormalShotAI_A4,
+    Enemy_NormalTouchAI_A4,
+};
+use crate::game::sm_a5::{
+    Draygon_Func_36, Draygon_Hurt, Draygon_Init, Draygon_Instr_1, Draygon_Instr_10,
+    Draygon_Instr_11, Draygon_Instr_12, Draygon_Instr_13, Draygon_Instr_14, Draygon_Instr_15,
+    Draygon_Instr_16, Draygon_Instr_17, Draygon_Instr_18, Draygon_Instr_19, Draygon_Instr_2,
+    Draygon_Instr_20, Draygon_Instr_21, Draygon_Instr_22, Draygon_Instr_23, Draygon_Instr_24,
+    Draygon_Instr_25, Draygon_Instr_26, Draygon_Instr_27, Draygon_Instr_28, Draygon_Instr_29,
+    Draygon_Instr_3, Draygon_Instr_30, Draygon_Instr_4, Draygon_Instr_5, Draygon_Instr_6,
+    Draygon_Instr_7, Draygon_Instr_8, Draygon_Instr_9, Draygon_Main, Draygon_Powerbomb,
+    Draygon_Shot, Draygon_Touch, DraygonsArms_Init, DraygonsEye_Init, DraygonsEye_Main,
+    DraygonsTail_Init, Enemy_GrappleReact_CancelBeam_A5, Enemy_GrappleReact_NoInteract_A5,
+    Enemy_NormalFrozenAI_A5, Enemy_NormalShotAI_A5, Enemy_NormalTouchAI_A5, SporeSpawn_Init,
+    SporeSpawn_Main, SporeSpawn_Shot, SporeSpawn_Touch,
+};
+use crate::game::sm_a6::{
+    sub_A6DF59, Boulder_Init, Boulder_Main, CeresDoor_Init, CeresDoor_Instr_1, CeresDoor_Instr_2,
+    CeresDoor_Instr_3, CeresDoor_Instr_4, CeresDoor_Instr_5, CeresDoor_Instr_6, CeresDoor_Instr_7,
+    CeresDoor_Instr_8, CeresDoor_Main, CeresRidley_Hurt, CeresRidley_Init, CeresRidley_Main,
+    CeresSteam_Init, CeresSteam_Instr_1, CeresSteam_Instr_2, CeresSteam_Instr_3,
+    CeresSteam_Instr_4, CeresSteam_Instr_5, CeresSteam_Main, CeresSteam_Touch,
+    Enemy_GrappleReact_CancelBeam_A6, Enemy_GrappleReact_NoInteract_A6, Enemy_NormalFrozenAI_A6,
+    Enemy_NormalShotAI_A6, Enemy_NormalTouchAI_A6, FakeKraid_Init, FakeKraid_Instr_1,
+    FakeKraid_Instr_2, FakeKraid_Instr_3, FakeKraid_Instr_4, FakeKraid_Instr_5, FakeKraid_Main,
+    FakeKraid_Shot, FakeKraid_Touch, FireGeyser_Init, FireGeyser_Instr_1, FireGeyser_Instr_10,
+    FireGeyser_Instr_11, FireGeyser_Instr_12, FireGeyser_Instr_13, FireGeyser_Instr_14,
+    FireGeyser_Instr_15, FireGeyser_Instr_16, FireGeyser_Instr_17, FireGeyser_Instr_18,
+    FireGeyser_Instr_19, FireGeyser_Instr_2, FireGeyser_Instr_20, FireGeyser_Instr_21,
+    FireGeyser_Instr_22, FireGeyser_Instr_23, FireGeyser_Instr_24, FireGeyser_Instr_3,
+    FireGeyser_Instr_4, FireGeyser_Instr_5, FireGeyser_Instr_6, FireGeyser_Instr_7,
+    FireGeyser_Instr_8, FireGeyser_Instr_9, FireGeyser_Main, NuclearWaffle_Init,
+    NuclearWaffle_Main, Ridley_A2F2, Ridley_Func_2, Ridley_Hurt, Ridley_Instr_1, Ridley_Instr_10,
+    Ridley_Instr_11, Ridley_Instr_12, Ridley_Instr_13, Ridley_Instr_14, Ridley_Instr_15,
+    Ridley_Instr_16, Ridley_Instr_2, Ridley_Instr_3, Ridley_Instr_4, Ridley_Instr_5,
+    Ridley_Instr_6, Ridley_Instr_7, Ridley_Instr_8, Ridley_Instr_9, Ridley_Main, Ridley_Powerbomb,
+    Ridley_Shot, RidleysExplosion_Init, RidleysExplosion_Main, SpikeyPlatform2ndEnemy_Init,
+    SpikeyPlatform2ndEnemy_Main, SpikeyPlatform_Init, SpikeyPlatform_Main, Zebetites_Init,
+    Zebetites_Main, Zebetites_Shot, Zebetites_Touch,
+};
+use crate::game::sm_a7::{
+    Dachora_Func_11, Dachora_Func_12, Dachora_Func_2, Dachora_Func_3, Dachora_Func_4,
+    Dachora_Func_5, Dachora_Func_7, Dachora_Func_8, Dachora_Init, Dachora_Main, EnemyInstr_Call_A7,
+    Enemy_GrappleReact_CancelBeam_A7, Enemy_GrappleReact_NoInteract_A7, Enemy_NormalFrozenAI_A7,
+    Enemy_NormalPowerBombAI_SkipDeathAnim_A7, Enemy_NormalShotAI_A7, Etecoon_Func_10,
+    Etecoon_Func_11, Etecoon_Func_12, Etecoon_Func_16, Etecoon_Func_17, Etecoon_Func_18,
+    Etecoon_Func_19, Etecoon_Func_20, Etecoon_Func_21, Etecoon_Func_22, Etecoon_Func_23,
+    Etecoon_Func_24, Etecoon_Func_25, Etecoon_Func_26, Etecoon_Func_4, Etecoon_Func_5,
+    Etecoon_Func_6, Etecoon_Func_7, Etecoon_Func_8, Etecoon_Func_9, Etecoon_Init, Etecoon_Main,
+    Kraid_Arm_Shot, Kraid_Init, Kraid_Instr_1, Kraid_Instr_9, Kraid_Instr_DecYpos,
+    Kraid_Instr_IncrYpos_Shake, Kraid_Instr_MoveHimRight, Kraid_Instr_PlaySound_0x76,
+    Kraid_Instr_XposMinus3, Kraid_Instr_XposMinus3b, Kraid_Instr_XposPlus3, Kraid_Main,
+    Kraid_Touch, Kraid_Touch_ArmFoot, KraidsArm_Init, KraidsArm_Main, KraidsArm_Touch,
+    KraidsBadFingernail_Init, KraidsBadFingernail_Main, KraidsBadFingernail_Touch,
+    KraidsBottomLint_Init, KraidsBottomLint_Main, KraidsFoot_Init, KraidsFoot_Main,
+    KraidsGoodFingernail_Init, KraidsGoodFingernail_Main, KraidsGoodFingernail_Touch,
+    KraidsMiddleLint_Init, KraidsMiddleLint_Main, KraidsTopLint_Init, KraidsTopLint_Main,
+    Phantoon2_Init, Phantoon_AlmostDead, Phantoon_BecomeSolidAfterRainingFireballs,
+    Phantoon_BecomesSolidAndBodyVuln, Phantoon_CompleteSwoopAfterFatalShot, Phantoon_Dead,
+    Phantoon_DyingFadeOut, Phantoon_DyingPhantoonExplosions, Phantoon_DyingPhantoonFadeInOut,
+    Phantoon_Enraged, Phantoon_EyeFollowsSamusUntilTimerRunsOut, Phantoon_FadeInBeforeFigure8,
+    Phantoon_FadeInDuringFireballRain, Phantoon_FadeInEnragedPhantoon,
+    Phantoon_FadeOutBeforeEnrage, Phantoon_FadeOutBeforeFirstFireballRain,
+    Phantoon_FadeOutDuringFireballRain, Phantoon_FadeoutAfterEnrage, Phantoon_FadeoutWithSwoop,
+    Phantoon_FollowSamusWithEyeDuringFireballRain, Phantoon_Hurt, Phantoon_Init,
+    Phantoon_IsSwooping, Phantoon_Main, Phantoon_MoveEnragedPhantoonToTopCenter,
+    Phantoon_MoveLeftOrRightAndPickEyeOpenPatt, Phantoon_MovePhantoonInFigure8ThenOpenEye,
+    Phantoon_PickPatternForRound1, Phantoon_Shot, Phantoon_Spawn8FireballsInCircleAtStart,
+    Phantoon_SpawnFireballsBeforeFight, Phantoon_SpawnRainingFireballs, Phantoon_Touch,
+    Phantoon_WaitAfterFadeOut, Phantoon_WaitBetweenSpawningAndSpinningFireballs,
+    Phantoon_WavyDyingPhantoonAndCry, Phantoon_WavyFadeIn,
+};
+use crate::game::sm_a8::{
+    sub_A8B193, sub_A8B291, Beetom_Init, Beetom_Instr_1, Beetom_Main, Beetom_Shot, Beetom_Touch,
+    BlueBrinstarFaceBlock_Func_1, BlueBrinstarFaceBlock_Init, BlueBrinstarFaceBlock_Main,
+    BlueBrinstarFaceBlock_Shot, Enemy_GrappleReact_CancelBeam_A8, Enemy_GrappleReact_HurtSamus_A8,
+    Enemy_GrappleReact_KillEnemy_A8, Enemy_GrappleReact_NoInteract_A8,
+    Enemy_GrappleReact_SamusLatchesNoInvinc_A8, Enemy_NormalFrozenAI_A8, Enemy_NormalShotAI_A8,
+    Enemy_NormalTouchAI_A8, EvirProjectile_Init, EvirProjectile_Main, Fune_Init, Fune_Instr_1,
+    Fune_Instr_2, Fune_Instr_3, Fune_Instr_4, Fune_Instr_5, Fune_Instr_6, Fune_Instr_7, Fune_Main,
+    Kago_Init, Kago_Main, Kago_Shot, KiHunterWings_Init, KiHunterWings_Main, KiHunter_Init,
+    KiHunter_Instr_1, KiHunter_Instr_2, KiHunter_Instr_3, KiHunter_Instr_4, KiHunter_Instr_5,
+    KiHunter_Main, KiHunter_Shot, MaridiaFloater_Func_10, MaridiaFloater_Func_11,
+    MaridiaFloater_Func_12, MaridiaFloater_Func_13, MaridiaFloater_Func_3, MaridiaFloater_Func_4,
+    MaridiaFloater_Func_5, MaridiaFloater_Func_6, MaridiaFloater_Func_7, MaridiaFloater_Func_8,
+    MaridiaFloater_Func_9, MaridiaFloater_Init, MaridiaFloater_Main, MaridiaFloater_Powerbomb,
+    MaridiaFloater_Shot, MaridiaFloater_Touch, MaridiaPuffer_Init, MaridiaPuffer_Main,
+    MaridiaPuffer_Shot, MiniDraygon_Init, MiniDraygon_Instr_1, MiniDraygon_Instr_2,
+    MiniDraygon_Instr_3, MiniDraygon_Instr_4, MiniDraygon_Main, MiniDraygon_Powerbomb,
+    MiniDraygon_Shot, MiniDraygon_Touch, MorphBallEye_Func_1, MorphBallEye_Func_2,
+    MorphBallEye_Func_3, MorphBallEye_Func_4, MorphBallEye_Init, MorphBallEye_Main,
+    NorfairLavaMan_Func_10, NorfairLavaMan_Func_11, NorfairLavaMan_Func_13, NorfairLavaMan_Func_15,
+    NorfairLavaMan_Func_16, NorfairLavaMan_Func_17, NorfairLavaMan_Func_18, NorfairLavaMan_Func_6,
+    NorfairLavaMan_Func_7, NorfairLavaMan_Func_8, NorfairLavaMan_Func_9, NorfairLavaMan_Init,
+    NorfairLavaMan_Instr_1, NorfairLavaMan_Instr_10, NorfairLavaMan_Instr_11,
+    NorfairLavaMan_Instr_12, NorfairLavaMan_Instr_13, NorfairLavaMan_Instr_14,
+    NorfairLavaMan_Instr_15, NorfairLavaMan_Instr_16, NorfairLavaMan_Instr_2,
+    NorfairLavaMan_Instr_3, NorfairLavaMan_Instr_4, NorfairLavaMan_Instr_5, NorfairLavaMan_Instr_6,
+    NorfairLavaMan_Instr_7, NorfairLavaMan_Instr_8, NorfairLavaMan_Instr_9, NorfairLavaMan_Main,
+    NorfairLavaMan_Powerbomb, NorfairLavaMan_Shot, NorfairLavaMan_Touch, WalkingLavaSeahorse_Init,
+    WalkingLavaSeahorse_Instr_1, WalkingLavaSeahorse_Instr_2, WalkingLavaSeahorse_Instr_3,
+    WalkingLavaSeahorse_Instr_4, WalkingLavaSeahorse_Instr_5, WalkingLavaSeahorse_Instr_6,
+    WalkingLavaSeahorse_Main, WreckedShipGhost_Init, WreckedShipGhost_Main, WreckedShipOrbs_Init,
+    WreckedShipOrbs_Main, WreckedShipRobotDeactivated_Init, WreckedShipRobotDeactivated_Shot,
+    WreckedShipRobotDeactivated_Touch, WreckedShipRobot_Func_1, WreckedShipRobot_Init,
+    WreckedShipRobot_Instr_1, WreckedShipRobot_Instr_10, WreckedShipRobot_Instr_11,
+    WreckedShipRobot_Instr_12, WreckedShipRobot_Instr_13, WreckedShipRobot_Instr_14,
+    WreckedShipRobot_Instr_15, WreckedShipRobot_Instr_16, WreckedShipRobot_Instr_17,
+    WreckedShipRobot_Instr_18, WreckedShipRobot_Instr_2, WreckedShipRobot_Instr_3,
+    WreckedShipRobot_Instr_4, WreckedShipRobot_Instr_5, WreckedShipRobot_Instr_6,
+    WreckedShipRobot_Instr_7, WreckedShipRobot_Instr_8, WreckedShipRobot_Instr_9,
+    WreckedShipRobot_Main, WreckedShipRobot_Shot, WreckedShipSpark_Init, WreckedShipSpark_Instr_1,
+    WreckedShipSpark_Instr_2, WreckedShipSpark_Main, WreckedShipSpark_Shot, YappingMaw_Frozen,
+    YappingMaw_Init, YappingMaw_Instr_1, YappingMaw_Instr_2, YappingMaw_Instr_3,
+    YappingMaw_Instr_4, YappingMaw_Instr_5, YappingMaw_Instr_6, YappingMaw_Instr_7,
+    YappingMaw_Main, YappingMaw_Shot, YappingMaw_Touch,
+};
+use crate::game::sm_a9::{
+    sub_A9ECD0, DeadRipper_Init, DeadRipper_Powerbomb, DeadRipper_Shot, DeadSidehopper_Init,
+    DeadSidehopper_Main, DeadSidehopper_Powerbomb, DeadSidehopper_Shot, DeadSidehopper_Touch,
+    DeadSkree_Init, DeadSkree_Powerbomb, DeadSkree_Shot, DeadTorizo_Init, DeadTorizo_Main,
+    DeadTorizo_MainGfxHook, DeadTorizo_Powerbomb, DeadTorizo_Shot, DeadZoomer_Init,
+    DeadZoomer_Powerbomb, DeadZoomer_Shot, Enemy_GrappleReact_CancelBeam_A9,
+    Enemy_NormalFrozenAI_A9, MotherBrain_DrawBrainNeck_EnemyGfxDrawHook,
+    MotherBrain_Instr_Down2Right15, MotherBrain_Instr_Down4Right6,
+    MotherBrain_Instr_IncrBeamAttackPhase, MotherBrain_Instr_MoveBodyUp10Left4,
+    MotherBrain_Instr_MoveBodyUp12Right2, MotherBrain_Instr_MoveBodyUp16Left4,
+    MotherBrain_Instr_MoveDown1, MotherBrain_Instr_MoveDown10Right2,
+    MotherBrain_Instr_MoveDown12Left4, MotherBrain_Instr_MoveDown16Right2,
+    MotherBrain_Instr_MoveDown1Left3, MotherBrain_Instr_MoveDown2Right1,
+    MotherBrain_Instr_MoveDown4Right2, MotherBrain_Instr_MoveLeft2, MotherBrain_Instr_MoveRight2,
+    MotherBrain_Instr_MoveUp1, MotherBrain_Instr_MoveUp1Right3_Sfx,
+    MotherBrain_Instr_MoveUp2Left15_Sfx, MotherBrain_Instr_MoveUp2Right1,
+    MotherBrain_Instr_MoveUp4Left6, MotherBrain_Instr_SetPose_Crouched,
+    MotherBrain_Instr_SetPose_CrouchedTrans, MotherBrain_Instr_SetPose_DeathBeamMode,
+    MotherBrain_Instr_SetPose_LeaningDown, MotherBrain_Instr_SetPose_Standing,
+    MotherBrain_Instr_SetPose_Walking, MotherBrain_Instr_SpawnDeathBeamEproj,
+    MotherBrain_Instr_SpawnEprojToOffset, MotherBrain_Instr_Up2Left1_Sfx,
+    MotherBrain_Instr_Up2Left1_Sfx2, MotherBrain_Instr_Up4Left2, MotherBrainsBody_Hurt,
+    MotherBrainsBody_Init, MotherBrainsBody_Powerbomb, MotherBrainsBody_Shot,
+    MotherBrainsBrain_GfxDrawHook, MotherBrainsBrain_Hurt, MotherBrainsBrain_Init,
+    MotherBrainsBrain_Shot, MotherBrainsBrain_Touch, MotherBrainsTubesFalling_Init,
+    MotherBrainsTubesFalling_Main, ShitroidInCutscene_Init, ShitroidInCutscene_Main,
+    ShitroidInCutscene_Touch, Shitroid_Init, Shitroid_Instr_1, Shitroid_Instr_2, Shitroid_Instr_3,
+    Shitroid_Instr_4, Shitroid_Instr_5, Shitroid_Instr_6, Shitroid_Main, Shitroid_Powerbomb,
+    Shitroid_Shot, Shitroid_Touch,
+};
+use crate::game::sm_aa::{
+    sub_AAE445, ChozoStatue_Init, ChozoStatue_Main, Enemy_ClearAiPreInstr_AA,
+    Enemy_GrappleReact_CancelBeam_AA, Enemy_NormalFrozenAI_AA, Enemy_SetAiPreInstr_AA,
+    GoldTorizo_Hurt, GoldTorizo_Main, GoldTorizo_Shot, GoldTorizo_Touch, N00bTubeCracks_Init,
+    Shaktool_DCAC, Shaktool_DCD7, Shaktool_DD25, Shaktool_Hurt, Shaktool_Init, Shaktool_Instr_1,
+    Shaktool_Instr_10, Shaktool_Instr_11, Shaktool_Instr_12, Shaktool_Instr_13, Shaktool_Instr_14,
+    Shaktool_Instr_2, Shaktool_Instr_3, Shaktool_Instr_4, Shaktool_Instr_5, Shaktool_Instr_6,
+    Shaktool_Instr_7, Shaktool_Instr_8, Shaktool_Instr_9, Shaktool_PreInstr_0, Shaktool_Shot,
+    Shaktool_Touch, Torizo_D5ED, Torizo_D5F1, Torizo_Func_5, Torizo_Func_6, Torizo_Func_7,
+    Torizo_Func_8, Torizo_Hurt, Torizo_Init, Torizo_Instr_1, Torizo_Instr_10, Torizo_Instr_11,
+    Torizo_Instr_12, Torizo_Instr_13, Torizo_Instr_14, Torizo_Instr_15, Torizo_Instr_16,
+    Torizo_Instr_17, Torizo_Instr_18, Torizo_Instr_19, Torizo_Instr_2, Torizo_Instr_20,
+    Torizo_Instr_21, Torizo_Instr_22, Torizo_Instr_23, Torizo_Instr_24, Torizo_Instr_25,
+    Torizo_Instr_26, Torizo_Instr_27, Torizo_Instr_28, Torizo_Instr_29, Torizo_Instr_3,
+    Torizo_Instr_30, Torizo_Instr_31, Torizo_Instr_32, Torizo_Instr_33, Torizo_Instr_34,
+    Torizo_Instr_35, Torizo_Instr_36, Torizo_Instr_37, Torizo_Instr_38, Torizo_Instr_39,
+    Torizo_Instr_4, Torizo_Instr_40, Torizo_Instr_41, Torizo_Instr_42, Torizo_Instr_43,
+    Torizo_Instr_44, Torizo_Instr_45, Torizo_Instr_46, Torizo_Instr_47, Torizo_Instr_48,
+    Torizo_Instr_49, Torizo_Instr_5, Torizo_Instr_50, Torizo_Instr_51, Torizo_Instr_52,
+    Torizo_Instr_53, Torizo_Instr_54, Torizo_Instr_55, Torizo_Instr_56, Torizo_Instr_57,
+    Torizo_Instr_58, Torizo_Instr_59, Torizo_Instr_6, Torizo_Instr_60, Torizo_Instr_61,
+    Torizo_Instr_62, Torizo_Instr_63, Torizo_Instr_7, Torizo_Instr_8, Torizo_Instr_9, Torizo_Main,
+    Torizo_Shot, TourianEntranceStatue_Init,
+};
+use crate::game::sm_b2::{
+    Enemy_GrappleReact_CancelBeam_B2, Enemy_NormalFrozenAI_B2, NinjaSpacePirates_Init,
+    NinjaSpacePirates_Main, SpacePirates_Instr_11, SpacePirates_Instr_12, SpacePirates_Instr_13,
+    SpacePirates_Instr_14, SpacePirates_Instr_15, SpacePirates_Instr_16, SpacePirates_Instr_17,
+    SpacePirates_Instr_18, SpacePirates_Instr_19, SpacePirates_Instr_20, SpacePirates_Instr_21,
+    SpacePirates_Instr_FireLaserL, SpacePirates_Instr_FireLaserR,
+    SpacePirates_Instr_MovePixelsDownAndChangeDirFaceLeft,
+    SpacePirates_Instr_MovePixelsDownAndChangeDirFaceRight, SpacePirates_Instr_PlaySfx,
+    SpacePirates_Instr_PrepareWallJumpL, SpacePirates_Instr_PrepareWallJumpR,
+    SpacePirates_Instr_RandomNewDirFaceL, SpacePirates_Instr_RandomNewDirFaceR,
+    SpacePirates_Instr_SetEnemyFunc, WalkingSpacePirates_87C8, WalkingSpacePirates_883E,
+    WalkingSpacePirates_Init, WalkingSpacePirates_Main, WalkingSpacePirates_Powerbomb,
+    WalkingSpacePirates_Shot, WalkingSpacePirates_Touch, WallSpacePirates_Init,
+    WallSpacePirates_Main,
+};
+use crate::game::sm_b3::{
+    Botwoon_Func_26, Botwoon_Func_27, Botwoon_Func_28, Botwoon_Func_29, Botwoon_Func_30,
+    Botwoon_Init, Botwoon_Instr_1, Botwoon_Instr_10, Botwoon_Instr_2, Botwoon_Instr_3,
+    Botwoon_Instr_4, Botwoon_Instr_5, Botwoon_Instr_6, Botwoon_Instr_7, Botwoon_Instr_8,
+    Botwoon_Instr_9, Botwoon_Instr_QueueSpitSfx, Botwoon_Instr_SetSpitting, Botwoon_Main,
+    Botwoon_Powerbomb, Botwoon_Shot, Botwoon_Touch, BrinstarPipeBug_Init, BrinstarPipeBug_Main,
+    BrinstarPipeBug_PreInstr_1, BrinstarPipeBug_PreInstr_2, BrinstarPipeBug_PreInstr_3,
+    BrinstarPipeBug_PreInstr_4, BrinstarPipeBug_PreInstr_5, BrinstarYellowPipeBug_Init,
+    BrinstarYellowPipeBug_Main, Enemy_ClearAiPreInstr_B3, Enemy_GrappleReact_CancelBeam_B3,
+    Enemy_GrappleReact_KillEnemy_B3, Enemy_GrappleReact_NoInteract_B3, Enemy_NormalFrozenAI_B3,
+    Enemy_NormalShotAI_B3, Enemy_NormalTouchAI_B3, Enemy_SetAiPreInstr_B3, EscapeDachora_Init,
+    EscapeDachora_Instr_1, EscapeDachora_Instr_2, EscapeDachora_Instr_3, EscapeDachora_Instr_4,
+    EscapeEtecoon_E65C, EscapeEtecoon_E670, EscapeEtecoon_E680, EscapeEtecoon_Init,
+    EscapeEtecoon_Instr_1, EscapeEtecoon_Instr_2, EscapeEtecoon_Main, NorfairPipeBug_Func_5,
+    NorfairPipeBug_Init, NorfairPipeBug_Main, UnusedSpinningTurtleEye_Init,
+    UnusedSpinningTurtleEye_Main,
+};
+use crate::game::sm_b4::{
+    ClearSpriteObjects, CreateSpriteAtPos, DrawSpriteObjects, HandleSpriteObjects,
+};
+use crate::rtl::{g_ram, g_rom, Load24, Mult8x8, RomPtr, SnesDivide, SnesModulus, Unreachable};
 extern "C" {
     fn __assert_fail(
         __assertion: *const ::core::ffi::c_char,
@@ -15,1089 +324,7 @@ extern "C" {
         __c: ::core::ffi::c_int,
         __n: size_t,
     ) -> *mut ::core::ffi::c_void;
-    static mut g_ram: [uint8; 131072];
-    static mut g_rom: *const uint8;
-    fn Load24(src: *const LongPtr) -> uint32;
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn Mult8x8(a: uint8, b: uint8) -> uint16;
-    fn SnesDivide(a: uint16, b: uint8) -> uint16;
-    fn SnesModulus(a: uint16, b: uint8) -> uint16;
-    fn NextRandom() -> uint16;
-    fn QueueSfx1_Max3(a: uint16);
-    fn QueueSfx1_Max6(a: uint16);
-    fn QueueSfx2_Max1(a: uint16);
-    fn QueueSfx2_Max3(a: uint16);
-    fn QueueSfx3_Max3(a: uint16);
-    fn DrawSpritemapWithBaseTile(
-        db: uint8,
-        j: uint16,
-        r20_x: uint16,
-        r18_y: uint16,
-        r3: uint16,
-        r0: uint16,
-    );
-    fn DrawSpritemapWithBaseTile2(
-        db: uint8,
-        j: uint16,
-        r20_x: uint16,
-        r18_y: uint16,
-        r3: uint16,
-        r0: uint16,
-    );
-    fn DrawSpritemapWithBaseTileOffscreen(
-        db: uint8,
-        j: uint16,
-        r20_x: uint16,
-        r18_y: uint16,
-        r3: uint16,
-        r0: uint16,
-    );
-    fn SpawnPLM(a: uint16) -> uint8;
-    static mut eproj_spawn_pt: Point16U;
-    static mut eproj_spawn_varE24: uint16;
-    fn DrawHighPriorityEprojs();
-    fn DrawLowPriorityEprojs();
-    fn SpawnEprojWithGfx(a: uint16, k: uint16, j: uint16);
-    fn CallSomeSamusCode(a: uint16) -> uint16;
-    fn DrawSamusAndProjectiles();
-    fn Samus_DealDamage(a: uint16);
-    fn DrawBombAndProjectileExplosions();
-    fn BouncingGoofball_Instr_88C5(k: uint16, jp: *const uint16) -> *const uint16;
-    fn BouncingGoofball_Instr_88C6(k: uint16, jp: *const uint16) -> *const uint16;
-    fn EnemyInstr_Rio_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn LavaSeahorse_Instr_E5FB(k: uint16, jp: *const uint16) -> *const uint16;
-    fn LowerNorfairRio_Instr_C6D2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn LowerNorfairRio_Instr_C6DD(k: uint16, jp: *const uint16) -> *const uint16;
-    fn LowerNorfairRio_Instr_C6E8(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MaridiaBeybladeTurtle_Instr_9381(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MaridiaBeybladeTurtle_Instr_9412(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MaridiaBeybladeTurtle_Instr_9447(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MaridiaBeybladeTurtle_Instr_9451(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MaridiaBeybladeTurtle_Instr_946B(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MaridiaBeybladeTurtle_Instr_9485(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MaridiaBeybladeTurtle_Instr_94A1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MaridiaBeybladeTurtle_Instr_94C7(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MaridiaBeybladeTurtle_Instr_94D1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MaridiaLargeSnail_Instr_CB6B(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MaridiaLargeSnail_Instr_CCB3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MaridiaLargeSnail_Instr_CCBE(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MaridiaLargeSnail_Instr_CCC9(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MaridiaSpikeyShell_Instr_A56D(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MaridiaSpikeyShell_Instr_A571(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MiniCrocomire_Instr_897E(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MiniCrocomire_Instr_8990(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MiniCrocomire_Instr_899D(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairLavajumpingEnemy_Instr_BE8E(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairRio_Instr_C1C9(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairRio_Instr_C1D4(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairRio_Instr_C1DF(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairRio_Instr_C1EA(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairRio_Instr_C1F5(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairRio_Instr_C200(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairRio_Instr_C20B(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairRio_Instr_C216(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairRio_Instr_C221(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairRio_Instr_C22C(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairRio_Instr_C237(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Rinka_Instr_B9B3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Rinka_Instr_B9BD(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Rinka_Instr_B9C7(k: uint16, jp: *const uint16) -> *const uint16;
-    fn SpikeShootingPlant_Instr_9F2A(k: uint16, jp: *const uint16) -> *const uint16;
-    fn SpikeShootingPlant_Instr_A095(k: uint16, jp: *const uint16) -> *const uint16;
-    fn SpikeShootingPlant_Instr_A0A7(k: uint16, jp: *const uint16) -> *const uint16;
-    fn BouncingGoofball_Init();
-    fn BouncingGoofball_Main();
-    fn Enemy_GrappleReact_CancelBeam_A2();
-    fn Enemy_GrappleReact_KillEnemy_A2();
-    fn Enemy_GrappleReact_SamusLatchesOn_A2();
-    fn Enemy_NormalFrozenAI_A2();
-    fn Enemy_NormalShotAI_A2();
-    fn Enemy_NormalTouchAI_A2();
-    fn Flies_4(k: uint16);
-    fn Flies_5(k: uint16);
-    fn Flies_6(k: uint16);
-    fn Flies_7(k: uint16);
-    fn Flies_Init();
-    fn Flies_Main();
-    fn Gripper_Init();
-    fn Gripper_Main();
-    fn GunshipBottom_Init();
-    fn GunshipTop_10(k: uint16);
-    fn GunshipTop_11(k: uint16);
-    fn GunshipTop_12(k: uint16);
-    fn GunshipTop_13(k: uint16);
-    fn GunshipTop_14(k: uint16);
-    fn GunshipTop_15(k: uint16);
-    fn GunshipTop_16(k: uint16);
-    fn GunshipTop_17(k: uint16);
-    fn GunshipTop_18(k: uint16);
-    fn GunshipTop_19(k: uint16);
-    fn GunshipTop_20(k: uint16);
-    fn GunshipTop_21(k: uint16);
-    fn GunshipTop_3(k: uint16);
-    fn GunshipTop_4(k: uint16);
-    fn GunshipTop_5(k: uint16);
-    fn GunshipTop_6(k: uint16);
-    fn GunshipTop_7(k: uint16);
-    fn GunshipTop_8(k: uint16);
-    fn GunshipTop_9(k: uint16);
-    fn GunshipTop_Init();
-    fn GunshipTop_Main();
-    fn HirisingSlowfalling_Init();
-    fn HirisingSlowfalling_Main();
-    fn HorizontalShootableShutter_Init();
-    fn HorizontalShootableShutter_Main();
-    fn HorizontalShootableShutter_Powerbomb();
-    fn HorizontalShootableShutter_Shot();
-    fn HorizontalShootableShutter_Touch();
-    fn JetPowerRipper_Init();
-    fn JetPowerRipper_Main();
-    fn JetPowerRipper_Shot();
-    fn LavaSeahorse_Func_1(k: uint16);
-    fn LavaSeahorse_Func_2(k: uint16);
-    fn LavaSeahorse_Func_3(k: uint16);
-    fn LavaSeahorse_Func_4(k: uint16);
-    fn LavaSeahorse_Func_5(k: uint16);
-    fn LavaSeahorse_Init();
-    fn LavaSeahorse_Main();
-    fn LavaSeahorse_Powerbomb();
-    fn LavaSeahorse_Shot();
-    fn LavaSeahorse_Touch();
-    fn LavaquakeRocks_Init();
-    fn LavaquakeRocks_Main();
-    fn LowerNorfairRio_Func_1(k: uint16);
-    fn LowerNorfairRio_Func_2(k: uint16);
-    fn LowerNorfairRio_Func_3(k: uint16);
-    fn LowerNorfairRio_Func_4(k: uint16);
-    fn LowerNorfairRio_Func_5(k: uint16);
-    fn LowerNorfairRio_Func_6(k: uint16);
-    fn LowerNorfairRio_Init();
-    fn LowerNorfairRio_Main();
-    fn MaridiaBeybladeTurtle_Init();
-    fn MaridiaBeybladeTurtle_Main();
-    fn MaridiaBeybladeTurtle_Touch();
-    fn MaridiaLargeSnail_Func_12();
-    fn MaridiaLargeSnail_Func_7(k: uint16);
-    fn MaridiaLargeSnail_Func_8(k: uint16);
-    fn MaridiaLargeSnail_Init();
-    fn MaridiaLargeSnail_Main();
-    fn MaridiaLargeSnail_Shot();
-    fn MaridiaLargeSnail_Touch();
-    fn MaridiaSpikeyShell_Init();
-    fn MaridiaSpikeyShell_Main();
-    fn MaridiaSpikeyShell_Shot();
-    fn MiniCrocomire_Init();
-    fn MiniCrocomire_Main();
-    fn MiniCrocomire_PreInstr5(k: uint16);
-    fn MiniCrocomire_PreInstr6(k: uint16);
-    fn MiniMaridiaBeybladeTurtle_Init();
-    fn MiniMaridiaBeybladeTurtle_Main();
-    fn MiniMaridiaBeybladeTurtle_Shot();
-    fn MiniMaridiaBeybladeTurtle_Touch();
-    fn NorfairErraticFireball_Init();
-    fn NorfairErraticFireball_Main();
-    fn NorfairLavajumpingEnemy_Func_1(k: uint16);
-    fn NorfairLavajumpingEnemy_Func_2(k: uint16);
-    fn NorfairLavajumpingEnemy_Func_3(k: uint16);
-    fn NorfairLavajumpingEnemy_Func_4(k: uint16);
-    fn NorfairLavajumpingEnemy_Func_5(k: uint16);
-    fn NorfairLavajumpingEnemy_Init();
-    fn NorfairLavajumpingEnemy_Main();
-    fn NorfairRio_Func_1(k: uint16);
-    fn NorfairRio_Func_2(k: uint16);
-    fn NorfairRio_Func_3(k: uint16);
-    fn NorfairRio_Func_4(k: uint16);
-    fn NorfairRio_Func_5(k: uint16);
-    fn NorfairRio_Func_6(k: uint16);
-    fn NorfairRio_Init();
-    fn NorfairRio_Main();
-    fn Rinka_Frozen(k: uint16);
-    fn Rinka_Init();
-    fn Rinka_Main();
-    fn Rinka_Powerbomb(k: uint16);
-    fn Rinka_Shot();
-    fn Rinka_Touch();
-    fn Rio_Init();
-    fn Rio_Main();
-    fn Ripper_Init();
-    fn Ripper_Main();
-    fn RisingFallingPlatform_Init();
-    fn RisingFallingPlatform_Main();
-    fn RisingFallingPlatform_Powerbomb();
-    fn RisingFallingPlatform_Shot();
-    fn RisingFallingPlatform_Touch();
-    fn ShootableShutter_Init();
-    fn ShootableShutter_Shot();
-    fn SpikeShootingPlant_2(k: uint16);
-    fn SpikeShootingPlant_3(k: uint16);
-    fn SpikeShootingPlant_Init();
-    fn SpikeShootingPlant_Main();
-    fn ThinHoppingBlobs_Init();
-    fn ThinHoppingBlobs_Main();
-    fn TimedShutter_Init();
-    fn TimedShutter_Main();
-    fn Bang_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Bang_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MaridiaFish_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MaridiaFish_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MaridiaFish_Instr_3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MaridiaRefillCandy_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MaridiaRefillCandy_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MaridiaRefillCandy_Instr_3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MaridiaSnail_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MaridiaSnail_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MaridiaSnail_Instr_3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MaridiaSnail_Instr_4(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MaridiaSnail_Instr_5(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Metalee_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Metroid_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Metroid_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn PlatformThatFallsWithSamus_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn PlatformThatFallsWithSamus_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn PlatformThatFallsWithSamus_Instr_3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn PlatformThatFallsWithSamus_Instr_4(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Reflec_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Sidehopper_Func_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Sidehopper_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Skree_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Waver_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WreckedShipOrangeZoomer_Func_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Zoomer_Instr_SetPreinstr(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Bang_Func_10(k: uint16);
-    fn Bang_Func_11(k: uint16);
-    fn Bang_Func_6(k: uint16);
-    fn Bang_Func_7(k: uint16);
-    fn Bang_Func_8(k: uint16);
-    fn Bang_Init();
-    fn Bang_Main();
-    fn Bang_Shot();
-    fn BigEyeBugs_Init();
-    fn Crab_Init();
-    fn Elevator_Frozen();
-    fn Elevator_Init();
-    fn Enemy_GrappleReact_CancelBeam_A3();
-    fn Enemy_GrappleReact_KillEnemy_A3();
-    fn Enemy_GrappleReact_NoInteract_A3();
-    fn Enemy_NormalFrozenAI_A3();
-    fn Enemy_NormalShotAI_A3();
-    fn Enemy_NormalTouchAI_A3();
-    fn FastMovingSlowSinkingPlatform_Init();
-    fn FastMovingSlowSinkingPlatform_Shot();
-    fn FireZoomer_Func_1(k: uint16);
-    fn FireZoomer_Func_2(k: uint16);
-    fn FireZoomer_Func_3(k: uint16);
-    fn FireZoomer_Init();
-    fn Fireflea_Init();
-    fn Fireflea_Main();
-    fn Fireflea_Powerbomb();
-    fn Fireflea_Shot();
-    fn Fireflea_Touch(k: uint16);
-    fn MaridiaFish_Init();
-    fn MaridiaFish_Main();
-    fn MaridiaRefillCandy_Init();
-    fn MaridiaRefillCandy_Main();
-    fn MaridiaSnail_CFB7(k: uint16);
-    fn MaridiaSnail_CFBD(k: uint16);
-    fn MaridiaSnail_CFCE(k: uint16);
-    fn MaridiaSnail_CFD4(k: uint16);
-    fn MaridiaSnail_CFE5(k: uint16);
-    fn MaridiaSnail_CFEB(k: uint16);
-    fn MaridiaSnail_CFFC(k: uint16);
-    fn MaridiaSnail_Func_15(k: uint16);
-    fn MaridiaSnail_Func_7(k: uint16);
-    fn MaridiaSnail_Func_9(k: uint16);
-    fn MaridiaSnail_Init();
-    fn MaridiaSnail_Main();
-    fn MaridiaSnail_Shot();
-    fn MaridiaSnail_Touch();
-    fn Metalee_Init();
-    fn Metalee_Main();
-    fn Metalee_Shot();
-    fn Metroid_Frozen();
-    fn Metroid_Hurt();
-    fn Metroid_Init();
-    fn Metroid_Main();
-    fn Metroid_Powerbomb(k: uint16);
-    fn Metroid_Shot();
-    fn Metroid_Touch();
-    fn Mochtroid_Init();
-    fn Mochtroid_Main();
-    fn Mochtroid_Shot();
-    fn Mochtroid_Touch();
-    fn NorfairSlowFireball_Init();
-    fn PlatformThatFallsWithSamus_Init();
-    fn PlatformThatFallsWithSamus_Main();
-    fn Reflec_Func_1();
-    fn Reflec_Init();
-    fn Reflec_Shot();
-    fn Roach_Init();
-    fn Roach_Main();
-    fn Sidehopper_Init();
-    fn Sidehopper_Main();
-    fn Skree_Init();
-    fn Skree_Main();
-    fn Skree_Shot();
-    fn Slug_Init();
-    fn StoneZoomer_Init();
-    fn StoneZoomer_Main();
-    fn Waver_Init();
-    fn Waver_Main();
-    fn WreckedShipOrangeZoomer_Func_2(k: uint16);
-    fn WreckedShipOrangeZoomer_Init();
-    fn WreckedShipOrangeZoomer_Main();
-    fn sub_A3E168(k: uint16);
-    fn Crocomire_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Crocomire_Instr_10(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Crocomire_Instr_11(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Crocomire_Instr_12(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Crocomire_Instr_13(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Crocomire_Instr_14(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Crocomire_Instr_15(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Crocomire_Instr_16(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Crocomire_Instr_17(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Crocomire_Instr_18(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Crocomire_Instr_19(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Crocomire_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Crocomire_Instr_20(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Crocomire_Instr_21(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Crocomire_Instr_22(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Crocomire_Instr_23(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Crocomire_Instr_24(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Crocomire_Instr_25(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Crocomire_Instr_26(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Crocomire_Instr_27(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Crocomire_Instr_3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Crocomire_Instr_4(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Crocomire_Instr_5(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Crocomire_Instr_6(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Crocomire_Instr_7(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Crocomire_Instr_8(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Crocomire_Instr_9(k: uint16, jp: *const uint16) -> *const uint16;
-    fn CrocomireTongue_Init();
-    fn CrocomireTongue_Main();
-    fn Crocomire_Func_1();
-    fn Crocomire_Func_92();
-    fn Crocomire_Func_93();
-    fn Crocomire_Func_94();
-    fn Crocomire_Func_95();
-    fn Crocomire_Hurt();
-    fn Crocomire_Init();
-    fn Crocomire_Main();
-    fn Crocomire_Powerbomb();
-    fn Enemy_GrappleReact_SamusLatchesOn_A4();
-    fn Enemy_NormalFrozenAI_A4();
-    fn Enemy_NormalShotAI_A4();
-    fn Enemy_NormalTouchAI_A4();
-    fn Draygon_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_10(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_11(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_12(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_13(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_14(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_15(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_16(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_17(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_18(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_19(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_20(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_21(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_22(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_23(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_24(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_25(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_26(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_27(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_28(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_29(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_30(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_4(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_5(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_6(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_7(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_8(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Instr_9(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Draygon_Func_36();
-    fn Draygon_Hurt();
-    fn Draygon_Init();
-    fn Draygon_Main();
-    fn Draygon_Powerbomb();
-    fn Draygon_Shot();
-    fn Draygon_Touch();
-    fn DraygonsArms_Init();
-    fn DraygonsEye_Init();
-    fn DraygonsEye_Main();
-    fn DraygonsTail_Init();
-    fn Enemy_GrappleReact_CancelBeam_A5();
-    fn Enemy_GrappleReact_NoInteract_A5();
-    fn Enemy_NormalFrozenAI_A5();
-    fn Enemy_NormalShotAI_A5();
-    fn Enemy_NormalTouchAI_A5();
-    fn SporeSpawn_Init();
-    fn SporeSpawn_Main();
-    fn SporeSpawn_Shot();
-    fn SporeSpawn_Touch();
-    fn CeresDoor_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn CeresDoor_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn CeresDoor_Instr_3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn CeresDoor_Instr_4(k: uint16, jp: *const uint16) -> *const uint16;
-    fn CeresDoor_Instr_5(k: uint16, jp: *const uint16) -> *const uint16;
-    fn CeresDoor_Instr_6(k: uint16, jp: *const uint16) -> *const uint16;
-    fn CeresDoor_Instr_7(k: uint16, jp: *const uint16) -> *const uint16;
-    fn CeresDoor_Instr_8(k: uint16, jp: *const uint16) -> *const uint16;
-    fn CeresSteam_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn CeresSteam_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn CeresSteam_Instr_3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn CeresSteam_Instr_4(k: uint16, jp: *const uint16) -> *const uint16;
-    fn CeresSteam_Instr_5(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FakeKraid_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FakeKraid_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FakeKraid_Instr_3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FakeKraid_Instr_4(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FakeKraid_Instr_5(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FireGeyser_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FireGeyser_Instr_10(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FireGeyser_Instr_11(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FireGeyser_Instr_12(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FireGeyser_Instr_13(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FireGeyser_Instr_14(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FireGeyser_Instr_15(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FireGeyser_Instr_16(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FireGeyser_Instr_17(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FireGeyser_Instr_18(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FireGeyser_Instr_19(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FireGeyser_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FireGeyser_Instr_20(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FireGeyser_Instr_21(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FireGeyser_Instr_22(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FireGeyser_Instr_23(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FireGeyser_Instr_24(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FireGeyser_Instr_3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FireGeyser_Instr_4(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FireGeyser_Instr_5(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FireGeyser_Instr_6(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FireGeyser_Instr_7(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FireGeyser_Instr_8(k: uint16, jp: *const uint16) -> *const uint16;
-    fn FireGeyser_Instr_9(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Ridley_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Ridley_Instr_10(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Ridley_Instr_11(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Ridley_Instr_12(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Ridley_Instr_13(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Ridley_Instr_14(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Ridley_Instr_15(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Ridley_Instr_16(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Ridley_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Ridley_Instr_3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Ridley_Instr_4(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Ridley_Instr_5(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Ridley_Instr_6(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Ridley_Instr_7(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Ridley_Instr_8(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Ridley_Instr_9(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Boulder_Init();
-    fn Boulder_Main();
-    fn CeresDoor_Init();
-    fn CeresDoor_Main();
-    fn CeresRidley_Hurt();
-    fn CeresRidley_Init();
-    fn CeresRidley_Main();
-    fn CeresSteam_Init();
-    fn CeresSteam_Main();
-    fn CeresSteam_Touch();
-    fn Enemy_GrappleReact_CancelBeam_A6();
-    fn Enemy_GrappleReact_NoInteract_A6();
-    fn Enemy_NormalFrozenAI_A6();
-    fn Enemy_NormalShotAI_A6();
-    fn Enemy_NormalTouchAI_A6();
-    fn FakeKraid_Init();
-    fn FakeKraid_Main();
-    fn FakeKraid_Shot();
-    fn FakeKraid_Touch();
-    fn FireGeyser_Init();
-    fn FireGeyser_Main();
-    fn NuclearWaffle_Init();
-    fn NuclearWaffle_Main();
-    fn Ridley_A2F2();
-    fn Ridley_Func_2();
-    fn Ridley_Hurt();
-    fn Ridley_Main();
-    fn Ridley_Powerbomb();
-    fn Ridley_Shot();
-    fn RidleysExplosion_Init();
-    fn RidleysExplosion_Main();
-    fn SpikeyPlatform2ndEnemy_Init();
-    fn SpikeyPlatform2ndEnemy_Main();
-    fn SpikeyPlatform_Init();
-    fn SpikeyPlatform_Main();
-    fn Zebetites_Init();
-    fn Zebetites_Main();
-    fn Zebetites_Shot();
-    fn Zebetites_Touch();
-    fn sub_A6DF59();
-    fn EnemyInstr_Call_A7(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Kraid_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Kraid_Instr_9(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Kraid_Instr_DecYpos(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Kraid_Instr_IncrYpos_Shake(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Kraid_Instr_MoveHimRight(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Kraid_Instr_PlaySound_0x76(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Kraid_Instr_XposMinus3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Kraid_Instr_XposMinus3b(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Kraid_Instr_XposPlus3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Dachora_Func_11(k: uint16);
-    fn Dachora_Func_12(k: uint16);
-    fn Dachora_Func_2(k: uint16);
-    fn Dachora_Func_3(k: uint16);
-    fn Dachora_Func_4(k: uint16);
-    fn Dachora_Func_5(k: uint16);
-    fn Dachora_Func_7(k: uint16);
-    fn Dachora_Func_8(k: uint16);
-    fn Dachora_Init();
-    fn Dachora_Main();
-    fn Enemy_GrappleReact_CancelBeam_A7();
-    fn Enemy_GrappleReact_NoInteract_A7();
-    fn Enemy_NormalFrozenAI_A7();
-    fn Enemy_NormalPowerBombAI_SkipDeathAnim_A7();
-    fn Enemy_NormalShotAI_A7();
-    fn Etecoon_Func_10(k: uint16);
-    fn Etecoon_Func_11(k: uint16);
-    fn Etecoon_Func_12(k: uint16);
-    fn Etecoon_Func_16(k: uint16);
-    fn Etecoon_Func_17(k: uint16);
-    fn Etecoon_Func_18(k: uint16);
-    fn Etecoon_Func_19(k: uint16);
-    fn Etecoon_Func_20(k: uint16);
-    fn Etecoon_Func_21(k: uint16);
-    fn Etecoon_Func_22(k: uint16);
-    fn Etecoon_Func_23(k: uint16);
-    fn Etecoon_Func_24(k: uint16);
-    fn Etecoon_Func_25(k: uint16);
-    fn Etecoon_Func_26(k: uint16);
-    fn Etecoon_Func_4(k: uint16);
-    fn Etecoon_Func_5(k: uint16);
-    fn Etecoon_Func_6(k: uint16);
-    fn Etecoon_Func_7(k: uint16);
-    fn Etecoon_Func_8(k: uint16);
-    fn Kraid_Touch();
-    fn Kraid_Touch_ArmFoot();
-    fn KraidsArm_Init();
-    fn KraidsArm_Main();
-    fn KraidsArm_Touch();
-    fn KraidsBadFingernail_Init();
-    fn KraidsBadFingernail_Main();
-    fn KraidsBadFingernail_Touch();
-    fn KraidsBottomLint_Init();
-    fn KraidsBottomLint_Main();
-    fn KraidsFoot_Init();
-    fn KraidsFoot_Main();
-    fn KraidsGoodFingernail_Init();
-    fn KraidsGoodFingernail_Main();
-    fn KraidsGoodFingernail_Touch();
-    fn KraidsMiddleLint_Init();
-    fn KraidsMiddleLint_Main();
-    fn KraidsTopLint_Init();
-    fn KraidsTopLint_Main();
-    fn Kraid_Init();
-    fn Kraid_Main();
-    fn Kraid_Arm_Shot(j: uint16);
-    fn Etecoon_Func_9(k: uint16);
-    fn Etecoon_Init();
-    fn Etecoon_Main();
-    fn Phantoon2_Init();
-    fn Phantoon_AlmostDead(k: uint16);
-    fn Phantoon_BecomeSolidAfterRainingFireballs(k: uint16);
-    fn Phantoon_BecomesSolidAndBodyVuln(k: uint16);
-    fn Phantoon_CompleteSwoopAfterFatalShot(k: uint16);
-    fn Phantoon_Dead(k: uint16);
-    fn Phantoon_DyingFadeOut(k: uint16);
-    fn Phantoon_DyingPhantoonExplosions(k: uint16);
-    fn Phantoon_DyingPhantoonFadeInOut(k: uint16);
-    fn Phantoon_Enraged(k: uint16);
-    fn Phantoon_EyeFollowsSamusUntilTimerRunsOut(k: uint16);
-    fn Phantoon_FadeInBeforeFigure8(k: uint16);
-    fn Phantoon_FadeInDuringFireballRain(k: uint16);
-    fn Phantoon_FadeInEnragedPhantoon(k: uint16);
-    fn Phantoon_FadeOutBeforeEnrage(k: uint16);
-    fn Phantoon_FadeOutBeforeFirstFireballRain(k: uint16);
-    fn Phantoon_FadeOutDuringFireballRain(k: uint16);
-    fn Phantoon_FadeoutAfterEnrage(k: uint16);
-    fn Phantoon_FadeoutWithSwoop(k: uint16);
-    fn Phantoon_FollowSamusWithEyeDuringFireballRain(k: uint16);
-    fn Phantoon_Hurt();
-    fn Phantoon_Init();
-    fn Phantoon_IsSwooping(k: uint16);
-    fn Phantoon_Main();
-    fn Phantoon_MoveEnragedPhantoonToTopCenter(k: uint16);
-    fn Phantoon_MoveLeftOrRightAndPickEyeOpenPatt(k: uint16);
-    fn Phantoon_MovePhantoonInFigure8ThenOpenEye(k: uint16);
-    fn Phantoon_PickPatternForRound1(k: uint16);
-    fn Phantoon_Shot();
-    fn Phantoon_Spawn8FireballsInCircleAtStart(k: uint16);
-    fn Phantoon_SpawnFireballsBeforeFight(k: uint16);
-    fn Phantoon_SpawnRainingFireballs(k: uint16);
-    fn Phantoon_Touch();
-    fn Phantoon_WaitAfterFadeOut(k: uint16);
-    fn Phantoon_WaitBetweenSpawningAndSpinningFireballs(k: uint16);
-    fn Phantoon_WavyDyingPhantoonAndCry(k: uint16);
-    fn Phantoon_WavyFadeIn(k: uint16);
-    fn Beetom_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Fune_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Fune_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Fune_Instr_3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Fune_Instr_4(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Fune_Instr_5(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Fune_Instr_6(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Fune_Instr_7(k: uint16, jp: *const uint16) -> *const uint16;
-    fn KiHunter_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn KiHunter_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn KiHunter_Instr_3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn KiHunter_Instr_4(k: uint16, jp: *const uint16) -> *const uint16;
-    fn KiHunter_Instr_5(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MiniDraygon_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MiniDraygon_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MiniDraygon_Instr_3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MiniDraygon_Instr_4(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairLavaMan_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairLavaMan_Instr_10(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairLavaMan_Instr_11(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairLavaMan_Instr_12(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairLavaMan_Instr_13(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairLavaMan_Instr_14(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairLavaMan_Instr_15(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairLavaMan_Instr_16(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairLavaMan_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairLavaMan_Instr_3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairLavaMan_Instr_4(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairLavaMan_Instr_5(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairLavaMan_Instr_6(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairLavaMan_Instr_7(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairLavaMan_Instr_8(k: uint16, jp: *const uint16) -> *const uint16;
-    fn NorfairLavaMan_Instr_9(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WalkingLavaSeahorse_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WalkingLavaSeahorse_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WalkingLavaSeahorse_Instr_3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WalkingLavaSeahorse_Instr_4(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WalkingLavaSeahorse_Instr_5(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WalkingLavaSeahorse_Instr_6(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WreckedShipRobot_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WreckedShipRobot_Instr_10(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WreckedShipRobot_Instr_11(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WreckedShipRobot_Instr_12(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WreckedShipRobot_Instr_13(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WreckedShipRobot_Instr_14(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WreckedShipRobot_Instr_15(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WreckedShipRobot_Instr_16(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WreckedShipRobot_Instr_17(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WreckedShipRobot_Instr_18(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WreckedShipRobot_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WreckedShipRobot_Instr_3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WreckedShipRobot_Instr_4(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WreckedShipRobot_Instr_5(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WreckedShipRobot_Instr_6(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WreckedShipRobot_Instr_7(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WreckedShipRobot_Instr_8(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WreckedShipRobot_Instr_9(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WreckedShipSpark_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn WreckedShipSpark_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn YappingMaw_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn YappingMaw_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn YappingMaw_Instr_3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn YappingMaw_Instr_4(k: uint16, jp: *const uint16) -> *const uint16;
-    fn YappingMaw_Instr_5(k: uint16, jp: *const uint16) -> *const uint16;
-    fn YappingMaw_Instr_6(k: uint16, jp: *const uint16) -> *const uint16;
-    fn YappingMaw_Instr_7(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Beetom_Init();
-    fn Beetom_Main();
-    fn Beetom_Shot();
-    fn Beetom_Touch();
-    fn BlueBrinstarFaceBlock_Func_1();
-    fn BlueBrinstarFaceBlock_Init();
-    fn BlueBrinstarFaceBlock_Main();
-    fn BlueBrinstarFaceBlock_Shot();
-    fn Enemy_GrappleReact_CancelBeam_A8();
-    fn Enemy_GrappleReact_HurtSamus_A8();
-    fn Enemy_GrappleReact_KillEnemy_A8();
-    fn Enemy_GrappleReact_NoInteract_A8();
-    fn Enemy_GrappleReact_SamusLatchesNoInvinc_A8();
-    fn Enemy_NormalFrozenAI_A8();
-    fn Enemy_NormalShotAI_A8();
-    fn Enemy_NormalTouchAI_A8();
-    fn EvirProjectile_Init();
-    fn EvirProjectile_Main();
-    fn Fune_Init();
-    fn Fune_Main();
-    fn Kago_Init();
-    fn Kago_Main();
-    fn Kago_Shot();
-    fn KiHunterWings_Init();
-    fn KiHunterWings_Main();
-    fn KiHunter_Init();
-    fn KiHunter_Main();
-    fn KiHunter_Shot();
-    fn MaridiaFloater_Func_10(k: uint16);
-    fn MaridiaFloater_Func_11(k: uint16);
-    fn MaridiaFloater_Func_12(k: uint16);
-    fn MaridiaFloater_Func_13(k: uint16);
-    fn MaridiaFloater_Func_3(k: uint16);
-    fn MaridiaFloater_Func_4(k: uint16);
-    fn MaridiaFloater_Func_5(k: uint16);
-    fn MaridiaFloater_Func_6(k: uint16);
-    fn MaridiaFloater_Func_7(k: uint16);
-    fn MaridiaFloater_Func_8(k: uint16);
-    fn MaridiaFloater_Func_9(k: uint16);
-    fn MaridiaFloater_Init();
-    fn MaridiaFloater_Main();
-    fn MaridiaFloater_Powerbomb();
-    fn MaridiaFloater_Shot();
-    fn MaridiaFloater_Touch();
-    fn MaridiaPuffer_Init();
-    fn MaridiaPuffer_Main();
-    fn MaridiaPuffer_Shot();
-    fn MiniDraygon_Init();
-    fn MiniDraygon_Main();
-    fn MiniDraygon_Powerbomb();
-    fn MiniDraygon_Shot();
-    fn MiniDraygon_Touch();
-    fn MorphBallEye_Func_1(k: uint16);
-    fn MorphBallEye_Func_2(k: uint16);
-    fn MorphBallEye_Func_3(k: uint16);
-    fn MorphBallEye_Func_4(k: uint16);
-    fn MorphBallEye_Init();
-    fn MorphBallEye_Main();
-    fn NorfairLavaMan_Func_10(k: uint16);
-    fn NorfairLavaMan_Func_11(k: uint16);
-    fn NorfairLavaMan_Func_13();
-    fn NorfairLavaMan_Func_15(k: uint16);
-    fn NorfairLavaMan_Func_16(k: uint16);
-    fn NorfairLavaMan_Func_17(k: uint16);
-    fn NorfairLavaMan_Func_18(k: uint16);
-    fn NorfairLavaMan_Func_6();
-    fn NorfairLavaMan_Func_7(k: uint16);
-    fn NorfairLavaMan_Func_8(k: uint16);
-    fn NorfairLavaMan_Func_9(k: uint16);
-    fn NorfairLavaMan_Init();
-    fn NorfairLavaMan_Main();
-    fn NorfairLavaMan_Powerbomb();
-    fn NorfairLavaMan_Shot();
-    fn NorfairLavaMan_Touch();
-    fn WalkingLavaSeahorse_Init();
-    fn WalkingLavaSeahorse_Main();
-    fn WreckedShipGhost_Init();
-    fn WreckedShipGhost_Main();
-    fn WreckedShipOrbs_Init();
-    fn WreckedShipOrbs_Main();
-    fn WreckedShipRobotDeactivated_Init();
-    fn WreckedShipRobotDeactivated_Shot();
-    fn WreckedShipRobotDeactivated_Touch();
-    fn WreckedShipRobot_Func_1();
-    fn WreckedShipRobot_Init();
-    fn WreckedShipRobot_Main();
-    fn WreckedShipRobot_Shot();
-    fn WreckedShipSpark_Init();
-    fn WreckedShipSpark_Main();
-    fn WreckedShipSpark_Shot();
-    fn YappingMaw_Frozen();
-    fn YappingMaw_Init();
-    fn YappingMaw_Main();
-    fn YappingMaw_Shot();
-    fn YappingMaw_Touch();
-    fn sub_A8B193(k: uint16);
-    fn sub_A8B291(k: uint16);
-    fn MotherBrain_Instr_Down2Right15(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_Down4Right6(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_IncrBeamAttackPhase(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_MoveBodyUp10Left4(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_MoveBodyUp12Right2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_MoveBodyUp16Left4(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_MoveDown1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_MoveDown10Right2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_MoveDown12Left4(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_MoveDown16Right2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_MoveDown1Left3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_MoveDown2Right1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_MoveDown4Right2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_MoveLeft2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_MoveRight2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_MoveUp1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_MoveUp1Right3_Sfx(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_MoveUp2Left15_Sfx(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_MoveUp2Right1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_MoveUp4Left6(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_SetPose_Crouched(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_SetPose_CrouchedTrans(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_SetPose_DeathBeamMode(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_SetPose_LeaningDown(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_SetPose_Standing(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_SetPose_Walking(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_SpawnDeathBeamEproj(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_SpawnEprojToOffset(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_Up2Left1_Sfx(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_Up2Left1_Sfx2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn MotherBrain_Instr_Up4Left2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Shitroid_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Shitroid_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Shitroid_Instr_3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Shitroid_Instr_4(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Shitroid_Instr_5(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Shitroid_Instr_6(k: uint16, jp: *const uint16) -> *const uint16;
-    fn sub_A9ECD0(k: uint16, jp: *const uint16) -> *const uint16;
-    fn DeadRipper_Init();
-    fn DeadRipper_Powerbomb();
-    fn DeadRipper_Shot();
-    fn DeadSidehopper_Init();
-    fn DeadSidehopper_Main();
-    fn DeadSidehopper_Powerbomb();
-    fn DeadSidehopper_Shot();
-    fn DeadSidehopper_Touch();
-    fn DeadSkree_Init();
-    fn DeadSkree_Powerbomb();
-    fn DeadSkree_Shot();
-    fn DeadTorizo_Init();
-    fn DeadTorizo_Main();
-    fn DeadTorizo_MainGfxHook();
-    fn DeadTorizo_Powerbomb();
-    fn DeadTorizo_Shot();
-    fn DeadZoomer_Init();
-    fn DeadZoomer_Powerbomb();
-    fn DeadZoomer_Shot();
-    fn Enemy_GrappleReact_CancelBeam_A9();
-    fn Enemy_NormalFrozenAI_A9();
-    fn MotherBrain_DrawBrainNeck_EnemyGfxDrawHook();
-    fn MotherBrainsBody_Hurt();
-    fn MotherBrainsBody_Init();
-    fn MotherBrainsBody_Powerbomb();
-    fn MotherBrainsBody_Shot();
-    fn MotherBrainsBrain_GfxDrawHook();
-    fn MotherBrainsBrain_Hurt();
-    fn MotherBrainsBrain_Init();
-    fn MotherBrainsBrain_Shot();
-    fn MotherBrainsBrain_Touch();
-    fn MotherBrainsTubesFalling_Init();
-    fn MotherBrainsTubesFalling_Main(k: uint16);
-    fn ShitroidInCutscene_Init();
-    fn ShitroidInCutscene_Main();
-    fn ShitroidInCutscene_Touch();
-    fn Shitroid_Init();
-    fn Shitroid_Main();
-    fn Shitroid_Powerbomb();
-    fn Shitroid_Shot();
-    fn Shitroid_Touch();
-    fn Enemy_ClearAiPreInstr_AA(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Enemy_SetAiPreInstr_AA(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Shaktool_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Shaktool_Instr_10(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Shaktool_Instr_11(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Shaktool_Instr_12(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Shaktool_Instr_13(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Shaktool_Instr_14(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Shaktool_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Shaktool_Instr_3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Shaktool_Instr_4(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Shaktool_Instr_5(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Shaktool_Instr_6(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Shaktool_Instr_7(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Shaktool_Instr_8(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Shaktool_Instr_9(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_10(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_11(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_12(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_13(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_14(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_15(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_16(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_17(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_18(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_19(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_20(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_21(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_22(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_23(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_24(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_25(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_26(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_27(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_28(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_29(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_30(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_31(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_32(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_33(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_34(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_35(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_36(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_37(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_38(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_39(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_4(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_40(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_41(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_42(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_43(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_44(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_45(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_46(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_47(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_48(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_49(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_5(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_50(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_51(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_52(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_53(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_54(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_55(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_56(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_57(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_58(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_59(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_6(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_60(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_61(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_62(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_63(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_7(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_8(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Torizo_Instr_9(k: uint16, jp: *const uint16) -> *const uint16;
-    fn ChozoStatue_Init();
-    fn ChozoStatue_Main();
-    fn Enemy_GrappleReact_CancelBeam_AA();
-    fn Enemy_NormalFrozenAI_AA();
-    fn GoldTorizo_Hurt();
-    fn GoldTorizo_Main();
-    fn GoldTorizo_Shot();
-    fn GoldTorizo_Touch();
-    fn N00bTubeCracks_Init();
-    fn Shaktool_DCAC(k: uint16);
-    fn Shaktool_DCD7(k: uint16);
-    fn Shaktool_DD25(k: uint16);
-    fn Shaktool_Hurt();
-    fn Shaktool_Init();
-    fn Shaktool_PreInstr_0(k: uint16);
-    fn Shaktool_Shot();
-    fn Shaktool_Touch();
-    fn Torizo_D5ED(k: uint16);
-    fn Torizo_D5F1(k: uint16);
-    fn Torizo_Func_5(k: uint16);
-    fn Torizo_Func_6(k: uint16);
-    fn Torizo_Func_7(k: uint16);
-    fn Torizo_Func_8();
-    fn Torizo_Hurt();
-    fn Torizo_Init();
-    fn Torizo_Main();
-    fn Torizo_Shot();
-    fn TourianEntranceStatue_Init();
-    fn sub_AAE445(k: uint16);
-    fn SpacePirates_Instr_11(k: uint16, jp: *const uint16) -> *const uint16;
-    fn SpacePirates_Instr_12(k: uint16, jp: *const uint16) -> *const uint16;
-    fn SpacePirates_Instr_13(k: uint16, jp: *const uint16) -> *const uint16;
-    fn SpacePirates_Instr_14(k: uint16, jp: *const uint16) -> *const uint16;
-    fn SpacePirates_Instr_15(k: uint16, jp: *const uint16) -> *const uint16;
-    fn SpacePirates_Instr_16(k: uint16, jp: *const uint16) -> *const uint16;
-    fn SpacePirates_Instr_17(k: uint16, jp: *const uint16) -> *const uint16;
-    fn SpacePirates_Instr_18(k: uint16, jp: *const uint16) -> *const uint16;
-    fn SpacePirates_Instr_19(k: uint16, jp: *const uint16) -> *const uint16;
-    fn SpacePirates_Instr_20(k: uint16, jp: *const uint16) -> *const uint16;
-    fn SpacePirates_Instr_21(k: uint16, jp: *const uint16) -> *const uint16;
-    fn SpacePirates_Instr_FireLaserL(k: uint16, jp: *const uint16) -> *const uint16;
-    fn SpacePirates_Instr_FireLaserR(k: uint16, jp: *const uint16) -> *const uint16;
-    fn SpacePirates_Instr_MovePixelsDownAndChangeDirFaceLeft(
-        k: uint16,
-        jp: *const uint16,
-    ) -> *const uint16;
-    fn SpacePirates_Instr_MovePixelsDownAndChangeDirFaceRight(
-        k: uint16,
-        jp: *const uint16,
-    ) -> *const uint16;
-    fn SpacePirates_Instr_PlaySfx(k: uint16, jp: *const uint16) -> *const uint16;
-    fn SpacePirates_Instr_PrepareWallJumpL(k: uint16, jp: *const uint16) -> *const uint16;
-    fn SpacePirates_Instr_PrepareWallJumpR(k: uint16, jp: *const uint16) -> *const uint16;
-    fn SpacePirates_Instr_RandomNewDirFaceL(k: uint16, jp: *const uint16) -> *const uint16;
-    fn SpacePirates_Instr_RandomNewDirFaceR(k: uint16, jp: *const uint16) -> *const uint16;
-    fn SpacePirates_Instr_SetEnemyFunc(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Enemy_GrappleReact_CancelBeam_B2();
-    fn Enemy_NormalFrozenAI_B2();
-    fn NinjaSpacePirates_Init();
-    fn NinjaSpacePirates_Main();
-    fn WalkingSpacePirates_87C8();
-    fn WalkingSpacePirates_883E();
-    fn WalkingSpacePirates_Init();
-    fn WalkingSpacePirates_Main();
-    fn WalkingSpacePirates_Powerbomb();
-    fn WalkingSpacePirates_Shot();
-    fn WalkingSpacePirates_Touch();
-    fn WallSpacePirates_Init();
-    fn WallSpacePirates_Main();
-    fn Botwoon_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Botwoon_Instr_10(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Botwoon_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Botwoon_Instr_3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Botwoon_Instr_4(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Botwoon_Instr_5(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Botwoon_Instr_6(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Botwoon_Instr_7(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Botwoon_Instr_8(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Botwoon_Instr_9(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Botwoon_Instr_QueueSpitSfx(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Botwoon_Instr_SetSpitting(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Enemy_ClearAiPreInstr_B3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Enemy_SetAiPreInstr_B3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn EscapeDachora_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn EscapeDachora_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn EscapeDachora_Instr_3(k: uint16, jp: *const uint16) -> *const uint16;
-    fn EscapeDachora_Instr_4(k: uint16, jp: *const uint16) -> *const uint16;
-    fn EscapeEtecoon_Instr_1(k: uint16, jp: *const uint16) -> *const uint16;
-    fn EscapeEtecoon_Instr_2(k: uint16, jp: *const uint16) -> *const uint16;
-    fn Botwoon_Func_26(k: uint16);
-    fn Botwoon_Func_27(k: uint16);
-    fn Botwoon_Func_28(k: uint16);
-    fn Botwoon_Func_29(k: uint16);
-    fn Botwoon_Func_30(k: uint16);
-    fn Botwoon_Init();
-    fn Botwoon_Main();
-    fn Botwoon_Powerbomb();
-    fn Botwoon_Shot();
-    fn Botwoon_Touch();
-    fn BrinstarPipeBug_Init();
-    fn BrinstarPipeBug_Main();
-    fn BrinstarPipeBug_PreInstr_1(k: uint16);
-    fn BrinstarPipeBug_PreInstr_2(k: uint16);
-    fn BrinstarPipeBug_PreInstr_3(k: uint16);
-    fn BrinstarPipeBug_PreInstr_4(k: uint16);
-    fn BrinstarPipeBug_PreInstr_5(k: uint16);
-    fn BrinstarYellowPipeBug_Init();
-    fn BrinstarYellowPipeBug_Main();
-    fn Enemy_GrappleReact_CancelBeam_B3();
-    fn Enemy_GrappleReact_KillEnemy_B3();
-    fn Enemy_GrappleReact_NoInteract_B3();
-    fn Enemy_NormalFrozenAI_B3();
-    fn Enemy_NormalShotAI_B3();
-    fn Enemy_NormalTouchAI_B3();
-    fn EscapeDachora_Init();
-    fn EscapeEtecoon_E65C(k: uint16);
-    fn EscapeEtecoon_E670(k: uint16);
-    fn EscapeEtecoon_E680(k: uint16);
-    fn EscapeEtecoon_Init();
-    fn EscapeEtecoon_Main();
-    fn NorfairPipeBug_Func_5(k: uint16);
-    fn NorfairPipeBug_Init();
-    fn NorfairPipeBug_Main();
-    fn UnusedSpinningTurtleEye_Init();
-    fn UnusedSpinningTurtleEye_Main();
-    fn ClearSpriteObjects();
-    fn CreateSpriteAtPos(
-        x_r18: uint16,
-        y_r20: uint16,
-        ilist_r22: uint16,
-        pal_r24: uint16,
-    ) -> uint16;
-    fn DrawSpriteObjects();
-    fn HandleSpriteObjects();
+
 }
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,

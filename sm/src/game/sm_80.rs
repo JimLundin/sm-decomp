@@ -1,3 +1,24 @@
+use crate::cpu_infra::g_use_my_apu_code;
+use crate::game::sm_81::{DrawSpritemap, LoadFromSram, SoftReset};
+use crate::game::sm_82::{
+    LoadCRETilesTilesetTilesAndPalette, LoadColorsForSpritesBeamsAndEnemies,
+    LoadDestinationRoomThings, LoadLevelDataAndOtherThings, LoadLibraryBackground, LoadRoomMusic,
+    NullFunc, ResetSoundQueues, UpdateMusicTrackIndex,
+};
+use crate::game::sm_84::{ClearPLMs, LoadRoomPlmGfx, SpawnHardcodedPlm};
+use crate::game::sm_86::ClearEprojs;
+use crate::game::sm_87::ClearAnimtiles;
+use crate::game::sm_88::{InitializeSpecialEffectsForNewRoom, WaitUntilEndOfVblankAndClearHdma};
+use crate::game::sm_89::LoadFXHeader;
+use crate::game::sm_8b::InitializeIoDisplayLogo_Async;
+use crate::game::sm_8d::ClearPaletteFXObjects;
+use crate::game::sm_90::{InitializeMiniMapBroken, UpdateBeamTilesAndPalette};
+use crate::game::sm_94::kSinCosTable8bit_Sext;
+use crate::game::sm_a0::LoadEnemies;
+use crate::rtl::{
+    g_ram, g_rom, g_sram, Load24, Mult8x8, ReadRegWord, RomPtr, RtlApuUpload, RtlApuWrite,
+    RtlWriteSram, SnesDivide, SnesModulus, Unreachable, WriteReg, WriteRegWord,
+};
 extern "C" {
     fn memcpy(
         __dest: *mut ::core::ffi::c_void,
@@ -15,48 +36,7 @@ extern "C" {
         __n: size_t,
     ) -> ::core::ffi::c_int;
     fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
-    static mut g_ram: [uint8; 131072];
-    fn RtlApuWrite(adr: uint32, val: uint8);
-    static mut g_sram: *mut uint8;
-    static mut g_rom: *const uint8;
-    static mut g_use_my_apu_code: bool;
-    fn Load24(src: *const LongPtr) -> uint32;
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn WriteReg(reg: uint16, value: uint8);
-    fn WriteRegWord(reg: uint16, value: uint16);
-    fn ReadRegWord(reg: uint16) -> uint16;
-    fn RtlApuUpload(p: *const uint8);
-    fn RtlWriteSram();
-    fn Mult8x8(a: uint8, b: uint8) -> uint16;
-    fn SnesDivide(a: uint16, b: uint8) -> uint16;
-    fn SnesModulus(a: uint16, b: uint8) -> uint16;
-    static kSinCosTable8bit_Sext: [int16; 320];
-    fn LoadFromSram(a: uint16) -> uint8;
-    fn DrawSpritemap(db: uint8, j: uint16, x_r20: uint16, y_r18: uint16, chr_r22: uint16);
-    fn SoftReset();
-    fn LoadCRETilesTilesetTilesAndPalette();
-    fn LoadColorsForSpritesBeamsAndEnemies();
-    fn LoadDestinationRoomThings();
-    fn LoadLevelDataAndOtherThings();
-    fn LoadLibraryBackground();
-    fn LoadRoomMusic();
-    fn NullFunc();
-    fn ResetSoundQueues();
-    fn UpdateMusicTrackIndex();
-    fn ClearPLMs();
-    fn LoadRoomPlmGfx();
-    fn SpawnHardcodedPlm(p: SpawnHardcodedPlmArgs);
-    fn ClearEprojs();
-    fn ClearAnimtiles();
-    fn InitializeSpecialEffectsForNewRoom();
-    fn WaitUntilEndOfVblankAndClearHdma();
-    fn LoadFXHeader();
-    fn InitializeIoDisplayLogo_Async() -> CoroutineRet;
-    fn ClearPaletteFXObjects();
-    fn InitializeMiniMapBroken();
-    fn UpdateBeamTilesAndPalette();
-    fn LoadEnemies();
+
 }
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,

@@ -1,37 +1,25 @@
+use crate::game::sm_80::{
+    CheckBossBitForCurArea, CheckEventHappened, NextRandom, QueueSfx2_Max6, SetEventHappened,
+};
+use crate::game::sm_84::SpawnHardcodedPlm;
+use crate::game::sm_86::SpawnEprojWithRoomGfx;
+use crate::game::sm_87::SpawnAnimtiles;
+use crate::game::sm_88::{
+    FxTypeFunc_20, FxTypeFunc_2C_Haze, RoomCode_ScrollingSkyLand, RoomMainAsm_ScrollingSkyOcean,
+    RoomSetupAsm_ScrollingSkyOcean,
+};
+use crate::game::sm_89::RoomCode_CeresElevatorShaft;
+use crate::game::sm_90::CallSomeSamusCode;
+use crate::game::sm_94::Samus_MoveDown_NoSolidColl;
+use crate::game::sm_a6::HandleCeresRidleyGetawayCutscene;
+use crate::game::sm_b4::CreateSpriteAtPos;
+use crate::rtl::{g_ram, mov24, Mult8x8, RomPtr, Unreachable, WriteReg};
 extern "C" {
     fn strcpy(
         __dest: *mut ::core::ffi::c_char,
         __src: *const ::core::ffi::c_char,
     ) -> *mut ::core::ffi::c_char;
-    static mut g_ram: [uint8; 131072];
-    fn mov24(dst: *mut LongPtr, src: uint32);
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn WriteReg(reg: uint16, value: uint8);
-    fn Mult8x8(a: uint8, b: uint8) -> uint16;
-    fn CheckEventHappened(a: uint16) -> uint16;
-    fn NextRandom() -> uint16;
-    fn CheckBossBitForCurArea(a: uint16) -> uint8;
-    fn QueueSfx2_Max6(a: uint16);
-    fn SetEventHappened(a: uint16);
-    fn SpawnHardcodedPlm(p: SpawnHardcodedPlmArgs);
-    fn SpawnEprojWithRoomGfx(j: uint16, a: uint16);
-    fn SpawnAnimtiles(j: uint16);
-    fn FxTypeFunc_20();
-    fn FxTypeFunc_2C_Haze();
-    fn RoomCode_ScrollingSkyLand();
-    fn RoomMainAsm_ScrollingSkyOcean();
-    fn RoomSetupAsm_ScrollingSkyOcean();
-    fn RoomCode_CeresElevatorShaft();
-    fn CallSomeSamusCode(a: uint16) -> uint16;
-    fn Samus_MoveDown_NoSolidColl(amt: int32) -> int32;
-    fn HandleCeresRidleyGetawayCutscene();
-    fn CreateSpriteAtPos(
-        x_r18: uint16,
-        y_r20: uint16,
-        ilist_r22: uint16,
-        pal_r24: uint16,
-    ) -> uint16;
+
 }
 pub use crate::types::{
     __int16_t, __int32_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32, int32_t,

@@ -1,3 +1,8 @@
+use crate::snes::dsp::{
+    dsp_cycle, dsp_free, dsp_init, dsp_read, dsp_reset, dsp_saveload, dsp_write,
+};
+use crate::snes::spc::{spc_free, spc_init, spc_reset, spc_runOpcode, spc_saveload};
+use crate::tracing::getProcessorStateSpc;
 extern "C" {
     fn puts(__s: *const ::core::ffi::c_char) -> ::core::ffi::c_int;
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
@@ -7,19 +12,7 @@ extern "C" {
         __c: ::core::ffi::c_int,
         __n: size_t,
     ) -> *mut ::core::ffi::c_void;
-    fn spc_init(apu: *mut Apu) -> *mut Spc;
-    fn spc_free(spc: *mut Spc);
-    fn spc_reset(spc: *mut Spc);
-    fn spc_runOpcode(spc: *mut Spc) -> ::core::ffi::c_int;
-    fn spc_saveload(spc: *mut Spc, func: Option<SaveLoadFunc>, ctx: *mut ::core::ffi::c_void);
-    fn dsp_init(ram: *mut uint8_t) -> *mut Dsp;
-    fn dsp_free(dsp: *mut Dsp);
-    fn dsp_reset(dsp: *mut Dsp);
-    fn dsp_cycle(dsp: *mut Dsp);
-    fn dsp_read(dsp: *mut Dsp, adr: uint8_t) -> uint8_t;
-    fn dsp_write(dsp: *mut Dsp, adr: uint8_t, val: uint8_t);
-    fn dsp_saveload(dsp: *mut Dsp, func: Option<SaveLoadFunc>, ctx: *mut ::core::ffi::c_void);
-    fn getProcessorStateSpc(snes: *mut Apu, line: *mut ::core::ffi::c_char);
+
 }
 pub use crate::types::{
     __int16_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16_t, int8_t, size_t, uint16_t,

@@ -246,6 +246,11 @@ every step makes the next one easier.
    metadata builds pass. C exports -6, no_mangle -18. Unsafe functions +6 and
    Rust lines +33 are callback dispatch/registration required to remove the
    binary symbol hooks, not gameplay changes; other counters unchanged.
+   Import batch applied: 2,437 internal function/static declarations replaced
+   by direct Rust imports; zero signature conflicts. Bodies and 210 true FFI
+   declarations unchanged. Any% 129,712 frames, zero failures (182.99s);
+   format and library/frontend metadata builds pass. Extern blocks 54 -> 40,
+   Rust lines 271,116 -> 269,432; other counters unchanged.
 3. Replace the hand-written SDL/OpenGL FFI with the `sdl2` crate (or similar)
    and drop `extern_types`; then move `rust-toolchain.toml` to stable.
 4. Globals: gather `static mut` game state behind one `Game` struct passed by

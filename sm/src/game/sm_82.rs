@@ -1,4 +1,73 @@
+use crate::cpu_infra::DebugGameOverMenu;
+use crate::game::sm_80::{
+    memset7E, CalculateLayer2PosAndScrollsWhenScrolling, CheckEventHappened, ClearBG2Tilemap,
+    ClearFXTilemap, ClearOamExt, ClearTimerRam, ClearUnusedOam, CopyToVramNow,
+    DebugScrollPosSaveLoad, DecompressToMem, DecompressToVRAM, DisableIrqInterrupts,
+    DoorTransitionScrollingSetup, DrawTimer, EnableIrqInterruptsNow, EnableNMI, FixDoorsMovingUp,
+    HandleFadeIn, HandleFadeOut, HandleHudTilemap, HasQueuedMusic, InitializeHud,
+    LoadFromLoadStation, LoadMirrorOfExploredMapTiles, NextRandom, PrepareBitAccess,
+    QueueClearingOfFxTilemap, QueueMusic_Delayed8, QueueMusic_DelayedY, QueueSfx1_Max15,
+    QueueSfx1_Max6, QueueSfx2_Max15, QueueSfx2_Max6, QueueSfx3_Max15, QueueSfx3_Max3,
+    QueueSfx3_Max6, ReadJoypadInputs, ReleaseButtonsFilter, ResumeGameplay,
+    SaveExploredMapTilesToSaved, SetElevatorsAsUsed, SetupDmaTransfer, StartGameplay_Async,
+    Vector_NMI, Vector_RESET_Async, WaitForNMI_Async,
+};
+use crate::game::sm_81::{
+    DrawMenuSpritemap, DrawSpritemap, FileSelectMap, FileSelectMenu, GameOverMenu, SaveToSram,
+};
+use crate::game::sm_84::{
+    ClearPLMs, ClearSoundsWhenGoingThroughDoor, EnablePLMs, PlaySpinJumpSoundIfSpinJumping,
+    PlmHandler_Async, SpawnRoomPLM,
+};
+use crate::game::sm_85::DisplayMessageBox_Async;
+use crate::game::sm_86::{ClearEprojs, EnableEprojs, EprojRunAll};
+use crate::game::sm_87::{AnimtilesHandler, ClearAnimtiles, DisableAnimtiles, EnableAnimtiles};
+use crate::game::sm_88::{
+    sub_8882AC, DisableHdmaObjects, EnableHdmaObjects, HdmaObjectHandler,
+    InitializeSpecialEffectsForNewRoom, SpawnBG3ScrollHdmaObject, WaitUntilEndOfVblankAndClearHdma,
+};
+use crate::game::sm_89::LoadFXHeader;
+use crate::game::sm_8b::{
+    GameState_1_OpeningCinematic_, GameState_37_CeresGoesBoomWithSamus_,
+    GameState_39_EndingAndCredits_, LoadTitleSequenceGraphics,
+};
+use crate::game::sm_8d::{
+    ClearPaletteFXObjects, DisablePaletteFx, EnablePaletteFx, PaletteFxHandler,
+};
+use crate::game::sm_8f::{
+    HandleRoomDefStateSelect, PauseHook_DraygonRoom, RunDoorSetupCode, RunRoomMainCode,
+    RunRoomSetupCode, UnpauseHook_DraygonRoom,
+};
+use crate::game::sm_90::{
+    CallSomeSamusCode, HandleControllerInputForGamePhysics, HandleSamusMovementAndPause,
+    MainScrollingRoutine, ResetProjectileData, Samus_DrawDuringDeathAnim,
+    Samus_DrawWhenNotAnimatingOrDying, Samus_LowHealthCheck_0, SetLiquidPhysicsType,
+    UpdateBeamTilesAndPalette,
+};
+use crate::game::sm_91::{
+    GameState_28_Unused_, SamusFunc_F433, Samus_Initialize, Samus_LoadSuitTargetPalette,
+    Samus_SetAnimationFrameIfPoseChanged,
+};
+use crate::game::sm_9b::{
+    DrawSamusStartingDeathAnim_, GameState_24_SamusNoHealth_Explosion_Helper,
+    HandleSamusDeathSequence, StartSamusDeathAnimation,
+};
+use crate::game::sm_a0::{
+    DecrementSamusTimers, DetermineWhichEnemiesToProcess, DrawSamusEnemiesAndProjectiles,
+    EnemyMain, EprojProjCollDet, EprojSamusCollDetect, HandleRoomShaking, InitializeEnemies,
+    LoadEnemies, ProcessEnemyPowerBombInteraction, QueueEnemyBG2TilemapTransfers,
+    SamusProjectileInteractionHandler, TransferEnemyTilesToVramAndInit,
+};
+use crate::game::sm_a7::{
+    Kraid_UnpauseHook_IsSinking, PauseHook_Kraid, UnpauseHook_Kraid_IsAlive,
+    UnpauseHook_Kraid_IsDead,
+};
+use crate::game::sm_a9::MotherBrainsBody_UnpauseHook;
 use crate::host::{Die, Warning};
+use crate::rtl::{
+    g_ram, g_rom, Load24, Mult8x8, RomPtr, RtlApuWrite, SnesDivide, Unreachable, WriteReg,
+    WriteRegWord,
+};
 extern "C" {
     fn __assert_fail(
         __assertion: *const ::core::ffi::c_char,
@@ -12,143 +81,7 @@ extern "C" {
         __n: size_t,
     ) -> *mut ::core::ffi::c_void;
     fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
-    static mut g_ram: [uint8; 131072];
-    fn RtlApuWrite(adr: uint32, val: uint8);
-    static mut g_rom: *const uint8;
-    fn Load24(src: *const LongPtr) -> uint32;
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn WriteReg(reg: uint16, value: uint8);
-    fn WriteRegWord(reg: uint16, value: uint16);
-    fn Mult8x8(a: uint8, b: uint8) -> uint16;
-    fn SnesDivide(a: uint16, b: uint8) -> uint16;
-    fn CheckEventHappened(a: uint16) -> uint16;
-    fn NextRandom() -> uint16;
-    fn PrepareBitAccess(a: uint16) -> uint16;
-    fn HasQueuedMusic() -> uint8;
-    fn CalculateLayer2PosAndScrollsWhenScrolling();
-    fn ClearBG2Tilemap();
-    fn ClearFXTilemap();
-    fn ClearOamExt();
-    fn ClearTimerRam();
-    fn DebugScrollPosSaveLoad();
-    fn DecompressToMem(src: uint32, decompress_dst: *mut uint8);
-    fn DecompressToVRAM(src: uint32, dst_addr: uint16);
-    fn DisableIrqInterrupts();
-    fn DoorTransitionScrollingSetup();
-    fn DrawTimer();
-    fn EnableIrqInterruptsNow();
-    fn EnableNMI();
-    fn FixDoorsMovingUp();
-    fn HandleFadeIn();
-    fn ClearUnusedOam();
-    fn HandleFadeOut();
-    fn HandleHudTilemap();
-    fn InitializeHud();
-    fn CopyToVramNow(vram_dst: uint16, src: uint32, size: uint16);
-    fn LoadFromLoadStation();
-    fn LoadMirrorOfExploredMapTiles();
-    fn QueueClearingOfFxTilemap();
-    fn QueueMusic_Delayed8(a: uint16);
-    fn QueueMusic_DelayedY(a: uint16, j: uint16);
-    fn QueueSfx1_Max15(a: uint16);
-    fn QueueSfx1_Max6(a: uint16);
-    fn QueueSfx2_Max15(a: uint16);
-    fn QueueSfx2_Max6(a: uint16);
-    fn QueueSfx3_Max15(a: uint16);
-    fn QueueSfx3_Max3(a: uint16);
-    fn QueueSfx3_Max6(a: uint16);
-    fn ReadJoypadInputs();
-    fn ReleaseButtonsFilter(a: uint16);
-    fn ResumeGameplay();
-    fn SaveExploredMapTilesToSaved();
-    fn SetElevatorsAsUsed();
-    fn SetupDmaTransfer(p: *const ::core::ffi::c_void);
-    fn StartGameplay_Async() -> CoroutineRet;
-    fn Vector_NMI();
-    fn Vector_RESET_Async() -> CoroutineRet;
-    fn WaitForNMI_Async() -> CoroutineRet;
-    fn memset7E(k: *mut uint16, a: uint16, j: uint16);
-    fn DebugGameOverMenu();
-    fn DrawMenuSpritemap(a: uint16, k: uint16, j: uint16, chr_r3: uint16);
-    fn DrawSpritemap(db: uint8, j: uint16, x_r20: uint16, y_r18: uint16, chr_r22: uint16);
-    fn FileSelectMap();
-    fn FileSelectMenu();
-    fn GameOverMenu();
-    fn SaveToSram(a: uint16);
-    fn ClearPLMs();
-    fn ClearSoundsWhenGoingThroughDoor();
-    fn EnablePLMs();
-    fn PlaySpinJumpSoundIfSpinJumping();
-    fn PlmHandler_Async() -> CoroutineRet;
-    fn SpawnRoomPLM(k: uint16);
-    fn DisplayMessageBox_Async(a: uint16) -> CoroutineRet;
-    fn ClearEprojs();
-    fn EnableEprojs();
-    fn EprojRunAll();
-    fn AnimtilesHandler();
-    fn ClearAnimtiles();
-    fn DisableAnimtiles();
-    fn EnableAnimtiles();
-    fn DisableHdmaObjects();
-    fn EnableHdmaObjects();
-    fn HdmaObjectHandler();
-    fn InitializeSpecialEffectsForNewRoom();
-    fn SpawnBG3ScrollHdmaObject();
-    fn WaitUntilEndOfVblankAndClearHdma();
-    fn sub_8882AC();
-    fn LoadFXHeader();
-    fn GameState_1_OpeningCinematic_() -> CoroutineRet;
-    fn GameState_37_CeresGoesBoomWithSamus_() -> CoroutineRet;
-    fn GameState_39_EndingAndCredits_() -> CoroutineRet;
-    fn LoadTitleSequenceGraphics();
-    fn ClearPaletteFXObjects();
-    fn DisablePaletteFx();
-    fn EnablePaletteFx();
-    fn PaletteFxHandler();
-    fn HandleRoomDefStateSelect(k: uint16);
-    fn PauseHook_DraygonRoom();
-    fn RunDoorSetupCode();
-    fn RunRoomMainCode();
-    fn RunRoomSetupCode();
-    fn UnpauseHook_DraygonRoom() -> CoroutineRet;
-    fn CallSomeSamusCode(a: uint16) -> uint16;
-    fn HandleControllerInputForGamePhysics();
-    fn HandleSamusMovementAndPause();
-    fn MainScrollingRoutine();
-    fn ResetProjectileData();
-    fn Samus_DrawDuringDeathAnim();
-    fn Samus_DrawWhenNotAnimatingOrDying();
-    fn Samus_LowHealthCheck_0();
-    fn SetLiquidPhysicsType();
-    fn UpdateBeamTilesAndPalette();
-    fn GameState_28_Unused_();
-    fn SamusFunc_F433();
-    fn Samus_Initialize();
-    fn Samus_LoadSuitTargetPalette();
-    fn Samus_SetAnimationFrameIfPoseChanged();
-    fn GameState_24_SamusNoHealth_Explosion_Helper() -> uint16;
-    fn HandleSamusDeathSequence() -> uint16;
-    fn DrawSamusStartingDeathAnim_();
-    fn StartSamusDeathAnimation();
-    fn DecrementSamusTimers();
-    fn DetermineWhichEnemiesToProcess();
-    fn DrawSamusEnemiesAndProjectiles();
-    fn EnemyMain();
-    fn EprojProjCollDet();
-    fn EprojSamusCollDetect();
-    fn HandleRoomShaking();
-    fn InitializeEnemies();
-    fn LoadEnemies();
-    fn ProcessEnemyPowerBombInteraction();
-    fn QueueEnemyBG2TilemapTransfers();
-    fn SamusProjectileInteractionHandler();
-    fn TransferEnemyTilesToVramAndInit();
-    fn Kraid_UnpauseHook_IsSinking() -> CoroutineRet;
-    fn PauseHook_Kraid();
-    fn UnpauseHook_Kraid_IsAlive() -> CoroutineRet;
-    fn UnpauseHook_Kraid_IsDead() -> CoroutineRet;
-    fn MotherBrainsBody_UnpauseHook() -> CoroutineRet;
+
 }
 pub use crate::types::{
     __int16_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int8, int8_t, size_t,

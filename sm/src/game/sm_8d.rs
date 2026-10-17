@@ -1,13 +1,6 @@
-extern "C" {
-    static mut g_ram: [uint8; 131072];
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn MakePairU16(k: uint16, j: uint16) -> PairU16;
-    fn QueueMusic_Delayed8(a: uint16);
-    fn QueueSfx1_Max6(a: uint16);
-    fn QueueSfx2_Max6(a: uint16);
-    fn QueueSfx3_Max6(a: uint16);
-}
+use crate::game::sm_80::{QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max6, QueueSfx3_Max6};
+use crate::rtl::{g_ram, MakePairU16, RomPtr, Unreachable};
+
 pub use crate::types::{
     __uint16_t, __uint32_t, __uint8_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t,
     EnemyData, PairU16, VoidP,

@@ -1,3 +1,21 @@
+use crate::game::sm_80::{
+    AddGrappleToHudTilemap, AddMissilesToHudTilemap, AddPowerBombsToHudTilemap,
+    AddSuperMissilesToHudTilemap, AddXrayToHudTilemap, CheckBossBitForCurArea, CheckEventHappened,
+    PrepareBitAccess, QueueMusic_Delayed8, QueueSfx1_Max1, QueueSfx1_Max15, QueueSfx1_Max3,
+    QueueSfx1_Max6, QueueSfx1_Max9, QueueSfx2_Max1, QueueSfx2_Max15, QueueSfx2_Max3,
+    QueueSfx2_Max6, QueueSfx2_Max9, QueueSfx3_Max1, QueueSfx3_Max15, QueueSfx3_Max3,
+    QueueSfx3_Max6, QueueSfx3_Max9, SetEventHappened,
+};
+use crate::game::sm_81::SaveToSram;
+use crate::game::sm_82::PlayRoomMusicTrackAfterAFrames;
+use crate::game::sm_85::{DisplayMessageBox, DisplayMessageBox_Async, DisplayMessageBox_Poll};
+use crate::game::sm_86::SpawnEprojWithRoomGfx;
+use crate::game::sm_90::{CallSomeSamusCode, UpdateBeamTilesAndPalette};
+use crate::game::sm_91::{
+    GravitySuitPickup, LoadBlockToXrayTilemap, MakeSamusFaceForward, VariaSuitPickup,
+};
+use crate::game::sm_94::cur_coll_amt32;
+use crate::rtl::{g_ram, g_rom, Load24, Mult8x8, RomPtr, SnesDivide, SnesModulus, Unreachable};
 extern "C" {
     fn __assert_fail(
         __assertion: *const ::core::ffi::c_char,
@@ -6,52 +24,7 @@ extern "C" {
         __function: *const ::core::ffi::c_char,
     ) -> !;
     fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
-    static mut g_ram: [uint8; 131072];
-    static mut g_rom: *const uint8;
-    fn Load24(src: *const LongPtr) -> uint32;
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn Mult8x8(a: uint8, b: uint8) -> uint16;
-    fn SnesDivide(a: uint16, b: uint8) -> uint16;
-    fn SnesModulus(a: uint16, b: uint8) -> uint16;
-    static mut cur_coll_amt32: *mut int32;
-    fn CheckEventHappened(a: uint16) -> uint16;
-    fn PrepareBitAccess(a: uint16) -> uint16;
-    fn CheckBossBitForCurArea(a: uint16) -> uint8;
-    fn AddGrappleToHudTilemap();
-    fn AddMissilesToHudTilemap();
-    fn AddPowerBombsToHudTilemap();
-    fn AddSuperMissilesToHudTilemap();
-    fn AddXrayToHudTilemap();
-    fn QueueMusic_Delayed8(a: uint16);
-    fn QueueSfx1_Max1(a: uint16);
-    fn QueueSfx1_Max15(a: uint16);
-    fn QueueSfx1_Max3(a: uint16);
-    fn QueueSfx1_Max6(a: uint16);
-    fn QueueSfx1_Max9(a: uint16);
-    fn QueueSfx2_Max1(a: uint16);
-    fn QueueSfx2_Max15(a: uint16);
-    fn QueueSfx2_Max3(a: uint16);
-    fn QueueSfx2_Max6(a: uint16);
-    fn QueueSfx2_Max9(a: uint16);
-    fn QueueSfx3_Max1(a: uint16);
-    fn QueueSfx3_Max15(a: uint16);
-    fn QueueSfx3_Max3(a: uint16);
-    fn QueueSfx3_Max6(a: uint16);
-    fn QueueSfx3_Max9(a: uint16);
-    fn SetEventHappened(a: uint16);
-    fn SaveToSram(a: uint16);
-    fn PlayRoomMusicTrackAfterAFrames(a: uint16);
-    fn DisplayMessageBox_Poll(a: uint16) -> ::core::ffi::c_int;
-    fn DisplayMessageBox(a: uint16);
-    fn DisplayMessageBox_Async(a: uint16) -> CoroutineRet;
-    fn SpawnEprojWithRoomGfx(j: uint16, a: uint16);
-    fn CallSomeSamusCode(a: uint16) -> uint16;
-    fn UpdateBeamTilesAndPalette();
-    fn GravitySuitPickup();
-    fn LoadBlockToXrayTilemap(a: uint16, k: uint16, j: uint16);
-    fn MakeSamusFaceForward();
-    fn VariaSuitPickup();
+
 }
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,

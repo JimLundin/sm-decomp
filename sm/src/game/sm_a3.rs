@@ -1,63 +1,26 @@
+use crate::cpu_infra::Call;
+use crate::game::sm_80::{
+    Multiply16x16, NextRandom, QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max6,
+};
+use crate::game::sm_86::SpawnEprojWithGfx;
+use crate::game::sm_90::{CallSomeSamusCode, ProjectileReflection, ResetProjectileData};
+use crate::game::sm_91::Samus_DealDamage;
+use crate::game::sm_a0::{
+    Abs16, CalculateAngleOfSamusFromEnemy, CalculateBlockContainingPixelPos, CallEnemyPreInstr,
+    CheckIfEnemyIsOnScreen, CheckIfEnemyTouchesSamus, ConvertAngleToXy, CosineMult8bit,
+    CosineMult8bitFull, DetermineDirectionOfSamusFromEnemy, EnemyDeathAnimation, EnemyFunc_B691,
+    EnemyFunc_BBBF, EnemyFunc_BC76, EnemyFunc_BF8A, EnemyFunc_C8AD, EnemyGrappleDeath,
+    Enemy_ItemDrop_Metroid, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
+    Enemy_MoveRight_ProcessSlopes, Enemy_SwitchToFrozenAi, GetSamusEnemyDelta_X,
+    GetSamusEnemyDelta_Y, IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y, NormalEnemyFrozenAI,
+    NormalEnemyPowerBombAi, NormalEnemyShotAi, NormalEnemyShotAiSkipDeathAnim_CurEnemy,
+    NormalEnemyTouchAi, SignExtend8, SineMult8bit, SineMult8bitFull, SwitchEnemyAiToMainAi,
+};
+use crate::game::sm_b4::CreateSpriteAtPos;
+use crate::rtl::{g_ram, g_rom, RomPtr, SnesDivide, Unreachable};
 extern "C" {
     fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
-    static mut g_ram: [uint8; 131072];
-    static mut g_rom: *const uint8;
-    fn Call(addr: uint32);
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn SnesDivide(a: uint16, b: uint8) -> uint16;
-    fn CallEnemyPreInstr(ea: uint32);
-    fn CalculateBlockContainingPixelPos(xpos: uint16, ypos: uint16);
-    fn NextRandom() -> uint16;
-    fn Multiply16x16(a: uint16, j: uint16) -> uint32;
-    fn QueueSfx1_Max6(a: uint16);
-    fn QueueSfx2_Max3(a: uint16);
-    fn QueueSfx2_Max6(a: uint16);
-    fn QueueSfx3_Max6(a: uint16);
-    fn SpawnEprojWithGfx(a: uint16, k: uint16, j: uint16);
-    fn CallSomeSamusCode(a: uint16) -> uint16;
-    fn ProjectileReflection(r20: uint16);
-    fn ResetProjectileData();
-    fn Samus_DealDamage(a: uint16);
-    fn Abs16(a: uint16) -> uint16;
-    fn CalculateAngleOfSamusFromEnemy(k: uint16) -> uint16;
-    fn CheckIfEnemyIsOnScreen() -> uint16;
-    fn CheckIfEnemyTouchesSamus(k: uint16) -> uint16;
-    fn DetermineDirectionOfSamusFromEnemy() -> uint16;
-    fn GetSamusEnemyDelta_X(k: uint16) -> uint16;
-    fn GetSamusEnemyDelta_Y(k: uint16) -> uint16;
-    fn IsSamusWithinEnemy_X(k: uint16, a: uint16) -> uint16;
-    fn IsSamusWithinEnemy_Y(k: uint16, a: uint16) -> uint16;
-    fn SignExtend8(a: uint16) -> uint16;
-    fn SineMult8bit(a: uint16, varE32: uint16) -> uint16;
-    fn CosineMult8bit(a: uint16, varE32: uint16) -> uint16;
-    fn CosineMult8bitFull(a: uint16, varE32: uint16) -> uint32;
-    fn SineMult8bitFull(a: uint16, varE32: uint16) -> uint32;
-    fn EnemyFunc_BBBF(k: uint16, amt: int32) -> uint8;
-    fn EnemyFunc_BC76(k: uint16, amt: int32) -> uint8;
-    fn EnemyFunc_BF8A(k: uint16, a: uint16, amt: int32) -> uint8;
-    fn EnemyFunc_C8AD(k: uint16) -> uint8;
-    fn Enemy_MoveDown(k: uint16, amt: int32) -> uint8;
-    fn Enemy_MoveRight_IgnoreSlopes(k: uint16, amt: int32) -> uint8;
-    fn Enemy_MoveRight_ProcessSlopes(k: uint16, amt: int32) -> uint8;
-    fn ConvertAngleToXy(r18: uint16, r20: uint16) -> Point32;
-    fn EnemyDeathAnimation(k: uint16, a: uint16);
-    fn EnemyFunc_B691(varE20: uint16, pt: Point32);
-    fn EnemyGrappleDeath();
-    fn Enemy_ItemDrop_Metroid(k: uint16);
-    fn Enemy_SwitchToFrozenAi();
-    fn NormalEnemyFrozenAI();
-    fn NormalEnemyPowerBombAi();
-    fn NormalEnemyShotAi();
-    fn NormalEnemyShotAiSkipDeathAnim_CurEnemy();
-    fn NormalEnemyTouchAi();
-    fn SwitchEnemyAiToMainAi();
-    fn CreateSpriteAtPos(
-        x_r18: uint16,
-        y_r20: uint16,
-        ilist_r22: uint16,
-        pal_r24: uint16,
-    ) -> uint16;
+
 }
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,

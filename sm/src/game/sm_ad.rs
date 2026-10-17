@@ -1,13 +1,11 @@
+use crate::game::sm_80::QueueSfx2_Max6;
+use crate::game::sm_84::SpawnHardcodedPlm;
+use crate::game::sm_86::{eproj_spawn_pt, SpawnEprojWithRoomGfx};
+use crate::game::sm_a9::WriteColorsToPalette;
+use crate::rtl::{g_ram, g_rom, RomPtr};
 extern "C" {
     fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
-    static mut g_ram: [uint8; 131072];
-    static mut g_rom: *const uint8;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn QueueSfx2_Max6(a: uint16);
-    fn SpawnHardcodedPlm(p: SpawnHardcodedPlmArgs);
-    static mut eproj_spawn_pt: Point16U;
-    fn SpawnEprojWithRoomGfx(j: uint16, a: uint16);
-    fn WriteColorsToPalette(k: uint16, db: uint8, j: uint16, a: uint16);
+
 }
 pub use crate::types::{
     __uint16_t, __uint32_t, __uint8_t, uint16, uint16_t, uint32_t, uint8, uint8_t, EnemyBase,

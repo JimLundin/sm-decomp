@@ -1,69 +1,25 @@
-extern "C" {
-    static mut g_ram: [uint8; 131072];
-    static mut g_rom: *const uint8;
-    fn Load24(src: *const LongPtr) -> uint32;
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn Mult8x8(a: uint8, b: uint8) -> uint16;
-    fn SnesDivide(a: uint16, b: uint8) -> uint16;
-    fn SnesModulus(a: uint16, b: uint8) -> uint16;
-    static kSinCosTable8bit_Sext: [int16; 320];
-    fn CallEnemyAi(ea: uint32);
-    fn NextRandom() -> uint16;
-    fn PrepareBitAccess(a: uint16) -> uint16;
-    fn QueueMusic_Delayed8(a: uint16);
-    fn QueueSfx1_Max1(a: uint16);
-    fn QueueSfx1_Max15(a: uint16);
-    fn QueueSfx1_Max3(a: uint16);
-    fn QueueSfx1_Max6(a: uint16);
-    fn QueueSfx1_Max9(a: uint16);
-    fn QueueSfx2_Max1(a: uint16);
-    fn QueueSfx2_Max15(a: uint16);
-    fn QueueSfx2_Max3(a: uint16);
-    fn QueueSfx2_Max6(a: uint16);
-    fn QueueSfx2_Max9(a: uint16);
-    fn QueueSfx3_Max1(a: uint16);
-    fn QueueSfx3_Max15(a: uint16);
-    fn QueueSfx3_Max3(a: uint16);
-    fn QueueSfx3_Max6(a: uint16);
-    fn QueueSfx3_Max9(a: uint16);
-    fn DrawEprojSpritemapWithBaseTile(
-        db: uint8,
-        j: uint16,
-        x_r20: uint16,
-        y_r18: uint16,
-        chr_r26: uint16,
-        chr_r28: uint16,
-    );
-    fn DrawEprojSpritemapWithBaseTileOffscreen(
-        db: uint8,
-        j: uint16,
-        x_r20: uint16,
-        y_r18: uint16,
-        chr_r26: uint16,
-        chr_r28: uint16,
-    );
-    fn CalculatePlmBlockCoords(k: uint16);
-    fn CallSomeSamusCode(a: uint16) -> uint16;
-    fn Samus_DealDamage(a: uint16);
-    fn Samus_RestoreHealth(a: uint16);
-    fn Samus_RestoreMissiles(a: uint16);
-    fn Samus_RestorePowerBombs(a: uint16);
-    fn Samus_RestoreSuperMissiles(a: uint16);
-    fn CalculateAngleFromXY(x_r18: uint16, y_r20: uint16) -> uint16;
-    fn CalculateAngleOfSamusFromEproj(k: uint16) -> uint16;
-    fn SignExtend8(a: uint16) -> uint16;
-    fn SuitDamageDivision(a: uint16) -> uint16;
-    fn ConvertAngleToXy(r18: uint16, r20: uint16) -> Point32;
-    fn SpawnEnemyDrops(a: uint16, k: uint16, varE20: uint16);
-    fn Ridley_Func_103(k: uint16, j: uint16) -> uint8;
-    fn CreateSpriteAtPos(
-        x_r18: uint16,
-        y_r20: uint16,
-        ilist_r22: uint16,
-        pal_r24: uint16,
-    ) -> uint16;
-}
+use crate::game::sm_80::{
+    NextRandom, PrepareBitAccess, QueueMusic_Delayed8, QueueSfx1_Max1, QueueSfx1_Max15,
+    QueueSfx1_Max3, QueueSfx1_Max6, QueueSfx1_Max9, QueueSfx2_Max1, QueueSfx2_Max15,
+    QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx2_Max9, QueueSfx3_Max1, QueueSfx3_Max15,
+    QueueSfx3_Max3, QueueSfx3_Max6, QueueSfx3_Max9,
+};
+use crate::game::sm_81::{DrawEprojSpritemapWithBaseTile, DrawEprojSpritemapWithBaseTileOffscreen};
+use crate::game::sm_84::CalculatePlmBlockCoords;
+use crate::game::sm_90::CallSomeSamusCode;
+use crate::game::sm_91::{
+    Samus_DealDamage, Samus_RestoreHealth, Samus_RestoreMissiles, Samus_RestorePowerBombs,
+    Samus_RestoreSuperMissiles,
+};
+use crate::game::sm_94::kSinCosTable8bit_Sext;
+use crate::game::sm_a0::{
+    CalculateAngleFromXY, CalculateAngleOfSamusFromEproj, CallEnemyAi, ConvertAngleToXy,
+    SignExtend8, SpawnEnemyDrops, SuitDamageDivision,
+};
+use crate::game::sm_a6::Ridley_Func_103;
+use crate::game::sm_b4::CreateSpriteAtPos;
+use crate::rtl::{g_ram, g_rom, Load24, Mult8x8, RomPtr, SnesDivide, SnesModulus, Unreachable};
+
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
     int32_t, int8, int8_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, uintptr_t,

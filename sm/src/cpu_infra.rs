@@ -1,5 +1,15 @@
+use crate::game::sm_80::Vector_IRQ;
+use crate::game::sm_82::RunOneFrameOfGame;
 use crate::host::{g_debug_flag, g_got_mismatch_count, g_other_image};
+use crate::rtl::{g_ram, g_rom, g_sram, RomPtr, RtlSaveSnapshot, RtlSetupEmuCallbacks, WriteReg};
+use crate::snes::apu::apu_cycle;
+use crate::snes::cpu::{cpu_getFlags, cpu_runOpcode, cpu_setFlags};
+use crate::snes::dma::dma_doDma;
+use crate::snes::snes::{snes_frame_counter, snes_handle_pos_stuff, snes_init};
+use crate::snes::snes_other::snes_loadRom;
+use crate::tracing::getProcessorStateCpu;
 pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data};
+use crate::util::ReadWholeFile;
 extern "C" {
 
     fn free(__ptr: *mut ::core::ffi::c_void);
@@ -38,30 +48,7 @@ extern "C" {
         __s2: *const ::core::ffi::c_void,
         __n: size_t,
     ) -> ::core::ffi::c_int;
-    fn cpu_runOpcode(cpu: *mut Cpu) -> ::core::ffi::c_int;
-    fn cpu_getFlags(cpu: *mut Cpu) -> uint8_t;
-    fn cpu_setFlags(cpu: *mut Cpu, val: uint8_t);
-    fn apu_cycle(apu: *mut Apu);
-    fn dma_doDma(dma: *mut Dma);
-    fn snes_init(ram: *mut uint8_t) -> *mut Snes;
-    fn snes_handle_pos_stuff(snes: *mut Snes);
-    fn snes_loadRom(snes: *mut Snes, data: *const uint8_t, length: ::core::ffi::c_int) -> bool;
-    static mut snes_frame_counter: ::core::ffi::c_int;
-    fn RunOneFrameOfGame();
-    fn getProcessorStateCpu(snes: *mut Snes, line: *mut ::core::ffi::c_char);
-    static mut g_ram: [uint8; 131072];
-    static mut g_sram: *mut uint8;
-    static mut g_rom: *const uint8;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn WriteReg(reg: uint16, value: uint8);
-    fn RtlSetupEmuCallbacks(
-        emu_ram: *mut uint8,
-        func: Option<RunFrameFunc>,
-        sync_all: Option<SyncAllFunc>,
-    );
-    fn RtlSaveSnapshot(filename: *const ::core::ffi::c_char, saving_with_bug: bool);
-    fn Vector_IRQ();
-    fn ReadWholeFile(name: *const ::core::ffi::c_char, length: *mut size_t) -> *mut uint8;
+
     fn time(__timer: *mut time_t) -> time_t;
 }
 pub use crate::types::{

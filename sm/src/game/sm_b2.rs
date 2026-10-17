@@ -1,37 +1,17 @@
-extern "C" {
-    static mut g_ram: [uint8; 131072];
-    static mut g_rom: *const uint8;
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn NextRandom() -> uint16;
-    fn QueueSfx2_Max6(a: uint16);
-    static mut eproj_spawn_rect: Rect16U;
-    static mut eproj_spawn_r22: uint16;
-    static mut eproj_spawn_pt: Point16U;
-    fn SpawnEprojWithGfx(a: uint16, k: uint16, j: uint16);
-    fn SpawnEprojWithRoomGfx(j: uint16, a: uint16);
-    fn ProjectileReflection(r20: uint16);
-    fn IsSamusWithinEnemy_Y(k: uint16, a: uint16) -> uint16;
-    fn SineMult8bit(a: uint16, varE32: uint16) -> uint16;
-    fn CosineMult8bit(a: uint16, varE32: uint16) -> uint16;
-    fn EnemyFunc_BBBF(k: uint16, amt: int32) -> uint8;
-    fn Enemy_MoveDown(k: uint16, amt: int32) -> uint8;
-    fn Enemy_MoveRight_IgnoreSlopes(k: uint16, amt: int32) -> uint8;
-    fn EnemyDeathAnimation(k: uint16, a: uint16);
-    fn Enemy_ItemDrop_LowerNorfairSpacePirate(k: uint16);
-    fn Enemy_SwitchToFrozenAi();
-    fn NormalEnemyFrozenAI();
-    fn NormalEnemyPowerBombAi();
-    fn NormalEnemyShotAi();
-    fn NormalEnemyShotAiSkipDeathAnim_CurEnemy();
-    fn NormalEnemyTouchAi();
-    fn CreateSpriteAtPos(
-        x_r18: uint16,
-        y_r20: uint16,
-        ilist_r22: uint16,
-        pal_r24: uint16,
-    ) -> uint16;
-}
+use crate::game::sm_80::{NextRandom, QueueSfx2_Max6};
+use crate::game::sm_86::{
+    eproj_spawn_pt, eproj_spawn_r22, eproj_spawn_rect, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
+};
+use crate::game::sm_90::ProjectileReflection;
+use crate::game::sm_a0::{
+    CosineMult8bit, EnemyDeathAnimation, EnemyFunc_BBBF, Enemy_ItemDrop_LowerNorfairSpacePirate,
+    Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, Enemy_SwitchToFrozenAi, IsSamusWithinEnemy_Y,
+    NormalEnemyFrozenAI, NormalEnemyPowerBombAi, NormalEnemyShotAi,
+    NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi, SineMult8bit,
+};
+use crate::game::sm_b4::CreateSpriteAtPos;
+use crate::rtl::{g_ram, g_rom, RomPtr, Unreachable};
+
 pub use crate::types::{
     __int16_t, __int32_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32, int32_t,
     uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, uintptr_t, EnemyBase, EnemyData, LongPtr,

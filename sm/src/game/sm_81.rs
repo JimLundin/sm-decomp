@@ -1,3 +1,18 @@
+use crate::game::sm_80::{
+    HandleFadeIn, HandleFadeOut, HasQueuedMusic, LoadFromLoadStation, LoadMirrorOfExploredMapTiles,
+    QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx3_Max6, ScreenOff, ScreenOn, SetupDmaTransfer,
+};
+use crate::game::sm_82::{
+    AdvanceGradualColorChangeOfPalette, DisplayMapElevatorDestinations,
+    DrawBorderAroundDataClearMode, DrawBorderAroundDataCopyMode, DrawBorderAroundSamusData,
+    DrawFileCopyArrow, DrawFileSelectMapIcons, DrawMapScrollArrowAndCheckToScroll,
+    DrawMenuSelectionMissile, DrawRoomSelectMap, DrawRoomSelectMapAreaLabel,
+    HandleGameOverBabyMetroid, MapScrolling, SetupMapScrollingForFileSelectMap,
+};
+use crate::game::sm_88::{
+    DisableHdmaObjects, EnableHdmaObjects, SpawnHdmaObject, WaitUntilEndOfVblankAndClearHdma,
+};
+use crate::rtl::{g_ram, g_rom, g_sram, RomPtr, RtlWriteSram, Unreachable, WriteReg};
 extern "C" {
     fn memcpy(
         __dest: *mut ::core::ffi::c_void,
@@ -9,42 +24,7 @@ extern "C" {
         __c: ::core::ffi::c_int,
         __n: size_t,
     ) -> *mut ::core::ffi::c_void;
-    static mut g_ram: [uint8; 131072];
-    static mut g_sram: *mut uint8;
-    static mut g_rom: *const uint8;
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn WriteReg(reg: uint16, value: uint8);
-    fn RtlWriteSram();
-    fn HasQueuedMusic() -> uint8;
-    fn HandleFadeIn();
-    fn HandleFadeOut();
-    fn LoadFromLoadStation();
-    fn LoadMirrorOfExploredMapTiles();
-    fn QueueMusic_Delayed8(a: uint16);
-    fn QueueSfx1_Max6(a: uint16);
-    fn QueueSfx3_Max6(a: uint16);
-    fn ScreenOff();
-    fn ScreenOn();
-    fn SetupDmaTransfer(p: *const ::core::ffi::c_void);
-    fn AdvanceGradualColorChangeOfPalette(k: uint16, j: uint16) -> uint8;
-    fn DisplayMapElevatorDestinations();
-    fn DrawBorderAroundDataClearMode();
-    fn DrawBorderAroundDataCopyMode();
-    fn DrawBorderAroundSamusData();
-    fn DrawFileCopyArrow();
-    fn DrawFileSelectMapIcons();
-    fn DrawMapScrollArrowAndCheckToScroll(db: uint8, k: uint16);
-    fn DrawMenuSelectionMissile();
-    fn DrawRoomSelectMap();
-    fn DrawRoomSelectMapAreaLabel(dst: *mut uint16);
-    fn HandleGameOverBabyMetroid();
-    fn MapScrolling();
-    fn SetupMapScrollingForFileSelectMap();
-    fn SpawnHdmaObject(db: uint8, p: *const ::core::ffi::c_void) -> uint16;
-    fn DisableHdmaObjects();
-    fn EnableHdmaObjects();
-    fn WaitUntilEndOfVblankAndClearHdma();
+
 }
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,

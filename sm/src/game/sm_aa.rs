@@ -1,39 +1,22 @@
-extern "C" {
-    static mut g_ram: [uint8; 131072];
-    static mut g_rom: *const uint8;
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    static kSinCosTable8bit_Sext: [int16; 320];
-    fn CallEnemyPreInstr(ea: uint32);
-    fn CalculateBlockContainingPixelPos(xpos: uint16, ypos: uint16);
-    fn NextRandom() -> uint16;
-    fn CheckBossBitForCurArea(a: uint16) -> uint8;
-    fn QueueMusic_Delayed8(a: uint16);
-    fn QueueSfx2_Max6(a: uint16);
-    fn SetBossBitForCurArea(a: uint16);
-    fn sub_82DAF7(a: uint16) -> uint8;
-    fn SpawnPLM(a: uint16) -> uint8;
-    fn SetGoldenTorizoPalette(a: uint16);
-    fn SpawnHardcodedPlm(p: SpawnHardcodedPlmArgs);
-    fn SpawnEprojWithGfx(a: uint16, k: uint16, j: uint16);
-    fn SpawnEprojWithRoomGfx(j: uint16, a: uint16);
-    fn SpawnBombTorizoHaze();
-    fn SpawnPalfxObject(j: uint16);
-    fn CallSomeSamusCode(a: uint16) -> uint16;
-    fn CalculateAngleOfEnemyXfromEnemyY(k: uint16, j: uint16) -> uint16;
-    fn CompareDistToSamus_X(k: uint16, a: uint16) -> uint8;
-    fn EnemyFunc_C8AD(k: uint16) -> uint8;
-    fn Enemy_MoveDown(k: uint16, amt: int32) -> uint8;
-    fn Enemy_MoveRight_IgnoreSlopes(k: uint16, amt: int32) -> uint8;
-    fn Enemy_ItemDrop_BombTorizo(k: uint16);
-    fn Enemy_ItemDrop_GoldenTorizo(k: uint16);
-    fn Enemy_SwitchToFrozenAi();
-    fn NormalEnemyFrozenAI();
-    fn NormalEnemyShotAi();
-    fn NormalEnemyShotAiSkipDeathAnim_CurEnemy();
-    fn NormalEnemyTouchAi();
-    fn NormalEnemyTouchAiSkipDeathAnim_CurEnemy();
-}
+use crate::game::sm_80::{
+    CheckBossBitForCurArea, NextRandom, QueueMusic_Delayed8, QueueSfx2_Max6, SetBossBitForCurArea,
+};
+use crate::game::sm_82::sub_82DAF7;
+use crate::game::sm_84::{SetGoldenTorizoPalette, SpawnHardcodedPlm, SpawnPLM};
+use crate::game::sm_86::{SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
+use crate::game::sm_88::SpawnBombTorizoHaze;
+use crate::game::sm_8d::SpawnPalfxObject;
+use crate::game::sm_90::CallSomeSamusCode;
+use crate::game::sm_94::kSinCosTable8bit_Sext;
+use crate::game::sm_a0::{
+    CalculateAngleOfEnemyXfromEnemyY, CalculateBlockContainingPixelPos, CallEnemyPreInstr,
+    CompareDistToSamus_X, EnemyFunc_C8AD, Enemy_ItemDrop_BombTorizo, Enemy_ItemDrop_GoldenTorizo,
+    Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, Enemy_SwitchToFrozenAi, NormalEnemyFrozenAI,
+    NormalEnemyShotAi, NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi,
+    NormalEnemyTouchAiSkipDeathAnim_CurEnemy,
+};
+use crate::rtl::{g_ram, g_rom, RomPtr, Unreachable};
+
 pub use crate::types::{
     __int16_t, __int32_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32, int32_t,
     uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, uintptr_t, EnemyBase, EnemyData, SamusPose,

@@ -1,8 +1,8 @@
+use crate::snes::apu::{apu_cpuRead, apu_cpuWrite};
 extern "C" {
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
-    fn apu_cpuRead(apu: *mut Apu, adr: uint16_t) -> uint8_t;
-    fn apu_cpuWrite(apu: *mut Apu, adr: uint16_t, val: uint8_t);
+
 }
 pub use crate::types::{
     __int16_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16_t, int8_t, size_t, uint16_t,

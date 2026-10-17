@@ -1,3 +1,23 @@
+use crate::game::sm_80::{
+    DecompressToMem, NextRandom, QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max15,
+    QueueSfx2_Max6, QueueSfx3_Max6, ScreenOff, ScreenOn, SetupDmaTransfer, WaitForNMI_Async,
+};
+use crate::game::sm_82::AdvancePaletteFade_BgPalette6;
+use crate::game::sm_84::SpawnHardcodedPlm;
+use crate::game::sm_86::{eproj_spawn_pt, SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
+use crate::game::sm_88::{sub_88E487, SpawnHdmaObject};
+use crate::game::sm_90::DisableMinimapAndMarkBossRoomAsExplored;
+use crate::game::sm_a0::{
+    CallEnemyPreInstr, CheckIfEnemyTouchesSamus, DetermineDirectionOfSamusFromEnemy,
+    EnemyDeathAnimation, EnemyFunc_BBBF, EnemyFunc_C8AD, Enemy_ItemDrop_Kraid,
+    Enemy_ItemDrop_Phantoon, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, Enemy_SwitchToFrozenAi,
+    IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y, NormalEnemyFrozenAI,
+    NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy, NormalEnemyShotAi,
+    NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi,
+    NormalEnemyTouchAiSkipDeathAnim_CurEnemy, SwitchEnemyAiToMainAi,
+};
+use crate::game::sm_b4::CreateSpriteAtPos;
+use crate::rtl::{g_ram, g_rom, MakePairU16, RomPtr, SnesDivide, Unreachable, WriteReg};
 extern "C" {
     fn memcpy(
         __dest: *mut ::core::ffi::c_void,
@@ -5,58 +25,7 @@ extern "C" {
         __n: size_t,
     ) -> *mut ::core::ffi::c_void;
     fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
-    static mut g_ram: [uint8; 131072];
-    static mut g_rom: *const uint8;
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn WriteReg(reg: uint16, value: uint8);
-    fn SnesDivide(a: uint16, b: uint8) -> uint16;
-    fn MakePairU16(k: uint16, j: uint16) -> PairU16;
-    fn CallEnemyPreInstr(ea: uint32);
-    fn NextRandom() -> uint16;
-    fn DecompressToMem(src: uint32, decompress_dst: *mut uint8);
-    fn QueueMusic_Delayed8(a: uint16);
-    fn QueueSfx1_Max6(a: uint16);
-    fn QueueSfx2_Max15(a: uint16);
-    fn QueueSfx2_Max6(a: uint16);
-    fn QueueSfx3_Max6(a: uint16);
-    fn ScreenOff();
-    fn ScreenOn();
-    fn SetupDmaTransfer(p: *const ::core::ffi::c_void);
-    fn WaitForNMI_Async() -> CoroutineRet;
-    fn AdvancePaletteFade_BgPalette6() -> uint8;
-    fn SpawnHardcodedPlm(p: SpawnHardcodedPlmArgs);
-    static mut eproj_spawn_pt: Point16U;
-    fn SpawnEprojWithGfx(a: uint16, k: uint16, j: uint16);
-    fn SpawnEprojWithRoomGfx(j: uint16, a: uint16);
-    fn SpawnHdmaObject(db: uint8, p: *const ::core::ffi::c_void) -> uint16;
-    fn sub_88E487(a: uint16, r22: uint16);
-    fn DisableMinimapAndMarkBossRoomAsExplored();
-    fn CheckIfEnemyTouchesSamus(k: uint16) -> uint16;
-    fn DetermineDirectionOfSamusFromEnemy() -> uint16;
-    fn IsSamusWithinEnemy_X(k: uint16, a: uint16) -> uint16;
-    fn IsSamusWithinEnemy_Y(k: uint16, a: uint16) -> uint16;
-    fn EnemyFunc_BBBF(k: uint16, amt: int32) -> uint8;
-    fn EnemyFunc_C8AD(k: uint16) -> uint8;
-    fn Enemy_MoveDown(k: uint16, amt: int32) -> uint8;
-    fn Enemy_MoveRight_IgnoreSlopes(k: uint16, amt: int32) -> uint8;
-    fn EnemyDeathAnimation(k: uint16, a: uint16);
-    fn Enemy_ItemDrop_Kraid(k: uint16);
-    fn Enemy_ItemDrop_Phantoon(k: uint16);
-    fn Enemy_SwitchToFrozenAi();
-    fn NormalEnemyFrozenAI();
-    fn NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy();
-    fn NormalEnemyShotAi();
-    fn NormalEnemyShotAiSkipDeathAnim_CurEnemy();
-    fn NormalEnemyTouchAi();
-    fn NormalEnemyTouchAiSkipDeathAnim_CurEnemy();
-    fn SwitchEnemyAiToMainAi();
-    fn CreateSpriteAtPos(
-        x_r18: uint16,
-        y_r20: uint16,
-        ilist_r22: uint16,
-        pal_r24: uint16,
-    ) -> uint16;
+
 }
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,

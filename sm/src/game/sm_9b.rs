@@ -1,42 +1,29 @@
+use crate::game::sm_80::{Multiply16x16, QueueSfx1_Max1, QueueSfx1_Max15, QueueSfx1_Max6};
+use crate::game::sm_81::DrawBeamGrappleSpritemap;
+use crate::game::sm_8b::CalcExplosion_Mode7;
+use crate::game::sm_90::{
+    CallSomeSamusCode, LoadProjectilePalette, Samus_DrawStartingDeathAnim, Samus_GetBottom_R18,
+    Samus_GrappleWallJumpCheck, Samus_PostGrappleCollisionDetect,
+};
+use crate::game::sm_91::{
+    SamusFunc_F433, Samus_DealDamage, Samus_LoadSuitPalette, Samus_Pose_CancelGrapple,
+    Samus_SetAnimationFrameIfPoseChanged,
+};
 use crate::game::sm_92::DrawSamusSuitExploding;
+use crate::game::sm_93::ProjectileInsts_GetValue;
+use crate::game::sm_94::{
+    kSinCosTable8bit_Sext, BlockCollGrappleBeam, BlockFunc_AC11, BlockFunc_AC31, BlockReactGrapple,
+    GrappleFunc_AF87, HandleMovementAndCollForSamusGrapple,
+};
+use crate::game::sm_a0::{CalculateAngleFromXY, GrappleBeam_CollDetect_Enemy};
+use crate::rtl::{g_ram, g_rom, RomPtr, Unreachable};
 extern "C" {
     fn memcpy(
         __dest: *mut ::core::ffi::c_void,
         __src: *const ::core::ffi::c_void,
         __n: size_t,
     ) -> *mut ::core::ffi::c_void;
-    static mut g_ram: [uint8; 131072];
-    static mut g_rom: *const uint8;
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    static kSinCosTable8bit_Sext: [int16; 320];
-    fn Multiply16x16(a: uint16, j: uint16) -> uint32;
-    fn QueueSfx1_Max1(a: uint16);
-    fn QueueSfx1_Max15(a: uint16);
-    fn QueueSfx1_Max6(a: uint16);
-    fn DrawBeamGrappleSpritemap(a: uint16, x_r20: uint16, y_r18: uint16);
-    fn CalcExplosion_Mode7(k: uint16) -> Point16U;
-    fn CallSomeSamusCode(a: uint16) -> uint16;
-    fn Samus_GrappleWallJumpCheck(amt: int32) -> uint8;
-    fn LoadProjectilePalette(a: uint16);
-    fn Samus_DrawStartingDeathAnim();
-    fn Samus_GetBottom_R18() -> uint16;
-    fn Samus_PostGrappleCollisionDetect();
-    fn SamusFunc_F433();
-    fn Samus_DealDamage(a: uint16);
-    fn Samus_LoadSuitPalette();
-    fn Samus_Pose_CancelGrapple();
-    fn Samus_SetAnimationFrameIfPoseChanged();
 
-    fn ProjectileInsts_GetValue(k: uint16) -> uint16;
-    fn BlockCollGrappleBeam() -> uint8;
-    fn BlockFunc_AC31() -> uint8;
-    fn BlockReactGrapple() -> uint8;
-    fn HandleMovementAndCollForSamusGrapple() -> uint8;
-    fn BlockFunc_AC11();
-    fn GrappleFunc_AF87();
-    fn CalculateAngleFromXY(x_r18: uint16, y_r20: uint16) -> uint16;
-    fn GrappleBeam_CollDetect_Enemy() -> PairU16;
 }
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,

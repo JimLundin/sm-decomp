@@ -1,57 +1,29 @@
-extern "C" {
-    static mut g_ram: [uint8; 131072];
-    static mut g_rom: *const uint8;
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn Mult8x8(a: uint8, b: uint8) -> uint16;
-    static kSinCosTable8bit_Sext: [int16; 320];
-    fn CallEnemyPreInstr(ea: uint32);
-    fn CheckEventHappened(a: uint16) -> uint16;
-    fn NextRandom() -> uint16;
-    fn QueueSfx2_Max6(a: uint16);
-    fn QueueSfx3_Max6(a: uint16);
-    fn SaveToSram(a: uint16);
-    fn DisplayMessageBox_Poll(a: uint16) -> ::core::ffi::c_int;
-    static mut eproj_spawn_pt: Point16U;
-    fn Math_MultByCos(a: uint16, r18: uint16) -> uint16;
-    fn Math_MultBySin(a: uint16, r18: uint16) -> uint16;
-    fn SpawnEprojWithGfx(a: uint16, k: uint16, j: uint16);
-    fn SpawnEprojWithRoomGfx(j: uint16, a: uint16);
-    fn SpawnPalfxObject(j: uint16);
-    fn CallSomeSamusCode(a: uint16) -> uint16;
-    fn MakeSamusFaceForward();
-    fn Samus_RestoreHealth(a: uint16);
-    fn Samus_RestoreMissiles(a: uint16);
-    fn Samus_RestorePowerBombs(a: uint16);
-    fn Samus_RestoreSuperMissiles(a: uint16);
-    fn CalculateAngleFromXY(x_r18: uint16, y_r20: uint16) -> uint16;
-    fn CalculateAngleOfSamusFromEnemy(k: uint16) -> uint16;
-    fn CheckIfEnemyIsOnScreen() -> uint16;
-    fn CheckIfEnemyTouchesSamus(k: uint16) -> uint16;
-    fn EnemyFunc_AC67(k: uint16) -> uint16;
-    fn GetSamusEnemyDelta_X(k: uint16) -> uint16;
-    fn IsSamusWithinEnemy_X(k: uint16, a: uint16) -> uint16;
-    fn IsSamusWithinEnemy_Y(k: uint16, a: uint16) -> uint16;
-    fn CompareDistToSamus_X(k: uint16, a: uint16) -> uint8;
-    fn EnemyFunc_BC76(k: uint16, amt: int32) -> uint8;
-    fn Enemy_MoveDown(k: uint16, amt: int32) -> uint8;
-    fn Enemy_MoveRight_IgnoreSlopes(k: uint16, amt: int32) -> uint8;
-    fn Enemy_MoveRight_SlopesAsWalls(k: uint16, amt: int32) -> uint8;
-    fn ConvertAngleToXy(r18: uint16, r20: uint16) -> Point32;
-    fn DeleteEnemyAndConnectedEnemies();
-    fn EnemyGrappleDeath();
-    fn Enemy_SwitchToFrozenAi();
-    fn NormalEnemyFrozenAI();
-    fn NormalEnemyPowerBombAi();
-    fn NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy();
-    fn NormalEnemyShotAi();
-    fn NormalEnemyShotAiSkipDeathAnim_CurEnemy();
-    fn NormalEnemyTouchAi();
-    fn NormalEnemyTouchAiSkipDeathAnim_CurEnemy();
-    fn RinkasDeathAnimation(a: uint16);
-    fn SamusLatchesOnWithGrapple();
-    fn MoveEnemyWithVelocity();
-}
+use crate::game::sm_80::{CheckEventHappened, NextRandom, QueueSfx2_Max6, QueueSfx3_Max6};
+use crate::game::sm_81::SaveToSram;
+use crate::game::sm_85::DisplayMessageBox_Poll;
+use crate::game::sm_86::{
+    eproj_spawn_pt, Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
+};
+use crate::game::sm_8d::SpawnPalfxObject;
+use crate::game::sm_90::CallSomeSamusCode;
+use crate::game::sm_91::{
+    MakeSamusFaceForward, Samus_RestoreHealth, Samus_RestoreMissiles, Samus_RestorePowerBombs,
+    Samus_RestoreSuperMissiles,
+};
+use crate::game::sm_94::kSinCosTable8bit_Sext;
+use crate::game::sm_a0::{
+    CalculateAngleFromXY, CalculateAngleOfSamusFromEnemy, CallEnemyPreInstr,
+    CheckIfEnemyIsOnScreen, CheckIfEnemyTouchesSamus, CompareDistToSamus_X, ConvertAngleToXy,
+    DeleteEnemyAndConnectedEnemies, EnemyFunc_AC67, EnemyFunc_BC76, EnemyGrappleDeath,
+    Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, Enemy_MoveRight_SlopesAsWalls,
+    Enemy_SwitchToFrozenAi, GetSamusEnemyDelta_X, IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y,
+    NormalEnemyFrozenAI, NormalEnemyPowerBombAi, NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy,
+    NormalEnemyShotAi, NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi,
+    NormalEnemyTouchAiSkipDeathAnim_CurEnemy, RinkasDeathAnimation, SamusLatchesOnWithGrapple,
+};
+use crate::game::sm_a9::MoveEnemyWithVelocity;
+use crate::rtl::{g_ram, g_rom, Mult8x8, RomPtr, Unreachable};
+
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
     int32_t, int8, int8_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, uintptr_t,

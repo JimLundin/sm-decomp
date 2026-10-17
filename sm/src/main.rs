@@ -10,9 +10,18 @@
 #[allow(unused_imports)]
 use ::sm as _;
 mod verify;
+use sm::config::{g_config, FindCmdForGamepadButton, FindCmdForSdlKey, ParseConfigFile};
+use sm::cpu_infra::{g_snes, SnesInit};
 use sm::host::{
     g_debug_flag, g_got_mismatch_count, g_new_ppu, g_other_image, g_spc_player, Die, Warning,
 };
+use sm::platform::opengl::OpenGLRenderer_Create;
+use sm::rtl::{
+    RtlCheat, RtlClearKeyLog, RtlReadSram, RtlRenderAudio, RtlReset, RtlRunFrame, RtlSaveLoad,
+    RtlStopReplay,
+};
+use sm::snes::ppu::{PpuBeginDrawing, PpuGetCurrentRenderScale};
+use sm::spc_player::{SpcPlayer_Create, SpcPlayer_Initialize};
 pub use sm::types::{_IO_codecvt, _IO_marker, _IO_wide_data, SDL_Window};
 extern "C" {
 
@@ -184,36 +193,14 @@ extern "C" {
     fn mkdir(__path: *const ::core::ffi::c_char, __mode: __mode_t) -> ::core::ffi::c_int;
     fn chdir(__path: *const ::core::ffi::c_char) -> ::core::ffi::c_int;
     fn getcwd(__buf: *mut ::core::ffi::c_char, __size: size_t) -> *mut ::core::ffi::c_char;
-    fn PpuBeginDrawing(ppu: *mut Ppu, pixels: *mut uint8_t, pitch: size_t, render_flags: uint32_t);
-    fn PpuGetCurrentRenderScale(ppu: *mut Ppu, render_flags: uint32_t) -> ::core::ffi::c_int;
-    fn RtlReset(mode: ::core::ffi::c_int);
-    fn RtlClearKeyLog();
-    fn RtlStopReplay();
-    fn RtlSaveLoad(cmd: ::core::ffi::c_int, slot: ::core::ffi::c_int);
-    fn RtlCheat(c: ::core::ffi::c_char);
-    fn RtlRenderAudio(
-        audio_buffer: *mut int16,
-        samples: ::core::ffi::c_int,
-        channels: ::core::ffi::c_int,
-    );
-    fn RtlRunFrame(inputs: ::core::ffi::c_int) -> bool;
-    fn RtlReadSram();
+
     fn __assert_fail(
         __assertion: *const ::core::ffi::c_char,
         __file: *const ::core::ffi::c_char,
         __line: ::core::ffi::c_uint,
         __function: *const ::core::ffi::c_char,
     ) -> !;
-    fn OpenGLRenderer_Create(funcs: *mut RendererFuncs);
-    fn SpcPlayer_Create() -> *mut SpcPlayer;
-    fn SpcPlayer_Initialize(p: *mut SpcPlayer);
-    static mut g_snes: *mut Snes;
-    fn SnesInit(filename: *const ::core::ffi::c_char) -> *mut Snes;
-    static mut g_config: Config;
-    fn ParseConfigFile(filename: *const ::core::ffi::c_char);
-    fn FindCmdForSdlKey(code: SDL_Keycode, mod_0: SDL_Keymod) -> ::core::ffi::c_int;
-    fn FindCmdForGamepadButton(button: ::core::ffi::c_int, modifiers: uint32)
-        -> ::core::ffi::c_int;
+
 }
 pub use sm::types::{
     _IO_lock_t, __int16_t, __int32_t, __int64_t, __int8_t, __mode_t, __off64_t, __off_t,

@@ -1,11 +1,8 @@
-extern "C" {
-    static mut g_ram: [uint8; 131072];
-    static mut g_rom: *const uint8;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn QueueMusic_DelayedY(a: uint16, j: uint16);
-    fn DrawSamusSpritemap(a: uint16, k: uint16, j: uint16);
-    fn PlayRoomMusicTrackAfterAFrames(a: uint16);
-}
+use crate::game::sm_80::QueueMusic_DelayedY;
+use crate::game::sm_81::DrawSamusSpritemap;
+use crate::game::sm_82::PlayRoomMusicTrackAfterAFrames;
+use crate::rtl::{g_ram, g_rom, RomPtr};
+
 pub use crate::types::{
     __uint16_t, __uint32_t, __uint8_t, uint16, uint16_t, uint32_t, uint8, uint8_t,
 };

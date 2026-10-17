@@ -1,79 +1,26 @@
+use crate::config::{g_config, ParseBool};
+use crate::platform::gl_core::{
+    _ptrc_glActiveTexture, _ptrc_glAttachShader, _ptrc_glBindBuffer, _ptrc_glBindFramebuffer,
+    _ptrc_glBindTexture, _ptrc_glBufferData, _ptrc_glCompileShader, _ptrc_glCreateProgram,
+    _ptrc_glCreateShader, _ptrc_glDeleteBuffers, _ptrc_glDeleteFramebuffers, _ptrc_glDeleteProgram,
+    _ptrc_glDeleteShader, _ptrc_glDeleteTextures, _ptrc_glDisable,
+    _ptrc_glDisableVertexAttribArray, _ptrc_glDrawArrays, _ptrc_glEnable,
+    _ptrc_glEnableVertexAttribArray, _ptrc_glFramebufferTexture2D, _ptrc_glGenBuffers,
+    _ptrc_glGenFramebuffers, _ptrc_glGenTextures, _ptrc_glGenerateMipmap,
+    _ptrc_glGetAttribLocation, _ptrc_glGetIntegerv, _ptrc_glGetProgramInfoLog,
+    _ptrc_glGetProgramiv, _ptrc_glGetShaderInfoLog, _ptrc_glGetShaderiv,
+    _ptrc_glGetUniformLocation, _ptrc_glLinkProgram, _ptrc_glShaderSource, _ptrc_glTexImage2D,
+    _ptrc_glTexParameteri, _ptrc_glUniform1f, _ptrc_glUniform1i, _ptrc_glUniform2fv,
+    _ptrc_glUniformMatrix4fv, _ptrc_glUseProgram, _ptrc_glVertexAttribPointer, _ptrc_glViewport,
+};
 pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data};
+use crate::util::{
+    ByteArray_AppendData, ByteArray_Destroy, NextDelim, NextLineStripComments,
+    NextPossiblyQuotedString, ReadWholeFile, ReplaceFilenameWithNewPath, SkipPrefix, SplitKeyValue,
+    StrSet, StringEqualsNoCase,
+};
 extern "C" {
 
-    static mut _ptrc_glDisable: Option<unsafe extern "C" fn(GLenum) -> ()>;
-    static mut _ptrc_glEnable: Option<unsafe extern "C" fn(GLenum) -> ()>;
-    static mut _ptrc_glGetIntegerv: Option<unsafe extern "C" fn(GLenum, *mut GLint) -> ()>;
-    static mut _ptrc_glTexImage2D: Option<
-        unsafe extern "C" fn(
-            GLenum,
-            GLint,
-            GLint,
-            GLsizei,
-            GLsizei,
-            GLint,
-            GLenum,
-            GLenum,
-            *const ::core::ffi::c_void,
-        ) -> (),
-    >;
-    static mut _ptrc_glTexParameteri: Option<unsafe extern "C" fn(GLenum, GLenum, GLint) -> ()>;
-    static mut _ptrc_glViewport: Option<unsafe extern "C" fn(GLint, GLint, GLsizei, GLsizei) -> ()>;
-    static mut _ptrc_glBindTexture: Option<unsafe extern "C" fn(GLenum, GLuint) -> ()>;
-    static mut _ptrc_glDeleteTextures: Option<unsafe extern "C" fn(GLsizei, *const GLuint) -> ()>;
-    static mut _ptrc_glDrawArrays: Option<unsafe extern "C" fn(GLenum, GLint, GLsizei) -> ()>;
-    static mut _ptrc_glGenTextures: Option<unsafe extern "C" fn(GLsizei, *mut GLuint) -> ()>;
-    static mut _ptrc_glActiveTexture: Option<unsafe extern "C" fn(GLenum) -> ()>;
-    static mut _ptrc_glBindBuffer: Option<unsafe extern "C" fn(GLenum, GLuint) -> ()>;
-    static mut _ptrc_glBufferData:
-        Option<unsafe extern "C" fn(GLenum, GLsizeiptr, *const ::core::ffi::c_void, GLenum) -> ()>;
-    static mut _ptrc_glDeleteBuffers: Option<unsafe extern "C" fn(GLsizei, *const GLuint) -> ()>;
-    static mut _ptrc_glGenBuffers: Option<unsafe extern "C" fn(GLsizei, *mut GLuint) -> ()>;
-    static mut _ptrc_glAttachShader: Option<unsafe extern "C" fn(GLuint, GLuint) -> ()>;
-    static mut _ptrc_glCompileShader: Option<unsafe extern "C" fn(GLuint) -> ()>;
-    static mut _ptrc_glCreateProgram: Option<unsafe extern "C" fn() -> GLuint>;
-    static mut _ptrc_glCreateShader: Option<unsafe extern "C" fn(GLenum) -> GLuint>;
-    static mut _ptrc_glDeleteProgram: Option<unsafe extern "C" fn(GLuint) -> ()>;
-    static mut _ptrc_glDeleteShader: Option<unsafe extern "C" fn(GLuint) -> ()>;
-    static mut _ptrc_glDisableVertexAttribArray: Option<unsafe extern "C" fn(GLuint) -> ()>;
-    static mut _ptrc_glEnableVertexAttribArray: Option<unsafe extern "C" fn(GLuint) -> ()>;
-    static mut _ptrc_glGetAttribLocation:
-        Option<unsafe extern "C" fn(GLuint, *const GLchar) -> GLint>;
-    static mut _ptrc_glGetProgramInfoLog:
-        Option<unsafe extern "C" fn(GLuint, GLsizei, *mut GLsizei, *mut GLchar) -> ()>;
-    static mut _ptrc_glGetProgramiv: Option<unsafe extern "C" fn(GLuint, GLenum, *mut GLint) -> ()>;
-    static mut _ptrc_glGetShaderInfoLog:
-        Option<unsafe extern "C" fn(GLuint, GLsizei, *mut GLsizei, *mut GLchar) -> ()>;
-    static mut _ptrc_glGetShaderiv: Option<unsafe extern "C" fn(GLuint, GLenum, *mut GLint) -> ()>;
-    static mut _ptrc_glGetUniformLocation:
-        Option<unsafe extern "C" fn(GLuint, *const GLchar) -> GLint>;
-    static mut _ptrc_glLinkProgram: Option<unsafe extern "C" fn(GLuint) -> ()>;
-    static mut _ptrc_glShaderSource:
-        Option<unsafe extern "C" fn(GLuint, GLsizei, *const *const GLchar, *const GLint) -> ()>;
-    static mut _ptrc_glUniform1f: Option<unsafe extern "C" fn(GLint, GLfloat) -> ()>;
-    static mut _ptrc_glUniform1i: Option<unsafe extern "C" fn(GLint, GLint) -> ()>;
-    static mut _ptrc_glUniform2fv:
-        Option<unsafe extern "C" fn(GLint, GLsizei, *const GLfloat) -> ()>;
-    static mut _ptrc_glUniformMatrix4fv:
-        Option<unsafe extern "C" fn(GLint, GLsizei, GLboolean, *const GLfloat) -> ()>;
-    static mut _ptrc_glUseProgram: Option<unsafe extern "C" fn(GLuint) -> ()>;
-    static mut _ptrc_glVertexAttribPointer: Option<
-        unsafe extern "C" fn(
-            GLuint,
-            GLint,
-            GLenum,
-            GLboolean,
-            GLsizei,
-            *const ::core::ffi::c_void,
-        ) -> (),
-    >;
-    static mut _ptrc_glBindFramebuffer: Option<unsafe extern "C" fn(GLenum, GLuint) -> ()>;
-    static mut _ptrc_glDeleteFramebuffers:
-        Option<unsafe extern "C" fn(GLsizei, *const GLuint) -> ()>;
-    static mut _ptrc_glFramebufferTexture2D:
-        Option<unsafe extern "C" fn(GLenum, GLenum, GLenum, GLuint, GLint) -> ()>;
-    static mut _ptrc_glGenFramebuffers: Option<unsafe extern "C" fn(GLsizei, *mut GLuint) -> ()>;
-    static mut _ptrc_glGenerateMipmap: Option<unsafe extern "C" fn(GLenum) -> ()>;
     fn strtod(
         __nptr: *const ::core::ffi::c_char,
         __endptr: *mut *mut ::core::ffi::c_char,
@@ -99,27 +46,7 @@ extern "C" {
         __line: ::core::ffi::c_uint,
         __function: *const ::core::ffi::c_char,
     ) -> !;
-    fn ByteArray_Destroy(arr: *mut ByteArray);
-    fn ByteArray_AppendData(arr: *mut ByteArray, data: *const uint8, data_size: size_t);
-    fn ReadWholeFile(name: *const ::core::ffi::c_char, length: *mut size_t) -> *mut uint8;
-    fn NextDelim(
-        s: *mut *mut ::core::ffi::c_char,
-        sep: ::core::ffi::c_int,
-    ) -> *mut ::core::ffi::c_char;
-    fn NextLineStripComments(s: *mut *mut ::core::ffi::c_char) -> *mut ::core::ffi::c_char;
-    fn NextPossiblyQuotedString(s: *mut *mut ::core::ffi::c_char) -> *mut ::core::ffi::c_char;
-    fn SplitKeyValue(p: *mut ::core::ffi::c_char) -> *mut ::core::ffi::c_char;
-    fn StringEqualsNoCase(a: *const ::core::ffi::c_char, b: *const ::core::ffi::c_char) -> bool;
-    fn ParseBool(value: *const ::core::ffi::c_char, result: *mut bool) -> bool;
-    fn SkipPrefix(
-        big: *const ::core::ffi::c_char,
-        little: *const ::core::ffi::c_char,
-    ) -> *const ::core::ffi::c_char;
-    fn StrSet(rv: *mut *mut ::core::ffi::c_char, s: *const ::core::ffi::c_char);
-    fn ReplaceFilenameWithNewPath(
-        old_path: *const ::core::ffi::c_char,
-        new_path: *const ::core::ffi::c_char,
-    ) -> *mut ::core::ffi::c_char;
+
     static mut stderr: *mut FILE;
     fn fclose(__stream: *mut FILE) -> ::core::ffi::c_int;
     fn fopen(
@@ -175,7 +102,7 @@ extern "C" {
     fn strdup(__s: *const ::core::ffi::c_char) -> *mut ::core::ffi::c_char;
     fn strlen(__s: *const ::core::ffi::c_char) -> size_t;
     fn pow(__x: ::core::ffi::c_double, __y: ::core::ffi::c_double) -> ::core::ffi::c_double;
-    static mut g_config: Config;
+
 }
 pub use crate::types::{
     __off64_t, __off_t, __uint16_t, __uint32_t, __uint8_t, ptrdiff_t, size_t, uint, uint16,

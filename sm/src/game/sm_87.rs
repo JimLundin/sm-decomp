@@ -1,19 +1,12 @@
-extern "C" {
-    static mut g_ram: [uint8; 131072];
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn CheckEventHappened(a: uint16) -> uint16;
-    fn CheckBossBitForCurArea(a: uint16) -> uint8;
-    fn QueueMusic_Delayed8(a: uint16);
-    fn QueueSfx1_Max6(a: uint16);
-    fn QueueSfx2_Max6(a: uint16);
-    fn QueueSfx3_Max6(a: uint16);
-    fn SetBossBitForCurArea(a: uint16);
-    fn SetEventHappened(a: uint16);
-    fn SpawnEprojWithRoomGfx(j: uint16, a: uint16);
-    fn SpawnPalfxObject(j: uint16);
-    fn CallSomeSamusCode(a: uint16) -> uint16;
-}
+use crate::game::sm_80::{
+    CheckBossBitForCurArea, CheckEventHappened, QueueMusic_Delayed8, QueueSfx1_Max6,
+    QueueSfx2_Max6, QueueSfx3_Max6, SetBossBitForCurArea, SetEventHappened,
+};
+use crate::game::sm_86::SpawnEprojWithRoomGfx;
+use crate::game::sm_8d::SpawnPalfxObject;
+use crate::game::sm_90::CallSomeSamusCode;
+use crate::rtl::{g_ram, RomPtr, Unreachable};
+
 pub use crate::types::{
     __int8_t, __uint16_t, __uint32_t, __uint8_t, int8, int8_t, uint16, uint16_t, uint32, uint32_t,
     uint8, uint8_t, Consts_86,

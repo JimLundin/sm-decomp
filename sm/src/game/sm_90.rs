@@ -1,92 +1,46 @@
+use crate::game::sm_80::{
+    CheckEventHappened, DrawTimer, HandleAutoscrolling_X, HandleAutoscrolling_Y,
+    HandleScrollingWhenTriggeringScrollDown, HandleScrollingWhenTriggeringScrollLeft,
+    HandleScrollingWhenTriggeringScrollRight, HandleScrollingWhenTriggeringScrollUp,
+    InvalidInterrupt_Crash, NextRandom, ProcessTimer, QueueSfx1_Max15, QueueSfx1_Max6,
+    QueueSfx1_Max9, QueueSfx2_Max6, QueueSfx3_Max15, QueueSfx3_Max3, QueueSfx3_Max6,
+    QueueSfx3_Max9,
+};
+use crate::game::sm_81::{DrawBeamGrappleSpritemap, DrawSamusSpritemap};
+use crate::game::sm_82::PlayRoomMusicTrackAfterAFrames;
+use crate::game::sm_86::{DisableEprojs, EnableEprojs, SpawnEprojWithGfx};
+use crate::game::sm_88::{EnableHdmaObjects, SpawnCrystalFlashHdmaObjs, SpawnPowerBombExplosion};
+use crate::game::sm_8b::Samus_CalcPos_Mode7;
+use crate::game::sm_8d::{DisablePaletteFx, SpawnPalfxObject};
+use crate::game::sm_91::{
+    DemoObjectInputHandler, MakeSamusFaceForward, SamusFunc_E633, SamusFunc_F433,
+    Samus_CancelSpeedBoost, Samus_Func20, Samus_HandlePalette, Samus_HandleTransFromBlockColl,
+    Samus_HandleTransitions, Samus_InputHandler, Samus_LoadSuitPalette,
+    Samus_LoadSuitTargetPalette, Samus_RestoreHealth, Samus_SetAnimationFrameIfPoseChanged,
+    XrayRunHandler,
+};
 use crate::game::sm_92::{PlaySamusFanfare, SetSamusTilesDefsForCurAnim};
+use crate::game::sm_93::{
+    DrawPlayerExplosions2, InitializeBombExplosion, InitializeInstrForMissile,
+    InitializeInstrForSuperMissile, InitializeProjectile, InitializeSbaProjectile,
+    InitializeShinesparkEchoOrSpazerSba, KillProjectileInner, RunProjectileInstructions,
+};
+use crate::game::sm_94::{
+    kSinCosTable8bit_Sext, BlockCollMissileHoriz, BlockCollMissileVert, BlockCollNoWaveBeamHoriz,
+    BlockCollNoWaveBeamVert, BlockCollSpreadBomb, BlockCollWaveBeamHoriz, BlockCollWaveBeamVert,
+    BlockInsideDetection, BombOrPowerBomb_Func1, HandleGrappleBeamGfx,
+    PostGrappleCollisionDetect_X, PostGrappleCollisionDetect_Y, Samus_AlignYPosSlope,
+    Samus_MoveDown_NoSolidColl, Samus_MoveRight_NoSolidColl, WallJumpBlockCollDetect,
+};
+use crate::game::sm_9b::{
+    GrappleBeamFunc_BF1B, GrappleBeamHandler, HandleGrappleBeamFlare, ProjectileTrail_Func5,
+    UpdateGrappleBeamTilesAndIncrFlameCtr,
+};
+use crate::game::sm_a0::Samus_CheckSolidEnemyColl;
+use crate::rtl::{g_ram, g_rom, Load24, MakePairU16, Mult8x8, RomPtr, Unreachable};
 extern "C" {
     fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
-    static mut g_ram: [uint8; 131072];
-    static mut g_rom: *const uint8;
-    fn Load24(src: *const LongPtr) -> uint32;
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn Mult8x8(a: uint8, b: uint8) -> uint16;
-    fn MakePairU16(k: uint16, j: uint16) -> PairU16;
-    static kSinCosTable8bit_Sext: [int16; 320];
-    fn CheckEventHappened(a: uint16) -> uint16;
-    fn NextRandom() -> uint16;
-    fn ProcessTimer() -> uint8;
-    fn DrawTimer();
-    fn HandleAutoscrolling_X();
-    fn HandleAutoscrolling_Y();
-    fn HandleScrollingWhenTriggeringScrollDown();
-    fn HandleScrollingWhenTriggeringScrollLeft();
-    fn HandleScrollingWhenTriggeringScrollRight();
-    fn HandleScrollingWhenTriggeringScrollUp();
-    fn InvalidInterrupt_Crash();
-    fn QueueSfx1_Max15(a: uint16);
-    fn QueueSfx1_Max6(a: uint16);
-    fn QueueSfx1_Max9(a: uint16);
-    fn QueueSfx2_Max6(a: uint16);
-    fn QueueSfx3_Max15(a: uint16);
-    fn QueueSfx3_Max3(a: uint16);
-    fn QueueSfx3_Max6(a: uint16);
-    fn QueueSfx3_Max9(a: uint16);
-    fn DrawBeamGrappleSpritemap(a: uint16, x_r20: uint16, y_r18: uint16);
-    fn DrawSamusSpritemap(a: uint16, k: uint16, j: uint16);
-    fn PlayRoomMusicTrackAfterAFrames(a: uint16);
-    fn DisableEprojs();
-    fn EnableEprojs();
-    fn SpawnEprojWithGfx(a: uint16, k: uint16, j: uint16);
-    fn EnableHdmaObjects();
-    fn SpawnCrystalFlashHdmaObjs();
-    fn SpawnPowerBombExplosion();
-    fn Samus_CalcPos_Mode7();
-    fn DisablePaletteFx();
-    fn SpawnPalfxObject(j: uint16);
-    fn DemoObjectInputHandler();
-    fn MakeSamusFaceForward();
-    fn SamusFunc_E633();
-    fn SamusFunc_F433();
-    fn Samus_CancelSpeedBoost();
-    fn Samus_Func20();
-    fn Samus_HandlePalette();
-    fn Samus_HandleTransFromBlockColl();
-    fn Samus_HandleTransitions();
-    fn Samus_InputHandler();
-    fn Samus_LoadSuitPalette();
-    fn Samus_LoadSuitTargetPalette();
-    fn Samus_RestoreHealth(a: uint16);
-    fn Samus_SetAnimationFrameIfPoseChanged();
-    fn XrayRunHandler();
 
-    fn DrawPlayerExplosions2();
-    fn InitializeBombExplosion(k: uint16);
-    fn InitializeInstrForMissile(k: uint16);
-    fn InitializeInstrForSuperMissile(k: uint16);
-    fn InitializeProjectile(k: uint16);
-    fn InitializeSbaProjectile(k: uint16);
-    fn InitializeShinesparkEchoOrSpazerSba(k: uint16);
-    fn KillProjectileInner(k: uint16);
-    fn RunProjectileInstructions();
-    fn BlockCollMissileHoriz(k: uint16) -> uint8;
-    fn BlockCollMissileVert(k: uint16) -> uint8;
-    fn BlockCollNoWaveBeamHoriz(k: uint16) -> uint8;
-    fn BlockCollNoWaveBeamVert(k: uint16) -> uint8;
-    fn BlockCollSpreadBomb(k: uint16) -> uint8;
-    fn BlockCollWaveBeamHoriz(k: uint16) -> uint8;
-    fn BlockCollWaveBeamVert(k: uint16) -> uint8;
-    fn Samus_MoveDown_NoSolidColl(amt: int32) -> int32;
-    fn Samus_MoveRight_NoSolidColl(amt: int32) -> int32;
-    fn WallJumpBlockCollDetect(amt: int32) -> int32;
-    fn BlockInsideDetection();
-    fn BombOrPowerBomb_Func1(k: uint16);
-    fn HandleGrappleBeamGfx();
-    fn PostGrappleCollisionDetect_X();
-    fn PostGrappleCollisionDetect_Y();
-    fn Samus_AlignYPosSlope();
-    fn GrappleBeamHandler();
-    fn HandleGrappleBeamFlare();
-    fn ProjectileTrail_Func5(k: uint16, j: uint16);
-    fn UpdateGrappleBeamTilesAndIncrFlameCtr();
-    fn GrappleBeamFunc_BF1B();
-    fn Samus_CheckSolidEnemyColl(amt: int32) -> CheckEnemyColl_Result;
 }
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,

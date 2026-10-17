@@ -1,48 +1,20 @@
-extern "C" {
-    static mut g_ram: [uint8; 131072];
-    static mut g_rom: *const uint8;
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn CallEnemyPreInstr(ea: uint32);
-    fn CheckEventHappened(a: uint16) -> uint16;
-    fn NextRandom() -> uint16;
-    fn QueueMusic_Delayed8(a: uint16);
-    fn QueueSfx2_Max6(a: uint16);
-    fn SetBossBitForCurArea(a: uint16);
-    fn SpawnHardcodedPlm(p: SpawnHardcodedPlmArgs);
-    static mut eproj_spawn_pt: Point16U;
-    fn SpawnEprojWithGfx(a: uint16, k: uint16, j: uint16);
-    fn SpawnEprojWithRoomGfx(j: uint16, a: uint16);
-    fn CalculateAngleFromXY(x_r18: uint16, y_r20: uint16) -> uint16;
-    fn CalculateAngleOfSamusFromEnemy(k: uint16) -> uint16;
-    fn CheckIfEnemyIsOnScreen() -> uint16;
-    fn GetSamusEnemyDelta_X(k: uint16) -> uint16;
-    fn GetSamusEnemyDelta_Y(k: uint16) -> uint16;
-    fn IsSamusWithinEnemy_X(k: uint16, a: uint16) -> uint16;
-    fn IsSamusWithinEnemy_Y(k: uint16, a: uint16) -> uint16;
-    fn SignExtend8(a: uint16) -> uint16;
-    fn Enemy_MoveDown(k: uint16, amt: int32) -> uint8;
-    fn Enemy_MoveRight_IgnoreSlopes(k: uint16, amt: int32) -> uint8;
-    fn IsEnemyLeavingScreen(k: uint16) -> uint8;
-    fn ConvertAngleToXy(r18: uint16, r20: uint16) -> Point32;
-    fn EnemyFunc_B691(varE20: uint16, pt: Point32);
-    fn EnemyGrappleDeath();
-    fn Enemy_ItemDrop_Botwoon(k: uint16);
-    fn Enemy_SwitchToFrozenAi();
-    fn NormalEnemyFrozenAI();
-    fn NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy();
-    fn NormalEnemyShotAi();
-    fn NormalEnemyShotAiSkipDeathAnim_CurEnemy();
-    fn NormalEnemyTouchAi();
-    fn NormalEnemyTouchAiSkipDeathAnim_CurEnemy();
-    fn SwitchEnemyAiToMainAi();
-    fn CreateSpriteAtPos(
-        x_r18: uint16,
-        y_r20: uint16,
-        ilist_r22: uint16,
-        pal_r24: uint16,
-    ) -> uint16;
-}
+use crate::game::sm_80::{
+    CheckEventHappened, NextRandom, QueueMusic_Delayed8, QueueSfx2_Max6, SetBossBitForCurArea,
+};
+use crate::game::sm_84::SpawnHardcodedPlm;
+use crate::game::sm_86::{eproj_spawn_pt, SpawnEprojWithGfx, SpawnEprojWithRoomGfx};
+use crate::game::sm_a0::{
+    CalculateAngleFromXY, CalculateAngleOfSamusFromEnemy, CallEnemyPreInstr,
+    CheckIfEnemyIsOnScreen, ConvertAngleToXy, EnemyFunc_B691, EnemyGrappleDeath,
+    Enemy_ItemDrop_Botwoon, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, Enemy_SwitchToFrozenAi,
+    GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, IsEnemyLeavingScreen, IsSamusWithinEnemy_X,
+    IsSamusWithinEnemy_Y, NormalEnemyFrozenAI, NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy,
+    NormalEnemyShotAi, NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi,
+    NormalEnemyTouchAiSkipDeathAnim_CurEnemy, SignExtend8, SwitchEnemyAiToMainAi,
+};
+use crate::game::sm_b4::CreateSpriteAtPos;
+use crate::rtl::{g_ram, g_rom, RomPtr, Unreachable};
+
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
     int32_t, int8, int8_t, uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, uintptr_t,

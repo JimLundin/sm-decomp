@@ -1,3 +1,6 @@
+use crate::snes::cart::cart_load;
+use crate::snes::dsp::dsp_getSamples;
+use crate::snes::snes::snes_reset;
 extern "C" {
     fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
@@ -12,15 +15,7 @@ extern "C" {
         __c: ::core::ffi::c_int,
         __n: size_t,
     ) -> *mut ::core::ffi::c_void;
-    fn dsp_getSamples(dsp: *mut Dsp, sampleData: *mut int16_t, samplesPerFrame: ::core::ffi::c_int);
-    fn cart_load(
-        cart: *mut Cart,
-        type_0: ::core::ffi::c_int,
-        rom: *mut uint8_t,
-        romSize: ::core::ffi::c_int,
-        ramSize: ::core::ffi::c_int,
-    );
-    fn snes_reset(snes: *mut Snes, hard: bool);
+
 }
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16_t, int32_t, int8_t,

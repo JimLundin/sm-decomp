@@ -1,69 +1,36 @@
+use crate::game::sm_80::{
+    CheckEventHappened, ClearEventHappened, NextRandom, QueueMode7Transfers, QueueMusic_Delayed8,
+    QueueSfx1_Max6, QueueSfx2_Max3, QueueSfx2_Max6, QueueSfx3_Max3, QueueSfx3_Max6,
+    SetBossBitForCurArea, SetEventHappened,
+};
+use crate::game::sm_81::DrawSpritemap;
+use crate::game::sm_86::{
+    eproj_spawn_pt, Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx, SpawnEprojWithRoomGfx,
+};
+use crate::game::sm_8b::CalcCeresSteamPos_Mode7;
+use crate::game::sm_90::{
+    CallSomeSamusCode, DisableMinimapAndMarkBossRoomAsExplored, Samus_SetPushedOutOfCeresRidley,
+};
+use crate::game::sm_91::Samus_DealDamage;
+use crate::game::sm_94::kSinCosTable8bit_Sext;
+use crate::game::sm_a0::{
+    CalculateAngleFromXY, CheckIfEnemyIsOnScreen, CosineMult8bit, EnemyDeathAnimation,
+    Enemy_ItemDrop_MiniKraid, Enemy_ItemDrop_Ridley, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
+    Enemy_SwitchToFrozenAi, GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, NormalEnemyFrozenAI,
+    NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy, NormalEnemyShotAi,
+    NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi,
+    NormalEnemyTouchAiSkipDeathAnim_CurEnemy, SineMult8bit, SpawnEnemy, SuitDamageDivision,
+    SwitchEnemyAiToMainAi,
+};
+use crate::game::sm_a9::{
+    ComputeCosMult, ComputeSinMult, MoveEnemyWithVelocity, Shitroid_Func_2, WriteColorsToPalette,
+    WriteColorsToTargetPalette,
+};
+use crate::game::sm_b4::CreateSpriteAtPos;
+use crate::rtl::{g_ram, g_rom, mov24, Mult8x8, RomPtr, SnesDivide, Unreachable};
 extern "C" {
     fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
-    static mut g_ram: [uint8; 131072];
-    static mut g_rom: *const uint8;
-    fn mov24(dst: *mut LongPtr, src: uint32);
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn Mult8x8(a: uint8, b: uint8) -> uint16;
-    fn SnesDivide(a: uint16, b: uint8) -> uint16;
-    static kSinCosTable8bit_Sext: [int16; 320];
-    fn CheckEventHappened(a: uint16) -> uint16;
-    fn NextRandom() -> uint16;
-    fn ClearEventHappened(a: uint16);
-    fn QueueMode7Transfers(db: uint8, k: uint16);
-    fn QueueMusic_Delayed8(a: uint16);
-    fn QueueSfx1_Max6(a: uint16);
-    fn QueueSfx2_Max3(a: uint16);
-    fn QueueSfx2_Max6(a: uint16);
-    fn QueueSfx3_Max3(a: uint16);
-    fn QueueSfx3_Max6(a: uint16);
-    fn SetBossBitForCurArea(a: uint16);
-    fn SetEventHappened(a: uint16);
-    fn DrawSpritemap(db: uint8, j: uint16, x_r20: uint16, y_r18: uint16, chr_r22: uint16);
-    static mut eproj_spawn_pt: Point16U;
-    fn Math_MultByCos(a: uint16, r18: uint16) -> uint16;
-    fn Math_MultBySin(a: uint16, r18: uint16) -> uint16;
-    fn SpawnEprojWithGfx(a: uint16, k: uint16, j: uint16);
-    fn SpawnEprojWithRoomGfx(j: uint16, a: uint16);
-    fn CalcCeresSteamPos_Mode7(pt: Point16U) -> Point16U;
-    fn CallSomeSamusCode(a: uint16) -> uint16;
-    fn DisableMinimapAndMarkBossRoomAsExplored();
-    fn Samus_SetPushedOutOfCeresRidley();
-    fn Samus_DealDamage(a: uint16);
-    fn CalculateAngleFromXY(x_r18: uint16, y_r20: uint16) -> uint16;
-    fn CheckIfEnemyIsOnScreen() -> uint16;
-    fn GetSamusEnemyDelta_X(k: uint16) -> uint16;
-    fn GetSamusEnemyDelta_Y(k: uint16) -> uint16;
-    fn SineMult8bit(a: uint16, varE32: uint16) -> uint16;
-    fn CosineMult8bit(a: uint16, varE32: uint16) -> uint16;
-    fn SpawnEnemy(db: uint8, k: uint16) -> uint16;
-    fn SuitDamageDivision(a: uint16) -> uint16;
-    fn Enemy_MoveDown(k: uint16, amt: int32) -> uint8;
-    fn Enemy_MoveRight_IgnoreSlopes(k: uint16, amt: int32) -> uint8;
-    fn EnemyDeathAnimation(k: uint16, a: uint16);
-    fn Enemy_ItemDrop_MiniKraid(k: uint16);
-    fn Enemy_ItemDrop_Ridley(k: uint16);
-    fn Enemy_SwitchToFrozenAi();
-    fn NormalEnemyFrozenAI();
-    fn NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy();
-    fn NormalEnemyShotAi();
-    fn NormalEnemyShotAiSkipDeathAnim_CurEnemy();
-    fn NormalEnemyTouchAi();
-    fn NormalEnemyTouchAiSkipDeathAnim_CurEnemy();
-    fn SwitchEnemyAiToMainAi();
-    fn ComputeCosMult(a: uint16, r18: uint16) -> uint16;
-    fn ComputeSinMult(a: uint16, r18: uint16) -> uint16;
-    fn Shitroid_Func_2(k: uint16, rect: Rect16U) -> uint8;
-    fn MoveEnemyWithVelocity();
-    fn WriteColorsToPalette(k: uint16, db: uint8, j: uint16, a: uint16);
-    fn WriteColorsToTargetPalette(db: uint8, k: uint16, j: uint16, a: uint16);
-    fn CreateSpriteAtPos(
-        x_r18: uint16,
-        y_r20: uint16,
-        ilist_r22: uint16,
-        pal_r24: uint16,
-    ) -> uint16;
+
 }
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,

@@ -1,80 +1,19 @@
+use crate::config::g_config;
 use crate::host::Die;
+use crate::platform::gl_core::{
+    _ptrc_glAttachShader, _ptrc_glBindBuffer, _ptrc_glBindTexture, _ptrc_glBindVertexArray,
+    _ptrc_glBufferData, _ptrc_glClear, _ptrc_glClearColor, _ptrc_glCompileShader,
+    _ptrc_glCreateProgram, _ptrc_glCreateShader, _ptrc_glDebugMessageCallback, _ptrc_glDrawArrays,
+    _ptrc_glEnable, _ptrc_glEnableVertexAttribArray, _ptrc_glGenBuffers, _ptrc_glGenTextures,
+    _ptrc_glGenVertexArrays, _ptrc_glGetProgramInfoLog, _ptrc_glGetProgramiv,
+    _ptrc_glGetShaderInfoLog, _ptrc_glGetShaderiv, _ptrc_glLinkProgram, _ptrc_glShaderSource,
+    _ptrc_glTexImage2D, _ptrc_glTexParameteri, _ptrc_glTexSubImage2D, _ptrc_glUseProgram,
+    _ptrc_glVertexAttribPointer, _ptrc_glViewport, ogl_IsVersionGEQ, ogl_LoadFunctions,
+};
+use crate::platform::glsl_shader::{GlslShader_CreateFromFile, GlslShader_Render};
 pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data, SDL_Window};
 extern "C" {
 
-    static mut _ptrc_glDebugMessageCallback:
-        Option<unsafe extern "C" fn(GLDEBUGPROC, *const ::core::ffi::c_void) -> ()>;
-    static mut _ptrc_glClear: Option<unsafe extern "C" fn(GLbitfield) -> ()>;
-    static mut _ptrc_glClearColor:
-        Option<unsafe extern "C" fn(GLfloat, GLfloat, GLfloat, GLfloat) -> ()>;
-    static mut _ptrc_glEnable: Option<unsafe extern "C" fn(GLenum) -> ()>;
-    static mut _ptrc_glTexImage2D: Option<
-        unsafe extern "C" fn(
-            GLenum,
-            GLint,
-            GLint,
-            GLsizei,
-            GLsizei,
-            GLint,
-            GLenum,
-            GLenum,
-            *const ::core::ffi::c_void,
-        ) -> (),
-    >;
-    static mut _ptrc_glTexParameteri: Option<unsafe extern "C" fn(GLenum, GLenum, GLint) -> ()>;
-    static mut _ptrc_glViewport: Option<unsafe extern "C" fn(GLint, GLint, GLsizei, GLsizei) -> ()>;
-    static mut _ptrc_glBindTexture: Option<unsafe extern "C" fn(GLenum, GLuint) -> ()>;
-    static mut _ptrc_glDrawArrays: Option<unsafe extern "C" fn(GLenum, GLint, GLsizei) -> ()>;
-    static mut _ptrc_glGenTextures: Option<unsafe extern "C" fn(GLsizei, *mut GLuint) -> ()>;
-    static mut _ptrc_glTexSubImage2D: Option<
-        unsafe extern "C" fn(
-            GLenum,
-            GLint,
-            GLint,
-            GLint,
-            GLsizei,
-            GLsizei,
-            GLenum,
-            GLenum,
-            *const ::core::ffi::c_void,
-        ) -> (),
-    >;
-    static mut _ptrc_glBindBuffer: Option<unsafe extern "C" fn(GLenum, GLuint) -> ()>;
-    static mut _ptrc_glBufferData:
-        Option<unsafe extern "C" fn(GLenum, GLsizeiptr, *const ::core::ffi::c_void, GLenum) -> ()>;
-    static mut _ptrc_glGenBuffers: Option<unsafe extern "C" fn(GLsizei, *mut GLuint) -> ()>;
-    static mut _ptrc_glAttachShader: Option<unsafe extern "C" fn(GLuint, GLuint) -> ()>;
-    static mut _ptrc_glCompileShader: Option<unsafe extern "C" fn(GLuint) -> ()>;
-    static mut _ptrc_glCreateProgram: Option<unsafe extern "C" fn() -> GLuint>;
-    static mut _ptrc_glCreateShader: Option<unsafe extern "C" fn(GLenum) -> GLuint>;
-    static mut _ptrc_glEnableVertexAttribArray: Option<unsafe extern "C" fn(GLuint) -> ()>;
-    static mut _ptrc_glGetProgramInfoLog:
-        Option<unsafe extern "C" fn(GLuint, GLsizei, *mut GLsizei, *mut GLchar) -> ()>;
-    static mut _ptrc_glGetProgramiv: Option<unsafe extern "C" fn(GLuint, GLenum, *mut GLint) -> ()>;
-    static mut _ptrc_glGetShaderInfoLog:
-        Option<unsafe extern "C" fn(GLuint, GLsizei, *mut GLsizei, *mut GLchar) -> ()>;
-    static mut _ptrc_glGetShaderiv: Option<unsafe extern "C" fn(GLuint, GLenum, *mut GLint) -> ()>;
-    static mut _ptrc_glLinkProgram: Option<unsafe extern "C" fn(GLuint) -> ()>;
-    static mut _ptrc_glShaderSource:
-        Option<unsafe extern "C" fn(GLuint, GLsizei, *const *const GLchar, *const GLint) -> ()>;
-    static mut _ptrc_glUseProgram: Option<unsafe extern "C" fn(GLuint) -> ()>;
-    static mut _ptrc_glVertexAttribPointer: Option<
-        unsafe extern "C" fn(
-            GLuint,
-            GLint,
-            GLenum,
-            GLboolean,
-            GLsizei,
-            *const ::core::ffi::c_void,
-        ) -> (),
-    >;
-    static mut _ptrc_glBindVertexArray: Option<unsafe extern "C" fn(GLuint) -> ()>;
-    static mut _ptrc_glGenVertexArrays: Option<unsafe extern "C" fn(GLsizei, *mut GLuint) -> ()>;
-    fn ogl_LoadFunctions() -> ::core::ffi::c_int;
-    fn ogl_IsVersionGEQ(
-        majorVersion: ::core::ffi::c_int,
-        minorVersion: ::core::ffi::c_int,
-    ) -> ::core::ffi::c_int;
     static mut stderr: *mut FILE;
     fn fprintf(
         __stream: *mut FILE,
@@ -93,16 +32,7 @@ extern "C" {
     );
     fn SDL_GL_SetSwapInterval(interval: ::core::ffi::c_int) -> ::core::ffi::c_int;
     fn SDL_GL_SwapWindow(window: *mut SDL_Window);
-    fn GlslShader_CreateFromFile(filename: *const ::core::ffi::c_char) -> *mut GlslShader;
-    fn GlslShader_Render(
-        gs: *mut GlslShader,
-        tex: *mut GlTextureWithSize,
-        viewport_x: ::core::ffi::c_int,
-        viewport_y: ::core::ffi::c_int,
-        viewport_width: ::core::ffi::c_int,
-        viewport_height: ::core::ffi::c_int,
-    );
-    static mut g_config: Config;
+
 }
 pub use crate::types::{
     _IO_lock_t, __off64_t, __off_t, __uint16_t, __uint32_t, __uint8_t, ptrdiff_t, size_t, uint,

@@ -1,56 +1,23 @@
+use crate::game::sm_80::{NextRandom, QueueSfx2_Max6, QueueSfx2_Max9, QueueSfx3_Max6};
+use crate::game::sm_86::SpawnEprojWithGfx;
+use crate::game::sm_88::SpawnMorphBallEyeBeamHdma;
+use crate::game::sm_90::CallSomeSamusCode;
+use crate::game::sm_a0::{
+    Abs16, CalculateAngleFromXY, CalculateAngleOfSamusFromEnemy, CallEnemyPreInstr,
+    CheckIfEnemyIsOnScreen, CheckIfEnemyTouchesSamus, CosineMult8bit, CosineMult8bitFull,
+    EnemyDeathAnimation, EnemyFunc_ACA8, EnemyFunc_ADA3, EnemyFunc_B7A1, EnemyFunc_C8AD,
+    EnemyGrappleDeath, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes, Enemy_SwitchToFrozenAi,
+    GetSamusEnemyDelta_X, GetSamusEnemyDelta_Y, IsSamusWithinEnemy_X, IsSamusWithinEnemy_Y,
+    NormalEnemyFrozenAI, NormalEnemyPowerBombAi, NormalEnemyShotAi,
+    NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAi, SamusHurtFromGrapple,
+    SamusLatchesOnWithGrappleNoInvinc, SignExtend8, SineMult8bit, SineMult8bitFull,
+    SwitchEnemyAiToMainAi,
+};
+use crate::game::sm_b4::CreateSpriteAtPos;
+use crate::rtl::{g_ram, g_rom, Mult8x8, RomPtr, Unreachable, WriteReg};
 extern "C" {
     fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
-    static mut g_ram: [uint8; 131072];
-    static mut g_rom: *const uint8;
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn WriteReg(reg: uint16, value: uint8);
-    fn Mult8x8(a: uint8, b: uint8) -> uint16;
-    fn CallEnemyPreInstr(ea: uint32);
-    fn NextRandom() -> uint16;
-    fn QueueSfx2_Max6(a: uint16);
-    fn QueueSfx2_Max9(a: uint16);
-    fn QueueSfx3_Max6(a: uint16);
-    fn SpawnEprojWithGfx(a: uint16, k: uint16, j: uint16);
-    fn SpawnMorphBallEyeBeamHdma();
-    fn CallSomeSamusCode(a: uint16) -> uint16;
-    fn Abs16(a: uint16) -> uint16;
-    fn CalculateAngleFromXY(x_r18: uint16, y_r20: uint16) -> uint16;
-    fn CalculateAngleOfSamusFromEnemy(k: uint16) -> uint16;
-    fn CheckIfEnemyIsOnScreen() -> uint16;
-    fn CheckIfEnemyTouchesSamus(k: uint16) -> uint16;
-    fn EnemyFunc_ACA8(base_pt: Point16U, samus_pt: Point16U) -> PairU16;
-    fn EnemyFunc_ADA3(a: uint16) -> uint16;
-    fn GetSamusEnemyDelta_X(k: uint16) -> uint16;
-    fn GetSamusEnemyDelta_Y(k: uint16) -> uint16;
-    fn IsSamusWithinEnemy_X(k: uint16, a: uint16) -> uint16;
-    fn IsSamusWithinEnemy_Y(k: uint16, a: uint16) -> uint16;
-    fn SignExtend8(a: uint16) -> uint16;
-    fn SineMult8bit(a: uint16, varE32: uint16) -> uint16;
-    fn CosineMult8bit(a: uint16, varE32: uint16) -> uint16;
-    fn CosineMult8bitFull(a: uint16, varE32: uint16) -> uint32;
-    fn SineMult8bitFull(a: uint16, varE32: uint16) -> uint32;
-    fn EnemyFunc_C8AD(k: uint16) -> uint8;
-    fn Enemy_MoveDown(k: uint16, amt: int32) -> uint8;
-    fn Enemy_MoveRight_IgnoreSlopes(k: uint16, amt: int32) -> uint8;
-    fn EnemyDeathAnimation(k: uint16, a: uint16);
-    fn EnemyFunc_B7A1();
-    fn EnemyGrappleDeath();
-    fn Enemy_SwitchToFrozenAi();
-    fn NormalEnemyFrozenAI();
-    fn NormalEnemyPowerBombAi();
-    fn NormalEnemyShotAi();
-    fn NormalEnemyShotAiSkipDeathAnim_CurEnemy();
-    fn NormalEnemyTouchAi();
-    fn SamusHurtFromGrapple();
-    fn SamusLatchesOnWithGrappleNoInvinc();
-    fn SwitchEnemyAiToMainAi();
-    fn CreateSpriteAtPos(
-        x_r18: uint16,
-        y_r20: uint16,
-        ilist_r22: uint16,
-        pal_r24: uint16,
-    ) -> uint16;
+
 }
 pub use crate::types::{
     __int16_t, __int32_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32, int32_t,

@@ -1,17 +1,6 @@
-extern "C" {
-    static mut g_ram: [uint8; 131072];
-    static mut g_rom: *const uint8;
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn DrawSpritemapWithBaseTile(
-        db: uint8,
-        j: uint16,
-        r20_x: uint16,
-        r18_y: uint16,
-        r3: uint16,
-        r0: uint16,
-    );
-}
+use crate::game::sm_81::DrawSpritemapWithBaseTile;
+use crate::rtl::{g_ram, g_rom, RomPtr, Unreachable};
+
 pub use crate::types::{
     __int16_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, uint16, uint16_t, uint32,
     uint32_t, uint8, uint8_t,

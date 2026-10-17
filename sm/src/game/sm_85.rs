@@ -1,20 +1,9 @@
-extern "C" {
-    static mut g_ram: [uint8; 131072];
-    static mut g_rom: *const uint8;
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn WriteReg(reg: uint16, value: uint8);
-    fn WriteRegWord(reg: uint16, value: uint16);
-    fn ReadRegWord(reg: uint16) -> uint16;
-    fn ReadReg(reg: uint16) -> uint8;
-    fn HandleMusicQueue();
-    fn QueueSfx1_Max6(a: uint16);
-    fn ReadJoypadInputs();
-    fn WaitForNMI_NoUpdate_Async() -> CoroutineRet;
-    fn CancelSoundEffects();
-    fn HandleSoundEffects();
-    fn QueueSamusMovementSfx();
-}
+use crate::game::sm_80::{
+    HandleMusicQueue, QueueSfx1_Max6, ReadJoypadInputs, WaitForNMI_NoUpdate_Async,
+};
+use crate::game::sm_82::{CancelSoundEffects, HandleSoundEffects, QueueSamusMovementSfx};
+use crate::rtl::{g_ram, g_rom, ReadReg, ReadRegWord, RomPtr, Unreachable, WriteReg, WriteRegWord};
+
 pub use crate::types::{
     __int16_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, uint16, uint16_t, uint32,
     uint32_t, uint8, uint8_t, CoroutineRet, SnesRegs, VoidP,

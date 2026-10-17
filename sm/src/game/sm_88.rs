@@ -1,53 +1,25 @@
-extern "C" {
-    static mut g_ram: [uint8; 131072];
-    static mut g_rom: *const uint8;
-    fn mov24(dst: *mut LongPtr, src: uint32);
-    fn Load24(src: *const LongPtr) -> uint32;
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn WriteReg(reg: uint16, value: uint8);
-    fn WriteRegWord(reg: uint16, value: uint16);
-    fn Mult8x8(a: uint8, b: uint8) -> uint16;
-    static kSinCosTable8bit_Sext: [int16; 320];
-    fn CheckEventHappened(a: uint16) -> uint16;
-    fn CheckBossBitForCurArea(a: uint16) -> uint8;
-    fn HandleMusicQueue();
-    fn QueueMusic_Delayed8(a: uint16);
-    fn QueueSfx1_Max15(a: uint16);
-    fn QueueSfx1_Max6(a: uint16);
-    fn QueueSfx2_Max6(a: uint16);
-    fn SetEventHappened(a: uint16);
-    fn SpawnHardcodedPlm(p: SpawnHardcodedPlmArgs);
-    fn SpawnEprojWithRoomGfx(j: uint16, a: uint16);
-    fn SpawnAnimtiles(j: uint16);
-    fn ConfigureTitleSequenceGradientHDMA();
-    fn CallSomeSamusCode(a: uint16) -> uint16;
-    fn Hdmaobj_CrystalFlash() -> uint8;
-    fn CanXrayShowBlocks() -> bool;
-    fn CalculateXrayHdmaTableInner(
-        k: uint16,
-        j: uint16,
-        r18: uint16,
-        r20: uint16,
-        off_screen: bool,
-        dest_addr: *mut uint16,
-    );
-    fn HdmaobjPreInstr_XraySetup(k: uint16);
-    fn InitializeSuitPickupHdma();
-    fn ResponsibleForXrayStandupGlitch();
-    fn SamusFunc_F433();
-    fn Samus_LoadSuitPalette();
-    fn Samus_SetAnimationFrameIfPoseChanged();
-    fn Xray_SetupStage1_FreezeTimeBackup(k: uint16);
-    fn Xray_SetupStage2_ReadBg1_2ndScreen();
-    fn Xray_SetupStage3_ReadBg1_1stScreen();
-    fn Xray_SetupStage4();
-    fn Xray_SetupStage5();
-    fn Xray_SetupStage6();
-    fn Xray_SetupStage7();
-    fn Xray_SetupStage8_SetBackdropColor();
-    fn MotherBrain_CalculateRainbowBeamHdma();
-}
+use crate::game::sm_80::{
+    CheckBossBitForCurArea, CheckEventHappened, HandleMusicQueue, QueueMusic_Delayed8,
+    QueueSfx1_Max15, QueueSfx1_Max6, QueueSfx2_Max6, SetEventHappened,
+};
+use crate::game::sm_84::SpawnHardcodedPlm;
+use crate::game::sm_86::SpawnEprojWithRoomGfx;
+use crate::game::sm_87::SpawnAnimtiles;
+use crate::game::sm_8b::ConfigureTitleSequenceGradientHDMA;
+use crate::game::sm_90::{CallSomeSamusCode, Hdmaobj_CrystalFlash};
+use crate::game::sm_91::{
+    CalculateXrayHdmaTableInner, CanXrayShowBlocks, HdmaobjPreInstr_XraySetup,
+    InitializeSuitPickupHdma, ResponsibleForXrayStandupGlitch, SamusFunc_F433,
+    Samus_LoadSuitPalette, Samus_SetAnimationFrameIfPoseChanged, Xray_SetupStage1_FreezeTimeBackup,
+    Xray_SetupStage2_ReadBg1_2ndScreen, Xray_SetupStage3_ReadBg1_1stScreen, Xray_SetupStage4,
+    Xray_SetupStage5, Xray_SetupStage6, Xray_SetupStage7, Xray_SetupStage8_SetBackdropColor,
+};
+use crate::game::sm_94::kSinCosTable8bit_Sext;
+use crate::game::sm_a9::MotherBrain_CalculateRainbowBeamHdma;
+use crate::rtl::{
+    g_ram, g_rom, mov24, Load24, Mult8x8, RomPtr, Unreachable, WriteReg, WriteRegWord,
+};
+
 pub use crate::types::{
     __int16_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int8, int8_t, uint16,
     uint16_t, uint32, uint32_t, uint8, uint8_t, uintptr_t, Func_U8, Func_V, Func_Y_V, Func_Y_Y,

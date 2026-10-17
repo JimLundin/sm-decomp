@@ -1,70 +1,38 @@
+use crate::game::sm_80::{
+    CheckEventHappened, NextRandom, QueueMusic_Delayed8, QueueSfx1_Max6, QueueSfx2_Max3,
+    QueueSfx2_Max6, QueueSfx3_Max3, QueueSfx3_Max6, SetBossBitForCurArea, SetEventHappened,
+};
+use crate::game::sm_84::SpawnHardcodedPlm;
+use crate::game::sm_86::{
+    eproj_spawn_pt, eproj_spawn_r22, Math_MultByCos, Math_MultBySin, SpawnEprojWithGfx,
+    SpawnEprojWithRoomGfx,
+};
+use crate::game::sm_88::{MotherBrainRisingHdmaObject, SpawnMotherBrainRainbowBeamHdma};
+use crate::game::sm_89::LoadFxEntry;
+use crate::game::sm_8d::SpawnPalfxObject;
+use crate::game::sm_90::{CallSomeSamusCode, DisableMinimapAndMarkBossRoomAsExplored};
+use crate::game::sm_91::SomeMotherBrainScripts;
+use crate::game::sm_94::kSinCosTable8bit_Sext;
+use crate::game::sm_a0::{
+    CalculateAngleFromXY, CreateDudShot, Enemy_MoveDown, Enemy_MoveRight_IgnoreSlopes,
+    Enemy_SwitchToFrozenAi, NormalEnemyFrozenAI, NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy,
+    NormalEnemyShotAiSkipDeathAnim_CurEnemy, NormalEnemyTouchAiSkipDeathAnim_CurEnemy, SpawnEnemy,
+    SuitDamageDivision,
+};
+use crate::game::sm_a6::{HandleTypewriterText_Ext, Ridley_Func_98, SetupZebesEscapeTypewriter};
+use crate::game::sm_ad::{
+    EnableEarthquakeAframes, HandleMotherBrainBodyFlickering, MotherBrain_CalcHdma,
+    MotherBrain_FadeFromGray_Drained, MotherBrain_FadeFromGray_FakeDeath,
+    MotherBrain_FadePalToBlack, MotherBrain_FadeToGray_Drained, MotherBrain_FadeToGray_FakeDeath,
+    MotherBrain_FadeToGray_RealDeath, MotherBrain_HealthBasedPaletteHandling,
+    MotherBrain_Phase3_TurnLightsBackOn, MotherBrain_SealWall, TurnOffLightsForShitroidDeath,
+};
+use crate::rtl::{
+    g_ram, g_rom, mov24, MemCpy, ReadRegWord, RomPtr, SnesDivide, Unreachable, WriteReg,
+};
 extern "C" {
     fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
-    static mut g_ram: [uint8; 131072];
-    static mut g_rom: *const uint8;
-    fn mov24(dst: *mut LongPtr, src: uint32);
-    fn MemCpy(
-        dst: *mut ::core::ffi::c_void,
-        src: *const ::core::ffi::c_void,
-        size: ::core::ffi::c_int,
-    );
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn WriteReg(reg: uint16, value: uint8);
-    fn ReadRegWord(reg: uint16) -> uint16;
-    fn SnesDivide(a: uint16, b: uint8) -> uint16;
-    static kSinCosTable8bit_Sext: [int16; 320];
-    fn CheckEventHappened(a: uint16) -> uint16;
-    fn NextRandom() -> uint16;
-    fn QueueMusic_Delayed8(a: uint16);
-    fn QueueSfx1_Max6(a: uint16);
-    fn QueueSfx2_Max3(a: uint16);
-    fn QueueSfx2_Max6(a: uint16);
-    fn QueueSfx3_Max3(a: uint16);
-    fn QueueSfx3_Max6(a: uint16);
-    fn SetBossBitForCurArea(a: uint16);
-    fn SetEventHappened(a: uint16);
-    fn SpawnHardcodedPlm(p: SpawnHardcodedPlmArgs);
-    static mut eproj_spawn_r22: uint16;
-    static mut eproj_spawn_pt: Point16U;
-    fn Math_MultByCos(a: uint16, r18: uint16) -> uint16;
-    fn Math_MultBySin(a: uint16, r18: uint16) -> uint16;
-    fn SpawnEprojWithGfx(a: uint16, k: uint16, j: uint16);
-    fn SpawnEprojWithRoomGfx(j: uint16, a: uint16);
-    fn MotherBrainRisingHdmaObject() -> uint16;
-    fn SpawnMotherBrainRainbowBeamHdma() -> uint16;
-    fn LoadFxEntry(a: uint16);
-    fn SpawnPalfxObject(j: uint16);
-    fn CallSomeSamusCode(a: uint16) -> uint16;
-    fn DisableMinimapAndMarkBossRoomAsExplored();
-    fn SomeMotherBrainScripts(a: uint16);
-    fn CalculateAngleFromXY(x_r18: uint16, y_r20: uint16) -> uint16;
-    fn SpawnEnemy(db: uint8, k: uint16) -> uint16;
-    fn SuitDamageDivision(a: uint16) -> uint16;
-    fn Enemy_MoveDown(k: uint16, amt: int32) -> uint8;
-    fn Enemy_MoveRight_IgnoreSlopes(k: uint16, amt: int32) -> uint8;
-    fn CreateDudShot();
-    fn Enemy_SwitchToFrozenAi();
-    fn NormalEnemyFrozenAI();
-    fn NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy();
-    fn NormalEnemyShotAiSkipDeathAnim_CurEnemy();
-    fn NormalEnemyTouchAiSkipDeathAnim_CurEnemy();
-    fn HandleTypewriterText_Ext(a: uint16) -> uint8;
-    fn Ridley_Func_98();
-    fn SetupZebesEscapeTypewriter();
-    fn MotherBrain_FadeFromGray_Drained(a: uint16) -> uint8;
-    fn MotherBrain_FadeFromGray_FakeDeath(a: uint16) -> uint8;
-    fn MotherBrain_FadePalToBlack(a: uint16) -> uint8;
-    fn MotherBrain_FadeToGray_Drained(a: uint16) -> uint8;
-    fn MotherBrain_FadeToGray_FakeDeath(a: uint16) -> uint8;
-    fn MotherBrain_FadeToGray_RealDeath(a: uint16) -> uint8;
-    fn MotherBrain_Phase3_TurnLightsBackOn(a: uint16) -> uint8;
-    fn EnableEarthquakeAframes(a: uint16);
-    fn HandleMotherBrainBodyFlickering();
-    fn MotherBrain_CalcHdma();
-    fn MotherBrain_HealthBasedPaletteHandling();
-    fn MotherBrain_SealWall();
-    fn TurnOffLightsForShitroidDeath();
+
 }
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,

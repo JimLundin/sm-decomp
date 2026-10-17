@@ -1,16 +1,11 @@
-extern "C" {
-    static mut g_ram: [uint8; 131072];
-    static mut g_rom: *const uint8;
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn InvalidInterrupt_Crash();
-    fn QueueSfx2_Max6(a: uint16);
-    fn DrawProjectileSpritemap(k: uint16, x_r20: uint16, y_r18: uint16);
-    fn CalcExplosion_Mode7(k: uint16) -> Point16U;
-    fn ClearProjectile(k: uint16);
-    fn HandleProjectileTrails();
-    fn Samus_DrawShinesparkCrashEchoProjectiles();
-}
+use crate::game::sm_80::{InvalidInterrupt_Crash, QueueSfx2_Max6};
+use crate::game::sm_81::DrawProjectileSpritemap;
+use crate::game::sm_8b::CalcExplosion_Mode7;
+use crate::game::sm_90::{
+    ClearProjectile, HandleProjectileTrails, Samus_DrawShinesparkCrashEchoProjectiles,
+};
+use crate::rtl::{g_ram, g_rom, RomPtr, Unreachable};
+
 pub use crate::types::{
     __int16_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, uint16, uint16_t, uint32,
     uint32_t, uint8, uint8_t, Point16U, VoidP,

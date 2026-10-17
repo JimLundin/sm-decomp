@@ -1,5 +1,22 @@
+use crate::cpu_infra::{
+    currently_installed_bug_fix_counter, g_fail, g_snes, g_use_my_apu_code,
+    RtlUpdateSnesPatchForBugfix,
+};
 use crate::host::{g_debug_flag, g_spc_player, Die, RtlApuLock, RtlApuUnlock};
+use crate::snes::apu::apu_cycle;
+use crate::snes::dsp::dsp_getSamples;
+use crate::snes::ppu::ppu_copy;
+use crate::snes::snes::{
+    snes_catchupApu, snes_frame_counter, snes_read, snes_reset, snes_saveload, snes_write,
+};
+use crate::spc_player::{
+    SpcPlayer_CopyVariablesFromRam, SpcPlayer_CopyVariablesToRam, SpcPlayer_GenerateSamples,
+    SpcPlayer_Initialize, SpcPlayer_Upload,
+};
 pub use crate::types::{_IO_codecvt, _IO_marker, _IO_wide_data};
+use crate::util::{
+    ByteArray_AppendByte, ByteArray_AppendData, ByteArray_Destroy, ByteArray_Resize,
+};
 extern "C" {
 
     fn __assert_fail(
@@ -57,29 +74,7 @@ extern "C" {
         __whence: ::core::ffi::c_int,
     ) -> ::core::ffi::c_int;
     fn ftell(__stream: *mut FILE) -> ::core::ffi::c_long;
-    static mut snes_frame_counter: ::core::ffi::c_int;
-    static mut g_use_my_apu_code: bool;
-    fn RtlUpdateSnesPatchForBugfix();
-    static mut currently_installed_bug_fix_counter: uint16;
-    fn dsp_getSamples(dsp: *mut Dsp, sampleData: *mut int16_t, samplesPerFrame: ::core::ffi::c_int);
-    fn apu_cycle(apu: *mut Apu);
-    fn ppu_copy(ppu: *mut Ppu, ppu_src: *mut Ppu);
-    fn snes_reset(snes: *mut Snes, hard: bool);
-    fn snes_read(snes: *mut Snes, adr: uint32_t) -> uint8_t;
-    fn snes_write(snes: *mut Snes, adr: uint32_t, val: uint8_t);
-    fn snes_saveload(snes: *mut Snes, func: Option<SaveLoadFunc>, ctx: *mut ::core::ffi::c_void);
-    fn snes_catchupApu(snes: *mut Snes);
-    static mut g_snes: *mut Snes;
-    static mut g_fail: bool;
-    fn SpcPlayer_GenerateSamples(p: *mut SpcPlayer);
-    fn SpcPlayer_Initialize(p: *mut SpcPlayer);
-    fn SpcPlayer_Upload(p: *mut SpcPlayer, data: *const uint8_t);
-    fn SpcPlayer_CopyVariablesFromRam(p: *mut SpcPlayer);
-    fn SpcPlayer_CopyVariablesToRam(p: *mut SpcPlayer);
-    fn ByteArray_Resize(arr: *mut ByteArray, new_size: size_t);
-    fn ByteArray_Destroy(arr: *mut ByteArray);
-    fn ByteArray_AppendData(arr: *mut ByteArray, data: *const uint8, data_size: size_t);
-    fn ByteArray_AppendByte(arr: *mut ByteArray, v: uint8);
+
 }
 pub use crate::types::{
     _IO_lock_t, __int16_t, __int32_t, __int8_t, __off64_t, __off_t, __uint16_t, __uint32_t,

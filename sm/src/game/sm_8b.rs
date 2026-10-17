@@ -1,3 +1,29 @@
+use crate::game::sm_80::{
+    memset7E, CheckEventHappened, ClearOamExt, ClearUnusedOam, CopySuperMetroidString,
+    DecompressToMem, DisableIrqInterrupts, EnableNMI, HandleFadeIn, HandleFadeOut, HasQueuedMusic,
+    QueueMode7Transfers, QueueMusic_Delayed8, QueueMusic_DelayedY, QueueSfx1_Max15, QueueSfx2_Max6,
+    QueueSfx3_Max6, SetupDmaTransfer, WaitForNMI_Async,
+};
+use crate::game::sm_81::{DrawSpritemap, DrawSpritemapOffScreen, SaveToSram};
+use crate::game::sm_88::{
+    CinematicFunction_Intro_Func133, DisableHdmaObjects, EnableHdmaObjects,
+    SpawnIntroCutsceneCrossfadeHdma, SpawnPowerBombExplosion, SpawnTitleScreenGradientObjs,
+    WaitUntilEndOfVblankAndClearHdma,
+};
+use crate::game::sm_8d::{
+    ClearPaletteFXObjects, DisablePaletteFx, EnablePaletteFx, PaletteFxHandler, SpawnPalfxObject,
+};
+use crate::game::sm_90::{
+    DrawSamusAndProjectiles, HandleControllerInputForGamePhysics, HandleSamusMovementAndPause,
+    KillProjectile, UpdateBeamTilesAndPalette,
+};
+use crate::game::sm_91::{
+    EnableDemoInput, LoadDemoInputObject, ResetDemoData, SamusFunc_F433, Samus_Initialize,
+    Samus_SetAnimationFrameIfPoseChanged,
+};
+use crate::game::sm_93::DrawPlayerExplosions2;
+use crate::game::sm_94::kSinCosTable8bit_Sext;
+use crate::rtl::{g_ram, g_rom, Mult8x8, RomPtr, SnesDivide, Unreachable, WriteReg, WriteRegWord};
 extern "C" {
     fn __assert_fail(
         __assertion: *const ::core::ffi::c_char,
@@ -15,61 +41,7 @@ extern "C" {
         __c: ::core::ffi::c_int,
         __n: size_t,
     ) -> *mut ::core::ffi::c_void;
-    static mut g_ram: [uint8; 131072];
-    static mut g_rom: *const uint8;
-    fn Unreachable() -> bool;
-    fn RomPtr(addr: uint32_t) -> *const uint8;
-    fn WriteReg(reg: uint16, value: uint8);
-    fn WriteRegWord(reg: uint16, value: uint16);
-    fn Mult8x8(a: uint8, b: uint8) -> uint16;
-    fn SnesDivide(a: uint16, b: uint8) -> uint16;
-    static kSinCosTable8bit_Sext: [int16; 320];
-    fn CheckEventHappened(a: uint16) -> uint16;
-    fn HasQueuedMusic() -> uint8;
-    fn ClearOamExt();
-    fn CopySuperMetroidString();
-    fn DecompressToMem(src: uint32, decompress_dst: *mut uint8);
-    fn DisableIrqInterrupts();
-    fn EnableNMI();
-    fn HandleFadeIn();
-    fn ClearUnusedOam();
-    fn HandleFadeOut();
-    fn QueueMode7Transfers(db: uint8, k: uint16);
-    fn QueueMusic_Delayed8(a: uint16);
-    fn QueueMusic_DelayedY(a: uint16, j: uint16);
-    fn QueueSfx1_Max15(a: uint16);
-    fn QueueSfx2_Max6(a: uint16);
-    fn QueueSfx3_Max6(a: uint16);
-    fn SetupDmaTransfer(p: *const ::core::ffi::c_void);
-    fn WaitForNMI_Async() -> CoroutineRet;
-    fn memset7E(k: *mut uint16, a: uint16, j: uint16);
-    fn DrawSpritemap(db: uint8, j: uint16, x_r20: uint16, y_r18: uint16, chr_r22: uint16);
-    fn DrawSpritemapOffScreen(j: uint16, x_r20: uint16, y_r18: uint16, chr_r22: uint16);
-    fn SaveToSram(a: uint16);
-    fn CinematicFunction_Intro_Func133();
-    fn DisableHdmaObjects();
-    fn EnableHdmaObjects();
-    fn SpawnIntroCutsceneCrossfadeHdma();
-    fn SpawnPowerBombExplosion();
-    fn SpawnTitleScreenGradientObjs();
-    fn WaitUntilEndOfVblankAndClearHdma();
-    fn ClearPaletteFXObjects();
-    fn DisablePaletteFx();
-    fn EnablePaletteFx();
-    fn PaletteFxHandler();
-    fn SpawnPalfxObject(j: uint16);
-    fn DrawSamusAndProjectiles();
-    fn HandleControllerInputForGamePhysics();
-    fn HandleSamusMovementAndPause();
-    fn KillProjectile(k: uint16);
-    fn UpdateBeamTilesAndPalette();
-    fn EnableDemoInput();
-    fn LoadDemoInputObject(a: uint16, j: uint16);
-    fn ResetDemoData();
-    fn SamusFunc_F433();
-    fn Samus_Initialize();
-    fn Samus_SetAnimationFrameIfPoseChanged();
-    fn DrawPlayerExplosions2();
+
 }
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,

@@ -1,4 +1,16 @@
+use crate::rtl::RtlApuWrite;
+use crate::snes::apu::{apu_cycle, apu_free, apu_init, apu_reset, apu_saveload};
+use crate::snes::cart::{cart_free, cart_init, cart_read, cart_reset, cart_saveload, cart_write};
+use crate::snes::cpu::{cpu_free, cpu_init, cpu_reset, cpu_saveload};
+use crate::snes::dma::{
+    dma_cycle, dma_doHdma, dma_free, dma_init, dma_initHdma, dma_read, dma_reset, dma_saveload,
+    dma_startDma, dma_write,
+};
 use crate::snes::input::{input_free, input_init, input_reset};
+use crate::snes::ppu::{
+    ppu_checkOverscan, ppu_free, ppu_handleVblank, ppu_init, ppu_read, ppu_reset, ppu_runLine,
+    ppu_saveload, ppu_write,
+};
 extern "C" {
     fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
@@ -14,42 +26,7 @@ extern "C" {
         __line: ::core::ffi::c_uint,
         __function: *const ::core::ffi::c_char,
     ) -> !;
-    fn cpu_init(mem: *mut ::core::ffi::c_void, memType: ::core::ffi::c_int) -> *mut Cpu;
-    fn cpu_free(cpu: *mut Cpu);
-    fn cpu_reset(cpu: *mut Cpu);
-    fn cpu_saveload(cpu: *mut Cpu, func: Option<SaveLoadFunc>, ctx: *mut ::core::ffi::c_void);
-    fn apu_init() -> *mut Apu;
-    fn apu_free(apu: *mut Apu);
-    fn apu_reset(apu: *mut Apu);
-    fn apu_cycle(apu: *mut Apu);
-    fn apu_saveload(apu: *mut Apu, func: Option<SaveLoadFunc>, ctx: *mut ::core::ffi::c_void);
-    fn dma_init(snes: *mut Snes) -> *mut Dma;
-    fn dma_free(dma: *mut Dma);
-    fn dma_reset(dma: *mut Dma);
-    fn dma_read(dma: *mut Dma, adr: uint16_t) -> uint8_t;
-    fn dma_write(dma: *mut Dma, adr: uint16_t, val: uint8_t);
-    fn dma_initHdma(dma: *mut Dma);
-    fn dma_doHdma(dma: *mut Dma);
-    fn dma_cycle(dma: *mut Dma) -> bool;
-    fn dma_startDma(dma: *mut Dma, val: uint8_t, hdma: bool);
-    fn dma_saveload(dma: *mut Dma, func: Option<SaveLoadFunc>, ctx: *mut ::core::ffi::c_void);
-    fn ppu_init(snes: *mut Snes) -> *mut Ppu;
-    fn ppu_free(ppu: *mut Ppu);
-    fn ppu_reset(ppu: *mut Ppu);
-    fn ppu_checkOverscan(ppu: *mut Ppu) -> bool;
-    fn ppu_handleVblank(ppu: *mut Ppu);
-    fn ppu_runLine(ppu: *mut Ppu, line: ::core::ffi::c_int);
-    fn ppu_read(ppu: *mut Ppu, adr: uint8_t) -> uint8_t;
-    fn ppu_write(ppu: *mut Ppu, adr: uint8_t, val: uint8_t);
-    fn ppu_saveload(ppu: *mut Ppu, func: Option<SaveLoadFunc>, ctx: *mut ::core::ffi::c_void);
-    fn cart_init(snes: *mut Snes) -> *mut Cart;
-    fn cart_free(cart: *mut Cart);
-    fn cart_reset(cart: *mut Cart);
-    fn cart_read(cart: *mut Cart, bank: uint8_t, adr: uint16_t) -> uint8_t;
-    fn cart_write(cart: *mut Cart, bank: uint8_t, adr: uint16_t, val: uint8_t);
-    fn cart_saveload(cart: *mut Cart, func: Option<SaveLoadFunc>, ctx: *mut ::core::ffi::c_void);
 
-    fn RtlApuWrite(adr: uint32_t, val: uint8_t);
 }
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16_t, int32_t, int8_t,

@@ -1,4 +1,6 @@
+use crate::cpu_infra::{CpuOpcodeHook, HookedFunctionRts};
 use crate::host::Die;
+use crate::snes::snes::{snes_cpuRead, snes_cpuWrite};
 extern "C" {
     fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
@@ -8,16 +10,14 @@ extern "C" {
         __c: ::core::ffi::c_int,
         __n: size_t,
     ) -> *mut ::core::ffi::c_void;
-    fn HookedFunctionRts(is_long: ::core::ffi::c_int) -> bool;
-    fn snes_cpuRead(snes: *mut Snes, adr: uint32_t) -> uint8_t;
-    fn snes_cpuWrite(snes: *mut Snes, adr: uint32_t, val: uint8_t);
+
     fn __assert_fail(
         __assertion: *const ::core::ffi::c_char,
         __file: *const ::core::ffi::c_char,
         __line: ::core::ffi::c_uint,
         __function: *const ::core::ffi::c_char,
     ) -> !;
-    fn CpuOpcodeHook(addr: uint32) -> ::core::ffi::c_int;
+
 }
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16_t, int32_t, int8_t,
