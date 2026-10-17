@@ -7,7 +7,7 @@ Existing root/restart translations and their historical verification are separat
 ## Landed source
 
 Nine complete source scopes, **191 recovered-C definitions**, are published on `main`.
-Eight have restart workspace library targets; Yapping Maw registration is pending.
+All nine have restart workspace library targets.
 Library registration enables checks; production runtime dispatch,
 native adapters and gameplay parity remain unfinished.
 
@@ -21,7 +21,7 @@ native adapters and gameplay parity remain unfinished.
 | Bouncing Goofball | 10 | [Published](../translations/bouncing-goofball/src/lib.rs) | Registered | Pending |
 | Mini Crocomire | 14 | [Published](../translations/mini-crocomire/src/lib.rs) | Registered | Pending |
 | MiniDraygon/Evir | 25 | [Published](../translations/minidraygon/src/lib.rs) | Registered | Pending |
-| Yapping Maw | 32 | [Published](../translations/yapping-maw/src/lib.rs) | Pending | Pending |
+| Yapping Maw | 32 | [Published](../translations/yapping-maw/src/lib.rs) | Registered | Pending |
 
 Source batch commits: `ca9522f` (six scopes, 120 definitions), then `1a71f28`
 (eight scopes, 159 definitions and six library targets). The latter preserves
@@ -32,9 +32,8 @@ the reviewed gameplay source bytes. See [scope and acceptance details](../transl
 | Scope | Full boundary | Status |
 | --- | ---: | --- |
 | KiHunter and linked Wings | 30 definitions | Translation in progress |
-| Norfair Lava Man | 45 definitions | Translation in progress |
 
-The active 75 definitions are excluded from completed totals until complete
+The active 30 definitions are excluded from completed totals until complete
 source is frozen, independently reviewed and published. Shared projectile and
 native-service implementations reused by these scopes are not counted again.
 
@@ -55,3 +54,7 @@ inputs must stay explicit failures; private inputs and outputs are not published
 Progress reports are requested every 15 minutes and at completed milestones.
 This document records landed source and active boundaries, while local tickets
 retain exact ownership, source hashes, review findings and pending gates.
+
+A duplicate Norfair Lava Man translation was stopped after an existing complete
+45-definition candidate was found in another delivery lane. The duplicate is
+excluded from source-growth totals; the existing reviewed source awaits publication.

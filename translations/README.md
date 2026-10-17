@@ -1,7 +1,7 @@
 # Translated actor source candidates
 
 Nine complete actor scopes, 191 definitions, are translated and unverified.
-Eight sources are registered as restart library targets; Yapping Maw is pending.
+All nine sources are registered as restart library targets.
 No production runtime registration or native adapter is provided.
 The seven Cargo manifests are preserved exactly;
 Skree and Rinka are standalone std-only modules without Cargo manifests.

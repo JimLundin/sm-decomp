@@ -15,7 +15,7 @@ NextRandom comparisons documented in [docs/DECOMP_PIVOT.md](docs/DECOMP_PIVOT.md
 Full Rust gameplay ownership, original-ROM any% completion and Map Rando are
 unfinished. Nine additional complete actor source candidates (191 definitions)
 are in [translations](translations/README.md). See [translation progress](docs/TRANSLATION_PROGRESS.md). They are translated and unverified.
-Eight are registered as restart library targets; Yapping Maw registration is pending.
+All nine are registered as restart library targets.
 Library wiring does not provide production runtime dispatch or native adapters.
 Their inclusion is not compilation,
 integration, actual-C, live replay or original-ROM acceptance.
