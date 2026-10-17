@@ -675,6 +675,17 @@ opened it. Read-only probe reports killed/quota 0/0 in this room state, so
 an enemy-quota explanation is unproved. Door behavior needs inspection.
 The nine-screen 96BA ascent is now a separate input worker using a known
 bottom-floor prefix while the return worker resolves the west door.
+The west-door inspection resolves that return obstacle: current 975C PLM
+C848 has preinstruction BE1C (PlmPreInstr_PlayDudSound), not an enemy-quota
+handler. Both fresh shots and stepping back before firing leave it closed;
+quota is 0/0. Stop the pre-missile return attempt here. Reuse the verified
+elevator suffix after first missiles, then measure the resulting room state
+before trying this door again. No gameplay gate was changed.
+The independent 9A44 branch also stops at a measured Morph requirement:
+standing Samus is blocked at X437/Y139 by the X400..431 column; its lower
+passage is only 16 pixels high. map-contact.inputs passes 24,278 frames,
+zero failures (37.60s), without another room. Continue this branch after
+a normal Morph return route exists. No map-terminal pickup was observed.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
