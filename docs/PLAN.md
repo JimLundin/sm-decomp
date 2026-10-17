@@ -698,6 +698,27 @@ All coverage workers in this pass have stopped with their useful ignored
 inputs retained. No gameplay source changed, and progress counters stay
 unchanged. Next focused item remains the short left jump from 9F11
 X133/Y395 into 9F64, followed by a proved first-missile pickup.
+Next coverage pass corrects that route using actual replay: 9F11's lower
+left leads to A107, the first-missile Chozo room; its upper right leads to
+9F64. Earlier door audits inferred source placement from list order, but
+DoorDef coordinates describe the destination. Match source doors using
+live level BTS and confirm with room transitions before relying on a graph.
+The lower passage needs Morph, not a short jump: two fresh Down presses
+at X133/Y395 yield ball center Y409 and roll beneath the Y352..399 wall.
+Unmorph left of the column and shoot the blue cap to enter A107.
+target/missile-pickup/door-shoot.inputs passes the current standard oracle:
+31,814 frames, zero failures (46.55s), fourteen rooms/nine enemy definitions.
+Together with the independent 9A44 route, coverage is fifteen rooms.
+A107 contains missile-orb PLM EF2F at X64/Y112; shoot and then contact it.
+Pickup is not yet verified. No source/progress counter changes.
+The awake 975C return state is now decoded: Morph plus nonzero missile
+capacity selects state 9787; its gray door then uses enemy-quota handler
+BE01 and requires five kills (four walking pirates, one wall pirate).
+Each has 20 HP and takes two basic-beam hits. Preserve missiles for bombs.
+Independent shaft ascent also advances: shelf3-left.inputs under
+target/mother-shaft-ascent2 passes the standard oracle for 25,313 frames,
+zero failures (36.74s), ending standing at X402/Y1955 in 96BA. Its reusable
+fresh jumps extend the previously verified first-ledge prefix.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
