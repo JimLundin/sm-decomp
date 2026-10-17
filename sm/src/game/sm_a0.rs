@@ -1139,7 +1139,7 @@ pub struct Point16U {
     pub y: uint16,
 }
 #[derive(Copy, Clone)]
-#[repr(C)]
+#[repr(C, packed)]
 pub struct VramWriteEntry {
     pub size: uint16,
     pub src: LongPtr,

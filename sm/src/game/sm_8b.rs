@@ -114,7 +114,7 @@ pub struct OamEnt {
     pub flags: uint8,
 }
 #[derive(Copy, Clone)]
-#[repr(C)]
+#[repr(C, packed)]
 pub struct VramWriteEntry {
     pub size: uint16,
     pub src: LongPtr,

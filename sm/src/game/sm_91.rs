@@ -79,7 +79,7 @@ pub struct LongPtr {
 pub type Func_V = unsafe extern "C" fn() -> ();
 pub type Func_U8 = unsafe extern "C" fn() -> uint8;
 #[derive(Copy, Clone)]
-#[repr(C)]
+#[repr(C, packed)]
 pub struct VramWriteEntry {
     pub size: uint16,
     pub src: LongPtr,

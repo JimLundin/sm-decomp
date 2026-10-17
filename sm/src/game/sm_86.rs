@@ -107,7 +107,7 @@ pub struct Rect16U {
 pub type Func_V = unsafe extern "C" fn() -> ();
 pub type Func_Y_V = unsafe extern "C" fn(uint16) -> ();
 #[derive(Copy, Clone)]
-#[repr(C)]
+#[repr(C, packed)]
 pub struct VramWriteEntry {
     pub size: uint16,
     pub src: LongPtr,
