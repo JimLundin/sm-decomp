@@ -3685,10 +3685,7 @@ pub unsafe fn ppu_write(mut ppu: *mut Ppu, mut adr: uint8_t, mut val: uint8_t) {
             current_block_164 = 16754622181974910496;
         }
         13 => {
-            (*ppu).m7matrix[6 as ::core::ffi::c_int as usize] =
-                (((val as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
-                    | (*ppu).m7prev as ::core::ffi::c_int)
-                    & 0x1fff as ::core::ffi::c_int) as int16_t;
+            (*ppu).m7matrix[6] = ((u16::from(val) << 8 | u16::from((*ppu).m7prev)) & 0x1fff) as i16;
             (*ppu).m7prev = val;
             current_block_164 = 6174974146017752131;
         }
@@ -3696,10 +3693,7 @@ pub unsafe fn ppu_write(mut ppu: *mut Ppu, mut adr: uint8_t, mut val: uint8_t) {
             current_block_164 = 6174974146017752131;
         }
         14 => {
-            (*ppu).m7matrix[7 as ::core::ffi::c_int as usize] =
-                (((val as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
-                    | (*ppu).m7prev as ::core::ffi::c_int)
-                    & 0x1fff as ::core::ffi::c_int) as int16_t;
+            (*ppu).m7matrix[7] = ((u16::from(val) << 8 | u16::from((*ppu).m7prev)) & 0x1fff) as i16;
             (*ppu).m7prev = val;
             current_block_164 = 5892776923941496671;
         }

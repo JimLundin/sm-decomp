@@ -3277,6 +3277,33 @@ Rust lines-3; other focused counters unchanged. No probes or ROM-derived
 assets committed. Next: Mode7 BG1 scroll/matrix write arithmetic, retaining
 signed13-bit field storage and shared m7prev/scroll latch order.
 
+Mode7 BG1 scroll packing cleanup (2026-10-18): ppu_write $210D/$210E
+now use word packing and literal matrix indices. Raw thirteen-bit values
+remain0..8191 in i16 storage; they are not sign-extended on write. Matrix
+writes precede m7prev updates, followed by unchanged BG scroll/shared latch
+writes. This clarifies the prior note's signed-field wording. No Ppu/RAM/
+save layout or rendering changes.
+
+Independent actual writer checks pass1,048,576 complete-Ppu cases across
+all input/m7prev bytes and eight BG latch seeds, plus98,304 mixed scroll/
+matrix writes sharing m7prev. Actual original/current Mode7 output matches
+in4,096 rows /4,194,304 BGRA bytes across both renderers, fine offsets,
+wrapped coordinates, flips and field settings. Visible fixtures produce
+256 distinct rows; transparent large-field controls are included. These
+compare preserved behavior, not SNES accuracy. Normal startup passes3,600/0
+(7.58s), nativeexit0, with14,408 actual calls per changed arm and no gameplay
+frames. Private counter/getter instrumentation strips to exact frozen source.
+Independent implementation and review find no issues.
+
+Frozen72fe1d31 plus only this PPU change passes any%129,712/0 (318.25s)
+and Waver58,109/0 (137.86s), both nativeexits0. Later concurrent edits are
+outside those replays. Direct optimized core/DLL, normal-core metadata and
+full-source rustfmt checks pass. Cargo fmt/build remain Access-denied at
+launch (OSerror5). Progress: cast lines-8, Rust lines-6; other focused
+counters unchanged. No probes or ROM-derived assets committed. Next:
+Mode7 coefficient/center writes in ppu_write, preserving raw signed-word
+storage, thirteen-bit centers and shared m7prev sequencing.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
