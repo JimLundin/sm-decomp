@@ -2569,6 +2569,30 @@ maintained renderer, so SNES accuracy and every addressing/composition mode
 are unproved. Next: remaining screen/window/color composition snapshot state.
 Audio timing, HDMA, masked RAM and boot-to-credits coverage remain open.
 
+Background address register cleanup (2026-10-18): ppu_write now selects
+BG1..4 directly for $2107..210A and shares the paired $210B/$210C tile-base
+writes. Native byte masks and word shifts replace C integer cast chains.
+Wide/high flags, full 16-bit addresses (including bit 15), and low-nibble
+before high-nibble store order remain exact. Ppu/RAM/save layouts unchanged.
+
+Independent actual ppu_write checks pass 24,576 cases: six registers, all
+256 values and sixteen seeded states, comparing complete Ppu storage against
+independently computed effects, including unchanged unrelated fields and
+ppu1openBus. Observed 3,600-frame startup passes 3,600/0, native exit 0;
+each rewritten register executes 7,208 times. Stripping observations restores
+the exact maintained PPU source. This demonstrates startup register execution,
+not all gameplay displays or hardware accuracy. Independent review has no findings.
+
+Frozen 3aa74ea8 plus only this PPU cleanup passes any% 129,712/0 (339.98s)
+and Waver 58,109/0 (107.37s), both native exits 0. These builds exclude later
+concurrent audio/BG snapshot and gameplay edits. Cargo fmt/check, optimized
+core/DLL and normal-core metadata builds pass. Cargo release remains denied
+executing khronos_api's build script; no-default release is likewise denied
+at sm's build script (OS error 5). Progress: cast lines -19, Rust lines -15;
+other focused counters unchanged. No probes or ROM-derived assets committed.
+Next: TM/TS screen-enable register cleanup, preserving full raw bytes and
+main/subscreen store order; coordinate composition snapshots separately.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

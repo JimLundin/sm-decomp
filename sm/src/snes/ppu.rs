@@ -3672,31 +3672,16 @@ pub unsafe fn ppu_write(mut ppu: *mut Ppu, mut adr: uint8_t, mut val: uint8_t) {
             current_block_164 = 16754622181974910496;
         }
         7 | 8 | 9 | 10 => {
-            (*ppu).bgLayer[(adr as ::core::ffi::c_int - 7 as ::core::ffi::c_int) as usize]
-                .tilemapWider = val as ::core::ffi::c_int & 0x1 as ::core::ffi::c_int != 0;
-            (*ppu).bgLayer[(adr as ::core::ffi::c_int - 7 as ::core::ffi::c_int) as usize]
-                .tilemapHigher = val as ::core::ffi::c_int & 0x2 as ::core::ffi::c_int != 0;
-            (*ppu).bgLayer[(adr as ::core::ffi::c_int - 7 as ::core::ffi::c_int) as usize]
-                .tilemapAdr = ((val as ::core::ffi::c_int & 0xfc as ::core::ffi::c_int)
-                << 8 as ::core::ffi::c_int) as uint16_t;
+            let bg = &mut (*ppu).bgLayer[usize::from(adr - 7)];
+            bg.tilemapWider = val & 1 != 0;
+            bg.tilemapHigher = val & 2 != 0;
+            bg.tilemapAdr = u16::from(val & 0xfc) << 8;
             current_block_164 = 16754622181974910496;
         }
-        11 => {
-            (*ppu).bgLayer[0 as ::core::ffi::c_int as usize].tileAdr =
-                ((val as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
-                    << 12 as ::core::ffi::c_int) as uint16_t;
-            (*ppu).bgLayer[1 as ::core::ffi::c_int as usize].tileAdr =
-                ((val as ::core::ffi::c_int & 0xf0 as ::core::ffi::c_int)
-                    << 8 as ::core::ffi::c_int) as uint16_t;
-            current_block_164 = 16754622181974910496;
-        }
-        12 => {
-            (*ppu).bgLayer[2 as ::core::ffi::c_int as usize].tileAdr =
-                ((val as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
-                    << 12 as ::core::ffi::c_int) as uint16_t;
-            (*ppu).bgLayer[3 as ::core::ffi::c_int as usize].tileAdr =
-                ((val as ::core::ffi::c_int & 0xf0 as ::core::ffi::c_int)
-                    << 8 as ::core::ffi::c_int) as uint16_t;
+        11 | 12 => {
+            let first_bg = usize::from(adr - 11) * 2;
+            (*ppu).bgLayer[first_bg].tileAdr = u16::from(val & 0x0f) << 12;
+            (*ppu).bgLayer[first_bg + 1].tileAdr = u16::from(val & 0xf0) << 8;
             current_block_164 = 16754622181974910496;
         }
         13 => {
