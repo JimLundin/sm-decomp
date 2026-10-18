@@ -5793,6 +5793,19 @@ Later peer edits are outside this frozen replay. Physical ROM/device,
 emulation hardware timing, rendered/audio output and credits remain open;
 held HDMA diagnosis stays stopped. Continue executed CPU address helpers.
 
+Independent immediate-address QC (2026-10-18): 1,048,576 actual LDA/LDX
+instructions execute every PC in both physical WRAM banks with all four
+native M/X combinations. Patterned operand bytes, same-bank PC wrap,
+byte accumulator-high preservation, index zero extension, final PC, Z/N,
+cycles and preserved registers match independent expectations. Forcing M
+width for index operands fails an actual LDX: cycles 3 versus 2, native
+exit 3221226505; production exits zero. Every PC is covered, not every
+operand value at each PC. The tested cpu_adrImm body matches bd8b8fb0;
+independent partner fixture review finds no issue. Optimized core/probe DLL,
+normal-core metadata, direct full-source formatting and progress pass.
+Other bus devices, hardware emulation-mode accuracy and rendered/audio
+movie integration remain outside this probe. Only this QC note changes.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
