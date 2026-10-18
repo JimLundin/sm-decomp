@@ -225,45 +225,21 @@ pub unsafe fn snes_readBBus(mut snes: *mut Snes, mut adr: uint8_t, game: &mut Ga
     };
     return (*snes).openBus;
 }
-pub unsafe fn snes_writeBBus(
-    mut snes: *mut Snes,
-    mut adr: uint8_t,
-    mut val: uint8_t,
-    game: &mut Game,
-) {
-    if (adr as ::core::ffi::c_int) < 0x40 as ::core::ffi::c_int {
-        ppu_write((*snes).ppu, adr, val);
-        return;
-    }
-    if (adr as ::core::ffi::c_int) < 0x80 as ::core::ffi::c_int {
-        RtlApuWrite(
-            (0x2100 as ::core::ffi::c_int + adr as ::core::ffi::c_int) as uint32_t,
-            val,
-            game,
-        );
-        return;
-    }
-    match adr as ::core::ffi::c_int {
-        128 => {
-            let fresh1 = (*snes).ramAdr;
+pub unsafe fn snes_writeBBus(snes: *mut Snes, address: u8, value: u8, game: &mut Game) {
+    match address {
+        0x00..=0x3f => ppu_write((*snes).ppu, address, value),
+        0x40..=0x7f => RtlApuWrite(0x2100 + u32::from(address), value, game),
+        0x80 => {
+            let address = (*snes).ramAdr;
             (*snes).ramAdr = (*snes).ramAdr.wrapping_add(1);
-            *(*snes).ram.offset(fresh1 as isize) = val;
-            (*snes).ramAdr &= 0x1ffff as uint32_t;
+            *(*snes).ram.offset(address as isize) = value;
+            (*snes).ramAdr &= 0x1ffff;
         }
-        129 => {
-            (*snes).ramAdr = (*snes).ramAdr & 0x1ff00 as uint32_t | val as uint32_t;
-        }
-        130 => {
-            (*snes).ramAdr = (*snes).ramAdr & 0x100ff as uint32_t
-                | ((val as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint32_t;
-        }
-        131 => {
-            (*snes).ramAdr = (*snes).ramAdr & 0xffff as uint32_t
-                | ((val as ::core::ffi::c_int & 1 as ::core::ffi::c_int)
-                    << 16 as ::core::ffi::c_int) as uint32_t;
-        }
+        0x81 => (*snes).ramAdr = ((*snes).ramAdr & 0x1ff00) | u32::from(value),
+        0x82 => (*snes).ramAdr = ((*snes).ramAdr & 0x100ff) | (u32::from(value) << 8),
+        0x83 => (*snes).ramAdr = ((*snes).ramAdr & 0xffff) | (u32::from(value & 1) << 16),
         _ => {}
-    };
+    }
 }
 fn SwapInputBits(input: u16) -> u16 {
     input.reverse_bits()

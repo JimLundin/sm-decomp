@@ -6071,6 +6071,38 @@ same-DLL rendered any%129712/0 (414.98s) remains regression coverage for
 these input-only trials. Concurrent hardware work is separate; assets/probes
 stay ignored. Credits and complete hardware/gameplay fidelity remain open.
 
+SNES B-bus writer cleanup (2026-10-18): snes_writeBBus uses native byte
+dispatch, APU forwarding addresses and WRAM latch masks. WRAM 80 retains
+captured address, increment, store and final 17-bit mask ordering. Actual
+old/current writes pass 134,285,312 cases: every valid 17-bit port pointer,
+all byte values and all four 80..83 registers; every forwarding/ignored
+address and value; additional high-pointer latch masks. Real WRAM results
+and independent masks/store locations match; substituted PPU/APU forwarding
+traces preserve addresses/values without proving those devices' behavior.
+Independent QC passes 93,184 actual STA pairs across all byte values, seven
+WRAM wrap boundaries, banks 00/80, sampled PPU ports, actual APU 40..43
+queued/direct paths, WRAM 80..83 and ignored 84/FF. Complete WRAM/serialized
+PPU, APU ports/queue and CPU bus bookkeeping match. Shifting the captured
+WRAM destination is detected, native assertion exit 3221226505; positive
+QC exits 0. Maintained RtlApuWrite does not accept 44..7F; those forwarding
+arguments have substituted trace coverage only.
+
+Instrumented any% passes 12,000/0 (25.55s), native exit 0. Each side records
+32,470,321 PPU writes and three writes each to 81/82/83; ROM has 924 APU
+writes, Rust zero. WRAM 80/ignored writes have no movie hits; actual STA
+controls above provide their coverage. Clean frozen 3e0a37f5 plus only this
+writer passes any% 129,712/0 (261.13s), native exit 0. TEMP wrapper expected
+count initially overstated by 256; corrected wrapper exits 0 after all Rust
+checks pass. Original clean replay continued unchanged; native exit captured
+directly. Direct full-source format, normal-core metadata and optimized
+clean/probe core/DLL builds pass. Cargo fmt/build --release remain denied
+at cargo.exe launch; that required check stays unmet. Probe matches maintained
+writer after stripping observation/substitutions. Progress/diff pass: focused
+cast lines -7, Rust lines -24, other categories unchanged. Later peer changes
+need separate integration. Hardware/audio timing, rendering/Waver71, masked
+RAM and credits remain open; held HDMA diagnosis stays stopped. Continue
+executed hardware paths and route coverage.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
