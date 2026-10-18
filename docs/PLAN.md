@@ -630,7 +630,9 @@ order; the observed start values alone do not justify a replacement rule.
 A second isolated candidate keeps the first gate removal and fills the
 remaining rows with FFFF when both edges saturate above FFFF. On committed
 4c125ea2, Waver still passes 58,109/0 (99.40s), native exit 0, but raw
-table/window mismatches increase to 71/68 frames. Reject this candidate:
+table/window mismatches increase to 71/68 frames. Any% passes 129,712/0
+(207.38s), raw table/window mismatches 0/0, native exit 0.
+Reject this candidate:
 its green enforced oracle conceals worse unverified hardware state. No
 maintained source is changed. Next: compare the original separate edge
 passes and crossing positions directly, rather than guessing a combined
