@@ -2087,8 +2087,9 @@ Summed cpu_runOpcode return values are 101,293,141 nominal opcode cycles
 before forced NMI and 10,967,529 after it. Seventy-five host intervals exceed
 a rough 44,671-cycle threshold; the largest pre-NMI interval reports
 4,589,525 cycles. These are not elapsed master clocks or measured hardware
-lag frames: interrupt overhead is overwritten by the next opcode count,
-and DMA, refresh and bus-speed timing are absent. The opcode and bus paths
+lag frames. At the time of this probe, interrupt entry cost was overwritten
+by the next opcode count; the later interrupt-service fix below resolves
+that accounting defect. DMA, refresh and bus-speed timing remain absent. The opcode and bus paths
 do not advance hPos/vPos; the frame loop forces NMI only at its yield. Thus
 the paired pass cannot establish movie/video-frame cadence. Independent
 review confirms the input reversal and importer; no mapping fix emerged.
@@ -5431,6 +5432,32 @@ Later peer edits are outside this frozen replay. Substituted all-bank
 traces do not prove physical ROM/device side effects or CPU hardware
 timing. Rendering/audio timing and credits remain open; held HDMA diagnosis
 stays stopped. Continue remaining executed CPU address helpers.
+
+Interrupt entry-cost audit (2026-10-18): a frozen maintained CPU core
+passes 4,096 actual IRQ/NMI plus NOP/immediate-LDA handler calls: 256 status
+seeds x native/emulation x IRQ/NMI x waiting off/on x two handlers. I is
+cleared before entry so every IRQ is serviced; E-mode status normalization
+still applies. Every call retains seven E-mode/eight native entry cycles
+plus the handler's two cycles (three for word LDA). Stack bytes, SP, vector,
+PBR/PC, I-set/D-clear, wait/pending flags and memory-operation counts match
+the expected transition. The local in-memory vector bytes are restored.
+Native exit 0, reproduced from the existing frozen DLL after handoff.
+
+This confirms the earlier interrupt-cost fix and supersedes the historical
+overwritten-cost observation above. It covers two handler opcodes and one
+stack/PC position, not all interrupt/address cases or hardware elapsed time.
+CPU bus clocks, refresh/DMA ordering and video event scheduling remain open;
+nominal instruction totals do not establish movie cadence or console timing.
+
+Only PLAN changes; no maintained Rust or residue changes. Current direct
+full-source rustfmt passes. Progress is 22,691 raw offsets, 39 extern blocks,
+3 C ABI functions, 5 no_mangle, 6,728 unsafe functions, 86,497 casts and
+258,484 Rust lines; reductions since the previous note are concurrent work.
+Cargo fmt and release remain denied launching cargo.exe. No fresh movie
+result is claimed for this documentation-only audit. Frozen probe/ROM assets
+stay ignored; peer PPU/SNES edits are excluded from this commit. Render
+initialization/Waver71, hires, audio timing, masked RAM and boot-to-credits
+remain gaps. Held HDMA diagnosis remains stopped.
 
 ## Definition of done for any change
 
