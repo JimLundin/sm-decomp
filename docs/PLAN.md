@@ -5433,6 +5433,25 @@ traces do not prove physical ROM/device side effects or CPU hardware
 timing. Rendering/audio timing and credits remain open; held HDMA diagnosis
 stays stopped. Continue remaining executed CPU address helpers.
 
+Independent opcode-fetch QC (2026-10-18): 1,051,136 actual old/current
+JMP/BRL/BRA instructions pass. Physical WRAM covers every 16-bit jump/long
+branch operand and every short displacement, both 7E/7F banks and starting
+PCs 1000/FFFD/FFFE/FFFF. Independent targets, final program bank,
+registers/flags and cycles match. Another 512 actual BRL instructions fetch
+opcode 82 from NMI register 4210 through banks 00/80, then read IRQ/status
+operands 4211/4212. They preserve maintained NMI state and clear IRQ state,
+with every selected open-bus low nibble and IRQ/busy/vblank combination.
+A TEMP swapped operand-byte assembly fails actual JMP target 256 versus 1,
+native exit 3221226505; positive native exit is zero. Frozen fetch helpers
+and opcode dispatch match live 2af169ec. Optimized probe core/DLL,
+normal-core metadata and direct full-source formatting/progress pass.
+Initial device fixture reached the maintained unsupported 2181 BBus-read
+assertion; corrected register fixture initially assumed NMI clear, then
+was corrected to the maintained preserved state before passing. These are
+fixture corrections, not production changes or hardware-accuracy claims.
+Only this note changes; full movie integration belongs to the implementing
+commit above, and physical ROM fetches/timing remain outside this probe.
+
 Interrupt entry-cost audit (2026-10-18): a frozen maintained CPU core
 passes 4,096 actual IRQ/NMI plus NOP/immediate-LDA handler calls: 256 status
 seeds x native/emulation x IRQ/NMI x waiting off/on x two handlers. I is
