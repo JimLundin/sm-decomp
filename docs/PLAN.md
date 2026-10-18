@@ -8239,6 +8239,23 @@ full frontend linking still lacks SDL2. Live edited arms match verified source.
 Cast lines -16, Rust lines -18; other counters unchanged. Gameplay and hardware
 completeness remain open.
 
+CPU ADC cleanup (2026-10-19): accumulator addition uses explicit `i32`
+intermediates, lossless widening and native constants/decimal boolean tests.
+Decimal nibble correction, overflow check before final correction, carry and
+byte-mode high accumulator preservation retain their order and invalid-BCD
+behavior. Frozen HEAD `35ffb6e2667240474ade985dfdb5dbaa97243c16` plus only ADC
+edits passes 4,718,592 actual old/current helper pairs: every byte operand pair
+with two accumulator high bytes, binary/decimal and both carries; every word
+accumulator with 16 boundary operands in all decimal/carry modes. Named CPU
+state, cycles and bus counters match, and input RAM bytes remain unchanged.
+Word operand pairs are sampled, not exhaustive. Prefix 3,600/0 (1.03s) executes
+195,798 word and 37,613 byte binary ADC calls; decimal has dedicated coverage.
+Clean full any% 129,712/0 (51.21s), native exit 0. Cargo fmt/check, release
+library, frozen normal metadata and optimized core/DLL builds pass; full
+frontend linking still lacks SDL2. Live source matches verified source.
+Cast lines -50, Rust lines -24; other counters unchanged. Complete gameplay
+and rendering/audio fidelity remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
