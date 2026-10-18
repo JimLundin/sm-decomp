@@ -355,6 +355,34 @@ source changed; only isolated wrappers/probes were used. Sound source is
 unchanged from a86198ac, whose any% 129,712/0 and Waver 58,109/0 baseline
 still applies. No ROM-derived state is committed.
 
+Cross-driver low-state classification (2026-10-18): preserving only ROM
+SPC bytes 0000..000B (input, output and previous-command port state) while
+copying all other mapped Rust fields resolves the controlled continuation
+at all three boot boundaries. Each passes 512 ticks, 65,536 samples and
+ordered DSP writes with six later commands (1,536 ticks / 196,608 samples
+total). Preserving the entire low 0000..0019 range was unnecessarily broad;
+address, LFSR and temporary-field preservation is not needed for these
+cases. The failing transfer feeds FF pseudoport markers and stale SFX
+output/previous-command bytes to the original driver, which uses latched
+port handshakes. This resolves the earlier probe's suspected low-state
+cause without justifying a serialization change.
+
+The probe itself delivers commands through Rust input_ports and does not
+maintain ROM-style output/previous-command handshakes. Its serialized port
+state therefore cannot be presumed suitable for direct SPC execution.
+Actual LoadSnesState restores serialized SPC registers through
+snes_saveload/spc_saveload; it does not reconstruct a timer-boundary SPC
+context from Rust variables. RtlSaveMusicStateToRam_Locked copies Rust RAM/
+DSP into the emulated APU before saving, while custom restore copies them
+back. Cross-driver compatibility is still unproven for application snapshot
+I/O; direct transplant failures are not evidence of a production defect.
+Next: verify the supported snapshot flow and determine whether switching
+custom-driver snapshots to emulated SPC is an intended supported operation
+before adding handshake conversion. Exact audio timing and independent
+sound-command enforcement remain separate work. No maintained Rust change;
+residue counters unchanged. Sound-source a86198ac any% 129,712/0 and Waver
+58,109/0 remain the gameplay baseline. No ROM-derived state is committed.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
