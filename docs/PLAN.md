@@ -251,6 +251,34 @@ from logic/state errors before enforcing sound checks. All probe changes
 stay outside maintained source. Sound source remains a86198ac; existing
 any% 129,712/0 and Waver 58,109/0 apply. Residue counters unchanged.
 
+Normal-clock divergence trace (2026-10-18): at the 3,600-frame boundary,
+the first ROM DSP write group occurs at sample positions 71..84; Rust
+writes the identical ten commands together at sample 64. Port-read timer
+polling and instruction execution spread ROM writes across sample positions.
+Across three frames, all 240 overlapping register/value commands match,
+while Rust has ten additional commands at the end. Frame-bounded write
+counts therefore conflate scheduling with command differences. Over 120
+frames without new commands, the first 6,604 continuous commands match;
+then ROM key-off 5C:02/5C:40 at samples 41,972/41,999 precedes Rust's same
+updates at sample 41,984 by one loop in the command stream. The following
+30 commands align with a ten-command index shift. ROM timer reads sometimes
+consume two ticks at once (samples 39,094 and 48,064); Rust always performs
+one tick per loop. Grouped two-tick driver comparisons at two test points
+still pass ordered writes when both sides receive identical tick groups.
+These observations establish scheduling differences, not a new driver bug.
+
+Clearing pending port commands and issuing no new commands yields zero
+sample differences over 120 frames at boot boundaries 160 and 400 despite
+72/48 frames with different DSP-write counts. The active 3,600 boundary
+still differs in 122,435 sample values. Thus write-count equality alone is
+not an audio-equivalence criterion, and active sounds need precise timer,
+command-latch and DSP-write scheduling. Next: compare state at equal timer
+tick groups around the active-SFX transition, then decide whether exact
+sample timing belongs in the maintained driver or whether its intentional
+approximation must be explicit in the plan. No maintained source changed;
+only isolated probes use tracing. Gameplay verify remains the sound-source
+baseline a86198ac (any% 129,712/0; Waver 58,109/0). Residue counters unchanged.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
