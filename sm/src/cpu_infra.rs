@@ -3595,6 +3595,8 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
             }
             SaveBugSnapshot(game);
             game.g_snapshot_mine.player.capture(game.g_spc_player);
+            // Saving music copies the custom player's state into the physical APU.
+            game.g_snapshot_before.audio.restore(game.g_snes);
             queue_before.restore(game);
             game.g_snapshot_before.player.restore(game.g_spc_player);
             RunOneFrameOfGame_Emulated(game);

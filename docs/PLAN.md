@@ -4433,6 +4433,29 @@ verification. The implementing session still owns its clean full-any% run.
 Disabled-demo, set 3 and dormant preinstruction paths remain held, alongside
 render initialization/Waver71, audio timing and complete credits coverage.
 
+Post-bug-save audio recovery (2026-10-18): after SaveBugSnapshot and custom
+player capture, failure recovery restores the pre-frame physical audio
+snapshot before queue/player reset and ROM rerun. Saving music copies custom
+player state into physical APU RAM/DSP state; the earlier gameplay rewind
+therefore does not remain sufficient after the save operation.
+
+TEMP frame-200 controls execute actual SaveBugSnapshot with its interactive
+guard enabled for that call, redirecting only its filename/buffer to TEMP.
+Its serializer creates a bug save and sets the 300-frame cooldown. Complete
+physical audio differs from pre-frame state after saving, then matches after
+the new restore. Omitting restore aborts the equality assertion. Candidate
+forced recovery completes 3,600/1, native exit 1, with one intentional failure
+and no cascade. Save-file reload is not tested by this recovery control.
+
+Clean frozen 059d0471 plus only this two-line change passes any% 129,712/0
+(246.69s), native exit 0, without instrumentation. Direct full-source format,
+normal-core metadata and optimized clean/probe core/DLL builds pass; Cargo
+fmt/check and release remain denied at launch. Focused Rust lines +2 restore
+audio after save; other residue categories unchanged. No disk format, RAM
+layout or normal success-path behavior changes. Concurrent demo/DMA/PPU edits
+are excluded. ROM-derived saves stay TEMP; audio timing, hardware events,
+rendering/HDMA and complete boot-to-credits coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
