@@ -7112,6 +7112,39 @@ this replay. Arbitrary bus mutation, other addressing modes, hardware/render/
 audio timing and credits remain open; held HDMA diagnosis stays stopped.
 Continue executed bit/shift helpers.
 
+Landing-site wall-jump ceiling isolated (2026-10-18): shorter return
+suffix (after the proven40-frame approach: right2, right/jump5, left/jump12,
+right2, right/jump20, left/jump35, neutral120) completes60679/71 (185.16s),
+nativeexit1. Read-only host per-frame RAM observation of the same input
+completes60679/71 (174.71s), nativeexit1. At60485, X635/Y1103, pose0083
+launches upward with speed0004.A000. At60486, X635/Y1098, speed0004.8400;
+at60487, X637/Y1098, collision1 resets speed to zero and direction to falling
+while Jump remains held0180. The second launch at60504 X629/Y1111 has
+speed0004.A000; at60507 X632/Y1102 it also collides upward and resets.
+These launches are ceiling-blocked, rather than weak initialization or
+early Jump release. The right2 release before each launch does stop the
+preceding spin ascent, as expected. Geometry has a slope atX624/Y1072
+above the exposed face. No callback counters are inferred from RAM poses.
+
+Earlier37-frame approach with right1, right/jump8, left/jump10, right1,
+right/jump25, left/jump35, neutral120 completes60680/71 (164.92s), nativeexit1.
+Neither Jump press produces a wall jump: animation remains1 at60481/60500,
+before wall-contact readiness. FinalX588/Y1195, alive, items1004, health99,
+missiles5. All three ordered diagnostic lists exactly match frozen d217ea15
+Waver71.16rooms/16enemy definitions remain;92B3 and credits unreached.
+
+Next: change the ground approach to retain running horizontal speed, giving
+the launch enough outward travel before its head reaches the overhang.
+Do not repeat the same shallow two-jump arc as ascent evidence. Prior
+same-DLL explicit-render any%129712/0 (414.98s) remains regression for
+these input-only trials, not verification of concurrent hardware edits.
+Direct full-source rustfmt passes; Cargo fmt/release again fail at launch
+OSerror5. No maintained Rust edits or own residue delta; live progress is
+22691raw/39extern-blocks/3extern-fns/5no_mangle/6728unsafe/86214casts/
+258230Rust lines, reflecting peer hardware changes. Inputs, geometry and
+host probes stay ignored. Upper99BD tuning,9AD9 ammunition and HDMA remain
+held. Peer owns hardware edits, cleanup and remote sync.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
