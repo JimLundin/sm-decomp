@@ -143,7 +143,14 @@ custom-audio oracle patches ROM $80:8028 to RTS, bypassing its upload
 routine; upload equality cannot be inferred from this run. Sound
 comparison stays diagnostic. Next: compare the maintained driver against the
 emulated SPC/DSP independently, then enforce sound commands with explicit
-reset/upload handling. No maintained source or residue counters changed.
+reset/upload handling. No maintained source or residue counters changed. Stable
+optimized core/DLL, normal-core metadata and direct full-source formatting
+pass; Cargo fmt/build remain ASR-denied. Fixed DLL gameplay matches 3897cb09;
+any% passes 129,712 frames with zero failures (208.45s), process exit 0.
+An earlier run stopped after 120,000/0 with missing saves-directory warnings
+and no final result; it is not counted as a pass. Restoring the ignored
+saves directory and rerunning with direct process capture succeeds. Coverage
+remains six Ceres rooms and three enemy definitions, with no credits proof.
 
 ## Definition of done for any change
 
