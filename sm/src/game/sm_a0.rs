@@ -2050,30 +2050,24 @@ pub unsafe fn EnemyInstr_SetTimer(k: uint16, jp: *const uint16, game: &mut Game)
 pub unsafe fn EnemyInstr_Skip2bytes(_k: uint16, jp: *const uint16) -> *const uint16 {
     jp.add(1)
 }
-pub unsafe fn EnemyInstr_Sleep(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut ED: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);
-    let mut base_ptr: *const uint8 = RomBankBase((*ED).bank, game);
-    (*ED).current_instruction = (jp as *const uint8)
-        .offset(-(2 as ::core::ffi::c_int as isize))
-        .offset_from(base_ptr) as ::core::ffi::c_long as uint16;
-    return ::core::ptr::null::<uint16>();
+pub unsafe fn EnemyInstr_Sleep(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let base_ptr = RomBankBase(game.enemy_instructions(k).bank(), game);
+    let instruction = (jp as *const uint8).sub(2).offset_from(base_ptr) as uint16;
+    game.enemy_instructions(k)
+        .set_current_instruction(instruction);
+    core::ptr::null()
 }
 pub unsafe fn EnemyInstr_WaitNframes(
-    mut k: uint16,
-    mut jp: *const uint16,
+    k: uint16,
+    jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    let mut ED: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);
-    let mut base_ptr: *const uint8 = RomBankBase((*ED).bank, game);
-    (*ED).instruction_timer = *jp.offset(0 as ::core::ffi::c_int as isize);
-    (*ED).current_instruction = (jp as *const uint8)
-        .offset(2 as ::core::ffi::c_int as isize)
-        .offset_from(base_ptr) as ::core::ffi::c_long as uint16;
-    return ::core::ptr::null::<uint16>();
+    let base_ptr = RomBankBase(game.enemy_instructions(k).bank(), game);
+    game.enemy_instructions(k).set_instruction_timer(*jp);
+    let instruction = (jp as *const uint8).add(2).offset_from(base_ptr) as uint16;
+    game.enemy_instructions(k)
+        .set_current_instruction(instruction);
+    core::ptr::null()
 }
 pub unsafe fn EnemyInstr_CopyToVram(
     mut k: uint16,

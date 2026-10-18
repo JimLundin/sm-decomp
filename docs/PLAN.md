@@ -2138,6 +2138,18 @@ frames, zero failures (188.79s); Waver route: 58,109 frames, zero failures
 accessors. Other counters unchanged. Next: shared enemy Sleep/WaitNframes
 callbacks, retaining captured ROM bank and timer-before-instruction writes.
 
+Shared enemy Sleep/WaitNframes callbacks now use the instruction byte view
+and direct pointer steps. Sleep stores jp-2; Wait stores its argument timer
+before jp+2. Both retain the ROM bank captured before any writes and return
+null. Independent extracted comparison passes 34,478,720 complete RAM/null-
+return checks across every enemy index, every bank byte and argument word,
+neighboring timer/instruction/bank arguments and random RAM aliases. Stable
+optimized core/DLL build and direct full-source format pass; Cargo fmt/build
+remain ASR-denied. Any%: 129,712 frames, zero failures (200.50s); Waver route:
+58,109 frames, zero failures (91.63s). Cast lines -5, Rust lines -6; other
+counters unchanged. Next: shared AI pre-instruction/property callbacks,
+retaining deletion and off-screen flags and exact callback return pointers.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
