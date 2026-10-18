@@ -5182,6 +5182,39 @@ requirements using existing item-bearing prefixes; verify actual source
 door BTS and controller traversal before claiming a new room. Credits,
 held rendering/HDMA gaps and complete gameplay coverage remain unproved.
 
+Independent recovery-PPU continuation QC (2026-10-18): separate frozen
+startup200/3,600 and gameplay9,000/10,000 controls corroborate581ce6f0:
+exactlyone forced failure each, no cascade, pixels equal, but actual recovery
+rerun makes zero ppu_runLine calls and leaves2/11 PPU bytes different from
+the completed ROM branch. Pixels reuse the ROM buffer rendered earlier in
+the same input frame; pixel equality alone does not verify recovered state.
+Independent runtime field mapping classifies the previously unidentified
+serialized-relative66606/66608 as oamAdr/oamInHigh (absolutePpu66614/66616).
+Their reset occurs in ppu_handleVblank when not forced blank; the recovery
+path omits the normal branch's DrawFrameToPpu. Typical next NMI rewrites
+OAM address, which can explain absent cascades without proving all reads safe.
+
+Targeted followups end immediately after200/9,000. A TEMP recovery
+DrawFrameToPpu executes225 actual PPU lines and removes every compared
+state/pixel difference at9,000. Independent Ppu copies then execute actual
+ppu_read(213F) at200: completed-ROM STAT78 is83, recovered state returns03.
+The same TEMP draw control returns83 with zero state/pixel differences.
+Thus parity is an observable future-read discrepancy, not only padding or
+stale-cache noise. No natural game callback reading STAT78 is claimed.
+Original/control exits are1 for the intended forced failure, with one recovery.
+
+This identifies a focused correction candidate, not a landed fix or proof
+for every recovery/retry/HDMA context. Compare real startup/gameplay/retry
+continuations and baseline movies before promoting it. The earlier calls
+counter was cumulative; this probe counts only the recovery rerun. Initial
+fixture compilation used u32 instead of i32 frame counters and was corrected
+before passing runs. All probes stay TEMP; raw range diagnostics include
+layout padding and exclude renderer caches beyond lastBrightnessMult.
+Optimized probe core/DLL, direct full-source rustfmt and progress pass;
+Cargo execution remains denied. Only this note changes, no maintained
+Rust/residue changes. Held HDMA diagnosis stays stopped; rendering/Waver71,
+event/audio timing, masked RAM and credits remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
