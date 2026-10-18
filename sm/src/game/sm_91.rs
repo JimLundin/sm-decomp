@@ -1384,37 +1384,19 @@ pub unsafe fn LoadDemoData(game: &mut Game) {
                     as *mut uint16) as isize,
             ) as ::core::ffi::c_int) as uint16;
     DemoSetDef = get_DemoSetDef(v0, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9a4 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*DemoSetDef).items;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9a4 as ::core::ffi::c_int as isize) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9c8 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*DemoSetDef).missiles;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9c6 as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9c8 as ::core::ffi::c_int as isize) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9cc as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*DemoSetDef).super_missiles;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9ca as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9cc as ::core::ffi::c_int as isize) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9d0 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*DemoSetDef).power_bombs;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9ce as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9d0 as ::core::ffi::c_int as isize) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9c4 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*DemoSetDef).health;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9c4 as ::core::ffi::c_int as isize) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9a8 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*DemoSetDef).beams;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9a6 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*DemoSetDef).equipped_beams_;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9d6 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    game.set_collected_items((*DemoSetDef).items);
+    game.set_equipped_items(game.collected_items());
+    game.set_samus_max_missiles((*DemoSetDef).missiles);
+    game.set_samus_missiles(game.samus_max_missiles());
+    game.set_samus_max_super_missiles((*DemoSetDef).super_missiles);
+    game.set_samus_super_missiles(game.samus_max_super_missiles());
+    game.set_samus_max_power_bombs((*DemoSetDef).power_bombs);
+    game.set_samus_power_bombs(game.samus_max_power_bombs());
+    game.set_samus_max_health((*DemoSetDef).health);
+    game.set_samus_health(game.samus_max_health());
+    game.set_collected_beams((*DemoSetDef).beams);
+    game.set_equipped_beams((*DemoSetDef).equipped_beams_);
+    game.set_samus_reserve_health(0);
     ResetDemoData(game);
     EnableDemoInput(game);
     let mut demo_obj: uint16 = (*get_DemoSetDef(v0, game)).demo_obj as uint16;

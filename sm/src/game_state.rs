@@ -499,6 +499,50 @@ impl Game {
         u16::from_le_bytes([self.g_ram[0x79f], self.g_ram[0x7a0]])
     }
 
+    /// collected_items ($7E:09A4 in ram_map).
+    pub fn set_collected_items(&mut self, value: u16) {
+        self.g_ram[0x9a4..0x9a6].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// equipped_items ($7E:09A2 in ram_map).
+    pub fn set_equipped_items(&mut self, value: u16) {
+        self.g_ram[0x9a2..0x9a4].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_max_missiles ($7E:09C8 in ram_map).
+    pub fn set_samus_max_missiles(&mut self, value: u16) {
+        self.g_ram[0x9c8..0x9ca].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_max_super_missiles ($7E:09CC in ram_map).
+    pub fn set_samus_max_super_missiles(&mut self, value: u16) {
+        self.g_ram[0x9cc..0x9ce].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_max_power_bombs ($7E:09D0 in ram_map).
+    pub fn set_samus_max_power_bombs(&mut self, value: u16) {
+        self.g_ram[0x9d0..0x9d2].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_max_health ($7E:09C4 in ram_map).
+    pub fn set_samus_max_health(&mut self, value: u16) {
+        self.g_ram[0x9c4..0x9c6].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// collected_beams ($7E:09A8 in ram_map).
+    pub fn set_collected_beams(&mut self, value: u16) {
+        self.g_ram[0x9a8..0x9aa].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// equipped_beams ($7E:09A6 in ram_map).
+    pub fn set_equipped_beams(&mut self, value: u16) {
+        self.g_ram[0x9a6..0x9a8].copy_from_slice(&value.to_le_bytes());
+    }
+
+    pub fn collected_items(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x9a4], self.g_ram[0x9a5]])
+    }
+
     /// frame_handler_alfa ($7E:0A42 in ram_map).
     pub fn set_frame_handler_alfa(&mut self, value: u16) {
         self.g_ram[0xa42..0xa44].copy_from_slice(&value.to_le_bytes());

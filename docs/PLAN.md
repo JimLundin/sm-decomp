@@ -3382,6 +3382,34 @@ neutral inputs remain ignored; no ROM-derived assets are committed. Next:
 LoadDemoData inventory stores, preserving ROM reads and capacity/count
 write order and measuring demo execution. The stopped ammo route stays held.
 
+LoadDemoData inventory initialization now uses named byte-backed setters
+for collected/equipped items and beams, health and ammunition capacities.
+Existing count setters/getters preserve each ROM-field read, capacity store,
+live capacity reread and count store in order. Separate collected/equipped
+beam ROM fields remain separate; reserve health still clears before demo
+input setup. Nine added accessors match ram_map at 09A2/09A4/09A6/09A8/
+09C4/09C8/09CC/09D0; g_ram layout and subsequent dispatch order are unchanged.
+
+Observed neutral-input attract replay passes 30,000/0 (63.17s), native exit
+0. All thirteen changed stores execute on Rust side 2 in each of 26 actual
+LoadDemoData calls (338 stores). Every call retains the original address
+order and equal collected/equipped items and capacity/count pairs. It
+exercises missile capacities 0 through 85 across eleven values, super
+capacities 0/5/15, power-bomb capacities 0/5/10, six health capacities
+99 through 999, and distinct collected/equipped beam values. Reserve health
+is zero throughout. Set 3 and demo interruption remain outside this route.
+Removing the source-site observations restores exact maintained source.
+
+Full any% passes 129,712/0 (272.33s), native exit 0, on committed 0ff5736f
+source with only this sm_91.rs/game_state.rs change. Concurrent screen-routing
+and native-audio work is outside that replay's scope. Cargo fmt/check,
+optimized core/DLL and normal-core metadata builds pass; Cargo release remains
+denied at khronos_api's build script (OS error 5). Raw offsets -18, cast lines
+-18; Rust lines +26 provide eight setters and one getter. Other gameplay
+counters unchanged. No probe or ROM-derived assets are committed. Next:
+LoadDemoData control configuration and trailing scalar setup, preserving
+write order and measuring actual attract-demo execution. Stopped ammo route held.
+
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
 the original `SignExtend8(0x8000)` initialization and the middle-byte velocity
