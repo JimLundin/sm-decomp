@@ -4690,6 +4690,27 @@ maintained Rust/residue changes; probes stay TEMP. The implementing session
 owns full-any% integration. Rendering/Waver71, event timing, audio timing and
 boot-to-credits remain open; held HDMA diagnosis stays stopped.
 
+Independent DMA transfer-byte alias QC (2026-10-18): pending helper cleanup
+passes 524,288 actual old/current transfer-byte continuations through the
+maintained WRAM B-bus port. Every 7E/7F address runs both directions with
+the port at the same or next wrapping WRAM address. Complete RAM, resulting
+port address and failure flag match from identical snapshot state. This
+includes 7E:FFFF/7F:0000 adjacency and port wrap at 1FFFF. The previous
+maintained Rust body is the reference; the candidate is called through an
+isolated wrapper exposing its private helper. Deliberately advancing the
+port before transfer fails the first actual RAM/order check. Native exits
+are 0 for the original and nonzero for that TEMP control. Tested helper
+matches current source after undoing the control.
+
+Optimized probe core/DLL, normal-core metadata and direct full-source rustfmt
+pass; Cargo execution remains denied as documented. Only this note changes;
+no maintained Rust/residue changes and all probes stay TEMP. This verifies
+read/write ordering on actual WRAM-port consumers, not all A/B-bus devices,
+independent hardware latency or a new movie replay. ROM/APU/PPU devices and
+full-any% integration remain the implementing session's separate checks.
+Rendering/Waver71, event timing, audio timing and credits remain open;
+held HDMA diagnosis stays stopped.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
