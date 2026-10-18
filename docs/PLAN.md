@@ -4674,6 +4674,22 @@ and serialized/ROM assets stay ignored. Continue remaining disk-state/event
 coverage without resuming held HDMA diagnosis. Rendering/Waver71, hires,
 hardware/audio timing, masked RAM and credits remain open.
 
+Independent CPU Z/N load-consumer QC (2026-10-18): pending cpu_setZN
+mask cleanup passes 25,165,824 actual immediate LDA/LDX/LDY instructions.
+All 65,536 input words, byte/word widths and 64 combinations of initial
+N/Z/V/C/D/I execute each opcode. Independent expectations check the loaded
+register, unchanged other registers, Z/N, preserved V/C/D/I/M/X/E/SP, PC and
+two/three cycles. Byte LDA preserves all high-byte values, including nonzero
+high bytes with zero low bytes; Z tests only the low byte. Both width paths
+execute through maintained cpu_runOpcode. Native mode and immediate loads
+are the scope; other helper consumers and emulation-mode loads are not
+claimed. Probe exits 0; frozen helper matches live source. Optimized probe
+core/DLL, normal-core metadata and direct full-source rustfmt pass; Cargo
+execution remains denied as documented. Only this note changes, with no
+maintained Rust/residue changes; probes stay TEMP. The implementing session
+owns full-any% integration. Rendering/Waver71, event timing, audio timing and
+boot-to-credits remain open; held HDMA diagnosis stays stopped.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
