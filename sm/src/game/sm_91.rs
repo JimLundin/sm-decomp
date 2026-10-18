@@ -1417,40 +1417,23 @@ pub unsafe fn LoadDemoData(game: &mut Game) {
     game.set_samus_hurt_switch_index(0);
     Samus_LoadSuitPalette(game);
     UpdateBeamTilesAndPalette(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9aa as ::core::ffi::c_int as isize)
-        as *mut uint16) = kButton_Up as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9ac as ::core::ffi::c_int as isize)
-        as *mut uint16) = kButton_Down as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9ae as ::core::ffi::c_int as isize)
-        as *mut uint16) = kButton_Left as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9b0 as ::core::ffi::c_int as isize)
-        as *mut uint16) = kButton_Right as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9b2 as ::core::ffi::c_int as isize)
-        as *mut uint16) = kButton_X as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9b4 as ::core::ffi::c_int as isize)
-        as *mut uint16) = kButton_A as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9b6 as ::core::ffi::c_int as isize)
-        as *mut uint16) = kButton_B as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9b8 as ::core::ffi::c_int as isize)
-        as *mut uint16) = kButton_Y as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9ba as ::core::ffi::c_int as isize)
-        as *mut uint16) = kButton_Select as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9be as ::core::ffi::c_int as isize)
-        as *mut uint16) = kButton_R as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9bc as ::core::ffi::c_int as isize)
-        as *mut uint16) = kButton_L as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9e8 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9e6 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9e4 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdf8 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdfa as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdfc as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    game.set_button_config_up(kButton_Up as u16);
+    game.set_button_config_down(kButton_Down as u16);
+    game.set_button_config_left(kButton_Left as u16);
+    game.set_button_config_right(kButton_Right as u16);
+    game.set_button_config_shoot_x(kButton_X as u16);
+    game.set_button_config_jump_a(kButton_A as u16);
+    game.set_button_config_run_b(kButton_B as u16);
+    game.set_button_config_itemcancel_y(kButton_Y as u16);
+    game.set_button_config_itemswitch(kButton_Select as u16);
+    game.set_button_config_aim_up_r(kButton_R as u16);
+    game.set_button_config_aim_down_l(kButton_L as u16);
+    game.set_unused_word_7e09e8(1);
+    game.set_debug_flag(1);
+    game.set_moonwalk_flag(0);
+    game.set_unused_word_7e0df8(0);
+    game.set_unused_word_7e0dfa(0);
+    game.set_unused_word_7e0dfc(0);
 }
 pub unsafe fn DemoSetFunc_0(game: &mut Game) {
     MakeSamusFaceForward(game);

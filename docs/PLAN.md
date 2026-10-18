@@ -3470,6 +3470,31 @@ counters unchanged. No probe or ROM-derived assets are committed. Next:
 LoadDemoData control configuration and trailing scalar setup, preserving
 write order and measuring actual attract-demo execution. Stopped ammo route held.
 
+LoadDemoData control/option setup now uses seventeen named byte-backed
+setters matching ram_map at 09AA..09BE, 09E8/09E6/09E4 and 0DF8/0DFA/0DFC.
+The eleven control words retain their button constants and original order,
+including aim-up R before aim-down L. Unused/debug words remain 1/1,
+moonwalk remains zero, and the three trailing unused words remain zero.
+All stores stay after palette/beam updates; RAM layout is unchanged.
+
+Observed neutral-input attract replay passes 30,000/0 (61.71s), native exit
+0. All seventeen changed stores execute on Rust side 2 in each of 26 actual
+LoadDemoData calls (442 stores). Every call matches the original ordered
+addresses and words, including R=0010 then L=0020 and the six option words.
+Removing observations restores exact maintained source. This covers normal
+attract setup across the existing sets 0..2 route; set 3 and interruption
+remain outside the run.
+
+Full any% passes 129,712/0 (316.94s), native exit 0, on committed 02b8ab72
+source with only this sm_91.rs/game_state.rs change. Concurrent audio/window
+work is outside that replay's scope. Cargo fmt/check, optimized core/DLL
+and normal-core metadata builds pass; Cargo release remains denied at
+khronos_api's build script (OS error 5). Raw offsets -17, cast lines -28;
+Rust lines +68 provide seventeen named setters. Other gameplay counters
+unchanged. No probe or ROM-derived assets are committed. Next: LoadDemoData
+ROM definition selection and scene dispatch, preserving live indices, word
+wrapping and callback order. The stopped ammo route remains held.
+
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
 the original `SignExtend8(0x8000)` initialization and the middle-byte velocity

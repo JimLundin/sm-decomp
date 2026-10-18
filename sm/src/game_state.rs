@@ -543,6 +543,91 @@ impl Game {
         u16::from_le_bytes([self.g_ram[0x9a4], self.g_ram[0x9a5]])
     }
 
+    /// button_config_up ($7E:09AA in ram_map).
+    pub fn set_button_config_up(&mut self, value: u16) {
+        self.g_ram[0x9aa..0x9ac].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// button_config_down ($7E:09AC in ram_map).
+    pub fn set_button_config_down(&mut self, value: u16) {
+        self.g_ram[0x9ac..0x9ae].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// button_config_left ($7E:09AE in ram_map).
+    pub fn set_button_config_left(&mut self, value: u16) {
+        self.g_ram[0x9ae..0x9b0].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// button_config_right ($7E:09B0 in ram_map).
+    pub fn set_button_config_right(&mut self, value: u16) {
+        self.g_ram[0x9b0..0x9b2].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// button_config_shoot_x ($7E:09B2 in ram_map).
+    pub fn set_button_config_shoot_x(&mut self, value: u16) {
+        self.g_ram[0x9b2..0x9b4].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// button_config_jump_a ($7E:09B4 in ram_map).
+    pub fn set_button_config_jump_a(&mut self, value: u16) {
+        self.g_ram[0x9b4..0x9b6].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// button_config_run_b ($7E:09B6 in ram_map).
+    pub fn set_button_config_run_b(&mut self, value: u16) {
+        self.g_ram[0x9b6..0x9b8].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// button_config_itemcancel_y ($7E:09B8 in ram_map).
+    pub fn set_button_config_itemcancel_y(&mut self, value: u16) {
+        self.g_ram[0x9b8..0x9ba].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// button_config_itemswitch ($7E:09BA in ram_map).
+    pub fn set_button_config_itemswitch(&mut self, value: u16) {
+        self.g_ram[0x9ba..0x9bc].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// button_config_aim_up_r ($7E:09BE in ram_map).
+    pub fn set_button_config_aim_up_r(&mut self, value: u16) {
+        self.g_ram[0x9be..0x9c0].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// button_config_aim_down_l ($7E:09BC in ram_map).
+    pub fn set_button_config_aim_down_l(&mut self, value: u16) {
+        self.g_ram[0x9bc..0x9be].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// unused_word_7e09e8 ($7E:09E8 in ram_map).
+    pub fn set_unused_word_7e09e8(&mut self, value: u16) {
+        self.g_ram[0x9e8..0x9ea].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// debug_flag ($7E:09E6 in ram_map).
+    pub fn set_debug_flag(&mut self, value: u16) {
+        self.g_ram[0x9e6..0x9e8].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// moonwalk_flag ($7E:09E4 in ram_map).
+    pub fn set_moonwalk_flag(&mut self, value: u16) {
+        self.g_ram[0x9e4..0x9e6].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// unused_word_7e0df8 ($7E:0DF8 in ram_map).
+    pub fn set_unused_word_7e0df8(&mut self, value: u16) {
+        self.g_ram[0xdf8..0xdfa].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// unused_word_7e0dfa ($7E:0DFA in ram_map).
+    pub fn set_unused_word_7e0dfa(&mut self, value: u16) {
+        self.g_ram[0xdfa..0xdfc].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// unused_word_7e0dfc ($7E:0DFC in ram_map).
+    pub fn set_unused_word_7e0dfc(&mut self, value: u16) {
+        self.g_ram[0xdfc..0xdfe].copy_from_slice(&value.to_le_bytes());
+    }
+
     /// frame_handler_alfa ($7E:0A42 in ram_map).
     pub fn set_frame_handler_alfa(&mut self, value: u16) {
         self.g_ram[0xa42..0xa44].copy_from_slice(&value.to_le_bytes());
