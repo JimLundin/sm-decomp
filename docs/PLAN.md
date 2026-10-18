@@ -7999,6 +7999,42 @@ pointer reads, full pointer Cartesian coverage, hardware/render/audio timing
 and credits remain open; held HDMA diagnosis stays stopped. Continue
 executed jump/call opcode cleanup.
 
+Palette-span throughput (2026-10-19): enabled-render profiling after
+scanline event stepping places 12.16s of a 25.18s/20,000-frame run in
+PpuDrawWholeLine (including background work), with 8,960,000 actual calls.
+Its no-color-math palette conversion now receives separate destination and
+source slices plus palette/brightness inputs. This gives the compiler
+nonaliasing pixel storage across the loop. Palette lookup, channel ordering,
+zero alpha, clipping mask and destination advancement remain exact. Empty
+and inverted in-bounds spans retain the old do-loop's one-pixel behavior.
+No state/cache fields, snapshot checks or comparison masks change.
+
+Same-source enabled-render 20,000-frame baseline/candidate/candidate/baseline
+times are 19.67/15.90/15.96/17.94s, all 20,000/0; the repeated candidate
+improvement is about 11..19 percent. Separate actual old/current row execution
+compares every BGRA byte and both background buffers: 8,960,000 rows over
+20,000 any% frames and 26,034,400 rows over full Waver match exactly.
+The latter retains 58,109/71 and the first pixel mismatch at frame 28,228,
+(255,223), channel 1, 00/84. Actual helper checks pass 196,864 palette-value/
+span output cases plus 65,792 complete guarded-buffer boundary cases,
+including equal/inverted spans. Temporary wrappers stay outside maintained
+source; no ROM-derived observations are committed.
+
+Frozen final source passes normal any% 129,712/0 (67.69s), enabled-render
+any% 129,712/0 (145.40s), and enabled-render Waver 58,109/71 (66.61s), native
+exits 0/0/1. The normal run still skips rendering and establishes only its
+explicit regression scope. Single full-run times have concurrent-load noise;
+the repeated paired sample is the throughput comparison. Cargo fmt and
+fmt --check, Cargo release library, optimized direct core/DLL and normal-core
+metadata builds pass. Full Cargo release reaches frontend link and fails
+because SDL2 is unavailable; a separate fresh RUSTFLAGS build remains denied
+executing dependency build scripts (OS error 5). Direct full-source formatting
+passes. Progress: cast lines -11, Rust lines +9 provide the conversion helper;
+other focused counters unchanged. Verified frozen PPU matches the live file.
+Known render initialization/Waver71 and broader hardware/audio/route gaps remain.
+Next: measure the color-math conversion path and sprite evaluation under
+explicit rendering, then optimize measured hotspots without reducing checks.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

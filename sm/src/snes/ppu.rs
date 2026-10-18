@@ -2405,29 +2405,23 @@ unsafe fn PpuDrawWholeLine(mut ppu: *mut Ppu, mut y: uint) {
         if math_enabled_cur == 0 as uint32
             || fixed_color == 0 as uint32 && !(*ppu).halfColor && !rendered_subscreen
         {
-            let mut i_0: uint32 = left;
-            loop {
-                let mut color: uint32 =
-                    (*ppu).cgram[((*ppu).bgBuffers[0 as ::core::ffi::c_int as usize].data
-                        [i_0 as usize] as ::core::ffi::c_int
-                        & 0xff as ::core::ffi::c_int) as usize] as uint32;
-                *dst_0.offset(0 as ::core::ffi::c_int as isize) =
-                    (((*ppu).brightnessMult[(color & clip_color_mask) as usize]
-                        as ::core::ffi::c_int)
-                        << 16 as ::core::ffi::c_int
-                        | ((*ppu).brightnessMult
-                            [(color >> 5 as ::core::ffi::c_int & clip_color_mask) as usize]
-                            as ::core::ffi::c_int)
-                            << 8 as ::core::ffi::c_int
-                        | (*ppu).brightnessMult
-                            [(color >> 10 as ::core::ffi::c_int & clip_color_mask) as usize]
-                            as ::core::ffi::c_int) as uint32;
-                dst_0 = dst_0.offset(1);
-                i_0 = i_0.wrapping_add(1);
-                if !(i_0 < right) {
-                    break;
-                }
-            }
+            // The original do-loop emits one pixel even for an empty span.
+            let count = if right > left {
+                (right - left) as usize
+            } else {
+                1
+            };
+            draw_palette_span(
+                core::slice::from_raw_parts_mut(dst_0, count),
+                core::slice::from_raw_parts(
+                    (*ppu).bgBuffers[0].data.as_ptr().add(left as usize),
+                    count,
+                ),
+                &(*ppu).cgram,
+                &(*ppu).brightnessMult,
+                clip_color_mask as u16,
+            );
+            dst_0 = dst_0.add(count);
         } else {
             let mut half_color_map: *mut uint8 = if (*ppu).halfColor as ::core::ffi::c_int != 0 {
                 &raw mut (*ppu).brightnessMultHalf as *mut uint8
@@ -4000,4 +3994,19 @@ pub unsafe fn PpuGetCurrentRenderScale(
     mut render_flags: uint32_t,
 ) -> ::core::ffi::c_int {
     return 1 as ::core::ffi::c_int;
+}
+
+fn draw_palette_span(
+    dst: &mut [u32],
+    pixels: &[u16],
+    palette: &[u16; 256],
+    brightness: &[u8; 63],
+    mask: u16,
+) {
+    for (dst, &pixel) in dst.iter_mut().zip(pixels) {
+        let color = palette[usize::from(pixel & 0xff)];
+        *dst = u32::from(brightness[usize::from(color & mask)]) << 16
+            | u32::from(brightness[usize::from((color >> 5) & mask)]) << 8
+            | u32::from(brightness[usize::from((color >> 10) & mask)]);
+    }
 }
