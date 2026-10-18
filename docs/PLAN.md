@@ -5806,6 +5806,21 @@ normal-core metadata, direct full-source formatting and progress pass.
 Other bus devices, hardware emulation-mode accuracy and rendered/audio
 movie integration remain outside this probe. Only this QC note changes.
 
+Independent read-routing candidate QC (2026-10-18): 1,179,648 actual
+old/current byte long-LDA instructions pass across all 131,072 physical WRAM
+addresses and all 128 mirrored low-RAM banks, every offset 0000..1FFF.
+Independent expected mapped bytes, accumulator high-byte preservation,
+Z/N, PC and cycles pass; instruction/data aliases in 7F0000..3 are retained.
+A TEMP wrong 7F bank selector initially changes the instruction stream and
+hits an inherited assertion. Moving only the negative fixture program to
+7E8000 isolates data access; actual LDA then fails accumulator 43902 versus
+43903, native exit 3221226505. Positive native exit is zero. Maintained
+routing body still matches the freeze; optimized probe core/DLL, normal-core
+metadata, direct full-source format and progress pass. Independent partner
+source/fixture review finds no issue. Cartridge/PPU/register/DMA routing,
+word reads and hardware timing remain outside this actual RAM-data probe.
+Implementing agent retains source ownership; only this note changes.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
