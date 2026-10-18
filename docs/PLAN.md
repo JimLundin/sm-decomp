@@ -1249,6 +1249,21 @@ backend selection and full audio equality remain unfinished. Next: isolate
 the queue/player transition needed by the emulated-audio backend before
 enabling native upload transport in the differential frame loop.
 
+Independent physical-audio recovery checks (2026-10-18): a temporary
+copy of the maintained BOTH frame loop passes native exit 0 after boot
+400 and three compared frames. Checkpoint observations removed reproduce
+the exact committed CPU/audio bodies. Each Rust-side iteration deliberately
+mutates live APU RAM/cycles, DSP sample storage, write history and catchup;
+a one-time captured CGRAM snapshot fault forces failure or debug retry.
+Two normal/final adoptions, six before-restores, one failed-frame ROM
+rerun and one debug retry match separately observed physical baselines.
+Checks include full APU RAM, semantic DSP/SPC/timer/port fields, all buffered
+samples and offsets, full write history, catchup and live pointer bindings.
+The two forced comparison failures are expected. This closes those bounded
+physical recovery checks, not custom-player/queue isolation or audio
+comparison. No maintained source or progress counters change; temporary
+probe code and ROM-derived state remain untracked.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read
