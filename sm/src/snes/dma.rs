@@ -135,70 +135,37 @@ pub unsafe fn dma_saveload(
         game,
     );
 }
-pub unsafe fn dma_read(mut dma: *mut Dma, mut adr: uint16_t) -> uint8_t {
-    let mut c: uint8_t = ((adr as ::core::ffi::c_int & 0x70 as ::core::ffi::c_int)
-        >> 4 as ::core::ffi::c_int) as uint8_t;
-    match adr as ::core::ffi::c_int & 0xf as ::core::ffi::c_int {
+pub unsafe fn dma_read(dma: *mut Dma, address: u16) -> u8 {
+    let channel = &(*dma).channel[usize::from((address >> 4) & 7)];
+    match address & 0x0f {
         0 => {
-            let mut val: uint8_t = (*dma).channel[c as usize].mode;
-            val = (val as ::core::ffi::c_int
-                | ((*dma).channel[c as usize].fixed as ::core::ffi::c_int)
-                    << 3 as ::core::ffi::c_int) as uint8_t;
-            val = (val as ::core::ffi::c_int
-                | ((*dma).channel[c as usize].decrement as ::core::ffi::c_int)
-                    << 4 as ::core::ffi::c_int) as uint8_t;
-            val = (val as ::core::ffi::c_int
-                | ((*dma).channel[c as usize].unusedBit as ::core::ffi::c_int)
-                    << 5 as ::core::ffi::c_int) as uint8_t;
-            val = (val as ::core::ffi::c_int
-                | ((*dma).channel[c as usize].indirect as ::core::ffi::c_int)
-                    << 6 as ::core::ffi::c_int) as uint8_t;
-            val = (val as ::core::ffi::c_int
-                | ((*dma).channel[c as usize].fromB as ::core::ffi::c_int)
-                    << 7 as ::core::ffi::c_int) as uint8_t;
-            return val;
+            channel.mode
+                | (u8::from(channel.fixed) << 3)
+                | (u8::from(channel.decrement) << 4)
+                | (u8::from(channel.unusedBit) << 5)
+                | (u8::from(channel.indirect) << 6)
+                | (u8::from(channel.fromB) << 7)
         }
-        1 => return (*dma).channel[c as usize].bAdr,
-        2 => {
-            return ((*dma).channel[c as usize].aAdr as ::core::ffi::c_int
-                & 0xff as ::core::ffi::c_int) as uint8_t;
-        }
-        3 => {
-            return ((*dma).channel[c as usize].aAdr as ::core::ffi::c_int
-                >> 8 as ::core::ffi::c_int) as uint8_t;
-        }
-        4 => return (*dma).channel[c as usize].aBank,
-        5 => {
-            return ((*dma).channel[c as usize].size as ::core::ffi::c_int
-                & 0xff as ::core::ffi::c_int) as uint8_t;
-        }
-        6 => {
-            return ((*dma).channel[c as usize].size as ::core::ffi::c_int
-                >> 8 as ::core::ffi::c_int) as uint8_t;
-        }
-        7 => return (*dma).channel[c as usize].indBank,
-        8 => {
-            return ((*dma).channel[c as usize].tableAdr as ::core::ffi::c_int
-                & 0xff as ::core::ffi::c_int) as uint8_t;
-        }
-        9 => {
-            return ((*dma).channel[c as usize].tableAdr as ::core::ffi::c_int
-                >> 8 as ::core::ffi::c_int) as uint8_t;
-        }
-        10 => return (*dma).channel[c as usize].repCount,
-        11 | 15 => return (*dma).channel[c as usize].unusedByte,
+        1 => channel.bAdr,
+        2 => channel.aAdr as u8,
+        3 => (channel.aAdr >> 8) as u8,
+        4 => channel.aBank,
+        5 => channel.size as u8,
+        6 => (channel.size >> 8) as u8,
+        7 => channel.indBank,
+        8 => channel.tableAdr as u8,
+        9 => (channel.tableAdr >> 8) as u8,
+        10 => channel.repCount,
+        11 | 15 => channel.unusedByte,
         _ => {
-            '_c2rust_label: {
-                __assert_fail(
-                    b"0\0" as *const u8 as *const ::core::ffi::c_char,
-                    b"src/snes/dma.c\0" as *const u8 as *const ::core::ffi::c_char,
-                    118 as ::core::ffi::c_uint,
-                    __ASSERT_FUNCTION.as_ptr(),
-                );
-            };
-            return (*(*dma).snes).openBus;
+            __assert_fail(
+                b"0\0" as *const u8 as *const ::core::ffi::c_char,
+                b"src/snes/dma.c\0" as *const u8 as *const ::core::ffi::c_char,
+                118 as ::core::ffi::c_uint,
+                __ASSERT_FUNCTION.as_ptr(),
+            );
         }
-    };
+    }
 }
 pub unsafe fn dma_write(dma: *mut Dma, address: u16, value: u8) {
     let channel = &mut (*dma).channel[usize::from((address >> 4) & 7)];

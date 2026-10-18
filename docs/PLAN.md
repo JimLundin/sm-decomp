@@ -5105,6 +5105,27 @@ Only this note changes; no maintained Rust/residue changes, probes stay TEMP.
 Implementing session owns full-any% integration. Rendering/Waver71, event/
 audio timing and credits stay open; held HDMA diagnosis stays stopped.
 
+DMA register-reader cleanup (2026-10-18): dma_read now uses native channel
+selection, unsigned flag packing and direct low/high word-byte reads. Full raw
+mode bits remain intact; unused-byte B/F mirror and reserved C/D/E assertion
+diagnostics stay exact. Actual old/current checks pass 3,264,512 decoder/word/
+mode cases; each reserved offset returns the expected assertion exit 2.
+Independent QC passes 118,784 CPU/bus consumers: 53,248 actual LDA absolute
+reads in banks 00/80 and 65,536 raw-mode/flag bus reads. Register results,
+CPU flags/cycles and DMA state preservation match; a wrong-register mapping
+control fails, native exit 3221226505. QC and live reader bodies match exactly.
+
+Clean frozen dfac9c53 plus only this change passes any% 129,712/0 (267.15s),
+native exit 0. The movie is general regression coverage: prior full-route
+observers found no DMA register reads; actual consumer controls establish
+the changed path. Direct full-source formatting, normal-core metadata and
+optimized clean/probe core/DLL builds pass; Cargo fmt/build remain denied
+at cargo.exe launch. Progress: cast lines -30, Rust lines -33; other focused
+counters unchanged. No hardware timing, layout or comparison-rule changes.
+Later CPU/PPU work is outside the clean replay; probes and ROM assets remain
+untracked. Hardware scheduling, rendering/Waver71, held HDMA diagnosis,
+audio timing and boot-to-credits remain open; continue actual route work.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
