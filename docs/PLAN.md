@@ -2969,6 +2969,35 @@ assets committed. Next: COLDATA fixed-color register stores, preserving
 blue/green/red conditional order and unselected channels; keep Mode 7
 whole-line direct-color accuracy as a separate open investigation.
 
+CGADSUB snapshot gap and enforcement (2026-10-18): subtract, half and
+all six layer math-enable controls were absent from snapshots. Eight actual
+field mutations escaped comparison and survived rewind against identical
+registered buffers. Backdrop-enable, half and subtract mutations changed the
+next whole-line backdrop row; this fixture does not exercise the other five
+layers. No natural movie divergence is claimed.
+
+Snapshots now capture, compare and directly restore all eight controls.
+Actual checks pass all 256 register states/equalities and 2,048 register-bit/
+capture/restore faults. All eight fields restore exactly, and the three
+backdrop continuation controls restore identical rows. All 256 actual $2131
+writes match the independent bit mapping. Reused independent backdrop math
+checks pass 4,096 rows / 1,048,576 pixels across base/fixed colors, addition,
+subtraction and halving; 8,388,608 actual COLDATA writes also pass. Probe
+native exit 0. Eight frame-200 field faults each yield 3,600/1, native exit 1,
+named diagnostics and no cascade. Foreground composition and hardware
+accuracy are outside this snapshot probe's independent model.
+
+Dedicated source Verified 129712 frames: 0 failing frames (327.98s); Verified 58109 frames: 0 failing frames (144.94s); native exits 0. Cargo fmt/check,
+direct optimized core/DLL and normal-core metadata builds pass. Cargo release
+remains denied executing khronos_api's build script (OS error 5). Progress
+run passes; focused Rust lines +12 add snapshot state and diagnostics, with
+other focused counters unchanged. Builds include then-current concurrent
+audio/gameplay work; later edits need their own verification. Only these
+four CPU hunks and this note enter the commit. Ppu/RAM/save layouts remain
+unchanged; probes and ROM-derived assets stay ignored. Next: CGWSEL clip,
+math-prevention, subscreen and direct-color snapshot state. Held window-boundary/
+HDMA diagnosis, audio timing, masked RAM and complete-route gaps remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
