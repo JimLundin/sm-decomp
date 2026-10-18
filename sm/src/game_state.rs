@@ -213,6 +213,28 @@ impl Game {
         u16::from_le_bytes([self.g_ram[0x18a6], self.g_ram[0x18a7]])
     }
 
+    pub fn set_collision_detection_index(&mut self, value: u16) {
+        self.g_ram[0x18a6..0x18a8].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// interactive_enemy_indexes_write_ptr ($7E:17A6 in ram_map).
+    pub fn interactive_enemy_indexes_write_ptr(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x17a6], self.g_ram[0x17a7]])
+    }
+
+    /// Read a word of interactive_enemy_indexes ($7E:17EC in ram_map).
+    /// Sentinel traversal uses backing RAM, including words beyond the list.
+    pub fn interactive_enemy_index(&self, index: usize) -> u16 {
+        let offset = 0x17ec + index * 2;
+        u16::from_le_bytes([self.g_ram[offset], self.g_ram[offset + 1]])
+    }
+
+    /// enemy_index_colliding_dirs ($7E:182C in ram_map).
+    pub fn set_enemy_index_colliding_dir(&mut self, direction: u16, index: u16) {
+        let offset = 0x182c + usize::from(direction & 3) * 2;
+        self.g_ram[offset..offset + 2].copy_from_slice(&index.to_le_bytes());
+    }
+
     /// enemy_index_to_shake ($7E:0E1C in ram_map).
     pub fn set_enemy_index_to_shake(&mut self, value: u16) {
         self.g_ram[0xe1c..0xe1e].copy_from_slice(&value.to_le_bytes());

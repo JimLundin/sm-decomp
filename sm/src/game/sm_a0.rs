@@ -9063,61 +9063,66 @@ fn solid_enemy_probe_position(amount: i32, game: &Game) -> PositionAndWidth {
     pos
 }
 
-pub unsafe fn Samus_CheckSolidEnemyColl(mut amt: int32, game: &mut Game) -> CheckEnemyColl_Result {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x17a6 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        == 0
-    {
-        return CheckSolidEnemyColl_Result {
-            collision: 0 as uint16,
-            amt: amt,
-        };
+struct SolidEnemyCollisionBody<'a> {
+    bytes: &'a [u8],
+}
+impl<'a> SolidEnemyCollisionBody<'a> {
+    fn new(game: &'a Game, index: u16) -> Self {
+        Self {
+            bytes: &game.g_ram[0xf78 + usize::from(index)..],
+        }
     }
-    let mut pos = solid_enemy_probe_position(amt, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x18a6 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    let mut i_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+    fn word(&self, offset: usize) -> u16 {
+        u16::from_le_bytes([self.bytes[offset], self.bytes[offset + 1]])
+    }
+    fn x_pos(&self) -> u16 {
+        self.word(core::mem::offset_of!(EnemyData, x_pos))
+    }
+    fn y_pos(&self) -> u16 {
+        self.word(core::mem::offset_of!(EnemyData, y_pos))
+    }
+    fn x_width(&self) -> u16 {
+        self.word(core::mem::offset_of!(EnemyData, x_width))
+    }
+    fn y_height(&self) -> u16 {
+        self.word(core::mem::offset_of!(EnemyData, y_height))
+    }
+    fn frozen_timer(&self) -> u16 {
+        self.word(core::mem::offset_of!(EnemyData, frozen_timer))
+    }
+    fn properties(&self) -> u16 {
+        self.word(core::mem::offset_of!(EnemyData, properties))
+    }
+}
+
+fn solid_enemy_axis_overlaps(
+    enemy_position: u16,
+    samus_position: u16,
+    enemy_radius: u16,
+    samus_radius: u16,
+) -> bool {
+    let delta = enemy_position.wrapping_sub(samus_position);
+    let distance = (delta as i16).wrapping_abs() as u16;
+    distance < enemy_radius || distance.wrapping_sub(enemy_radius) < samus_radius
+}
+
+pub fn Samus_CheckSolidEnemyColl(amt: int32, game: &mut Game) -> CheckEnemyColl_Result {
+    if game.interactive_enemy_indexes_write_ptr() == 0 {
+        return CheckSolidEnemyColl_Result { collision: 0, amt };
+    }
+    let pos = solid_enemy_probe_position(amt, game);
+    game.set_collision_detection_index(0);
+    let mut list_index = 0;
     loop {
-        let mut v7: uint16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x17ec as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(i_0 as isize);
-        if v7 as ::core::ffi::c_int == 0xffff as ::core::ffi::c_int {
+        let index = game.interactive_enemy_index(list_index);
+        if index == 0xffff {
             break;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x18a6 as ::core::ffi::c_int as isize)
-            as *mut uint16) = v7;
-        let mut ED: *mut EnemyData = gEnemyData(v7 as ::core::ffi::c_int, game);
-        if !((*ED).frozen_timer == 0
-            && (*ED).properties as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-                == 0 as ::core::ffi::c_int)
-        {
-            let mut v9: *mut uint16 = &raw mut (*ED).x_pos;
-            let mut v10: *mut uint16 = &raw mut pos.x_pos;
-            let mut v11: uint16 =
-                abs16((*v9 as ::core::ffi::c_int - *v10 as ::core::ffi::c_int) as uint16);
-            let mut v12: bool = (v11 as ::core::ffi::c_int)
-                < *v9.offset(4 as ::core::ffi::c_int as isize) as ::core::ffi::c_int;
-            let mut v13: uint16 = (v11 as ::core::ffi::c_int
-                - *v9.offset(4 as ::core::ffi::c_int as isize) as ::core::ffi::c_int)
-                as uint16;
-            if v12 as ::core::ffi::c_int != 0
-                || (v13 as ::core::ffi::c_int)
-                    < *v10.offset(4 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-            {
-                let mut v14: uint16 = abs16(
-                    (*v9.offset(2 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-                        - *v10.offset(2 as ::core::ffi::c_int as isize) as ::core::ffi::c_int)
-                        as uint16,
-                );
-                v12 = (v14 as ::core::ffi::c_int)
-                    < *v9.offset(5 as ::core::ffi::c_int as isize) as ::core::ffi::c_int;
-                let mut v15: uint16 = (v14 as ::core::ffi::c_int
-                    - *v9.offset(5 as ::core::ffi::c_int as isize) as ::core::ffi::c_int)
-                    as uint16;
-                if v12 as ::core::ffi::c_int != 0
-                    || (v15 as ::core::ffi::c_int)
-                        < *v10.offset(5 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
+        game.set_collision_detection_index(index);
+        let enemy = SolidEnemyCollisionBody::new(game, index);
+        if enemy.frozen_timer() != 0 || enemy.properties() & 0x8000 != 0 {
+            if solid_enemy_axis_overlaps(enemy.x_pos(), pos.x_pos, enemy.x_width(), pos.width) {
+                if solid_enemy_axis_overlaps(enemy.y_pos(), pos.y_pos, enemy.y_height(), pos.height)
                 {
                     let direction = game.samus_collision_direction() & 3;
                     let (distance, exact) = match direction {
@@ -9127,15 +9132,15 @@ pub unsafe fn Samus_CheckSolidEnemyColl(mut amt: int32, game: &mut Game) -> Chec
                                 (
                                     game.samus_x_pos(),
                                     game.samus_x_radius(),
-                                    (*ED).x_pos,
-                                    (*ED).x_width,
+                                    enemy.x_pos(),
+                                    enemy.x_width(),
                                 )
                             } else {
                                 (
                                     game.samus_y_pos(),
                                     game.samus_y_radius(),
-                                    (*ED).y_pos,
-                                    (*ED).y_height,
+                                    enemy.y_pos(),
+                                    enemy.y_height(),
                                 )
                             };
                             let enemy_edge = enemy_position.wrapping_add(enemy_radius);
@@ -9152,15 +9157,15 @@ pub unsafe fn Samus_CheckSolidEnemyColl(mut amt: int32, game: &mut Game) -> Chec
                                 (
                                     game.samus_x_pos(),
                                     game.samus_x_radius(),
-                                    (*ED).x_pos,
-                                    (*ED).x_width,
+                                    enemy.x_pos(),
+                                    enemy.x_width(),
                                 )
                             } else {
                                 (
                                     game.samus_y_pos(),
                                     game.samus_y_radius(),
-                                    (*ED).y_pos,
-                                    (*ED).y_height,
+                                    enemy.y_pos(),
+                                    enemy.y_height(),
                                 )
                             };
                             let distance = (i32::from(enemy_position)
@@ -9178,8 +9183,7 @@ pub unsafe fn Samus_CheckSolidEnemyColl(mut amt: int32, game: &mut Game) -> Chec
                             game.set_samus_y_subpos(0);
                         }
                         let index = game.collision_detection_index();
-                        let offset = 0x182c + usize::from(game.samus_collision_direction() & 3) * 2;
-                        game.g_ram[offset..offset + 2].copy_from_slice(&index.to_le_bytes());
+                        game.set_enemy_index_colliding_dir(game.samus_collision_direction(), index);
                         return CheckSolidEnemyColl_Result {
                             collision: 0xffff,
                             amt: if exact { 0 } else { i32::from(distance) << 16 },
@@ -9188,12 +9192,9 @@ pub unsafe fn Samus_CheckSolidEnemyColl(mut amt: int32, game: &mut Game) -> Chec
                 }
             }
         }
-        i_0 += 1;
+        list_index += 1;
     }
-    return CheckSolidEnemyColl_Result {
-        collision: 0 as uint16,
-        amt: amt,
-    };
+    CheckSolidEnemyColl_Result { collision: 0, amt }
 }
 pub unsafe fn CheckIfEnemyTouchesSamus(mut k: uint16, game: &mut Game) -> uint16 {
     let mut E: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);

@@ -1821,6 +1821,23 @@ Rust lines -131; other counters unchanged. Next: solid-enemy overlap checks
 and list/index byte-backed access, preserving wrapped abs16, strict radius
 comparisons, frozen/property gate and sentinel traversal.
 
+Solid-enemy collision now uses a private borrowed byte view for enemy fields
+and a shared safe axis-overlap predicate. Packed EnemyData field offsets,
+wrapped abs16 including 8000, strict radius comparisons and frozen/property
+gates remain exact. Named list/index methods preserve reset-before-traversal,
+write-before-enemy-read and sentinel order, including backing RAM beyond the
+nominal list and fields aliasing list/index writes. The full probe is safe
+Rust; no raw pointers remain. Prior Rust comparison passes 2,952,972 complete-
+function full-RAM/return cases; independent checks pass 9,633,792 overlap
+predicates and 250,000 full-function cases including high/unaligned enemy
+slots and long sentinel traversal. Stable optimized core/DLL build and
+direct full-source format pass; Cargo fmt/build remain ASR-denied. Any%:
+129,712 frames, zero failures (195.55s); Waver route: 58,109 frames, zero
+failures (91.76s). Raw offsets -4, unsafe functions -1, cast lines -26;
+Rust lines +23 provide the byte view and four named RAM accessors. Next:
+CheckIfEnemyTouchesSamus overlap arithmetic and live byte-backed enemy/Samus
+reads, retaining its signed Y gate and asymmetric three-pixel offset.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
