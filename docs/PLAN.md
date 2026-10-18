@@ -7255,6 +7255,39 @@ were attempted but Windows denies cargo.exe execution. Progress cast lines
 enter this commit. Existing explicit-render Waver baseline failures and
 complete boot-to-credits coverage remain separate plan gaps.
 
+APU timer-loop cleanup (2026-10-18): apu_cycle updates three timers through
+scoped native byte state after the unchanged debug/SPC/DSP prefix. Timer
+zero-count reloads retain 128/128/16; disabled timers still count down.
+Enabled divider increments wrap, target equality resets the divider and
+increments the counter with the original four-bit mask. Countdown and global
+cycle increment retain their order and wrapping. No callback occurs while
+a timer reference exists. Read-only subagent finds no defect.
+
+Actual old/current function ticks pass 7,340,032 timer cases over all target/
+divider bytes, eight counter values, seven countdowns and both enable states,
+checking all three timers independently. Five additional global-cycle wrap
+cases pass the maintained function. These use a waiting SPC/countdown and
+non-DSP cycle phase, so callback effects are covered separately. Independent
+QC passes 184,320 actual ticks including real SPC MOV A,timer reads before
+timer updates, DSP ticks, whole DSP/RAM comparison and independent timer
+expectations. Target/reload/countdown/wrap boundaries pass. Mutating timer-2
+reload to 128 is caught (countdown 127 versus 15), native assertion exit
+3221226505. Frozen/live routine equality and independent review pass.
+
+Normal instrumented verification passes 3,600/0 (6.74s), native exit 0,
+with zero apu_cycle calls. A separate probe disables custom audio before
+SnesInit and passes actual ROM/SPC boot 3,600/0 (7.07s), native exit 0,
+executing apu_cycle 70,306,849 times. This establishes execution in context,
+not independent audio equivalence. Clean frozen 93f7651b plus only this timer
+loop passes any% 129,712/0 (248.16s), native exit 0. Direct full-source
+format, normal-core metadata and optimized clean/probe core/DLL builds pass;
+Cargo fmt/check/release remain launch-denied, so that required check stays
+unmet. Progress/diff pass: focused cast lines -10, Rust lines -11, other
+categories unchanged. Later peer integration (including M7SEL recovery),
+hardware/audio timing, rendering/Waver71, masked RAM and credits remain open.
+Held HDMA diagnosis stays stopped. Continue executed APU/SPC paths and route
+coverage with independent subagents; peer owns remote sync.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

@@ -163,30 +163,19 @@ pub unsafe fn apu_cycle(mut apu: *mut Apu, game: &mut Game) {
     if (*apu).cycles & 0x1f as uint32_t == 0 as uint32_t {
         dsp_cycle((*apu).dsp);
     }
-    let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    while i < 3 as ::core::ffi::c_int {
-        if (*apu).timer[i as usize].cycles as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-            (*apu).timer[i as usize].cycles = (if i == 2 as ::core::ffi::c_int {
-                16 as ::core::ffi::c_int
-            } else {
-                128 as ::core::ffi::c_int
-            }) as uint8_t;
-            if (*apu).timer[i as usize].enabled {
-                (*apu).timer[i as usize].divider = (*apu).timer[i as usize].divider.wrapping_add(1);
-                if (*apu).timer[i as usize].divider as ::core::ffi::c_int
-                    == (*apu).timer[i as usize].target as ::core::ffi::c_int
-                {
-                    (*apu).timer[i as usize].divider = 0 as uint8_t;
-                    (*apu).timer[i as usize].counter =
-                        (*apu).timer[i as usize].counter.wrapping_add(1);
-                    (*apu).timer[i as usize].counter =
-                        ((*apu).timer[i as usize].counter as ::core::ffi::c_int
-                            & 0xf as ::core::ffi::c_int) as uint8_t;
+    for i in 0..3 {
+        let timer = &mut (*apu).timer[i];
+        if timer.cycles == 0 {
+            timer.cycles = if i == 2 { 16 } else { 128 };
+            if timer.enabled {
+                timer.divider = timer.divider.wrapping_add(1);
+                if timer.divider == timer.target {
+                    timer.divider = 0;
+                    timer.counter = timer.counter.wrapping_add(1) & 0xf;
                 }
             }
         }
-        (*apu).timer[i as usize].cycles = (*apu).timer[i as usize].cycles.wrapping_sub(1);
-        i += 1;
+        timer.cycles = timer.cycles.wrapping_sub(1);
     }
     (*apu).cycles = (*apu).cycles.wrapping_add(1);
 }
