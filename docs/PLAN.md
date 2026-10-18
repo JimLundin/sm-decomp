@@ -4971,6 +4971,28 @@ maintained Rust/residue changes occur. Implementing commit owns full-any%
 integration. Rendering/Waver71, event/audio timing and credits stay open;
 held HDMA diagnosis stays stopped.
 
+Full rendered-route diagnostic comparison (2026-10-18): both retained
+Waver and broad elevator-arrival inputs run on the same frozen d217ea15 DLL,
+with explicit rendering enabled and only the diagnostic-print gate expanded.
+Waver completes 58,109/71 (185.74s), arrival 62,817/71 (171.88s), native
+exits 1. All 71 ordered compare-failure diagnostics match exactly: frame,
+pixel, channel and mine/theirs byte values. Every diagnostic is a rendered
+pixel difference; frames range 28,228..28,479. This does not classify their
+cause or establish complete RAM/hardware/audio fidelity.
+
+Input audit confirms the broad route contains the exact 58,109-frame Waver
+prefix plus 4,708 frames. No additional reported failures occur in that
+extension; rendering failures recur only in the shared early prefix in
+these sampled runs. Prior first-error-only logs could not prove this.
+The isolated print change does not alter comparison/recovery; no maintained
+source, pixels or snapshots are normalized. Held HDMA diagnosis stays held.
+No maintained Rust or focused residue counters change; probes and ROM-derived
+outputs stay ignored. Next: inspect a materially different normal route from
+the existing 9969/9938 prefix toward gameplay progression, preserving the
+known 71 rendered baseline failures and recording any new ones separately.
+The stopped 9AD9 ammunition suffix experiments remain held. Credits are
+unproved; these runs still end in gameplay.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
