@@ -108,6 +108,7 @@ pub struct Snapshot {
     pub interrupt_latches: (bool, bool, bool),
     pub interrupt_enables: (bool, bool, bool),
     pub h_timer: uint16_t,
+    pub wram_port_address: uint32_t,
     pub arithmetic: (uint8_t, uint16_t, uint16_t, uint16_t),
     pub vTimer: uint16_t,
     pub ram: [uint8; 131072],
@@ -1759,6 +1760,7 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     (*s).interrupt_latches = (snes.inNmi, snes.inIrq, snes.inVblank);
     (*s).interrupt_enables = (snes.hIrqEnabled, snes.vIrqEnabled, snes.nmiEnabled);
     (*s).h_timer = snes.hTimer;
+    (*s).wram_port_address = snes.ramAdr;
     (*s).arithmetic = (
         snes.multiplyA,
         snes.multiplyResult,
@@ -1976,6 +1978,7 @@ unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     (snes.inNmi, snes.inIrq, snes.inVblank) = (*s).interrupt_latches;
     (snes.hIrqEnabled, snes.vIrqEnabled, snes.nmiEnabled) = (*s).interrupt_enables;
     snes.hTimer = (*s).h_timer;
+    snes.ramAdr = (*s).wram_port_address;
     (
         snes.multiplyA,
         snes.multiplyResult,

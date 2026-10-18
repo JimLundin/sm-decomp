@@ -4070,6 +4070,30 @@ implementation session owns the focused production restore and its BOTH
 success/recovery/debug integration. WRIO/autojoy, DMA context, event timing,
 enabled-render Waver71, held HDMA and boot-to-credits remain open.
 
+WRAM data-port address rewind (2026-10-18): snapshots capture/restore
+Snes.ramAdr separately from WRAM bytes. Baseline actual $2180 read at address
+zero advances the port to one; restoring the snapshot leaves one and the
+next read targets the wrong byte. Candidate passes 2,621,440 actual bus-port
+continuations over all 131,072 addresses: reads, writes, 17-bit wrap and
+partial $2181/$2182/$2183 writes with reserved-bit masking. Restored writes
+target the saved byte and preserve the next byte. Independent CPU consumer
+QC separately passes 262,144 read/write continuations, recorded above.
+
+Temporary frame-200 port disturbances exercise ordinary paired rewind and
+the failed-frame rewind before ROM rerun: 3,600/0 and 3,600/1, native exits
+0/1, with exactly one intentional failure and no cascade. The first recovery
+probe placed an assertion in successful adoption; it was corrected to check
+the actual failed-frame path and rerun. Clean frozen 4c9f3d1c plus only the
+three address snapshot lines passes any% 129,712/0 (264.82s), native exit 0.
+Direct full-source formatting, optimized core/DLL and normal-core metadata
+pass; Cargo fmt/build remain denied at cargo.exe launch. Progress: Rust lines
++3 preserve address context; other focused counters unchanged. No g_ram,
+SNES/CPU or disk-save layout change. Final ROM/Rust port-address equality is
+not enforced. Concurrent arithmetic/input/audio/PPU changes are outside this
+clean replay; their integration remains separate. Input/DMA context, event
+generation, rendering/HDMA, audio timing and boot-to-credits remain open.
+Probe source, logs and ROM-derived assets stay outside tracked files.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
