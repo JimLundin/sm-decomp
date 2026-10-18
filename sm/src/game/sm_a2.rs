@@ -2370,47 +2370,67 @@ fn set_mini_crocomire_preinstruction(index: u16, preinstruction: u16, state: u16
     game.g_ram[field..field + 2].copy_from_slice(&state.to_le_bytes());
 }
 
-pub unsafe fn MiniCrocomire_Init(game: &mut Game) {
-    let mut E: *mut Enemy_MiniCrocomire = Get_MiniCrocomire(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A2 as ::core::ffi::c_int as uint16;
-    let mut v1: ::core::ffi::c_int = 8 as ::core::ffi::c_int
-        * (*E).mce_parameter_2 as ::core::ffi::c_int
-        >> 1 as ::core::ffi::c_int;
-    (*E).mce_var_B = *(game.g_rom.offset(
-        (((0xa28187 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xa28187 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
-        .offset(v1 as isize);
-    (*E).mce_var_A = *(game.g_rom.offset(
-        (((0xa28187 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xa28187 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
-        .offset((v1 + 1 as ::core::ffi::c_int) as isize);
-    (*E).mce_var_D = *(game.g_rom.offset(
-        (((0xa28187 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xa28187 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
-        .offset((v1 + 2 as ::core::ffi::c_int) as isize);
-    (*E).mce_var_C = *(game.g_rom.offset(
-        (((0xa28187 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xa28187 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
-        .offset((v1 + 3 as ::core::ffi::c_int) as isize);
+struct MiniCrocomireState<'a> {
+    bytes: &'a mut [u8],
+}
+impl<'a> MiniCrocomireState<'a> {
+    fn new(game: &'a mut Game, index: u16) -> Self {
+        Self {
+            bytes: &mut game.g_ram[0xf78 + usize::from(index)..],
+        }
+    }
+    fn read(&self, offset: usize) -> u16 {
+        u16::from_le_bytes([self.bytes[offset], self.bytes[offset + 1]])
+    }
+    fn write(&mut self, offset: usize, value: u16) {
+        self.bytes[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+    }
+    fn parameter_1(&self) -> u16 {
+        self.read(core::mem::offset_of!(Enemy_MiniCrocomire, mce_parameter_1))
+    }
+    fn parameter_2(&self) -> u16 {
+        self.read(core::mem::offset_of!(Enemy_MiniCrocomire, mce_parameter_2))
+    }
+    fn set_var_b(&mut self, value: u16) {
+        self.write(core::mem::offset_of!(Enemy_MiniCrocomire, mce_var_B), value);
+    }
+    fn set_var_a(&mut self, value: u16) {
+        self.write(core::mem::offset_of!(Enemy_MiniCrocomire, mce_var_A), value);
+    }
+    fn set_var_d(&mut self, value: u16) {
+        self.write(core::mem::offset_of!(Enemy_MiniCrocomire, mce_var_D), value);
+    }
+    fn set_var_c(&mut self, value: u16) {
+        self.write(core::mem::offset_of!(Enemy_MiniCrocomire, mce_var_C), value);
+    }
+    fn set_preinstruction(&mut self, value: u16) {
+        self.write(core::mem::offset_of!(Enemy_MiniCrocomire, mce_var_F), value);
+    }
+    fn set_state(&mut self, value: u16) {
+        self.write(core::mem::offset_of!(Enemy_MiniCrocomire, mce_var_E), value);
+    }
+}
+pub fn MiniCrocomire_Init(game: &mut Game) {
+    let index = game.cur_enemy_index();
+    game.enemy_instructions(index)
+        .set_spritemap_pointer(addr_kSpritemap_Nothing_A2 as u16);
+    // Parameter indexing is wider than a SNES word; do not wrap this offset.
+    let table_offset = usize::from(MiniCrocomireState::new(game, index).parameter_2()) * 8;
+    let value = game.read_rom_word(0xa28187, table_offset);
+    MiniCrocomireState::new(game, index).set_var_b(value);
+    let value = game.read_rom_word(0xa28187, table_offset + 2);
+    MiniCrocomireState::new(game, index).set_var_a(value);
+    let value = game.read_rom_word(0xa28187, table_offset + 4);
+    MiniCrocomireState::new(game, index).set_var_d(value);
+    let value = game.read_rom_word(0xa28187, table_offset + 6);
+    MiniCrocomireState::new(game, index).set_var_c(value);
     MiniCrocomire_Func1(game);
-    (*E).mce_var_F = (0xa28a43 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    let mut mce_parameter_1: uint16 = (*E).mce_parameter_1;
-    (*E).mce_var_E = mce_parameter_1;
-    if mce_parameter_1 != 0 {
+    MiniCrocomireState::new(game, index).set_preinstruction(0x8a43);
+    let parameter = MiniCrocomireState::new(game, index).parameter_1();
+    MiniCrocomireState::new(game, index).set_state(parameter);
+    if parameter != 0 {
         MiniCrocomire_Func3(game);
-        (*E).mce_var_F = (0xa28a5c as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        MiniCrocomireState::new(game, index).set_preinstruction(0x8a5c);
     }
 }
 pub unsafe fn MiniCrocomire_Main(game: &mut Game) {

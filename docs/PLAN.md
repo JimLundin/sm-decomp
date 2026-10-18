@@ -2478,6 +2478,20 @@ and predate the concurrent oracle session's APU-read assertion removal.
 Next: Mini Crocomire initialization safe ROM table reads and state fields,
 retaining wide parameter offsets and captured-slot callback writes.
 
+Mini Crocomire initialization now uses safe live-ROM word reads and a named
+byte-backed state view. Parameter-2 offsets retain their full width; B/A/D/C
+writes remain sequential. The slot captured before spritemap setup remains
+selected across live-index animation calls; F-before-parameter-1-read,
+E-before-branch and final F writes retain their order. Direct full-source
+format and stable optimized core/DLL build pass; Cargo fmt/build remain
+access-denied. Final-source any% passes 129,712 frames with zero failures
+(187.51s); Waver passes 58,109/0 (85.95s), both process exits 0. Raw offsets
+-1, unsafe functions -1, cast lines -23; Rust lines +20 provide the state
+view. Other counters unchanged. These replays include the committed SPC BRA
+and APU-read fixes; audio equivalence and complete route coverage remain
+unverified. Next: Mini Crocomire Main captured-slot dispatch, then movement
+callbacks retaining live index reads across calls.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
