@@ -7204,6 +7204,34 @@ Full operand Cartesian coverage, arbitrary read mutation, other addressing
 modes, hardware/render/audio timing and credits remain open; held HDMA
 diagnosis stays stopped. Continue executed shift helpers.
 
+Landing-site running-approach bounds (2026-10-18): from60402 restored
+free-movement prefix, left/run10, left/run/jump32, right2, right/jump12,
+left/jump12, right2, right/jump25, left/jump35, neutral120 completes60652/71
+(190.86s), nativeexit1. Turn nearX701/Y1111 misses the cliff; no wall-jump
+pose is seen, finalX627/Y1195. The approach has roughly2px/frame horizontal
+motion, but starts too far right for contact during its rising arc.
+
+Closer left/run38, left/run/jump28, right2, right/jump14, left/jump14,
+right2, right/jump25, left/jump35, neutral120 completes60680/71 (174.06s),
+nativeexit1. Starts jump nearX651/Y1207; spin reachesX613/Y1143 beneath
+the lower overhang. At60470 it has wall-jump pose0083 X613/Y1150, then
+falls; this sampled pose alone does not establish the exact launch/collision
+callbacks. Later ordinary jump reachesY1098 nearX638; finalX629/Y1195.
+Health99/99, missiles5/5 and items1004 preserved. Neither trial gains
+an established ledge, room or definition. Both ordered diagnostic lists
+exactly match frozen d217ea15 Waver71;16rooms/16enemy definitions remain.
+
+Next bounded trial: intermediate left/run22 before the28-frame running
+spin approach, then retain the2-frame away release. Aim for wall contact
+nearX640 whileY is still below the upper slope; observe full velocity/
+collision if a wall-jump launch occurs. Current source untouched; frozen
+same-DLL explicit-render any%129712/0 remains the input-only regression.
+Cargo fmt/release remain launch-denied; direct full-source format passes.
+Own residue delta zero. Peer hardware changes/remote sync remain separate;
+cleanup peer retired six unused historical Waver probe directories to TEMP
+while preserving all route dependencies. Upper99BD tuning,9AD9 ammunition
+and HDMA stay held. Inputs/probes/ROM-derived outputs remain ignored.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
