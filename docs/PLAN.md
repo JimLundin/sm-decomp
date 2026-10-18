@@ -1548,8 +1548,14 @@ Concurrent gameplay/display edits are excluded from its frozen source.
 Frame-state equality is separate from ordinary command timing, custom-driver
 sample equivalence and autonomous RM_MINE gameplay. The physical verifier
 still adopts ROM state after comparison. Native APU continuation within BOTH
-is being checked independently; complete queue adoption and rendered waveform
-comparison remain distinct from the new snapshot guard.
+passes an isolated 129,712/0 replay (256.98s), native exit 0: after successful
+comparison, restore mine's physical audio snapshot instead of retaining the
+ROM audio snapshot. This retains independently produced Rust APU state across
+all observed frames and still compares the next ROM/Rust frame. Gameplay,
+PPU and queue adoption retain the normal BOTH policy. This is physical APU
+continuation within the differential loop, not autonomous RM_MINE gameplay.
+Complete queue adoption and rendered waveform comparison remain distinct from
+the new snapshot guard; the maintained adoption policy is unchanged.
 
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
