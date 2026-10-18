@@ -1697,6 +1697,46 @@ Only this source hunk and note are committed; probes/ROM-derived data stay
 ignored. Next: classify remaining omitted display/register state; audio timing,
 HDMA, masked RAM and boot-to-credits coverage remain open.
 
+Mode 7 register-group enforcement (2026-10-18): snapshots now capture,
+restore and compare all eight signed matrix words (A/B/C/D, centers and scroll)
+with bounded diagnostics. Independent actual pre-change faults in A and B
+pass verification, survive rewind and change MPYL. Their multiplication-port
+model checks 50,331,648 signed A/B-high/port cases. This is a verifier gap,
+not a natural gameplay divergence. Full register-group capture preserves
+rendering inputs beyond the two multiplication operands; Ppu/RAM/save layout
+and all PPU arithmetic remain unchanged.
+
+Final-source probes pass 65,536 transformed matrix capture/restores and 196,608
+actual restored product reads. Each word's individual domain is exhausted;
+the matrices are related transformations, not every eight-word tuple. All
+524,288 byte-latch/register/input write cases pass actual restored writes at
+$211B..2120 and $210D/E, checking destination masks, shared latch and other
+words. All 256 bidirectional snapshot bit faults are detected; two equal states
+pass. A strengthened probe separately captures/detects/restores all 256 actual
+Ppu bit mutations from zero/all-one initial matrices. Each of eight actual
+post-render frame-200 field faults yields 3,600/1, matrix diagnostics, zero RAM
+differences and native exit 1. Other probes return native exit 0.
+
+Rendering continuation checks pass 3,840 restored rows / 983,040 pixel-result
+triples across eight matrix fields, eight seeds, four flips, five lines and
+three outside-map settings; every mutated row differs before restoration.
+These use synthetic VRAM and actual maintained Mode7 start/pixel functions
+against independent integer/VRAM models. They do not exercise final BGRA
+composition or every production drawing path. Probe cpu_infra source prefixes
+match maintained source after removing appended wrappers. Mode7 control flags
+and derived starts remain omitted and require separate classification.
+
+Dedicated maintained-source any% passes 129,712/0 (259.48s); Waver passes
+58,109/0 (125.21s), both native exits 0. The build includes the then-current
+health-restoration source; later concurrent gameplay edits are excluded from
+these results. Cargo fmt/fmt --check, direct optimized core/DLL and normal-core
+metadata builds pass. Cargo release remains blocked executing khronos_api's
+build script (OS error 5). Rust lines +14 implement this snapshot group and
+diagnostics; other residue counters unchanged for this change. Only this
+source hunk and note are committed; probe/ROM-derived data stay ignored.
+Next: classify omitted Mode7/display controls and derived state; audio timing,
+HDMA, masked RAM and boot-to-credits coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
