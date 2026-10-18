@@ -7145,6 +7145,42 @@ OSerror5. No maintained Rust edits or own residue delta; live progress is
 host probes stay ignored. Upper99BD tuning,9AD9 ammunition and HDMA remain
 held. Peer owns hardware edits, cleanup and remote sync.
 
+APU writer cleanup (2026-10-18): apu_cpuWrite uses native word/byte
+dispatch, timer enable masks and bounded port/target indexes. Divider then
+counter reset only on disabled-to-enabled transitions; ordered timer enables,
+port-pair clears and boot-ROM control remain exact. F8/F9 still writes input
+ports 4/5. DSP history/callback body is unchanged except its hexadecimal arm
+label, including signed-count quirks. RAM stores remain last for every address.
+Read-only subagent finds no defect; the rest of this file is unchanged.
+
+Actual old/current writes pass 16,780,032 pairs: every word address and byte,
+2,048 complete enable-state/value combinations and 768 high-DSP history
+0/255/256 boundary cases. Independent timer/control/port/RAM expectations
+pass; whole RAM is checked at each value boundary in the address matrix.
+Independent QC passes 47,104 actual SPC MOV abs,A pairs, covering control,
+ports, targets, ordinary RAM and high-bit DSP history. Another 13,056 actual
+SPC F3 pairs exercise low/high DSP addresses and history counts 0/255/256,
+comparing copied-baseline whole DSP bytes plus independent selected volume,
+high-bit no-write, history and RAM expectations. Mutating already-enabled
+timer writes to reset counters/dividers is caught at F1, value 1, initial
+enabled mask 1 (0/0 versus 19/73), native assertion exit 3221226505.
+Frozen/live writer equality and independent review pass.
+
+Normal instrumented verification passes 3,600/0 (7.40s), native exit 0,
+with zero writer calls. A separate probe disables custom audio before
+SnesInit and passes actual ROM/SPC boot 3,600/0 (11.13s), native exit 0.
+Control/address/DSP/output/input/target/ordinary-RAM writer calls are
+10/303,376/303,368/278,063/0/1/2,857,778. Constructed actual SPC tests supply
+input-port and remaining boundary coverage; audio equivalence is not proven.
+Clean frozen 3ecde6a4 plus only this writer passes any% 129,712/0
+(273.03s), native exit 0. Direct full-source format, normal-core metadata
+and optimized clean/probe core/DLL builds pass; Cargo fmt/check/release remain
+launch-denied, so the required Cargo check stays unmet. Progress/diff pass:
+focused cast lines -15, Rust lines -5; other categories unchanged. Later peer
+integration, hardware/audio timing, rendering/Waver71, masked RAM and credits
+remain open. Held HDMA diagnosis stays stopped. Continue executed APU/SPC
+hardware paths and route coverage with independent subagents; peer owns sync.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

@@ -209,35 +209,32 @@ pub unsafe fn apu_cpuRead(apu: *mut Apu, adr: u16) -> u8 {
     }
     (*apu).ram[usize::from(adr)]
 }
-pub unsafe fn apu_cpuWrite(mut apu: *mut Apu, mut adr: uint16_t, mut val: uint8_t) {
-    match adr as ::core::ffi::c_int {
-        241 => {
-            let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-            while i < 3 as ::core::ffi::c_int {
-                if !(*apu).timer[i as usize].enabled
-                    && val as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << i != 0
-                {
-                    (*apu).timer[i as usize].divider = 0 as uint8_t;
-                    (*apu).timer[i as usize].counter = 0 as uint8_t;
+pub unsafe fn apu_cpuWrite(apu: *mut Apu, adr: u16, val: u8) {
+    match adr {
+        0xf1 => {
+            for i in 0..3 {
+                let enabled = val & (1 << i) != 0;
+                let timer = &mut (*apu).timer[i];
+                if !timer.enabled && enabled {
+                    timer.divider = 0;
+                    timer.counter = 0;
                 }
-                (*apu).timer[i as usize].enabled =
-                    val as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << i != 0;
-                i += 1;
+                timer.enabled = enabled;
             }
-            if val as ::core::ffi::c_int & 0x10 as ::core::ffi::c_int != 0 {
-                (*apu).inPorts[0 as ::core::ffi::c_int as usize] = 0 as uint8_t;
-                (*apu).inPorts[1 as ::core::ffi::c_int as usize] = 0 as uint8_t;
+            if val & 0x10 != 0 {
+                (*apu).inPorts[0] = 0;
+                (*apu).inPorts[1] = 0;
             }
-            if val as ::core::ffi::c_int & 0x20 as ::core::ffi::c_int != 0 {
-                (*apu).inPorts[2 as ::core::ffi::c_int as usize] = 0 as uint8_t;
-                (*apu).inPorts[3 as ::core::ffi::c_int as usize] = 0 as uint8_t;
+            if val & 0x20 != 0 {
+                (*apu).inPorts[2] = 0;
+                (*apu).inPorts[3] = 0;
             }
-            (*apu).romReadable = val as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0;
+            (*apu).romReadable = val & 0x80 != 0;
         }
-        242 => {
+        0xf2 => {
             (*apu).dspAdr = val;
         }
-        243 => {
+        0xf3 => {
             let mut i_0: ::core::ffi::c_int =
                 (*apu).c2rust_unnamed.hist.count as ::core::ffi::c_int;
             if i_0 != 256 as ::core::ffi::c_int {
@@ -249,18 +246,16 @@ pub unsafe fn apu_cpuWrite(mut apu: *mut Apu, mut adr: uint16_t, mut val: uint8_
                 dsp_write((*apu).dsp, (*apu).dspAdr, val);
             }
         }
-        244 | 245 | 246 | 247 => {
-            (*apu).outPorts[(adr as ::core::ffi::c_int - 0xf4 as ::core::ffi::c_int) as usize] =
-                val;
+        0xf4..=0xf7 => {
+            (*apu).outPorts[usize::from(adr - 0xf4)] = val;
         }
-        248 | 249 => {
-            (*apu).inPorts[(adr as ::core::ffi::c_int - 0xf4 as ::core::ffi::c_int) as usize] = val;
+        0xf8..=0xf9 => {
+            (*apu).inPorts[usize::from(adr - 0xf4)] = val;
         }
-        250 | 251 | 252 => {
-            (*apu).timer[(adr as ::core::ffi::c_int - 0xfa as ::core::ffi::c_int) as usize]
-                .target = val;
+        0xfa..=0xfc => {
+            (*apu).timer[usize::from(adr - 0xfa)].target = val;
         }
-        240 | _ => {}
+        _ => {}
     }
-    (*apu).ram[adr as usize] = val;
+    (*apu).ram[usize::from(adr)] = val;
 }
