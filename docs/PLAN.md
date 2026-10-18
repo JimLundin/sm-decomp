@@ -72,12 +72,28 @@ fmt/build remain ASR-denied. Rust lines +17 implement palette verification;
 other progress counters are unchanged. Linux frontend validation is pending.
 Separate observation probes found no palette/sampled-register differences
 over full any%, and no expanded display-field/rendered-buffer differences
-over the Waver route. These fields are not yet enforced by the verifier.
+over the Waver route. Display registers are not yet enforced by the verifier.
 Audio writes from mine are discarded by RtlApuWrite during comparison;
 rendering audio once afterward does not verify audio equivalence. Next oracle
 work: compare display state/output, then isolate and compare sound commands
 and driver behavior. Masked RAM and boot-to-credits coverage remain gaps;
 zero failing frames alone does not prove complete game equivalence.
+
+Rendered output comparison now runs inside the headless snapshot check,
+before recovery. It compares the initialized 256x240 BGRA buffers and reports
+the first differing pixel/channel through the existing failed-frame path.
+Both buffers clear before each input frame: an injected pixel in an undrawn
+row otherwise persisted and inflated the bad-frame count. Every buffer byte
+mutation is detected (245,762 byte/equality/diagnostic checks); a frame-200
+pixel injection in a 3,600-frame replay now produces exactly one failing
+frame and exit 1. Final source at 0c9ae770 plus this change passes any%
+129,712/0 (193.95s) and Waver 58,109/0 (92.12s). Stable optimized core/DLL,
+normal core metadata and direct full-source format pass; Cargo fmt/build
+remain ASR-denied and Linux frontend validation is pending. Rust lines +28
+provide comparison, diagnostics and buffer reset; other counters unchanged.
+Hidden display state, audio equivalence, masked RAM and complete route
+coverage remain unverified. Next: compare sound commands and driver behavior
+without allowing the ROM side's writes to conceal Rust-side differences.
 
 ## Definition of done for any change
 

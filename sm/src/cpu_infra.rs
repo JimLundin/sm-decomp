@@ -829,6 +829,31 @@ unsafe fn VerifySnapshotsEq(
 ) {
     // Keep checking every frame, but bound headless logs to the first failure.
     let report_details = !game.VERIFY_ACTIVE || game.VERIFY_FAILURES == 0;
+    if game.VERIFY_ACTIVE {
+        // Both headless hosts register initialized 256x240 BGRA buffers with
+        // pitch 1024. Compare before recovery so a failed mine frame is visible.
+        let mine = &*(*game.g_snes).my_ppu;
+        let theirs = &*(*game.g_snes).snes_ppu;
+        assert_eq!(mine.renderPitch, 1024);
+        assert_eq!(theirs.renderPitch, 1024);
+        let mine_pixels = core::slice::from_raw_parts(mine.renderBuffer, 256 * 240 * 4);
+        let their_pixels = core::slice::from_raw_parts(theirs.renderBuffer, 256 * 240 * 4);
+        if mine_pixels != their_pixels {
+            game.g_fail = true;
+            if report_details {
+                let byte = mine_pixels
+                    .iter()
+                    .zip(their_pixels)
+                    .position(|(a, b)| a != b)
+                    .unwrap();
+                eprintln!(
+                    "@{}: Rendered frame compare failed at pixel ({}, {}), byte {}: ${:02X} != ${:02X}",
+                    game.snes_frame_counter, (byte / 4) % 256, byte / 1024,
+                    byte % 4, mine_pixels[byte], their_pixels[byte]
+                );
+            }
+        }
+    }
     if (*b).cgram != (*a).cgram {
         game.g_fail = true;
         if report_details {

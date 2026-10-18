@@ -156,6 +156,9 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
         // Optional console diagnostics share the normal CLI and DLL replay path.
         let trace = std::env::var_os("SM_VERIFY_TRACE").is_some();
         for (index, &pad) in inputs[..frames].iter().enumerate() {
+            // Undrawn rows must not retain a prior mismatch or stale pixels.
+            super::g_pixels.fill(0);
+            super::g_my_pixels.fill(0);
             sm::rtl::RtlRunFrame(i32::from(pad), game);
             // Advance the music driver once per frame without playing audio.
             sm::rtl::RtlRenderAudio(discarded_audio.as_mut_ptr(), 534, 2, game);
