@@ -2368,6 +2368,12 @@ ROM/probe assets ignored. Ppu/RAM/save layouts unchanged. Next: remaining
 semantic display/register snapshot gaps. Audio timing, shared hardware
 accuracy, HDMA, masked RAM and boot-to-credits coverage remain open.
 
+Mosaic commit record: the verified21-line snapshot change and its note were
+concurrently included in9534fcee while staged, alongside Samus initialization
+work. The separate commit attempt found an empty index. Shared history is
+preserved; the mosaic evidence above remains scoped to its dedicated builds.
+This collision mixed focused changes despite hunk isolation.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
