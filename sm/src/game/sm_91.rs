@@ -1035,19 +1035,20 @@ pub fn ResetDemoData(game: &mut Game) {
     game.set_demo_input_prev_new(0);
     game.set_demo_enable(0);
 }
-pub unsafe fn LoadDemoInputObject(mut a: uint16, mut j: uint16, game: &mut Game) {
-    let mut dio: *mut DemoInputObject = ::core::ptr::null_mut::<DemoInputObject>();
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa82 as ::core::ffi::c_int as isize)
-        as *mut uint16) = a;
-    dio = get_DemoInputObject(j, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa7a as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*dio).pre_instr as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa7e as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*dio).instr_ptr as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa7c as ::core::ffi::c_int as isize)
-        as *mut uint16) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa80 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+pub unsafe fn LoadDemoInputObject(angle: u16, object_ptr: u16, game: &mut Game) {
+    game.set_xray_angle(angle);
+    if object_ptr & 0x8000 == 0 {
+        get_DemoInputObject(object_ptr, game);
+    }
+    let address = 0x918000 | u32::from(object_ptr);
+    game.set_demo_input_pre_instr(
+        game.read_rom_word(address, core::mem::offset_of!(DemoInputObject, pre_instr)),
+    );
+    game.set_demo_input_instr_ptr(
+        game.read_rom_word(address, core::mem::offset_of!(DemoInputObject, instr_ptr)),
+    );
+    game.set_demo_input_instr_timer(1);
+    game.set_demo_timer_counter(0);
 }
 pub unsafe fn DemoObjectInputHandler(game: &mut Game) {
     if game.demo_enable() & 0x8000 != 0 {

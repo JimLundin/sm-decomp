@@ -4925,6 +4925,32 @@ reads, preserving angle-before-mapping and preinstruction/pointer/timer/counter
 write order. Disable, set 3, uncovered demo operations/preinstructions and
 stopped ammo coverage remain held.
 
+LoadDemoInputObject now uses named byte-backed stores and checked live
+ROM definition reads. Angle is stored before the original invalid-window
+mapping diagnostic; canonical LoROM reads retain linear offsets after mapping.
+Packed DemoInputObject field offsets select only preinstruction/instruction
+words, separately read and stored in order, followed by timer one/counter zero.
+The first definition word stays unread. Parameter names now express angle and
+object pointer. Unsafe remains only for the diagnostic helper boundary.
+
+Committed d505340d baseline attract passes 30,000/0 (46.26s), native exit 0.
+Baseline and rewritten attract observe 26 actual Rust-side-2 loads; complete
+entry and five-field store observation traces match, including timer 1 and
+counter 0. Removing observations restores exact maintained source.
+Rewritten Verified 30000 frames: 0 failing frames (53.69s); Start-exit Verified 5000 frames: 0 failing frames (7.16s); full any% Verified 129712 frames: 0 failing frames (250.32s);
+native exits 0. These normal object pointers select valid LoROM windows;
+invalid-window diagnostic preservation is a source audit, not route coverage.
+Dedicated source freezes d505340d plus only this sm_91.rs change; concurrent
+oracle/display work needs its own integration. Direct full-source rustfmt
+check, optimized core/DLL and normal-core metadata builds pass. Required
+Cargo fmt/check/build attempts remain denied launching Cargo (OS error 5).
+Progress passes: raw offsets -5, cast lines -5; Rust lines +1 retain the
+invalid-window diagnostic gate; other focused counters unchanged. No probes
+or ROM-derived assets committed. Next: replace the remaining diagnostic-only
+get_DemoInputObject helper call with RomPtr_91 and remove the unused private
+pointer helper, retaining the exact invalid-address diagnostic. Disable,
+set 3, uncovered demo operations/preinstructions and stopped ammo stay held.
+
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
 the original `SignExtend8(0x8000)` initialization and the middle-byte velocity
