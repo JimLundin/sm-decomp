@@ -228,63 +228,59 @@ pub unsafe fn dma_write(dma: *mut Dma, address: u16, value: u8) {
     }
 }
 pub unsafe fn dma_doDma(mut dma: *mut Dma, game: &mut Game) {
-    if (*dma).dmaTimer > 0 as uint32_t {
-        (*dma).dmaTimer = (*dma).dmaTimer.wrapping_sub(2 as uint32_t);
+    if (*dma).dmaTimer > 0 {
+        (*dma).dmaTimer = (*dma).dmaTimer.wrapping_sub(2);
         return;
     }
-    let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    i = 0 as ::core::ffi::c_int;
-    while i < 8 as ::core::ffi::c_int {
-        if (*dma).channel[i as usize].dmaActive {
+    let mut i = 0usize;
+    while i < 8 {
+        if (*dma).channel[i].dmaActive {
             break;
         }
         i += 1;
     }
-    if i == 8 as ::core::ffi::c_int {
-        (*dma).dmaBusy = false_0 != 0;
+    if i == 8 {
+        (*dma).dmaBusy = false;
         return;
     }
-    if !(*dma).channel[i as usize].fromB
-        && (*dma).channel[i as usize].aBank as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0
-        && (*dma).channel[i as usize].aAdr as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0
+    if !(*dma).channel[i].fromB
+        && (*dma).channel[i].aBank & 0x80 != 0
+        && (*dma).channel[i].aAdr & 0x8000 == 0
         && !game.g_fail
     {
         printf(
             b"Warning! DMA from addr 0x%x\n\0" as *const u8 as *const ::core::ffi::c_char,
-            ((*dma).channel[i as usize].aBank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                | (*dma).channel[i as usize].aAdr as ::core::ffi::c_int,
+            ((*dma).channel[i].aBank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
+                | (*dma).channel[i].aAdr as ::core::ffi::c_int,
         );
         game.g_fail = true_0 != 0;
     }
-    let fresh0 = (*dma).channel[i as usize].offIndex;
-    (*dma).channel[i as usize].offIndex = (*dma).channel[i as usize].offIndex.wrapping_add(1);
+    let fresh0 = (*dma).channel[i].offIndex;
+    (*dma).channel[i].offIndex = (*dma).channel[i].offIndex.wrapping_add(1);
     dma_transferByte(
         dma,
-        (*dma).channel[i as usize].aAdr,
-        (*dma).channel[i as usize].aBank,
-        ((*dma).channel[i as usize].bAdr as ::core::ffi::c_int
-            + bAdrOffsets[(*dma).channel[i as usize].mode as usize][fresh0 as usize])
-            as uint8_t,
-        (*dma).channel[i as usize].fromB,
+        (*dma).channel[i].aAdr,
+        (*dma).channel[i].aBank,
+        (*dma).channel[i].bAdr.wrapping_add(
+            bAdrOffsets[usize::from((*dma).channel[i].mode)][usize::from(fresh0)] as u8,
+        ),
+        (*dma).channel[i].fromB,
         game,
     );
-    (*dma).channel[i as usize].offIndex = ((*dma).channel[i as usize].offIndex
-        as ::core::ffi::c_int
-        & 3 as ::core::ffi::c_int) as uint8_t;
-    (*dma).dmaTimer = (*dma).dmaTimer.wrapping_add(6 as uint32_t);
-    if !(*dma).channel[i as usize].fixed {
-        (*dma).channel[i as usize].aAdr = ((*dma).channel[i as usize].aAdr as ::core::ffi::c_int
-            + if (*dma).channel[i as usize].decrement as ::core::ffi::c_int != 0 {
-                -(1 as ::core::ffi::c_int)
-            } else {
-                1 as ::core::ffi::c_int
-            }) as uint16_t;
+    (*dma).channel[i].offIndex &= 3;
+    (*dma).dmaTimer = (*dma).dmaTimer.wrapping_add(6);
+    if !(*dma).channel[i].fixed {
+        (*dma).channel[i].aAdr = if (*dma).channel[i].decrement {
+            (*dma).channel[i].aAdr.wrapping_sub(1)
+        } else {
+            (*dma).channel[i].aAdr.wrapping_add(1)
+        };
     }
-    (*dma).channel[i as usize].size = (*dma).channel[i as usize].size.wrapping_sub(1);
-    if (*dma).channel[i as usize].size as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-        (*dma).channel[i as usize].offIndex = 0 as uint8_t;
-        (*dma).channel[i as usize].dmaActive = false_0 != 0;
-        (*dma).dmaTimer = (*dma).dmaTimer.wrapping_add(8 as uint32_t);
+    (*dma).channel[i].size = (*dma).channel[i].size.wrapping_sub(1);
+    if (*dma).channel[i].size == 0 {
+        (*dma).channel[i].offIndex = 0;
+        (*dma).channel[i].dmaActive = false;
+        (*dma).dmaTimer = (*dma).dmaTimer.wrapping_add(8);
     }
 }
 pub unsafe fn dma_initHdma(mut dma: *mut Dma, game: &mut Game) {

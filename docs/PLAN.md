@@ -4514,6 +4514,29 @@ ignored. Ordinary movie pixels retain the known render-initialization limit.
 Enabled-render Waver71, hires, hardware events/timing, audio timing, masked
 RAM and boot-to-credits coverage remain open.
 
+Ordinary DMA-step cleanup (2026-10-18): dma_doDma now selects the first
+active channel with a native index and uses explicit wrapping byte destination
+and word source arithmetic. Delay countdown, warning/failure gate, offset
+increment before transfer, post-transfer offset mask, timer increment, source
+advance, size decrement and terminal clears retain their order. Fixed source
+and zero-size underflow remain exact; bus accesses still use the same helpers.
+
+Actual old/current comparisons pass 589,830 cases across all channel masks,
+eight modes, four offsets, both directions, three source steps, wrap-boundary
+sources and sizes 0/1/2/FFFF, plus six delay boundaries. Complete RAM, PPU
+memory/register region, channel fields, timers, port address and failure flag
+match. Instrumented any% prefix passes 12,000/0 (23.49s), native exit 0,
+with 126,065,834 actual DMA-step calls per implementation. Clean frozen
+1bd08d52 plus only this change passes any% 129,712/0 (249.36s), native exit
+0. Later audio/CPU/demo/PPU edits are outside these frozen checks.
+Direct full-source formatting, normal-core metadata and optimized clean/probe
+core/DLL builds pass; Cargo fmt/build remain denied at cargo.exe launch.
+Progress: cast lines -14, Rust lines -4; other focused counters unchanged.
+No layout, hardware schedule or comparison-rule changes. Probes and ROM assets
+stay untracked. These checks establish maintained transfer equivalence, not
+independent hardware timing or credits coverage. Continue actual scheduling
+and route work; the held HDMA window diagnosis remains held.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
