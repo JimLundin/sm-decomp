@@ -4094,6 +4094,18 @@ Next: measure DemoPreInstr_864F/866A execution and taken-body coverage before
 cleaning their ordered preinstruction/instruction/timer stores. Set 3,
 special leave-preinstruction and stopped ammo coverage remain held.
 
+Demo preinstruction coverage (2026-10-18): isolated committed fb79f80f
+source instruments entry and taken-body sites for DemoPreInstr_864F/866A.
+Normal 30,000-frame attract passes 30,000/0 (64.64s), native exit 0, with
+zero entry calls and zero taken-body observations for both routines.
+Stripping the four observations restores exact maintained sm_91.rs.
+These functions remain untouched; this movie does not establish their
+execution. No maintained Rust or focused residue counters change.
+Next: measure executed demo instruction interpreter operations, then clean
+covered operations while retaining ROM reads, wrapped pointers and write
+order. Set 3, these two preinstructions, the special leave-preinstruction
+and stopped ammo coverage remain held. Probes and inputs stay ignored.
+
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
 the original `SignExtend8(0x8000)` initialization and the middle-byte velocity
