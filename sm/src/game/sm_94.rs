@@ -2369,160 +2369,50 @@ unsafe fn BlockColl_Vert_Slope_NonSquare(ci: *mut CollInfo, k: uint16, game: &mu
     1
 }
 pub unsafe fn Samus_AlignYPosSlope(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa46 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 2 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
-    {
+    let movement_flags = u16::from_le_bytes([game.g_ram[0xa46], game.g_ram[0xa47]]);
+    if movement_flags & 2 == 0 {
         return;
     }
-    let mut r26: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xaf6 as ::core::ffi::c_int as isize) as *mut uint16);
-    let mut R28: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb00 as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-        - 1 as ::core::ffi::c_int) as uint16;
-    CalculateBlockAt(r26, R28, 0 as uint16, 0 as uint16, game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x10002 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as ::core::ffi::c_int
-        & 0xf000 as ::core::ffi::c_int
-        == 4096 as ::core::ffi::c_int
-        && *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x16402 as ::core::ffi::c_int as isize)
-            .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
-            ) as ::core::ffi::c_int
-            & 0x1f as ::core::ffi::c_int
-            >= 5 as ::core::ffi::c_int
-    {
-        let mut temp_collision_DD4: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0xb00 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-            - 1 as ::core::ffi::c_int
-            & 0xf as ::core::ffi::c_int) as uint16;
-        let mut temp_collision_DD6: uint16 = (16 as ::core::ffi::c_int
-            * (*(&raw mut game.g_ram as *mut uint8)
-                .offset(0x16402 as ::core::ffi::c_int as isize)
-                .offset(
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xdc4 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as isize,
-                ) as ::core::ffi::c_int
-                & 0x1f as ::core::ffi::c_int))
-            as uint16;
-        let mut v0: uint8 = *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x16402 as ::core::ffi::c_int as isize)
-            .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
-            );
-        if v0 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int == 0 {
-            let mut v1: uint16 = (if v0 as ::core::ffi::c_int & 0x40 as ::core::ffi::c_int
-                != 0 as ::core::ffi::c_int
-            {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
-                    ^ 0xf as ::core::ffi::c_int
-            } else {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
-            }) as uint16;
-            let mut v2: uint16 = ((kAlignYPos_Tab0[(temp_collision_DD6 as ::core::ffi::c_int
-                + (v1 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int))
-                as usize] as ::core::ffi::c_int
-                & 0x1f as ::core::ffi::c_int)
-                - temp_collision_DD4 as ::core::ffi::c_int
-                - 1 as ::core::ffi::c_int) as uint16;
-            if (v2 as int16 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
-                let ref mut fresh20 = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0xafa as ::core::ffi::c_int as isize)
-                    as *mut uint16);
-                *fresh20 = (*fresh20 as ::core::ffi::c_int + v2 as ::core::ffi::c_int) as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdba as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 1 as uint16;
+    let x = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
+    let y = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
+    let radius = u16::from_le_bytes([game.g_ram[0xb00], game.g_ram[0xb01]]);
+    CalculateBlockAt(x, radius.wrapping_add(y).wrapping_sub(1), 0, 0, game);
+    if game.current_level_block() & 0xf000 == 0x1000 && game.current_block_bts() & 0x1f >= 5 {
+        let radius = u16::from_le_bytes([game.g_ram[0xb00], game.g_ram[0xb01]]);
+        let y = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
+        let offset = radius.wrapping_add(y).wrapping_sub(1) & 15;
+        let bts = game.current_block_bts();
+        if bts & 0x80 == 0 {
+            let x = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
+            let x = if bts & 0x40 != 0 { x ^ 15 } else { x };
+            let index = usize::from(bts & 0x1f) * 16 + usize::from(x & 15);
+            let adjustment = i16::from(kAlignYPos_Tab0[index] & 0x1f) - offset as i16 - 1;
+            if adjustment < 0 {
+                game.g_ram[0xafa..0xafc]
+                    .copy_from_slice(&y.wrapping_add(adjustment as u16).to_le_bytes());
+                game.g_ram[0xdba..0xdbc].copy_from_slice(&1u16.to_le_bytes());
             }
         }
     }
-    r26 = *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-        as *mut uint16);
-    R28 = (*((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16;
-    CalculateBlockAt(r26, R28, 0 as uint16, 0 as uint16, game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x10002 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as ::core::ffi::c_int
-        & 0xf000 as ::core::ffi::c_int
-        == 4096 as ::core::ffi::c_int
-        && *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x16402 as ::core::ffi::c_int as isize)
-            .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
-            ) as ::core::ffi::c_int
-            & 0x1f as ::core::ffi::c_int
-            >= 5 as ::core::ffi::c_int
-    {
-        let mut temp_collision_DD4_0: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-            & 0xf as ::core::ffi::c_int
-            ^ 0xf as ::core::ffi::c_int) as uint16;
-        let mut temp_collision_DD6_0: uint16 = (16 as ::core::ffi::c_int
-            * (*(&raw mut game.g_ram as *mut uint8)
-                .offset(0x16402 as ::core::ffi::c_int as isize)
-                .offset(
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xdc4 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as isize,
-                ) as ::core::ffi::c_int
-                & 0x1f as ::core::ffi::c_int))
-            as uint16;
-        let mut v3: uint8 = *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x16402 as ::core::ffi::c_int as isize)
-            .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
-            );
-        if v3 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0 {
-            let mut v4: uint16 = (if v3 as ::core::ffi::c_int & 0x40 as ::core::ffi::c_int
-                != 0 as ::core::ffi::c_int
-            {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
-                    ^ 0xf as ::core::ffi::c_int
-            } else {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
-            }) as uint16;
-            let mut v6: uint16 = ((kAlignYPos_Tab0[(temp_collision_DD6_0 as ::core::ffi::c_int
-                + (v4 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int))
-                as usize] as ::core::ffi::c_int
-                & 0x1f as ::core::ffi::c_int)
-                - temp_collision_DD4_0 as ::core::ffi::c_int
-                - 1 as ::core::ffi::c_int) as uint16;
-            if v6 as int16 as ::core::ffi::c_int <= 0 as ::core::ffi::c_int {
-                let ref mut fresh21 = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0xafa as ::core::ffi::c_int as isize)
-                    as *mut uint16);
-                *fresh21 = (*fresh21 as ::core::ffi::c_int - v6 as ::core::ffi::c_int) as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdba as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 1 as uint16;
+    // Re-read the position after the bottom-edge alignment before looking up the top block.
+    let x = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
+    let y = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
+    let radius = u16::from_le_bytes([game.g_ram[0xb00], game.g_ram[0xb01]]);
+    CalculateBlockAt(x, y.wrapping_sub(radius), 0, 0, game);
+    if game.current_level_block() & 0xf000 == 0x1000 && game.current_block_bts() & 0x1f >= 5 {
+        let y = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
+        let radius = u16::from_le_bytes([game.g_ram[0xb00], game.g_ram[0xb01]]);
+        let offset = (y.wrapping_sub(radius) & 15) ^ 15;
+        let bts = game.current_block_bts();
+        if bts & 0x80 != 0 {
+            let x = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
+            let x = if bts & 0x40 != 0 { x ^ 15 } else { x };
+            let index = usize::from(bts & 0x1f) * 16 + usize::from(x & 15);
+            let adjustment = i16::from(kAlignYPos_Tab0[index] & 0x1f) - offset as i16 - 1;
+            if adjustment <= 0 {
+                game.g_ram[0xafa..0xafc]
+                    .copy_from_slice(&y.wrapping_sub(adjustment as u16).to_le_bytes());
+                game.g_ram[0xdba..0xdbc].copy_from_slice(&1u16.to_le_bytes());
             }
         }
     }

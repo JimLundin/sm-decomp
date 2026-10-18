@@ -1362,6 +1362,20 @@ build and direct format pass; Cargo fmt/build remain ASR-denied. Waver route:
 unchanged. Next: Samus slope alignment RAM/arithmetic, preserving the second
 block lookup after the first position adjustment and strict/non-strict tests.
 
+Samus slope alignment now uses byte-backed coordinates and named live
+block/BTS access. Bottom correction retains its strict negative test; top
+correction retains its nonpositive test and flag write even at zero. The
+second lookup reads the position after the first correction; lookup calls,
+wrapping Y writes and flag ordering remain exact. Prior Rust comparison
+passes 1,446,912 full-RAM/lookup cases over every bottom/top BTS pair, table
+coordinates, radius/position boundaries and block-type/movement gates;
+synthetic lookups also mutate coordinates to check live reads. Stable
+optimized core/DLL build and direct format pass; Cargo fmt/build remain
+ASR-denied. Waver route: 58,109 frames, zero failures (86.01s); any%: 129,712
+frames, zero failures (183.26s). Raw offsets -35, cast lines -97, Rust lines
+-110; unsafe count unchanged. Next: CalculateBlockAt coordinate arithmetic
+and byte-backed block writes, retaining signed range and low-byte multiply.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
