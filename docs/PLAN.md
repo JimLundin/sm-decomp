@@ -7029,6 +7029,32 @@ integration, hardware/audio timing, rendering/Waver71, masked RAM and credits
 remain open. Held HDMA diagnosis stays stopped. Continue executed hardware
 paths and route coverage with useful independent subagents; peer owns sync.
 
+CPU comparison cleanup (2026-10-18): cpu_cmp/cpx/cpy use width-specific
+complements and widened native unsigned addition. Operand reads still precede
+register reads; word cycle increments precede reads, carry precedes Z/N,
+and the final width flag is reread live. Actual old/current helpers pass
+1,966,080 ordered substituted-bus cases: every byte pair at three high-byte
+patterns, and every word operand at seven register boundaries, for all three
+helpers. Complete named CPU state, read addresses/cycles and independent
+carry/Z/N from wrapped subtraction match. Physical WRAM executes 1,769,472
+immediate instructions over all input words, three register boundaries and
+native byte/word plus emulation byte modes, with opcode FFFF and operands
+0000/0001; 441 absolute controls cross operand bank 7E:FFFF to 7F:0000.
+Independent device/absolute QC above adds 4,718,592 actual instruction pairs.
+Instrumented any% prefix passes 3,600/0 (9.10s), native exit 0; CMP/CPX/CPY
+word/byte calls are 72,809/117,035, 10,098/49,139 and 11,452/10,038.
+Clean frozen 04b5602a4ae28ce4eed0714cb73b21d7cb149be8 plus only these helpers
+passes full any% 129,712/0 (246.12s), native exit 0. Direct full-source format,
+normal-core metadata and optimized clean/probe core/DLL builds pass; Cargo
+fmt/release are launch-denied. TEMP probe initially used SBC E9 instead of
+CMP C9; its carry assertion caught this and the corrected probe passes.
+Progress/diff checks pass: focused cast lines -39, Rust lines -15, other
+categories unchanged. Live helpers match the frozen verified bodies. Later
+peer changes are outside this replay. Arbitrary bus mutation, full word
+Cartesian coverage, independent M/X combinations, hardware/render/audio
+timing and credits remain open; held HDMA diagnosis stays stopped.
+Continue executed store/bit helpers.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
