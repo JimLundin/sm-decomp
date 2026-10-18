@@ -3106,101 +3106,43 @@ unsafe fn BlockColl_Vert_SpecialBlock(ci: *mut CollInfo, game: &mut Game) -> uin
         result
     }
 }
-unsafe fn BlockColl_Horiz_BombableAir(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    let mut v0: uint8 = *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        );
-    if v0 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-        SpawnPLM(
-            *(game.g_rom.offset(
-                (((0x94936b as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x94936b as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
-                .offset(v0 as isize),
-            game,
-        );
+unsafe fn BlockColl_Horiz_BombableAir(_ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    let bts = game.current_block_bts();
+    if bts & 0x80 == 0 {
+        let header = game.read_rom_word(0x94936b, usize::from(bts) * 2);
+        SpawnPLM(header, game);
     }
-    return 0 as uint8;
+    0
 }
-unsafe fn BlockColl_Vert_BombableAir(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    let mut v0: uint8 = *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        );
-    if v0 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-        SpawnPLM(
-            *(game.g_rom.offset(
-                (((0x94936b as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x94936b as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
-                .offset(v0 as isize),
-            game,
-        );
-    }
-    return 0 as uint8;
+unsafe fn BlockColl_Vert_BombableAir(ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    BlockColl_Horiz_BombableAir(ci, game)
 }
-unsafe fn BlockColl_Horiz_BombBlock(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    let mut v0: uint8 = *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        );
-    if v0 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
+unsafe fn BlockColl_Horiz_BombBlock(ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    let bts = game.current_block_bts();
+    if bts & 0x80 != 0 {
         return BlockColl_Horiz_SolidShootGrappleBlock(ci, game);
     }
-    let mut v1: uint8 = (SpawnPLM(
-        *(game.g_rom.offset(
-            (((0x94936b as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x94936b as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
-            .offset(v0 as isize),
-        game,
-    ) as ::core::ffi::c_int
-        & 1 as ::core::ffi::c_int) as uint8;
-    if v1 != 0 {
-        return BlockColl_Horiz_SolidShootGrappleBlock(ci, game);
+    let header = game.read_rom_word(0x94936b, usize::from(bts) * 2);
+    let result = SpawnPLM(header, game) & 1;
+    if result != 0 {
+        // Setup may adjust the displacement and Samus RAM before collision.
+        BlockColl_Horiz_SolidShootGrappleBlock(ci, game)
     } else {
-        return v1;
-    };
+        result
+    }
 }
-unsafe fn BlockColl_Vert_BombBlock(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    let mut v0: uint8 = *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        );
-    if v0 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
+unsafe fn BlockColl_Vert_BombBlock(ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    let bts = game.current_block_bts();
+    if bts & 0x80 != 0 {
         return BlockColl_Vert_SolidShootGrappleBlock(ci, game);
     }
-    let mut v1: uint8 = (SpawnPLM(
-        *(game.g_rom.offset(
-            (((0x94936b as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x94936b as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
-            .offset(v0 as isize),
-        game,
-    ) as ::core::ffi::c_int
-        & 1 as ::core::ffi::c_int) as uint8;
-    if v1 != 0 {
-        return BlockColl_Vert_SolidShootGrappleBlock(ci, game);
+    let header = game.read_rom_word(0x94936b, usize::from(bts) * 2);
+    let result = SpawnPLM(header, game) & 1;
+    if result != 0 {
+        BlockColl_Vert_SolidShootGrappleBlock(ci, game)
     } else {
-        return v1;
-    };
+        result
+    }
 }
 pub unsafe fn BlockColl_Horiz_Door(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x99c as ::core::ffi::c_int as isize)

@@ -1268,6 +1268,19 @@ unsafe functions +1 for the shared selector retaining legacy diagnostics.
 Next: bombable-air/bomb-block PLM selection reads, retaining carry handling
 and live collision state after setup.
 
+Bombable-air/bomb-block collision now uses named live BTS and checked ROM
+words. Both air directions share the same reaction; high-bit air still skips
+spawn and returns zero. High-bit solid blocks collide immediately; low-bit
+blocks mask setup carry and invoke the directional solid handler afterward,
+retaining live context/RAM reads. Synthetic comparison with prior Rust
+passes 262,144 selection/callback/return cases over all BTS bytes, setup
+returns and four handlers, with setup mutating BTS/area RAM. Stable optimized
+core/DLL build and direct format pass; Cargo fmt/build remain ASR-denied.
+Waver route: 58,109 frames, zero failures (83.79s); any%: 129,712 frames,
+zero failures (183.97s). Raw offsets -8, cast lines -32, Rust lines -58;
+unsafe count unchanged. Next: door collision RAM/ROM reads, preserving the
+existing pose-based enemy-door condition and write order.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
