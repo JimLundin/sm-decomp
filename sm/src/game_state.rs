@@ -298,6 +298,11 @@ impl Game {
         self.g_ram[0xa1e..0xa20].copy_from_slice(&[direction, movement_type]);
     }
 
+    /// samus_movement_type ($7E:0A1F in ram_map).
+    pub fn samus_movement_type(&self) -> u8 {
+        self.g_ram[0xa1f]
+    }
+
     /// samus_prev_pose_x_dir / samus_prev_movement_type2 ($7E:0A22/0A23).
     /// Preserve the original paired-byte word store.
     pub fn set_samus_prev_pose_direction_and_movement_type(

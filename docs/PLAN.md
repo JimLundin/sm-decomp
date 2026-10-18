@@ -5513,6 +5513,30 @@ its observed single attract call before cleaning its movement-type gate and
 ordered preinstruction/instruction/timer stores. Disable, set 3, other
 uncovered demo operations/preinstructions and stopped ammo remain held.
 
+DemoPreInstr_8AB0 now reads the named Samus movement-type byte and
+uses existing byte-backed preinstruction/pointer/timer setters. Its gate
+still skips stores only for GrabbedByDraygon (1A); writes remain 8A9B, 9346,
+then timer one. The preinstruction address uses its existing named constant.
+The new byte getter matches ram_map at 0A1F and the routine is now safe.
+
+Committed 291f859b baseline attract passes 30,000/0 (46.72s), native exit 0;
+Start-exit passes 5,000/0 (7.37s), native exit 0. Attract observes exactly
+one Rust-side-2 entry and taken body at SNES counter 17,215, movement type 0.
+Baseline and rewritten entry/taken traces match for both movies. The grabbed
+false branch remains unexercised; no Draygon coverage is inferred.
+Rewritten Verified 30000 frames: 0 failing frames (50.29s); Start-exit Verified 5000 frames: 0 failing frames (8.45s); full any% Verified 129712 frames: 0 failing frames (258.81s);
+native exits 0. Removing observations restores exact maintained source.
+Dedicated source freezes 291f859b plus this sm_91.rs/game_state.rs change;
+concurrent hardware/oracle changes require their own integration. Direct
+full-source rustfmt check, optimized core/DLL and normal-core metadata builds
+pass. Required Cargo fmt/check/build attempts remain denied launching Cargo
+(OS error 5). Progress passes: raw offsets -4, unsafe functions -1, cast
+lines -7, Rust lines -2; other focused counters unchanged. No probes or
+ROM-derived assets committed. Next: measure CallDemoInstr addresses in
+attract/Start-exit and simplify its executed dispatch, retaining all recognized
+arms and the unknown-address return. Disable, set 3, other uncovered demo
+operations/preinstructions and stopped ammo remain held.
+
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
 the original `SignExtend8(0x8000)` initialization and the middle-byte velocity

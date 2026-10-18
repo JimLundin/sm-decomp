@@ -1429,18 +1429,11 @@ pub unsafe fn DemoPreInstr_CheckLeaveDemo(game: &mut Game) {
             as *mut uint16) = 1 as uint16;
     }
 }
-pub unsafe fn DemoPreInstr_8AB0(game: &mut Game) {
-    if *(&raw mut game.g_ram as *mut uint8).offset(0xa1f as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
-        != kMovementType_1A_GrabbedByDraygon as ::core::ffi::c_int
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa7a as ::core::ffi::c_int as isize)
-            as *mut uint16) =
-            (0x918a9b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa7e as ::core::ffi::c_int as isize)
-            as *mut uint16) = addr_stru_919346 as ::core::ffi::c_int as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa7c as ::core::ffi::c_int as isize)
-            as *mut uint16) = 1 as uint16;
+pub fn DemoPreInstr_8AB0(game: &mut Game) {
+    if game.samus_movement_type() != kMovementType_1A_GrabbedByDraygon as u8 {
+        game.set_demo_input_pre_instr(fnDemoPreInstr_CheckLeaveDemo as u16);
+        game.set_demo_input_instr_ptr(addr_stru_919346 as u16);
+        game.set_demo_input_instr_timer(1);
     }
 }
 unsafe fn XrayFillUp(mut dest: *mut uint16, mut fill_with: uint16, mut v1: uint16) {
