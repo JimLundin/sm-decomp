@@ -597,6 +597,25 @@ pub unsafe fn ppu_saveload(
         game,
     );
 }
+// These duplicate renderer inputs are outside the legacy serialized PPU range.
+pub fn PpuRestoreRenderRouting(ppu: &mut Ppu) {
+    ppu.screenEnabled = [0; 2];
+    ppu.screenWindowed = [0; 2];
+    for (index, layer) in ppu.layer.iter().enumerate() {
+        ppu.screenEnabled[0] |= u8::from(layer.mainScreenEnabled) << index;
+        ppu.screenEnabled[1] |= u8::from(layer.subScreenEnabled) << index;
+        ppu.screenWindowed[0] |= u8::from(layer.mainScreenWindowed) << index;
+        ppu.screenWindowed[1] |= u8::from(layer.subScreenWindowed) << index;
+    }
+    ppu.windowsel = 0;
+    for (index, window) in ppu.windowLayer.iter().enumerate() {
+        let flags = u32::from(window.window1inversed)
+            | (u32::from(window.window1enabled) << 1)
+            | (u32::from(window.window2inversed) << 2)
+            | (u32::from(window.window2enabled) << 3);
+        ppu.windowsel |= flags << (index * 4);
+    }
+}
 pub unsafe fn PpuBeginDrawing(
     mut ppu: *mut Ppu,
     mut pixels: *mut uint8_t,

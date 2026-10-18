@@ -3501,6 +3501,43 @@ limitations recorded above; audio timing, CPU context omissions, hardware
 event ordering and boot-to-credits coverage remain open. Next: audit remaining
 CPU execution context before changing the hardware-clock frame schedule.
 
+PPU load routing repair (2026-10-18): LoadSnesState now rebuilds fast-
+renderer screen enables, screen-window masks and window selection from the
+serialized Layer/WindowLayer flags. PpuRestoreRenderRouting changes only the
+four duplicate screen bytes and windowsel. Save-time state, serialized sizes,
+Ppu/RAM layouts, render buffers and caches remain unchanged. Reserved screen
+bits5..7 and windowsel bits24..31 are cleared on load: those bits were never
+serialized and have no rendering consumers. All semantic bits are retained.
+
+Actual checks pass1,792 register save/load/reconstruction cases,1,024 complete
+SNES save/load/resave byte-identity and unrelated-Ppu-byte preservation cases,
+and16 saved next-row continuations through SaveSnesState/LoadSnesState without
+register reapplication. The first byte-identity fixture began in CPU emulation
+mode, which LoadSnesState intentionally clears; beginning in native mode
+corrects that fixture and passes. Public RtlSaveLoad filesystem save/load after
+400 rendered startup frames restores identical next rows for both PPUs; public
+recorder replay also runs400 frames with zero oracle failures. Initial public
+fixtures omitted render buffers and then host callbacks; both setup errors
+were corrected before the passing run. Probe nativeexit0. Synthetic rendering
+state establishes load continuation, not natural saved-route or credits coverage.
+
+Dedicated maintained-source any%129,712/0 (260.75s), Waver58,109/0 (132.45s),
+nativeexits0. The existing uninitialized disableRender problem still limits
+those ordinary movie pixel checks; the focused public/continuation probes
+explicitly register buffers and enable rendering. Enabled-render Waver71
+failures and the held HDMA diagnosis remain unresolved. No pixel normalization
+or renderer behavior change is included.
+
+Direct optimized core/DLL, normal-core metadata and full-source rustfmt check
+pass; Cargo fmt/release attempts remain denied executing cargo.exe. Progress
+script passes; focused Rust lines+20 add one safe helper and its load call,
+other focused counters unchanged. Only these two source hunks and note enter
+the commit; concurrent edits remain separate. Probe/ROM-derived save assets
+are ignored; the dedicated temporary save slot is removed after verification.
+Next: audit brightness/cache continuation after load before broader saved-route
+claims. Hires, audio timing, masked RAM, shared hardware accuracy and complete
+boot-to-credits coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

@@ -425,6 +425,7 @@ unsafe fn LoadSnesState(
     game: &mut Game,
 ) {
     snes_saveload(game.g_snes as *mut Snes, func, ctx, game);
+    crate::snes::ppu::PpuRestoreRenderRouting(&mut *(*game.g_snes).ppu);
     (*(*game.g_snes).cpu).e = false_0 != 0;
     let mut next: uint32 = ((*(*game.g_snes)
         .ram
