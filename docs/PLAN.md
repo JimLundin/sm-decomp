@@ -1737,6 +1737,34 @@ source hunk and note are committed; probe/ROM-derived data stay ignored.
 Next: classify omitted Mode7/display controls and derived state; audio timing,
 HDMA, masked RAM and boot-to-credits coverage remain open.
 
+Mode 7 active-renderer coverage (2026-10-18): Game::new initializes
+g_new_ppu=true, so the prior matrix continuation probe's old per-pixel path
+alone did not establish coverage of the default drawing implementation.
+A fresh isolated committed-source probe now exercises both old pixel lookup
+and actual PpuDrawBackground_mode7 BG0 main/sub row generation against the
+same independent integer/VRAM model. All 3,840 restored row cases pass, with
+983,040 modeled pixel-result triples per baseline/mutated/restored pass;
+the whole-line main and sub buffers also match expected priority/color values.
+
+Cases cover all eight matrix fields, eight seeds, four flip settings, five
+lines and three outside-map settings. B perturbations flip only bit zero,
+leaving the signed-high-byte multiplication factor unchanged. Changed pixel
+rows by A/B/C/D/centerX/centerY/scrollX/scrollY are
+[480,378,480,480,480,480,480,480]; 3,780 row controls differ, and the 60
+unchanged B controls are legitimate. Every restored row equals its baseline.
+This closes the default Mode7 BG0 drawing-path coverage gap for these cases,
+and demonstrates why the full B word matters beyond CPU multiplication.
+Mosaic, windows, final color/BGRA composition and every drawing path remain
+outside this constructed probe. It does not prove SNES hardware accuracy.
+
+Native exit 0. Snapshot and PPU production bodies match a24fdb32 exactly after
+removing appended wrappers. No maintained Rust source or this probe's progress
+counters change; committed any% 129,712/0 and Waver 58,109/0 remain the matrix
+regression results. Cargo fmt --check passes; wrappers and synthetic/ROM inputs
+stay ignored. Remaining Mode7 control-flag probes have an unsuccessful pixel
+control and are not yet sufficient for production enforcement; repair those
+controls before claiming a preserved rendering effect or adding snapshot fields.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
