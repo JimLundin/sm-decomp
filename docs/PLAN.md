@@ -1139,6 +1139,36 @@ delay. Maintained source/counters stay unchanged; preceding build limits
 apply. Next: test preparation in the executing ROM upload with live SPC
 feedback, then derive a timing change from the actual protocol.
 
+Live SPC upload preparation (2026-10-18): an isolated original-ROM
+execution variant captures CPU 808028 entry, then applies selected
+preparation through actual dsp_write before the original upload runs.
+SPC instructions, timers, DSP samples and later driver activity continue
+normally. Fresh processes compare constructed DCFAC7 uploads at boots
+160/400/3,600, including 32,768 stereo samples from entry. All pairs have
+identical entry RAM and explicit DSP/channel/SPC/timer/port/cycle fields;
+pointers, padding and output storage are excluded from field comparison.
+Upload-completion sample counts match per boot, and all compared RAM
+images have exactly 65,536 bytes. Twelve guarded processes return exit 0.
+
+Quiet boots 160/400 have zero preparation effects. At active boot 3,600,
+full preparation and KOF alone each differ from baseline in 53,751 scalar
+values, beginning at zero. Each has 4,012 differing RAM bytes at the next
+15BF boundary and 1,682 after equal ordinal sample counts. EVOLL alone
+differs in 20 values from scalar zero, EVOLR in 18 from scalar one; both
+have zero RAM differences. Full preparation and KOF have identical RAM
+at both checkpoints but differ from each other in 38 early sample values
+(first zero, last 38); equal divergence counts do not mean equal output.
+All exact effect guards pass. Identical-run controls match all samples/RAM;
+a reader-side sample-bit fault is counted as exactly one difference.
+
+Two independent reviews find no blocking execution/order/ownership issue.
+This resolves the fixed-trace feedback limitation for preparation's causal
+effects in these constructed uploads. It does not compare full CPU state,
+natural gameplay upload timing or Rust/ROM runtime audio equivalence.
+Maintained source/counters are unchanged; diagnostic code and ROM-derived
+outputs stay outside tracked files. Next: preserve actual upload protocol
+timing in the runtime comparison, rather than removing preparation blindly.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read
