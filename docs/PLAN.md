@@ -5955,6 +5955,32 @@ mapping; extraneous writes, cartridge fallback, other devices and word writes
 remain outside this probe. Implementing agent retains production ownership;
 only the QC note changes.
 
+CPU indexed-address cleanup (2026-10-18): cpu_adrAbx/Aby/Alx use native
+operand/index widening, full unsigned page comparisons and 24-bit masks.
+The existing write-gated penalty remains exact, including carry beyond
+FFFF; output writes still precede fresh DB/index reads for the high address.
+Actual old/current helpers pass 23,592,960 cases over every operand word,
+ten index boundaries, three banks, all write/X-width gates and all three
+modes. Independent addresses/cycles and matching fetch traces pass. Another
+393,216 cases alias output with aligned X/Y or DP/K/DB storage, matching high
+address and resulting fields. Physical WRAM executes 12,582,912 STA/LDA
+instructions: every value, five index boundaries, valid byte/word index
+modes and four operands across X/Y absolute and X long addressing. RAM,
+load value, Z/N, PC and inherited cycles pass. Initial probe expected the
+penalty on loads and excluded upper WRAM targets; correcting only those
+fixture assumptions makes the checks pass. Independent physical-bus QC
+follows. Instrumented any% prefix passes 3,600/0, native exit 0, with
+Abx/Aby/Alx counts 535,840/244,974/293,365. Clean frozen
+d8858254d36ccb40f0f2f0fd915d5145c40ad2dc plus only these three helpers passes
+any% 129,712/0 (257.66s), native exit 0. Direct full-source format,
+normal-core metadata and optimized clean/probe core/DLL builds pass;
+Cargo fmt/release remain launch-denied. Progress/diff checks pass; focused
+cast lines -27 and Rust lines -38, other residue categories unchanged.
+Later peer edits are outside this replay. Full index/operand/target Cartesian
+coverage, physical devices, hardware cycle accuracy, rendering/audio and
+credits remain open; held HDMA diagnosis stays stopped. Continue executed
+indirect/stack-relative address helpers without changing current behavior.
+
 Independent indexed absolute/long QC (2026-10-18): candidate cpu_adrAbx,
 cpu_adrAby and cpu_adrAlx pass 789,504 actual old/current LDA/STA instructions.
 All 65,536 word indexes and 256 valid byte indexes execute both accumulator

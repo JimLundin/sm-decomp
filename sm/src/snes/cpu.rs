@@ -717,55 +717,21 @@ unsafe fn cpu_adrAbs(cpu: *mut Cpu, low: *mut uint32_t, game: &mut Game) -> uint
     *low = (u32::from((*cpu).db) << 16) + adr;
     ((u32::from((*cpu).db) << 16) + adr + 1) & 0xffffff
 }
-unsafe fn cpu_adrAbx(
-    mut cpu: *mut Cpu,
-    mut low: *mut uint32_t,
-    mut write: bool,
-    game: &mut Game,
-) -> uint32_t {
-    let mut adr: uint16_t = cpu_readOpcodeWord(cpu, game);
-    if write as ::core::ffi::c_int != 0
-        && (!(*cpu).xf
-            || adr as ::core::ffi::c_int >> 8 as ::core::ffi::c_int
-                != adr as ::core::ffi::c_int + (*cpu).x as ::core::ffi::c_int
-                    >> 8 as ::core::ffi::c_int)
-    {
+unsafe fn cpu_adrAbx(cpu: *mut Cpu, low: *mut uint32_t, write: bool, game: &mut Game) -> uint32_t {
+    let adr = u32::from(cpu_readOpcodeWord(cpu, game));
+    if write && (!(*cpu).xf || adr >> 8 != (adr + u32::from((*cpu).x)) >> 8) {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
     }
-    *low = ((((*cpu).db as ::core::ffi::c_int) << 16 as ::core::ffi::c_int)
-        + adr as ::core::ffi::c_int
-        + (*cpu).x as ::core::ffi::c_int
-        & 0xffffff as ::core::ffi::c_int) as uint32_t;
-    return ((((*cpu).db as ::core::ffi::c_int) << 16 as ::core::ffi::c_int)
-        + adr as ::core::ffi::c_int
-        + (*cpu).x as ::core::ffi::c_int
-        + 1 as ::core::ffi::c_int
-        & 0xffffff as ::core::ffi::c_int) as uint32_t;
+    *low = ((u32::from((*cpu).db) << 16) + adr + u32::from((*cpu).x)) & 0xffffff;
+    ((u32::from((*cpu).db) << 16) + adr + u32::from((*cpu).x) + 1) & 0xffffff
 }
-unsafe fn cpu_adrAby(
-    mut cpu: *mut Cpu,
-    mut low: *mut uint32_t,
-    mut write: bool,
-    game: &mut Game,
-) -> uint32_t {
-    let mut adr: uint16_t = cpu_readOpcodeWord(cpu, game);
-    if write as ::core::ffi::c_int != 0
-        && (!(*cpu).xf
-            || adr as ::core::ffi::c_int >> 8 as ::core::ffi::c_int
-                != adr as ::core::ffi::c_int + (*cpu).y as ::core::ffi::c_int
-                    >> 8 as ::core::ffi::c_int)
-    {
+unsafe fn cpu_adrAby(cpu: *mut Cpu, low: *mut uint32_t, write: bool, game: &mut Game) -> uint32_t {
+    let adr = u32::from(cpu_readOpcodeWord(cpu, game));
+    if write && (!(*cpu).xf || adr >> 8 != (adr + u32::from((*cpu).y)) >> 8) {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
     }
-    *low = ((((*cpu).db as ::core::ffi::c_int) << 16 as ::core::ffi::c_int)
-        + adr as ::core::ffi::c_int
-        + (*cpu).y as ::core::ffi::c_int
-        & 0xffffff as ::core::ffi::c_int) as uint32_t;
-    return ((((*cpu).db as ::core::ffi::c_int) << 16 as ::core::ffi::c_int)
-        + adr as ::core::ffi::c_int
-        + (*cpu).y as ::core::ffi::c_int
-        + 1 as ::core::ffi::c_int
-        & 0xffffff as ::core::ffi::c_int) as uint32_t;
+    *low = ((u32::from((*cpu).db) << 16) + adr + u32::from((*cpu).y)) & 0xffffff;
+    ((u32::from((*cpu).db) << 16) + adr + u32::from((*cpu).y) + 1) & 0xffffff
 }
 unsafe fn cpu_adrAbl(cpu: *mut Cpu, low: *mut uint32_t, game: &mut Game) -> uint32_t {
     let mut adr = u32::from(cpu_readOpcodeWord(cpu, game));
@@ -773,15 +739,11 @@ unsafe fn cpu_adrAbl(cpu: *mut Cpu, low: *mut uint32_t, game: &mut Game) -> uint
     *low = adr;
     adr.wrapping_add(1) & 0xffffff
 }
-unsafe fn cpu_adrAlx(mut cpu: *mut Cpu, mut low: *mut uint32_t, game: &mut Game) -> uint32_t {
-    let mut adr: uint32_t = cpu_readOpcodeWord(cpu, game) as uint32_t;
-    adr |=
-        ((cpu_readOpcode(cpu, game) as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) as uint32_t;
-    *low = adr.wrapping_add((*cpu).x as uint32_t) & 0xffffff as uint32_t;
-    return adr
-        .wrapping_add((*cpu).x as uint32_t)
-        .wrapping_add(1 as uint32_t)
-        & 0xffffff as uint32_t;
+unsafe fn cpu_adrAlx(cpu: *mut Cpu, low: *mut uint32_t, game: &mut Game) -> uint32_t {
+    let mut adr = u32::from(cpu_readOpcodeWord(cpu, game));
+    adr |= u32::from(cpu_readOpcode(cpu, game)) << 16;
+    *low = adr.wrapping_add(u32::from((*cpu).x)) & 0xffffff;
+    adr.wrapping_add(u32::from((*cpu).x)).wrapping_add(1) & 0xffffff
 }
 unsafe fn cpu_adrIax(mut cpu: *mut Cpu, game: &mut Game) -> uint16_t {
     let mut adr: uint16_t = cpu_readOpcodeWord(cpu, game);
