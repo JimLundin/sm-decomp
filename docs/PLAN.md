@@ -2607,6 +2607,29 @@ or ROM-derived assets are committed. Next: initialization callback/pose
 setup fields and projectile preinstruction initialization, retaining live
 reads and write order; the stopped ammo route remains held.
 
+Projectile/bomb preinstruction initialization now uses a named byte-backed
+setter and an ascending ten-slot loop. The setter matches ram_map at 0C68;
+slots 5 through 9 overlap bomb_functions at 0C72. All ten little-endian
+word stores retain their original order and the low word B169 of
+fnProjPreInstr_Empty, before the grapple callback store. g_ram layout stays
+unchanged; the fixed loop satisfies the setter's ten-slot bound.
+
+The normal boot/gunship replay passes 22,631/0 (49.36s), native exit 0.
+Read-only observations immediately after each changed store show slots
+0 through 9, in order, with word B169, in three actual Rust-side-2
+Samus_Initialize calls at SNES counters 298, 8,256 and 20,817. Removing
+the observation restores exact maintained source. This proves execution
+of this initialization path, not all other initialization branches.
+Full any% also passes 129,712/0 (224.79s), native exit 0, on committed 66c9e524
+source with only sm_91.rs/game_state.rs replaced by this focused change;
+later concurrent brightness/audio work is outside that replay's scope.
+Cargo fmt/check, optimized core/DLL and normal-core metadata builds pass.
+Cargo release remains denied at khronos_api's build script (OS error 5).
+Raw offsets -1, cast lines -6, Rust lines -3; other gameplay counters
+unchanged. Concurrent audio lines are separate. No probe or ROM-derived
+assets are committed. Next: initialization callback/pose setup fields,
+retaining live reads and store order; the stopped ammo route stays held.
+
 
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve

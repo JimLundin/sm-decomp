@@ -4933,18 +4933,8 @@ pub unsafe fn Samus_Initialize(game: &mut Game) {
         as *mut uint16) = 50 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xa72 as ::core::ffi::c_int as isize)
         as *mut uint16) = 1537 as uint16;
-    let mut v1: uint16 = 0 as uint16;
-    loop {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc68 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-            (0x90b169 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        v1 = (v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
-        if !(((v1 as ::core::ffi::c_int - 20 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
-            < 0 as ::core::ffi::c_int)
-        {
-            break;
-        }
+    for slot in 0..10 {
+        game.set_projectile_bomb_pre_instruction(slot, fnProjPreInstr_Empty as u16);
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0xd32 as ::core::ffi::c_int as isize)
         as *mut uint16) = (0x9bc4f0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;

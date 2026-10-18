@@ -440,6 +440,13 @@ impl Game {
         u16::from_le_bytes([self.g_ram[offset], self.g_ram[offset + 1]])
     }
 
+    /// projectile_bomb_pre_instructions ($7E:0C68); slots 5..10 are bomb_functions.
+    pub fn set_projectile_bomb_pre_instruction(&mut self, slot: usize, value: u16) {
+        assert!(slot < 10);
+        let offset = 0xc68 + slot * 2;
+        self.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+    }
+
     /// Enemy projectile X position ($7E:1A4B in ram_map); odd indexes round down.
     pub fn enemy_projectile_x_pos(&self, index: u16) -> u16 {
         let offset = 0x1a4b + usize::from(index & !1);
