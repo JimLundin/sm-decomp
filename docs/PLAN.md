@@ -1115,6 +1115,17 @@ frames, zero failures (189.33s). Raw offsets -2, unsafe functions -3,
 cast lines -6, Rust lines -6. Next: the shared block-type/BTS writer and PLM
 deletion used by extension setups, preserving their byte write order.
 
+The shared level-data type/BTS writer, PLM deletion and four directional
+extension setups are now safe byte-backed Rust. The writer retains the exact
+level-data byte offset (including odd offsets), rounds BTS indexing down,
+and writes level data before BTS. Extension setups retain 50FF/5001/D0FF/D001,
+then clear the original PLM header and return zero. Stable optimized core/DLL
+build and direct format pass; Cargo fmt/build remain ASR-denied. Waver route:
+58,109 frames, zero failures (85.18s); any%: 129,712 frames, zero failures
+(185.73s). Raw offsets -7, unsafe functions -6, cast lines -17, Rust lines -36.
+Next: air/solid scroll setups and their wrapping instruction advance,
+preserving level-data, BTS, trigger and instruction write order.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

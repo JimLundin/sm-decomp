@@ -951,21 +951,11 @@ pub unsafe fn CalculatePlmBlockCoords(mut k: uint16, game: &mut Game) {
             as *mut uint16) as uint8,
     );
 }
-pub unsafe fn WriteLevelDataBlockTypeAndBts(mut k: uint16, mut a: uint16, game: &mut Game) {
-    let mut v2: *mut uint8 = (&raw mut game.g_ram as *mut uint8)
-        .offset((0x10000 as ::core::ffi::c_int + k as ::core::ffi::c_int) as isize)
-        as *mut uint8;
-    *v2.offset(3 as ::core::ffi::c_int as isize) = (*(&raw mut a as *mut uint8).offset(
-        (::core::mem::size_of::<uint16>() as usize)
-            .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-            .wrapping_sub(1 as usize) as isize,
-    ) as ::core::ffi::c_int
-        | *v2.offset(3 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-            & 0xf as ::core::ffi::c_int)
-        as uint8;
-    *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = a as uint8;
+pub fn WriteLevelDataBlockTypeAndBts(k: uint16, a: uint16, game: &mut Game) {
+    // The level-data byte uses the exact offset, while BTS rounds down to a word.
+    let block_high = 0x10003 + usize::from(k);
+    game.g_ram[block_high] = (a >> 8) as u8 | (game.g_ram[block_high] & 0x0f);
+    game.g_ram[0x16402 + usize::from(k >> 1)] = a as u8;
 }
 pub unsafe fn WriteRowOfLevelDataBlockAndBTS(
     mut k: uint16,
@@ -4059,54 +4049,28 @@ pub unsafe fn PlmSetup_B6F3_MissileStationLeftAccess(mut j: uint16, game: &mut G
         return 1 as uint8;
     };
 }
-pub unsafe fn DeletePlm(mut j: uint16, game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1c37 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
+pub fn DeletePlm(j: uint16, game: &mut Game) {
+    let header_offset = 0x1c37 + usize::from(j & !1);
+    game.g_ram[header_offset..header_offset + 2].fill(0);
 }
-pub unsafe fn PlmSetup_B638_Rightwards_Extension(mut j: uint16, game: &mut Game) -> uint8 {
-    WriteLevelDataBlockTypeAndBts(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize),
-        0x50ff as uint16,
-        game,
-    );
-    DeletePlm(j, game);
-    return 0 as uint8;
+pub fn PlmSetup_B638_Rightwards_Extension(j: uint16, game: &mut Game) -> uint8 {
+    setup_extension_block(j, 0x50ff, game)
 }
-pub unsafe fn PlmSetup_B63F_Leftwards_Extension(mut j: uint16, game: &mut Game) -> uint8 {
-    WriteLevelDataBlockTypeAndBts(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize),
-        0x5001 as uint16,
-        game,
-    );
-    DeletePlm(j, game);
-    return 0 as uint8;
+pub fn PlmSetup_B63F_Leftwards_Extension(j: uint16, game: &mut Game) -> uint8 {
+    setup_extension_block(j, 0x5001, game)
 }
-pub unsafe fn PlmSetup_B643_Downwards_Extension(mut j: uint16, game: &mut Game) -> uint8 {
-    WriteLevelDataBlockTypeAndBts(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize),
-        0xd0ff as uint16,
-        game,
-    );
-    DeletePlm(j, game);
-    return 0 as uint8;
+pub fn PlmSetup_B643_Downwards_Extension(j: uint16, game: &mut Game) -> uint8 {
+    setup_extension_block(j, 0xd0ff, game)
 }
-pub unsafe fn PlmSetup_B647_Upwards_Extension(mut j: uint16, game: &mut Game) -> uint8 {
-    WriteLevelDataBlockTypeAndBts(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize),
-        0xd001 as uint16,
-        game,
-    );
+pub fn PlmSetup_B647_Upwards_Extension(j: uint16, game: &mut Game) -> uint8 {
+    setup_extension_block(j, 0xd001, game)
+}
+fn setup_extension_block(j: uint16, block_type_and_bts: u16, game: &mut Game) -> uint8 {
+    let slot_offset = 0x1c87 + usize::from(j & !1);
+    let block_index = u16::from_le_bytes([game.g_ram[slot_offset], game.g_ram[slot_offset + 1]]);
+    WriteLevelDataBlockTypeAndBts(block_index, block_type_and_bts, game);
     DeletePlm(j, game);
-    return 0 as uint8;
+    0
 }
 pub unsafe fn SkipDebugDrawInstructionsForScrollPlms(mut j: uint16, game: &mut Game) {
     let ref mut fresh18 = *((&raw mut game.g_ram as *mut uint8)
