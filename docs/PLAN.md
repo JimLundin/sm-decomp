@@ -780,6 +780,32 @@ counters unchanged. This proves the tested port behavior, not complete PPU
 or boot-to-credits equivalence. Next: resolve the separate HDMA edge-pass
 discrepancy and continue normal-input gameplay coverage.
 
+Normal-input coverage reaches 9969 (2026-10-18): the verified 99BD prefix
+ends near X200/Y1163. A rightward suffix returns to 990D; leftward movement
+reaches X37/Y1243 without leaving 99BD. An isolated end-of-replay RAM read
+shows a 16x112-block room: lower door blocks are at rows 102..105, while
+ledges at rows 79/84/89/94/99 alternate right/left openings. Steering through
+those gaps reaches the left lower door at frame 60,845; room 9969 loads at
+60,863 and gameplay resumes at 60,950. Final diagnostic health is 89/199,
+X963/Y139, state 8. All controls use the normal replay path; no RAM writes,
+teleports or save-state initialization are used.
+
+The ignored input lead-99bd-bottom-left.inputs extends the 59,942-frame
+qa-waver-tank-xfire-exit.inputs prefix with left/run/shoot 180, neutral 60;
+right/run/shoot 50, left/run/shoot 140, right/run/shoot 100,
+left/run/shoot 140, neutral 60; right/run/shoot 90, left/run/shoot 150,
+neutral 120. Runtime shoot is 0040, run 8000, left 0200, right 0100.
+The final 61,032-frame route observes 19 rooms and 21 enemy definitions.
+Standard replay on the Func2/slope/sound DLL passes 61,032/0 (107.40s);
+a fresh optimized DLL on e23c9141 also passes 61,032/0 (116.93s), native
+exit 0, including VRAM read-latch and port-state checks. The diagnostic host
+adds only final RAM reads; its earlier run passes 61,032/0 (106.81s).
+This establishes actual new-room traversal, not Turtle callback execution
+or boot-to-credits coverage. No diagnostic or ROM-derived artifacts are
+committed. Next: continue normal inputs from 9969 toward further gameplay;
+keep uncovered Turtle cleanup on hold. Maintained Rust and residue counters
+are unchanged by this route note.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
