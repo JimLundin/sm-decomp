@@ -1415,7 +1415,8 @@ pub unsafe fn LoadDemoData(game: &mut Game) {
     LoadDemoInputObject(demo_obj, demo_obj, game);
     let set = usize::from(game.demo_set());
     let scene = usize::from(game.demo_scene());
-    (*kDemoSetFuncPtrs[set].as_ptr().add(scene)).expect("non-null function pointer")(game);
+    let initialize_scene = kDemoSetFuncPtrs[set][scene].expect("non-null function pointer");
+    initialize_scene(game);
     game.set_frame_handler_alfa(fnSamus_FrameHandlerAlfa_Func12 as u16);
     game.set_frame_handler_beta(fnSamus_FrameHandlerBeta_Func14 as u16);
     game.set_samus_momentum_routine_index(0);

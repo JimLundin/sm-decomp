@@ -3868,6 +3868,39 @@ provide checked reads and retained diagnostics. Other gameplay counters unchange
 No probe or ROM-derived assets committed. Next: demonstrate demo set 3 / leave
 coverage and deepen scene dispatch; stopped ammo route held.
 
+Demo set-3 coverage investigation: VerifySRAM initializes demo-set count
+to three and enables four only with valid save data plus the completed-game
+SRAM marker. Normal neutral boot cannot reach set 3 by waiting. A committed
+b4d8db61 neutral replay extended to 90,000 frames passes 90,000/0 (215.15s),
+native exit 0, with 82 actual Rust-side-2 LoadDemoData calls across sets 0..2;
+no set-3 call. Do not manufacture completion SRAM or claim set 3 covered.
+This gap remains tied to normal boot-to-credits completion coverage.
+
+A normal Start input at zero-based input frame 3,000 during the first demo
+moves replay state 42 to 43 then 44 and resumes attract initialization.
+Its 5,000-frame baseline passes 5,000/0 (11.57s), native exit 0. The special
+DemoPreInstr_CheckLeaveDemo state-44 body has zero observed hits in both
+exit and extended idle runs, so it remains unproved and untouched.
+
+LoadDemoData scene dispatch now uses checked slice indexing and a named
+initialize_scene function value before the same call. Set/scene live reads,
+table contents, Option check and callback/store order are unchanged. Valid
+scene behavior is retained; an out-of-range scene now fails bounds checking
+instead of the previous pointer's undefined behavior. Rewritten attract
+passes 30,000/0 (61.44s), with 26 actual Rust-side-2 dispatches; rewritten
+Start-exit passes 5,000/0 (8.55s), with two actual dispatches. Native exits 0.
+Removing observations restores exact maintained source.
+
+Full any% passes 129,712/0 (324.43s), native exit 0, on committed b4d8db61
+source with only this sm_91.rs change. Concurrent audio/COLDATA work is outside
+that replay's scope. Cargo fmt/check, optimized core/DLL and normal-core
+metadata builds pass; Cargo release remains denied at khronos_api's build
+script (OS error 5). Rust lines +1 names the selected function; all other
+focused residue counters unchanged. Probe/inputs stay ignored; no ROM-derived
+assets committed. Next: measure actual DemoSetFunc entries and clean the
+executed scene initializers, retaining callback and pose-update order.
+Set 3, special leave-preinstruction and stopped ammo coverage remain held.
+
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
 the original `SignExtend8(0x8000)` initialization and the middle-byte velocity
