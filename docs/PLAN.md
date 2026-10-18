@@ -8329,6 +8329,19 @@ builds pass; full frontend linking still lacks SDL2. Live source matches
 verified source. Rust lines -153; other progress counters unchanged. Complete
 gameplay and rendering/audio fidelity remain open.
 
+CPU addressing-name cleanup (2026-10-19): 17 private helpers now name their
+65816 addressing modes directly, including direct-page indirect variants,
+stack-relative modes and absolute long/indexed modes. Exact inverse identifier
+replacement reconstructs original source before formatting; frozen HEAD
+`4548dc5f5001eceadc9ae7457f605c07f9f1b3c1` plus rename/reflow matches live source.
+Cargo fmt/check, release library, normal metadata and optimized core/DLL builds
+pass; full frontend linking still lacks SDL2. Prefix 3,600/0 (1.05s) exercises
+14/17 helpers. Direct-page indexed indirect, direct-page indirect long and
+stack-relative indirect-Y have zero prefix hits; this rename does not establish
+their gameplay coverage. Clean full any% 129,712/0 (53.86s), native exit 0.
+Rust lines +4 solely from formatter reflow of longer readable names; all other
+counters unchanged. Gameplay and rendering/audio completeness remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
