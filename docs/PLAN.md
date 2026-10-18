@@ -4343,6 +4343,29 @@ movie result is claimed; diagnostic sources and ROM assets stay ignored.
 Rendering initialization/Waver71, hires, hardware events, audio timing,
 masked RAM and boot-to-credits coverage remain open.
 
+Independent open-bus CPU-consumer QC (2026-10-18): the snapshot change in
+d0912c2d passes 114,688 actual MakeSnapshot/RestoreSnapshot/65816 LDA
+continuations. All 256 seeded bus bytes, eight NMI/IRQ/vblank combinations,
+two HBlank positions and two autojoy busy states exercise byte and word
+reads at 4210, 4211, 4212, 420F, 4200, 420D and 420E. Independently computed
+status/unimplemented-register values, accumulator, PC and four/five opcode
+cycles match. Removing only the open-bus restore, and omitting the direct
+restored-byte assertion, fails at the actual LDA result: 5A72 versus 5A02.
+
+The initial fixture attempted invalid LoROM 4220 reads and stopped; it is
+not counted as a verification run. Corrected addresses stay within the
+maintained register mapping. Frozen MakeSnapshot and RestoreSnapshot bodies
+match current source after restoring the negative-control deletion. Optimized
+probe core/DLL, normal-core metadata and direct full-source rustfmt pass;
+Cargo launch remains denied as documented. No maintained Rust changes or
+residue-counter changes result from this QC note. Existing d0912c2d any%
+129,712/0 and injected BOTH recovery/retry results remain the implementation's
+frame verification; this probe adds CPU-consumer evidence, not another movie
+pass. All probes remain in TEMP. These are seeded-context preservation checks,
+not hardware bus-update accuracy, status-register residual equality or natural
+instruction coverage. Rendering/Waver71, events, audio timing and credits
+remain open; held HDMA diagnosis stays stopped.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
