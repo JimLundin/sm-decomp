@@ -4891,6 +4891,21 @@ maintained tooling is added. Movie integration remains separately owned;
 rendering/Waver71, hardware/audio timing and credits remain open. Held
 HDMA diagnosis remains stopped.
 
+Independent controller bit-reversal QC (2026-10-18): pending reverse_bits
+cleanup passes 262,144 actual CPU LDA absolute instructions through the
+maintained SNES register reader. All 65,536 controller input words execute
+byte/word reads at both 4218 and 4219 (the latter word includes zero-valued
+421A). Independent bit-position expectations check A, N/Z, PC and cycles;
+unrelated C/V/I flags and controller state remain unchanged. Replacing only
+reverse_bits with swap_bytes in TEMP fails pad 1's word read: 0100 versus
+8000. Original/control native exits are zero/nonzero. Frozen/live changed
+helper matches. Optimized probe core/DLL, normal-core metadata, direct full
+source rustfmt and progress pass; no production changes or residue increases
+from this note. Movie integration remains separately owned. This proves
+executed input packing, not automatic-joy timing or broader hardware accuracy;
+rendering/Waver71, recovery integration, audio/event timing and credits remain
+open. Held HDMA diagnosis remains stopped; probes stay TEMP.
+
 Current broad-route revalidation (2026-10-18): committed d217ea15 source
 replays the retained 62,817-frame lead-9ad9-arrive.inputs through the standard
 verifier, passing 62,817/0 (117.57s), native exit 0. It observes 48,819
