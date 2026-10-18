@@ -484,6 +484,21 @@ impl Game {
         self.g_ram[0x18aa..0x18ac].copy_from_slice(&value.to_le_bytes());
     }
 
+    /// game_state ($7E:0998 in ram_map).
+    pub fn game_state(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x998], self.g_ram[0x999]])
+    }
+
+    /// loading_game_state ($7E:D914 in ram_map).
+    pub fn loading_game_state(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xd914], self.g_ram[0xd915]])
+    }
+
+    /// area_index ($7E:079F in ram_map).
+    pub fn area_index(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x79f], self.g_ram[0x7a0]])
+    }
+
     /// frame_handler_alfa ($7E:0A42 in ram_map).
     pub fn set_frame_handler_alfa(&mut self, value: u16) {
         self.g_ram[0xa42..0xa44].copy_from_slice(&value.to_le_bytes());

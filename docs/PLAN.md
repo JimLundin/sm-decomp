@@ -3156,6 +3156,33 @@ No probe or ROM-derived assets are committed. Next: remaining initialization
 state reads and local constants; keep reads live and preserve callback order.
 The stopped ammo route stays held.
 
+Samus_Initialize now uses named byte-backed game_state, loading_game_state
+and area_index getters matching ram_map at 0998/D914/079F. Both game-state
+reads remain at their original separate sites around initialization callbacks;
+no cached state replaces the later live read. Six immutable local word_*
+constants become their original literal values at the same displacement/
+acceleration stores. The captured invincibility variable now names its meaning.
+No raw RAM pointer accesses remain in this routine; its unsafe declaration
+still reflects the legacy palette/beam/demo calls.
+
+Observed boot/gunship passes 22,631/0 (41.34s), native exit 0. Four actual
+changed read sites execute in each Rust-side-2 initialization call at SNES
+counters 298/8,256/20,817 (12 observations). First/later game-state values
+are 001E/001F/0006, loading states 0000/001F/0022, areas 0000/0006/0000.
+Both loading-state and area branches execute. Removing observations restores
+exact maintained source. The demo-transition skip/loading path remains
+unproved; these reads do not establish its execution.
+
+Full any% passes 129,712/0 (209.16s), native exit 0, on committed 47f85757
+source with only this sm_91.rs/game_state.rs change. Concurrent physical-APU
+and scroll-oracle changes are outside that replay's scope. Cargo fmt/check,
+optimized core/DLL and normal-core metadata builds pass; Cargo release stays
+denied at khronos_api's build script (OS error 5). Raw offsets -4, cast lines
+-12, Rust lines -3; other gameplay counters unchanged. No probe or ROM-derived
+assets are committed. Next: obtain actual demo-transition initialization
+coverage through normal inputs before cleaning LoadDemoData or claiming all
+Samus_Initialize paths covered. The stopped ammo route stays held.
+
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
 the original `SignExtend8(0x8000)` initialization and the middle-byte velocity

@@ -4848,26 +4848,14 @@ pub fn Samus_RestorePowerBombs(amount: u16, game: &mut Game) {
     }
 }
 pub unsafe fn Samus_Initialize(game: &mut Game) {
-    static word_909EAF: uint16 = 0 as uint16;
-    static word_909EAD: uint16 = 1 as uint16;
-    static word_909EB3: uint16 = 0 as uint16;
-    static word_909EB1: uint16 = 1 as uint16;
-    static word_909EA1: uint16 = 0x1c00 as uint16;
-    static word_909EA7: uint16 = 0 as uint16;
-    let r18 = game.debug_invincibility();
+    let debug_invincibility = game.debug_invincibility();
     // Clear the original Samus workspace from its last byte to its first.
     for address in (0xa02..=0xe0b).rev() {
         game.g_ram[address] = 0;
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        != kGameState_40_TransitionToDemo as ::core::ffi::c_int
-    {
+    if game.game_state() != kGameState_40_TransitionToDemo as u16 {
         game.set_frame_handler_alfa(fnEmptyFunction as u16);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xd914 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            == kGameState_34_CeresGoesBoom as ::core::ffi::c_int
-        {
+        if game.loading_game_state() == kGameState_34_CeresGoesBoom as u16 {
             game.set_frame_handler_beta(fnSetContactDamageIndexAndUpdateMinimap as u16);
             game.set_samus_draw_handler(fnSamusDrawHandler_Default as u16);
             game.set_samus_momentum_routine_index(u16::MAX);
@@ -4882,16 +4870,13 @@ pub unsafe fn Samus_Initialize(game: &mut Game) {
             game.set_samus_special_transgfx_index(0);
             game.set_samus_hurt_switch_index(0);
             game.set_samus_input_handler(fnSamus_InputHandler_E913 as u16);
-            game.set_debug_invincibility(r18);
+            game.set_debug_invincibility(debug_invincibility);
         }
     }
     game.set_samus_new_pose(u16::MAX);
     game.set_samus_new_pose_interrupted(u16::MAX);
     game.set_samus_new_pose_transitional(u16::MAX);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        == 6 as ::core::ffi::c_int
-    {
+    if game.area_index() == 6 {
         game.set_frame_handler_gamma(fnSamus_Func3 as u16);
     } else {
         game.set_frame_handler_gamma(fnnullsub_152 as u16);
@@ -4907,16 +4892,16 @@ pub unsafe fn Samus_Initialize(game: &mut Game) {
     game.set_enable_horiz_slope_coll(3);
     game.set_samus_hurt_flash_counter(0);
     game.set_samus_special_super_palette_flags(0);
-    game.set_absolute_moved_last_frame_x_fract(word_909EAF);
-    game.set_absolute_moved_last_frame_x(word_909EAD);
-    game.set_absolute_moved_last_frame_y_fract(word_909EB3);
-    game.set_absolute_moved_last_frame_y(word_909EB1);
+    game.set_absolute_moved_last_frame_x_fract(0);
+    game.set_absolute_moved_last_frame_x(1);
+    game.set_absolute_moved_last_frame_y_fract(0);
+    game.set_absolute_moved_last_frame_y(1);
     // Initialize the hdma_table_1 from its last word to its first.
     for word in game.g_ram[0x9800..0x9a00].chunks_exact_mut(2).rev() {
         word.copy_from_slice(&255u16.to_le_bytes());
     }
-    game.set_samus_y_subaccel(word_909EA1);
-    game.set_samus_y_accel(word_909EA7);
+    game.set_samus_y_subaccel(0x1c00);
+    game.set_samus_y_accel(0);
     game.set_fx_y_pos(u16::MAX);
     game.set_lava_acid_y_pos(u16::MAX);
     UpdateBeamTilesAndPalette(game);
@@ -4934,10 +4919,7 @@ pub unsafe fn Samus_Initialize(game: &mut Game) {
     game.set_samus_knockback_timer(0);
     game.set_samus_hurt_flash_counter(0);
     game.set_debug_invincibility(0);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        == kGameState_40_TransitionToDemo as ::core::ffi::c_int
-    {
+    if game.game_state() == kGameState_40_TransitionToDemo as u16 {
         LoadDemoData(game);
     }
     game.set_samus_prev_health_for_flash(game.samus_health());
