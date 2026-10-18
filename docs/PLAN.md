@@ -4711,6 +4711,31 @@ full-any% integration remain the implementing session's separate checks.
 Rendering/Waver71, event timing, audio timing and credits remain open;
 held HDMA diagnosis stays stopped.
 
+SNES register disk-save continuation audit (2026-10-18):65,536 complete
+SaveSnesState/reset/LoadSnesState cases preserve arithmetic operands/results,
+interrupt enables and H/V timers, WRIO latch, autojoy enable/timer, fast-memory
+selection and open-bus state. Actual4202..4206/4200/4201/4207..420A/420D
+writes establish saved context; timer/bus seeds include constructed states.
+Post-load4214..4217 reads, a low-only dividend update/division and high-only
+horizontal-timer update match independent expectations. Nativeexit0.
+
+Windows layout: hPos92, multiplyA137, multiplyResult138, divideA140,
+divideResult142, fastMem144, openBus145. The54-byte serialized range beginning
+at hPos includes all these fields through openBus. A TEMP control reducing
+it to53 bytes fails saved bus1 versus reset0, nativeexit3221226505. No format
+or production fix is justified for these tested contexts. This does not
+establish hardware arithmetic latency, autojoy timing, interrupt delivery,
+cross-platform layout or filesystem frontend behavior. Input device ownership
+and complete controller state are outside this range/continuation audit.
+
+Only this note changes; no maintained Rust/residue changes. Frozen source
+includes then-current CPU/DMA/PPU edits; later integration is separate.
+Isolated optimized core/DLL builds, direct full-source rustfmt and progress
+pass; Cargo fmt/check and release remain denied at cargo.exe launch. No fresh
+movie result claimed; diagnostic/save/ROM assets stay ignored. Continue
+actual device/event coverage; held HDMA diagnosis stays stopped. Rendering/
+Waver71, hires, hardware/audio timing, masked RAM and credits remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
