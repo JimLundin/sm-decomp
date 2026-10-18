@@ -3058,6 +3058,38 @@ Rust lines -3; other focused counters unchanged. No probes or ROM-derived
 assets committed. Next: SETINI display flags, preserving store order and
 ignored bits; retain whole-line Mode 7 direct-color accuracy for separate work.
 
+CGWSEL snapshot gap and enforcement (2026-10-18): clipping, math
+prevention, subscreen selection and direct color were omitted from snapshots.
+Four actual mutations escaped comparison, survived rewind and changed the
+next row: three whole-line backdrop controls and direct color through the
+pixel Mode 7 renderer. An initial fixture used an incorrect layer-field name
+and failed to compile; enabling BG1 through the actual register writer fixes
+the probe. This is injected-gap evidence, not natural movie divergence.
+
+Snapshots now capture, compare and directly restore all four fields. Actual
+checks pass 256 register mappings/equalities, 1,536 meaningful register-bit
+faults and 512 unused-bit equality controls. Four continuation controls restore
+identical rows. Independent clipping/math-prevention/subscreen/half/subtract
+arithmetic passes 2,048 actual rows / 524,288 pixels in both renderers, with
+a color window at 100..159, all four clip/prevention modes, four backdrop
+levels and two fixed levels. Subscreen coverage here uses the empty-subscreen
+fixed-color fallback and its half suppression; populated subscreen composition
+and direct-color arithmetic are outside this model. Probe native exit 0.
+Four frame-200 field faults each produce 3,600/1 and native exit 1, named
+diagnostics and no later cascade.
+
+Dedicated source Verified 129712 frames: 0 failing frames (296.31s); Verified 58109 frames: 0 failing frames (147.31s); native exits 0. Cargo fmt/check,
+direct optimized core/DLL and normal-core metadata builds pass. Cargo release
+remains denied executing khronos_api's build script (OS error 5). Progress
+run passes; focused Rust lines +22 implement the snapshot and diagnostics,
+with other focused counters unchanged. Only the four CPU hunks and this note
+enter the commit. Concurrent source work in the tested build is included;
+later edits require their own verification. Ppu/RAM/save layouts unchanged;
+probes and ROM-derived assets stay ignored. Next: display geometry/timing
+snapshot coverage. Known whole-line Mode 7 direct-color hardware accuracy,
+held window-boundary/HDMA diagnosis, audio timing, masked RAM and complete
+route coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
