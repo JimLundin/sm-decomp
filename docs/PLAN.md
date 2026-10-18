@@ -6152,6 +6152,29 @@ need separate integration. Hardware/audio timing, rendering/Waver71, masked
 RAM and credits remain open; held HDMA diagnosis stays stopped. Continue
 executed hardware paths and route coverage.
 
+CPU stack-relative cleanup (2026-10-18): cpu_adrSr/Isy use native widening,
+full-word stack wrapping and 24-bit indirect/index sums. Operand and pointer
+reads retain their order; low output precedes fresh SP or DB/Y reads for the
+high address. Actual old/current helpers pass 33,554,432 substituted-bus
+cases over every SP/operand pair and both modes, with varying pointer/Y/DB.
+Independent address/cycle/PC expectations and ordered fetch/pointer traces
+pass. Another 393,216 cases alias output with aligned SP/PC, X/Y or DP/K/DB
+storage, matching high address and final fields. Physical WRAM executes
+2,097,152 STA/LDA instructions across every value, both accumulator widths,
+four SP boundaries and direct/indirect modes, including stack sum wrapping
+and indirect carry from 7E:FFFF to 7F:0000. RAM/value, SP, Z/N, PC and cycles
+pass. Independent physical-bus QC follows. Instrumented any% prefix passes
+3,600/0, native exit 0, with Sr 7,017 and Isy zero calls; dedicated actual
+instructions establish Isy execution, not movie coverage. Clean frozen
+4e0fcfdac460ecc024ce4e8a3190caf1d8c4572a plus only these two helpers passes
+any% 129,712/0 (259.44s), native exit 0. Direct full-source format,
+normal-core metadata and optimized clean/probe core/DLL builds pass;
+Cargo fmt/release remain launch-denied. Progress/diff checks pass; focused
+cast lines -16 and Rust lines -11, other categories unchanged. Later peer
+changes are outside this replay. Physical device/ROM pointers, full input
+Cartesian coverage, hardware/render/audio timing and credits remain open;
+held HDMA diagnosis stays stopped. Continue executed indirect CPU helpers.
+
 Independent stack-address QC (2026-10-18): candidate cpu_adrSr/Isy pass
 4,587,008 actual old/current LDA instructions. Sr covers every supported
 low-WRAM target 0000..1FFE, every operand byte and byte/word accumulator

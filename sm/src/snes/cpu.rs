@@ -685,32 +685,21 @@ unsafe fn cpu_adrIly(mut cpu: *mut Cpu, mut low: *mut uint32_t, game: &mut Game)
         .wrapping_add(1 as uint32_t)
         & 0xffffff as uint32_t;
 }
-unsafe fn cpu_adrSr(mut cpu: *mut Cpu, mut low: *mut uint32_t, game: &mut Game) -> uint32_t {
-    let mut adr: uint8_t = cpu_readOpcode(cpu, game);
-    *low = ((*cpu).sp as ::core::ffi::c_int + adr as ::core::ffi::c_int
-        & 0xffff as ::core::ffi::c_int) as uint32_t;
-    return ((*cpu).sp as ::core::ffi::c_int + adr as ::core::ffi::c_int + 1 as ::core::ffi::c_int
-        & 0xffff as ::core::ffi::c_int) as uint32_t;
+unsafe fn cpu_adrSr(cpu: *mut Cpu, low: *mut uint32_t, game: &mut Game) -> uint32_t {
+    let adr = u16::from(cpu_readOpcode(cpu, game));
+    *low = u32::from((*cpu).sp.wrapping_add(adr));
+    u32::from((*cpu).sp.wrapping_add(adr).wrapping_add(1))
 }
-unsafe fn cpu_adrIsy(mut cpu: *mut Cpu, mut low: *mut uint32_t, game: &mut Game) -> uint32_t {
-    let mut adr: uint8_t = cpu_readOpcode(cpu, game);
-    let mut pointer: uint16_t = cpu_readWord(
+unsafe fn cpu_adrIsy(cpu: *mut Cpu, low: *mut uint32_t, game: &mut Game) -> uint32_t {
+    let adr = u16::from(cpu_readOpcode(cpu, game));
+    let pointer = u32::from(cpu_readWord(
         cpu,
-        ((*cpu).sp as ::core::ffi::c_int + adr as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int)
-            as uint32_t,
-        ((*cpu).sp as ::core::ffi::c_int + adr as ::core::ffi::c_int + 1 as ::core::ffi::c_int
-            & 0xffff as ::core::ffi::c_int) as uint32_t,
+        u32::from((*cpu).sp.wrapping_add(adr)),
+        u32::from((*cpu).sp.wrapping_add(adr).wrapping_add(1)),
         game,
-    );
-    *low = ((((*cpu).db as ::core::ffi::c_int) << 16 as ::core::ffi::c_int)
-        + pointer as ::core::ffi::c_int
-        + (*cpu).y as ::core::ffi::c_int
-        & 0xffffff as ::core::ffi::c_int) as uint32_t;
-    return ((((*cpu).db as ::core::ffi::c_int) << 16 as ::core::ffi::c_int)
-        + pointer as ::core::ffi::c_int
-        + (*cpu).y as ::core::ffi::c_int
-        + 1 as ::core::ffi::c_int
-        & 0xffffff as ::core::ffi::c_int) as uint32_t;
+    ));
+    *low = ((u32::from((*cpu).db) << 16) + pointer + u32::from((*cpu).y)) & 0xffffff;
+    ((u32::from((*cpu).db) << 16) + pointer + u32::from((*cpu).y) + 1) & 0xffffff
 }
 unsafe fn cpu_adrAbs(cpu: *mut Cpu, low: *mut uint32_t, game: &mut Game) -> uint32_t {
     let adr = u32::from(cpu_readOpcodeWord(cpu, game));
