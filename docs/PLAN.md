@@ -5043,6 +5043,26 @@ PPU state/output before assuming the rerun completes the same render state;
 held HDMA diagnosis stays stopped. Rendering/Waver71, hardware/audio timing,
 masked RAM and boot-to-credits remain open.
 
+Independent CPU stack opcode QC (2026-10-18): pending byte/word push/pull
+cleanup passes5,504,512 actual PHA/PLA instruction pairs. Native SP0001..1FFF
+and emulation SP0100..01FF run both widths and all256 low-byte seeds with
+varying high bytes. Seven native boundaries and both emulation-page ends
+also run all65,536 values. Independent checks observe high-before-low word
+pushes, post-push SP, restored SP/value, byte accumulator-high preservation,
+flags, unchanged registers/modes/banks, PC and3/4 push plus4/5 pull cycles.
+Swapping only word push byte order fails the direct RAM check1 versus73;
+original/control native exits are zero/nonzero. Frozen stack/Z/N helpers
+match live. Optimized probe core/DLL, normal-core metadata, direct full-source
+rustfmt and progress pass; Cargo execution remains denied as documented.
+
+Scope is actual WRAM stacks and valid emulation stack pages, including page
+wrap and word spill at native SP0001. Native SP0000/FFFF, device/ROM stack
+addresses, interrupt/return opcodes and invalid emulation SP values are not
+claimed. Main uses physical bus reads/writes rather than stubbed memory.
+Only this note changes; no maintained Rust/residue changes, probes stay TEMP.
+Implementing session owns full-any% integration. Rendering/Waver71, event/
+audio timing and credits stay open; held HDMA diagnosis stays stopped.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
