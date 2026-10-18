@@ -8256,6 +8256,22 @@ frontend linking still lacks SDL2. Live source matches verified source.
 Cast lines -50, Rust lines -24; other counters unchanged. Complete gameplay
 and rendering/audio fidelity remain open.
 
+CPU SBC cleanup (2026-10-19): accumulator subtraction uses native byte/word
+complements, explicit `i32` intermediates, lossless widening and native
+constants/decimal tests. Signed decimal correction masks and overflow-before-
+final-correction order retain invalid-BCD behavior. Frozen HEAD
+`46057f9f0e4414a0cd6f49cd398eebfa50315cdc` plus only SBC edits passes 4,718,592
+actual old/current helper pairs: exhaustive byte operands with two accumulator
+high bytes and all decimal/carry modes; every word accumulator with 16 boundary
+operands in all modes. Word pairs are sampled, not exhaustive. Named CPU state,
+cycles and bus counters match; input RAM bytes stay unchanged. Prefix 3,600/0
+(1.09s) executes 38,340 word and 169 byte binary SBC calls; decimal has dedicated
+coverage. Clean full any% 129,712/0 (56.28s), native exit 0. Cargo fmt/check,
+release library, frozen normal metadata and optimized core/DLL builds pass;
+full frontend linking still lacks SDL2. Live source matches verified source.
+Cast lines -62, Rust lines -37; other counters unchanged. Complete gameplay
+and rendering/audio fidelity remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

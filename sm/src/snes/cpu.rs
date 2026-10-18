@@ -528,96 +528,59 @@ unsafe fn cpu_adc(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
     }
     cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
 }
-unsafe fn cpu_sbc(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t, game: &mut Game) {
+unsafe fn cpu_sbc(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
     if (*cpu).mf {
-        let mut value: uint8_t = (cpu_read(cpu, low, game) as ::core::ffi::c_int
-            ^ 0xff as ::core::ffi::c_int) as uint8_t;
-        let mut result: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+        let value = !cpu_read(cpu, low, game);
+        let mut result: i32 = 0;
         if (*cpu).d {
-            result = ((*cpu).a as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
-                + (value as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
-                + (*cpu).c as ::core::ffi::c_int;
-            if result < 0x10 as ::core::ffi::c_int {
-                result = result - 0x6 as ::core::ffi::c_int
-                    & (if (result - 0x6 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
-                        0xf as ::core::ffi::c_int
-                    } else {
-                        0x1f as ::core::ffi::c_int
-                    });
+            result = (i32::from((*cpu).a) & 0xf) + (i32::from(value) & 0xf) + i32::from((*cpu).c);
+            if result < 0x10 {
+                result = result - 0x6 & (if (result - 0x6) < 0 { 0xf } else { 0x1f });
             }
-            result = ((*cpu).a as ::core::ffi::c_int & 0xf0 as ::core::ffi::c_int)
-                + (value as ::core::ffi::c_int & 0xf0 as ::core::ffi::c_int)
-                + result;
+            result = (i32::from((*cpu).a) & 0xf0) + (i32::from(value) & 0xf0) + result;
         } else {
-            result = ((*cpu).a as ::core::ffi::c_int & 0xff as ::core::ffi::c_int)
-                + value as ::core::ffi::c_int
-                + (*cpu).c as ::core::ffi::c_int;
+            result = (i32::from((*cpu).a) & 0xff) + i32::from(value) + i32::from((*cpu).c);
         }
-        (*cpu).v = (*cpu).a as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
-            == value as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
-            && value as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
-                != result & 0x80 as ::core::ffi::c_int;
-        if (*cpu).d as ::core::ffi::c_int != 0 && result < 0x100 as ::core::ffi::c_int {
-            result -= 0x60 as ::core::ffi::c_int;
+        (*cpu).v = i32::from((*cpu).a) & 0x80 == i32::from(value) & 0x80
+            && i32::from(value) & 0x80 != result & 0x80;
+        if (*cpu).d && result < 0x100 {
+            result -= 0x60;
         }
-        (*cpu).c = result > 0xff as ::core::ffi::c_int;
-        (*cpu).a = ((*cpu).a as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int
-            | result & 0xff as ::core::ffi::c_int) as uint16_t;
+        (*cpu).c = result > 0xff;
+        (*cpu).a = (i32::from((*cpu).a) & 0xff00 | result & 0xff) as uint16_t;
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        let mut value_0: uint16_t = (cpu_readWord(cpu, low, high, game) as ::core::ffi::c_int
-            ^ 0xffff as ::core::ffi::c_int) as uint16_t;
-        let mut result_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+        let value_0 = !cpu_readWord(cpu, low, high, game);
+        let mut result_0: i32 = 0;
         if (*cpu).d {
-            result_0 = ((*cpu).a as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
-                + (value_0 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
-                + (*cpu).c as ::core::ffi::c_int;
-            if result_0 < 0x10 as ::core::ffi::c_int {
-                result_0 = result_0 - 0x6 as ::core::ffi::c_int
-                    & (if (result_0 - 0x6 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
-                        0xf as ::core::ffi::c_int
+            result_0 =
+                (i32::from((*cpu).a) & 0xf) + (i32::from(value_0) & 0xf) + i32::from((*cpu).c);
+            if result_0 < 0x10 {
+                result_0 = result_0 - 0x6 & (if (result_0 - 0x6) < 0 { 0xf } else { 0x1f });
+            }
+            result_0 = (i32::from((*cpu).a) & 0xf0) + (i32::from(value_0) & 0xf0) + result_0;
+            if result_0 < 0x100 {
+                result_0 = result_0 - 0x60 & (if (result_0 - 0x60) < 0 { 0xff } else { 0x1ff });
+            }
+            result_0 = (i32::from((*cpu).a) & 0xf00) + (i32::from(value_0) & 0xf00) + result_0;
+            if result_0 < 0x1000 {
+                result_0 = result_0 - 0x600
+                    & (if (result_0 - 0x600) < 0 {
+                        0xfff
                     } else {
-                        0x1f as ::core::ffi::c_int
+                        0x1fff
                     });
             }
-            result_0 = ((*cpu).a as ::core::ffi::c_int & 0xf0 as ::core::ffi::c_int)
-                + (value_0 as ::core::ffi::c_int & 0xf0 as ::core::ffi::c_int)
-                + result_0;
-            if result_0 < 0x100 as ::core::ffi::c_int {
-                result_0 = result_0 - 0x60 as ::core::ffi::c_int
-                    & (if (result_0 - 0x60 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
-                        0xff as ::core::ffi::c_int
-                    } else {
-                        0x1ff as ::core::ffi::c_int
-                    });
-            }
-            result_0 = ((*cpu).a as ::core::ffi::c_int & 0xf00 as ::core::ffi::c_int)
-                + (value_0 as ::core::ffi::c_int & 0xf00 as ::core::ffi::c_int)
-                + result_0;
-            if result_0 < 0x1000 as ::core::ffi::c_int {
-                result_0 = result_0 - 0x600 as ::core::ffi::c_int
-                    & (if (result_0 - 0x600 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
-                        0xfff as ::core::ffi::c_int
-                    } else {
-                        0x1fff as ::core::ffi::c_int
-                    });
-            }
-            result_0 = ((*cpu).a as ::core::ffi::c_int & 0xf000 as ::core::ffi::c_int)
-                + (value_0 as ::core::ffi::c_int & 0xf000 as ::core::ffi::c_int)
-                + result_0;
+            result_0 = (i32::from((*cpu).a) & 0xf000) + (i32::from(value_0) & 0xf000) + result_0;
         } else {
-            result_0 = (*cpu).a as ::core::ffi::c_int
-                + value_0 as ::core::ffi::c_int
-                + (*cpu).c as ::core::ffi::c_int;
+            result_0 = i32::from((*cpu).a) + i32::from(value_0) + i32::from((*cpu).c);
         }
-        (*cpu).v = (*cpu).a as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-            == value_0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-            && value_0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-                != result_0 & 0x8000 as ::core::ffi::c_int;
-        if (*cpu).d as ::core::ffi::c_int != 0 && result_0 < 0x10000 as ::core::ffi::c_int {
-            result_0 -= 0x6000 as ::core::ffi::c_int;
+        (*cpu).v = i32::from((*cpu).a) & 0x8000 == i32::from(value_0) & 0x8000
+            && i32::from(value_0) & 0x8000 != result_0 & 0x8000;
+        if (*cpu).d && result_0 < 0x10000 {
+            result_0 -= 0x6000;
         }
-        (*cpu).c = result_0 > 0xffff as ::core::ffi::c_int;
+        (*cpu).c = result_0 > 0xffff;
         (*cpu).a = result_0 as uint16_t;
     }
     cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
