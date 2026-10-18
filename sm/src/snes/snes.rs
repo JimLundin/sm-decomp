@@ -419,46 +419,23 @@ pub unsafe fn LogWrite(mut snes: *mut Snes, mut adr: uint32_t, mut val: uint8_t,
         (*(*snes).cpu).c as ::core::ffi::c_int,
     );
 }
-pub unsafe fn snes_write(
-    mut snes: *mut Snes,
-    mut adr: uint32_t,
-    mut val: uint8_t,
-    game: &mut Game,
-) {
-    let mut bank: uint8_t = (adr >> 16 as ::core::ffi::c_int) as uint8_t;
-    adr &= 0xffff as uint32_t;
-    if bank as ::core::ffi::c_int == 0x7e as ::core::ffi::c_int
-        || bank as ::core::ffi::c_int == 0x7f as ::core::ffi::c_int
-    {
-        let mut addr: uint32_t = ((bank as ::core::ffi::c_int & 1 as ::core::ffi::c_int)
-            << 16 as ::core::ffi::c_int) as uint32_t
-            | adr;
-        *(*snes).ram.offset(addr as isize) = val;
-        if addr == 0xfffff as uint32_t {
-            LogWrite(snes, adr, val, game);
+pub unsafe fn snes_write(snes: *mut Snes, address: u32, value: u8, game: &mut Game) {
+    let bank = (address >> 16) as u8;
+    let offset = address as u16;
+    if matches!(bank, 0x7e | 0x7f) {
+        let index = (usize::from(bank & 1) << 16) | usize::from(offset);
+        *(*snes).ram.add(index) = value;
+    }
+    if matches!(bank, 0x00..=0x3f | 0x80..=0xbf) {
+        match offset {
+            0x0000..=0x1fff => *(*snes).ram.add(usize::from(offset)) = value,
+            0x2100..=0x21ff => snes_writeBBus(snes, offset as u8, value, game),
+            0x4200..=0x421f => snes_writeReg(snes, offset, value, game),
+            0x4300..=0x437f => dma_write((*snes).dma, offset, value),
+            _ => {}
         }
     }
-    if (bank as ::core::ffi::c_int) < 0x40 as ::core::ffi::c_int
-        || bank as ::core::ffi::c_int >= 0x80 as ::core::ffi::c_int
-            && (bank as ::core::ffi::c_int) < 0xc0 as ::core::ffi::c_int
-    {
-        if adr < 0x2000 as uint32_t {
-            *(*snes).ram.offset(adr as isize) = val;
-            if adr == 0xfffff as uint32_t {
-                LogWrite(snes, adr, val, game);
-            }
-        }
-        if adr >= 0x2100 as uint32_t && adr < 0x2200 as uint32_t {
-            snes_writeBBus(snes, (adr & 0xff as uint32_t) as uint8_t, val, game);
-        }
-        if adr >= 0x4200 as uint32_t && adr < 0x4220 as uint32_t {
-            snes_writeReg(snes, adr as uint16_t, val, game);
-        }
-        if adr >= 0x4300 as uint32_t && adr < 0x4380 as uint32_t {
-            dma_write((*snes).dma, adr as uint16_t, val);
-        }
-    }
-    cart_write((*snes).cart, bank, adr as uint16_t, val);
+    cart_write((*snes).cart, bank, offset, value);
 }
 pub unsafe fn snes_cpuRead(mut snes: *mut Snes, mut adr: uint32_t, game: &mut Game) -> uint8_t {
     (*snes).cpuMemOps = (*snes).cpuMemOps.wrapping_add(1);

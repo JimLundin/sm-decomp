@@ -5969,6 +5969,35 @@ normal-core metadata, direct full-source format and progress pass. Arbitrary
 target/index Cartesian coverage, other devices, hardware cycle accuracy,
 emulation-mode rules and movie integration remain separate. No production edits.
 
+SNES memory-write routing (2026-10-18): snes_write now uses native bank/
+offset values and matched RAM/device ranges, retaining the unconditional
+cartridge write after every mapped write. High address-byte truncation and
+WRAM mirroring are unchanged. Two unreachable logging gates are removed:
+the WRAM index is at most 1FFFF and the mirrored offset at most 1FFF, so
+neither can equal FFFFF. Actual old/current routing passes 67,108,864 cases,
+every 24-bit address with high bytes 00/55/AA/FF and address-derived values.
+Real WRAM stores and substituted ordered device/cartridge traces match;
+independent expectations verify arguments and final cartridge continuation.
+Independent QC passes 32,768 actual STA pairs across all 256 banks, 16 sampled
+RAM/device/cart boundaries and 8 byte seeds, plus 5,120 high-address write
+pairs. Complete WRAM/SRAM/serialized PPU and relevant DMA/IRQ/arithmetic/
+CPU-bus state match. The actual cartridge callback executes once per call;
+an early return after WRAM storage is detected (zero callbacks versus one),
+native assertion exit 3221226505. Positive QC exits 0.
+
+Instrumented any% passes 12,000/0 (22.83s), native exit 0. RAM/B-bus/register/
+DMA/cartridge-only counts are ROM[18911551,1025650,461750,464710,13048] and
+Rust[0,1024726,108143,436552,0]; all router destinations execute. Clean
+frozen f69a42aa plus only this writer passes any% 129,712/0 (257.22s), native
+exit 0. Direct full-source format, normal-core metadata and optimized clean/
+probe core/DLL builds pass. Cargo fmt/build --release remain denied at
+cargo.exe launch; that required check stays unmet. Probe writer matches
+maintained source after removing observation/substitutions. Progress/diff
+pass: focused cast lines -8, Rust lines -23, other categories unchanged. Later
+peer changes require separate integration. Hardware/audio timing, rendering/
+Waver71, masked RAM and credits remain open; held HDMA diagnosis stays
+stopped. Continue executed hardware paths and route coverage.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
