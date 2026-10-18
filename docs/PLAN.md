@@ -4752,6 +4752,26 @@ movie result claimed; diagnostic/save/ROM assets stay ignored. Continue
 actual device/event coverage; held HDMA diagnosis stays stopped. Rendering/
 Waver71, hires, hardware/audio timing, masked RAM and credits remain open.
 
+DMA byte-transfer boundary cleanup (2026-10-18): dma_transferByte now
+assembles its banked address with native unsigned widths and explicitly reads
+before writing on each direction. Arguments, bus helpers and side-effect order
+remain exact. The live SNES owner pointer is retained across the bus call.
+Actual old/current comparisons pass 86,016 cases across both WRAM banks,
+six source boundaries, representative PPU/WRAM ports and all byte values.
+Complete RAM, PPU memory/register region and WRAM-port address match.
+
+Instrumented any% prefix passes 12,000/0 (21.63s), native exit 0, with
+31,445,604 forward transfers per implementation; reverse transfers have no
+movie calls and are covered by constructed actual calls only. Clean frozen
+32503c56 plus only this helper change passes any% 129,712/0 (243.38s), native
+exit 0. Later CPU/PPU changes are outside these frozen checks. Direct full-source
+formatting, normal-core metadata and optimized clean/probe core/DLL builds
+pass; Cargo fmt/build remain denied at cargo.exe launch. Progress: cast lines
+-3, Rust lines -12; other focused counters unchanged. No layout, scheduling
+or comparison-rule changes. Probe and ROM assets stay untracked. Hardware
+timing, rendering/Waver71, held HDMA diagnosis, audio timing and credits
+coverage remain open; continue actual scheduling and route coverage work.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

@@ -476,34 +476,22 @@ pub unsafe fn dma_doHdma(mut dma: *mut Dma, game: &mut Game) {
     }
 }
 unsafe fn dma_transferByte(
-    mut dma: *mut Dma,
-    mut aAdr: uint16_t,
-    mut aBank: uint8_t,
-    mut bAdr: uint8_t,
-    mut fromB: bool,
+    dma: *mut Dma,
+    a_address: u16,
+    a_bank: u8,
+    b_address: u8,
+    from_b: bool,
     game: &mut Game,
 ) {
-    if fromB {
-        snes_write(
-            (*dma).snes,
-            ((aBank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int | aAdr as ::core::ffi::c_int)
-                as uint32_t,
-            snes_readBBus((*dma).snes, bAdr, game),
-            game,
-        );
+    let address = (u32::from(a_bank) << 16) | u32::from(a_address);
+    let snes = (*dma).snes;
+    if from_b {
+        let value = snes_readBBus(snes, b_address, game);
+        snes_write(snes, address, value, game);
     } else {
-        snes_writeBBus(
-            (*dma).snes,
-            bAdr,
-            snes_read(
-                (*dma).snes,
-                ((aBank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                    | aAdr as ::core::ffi::c_int) as uint32_t,
-                game,
-            ),
-            game,
-        );
-    };
+        let value = snes_read(snes, address, game);
+        snes_writeBBus(snes, b_address, value, game);
+    }
 }
 pub unsafe fn dma_cycle(dma: *mut Dma, game: &mut Game) -> bool {
     if (*dma).hdmaTimer > 0 {
