@@ -3805,6 +3805,30 @@ integration checks. No fresh movie result is claimed. Next: actual interrupt
 generation/gating needs focused oracle work before hardware-clock scheduling;
 continue QC of new gameplay work without resuming held HDMA diagnosis.
 
+Interrupt enable/timer rewind (2026-10-18): snapshots now capture/restore
+hIrqEnabled, vIrqEnabled, nmiEnabled and hTimer; existing vTimer coverage
+remains. Actual NMITIMEN/HTIME writes previously survived rewind. A later
+HTIME high-byte-only write therefore retained the wrong low byte. Baseline
+and candidate actual-function matrices cover all eight enable combinations
+and 512 timer values (4,096 cases), restore VTIMER as a control and check
+the partial-write continuation. Baseline confirms omissions in every case;
+candidate restores expected registers and subsequent timer writes.
+
+Temporary BOTH frame-200 register-write disturbances pass normal 3,600/0,
+forced recovery 3,600/1 and debug retry 3,600/1, native exits 0/1/1 with one
+intentional failure and no cascade. Clean frozen 47e64f9d plus only this
+six-line change passes any% 129,712/0 (230.62s), native exit 0, without
+instrumentation. Direct full-source format, normal-core metadata and
+optimized clean/baseline/probe core/DLL builds pass; Cargo fmt/check and
+release remain denied at cargo.exe launch. Focused Rust lines +6 preserve
+interrupt register context; other residue counters unchanged. CPU/SNES
+layout, g_ram and disk saves stay unchanged. No new register comparison
+or event scheduling enters this change; concurrent audio/demo/PPU edits
+are outside its replay. IRQ generation and NMI-enable/vblank behavior still
+need actual event implementation and verification before hardware-clock
+scheduling; remaining input/register/DMA state, rendering/HDMA, audio
+timing and boot-to-credits coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
