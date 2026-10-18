@@ -1185,14 +1185,11 @@ pub unsafe fn ProcessDemoInputObject(game: &mut Game) {
             as *mut uint16) = (v0 as ::core::ffi::c_int + 6 as ::core::ffi::c_int) as uint16;
     }
 }
-pub unsafe fn DemoInstr_Finish(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa7e as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa84 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa86 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    return 0 as uint16;
+pub fn DemoInstr_Finish(_k: u16, _j: u16, game: &mut Game) -> u16 {
+    game.set_demo_input_instr_ptr(0);
+    game.set_demo_input(0);
+    game.set_demo_input_new(0);
+    0
 }
 pub unsafe fn DemoInstr_SetPreInstr(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xa7a as ::core::ffi::c_int as isize)

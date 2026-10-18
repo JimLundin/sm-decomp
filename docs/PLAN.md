@@ -4213,6 +4213,35 @@ covered operations while retaining ROM reads, wrapped pointers and write
 order. Set 3, these two preinstructions, the special leave-preinstruction
 and stopped ammo coverage remain held. Probes and inputs stay ignored.
 
+Demo interpreter operation coverage (2026-10-18): isolated committed
+69e61b93 attract instruments all nine DemoInstr operations. Baseline passes
+30,000/0 (63.98s), native exit 0. Only Finish executes: one Rust-side-2 call
+at SNES counter 19,711, live set 2/scene 6. This live scene value is observed
+during finishing, not a scene-initializer table index. The other eight
+operations have zero calls and remain untouched.
+
+DemoInstr_Finish now uses three named byte-backed setters matching ram_map
+at 0A7E/0A84/0A86, retains pointer/input/new-input zero-store order, and
+returns zero. Its unused arguments are explicit and the function is safe.
+Rewritten Verified 30000 frames: 0 failing frames (75.07s); the same single Finish call is observed.
+Start-exit Verified 5000 frames: 0 failing frames (10.27s); full any% Verified 129712 frames: 0 failing frames (295.00s); native exits 0.
+An initial observation build failed because its raw-pointer side read was
+inside the newly safe Finish; an explicit unsafe probe block fixes that.
+Removing observations restores exact maintained source.
+
+Optimized core/DLL and normal-core metadata builds and direct full-source
+rustfmt check pass. Required Cargo fmt/check/build attempts are now denied
+launching Cargo itself (OS error 5), including its direct stable binary.
+Dedicated replay source freezes 69e61b93 with only this sm_91.rs/game_state.rs
+change; concurrent CPU/oracle/display changes need their own integration.
+Progress passes: raw offsets -3, unsafe functions -1, cast lines -3;
+Rust lines +12 provide three field setters, other focused counters unchanged.
+No probes, input movies or ROM-derived assets committed. Next: measure
+ProcessDemoInputObject entry, timer-expiry and input-word setup execution,
+then clean its covered RAM accesses while retaining live reads across calls.
+Set 3, uncovered instruction operations/preinstructions and stopped ammo
+coverage remain held.
+
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
 the original `SignExtend8(0x8000)` initialization and the middle-byte velocity

@@ -638,6 +638,21 @@ impl Game {
         u16::from_le_bytes([self.g_ram[0x1f57], self.g_ram[0x1f58]])
     }
 
+    /// demo_input_instr_ptr ($7E:0A7E in ram_map).
+    pub fn set_demo_input_instr_ptr(&mut self, value: u16) {
+        self.g_ram[0xa7e..0xa80].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// demo_input ($7E:0A84 in ram_map).
+    pub fn set_demo_input(&mut self, value: u16) {
+        self.g_ram[0xa84..0xa86].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// demo_input_new ($7E:0A86 in ram_map).
+    pub fn set_demo_input_new(&mut self, value: u16) {
+        self.g_ram[0xa86..0xa88].copy_from_slice(&value.to_le_bytes());
+    }
+
     /// frame_handler_alfa ($7E:0A42 in ram_map).
     pub fn set_frame_handler_alfa(&mut self, value: u16) {
         self.g_ram[0xa42..0xa44].copy_from_slice(&value.to_le_bytes());
