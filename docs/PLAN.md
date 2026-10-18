@@ -95,6 +95,22 @@ Hidden display state, audio equivalence, masked RAM and complete route
 coverage remain unverified. Next: compare sound commands and driver behavior
 without allowing the ROM side's writes to conceal Rust-side differences.
 
+Sound-command probe (2026-10-18): independently capture each side's final
+four queued port values from the same initial ApuWriteEnt, then restore the
+ROM queue before audio consumption. The isolated probe's gameplay matches
+ed694573. Full any% passes the enforced oracle (129,712/0, 206.74s) but has
+12 queued-sound mismatch frames; Waver passes 58,109/0 (99.34s) with one.
+The first mismatch is frame 150: mine [00, FF, 00, FF], theirs all 00.
+Trace proves that Rust uploads the sound bank, resets its queue and writes
+ports 0/2; the ROM writes zeros to all four ports. FF means no queued write.
+Initialized Sfx1/2/3 handler comparisons confirm 00/FF take the same
+no-command path, but a full-queue check preserves them as distinct entries;
+blanket normalization would be unjustified. This is diagnostic evidence,
+not proof of audible divergence or driver equivalence. Sound comparison is
+not yet enforced. Next: classify all twelve mismatch frames and compare
+upload-aware queue consumption before comparing the driver against emulated
+SPC/DSP. No maintained Rust source or residue counters changed in this probe.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
