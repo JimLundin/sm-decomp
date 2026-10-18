@@ -98,7 +98,7 @@ pub unsafe fn snes_saveload(
     );
     (*snes).runningWhichVersion = 0 as uint8_t;
 }
-pub unsafe fn snes_reset(mut snes: *mut Snes, mut hard: bool, game: &mut Game) {
+pub unsafe fn snes_reset(snes: *mut Snes, hard: bool, game: &mut Game) {
     cart_reset((*snes).cart);
     cpu_reset((*snes).cpu, game);
     apu_reset((*snes).apu);
@@ -114,35 +114,31 @@ pub unsafe fn snes_reset(mut snes: *mut Snes, mut hard: bool, game: &mut Game) {
             0x20000 as ::core::ffi::c_int as size_t,
         );
     }
-    (*snes).ramAdr = 0 as uint32_t;
-    (*snes).hPos = 0 as uint16_t;
-    (*snes).vPos = 0 as uint16_t;
-    (*snes).frames = 0 as uint32_t;
-    (*snes).cpuCyclesLeft = 52 as uint8_t;
-    (*snes).cpuMemOps = 0 as uint8_t;
+    (*snes).ramAdr = 0;
+    (*snes).hPos = 0;
+    (*snes).vPos = 0;
+    (*snes).frames = 0;
+    (*snes).cpuCyclesLeft = 52;
+    (*snes).cpuMemOps = 0;
     (*snes).apuCatchupCycles = 0.0f64;
-    (*snes).hIrqEnabled = false_0 != 0;
-    (*snes).vIrqEnabled = false_0 != 0;
-    (*snes).nmiEnabled = false_0 != 0;
-    (*snes).hTimer = 0x1ff as uint16_t;
-    (*snes).vTimer = 0x1ff as uint16_t;
-    (*snes).inNmi = false_0 != 0;
-    (*snes).inIrq = false_0 != 0;
-    (*snes).inVblank = false_0 != 0;
-    memset(
-        &raw mut (*snes).portAutoReadX as *mut uint16_t as *mut ::core::ffi::c_void,
-        0 as ::core::ffi::c_int,
-        ::core::mem::size_of::<[uint16_t; 4]>() as size_t,
-    );
-    (*snes).autoJoyRead = false_0 != 0;
-    (*snes).autoJoyTimer = 0 as uint16_t;
-    (*snes).ppuLatch = false_0 != 0;
-    (*snes).multiplyA = 0xff as uint8_t;
-    (*snes).multiplyResult = 0xfe01 as uint16_t;
-    (*snes).divideA = 0xffff as uint16_t;
-    (*snes).divideResult = 0x101 as uint16_t;
-    (*snes).fastMem = false_0 != 0;
-    (*snes).openBus = 0 as uint8_t;
+    (*snes).hIrqEnabled = false;
+    (*snes).vIrqEnabled = false;
+    (*snes).nmiEnabled = false;
+    (*snes).hTimer = 0x1ff;
+    (*snes).vTimer = 0x1ff;
+    (*snes).inNmi = false;
+    (*snes).inIrq = false;
+    (*snes).inVblank = false;
+    (*snes).portAutoReadX = [0; 4];
+    (*snes).autoJoyRead = false;
+    (*snes).autoJoyTimer = 0;
+    (*snes).ppuLatch = false;
+    (*snes).multiplyA = 0xff;
+    (*snes).multiplyResult = 0xfe01;
+    (*snes).divideA = 0xffff;
+    (*snes).divideResult = 0x101;
+    (*snes).fastMem = false;
+    (*snes).openBus = 0;
 }
 pub unsafe fn snes_handle_pos_stuff(mut snes: *mut Snes, game: &mut Game) {
     if (*snes).hPos as ::core::ffi::c_int == 0 as ::core::ffi::c_int {

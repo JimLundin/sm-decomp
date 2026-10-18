@@ -6445,6 +6445,34 @@ Concurrent hardware edits/totals are separate. Inputs/probes/decompressed
 ROM assets stay ignored. Upper99BD tuning,9AD9 ammo and HDMA remain held;
 credits and full hardware/gameplay fidelity are unproved.
 
+SNES reset initialization cleanup (2026-10-18): snes_reset uses native
+scalar values/booleans and portAutoReadX=[0;4] instead of an eight-byte
+memset. Subsystem invocation order, hard RAM clear and every reset value
+remain exact; no layout changes. Actual old/current hard/soft reset pairs
+pass 1,024 cases with varied scalar/array seeds, complete WRAM comparisons,
+independent defaults and preserved flags/padding fields. Independent QC
+passes 512 pairs from restored identical device state, comparing complete
+Snes/CPU/both PPU/APU/SPC/DSP/DMA/Input state and WRAM. Subsystem entry
+observers confirm cart, CPU, APU, DMA, PPU, PPU, input, input order. Hard
+clear and soft retention pass; a wrong reset delay is detected,
+native assertion exit 3221226505. The negative control actually sets 51 in
+place of maintained 52. Read-only subagent confirms the reset body is identical
+after normalizing authorized syntax and that the array writes the same bytes.
+CPU vector reads remain before hard RAM clearing in source; no dedicated
+reordered-clear fault is claimed.
+
+Instrumented any% passes 12,000/0 (22.15s), native exit 0, observing one hard
+reset and no soft resets. Direct paired resets supply soft coverage. Clean
+frozen 376bb447 plus only this reset change passes any% 129,712/0 (230.30s),
+native exit 0. Direct full-source format, normal-core metadata and optimized
+clean/probe core/DLL builds pass; Cargo fmt/build --release remain denied at
+cargo.exe launch, so that check stays unmet. Probe reset matches maintained
+source after removing its counter. Progress/diff pass: focused cast lines -1,
+Rust lines -4, other categories unchanged. Later peer integration, hardware/
+audio timing, rendering/Waver71, masked RAM and credits remain open. Held
+HDMA diagnosis stays stopped. Continue executed hardware paths and route
+coverage with useful independent subagents.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
