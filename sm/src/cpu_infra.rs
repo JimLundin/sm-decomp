@@ -1440,6 +1440,32 @@ unsafe fn VerifySnapshotsEq(
         game.g_fail = true;
         if report_details {
             eprintln!("@{}: OAM memory compare failed", game.snes_frame_counter);
+            let low = (*b)
+                .oam
+                .iter()
+                .zip(&(*a).oam)
+                .zip(&(*prev).oam)
+                .enumerate()
+                .filter(|(_, ((mine, theirs), _))| mine != theirs)
+                .map(|(index, ((mine, theirs), previous))| (index * 2, *mine, *theirs, *previous));
+            let high = (*b)
+                .high_oam
+                .iter()
+                .zip(&(*a).high_oam)
+                .zip(&(*prev).high_oam)
+                .enumerate()
+                .filter(|(_, ((mine, theirs), _))| mine != theirs)
+                .map(|(index, ((mine, theirs), previous))| {
+                    (
+                        512 + index,
+                        u16::from(*mine),
+                        u16::from(*theirs),
+                        u16::from(*previous),
+                    )
+                });
+            for (offset, mine, theirs, previous) in low.chain(high).take(16) {
+                eprintln!("OAM byte ${offset:03X}: mine ${mine:04X} != theirs ${theirs:04X}, previous ${previous:04X}");
+            }
         }
     }
     if (*b).sprite != (*a).sprite {
