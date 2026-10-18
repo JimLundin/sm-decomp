@@ -996,6 +996,22 @@ fall back to the Y267 shelf. Centering the vertical opening is next;
 upper-hall traversal and Waver presence are still unproved. No source or
 counter changes; any% and format results above apply.
 
+Post-Bomb upper-hall entry now passes the standard oracle:
+target/awake-return/parlor-return-hall-west.inputs, 56,577 frames, zero
+failures (82.88s), standing X1077/Y171 with Morph/Bombs 1004, missiles 0/5.
+The rightward low passage opens its second Bomb-block pair with fresh fire:
+from parlor-return-real-ground-bomb.inputs, shoot 1, neutral 90, right 20,
+then right/shoot 1 and right 89 repeated three times. Retain only through
+frame 56,330 of this continuation (parlor-return-right-stop56330.inputs),
+then Up 1, neutral 20, run/left/shoot 6, run/left/jump/shoot 100, neutral 120.
+The longer rightward route dies near X1243; the retained prefix turns back
+before that contact. Earlier turn-back at 56,200 falls into the lower shaft.
+At X1077 the westward jump hits the central hill's side; Morph with fresh
+Bombs reopens the low passage but prolonged left rolling falls back to Y267.
+Next trial starts vertically before steering left over the hill. The main
+upper hall and Waver remain unproved; no gameplay state was injected.
+Source/counters unchanged; any% and formatting results above apply.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
