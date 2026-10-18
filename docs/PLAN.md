@@ -1704,6 +1704,19 @@ pass; Cargo fmt/build remain ASR-denied. Any%: 129,712 frames, zero failures
 Samus_PostGrappleCollisionDetect correction caller, preserving live ejection
 distances, wrapping Y subtraction and the radius-gated second vertical probe.
 
+Post-grapple context is now a private stack-owned sample with descriptive
+remaining/initial span and edge-position fields. All handlers take shared
+references; traversal alone changes the remaining span, and the completed
+collision chain is safe Rust. The unused raw callback alias and C layout
+annotation are removed; RAM layout is unchanged. Mechanical body audit
+matches all thirteen gameplay bodies after reference/field normalization
+and exact solid low-nibble mask simplification. Stable optimized core/DLL
+build and direct format pass; Cargo fmt/build remain ASR-denied. Waver route:
+58,109 frames, zero failures (99.34s); any%: 129,712 frames, zero failures
+(203.48s). Unsafe functions -13, cast lines -2, Rust lines -10; other counters
+unchanged. Next: Samus post-grapple ejection caller arithmetic and byte-backed
+Y writes, retaining the second vertical check after the first adjustment.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
