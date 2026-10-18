@@ -4925,6 +4925,27 @@ owns DMA reset coverage. Continue actual device/event work without resuming
 held HDMA; rendering/Waver71, hires, hardware/audio timing, masked RAM and
 boot-to-credits remain open.
 
+DMA reset cleanup (2026-10-18): dma_reset now uses a native index and
+byte/word/bool defaults, preserving every ordered field store. Indexed writes
+initialize the initially uninitialized allocation without forming a reference
+to an uninitialized channel array. The owner pointer and padding remain intact.
+Actual old/current comparisons pass 65,536 constructed prior states. Independent
+QC also passes 65,536 states and 6,815,744 actual readable-register byte checks;
+skipping the eighth channel fails seed zero, native exit 3221226505. All live,
+QC, observed and final-clean reset bodies match after instrumentation removal.
+
+Instrumented any% prefix passes 12,000/0 (25.07s), native exit 0, with one
+actual startup reset. Definitive clean frozen e0cf3bf2 plus only the indexed
+reset passes any% 129,712/0 (269.40s), native exit 0. A first clean build ran
+during the indexed correction; its later 129,712/0 is supporting evidence only.
+Direct final-source formatting, normal-core metadata and optimized core/DLL
+builds pass; Cargo fmt/build remain denied at cargo.exe launch. Progress:
+cast lines -2, Rust lines -2; other focused counters unchanged. No layout,
+hardware timing or comparison-rule changes. Concurrent CPU/PPU work is outside
+the clean replay; probes and ROM assets remain untracked. Hardware scheduling,
+rendering/Waver71, held HDMA diagnosis, audio timing and boot-to-credits remain
+open; continue actual scheduling and route coverage work.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

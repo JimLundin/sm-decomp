@@ -94,33 +94,31 @@ pub unsafe fn dma_init(mut snes: *mut Snes) -> *mut Dma {
 pub unsafe fn dma_free(mut dma: *mut Dma) {
     free(dma as *mut ::core::ffi::c_void);
 }
-pub unsafe fn dma_reset(mut dma: *mut Dma) {
-    let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    while i < 8 as ::core::ffi::c_int {
-        (*dma).channel[i as usize].bAdr = 0xff as uint8_t;
-        (*dma).channel[i as usize].aAdr = 0xffff as uint16_t;
-        (*dma).channel[i as usize].aBank = 0xff as uint8_t;
-        (*dma).channel[i as usize].size = 0xffff as uint16_t;
-        (*dma).channel[i as usize].indBank = 0xff as uint8_t;
-        (*dma).channel[i as usize].tableAdr = 0xffff as uint16_t;
-        (*dma).channel[i as usize].repCount = 0xff as uint8_t;
-        (*dma).channel[i as usize].unusedByte = 0xff as uint8_t;
-        (*dma).channel[i as usize].dmaActive = false_0 != 0;
-        (*dma).channel[i as usize].hdmaActive = false_0 != 0;
-        (*dma).channel[i as usize].mode = 7 as uint8_t;
-        (*dma).channel[i as usize].fixed = true_0 != 0;
-        (*dma).channel[i as usize].decrement = true_0 != 0;
-        (*dma).channel[i as usize].indirect = true_0 != 0;
-        (*dma).channel[i as usize].fromB = true_0 != 0;
-        (*dma).channel[i as usize].unusedBit = true_0 != 0;
-        (*dma).channel[i as usize].doTransfer = false_0 != 0;
-        (*dma).channel[i as usize].terminated = false_0 != 0;
-        (*dma).channel[i as usize].offIndex = 0 as uint8_t;
-        i += 1;
+pub unsafe fn dma_reset(dma: *mut Dma) {
+    for i in 0..8 {
+        (*dma).channel[i].bAdr = 0xff;
+        (*dma).channel[i].aAdr = 0xffff;
+        (*dma).channel[i].aBank = 0xff;
+        (*dma).channel[i].size = 0xffff;
+        (*dma).channel[i].indBank = 0xff;
+        (*dma).channel[i].tableAdr = 0xffff;
+        (*dma).channel[i].repCount = 0xff;
+        (*dma).channel[i].unusedByte = 0xff;
+        (*dma).channel[i].dmaActive = false;
+        (*dma).channel[i].hdmaActive = false;
+        (*dma).channel[i].mode = 7;
+        (*dma).channel[i].fixed = true;
+        (*dma).channel[i].decrement = true;
+        (*dma).channel[i].indirect = true;
+        (*dma).channel[i].fromB = true;
+        (*dma).channel[i].unusedBit = true;
+        (*dma).channel[i].doTransfer = false;
+        (*dma).channel[i].terminated = false;
+        (*dma).channel[i].offIndex = 0;
     }
-    (*dma).hdmaTimer = 0 as uint16_t;
-    (*dma).dmaTimer = 0 as uint32_t;
-    (*dma).dmaBusy = false_0 != 0;
+    (*dma).hdmaTimer = 0;
+    (*dma).dmaTimer = 0;
+    (*dma).dmaBusy = false;
 }
 pub unsafe fn dma_saveload(
     mut dma: *mut Dma,
