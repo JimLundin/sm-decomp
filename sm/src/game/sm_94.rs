@@ -3022,65 +3022,42 @@ unsafe fn handle_vertical_collision(
         amt: context.ci_r18_r20,
     }
 }
-pub unsafe fn WallJumpBlockCollDetect(mut amt: int32, game: &mut Game) -> int32 {
-    let ref mut fresh15 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb02 as ::core::ffi::c_int as isize) as *mut uint16);
-    *fresh15 = (*fresh15 as ::core::ffi::c_int | 0xf as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1e71 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    let mut pair: Pair_Bool_Amt = BlockColl_Handle_Horiz(amt, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdd0 as ::core::ffi::c_int as isize)
-        as *mut uint16) = pair.flag as uint16;
-    return if pair.amt >= 0 as int32 {
-        pair.amt
-    } else {
-        -pair.amt
-    };
+fn prepare_pose_collision(game: &mut Game) {
+    let direction = u16::from_le_bytes([game.g_ram[0xb02], game.g_ram[0xb03]]);
+    game.g_ram[0xb02..0xb04].copy_from_slice(&(direction | 15).to_le_bytes());
+    game.g_ram[0x1e71..0x1e73].copy_from_slice(&0u16.to_le_bytes());
 }
-unsafe fn CollDetectDueToPoseChange_SingleBlock(mut amt: int32, game: &mut Game) -> int32 {
-    let ref mut fresh11 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb02 as ::core::ffi::c_int as isize) as *mut uint16);
-    *fresh11 = (*fresh11 as ::core::ffi::c_int | 0xf as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1e71 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    let mut pair: Pair_Bool_Amt = if *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x5b6 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 1 as ::core::ffi::c_int
-        == 0
-    {
+fn finish_pose_collision(pair: Pair_Bool_Amt, game: &mut Game) -> i32 {
+    game.g_ram[0xdd0..0xdd2].copy_from_slice(&u16::from(pair.flag).to_le_bytes());
+    pair.amt.wrapping_abs()
+}
+pub unsafe fn WallJumpBlockCollDetect(amt: int32, game: &mut Game) -> int32 {
+    prepare_pose_collision(game);
+    let pair = BlockColl_Handle_Horiz(amt, game);
+    finish_pose_collision(pair, game)
+}
+unsafe fn CollDetectDueToPoseChange_SingleBlock(amt: int32, game: &mut Game) -> int32 {
+    prepare_pose_collision(game);
+    let frame = u16::from_le_bytes([game.g_ram[0x5b6], game.g_ram[0x5b7]]);
+    let pair = if frame & 1 == 0 {
         BlockColl_Handle_Vert_LeftToRight(amt, game)
     } else {
         BlockColl_Handle_Vert_RightToLeft(amt, game)
     };
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdd0 as ::core::ffi::c_int as isize)
-        as *mut uint16) = pair.flag as uint16;
-    return if pair.amt >= 0 as int32 {
-        pair.amt
-    } else {
-        -pair.amt
-    };
+    finish_pose_collision(pair, game)
 }
-pub unsafe fn Samus_CollDetectChangedPose(mut amt: int32, game: &mut Game) -> int32 {
-    if abs16((amt >> 16 as ::core::ffi::c_int) as uint16) as ::core::ffi::c_int
-        & 0xfff8 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
-    {
+pub unsafe fn Samus_CollDetectChangedPose(amt: int32, game: &mut Game) -> int32 {
+    let integer = (amt >> 16) as i16;
+    if integer.wrapping_abs() as u16 & 0xfff8 == 0 {
         return CollDetectDueToPoseChange_SingleBlock(amt, game);
     }
-    let mut amt_backup: int32 = amt;
-    amt = CollDetectDueToPoseChange_SingleBlock(
-        ((amt >> 16 as ::core::ffi::c_int & 0xfff0 as int32 | 8 as int32) as int16 as int32)
-            << 16 as ::core::ffi::c_int,
-        game,
-    );
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xdd0 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        != 0
-    {
-        return amt;
+    let probe = i32::from(((integer as u16 & 0xfff0) | 8) as i16) << 16;
+    let adjusted = CollDetectDueToPoseChange_SingleBlock(probe, game);
+    let collided = u16::from_le_bytes([game.g_ram[0xdd0], game.g_ram[0xdd1]]);
+    if collided != 0 {
+        return adjusted;
     }
-    return CollDetectDueToPoseChange_SingleBlock(amt_backup, game);
+    CollDetectDueToPoseChange_SingleBlock(amt, game)
 }
 fn add_samus_position(position: &mut [u8], amount: i32) {
     // RAM stores the integer word first, then the fractional word.

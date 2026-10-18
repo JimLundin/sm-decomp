@@ -1528,6 +1528,19 @@ frames, zero failures (184.44s). Raw offsets -18, cast lines -55, Rust lines
 Next: pose-change collision entry reads and flags, retaining fallback order
 and live displacement after horizontal/vertical checks.
 
+Pose-change/wall-jump collision entries now share byte-backed preparation
+and result writes. Direction OR/reset order, live frame-parity dispatch and
+collision flag precede wrapping absolute return. Pose changes retain the
+signed high-word threshold, eight-pixel probe and original-amount fallback.
+Prior Rust comparison passes 1,048,576 full-RAM/callback/return cases over
+every high word, frame/direction word, signed return boundaries and callbacks
+changing parity/direction before fallback. Stable optimized core/DLL build
+and direct format pass; Cargo fmt/build remain ASR-denied. Waver route:
+58,109 frames, zero failures (84.00s); any%: 129,712 frames, zero failures
+(182.70s). Raw offsets -8, cast lines -17, Rust lines -23; unsafe count
+unchanged. Next: Samus collision RAM names/accessors for position and flags,
+then remove the active-displacement Game bridge across PLM setup callbacks.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
