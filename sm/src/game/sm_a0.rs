@@ -1981,33 +1981,22 @@ pub unsafe fn CreateADudShot(game: &mut Game) {
 pub unsafe fn func_nullsub_169() {}
 pub unsafe fn func_nullsub_170() {}
 pub unsafe fn EnemyInstr_SetAiPreInstr(
-    mut k: uint16,
-    mut jp: *const uint16,
+    k: uint16,
+    jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*gEnemyData(k as ::core::ffi::c_int, game)).ai_preinstr =
-        *jp.offset(0 as ::core::ffi::c_int as isize);
-    return jp.offset(1 as ::core::ffi::c_int as isize);
+    game.enemy_instructions(k).set_ai_preinstr(*jp);
+    jp.add(1)
 }
-pub unsafe fn EnemyInstr_ClearAiPreInstr(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    (*gEnemyData(k as ::core::ffi::c_int, game)).ai_preinstr =
-        (0xa0807b as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    return jp;
+pub fn EnemyInstr_ClearAiPreInstr(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    game.enemy_instructions(k).set_ai_preinstr(0x807b);
+    jp
 }
 pub unsafe fn func_nullsub_171() {}
-pub unsafe fn EnemyInstr_StopScript(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut v2: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);
-    (*v2).properties = ((*v2).properties as ::core::ffi::c_int
-        | kEnemyProps_Deleted as ::core::ffi::c_int) as uint16;
-    return ::core::ptr::null::<uint16>();
+pub fn EnemyInstr_StopScript(k: uint16, _jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let properties = game.enemy_instructions(k).properties() | kEnemyProps_Deleted as u16;
+    game.enemy_instructions(k).set_properties(properties);
+    core::ptr::null()
 }
 pub unsafe fn EnemyInstr_Goto(_k: uint16, jp: *const uint16) -> *const uint16 {
     *jp as usize as *const uint16
@@ -2092,25 +2081,23 @@ pub unsafe fn EnemyInstr_CopyToVram(
         as *mut uint16) = (v2 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
     return (jp as uintptr_t).wrapping_add(7 as ::core::ffi::c_int as uintptr_t) as *const uint16;
 }
-pub unsafe fn EnemyInstr_EnableOffScreenProcessing(
-    mut k: uint16,
-    mut jp: *const uint16,
+pub fn EnemyInstr_EnableOffScreenProcessing(
+    k: uint16,
+    jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    let mut v2: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);
-    (*v2).properties =
-        ((*v2).properties as ::core::ffi::c_int | 0x800 as ::core::ffi::c_int) as uint16;
-    return jp;
+    let properties = game.enemy_instructions(k).properties() | 0x800;
+    game.enemy_instructions(k).set_properties(properties);
+    jp
 }
-pub unsafe fn EnemyInstr_DisableOffScreenProcessing(
-    mut k: uint16,
-    mut jp: *const uint16,
+pub fn EnemyInstr_DisableOffScreenProcessing(
+    k: uint16,
+    jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    let mut v2: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);
-    (*v2).properties =
-        ((*v2).properties as ::core::ffi::c_int & !(0x800 as ::core::ffi::c_int)) as uint16;
-    return jp;
+    let properties = game.enemy_instructions(k).properties() & !0x800;
+    game.enemy_instructions(k).set_properties(properties);
+    jp
 }
 static kRoomShakes: [uint16; 144] = [
     1 as ::core::ffi::c_int as uint16,

@@ -75,6 +75,15 @@ impl Game {
 }
 
 impl EnemyInstructions<'_> {
+    pub(crate) fn set_ai_preinstr(&mut self, value: u16) {
+        self.write(core::mem::offset_of!(EnemyData, ai_preinstr), value);
+    }
+    pub(crate) fn properties(&self) -> u16 {
+        self.read(core::mem::offset_of!(EnemyData, properties))
+    }
+    pub(crate) fn set_properties(&mut self, value: u16) {
+        self.write(core::mem::offset_of!(EnemyData, properties), value);
+    }
     pub(crate) fn timer(&self) -> u16 {
         self.read(core::mem::offset_of!(EnemyData, timer))
     }

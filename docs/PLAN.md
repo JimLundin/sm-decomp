@@ -2150,6 +2150,19 @@ remain ASR-denied. Any%: 129,712 frames, zero failures (200.50s); Waver route:
 counters unchanged. Next: shared AI pre-instruction/property callbacks,
 retaining deletion and off-screen flags and exact callback return pointers.
 
+Five shared AI pre-instruction/property callbacks now use named byte-backed
+fields. Clear retains 807B, Stop retains deletion bit 0200, and off-screen
+processing toggles only bit 0800; return pointers remain exact. Four callbacks
+are safe; SetAiPreInstr retains unsafe for its argument read. Independent
+extracted comparison passes 1,983,056 full-RAM/return-pointer checks across
+index/property/argument words, overlapping RAM arguments and random states,
+including null/integer pointer pass-throughs. Stable optimized core/DLL build
+and direct full-source format pass; Cargo fmt/build remain ASR-denied. Any%:
+129,712 frames, zero failures (186.05s); Waver route: 58,109 frames, zero
+failures (86.76s). Unsafe functions -4, cast lines -12, Rust lines -4; other
+counters unchanged. Next: EnemyInstr_CopyToVram ordered queue writes,
+retaining overlapping source-word writes and wrapped queue-tail advance.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
