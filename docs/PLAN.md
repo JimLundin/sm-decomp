@@ -7829,6 +7829,40 @@ Rust lines -2, other categories unchanged. Live arms match verified source.
 Hardware/render/audio timing and credits remain open; held HDMA diagnosis
 stays stopped. Continue executed push/stack transfer opcode cleanup.
 
+Refilled lower99BD route reaches9969 and9938 (2026-10-19): from
+64120-frame refilled-990d-exit prefix X192/Y1163, retain the established
+lead-99bd-bottom-left suffix after qa-waver-tank-xfire-exit.65210/71
+(161.15s), nativeexit1. Final9969 X963/Y139, health99/199, missiles5/5,
+items1004;19rooms/21enemy definitions. The lower descent costs100health
+in this scenario but remains alive with all missiles. It does not resume
+the separately held upper99BD ascent.
+
+Six pairs of left/run/shoot35 and left/run/jump/shoot35, then left/run/
+shoot100, neutral120 cross9969 into9938.65850/71 (157.89s), nativeexit1;
+finalX195/Y139, health79/199, missiles5/5, items1004.20rooms/21enemy
+definitions. Both ordered diagnostic lists exactly match frozen d217ea15
+Waver71; these are restored route coverage, not new rooms or credits.
+No state/inventory writes are injected. Retain refilled-9938.inputs.
+
+Next: left24, neutral20, freshDown1, neutral1100 is the established9938
+elevator alignment; verify actual9AD9 arrival/control with this missile-
+equipped prefix before choosing a materially different progression route.
+Held9AD9 ammunition experiments, upper99BD ascent, landing-site cliff
+tuning and HDMA diagnosis stay held. Frozen same-DLL explicit-render any%
+129712/0 remains input-only regression, not verification of peer hardware.
+
+Cargo launch denial has cleared: cargo fmt and fmt --check now pass;
+release reaches frontend linking but fails missingSDL2 (-lSDL2). Cargo
+release --lib reports Finished release successfully (25.70s); PowerShell
+returns1 while redirecting warning stderr, so distinguish that wrapper
+status from Cargo's successful completion diagnostic. Full frontend build
+remains unmet. Direct full-source format/progress pass; own source/residue
+delta zero. Local tools search finds noSDL2 import library. Peer owns source
+changes, cleanup and remote sync; obsolete root shaft/top/upper logs were
+reversibly archived with active route assets preserved. Inputs and ROM-
+derived probes stay ignored. Credits, complete gameplay/hardware, rendering/
+audio fidelity, masked RAM and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
