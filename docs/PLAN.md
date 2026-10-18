@@ -2016,6 +2016,36 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Health restoration now uses safe named byte-backed health/reserve accessors
+and word-wrapping arithmetic. Initial health store, signed wrapped health/
+reserve gates, reserve store, conditional mode update and final maximum-
+health reread/store retain their order and original quirks. The eight
+accessors match ram_map at 09C0/09C2/09C4/09D4/09D6; g_ram layout is unchanged.
+Two million actual old/new full-RAM cases pass: one million combinations
+of ten boundary values across six inputs, plus one million random cases.
+Independent layout/arithmetic/order reviews find no functional blocker.
+
+The fresh maintained DLL includes fe4b8726's separately owned PPU status
+change. Any% passes 129,712/0 (253.41s), native exit 0. The normal-input
+health-pickup route also passes 63,610/0 (114.71s), native exit 0, in a
+corrected read-only call probe. All six observed restoration
+calls have runningWhichVersion 2 (Rust). The amount-20/before-39 call is
+at zero-based input frame 63,277, bracketed by input frame markers; its
+separately observed SNES frame counter also reads 63,277. Removing the call observation restores the exact maintained
+routine. This proves execution of the ordinary restoration path against
+the oracle; reserve/clamp branches are covered by the extracted comparisons,
+not claimed as movie-executed. An earlier hookmode counter did not identify
+execution sides and is not used for that claim.
+
+Cargo fmt/check, optimized core/DLL and normal-core metadata builds pass;
+Cargo release remains denied executing khronos_api's build script (OS error 5).
+Raw offsets -12, unsafe functions -1, cast lines -23; Rust lines +9 provide
+the reusable named accessors. Other gameplay residue counters are unchanged.
+Probe code and ROM-derived assets stay ignored. Next: health-damage word
+arithmetic and state gates, with actual damage calls measured in context;
+the stalled ammunition route and uncovered Turtle cleanup remain held.
+
+
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
 the original `SignExtend8(0x8000)` initialization and the middle-byte velocity

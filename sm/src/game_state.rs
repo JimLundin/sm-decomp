@@ -66,6 +66,39 @@ struct LoadedRom {
 
 // Initialize the large RAM and oracle snapshots directly on the heap.
 impl Game {
+    /// Health and reserve fields retain their original byte-backed RAM layout.
+    pub fn samus_health(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x9c2], self.g_ram[0x9c3]])
+    }
+
+    pub fn set_samus_health(&mut self, value: u16) {
+        self.g_ram[0x9c2..0x9c4].copy_from_slice(&value.to_le_bytes());
+    }
+
+    pub fn samus_max_health(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x9c4], self.g_ram[0x9c5]])
+    }
+
+    pub fn samus_reserve_health(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x9d6], self.g_ram[0x9d7]])
+    }
+
+    pub fn set_samus_reserve_health(&mut self, value: u16) {
+        self.g_ram[0x9d6..0x9d8].copy_from_slice(&value.to_le_bytes());
+    }
+
+    pub fn samus_max_reserve_health(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x9d4], self.g_ram[0x9d5]])
+    }
+
+    pub fn reserve_health_mode(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x9c0], self.g_ram[0x9c1]])
+    }
+
+    pub fn set_reserve_health_mode(&mut self, value: u16) {
+        self.g_ram[0x9c0..0x9c2].copy_from_slice(&value.to_le_bytes());
+    }
+
     /// Register the cartridge's ROM after a successful load.
     ///
     /// # Safety

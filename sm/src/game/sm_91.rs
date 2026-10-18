@@ -4770,46 +4770,22 @@ pub unsafe fn Samus_LoadSuitTargetPalette(game: &mut Game) {
         );
     };
 }
-pub unsafe fn Samus_RestoreHealth(mut a: uint16, game: &mut Game) {
-    let mut v1: uint16 = (a as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize)
-        as *mut uint16) = v1;
-    if (v1 as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0x9c4 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
-        >= 0 as ::core::ffi::c_int
-    {
-        let mut v2: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x9d6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + v1 as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x9c4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16;
-        if (v2 as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x9d4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
-            >= 0 as ::core::ffi::c_int
-        {
-            v2 = *((&raw mut game.g_ram as *mut uint8).offset(0x9d4 as ::core::ffi::c_int as isize)
-                as *mut uint16);
+pub fn Samus_RestoreHealth(amount: u16, game: &mut Game) {
+    let health = game.samus_health().wrapping_add(amount);
+    game.set_samus_health(health);
+    if (health.wrapping_sub(game.samus_max_health()) as i16) >= 0 {
+        let mut reserve = game
+            .samus_reserve_health()
+            .wrapping_add(health)
+            .wrapping_sub(game.samus_max_health());
+        if (reserve.wrapping_sub(game.samus_max_reserve_health()) as i16) >= 0 {
+            reserve = game.samus_max_reserve_health();
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9d6 as ::core::ffi::c_int as isize)
-            as *mut uint16) = v2;
-        if v2 != 0 {
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x9c0 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                == 0
-            {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9c0 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 1 as uint16;
-            }
+        game.set_samus_reserve_health(reserve);
+        if reserve != 0 && game.reserve_health_mode() == 0 {
+            game.set_reserve_health_mode(1);
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize)
-            as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x9c4 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        game.set_samus_health(game.samus_max_health());
     }
 }
 pub unsafe fn Samus_DealDamage(mut a: uint16, game: &mut Game) {
