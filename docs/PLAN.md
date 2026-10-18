@@ -7485,6 +7485,36 @@ integration, hardware/audio timing, rendering/Waver71, masked RAM and credits
 remain open. Held HDMA diagnosis stays stopped. Continue SPC stack/instruction
 helpers with independent subagents; peer owns remote sync.
 
+Refilled landing-site return to Parlor established (2026-10-18): from
+60402-frame ship-free-movement prefix, left/run/shoot190, neutral120 ends
+X26/Y1163 at the lower-left source door, health99/99, missiles5/5 and
+items1004.60712/71 (199.22s), nativeexit1. Samus is below the opening;
+left/jump/shoot22, left/run/shoot70, neutral120 crosses normally. Door
+transition starts60718 in91F8, loads92FD at60737 and returns to gameplay
+60839 atX1240/Y116.60924/71 (186.66s), nativeexit1; finalX1240/Y139,
+health99/99, missiles5/5, items1004. No state/inventory writes are injected.
+
+Eastern hill approach left/run/shoot10, left/run/jump/shoot60, neutral120
+completes61114/71 (166.04s), nativeexit1. Jump clips the roof nearX1182/Y63;
+enemy contact knocks Samus right and reduces health to89, finalX1161/Y155.
+Then left/run/shoot6, left/run/jump/shoot55, neutral120 moves toX1092/Y171
+with health89/99, missiles5/5, items1004.61295/71, nativeexit1. The second
+jump reachesX1127/Y93 then is obstructed nearX1125; no hill crest is proved.
+All four ordered diagnostic lists exactly match frozen d217ea15 Waver71;
+16rooms/16enemy definitions remain. Parlor is a revisit, not new coverage.
+
+Next: launch farther left from the retained refilled-hill-second prefix to
+clear Parlor's mound toward the established hill-top/hatch/west-door route.
+Retain supplies and observe actual positions before reusing old suffixes.
+Landing-site cliff tuning stays held under its time limit, as do Upper99BD,
+9AD9 ammunition and HDMA. Frozen same-DLL explicit-render any%129712/0
+remains regression for these input-only trials; it does not verify peer
+hardware edits. Direct full-source format passes; Cargo fmt/release again
+fail at launch OSerror5. Own source/residue delta zero. Peer owns hardware,
+cleanup and remote sync; route/oracle assets remain ignored. Credits,
+complete gameplay/hardware, rendering/audio fidelity and masked RAM remain
+unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
