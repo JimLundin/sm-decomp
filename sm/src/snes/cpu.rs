@@ -159,13 +159,13 @@ pub unsafe fn cpu_setFlags(cpu: *mut Cpu, val: u8) {
         (*cpu).y &= 0xff;
     }
 }
-unsafe fn cpu_setZN(cpu: *mut Cpu, value: u16, byte: bool) {
+fn set_zero_negative(value: u16, byte: bool, cpu: &mut Cpu) {
     if byte {
-        (*cpu).z = value & 0xff == 0;
-        (*cpu).n = value & 0x80 != 0;
+        cpu.z = value & 0xff == 0;
+        cpu.n = value & 0x80 != 0;
     } else {
-        (*cpu).z = value == 0;
-        (*cpu).n = value & 0x8000 != 0;
+        cpu.z = value == 0;
+        cpu.n = value & 0x8000 != 0;
     }
 }
 unsafe fn cpu_doBranch(cpu: *mut Cpu, value: u8, check: bool) {
@@ -474,7 +474,7 @@ unsafe fn cpu_and(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
         let value = cpu_readWord(cpu, low, high, game);
         (*cpu).a &= value;
     }
-    cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
+    set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
 }
 unsafe fn cpu_ora(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
@@ -485,7 +485,7 @@ unsafe fn cpu_ora(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
         let value = cpu_readWord(cpu, low, high, game);
         (*cpu).a |= value;
     }
-    cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
+    set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
 }
 unsafe fn cpu_eor(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
@@ -496,7 +496,7 @@ unsafe fn cpu_eor(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
         let value = cpu_readWord(cpu, low, high, game);
         (*cpu).a ^= value;
     }
-    cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
+    set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
 }
 unsafe fn cpu_adc(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
@@ -548,7 +548,7 @@ unsafe fn cpu_adc(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
         (*cpu).c = result_0 > 0xffff;
         (*cpu).a = result_0 as u16;
     }
-    cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
+    set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
 }
 unsafe fn cpu_sbc(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
@@ -605,7 +605,7 @@ unsafe fn cpu_sbc(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
         (*cpu).c = result_0 > 0xffff;
         (*cpu).a = result_0 as u16;
     }
-    cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
+    set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
 }
 unsafe fn cpu_cmp(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).mf {
@@ -620,7 +620,7 @@ unsafe fn cpu_cmp(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
         (*cpu).c = result > 0xffff;
         result
     };
-    cpu_setZN(cpu, result as u16, (*cpu).mf);
+    set_zero_negative(result as u16, (*cpu).mf, &mut *cpu);
 }
 unsafe fn cpu_cpx(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).xf {
@@ -635,7 +635,7 @@ unsafe fn cpu_cpx(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
         (*cpu).c = result > 0xffff;
         result
     };
-    cpu_setZN(cpu, result as u16, (*cpu).xf);
+    set_zero_negative(result as u16, (*cpu).xf, &mut *cpu);
 }
 unsafe fn cpu_cpy(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).xf {
@@ -650,7 +650,7 @@ unsafe fn cpu_cpy(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
         (*cpu).c = result > 0xffff;
         result
     };
-    cpu_setZN(cpu, result as u16, (*cpu).xf);
+    set_zero_negative(result as u16, (*cpu).xf, &mut *cpu);
 }
 unsafe fn cpu_bit(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
@@ -673,7 +673,7 @@ unsafe fn cpu_lda(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
         (*cpu).a = cpu_readWord(cpu, low, high, game);
     }
-    cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
+    set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
 }
 unsafe fn cpu_ldx(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).xf {
@@ -682,7 +682,7 @@ unsafe fn cpu_ldx(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
         (*cpu).x = cpu_readWord(cpu, low, high, game);
     }
-    cpu_setZN(cpu, (*cpu).x, (*cpu).xf);
+    set_zero_negative((*cpu).x, (*cpu).xf, &mut *cpu);
 }
 unsafe fn cpu_ldy(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).xf {
@@ -691,7 +691,7 @@ unsafe fn cpu_ldy(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
         (*cpu).y = cpu_readWord(cpu, low, high, game);
     }
-    cpu_setZN(cpu, (*cpu).y, (*cpu).xf);
+    set_zero_negative((*cpu).y, (*cpu).xf, &mut *cpu);
 }
 unsafe fn cpu_sta(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
@@ -740,7 +740,7 @@ unsafe fn cpu_ror(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
         cpu_writeWord(cpu, low, high, result, true, game);
         (result, carry)
     };
-    cpu_setZN(cpu, result, (*cpu).mf);
+    set_zero_negative(result, (*cpu).mf, &mut *cpu);
     (*cpu).c = carry;
 }
 unsafe fn cpu_rol(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
@@ -756,7 +756,7 @@ unsafe fn cpu_rol(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
         cpu_writeWord(cpu, low, high, result as u16, true, game);
         result
     };
-    cpu_setZN(cpu, result as u16, (*cpu).mf);
+    set_zero_negative(result as u16, (*cpu).mf, &mut *cpu);
 }
 unsafe fn cpu_lsr(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).mf {
@@ -773,7 +773,7 @@ unsafe fn cpu_lsr(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
         cpu_writeWord(cpu, low, high, result, true, game);
         result
     };
-    cpu_setZN(cpu, result, (*cpu).mf);
+    set_zero_negative(result, (*cpu).mf, &mut *cpu);
 }
 unsafe fn cpu_asl(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).mf {
@@ -788,7 +788,7 @@ unsafe fn cpu_asl(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
         cpu_writeWord(cpu, low, high, result as u16, true, game);
         result
     };
-    cpu_setZN(cpu, result as u16, (*cpu).mf);
+    set_zero_negative(result as u16, (*cpu).mf, &mut *cpu);
 }
 unsafe fn cpu_inc(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).mf {
@@ -801,7 +801,7 @@ unsafe fn cpu_inc(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
         cpu_writeWord(cpu, low, high, result, true, game);
         result
     };
-    cpu_setZN(cpu, result, (*cpu).mf);
+    set_zero_negative(result, (*cpu).mf, &mut *cpu);
 }
 unsafe fn cpu_dec(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).mf {
@@ -814,7 +814,7 @@ unsafe fn cpu_dec(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
         cpu_writeWord(cpu, low, high, result, true, game);
         result
     };
-    cpu_setZN(cpu, result, (*cpu).mf);
+    set_zero_negative(result, (*cpu).mf, &mut *cpu);
 }
 unsafe fn cpu_tsb(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
@@ -946,7 +946,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                     (*cpu).c = (*cpu).a & 0x8000 != 0;
                     (*cpu).a <<= 1;
                 }
-                cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
+                set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
                 break;
             }
             0x0b => {
@@ -1027,7 +1027,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 } else {
                     (*cpu).a = (*cpu).a.wrapping_add(1);
                 }
-                cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
+                set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
                 break;
             }
             0x1b => {
@@ -1117,12 +1117,12 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                     (*cpu).c = result & 0x10000 != 0;
                     (*cpu).a = result as u16;
                 }
-                cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
+                set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
                 break;
             }
             0x2b => {
                 (*cpu).dp = cpu_pullWord(cpu, game);
-                cpu_setZN(cpu, (*cpu).dp, false);
+                set_zero_negative((*cpu).dp, false, &mut *cpu);
                 break;
             }
             0x2c => {
@@ -1199,12 +1199,12 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 } else {
                     (*cpu).a = (*cpu).a.wrapping_sub(1);
                 }
-                cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
+                set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
                 break;
             }
             0x3b => {
                 (*cpu).a = (*cpu).sp;
-                cpu_setZN(cpu, (*cpu).a, false);
+                set_zero_negative((*cpu).a, false, &mut *cpu);
                 break;
             }
             0x3c => {
@@ -1308,7 +1308,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 } else {
                     (*cpu).a >>= 1;
                 }
-                cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
+                set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
                 break;
             }
             0x4b => {
@@ -1410,7 +1410,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0x5b => {
                 (*cpu).dp = (*cpu).a;
-                cpu_setZN(cpu, (*cpu).dp, false);
+                set_zero_negative((*cpu).dp, false, &mut *cpu);
                 break;
             }
             0x5c => {
@@ -1518,7 +1518,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                     (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
                     (*cpu).a = cpu_pullWord(cpu, game);
                 }
-                cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
+                set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
                 break;
             }
             0x69 => {
@@ -1535,7 +1535,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                     (*cpu).a = (*cpu).a >> 1 | (u16::from((*cpu).c) << 15);
                 }
                 (*cpu).c = carry;
-                cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
+                set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
                 break;
             }
             0x6b => {
@@ -1641,12 +1641,12 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                     (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
                     (*cpu).y = cpu_pullWord(cpu, game);
                 }
-                cpu_setZN(cpu, (*cpu).y, (*cpu).xf);
+                set_zero_negative((*cpu).y, (*cpu).xf, &mut *cpu);
                 break;
             }
             0x7b => {
                 (*cpu).a = (*cpu).dp;
-                cpu_setZN(cpu, (*cpu).a, false);
+                set_zero_negative((*cpu).a, false, &mut *cpu);
                 break;
             }
             0x7c => {
@@ -1715,7 +1715,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 } else {
                     (*cpu).y = (*cpu).y.wrapping_sub(1);
                 }
-                cpu_setZN(cpu, (*cpu).y, (*cpu).xf);
+                set_zero_negative((*cpu).y, (*cpu).xf, &mut *cpu);
                 break;
             }
             0x89 => {
@@ -1735,7 +1735,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 } else {
                     (*cpu).a = (*cpu).x;
                 }
-                cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
+                set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
                 break;
             }
             0x8b => {
@@ -1807,7 +1807,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 } else {
                     (*cpu).a = (*cpu).y;
                 }
-                cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
+                set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
                 break;
             }
             0x99 => {
@@ -1825,7 +1825,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 } else {
                     (*cpu).y = (*cpu).x;
                 }
-                cpu_setZN(cpu, (*cpu).y, (*cpu).xf);
+                set_zero_negative((*cpu).y, (*cpu).xf, &mut *cpu);
                 break;
             }
             0x9c => {
@@ -1894,7 +1894,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 } else {
                     (*cpu).y = (*cpu).a;
                 }
-                cpu_setZN(cpu, (*cpu).y, (*cpu).xf);
+                set_zero_negative((*cpu).y, (*cpu).xf, &mut *cpu);
                 break;
             }
             0xa9 => {
@@ -1908,12 +1908,12 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 } else {
                     (*cpu).x = (*cpu).a;
                 }
-                cpu_setZN(cpu, (*cpu).x, (*cpu).xf);
+                set_zero_negative((*cpu).x, (*cpu).xf, &mut *cpu);
                 break;
             }
             0xab => {
                 (*cpu).db = cpu_pullByte(cpu, game);
-                cpu_setZN(cpu, u16::from((*cpu).db), true);
+                set_zero_negative(u16::from((*cpu).db), true, &mut *cpu);
                 break;
             }
             0xac => {
@@ -1990,7 +1990,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 } else {
                     (*cpu).x = (*cpu).sp;
                 }
-                cpu_setZN(cpu, (*cpu).x, (*cpu).xf);
+                set_zero_negative((*cpu).x, (*cpu).xf, &mut *cpu);
                 break;
             }
             0xbb => {
@@ -1999,7 +1999,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 } else {
                     (*cpu).x = (*cpu).y;
                 }
-                cpu_setZN(cpu, (*cpu).x, (*cpu).xf);
+                set_zero_negative((*cpu).x, (*cpu).xf, &mut *cpu);
                 break;
             }
             0xbc => {
@@ -2067,7 +2067,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 } else {
                     (*cpu).y = (*cpu).y.wrapping_add(1);
                 }
-                cpu_setZN(cpu, (*cpu).y, (*cpu).xf);
+                set_zero_negative((*cpu).y, (*cpu).xf, &mut *cpu);
                 break;
             }
             0xc9 => {
@@ -2081,7 +2081,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 } else {
                     (*cpu).x = (*cpu).x.wrapping_sub(1);
                 }
-                cpu_setZN(cpu, (*cpu).x, (*cpu).xf);
+                set_zero_negative((*cpu).x, (*cpu).xf, &mut *cpu);
                 break;
             }
             0xcb => {
@@ -2235,7 +2235,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 } else {
                     (*cpu).x = (*cpu).x.wrapping_add(1);
                 }
-                cpu_setZN(cpu, (*cpu).x, (*cpu).xf);
+                set_zero_negative((*cpu).x, (*cpu).xf, &mut *cpu);
                 break;
             }
             0xe9 => {
@@ -2245,7 +2245,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             }
             0xeb => {
                 (*cpu).a = (*cpu).a.swap_bytes();
-                cpu_setZN(cpu, (*cpu).a, true);
+                set_zero_negative((*cpu).a, true, &mut *cpu);
                 break;
             }
             0xec => {
@@ -2326,7 +2326,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                     (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
                     (*cpu).x = cpu_pullWord(cpu, game);
                 }
-                cpu_setZN(cpu, (*cpu).x, (*cpu).xf);
+                set_zero_negative((*cpu).x, (*cpu).xf, &mut *cpu);
                 break;
             }
             0xfb => {
