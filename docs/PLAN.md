@@ -5647,6 +5647,47 @@ unchanged. Later peer changes require separate integration. Hardware/audio
 timing, rendering/Waver71, masked RAM and credits remain open; held HDMA
 diagnosis stays stopped. Continue executed hardware paths and route coverage.
 
+Natural low-RAM mask audit (2026-10-18): a frozen actual paired any%
+run observes all 183 mine-to-theirs masked bytes below 9000 before the first
+normalization store. Exactly 129,712 comparisons complete; 99 bytes differ
+on at least one frame and 84 never differ. Ordinary comparison remains
+129,712/0 (269.66s), native exit 0. Thus some adopted Rust values differ
+naturally, not only under the preceding synthetic fault controls.
+
+Selected per-byte counts and first observations (mine/theirs, zero-based
+frame):060B/060C differ on81,536 frames, first8,324=00/CC and00/01;
+060D on8, first40,237=00/01;060F on2,800, first36,358=00/01;
+0611 on131, first0=02/00;0612 on140, first0=01/00;
+077E on241, first8,257=01/00;0933 on40,589, first8,325=00/1F;
+0DD4 on92,468, first2,384=00/09;0E02 on96,712, first2,218=00/87;
+0E32 on96,541, first8,324=00/08;1784..1786 each on96,606,
+first8,322=00/C5,00/F6,00/A6. ram_map names these groups as projectile
+initialization/removed collision fields, coroutine state, my_counter,
+removed scratch/boundary values and removed enemy AI pointer. Rust's
+RunOneFrameOfGameInner actually consumes coroutine_state_0; source confirms
+its startup initialization and reset continuation. Names alone do not prove
+the remaining masked differences harmless or establish natural ROM reads.
+
+The observer changes no comparison, recovery or input scheduling. This
+establishes raw differences in fields whose adopted values were independently
+tested above, not a natural read-before-write dependency or gameplay bug.
+Next: trace actual ROM reads/writes for a focused non-HDMA field to determine
+whether its incoming adopted value is consumed before replacement. Do not
+remove masks or change the paired schedule based on these counts alone.
+Held HDMA diagnosis remains stopped; high-address masks are outside this
+probe. Coverage still ends state8/DF8D, six rooms/three enemy definitions,
+zero credits frames; this run does not close route or rendering gaps.
+
+Only PLAN changes. Frozen source at22dff8a2 includes then-current peer
+CPU/PPU/SNES edits; later integration is separate. Optimized core/DLL and
+direct full-source rustfmt pass; Cargo fmt/release remain access-denied at
+launch. Current progress:22,691 offsets,39 extern blocks,3 C ABI functions,
+5 no_mangle,6,728 unsafe functions,86,455 casts,258,487 Rust lines;
+differences are concurrent source changes. Initial probe setup failed before
+execution on a size-expression parser and a mistaken179-byte expectation;
+corrected unique v3 build supports the results above. Probe/ROM outputs stay
+ignored. No maintained source or normalization behavior changes.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
