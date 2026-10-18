@@ -977,6 +977,25 @@ return and Waver remain unproved. All inputs are ordinary controller words.
 Full any% passes 129,712 frames, zero failures (190.43s). Direct rustfmt
 and progress pass; source/counters unchanged, Cargo remains ASR-denied.
 
+Bomb-block opening on the return is now standard-verified:
+target/awake-return/parlor-return-real-ground-bomb.inputs, 56,014 frames,
+zero failures (81.21s), final X987/Y185 in ball form, items 1004, missiles
+0/5. From parlor-return-upper-right.inputs at X955/Y267, neutral 5,
+jump/shoot 28, Down/jump 1, jump 2, Down/jump 1, jump 10,
+right/jump 15, jump/shoot 1, shoot 140 and neutral 120 reaches X971/Y185
+in ball form. Keep Jump held through both Down presses: releasing it cuts
+the ascent short. This prefix is parlor-return-ball185.inputs; exclude
+the later Up press that unmorphs into crouch before firing another Bomb.
+Fresh shoot 1, neutral 90, right/shoot 40, neutral 60, Up 1, neutral 20,
+neutral 5, right/jump/shoot 50 and neutral 120 produces the verified finish.
+Read-only block checks show X976/Y176 and X992/Y176 changing from F2D8
+to air; the next two Bomb blocks stay intact. A 12-frame left roll settles
+X957/Y185; unmorphing reaches standing Y171. Its vertical jump clips the
+ledge, while a Bomb lift reaches ball Y151. Longer left rolls overshoot and
+fall back to the Y267 shelf. Centering the vertical opening is next;
+upper-hall traversal and Waver presence are still unproved. No source or
+counter changes; any% and format results above apply.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
