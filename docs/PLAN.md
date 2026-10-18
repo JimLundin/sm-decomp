@@ -1848,6 +1848,37 @@ control preservation alone does not establish full SETINI restoration, all
 Mode7 rendering, or hardware accuracy. Audio timing, other display state,
 HDMA, masked RAM and boot-to-credits coverage remain open.
 
+EXTBG complete-row diagnosis (2026-10-18): an isolated current-renderer
+probe compares actual ppu_runLine with g_new_ppu false/true on cloned Ppu states
+and independently checks each complete BGRA pixel against palette/priority
+models. It covers four synthetic VRAM seeds, EXTBG off/on, BG0/BG1/both main-
+screen selections, and five lines (120 rows). Eighty baseline rows match;
+40 EXTBG rows diverge at7,690 pixel positions. The old renderer matches BG1
+seven-bit palette/priority selection; the default renderer matches BG0-only
+output. Native exit0. Snapshot and renderer production bodies exactly match
+86a7a3d6 after appended wrappers are removed.
+
+State is identity Mode7 with no sprites, windows, mosaic, color math,
+direct color or interlace; palette entries vary across all RGB channels.
+The independent model covers raw pixel high-bit priority, transparent index
+zero, BG1-only selection and BG1/BG0 precedence. It establishes a concrete
+visible difference for these scenarios, not complete EXTBG hardware accuracy
+or all priority interactions. Earlier source inspection found no m7extBg read
+in the whole-line path; this full-row result corroborates that omission.
+
+This is a shared-hardware verifier blind spot: ROM and Rust game logic both
+use the same default renderer, so equal per-frame pixels can conceal an EXTBG
+rendering defect shared by both. No ordinary movie divergence or hardware
+accuracy is inferred. Production rendering remains unchanged. Next focused
+fix must establish sprite priority, independent BG windows/main/sub selection
+and color/math behavior before promotion; a normal any% pass alone cannot
+validate EXTBG because exercised EXTBG coverage is not established.
+
+No maintained Rust source or progress counters changed in this diagnosis.
+Cargo fmt --check passes; committed86a7a3d6 any%129,712/0 andWaver58,109/0
+remain its regression results. Probe/source/ROM-derived assets stay ignored.
+Audio, other display state, HDMA, masked RAM and complete route gaps remain.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
