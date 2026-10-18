@@ -1214,6 +1214,33 @@ Next: obtain ammunition through normal gameplay or identify an accessible
 alternate route before repeating this door trial. No maintained Rust or
 ROM-derived artifacts are committed; residue counters are unchanged.
 
+9AD9 lower-shaft and combat diagnosis (2026-10-18): normal controls from
+the first-door prefix reach X83/Y1675; the frozen 97309b4a bus verifier
+passes 63,990/0 (100.68s), native exit 0. A further Morph/bomb-input trial
+passes 64,427/0 (99.23s), native exit 0, ending X130/Y1689 with missiles
+0/5. It does not establish a bomb spawn or hit. Read-only final floor
+diagnostics separately pass 64,427/0 (98.09s): row 106, blocks 5..10,
+have BTS 09, including the revealed C057 word at block 8. The shot-reaction
+table selects D088/CF2E, PlmSetup_RespawningPowerBombBlock. Its maintained
+body requires projectile type 0500 for passage; normal bomb type 0300
+only reveals the block. Equipped items 1004 provide Morph and normal bombs.
+The gray door at (14,118) is C842 with argument 9024, selecting BE1C,
+PlmPreInstr_PlayDudSound; it is not an immediately usable blue-door route.
+
+The 63,160-frame ammo-fall trial passes the standard bus verifier with
+zero failures (104.89s), native exit 0. An isolated read-only replay on
+the same frozen core passes 63,160/0 (96.14s), native exit 0. Actual
+projectile observations show a downward beam at X123/Y838..904 on frames
+62,985..62,995. Enemy slot 0FF8, definition DC7F, changes from 30 HP to
+10 HP by frame 63,000. It remains alive through frame 63,155; no pickup
+is observed and missiles remain 0/5. Samus health falls from 49 to 39.
+Later shots travel horizontally after landing. These observations prove
+a hit, not a kill, drop or ammunition collection. Down 0400 differs from
+the configured L/aim-down 0020; trace pad values are reversed runtime words.
+Next: finish the damaged enemy with normal controls and observe its actual
+drop/collection before another missile-door attempt. Probe files and inputs
+stay ignored; no maintained Rust or ROM-derived artifacts are committed.
+
 HDMA remaining-byte classification (2026-10-18): the preserved 462-byte
 offscreen candidate's detailed 35,000-frame run passes the enforced oracle
 (62.50s), native exit 0, while still recording 34 raw table-difference
