@@ -4906,6 +4906,28 @@ executed input packing, not automatic-joy timing or broader hardware accuracy;
 rendering/Waver71, recovery integration, audio/event timing and credits remain
 open. Held HDMA diagnosis remains stopped; probes stay TEMP.
 
+Independent SNES register-read cleanup QC (2026-10-18): 1,835,008 actual
+LDA byte/word instructions match independent status/arithmetic expectations.
+The status matrix covers all 256 open-bus bytes, all 32 NMI/IRQ/vblank/
+WRIO-latch/autojoy-busy combinations, and H positions 0/1023/1024/65535.
+Reads at 420F/4210/4211/4212/4213 include odd pairs and verify 4211 clears
+both inIrq and cpu.irqWanted while preserving NMI. Arithmetic/zero-register
+reads cover all 65,536 dividend-result words and rotated multiplication
+results across 4214..421F, in both widths where routed reads are supported.
+Input-register packing is separately verified above. A, N/Z, PC and cycles
+match. The initial fixture's word421F wrongly reached unsupported LoROM4220
+and aborted; corrected positive matrix excludes that one pair. No production
+defect was inferred from the invalid fixture.
+
+A TEMP control retaining inIrq=true instead of clearing it fails immediately
+with true versus expected false. Original/control native exits are zero/
+nonzero. Frozen/live snes_readReg body matches; optimized probe core/DLL,
+normal-core metadata, full-source direct rustfmt and progress pass. Only
+this note changes; no maintained code/residue or tooling is added. This
+proves executed maintained register semantics, not SNES event/autojoy timing.
+Movie integration, rendering/Waver71, recovery integration, audio timing and
+credits remain separately open. Held HDMA diagnosis remains stopped.
+
 Current broad-route revalidation (2026-10-18): committed d217ea15 source
 replays the retained 62,817-frame lead-9ad9-arrive.inputs through the standard
 verifier, passing 62,817/0 (117.57s), native exit 0. It observes 48,819
