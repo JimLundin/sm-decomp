@@ -8071,6 +8071,42 @@ SDL2. Frozen optimized core/DLL builds pass and live edited arms match.
 Cast lines -4, Rust lines -2; other counters unchanged. This is CPU regression
 coverage, not independent boot-to-credits or rendering/audio accuracy proof.
 
+9B9D Bomb passage crossed into9C35 (2026-10-19): from68558-frame
+missile-door-five prefix, Select1, neutral20, left/run/shoot6,
+left/run/jump/shoot100, left/run/shoot45, neutral120 reachesX517/Y139
+at the raised platform edge, then dies while waiting.68850/71 (184.76s),
+nativeexit1, finalstate20. Retain only through68690 before the later
+contacts: health29 atX517. Neutral1, left/jump/shoot65, left/run/shoot45,
+neutral20 clears the platform and reachesX279/Y75, health19/199.
+68821/71 (161.72s), nativeexit1, alive. Actual fresh jump separates the
+successful crossing from repeated wall contact; no state writes injected.
+
+Correction to initial geometry interpretation: typeF/BTS5 blocksX208/Y80
+andX80/Y80 are respawning Bomb blocks, not Speed Booster blocks. Read-only
+table94936B+10 selectsD0AC/setupCE83; shot table94A012+10 selectsD0CC/
+setupCEDA. Maintained names identify RespawningBombBlock/Block2.
+FromX279/Y75, Down1, neutral8, Down1, neutral12, left30, shoot1, neutral90,
+left/shoot55, neutral30, shoot1, neutral90, left/shoot100, neutral30 crosses
+both Bomb blocks and reachesX37/Y153 in ball form with19health intact.
+69270/71 (153.12s), nativeexit1. Up1, neutral20, left/shoot100, neutral120
+unmorphs and opens/crosses the west blue cap.69511/71 (154.27s), native
+exit1. Transition starts69322, loads9C35 at69340, gameplay resumes69427
+X216/Y139; finalX200/Y139, health19/199, missiles0/5, items1004.
+Coverage expands to23rooms/25enemy definitions. All four ordered diagnostics
+exactly match frozen d217ea15 Waver71; no new failing frames.
+
+9C35 is an enemy-free single-screen Map Station room: PLMB6D3 atX80/Y160,
+not an Energy Station. Next: approach its trigger and verify map activation
+through normal input, then return to9AD9 for a different onward exit.
+Do not infer refill from station appearance. Retain9b9d-west-exit.inputs.
+Held upper99BD ascent, cliff tuning,9AD9 ammunition and HDMA remain held.
+Frozen same-DLL explicit-render any%129712/0 remains input-only regression;
+peer hardware source owns its replays. Cargo fmt/check and progress pass;
+release-library completion is recorded above, frontend still lacksSDL2.
+Own source/residue delta zero. Inputs/ROM-derived probes stay ignored;
+peer owns hardware edits, cleanup and remote sync. Credits, complete
+gameplay/hardware, render/audio fidelity, masked RAM and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
