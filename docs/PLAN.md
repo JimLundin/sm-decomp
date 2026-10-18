@@ -811,6 +811,24 @@ Independent Parlor preparation has a verified first ledge at X463/Y1180
 (30,314/0 standard). Upper ceiling islands require approaching each shelf
 from outside its underside. These pre-Morph prefixes remain preparation;
 the item-bearing combined route is still the next required proof.
+Independent Parlor ascent reaches its upper hall: target/parlor-ascent/
+upper-align.inputs passes the standard oracle for 32,106 frames, zero
+failures (44.75s), final X433/Y170. Further right movement reaches
+X795/Y171 at the Morph-passage wall in upper-walk.inputs (32,326/0 probe).
+The reusable ascent-from-370-1211.inputs suffix has 2,639 frames and
+requires standing X370/Y1211 facing left (pose0002); it includes the
+right movement to that wall. It still needs an item-bearing combined
+replay. Run movement before fresh jumps and short vertical starts avoid
+ceiling islands; centering inside X368..399 clears the last upper roof.
+The actual awake 96BA return exposed why the empty-room ascent cannot
+be assumed transferable: eleven wall pirates are present, and one near
+X464/Y1511 hits Samus before the saved beam sequence kills it, knocking
+her off the cycle's horizontal position. Repeated unchanged grafts pass
+the oracle but stall below Parlor. Read-only motion/HP tracing identified
+the contact; normal combat and position recovery are being verified.
+A recovered cycle starting X401/Y1443 now reaches X401/Y1187 without
+another hit (38,742/0 probe). The combined exit remains unproved.
+No gameplay source or residue counters changed; useful inputs are retained.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
