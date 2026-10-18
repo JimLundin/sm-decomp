@@ -5478,6 +5478,44 @@ stay ignored; peer PPU/SNES edits are excluded from this commit. Render
 initialization/Waver71, hires, audio timing, masked RAM and boot-to-credits
 remain gaps. Held HDMA diagnosis remains stopped.
 
+Upper 99BD route audit (2026-10-18): actual source door BTS values are
+3 at the upper-right door (block15,row6), 0 at the middle-right door,
+1 at the bottom-left and 2 at the bottom-right. Maintained collision uses
+these indexes into the room door list; index3 selects 838C5E/destination965B.
+Thus 965B is a definition-confirmed destination, not a traversed room.
+Read-only 965B inspection shows a 1536x256 room with a missile-capacity PLM
+and exits toward92B3/99BD; these rooms/items remain unreached on this route.
+
+Four normal-controller trials retain the item-bearing59,942-frame prefix.
+Upper-first60230/71 (190.54s) drifts left and falls toX37/Y1243;
+upper-align60250/71 (215.97s) holdsX189/Y1163 beneath solid ceiling;
+upper-hatch60230/71 (183.53s) holdsX138/Y1163;
+upper-hatch-center60225/71 (181.25s) holdsX151/Y1163 beneath the right hatch.
+All native exits1, all18rooms/19enemy definitions, no new room or item.
+Each has exactly the same71 ordered rendered diagnostics as the frozen
+Waver baseline. Inputs/probes and decompressed geometry stay ignored.
+
+The right entry hatch blocks atX144/160,Y1104 are typeC/BTS09. Live table
+949EA6 selects PLM D088/setupCF2E, PlmSetup_RespawningPowerBombBlock;
+its projectile gate accepts0300 (Power Bomb), while0500 selects its reveal
+instruction. Ordinary upward beams do not open it. Do not repeat these
+right-hatch beam suffixes. The alternative left hatch atX48/Y1104 is
+B/BTS01: contact table949139 selectsD048/setupCE37 (crumble), while bomb
+reaction949DA4 selectsD000/setupCFA0. Higher shaft B/BTS03/05/07 layers
+also select crumble on contact and bomb reactions; higher C/BTS05/07 layers
+select inactive setupB3C1 shot-reaction PLMs. These are exact definitions,
+not proof of ascent. Next: align at the left hatch, Morph and bomb it using
+the existing inventory; measure actual traversal before attempting the climb.
+Held9AD9 ammunition and HDMA work stay held.
+
+Explicit-render any% on the same frozen d217ea15 diagnostic DLL passes
+129712/0 (414.98s), native exit0. This is regression on the frozen source;
+concurrent hardware edits require separate integration. No maintained Rust
+changes in this audit. Direct full-source rustfmt passes; Cargo fmt/check
+and release build again fail at cargo launch with access denied OSerror5.
+Progress differences belong to concurrent hardware work; own residue delta
+is zero. Credits, complete rendering/audio and masked RAM remain unproved.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
