@@ -8312,6 +8312,23 @@ every opcode branch; exact constant substitution supports the unexercised
 literal sites. Cast lines -2, Rust lines -2; other counters unchanged.
 Gameplay and rendering/audio completeness remain open.
 
+CPU address-pair interface cleanup (2026-10-19): all 16 address-pair helpers
+return `(low, high)` instead of writing low through a raw output pointer;
+178 dispatcher callers destructure the pair. Address expressions, fetches,
+cycle updates and their order remain unchanged. Frozen HEAD
+`8aa9e55d98ace85a930b6013251299627424274d` plus this interface change passes
+2,097,152 actual old/current helper comparisons across all 16 modes, every
+operand/index value and both flag variants. Returned pairs, CPU register/flag
+state, cycle count and bus operation/cycle counters match. Pointer reads use
+constructed RAM fixtures; this does not exhaust arbitrary mapped devices or
+all state combinations. Prefix 3,600/0 (1.01s) executes 10,363,030 dispatcher
+calls; individual helper movie hits were not counted. Dedicated comparisons
+exercise every helper. Clean full any% 129,712/0 (51.91s), native exit 0.
+Cargo fmt/check, release library, frozen normal metadata and optimized core/DLL
+builds pass; full frontend linking still lacks SDL2. Live source matches
+verified source. Rust lines -153; other progress counters unchanged. Complete
+gameplay and rendering/audio fidelity remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
