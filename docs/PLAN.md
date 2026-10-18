@@ -5536,6 +5536,29 @@ and release build again fail at cargo launch with access denied OSerror5.
 Progress differences belong to concurrent hardware work; own residue delta
 is zero. Credits, complete rendering/audio and masked RAM remain unproved.
 
+CPU direct-page cleanup (2026-10-18): cpu_adrDp/Dpx/Dpy use native masks,
+operand widening and wrapping word sums. Operand fetch precedes the same
+unaligned-DP cycle penalty. Low-address output remains before fresh DP/index
+reads for the high address, retaining raw-pointer aliases. Actual old/current
+helpers pass 50,331,648 substituted-bus cases across every DP/operand pair
+and all three modes; indexed registers vary bijectively with DP. Independent
+modulo/address/cycle/fetch expectations pass. Another 393,216 cases alias
+the low output with aligned CPU DP/DB/K or X/Y storage, matching high result
+and resulting fields. Physical WRAM runs 1,179,648 word LDA/LDX instructions
+over all values, six DP boundaries and unindexed/X/Y modes: result, Z/N,
+PC and cycles pass. Independent physical-bus QC follows. Instrumented any%
+prefix passes 3,600/0, native exit 0, with Dp/Dpx/Dpy counts
+1,152,945/26,579/5,963. Clean frozen
+8f95207cebf627f918319d4ce5109522b8dd1a41 plus only these helpers passes
+any% 129,712/0 (240.43s), native exit 0. Direct full-source format,
+normal-core metadata and optimized clean/probe core/DLL builds pass;
+Cargo fmt/release remain launch-denied. Progress/diff checks pass; focused
+cast lines -25 and Rust lines -4, other categories unchanged. Later peer
+changes are outside this frozen replay. Full index/DP Cartesian coverage,
+physical device behavior, emulation hardware quirks, timing/render/audio and
+credits remain open; held HDMA diagnosis stays stopped. Continue executed
+CPU address helpers without changing established hardware behavior.
+
 Independent direct-page address QC (2026-10-18): current cpu_adrDp/Dpx/Dpy
 candidate passes 393,222 actual old/current word LDA/LDX instructions.
 Indexed cases cover every DP word with operand 00/01/FF and cancelling
