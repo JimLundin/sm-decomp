@@ -3699,45 +3699,17 @@ pub unsafe fn BlockInsideDetection(game: &mut Game) {
         }
     }
 }
-unsafe fn CalculateBlockAt(
-    mut r26: uint16,
-    mut r28: uint16,
-    mut r30: uint16,
-    mut r32: uint16,
-    game: &mut Game,
-) {
-    let mut v0: int16 = 0;
-    let mut v1: int16 = 0;
-    let mut temp_collision_DD4: uint16 = 0;
-    v0 = (r30 as ::core::ffi::c_int + r26 as ::core::ffi::c_int) as int16;
-    if (r30 as ::core::ffi::c_int + r26 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
-        >= 0 as ::core::ffi::c_int
-        && v0 as ::core::ffi::c_int - 4096 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0
-        && {
-            temp_collision_DD4 = ((v0 as ::core::ffi::c_int & 0xfff0 as ::core::ffi::c_int)
-                as uint16 as ::core::ffi::c_int
-                >> 4 as ::core::ffi::c_int) as uint16;
-            v1 = (r32 as ::core::ffi::c_int + r28 as ::core::ffi::c_int) as int16;
-            (r32 as ::core::ffi::c_int + r28 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
-                >= 0 as ::core::ffi::c_int
-        }
-        && v1 as ::core::ffi::c_int - 4096 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0
-    {
-        let mut RegWord: uint16 = ((v1 as ::core::ffi::c_int & 0xfff0 as ::core::ffi::c_int)
-            as uint16 as ::core::ffi::c_int
-            >> 4 as ::core::ffi::c_int) as uint16;
-        RegWord = Mult8x8(
-            RegWord as uint8,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-                as *mut uint16) as uint8,
-        );
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-            as *mut uint16) =
-            (temp_collision_DD4 as ::core::ffi::c_int + RegWord as ::core::ffi::c_int) as uint16;
+fn CalculateBlockAt(x: uint16, y: uint16, x_offset: uint16, y_offset: uint16, game: &mut Game) {
+    let x = x.wrapping_add(x_offset);
+    let y = y.wrapping_add(y_offset);
+    // The original signed tests accept only wrapped coordinates in 0..4096.
+    let block = if x < 4096 && y < 4096 {
+        let width = u16::from(game.room_width_in_blocks() as u8);
+        (x >> 4) + (y >> 4) * width
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-            as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
+        0xffff
     };
+    game.set_cur_block_index(block);
 }
 static kBlockFunc_9C73_Tab0: [uint8; 36] = [
     3 as ::core::ffi::c_int as uint8,

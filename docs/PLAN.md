@@ -1376,6 +1376,18 @@ frames, zero failures (183.26s). Raw offsets -35, cast lines -97, Rust lines
 -110; unsafe count unchanged. Next: CalculateBlockAt coordinate arithmetic
 and byte-backed block writes, retaining signed range and low-byte multiply.
 
+CalculateBlockAt is now safe Rust with wrapping coordinate sums, explicit
+0..4096 range checks, low-byte room-width multiplication and named backing
+block-index writes. The original signed tests accept exactly that wrapped
+range; invalid coordinates still write FFFF. Prior Rust comparison passes
+20,447,232 full-RAM cases over all wrapped coordinate sums, seven offsets,
+four opposite-axis boundaries and every room width/valid row combination.
+Stable optimized core/DLL build and direct format pass; Cargo fmt/build
+remain ASR-denied. Waver route: 58,109 frames, zero failures (86.52s); any%:
+129,712 frames, zero failures (186.84s). Raw offsets -3, unsafe functions -1,
+cast lines -19, Rust lines -28. Next: block-inside detection type dispatch
+and its retry loops, preserving three live position samples and callbacks.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
