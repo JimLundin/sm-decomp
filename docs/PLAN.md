@@ -6266,6 +6266,22 @@ changes are outside this replay. Physical device/ROM pointers, full Cartesian
 input coverage, hardware/render/audio timing and credits remain open; held
 HDMA diagnosis stays stopped. Continue remaining indirect address helpers.
 
+Independent indirect-Y QC (2026-10-18): cpu_adrIdy candidate passes
+1,572,864 actual old/current LDA/STA instructions, native exit zero. Every
+Y word uses a cancelling pointer at low WRAM 1800 and DB 7E/7F to access
+7F1800; operand 00/01/FF, byte/word accumulator widths and both X flags
+execute. Independent RAM/value, accumulator, PC, preserved Y/DP/DB and
+cycles match, including unaligned-DP and maintained write-only page/index
+penalties. Swapping the write gate polarity fails actual LDA cycles six
+versus five, native exit 3221226505. Frozen helper matches live; optimized
+core/probe DLL, normal-core metadata, direct formatting and progress pass.
+Partner independently reviews fixture and scope. Cases with high X/Y bits
+and the narrow X flag are deliberately constructed raw CPU states; this
+establishes behavior preservation, not canonical hardware accuracy. Pointer
+location wrapping, arbitrary devices, full Cartesian pointer/Y coverage
+and full-movie integration remain separate. No production edits; only this
+note changes and probes/assets stay TEMP/ignored.
+
 Independent direct-page indirect QC (2026-10-18): cpu_adrIdp/Idx candidate
 passes 442,362 actual old/current byte/word LDA instructions, native exit
 zero. Idx executes all DP words with operand 00/01/FF and cancelling X to
