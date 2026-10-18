@@ -2321,6 +2321,21 @@ unsafe functions -3, cast lines -9, Rust lines -13; other counters unchanged.
 Next: Goofball State0/State1 byte-backed fields and wrapping movement,
 retaining ROM-read-before-clamp order and signed phase gates.
 
+Goofball State0/State1 now use a named byte-backed state view, safe live-ROM
+byte reads and explicit wrapping movement. State0 increments phase before
+reading; State1 reads before moving and decrementing. Both read ROM even
+when the signed phase-minus-23 gate selects FF, multiply by scale's low byte,
+and move Y by the product high byte. Signed phase/limit gates and captured
+slot write order remain exact. Independent extracted comparison passes
+2,366,080 complete-RAM cases across all phase/scale/Y/limit/index words and
+random high/odd slots with synthetic live ROM. Stable optimized core/DLL
+build and direct full-source format pass; Cargo fmt/build remain ASR-denied.
+CGRAM/render-enabled any%: 129,712 frames, zero failures (196.58s); Waver
+route: 58,109 frames, zero failures (93.35s). Raw offsets -2, unsafe functions
+-2, cast lines -25; Rust lines +45 provide the named state view and ROM-read
+helper. Other counters unchanged. Next: Goofball initialization, preserving
+captured slot across animation setup and independent parameter-byte reads.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

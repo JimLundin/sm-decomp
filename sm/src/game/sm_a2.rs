@@ -2174,73 +2174,118 @@ pub unsafe fn BouncingGoofball_Main(game: &mut Game) {
     (*E).bgl_var_A = (*E).bgl_var_03;
     off_A28718[(*E).bgl_var_01 as usize].expect("non-null function pointer")(game);
 }
-pub unsafe fn BouncingGoofball_State0(game: &mut Game) {
-    let mut E: *mut Enemy_BouncingGoofball = Get_BouncingGoofball(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    (*E).bgl_var_E = (*E).bgl_var_E.wrapping_add(1);
-    let mut v1: uint16 = (*E).bgl_var_E;
-    let mut v2: uint8 = *(game.g_rom.offset(
-        (((0xa28701 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xa28701 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint8)
-        .offset(v1 as isize);
-    if (v1 as ::core::ffi::c_int - 23 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
-        >= 0 as ::core::ffi::c_int
-    {
-        v2 = -(1 as ::core::ffi::c_int) as uint8;
+struct GoofballState<'a> {
+    bytes: &'a mut [u8],
+}
+impl<'a> GoofballState<'a> {
+    fn new(game: &'a mut Game, index: u16) -> Self {
+        Self {
+            bytes: &mut game.g_ram[0xf78 + usize::from(index)..],
+        }
     }
-    let mut RegWord: uint16 = Mult8x8(v2, (*E).bgl_var_A as uint8);
-    (*E).bgl_var_B = RegWord;
-    (*E).base.y_pos = ((*E).base.y_pos as ::core::ffi::c_int
-        + *(&raw mut RegWord as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                .wrapping_sub(1 as usize) as isize,
-        ) as ::core::ffi::c_int) as uint16;
-    if ((*E).bgl_var_E as ::core::ffi::c_int - (*E).bgl_var_00 as ::core::ffi::c_int) as int16
-        as ::core::ffi::c_int
-        >= 0 as ::core::ffi::c_int
-    {
-        (*E).bgl_var_01 = 1 as uint16;
-        (*E).bgl_var_02 = 1 as uint16;
-        (*E).bgl_var_F = 0 as uint16;
+    fn read(&self, offset: usize) -> u16 {
+        u16::from_le_bytes([self.bytes[offset], self.bytes[offset + 1]])
+    }
+    fn write(&mut self, offset: usize, value: u16) {
+        self.bytes[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+    }
+    fn phase(&self) -> u16 {
+        self.read(core::mem::offset_of!(Enemy_BouncingGoofball, bgl_var_E))
+    }
+    fn set_phase(&mut self, value: u16) {
+        self.write(
+            core::mem::offset_of!(Enemy_BouncingGoofball, bgl_var_E),
+            value,
+        );
+    }
+    fn scale(&self) -> u16 {
+        self.read(core::mem::offset_of!(Enemy_BouncingGoofball, bgl_var_A))
+    }
+    fn set_product(&mut self, value: u16) {
+        self.write(
+            core::mem::offset_of!(Enemy_BouncingGoofball, bgl_var_B),
+            value,
+        );
+    }
+    fn limit(&self) -> u16 {
+        self.read(core::mem::offset_of!(Enemy_BouncingGoofball, bgl_var_00))
+    }
+    fn set_state(&mut self, value: u16) {
+        self.write(
+            core::mem::offset_of!(Enemy_BouncingGoofball, bgl_var_01),
+            value,
+        );
+    }
+    fn set_active(&mut self, value: u16) {
+        self.write(
+            core::mem::offset_of!(Enemy_BouncingGoofball, bgl_var_02),
+            value,
+        );
+    }
+    fn set_animation_trigger(&mut self, value: u16) {
+        self.write(
+            core::mem::offset_of!(Enemy_BouncingGoofball, bgl_var_F),
+            value,
+        );
+    }
+    fn y_pos(&self) -> u16 {
+        self.read(
+            core::mem::offset_of!(Enemy_BouncingGoofball, base)
+                + core::mem::offset_of!(EnemyBase, y_pos),
+        )
+    }
+    fn set_y_pos(&mut self, value: u16) {
+        self.write(
+            core::mem::offset_of!(Enemy_BouncingGoofball, base)
+                + core::mem::offset_of!(EnemyBase, y_pos),
+            value,
+        );
     }
 }
-pub unsafe fn BouncingGoofball_State1(game: &mut Game) {
-    let mut E: *mut Enemy_BouncingGoofball = Get_BouncingGoofball(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    let mut bgl_var_E: uint16 = (*E).bgl_var_E;
-    let mut v2: uint8 = *(game.g_rom.offset(
-        (((0xa28701 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xa28701 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint8)
-        .offset(bgl_var_E as isize);
-    if (bgl_var_E as ::core::ffi::c_int - 23 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
-        >= 0 as ::core::ffi::c_int
+fn goofball_movement_product(index: u16, phase: u16, game: &mut Game) -> u16 {
+    // The ROM byte is read even when the signed gate replaces it with FF.
+    let sample = game.read_rom_byte(0xa28701, usize::from(phase));
+    let sample = if (phase.wrapping_sub(23) as i16) >= 0 {
+        255
+    } else {
+        sample
+    };
+    u16::from(sample) * u16::from(GoofballState::new(game, index).scale() as u8)
+}
+pub fn BouncingGoofball_State0(game: &mut Game) {
+    let index = game.cur_enemy_index();
+    let phase = GoofballState::new(game, index).phase().wrapping_add(1);
+    GoofballState::new(game, index).set_phase(phase);
+    let phase = GoofballState::new(game, index).phase();
+    let product = goofball_movement_product(index, phase, game);
+    GoofballState::new(game, index).set_product(product);
+    let y = GoofballState::new(game, index)
+        .y_pos()
+        .wrapping_add(product >> 8);
+    GoofballState::new(game, index).set_y_pos(y);
+    if (GoofballState::new(game, index)
+        .phase()
+        .wrapping_sub(GoofballState::new(game, index).limit()) as i16)
+        >= 0
     {
-        v2 = -(1 as ::core::ffi::c_int) as uint8;
+        GoofballState::new(game, index).set_state(1);
+        GoofballState::new(game, index).set_active(1);
+        GoofballState::new(game, index).set_animation_trigger(0);
     }
-    let mut RegWord: uint16 = Mult8x8(v2, (*E).bgl_var_A as uint8);
-    (*E).bgl_var_B = RegWord;
-    (*E).base.y_pos = ((*E).base.y_pos as ::core::ffi::c_int
-        - *(&raw mut RegWord as *mut uint8).offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                .wrapping_sub(1 as usize) as isize,
-        ) as ::core::ffi::c_int) as uint16;
-    (*E).bgl_var_E = (*E).bgl_var_E.wrapping_sub(1);
-    if (*E).bgl_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
-    {
-        (*E).bgl_var_01 = 0 as uint16;
+}
+pub fn BouncingGoofball_State1(game: &mut Game) {
+    let index = game.cur_enemy_index();
+    let phase = GoofballState::new(game, index).phase();
+    let product = goofball_movement_product(index, phase, game);
+    GoofballState::new(game, index).set_product(product);
+    let y = GoofballState::new(game, index)
+        .y_pos()
+        .wrapping_sub(product >> 8);
+    GoofballState::new(game, index).set_y_pos(y);
+    let phase = GoofballState::new(game, index).phase().wrapping_sub(1);
+    GoofballState::new(game, index).set_phase(phase);
+    if GoofballState::new(game, index).phase() & 0x8000 != 0 {
+        GoofballState::new(game, index).set_state(0);
     }
 }
 pub fn BouncingGoofball_SamusCloseX(game: &mut Game) -> uint16 {
