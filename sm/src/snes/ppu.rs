@@ -667,8 +667,9 @@ pub unsafe fn ppu_runLine(mut ppu: *mut Ppu, mut line: ::core::ffi::c_int, game:
         ClearBackdrop(&raw mut (*ppu).objBuffer);
         (*ppu).lineHasSprites = !(*ppu).forcedBlank
             && ppu_evaluateSprites(ppu, line - 1 as ::core::ffi::c_int) as ::core::ffi::c_int != 0;
-        // EXTBG layer priorities and color composition use the per-pixel path.
-        if game.g_new_ppu && !((*ppu).mode == 7 && (*ppu).m7extBg) {
+        // EXTBG composition and enabled mosaic use the per-pixel path.
+        let mosaic = (*ppu).mosaicSize > 1 && (*ppu).bgLayer.iter().any(|bg| bg.mosaicEnabled);
+        if game.g_new_ppu && !((*ppu).mode == 7 && (*ppu).m7extBg) && !mosaic {
             PpuDrawWholeLine(ppu, line as uint);
         } else {
             if (*ppu).mode as ::core::ffi::c_int == 7 as ::core::ffi::c_int {

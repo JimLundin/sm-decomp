@@ -2242,6 +2242,36 @@ separate. No Ppu/RAM/save layout changes. Next: investigate omitted semantic
 display/register state. Audio timing, shared hardware accuracy, HDMA, masked
 RAM and boot-to-credits coverage remain open.
 
+Mosaic renderer gap and fix (2026-10-18): actual $2106 writes update
+bgLayer mosaic flags/size, but the default whole-line renderer consumes a
+separate mosaicEnabled byte that has no maintained write. In constructed
+identity Mode7 rows, enabled sizes2..16 therefore render without mosaic:
+300 divergent rows and70,184 differing pixel positions, while20 size1
+controls agree. The existing per-pixel renderer matches an independent
+tile/palette/mosaic-coordinate model at all81,920 positions. Both oracle
+sides share the default renderer, so passing movie comparisons can conceal
+this display defect. No natural movie mosaic coverage is established here.
+
+ppu_runLine now selects the existing per-pixel path whenever size>1 and
+any background mosaic flag is enabled. EXTBG dispatch remains intact.
+Actual $2106 Mode7 cases now match both paths and the independent model:
+320 rows/81,920 pixels. Additional Mode1 cases pass960 rows/245,760 modeled
+pixels, each of3 backgrounds x16 sizes x4 tile patterns x5 scanlines.
+Another1,024 actual Mode7 composition row pairs pass (959 nonzero), covering
+windows, sprites, direct color, brightness, clipping, math, half and blank.
+These composition pairs share the existing pixel implementation; only the
+simple tile/palette rows have independent expected colors. They do not prove
+all scanline-write timing, interlace, other display modes or SNES accuracy.
+
+Dedicated source Verified 129712 frames: 0 failing frames (243.21s); Verified 58109 frames: 0 failing frames (119.62s); nativeexits0. Cargo fmt/fmt--check
+and direct optimized core/DLL/normal-core metadata builds pass. Cargo release
+still cannot execute khronos_api's build script (OSerror5). Progress run:
+focused Rust lines+1 name the mosaic dispatch predicate; other counters
+unchanged for this change. Later concurrent gameplay/audio edits need their
+own replays. Only this PPU hunk and note are staged; ROM/probe assets ignored.
+No Ppu/RAM/save layout change. Next: omitted mosaic/display snapshot state;
+audio timing, HDMA, masked RAM, hardware accuracy and full-route gaps remain.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
