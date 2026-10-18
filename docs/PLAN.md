@@ -1647,6 +1647,19 @@ cast lines -68, Rust lines -104; unsafe count unchanged. Next: post-grapple
 coordinate sampling and traversal, retaining wrapping block arithmetic,
 live room-width steps and maximum distance writes.
 
+Horizontal post-grapple samplers now share explicit wrapping coordinates
+and traversal with named byte-backed position reads. Initial row multiplication
+retains low-byte row/width; row steps retain full live width after callbacks.
+Signed-result filtering, >= maximum writes and sample decrement order remain.
+Prior Rust comparison passes 655,388 full-RAM/context/callback cases over
+every position/width word, radius boundaries, extreme sample counts and
+callbacks mutating width/count/maximum. Stable optimized core/DLL build and
+direct format pass; Cargo fmt/build remain ASR-denied. Waver route: 58,109
+frames, zero failures (85.04s); any%: 129,712 frames, zero failures (188.18s).
+Raw offsets -28, cast lines -67, Rust lines -78; unsafe functions +1 is the
+shared callback traversal helper. Next: vertical post-grapple coordinates
+and traversal, retaining wrapping edge/row arithmetic and distance writes.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
