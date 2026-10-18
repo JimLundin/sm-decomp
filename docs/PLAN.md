@@ -1870,6 +1870,21 @@ Rust lines -18; other counters unchanged. Next: EnemyFunc_ACA8 relative-point
 angle/distance arithmetic, retaining signed-bit range gates and independent
 sine/cosine component magnitudes.
 
+EnemyFunc_ACA8 relative-point calculation now uses named deltas, component
+magnitudes and explicit wrapping arithmetic. Signed-bit magnitude-minus-255
+gates and X-versus-Y early-return values remain exact. Magnitude-angle,
+sine, cosine and signed-angle call order/arguments remain unchanged;
+component abs16 values are added independently with word wrapping. Unsafe
+remains for the legacy angle helper. Prior Rust comparison passes 1,570,820
+return/RAM/callback-trace cases; independent comparison passes 2,081,945
+cases with every delta/component return word, all in-range signed pairs,
+wrapped base points and mutating callbacks. Stable optimized core/DLL build
+and direct full-source format pass; Cargo fmt/build remain ASR-denied.
+Any%: 129,712 frames, zero failures (193.26s); Waver route: 58,109 frames,
+zero failures (88.61s). Cast lines -6, Rust lines -12; other counters unchanged.
+Next: enemy screen-boundary checks with named byte-backed camera/enemy
+reads, retaining signed-word gates and the 256-pixel inclusive boundary.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

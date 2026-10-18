@@ -9239,38 +9239,26 @@ pub fn EnemyFunc_AC67(k: uint16, game: &mut Game) -> uint16 {
         0
     }
 }
-pub unsafe fn EnemyFunc_ACA8(
-    mut base_pt: Point16U,
-    mut samus_pt: Point16U,
-    game: &mut Game,
-) -> PairU16 {
-    let mut varE3C: uint16 =
-        (samus_pt.x as ::core::ffi::c_int - base_pt.x as ::core::ffi::c_int) as uint16;
-    let mut result: uint16 = abs16(varE3C);
-    if result as ::core::ffi::c_int - 255 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0
-    {
-        let mut x: uint16 = result;
-        let mut varE20: uint16 = result;
-        let mut varE3E: uint16 =
-            (samus_pt.y as ::core::ffi::c_int - base_pt.y as ::core::ffi::c_int) as uint16;
-        result = abs16(varE3E);
-        if result as ::core::ffi::c_int - 255 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-            != 0
-        {
-            let mut y: uint16 = result;
-            let mut varE22: uint16 = result;
-            let mut varE24: uint16 = CalculateAngleFromXY(x, y, game);
-            let mut dist: uint16 = (abs16(SineMult8bit(varE24, varE20, game)) as ::core::ffi::c_int
-                + abs16(CosineMult8bit(varE24, varE22, game)) as ::core::ffi::c_int)
-                as uint16;
-            let mut varE3A: uint16 = CalculateAngleFromXY(varE3C, varE3E, game);
-            return PairU16 { k: dist, j: varE3A };
-        }
+pub unsafe fn EnemyFunc_ACA8(base_pt: Point16U, samus_pt: Point16U, game: &mut Game) -> PairU16 {
+    let dx = samus_pt.x.wrapping_sub(base_pt.x);
+    let x = (dx as i16).wrapping_abs() as u16;
+    if x.wrapping_sub(255) & 0x8000 == 0 {
+        return PairU16 { k: x, j: 0 };
     }
-    return PairU16 {
-        k: result,
-        j: 0 as uint16,
-    };
+    let dy = samus_pt.y.wrapping_sub(base_pt.y);
+    let y = (dy as i16).wrapping_abs() as u16;
+    if y.wrapping_sub(255) & 0x8000 == 0 {
+        return PairU16 { k: y, j: 0 };
+    }
+    let angle = CalculateAngleFromXY(x, y, game);
+    let horizontal = (SineMult8bit(angle, x, game) as i16).wrapping_abs() as u16;
+    let vertical = (CosineMult8bit(angle, y, game) as i16).wrapping_abs() as u16;
+    let distance = horizontal.wrapping_add(vertical);
+    let direction = CalculateAngleFromXY(dx, dy, game);
+    PairU16 {
+        k: distance,
+        j: direction,
+    }
 }
 pub unsafe fn CheckIfEnemyIsOnScreen(game: &mut Game) -> uint16 {
     let mut v0: *mut EnemyData = gEnemyData(
