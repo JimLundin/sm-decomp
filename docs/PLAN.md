@@ -4412,6 +4412,27 @@ and executed setup are covered, not independent transfer timing or remaining
 hardware accuracy. Continue actual DMA consumer coverage, event scheduling
 and boot-to-credits work; held HDMA diagnosis and Waver71 remain open.
 
+Independent executed DemoPreInstr_8AB0 QC (2026-10-18): the pending safe
+movement-byte/named-store cleanup passes an explicitly rendered normal
+zero-input attract replay: 30,000/0 (86.57s), native exit 0, with 13,500,000
+actual PPU line calls. The changed routine runs once on Rust side 2 at SNES
+frame 17,215, movement byte 00; its not-grabbed gate takes the three-store
+body. At that actual call, complete RAM matches the previous maintained Rust
+body executed independently from identical entry RAM. The Draygon-grabbed
+skip branch has zero calls and is outside this movie claim. Source audit
+confirms byte 0A1F, then little-endian word stores 0A7A=8A9B, 0A7E=9346 and
+0A7C=1 in the original order; all four accessor bodies match the freeze.
+
+Removing the observations restores the current routine exactly. Optimized
+probe core/DLL, normal-core metadata and direct full-source rustfmt pass;
+Cargo execution remains denied as documented. Only this note changes;
+diagnostics stay TEMP and maintained Rust/residue counters are unchanged.
+This freezes the then-pending peer CPU/audio/DMA/PPU changes and establishes
+this routine's taken-path execution under the oracle, not their integration
+verification. The implementing session still owns its clean full-any% run.
+Disabled-demo, set 3 and dormant preinstruction paths remain held, alongside
+render initialization/Waver71, audio timing and complete credits coverage.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
