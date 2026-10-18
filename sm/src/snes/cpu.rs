@@ -2158,17 +2158,12 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             137 => {
                 if (*cpu).mf {
-                    let mut result_0: uint8_t = ((*cpu).a as ::core::ffi::c_int
-                        & 0xff as ::core::ffi::c_int
-                        & cpu_readOpcode(cpu, game) as ::core::ffi::c_int)
-                        as uint8_t;
-                    (*cpu).z = result_0 as ::core::ffi::c_int == 0 as ::core::ffi::c_int;
+                    let result = (*cpu).a as u8 & cpu_readOpcode(cpu, game);
+                    (*cpu).z = result == 0;
                 } else {
                     (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-                    let mut result_1: uint16_t = ((*cpu).a as ::core::ffi::c_int
-                        & cpu_readOpcodeWord(cpu, game) as ::core::ffi::c_int)
-                        as uint16_t;
-                    (*cpu).z = result_1 as ::core::ffi::c_int == 0 as ::core::ffi::c_int;
+                    let result = (*cpu).a & cpu_readOpcodeWord(cpu, game);
+                    (*cpu).z = result == 0;
                 }
                 break;
             }

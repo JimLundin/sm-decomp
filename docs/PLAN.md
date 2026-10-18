@@ -7677,6 +7677,24 @@ current progress22691raw/39extern-blocks/3extern-fns/5no_mangle/6728unsafe/
 stay ignored; peer owns cleanup and remote sync. Credits, complete gameplay,
 hardware/render/audio fidelity, masked RAM and ownership remain unfinished.
 
+CPU immediate BIT cleanup (2026-10-19): opcode 89 uses native byte/word
+intersections and immutable results. Accumulator capture precedes operand
+fetch; word cycle increment precedes accumulator capture. Only Z changes.
+Actual old/current instructions pass 7,208,960 pairs across every accumulator,
+eleven operand patterns, independent native M/X, emulation byte mode and PC
+8000/FFFF (operands wrap to 0000/0001). Independent Z checks and complete
+named CPU state, preserved N/V/registers/control flags, cycles, PC wrap, open
+bus and PC-history updates match. Instrumented any% prefix passes 3,600/0
+(5.90s), native exit 0; word/byte calls are 41,196/6,698. Clean frozen
+47eb2520f9fa168821ed3a710a68a24e1c891d47 plus only this arm passes any%
+129,712/0 (205.61s), native exit 0. Direct full-source format, normal-core
+metadata and optimized clean/probe core/DLL builds pass; required Cargo
+fmt/release remain launch-denied. Progress/diff pass: focused cast lines -7,
+Rust lines -5, other categories unchanged. Live arm matches verified source.
+Later peer route/performance/SPC changes are outside this replay. Full
+operand Cartesian coverage, hardware/render/audio timing and credits remain
+open; held HDMA diagnosis stays stopped. Continue executed register transfers.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
