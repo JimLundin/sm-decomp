@@ -865,6 +865,43 @@ upload terminator/reset effects and command-latch delivery independently
 before adding upload enforcement. Complete route/audio equivalence remains
 unproved.
 
+Upload postamble timing diagnostic (2026-10-18): an isolated 3eac6b6a
+payload-source copy boots the unpatched ROM/SPC for 400 frames, then reaches
+SPC 15BF at an instruction boundary. Independent Rust RAM/DSP state is
+seeded before either upload. Actual ROM 80:8028 and SpcPlayer_Upload receive
+DCFAC7; the ROM then advances to its next 15BF boundary, 567 APU cycles
+after CPU upload return. Rust's deferred Part1 runs through an isolated
+wrapper. This is a constructed comparison, not natural route timing.
+
+The ROM interval consumes 32 one-tick reads at SPC 15BF and produces 320
+DSP register writes. An independent vector records writes before the
+inherited 256-entry history truncates; all recorded registers are below
+80. Rust upload writes three DSP registers immediately and Part1 writes
+ten afterward. Complete stream equality is not established across these
+different elapsed intervals. The initial key-off 00/FF difference clears
+after Rust Part1; named music pointer, counter and echo-time fields match.
+
+SPC byte 0051 is main_tempo_accum, not echo_stored_time; the named echo
+field maps to 004C and equals 2 on both sides. Actual 0051 stores at 15FA
+advance 80 by 0C thirty-two times to 00, exactly matching the consumed
+ticks and tempo 0C00. Assertions check every store, timer read, the final
+wrapped accumulator and the deferred key-off clear. The normal diagnostic
+returns native exit 0. A bit fault in the Rust accumulator fails the timing
+classification assertion, aborts with native code 3221226505 and omits the
+completion marker. This is a state/classification control, not a payload
+producer fault. Independent reviews confirm the corrected names and hooks.
+
+Port markers, LFSR/stack state and elapsed timer/command-latch scheduling
+remain different or unsynchronized. No upload/postamble behavior change is
+justified by this diagnostic. Maintained Rust and residue counters are
+unchanged; the probe is not a current-source gameplay integration replay.
+Cargo fmt --check and isolated optimized builds pass; Cargo release remains
+denied executing khronos_api's build script (OS error 5). Diagnostic source,
+logs and ROM-derived bytes remain outside tracked files. Next: align actual
+timer groups and command latches across upload/receiver phases before
+comparing reset effects or enforcing upload equality. Audio timing and
+complete gameplay equivalence remain open.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read
