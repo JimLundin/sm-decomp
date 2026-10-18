@@ -59,3 +59,56 @@ impl EnemyCoordinates<'_> {
         self.write(core::mem::offset_of!(EnemyData, y_height), value);
     }
 }
+
+/// Live animation instruction fields in the original enemy slot.
+pub(crate) struct EnemyInstructions<'a> {
+    bytes: &'a mut [u8],
+}
+
+impl Game {
+    pub(crate) fn enemy_instructions(&mut self, index: u16) -> EnemyInstructions<'_> {
+        let start = 0xf78 + usize::from(index);
+        EnemyInstructions {
+            bytes: &mut self.g_ram[start..start + core::mem::size_of::<EnemyData>()],
+        }
+    }
+}
+
+impl EnemyInstructions<'_> {
+    fn read(&self, offset: usize) -> u16 {
+        u16::from_le_bytes([self.bytes[offset], self.bytes[offset + 1]])
+    }
+    fn write(&mut self, offset: usize, value: u16) {
+        self.bytes[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+    }
+    pub(crate) fn ai_handler_bits(&self) -> u16 {
+        self.read(core::mem::offset_of!(EnemyData, ai_handler_bits))
+    }
+    pub(crate) fn instruction_timer(&self) -> u16 {
+        self.read(core::mem::offset_of!(EnemyData, instruction_timer))
+    }
+    pub(crate) fn set_instruction_timer(&mut self, value: u16) {
+        self.write(core::mem::offset_of!(EnemyData, instruction_timer), value);
+    }
+    pub(crate) fn current_instruction(&self) -> u16 {
+        self.read(core::mem::offset_of!(EnemyData, current_instruction))
+    }
+    pub(crate) fn set_current_instruction(&mut self, value: u16) {
+        self.write(core::mem::offset_of!(EnemyData, current_instruction), value);
+    }
+    pub(crate) fn spritemap_pointer(&self) -> u16 {
+        self.read(core::mem::offset_of!(EnemyData, spritemap_pointer))
+    }
+    pub(crate) fn set_spritemap_pointer(&mut self, value: u16) {
+        self.write(core::mem::offset_of!(EnemyData, spritemap_pointer), value);
+    }
+    pub(crate) fn extra_properties(&self) -> u16 {
+        self.read(core::mem::offset_of!(EnemyData, extra_properties))
+    }
+    pub(crate) fn set_extra_properties(&mut self, value: u16) {
+        self.write(core::mem::offset_of!(EnemyData, extra_properties), value);
+    }
+    pub(crate) fn bank(&self) -> u8 {
+        self.bytes[core::mem::offset_of!(EnemyData, bank)]
+    }
+}

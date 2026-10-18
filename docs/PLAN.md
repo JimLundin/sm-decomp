@@ -2108,6 +2108,22 @@ Rust lines -8; other counters unchanged. Next: ProcessEnemyInstructions
 live timer/instruction slot reads and writes, retaining callback order and
 ROM-bank instruction dispatch.
 
+ProcessEnemyInstructions now uses a byte-backed instruction-field view and
+explicit timer/property arithmetic. The enemy slot and ROM base remain
+captured at entry; callbacks receive the live current index and captured-slot
+bank on every dispatch. Null, relative and full returned pointers retain
+original handling; timer, spritemap, instruction and property writes remain
+ordered on the captured slot. The existing assertion is unchanged. Independent
+extracted comparison passes 17,108,288 full-RAM/callback-trace/RNG cases,
+including every enemy slot, 256 callback modes, four initial banks, all timer/
+AI-bit words and mutating bank/index/field callbacks. Stable optimized
+core/DLL build and direct full-source format pass; Cargo fmt/build remain
+ASR-denied. Any%: 129,712 frames, zero failures (197.31s); Waver route:
+58,109 frames, zero failures (93.18s). Raw offsets -2, cast lines -21;
+Rust lines +40 provide named instruction-field accessors. Other counters
+unchanged. Next: shared enemy instruction timer/branch callbacks, retaining
+the relative branch's low-byte-only timer decrement and pointer steps.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

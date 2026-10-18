@@ -9715,68 +9715,55 @@ pub fn IsEnemyLeavingScreen(k: uint16, game: &mut Game) -> uint8 {
     u8::from((edge as i16) < 0 || (past_screen as i16) >= 0)
 }
 pub unsafe fn ProcessEnemyInstructions(game: &mut Game) {
-    let mut E: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    if (*E).ai_handler_bits as ::core::ffi::c_int & 4 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
-    {
-        let fresh29 = (*E).instruction_timer;
-        (*E).instruction_timer = (*E).instruction_timer.wrapping_sub(1);
-        if fresh29 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
-            '_c2rust_label: {
-                if (*E).current_instruction as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-                    != 0
-                {
-                } else {
-                    __assert_fail(
-                        b"E->current_instruction & 0x8000\0" as *const u8
-                            as *const ::core::ffi::c_char,
-                        b"src/sm_a0.c\0" as *const u8 as *const ::core::ffi::c_char,
-                        3399 as ::core::ffi::c_uint,
-                        b"void ProcessEnemyInstructions(void)\0" as *const u8
-                            as *const ::core::ffi::c_char,
-                    );
-                }
-            };
-            let mut base_ptr: *const uint8 = RomBankBase((*E).bank, game);
-            let mut pc: *const uint16 = base_ptr
-                .offset((*E).current_instruction as ::core::ffi::c_int as isize)
-                as *const uint16;
-            while *pc as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-                != 0 as ::core::ffi::c_int
-            {
-                pc = CallEnemyInstr(
-                    (((*E).bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                        | *pc as ::core::ffi::c_int) as uint32,
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xe54 as ::core::ffi::c_int as isize)
-                        as *mut uint16),
-                    pc.offset(1 as ::core::ffi::c_int as isize),
-                    game,
-                );
-                if pc.is_null() {
-                    return;
-                }
-                if (pc as uintptr_t) < 0x10000 as ::core::ffi::c_int as uintptr_t {
-                    pc = base_ptr.offset(pc as uintptr_t as isize) as *const uint16;
-                }
-            }
-            (*E).instruction_timer = *pc.offset(0 as ::core::ffi::c_int as isize);
-            (*E).spritemap_pointer = *pc.offset(1 as ::core::ffi::c_int as isize);
-            (*E).current_instruction = (pc as *mut uint8)
-                .offset(4 as ::core::ffi::c_int as isize)
-                .offset_from(base_ptr) as ::core::ffi::c_long
-                as uint16;
-            (*E).extra_properties = ((*E).extra_properties as ::core::ffi::c_int
-                | 0x8000 as ::core::ffi::c_int) as uint16;
-        } else {
-            (*E).extra_properties = ((*E).extra_properties as ::core::ffi::c_int
-                & !(0x8000 as ::core::ffi::c_int)) as uint16;
+    // Callbacks may change the current index; animation writes retain this slot.
+    let index = game.cur_enemy_index();
+    if game.enemy_instructions(index).ai_handler_bits() & 4 != 0 {
+        return;
+    }
+    let timer = game.enemy_instructions(index).instruction_timer();
+    let decremented = game
+        .enemy_instructions(index)
+        .instruction_timer()
+        .wrapping_sub(1);
+    game.enemy_instructions(index)
+        .set_instruction_timer(decremented);
+    if timer != 1 {
+        let properties = game.enemy_instructions(index).extra_properties() & !0x8000;
+        game.enemy_instructions(index)
+            .set_extra_properties(properties);
+        return;
+    }
+    if game.enemy_instructions(index).current_instruction() & 0x8000 == 0 {
+        __assert_fail(
+            b"E->current_instruction & 0x8000\0" as *const u8 as *const ::core::ffi::c_char,
+            b"src/sm_a0.c\0" as *const u8 as *const ::core::ffi::c_char,
+            3399 as ::core::ffi::c_uint,
+            b"void ProcessEnemyInstructions(void)\0" as *const u8 as *const ::core::ffi::c_char,
+        );
+    }
+    let base_ptr = RomBankBase(game.enemy_instructions(index).bank(), game);
+    let mut pc = base_ptr.add(usize::from(
+        game.enemy_instructions(index).current_instruction(),
+    )) as *const uint16;
+    while *pc & 0x8000 != 0 {
+        let address = (u32::from(game.enemy_instructions(index).bank()) << 16) | u32::from(*pc);
+        pc = CallEnemyInstr(address, game.cur_enemy_index(), pc.add(1), game);
+        if pc.is_null() {
+            return;
+        }
+        if (pc as usize) < 0x10000 {
+            pc = base_ptr.add(pc as usize) as *const uint16;
         }
     }
+    game.enemy_instructions(index).set_instruction_timer(*pc);
+    game.enemy_instructions(index)
+        .set_spritemap_pointer(*pc.add(1));
+    let instruction = (pc as *const uint8).add(4).offset_from(base_ptr) as uint16;
+    game.enemy_instructions(index)
+        .set_current_instruction(instruction);
+    let properties = game.enemy_instructions(index).extra_properties() | 0x8000;
+    game.enemy_instructions(index)
+        .set_extra_properties(properties);
 }
 unsafe fn EnemyBlockCollReact_Spike(_collision: &mut EnemyBlockCollInfo, game: &mut Game) -> uint8 {
     let behavior = game.current_block_bts() & 0x7f;
