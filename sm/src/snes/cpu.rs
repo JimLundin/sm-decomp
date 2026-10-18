@@ -2763,13 +2763,8 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
                 break;
             }
             235 => {
-                let mut low_163: uint8_t =
-                    ((*cpu).a as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint8_t;
-                let mut high_163: uint8_t =
-                    ((*cpu).a as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint8_t;
-                (*cpu).a = ((low_163 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
-                    | high_163 as ::core::ffi::c_int) as uint16_t;
-                cpu_setZN(cpu, high_163 as uint16_t, true_0 != 0);
+                (*cpu).a = (*cpu).a.swap_bytes();
+                cpu_setZN(cpu, (*cpu).a, true);
                 break;
             }
             236 => {

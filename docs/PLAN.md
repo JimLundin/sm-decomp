@@ -7863,6 +7863,23 @@ reversibly archived with active route assets preserved. Inputs and ROM-
 derived probes stay ignored. Credits, complete gameplay/hardware, rendering/
 audio fidelity, masked RAM and ownership remain unfinished.
 
+CPU XBA cleanup (2026-10-19): opcode EB swaps the accumulator with native
+swap_bytes and sets byte-sized Z/N from its new low byte. Actual old/current
+instructions pass 655,360 pairs over every accumulator word, independent
+native M/X, emulation byte mode and PC 8000/FFFF. Independent byte assembly
+and Z/N expectations match complete named CPU state, preserved registers/
+control flags, cycles, PC wrap, open bus and PC-history updates. Instrumented
+any% prefix passes 3,600/0 (1.26s), native exit 0; native/emulation XBA calls
+are 55,209/0. Dedicated pairs cover emulation. Clean frozen
+4e67550bbe2b1a6faaafde233447b6928d6421c5 plus only this arm passes any%
+129,712/0 (63.25s), native exit 0. Cargo fmt/check, direct full-source format,
+normal-core metadata and optimized clean/probe core/DLL builds pass. Full
+Cargo release reaches frontend link but fails missing SDL2, exit 101.
+Progress/diff pass: focused cast lines -4, Rust lines -5, other categories
+unchanged. Live arm matches verified source. Hardware/render/audio timing
+and credits remain open; held HDMA diagnosis stays stopped. Continue
+executed stack transfer/push opcode cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
