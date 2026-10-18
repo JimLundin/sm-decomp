@@ -5955,6 +5955,20 @@ mapping; extraneous writes, cartridge fallback, other devices and word writes
 remain outside this probe. Implementing agent retains production ownership;
 only the QC note changes.
 
+Independent indexed absolute/long QC (2026-10-18): candidate cpu_adrAbx,
+cpu_adrAby and cpu_adrAlx pass 789,504 actual old/current LDA/STA instructions.
+All 65,536 word indexes and 256 valid byte indexes execute both accumulator
+widths and X/Y absolute or X long reads/writes. Cancelling operands select
+physical WRAM 7F1800 while exercising page and bank carry. Loaded A, written
+bytes, load Z/N, final PC and preserved X/Y/DB match independent expectations;
+cycles match prior Rust behavior, including its existing store-penalty rule.
+Removing the Abx penalty fails actual STA cycles 5 versus 6, native exit
+3221226505; production exits zero. Tested helpers match current source and
+independent partner fixture review finds no issue. Optimized core/probe DLL,
+normal-core metadata, direct full-source format and progress pass. Arbitrary
+target/index Cartesian coverage, other devices, hardware cycle accuracy,
+emulation-mode rules and movie integration remain separate. No production edits.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
