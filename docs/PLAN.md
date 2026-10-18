@@ -5725,6 +5725,30 @@ three enemy definitions, final state8/DF8D and zero credits frames. Rendering,
 audio/hardware accuracy and held diagnoses remain open. Only PLAN changes;
 observer/ROM outputs stay TEMP/ignored. Partner independently reviews scope.
 
+Independent masked bottom-boundary consumer audit (2026-10-18): actual
+paired full any% completes 129,712/0 (249.80s), native exit zero. ROM reads
+of each byte 0E02/0E03 total 193,438, with 96,738 writes apiece. Neither
+byte is read before its first write in that emulated frame. Counters reset
+at each ROM frame entry; direct 7E:0E02 and WRAM-port 0E03 incoming-read
+self-controls pass before clearing the observations. This proves actual
+ROM consumers execute and replace the incoming word first in this movie;
+zero incoming reads is not inferred from a field name or a green replay.
+
+ram_map names the word REMOVED_samus_bottom_boundary_position. Rust
+BlockInsideDetection computes its boundary locally; explicit maintained
+gameplay accesses to this word were not found. Indirect accesses and Rust
+counterfactual behavior are not established by that search. The oracle
+still copies the ROM word into mine before comparison; no mask, comparison,
+recovery or input scheduling changes. All four observed bus consumers,
+paired loop, normalization and BlockInsideDetection body match live after
+stripping TEMP counters. Optimized observer core/DLL, direct format,
+normal-core metadata and progress pass; Cargo launch remains denied.
+Coverage is 94,445 gameplay frames, six Ceres rooms, three enemy definitions,
+final state8/DF8D and zero credits frames. Arbitrary inputs, other masks,
+rendering/audio/hardware accuracy and held diagnoses remain open. Only this
+PLAN note changes; probes/assets stay TEMP/ignored. Partner independently
+checks the fixture, final logs and scope.
+
 Independent native control-write candidate QC (2026-10-18): 73,728 actual
 old/current byte STA instructions pass through banks 00/80 at 4200/4201/420D.
 All 256 written bytes, 16 initial control-flag combinations and autojoy
