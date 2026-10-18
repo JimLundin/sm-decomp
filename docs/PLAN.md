@@ -5550,6 +5550,38 @@ native-mode word paths, not every bus device, emulation-mode rule or movie
 integration. The candidate remains owned by its implementing agent; this
 commit changes only the QC note and leaves their production edits untouched.
 
+Masked RAM continuation audit (2026-10-18): actual VerifySnapshotsEq
+and RestoreSnapshot calls confirm that normalization changes the state
+adopted after a passing comparison. Of 1,412 masked bytes, 1,117 copy mine
+into theirs and 295 copy theirs into mine. The success path subsequently
+restores the modified theirs snapshot, so these 1,117 bytes can carry Rust
+values into the next ROM branch. This is stronger than merely suppressing
+comparison diagnostics: the continued oracle is not an independent ROM
+trajectory for these bytes.
+
+An isolated optimized core/DLL discovers the current mask destinations by
+comparing distinct complete RAM patterns, then exercises 11,296 controls:
+each masked byte x eight independent Rust-side bit faults. Every fault is
+accepted by the maintained comparison; restoring theirs retains the fault
+for all mine-to-theirs destinations and removes it for the other direction.
+A subsequent actual 8-bit absolute LDA reads adopted value 5A at 7E:060B.
+Native exit 0. Synthetic RAM patterns/instruction are probe-only; this does
+not demonstrate natural gameplay consumption of each field, an observed
+game bug or which masks can safely be removed. Existing held HDMA diagnosis
+remains stopped; no mask or continuation behavior is changed here.
+
+Next: classify remaining masked producers and actual consumers before
+claiming independent long-run equivalence. Retain raw pre-normalization
+observations when validating affected gameplay; a passing replay alone does
+not establish those fields or their downstream behavior. Only PLAN changes;
+frozen probes and ROM assets remain ignored. Direct full-source rustfmt
+passes. Current progress: 22,691 offsets, 39 extern blocks, 3 C ABI functions,
+5 no_mangle, 6,728 unsafe functions, 86,472 casts, 258,496 Rust lines;
+differences from the preceding note belong to concurrent changes. Cargo
+fmt/release remain denied launching cargo.exe, as checked this turn. No
+fresh movie result claimed. Peer CPU/PPU/SNES edits are excluded. Rendering,
+hardware/audio timing and boot-to-credits coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
