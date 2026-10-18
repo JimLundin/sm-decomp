@@ -1813,6 +1813,41 @@ stay ignored. Remaining Mode7 control-flag probes have an unsuccessful pixel
 control and are not yet sufficient for production enforcement; repair those
 controls before claiming a preserved rendering effect or adding snapshot fields.
 
+Mode 7 control-flag enforcement (2026-10-18): snapshots now capture,
+restore and compare m7largeField, m7charFill, m7xFlip, m7yFlip and m7extBg,
+with named bounded diagnostics. Current-source pre-change actual probes show
+all five mutations are accepted and survive rewind. Corrected outside-map
+controls set centerX and scrollX to1500; changing scroll alone clips to476 and
+was an ineffective initial test. All five corrected legacy renderer controls
+change256 pixel tuples. The first four also change256 whole-line BG pixels.
+EXTBG changes zero whole-line BG pixels: the default drawing path lacks
+m7extBg handling. This is a separate renderer gap, not fixed by snapshots.
+
+Final-source checks pass all1,024 saved/mutated flag pairs:992 mismatches,
+1,056 equalities and restoration in both directions. Actual restored legacy
+pixel and whole-line controls return their complete baseline outputs. Actual
+256 M7SEL and256 SETINI writes check current bit mappings and unaffected Mode7
+flags; other coupled SETINI fields remain omitted. Restore assigns five
+fields directly, preserving Ppu/RAM/save layouts and existing register behavior.
+Five actual post-render frame-200 faults each produce3,600/1, named diagnostics
+and native exit1. Control probes native exit0; production snapshot body matches
+maintained source exactly after removing appended wrappers.
+
+Dedicated maintained-source any% passes129,712/0 (225.65s); Waver passes
+58,109/0 (109.03s), both native exits0. These builds predate later concurrent
+audio snapshot/missile edits and do not verify them. Cargo fmt/fmt --check,
+direct optimized core/DLL and normal-core metadata builds pass; Cargo release
+remains blocked executing khronos_api's build script (OS error5). Rust lines+26
+provide five-flag capture/restore/comparison and diagnostics; other counters
+unchanged for this change. Only this source hunk and note are committed.
+Probe and ROM-derived data stay ignored.
+
+Next: investigate missing EXTBG priority/layer handling in the default whole-
+line renderer against actual legacy/oracle behavior before changing it. Mode7
+control preservation alone does not establish full SETINI restoration, all
+Mode7 rendering, or hardware accuracy. Audio timing, other display state,
+HDMA, masked RAM and boot-to-credits coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

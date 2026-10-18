@@ -107,6 +107,7 @@ pub struct Snapshot {
     pub counters: CounterSnapshot,
     pub status_flags: [bool; 3],
     pub mode7_matrix: [i16; 8],
+    pub mode7_flags: [bool; 5],
     pub cgram: [uint16; 256],
     pub write_latches: [uint8; 3],
     pub cgram_pointer: uint8,
@@ -908,6 +909,17 @@ unsafe fn VerifySnapshotsEq(
             );
         }
     }
+    if (*b).mode7_flags != (*a).mode7_flags {
+        game.g_fail = true;
+        if report_details {
+            eprintln!(
+                "@{}: Mode 7 flags (large field, character fill, X flip, Y flip, EXTBG) compare failed: mine {:?} != theirs {:?}",
+                game.snes_frame_counter,
+                (*b).mode7_flags,
+                (*a).mode7_flags
+            );
+        }
+    }
     if (*b).mode7_matrix != (*a).mode7_matrix {
         game.g_fail = true;
         if report_details {
@@ -1581,6 +1593,13 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     );
     let ppu = &*(*game.g_snes).ppu;
     (*s).mode7_matrix = ppu.m7matrix;
+    (*s).mode7_flags = [
+        ppu.m7largeField,
+        ppu.m7charFill,
+        ppu.m7xFlip,
+        ppu.m7yFlip,
+        ppu.m7extBg,
+    ];
     (*s).status_flags = [ppu.rangeOver, ppu.timeOver, ppu.evenFrame];
     (*s).counters = CounterSnapshot {
         horizontal: ppu.hCount,
@@ -1608,6 +1627,13 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
 unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     let ppu = &mut *(*game.g_snes).ppu;
     ppu.m7matrix = (*s).mode7_matrix;
+    [
+        ppu.m7largeField,
+        ppu.m7charFill,
+        ppu.m7xFlip,
+        ppu.m7yFlip,
+        ppu.m7extBg,
+    ] = (*s).mode7_flags;
     [ppu.rangeOver, ppu.timeOver, ppu.evenFrame] = (*s).status_flags;
     [ppu.scrollPrev, ppu.scrollPrev2, ppu.m7prev] = (*s).write_latches;
     (*(*game.g_snes).ppu).cgram = (*s).cgram;
