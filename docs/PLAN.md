@@ -1198,6 +1198,34 @@ HDMA diagnosis has exceeded the one-hour item limit: its findings and
 verified isolated candidate are recorded above; stop work on that item
 until it is explicitly resumed with a focused next step.
 
+OAM snapshot-layout audit (2026-10-18): the inherited Snapshot.oam has 288
+words and copies/compares/restores 576 bytes starting at Ppu.oam. Actual
+sprite memory is 256 low-table words plus 32 high-table bytes: 544 bytes.
+The final 32 copied bytes therefore include neighboring state, not OAM.
+Measured offsets relative to Ppu.oam: highOam 512, oamAdr 544,
+objPriority 550, objTileAdr1 552, objSize 556, objPixelBufferXX 557.
+The copy includes the six OAM port/address/latch fields, sprite priority,
+tile addresses, size, one padding byte and the first 19 cache bytes.
+
+An actual-function probe on f558ebcd confirms all six port-field faults
+are already detected and restored. Continued $2138 reads, $2104 writes
+and vblank address reloads match the original state afterward. A 577-case
+byte-boundary probe detects/restores every byte at offsets 0..575 and
+accepts/leaves offset 576, native exit 0. The initial blind-spot assertion
+failed because it incorrectly assumed the oversized OAM copy excluded
+those fields; the corrected probe establishes their current coverage.
+
+This is a layout-dependent verifier contract, not six omitted latches.
+Blindly reducing the copy to 544 bytes would weaken current coverage.
+The partial objPixelBufferXX range and padding comparison are accidental;
+full sm/src search finds the two XX cache arrays only in their declarations.
+ppu_reset zeros the complete PPU, including padding/cache storage. No
+maintained source, serialized PPU layout or residue counters change.
+Cargo fmt --check and the isolated optimized core/DLL build pass.
+Probe source/output remains ignored. Next: replace this implicit spill with
+explicit sprite-memory and field snapshots while preserving demonstrated
+port/configuration coverage and classifying padding/cache behavior.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
