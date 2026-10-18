@@ -555,6 +555,37 @@ PCs against the Rust helper, then validate any focused change against raw
 table/window fields and the existing RAM/pixel/audio oracle. No maintained
 Rust or counters changed; source/opcode traces stay ignored.
 
+Vertical slope BTS repair (2026-10-18): actual frame 11,629 executes
+94:8FED with a 16-bit accumulator, A=5513, X=0142 and neighboring BTS
+bytes 13/55. Rust now reads the full bus word for vertical nonsquare
+dispatch, preserving low/high read order and the WRAM bank crossing into
+80:0000. Horizontal and square dispatch stay exact. The two-byte 1E77
+normalization is removed; masked coverage falls from 1,414 bytes/38 ranges
+to 1,412 bytes/37 ranges.
+
+Independent subagents review the maintained diff and pass 105,766 dispatch/
+bus cases, including all byte pairs and valid index boundaries; 51 actual
+verifier equality/fault cases pass without snapshot mutation. Isolated full
+any% and Waver replays have zero low-byte and high-byte differences across
+129,712 and 58,109 frames, with 716/547 observed word changes. Injecting
+either byte at frame 11,629 yields exactly one failing frame in 12,000,
+native exits 1, with no later failures.
+Final source includes Mini Turtle Main 3095af59: any% 129,712/0 (242.52s),
+Waver 58,109/0 (110.76s), Energy Tank route 58,857/0 (112.90s), all native
+exits 0. Cargo fmt --check, optimized core/DLL and normal metadata builds
+pass; Cargo release remains blocked by managed build-script execution,
+OS error 5. Raw offsets -2, cast lines -4, Rust lines -1; other counters
+unchanged. No diagnostic instrumentation or ROM-derived assets committed.
+
+The normal-control Energy Tank route now proves Waver contact and pickup:
+before morphing, live Waver slot 0FF8 overlaps Samus's standing hitbox and
+health drops 10 to 0. A timed Morph Ball suffix reduces the vertical radius
+and passes beneath it; final named health is 199/199, state 8/room 990D.
+This demonstrates exercised contact and pickup logic, not every Waver AI
+state or Turtle callback. Next: finish the controller exit into 99BD,
+continue classifying masked HDMA/display state and independently compare
+sound uploads. Boot-to-credits and complete gameplay coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

@@ -1131,13 +1131,6 @@ unsafe fn VerifySnapshotsEq(
         2 as size_t,
     );
     memcpy(
-        (&raw mut (*a).ram as *mut uint8).offset(0x1e77 as ::core::ffi::c_int as isize)
-            as *mut uint8 as *mut ::core::ffi::c_void,
-        (&raw mut (*b).ram as *mut uint8).offset(0x1e77 as ::core::ffi::c_int as isize)
-            as *mut uint8 as *const ::core::ffi::c_void,
-        2 as size_t,
-    );
-    memcpy(
         (&raw mut (*a).ram as *mut uint8).offset(0x9100 as ::core::ffi::c_int as isize)
             as *mut uint8 as *mut ::core::ffi::c_void,
         (&raw mut (*b).ram as *mut uint8).offset(0x9100 as ::core::ffi::c_int as isize)

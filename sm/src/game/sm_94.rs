@@ -4,6 +4,7 @@ use crate::game::sm_90::KillProjectile;
 use crate::game::sm_a0::CalculateAngleFromXY;
 use crate::game_state::Game;
 use crate::rtl::{Mult8x8, RomPtr, SnesDivide, SnesModulus, Unreachable};
+use crate::snes::snes::snes_read;
 
 pub use crate::types::{
     __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16, int16_t, int32,
@@ -2007,7 +2008,12 @@ unsafe fn BlockColl_Vert_Slope(ci: *mut CollInfo, game: &mut Game) -> uint8 {
     if slope < 5 {
         return BlockColl_Vert_Slope_Square(ci, slope, game.cur_block_index(), game);
     }
-    game.set_current_slope_bts(u16::from(game.current_block_bts()));
+    // The ROM's vertical dispatch stores the full LDA long,X word, including
+    // the neighboring BTS byte. Long indexing can cross the WRAM bank edge.
+    let address = 0x7f6402 + u32::from(game.cur_block_index());
+    let low = snes_read(game.g_snes, address, game);
+    let high = snes_read(game.g_snes, address + 1, game);
+    game.set_current_slope_bts(u16::from_le_bytes([low, high]));
     BlockColl_Vert_Slope_NonSquare(ci, game.cur_block_index(), game)
 }
 fn ClearCarry_5(_ci: *mut CollInfo, _game: &mut Game) -> uint8 {
