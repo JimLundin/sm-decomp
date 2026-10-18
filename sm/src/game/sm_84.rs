@@ -1138,6 +1138,7 @@ pub unsafe fn SpawnHardcodedPlm(mut p: SpawnHardcodedPlmArgs, game: &mut Game) {
     CallPlmHeaderFunc(
         ((*PH).func_ptr as ::core::ffi::c_int | 0x840000 as ::core::ffi::c_int) as uint32,
         v1,
+        game.cur_coll_amt32,
         game,
     );
 }
@@ -1205,6 +1206,7 @@ pub unsafe fn SpawnRoomPLM(mut k: uint16, game: &mut Game) {
     CallPlmHeaderFunc(
         ((*PH).func_ptr as ::core::ffi::c_int | 0x840000 as ::core::ffi::c_int) as uint32,
         v1,
+        game.cur_coll_amt32,
         game,
     );
 }
@@ -1241,7 +1243,12 @@ pub unsafe fn SpawnPLM(header: uint16, game: &mut Game) -> uint8 {
     write_word(game, 0x1c27, index as u16);
     // Read setup after preparing the slot, at the original callback boundary.
     let setup = game.read_rom_word(0x840000 | u32::from(header), 0);
-    CallPlmHeaderFunc(0x840000 | u32::from(setup), index as u16, game)
+    CallPlmHeaderFunc(
+        0x840000 | u32::from(setup),
+        index as u16,
+        game.cur_coll_amt32,
+        game,
+    )
 }
 pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
     let mut _state_variable_: *mut uint8 =
@@ -4240,16 +4247,20 @@ pub fn PlmSetup_B727_SandFallsFast(_j: uint16, game: &mut Game) -> uint8 {
 /// Apply the collision-side quicksand reaction to the active displacement.
 ///
 /// # Safety
-/// A non-null `cur_coll_amt32` must point to a live, writable i32 for the
+/// A non-null `displacement` must point to a live, writable i32 for the
 /// duration of this call, as installed by the Samus collision dispatcher.
-pub unsafe fn PlmSetup_QuicksandSurfaceB(_j: uint16, game: &mut Game) -> uint8 {
+pub unsafe fn PlmSetup_QuicksandSurfaceB(
+    _j: uint16,
+    displacement: *mut i32,
+    game: &mut Game,
+) -> uint8 {
     let read_word = |game: &Game, offset: usize| {
         u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
     };
     if read_word(game, 0xb02) & 2 == 0 {
         return 0;
     }
-    if game.cur_coll_amt32.is_null() {
+    if displacement.is_null() {
         printf(
             b"ERROR: PlmSetup_QuicksandSurfaceB is broken!!\n\0" as *const u8
                 as *const ::core::ffi::c_char,
@@ -4261,13 +4272,12 @@ pub unsafe fn PlmSetup_QuicksandSurfaceB(_j: uint16, game: &mut Game) -> uint8 {
         0 | 3 => {
             if read_word(game, 0xb02) & 0x0f == 3 {
                 if read_word(game, 0xa6e) == 1 {
-                    *game.cur_coll_amt32 = 0;
+                    *displacement = 0;
                     return 1;
                 }
                 // Compare the unsigned middle word; retain both outside bytes.
-                if (*game.cur_coll_amt32 >> 8) as u16 > 0x30 {
-                    *game.cur_coll_amt32 =
-                        ((*game.cur_coll_amt32 as u32 & 0xff0000ff) | 0x3000) as i32;
+                if (*displacement >> 8) as u16 > 0x30 {
+                    *displacement = ((*displacement as u32 & 0xff0000ff) | 0x3000) as i32;
                 }
                 let in_quicksand = read_word(game, 0x1e71).wrapping_add(1);
                 game.g_ram[0x1e71..0x1e73].copy_from_slice(&in_quicksand.to_le_bytes());
@@ -4275,7 +4285,7 @@ pub unsafe fn PlmSetup_QuicksandSurfaceB(_j: uint16, game: &mut Game) -> uint8 {
         }
         2 => {
             if read_word(game, 0xa6e) == 1 {
-                *game.cur_coll_amt32 = 0;
+                *displacement = 0;
                 return 1;
             }
             let in_quicksand = read_word(game, 0x1e71).wrapping_add(1);
@@ -7514,7 +7524,17 @@ pub unsafe fn sub_84EEAB(mut v0: uint16, game: &mut Game) -> uint8 {
     }
     return 0 as uint8;
 }
-pub unsafe fn CallPlmHeaderFunc(mut ea: uint32, mut j: uint16, game: &mut Game) -> uint8 {
+/// Dispatch setup with the active collision displacement, or null outside collision.
+///
+/// # Safety
+/// Legacy setup callbacks require initialized runtime state. A non-null
+/// `displacement` must remain live and writable throughout the setup call.
+pub unsafe fn CallPlmHeaderFunc(
+    ea: uint32,
+    j: uint16,
+    displacement: *mut i32,
+    game: &mut Game,
+) -> uint8 {
     match ea {
         8694567 | 8696783 | 8698095 | 8698618 | 8705782 | 8705783 | 8704398 => {
             return 0 as uint8;
@@ -7549,7 +7569,7 @@ pub unsafe fn CallPlmHeaderFunc(mut ea: uint32, mut j: uint16, game: &mut Game) 
         8696983 => return PlmSetup_B71F_SubmergingQuicksand(j, game),
         8697000 => return PlmSetup_B723_SandfallsSlow(j, game),
         8697014 => return PlmSetup_B727_SandFallsFast(j, game),
-        8697028 => return PlmSetup_QuicksandSurfaceB(j, game),
+        8697028 => return PlmSetup_QuicksandSurfaceB(j, displacement, game),
         8697153 => return PlmSetup_B737_SubmergingQuicksand(j, game),
         8697167 => return PlmSetup_B73B_B73F_SandFalls(j),
         8697169 => return PlmSetup_ClearShitroidInvisibleWall(j, game),

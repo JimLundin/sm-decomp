@@ -1200,6 +1200,20 @@ Raw offsets -7, cast lines -24, Rust lines -21; unsafe count unchanged.
 Next: make the Samus collision displacement context explicit across its PLM
 callback boundary, preserving retries, callback order and live RAM reads.
 
+PLM setup dispatch now receives the active collision displacement explicitly.
+All three spawn paths pass the stored context at the final callback boundary;
+quicksand consumes that argument instead of reading the pointer from Game.
+The stored pointer remains a bridge from Samus collision dispatch, retaining
+its scope across retries and nested game calls. Unsafe contracts document
+the live/writable requirement. Direct dispatch comparison against prior Rust
+passes 8,388,608 displacement/RAM/return cases with the new Game's stored
+pointer deliberately null. Stable optimized core/DLL build and direct format
+pass; Cargo fmt/build remain ASR-denied. Waver route: 58,109 frames, zero
+failures (85.66s); any%: 129,712 frames, zero failures (183.35s).
+Rust lines +20 expose/document the context; all other counters unchanged.
+Next: replace Samus collision context parameters with references, preserving
+the active displacement's retry-loop scope before removing the stored bridge.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
