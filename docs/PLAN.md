@@ -938,6 +938,42 @@ and ROM-derived data remain outside tracked files. Next: compare effects
 of the three preparation writes with synchronized DSP sampling before
 deciding whether upload enforcement needs an explicit timing boundary.
 
+Upload preparation sample effects (2026-10-18): actual ROM/SPC boots at
+160, 400 and 3,600 frames each perform a constructed DCFAC7 upload. Capture
+RAM/full DSP at CPU upload return, before subsequent housekeeping writes.
+Two independently owned RAM/DSP copies use that same state; only one
+receives 2C:00, 3C:00 and 5C:FF. Both receive the ten independently captured
+post-upload writes after a declared gap of 0, 1, 8, 32 or 128 DSP samples,
+then generate 2,048 more stereo samples. Exact write-count/register guards
+pass. These gaps and simultaneous follow-up writes are constructed
+schedules, not measured runtime command timing.
+
+All zero-gap cases have zero differing values. Boot 160 remains silent at
+all gaps. Boot 400 differs only at gap 128: 113 values, first at sample 39
+(-6 versus 0). Active boot 3,600 differs at gaps 1/8/32/128 by
+788/1,002/1,155/1,739 values; gap 1 differs immediately (-406 versus -1,101).
+All three diagnostic processes return native exit 0. Thus the preparation
+writes can change generated samples under tested schedules; blanket
+normalization as harmless is unjustified. This is not proof of actual
+runtime audible divergence.
+
+An identical-copy control omits the preparation writes and matches all
+five gaps in the active 3,600-frame state, native exit 0. Flipping one
+captured sample bit at sample 17/channel 0 yields exactly one mismatch,
+returns native exit 1 and omits the completion marker. This tests sample
+comparison, not a DSP producer fault. Independent reviews confirm owned
+RAM pointers, capture before housekeeping and the declared schedule.
+Terminal DSP/RAM equality is not compared; shared DSP implementation
+accuracy, natural write timing and full audio equivalence remain unproved.
+
+Maintained Rust and residue counters are unchanged. Cargo fmt --check and
+isolated optimized builds pass; Cargo release remains denied executing
+khronos_api's build script (OS error 5). The frozen 3eac6b6a-derived probe
+is not a current-source gameplay replay. Diagnostic source/logs and
+ROM-derived state remain outside tracked files. Next: measure actual DSP
+sample positions of upload preparation/housekeeping and compare state
+continuation before deciding the maintained driver's timing behavior.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read
