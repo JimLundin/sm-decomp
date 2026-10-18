@@ -5299,6 +5299,22 @@ device addresses do not establish physical device side-effect equivalence;
 hardware/render/audio timing and credits remain open. Held HDMA diagnosis
 stays stopped. Continue remaining executed CPU fetch/address helpers.
 
+Independent CPU word-device QC (2026-10-18): 327,680 actual old/current
+native-mode LDA/STA/INC absolute word instructions pass over every word value.
+LDA reads the 217F/2180 pair; STA writes 2180/2181, 2181/2182 and
+2182/2183; INC uses physical WRAM at 1800. Port starts alternate 0100 and
+1FFFF, exercising wrap and adjacent address-latch writes. Complete RAM,
+CPU result/registers/flags/PC/cycles, WRAM port address, serialized PPU
+state and captured audio state match. A TEMP negative control reverses
+the ordinary low/high store order and fails the actual port continuation:
+ramAdr 257 versus 256. Positive log reports 327,680 passes; negative log
+reports the native assertion abort. Frozen word helpers and actual opcode
+consumers still match live source. Optimized probe core/DLL and normal-core
+metadata artifacts exist; direct full-source formatting and progress pass.
+This extends device side-effect coverage without claiming every bus device,
+reversed-store device effects or full-movie integration. Only this note
+changes; probes remain TEMP and peer production edits remain untouched.
+
 Failure recovery now draws the rerun ROM frame (2026-10-18): after
 pre-frame restore and emulated rerun, DrawFrameToPpu completes the same render
 phase used by both comparison branches. Previously recovery kept old drawn
