@@ -4815,6 +4815,34 @@ the retained explicit-render Waver run to determine whether failures recur
 only in the shared prefix before attempting broader normal-input coverage.
 Stopped ammunition trials and uncovered gameplay cleanup remain held.
 
+Controller disk-load/next-input audit (2026-10-18):65,536 complete
+SaveSnesState/LoadSnesState controls save each physical input word, replace it
+with its complement, load and read actual4218/4219. Input.currentState keeps
+the later host word; result bytes match independent16-bit reversal of that
+word. Input ownership stays unchanged. The SNES save stream omits the Input
+device, and load synchronization does not restore its current physical state.
+This is an observed interface boundary, not alone a normal gameplay defect.
+
+131,072 actual RtlRunFrame selection calls cover every supplied word with
+snapshot_flags bit0 clear/set. The installed capture callback receives host
+input normally or recorder.last_inputs when bit0 is set; the flag clears.
+RtlRunFrameCompare assigns the selected word to input1 before either gameplay
+branch. Thus normal next-frame entry replaces physical state before controller
+polling; direct4218/4219 reads between loading and frame entry consume later
+host state. Recorder file parsing/replay timing and full post-load gameplay
+remain outside this matrix. Nativeexit0 after correcting missing host callback
+installation in the initial fixture; that initial run had passed disk controls
+but stopped before completing frame-selection controls.
+
+Only this note changes; no production input/snapshot interface or residue
+counts change. Frozen source includes then-current CPU/DMA/PPU edits; later
+integration is separate. Isolated optimized core/DLL, direct full-source
+rustfmt and progress pass; Cargo fmt/check and release remain denied at
+cargo.exe launch. No fresh movie result claimed; probes/save/ROM assets stay
+ignored. Continue actual device/event coverage without resuming held HDMA.
+Render initialization/Waver71, hires, hardware/audio timing, masked RAM and
+boot-to-credits remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
