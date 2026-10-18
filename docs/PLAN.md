@@ -2837,6 +2837,28 @@ Other gameplay counters unchanged. No probe or ROM-derived assets are
 committed. Next: initialization ramp-table and scalar setup, preserving
 write order and byte/word widths; the stopped ammo route stays held.
 
+Samus initialization's hdma_table_1 loop now iterates reversed two-byte
+chunks of g_ram at 9800..9A00. The 256 word stores retain descending
+addresses 99FE through 9800 and value 00FF; no bulk fill changes their
+order or turns the high bytes into FF. The surrounding scalar stores
+and callback calls retain their positions. The same-looking suit-pickup
+and X-ray loops remain untouched.
+
+Observed boot/gunship passes 22,631/0 (48.24s), native exit 0. Read-only
+observations show exactly 256 rewritten stores, all word 00FF on Rust
+side 2, at each SNES counter 298, 8,256 and 20,817 (768 total).
+Removing the observation restores exact maintained source. The iterator's
+512-byte range, two-byte chunks and reverse order match the original
+510-to-zero decrement-by-two sequence. Full any% passes 129,712/0
+(261.22s), native exit 0, on committed 6269e793 source with only this
+sm_91.rs change. Concurrent reset-upload work is outside that replay's
+scope. Cargo fmt/check, optimized core/DLL and normal-core metadata
+builds pass; Cargo release remains denied at khronos_api's build script
+(OS error 5). Raw offsets -1, cast lines -5, Rust lines -3; other gameplay
+counters unchanged. No probe or ROM-derived assets are committed.
+Next: remaining initialization scalar setup and mixed pose-byte fields,
+preserving write order and widths; the stopped ammo route stays held.
+
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
 the original `SignExtend8(0x8000)` initialization and the middle-byte velocity

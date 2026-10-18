@@ -4929,12 +4929,9 @@ pub unsafe fn Samus_Initialize(game: &mut Game) {
         as *mut uint16) = word_909EB3;
     *((&raw mut game.g_ram as *mut uint8).offset(0xda6 as ::core::ffi::c_int as isize)
         as *mut uint16) = word_909EB1;
-    let mut i: ::core::ffi::c_int = 510 as ::core::ffi::c_int;
-    while i >= 0 as ::core::ffi::c_int {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9800 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset((i >> 1 as ::core::ffi::c_int) as isize) = 255 as uint16;
-        i -= 2 as ::core::ffi::c_int;
+    // Initialize the hdma_table_1 from its last word to its first.
+    for word in game.g_ram[0x9800..0x9a00].chunks_exact_mut(2).rev() {
+        word.copy_from_slice(&255u16.to_le_bytes());
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0xb32 as ::core::ffi::c_int as isize)
         as *mut uint16) = word_909EA1;
