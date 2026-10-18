@@ -67,8 +67,16 @@ impl ReplayCoverage {
             self.gameplay_frames, self.rooms.len(), self.enemies.len(), self.longest_unchanged
         );
         println!("Observed game states (state:frames): {:?}", self.states);
+        println!("Ending/credits state frames: {}", self.credits_frames());
         println!("Gameplay rooms: {:04X?}", self.rooms);
         println!("Gameplay enemy definitions: {:04X?}", self.enemies);
+    }
+
+    fn credits_frames(&self) -> usize {
+        self.states
+            .get(&(sm::game::sm_82::kGameState_39_EndingAndCredits as u16))
+            .copied()
+            .unwrap_or(0)
     }
 
     fn report_progress(&self) {
@@ -184,6 +192,10 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
             "Verified {frames} frames: {failures} failing frames ({:.2}s)",
             start.elapsed().as_secs_f64()
         );
+        if std::env::var_os("SM_VERIFY_REQUIRE_CREDITS").is_some() && coverage.credits_frames() == 0
+        {
+            return Err("replay never entered the ending/credits state (39)".into());
+        }
         Ok(failures)
     }
 }

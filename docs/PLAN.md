@@ -2075,6 +2075,50 @@ No maintained Rust or residue counters change; probe source/logs stay
 ignored. The generated importer bytecode was removed from tools/.
 Next: compare actual controller-poll/yield cadence against movie timing
 before treating the imported route categories as execution coverage.
+Current-source cadence probe (2026-10-18): a frozen f6a321f3 observer runs
+the first 9,000 imported any% inputs through the actual paired frame loop.
+It passes 9,000/0, native exit 0. Both implementations read the low joypad
+port on 8,783 frames; 217 have no read. State 30 starts at input index 297,
+31 at 8,255, gameplay fade-in at 8,323 and gameplay at 8,353; the first
+sustained Right input arrives at 8,639. All 23 selected anchors finish at
+hPos 0/vPos 226 with nmi_frames_missed zero. Counts use zero-based indexes.
+
+Summed cpu_runOpcode return values are 101,293,141 nominal opcode cycles
+before forced NMI and 10,967,529 after it. Seventy-five host intervals exceed
+a rough 44,671-cycle threshold; the largest pre-NMI interval reports
+4,589,525 cycles. These are not elapsed master clocks or measured hardware
+lag frames: interrupt overhead is overwritten by the next opcode count,
+and DMA, refresh and bus-speed timing are absent. The opcode and bus paths
+do not advance hPos/vPos; the frame loop forces NMI only at its yield. Thus
+the paired pass cannot establish movie/video-frame cadence. Independent
+review confirms the input reversal and importer; no mapping fix emerged.
+No diagnostic source or ROM-derived outputs are committed.
+
+The verify run now always reports observed ending/credits state-39 frames.
+Set SM_VERIFY_REQUIRE_CREDITS=1 to require that milestone in the existing
+CLI/DLL run; absent state 39 returns exit 2 after ordinary coverage and
+comparison summaries. Default differential exit behavior is unchanged.
+This is a necessary ending-state observation, not proof that credits finish.
+Focused controls distinguish empty/gameplay/adjacent states from repeated
+state-39 observations. The required 9,000-frame prefix fails with zero
+credits frames and zero comparison failures (23.78s), native exit 2.
+Full default any% passes 129,712/0 (376.44s), native exit 0. The required
+run also compares 129,712/0 (366.26s) but correctly returns native exit 2:
+zero state-39 frames, six rooms/three enemy definitions, final state 8 in
+DF8D. This exposes incomplete route coverage without new failing frames.
+Independent source review finds no blockers. Cargo fmt and
+direct optimized core/DLL and metadata builds pass; Cargo release remains
+blocked executing khronos_api's build script (OS error 5).
+Later Cargo fmt recheck is denied launching cargo.exe itself; direct rustfmt
+on the changed verify file passes and its hash matches the tested frozen file.
+The focused verify change adds 12 Rust lines for the missing coverage signal;
+other residue categories are unchanged by it. Concurrent gameplay/PPU edits
+are excluded.
+Next: an isolated ROM CPU/video-clock probe must retain PC across video
+frames, gate NMI and latch controller input at hardware boundaries before
+changing the maintained paired schedule. Do not compensate by skipping
+zero-poll inputs or treat this credits guard as resolving route coverage.
+
 HDMA diagnosis has exceeded the one-hour item limit: its findings and
 verified isolated candidate are recorded above; stop work on that item
 until it is explicitly resumed with a focused next step.
