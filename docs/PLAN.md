@@ -869,6 +869,51 @@ Direct rustfmt checks pass; Cargo fmt/build remain ASR-denied on this host.
 Tracked source and all progress counters are unchanged; the unchanged source
 90889612 retains its passing Linux stable build and four original replays.
 
+Bomb pickup is now verified with normal inputs and the standard oracle:
+target/awake-return/bomb-orb-contact.inputs passes 49,789 frames, zero
+failures (70.38s), ending in 9804 at X187/Y187, gameplay state 8, equipped
+and collected items 1004 (Morph and Bombs), missiles 0/5. This route visits
+sixteen rooms and sixteen enemy definitions; union with the retained 9A44
+branch is seventeen rooms. The new definitions are D0FF in 9879 and EEFF
+in 9804. No gameplay state or gate was edited.
+The lower Parlor shaft bends left: from bomb-left-unmorph.inputs at
+X987/Y523, left/shoot 100 then neutral 180 reaches X821/Y593
+(bomb-left-run.inputs, 47,311/0 standard, 68.31s). Right/shoot 180,
+neutral 120 opens and crosses the lower-right blue door into 9879
+(bomb-door-right.inputs, 47,611/0 standard, 70.81s). Downward shots from
+the earlier ledge add no progress; its visible geometry is solid/sloped.
+Across 9879, right/shoot 220, neutral 120 reaches X575/Y187; right 5,
+run/right/shoot 200 and neutral 120 reaches the raised lip at X699/Y187
+(bomb-red-run.inputs, 48,276/0 standard, 69.75s). Fresh jump/right/shoot
+50 after neutral 5 reaches X731/Y139 beside the red cap
+(bomb-cap-jump.inputs, 48,451/0 standard, 69.51s).
+Fresh Select, neutral 30, then five fresh shoot presses separated by
+neutral 30 (neutral 60 after the fifth), right 100, neutral 120 opens
+the cap and enters 9804 (bomb-five-missiles.inputs, 48,887/0 standard,
+69.81s). Current missiles are confirmed 0/5; the older probe prints only
+maximum missiles, so its 5 alone must not be read as remaining ammunition.
+Fresh Select again, neutral 10, right/shoot 70, neutral 700, fresh jump
+and neutral 120 shoots/contacts the Bomb orb. Item bits become 1004 by
+frame 49,000 in the standard trace. The message is closed at the finish.
+Post-pickup left/shoot 100, neutral 5, left/jump/shoot 70, neutral 120
+reaches X37/Y187 in 9804 (bomb-exit-left.inputs, 50,084/0 probe) but does
+not exit. The vertical-jump attempt also passes the standard oracle
+(bomb-exit-up.inputs, 50,329/0, 71.80s) and remains blocked at X37 even
+at door height. Read-only live-state inspection confirms PLM BAF4 uses
+preinstruction BDF2, PlmPreInstr_GotoLinkIfTorizoDead; enemy EEFF is active
+with 800 HP, Samus has 31 health and HUD selection 0. The gray door needs
+the boss defeat, not another movement adjustment. Bomb Torizo activation
+is proved; combat and return through the corridor remain unfinished.
+The facing-right stationary-beam continuation (right 1, shoot 1200,
+neutral 120) passes 51,650 frames with zero failures but ends in death
+state 26. Preserve bomb-orb-contact.inputs; use movement and beam combat
+or shorten the post-pickup wait to improve the fight setup. Boss defeat
+is not proved. Continue this item-bearing route toward wider enemy coverage
+before resuming the deferred slope cleanup.
+Full any% passes 129,712 frames, zero failures (188.48s). Direct rustfmt
+passes; Cargo fmt/build are still ASR-denied. No source changes; all residue
+counters are unchanged, and prior Linux validation applies to source 90889612.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
