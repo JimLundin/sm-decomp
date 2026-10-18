@@ -265,16 +265,8 @@ pub unsafe fn snes_writeBBus(
         _ => {}
     };
 }
-unsafe fn SwapInputBits(mut x: uint16_t) -> uint16_t {
-    let mut r: uint16_t = 0 as uint16_t;
-    let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    while i < 16 as ::core::ffi::c_int {
-        r = (r as ::core::ffi::c_int * 2 as ::core::ffi::c_int
-            + (x as ::core::ffi::c_int & 1 as ::core::ffi::c_int)) as uint16_t;
-        i += 1;
-        x = (x as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16_t;
-    }
-    return r;
+fn SwapInputBits(input: u16) -> u16 {
+    input.reverse_bits()
 }
 unsafe fn snes_readReg(mut snes: *mut Snes, mut adr: uint16_t) -> uint8_t {
     match adr as ::core::ffi::c_int {

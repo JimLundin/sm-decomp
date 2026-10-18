@@ -5218,6 +5218,26 @@ Cargo execution remains denied. Only this note changes, no maintained
 Rust/residue changes. Held HDMA diagnosis stays stopped; rendering/Waver71,
 event/audio timing, masked RAM and credits remain open.
 
+Controller bit-reversal cleanup (2026-10-18): SwapInputBits is now safe and
+uses u16::reverse_bits. Actual checks cover every input word against manual
+bit-permutation expectations and the old helper, plus 262,144 low/high register
+reads through banks 00/80. Independent QC passes 393,216 actual byte/word
+LDA consumers across those banks, checking CPU results/flags/cycles and unchanged
+controller state/owner. An injected reversed-output bit fails input zero,
+native exit 3221226505; unmodified QC exits zero. Live/QC helper bodies match.
+
+Instrumented any% prefix passes 12,000/0 (29.65s), native exit zero, with
+11,657 low and high controller reads per implementation. Clean frozen 581ce6f0
+plus only this helper change passes any% 129,712/0 (273.52s), native exit zero.
+Direct full-source formatting, normal-core metadata and optimized clean/probe
+core/DLL builds pass; Cargo fmt/build remain denied at cargo.exe launch.
+Progress: unsafe functions -1, cast lines -5, Rust lines -8; other focused
+counters unchanged. No input layout, timing or scheduling changes. Later
+CPU/PPU edits are outside the clean replay; probes and ROM assets remain
+untracked. Controller cadence, rendering/Waver71, held HDMA diagnosis,
+hardware/audio timing and credits coverage remain open; continue actual
+scheduling and route coverage work.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
