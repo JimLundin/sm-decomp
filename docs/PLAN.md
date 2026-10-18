@@ -199,6 +199,31 @@ ASR-denied. Dedicated DLL gameplay matches c8eead63. Any% passes
 129,712/0 (198.06s); Waver passes 58,109/0 (97.70s), both process exits 0.
 No ROM-derived assets or diagnostic code are committed.
 
+Independent driver tick probe (2026-10-18): boot the ROM/SPC through
+160, 400 and 3,600 frames, stop at the timer-wait entry $15BF, and initialize
+separate Rust player RAM and DSP state from that boundary. Copying RAM alone
+is insufficient: SFX reads DSP state and caused a false key-off mismatch.
+For each state, advance 512 identical timer ticks and issue six SFX commands.
+All 1,536 ticks and 16,040 ordered DSP writes match (maximum 46/tick, no
+history truncation). A Rust key-off bit injection differs on tick zero and
+returns process exit 1; all three unmodified comparisons return exit 0.
+The probe uses maintained sound/SPC/DSP code at a86198ac, plus an isolated
+wrapper exposing the two private driver loop parts. No maintained source or
+residue counters change; the prior any% 129,712/0 and Waver 58,109/0 remain
+the gameplay verification for that sound source.
+
+This comparison requires explicit command-latch timing: the ROM processes
+the previously latched SFX command before reading the input ports for the
+next SFX tick. Feeding Rust immediately caused a mismatch; feeding it when
+the ROM latches the value removes it. This proves sampled driver processing,
+not equivalence of runtime command delivery. RAM scratch/driver fields still
+differ after some ticks and have not all been classified. Direct opcode
+stepping deliberately holds DSP sample generation/timer scheduling still;
+matching DSP writes therefore does not establish audible output equivalence.
+Next: compare normal command-delivery timing and classify remaining driver
+RAM differences before enforcing audio checks; then compare DSP/sample
+output with explicitly synchronized clocks. ROM assets stay ignored.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
