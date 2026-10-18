@@ -8429,6 +8429,17 @@ counts; alias definitions and compilation prove type equivalence, while replay
 provides regression coverage. Rust lines -8; other counters unchanged.
 Gameplay and rendering/audio completeness remain open.
 
+CPU hexadecimal-opcode cleanup (2026-10-19): dispatcher and hook-return
+patterns use hexadecimal byte notation matching 65816 bank logs. All 262
+patterns invert exactly to the original numeric source; branches and bodies
+are unchanged. Frozen HEAD `2927399097ad59a83f1ea69c93c39b4ea1ffbad8` plus
+literal conversion matches live source. Cargo fmt/check, release library,
+normal metadata and optimized core/DLL builds pass; full frontend linking
+still lacks SDL2. Prefix 3,600/0 (1.19s) executes 10,363,030 dispatcher calls;
+clean full any% 129,712/0 (52.40s), native exit 0. All progress counters are
+unchanged. Replay does not establish every branch; exact numeric conversion
+supports unexercised labels. Gameplay and rendering/audio remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

@@ -858,41 +858,41 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
     game.pc_hist_ctr = game.pc_hist_ctr.wrapping_add(1) & 7;
     loop {
         match opcode {
-            0 => {
+            0x00 => {
                 let mut addr: u32 = (((*cpu).k as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
                     | (*cpu).pc as ::core::ffi::c_int
                     | 0x800000 as ::core::ffi::c_int) as u32;
                 opcode = CpuOpcodeHook((addr as u32).wrapping_sub(1 as u32), game) as u8;
                 match opcode {
-                    0 => {
+                    0x00 => {
                         break;
                     }
-                    1 => {
+                    0x01 => {
                         (*cpu).pc = (cpu_pullWord(cpu, game) as ::core::ffi::c_int
                             + 1 as ::core::ffi::c_int) as u16;
                         break;
                     }
-                    2 => {
+                    0x02 => {
                         (*cpu).pc = (cpu_pullWord(cpu, game) as ::core::ffi::c_int
                             + 1 as ::core::ffi::c_int) as u16;
                         (*cpu).k = cpu_pullByte(cpu, game);
                         break;
                     }
-                    229 | 233 | 237 => {
+                    0xe5 | 0xe9 | 0xed => {
                         (*cpu).c = 1 as ::core::ffi::c_int != 0;
                     }
-                    101 | 109 | 105 | 125 | 127 => {
+                    0x65 | 0x6d | 0x69 | 0x7d | 0x7f => {
                         (*cpu).c = 0 as ::core::ffi::c_int != 0;
                     }
                     _ => {}
                 }
             }
-            1 => {
+            0x01 => {
                 let (low, high) = address_direct_page_indexed_indirect(cpu, game);
                 cpu_ora(cpu, low, high, game);
                 break;
             }
-            2 => {
+            0x02 => {
                 cpu_readOpcode(cpu, game);
                 cpu_pushByte(cpu, (*cpu).k, game);
                 cpu_pushWord(cpu, (*cpu).pc, game);
@@ -904,41 +904,41 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 (*cpu).pc = cpu_readWord(cpu, 0xffe4 as u32, 0xffe5 as u32, game);
                 break;
             }
-            3 => {
+            0x03 => {
                 let (low, high) = address_stack_relative(cpu, game);
                 cpu_ora(cpu, low, high, game);
                 break;
             }
-            4 => {
+            0x04 => {
                 let (low, high) = address_direct_page(cpu, game);
                 cpu_tsb(cpu, low, high, game);
                 break;
             }
-            5 => {
+            0x05 => {
                 let (low, high) = address_direct_page(cpu, game);
                 cpu_ora(cpu, low, high, game);
                 break;
             }
-            6 => {
+            0x06 => {
                 let (low, high) = address_direct_page(cpu, game);
                 cpu_asl(cpu, low, high, game);
                 break;
             }
-            7 => {
+            0x07 => {
                 let (low, high) = address_direct_page_indirect_long(cpu, game);
                 cpu_ora(cpu, low, high, game);
                 break;
             }
-            8 => {
+            0x08 => {
                 cpu_pushByte(cpu, cpu_getFlags(cpu), game);
                 break;
             }
-            9 => {
+            0x09 => {
                 let (low, high) = address_immediate(cpu, false);
                 cpu_ora(cpu, low, high, game);
                 break;
             }
-            10 => {
+            0x0a => {
                 if (*cpu).mf {
                     (*cpu).c = (*cpu).a & 0x80 != 0;
                     (*cpu).a = (*cpu).a & 0xff00 | ((*cpu).a << 1 & 0xff);
@@ -949,79 +949,79 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
                 break;
             }
-            11 => {
+            0x0b => {
                 cpu_pushWord(cpu, (*cpu).dp, game);
                 break;
             }
-            12 => {
+            0x0c => {
                 let (low, high) = address_absolute(cpu, game);
                 cpu_tsb(cpu, low, high, game);
                 break;
             }
-            13 => {
+            0x0d => {
                 let (low, high) = address_absolute(cpu, game);
                 cpu_ora(cpu, low, high, game);
                 break;
             }
-            14 => {
+            0x0e => {
                 let (low, high) = address_absolute(cpu, game);
                 cpu_asl(cpu, low, high, game);
                 break;
             }
-            15 => {
+            0x0f => {
                 let (low, high) = address_absolute_long(cpu, game);
                 cpu_ora(cpu, low, high, game);
                 break;
             }
-            16 => {
+            0x10 => {
                 cpu_doBranch(cpu, cpu_readOpcode(cpu, game), !(*cpu).n);
                 break;
             }
-            17 => {
+            0x11 => {
                 let (low, high) = address_direct_page_indirect_y(cpu, false, game);
                 cpu_ora(cpu, low, high, game);
                 break;
             }
-            18 => {
+            0x12 => {
                 let (low, high) = address_direct_page_indirect(cpu, game);
                 cpu_ora(cpu, low, high, game);
                 break;
             }
-            19 => {
+            0x13 => {
                 let (low, high) = address_stack_relative_indirect_y(cpu, game);
                 cpu_ora(cpu, low, high, game);
                 break;
             }
-            20 => {
+            0x14 => {
                 let (low, high) = address_direct_page(cpu, game);
                 cpu_trb(cpu, low, high, game);
                 break;
             }
-            21 => {
+            0x15 => {
                 let (low, high) = address_direct_page_x(cpu, game);
                 cpu_ora(cpu, low, high, game);
                 break;
             }
-            22 => {
+            0x16 => {
                 let (low, high) = address_direct_page_x(cpu, game);
                 cpu_asl(cpu, low, high, game);
                 break;
             }
-            23 => {
+            0x17 => {
                 let (low, high) = address_direct_page_indirect_long_y(cpu, game);
                 cpu_ora(cpu, low, high, game);
                 break;
             }
-            24 => {
+            0x18 => {
                 (*cpu).c = false;
                 break;
             }
-            25 => {
+            0x19 => {
                 let (low, high) = address_absolute_y(cpu, false, game);
                 cpu_ora(cpu, low, high, game);
                 break;
             }
-            26 => {
+            0x1a => {
                 if (*cpu).mf {
                     (*cpu).a = (*cpu).a & 0xff00 | ((*cpu).a.wrapping_add(1) & 0xff);
                 } else {
@@ -1030,42 +1030,42 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
                 break;
             }
-            27 => {
+            0x1b => {
                 (*cpu).sp = (*cpu).a;
                 break;
             }
-            28 => {
+            0x1c => {
                 let (low, high) = address_absolute(cpu, game);
                 cpu_trb(cpu, low, high, game);
                 break;
             }
-            29 => {
+            0x1d => {
                 let (low, high) = address_absolute_x(cpu, false, game);
                 cpu_ora(cpu, low, high, game);
                 break;
             }
-            30 => {
+            0x1e => {
                 let (low, high) = address_absolute_x(cpu, true, game);
                 cpu_asl(cpu, low, high, game);
                 break;
             }
-            31 => {
+            0x1f => {
                 let (low, high) = address_absolute_long_x(cpu, game);
                 cpu_ora(cpu, low, high, game);
                 break;
             }
-            32 => {
+            0x20 => {
                 let value = cpu_readOpcodeWord(cpu, game);
                 cpu_pushWord(cpu, (*cpu).pc.wrapping_sub(1), game);
                 (*cpu).pc = value;
                 break;
             }
-            33 => {
+            0x21 => {
                 let (low, high) = address_direct_page_indexed_indirect(cpu, game);
                 cpu_and(cpu, low, high, game);
                 break;
             }
-            34 => {
+            0x22 => {
                 let value_0 = cpu_readOpcodeWord(cpu, game);
                 let newK = cpu_readOpcode(cpu, game);
                 cpu_pushByte(cpu, (*cpu).k, game);
@@ -1074,41 +1074,41 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 (*cpu).k = newK;
                 break;
             }
-            35 => {
+            0x23 => {
                 let (low, high) = address_stack_relative(cpu, game);
                 cpu_and(cpu, low, high, game);
                 break;
             }
-            36 => {
+            0x24 => {
                 let (low, high) = address_direct_page(cpu, game);
                 cpu_bit(cpu, low, high, game);
                 break;
             }
-            37 => {
+            0x25 => {
                 let (low, high) = address_direct_page(cpu, game);
                 cpu_and(cpu, low, high, game);
                 break;
             }
-            38 => {
+            0x26 => {
                 let (low, high) = address_direct_page(cpu, game);
                 cpu_rol(cpu, low, high, game);
                 break;
             }
-            39 => {
+            0x27 => {
                 let (low, high) = address_direct_page_indirect_long(cpu, game);
                 cpu_and(cpu, low, high, game);
                 break;
             }
-            40 => {
+            0x28 => {
                 cpu_setFlags(cpu, cpu_pullByte(cpu, game));
                 break;
             }
-            41 => {
+            0x29 => {
                 let (low, high) = address_immediate(cpu, false);
                 cpu_and(cpu, low, high, game);
                 break;
             }
-            42 => {
+            0x2a => {
                 let result = (u32::from((*cpu).a) << 1) | u32::from((*cpu).c);
                 if (*cpu).mf {
                     (*cpu).c = result & 0x100 != 0;
@@ -1120,80 +1120,80 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
                 break;
             }
-            43 => {
+            0x2b => {
                 (*cpu).dp = cpu_pullWord(cpu, game);
                 cpu_setZN(cpu, (*cpu).dp, false);
                 break;
             }
-            44 => {
+            0x2c => {
                 let (low, high) = address_absolute(cpu, game);
                 cpu_bit(cpu, low, high, game);
                 break;
             }
-            45 => {
+            0x2d => {
                 let (low, high) = address_absolute(cpu, game);
                 cpu_and(cpu, low, high, game);
                 break;
             }
-            46 => {
+            0x2e => {
                 let (low, high) = address_absolute(cpu, game);
                 cpu_rol(cpu, low, high, game);
                 break;
             }
-            47 => {
+            0x2f => {
                 let (low, high) = address_absolute_long(cpu, game);
                 cpu_and(cpu, low, high, game);
                 break;
             }
-            48 => {
+            0x30 => {
                 cpu_doBranch(cpu, cpu_readOpcode(cpu, game), (*cpu).n);
                 break;
             }
-            49 => {
+            0x31 => {
                 let (low, high) = address_direct_page_indirect_y(cpu, false, game);
                 cpu_and(cpu, low, high, game);
                 break;
             }
-            50 => {
+            0x32 => {
                 let (low, high) = address_direct_page_indirect(cpu, game);
                 cpu_and(cpu, low, high, game);
                 break;
             }
-            51 => {
+            0x33 => {
                 let (low, high) = address_stack_relative_indirect_y(cpu, game);
                 cpu_and(cpu, low, high, game);
                 break;
             }
-            52 => {
+            0x34 => {
                 let (low, high) = address_direct_page_x(cpu, game);
                 cpu_bit(cpu, low, high, game);
                 break;
             }
-            53 => {
+            0x35 => {
                 let (low, high) = address_direct_page_x(cpu, game);
                 cpu_and(cpu, low, high, game);
                 break;
             }
-            54 => {
+            0x36 => {
                 let (low, high) = address_direct_page_x(cpu, game);
                 cpu_rol(cpu, low, high, game);
                 break;
             }
-            55 => {
+            0x37 => {
                 let (low, high) = address_direct_page_indirect_long_y(cpu, game);
                 cpu_and(cpu, low, high, game);
                 break;
             }
-            56 => {
+            0x38 => {
                 (*cpu).c = true;
                 break;
             }
-            57 => {
+            0x39 => {
                 let (low, high) = address_absolute_y(cpu, false, game);
                 cpu_and(cpu, low, high, game);
                 break;
             }
-            58 => {
+            0x3a => {
                 if (*cpu).mf {
                     (*cpu).a = (*cpu).a & 0xff00 | ((*cpu).a.wrapping_sub(1) & 0xff);
                 } else {
@@ -1202,32 +1202,32 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
                 break;
             }
-            59 => {
+            0x3b => {
                 (*cpu).a = (*cpu).sp;
                 cpu_setZN(cpu, (*cpu).a, false);
                 break;
             }
-            60 => {
+            0x3c => {
                 let (low, high) = address_absolute_x(cpu, false, game);
                 cpu_bit(cpu, low, high, game);
                 break;
             }
-            61 => {
+            0x3d => {
                 let (low, high) = address_absolute_x(cpu, false, game);
                 cpu_and(cpu, low, high, game);
                 break;
             }
-            62 => {
+            0x3e => {
                 let (low, high) = address_absolute_x(cpu, true, game);
                 cpu_rol(cpu, low, high, game);
                 break;
             }
-            63 => {
+            0x3f => {
                 let (low, high) = address_absolute_long_x(cpu, game);
                 cpu_and(cpu, low, high, game);
                 break;
             }
-            64 => {
+            0x40 => {
                 cpu_setFlags(cpu, cpu_pullByte(cpu, game));
                 (*cpu).pc = cpu_pullWord(cpu, game);
                 if !(*cpu).e {
@@ -1236,21 +1236,21 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 }
                 break;
             }
-            65 => {
+            0x41 => {
                 let (low, high) = address_direct_page_indexed_indirect(cpu, game);
                 cpu_eor(cpu, low, high, game);
                 break;
             }
-            66 => {
+            0x42 => {
                 cpu_readOpcode(cpu, game);
                 break;
             }
-            67 => {
+            0x43 => {
                 let (low, high) = address_stack_relative(cpu, game);
                 cpu_eor(cpu, low, high, game);
                 break;
             }
-            68 => {
+            0x44 => {
                 let dest = cpu_readOpcode(cpu, game);
                 let src = cpu_readOpcode(cpu, game);
                 (*cpu).db = dest;
@@ -1272,22 +1272,22 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 }
                 break;
             }
-            69 => {
+            0x45 => {
                 let (low, high) = address_direct_page(cpu, game);
                 cpu_eor(cpu, low, high, game);
                 break;
             }
-            70 => {
+            0x46 => {
                 let (low, high) = address_direct_page(cpu, game);
                 cpu_lsr(cpu, low, high, game);
                 break;
             }
-            71 => {
+            0x47 => {
                 let (low, high) = address_direct_page_indirect_long(cpu, game);
                 cpu_eor(cpu, low, high, game);
                 break;
             }
-            72 => {
+            0x48 => {
                 if (*cpu).mf {
                     cpu_pushByte(cpu, (*cpu).a as u8, game);
                 } else {
@@ -1296,12 +1296,12 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 }
                 break;
             }
-            73 => {
+            0x49 => {
                 let (low, high) = address_immediate(cpu, false);
                 cpu_eor(cpu, low, high, game);
                 break;
             }
-            74 => {
+            0x4a => {
                 (*cpu).c = (*cpu).a & 1 != 0;
                 if (*cpu).mf {
                     (*cpu).a = (*cpu).a & 0xff00 | ((*cpu).a >> 1 & 0x7f);
@@ -1311,49 +1311,49 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
                 break;
             }
-            75 => {
+            0x4b => {
                 cpu_pushByte(cpu, (*cpu).k, game);
                 break;
             }
-            76 => {
+            0x4c => {
                 (*cpu).pc = cpu_readOpcodeWord(cpu, game);
                 break;
             }
-            77 => {
+            0x4d => {
                 let (low, high) = address_absolute(cpu, game);
                 cpu_eor(cpu, low, high, game);
                 break;
             }
-            78 => {
+            0x4e => {
                 let (low, high) = address_absolute(cpu, game);
                 cpu_lsr(cpu, low, high, game);
                 break;
             }
-            79 => {
+            0x4f => {
                 let (low, high) = address_absolute_long(cpu, game);
                 cpu_eor(cpu, low, high, game);
                 break;
             }
-            80 => {
+            0x50 => {
                 cpu_doBranch(cpu, cpu_readOpcode(cpu, game), !(*cpu).v);
                 break;
             }
-            81 => {
+            0x51 => {
                 let (low, high) = address_direct_page_indirect_y(cpu, false, game);
                 cpu_eor(cpu, low, high, game);
                 break;
             }
-            82 => {
+            0x52 => {
                 let (low, high) = address_direct_page_indirect(cpu, game);
                 cpu_eor(cpu, low, high, game);
                 break;
             }
-            83 => {
+            0x53 => {
                 let (low, high) = address_stack_relative_indirect_y(cpu, game);
                 cpu_eor(cpu, low, high, game);
                 break;
             }
-            84 => {
+            0x54 => {
                 let dest_0 = cpu_readOpcode(cpu, game);
                 let src_0 = cpu_readOpcode(cpu, game);
                 (*cpu).db = dest_0;
@@ -1375,31 +1375,31 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 }
                 break;
             }
-            85 => {
+            0x55 => {
                 let (low, high) = address_direct_page_x(cpu, game);
                 cpu_eor(cpu, low, high, game);
                 break;
             }
-            86 => {
+            0x56 => {
                 let (low, high) = address_direct_page_x(cpu, game);
                 cpu_lsr(cpu, low, high, game);
                 break;
             }
-            87 => {
+            0x57 => {
                 let (low, high) = address_direct_page_indirect_long_y(cpu, game);
                 cpu_eor(cpu, low, high, game);
                 break;
             }
-            88 => {
+            0x58 => {
                 (*cpu).i = false;
                 break;
             }
-            89 => {
+            0x59 => {
                 let (low, high) = address_absolute_y(cpu, false, game);
                 cpu_eor(cpu, low, high, game);
                 break;
             }
-            90 => {
+            0x5a => {
                 if (*cpu).xf {
                     cpu_pushByte(cpu, (*cpu).y as u8, game);
                 } else {
@@ -1408,12 +1408,12 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 }
                 break;
             }
-            91 => {
+            0x5b => {
                 (*cpu).dp = (*cpu).a;
                 cpu_setZN(cpu, (*cpu).dp, false);
                 break;
             }
-            92 => {
+            0x5c => {
                 let mut value_1: u16 = cpu_readOpcodeWord(cpu, game);
                 let mut new_k: u8 = cpu_readOpcode(cpu, game);
                 if new_k as ::core::ffi::c_int == 0x80 as ::core::ffi::c_int
@@ -1431,22 +1431,22 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 (*cpu).pc = value_1;
                 break;
             }
-            93 => {
+            0x5d => {
                 let (low, high) = address_absolute_x(cpu, false, game);
                 cpu_eor(cpu, low, high, game);
                 break;
             }
-            94 => {
+            0x5e => {
                 let (low, high) = address_absolute_x(cpu, true, game);
                 cpu_lsr(cpu, low, high, game);
                 break;
             }
-            95 => {
+            0x5f => {
                 let (low, high) = address_absolute_long_x(cpu, game);
                 cpu_eor(cpu, low, high, game);
                 break;
             }
-            96 => {
+            0x60 => {
                 if (*cpu).sp as ::core::ffi::c_int >= (*cpu).spBreakpoint as ::core::ffi::c_int
                     && (*cpu).spBreakpoint as ::core::ffi::c_int != 0
                 {
@@ -1476,42 +1476,42 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 (*cpu).pc = cpu_pullWord(cpu, game).wrapping_add(1);
                 break;
             }
-            97 => {
+            0x61 => {
                 let (low, high) = address_direct_page_indexed_indirect(cpu, game);
                 cpu_adc(cpu, low, high, game);
                 break;
             }
-            98 => {
+            0x62 => {
                 let displacement = cpu_readOpcodeWord(cpu, game) as i16;
                 cpu_pushWord(cpu, (*cpu).pc.wrapping_add_signed(displacement), game);
                 break;
             }
-            99 => {
+            0x63 => {
                 let (low, high) = address_stack_relative(cpu, game);
                 cpu_adc(cpu, low, high, game);
                 break;
             }
-            100 => {
+            0x64 => {
                 let (low, high) = address_direct_page(cpu, game);
                 cpu_stz(cpu, low, high, game);
                 break;
             }
-            101 => {
+            0x65 => {
                 let (low, high) = address_direct_page(cpu, game);
                 cpu_adc(cpu, low, high, game);
                 break;
             }
-            102 => {
+            0x66 => {
                 let (low, high) = address_direct_page(cpu, game);
                 cpu_ror(cpu, low, high, game);
                 break;
             }
-            103 => {
+            0x67 => {
                 let (low, high) = address_direct_page_indirect_long(cpu, game);
                 cpu_adc(cpu, low, high, game);
                 break;
             }
-            104 => {
+            0x68 => {
                 if (*cpu).mf {
                     (*cpu).a = (*cpu).a & 0xff00 | u16::from(cpu_pullByte(cpu, game));
                 } else {
@@ -1521,12 +1521,12 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
                 break;
             }
-            105 => {
+            0x69 => {
                 let (low, high) = address_immediate(cpu, false);
                 cpu_adc(cpu, low, high, game);
                 break;
             }
-            106 => {
+            0x6a => {
                 let carry = (*cpu).a & 1 != 0;
                 if (*cpu).mf {
                     (*cpu).a =
@@ -1538,7 +1538,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
                 break;
             }
-            107 => {
+            0x6b => {
                 if (*cpu).sp as ::core::ffi::c_int >= (*cpu).spBreakpoint as ::core::ffi::c_int
                     && (*cpu).spBreakpoint as ::core::ffi::c_int != 0
                 {
@@ -1566,75 +1566,75 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 (*cpu).k = cpu_pullByte(cpu, game);
                 break;
             }
-            108 => {
+            0x6c => {
                 let adr = cpu_readOpcodeWord(cpu, game);
                 (*cpu).pc = cpu_readWord(cpu, u32::from(adr), u32::from(adr.wrapping_add(1)), game);
                 break;
             }
-            109 => {
+            0x6d => {
                 let (low, high) = address_absolute(cpu, game);
                 cpu_adc(cpu, low, high, game);
                 break;
             }
-            110 => {
+            0x6e => {
                 let (low, high) = address_absolute(cpu, game);
                 cpu_ror(cpu, low, high, game);
                 break;
             }
-            111 => {
+            0x6f => {
                 let (low, high) = address_absolute_long(cpu, game);
                 cpu_adc(cpu, low, high, game);
                 break;
             }
-            112 => {
+            0x70 => {
                 cpu_doBranch(cpu, cpu_readOpcode(cpu, game), (*cpu).v);
                 break;
             }
-            113 => {
+            0x71 => {
                 let (low, high) = address_direct_page_indirect_y(cpu, false, game);
                 cpu_adc(cpu, low, high, game);
                 break;
             }
-            114 => {
+            0x72 => {
                 let (low, high) = address_direct_page_indirect(cpu, game);
                 cpu_adc(cpu, low, high, game);
                 break;
             }
-            115 => {
+            0x73 => {
                 let (low, high) = address_stack_relative_indirect_y(cpu, game);
                 cpu_adc(cpu, low, high, game);
                 break;
             }
-            116 => {
+            0x74 => {
                 let (low, high) = address_direct_page_x(cpu, game);
                 cpu_stz(cpu, low, high, game);
                 break;
             }
-            117 => {
+            0x75 => {
                 let (low, high) = address_direct_page_x(cpu, game);
                 cpu_adc(cpu, low, high, game);
                 break;
             }
-            118 => {
+            0x76 => {
                 let (low, high) = address_direct_page_x(cpu, game);
                 cpu_ror(cpu, low, high, game);
                 break;
             }
-            119 => {
+            0x77 => {
                 let (low, high) = address_direct_page_indirect_long_y(cpu, game);
                 cpu_adc(cpu, low, high, game);
                 break;
             }
-            120 => {
+            0x78 => {
                 (*cpu).i = true;
                 break;
             }
-            121 => {
+            0x79 => {
                 let (low, high) = address_absolute_y(cpu, false, game);
                 cpu_adc(cpu, low, high, game);
                 break;
             }
-            122 => {
+            0x7a => {
                 if (*cpu).xf {
                     (*cpu).y = u16::from(cpu_pullByte(cpu, game));
                 } else {
@@ -1644,72 +1644,72 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 cpu_setZN(cpu, (*cpu).y, (*cpu).xf);
                 break;
             }
-            123 => {
+            0x7b => {
                 (*cpu).a = (*cpu).dp;
                 cpu_setZN(cpu, (*cpu).a, false);
                 break;
             }
-            124 => {
+            0x7c => {
                 (*cpu).pc = address_absolute_indexed_indirect(cpu, game);
                 break;
             }
-            125 => {
+            0x7d => {
                 let (low, high) = address_absolute_x(cpu, false, game);
                 cpu_adc(cpu, low, high, game);
                 break;
             }
-            126 => {
+            0x7e => {
                 let (low, high) = address_absolute_x(cpu, true, game);
                 cpu_ror(cpu, low, high, game);
                 break;
             }
-            127 => {
+            0x7f => {
                 let (low, high) = address_absolute_long_x(cpu, game);
                 cpu_adc(cpu, low, high, game);
                 break;
             }
-            128 => {
+            0x80 => {
                 // Relative branches start after the displacement operand.
                 let displacement = cpu_readOpcode(cpu, game) as i8;
                 (*cpu).pc = (*cpu).pc.wrapping_add_signed(displacement as i16);
                 break;
             }
-            129 => {
+            0x81 => {
                 let (low, high) = address_direct_page_indexed_indirect(cpu, game);
                 cpu_sta(cpu, low, high, game);
                 break;
             }
-            130 => {
+            0x82 => {
                 let displacement = cpu_readOpcodeWord(cpu, game) as i16;
                 (*cpu).pc = (*cpu).pc.wrapping_add_signed(displacement);
                 break;
             }
-            131 => {
+            0x83 => {
                 let (low, high) = address_stack_relative(cpu, game);
                 cpu_sta(cpu, low, high, game);
                 break;
             }
-            132 => {
+            0x84 => {
                 let (low, high) = address_direct_page(cpu, game);
                 cpu_sty(cpu, low, high, game);
                 break;
             }
-            133 => {
+            0x85 => {
                 let (low, high) = address_direct_page(cpu, game);
                 cpu_sta(cpu, low, high, game);
                 break;
             }
-            134 => {
+            0x86 => {
                 let (low, high) = address_direct_page(cpu, game);
                 cpu_stx(cpu, low, high, game);
                 break;
             }
-            135 => {
+            0x87 => {
                 let (low, high) = address_direct_page_indirect_long(cpu, game);
                 cpu_sta(cpu, low, high, game);
                 break;
             }
-            136 => {
+            0x88 => {
                 if (*cpu).xf {
                     (*cpu).y = (*cpu).y.wrapping_sub(1) & 0xff;
                 } else {
@@ -1718,7 +1718,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 cpu_setZN(cpu, (*cpu).y, (*cpu).xf);
                 break;
             }
-            137 => {
+            0x89 => {
                 if (*cpu).mf {
                     let result = (*cpu).a as u8 & cpu_readOpcode(cpu, game);
                     (*cpu).z = result == 0;
@@ -1729,7 +1729,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 }
                 break;
             }
-            138 => {
+            0x8a => {
                 if (*cpu).mf {
                     (*cpu).a = (*cpu).a & 0xff00 | ((*cpu).x & 0xff);
                 } else {
@@ -1738,70 +1738,70 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
                 break;
             }
-            139 => {
+            0x8b => {
                 cpu_pushByte(cpu, (*cpu).db, game);
                 break;
             }
-            140 => {
+            0x8c => {
                 let (low, high) = address_absolute(cpu, game);
                 cpu_sty(cpu, low, high, game);
                 break;
             }
-            141 => {
+            0x8d => {
                 let (low, high) = address_absolute(cpu, game);
                 cpu_sta(cpu, low, high, game);
                 break;
             }
-            142 => {
+            0x8e => {
                 let (low, high) = address_absolute(cpu, game);
                 cpu_stx(cpu, low, high, game);
                 break;
             }
-            143 => {
+            0x8f => {
                 let (low, high) = address_absolute_long(cpu, game);
                 cpu_sta(cpu, low, high, game);
                 break;
             }
-            144 => {
+            0x90 => {
                 cpu_doBranch(cpu, cpu_readOpcode(cpu, game), !(*cpu).c);
                 break;
             }
-            145 => {
+            0x91 => {
                 let (low, high) = address_direct_page_indirect_y(cpu, true, game);
                 cpu_sta(cpu, low, high, game);
                 break;
             }
-            146 => {
+            0x92 => {
                 let (low, high) = address_direct_page_indirect(cpu, game);
                 cpu_sta(cpu, low, high, game);
                 break;
             }
-            147 => {
+            0x93 => {
                 let (low, high) = address_stack_relative_indirect_y(cpu, game);
                 cpu_sta(cpu, low, high, game);
                 break;
             }
-            148 => {
+            0x94 => {
                 let (low, high) = address_direct_page_x(cpu, game);
                 cpu_sty(cpu, low, high, game);
                 break;
             }
-            149 => {
+            0x95 => {
                 let (low, high) = address_direct_page_x(cpu, game);
                 cpu_sta(cpu, low, high, game);
                 break;
             }
-            150 => {
+            0x96 => {
                 let (low, high) = address_direct_page_y(cpu, game);
                 cpu_stx(cpu, low, high, game);
                 break;
             }
-            151 => {
+            0x97 => {
                 let (low, high) = address_direct_page_indirect_long_y(cpu, game);
                 cpu_sta(cpu, low, high, game);
                 break;
             }
-            152 => {
+            0x98 => {
                 if (*cpu).mf {
                     (*cpu).a = (*cpu).a & 0xff00 | ((*cpu).y & 0xff);
                 } else {
@@ -1810,16 +1810,16 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
                 break;
             }
-            153 => {
+            0x99 => {
                 let (low, high) = address_absolute_y(cpu, true, game);
                 cpu_sta(cpu, low, high, game);
                 break;
             }
-            154 => {
+            0x9a => {
                 (*cpu).sp = (*cpu).x;
                 break;
             }
-            155 => {
+            0x9b => {
                 if (*cpu).xf {
                     (*cpu).y = (*cpu).x & 0xff;
                 } else {
@@ -1828,67 +1828,67 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 cpu_setZN(cpu, (*cpu).y, (*cpu).xf);
                 break;
             }
-            156 => {
+            0x9c => {
                 let (low, high) = address_absolute(cpu, game);
                 cpu_stz(cpu, low, high, game);
                 break;
             }
-            157 => {
+            0x9d => {
                 let (low, high) = address_absolute_x(cpu, true, game);
                 cpu_sta(cpu, low, high, game);
                 break;
             }
-            158 => {
+            0x9e => {
                 let (low, high) = address_absolute_x(cpu, true, game);
                 cpu_stz(cpu, low, high, game);
                 break;
             }
-            159 => {
+            0x9f => {
                 let (low, high) = address_absolute_long_x(cpu, game);
                 cpu_sta(cpu, low, high, game);
                 break;
             }
-            160 => {
+            0xa0 => {
                 let (low, high) = address_immediate(cpu, true);
                 cpu_ldy(cpu, low, high, game);
                 break;
             }
-            161 => {
+            0xa1 => {
                 let (low, high) = address_direct_page_indexed_indirect(cpu, game);
                 cpu_lda(cpu, low, high, game);
                 break;
             }
-            162 => {
+            0xa2 => {
                 let (low, high) = address_immediate(cpu, true);
                 cpu_ldx(cpu, low, high, game);
                 break;
             }
-            163 => {
+            0xa3 => {
                 let (low, high) = address_stack_relative(cpu, game);
                 cpu_lda(cpu, low, high, game);
                 break;
             }
-            164 => {
+            0xa4 => {
                 let (low, high) = address_direct_page(cpu, game);
                 cpu_ldy(cpu, low, high, game);
                 break;
             }
-            165 => {
+            0xa5 => {
                 let (low, high) = address_direct_page(cpu, game);
                 cpu_lda(cpu, low, high, game);
                 break;
             }
-            166 => {
+            0xa6 => {
                 let (low, high) = address_direct_page(cpu, game);
                 cpu_ldx(cpu, low, high, game);
                 break;
             }
-            167 => {
+            0xa7 => {
                 let (low, high) = address_direct_page_indirect_long(cpu, game);
                 cpu_lda(cpu, low, high, game);
                 break;
             }
-            168 => {
+            0xa8 => {
                 if (*cpu).xf {
                     (*cpu).y = (*cpu).a & 0xff;
                 } else {
@@ -1897,12 +1897,12 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 cpu_setZN(cpu, (*cpu).y, (*cpu).xf);
                 break;
             }
-            169 => {
+            0xa9 => {
                 let (low, high) = address_immediate(cpu, false);
                 cpu_lda(cpu, low, high, game);
                 break;
             }
-            170 => {
+            0xaa => {
                 if (*cpu).xf {
                     (*cpu).x = (*cpu).a & 0xff;
                 } else {
@@ -1911,80 +1911,80 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 cpu_setZN(cpu, (*cpu).x, (*cpu).xf);
                 break;
             }
-            171 => {
+            0xab => {
                 (*cpu).db = cpu_pullByte(cpu, game);
                 cpu_setZN(cpu, u16::from((*cpu).db), true);
                 break;
             }
-            172 => {
+            0xac => {
                 let (low, high) = address_absolute(cpu, game);
                 cpu_ldy(cpu, low, high, game);
                 break;
             }
-            173 => {
+            0xad => {
                 let (low, high) = address_absolute(cpu, game);
                 cpu_lda(cpu, low, high, game);
                 break;
             }
-            174 => {
+            0xae => {
                 let (low, high) = address_absolute(cpu, game);
                 cpu_ldx(cpu, low, high, game);
                 break;
             }
-            175 => {
+            0xaf => {
                 let (low, high) = address_absolute_long(cpu, game);
                 cpu_lda(cpu, low, high, game);
                 break;
             }
-            176 => {
+            0xb0 => {
                 cpu_doBranch(cpu, cpu_readOpcode(cpu, game), (*cpu).c);
                 break;
             }
-            177 => {
+            0xb1 => {
                 let (low, high) = address_direct_page_indirect_y(cpu, false, game);
                 cpu_lda(cpu, low, high, game);
                 break;
             }
-            178 => {
+            0xb2 => {
                 let (low, high) = address_direct_page_indirect(cpu, game);
                 cpu_lda(cpu, low, high, game);
                 break;
             }
-            179 => {
+            0xb3 => {
                 let (low, high) = address_stack_relative_indirect_y(cpu, game);
                 cpu_lda(cpu, low, high, game);
                 break;
             }
-            180 => {
+            0xb4 => {
                 let (low, high) = address_direct_page_x(cpu, game);
                 cpu_ldy(cpu, low, high, game);
                 break;
             }
-            181 => {
+            0xb5 => {
                 let (low, high) = address_direct_page_x(cpu, game);
                 cpu_lda(cpu, low, high, game);
                 break;
             }
-            182 => {
+            0xb6 => {
                 let (low, high) = address_direct_page_y(cpu, game);
                 cpu_ldx(cpu, low, high, game);
                 break;
             }
-            183 => {
+            0xb7 => {
                 let (low, high) = address_direct_page_indirect_long_y(cpu, game);
                 cpu_lda(cpu, low, high, game);
                 break;
             }
-            184 => {
+            0xb8 => {
                 (*cpu).v = false;
                 break;
             }
-            185 => {
+            0xb9 => {
                 let (low, high) = address_absolute_y(cpu, false, game);
                 cpu_lda(cpu, low, high, game);
                 break;
             }
-            186 => {
+            0xba => {
                 if (*cpu).xf {
                     (*cpu).x = (*cpu).sp & 0xff;
                 } else {
@@ -1993,7 +1993,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 cpu_setZN(cpu, (*cpu).x, (*cpu).xf);
                 break;
             }
-            187 => {
+            0xbb => {
                 if (*cpu).xf {
                     (*cpu).x = (*cpu).y & 0xff;
                 } else {
@@ -2002,66 +2002,66 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 cpu_setZN(cpu, (*cpu).x, (*cpu).xf);
                 break;
             }
-            188 => {
+            0xbc => {
                 let (low, high) = address_absolute_x(cpu, false, game);
                 cpu_ldy(cpu, low, high, game);
                 break;
             }
-            189 => {
+            0xbd => {
                 let (low, high) = address_absolute_x(cpu, false, game);
                 cpu_lda(cpu, low, high, game);
                 break;
             }
-            190 => {
+            0xbe => {
                 let (low, high) = address_absolute_y(cpu, false, game);
                 cpu_ldx(cpu, low, high, game);
                 break;
             }
-            191 => {
+            0xbf => {
                 let (low, high) = address_absolute_long_x(cpu, game);
                 cpu_lda(cpu, low, high, game);
                 break;
             }
-            192 => {
+            0xc0 => {
                 let (low, high) = address_immediate(cpu, true);
                 cpu_cpy(cpu, low, high, game);
                 break;
             }
-            193 => {
+            0xc1 => {
                 let (low, high) = address_direct_page_indexed_indirect(cpu, game);
                 cpu_cmp(cpu, low, high, game);
                 break;
             }
-            194 => {
+            0xc2 => {
                 cpu_setFlags(cpu, cpu_getFlags(cpu) & !cpu_readOpcode(cpu, game));
                 break;
             }
-            195 => {
+            0xc3 => {
                 let (low, high) = address_stack_relative(cpu, game);
                 cpu_cmp(cpu, low, high, game);
                 break;
             }
-            196 => {
+            0xc4 => {
                 let (low, high) = address_direct_page(cpu, game);
                 cpu_cpy(cpu, low, high, game);
                 break;
             }
-            197 => {
+            0xc5 => {
                 let (low, high) = address_direct_page(cpu, game);
                 cpu_cmp(cpu, low, high, game);
                 break;
             }
-            198 => {
+            0xc6 => {
                 let (low, high) = address_direct_page(cpu, game);
                 cpu_dec(cpu, low, high, game);
                 break;
             }
-            199 => {
+            0xc7 => {
                 let (low, high) = address_direct_page_indirect_long(cpu, game);
                 cpu_cmp(cpu, low, high, game);
                 break;
             }
-            200 => {
+            0xc8 => {
                 if (*cpu).xf {
                     (*cpu).y = (*cpu).y.wrapping_add(1) & 0xff;
                 } else {
@@ -2070,12 +2070,12 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 cpu_setZN(cpu, (*cpu).y, (*cpu).xf);
                 break;
             }
-            201 => {
+            0xc9 => {
                 let (low, high) = address_immediate(cpu, false);
                 cpu_cmp(cpu, low, high, game);
                 break;
             }
-            202 => {
+            0xca => {
                 if (*cpu).xf {
                     (*cpu).x = (*cpu).x.wrapping_sub(1) & 0xff;
                 } else {
@@ -2084,79 +2084,79 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 cpu_setZN(cpu, (*cpu).x, (*cpu).xf);
                 break;
             }
-            203 => {
+            0xcb => {
                 (*cpu).waiting = true;
                 break;
             }
-            204 => {
+            0xcc => {
                 let (low, high) = address_absolute(cpu, game);
                 cpu_cpy(cpu, low, high, game);
                 break;
             }
-            205 => {
+            0xcd => {
                 let (low, high) = address_absolute(cpu, game);
                 cpu_cmp(cpu, low, high, game);
                 break;
             }
-            206 => {
+            0xce => {
                 let (low, high) = address_absolute(cpu, game);
                 cpu_dec(cpu, low, high, game);
                 break;
             }
-            207 => {
+            0xcf => {
                 let (low, high) = address_absolute_long(cpu, game);
                 cpu_cmp(cpu, low, high, game);
                 break;
             }
-            208 => {
+            0xd0 => {
                 cpu_doBranch(cpu, cpu_readOpcode(cpu, game), !(*cpu).z);
                 break;
             }
-            209 => {
+            0xd1 => {
                 let (low, high) = address_direct_page_indirect_y(cpu, false, game);
                 cpu_cmp(cpu, low, high, game);
                 break;
             }
-            210 => {
+            0xd2 => {
                 let (low, high) = address_direct_page_indirect(cpu, game);
                 cpu_cmp(cpu, low, high, game);
                 break;
             }
-            211 => {
+            0xd3 => {
                 let (low, high) = address_stack_relative_indirect_y(cpu, game);
                 cpu_cmp(cpu, low, high, game);
                 break;
             }
-            212 => {
+            0xd4 => {
                 let (low, high) = address_direct_page(cpu, game);
                 cpu_pushWord(cpu, cpu_readWord(cpu, low, high, game), game);
                 break;
             }
-            213 => {
+            0xd5 => {
                 let (low, high) = address_direct_page_x(cpu, game);
                 cpu_cmp(cpu, low, high, game);
                 break;
             }
-            214 => {
+            0xd6 => {
                 let (low, high) = address_direct_page_x(cpu, game);
                 cpu_dec(cpu, low, high, game);
                 break;
             }
-            215 => {
+            0xd7 => {
                 let (low, high) = address_direct_page_indirect_long_y(cpu, game);
                 cpu_cmp(cpu, low, high, game);
                 break;
             }
-            216 => {
+            0xd8 => {
                 (*cpu).d = false;
                 break;
             }
-            217 => {
+            0xd9 => {
                 let (low, high) = address_absolute_y(cpu, false, game);
                 cpu_cmp(cpu, low, high, game);
                 break;
             }
-            218 => {
+            0xda => {
                 if (*cpu).xf {
                     cpu_pushByte(cpu, (*cpu).x as u8, game);
                 } else {
@@ -2165,71 +2165,71 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 }
                 break;
             }
-            219 => {
+            0xdb => {
                 (*cpu).stopped = true;
                 break;
             }
-            220 => {
+            0xdc => {
                 let adr = cpu_readOpcodeWord(cpu, game);
                 (*cpu).pc = cpu_readWord(cpu, u32::from(adr), u32::from(adr.wrapping_add(1)), game);
                 (*cpu).k = cpu_read(cpu, u32::from(adr.wrapping_add(2)), game);
                 break;
             }
-            221 => {
+            0xdd => {
                 let (low, high) = address_absolute_x(cpu, false, game);
                 cpu_cmp(cpu, low, high, game);
                 break;
             }
-            222 => {
+            0xde => {
                 let (low, high) = address_absolute_x(cpu, true, game);
                 cpu_dec(cpu, low, high, game);
                 break;
             }
-            223 => {
+            0xdf => {
                 let (low, high) = address_absolute_long_x(cpu, game);
                 cpu_cmp(cpu, low, high, game);
                 break;
             }
-            224 => {
+            0xe0 => {
                 let (low, high) = address_immediate(cpu, true);
                 cpu_cpx(cpu, low, high, game);
                 break;
             }
-            225 => {
+            0xe1 => {
                 let (low, high) = address_direct_page_indexed_indirect(cpu, game);
                 cpu_sbc(cpu, low, high, game);
                 break;
             }
-            226 => {
+            0xe2 => {
                 cpu_setFlags(cpu, cpu_getFlags(cpu) | cpu_readOpcode(cpu, game));
                 break;
             }
-            227 => {
+            0xe3 => {
                 let (low, high) = address_stack_relative(cpu, game);
                 cpu_sbc(cpu, low, high, game);
                 break;
             }
-            228 => {
+            0xe4 => {
                 let (low, high) = address_direct_page(cpu, game);
                 cpu_cpx(cpu, low, high, game);
                 break;
             }
-            229 => {
+            0xe5 => {
                 let (low, high) = address_direct_page(cpu, game);
                 cpu_sbc(cpu, low, high, game);
                 break;
             }
-            230 => {
+            0xe6 => {
                 let (low, high) = address_direct_page(cpu, game);
                 cpu_inc(cpu, low, high, game);
                 break;
             }
-            231 => {
+            0xe7 => {
                 let (low, high) = address_direct_page_indirect_long(cpu, game);
                 cpu_sbc(cpu, low, high, game);
                 break;
             }
-            232 => {
+            0xe8 => {
                 if (*cpu).xf {
                     (*cpu).x = (*cpu).x.wrapping_add(1) & 0xff;
                 } else {
@@ -2238,56 +2238,56 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 cpu_setZN(cpu, (*cpu).x, (*cpu).xf);
                 break;
             }
-            233 => {
+            0xe9 => {
                 let (low, high) = address_immediate(cpu, false);
                 cpu_sbc(cpu, low, high, game);
                 break;
             }
-            235 => {
+            0xeb => {
                 (*cpu).a = (*cpu).a.swap_bytes();
                 cpu_setZN(cpu, (*cpu).a, true);
                 break;
             }
-            236 => {
+            0xec => {
                 let (low, high) = address_absolute(cpu, game);
                 cpu_cpx(cpu, low, high, game);
                 break;
             }
-            237 => {
+            0xed => {
                 let (low, high) = address_absolute(cpu, game);
                 cpu_sbc(cpu, low, high, game);
                 break;
             }
-            238 => {
+            0xee => {
                 let (low, high) = address_absolute(cpu, game);
                 cpu_inc(cpu, low, high, game);
                 break;
             }
-            239 => {
+            0xef => {
                 let (low, high) = address_absolute_long(cpu, game);
                 cpu_sbc(cpu, low, high, game);
                 break;
             }
-            240 => {
+            0xf0 => {
                 cpu_doBranch(cpu, cpu_readOpcode(cpu, game), (*cpu).z);
                 break;
             }
-            241 => {
+            0xf1 => {
                 let (low, high) = address_direct_page_indirect_y(cpu, false, game);
                 cpu_sbc(cpu, low, high, game);
                 break;
             }
-            242 => {
+            0xf2 => {
                 let (low, high) = address_direct_page_indirect(cpu, game);
                 cpu_sbc(cpu, low, high, game);
                 break;
             }
-            243 => {
+            0xf3 => {
                 let (low, high) = address_stack_relative_indirect_y(cpu, game);
                 cpu_sbc(cpu, low, high, game);
                 break;
             }
-            244 => {
+            0xf4 => {
                 let mut w: u16 = cpu_readOpcodeWord(cpu, game);
                 if w as ::core::ffi::c_int == 0xc2ae as ::core::ffi::c_int {
                     (*cpu).y = 0 as u16;
@@ -2295,31 +2295,31 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 cpu_pushWord(cpu, w, game);
                 break;
             }
-            245 => {
+            0xf5 => {
                 let (low, high) = address_direct_page_x(cpu, game);
                 cpu_sbc(cpu, low, high, game);
                 break;
             }
-            246 => {
+            0xf6 => {
                 let (low, high) = address_direct_page_x(cpu, game);
                 cpu_inc(cpu, low, high, game);
                 break;
             }
-            247 => {
+            0xf7 => {
                 let (low, high) = address_direct_page_indirect_long_y(cpu, game);
                 cpu_sbc(cpu, low, high, game);
                 break;
             }
-            248 => {
+            0xf8 => {
                 (*cpu).d = true;
                 break;
             }
-            249 => {
+            0xf9 => {
                 let (low, high) = address_absolute_y(cpu, false, game);
                 cpu_sbc(cpu, low, high, game);
                 break;
             }
-            250 => {
+            0xfa => {
                 if (*cpu).xf {
                     (*cpu).x = u16::from(cpu_pullByte(cpu, game));
                 } else {
@@ -2329,35 +2329,35 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 cpu_setZN(cpu, (*cpu).x, (*cpu).xf);
                 break;
             }
-            251 => {
+            0xfb => {
                 let temp = (*cpu).c;
                 (*cpu).c = (*cpu).e;
                 (*cpu).e = temp;
                 cpu_setFlags(cpu, cpu_getFlags(cpu));
                 break;
             }
-            252 => {
+            0xfc => {
                 let value_3 = address_absolute_indexed_indirect(cpu, game);
                 cpu_pushWord(cpu, (*cpu).pc.wrapping_sub(1), game);
                 (*cpu).pc = value_3;
                 break;
             }
-            253 => {
+            0xfd => {
                 let (low, high) = address_absolute_x(cpu, false, game);
                 cpu_sbc(cpu, low, high, game);
                 break;
             }
-            254 => {
+            0xfe => {
                 let (low, high) = address_absolute_x(cpu, true, game);
                 cpu_inc(cpu, low, high, game);
                 break;
             }
-            255 => {
+            0xff => {
                 let (low, high) = address_absolute_long_x(cpu, game);
                 cpu_sbc(cpu, low, high, game);
                 break;
             }
-            234 | _ => {
+            0xea | _ => {
                 break;
             }
         }
