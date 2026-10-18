@@ -1583,6 +1583,37 @@ then restores pre-render state and retains mine's audio/queue on success.
 Headless callback schedule, shared emulated hardware and BOTH gameplay adoption
 bound this probe; custom-driver timing and autonomous native gameplay remain open.
 
+Paired physical rendering and native adoption (2026-10-18): the original paired
+push/render probe completes 129,712/0 (464.81s), native exit 0. Its stronger
+context-checked variant also completes 129,712/0 (400.18s), native exit 0,
+with all 138,532,416 stereo sample values, terminal physical audio state and
+full queue matching. Captured/live upload latch bytes agree and are zero before
+every paired render. Nonzero audio is observed throughout sampled gameplay.
+The independently reviewed output-only fault fails at frame 200 with exactly
+one sample difference while terminal state/queue match. Probe code and all
+ROM-derived output remain temporary; no maintained rendering schedule changes.
+
+Successful physical BOTH comparisons now restore mine's audio snapshot and
+queue after restoring the ROM gameplay snapshot. Full audio/queue guards run
+before selection, so this retains the independently produced Rust branch across
+frames instead of replacing it with the ROM branch. Failure still uses the ROM
+rerun; custom-player adoption is unchanged. Live pre-comparison port and ring
+faults each produce exactly one failing frame in 3,600 with clean continuation.
+Post-comparison selection controls alter the ROM audio snapshot or live queue
+before adoption. Normal restores pass 3,600/0; omitting the audio or queue
+restore detects the altered input port or ring entry at frame 200, native exit 3.
+These independently verify both maintained selection calls execute. Cargo
+fmt/check, optimized core/DLL and metadata builds pass; Cargo release remains
+denied executing khronos_api's build script (OS error 5). The focused source
+change adds three Rust lines; all other residue counters are unchanged by it.
+Concurrent gameplay/display edits are excluded from its frozen verification.
+Exact maintained-source any% passes with default audio 129,712/0 (323.74s)
+and physical audio 129,712/0 (350.70s), native exits 0.
+This is native physical APU/queue continuation inside BOTH; autonomous native
+gameplay, custom-driver sample timing and different audio callback schedules
+remain unproved. Next: exercise supported save/load continuation with physical
+audio after native adoption and extend room/gameplay coverage toward credits.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read

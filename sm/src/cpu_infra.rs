@@ -3371,7 +3371,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
                 }
             }
         }
-        // Never deliver mine's captured commands to the shared audio player.
+        // Select recovery commands; successful physical comparison adopts mine below.
         queue_mine.select_runtime(queue_theirs, game);
         if game.g_fail {
             if game.VERIFY_ACTIVE {
@@ -3411,6 +3411,9 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
             if game.g_use_my_apu_code {
                 game.g_snapshot_mine.player.restore(game.g_spc_player);
             } else {
+                // Continue the independently verified Rust audio branch.
+                game.g_snapshot_mine.audio.restore(game.g_snes);
+                queue_mine.restore(game);
                 game.g_snapshot_theirs.player.restore(game.g_spc_player);
             }
             break;
