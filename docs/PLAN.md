@@ -2581,6 +2581,19 @@ both process exits 0. Raw offsets -1, cast lines -3, Rust lines -3; other
 counters unchanged. Next: Mini Crocomire movement/pre-instruction callbacks,
 retaining live index reads after movement, animation and RNG calls.
 
+Mini Crocomire movement/pre-instruction callbacks now use named byte-backed
+state reads, explicit 32-bit movement assembly and a wrapping byte random
+gate. Movement, animation and RNG callbacks retain subsequent live index
+reads; Func8 is safe, while movement and NextRandom boundaries remain unsafe.
+The simplified gate matches its prior integer expression for all 16,777,216
+frame-byte/RNG-word pairs. Direct full-source format and stable optimized
+core/DLL build pass; Cargo build scripts remain ASR-denied. Final-source any%
+passes 129,712/0 (188.76s); Waver passes 58,109/0 (87.22s), both process exits
+0. Raw offsets -7, unsafe functions -1, cast lines -22, Rust lines -19;
+other counters unchanged. Full sm/src search now finds Get_MiniCrocomire
+only at its definition. Next: remove that unused private pointer helper,
+then continue the next bank-A2 enemy's state/initialization access.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
