@@ -3512,27 +3512,18 @@ unsafe fn BlockInsideReact_SpecialAir(mut ci: *mut CollInfo, game: &mut Game) ->
     }
     return 0 as uint8;
 }
+unsafe fn dispatch_block_inside(ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    match game.current_level_block() >> 12 {
+        0 | 4 | 6 | 7 => BlockInsideReact_ShootableAir(ci, game),
+        1 => BlockInsideReact_Slope(ci, game),
+        2 => BlockInsideReact_SpikeAir(ci, game),
+        3 => BlockInsideReact_SpecialAir(ci, game),
+        5 => BlockReact_HorizExt(ci, game),
+        13 => BlockReact_VertExt(ci, game),
+        _ => BlockInsideReact_Special_(ci, game),
+    }
+}
 pub unsafe fn BlockInsideDetection(game: &mut Game) {
-    static kSamus_BlockInsideDetection: [Option<Func_CollInfo_U8>; 16] = unsafe {
-        [
-            Some(BlockInsideReact_ShootableAir as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockInsideReact_Slope as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockInsideReact_SpikeAir as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockInsideReact_SpecialAir as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockInsideReact_ShootableAir as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReact_HorizExt as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockInsideReact_ShootableAir as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockInsideReact_ShootableAir as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockInsideReact_Special_ as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockInsideReact_Special_ as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockInsideReact_Special_ as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockInsideReact_Special_ as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockInsideReact_Special_ as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReact_VertExt as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockInsideReact_Special_ as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockInsideReact_Special_ as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        ]
-    };
     *((&raw mut game.g_ram as *mut uint8).offset(0xb4c as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xb56 as ::core::ffi::c_int as isize)
@@ -3572,22 +3563,8 @@ pub unsafe fn BlockInsideDetection(game: &mut Game) {
     };
     let mut rv: uint8 = 0;
     loop {
-        rv = kSamus_BlockInsideDetection[((*(((&raw mut game.g_ram as *mut uint8)
-            .offset(0x10002 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
-            ) as *mut uint16 as *mut uint8)
-            .offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                    .wrapping_sub(1 as usize) as isize,
-            ) as ::core::ffi::c_int
-            & 0xf0 as ::core::ffi::c_int)
-            >> 4 as ::core::ffi::c_int) as usize]
-            .expect("non-null function pointer")(&raw mut ci, game);
-        if !(rv as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0) {
+        rv = dispatch_block_inside(&raw mut ci, game);
+        if rv & 0x80 == 0 {
             break;
         }
     }
@@ -3615,23 +3592,8 @@ pub unsafe fn BlockInsideDetection(game: &mut Game) {
             ci_r40: 0,
         };
         loop {
-            rv = kSamus_BlockInsideDetection[((*(((&raw mut game.g_ram as *mut uint8)
-                .offset(0x10002 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xdc4 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as isize,
-                ) as *mut uint16 as *mut uint8)
-                .offset(
-                    (::core::mem::size_of::<uint16>() as usize)
-                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                        .wrapping_sub(1 as usize) as isize,
-                ) as ::core::ffi::c_int
-                & 0xf0 as ::core::ffi::c_int)
-                >> 4 as ::core::ffi::c_int) as usize]
-                .expect("non-null function pointer")(&raw mut ci_0, game);
-            if !(rv as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0) {
+            rv = dispatch_block_inside(&raw mut ci_0, game);
+            if rv & 0x80 == 0 {
                 break;
             }
         }
@@ -3677,23 +3639,8 @@ pub unsafe fn BlockInsideDetection(game: &mut Game) {
             ci_r40: 0,
         };
         loop {
-            rv = kSamus_BlockInsideDetection[((*(((&raw mut game.g_ram as *mut uint8)
-                .offset(0x10002 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xdc4 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as isize,
-                ) as *mut uint16 as *mut uint8)
-                .offset(
-                    (::core::mem::size_of::<uint16>() as usize)
-                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                        .wrapping_sub(1 as usize) as isize,
-                ) as ::core::ffi::c_int
-                & 0xf0 as ::core::ffi::c_int)
-                >> 4 as ::core::ffi::c_int) as usize]
-                .expect("non-null function pointer")(&raw mut ci_1, game);
-            if !(rv as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0) {
+            rv = dispatch_block_inside(&raw mut ci_1, game);
+            if rv & 0x80 == 0 {
                 break;
             }
         }

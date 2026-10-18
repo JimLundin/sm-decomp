@@ -1388,6 +1388,19 @@ remain ASR-denied. Waver route: 58,109 frames, zero failures (86.52s); any%:
 cast lines -19, Rust lines -28. Next: block-inside detection type dispatch
 and its retry loops, preserving three live position samples and callbacks.
 
+Block-inside detection now shares direct type matches across its three
+sample retry loops. All sixteen selections, live block reads and high-bit
+retry behavior remain exact; position sampling/reset writes are unchanged.
+Prior Rust comparison passes 66,560 full-RAM/callback-log cases over every
+level word and all types with 0..15 retries across four sample scenarios;
+callbacks change the live index/type, coordinates and collision context.
+Stable optimized core/DLL build and direct format pass; Cargo fmt/build
+remain ASR-denied. Waver route: 58,109 frames, zero failures (83.60s); any%:
+129,712 frames, zero failures (182.27s). Raw offsets -6, cast lines -18,
+Rust lines -53. Unsafe functions +1 is the shared raw-context dispatcher
+replacing the three table calls. Next: block-inside detection coordinates
+and reset writes, preserving live center/top tests after reaction callbacks.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
