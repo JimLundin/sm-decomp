@@ -1401,6 +1401,19 @@ Rust lines -53. Unsafe functions +1 is the shared raw-context dispatcher
 replacing the three table calls. Next: block-inside detection coordinates
 and reset writes, preserving live center/top tests after reaction callbacks.
 
+Block-inside detection now uses byte-backed reset/coordinate access and
+wrapping bottom/top arithmetic. B4C still clears the following byte, reset
+and phase writes retain order, and center/top tests read live coordinates
+after callbacks. The unusual top XOR expression is preserved explicitly.
+Prior Rust comparison passes 721,920 full-RAM/callback cases over every
+initial and callback-adjusted Y value, seven radius boundaries, level words
+and retries; contexts/sample phases agree. Stable optimized core/DLL build
+and direct format pass; Cargo fmt/build remain ASR-denied. Waver route:
+58,109 frames, zero failures (85.51s); any%: 129,712 frames, zero failures
+(185.29s). Raw offsets -24, cast lines -49, Rust lines -42; unsafe count
+unchanged. Next: inert slope/default-speed inside reactions, then spike-air
+reactions, preserving their contact gates and speed-table writes.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

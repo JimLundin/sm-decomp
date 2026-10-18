@@ -3524,36 +3524,21 @@ unsafe fn dispatch_block_inside(ci: *mut CollInfo, game: &mut Game) -> uint8 {
     }
 }
 pub unsafe fn BlockInsideDetection(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb4c as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb56 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb58 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb5a as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb5c as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1e73 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    let mut r26: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xaf6 as ::core::ffi::c_int as isize) as *mut uint16);
-    let mut samus_bottom_boundary_position: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb00 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-        - 1 as ::core::ffi::c_int) as uint16;
-    let mut r28: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb00 as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-        - 1 as ::core::ffi::c_int) as uint16;
-    CalculateBlockAt(r26, r28, 0 as uint16, 0 as uint16, game);
+    game.g_ram[0xb4c..0xb4e].copy_from_slice(&0u16.to_le_bytes());
+    game.g_ram[0xb56..0xb58].copy_from_slice(&0u16.to_le_bytes());
+    game.g_ram[0xb58..0xb5a].copy_from_slice(&0u16.to_le_bytes());
+    game.g_ram[0xb5a..0xb5c].copy_from_slice(&0u16.to_le_bytes());
+    game.g_ram[0xb5c..0xb5e].copy_from_slice(&0u16.to_le_bytes());
+    game.g_ram[0x1e73..0x1e75].copy_from_slice(&0u16.to_le_bytes());
+    let mut r26 = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
+    let radius = u16::from_le_bytes([game.g_ram[0xb00], game.g_ram[0xb01]]);
+    let y = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
+    let samus_bottom_boundary_position = radius.wrapping_add(y).wrapping_sub(1);
+    let mut r28 = samus_bottom_boundary_position;
+    CalculateBlockAt(r26, r28, 0, 0, game);
     let mut ci: CollInfo = CollInfo {
         ci_r18_r20: 0,
-        ci_r24: 0 as uint16,
+        ci_r24: 0,
         ci_r26: r26,
         ci_r28: r28,
         ci_r30: 0,
@@ -3568,22 +3553,15 @@ pub unsafe fn BlockInsideDetection(game: &mut Game) {
             break;
         }
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1e73 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 1 as uint16;
-    if (samus_bottom_boundary_position as ::core::ffi::c_int
-        ^ *((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int)
-        & 0xfff0 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
-    {
-        r26 = *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        r28 = *((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        CalculateBlockAt(r26, r28, 0 as uint16, 0 as uint16, game);
+    game.g_ram[0x1e73..0x1e75].copy_from_slice(&1u16.to_le_bytes());
+    let y = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
+    if (samus_bottom_boundary_position ^ y) & 0xfff0 != 0 {
+        r26 = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
+        r28 = y;
+        CalculateBlockAt(r26, r28, 0, 0, game);
         let mut ci_0: CollInfo = CollInfo {
             ci_r18_r20: 0,
-            ci_r24: 0 as uint16,
+            ci_r24: 0,
             ci_r26: r26,
             ci_r28: r28,
             ci_r30: 0,
@@ -3598,39 +3576,19 @@ pub unsafe fn BlockInsideDetection(game: &mut Game) {
             }
         }
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1e73 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 2 as uint16;
-    if (samus_bottom_boundary_position as ::core::ffi::c_int
-        ^ (*((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int)
-        & 0xfff0 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
-        && (*((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            ^ (samus_bottom_boundary_position as ::core::ffi::c_int
-                ^ (*((&raw mut game.g_ram as *mut uint8)
-                    .offset(0xafa as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
-                    - *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xb00 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int) as uint16
-                    as ::core::ffi::c_int)
-                & 0xfff0 as ::core::ffi::c_int)
-            & 0xfff0 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-    {
-        r26 = *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        r28 = (*((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16;
-        CalculateBlockAt(r26, r28, 0 as uint16, 0 as uint16, game);
+    game.g_ram[0x1e73..0x1e75].copy_from_slice(&2u16.to_le_bytes());
+    let y = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
+    let radius = u16::from_le_bytes([game.g_ram[0xb00], game.g_ram[0xb01]]);
+    let top = y.wrapping_sub(radius);
+    let changed_row_bits = (samus_bottom_boundary_position ^ top) & 0xfff0;
+    // Preserve the original XOR test; this is not a simple center/top comparison.
+    if changed_row_bits != 0 && (y ^ changed_row_bits) & 0xfff0 != 0 {
+        r26 = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
+        r28 = top;
+        CalculateBlockAt(r26, r28, 0, 0, game);
         let mut ci_1: CollInfo = CollInfo {
             ci_r18_r20: 0,
-            ci_r24: 0 as uint16,
+            ci_r24: 0,
             ci_r26: r26,
             ci_r28: r28,
             ci_r30: 0,
