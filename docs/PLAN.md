@@ -1346,6 +1346,29 @@ Next: finish the damaged enemy with normal controls and observe its actual
 drop/collection before another missile-door attempt. Probe files and inputs
 stay ignored; no maintained Rust or ROM-derived artifacts are committed.
 
+9AD9 damaged-enemy kill and health collection (2026-10-18): four further
+beam trials remain regression-clean but do not kill enemy slot 0FF8.
+Aim-down, jump/downward fire, fresh early shots and side fire pass
+63,480/0, 63,441/0, 63,160/0 and 63,385/0 respectively; the shorter
+side/diagonal trial passes 63,415/0. Each ends with that enemy still at
+10 HP and missiles 0/5. Actual vertical shots stop at the platform, while
+diagonal shots miss; these trials do not prove additional damage or drops.
+
+Normal Morph/bomb controls from the 63,160-frame ammo-fall checkpoint
+finally kill the enemy: the isolated read-only replay passes 63,610/0
+(133.91s), native exit 0. Actual bomb slots appear at X102/Y921. Slot
+0FF8 is present with 10 HP at frame 63,235 and absent at 63,240; its
+F345 death effect appears at X88/Y922 and selects pickup kind 4 by
+63,270. The maintained pickup table indexes kind/2, so 4 selects large
+health, not missiles. Samus health rises from 39 to 59 by frame 63,280;
+missiles stay 0/5. A separate standard frozen 97309b4a bus replay of the
+exact 63,610 inputs also completes with zero failures and native exit 0.
+This proves an enemy death and health collection through normal gameplay,
+not ammunition acquisition or calls to the held Turtle/Crocomire routines.
+Next: use the living 59-health checkpoint to kill another reachable enemy
+and observe missile pickup kind 8 plus an actual missile-count increase.
+No maintained Rust or residue counters change; all inputs/probes stay ignored.
+
 HDMA remaining-byte classification (2026-10-18): the preserved 462-byte
 offscreen candidate's detailed 35,000-frame run passes the enforced oracle
 (62.50s), native exit 0, while still recording 34 raw table-difference
