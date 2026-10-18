@@ -5536,6 +5536,20 @@ and release build again fail at cargo launch with access denied OSerror5.
 Progress differences belong to concurrent hardware work; own residue delta
 is zero. Credits, complete rendering/audio and masked RAM remain unproved.
 
+Independent direct-page address QC (2026-10-18): current cpu_adrDp/Dpx/Dpy
+candidate passes 393,222 actual old/current word LDA/LDX instructions.
+Indexed cases cover every DP word with operand 00/01/FF and cancelling
+X/Y values that select physical WRAM 1800; unindexed cases select 0000 and
+1FFE. Actual loaded values, registers/flags, final PC and cycles match
+independent expectations and prior Rust helper execution. An omitted Dpx
+unaligned-DP penalty fails actual instruction cycles 5 versus 6, native
+exit 3221226505; unmodified probe exits zero. Frozen helper and dispatch
+bodies match live candidate. Optimized probe core/DLL, normal-core metadata,
+direct full-source formatting and progress pass. This verifies the exercised
+native-mode word paths, not every bus device, emulation-mode rule or movie
+integration. The candidate remains owned by its implementing agent; this
+commit changes only the QC note and leaves their production edits untouched.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
