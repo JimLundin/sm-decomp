@@ -1011,6 +1011,42 @@ remain outside tracked files. Next: compare at the actual pre-payload
 boundary, including ordered RAM stores and DSP sample timing, before
 changing upload behavior or enforcing audio equality.
 
+Pre-payload receiver replay (2026-10-18): the isolated 3eac6b6a-derived
+probe captures actual ROM/SPC RAM and DSP immediately before instruction
+1E8D, with input port 0 equal to FF. Constructed DCFAC7 uploads after
+160/400/3,600 boot frames record every ordered SPC RAM store, DSP register
+write and stereo sample through the next 15BF instruction boundary.
+Each span has 27,830 RAM stores and ten DSP writes; sample-value counts
+are 27,786/27,786/27,784. Independent RAM/DSP replay matches every actual
+sample value and the complete terminal APU RAM before continuation.
+DSP echo RAM writes arise naturally during replayed DSP cycles.
+
+A second owned copy receives only preparation writes 2C:00, 3C:00 and
+5C:FF at receiver entry, then follows the same captured events. Differing
+sample values are 0/14,319/27,777 during the recorded spans. A subsequent
+2,048-stereo-sample DSP-only continuation differs in 0/0/4,095 values;
+the two RAM copies differ in 0/0/3,796 bytes afterward. All three guarded
+diagnostics return native exit 0. An active identical-copy control has
+zero sample/RAM differences and exit 0; a captured sample-bit fault fails
+the baseline comparator with exit 1 and no completion marker.
+
+Two independent reviews find no blocking capture/order/ownership issue.
+This is a fixed-trace causal DSP intervention: both copies receive the
+original SPC stores and commands, so changed SPC feedback is excluded.
+Receiver entry precedes payload transfer but excludes earlier handshaking
+and Rust's actual CPU-side preparation point. No complete DSP-field state
+comparison is asserted; continuation executes no future SPC instructions.
+Actual Rust upload scheduling and runtime audio equivalence remain open.
+
+Maintained Rust and this probe's residue counters are unchanged. Cargo fmt
+and fmt --check and isolated optimized builds pass; Cargo release still
+fails executing khronos_api's build script (OS error 5). Concurrent oracle
+source changes and their integration verification belong to their owner;
+this frozen-source diagnostic claims no current-source gameplay pass.
+All diagnostic code/logs and ROM-derived state remain outside tracked
+files. Next: compare the actual CPU upload-entry boundary and earlier
+handshaking, then actual Rust scheduling before changing upload behavior.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read
@@ -1358,6 +1394,29 @@ Tests preserve current coverage rather than prove every port/configuration
 or rendering case. No diagnostic or ROM-derived assets are committed.
 Next: retain useful bounded OAM memory diagnostics, then broaden actual
 sprite-port boundary coverage and classify other omitted hardware state.
+
+Bounded OAM memory diagnostics (2026-10-18): failures now list up to 16
+low/high-table differences in one combined limit, with byte offset and
+mine/theirs/previous values. Low entries use offsets 2*word-index; high
+entries use 512+byte-index. Low values remain full words; high values are
+zero-extended bytes. Comparison, snapshot state and recovery are unchanged.
+
+Actual failure-path controls mutate the last low-table word, last high
+byte, and all low/high entries at frame 200. Each 3,600-frame replay has
+exactly one failing frame, zero RAM differences and native exit 1. The
+single faults print offsets 1FE/21F; the many-fault case prints exactly
+16 details. Independent source/output review confirms offsets, bounded
+ordering and read-only diagnostics. The truncation case exhausts its
+limit in the low table; a small mixed case remains useful extra coverage.
+
+Maintained-source any% passes 129,712/0 (212.10s), native exit 0. Its
+frozen DLL contains 060963f9 plus these 26 diagnostic lines; concurrent
+commits change only PLAN. Cargo fmt/check, optimized core/DLL and
+normal-core metadata builds pass; Cargo release remains blocked executing
+khronos_api's build script (OS error 5). Rust lines +26 restore useful
+failure details; other residue counters unchanged. No diagnostic hooks
+or ROM-derived outputs enter tracked files. Next: broaden actual sprite
+port boundary tests and classify other omitted hardware state.
 
 ## Definition of done for any change
 
