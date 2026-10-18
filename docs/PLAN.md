@@ -5887,6 +5887,25 @@ and progress pass. Independent partner fixture review finds no issue.
 Hardware accuracy, arbitrary addressing and full-movie integration remain
 separate. Only PLAN changes; synthetic probes/assets stay TEMP.
 
+Independent compare CPU candidate QC (2026-10-18): 4,718,592 actual
+old/current absolute CMP/CPX/CPY pairs pass, native exit zero. Every initial
+target word, six operand patterns and both widths exercise WRAM, byte reads
+through 2180 and word divide-result reads through 4214/4215. Independent
+carry target>=operand and N/Z from wrapped subtraction pass, as do unchanged
+A/X/Y, selected preserved control flags, PC, cycles and WRAM-port increments.
+A TEMP byte-CMP widened-sum threshold fault (>= FF instead of > FF) sets
+carry true instead of false, native exit 3221226505.
+
+The fixture ties M/X widths together; separate width combinations remain
+source-reviewed rather than exercised here. Raw high X/Y values in byte mode
+deliberately test helper behavior, not canonical hardware states. No assertion
+bypass is used. Tested helper bodies match live exactly; optimized probe
+core/DLL, direct full-source format, normal-core metadata and progress pass.
+Independent partner fixture review finds no issue. Other addressing modes,
+arbitrary read mutations, hardware accuracy and full-movie integration remain
+separate. Only PLAN changes; probes/assets stay TEMP. Implementer retains
+production ownership and full-movie verification.
+
 Independent native control-write candidate QC (2026-10-18): 73,728 actual
 old/current byte STA instructions pass through banks 00/80 at 4200/4201/420D.
 All 256 written bytes, 16 initial control-flag combinations and autojoy
