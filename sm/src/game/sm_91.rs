@@ -1012,12 +1012,9 @@ pub unsafe fn Samus_Pose_Func2(game: &mut Game) -> uint8 {
         as *mut uint16) = v0;
     return 0 as uint8;
 }
-pub unsafe fn EnableDemoInput(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa60 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (0x90e91d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    let ref mut fresh32 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xa88 as ::core::ffi::c_int as isize) as *mut uint16);
-    *fresh32 = (*fresh32 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
+pub fn EnableDemoInput(game: &mut Game) {
+    game.set_samus_input_handler(fnSamus_InputHandler_E91D as u16);
+    game.set_demo_enable(game.demo_enable() | 0x8000);
 }
 pub unsafe fn DisableDemoInput(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xa60 as ::core::ffi::c_int as isize)
@@ -1026,27 +1023,17 @@ pub unsafe fn DisableDemoInput(game: &mut Game) {
         .offset(0xa88 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh1 = (*fresh1 as ::core::ffi::c_int & !(0x8000 as ::core::ffi::c_int)) as uint16;
 }
-pub unsafe fn ResetDemoData(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa7a as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa7c as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa7e as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa80 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa82 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa84 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa86 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa8c as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa8e as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa88 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+pub fn ResetDemoData(game: &mut Game) {
+    game.set_demo_input_pre_instr(0);
+    game.set_demo_input_instr_timer(0);
+    game.set_demo_input_instr_ptr(0);
+    game.set_demo_timer_counter(0);
+    game.set_xray_angle(0);
+    game.set_demo_input(0);
+    game.set_demo_input_new(0);
+    game.set_demo_input_prev(0);
+    game.set_demo_input_prev_new(0);
+    game.set_demo_enable(0);
 }
 pub unsafe fn LoadDemoInputObject(mut a: uint16, mut j: uint16, game: &mut Game) {
     let mut dio: *mut DemoInputObject = ::core::ptr::null_mut::<DemoInputObject>();

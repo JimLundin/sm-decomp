@@ -647,6 +647,10 @@ impl Game {
         u16::from_le_bytes([self.g_ram[0xa7a], self.g_ram[0xa7b]])
     }
 
+    pub fn set_demo_input_pre_instr(&mut self, value: u16) {
+        self.g_ram[0xa7a..0xa7c].copy_from_slice(&value.to_le_bytes());
+    }
+
     /// demo_input_instr_timer ($7E:0A7C in ram_map).
     pub fn demo_input_instr_timer(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0xa7c], self.g_ram[0xa7d]])
@@ -663,6 +667,16 @@ impl Game {
 
     pub fn set_demo_input_instr_ptr(&mut self, value: u16) {
         self.g_ram[0xa7e..0xa80].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// demo_timer_counter ($7E:0A80 in ram_map).
+    pub fn set_demo_timer_counter(&mut self, value: u16) {
+        self.g_ram[0xa80..0xa82].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// xray_angle ($7E:0A82 in ram_map), also used by demo input objects.
+    pub fn set_xray_angle(&mut self, value: u16) {
+        self.g_ram[0xa82..0xa84].copy_from_slice(&value.to_le_bytes());
     }
 
     /// demo_input ($7E:0A84 in ram_map).
@@ -686,6 +700,10 @@ impl Game {
     /// demo_enable ($7E:0A88 in ram_map), shared with hdma_ptr_1.
     pub fn demo_enable(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0xa88], self.g_ram[0xa89]])
+    }
+
+    pub fn set_demo_enable(&mut self, value: u16) {
+        self.g_ram[0xa88..0xa8a].copy_from_slice(&value.to_le_bytes());
     }
 
     /// demo_input_prev ($7E:0A8C in ram_map).

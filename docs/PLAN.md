@@ -4712,6 +4712,33 @@ claim. No source changes; probes stay TEMP. Direct format/metadata and progress
 checks pass; Cargo remains execution-denied. No new full-any% or Waver result
 is claimed; enabled-render Waver71 and credits gaps remain open.
 
+EnableDemoInput and ResetDemoData now use named byte-backed stores.
+Enable writes the original E91D handler before its live enable-word read/OR;
+all lower bits remain intact. Reset retains ten separate zero stores in
+preinstruction/timer/pointer/counter/angle/input/new/history/history-new/enable
+order, with enable last. Four added setters match ram_map at 0A7A/0A80/0A82/
+0A88 and preserve shared HDMA aliases. Both routines are now safe.
+DisableDemoInput has no attract calls and remains unchanged.
+
+Committed bf43431c baseline attract passes 30,000/0 (49.68s), native exit 0.
+Baseline and rewritten attract observe 26 actual Rust-side-2 calls each to
+reset and enable, zero disable calls; complete ordered entry traces match.
+Removing probes restores exact maintained source. Rewritten Verified 30000 frames: 0 failing frames (48.85s);
+Start-exit Verified 5000 frames: 0 failing frames (7.33s); full any% Verified 129712 frames: 0 failing frames (243.16s); native exits 0.
+These calls cover normal attract initialization, with enable zero on entry;
+nonzero lower enable bits are preserved by source arithmetic but are not
+proved by this route. Dedicated source freezes bf43431c plus only this
+sm_91.rs/game_state.rs change; concurrent oracle/display work is separate.
+Direct full-source rustfmt check, optimized core/DLL and normal-core metadata
+builds pass. Required Cargo fmt/check/build attempts remain denied launching
+Cargo (OS error 5). Progress passes: raw offsets -12, unsafe functions -2,
+cast lines -14; Rust lines +5 provide four setters, other focused counters
+unchanged. No probes or ROM-derived assets committed. Next: clean
+LoadDemoInputObject's executed RAM stores and checked live ROM definition
+reads, preserving angle-before-mapping and preinstruction/pointer/timer/counter
+write order. Disable, set 3, uncovered demo operations/preinstructions and
+stopped ammo coverage remain held.
+
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
 the original `SignExtend8(0x8000)` initialization and the middle-byte velocity
