@@ -61,6 +61,22 @@ pub use crate::types::{
 };
 pub const VMAIN: SnesRegs = 8469;
 pub use crate::types::{ProjectileInstr, SyncAllFunc};
+// Explicit state previously included by the oversized OAM memory copy.
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub struct SpriteSnapshot {
+    pub address: uint8,
+    pub written_address: uint8,
+    pub high_table: bool,
+    pub written_high_table: bool,
+    pub second_byte: bool,
+    pub buffer: uint8,
+    pub priority_rotation: bool,
+    pub tile_address_1: uint16,
+    pub tile_address_2: uint16,
+    pub size: uint8,
+    // Preserve the inherited cache coverage without depending on Ppu layout.
+    pub legacy_pixel_prefix: [uint8; 19],
+}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Snapshot {
@@ -77,7 +93,9 @@ pub struct Snapshot {
     pub ram: [uint8; 131072],
     pub vram: [uint16; 32768],
     pub sram: [uint8; 8192],
-    pub oam: [uint16; 288],
+    pub oam: [uint16; 256],
+    pub high_oam: [uint8; 32],
+    pub sprite: SpriteSnapshot,
     pub cgram: [uint16; 256],
     pub cgram_pointer: uint8,
     pub cgram_second_write: bool,
@@ -1418,43 +1436,21 @@ unsafe fn VerifySnapshotsEq(
             }
         }
     }
-    if memcmp(
-        &raw mut (*b).oam as *mut uint16 as *const ::core::ffi::c_void,
-        &raw mut (*a).oam as *mut uint16 as *const ::core::ffi::c_void,
-        (::core::mem::size_of::<uint16>() as size_t).wrapping_mul(0x120 as size_t),
-    ) != 0
-    {
-        game.g_fail = true_0 != 0;
+    if (*b).oam != (*a).oam || (*b).high_oam != (*a).high_oam {
+        game.g_fail = true;
         if report_details {
-            fprintf(
-                stderr,
-                b"@%d: VRAM OAM compare failed (mine != theirs, prev):\n\0" as *const u8
-                    as *const ::core::ffi::c_char,
+            eprintln!("@{}: OAM memory compare failed", game.snes_frame_counter);
+        }
+    }
+    if (*b).sprite != (*a).sprite {
+        game.g_fail = true;
+        if report_details {
+            eprintln!(
+                "@{}: Sprite state compare failed: mine {:?} != theirs {:?}",
                 game.snes_frame_counter,
+                (*b).sprite,
+                (*a).sprite
             );
-            let mut i_2: size_t = 0 as size_t;
-            let mut j_2: size_t = 0 as size_t;
-            while i_2 < 0x120 as size_t {
-                if (*a).oam[i_2 as usize] as ::core::ffi::c_int
-                    != (*b).oam[i_2 as usize] as ::core::ffi::c_int
-                {
-                    fprintf(
-                        stderr,
-                        b"0x%.6X: %.4X != %.4X (%.4X)\n\0" as *const u8
-                            as *const ::core::ffi::c_char,
-                        i_2 as ::core::ffi::c_int,
-                        (*b).oam[i_2 as usize] as ::core::ffi::c_int,
-                        (*a).oam[i_2 as usize] as ::core::ffi::c_int,
-                        (*prev).oam[i_2 as usize] as ::core::ffi::c_int,
-                    );
-                    game.g_fail = true_0 != 0;
-                    j_2 = j_2.wrapping_add(1);
-                    if j_2 >= 16 as size_t {
-                        break;
-                    }
-                }
-                i_2 = i_2.wrapping_add(1);
-            }
         }
     }
 }
@@ -1496,11 +1492,22 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
         &raw mut (*(*game.g_snes).ppu).vram as *mut uint16_t as *const ::core::ffi::c_void,
         (::core::mem::size_of::<uint16>() as size_t).wrapping_mul(0x8000 as size_t),
     );
-    memcpy(
-        &raw mut (*s).oam as *mut uint16 as *mut ::core::ffi::c_void,
-        &raw mut (*(*game.g_snes).ppu).oam as *mut uint16_t as *const ::core::ffi::c_void,
-        (::core::mem::size_of::<uint16>() as size_t).wrapping_mul(0x120 as size_t),
-    );
+    let ppu = &*(*game.g_snes).ppu;
+    (*s).oam = ppu.oam;
+    (*s).high_oam = ppu.highOam;
+    (*s).sprite = SpriteSnapshot {
+        address: ppu.oamAdr,
+        written_address: ppu.oamAdrWritten,
+        high_table: ppu.oamInHigh,
+        written_high_table: ppu.oamInHighWritten,
+        second_byte: ppu.oamSecondWrite,
+        buffer: ppu.oamBuffer,
+        priority_rotation: ppu.objPriority,
+        tile_address_1: ppu.objTileAdr1,
+        tile_address_2: ppu.objTileAdr2,
+        size: ppu.objSize,
+        legacy_pixel_prefix: ppu.objPixelBufferXX[..19].try_into().unwrap(),
+    };
 }
 unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     (*(*game.g_snes).ppu).cgram = (*s).cgram;
@@ -1540,11 +1547,20 @@ unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
         &raw mut (*s).vram as *mut uint16 as *const ::core::ffi::c_void,
         (::core::mem::size_of::<uint16>() as size_t).wrapping_mul(0x8000 as size_t),
     );
-    memcpy(
-        &raw mut (*(*game.g_snes).ppu).oam as *mut uint16_t as *mut ::core::ffi::c_void,
-        &raw mut (*s).oam as *mut uint16 as *const ::core::ffi::c_void,
-        (::core::mem::size_of::<uint16>() as size_t).wrapping_mul(0x120 as size_t),
-    );
+    let ppu = &mut *(*game.g_snes).ppu;
+    ppu.oam = (*s).oam;
+    ppu.highOam = (*s).high_oam;
+    ppu.oamAdr = (*s).sprite.address;
+    ppu.oamAdrWritten = (*s).sprite.written_address;
+    ppu.oamInHigh = (*s).sprite.high_table;
+    ppu.oamInHighWritten = (*s).sprite.written_high_table;
+    ppu.oamSecondWrite = (*s).sprite.second_byte;
+    ppu.oamBuffer = (*s).sprite.buffer;
+    ppu.objPriority = (*s).sprite.priority_rotation;
+    ppu.objTileAdr1 = (*s).sprite.tile_address_1;
+    ppu.objTileAdr2 = (*s).sprite.tile_address_2;
+    ppu.objSize = (*s).sprite.size;
+    ppu.objPixelBufferXX[..19].copy_from_slice(&(*s).sprite.legacy_pixel_prefix);
 }
 pub unsafe fn RunAsmCode(
     mut pc: uint32,

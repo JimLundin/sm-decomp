@@ -1299,6 +1299,39 @@ Probe source/output remains ignored. Next: replace this implicit spill with
 explicit sprite-memory and field snapshots while preserving demonstrated
 port/configuration coverage and classifying padding/cache behavior.
 
+Explicit OAM snapshots (2026-10-18): Snapshot now stores the 256 low-table
+words and 32 high-table bytes separately, plus a value-compared
+SpriteSnapshot for the six port fields, priority rotation, both tile
+addresses, size and the inherited 19-byte cache prefix. Capture/restore
+uses named fields and bounded arrays rather than copying into neighboring
+Ppu fields. Ppu/g_ram layout and serialized save states are unchanged.
+The former padding byte at relative offset 551 is deliberately excluded:
+it has no emulated meaning and derived equality never compares padding.
+
+The actual changed capture/compare/restore paths pass 577 byte-boundary
+fault/restore cases: all 575 previously covered nonpadding bytes remain
+detected/restored, padding is ignored/left alone, and cache byte 19 remains
+outside the inherited prefix coverage. Equal snapshots pass. Six port
+faults also pass actual continued $2138 reads, $2104 writes and vblank
+address reloads after restoration. Another session executes the same
+probe with native exit 0 and verifies that stripping observations restores
+the exact maintained body. Independent source review finds no functional
+blocker. An isolated frame-200 address fault produces exactly one failure
+over 3,600 frames, zero RAM differences and native exit 1.
+
+The maintained-source frozen DLL is 1fdb9a55 plus this focused change;
+later concurrent commits change only PLAN. Any% passes 129,712/0 (203.12s)
+and Waver 58,109/0 (94.63s), both native exits 0. Cargo fmt/check, optimized
+core/DLL and normal-core metadata builds pass; Cargo release remains
+blocked executing khronos_api's build script (OS error 5). Rust lines +16
+make the snapshot contract explicit; cast lines -6, other residue counters
+unchanged. Diagnostics name sprite fields; memory mismatch diagnostics are
+now generic instead of the old first-16-word dump, a diagnostic limitation.
+Tests preserve current coverage rather than prove every port/configuration
+or rendering case. No diagnostic or ROM-derived assets are committed.
+Next: retain useful bounded OAM memory diagnostics, then broaden actual
+sprite-port boundary coverage and classify other omitted hardware state.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
