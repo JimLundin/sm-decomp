@@ -6649,6 +6649,29 @@ diagnosis stays stopped. Continue executed hardware paths and route coverage
 with useful independent subagents. Peer owns remote synchronization; root
 probes run in TEMP and require no legacy target outputs.
 
+CPU long-indirect cleanup (2026-10-18): cpu_adrIdl/Ily use native widening,
+word-wrapped pointer-byte addresses and 24-bit target masks. Operand fetch,
+DP penalty and all three pointer reads retain their order; the bank-byte
+address rereads DP after the first two reads. Ily still rereads Y after low
+output, while Idl retains its captured pointer. Actual old/current helpers
+pass 33,554,432 cases across every DP/operand pair and both modes with
+varying pointer/Y; independent addresses/cycles and ordered bus traces
+pass. Another 262,144 aliased-output cases match high target and CPU fields.
+Physical WRAM executes 2,097,152 STA/LDA instructions over every value,
+both accumulator widths, four DP boundaries and both modes, including target
+bank crossing. RAM/value, Y/DP, Z/N, PC and cycles pass. Instrumented any%
+prefix passes 3,600/0 (5.80s), native exit 0, with Idl zero and Ily 143,578
+calls. Dedicated instructions establish Idl execution, not movie coverage.
+Clean frozen 82fe473dc197ce1064ebeeb3809575af9b547fce plus only these helpers
+passes any% 129,712/0 (211.79s), native exit 0. Direct full-source format,
+normal-core metadata and optimized clean/probe core/DLL builds pass;
+Cargo fmt/release remain launch-denied. Progress/diff checks pass; focused
+cast lines -16 and Rust lines -11, other categories unchanged. Later peer
+edits are outside this replay. Physical device/ROM pointer side effects,
+full Cartesian coverage, hardware/render/audio timing and credits remain
+open; held HDMA diagnosis stays stopped. Address-helper arithmetic cleanup
+is complete; continue executed CPU data-operation helpers.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
