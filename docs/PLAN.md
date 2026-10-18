@@ -616,6 +616,54 @@ compare saturation cases independently, and verify the complete correction
 with raw table/window checks before enforcing those fields. No maintained
 Rust or residue counters changed; all candidate/probe assets stay ignored.
 
+Later X-ray window mismatch (2026-10-18): a 28,431-frame isolated trace
+passes 28,431/0 (54.64s), native exit 0. Near frame 28,428, the downward
+helper starts at offset 144 with both edges FFFFFE00 and positive steps
+01C3/0306. The earlier C87D..C8D5 instruction range captures no ROM
+execution here; this is an offscreen branch, not the first on-screen case.
+A wider CPU/store trace passes 28,431/0 (49.22s), native exit 0, locating
+7E:92BF writes at 91:C309 (00) and C363 (FF). ROM computes and clips
+edges in separate passes, with byte stores and saved crossing positions.
+The combined helper's early-finish behavior needs comparison against that
+order; the observed start values alone do not justify a replacement rule.
+
+A second isolated candidate keeps the first gate removal and fills the
+remaining rows with FFFF when both edges saturate above FFFF. On committed
+4c125ea2, Waver still passes 58,109/0 (99.40s), native exit 0, but raw
+table/window mismatches increase to 71/68 frames. Reject this candidate:
+its green enforced oracle conceals worse unverified hardware state. No
+maintained source is changed. Next: compare the original separate edge
+passes and crossing positions directly, rather than guessing a combined
+saturation rule. Complete route, latch and upload gaps remain open.
+
+Executed-function coverage audit (2026-10-18): an isolated probe on committed
+1d8f070e counts 63 public entries and seven Waver branches, using Rust-side
+version 2 and zero-based movie input frames. Independent subagents verify
+that removing the observations restores the exact maintained function
+bodies. Each route runs in a fresh process. One no-Game Goofball no-op has
+an unfiltered call-only counter and is excluded from Rust-side/frame claims.
+Any% passes 129,712/0 (233.12s), native exit 0, with all 70 counters zero.
+Its replay does not exercise these Waver or Turtle routines.
+
+Waver passes 58,109/0 (109.96s), native exit 0: Init 3 calls, Main 237 calls
+across 79 frames (58,030..58,108), instruction callback 3, animation helper
+10. The Energy Tank route passes 58,857/0 (112.63s), native exit 0: Init 3,
+Main 1,624 calls across 705 frames (58,030..58,734), instruction callback
+21, animation helper 57. Both routes execute all seven measured branches.
+The extended route records horizontal collisions 6, vertical collisions 35,
+phase-56 transitions 27, animation completions 21 and instruction changes 55.
+Calls and frames differ because multiple enemies/callbacks can run per frame.
+
+All 59 counted Turtle, Goofball and Mini Crocomire entries record zero calls
+on all three routes. Their passing replays establish regression results,
+not execution of the refactored bodies. Extracted function comparisons are
+separate evidence. Hold further uncovered Turtle cleanup and prioritize
+actual route coverage. These counters do not measure private helpers,
+shared collision internals, enemy instances or all possible AI states.
+No maintained instrumentation, residue-counter changes or ROM-derived
+assets enter this audit. Next: verify new room 99BD with the current oracle
+and extend normal inputs toward currently unexecuted gameplay paths.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
