@@ -4072,41 +4072,31 @@ fn setup_extension_block(j: uint16, block_type_and_bts: u16, game: &mut Game) ->
     DeletePlm(j, game);
     0
 }
-pub unsafe fn SkipDebugDrawInstructionsForScrollPlms(mut j: uint16, game: &mut Game) {
-    let ref mut fresh18 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1d27 as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
-    *fresh18 = (*fresh18 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as uint16;
+pub fn SkipDebugDrawInstructionsForScrollPlms(j: uint16, game: &mut Game) {
+    let instruction_offset = 0x1d27 + usize::from(j & !1);
+    let instruction = u16::from_le_bytes([
+        game.g_ram[instruction_offset],
+        game.g_ram[instruction_offset + 1],
+    ]);
+    game.g_ram[instruction_offset..instruction_offset + 2]
+        .copy_from_slice(&instruction.wrapping_add(4).to_le_bytes());
 }
-pub unsafe fn PlmSetup_B703_ScrollPLM(mut j: uint16, game: &mut Game) -> uint8 {
-    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    WriteLevelDataBlockTypeAndBts(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize),
-        0x3046 as uint16,
-        game,
-    );
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1e17 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v1 as isize) = 0 as uint16;
-    SkipDebugDrawInstructionsForScrollPlms(j, game);
-    return 0 as uint8;
+pub fn PlmSetup_B703_ScrollPLM(j: uint16, game: &mut Game) -> uint8 {
+    setup_scroll_block(j, 0x3046, game)
 }
-pub unsafe fn PlmSetup_B707_SolidScrollPLM(mut j: uint16, game: &mut Game) -> uint8 {
-    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    WriteLevelDataBlockTypeAndBts(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize),
-        0xb046 as uint16,
-        game,
-    );
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1e17 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v1 as isize) = 0 as uint16;
+pub fn PlmSetup_B707_SolidScrollPLM(j: uint16, game: &mut Game) -> uint8 {
+    setup_scroll_block(j, 0xb046, game)
+}
+fn setup_scroll_block(j: uint16, block_type_and_bts: u16, game: &mut Game) -> uint8 {
+    let slot_index = usize::from(j & !1);
+    let block_offset = 0x1c87 + slot_index;
+    let block_index = u16::from_le_bytes([game.g_ram[block_offset], game.g_ram[block_offset + 1]]);
+    WriteLevelDataBlockTypeAndBts(block_index, block_type_and_bts, game);
+    let trigger_offset = 0x1e17 + slot_index;
+    game.g_ram[trigger_offset..trigger_offset + 2].fill(0);
+    // Read the live instruction after the level-data/BTS and trigger writes.
     SkipDebugDrawInstructionsForScrollPlms(j, game);
-    return 0 as uint8;
+    0
 }
 pub unsafe fn PlmSetup_B6FF_ScrollBlockTouch(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;

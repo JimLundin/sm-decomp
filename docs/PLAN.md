@@ -1126,6 +1126,16 @@ build and direct format pass; Cargo fmt/build remain ASR-denied. Waver route:
 Next: air/solid scroll setups and their wrapping instruction advance,
 preserving level-data, BTS, trigger and instruction write order.
 
+Air/solid scroll setups and the debug-draw instruction advance are now safe
+byte-backed Rust. They retain 3046/B046, reset the slot's variable, then read
+and advance the live instruction pointer by four with 16-bit wrapping. Slot
+word indexing still rounds odd offsets down. Stable optimized core/DLL build
+and direct format pass; Cargo fmt/build remain ASR-denied. Waver route passes
+58,109 frames, zero failures (88.41s); any% passes 129,712 frames, zero
+failures (188.61s). Raw offsets -5, unsafe functions -3, cast lines -9,
+Rust lines -10. Next: scroll-block touch, retaining descending slot search,
+the no-match infinite loop and the two separate wrapping instruction writes.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
