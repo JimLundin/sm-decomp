@@ -754,6 +754,43 @@ Cargo release remains blocked executing dependency build scripts (OS error
 5). Next: independently capture Rust gameplay upload sources/order and
 compare them with ROM transactions before enforcing upload equivalence.
 
+Independent upload-selection audit (2026-10-18): an isolated source copy
+at c2fcf170 records the actual Rust APU_UploadBank argument independently
+of the ROM's source pointer at CPU 80:8028. Both observations carry the
+zero-based movie input frame. Complete ordered vectors compare after a
+successful replay; failed replay exits cannot support a selection pass.
+Guards require initialized frames, ROM direct page zero, the upload guard
+clear, nonempty observations and the startup CF8000 source. The normal
+custom-audio RTS patch remains at 80:8028, so this observes choices under
+the paired oracle progression, not unpatched upload execution or timing.
+
+The 400-frame smoke matches all three choices at frames 150, 160 and 315,
+native exit 0. The exact 59,942-frame qa-waver-tank-xfire-exit.inputs route
+matches all 13 ordered frame/source choices, with zero gameplay failures
+(106.29s), native exit 0. Source, order and omission faults in the captured
+Rust vector each return native exit 1 through the normal comparison path.
+These are observation/comparator controls, not injected caller faults.
+Independent reviews confirm the hooks preserve baseline function bodies.
+
+Full any% completes 129,712 frames with zero gameplay failures (236.63s),
+but the selection check FAILS: 34 ROM calls versus 45 Rust calls, native
+exit 1. The first discrepancy is Rust CF8000 at reset frame 43,188, absent
+from the ROM observation. The maintained oracle redirects soft reset to
+ROM 80:8462, after its startup upload call at 80:8459 with inline CF8000,
+while setting Rust's reset coroutine to state 3, which performs that upload.
+This explains the first missing ROM reset event; the full vector remains
+unequal and is not filtered or treated as an upload-equivalence pass.
+
+Route choices include banks beyond the three prior payload-audit sources;
+their payload equality remains untested. No maintained Rust or residue
+counters change; probe source/logs and ROM-derived data remain outside
+tracked files. Cargo fmt --check and the isolated optimized core/DLL build
+pass; Cargo release remains denied executing khronos_api's build script
+(OS error 5). These replays predate separate VRAM port-state enforcement.
+Next: independently audit the soft-reset upload boundary before enforcing
+source equality, then extend payload checks to additional observed banks.
+Audio handshakes, command timing and audible equivalence remain open.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read
