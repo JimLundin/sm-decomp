@@ -7313,6 +7313,33 @@ Later peer APU changes are outside this replay. Arbitrary bus mutation, other
 addressing modes, hardware/render/audio timing and credits remain open;
 held HDMA diagnosis stays stopped. Continue executed increment/decrement.
 
+APU reset cleanup (2026-10-18): apu_reset uses native field values and exact
+RAM/input/output array fills. Timer fields reset individually in their prior
+order. ROM readability still becomes true before SPC reset, followed by DSP
+reset and RAM clearing. Owner pointers, padding and DSP-write history payload
+remain untouched; only history count resets last. Read-only subagent finds
+no defect, and the rest of this file remains unchanged.
+
+Actual old/current reset functions pass 512 pairs over 256 seeds and both
+initial boot gates. Whole RAM/ports, timers, padding/history retention, real
+SPC vector FFC0 and selected SPC/DSP state pass. Independent QC passes 1,024
+actual reset cases including repeated resets and the actual initial SPC
+opcode. Moving ROM readability after SPC reset is caught (PC 1234 versus
+FFC0), native assertion exit 3221226505. Frozen/live reset equality passes
+after removing only the TEMP reset-hit counter.
+
+Normal instrumented verification passes 3,600/0 (6.99s), native exit 0,
+with one reset call. A separate probe disables custom audio before SnesInit
+and passes actual ROM/SPC boot 3,600/0 (7.92s), native exit 0, also with one
+reset call. Clean frozen dda7c009 plus only this reset passes any% 129,712/0
+(245.77s), native exit 0. Direct full-source format, normal-core metadata
+and optimized clean/probe core/DLL builds pass; Cargo fmt/check/release remain
+launch-denied, so the required Cargo check stays unmet. Progress/diff pass:
+focused cast lines -5, Rust lines -14; other categories unchanged. Later peer
+integration, hardware/audio timing, rendering/Waver71, masked RAM and credits
+remain open. Held HDMA diagnosis stays stopped. Continue executed APU/SPC
+paths and route coverage with independent subagents; peer owns remote sync.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

@@ -99,38 +99,24 @@ pub unsafe fn apu_free(mut apu: *mut Apu) {
     dsp_free((*apu).dsp);
     free(apu as *mut ::core::ffi::c_void);
 }
-pub unsafe fn apu_reset(mut apu: *mut Apu) {
-    (*apu).romReadable = true_0 != 0;
+pub unsafe fn apu_reset(apu: *mut Apu) {
+    (*apu).romReadable = true;
     spc_reset((*apu).spc);
     dsp_reset((*apu).dsp);
-    memset(
-        &raw mut (*apu).ram as *mut uint8_t as *mut ::core::ffi::c_void,
-        0 as ::core::ffi::c_int,
-        ::core::mem::size_of::<[uint8_t; 65536]>() as size_t,
-    );
-    (*apu).dspAdr = 0 as uint8_t;
-    (*apu).cycles = 0 as uint32_t;
-    memset(
-        &raw mut (*apu).inPorts as *mut uint8_t as *mut ::core::ffi::c_void,
-        0 as ::core::ffi::c_int,
-        ::core::mem::size_of::<[uint8_t; 6]>() as size_t,
-    );
-    memset(
-        &raw mut (*apu).outPorts as *mut uint8_t as *mut ::core::ffi::c_void,
-        0 as ::core::ffi::c_int,
-        ::core::mem::size_of::<[uint8_t; 4]>() as size_t,
-    );
-    let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    while i < 3 as ::core::ffi::c_int {
-        (*apu).timer[i as usize].cycles = 0 as uint8_t;
-        (*apu).timer[i as usize].divider = 0 as uint8_t;
-        (*apu).timer[i as usize].target = 0 as uint8_t;
-        (*apu).timer[i as usize].counter = 0 as uint8_t;
-        (*apu).timer[i as usize].enabled = false_0 != 0;
-        i += 1;
+    (*apu).ram.fill(0);
+    (*apu).dspAdr = 0;
+    (*apu).cycles = 0;
+    (*apu).inPorts.fill(0);
+    (*apu).outPorts.fill(0);
+    for timer in &mut (*apu).timer {
+        timer.cycles = 0;
+        timer.divider = 0;
+        timer.target = 0;
+        timer.counter = 0;
+        timer.enabled = false;
     }
-    (*apu).cpuCyclesLeft = 7 as uint8_t;
-    (*apu).c2rust_unnamed.hist.count = 0 as uint32_t;
+    (*apu).cpuCyclesLeft = 7;
+    (*apu).c2rust_unnamed.hist.count = 0;
 }
 pub unsafe fn apu_saveload(
     mut apu: *mut Apu,
