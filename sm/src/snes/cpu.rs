@@ -379,21 +379,15 @@ pub unsafe fn cpu_runOpcode(mut cpu: *mut Cpu, game: &mut Game) -> ::core::ffi::
     cpu_doOpcode(cpu, opcode, game);
     return (*cpu).cyclesUsed as ::core::ffi::c_int;
 }
-unsafe fn cpu_readOpcode(mut cpu: *mut Cpu, game: &mut Game) -> uint8_t {
-    let fresh0 = (*cpu).pc;
+unsafe fn cpu_readOpcode(cpu: *mut Cpu, game: &mut Game) -> uint8_t {
+    let pc = (*cpu).pc;
     (*cpu).pc = (*cpu).pc.wrapping_add(1);
-    return cpu_read(
-        cpu,
-        (((*cpu).k as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-            | fresh0 as ::core::ffi::c_int) as uint32_t,
-        game,
-    );
+    cpu_read(cpu, u32::from((*cpu).k) << 16 | u32::from(pc), game)
 }
-unsafe fn cpu_readOpcodeWord(mut cpu: *mut Cpu, game: &mut Game) -> uint16_t {
-    let mut low: uint8_t = cpu_readOpcode(cpu, game);
-    return (low as ::core::ffi::c_int
-        | (cpu_readOpcode(cpu, game) as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
-        as uint16_t;
+unsafe fn cpu_readOpcodeWord(cpu: *mut Cpu, game: &mut Game) -> uint16_t {
+    let low = cpu_readOpcode(cpu, game);
+    let high = cpu_readOpcode(cpu, game);
+    u16::from_le_bytes([low, high])
 }
 pub unsafe fn cpu_getFlags(cpu: *mut Cpu) -> uint8_t {
     (u8::from((*cpu).n) << 7)

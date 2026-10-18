@@ -5392,6 +5392,27 @@ frozen replay. Hardware scheduling, rendering/Waver71, audio timing, masked
 RAM and credits remain open; held HDMA diagnosis stays stopped. Continue
 executed hardware register paths and route coverage. Probes stay in TEMP.
 
+CPU opcode-fetch cleanup (2026-10-18): byte fetch names the captured PC
+and widens bank/PC natively; word fetch performs two ordered byte reads
+and little-endian assembly. PC still advances before each bus access;
+word fetch wraps within the same program bank. Actual old/current helpers
+pass 33,554,432 substituted-bus traces across every PC, all 256 banks and
+both fetch widths. Address, PC visible at each read, bank, return value,
+final PC and selected unchanged registers/cycles pass independent checks.
+Physical WRAM executes 1,179,648 JMP instructions: all target words, both
+WRAM banks and nine starting PCs including FFFD/FFFE/FFFF. Target, bank,
+flags, selected registers and cycles pass. Instrumented any% prefix passes
+3,600/0, native exit 0, with 20,261,630 byte and 3,142,938 word fetch calls.
+Clean frozen 69010014a3212e9429bbbf7683411caf4b399616 plus only these helpers
+passes any% 129,712/0 (260.02s), native exit 0. Direct full-source format,
+normal-core metadata and optimized clean/probe core/DLL builds pass;
+Cargo fmt/release remain launch-denied. Progress and diff checks pass.
+Focused cast lines -4 and Rust lines -6; other categories unchanged.
+Later peer edits are outside this frozen replay. Substituted all-bank
+traces do not prove physical ROM/device side effects or CPU hardware
+timing. Rendering/audio timing and credits remain open; held HDMA diagnosis
+stays stopped. Continue remaining executed CPU address helpers.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
