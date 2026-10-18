@@ -8182,6 +8182,45 @@ lacks SDL2. Live source matches verified source. Cast lines -5, Rust lines -4;
 other counters unchanged. Dedicated NOP coverage does not establish every
 opcode branch; full gameplay, rendering and audio completeness remain open.
 
+Map Station activation and control release verified (2026-10-19): from
+69511-frame9C35 entry, left70, neutral500, freshJump1, neutral120 acquires
+the area map: has_area_map0->1, station byte0->FF, message20.70202/71
+(155.60s), nativeexit1, health19/199 unchanged. Right/shoot30, neutral30
+still leavesX117/Y171:70262/71 (154.70s). Another neutral1800,
+freshJump1, neutral60, right/shoot30, neutral30 likewise stays there:
+72183/71 (161.94s). The read-only observer initially watched movement
+handlerA337; that value does not establish control release.
+
+Extended read-only probe resolves the apparent lock: message20 dismissal
+enters pausing at70094 and paused state15 at70140. Coroutines finish;
+frame handlers remainE713/E8D6 until unpausing. The station's idle PLM
+AD7E is separate from the consumed activation sequence. Byte-aware decoding
+shows sound operands, activation and deletion in that sequence; the unlock
+is instead ContinueInitGameplayResume -> SamusCode_0C_UnlockFromMapStation.
+The actual input handlerA60 staysE913. No gameplay correction is justified:
+the oracle follows the same normal pause-screen behavior.
+
+Fresh Start1, neutral180, Start1, neutral180, right/shoot120, neutral30
+from70262 remains paused:70774/71 (153.40s). A single Start1,
+neutral180, right/shoot60, neutral30 also remains paused:70533/71
+(166.18s). Pause uses ReleaseButtonsFilter(3), so one-frame presses are
+too short. Start12, neutral180, right/shoot60, neutral30 closes the map,
+restores handlersE695/E725 and moves SamusX117->155/Y171 in gameplay
+state8 with19/199health intact:70544/71 (162.00s), nativeexit1.
+Retain map-held-start.inputs as the acquired-map/control prefix.
+All six ordered diagnostics exactly match frozen d217ea15 Waver71;
+no new failing frames. Inputs and ROM-derived probes remain ignored.
+
+Next: exit9C35 to9B9D, cross the Bomb passage back toward9AD9 and seek
+another onward exit. Held upper99BD ascent, cliff tuning,9AD9 ammunition
+and HDMA remain held. Frozen explicit-render same-DLL any%129712/0
+(414.98s) remains the input-only regression; peer hardware owns its replays.
+Cargo fmt/check and release-library build pass; full frontend release link
+still fails on missingSDL2. Progress passes; own source/residue delta zero.
+Peer CPU cleanup separately reduces casts/lines (observed85730/257774).
+Peer owns cleanup/remote sync. Credits, complete gameplay/hardware,
+render/audio fidelity, masked RAM and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
