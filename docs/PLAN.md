@@ -8056,6 +8056,21 @@ replay. Arbitrary stack/device mutation, hardware/render/audio timing and
 credits remain open; held HDMA diagnosis stays stopped. Continue executed
 return opcode cleanup.
 
+CPU return-PC cleanup (2026-10-19): RTS and RTL now increment the pulled
+return word with `wrapping_add(1)`, preserving breakpoint/hook branches and
+RTL bank-pull order. Frozen source is HEAD
+`1e7aa72f2a855437e633daf83b714c905721b29d` plus these two opcode edits.
+Actual old/current instruction execution matches 1,048,576 pairs over all
+return words, native/emulation modes and four stack positions, comparing CPU
+state, stack, cycles and bus history. The probe bypasses unchanged hooks.
+Prefix passes 3,600/0, executing RTS 167,588 times and RTL 74,857 times in
+native mode; dedicated cases cover emulation and return-PC wrapping.
+Full any% passes 129,712/0 (51.29s), native exit 0. Cargo fmt/check and release
+library build pass; full release frontend linking still fails on missing
+SDL2. Frozen optimized core/DLL builds pass and live edited arms match.
+Cast lines -4, Rust lines -2; other counters unchanged. This is CPU regression
+coverage, not independent boot-to-credits or rendering/audio accuracy proof.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

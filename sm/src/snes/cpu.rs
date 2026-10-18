@@ -1861,8 +1861,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
                         return;
                     }
                 }
-                (*cpu).pc = (cpu_pullWord(cpu, game) as ::core::ffi::c_int
-                    + 1 as ::core::ffi::c_int) as uint16_t;
+                (*cpu).pc = cpu_pullWord(cpu, game).wrapping_add(1);
                 break;
             }
             97 => {
@@ -1963,8 +1962,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
                         return;
                     }
                 }
-                (*cpu).pc = (cpu_pullWord(cpu, game) as ::core::ffi::c_int
-                    + 1 as ::core::ffi::c_int) as uint16_t;
+                (*cpu).pc = cpu_pullWord(cpu, game).wrapping_add(1);
                 (*cpu).k = cpu_pullByte(cpu, game);
                 break;
             }
