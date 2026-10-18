@@ -8565,6 +8565,18 @@ frontend linking still lacks SDL2. Live CPU/snapshot caller match verified
 source. Unsafe functions -1; other counters unchanged. Complete gameplay and
 rendering/audio remain open.
 
+CPU direct-page address reuse (2026-10-19): the unindexed, X-indexed and
+Y-indexed helpers compute their wrapped word address once, then derive the
+second byte with word wrapping. Operand fetches and direct-page cycle penalties
+retain their order. Frozen HEAD `32adbffc` plus this change passes 54,525,952
+actual old/current helper comparisons: every DP/operand pair, full indexes at
+boundary DP/operands, PC/cycle wrapping and named CPU/bus state. Prefix 3,600/0
+(1.05s) executes 1,152,945 / 26,579 / 5,963 calls respectively. Clean full any%
+129,712/0 (57.68s), native exit 0. Cargo fmt/check, release library, normal
+metadata and optimized core/DLL builds pass; full frontend linking still lacks
+SDL2. Live CPU source matches the frozen verified source. Rust lines -18;
+other counters unchanged. Complete gameplay and rendering/audio remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

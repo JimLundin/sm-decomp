@@ -259,42 +259,24 @@ unsafe fn address_direct_page(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
     if (*cpu).dp & 0xff != 0 {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
     }
-    let low = u32::from((*cpu).dp.wrapping_add(adr));
-    (low, u32::from((*cpu).dp.wrapping_add(adr).wrapping_add(1)))
+    let address = (*cpu).dp.wrapping_add(adr);
+    (u32::from(address), u32::from(address.wrapping_add(1)))
 }
 unsafe fn address_direct_page_x(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
     let adr = u16::from(cpu_readOpcode(cpu, game));
     if (*cpu).dp & 0xff != 0 {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
     }
-    let low = u32::from((*cpu).dp.wrapping_add(adr).wrapping_add((*cpu).x));
-    (
-        low,
-        u32::from(
-            (*cpu)
-                .dp
-                .wrapping_add(adr)
-                .wrapping_add((*cpu).x)
-                .wrapping_add(1),
-        ),
-    )
+    let address = (*cpu).dp.wrapping_add(adr).wrapping_add((*cpu).x);
+    (u32::from(address), u32::from(address.wrapping_add(1)))
 }
 unsafe fn address_direct_page_y(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
     let adr = u16::from(cpu_readOpcode(cpu, game));
     if (*cpu).dp & 0xff != 0 {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
     }
-    let low = u32::from((*cpu).dp.wrapping_add(adr).wrapping_add((*cpu).y));
-    (
-        low,
-        u32::from(
-            (*cpu)
-                .dp
-                .wrapping_add(adr)
-                .wrapping_add((*cpu).y)
-                .wrapping_add(1),
-        ),
-    )
+    let address = (*cpu).dp.wrapping_add(adr).wrapping_add((*cpu).y);
+    (u32::from(address), u32::from(address.wrapping_add(1)))
 }
 unsafe fn address_direct_page_indirect(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
     let adr = u16::from(cpu_readOpcode(cpu, game));
