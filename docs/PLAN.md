@@ -3200,6 +3200,36 @@ the demonstrated pseudo-hires output omission against the current renderer
 buffer contract. Held HDMA/window-boundary diagnosis, audio timing, masked
 RAM, hardware accuracy and complete-route coverage remain open.
 
+BG scroll-write arithmetic cleanup (2026-10-18): the two trailing
+ppu_write branches now use native layer indices and word packing. Horizontal
+scroll retains the previous-byte high five bits and second-latch low three
+bits; vertical scroll retains the complete previous byte before ten-bit
+masking. Destination writes precede latch writes, and horizontal scrollPrev
+precedes scrollPrev2. BG1's preceding Mode7 writes remain unchanged.
+
+Independent actual writer checks pass 2,490,368 complete-Ppu comparisons:
+2,359,296 exhaustive write/previous-byte/effective second-latch cases,
+65,536 full second-latch cases and 65,536 mixed shared-latch sequences.
+Actual original/current output matches in 8,192 rows / 8,388,608 bytes.
+Per-pixel mode0 covers all four BGs; whole-line mode1 covers active BG1..3
+and retains inactive BG4 output. Initial fast mode0 fixtures were unsupported;
+using mode1 exercises actual drawing without source changes. Active scroll
+registers produce 256 distinct outputs per seed. This proves preservation
+for these cases, not SNES accuracy. Normal startup passes3,600/0 (7.18s),
+nativeexit0; each register13..20 executes its actual rewritten trailing
+branch14,408 times. Startup has no gameplay frames. Counter instrumentation
+strips to exact frozen source; independent implementation/review find no issues.
+
+Frozen446c2af0 plus only this PPU change passes any%129,712/0 (286.73s)
+and Waver58,109/0 (123.85s), both nativeexits0. Later concurrent edits are
+outside those replays. Direct optimized core/DLL, normal-core metadata and
+full-source rustfmt checks pass. Cargo fmt/build now fail before launch:
+both rustup launcher and installed Cargo executable return Access denied,
+OSerror5; direct rustc/rustfmt still execute. Progress: cast lines-11,
+Rust lines-3; other focused counters unchanged. No probes or ROM-derived
+assets committed. Next: Mode7 BG1 scroll/matrix write arithmetic, retaining
+signed13-bit field storage and shared m7prev/scroll latch order.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

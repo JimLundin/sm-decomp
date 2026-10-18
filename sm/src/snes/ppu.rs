@@ -3968,20 +3968,17 @@ pub unsafe fn ppu_write(mut ppu: *mut Ppu, mut adr: uint8_t, mut val: uint8_t) {
     }
     match current_block_164 {
         5892776923941496671 => {
-            (*ppu).bgLayer[((adr as ::core::ffi::c_int - 0xe as ::core::ffi::c_int)
-                / 2 as ::core::ffi::c_int) as usize]
-                .vScroll = (((val as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
-                | (*ppu).scrollPrev as ::core::ffi::c_int)
-                & 0x3ff as ::core::ffi::c_int) as uint16_t;
+            let layer = (usize::from(adr) - 0x0e) / 2;
+            (*ppu).bgLayer[layer].vScroll =
+                ((u16::from(val) << 8) | u16::from((*ppu).scrollPrev)) & 0x3ff;
             (*ppu).scrollPrev = val;
         }
         6174974146017752131 => {
-            (*ppu).bgLayer[((adr as ::core::ffi::c_int - 0xd as ::core::ffi::c_int)
-                / 2 as ::core::ffi::c_int) as usize]
-                .hScroll = (((val as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
-                | (*ppu).scrollPrev as ::core::ffi::c_int & 0xf8 as ::core::ffi::c_int
-                | (*ppu).scrollPrev2 as ::core::ffi::c_int & 0x7 as ::core::ffi::c_int)
-                & 0x3ff as ::core::ffi::c_int) as uint16_t;
+            let layer = (usize::from(adr) - 0x0d) / 2;
+            (*ppu).bgLayer[layer].hScroll = ((u16::from(val) << 8)
+                | u16::from((*ppu).scrollPrev & 0xf8)
+                | u16::from((*ppu).scrollPrev2 & 0x07))
+                & 0x3ff;
             (*ppu).scrollPrev = val;
             (*ppu).scrollPrev2 = val;
         }
