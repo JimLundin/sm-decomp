@@ -791,6 +791,48 @@ Next: independently audit the soft-reset upload boundary before enforcing
 source equality, then extend payload checks to additional observed banks.
 Audio handshakes, command timing and audible equivalence remain open.
 
+Reset upload-boundary audit (2026-10-18): the isolated c2fcf170 selection
+probe now records actual oracle reset redirects after the ROM PC/state-3
+assignments, actual subsequent CPU entry at 80:8462, and Rust's coroutine
+state at APU_UploadBank. Both complete source/frame vectors are printed.
+Full any% passes 129,712 frames with zero gameplay failures (230.78s),
+but strict upload selection still fails 34 ROM versus 45 Rust, native exit 1.
+
+All 34 ROM calls match the ordered Rust subsequence. The eleven additional
+Rust calls are CF8000 at frames 43,188, 43,542, 44,392, 44,810, 44,965,
+45,544, 47,613, 48,322, 95,066, 97,204 and 97,542. Each is exactly one
+input frame after an actual reset redirect, with actual ROM entry at
+80:8462 on that frame and Rust upload state 3. Exact vector/multiplicity
+assertions pass for all eleven; no calls are discarded from the strict
+comparison. The 43,200-frame prefix separately classifies the first reset
+(zero gameplay failures, 71.83s; strict native exit 1). Replaying its
+captured records through the compiled classifier passes classification
+while retaining strict exit 1. Removing the CPU-entry record or shifting
+the redirect fails the specific classifier assertion, returns caught-
+failure exit 2 and omits the classification-pass marker. These controls
+test classification, not trace-producer faults. Independent reviews pass.
+
+A separate bounded actual-ROM entry probe uses the earlier 3eac6b6a
+payload-audit library with custom audio disabled before boot. After 400
+frames, entering CPU 80:8459 executes its startup upload and reaches
+80:8460 in 875,092 instructions; entering 80:8462 reaches 80:8482 in 60
+instructions without that upload. Both native exits are 0. The full entry
+adds 57,841 ordered CF8000 payload writes matching actual Rust assignments,
+for 156,458 writes across four complete uploads; bypass has the original
+98,617 across three. The two-million-instruction bound, exact source lists
+and completed-transaction guards pass. These constructed entries retain
+frame-400 registers/APU state; they prove the included/skipped upload path,
+not natural reset preconditions, common final state or audio timing.
+
+No maintained Rust or residue counters change. Both probes predate later
+PPU port enforcement; they are not current-source integration replays.
+Cargo fmt --check and isolated optimized builds pass; Cargo release remains
+denied executing khronos_api's build script (OS error 5). Probe code/logs
+and ROM-derived data stay outside tracked files. The oracle's reset bypass
+is now classified, not exempted: upload equality and audible equivalence
+remain unproved. Next: compare additional gameplay-selected bank payloads
+through actual ROM upload calls before choosing an enforcement boundary.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read
