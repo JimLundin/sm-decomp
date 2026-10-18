@@ -1743,15 +1743,6 @@ unsafe fn gRam8000_Default(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut R
         .offset(o as isize) as *mut Ram8000_Default;
 }
 #[inline]
-unsafe fn Get_BouncingGoofball(
-    mut o: ::core::ffi::c_int,
-    game: &mut Game,
-) -> *mut Enemy_BouncingGoofball {
-    return (&raw mut game.g_ram as *mut uint8)
-        .offset(0xf78 as ::core::ffi::c_int as isize)
-        .offset(o as isize) as *mut Enemy_BouncingGoofball;
-}
-#[inline]
 unsafe fn Get_Flies(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_Flies {
     return (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78 as ::core::ffi::c_int as isize)

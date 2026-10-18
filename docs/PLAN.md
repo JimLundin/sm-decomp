@@ -152,6 +152,26 @@ and no final result; it is not counted as a pass. Restoring the ignored
 saves directory and rerunning with direct process capture succeeds. Coverage
 remains six Ceres rooms and three enemy definitions, with no credits proof.
 
+Independent SPC boot audit (2026-10-18): setting custom audio off before
+SnesInit preserves the ROM upload routine. Maintained hardware then aborts
+at frame 150 on the unconditional APU-port read assertion in snes_readBBus.
+An isolated assertion bypass allows the first upload, but SPC executes SLEEP
+at $181D on frame 176; the later upload waits indefinitely at CPU $80:8077.
+A bounded probe reproduces that stop. SPC opcode 2F (BRA) calculates its
+base PC before fetching the displacement, landing one byte early. Even
+BRA +0 at PC 0000 returns 0001 instead of 0002. The maintained opcode now
+fetches its signed displacement first, then adds it with word wrapping.
+Actual spc_runOpcode validation passes 16,772,864 ordinary-RAM PC/offset
+cases, including wrapping, four cycles and unchanged registers/flags.
+With the branch fix and isolated port-read assertion bypass, ROM/SPC boot
+completes 400 frames with 193,611 nonzero sample values. Removing the
+experimental direct-write routing change preserves that result; routing
+was not the cause. Only the branch fix enters maintained source in this
+commit; the port-read assertion remains a separate gap. Normal verification
+still uses the Rust audio driver, so its passing replays do not establish
+ROM-driver equivalence. Next: enable valid emulated APU port reads, verify
+the upload path, then compare independently emulated driver output.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
@@ -2405,6 +2425,17 @@ enabled any%: 129,712 frames, zero failures (209.76s); Waver route: 58,109
 frames, zero failures (99.12s). Unsafe functions -2, cast lines -13,
 Rust lines -3; other counters unchanged. Next: remove the now-unused
 Get_BouncingGoofball pointer helper, then Mini Crocomire animation setup.
+
+Removed the unused Get_BouncingGoofball raw-pointer helper after a full
+sm/src symbol search confirmed its definition was the only occurrence.
+Independent scope audit confirms no gameplay bodies changed and the next
+helper retains its inline attribute. Stable optimized core/DLL build and
+direct full-source format pass; Cargo fmt/build remain ASR-denied. CGRAM/
+render-enabled any%: 129,712 frames, zero failures (215.80s); Waver route:
+58,109 frames, zero failures (96.94s). Raw offsets -1, unsafe functions -1,
+cast lines -1, Rust lines -9; other counters unchanged. These replays predate
+the concurrent SPC BRA fix owned by the oracle session. Next: Mini Crocomire
+animation setup, retaining instruction-timer, timer, then instruction order.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
