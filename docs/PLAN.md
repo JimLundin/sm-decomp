@@ -692,6 +692,33 @@ change. Next: continue from 99BD toward wider playable coverage, using
 actual control bindings and function-hit evidence. Turtle execution and
 boot-to-credits remain unproved.
 
+VRAM read-latch enforcement (2026-10-18): frame snapshots now capture,
+restore and compare the PPU's 16-bit vramReadBuffer before RAM normalization
+and failure recovery. This closes the demonstrated blind spot where a
+later $2139/$213A read could differ despite equal memory/current pixels.
+The serialized save-state format is unchanged: it uses snes/ppu_saveload,
+not the per-frame Snapshot struct. Other PPU registers and latches remain
+outside snapshot enforcement; this is not complete hardware equivalence.
+
+Actual-function checks pass all 65,536 latch values for capture/restore,
+all 16 single-bit differences, and equal-state comparison. A second pass
+also verifies restored $2139 low/$213A high reads for every value with
+increment-on-high enabled. An isolated frame-200 latch injection produces
+exactly one failed frame over 3,600, zero RAM differences, and native exit 1.
+Independent review finds no blocking issue in the field, routing, comparison
+or recovery. Diagnostic wrappers and injected source remain ignored.
+
+Cargo fmt/check, direct optimized core/DLL and normal-core metadata pass;
+Cargo release still fails dependency build-script execution, OS error 5.
+Rust lines +14 implement the latch field, capture/restore and diagnostics;
+all other residue counters unchanged. The exact maintained-source Waver
+run passes 58,109/0 (119.62s), native exit 0. Maintained-source any% passes
+129,712/0 (236.30s), native exit 0. The source is 3eac6b6a plus these
+14 latch lines; later concurrent commits change only PLAN. No gameplay
+changes or diagnostic wrappers enter its frozen maintained-source DLL.
+Next: return to the separate HDMA edge-pass
+discrepancy and broaden actual gameplay/room coverage.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

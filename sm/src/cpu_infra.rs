@@ -79,6 +79,7 @@ pub struct Snapshot {
     pub sram: [uint8; 8192],
     pub oam: [uint16; 288],
     pub cgram: [uint16; 256],
+    pub vram_read_buffer: uint16,
     // Per-run observations, not emulated or serialized audio state.
     pub apu_upload_count: u32,
     pub apu_startup_upload: bool,
@@ -857,6 +858,17 @@ unsafe fn VerifySnapshotsEq(
             }
         }
     }
+    if (*b).vram_read_buffer != (*a).vram_read_buffer {
+        game.g_fail = true;
+        if report_details {
+            eprintln!(
+                "@{}: VRAM read buffer compare failed: mine ${:04X} != theirs ${:04X}",
+                game.snes_frame_counter,
+                (*b).vram_read_buffer,
+                (*a).vram_read_buffer
+            );
+        }
+    }
     if (*b).cgram != (*a).cgram {
         game.g_fail = true;
         if report_details {
@@ -1386,6 +1398,7 @@ unsafe fn VerifySnapshotsEq(
 }
 unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     (*s).cgram = (*(*game.g_snes).ppu).cgram;
+    (*s).vram_read_buffer = (*(*game.g_snes).ppu).vramReadBuffer;
     let mut c: *mut Cpu = game.g_cpu;
     (*s).a = (*c).a as uint16;
     (*s).x = (*c).x as uint16;
@@ -1420,6 +1433,7 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
 }
 unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     (*(*game.g_snes).ppu).cgram = (*s).cgram;
+    (*(*game.g_snes).ppu).vramReadBuffer = (*s).vram_read_buffer;
     let mut c: *mut Cpu = game.g_cpu;
     (*c).a = (*s).a as uint16_t;
     (*c).x = (*s).x as uint16_t;
