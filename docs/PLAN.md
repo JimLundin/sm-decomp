@@ -1045,6 +1045,46 @@ artifacts are committed. Next: verify movement control after elevator
 arrival, then continue normal inputs in 9AD9; uncovered Turtle cleanup
 remains held. Rust residue counters are unchanged.
 
+Direct HDMA edge-pass comparison (2026-10-18): an isolated current-source
+probe enters actual ROM 91:C27F in native 65816 mode, DP 0, DB 91, stack
+1FFF, with explicit pointer/origin/angle/gradient inputs. It steps actual
+opcodes to the routine's final RTS at C2B6 with a 20,000-instruction bound.
+A reconstruction of the offscreen down-right branch matches all 460 display
+table bytes in 100 constructed cases: four negative origins, five start
+rows and five gradient pairs. The maintained combined helper differs in
+62. Native exit 0. This tests one internal branch with supplied gradients,
+not the outer angle-table lookup, adjacent stores or complete RAM equality.
+Start zero was excluded after exposing a negative model cleanup index;
+the probe's first RunAsmCode attempts also failed setup/return handling.
+Those failed attempts are not correctness evidence.
+
+The bank log and actual trace show that the right pass writes whole words
+after overflow, then the left pass overwrites high bytes. Offscreen entry
+positions determine later clears. At observed frame 28,428, ROM gradients
+are left/right 0306/01C3, while Rust's combined helper consumes 01C3/0306.
+Independent review confirms the caller gradient mapping and adjacent-word
+effects need investigation before promoting any reconstructed helper.
+
+Same-observer 35,000-frame Waver comparisons on 87902d6b (whose maintained
+Rust matches 97309b4a) give baseline 72 raw table-difference frames and 40
+window-difference frames, enforced 35,000/0 (57.15s), native exit 0. A
+preserved-destination separate-pass candidate with ROM gradient assignment
+reduces those to 34/2, enforced 35,000/0 (57.05s), native exit 0. Extending
+its model/copy to the adjacent word at 92CC while preserving destination
+bytes still gives 34/2, enforced 35,000/0 (55.71s), native exit 0.
+The first two remaining window mismatches are the earlier on-screen case;
+table differences also start at 28,311. These candidates remain incomplete.
+
+An earlier candidate initialized all destination bytes to synthetic 5A;
+its full Waver replay had 109/39 raw differences despite enforced 58,109/0
+(97.07s), native exit 0. A preserved-destination version with the original
+Rust gradient assignment also had 109/39 through frame 35,000 (55.77s).
+The experiments establish partial causes, not a behavior-preserving fix.
+No maintained source or residue counters change; isolated source, bank-log
+copies and ROM-derived outputs stay ignored. Next: explain the remaining
+table bytes and on-screen cleanup, compare actual caller gradient selection
+and complete destination write ranges, then verify a complete correction.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
