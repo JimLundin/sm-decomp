@@ -4560,6 +4560,28 @@ session owns clean full-any% integration; concurrent demo/DMA/PPU changes
 require their own evidence. Rendering/Waver71, events, audio timing and
 credits remain open; held HDMA diagnosis stays stopped.
 
+Independent CPU status-flag QC (2026-10-18): frozen getFlags/setFlags
+cleanup matches live source.33,554,432 actual setter/getter cases cover all
+256 flag bytes xboth emulation states xevery16-bit word used for X, inverse
+Y and byte-rotated SP. Independent expected bits verify packing, emulation
+M/X forcing, stack page1 and conditional X/Y high-byte truncation; A and PC
+remain unchanged.2,048 real CPU opcode continuations cover REP, SEP, PHP,
+PLP x256 masks/pulled bytes xboth emulation states. Flags, index widths,
+stack bytes/SP, PC and3/4-cycle results match independent expectations.
+Nativeexit0. Removing only X truncation fails with256 instead of0,
+nativeexit3221226505. This confirms the matrix detects the width side effect.
+
+These are actual maintained CPU/bus executions, not independent full65816
+accuracy or movie-call coverage. The implementation session owns clean any%
+integration. Only this note changes; no production Rust/residue changes.
+Frozen source includes then-current demo/DMA/PPU peer edits; later integration
+is separate. Isolated optimized core/DLL builds, direct full-source rustfmt
+and progress pass; Cargo fmt/check and release remain denied at cargo.exe
+launch. No fresh movie result is claimed. Diagnostic sources/logs and ROM
+assets stay ignored. Next: continue actual hardware consumer and event
+coverage; held HDMA diagnosis remains stopped. Render initialization/Waver71,
+hires, hardware timing, audio timing, masked RAM and credits remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
