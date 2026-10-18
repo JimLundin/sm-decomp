@@ -7089,6 +7089,29 @@ and credits remain open. Held HDMA diagnosis stays stopped. Continue executed
 APU/SPC hardware paths and route coverage with independent subagents; peer
 owns remote sync.
 
+CPU store cleanup (2026-10-18): cpu_sta/stx/sty/stz use native byte casts,
+boolean/zero literals and immutable parameters. Width gates, cycle-before-
+word-write order and live source-register reads remain exact. Actual
+old/current helpers pass 2,097,152 ordered substituted-bus cases across
+every register word, independent M/X combinations, four stores and equal/
+distinct write addresses. Complete named CPU state and independent ordered
+address/value/cycle expectations match. Actual absolute instructions pass
+2,621,440 WRAM/device pairs across every value, independent native M/X and
+emulation byte mode: WRAM writes cross 7E:FFFF to 7F:0000; 2180/2181 writes
+check data, WRAM-port increment and subsequent address-low update. Registers,
+flags, control state, PC and cycle counts match original helpers.
+Instrumented any% prefix passes 3,600/0 (6.80s), native exit 0. STA/STX/STY/
+STZ word/byte calls are 576,985/787,595, 229,096/242,810, 22,222/3,600 and
+160,743/10,390. Clean frozen 6326a2829ccbe19661323f001d0acadf5602b62c plus
+only these helpers passes any% 129,712/0 (234.45s), native exit 0. Direct
+full-source format, normal-core metadata and optimized clean/probe core/DLL
+builds pass; required Cargo fmt/release remain launch-denied. Progress/diff
+checks pass; all focused counters unchanged, including cast/Rust lines.
+Live helpers match the verified frozen bodies. Peer APU/PPU edits are outside
+this replay. Arbitrary bus mutation, other addressing modes, hardware/render/
+audio timing and credits remain open; held HDMA diagnosis stays stopped.
+Continue executed bit/shift helpers.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

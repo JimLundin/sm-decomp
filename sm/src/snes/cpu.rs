@@ -996,37 +996,37 @@ unsafe fn cpu_ldy(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
     }
     cpu_setZN(cpu, (*cpu).y, (*cpu).xf);
 }
-unsafe fn cpu_sta(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t, game: &mut Game) {
+unsafe fn cpu_sta(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
     if (*cpu).mf {
-        cpu_write(cpu, low, (*cpu).a as uint8_t, game);
+        cpu_write(cpu, low, (*cpu).a as u8, game);
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        cpu_writeWord(cpu, low, high, (*cpu).a, false_0 != 0, game);
-    };
+        cpu_writeWord(cpu, low, high, (*cpu).a, false, game);
+    }
 }
-unsafe fn cpu_stx(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t, game: &mut Game) {
+unsafe fn cpu_stx(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
     if (*cpu).xf {
-        cpu_write(cpu, low, (*cpu).x as uint8_t, game);
+        cpu_write(cpu, low, (*cpu).x as u8, game);
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        cpu_writeWord(cpu, low, high, (*cpu).x, false_0 != 0, game);
-    };
+        cpu_writeWord(cpu, low, high, (*cpu).x, false, game);
+    }
 }
-unsafe fn cpu_sty(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t, game: &mut Game) {
+unsafe fn cpu_sty(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
     if (*cpu).xf {
-        cpu_write(cpu, low, (*cpu).y as uint8_t, game);
+        cpu_write(cpu, low, (*cpu).y as u8, game);
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        cpu_writeWord(cpu, low, high, (*cpu).y, false_0 != 0, game);
-    };
+        cpu_writeWord(cpu, low, high, (*cpu).y, false, game);
+    }
 }
-unsafe fn cpu_stz(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t, game: &mut Game) {
+unsafe fn cpu_stz(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
     if (*cpu).mf {
-        cpu_write(cpu, low, 0 as uint8_t, game);
+        cpu_write(cpu, low, 0, game);
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        cpu_writeWord(cpu, low, high, 0 as uint16_t, false_0 != 0, game);
-    };
+        cpu_writeWord(cpu, low, high, 0, false, game);
+    }
 }
 unsafe fn cpu_ror(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t, game: &mut Game) {
     let mut carry: bool = false_0 != 0;
