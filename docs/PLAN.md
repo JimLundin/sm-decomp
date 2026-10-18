@@ -3627,6 +3627,19 @@ render Waver71 failures, hires sample loss, audio timing, masked RAM, shared
 hardware accuracy and complete boot-to-credits coverage remain open. Probe/
 ROM-derived assets stay ignored; concurrent working edits remain separate.
 
+Independent public brightness QC (2026-10-18): both filesystem save APIs
+and ordinary load/recorder replay pass1,024 constructed BG/window states,
+covering every16 saved x16 later brightness pair. The later state actually
+renders before load, generating its coherent cache. After public load, both
+PPUs produce the saved next whole-line row and matching brightness tables;
+the marker equals saved brightness after rendering. Same-brightness pairs
+exercise reuse, differing pairs exercise regeneration. This independently
+extends8c3722a0 to public wrappers and populated BG/window continuation;
+it does not validate arbitrary corrupted caches or SNES rendering accuracy.
+No source change or extra invalidation is justified. Nativeexit0; temporary
+save files removed. Full-source direct rustfmt and normal-core metadata pass;
+Cargo fmt/check and release remain denied launching Cargo (OS error5).
+
 Remaining PPU save-range dependency audit (2026-10-18): omitted
 bgBuffers, objBuffer and lineHasSprites are scanline scratch. Actual complete
 SaveSnesState/LoadSnesState controls save a rendered state, replace both BG
@@ -4651,6 +4664,22 @@ No probes or ROM-derived assets committed. Next: measure EnableDemoInput,
 DisableDemoInput and ResetDemoData calls, then clean executed enable/reset
 stores while retaining ordered writes and shared HDMA aliases. Set 3,
 uncovered demo operations/preinstructions and stopped ammo coverage remain held.
+
+Independent executed demo-copy QC (2026-10-18): frozen candidate handler
+and its existing accessors match bf43431c. An explicitly rendered, normal
+zero-input attract replay passes30,000/0 (74.29s), nativeexit0, with13,500,000
+actual PPU calls. Handler probes assert Rust side2 for all13,294 entries;
+two skip on zero instruction pointer and13,292 execute the interpreter and
+six ordered copy checks. Post-interpreter source words are nonzero in7,813
+previous-input,286 previous-new-input,7,830 current-input and286 current-new-
+input sequences. Every actual output word matches its captured post-callback
+source. This establishes changed body execution and exercised data movement
+under the oracle; the disabled-enable branch has zero hits and remains
+outside this replay. Stripping observations restores the live handler exactly.
+Later demo-reset setters are separate concurrent work and not covered by this
+claim. No source changes; probes stay TEMP. Direct format/metadata and progress
+checks pass; Cargo remains execution-denied. No new full-any% or Waver result
+is claimed; enabled-render Waver71 and credits gaps remain open.
 
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
