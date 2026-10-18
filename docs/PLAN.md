@@ -7695,6 +7695,29 @@ Later peer route/performance/SPC changes are outside this replay. Full
 operand Cartesian coverage, hardware/render/audio timing and credits remain
 open; held HDMA diagnosis stays stopped. Continue executed register transfers.
 
+CPU register transfer cleanup (2026-10-19): TXA/TYA/TXY/TAY/TAX/TSX/TYX
+use native word masks. Byte transfers into A retain its high byte; transfers
+into X/Y clear high bytes. Source reads, destination writes and final live-
+width Z/N updates remain exact. Actual old/current instructions pass
+13,762,560 pairs across every source word, three initial destination patterns,
+independent native M/X, emulation byte mode, seven opcodes and PC 8000/FFFF.
+Independent result/high-byte/Z/N checks and complete named CPU state,
+preserved registers/control flags, cycles, PC wrap, open bus and PC-history
+updates match. Raw high index/stack words in emulation test inherited software
+behavior, not canonical hardware states. Instrumented any% prefix passes
+3,600/0 (1.04s), native exit 0; TXA/TYA/TXY/TAY/TAX/TSX/TYX word/byte calls
+are 31,326/0, 43,797/146, 727/0, 48,184/146, 98,001/10,748, 0/0 and
+37/10,330. Dedicated pairs supply TSX and absent byte paths. Clean frozen
+651c9f8fd776b32070767ac6d040e62f990ad29b plus only these seven arms passes
+any% 129,712/0 (66.84s), native exit 0, including committed scanline-event
+verification. Direct full-source format, normal-core metadata and optimized
+clean/probe core/DLL builds pass; required Cargo fmt/release remain launch-
+denied. Progress/diff pass: focused cast lines -9, Rust lines -9, other
+categories unchanged. Live arms match verified source. Later peer SPC edits
+are outside this replay. Hardware/render/audio timing and credits remain
+open; held HDMA diagnosis stays stopped. Continue executed status/stack
+transfer opcode cleanup, preserving existing emulation quirks.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

@@ -2169,9 +2169,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             138 => {
                 if (*cpu).mf {
-                    (*cpu).a = ((*cpu).a as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int
-                        | (*cpu).x as ::core::ffi::c_int & 0xff as ::core::ffi::c_int)
-                        as uint16_t;
+                    (*cpu).a = (*cpu).a & 0xff00 | ((*cpu).x & 0xff);
                 } else {
                     (*cpu).a = (*cpu).x;
                 }
@@ -2254,9 +2252,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             152 => {
                 if (*cpu).mf {
-                    (*cpu).a = ((*cpu).a as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int
-                        | (*cpu).y as ::core::ffi::c_int & 0xff as ::core::ffi::c_int)
-                        as uint16_t;
+                    (*cpu).a = (*cpu).a & 0xff00 | ((*cpu).y & 0xff);
                 } else {
                     (*cpu).a = (*cpu).y;
                 }
@@ -2275,8 +2271,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             155 => {
                 if (*cpu).xf {
-                    (*cpu).y =
-                        ((*cpu).x as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint16_t;
+                    (*cpu).y = (*cpu).x & 0xff;
                 } else {
                     (*cpu).y = (*cpu).x;
                 }
@@ -2357,8 +2352,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             168 => {
                 if (*cpu).xf {
-                    (*cpu).y =
-                        ((*cpu).a as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint16_t;
+                    (*cpu).y = (*cpu).a & 0xff;
                 } else {
                     (*cpu).y = (*cpu).a;
                 }
@@ -2373,8 +2367,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             170 => {
                 if (*cpu).xf {
-                    (*cpu).x =
-                        ((*cpu).a as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint16_t;
+                    (*cpu).x = (*cpu).a & 0xff;
                 } else {
                     (*cpu).x = (*cpu).a;
                 }
@@ -2468,8 +2461,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             186 => {
                 if (*cpu).xf {
-                    (*cpu).x =
-                        ((*cpu).sp as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint16_t;
+                    (*cpu).x = (*cpu).sp & 0xff;
                 } else {
                     (*cpu).x = (*cpu).sp;
                 }
@@ -2478,8 +2470,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             187 => {
                 if (*cpu).xf {
-                    (*cpu).x =
-                        ((*cpu).y as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint16_t;
+                    (*cpu).x = (*cpu).y & 0xff;
                 } else {
                     (*cpu).x = (*cpu).y;
                 }
