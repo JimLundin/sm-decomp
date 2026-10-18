@@ -4868,6 +4868,26 @@ remain TEMP; full-movie integration and hardware cycle accuracy stay outside
 this scheduler-semantics claim. Rendering/Waver71, audio/event timing and
 credits remain open; held HDMA diagnosis remains stopped.
 
+Independent DMA register-read QC (2026-10-18): pending named-channel and
+byte-extraction cleanup passes 20,447,232 actual old/current reads checked
+against independent word-byte/mode-flag expectations. All valid addresses
+in the complete 16-bit alias space execute with 256 byte seeds; another
+65,536 word seeds exercise every readable register on all eight channels.
+High/low A address, size and table words, banks, mode/flags and duplicate
+unused-byte registers match. Non-hardware mode byte values are deliberately
+included to retain inherited OR semantics. A TEMP channel mask 7-to-3 change
+fails immediately at address 0040 (0 versus 252). Original/control native
+exits are zero/nonzero; frozen/live dma_read bodies match. Invalid low
+offsets C/D/E retain the noreturn assertion by source inspection but are
+outside this positive execution test. Removing its unreachable open-bus
+return therefore does not change reachable behavior.
+
+Optimized probe core/DLL, normal-core metadata, direct full-source rustfmt
+and progress pass. Only this note changes; no production code/residue or
+maintained tooling is added. Movie integration remains separately owned;
+rendering/Waver71, hardware/audio timing and credits remain open. Held
+HDMA diagnosis remains stopped.
+
 Current broad-route revalidation (2026-10-18): committed d217ea15 source
 replays the retained 62,817-frame lead-9ad9-arrive.inputs through the standard
 verifier, passing 62,817/0 (117.57s), native exit 0. It observes 48,819
