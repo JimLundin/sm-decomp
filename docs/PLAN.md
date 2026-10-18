@@ -4484,6 +4484,36 @@ accuracy or a new movie pass. The implementing session owns clean any%
 integration. Rendering/Waver71, event generation, audio timing and credits
 remain open; held HDMA diagnosis stays stopped.
 
+Full-route DMA/HDMA timer observation (2026-10-18): frozen observer
+checks actual ROM/Rust branch-entry hdmaTimer/dmaTimer/dmaBusy tuples after
+rewind and compares final snapshot timers without production enforcement.
+Any%129,712/0 (252.53s), Waver58,109/0 (110.88s), nativeexits0. All branch-
+entry tuple assertions pass. Every previously combined nonzero timer entry
+is HDMA:7,841 any%,3,731 Waver per side. Ordinary DMA timer is zero at every
+entry; maximum HDMA delay is80 on both routes. First nonzero entries are
+frames161/162 with24. Final HDMA and DMA timers differ onzero frames, and
+final busy values match. The output label 'window differing frames7' counts
+seven diagnostic lines, not mismatches; authoritative timer counts arezero.
+
+This establishes scheduler context equality on these executed routes under
+the existing paired schedule, not hardware latency or exact master clocks.
+DrawFrameToPpu advances positions through snes_handle_pos_stuff directly;
+it does not drain dma_cycle on each position step. HDMA delays can therefore
+remain until a subsequent ordinary DMA start consumes them. No event timing
+change, normalization or residual equality enforcement is introduced.
+No held HDMA table/window diagnosis is resumed. Next: actual DMA delay
+consumption and hardware event ordering need focused implementation evidence;
+continue QC of newly landed gameplay/verifier changes in parallel sessions.
+
+Only this note changes; no maintained Rust/residue counters change. Frozen
+source includes then-current open-bus/audio/demo/PPU and DMA-write cleanup
+edits; later integration is separate. Isolated optimized core/DLL builds,
+direct full-source rustfmt and progress pass; Cargo fmt/check and release
+remain denied at cargo.exe launch. Diagnostic source/logs and ROM inputs stay
+ignored. Ordinary movie pixels retain the known render-initialization limit.
+Enabled-render Waver71, hires, hardware events/timing, audio timing, masked
+RAM and boot-to-credits coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
