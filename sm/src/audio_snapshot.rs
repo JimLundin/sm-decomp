@@ -13,6 +13,34 @@ pub(crate) struct ApuQueueSnapshot {
 }
 
 impl ApuQueueSnapshot {
+    pub(crate) fn first_difference(&self, other: &Self) -> Option<&'static str> {
+        let Self {
+            pending: ApuWriteEnt { ports: pending },
+            entries,
+            size,
+            position,
+            time_since_empty,
+        } = self;
+        if *pending != other.pending.ports {
+            return Some("pending.ports");
+        }
+        for (ApuWriteEnt { ports }, other) in entries.iter().zip(&other.entries) {
+            if *ports != other.ports {
+                return Some("entries.ports");
+            }
+        }
+        if *size != other.size {
+            return Some("size");
+        }
+        if *position != other.position {
+            return Some("position");
+        }
+        if *time_since_empty != other.time_since_empty {
+            return Some("time_since_empty");
+        }
+        None
+    }
+
     pub(crate) fn capture(game: &Game) -> Self {
         Self {
             pending: game.g_apu_write,

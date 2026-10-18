@@ -1557,6 +1557,32 @@ continuation within the differential loop, not autonomous RM_MINE gameplay.
 Complete queue adoption and rendered waveform comparison remain distinct from
 the new snapshot guard; the maintained adoption policy is unchanged.
 
+Physical audio queue enforcement (2026-10-18): compare independently captured
+pending ports, all sixteen ring entries, size, position and empty-time counter
+before runtime selection. This closes the physical branch's queue-adoption
+blind spot; the custom driver retains its existing startup/upload policy.
+Exhaustive queue/entry patterns make added fields require an explicit choice.
+Each live frame-200 mutation of pending port, slot-15 port, size, position or
+empty-time counter produces exactly one failing frame in 3,600, native exit 1,
+with the existing queue diagnostics and clean later recovery. Independent review
+confirms actual queue mutation before capture, not altered comparison text.
+The focused implementation adds 39 Rust lines; other residue counters unchanged.
+Cargo fmt/check, optimized core/DLL and metadata builds pass; Cargo release
+remains denied executing khronos_api's build script (OS error 5).
+Concurrent display/gameplay changes are outside its frozen verification source.
+Full maintained-source default any% passes 129,712/0 (362.04s), and physical
+any% passes 129,712/0 (403.76s), native exits 0. The custom slot-15 mutation
+control passes 3,600/0, confirming the physical-only scope. Paired actual
+push/render continuation probes are running separately. An output-only
+frame-200 mutation is detected as one differing sample, native exit 3, while
+terminal APU and queue state still match. The context-checked paired probe
+asserts both captured/live upload latch bytes are zero before rendering.
+The paired probe restores each branch's APU and queue,
+renders 534 stereo samples and compares output plus terminal APU/queue state,
+then restores pre-render state and retains mine's audio/queue on success.
+Headless callback schedule, shared emulated hardware and BOTH gameplay adoption
+bound this probe; custom-driver timing and autonomous native gameplay remain open.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read

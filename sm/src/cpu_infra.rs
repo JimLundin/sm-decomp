@@ -3341,6 +3341,17 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
                 );
             }
         }
+        if !game.g_use_my_apu_code {
+            if let Some(field) = queue_mine.first_difference(&queue_theirs) {
+                game.g_fail = true;
+                if !game.VERIFY_ACTIVE || game.VERIFY_FAILURES == 0 {
+                    eprintln!(
+                        "@{}: Physical APU queue compare failed: {}",
+                        game.snes_frame_counter, field
+                    );
+                }
+            }
+        }
         // Never deliver mine's captured commands to the shared audio player.
         queue_mine.select_runtime(queue_theirs, game);
         if game.g_fail {
