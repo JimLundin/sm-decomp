@@ -1418,29 +1418,6 @@ failure details; other residue counters unchanged. No diagnostic hooks
 or ROM-derived outputs enter tracked files. Next: broaden actual sprite
 port boundary tests and classify other omitted hardware state.
 
-Bounded OAM memory diagnostics (2026-10-18): failures now list up to 16
-low/high-table differences in one combined limit, with byte offset and
-mine/theirs/previous values. Low entries use offsets 2*word-index; high
-entries use 512+byte-index. Low values remain full words; high values are
-zero-extended bytes. Comparison, snapshot state and recovery are unchanged.
-
-Actual failure-path controls mutate the last low-table word, last high
-byte, and all low/high entries at frame 200. Each 3,600-frame replay has
-exactly one failing frame, zero RAM differences and native exit 1. The
-single faults print offsets 1FE/21F; the many-fault case prints exactly
-16 details. Independent source/output review confirms offsets, bounded
-ordering and read-only diagnostics. The truncation case exhausts its
-limit in the low table; a small mixed case remains useful extra coverage.
-
-Maintained-source any% passes 129,712/0 (212.10s), native exit 0. Its
-frozen DLL contains 060963f9 plus these 26 diagnostic lines; concurrent
-commits change only PLAN. Cargo fmt/check, optimized core/DLL and
-normal-core metadata builds pass; Cargo release remains blocked executing
-khronos_api's build script (OS error 5). Rust lines +26 restore useful
-failure details; other residue counters unchanged. No diagnostic hooks
-or ROM-derived outputs enter tracked files. Next: broaden actual sprite
-port boundary tests and classify other omitted hardware state.
-
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
