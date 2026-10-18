@@ -1418,6 +1418,27 @@ failure details; other residue counters unchanged. No diagnostic hooks
 or ROM-derived outputs enter tracked files. Next: broaden actual sprite
 port boundary tests and classify other omitted hardware state.
 
+Sprite-port continuation coverage (2026-10-18): an isolated current-source
+probe on 3f6f338b exercises actual MakeSnapshot/RestoreSnapshot and PPU
+reads/writes across all 262,144 address/table/byte-phase/pending-byte
+combinations. It poisons all six saved port fields before restoration,
+then performs four $2104 writes and four $2138 reads against independent
+low/high memory, pointer, phase, pending-byte and returned-value models.
+This covers low-to-high and high-to-low address-255 wrapping, high-table
+mirroring, pending low-byte writes and open-bus updates from reads.
+
+All 1,024 saved-address/saved-table/forced-blank combinations also pass
+actual vblank reload and $2102/$2103 address/control writes, checking
+reload suppression while blank, byte-phase reset and priority rotation.
+The complete probe returns native exit 0. These checks exercise actual
+continued port behavior after rewind; they do not compare PPU accuracy
+against external hardware, every sprite configuration or rendered output.
+The existing committed any% 129,712/0 remains the regression result for
+this unchanged source. No maintained Rust or residue counters change;
+Cargo fmt --check and the isolated optimized build pass. Probe wrappers
+and ROM-derived data stay ignored. Next: investigate omitted counter and
+register latches while preserving the demonstrated sprite snapshot scope.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
