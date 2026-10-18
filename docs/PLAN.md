@@ -719,6 +719,38 @@ changes or diagnostic wrappers enter its frozen maintained-source DLL.
 Next: return to the separate HDMA edge-pass
 discrepancy and broaden actual gameplay/room coverage.
 
+Independent sound-upload payload audit (2026-10-18): an isolated source
+copy at 3eac6b6a preserves the executable ROM upload by disabling custom
+audio before SnesInit. Actual CPU entry 80:8028 captures the source pointer;
+normal return 80:8058 completes each transaction. SPC writes are tagged
+with instruction-start PC. IPL FFE2 and the uploaded receiver's 1EAE
+(D7 14, checked in actual APU RAM) identify payload stores independently
+of SpcPlayer_Upload's actual destination/value assignment observations.
+No shared parser or post-upload RAM seeding supplies expected payloads.
+
+A 400-frame ROM/SPC boot produces three complete uploads: CF8000 57,841
+bytes, D0E20D 21,509 and DCAF6C 19,267. All 98,617 ordered destination/value
+writes match the maintained Rust uploader. Calling the actual ROM upload
+again with DCAF6C adds 19,267 matching writes, totaling 117,884 across four
+transactions. Normal and repeated suites return native exit 0. Guards
+reject reentry, incomplete/leftover transactions and missing/reordered
+source events. Value, destination and omission faults in the compared
+Rust observation fail at transaction 1/byte 17; a bit fault in the actual
+Rust payload assignment fails at transaction 0/byte 17. All four negative
+runs return native exit 1. Independent subagent reviews confirm actual
+assignment capture and corrected completeness/failure checks.
+
+This proves tested payload transfer for ROM-selected sources supplied to
+independent Rust players. It does not verify Rust gameplay chooses the same
+upload, arbitrary receiver code, post-upload reset/terminator effects,
+handshake timing, runtime command delivery or audible equivalence. The
+400-frame RM_THEIRS audit is not an RM_BOTH gameplay regression replay.
+Maintained Rust and residue counters are unchanged; all isolated code/logs
+and ROM-derived data stay outside tracked files. Cargo fmt --check passes;
+Cargo release remains blocked executing dependency build scripts (OS error
+5). Next: independently capture Rust gameplay upload sources/order and
+compare them with ROM transactions before enforcing upload equivalence.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
