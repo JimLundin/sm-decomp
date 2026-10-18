@@ -2177,9 +2177,24 @@ Stable optimized final-source core/DLL build and direct full-source format
 pass; Cargo fmt/build remain ASR-denied. Final-source any%: 129,712 frames,
 zero failures (196.26s); Waver route: 58,109 frames, zero failures (95.54s).
 Raw offsets -3, cast lines -10; Rust lines +11 provide named queue accessors
-and explicit source-read sequencing. Other counters unchanged. Next: remove
-the now-unused bank-A0 VRAM entry pointer helper, then continue enemy
-instruction field access in the bank-specific callbacks.
+and explicit source-read sequencing. Other counters unchanged. Next: convert the remaining bank-A0 VRAM entry
+pointer callers before removing the helper, then continue enemy instruction
+field access in the bank-specific callbacks.
+
+Fresh audit found two live gVramWriteEntry callers; the prior unused-helper
+claim was incorrect. TransferEnemyTilesToVramAndInit now uses named source/
+destination fields and ordered byte-backed queue writes. Zero initialization,
+FFFF/FFFE/9800 states and InitializeEnemies callback order remain exact.
+Captured queue tail, live source/destination reads and the bank word write
+at entry+4 (overlapping destination low byte) are preserved. Independent
+extracted comparison passes 1,117,504 full-RAM/initialization-trace cases,
+including all queue tails, source states and overlapping entry/field writes.
+Stable optimized core/DLL build and direct full-source format pass; Cargo
+fmt/build remain ASR-denied. Any%: 129,712 frames, zero failures (210.66s);
+Waver route: 58,109 frames, zero failures (92.08s). Raw offsets -19,
+cast lines -26, Rust lines -10; other counters unchanged. Next:
+QueueEnemyBG2TilemapTransfers, preserving its live tail read after entry
+writes and unconditional request clearing; then remove gVramWriteEntry.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:

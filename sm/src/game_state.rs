@@ -364,6 +364,24 @@ impl Game {
         u16::from_le_bytes([self.g_ram[offset], self.g_ram[offset + 1]])
     }
 
+    /// enemy_tile_vram_src ($7E:0E7C in ram_map).
+    pub fn enemy_tile_vram_src(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xe7c], self.g_ram[0xe7d]])
+    }
+
+    pub fn set_enemy_tile_vram_src(&mut self, value: u16) {
+        self.g_ram[0xe7c..0xe7e].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// enemy_tile_vram_dst ($7E:0E7E in ram_map).
+    pub fn enemy_tile_vram_dst(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xe7e], self.g_ram[0xe7f]])
+    }
+
+    pub fn set_enemy_tile_vram_dst(&mut self, value: u16) {
+        self.g_ram[0xe7e..0xe80].copy_from_slice(&value.to_le_bytes());
+    }
+
     /// VRAM write queue byte cursor ($7E:0330 in ram_map).
     pub fn vram_write_queue_tail(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0x330], self.g_ram[0x331]])

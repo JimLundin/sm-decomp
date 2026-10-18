@@ -2733,62 +2733,34 @@ pub unsafe fn LoadEnemyTileData(game: &mut Game) {
     }
 }
 pub unsafe fn TransferEnemyTilesToVramAndInit(game: &mut Game) {
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xe7c as ::core::ffi::c_int as isize) as *mut uint16);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xe7c as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        == 0
-    {
-        v0 = ((&raw mut game.g_ram as *mut uint8).offset(0x7000 as ::core::ffi::c_int as isize)
-            as *mut EnemySpawnData as *mut uint8)
-            .offset_from(&raw mut game.g_ram as *mut uint8) as ::core::ffi::c_long
-            as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe7c as ::core::ffi::c_int as isize)
-            as *mut uint16) = ((&raw mut game.g_ram as *mut uint8)
-            .offset(0x7000 as ::core::ffi::c_int as isize)
-            as *mut EnemySpawnData as *mut uint8)
-            .offset_from(&raw mut game.g_ram as *mut uint8)
-            as ::core::ffi::c_long as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe7e as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0x6c00 as uint16;
+    let mut source = game.enemy_tile_vram_src();
+    if game.enemy_tile_vram_src() == 0 {
+        source = 0x7000;
+        game.set_enemy_tile_vram_src(0x7000);
+        game.set_enemy_tile_vram_dst(0x6c00);
     }
-    if v0 as ::core::ffi::c_int != 0xffff as ::core::ffi::c_int {
-        if v0 as ::core::ffi::c_int == 0xfffe as ::core::ffi::c_int {
+    match source {
+        0xffff => {}
+        0xfffe => {
             InitializeEnemies(game);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe7c as ::core::ffi::c_int as isize)
-                as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
-        } else if v0 as ::core::ffi::c_int == 0x9800 as ::core::ffi::c_int {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe7c as ::core::ffi::c_int as isize)
-                as *mut uint16) = -(2 as ::core::ffi::c_int) as uint16;
-        } else {
-            let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x330 as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            let mut v2: *mut VramWriteEntry = gVramWriteEntry(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int,
-                game,
-            );
-            (*v2).size = 2048 as uint16;
-            let mut v3: uint16 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xe7c as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            (*v2).src.addr = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xe7c as ::core::ffi::c_int as isize)
-                as *mut uint16) as VoidP;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe7c as ::core::ffi::c_int as isize)
-                as *mut uint16) = (v3 as ::core::ffi::c_int + 2048 as ::core::ffi::c_int) as uint16;
-            *(&raw mut (*v2).src.bank as *mut uint16) = 126 as uint16;
-            let mut v4: uint16 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xe7e as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            (*v2).vram_dst = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xe7e as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe7e as ::core::ffi::c_int as isize)
-                as *mut uint16) = (v4 as ::core::ffi::c_int + 1024 as ::core::ffi::c_int) as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-                as *mut uint16) = (v1 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
+            game.set_enemy_tile_vram_src(0xffff);
+        }
+        0x9800 => game.set_enemy_tile_vram_src(0xfffe),
+        _ => {
+            let tail = game.vram_write_queue_tail();
+            let cursor = game.vram_write_queue_tail();
+            game.write_vram_queue_word(cursor, 0, 2048);
+            let source = game.enemy_tile_vram_src();
+            let address = game.enemy_tile_vram_src();
+            game.write_vram_queue_word(cursor, 2, address);
+            game.set_enemy_tile_vram_src(source.wrapping_add(2048));
+            // Original word store clears the first destination byte too.
+            game.write_vram_queue_word(cursor, 4, 126);
+            let destination = game.enemy_tile_vram_dst();
+            let address = game.enemy_tile_vram_dst();
+            game.write_vram_queue_word(cursor, 5, address);
+            game.set_enemy_tile_vram_dst(destination.wrapping_add(1024));
+            game.set_vram_write_queue_tail(tail.wrapping_add(7));
         }
     }
 }
