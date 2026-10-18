@@ -6291,6 +6291,30 @@ changes are outside this replay. Physical device/ROM pointers, full Cartesian
 input coverage, hardware/render/audio timing and credits remain open; held
 HDMA diagnosis stays stopped. Continue remaining indirect address helpers.
 
+CPU indirect-Y cleanup (2026-10-18): cpu_adrIdy uses native widening,
+word-wrapped pointer offsets, full page comparisons and 24-bit target sums.
+Operand fetch, DP penalty, pointer reads, write-gated index/page penalty and
+fresh DB/Y reads after low output retain their order. Actual old/current
+helpers pass 7,340,032 cases across every pointer word, seven Y boundaries,
+four DP boundaries and all write/X-width gates; independent addresses,
+cycles and ordered bus traces pass. Another 131,072 aliased-output cases
+match high target and CPU fields. Physical WRAM executes 25,165,824 STA/LDA
+instructions over every value, valid index widths, both accumulator widths,
+DP/Y/pointer boundaries, excluding pointer/data overlap. RAM/value, Y/DP,
+Z/N, PC and inherited cycles pass. Initial probe omitted the store opcode's
+extra base cycle; corrected fixture passes. It then wrongly required store
+movie hits; corrected reporting retains read 4,362/store zero in the passing
+3,600/0 (5.68s), native exit 0. Dedicated instructions cover store execution,
+not movie coverage. Independent physical-bus QC follows. Clean frozen
+990e70fe821ab4d09492444d94cbd8b4cb61995c plus only this helper passes any%
+129,712/0 (217.63s), native exit 0. Direct full-source format, normal-core
+metadata and optimized clean/probe core/DLL builds pass; Cargo fmt/release
+remain launch-denied. Progress/diff checks pass; focused cast lines -17 and
+Rust lines -19, other categories unchanged. Later peer edits are outside
+this replay. Physical devices, full Cartesian pointer/Y coverage, hardware/
+render/audio timing and credits remain open; held HDMA diagnosis stays
+stopped. Continue remaining long indirect address helpers.
+
 Independent indirect-Y QC (2026-10-18): cpu_adrIdy candidate passes
 1,572,864 actual old/current LDA/STA instructions, native exit zero. Every
 Y word uses a cancelling pointer at low WRAM 1800 and DB 7E/7F to access
