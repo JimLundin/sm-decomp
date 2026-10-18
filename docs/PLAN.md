@@ -1836,7 +1836,24 @@ direct full-source format pass; Cargo fmt/build remain ASR-denied. Any%:
 failures (91.76s). Raw offsets -4, unsafe functions -1, cast lines -26;
 Rust lines +23 provide the byte view and four named RAM accessors. Next:
 CheckIfEnemyTouchesSamus overlap arithmetic and live byte-backed enemy/Samus
-reads, retaining its signed Y gate and asymmetric three-pixel offset.
+reads, retaining its signed Y gate and three-pixel Samus offset.
+
+CheckIfEnemyTouchesSamus now uses the existing borrowed enemy byte view and
+safe overlap helper. Horizontal abs16/radius boundaries remain strict; the
+vertical signed gate and contact distance both use Samus Y plus three,
+wrapping as words. Vertical height contact remains inclusive. The prior
+asymmetric-offset description was incorrect: the original parentheses
+subtract (Samus Y + 3); boundary comparison caught and corrected that reading
+before commit. The function is safe Rust and leaves RAM unchanged. Prior
+Rust comparison passes 594,724 complete-function full-RAM/return cases,
+including every enemy index; independent corrected comparison passes
+3,002,512 cases including high/unaligned slots and coordinate/radius extremes.
+Stable optimized corrected core/DLL build and direct full-source format
+pass; Cargo fmt/build remain ASR-denied. Corrected-source any%: 129,712 frames,
+zero failures (206.26s); Waver route: 58,109 frames, zero failures (101.62s).
+Raw offsets -7, unsafe functions -1, cast lines -29, Rust lines -17; other
+counters unchanged. Next: EnemyFunc_AC67 proximity overlap, retaining its
+horizontal eight-pixel fallback and strict vertical radius comparison.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:

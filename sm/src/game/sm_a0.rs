@@ -9196,45 +9196,28 @@ pub fn Samus_CheckSolidEnemyColl(amt: int32, game: &mut Game) -> CheckEnemyColl_
     }
     CheckSolidEnemyColl_Result { collision: 0, amt }
 }
-pub unsafe fn CheckIfEnemyTouchesSamus(mut k: uint16, game: &mut Game) -> uint16 {
-    let mut E: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);
-    let mut i: uint16 = abs16(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - (*E).x_pos as ::core::ffi::c_int) as uint16,
-    );
-    let mut v3: bool = (i as ::core::ffi::c_int)
-        < *((&raw mut game.g_ram as *mut uint8).offset(0xafe as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int;
-    let mut v4: uint16 = (i as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xafe as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16;
-    if !v3 && v4 as ::core::ffi::c_int >= (*E).x_width as ::core::ffi::c_int {
-        return 0 as uint16;
+pub fn CheckIfEnemyTouchesSamus(k: uint16, game: &mut Game) -> uint16 {
+    let enemy = SolidEnemyCollisionBody::new(game, k);
+    if !solid_enemy_axis_overlaps(
+        game.samus_x_pos(),
+        enemy.x_pos(),
+        game.samus_x_radius(),
+        enemy.x_width(),
+    ) {
+        return 0;
     }
-    if ((*((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        + 3 as ::core::ffi::c_int
-        - (*E).y_pos as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
-        < 0 as ::core::ffi::c_int
-    {
-        let mut v6: uint16 = ((*E).y_pos as ::core::ffi::c_int
-            - (*((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                + 3 as ::core::ffi::c_int)) as uint16;
-        let mut v7: uint16 = (v6 as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16;
-        if (v6 as ::core::ffi::c_int)
-            < *((&raw mut game.g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-            || v7 as ::core::ffi::c_int == (*E).y_height as ::core::ffi::c_int
-            || (v7 as ::core::ffi::c_int) < (*E).y_height as ::core::ffi::c_int
-        {
-            return -(1 as ::core::ffi::c_int) as uint16;
-        }
+    let samus_y = game.samus_y_pos();
+    let enemy_y = enemy.y_pos();
+    if samus_y.wrapping_add(3).wrapping_sub(enemy_y) as i16 >= 0 {
+        return 0;
     }
-    return 0 as uint16;
+    let distance = enemy_y.wrapping_sub(samus_y.wrapping_add(3));
+    let radius = game.samus_y_radius();
+    if distance < radius || distance.wrapping_sub(radius) <= enemy.y_height() {
+        0xffff
+    } else {
+        0
+    }
 }
 pub unsafe fn EnemyFunc_AC67(mut k: uint16, game: &mut Game) -> uint16 {
     let mut E: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);
