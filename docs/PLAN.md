@@ -471,6 +471,30 @@ Bomb timing. All controller workers are terminal; no maintained source or
 residue counters changed. New milestones must also pass the current oracle,
 including committed sound-command enforcement. Credits remain unproved.
 
+Raw slope-mask audit (2026-10-18): an independently reviewed isolated
+observer on committed d1adcfb9 compares current_slope_bts (1E77..1E78)
+before any normalization. Any% completes 129,712/0 (226.08s), Waver
+58,109/0 (96.38s), both native process exits 0, but the masked word differs
+in 3,967..3,968 and 1,028..1,029 frames respectively. The observer reports
+its final summary before counting the last comparison, hence the one-frame
+uncertainty. Values vary during both routes; full-route low-byte equality
+was not counted. First logged divergence is frame 11,629, state 8/DF8D:
+mine 0013, theirs 5513. Zero enforced failures do not cover this raw field.
+
+Ignored ROM opcode inspection finds vertical slope store 94:8FED loads
+the full word from 7F:6402,X and stores it at 1E77 without AND 00FF.
+Horizontal 94:8FD1, enemy A0:C313 and projectile 86:85A7 explicitly mask
+their loads. Rust's vertical nonsquare dispatch zero-extends a BTS byte;
+the prior transpiled body does too, so this discrepancy predates cleanup.
+This identifies a producer candidate, not a completed fix or proof that
+all consumers ignore the high byte. ROM 86:873D reads the field, while its
+maintained Rust callback currently returns zero without a read.
+Next: trace the executing vertical store and neighboring BTS at the first
+divergence, then verify a focused full-word read. Remove the mask only after
+raw comparisons and injected-fault checks justify it. No maintained Rust,
+residue counters or ROM-derived artifacts changed; both probe processes
+are terminal. Do not normalize away the observed discrepancy.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
