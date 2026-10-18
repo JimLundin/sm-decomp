@@ -7898,6 +7898,29 @@ pass; all focused counters unchanged. Live arms match verified source.
 Hardware/render/audio timing and credits remain open; held HDMA diagnosis
 stays stopped. Continue executed push opcode cleanup.
 
+CPU push cast cleanup (2026-10-19): PHA/PHY/PHX use native u8 casts for byte
+pushes. Width gates, live source reads, cycle increments and high-byte-first
+word pushes remain exact. Actual old/current instructions pass 3,932,160 pairs
+over every source word, distinct nonsource register sentinels, independent
+native M/X, emulation byte mode and stack 0000/0100/0101/1FFF. Code at
+7E:8000 stays separate from stack sentinels. Independent stack bytes and
+stack-page wrap, complete named CPU state, cycles, open bus and PC history
+match. Native second write at 00:FFFF is ROM-mapped and leaves the RAM
+sentinel untouched. TEMP fixture first overwrote its opcode at 7E:FFFF with
+a stack sentinel, then wrongly expected that ROM-mapped write in RAM;
+assertions caught both assumptions, and corrected actual-bus checks pass.
+Independent QC identified the same mapping and nonsource-sentinel issues.
+Instrumented any% prefix passes 3,600/0 (1.01s), native exit 0; PHA/PHY/PHX
+native/emulation calls are 29,471/0, 33,042/0 and 104,749/0. Dedicated pairs
+cover both widths and emulation. Clean frozen
+848aa63692fa938699ca222c23f0b4671cd91d26 plus only these three casts passes
+any% 129,712/0 (53.63s), native exit 0. Cargo fmt/check, direct format,
+normal-core metadata and optimized clean/probe core/DLL builds pass. Full
+Cargo release fails frontend link for missing SDL2, exit 101. Progress/diff
+pass; all focused counters unchanged. Live arms match verified source.
+Hardware/render/audio timing and credits remain open; held HDMA diagnosis
+stays stopped. Continue executed control-flow opcode cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

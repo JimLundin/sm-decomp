@@ -1662,7 +1662,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             72 => {
                 if (*cpu).mf {
-                    cpu_pushByte(cpu, (*cpu).a as uint8_t, game);
+                    cpu_pushByte(cpu, (*cpu).a as u8, game);
                 } else {
                     (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
                     cpu_pushWord(cpu, (*cpu).a, game);
@@ -1794,7 +1794,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             90 => {
                 if (*cpu).xf {
-                    cpu_pushByte(cpu, (*cpu).y as uint8_t, game);
+                    cpu_pushByte(cpu, (*cpu).y as u8, game);
                 } else {
                     (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
                     cpu_pushWord(cpu, (*cpu).y, game);
@@ -2655,7 +2655,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             218 => {
                 if (*cpu).xf {
-                    cpu_pushByte(cpu, (*cpu).x as uint8_t, game);
+                    cpu_pushByte(cpu, (*cpu).x as u8, game);
                 } else {
                     (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
                     cpu_pushWord(cpu, (*cpu).x, game);
