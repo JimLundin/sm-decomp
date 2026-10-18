@@ -395,41 +395,33 @@ unsafe fn cpu_readOpcodeWord(mut cpu: *mut Cpu, game: &mut Game) -> uint16_t {
         | (cpu_readOpcode(cpu, game) as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
         as uint16_t;
 }
-pub unsafe fn cpu_getFlags(mut cpu: *mut Cpu) -> uint8_t {
-    let mut val: uint8_t = (((*cpu).n as ::core::ffi::c_int) << 7 as ::core::ffi::c_int) as uint8_t;
-    val = (val as ::core::ffi::c_int | ((*cpu).v as ::core::ffi::c_int) << 6 as ::core::ffi::c_int)
-        as uint8_t;
-    val = (val as ::core::ffi::c_int | ((*cpu).mf as ::core::ffi::c_int) << 5 as ::core::ffi::c_int)
-        as uint8_t;
-    val = (val as ::core::ffi::c_int | ((*cpu).xf as ::core::ffi::c_int) << 4 as ::core::ffi::c_int)
-        as uint8_t;
-    val = (val as ::core::ffi::c_int | ((*cpu).d as ::core::ffi::c_int) << 3 as ::core::ffi::c_int)
-        as uint8_t;
-    val = (val as ::core::ffi::c_int | ((*cpu).i as ::core::ffi::c_int) << 2 as ::core::ffi::c_int)
-        as uint8_t;
-    val = (val as ::core::ffi::c_int | ((*cpu).z as ::core::ffi::c_int) << 1 as ::core::ffi::c_int)
-        as uint8_t;
-    val = (val as ::core::ffi::c_int | (*cpu).c as ::core::ffi::c_int) as uint8_t;
-    return val;
+pub unsafe fn cpu_getFlags(cpu: *mut Cpu) -> uint8_t {
+    (u8::from((*cpu).n) << 7)
+        | (u8::from((*cpu).v) << 6)
+        | (u8::from((*cpu).mf) << 5)
+        | (u8::from((*cpu).xf) << 4)
+        | (u8::from((*cpu).d) << 3)
+        | (u8::from((*cpu).i) << 2)
+        | (u8::from((*cpu).z) << 1)
+        | u8::from((*cpu).c)
 }
-pub unsafe fn cpu_setFlags(mut cpu: *mut Cpu, mut val: uint8_t) {
-    (*cpu).n = val as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0;
-    (*cpu).v = val as ::core::ffi::c_int & 0x40 as ::core::ffi::c_int != 0;
-    (*cpu).mf = val as ::core::ffi::c_int & 0x20 as ::core::ffi::c_int != 0;
-    (*cpu).xf = val as ::core::ffi::c_int & 0x10 as ::core::ffi::c_int != 0;
-    (*cpu).d = val as ::core::ffi::c_int & 8 as ::core::ffi::c_int != 0;
-    (*cpu).i = val as ::core::ffi::c_int & 4 as ::core::ffi::c_int != 0;
-    (*cpu).z = val as ::core::ffi::c_int & 2 as ::core::ffi::c_int != 0;
-    (*cpu).c = val as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0;
+pub unsafe fn cpu_setFlags(cpu: *mut Cpu, val: uint8_t) {
+    (*cpu).n = val & 0x80 != 0;
+    (*cpu).v = val & 0x40 != 0;
+    (*cpu).mf = val & 0x20 != 0;
+    (*cpu).xf = val & 0x10 != 0;
+    (*cpu).d = val & 0x08 != 0;
+    (*cpu).i = val & 0x04 != 0;
+    (*cpu).z = val & 0x02 != 0;
+    (*cpu).c = val & 0x01 != 0;
     if (*cpu).e {
-        (*cpu).mf = true_0 != 0;
-        (*cpu).xf = true_0 != 0;
-        (*cpu).sp = ((*cpu).sp as ::core::ffi::c_int & 0xff as ::core::ffi::c_int
-            | 0x100 as ::core::ffi::c_int) as uint16_t;
+        (*cpu).mf = true;
+        (*cpu).xf = true;
+        (*cpu).sp = ((*cpu).sp & 0xff) | 0x100;
     }
     if (*cpu).xf {
-        (*cpu).x = ((*cpu).x as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint16_t;
-        (*cpu).y = ((*cpu).y as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint16_t;
+        (*cpu).x &= 0xff;
+        (*cpu).y &= 0xff;
     }
 }
 unsafe fn cpu_setZN(mut cpu: *mut Cpu, mut value: uint16_t, mut byte: bool) {

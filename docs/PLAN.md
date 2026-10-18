@@ -4582,6 +4582,24 @@ assets stay ignored. Next: continue actual hardware consumer and event
 coverage; held HDMA diagnosis remains stopped. Render initialization/Waver71,
 hires, hardware timing, audio timing, masked RAM and credits remain open.
 
+CPU status-flag cleanup (2026-10-18): cpu_getFlags packs boolean flags with
+native byte shifts; cpu_setFlags uses byte masks and word masks for emulation
+stack/index restrictions. Flag assignment order, forced M/X in E mode, page-1
+stack restriction and high-index truncation remain exact. Raw-pointer public
+signatures and CPU layout are unchanged.
+
+Actual old/current helpers pass 33,554,432 cases across both E modes, all
+256 flag bytes and every 16-bit register word, checking flags, SP/X/Y and
+unrelated registers/control fields. Actual 3,600-frame oracle coverage passes
+3,600/0, native exit 0, with 446,341 pack calls and 442,741 setter calls.
+Clean frozen e2c5d9c6 plus only this change passes any% 129,712/0 (243.52s),
+native exit 0, without counters. Independent boundary/opcode QC is recorded
+above. Direct full-source format, normal-core metadata and optimized
+clean/probe core/DLL builds pass; Cargo fmt and release remain denied at
+launch. Focused cast lines -20 and Rust lines -8; other residue categories
+unchanged. Concurrent demo/PPU changes are excluded. Hardware timing,
+rendering/HDMA, audio timing and boot-to-credits coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
