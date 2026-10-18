@@ -3710,6 +3710,43 @@ rendering/HDMA, audio timing and boot-to-credits coverage remain open.
 Next: audit interrupt enable/timer rewind and actual event generation before
 replacing the paired yield schedule with hardware-clock execution.
 
+SNES arithmetic-state audit (2026-10-18): multiplyA, multiplyResult,
+divideA and divideResult are absent from Snapshot. Four actual field faults
+escape comparison, survive rewind and change the next actual register read
+or operation. Actual snes_writeReg/snes_readReg checks pass all65,536 byte
+multiplication pairs and16,777,216 dividend/divisor pairs, including complete
+result-byte reads and zero-divisor quotientFFFF/remainderdividend. These
+independent arithmetic checks prove values, not hardware latency: maintained
+results are produced immediately on the trigger write.
+
+Frozen end-of-frame snapshot observers pass Verified 129712 frames: 0 failing frames (243.82s) and Verified 58109 frames: 0 failing frames (115.89s),
+nativeexits0, with ARITHMETIC_DIFFS 4 and ARITHMETIC_DIFFS 2 respectively. First difference
+is frame8,256: mine(multiplyA0,result0,dividend0,quotientFFFF), theirs(16,768,0,
+FFFF). Waver's second is20,817, theirs(144,11520,0,FFFF). Any%'s reported
+first three are8,256/56,851/77,991 with the first tuple. Natural differences
+mean blanket arithmetic-state comparison would add failures; no enforcement
+or normalization is committed. The injected rewind loss remains a real
+missing-boundary check, independently of whether those natural residuals
+are consumed. Observer field capture does not alter arithmetic runtime state.
+
+A named-register search finds15 Rust gameplay arithmetic writes, all reset/
+initialization zeros, and no named arithmetic-result reads. Direct Rust
+calculations can therefore leave different hardware residuals than ROM code;
+this search does not rule out numeric-address reads or emulated helper use.
+Next: audit actual consumers and write/read order at the differing frames,
+then determine the correct rewind boundary before enforcing state equality.
+Do not infer register irrelevance or arbitrary equivalence from zero RAM
+failures. Held HDMA diagnosis is not resumed.
+
+The first isolated build missed wrapper insertion and failed to link; fixing
+the builder yielded the passing actual-function controls. Only this note is
+committed; no maintained source/layout/residue changes. Direct optimized
+probe/observer core/DLL, full-source rustfmt and progress checks pass. Ordinary
+movie pixel checks retain the uninitialized disableRender limitation. Probe/
+ROM-derived assets remain ignored; concurrent changes separate. Rendering
+initialization/Waver71 failures, hires, audio timing, masked RAM, shared
+hardware accuracy and boot-to-credits coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
