@@ -113,6 +113,7 @@ pub struct Snapshot {
     pub mosaic: ([bool; 4], uint8, uint8),
     pub bgmode: (uint8, bool, [bool; 4]),
     pub bg_scroll: [(uint16, uint16); 4],
+    pub bg_address: [(bool, bool, uint16, uint16); 4],
     pub brightness: uint8,
     pub forced_blank: bool,
     pub cgram: [uint16; 256],
@@ -970,6 +971,15 @@ unsafe fn VerifySnapshotsEq(
             );
         }
     }
+    if (*b).bg_address != (*a).bg_address {
+        game.g_fail = true;
+        if report_details {
+            eprintln!(
+                "@{}: BG address (wide, high, tilemap, tile data) compare failed: mine {:?} != theirs {:?}",
+                game.snes_frame_counter, (*b).bg_address, (*a).bg_address
+            );
+        }
+    }
     if (*b).bg_scroll != (*a).bg_scroll {
         game.g_fail = true;
         if report_details {
@@ -1686,6 +1696,9 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     let ppu = &*(*game.g_snes).ppu;
     (*s).brightness = ppu.brightness;
     (*s).forced_blank = ppu.forcedBlank;
+    (*s).bg_address = ppu
+        .bgLayer
+        .map(|bg| (bg.tilemapWider, bg.tilemapHigher, bg.tilemapAdr, bg.tileAdr));
     (*s).bg_scroll = ppu.bgLayer.map(|bg| (bg.hScroll, bg.vScroll));
     (*s).bgmode = (ppu.mode, ppu.bg3priority, ppu.bgLayer.map(|bg| bg.bigTiles));
     (*s).mosaic = (
@@ -1730,6 +1743,12 @@ unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     let ppu = &mut *(*game.g_snes).ppu;
     ppu.brightness = (*s).brightness;
     ppu.forcedBlank = (*s).forced_blank;
+    for (bg, (wide, high, tilemap, tiles)) in ppu.bgLayer.iter_mut().zip((*s).bg_address) {
+        bg.tilemapWider = wide;
+        bg.tilemapHigher = high;
+        bg.tilemapAdr = tilemap;
+        bg.tileAdr = tiles;
+    }
     for (bg, (horizontal, vertical)) in ppu.bgLayer.iter_mut().zip((*s).bg_scroll) {
         bg.hScroll = horizontal;
         bg.vScroll = vertical;

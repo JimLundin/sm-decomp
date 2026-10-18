@@ -2539,6 +2539,36 @@ renderer and do not establish hardware accuracy or every BG/scroll mode.
 Next: BG tilemap/tile-address and composition snapshot gaps. Audio timing,
 HDMA, masked RAM, shared hardware accuracy and boot-to-credits remain open.
 
+Background-address snapshot gap and enforcement (2026-10-18): tilemap
+width/height, tilemap base and tile-data base for all four backgrounds were
+absent from snapshots. Each of16 actual field mutations is accepted against
+identical registered buffers, survives rewind and changes the next rendered
+row. Constructed Mode1 BG1/2/3 and Mode0 BG4 rows use mosaic for the pixel
+path; width/height cases cross256-pixel boundaries. This is a future-output
+snapshot defect, not evidence of a naturally occurring movie divergence.
+
+Snapshots now capture, compare and directly restore all16 semantic fields.
+Actual controls pass256 related register-generated equality states and12,288
+single-bit mutation/capture/restore cases, covering both size flags, six
+tilemap address bits and four tile-data address bits perBG. Related register
+patterns are not a full Cartesian product of four backgrounds. All16 prior
+continuation faults restore identical rows. Independent bit mappings pass
+1,024 actual BGSC writes and512 BGNBA writes. Probe nativeexit0. Sixteen
+actual post-render frame200 faults each produce3,600/1 and nativeexit1,
+with named BG-address diagnostics and no later cascade.
+
+Dedicated maintained-source Verified 129712 frames: 0 failing frames (370.63s); Verified 58109 frames: 0 failing frames (168.26s); nativeexits0.
+Cargo fmt/fmt--check and direct optimized core/DLL/normal-core metadata builds
+pass; Cargo release remains blocked executing khronos_api's build script
+(OSerror5). Progress run: focused Rust lines+19 implement state/capture/
+restore/diagnostics; other counters unchanged for this change. Builds include
+then-current independent audio work; later concurrent edits need their own
+replays. Only these CPU hunks and note enter this commit. Ppu/RAM/save layouts
+unchanged; ROM/probe assets ignored. Constructed continuation rows share the
+maintained renderer, so SNES accuracy and every addressing/composition mode
+are unproved. Next: remaining screen/window/color composition snapshot state.
+Audio timing, HDMA, masked RAM and boot-to-credits coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
