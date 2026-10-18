@@ -5821,6 +5821,20 @@ source/fixture review finds no issue. Cartridge/PPU/register/DMA routing,
 word reads and hardware timing remain outside this actual RAM-data probe.
 Implementing agent retains source ownership; only this note changes.
 
+Independent absolute/long-address QC (2026-10-18): candidate cpu_adrAbs
+and cpu_adrAbl pass 1,048,572 actual old/current LDA instructions. Every
+physical WRAM target executes byte/word reads with ordinary and wrapped
+operand PCs, including opcode/data aliases and the 7EFFFF word successor
+in bank 7F. Only the 7FFFFF word case is excluded because its successor is
+outside WRAM. Loaded A, Z/N, final PC and cycles match independent expected
+values and prior Rust helper execution. Wrapping the absolute word successor
+within DB instead of carrying to the next bank fails A 32385 versus 4225,
+native exit 3221226505; production exits zero. Both tested helpers match
+current source; independent partner fixture review finds no issue. Optimized
+core/probe DLL, normal-core metadata, direct full-source format and progress
+pass. Other bus devices, arbitrary operand-value coverage, emulation hardware
+accuracy and movie integration are outside this probe. No production edits.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
