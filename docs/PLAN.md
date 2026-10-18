@@ -4878,9 +4878,12 @@ unused-byte registers match. Non-hardware mode byte values are deliberately
 included to retain inherited OR semantics. A TEMP channel mask 7-to-3 change
 fails immediately at address 0040 (0 versus 252). Original/control native
 exits are zero/nonzero; frozen/live dma_read bodies match. Invalid low
-offsets C/D/E retain the noreturn assertion by source inspection but are
-outside this positive execution test. Removing its unreachable open-bus
-return therefore does not change reachable behavior.
+offsets C/D/E retain the noreturn assertion. A follow-up executes each offset
+in both frozen old/current readers (430C, 437D and 00FE), six separate native
+processes. All exit 2 through the assertion hook with assertion "0", source
+"src/snes/dma.c" and line 118; no read returns. Frozen/live read body still
+matches. Removing its unreachable open-bus return therefore does not change
+reachable behavior.
 
 Optimized probe core/DLL, normal-core metadata, direct full-source rustfmt
 and progress pass. Only this note changes; no production code/residue or
