@@ -1634,6 +1634,19 @@ remain ASR-denied. Waver route: 58,109 frames, zero failures (84.23s); any%:
 Rust lines -77; unsafe count unchanged. Next: post-grapple square-slope
 sampling, retaining first/last sample tests and mirrored quadrant selection.
 
+Both post-grapple square-slope handlers now use the existing shared
+occupancy helper with named byte-backed position/radius reads. First/last
+sample gates, mirrored quadrant XOR and three-bit directional distance
+returns remain exact. Prior Rust comparison passes 4,325,376 RAM/context/
+return cases over both axes, all five shapes/orientations, sub-block position,
+radius and edge combinations, sample counts and every position with six
+radius boundaries. Stable optimized core/DLL build and direct format pass;
+Cargo fmt/build remain ASR-denied. Waver route: 58,109 frames, zero failures
+(85.93s); any%: 129,712 frames, zero failures (184.03s). Raw offsets -14,
+cast lines -68, Rust lines -104; unsafe count unchanged. Next: post-grapple
+coordinate sampling and traversal, retaining wrapping block arithmetic,
+live room-width steps and maximum distance writes.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

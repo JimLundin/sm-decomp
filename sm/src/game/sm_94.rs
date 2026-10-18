@@ -1570,156 +1570,52 @@ unsafe fn PostGrappleColl_Vert_Slope_NonSquare(
     }
 }
 unsafe fn PostGrappleColl_Horiz_Slope_Square(
-    mut pgci: *mut PostGrappleCollInfo,
-    mut k: uint16,
+    pgci: *mut PostGrappleCollInfo,
+    k: uint16,
     game: &mut Game,
 ) -> uint16 {
-    let mut current_block: u64;
-    let mut temp_collision_DD4: uint16 = (4 as ::core::ffi::c_int
-        * (*(&raw mut game.g_ram as *mut uint8)
-            .offset(0x16402 as ::core::ffi::c_int as isize)
-            .offset(k as isize) as ::core::ffi::c_int
-            & 0x1f as ::core::ffi::c_int)) as uint16;
-    let mut temp_collision_DD6: uint16 = (*(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(k as isize) as ::core::ffi::c_int
-        >> 6 as ::core::ffi::c_int) as uint16;
-    let mut v1: uint16 = (temp_collision_DD4 as ::core::ffi::c_int
-        + (temp_collision_DD6 as ::core::ffi::c_int
-            ^ ((*pgci).pgci_r32 as ::core::ffi::c_int & 8 as ::core::ffi::c_int)
-                >> 3 as ::core::ffi::c_int)) as uint16;
-    if (*pgci).pgci_r26 == 0 {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-            - 1 as ::core::ffi::c_int
-            & 8 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
-        {
-            if kTab948E54[v1 as usize] == 0 {
-                return -(1 as ::core::ffi::c_int) as uint16;
-            }
-            current_block = 11148800648680365515;
-        } else {
-            current_block = 16129070931773799691;
-        }
-    } else if (*pgci).pgci_r26 as ::core::ffi::c_int != (*pgci).pgci_r28 as ::core::ffi::c_int
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-            & 8 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
-    {
-        current_block = 16129070931773799691;
+    let bts = game.g_ram[0x16402 + usize::from(k)];
+    let index = u16::from(bts & 0x1f) * 4 + (u16::from(bts >> 6) ^ (((*pgci).pgci_r32 & 8) >> 3));
+    if !square_slope_occupied(
+        index,
+        (*pgci).pgci_r26,
+        (*pgci).pgci_r28,
+        game.samus_y_pos(),
+        game.samus_y_radius(),
+        2,
+    ) {
+        return 0xffff;
+    }
+    let distance = (*pgci).pgci_r32 & 7;
+    if game.samus_collision_direction() & 1 != 0 {
+        distance
     } else {
-        current_block = 10886091980245723256;
+        distance ^ 7
     }
-    match current_block {
-        16129070931773799691 => {
-            if kTab948E54[v1 as usize] != 0 {
-                current_block = 11148800648680365515;
-            } else {
-                current_block = 10886091980245723256;
-            }
-        }
-        _ => {}
-    }
-    match current_block {
-        10886091980245723256 => {
-            if kTab948E54[(v1 as ::core::ffi::c_int ^ 2 as ::core::ffi::c_int) as usize] == 0 {
-                return -(1 as ::core::ffi::c_int) as uint16;
-            }
-        }
-        _ => {}
-    }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 1 as ::core::ffi::c_int
-        != 0
-    {
-        return ((*pgci).pgci_r32 as ::core::ffi::c_int & 7 as ::core::ffi::c_int) as uint16;
-    } else {
-        return ((*pgci).pgci_r32 as ::core::ffi::c_int & 7 as ::core::ffi::c_int
-            ^ 7 as ::core::ffi::c_int) as uint16;
-    };
 }
 unsafe fn PostGrappleColl_Vertical_Slope_Square(
-    mut pgci: *mut PostGrappleCollInfo,
-    mut k: uint16,
+    pgci: *mut PostGrappleCollInfo,
+    k: uint16,
     game: &mut Game,
 ) -> uint16 {
-    let mut current_block: u64;
-    let mut temp_collision_DD4: uint16 = (4 as ::core::ffi::c_int
-        * (*(&raw mut game.g_ram as *mut uint8)
-            .offset(0x16402 as ::core::ffi::c_int as isize)
-            .offset(k as isize) as ::core::ffi::c_int
-            & 0x1f as ::core::ffi::c_int)) as uint16;
-    let mut temp_collision_DD6: uint16 = (*(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(k as isize) as ::core::ffi::c_int
-        >> 6 as ::core::ffi::c_int) as uint16;
-    let mut v1: uint16 = (temp_collision_DD4 as ::core::ffi::c_int
-        + (temp_collision_DD6 as ::core::ffi::c_int
-            ^ ((*pgci).pgci_r32 as ::core::ffi::c_int & 8 as ::core::ffi::c_int)
-                >> 2 as ::core::ffi::c_int)) as uint16;
-    if (*pgci).pgci_r26 == 0 {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xafe as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-            - 1 as ::core::ffi::c_int
-            & 8 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
-        {
-            if kTab948E54[v1 as usize] == 0 {
-                return -(1 as ::core::ffi::c_int) as uint16;
-            }
-            current_block = 856425524694780040;
-        } else {
-            current_block = 15830000096881139597;
-        }
-    } else if (*pgci).pgci_r26 as ::core::ffi::c_int != (*pgci).pgci_r28 as ::core::ffi::c_int
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xafe as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-            & 8 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
-    {
-        current_block = 15830000096881139597;
+    let bts = game.g_ram[0x16402 + usize::from(k)];
+    let index = u16::from(bts & 0x1f) * 4 + (u16::from(bts >> 6) ^ (((*pgci).pgci_r32 & 8) >> 2));
+    if !square_slope_occupied(
+        index,
+        (*pgci).pgci_r26,
+        (*pgci).pgci_r28,
+        game.samus_x_pos(),
+        game.samus_x_radius(),
+        1,
+    ) {
+        return 0xffff;
+    }
+    let distance = (*pgci).pgci_r32 & 7;
+    if game.samus_collision_direction() & 1 != 0 {
+        distance
     } else {
-        current_block = 10886091980245723256;
+        distance ^ 7
     }
-    match current_block {
-        15830000096881139597 => {
-            if kTab948E54[v1 as usize] != 0 {
-                current_block = 856425524694780040;
-            } else {
-                current_block = 10886091980245723256;
-            }
-        }
-        _ => {}
-    }
-    match current_block {
-        10886091980245723256 => {
-            if kTab948E54[(v1 as ::core::ffi::c_int ^ 1 as ::core::ffi::c_int) as usize] == 0 {
-                return -(1 as ::core::ffi::c_int) as uint16;
-            }
-        }
-        _ => {}
-    }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 1 as ::core::ffi::c_int
-        != 0
-    {
-        return ((*pgci).pgci_r32 as ::core::ffi::c_int & 7 as ::core::ffi::c_int) as uint16;
-    } else {
-        return ((*pgci).pgci_r32 as ::core::ffi::c_int & 7 as ::core::ffi::c_int
-            ^ 7 as ::core::ffi::c_int) as uint16;
-    };
 }
 unsafe fn PostGrappleColl_Horiz_Slope(pgci: *mut PostGrappleCollInfo, game: &mut Game) -> uint16 {
     let slope = game.current_block_bts() & 0x1f;
