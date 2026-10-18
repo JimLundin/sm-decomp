@@ -302,6 +302,33 @@ Probe source is isolated; no maintained Rust changes or residue-counter
 changes. Existing sound source a86198ac any% 129,712/0 and Waver 58,109/0
 remain the baseline. ROM-derived timer events stay in ignored target files.
 
+Audio state roundtrip (2026-10-18): three actual ROM boot boundaries
+(160, 400, 3,600) initialize independent Rust players. After 17 rendered
+frames and an SFX command, copy driver variables to RAM and restore a new
+player's RAM/DSP state. Each continues for 240 frames with six later SFX
+commands; all 768,960 sample values and ordered DSP writes match. Repeat
+through the actual RtlSaveMusicStateToRam_Locked and
+RtlRestoreMusicAfterLoad_Locked(false) functions, with a queued SFX2 command;
+all 720 continuation frames and 768,960 sample values again match, and
+restore empties the queue/current write entry as intended. A restored
+key-off bit injection is detected on continuation frame zero (1,047 sample
+values differ), exit 1. Unmodified runs exit 0. These helpers are exposed
+only through isolated wrappers; no save states or ROM-derived files enter
+the commit.
+
+The mapped addr0/addr1, lfsr_value, temp_accum and ttt fields are serialized
+but are not read by Rust driver's processing code. This explains why their
+observed differences need not affect Rust-only continuation; it does not
+establish their equivalence for emulated SPC continuation. The roundtrip
+checks custom-driver save/restore with the same DSP implementation, not
+filesystem snapshot I/O, cross-driver mode switching or hardware fidelity.
+Next: enforce independently captured sound commands with explicit upload/
+latch semantics, and audit a saved custom-driver state resumed by emulated
+SPC before claiming cross-driver state compatibility. Exact sample timing
+remains unresolved. No maintained Rust changes; residue counters unchanged.
+The sound source remains a86198ac, with its any% 129,712/0 and Waver
+58,109/0 baseline.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
