@@ -439,39 +439,29 @@ unsafe fn cpu_doBranch(cpu: *mut Cpu, value: uint8_t, check: bool) {
         (*cpu).pc = (*cpu).pc.wrapping_add_signed(value as i8 as i16);
     }
 }
-unsafe fn cpu_pullByte(mut cpu: *mut Cpu, game: &mut Game) -> uint8_t {
+unsafe fn cpu_pullByte(cpu: *mut Cpu, game: &mut Game) -> uint8_t {
     (*cpu).sp = (*cpu).sp.wrapping_add(1);
     if (*cpu).e {
-        (*cpu).sp = ((*cpu).sp as ::core::ffi::c_int & 0xff as ::core::ffi::c_int
-            | 0x100 as ::core::ffi::c_int) as uint16_t;
+        (*cpu).sp = (*cpu).sp & 0xff | 0x100;
     }
-    return cpu_read(cpu, (*cpu).sp as uint32_t, game);
+    cpu_read(cpu, u32::from((*cpu).sp), game)
 }
-unsafe fn cpu_pushByte(mut cpu: *mut Cpu, mut value: uint8_t, game: &mut Game) {
-    cpu_write(cpu, (*cpu).sp as uint32_t, value, game);
+unsafe fn cpu_pushByte(cpu: *mut Cpu, value: uint8_t, game: &mut Game) {
+    cpu_write(cpu, u32::from((*cpu).sp), value, game);
     (*cpu).sp = (*cpu).sp.wrapping_sub(1);
     if (*cpu).e {
-        (*cpu).sp = ((*cpu).sp as ::core::ffi::c_int & 0xff as ::core::ffi::c_int
-            | 0x100 as ::core::ffi::c_int) as uint16_t;
+        (*cpu).sp = (*cpu).sp & 0xff | 0x100;
     }
 }
-unsafe fn cpu_pullWord(mut cpu: *mut Cpu, game: &mut Game) -> uint16_t {
-    let mut value: uint8_t = cpu_pullByte(cpu, game);
-    return (value as ::core::ffi::c_int
-        | (cpu_pullByte(cpu, game) as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
-        as uint16_t;
+unsafe fn cpu_pullWord(cpu: *mut Cpu, game: &mut Game) -> uint16_t {
+    let low = cpu_pullByte(cpu, game);
+    let high = cpu_pullByte(cpu, game);
+    u16::from_le_bytes([low, high])
 }
-unsafe fn cpu_pushWord(mut cpu: *mut Cpu, mut value: uint16_t, game: &mut Game) {
-    cpu_pushByte(
-        cpu,
-        (value as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint8_t,
-        game,
-    );
-    cpu_pushByte(
-        cpu,
-        (value as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint8_t,
-        game,
-    );
+unsafe fn cpu_pushWord(cpu: *mut Cpu, value: uint16_t, game: &mut Game) {
+    let [low, high] = value.to_le_bytes();
+    cpu_pushByte(cpu, high, game);
+    cpu_pushByte(cpu, low, game);
 }
 unsafe fn cpu_readWord(
     mut cpu: *mut Cpu,

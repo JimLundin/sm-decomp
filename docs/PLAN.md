@@ -5063,6 +5063,28 @@ PPU state/output before assuming the rerun completes the same render state;
 held HDMA diagnosis stays stopped. Rendering/Waver71, hardware/audio timing,
 masked RAM and boot-to-credits remain open.
 
+CPU stack-helper cleanup (2026-10-18): byte push/pull use native word masks
+and address widening; word push/pull use explicit little-endian conversion.
+Push still writes before decrement/page restriction; pull still increments
+and restricts before reading. Word writes remain high-before-low and reads
+low-before-high. Actual old/current helpers pass 524,288 ordered bus traces
+across every SP, both E modes and all four operations, checking address,
+value, SP visible at access, final SP and unchanged selected CPU fields.
+These exhaustive traces substitute the bus; physical WRAM coverage comes
+from 2,359,296 actual PHA/PLA instructions spanning all values, six page-one
+boundaries and native byte/word plus emulation byte modes. Value/SP, RAM byte
+order, Z/N, PC and cycles pass. Independent physical-bus opcode QC follows.
+Instrumented any% prefix passes 3,600/0, native exit 0; byte pull/push and word
+pull/push calls are 1,127,283/1,127,286/381,322/399,059. Clean frozen
+758bb173f55521120dfb3dc333186a6e8da4126f plus only these four helpers passes
+any% 129,712/0 (272.19s), native exit 0. Direct full-source format, normal-core
+metadata and optimized clean/probe core/DLL builds pass; Cargo fmt/release
+remain launch-denied. Focused cast lines -8 and Rust lines -10; other residue
+categories unchanged. Progress and diff checks pass. Later peer changes are
+outside this frozen replay. Device/ROM stacks, interrupt/return consumers,
+hardware/render/audio timing and credits remain open; held HDMA diagnosis
+stays stopped. Continue remaining executed CPU memory helpers.
+
 Independent CPU stack opcode QC (2026-10-18): pending byte/word push/pull
 cleanup passes5,504,512 actual PHA/PLA instruction pairs. Native SP0001..1FFF
 and emulation SP0100..01FF run both widths and all256 low-byte seeds with
