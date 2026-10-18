@@ -2518,22 +2518,23 @@ pub unsafe fn MiniCrocomire_Func9(game: &mut Game) -> uint8 {
     }
     0
 }
-pub unsafe fn MaridiaBeybladeTurtle_Init(game: &mut Game) {
-    let mut E: *mut Enemy_MaridiaBeybladeTurtle = Get_MaridiaBeybladeTurtle(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
-        | kEnemyProps_DisableSamusColl as ::core::ffi::c_int) as uint16;
-    (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A2 as ::core::ffi::c_int as uint16;
-    (*E).base.instruction_timer = 1 as uint16;
-    (*E).base.timer = 0 as uint16;
-    (*E).base.y_height = 0 as uint16;
-    (*E).base.current_instruction =
-        addr_kMaridiaBeybladeTurtle_Ilist_8C44 as ::core::ffi::c_int as uint16;
-    (*E).mbte_var_A = (0xa28dd8 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    (*E).mbte_var_F = g_word_A28D52;
+pub fn MaridiaBeybladeTurtle_Init(game: &mut Game) {
+    let index = game.cur_enemy_index();
+    let properties = game.enemy_instructions(index).properties();
+    game.enemy_instructions(index)
+        .set_properties(properties | kEnemyProps_DisableSamusColl as u16);
+    game.enemy_instructions(index)
+        .set_spritemap_pointer(addr_kSpritemap_Nothing_A2 as u16);
+    game.enemy_instructions(index).set_instruction_timer(1);
+    game.enemy_instructions(index).set_timer(0);
+    game.enemy_coordinates(index).set_y_height(0);
+    game.enemy_instructions(index)
+        .set_current_instruction(addr_kMaridiaBeybladeTurtle_Ilist_8C44 as u16);
+    let base = 0xf78 + usize::from(index);
+    let field = base + core::mem::offset_of!(Enemy_MaridiaBeybladeTurtle, mbte_var_A);
+    game.g_ram[field..field + 2].copy_from_slice(&0x8dd8u16.to_le_bytes());
+    let field = base + core::mem::offset_of!(Enemy_MaridiaBeybladeTurtle, mbte_var_F);
+    game.g_ram[field..field + 2].copy_from_slice(&g_word_A28D52.to_le_bytes());
 }
 pub unsafe fn MiniMaridiaBeybladeTurtle_Init(game: &mut Game) {
     let mut mmbte_parameter_1: int16 = 0;

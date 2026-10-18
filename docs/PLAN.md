@@ -2680,6 +2680,18 @@ functions -1, cast lines -1, Rust lines -9; other counters unchanged. Next:
 Maridia Beyblade Turtle initialization, retaining its ordered properties,
 spritemap, timers, radius, instruction and state writes.
 
+Maridia Beyblade Turtle initialization now uses safe named instruction and
+coordinate fields plus byte-backed state stores. The captured slot and ordered
+properties, spritemap, timers, radius, instruction and A/F writes remain exact.
+Independent session standards/behavior review reports no blocking findings.
+Direct full-source format and stable optimized core/DLL build pass; Cargo
+build scripts remain ASR-denied. Final-source any% passes 129,712/0 (207.36s);
+Waver passes 58,109/0 (98.02s), both process exits 0. Raw offsets -1, unsafe
+functions -1, cast lines -7; Rust lines +1 replace raw-pointer setup with named
+field operations. Other counters unchanged. Next: the coordinated dispatch
+session owns CallMaridiaBeybladeTurtleFunc cleanup and its dedicated verification;
+then continue Mini Maridia Beyblade Turtle initialization.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
