@@ -4645,6 +4645,35 @@ Probes and ROM-derived assets remain untracked. Hardware event timing,
 rendering/Waver71, held HDMA diagnosis, audio timing and boot-to-credits
 remain open; continue actual scheduling and route coverage work.
 
+DMA disk-save continuation audit (2026-10-18): complete maintained
+SaveSnesState/LoadSnesState calls preserve DMA context.512 saved configurations
+(256 byte seeds xbusy states) compare every semantic channel field, scheduler
+timers/busy and unchanged owner pointer after reset/load; resaving is byte-
+identical and consumes the complete stream.72 pending-transfer continuations
+cover eight channels xthree source boundaries xincrement/fixed/decrement.
+After save/reset/load, the next actual dma_cycle writes5A through WRAM's port,
+updates source/size correctly and advances the destination once. Nativeexit0.
+
+On this Windows layout Dma size232, channel offset8, channel size26, HDMA
+timer216, DMA timer220, busy224. The224-byte serialization from channel8
+extends to232 and includes all semantic channel/scheduler fields, excluding
+the owner pointer. A TEMP control truncating it to208 bytes loses scheduler
+state and aborts semantic equality, nativeexit3221226505. No disk-format
+change is justified by this audit. It does not prove cross-platform layout,
+filesystem slot UI, all transfer targets or HDMA hardware timing.
+
+The initial generated script accidentally reused an older ignored probe
+directory because a path replacement did not match. Corrected unique
+dma-disk-qc/dma-disk-knockout directories reproduce both native results;
+only corrected reruns support this note. Only this note changes; no maintained
+Rust/residue changes. Frozen source includes then-current CPU/demo/DMA/PPU
+peer edits; later integration is separate. Isolated optimized core/DLL,
+direct full-source rustfmt and progress pass; Cargo fmt/check and release
+remain denied at cargo.exe launch. No fresh movie result is claimed; probes
+and serialized/ROM assets stay ignored. Continue remaining disk-state/event
+coverage without resuming held HDMA diagnosis. Rendering/Waver71, hires,
+hardware/audio timing, masked RAM and credits remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
