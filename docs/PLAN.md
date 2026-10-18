@@ -2743,6 +2743,37 @@ still cannot execute khronos_api's build script (OSerror5). Progress unchanged
 for this diagnostic-only work. ROM/probe assets stay ignored. Audio timing,
 HDMA, masked RAM, hardware accuracy and boot-to-credits coverage remain open.
 
+TMW/TSW register cleanup (2026-10-18): ppu_write $212E/$212F now use
+literal layer indices and native byte masks. Full screenWindowed bytes,
+including bits 5..7, still store before the five BG/OBJ window-enable fields.
+Main/sub selection, store order and control flow remain exact. No Ppu/RAM/
+save-state layout or rendering changes.
+
+Independent actual writer checks pass 8,192 complete-Ppu comparisons across
+both registers, all 256 values and sixteen seeded states, with independent
+expected effects and unchanged unrelated fields. Actual window-active rows
+match the extracted original writer in 2,048 rows / 2,097,152 BGRA bytes,
+covering modes 0/1 and whole-line/per-pixel rendering: 95 distinct outputs,
+1,920 nonuniform rows and multiple outputs for every renderer/mode/register
+combination. Initial fixtures omitted fast windowsel and subscreen routing;
+correcting the isolated setup exercises the windows without changing source.
+These comparisons prove preserved exercised behavior, not SNES accuracy.
+Normal startup passes 3,600/0 (7.15s), native exit 0; TMW/TSW execute
+7,208/7,204 times across both implementations, including initialization.
+That replay has zero gameplay frames. Counter instrumentation strips to the
+exact frozen PPU body; independent implementation and review have no findings.
+
+Frozen 02b8ab72 plus only this PPU change passes any% 129,712/0 (286.19s)
+and Waver 58,109/0 (155.15s), both native exits 0. Later concurrent changes
+are outside those replays. Cargo fmt/check, direct optimized core/DLL and
+normal-core metadata builds pass. A concurrent audio edit briefly failed
+formatting; cargo fmt restores the full check. Cargo release remains denied
+executing khronos_api's build script (OS error 5). Progress: cast lines -22,
+Rust lines -10; other focused counters unchanged. No probes or ROM-derived
+assets committed. Next: CGWSEL color-window selection register cleanup,
+preserving direct-color/subscreen flags and clip/prevent-math bit fields;
+coordinate window snapshot/HDMA diagnosis separately.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
