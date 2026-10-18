@@ -7181,6 +7181,29 @@ integration, hardware/audio timing, rendering/Waver71, masked RAM and credits
 remain open. Held HDMA diagnosis stays stopped. Continue executed APU/SPC
 hardware paths and route coverage with independent subagents; peer owns sync.
 
+CPU BIT cleanup (2026-10-18): cpu_bit uses native byte/word masks for Z/N/V.
+Operand reads precede the accumulator read; word cycle increments precede
+reads, and Z/N/V stores retain their order. Actual old/current helpers pass
+1,441,792 ordered substituted-bus cases over every accumulator word, eleven
+operand patterns and both widths. Complete named CPU state, read addresses/
+cycles and independent Z/N/V expectations match. Actual absolute BIT passes
+3,145,728 old/current WRAM/device instruction pairs over every accumulator,
+eight operands and native byte/word plus emulation byte modes. WRAM operand
+reads cross 7E:FFFF to 7F:0000; byte device reads use 2180 and word reads use
+4214/4215. Flags, unchanged state, PC, cycles, open bus and WRAM-port increment
+match. These are constructed instruction contexts, not hardware accuracy proof.
+Instrumented any% prefix passes 3,600/0 (6.53s), native exit 0; BIT word/byte
+calls are 23,474/6,698. Clean frozen
+3ecde6a419ba57839c67e00884c07dbe444fdc2c plus only this helper passes any%
+129,712/0 (252.20s), native exit 0. Direct full-source format, normal-core
+metadata and optimized clean/probe core/DLL builds pass; required Cargo
+fmt/release remain launch-denied. Progress/diff checks pass: focused cast
+lines -10, Rust lines -5, other categories unchanged. Live helper matches
+the verified frozen body. Later peer APU/PPU changes are outside this replay.
+Full operand Cartesian coverage, arbitrary read mutation, other addressing
+modes, hardware/render/audio timing and credits remain open; held HDMA
+diagnosis stays stopped. Continue executed shift helpers.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

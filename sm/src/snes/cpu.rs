@@ -950,24 +950,19 @@ unsafe fn cpu_cpy(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
     };
     cpu_setZN(cpu, result as u16, (*cpu).xf);
 }
-unsafe fn cpu_bit(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t, game: &mut Game) {
+unsafe fn cpu_bit(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
     if (*cpu).mf {
-        let mut value: uint8_t = cpu_read(cpu, low, game);
-        let mut result: uint8_t = ((*cpu).a as ::core::ffi::c_int
-            & 0xff as ::core::ffi::c_int
-            & value as ::core::ffi::c_int) as uint8_t;
-        (*cpu).z = result as ::core::ffi::c_int == 0 as ::core::ffi::c_int;
-        (*cpu).n = value as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0;
-        (*cpu).v = value as ::core::ffi::c_int & 0x40 as ::core::ffi::c_int != 0;
+        let value = cpu_read(cpu, low, game);
+        (*cpu).z = (*cpu).a as u8 & value == 0;
+        (*cpu).n = value & 0x80 != 0;
+        (*cpu).v = value & 0x40 != 0;
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        let mut value_0: uint16_t = cpu_readWord(cpu, low, high, game);
-        let mut result_0: uint16_t =
-            ((*cpu).a as ::core::ffi::c_int & value_0 as ::core::ffi::c_int) as uint16_t;
-        (*cpu).z = result_0 as ::core::ffi::c_int == 0 as ::core::ffi::c_int;
-        (*cpu).n = value_0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0;
-        (*cpu).v = value_0 as ::core::ffi::c_int & 0x4000 as ::core::ffi::c_int != 0;
-    };
+        let value = cpu_readWord(cpu, low, high, game);
+        (*cpu).z = (*cpu).a & value == 0;
+        (*cpu).n = value & 0x8000 != 0;
+        (*cpu).v = value & 0x4000 != 0;
+    }
 }
 unsafe fn cpu_lda(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
     if (*cpu).mf {
