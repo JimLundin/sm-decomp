@@ -1281,6 +1281,19 @@ zero failures (183.97s). Raw offsets -8, cast lines -32, Rust lines -58;
 unsafe count unchanged. Next: door collision RAM/ROM reads, preserving the
 existing pose-based enemy-door condition and write order.
 
+Both door collision handlers now use byte-backed RAM and checked live-ROM
+words. Door-list indexing retains sixteen-bit wrap before mapping; invalid
+list/door windows retain legacy diagnostics and g_fail writes. The initial
+E17D function write, pose < 9 enemy-door test, collision fallback, door-pointer
+write and state-9 write keep their order. Synthetic comparison against prior
+Rust passes 25,088 full-RAM/collision/diagnostic cases over all BTS values,
+seven list boundaries, seven poses and both directions. Stable optimized
+core/DLL build and direct format pass; Cargo fmt/build remain ASR-denied.
+Waver route: 58,109 frames, zero failures (84.25s); any%: 129,712 frames,
+zero failures (183.21s). Raw offsets -16, cast lines -36, Rust lines -22;
+unsafe count unchanged. Next: solid collision boundary arithmetic and
+byte-backed Samus coordinates, preserving live context after PLM callbacks.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

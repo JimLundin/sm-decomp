@@ -3144,79 +3144,57 @@ unsafe fn BlockColl_Vert_BombBlock(ci: *mut CollInfo, game: &mut Game) -> uint8 
         result
     }
 }
-pub unsafe fn BlockColl_Horiz_Door(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x99c as ::core::ffi::c_int as isize)
-        as *mut uint16) = (0x82e17d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    let mut door_bts: uint8 = *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        );
-    let mut v0: uint16 = *(RomPtr_8F(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x7b5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + 2 as ::core::ffi::c_int
-                * (door_bts as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int))
-            as uint16_t,
-        game,
-    ) as *mut uint16);
-    if (*get_DoorDef(v0, game)).room_definition_ptr as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
-    {
-        if (*((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int)
-            < kGameState_9_HitDoorBlock as ::core::ffi::c_int
-        {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe16 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 1 as uint16;
+pub unsafe fn BlockColl_Horiz_Door(ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    game.g_ram[0x99c..0x99e].copy_from_slice(&0xe17du16.to_le_bytes());
+    let bts = game.current_block_bts();
+    let door_list = u16::from_le_bytes([game.g_ram[0x7b5], game.g_ram[0x7b6]]);
+    let entry = door_list.wrapping_add(u16::from(bts & 0x7f) * 2);
+    if entry & 0x8000 == 0 {
+        RomPtr_8F(entry, game);
+    }
+    let door = game.read_rom_word(0x8f8000 | u32::from(entry), 0);
+    if door & 0x8000 == 0 {
+        get_DoorDef(door, game);
+    }
+    let destination = game.read_rom_word(0x838000 | u32::from(door), 0);
+    if destination & 0x8000 == 0 {
+        // Preserve the original pose comparison, even though its threshold is a state value.
+        let pose = u16::from_le_bytes([game.g_ram[0xa1c], game.g_ram[0xa1d]]);
+        if pose < 9 {
+            game.g_ram[0xe16..0xe18].copy_from_slice(&1u16.to_le_bytes());
         }
-        return BlockColl_Horiz_SolidShootGrappleBlock(ci, game);
+        BlockColl_Horiz_SolidShootGrappleBlock(ci, game)
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize)
-            as *mut uint16) = v0;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16) = kGameState_9_HitDoorBlock as ::core::ffi::c_int as uint16;
-        return 0 as uint8;
-    };
+        game.g_ram[0x78d..0x78f].copy_from_slice(&door.to_le_bytes());
+        game.g_ram[0x998..0x99a].copy_from_slice(&9u16.to_le_bytes());
+        0
+    }
 }
-pub unsafe fn BlockColl_Vert_Door(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x99c as ::core::ffi::c_int as isize)
-        as *mut uint16) = (0x82e17d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    let mut door_bts: uint8 = *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        );
-    let mut v0: uint16 = *(RomPtr_8F(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x7b5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + 2 as ::core::ffi::c_int
-                * (door_bts as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int))
-            as uint16_t,
-        game,
-    ) as *mut uint16);
-    if (*get_DoorDef(v0, game)).room_definition_ptr as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
-    {
-        if (*((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int)
-            < kPose_09_MoveR_NoAim as ::core::ffi::c_int
-        {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe16 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 1 as uint16;
+pub unsafe fn BlockColl_Vert_Door(ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    game.g_ram[0x99c..0x99e].copy_from_slice(&0xe17du16.to_le_bytes());
+    let bts = game.current_block_bts();
+    let door_list = u16::from_le_bytes([game.g_ram[0x7b5], game.g_ram[0x7b6]]);
+    let entry = door_list.wrapping_add(u16::from(bts & 0x7f) * 2);
+    if entry & 0x8000 == 0 {
+        RomPtr_8F(entry, game);
+    }
+    let door = game.read_rom_word(0x8f8000 | u32::from(entry), 0);
+    if door & 0x8000 == 0 {
+        get_DoorDef(door, game);
+    }
+    let destination = game.read_rom_word(0x838000 | u32::from(door), 0);
+    if destination & 0x8000 == 0 {
+        // Preserve the original pose comparison, even though its threshold is a state value.
+        let pose = u16::from_le_bytes([game.g_ram[0xa1c], game.g_ram[0xa1d]]);
+        if pose < 9 {
+            game.g_ram[0xe16..0xe18].copy_from_slice(&1u16.to_le_bytes());
         }
-        return BlockColl_Vert_SolidShootGrappleBlock(ci, game);
+        BlockColl_Vert_SolidShootGrappleBlock(ci, game)
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x78d as ::core::ffi::c_int as isize)
-            as *mut uint16) = v0;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
-            as *mut uint16) = kPose_09_MoveR_NoAim as ::core::ffi::c_int as uint16;
-        return 0 as uint8;
-    };
+        game.g_ram[0x78d..0x78f].copy_from_slice(&door.to_le_bytes());
+        game.g_ram[0x998..0x99a].copy_from_slice(&9u16.to_le_bytes());
+        0
+    }
 }
 fn BlockReact_HorizExt(_ci: *mut CollInfo, game: &mut Game) -> uint8 {
     let offset = i16::from(game.current_block_bts() as i8);
