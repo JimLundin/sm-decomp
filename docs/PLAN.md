@@ -125,6 +125,26 @@ uncompared, so this does not establish sound equivalence. Next: isolate
 reset/upload queue consumption and prove its driver effects before enforcing
 sound checks. Probe changes stayed outside maintained source; counters unchanged.
 
+Upload/queue consumption probe (2026-10-18): current sound/runtime source
+passes 15,360 paired frames through RtlApuUpload, RtlPushApuState and
+RtlRenderAudio. Two independently initialized players load the actual startup
+bank from the ignored ROM; all 64 timer phases, a repeated upload and later
+commands on SFX ports 1/2/3 are covered. The startup [00, FF, 00, FF] versus
+all-00 queues yield identical canonical driver RAM, remaining driver state,
+DSP state, ordered DSP register writes and 16,404,480 sample values
+(13,208,650 nonzero). No DSP write history truncates (maximum 130/frame).
+Changing a later SFX1 command from 1 to 2 is detected at that frame (20),
+confirming the comparison catches a real command difference.
+This proves the observed startup difference has no effect in this tested
+consumption path; it does not justify global 00/FF queue normalization.
+Both sides use the maintained Rust driver, so ROM SPC-driver equivalence,
+upload contents and inter-frame write ordering remain unverified. The
+custom-audio oracle patches ROM $80:8028 to RTS, bypassing its upload
+routine; upload equality cannot be inferred from this run. Sound
+comparison stays diagnostic. Next: compare the maintained driver against the
+emulated SPC/DSP independently, then enforce sound commands with explicit
+reset/upload handling. No maintained source or residue counters changed.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
@@ -2335,6 +2355,20 @@ route: 58,109 frames, zero failures (93.35s). Raw offsets -2, unsafe functions
 -2, cast lines -25; Rust lines +45 provide the named state view and ROM-read
 helper. Other counters unchanged. Next: Goofball initialization, preserving
 captured slot across animation setup and independent parameter-byte reads.
+
+Goofball initialization now uses safe live-ROM table words and byte-backed
+state writes. The slot captured before spritemap/animation setup remains
+selected for later writes; low parameter read, scale write, high parameter
+read, distance write and accumulated/phase/trigger clears stay ordered.
+Independent extracted comparison passes 1,317,504 full-RAM/animation-trace/
+RNG cases across every index/parameter word and random high/odd slots with
+normal and mutating animation callbacks and synthetic live ROM. Stable
+optimized core/DLL build and direct full-source format pass; Cargo fmt/build
+remain ASR-denied. CGRAM/render-enabled any%: 129,712 frames, zero failures
+(210.23s); Waver route: 58,109 frames, zero failures (98.36s). Raw offsets -1,
+unsafe functions -1, cast lines -16; Rust lines +1 provide named parameter
+and state fields. Other counters unchanged. Next: Goofball Main captured-slot
+state access and direct dispatch, preserving live callback index reads.
 
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:

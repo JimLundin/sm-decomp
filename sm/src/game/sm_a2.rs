@@ -2061,44 +2061,21 @@ pub unsafe fn Enemy_NormalTouchAI_A2(game: &mut Game) {
 pub unsafe fn Enemy_NormalShotAI_A2(game: &mut Game) {
     NormalEnemyShotAi(game);
 }
-pub unsafe fn BouncingGoofball_Init(game: &mut Game) {
-    let mut E: *mut Enemy_BouncingGoofball = Get_BouncingGoofball(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.spritemap_pointer = addr_kSpritemap_Nothing_A2 as ::core::ffi::c_int as uint16;
+pub fn BouncingGoofball_Init(game: &mut Game) {
+    let index = game.cur_enemy_index();
+    game.enemy_instructions(index)
+        .set_spritemap_pointer(addr_kSpritemap_Nothing_A2 as u16);
     BouncingGoofball_Func2(game);
-    (*E).bgl_var_01 = 1 as uint16;
-    (*E).bgl_var_A = *(game.g_rom.offset(
-        (((0xa286df as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xa286df as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
-        .offset(
-            ((2 as ::core::ffi::c_int
-                * *(&raw mut (*E).bgl_parameter_1 as *mut uint8)
-                    .offset(0 as ::core::ffi::c_int as isize)
-                    as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
-                >> 1 as ::core::ffi::c_int) as isize,
-        );
-    (*E).bgl_var_C = *(game.g_rom.offset(
-        (((0xa286ef as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xa286ef as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
-        .offset(
-            ((2 as ::core::ffi::c_int
-                * *(&raw mut (*E).bgl_parameter_1 as *mut uint8).offset(
-                    (::core::mem::size_of::<uint16>() as usize)
-                        .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                        .wrapping_sub(1 as usize) as isize,
-                ) as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
-                >> 1 as ::core::ffi::c_int) as isize,
-        );
-    (*E).bgl_var_D = 0 as uint16;
-    (*E).bgl_var_E = 0 as uint16;
-    (*E).bgl_var_F = 0 as uint16;
+    GoofballState::new(game, index).set_state(1);
+    let parameter = GoofballState::new(game, index).parameter_low();
+    let scale = game.read_rom_word(0xa286df, usize::from(parameter) * 2);
+    GoofballState::new(game, index).set_scale(scale);
+    let parameter = GoofballState::new(game, index).parameter_high();
+    let distance = game.read_rom_word(0xa286ef, usize::from(parameter) * 2);
+    GoofballState::new(game, index).set_distance(distance);
+    GoofballState::new(game, index).set_accumulated(0);
+    GoofballState::new(game, index).set_phase(0);
+    GoofballState::new(game, index).set_animation_trigger(0);
 }
 pub unsafe fn BouncingGoofball_Func1(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_BouncingGoofball = Get_BouncingGoofball(k as ::core::ffi::c_int, game);
@@ -2178,6 +2155,30 @@ struct GoofballState<'a> {
     bytes: &'a mut [u8],
 }
 impl<'a> GoofballState<'a> {
+    fn parameter_low(&self) -> u8 {
+        self.bytes[core::mem::offset_of!(Enemy_BouncingGoofball, bgl_parameter_1)]
+    }
+    fn parameter_high(&self) -> u8 {
+        self.bytes[core::mem::offset_of!(Enemy_BouncingGoofball, bgl_parameter_1) + 1]
+    }
+    fn set_scale(&mut self, value: u16) {
+        self.write(
+            core::mem::offset_of!(Enemy_BouncingGoofball, bgl_var_A),
+            value,
+        );
+    }
+    fn set_distance(&mut self, value: u16) {
+        self.write(
+            core::mem::offset_of!(Enemy_BouncingGoofball, bgl_var_C),
+            value,
+        );
+    }
+    fn set_accumulated(&mut self, value: u16) {
+        self.write(
+            core::mem::offset_of!(Enemy_BouncingGoofball, bgl_var_D),
+            value,
+        );
+    }
     fn new(game: &'a mut Game, index: u16) -> Self {
         Self {
             bytes: &mut game.g_ram[0xf78 + usize::from(index)..],
