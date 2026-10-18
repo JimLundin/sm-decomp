@@ -1970,6 +1970,19 @@ functions -1, cast lines -6, Rust lines -3; other counters unchanged.
 Next: EnemyFunc_B7A1 Samus previous-position corrections, preserving signed
 word gates, wrapped 12-pixel limits and write order.
 
+EnemyFunc_B7A1 previous-position correction now shares a safe word helper
+and named byte-backed previous-position reads/writes. Signed magnitude-minus-
+12 gates, direction-dependent current-position +/-12 wrapping and Y-before-
+X correction order remain exact; fraction bytes are untouched. Prior Rust
+comparison passes 1,179,648 full-RAM cases; independent comparison passes
+2,019,472 relevant-RAM cases across all position/previous/delta words and
+independent random axes. Stable optimized core/DLL build and direct full-
+source format pass; Cargo fmt/build remain ASR-denied. Any%: 129,712 frames,
+zero failures (187.70s); Waver route: 58,109 frames, zero failures (87.22s).
+Raw offsets -12, unsafe functions -1, cast lines -30, Rust lines -5; other
+counters unchanged. Next: repeated enemy item-drop positioning loops, retaining
+live RNG/drop coordinates, per-drop callbacks and original counts.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

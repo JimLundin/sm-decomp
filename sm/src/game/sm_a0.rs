@@ -9435,52 +9435,29 @@ pub unsafe fn EnemyFunc_Divide(mut a: uint32, mut b: uint32) -> uint32 {
         0 as uint32
     };
 }
-pub unsafe fn EnemyFunc_B7A1(game: &mut Game) {
-    let mut yd: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xafa as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xb14 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16;
-    let mut v0: uint16 = Abs16(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xb14 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16,
-    );
-    if v0 as ::core::ffi::c_int - 12 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb14 as ::core::ffi::c_int as isize)
-            as *mut uint16) = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + (if yd as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int
-            {
-                12 as ::core::ffi::c_int
-            } else {
-                -(12 as ::core::ffi::c_int)
-            })) as uint16;
+fn corrected_samus_previous_position(position: u16, previous: u16) -> Option<u16> {
+    let delta = position.wrapping_sub(previous);
+    let distance = Abs16(delta);
+    if distance.wrapping_sub(12) & 0x8000 != 0 {
+        return None;
     }
-    let mut xd: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xaf6 as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xb10 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16;
-    let mut i: uint16 = Abs16(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xb10 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16,
-    );
-    if i as ::core::ffi::c_int - 12 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb10 as ::core::ffi::c_int as isize)
-            as *mut uint16) = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + (if xd as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int
-            {
-                12 as ::core::ffi::c_int
-            } else {
-                -(12 as ::core::ffi::c_int)
-            })) as uint16;
+    Some(if delta & 0x8000 == 0 {
+        position.wrapping_add(12)
+    } else {
+        position.wrapping_sub(12)
+    })
+}
+
+pub fn EnemyFunc_B7A1(game: &mut Game) {
+    if let Some(previous) =
+        corrected_samus_previous_position(game.samus_y_pos(), game.samus_prev_y_pos())
+    {
+        game.set_samus_prev_y_pos(previous);
+    }
+    if let Some(previous) =
+        corrected_samus_previous_position(game.samus_x_pos(), game.samus_prev_x_pos())
+    {
+        game.set_samus_prev_x_pos(previous);
     }
 }
 pub unsafe fn Enemy_ItemDrop_MiniKraid(mut k: uint16, game: &mut Game) {
