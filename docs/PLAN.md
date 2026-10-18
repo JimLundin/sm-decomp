@@ -3747,6 +3747,36 @@ ROM-derived assets remain ignored; concurrent changes separate. Rendering
 initialization/Waver71 failures, hires, audio timing, masked RAM, shared
 hardware accuracy and boot-to-credits coverage remain open.
 
+Independent clock/latch and demo-reset QC (2026-10-18): frozen clock
+capture/restore bodies match47e64f9d; later interrupt-enable/hTimer additions
+are outside this check. Actual snapshot tests pass65,536 cases: all eight
+NMI/IRQ/vblank latch combinations, four horizontal and four vertical boundary
+positions, frame counts0/u32::MAX and every open-bus byte. Each consumes
+TIMEUP, executes end-of-frame rollover, changes latches, rewinds and checks
+HVBJOY/RDNMI/TIMEUP plus restored CPU IRQ state. Removing only clock/latch
+restore fails the first frame-count comparison. These controls establish
+rewind behavior, not independent hardware timing or event generation.
+
+Frozen EnableDemoInput/ResetDemoData bodies and their accessors match the
+live candidate after observations are stripped. Full-RAM post-call checks
+pass under explicitly rendered oracle runs: attract30,000/0 (86.08s),
+Start interruption15,000/0 (40.40s), and the first30,000 any% frames/0
+(72.34s), all nativeexit0. Actual PPU calls are13,500,000/6,750,000/13,500,000.
+Enable/reset calls are26/26,13/13 and2/2 respectively, all Rust side2;
+every enable observes the high bit clear and sets it. Attract/interruption
+reset targets are already zero. Any% supplies two nonzero reset-field
+observations, which clear correctly; this establishes observed nonzero
+clearing, not all ten reset fields from arbitrary values. No DisableDemoInput
+cleanup or unobserved enable-bit preservation is proved by these movies.
+An initial attempted any% command retained the attract path; it was stopped
+and replaced with the explicitly checked any% path, not counted as a result.
+
+Only this QC note changes. Direct full-source rustfmt, normal-core metadata
+and progress checks pass; probes remain TEMP. Concurrent interrupt-enable/
+timer and audio recovery changes need their own checks. No fresh full-any%
+result is claimed; enabled-render Waver71, held HDMA and credits gaps remain
+open. Next: QC actual enable/timer rewind and its event consumers.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
