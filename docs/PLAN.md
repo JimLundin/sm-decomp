@@ -7623,6 +7623,29 @@ OSerror5. Own source/residue delta zero. Inputs and ROM-derived probes remain
 ignored. Peer owns hardware edits, cleanup and remote sync. Credits, full
 gameplay/hardware fidelity, rendering/audio and masked RAM remain open.
 
+990D Energy Tank collected with normal inputs (2026-10-18): from
+62814-frame refilled-west prefix X1480/Y139, left/run/shoot410, neutral120
+descends the diagonal room and collects the Energy Tank nearX112/Y672.
+63344/71 (160.69s), nativeexit1. Health and maximum health become199/199;
+missiles5/5 and Morph/Bombs1004 remain. FinalX131/Y667, pose0054 persists
+through the endpoint; free movement after the item message is not yet proved.
+No gameplay state or inventory writes are injected. All71 ordered rendered
+diagnostics exactly match frozen d217ea15 Waver baseline.17rooms/17enemy
+definitions remain; this pickup adds inventory-route evidence, not a new
+room or credits. Retain refilled-tank-approach.inputs as the stronger prefix.
+
+Next: dismiss the pickup message with fresh normal input and establish free
+movement, then inspect lower990D source-door requirements before onward
+travel. Do not automatically resume the held Upper99BD ascent, landing-site
+cliff tuning,9AD9 ammunition or HDMA diagnosis. Prior frozen same-DLL
+explicit-render any%129712/0 remains input-only regression; peer hardware
+changes own their replays. Direct full-source format passes; Cargo fmt/
+release remain launch-denied OSerror5. Own source/residue delta zero;
+current progress22691raw/39extern-blocks/3extern-fns/5no_mangle/6728unsafe/
+86041casts/258085Rust lines includes peer work. ROM assets and route probes
+stay ignored; peer owns cleanup and remote sync. Credits, complete gameplay,
+hardware/render/audio fidelity, masked RAM and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
