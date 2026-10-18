@@ -2833,37 +2833,23 @@ fn BlockReact_VertExt(_ci: *mut CollInfo, game: &mut Game) -> uint8 {
     game.set_cur_block_index(game.cur_block_index().wrapping_add(block_offset));
     0xff
 }
-unsafe fn Samus_GetYposSpan(game: &mut Game) -> uint16 {
-    let mut r26: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xafa as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-        & 0xfff0 as ::core::ffi::c_int) as uint16;
-    r26 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-        - 1 as ::core::ffi::c_int
-        - r26 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
-        >> 4 as ::core::ffi::c_int) as uint16;
-    return r26;
+fn samus_block_span(position: u16, radius: u16) -> u16 {
+    let first_block_edge = position.wrapping_sub(radius) & 0xfff0;
+    radius
+        .wrapping_add(position)
+        .wrapping_sub(1)
+        .wrapping_sub(first_block_edge)
+        >> 4
 }
-unsafe fn Samus_GetXposSpan(game: &mut Game) -> uint16 {
-    let mut r26: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xaf6 as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xafe as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-        & 0xfff0 as ::core::ffi::c_int) as uint16;
-    r26 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xafe as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-        - 1 as ::core::ffi::c_int
-        - r26 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
-        >> 4 as ::core::ffi::c_int) as uint16;
-    return r26;
+fn Samus_GetYposSpan(game: &mut Game) -> uint16 {
+    let position = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
+    let radius = u16::from_le_bytes([game.g_ram[0xb00], game.g_ram[0xb01]]);
+    samus_block_span(position, radius)
+}
+fn Samus_GetXposSpan(game: &mut Game) -> uint16 {
+    let position = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
+    let radius = u16::from_le_bytes([game.g_ram[0xafe], game.g_ram[0xaff]]);
+    samus_block_span(position, radius)
 }
 unsafe fn BlockColl_Horiz_CheckColl(ci: &mut CollInfo, k: uint16, game: &mut Game) -> uint8 {
     game.set_cur_block_index(k >> 1);

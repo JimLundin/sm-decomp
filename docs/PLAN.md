@@ -1489,6 +1489,18 @@ Cargo fmt/build remain ASR-denied. Waver route: 58,109 frames, zero failures
 cast lines -21, Rust lines -23; unsafe count unchanged. Next: Samus X/Y span
 calculations, retaining wrapped endpoint arithmetic and half-block span counts.
 
+Samus X/Y span functions now use safe byte-backed position/radius reads
+and shared wrapping endpoint arithmetic. The aligned first edge and wrapped
+difference still precede the sixteen-pixel shift, including zero/extreme
+radii. Prior Rust comparison passes 3,014,656 full-RAM/return cases over every
+radius/sub-block position and every position with seven radius boundaries,
+both axes. Stable optimized core/DLL build and direct format pass; Cargo
+fmt/build remain ASR-denied. Waver route: 58,109 frames, zero failures
+(83.10s); any%: 129,712 frames, zero failures (182.54s). Raw offsets -8,
+unsafe functions -2, cast lines -24, Rust lines -14. Next: horizontal Samus
+collision handler block coordinates and context initialization, retaining
+callback-adjusted displacement and row iteration.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
