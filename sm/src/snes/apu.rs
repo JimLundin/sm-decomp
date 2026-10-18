@@ -136,17 +136,17 @@ pub unsafe fn apu_saveload(
     spc_saveload((*apu).spc, func, ctx, game);
 }
 
-pub unsafe fn apu_cycle(mut apu: *mut Apu, game: &mut Game) {
-    if (*apu).cpuCyclesLeft as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+pub unsafe fn apu_cycle(apu: *mut Apu, game: &mut Game) {
+    if (*apu).cpuCyclesLeft == 0 {
         if game.g_debug_apu_cycles {
             let mut line: [::core::ffi::c_char; 80] = [0; 80];
-            getProcessorStateSpc(apu, &raw mut line as *mut ::core::ffi::c_char);
-            puts(&raw mut line as *mut ::core::ffi::c_char);
+            getProcessorStateSpc(apu, line.as_mut_ptr());
+            puts(line.as_mut_ptr());
         }
-        (*apu).cpuCyclesLeft = spc_runOpcode((*apu).spc) as uint8_t;
+        (*apu).cpuCyclesLeft = spc_runOpcode((*apu).spc) as u8;
     }
     (*apu).cpuCyclesLeft = (*apu).cpuCyclesLeft.wrapping_sub(1);
-    if (*apu).cycles & 0x1f as uint32_t == 0 as uint32_t {
+    if (*apu).cycles & 0x1f == 0 {
         dsp_cycle((*apu).dsp);
     }
     for i in 0..3 {

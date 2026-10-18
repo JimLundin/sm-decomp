@@ -7400,6 +7400,35 @@ All route/oracle inputs and ROM-derived probes remain ignored. Peer owns
 hardware changes, cleanup and remote sync. Credits, complete gameplay,
 render/audio fidelity, masked RAM and ownership remain unfinished.
 
+APU scheduling-prefix cleanup (2026-10-18): apu_cycle uses native byte wait
+and word DSP-phase comparisons, the native byte opcode cast and the debug
+buffer's element pointer. Debug formatting/output, opcode execution, wait
+wrapping decrement, DSP tick, timer updates and global-cycle increment retain
+their order. Timer body and all other source are unchanged. Read-only subagent
+finds no defect; debug pointers address the same initialized 80-byte buffer.
+
+Independent QC passes 184,320 actual old/current ticks with SPC timer-read
+and DSP/timer ordering, plus 9,216 ticks over all 256 waits and 36 cycle phases/
+wrap values. Independent wait/result/PC/global-cycle/DSP-sample expectations
+and paired RAM/DSP state pass. Changing the DSP gate to phase 1 is caught
+(missing first sample 0 versus 1), native assertion exit 3221226505.
+Root supporting timer matrix passes 7,340,037 actual function cases; it uses
+waiting SPC/non-DSP phases and is not prefix callback coverage. A separate actual NOP tick with debug enabled produces byte-identical old/
+current stdout/stderr and passes PC/wait timing, native exits 0.
+Frozen/live prefix equality passes before TEMP-only probe formatting.
+
+Normal instrumented verification passes 3,600/0 (6.98s), native exit 0,
+with zero cycle calls. Actual ROM/SPC boot with custom audio disabled before
+SnesInit passes 3,600/0 (9.67s), native exit 0, with 70,306,849 cycle calls.
+Clean frozen 81133b96 plus only this prefix passes any% 129,712/0
+(277.25s), native exit 0. Direct full-source format, normal-core metadata
+and optimized clean/probe core/DLL builds pass; Cargo fmt/check/release remain
+launch-denied, so the required Cargo check stays unmet. Progress/diff pass:
+focused cast lines -1, Rust lines unchanged; other categories unchanged.
+Later peer integration, hardware/audio timing, rendering/Waver71, masked RAM
+and credits remain open. Held HDMA diagnosis stays stopped. Continue executed
+SPC flags and instruction helpers with independent subagents; peer owns sync.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
