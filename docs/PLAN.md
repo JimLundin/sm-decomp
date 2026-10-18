@@ -2823,6 +2823,21 @@ sound-command enforcement is separate and requires its integration replays.
 Next: Mini Maridia Beyblade Turtle initialization, preserving captured slots,
 wrapped coordinate subtraction and signed parameter selection.
 
+Mini Maridia Beyblade Turtle initialization now uses safe coordinate and
+instruction accessors with byte-backed state fields. Captured slot, C/D/A
+stores, timer stores, subsequent parameter read/E store and final instruction
+write retain their order. Y-minus-radius wraps as a word; parameter sign
+selects the original 8B80/8C72 lists while preserving its bits in E. Independent
+layout/behavior review finds no differences, including odd/high indices;
+actual Turtle route coverage remains unproven. Direct full-source format and
+stable optimized core/DLL build pass; Cargo build scripts remain ASR-denied.
+The fresh DLL includes d1adcfb9 sound-command enforcement: any% passes
+129,712/0 (229.76s); Waver passes 58,109/0 (110.43s), both process exits 0.
+Raw offsets -1, unsafe functions -1, cast lines -9; Rust lines +5 provide
+explicit byte-backed state reads/writes. Other counters unchanged. Next:
+the coordinated gameplay session owns Maridia Beyblade Turtle Main's captured-
+slot dispatch read; then continue its state/setup callbacks.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

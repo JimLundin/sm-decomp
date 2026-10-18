@@ -2536,26 +2536,31 @@ pub fn MaridiaBeybladeTurtle_Init(game: &mut Game) {
     let field = base + core::mem::offset_of!(Enemy_MaridiaBeybladeTurtle, mbte_var_F);
     game.g_ram[field..field + 2].copy_from_slice(&g_word_A28D52.to_le_bytes());
 }
-pub unsafe fn MiniMaridiaBeybladeTurtle_Init(game: &mut Game) {
-    let mut mmbte_parameter_1: int16 = 0;
-    let mut E: *mut Enemy_MiniMaridiaBeybladeTurtle = Get_MiniMaridiaBeybladeTurtle(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    (*E).mmbte_var_C = (*E).base.x_pos;
-    (*E).mmbte_var_D = ((*E).base.y_pos as ::core::ffi::c_int
-        - (*E).base.y_height as ::core::ffi::c_int) as uint16;
-    (*E).mmbte_var_A = (0xa29142 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    (*E).base.instruction_timer = 1 as uint16;
-    (*E).base.timer = 0 as uint16;
-    let mut v1: uint16 = addr_kMaridiaBeybladeTurtle_Ilist_8B80 as ::core::ffi::c_int as uint16;
-    mmbte_parameter_1 = (*E).mmbte_parameter_1 as int16;
-    (*E).mmbte_var_E = mmbte_parameter_1 as uint16;
-    if mmbte_parameter_1 as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
-        v1 = addr_kMaridiaBeybladeTurtle_Ilist_8C72 as ::core::ffi::c_int as uint16;
-    }
-    (*E).base.current_instruction = v1;
+pub fn MiniMaridiaBeybladeTurtle_Init(game: &mut Game) {
+    let index = game.cur_enemy_index();
+    let base = 0xf78 + usize::from(index);
+    let x = game.enemy_coordinates(index).x_pos();
+    let field = base + core::mem::offset_of!(Enemy_MiniMaridiaBeybladeTurtle, mmbte_var_C);
+    game.g_ram[field..field + 2].copy_from_slice(&x.to_le_bytes());
+    let y = game.enemy_coordinates(index).y_pos();
+    let radius = game.enemy_coordinates(index).y_height();
+    let field = base + core::mem::offset_of!(Enemy_MiniMaridiaBeybladeTurtle, mmbte_var_D);
+    game.g_ram[field..field + 2].copy_from_slice(&y.wrapping_sub(radius).to_le_bytes());
+    let field = base + core::mem::offset_of!(Enemy_MiniMaridiaBeybladeTurtle, mmbte_var_A);
+    game.g_ram[field..field + 2].copy_from_slice(&0x9142u16.to_le_bytes());
+    game.enemy_instructions(index).set_instruction_timer(1);
+    game.enemy_instructions(index).set_timer(0);
+    let field = base + core::mem::offset_of!(Enemy_MiniMaridiaBeybladeTurtle, mmbte_parameter_1);
+    let parameter = u16::from_le_bytes([game.g_ram[field], game.g_ram[field + 1]]);
+    let field = base + core::mem::offset_of!(Enemy_MiniMaridiaBeybladeTurtle, mmbte_var_E);
+    game.g_ram[field..field + 2].copy_from_slice(&parameter.to_le_bytes());
+    let instruction = if (parameter as i16) >= 0 {
+        addr_kMaridiaBeybladeTurtle_Ilist_8C72 as u16
+    } else {
+        addr_kMaridiaBeybladeTurtle_Ilist_8B80 as u16
+    };
+    game.enemy_instructions(index)
+        .set_current_instruction(instruction);
 }
 pub unsafe fn CallMaridiaBeybladeTurtleFunc(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
