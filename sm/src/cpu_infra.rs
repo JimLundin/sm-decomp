@@ -110,6 +110,7 @@ pub struct Snapshot {
     pub status_flags: [bool; 3],
     pub mode7_matrix: [i16; 8],
     pub mode7_flags: [bool; 5],
+    pub mosaic: ([bool; 4], uint8, uint8),
     pub brightness: uint8,
     pub forced_blank: bool,
     pub cgram: [uint16; 256],
@@ -956,6 +957,15 @@ unsafe fn VerifySnapshotsEq(
             );
         }
     }
+    if (*b).mosaic != (*a).mosaic {
+        game.g_fail = true;
+        if report_details {
+            eprintln!(
+                "@{}: Mosaic (BG enables, size, start line) compare failed: mine {:?} != theirs {:?}",
+                game.snes_frame_counter, (*b).mosaic, (*a).mosaic
+            );
+        }
+    }
     if (*b).mode7_flags != (*a).mode7_flags {
         game.g_fail = true;
         if report_details {
@@ -1643,6 +1653,11 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     let ppu = &*(*game.g_snes).ppu;
     (*s).brightness = ppu.brightness;
     (*s).forced_blank = ppu.forcedBlank;
+    (*s).mosaic = (
+        ppu.bgLayer.map(|bg| bg.mosaicEnabled),
+        ppu.mosaicSize,
+        ppu.mosaicStartLine,
+    );
     (*s).mode7_matrix = ppu.m7matrix;
     (*s).mode7_flags = [
         ppu.m7largeField,
@@ -1680,6 +1695,12 @@ unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     let ppu = &mut *(*game.g_snes).ppu;
     ppu.brightness = (*s).brightness;
     ppu.forcedBlank = (*s).forced_blank;
+    let (enabled, size, start_line) = (*s).mosaic;
+    for (bg, enabled) in ppu.bgLayer.iter_mut().zip(enabled) {
+        bg.mosaicEnabled = enabled;
+    }
+    ppu.mosaicSize = size;
+    ppu.mosaicStartLine = start_line;
     if !brightness_cache_is_valid(ppu) {
         ppu.lastBrightnessMult = 255;
     }

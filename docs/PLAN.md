@@ -2334,6 +2334,40 @@ own replays. Only this PPU hunk and note are staged; ROM/probe assets ignored.
 No Ppu/RAM/save layout change. Next: omitted mosaic/display snapshot state;
 audio timing, HDMA, masked RAM, hardware accuracy and full-route gaps remain.
 
+Mosaic snapshot gap and enforcement (2026-10-18): actual snapshot probes
+confirm all four BG mosaic enables, mosaicSize and mosaicStartLine were
+omitted from comparison and rewind. Each mutation was accepted against
+identical registered frame buffers, survived RestoreSnapshot and changed
+the next default-renderer row. Enable controls exercise Mode1 BG1/2/3 and
+Mode0 BG4; size/start controls exercise patterned Mode0 BG1. This demonstrates
+future output divergence after an accepted snapshot, not a natural movie bug.
+
+Snapshots now capture, compare and restore these six semantic fields. No
+register writes or derived-cache normalization are used for restore. Actual
+MakeSnapshot/VerifySnapshotsEq/RestoreSnapshot controls pass1,024 states
+(16 enable sets x16 sizes x4 start values),1,024 equality checks and6,144
+single-field mutation/capture/restore cases. All six prior continuation faults
+now restore identical rows. All256 actual $2106 mappings and actual line0
+start reset pass. Initial probe attempts had a generated diagnostic compile
+error and missing registered buffers; corrected setup retains equal frame
+buffers and uses a temporary buffer solely for rendered continuation. Neither
+failed attempt is evidence. Final probe nativeexit0.
+
+Six actual post-render frame200 faults each produce3,600/1, named mosaic
+diagnostics and nativeexit1. Dedicated maintained-source Verified 129712 frames: 0 failing frames (299.82s);
+Verified 58109 frames: 0 failing frames (130.50s); nativeexits0. Cargo fmt/fmt--check and direct optimized
+core/DLL/normal-core metadata builds pass. Cargo release remains blocked
+executing khronos_api's build script (OSerror5). Progress run: focused Rust
+lines+21 provide fields/capture/restore/diagnostics; other counters unchanged.
+Initial replays included the concurrent PC8459 reset experiment. It was
+withdrawn for a stack-lifecycle defect; fresh dedicated replays below use
+the restored PC8462 path. Builds include then-current independent audio
+source and precede later concurrent gameplay edits. Only these CPU hunks
+and this note are staged;
+ROM/probe assets ignored. Ppu/RAM/save layouts unchanged. Next: remaining
+semantic display/register snapshot gaps. Audio timing, shared hardware
+accuracy, HDMA, masked RAM and boot-to-credits coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
