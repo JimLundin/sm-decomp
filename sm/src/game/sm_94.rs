@@ -2326,136 +2326,47 @@ unsafe fn BlockColl_Horiz_Slope_NonSquare(ci: *mut CollInfo, game: &mut Game) ->
     };
     0
 }
-unsafe fn BlockColl_Vert_Slope_NonSquare(
-    mut ci: *mut CollInfo,
-    mut k: uint16,
-    game: &mut Game,
-) -> uint8 {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 1 as ::core::ffi::c_int
-        != 0
-    {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            >> 4 as ::core::ffi::c_int
-            != SnesModulus(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                    as *mut uint16),
-                *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as uint8,
-            ) as ::core::ffi::c_int
-        {
-            return 0 as uint8;
-        }
-        if *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x16402 as ::core::ffi::c_int as isize)
-            .offset(k as isize) as ::core::ffi::c_int
-            & 0x80 as ::core::ffi::c_int
-            != 0
-        {
-            return 0 as uint8;
-        }
-        let mut v10: uint16 = (if *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x16402 as ::core::ffi::c_int as isize)
-            .offset(k as isize) as ::core::ffi::c_int
-            & 0x40 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-        {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                ^ 0xf as ::core::ffi::c_int
-        } else {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-        }) as uint16;
-        let mut v11: uint16 = (16 as ::core::ffi::c_int
-            * (*(&raw mut game.g_ram as *mut uint8)
-                .offset(0x16402 as ::core::ffi::c_int as isize)
-                .offset(k as isize) as ::core::ffi::c_int
-                & 0x1f as ::core::ffi::c_int)
-            + (v10 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int))
-            as uint16;
-        let mut v12: int16 = ((kAlignYPos_Tab0[v11 as usize] as ::core::ffi::c_int
-            & 0x1f as ::core::ffi::c_int)
-            - (*((&raw mut game.g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                + (*ci).ci_r24 as ::core::ffi::c_int
-                - 1 as ::core::ffi::c_int
-                & 0xf as ::core::ffi::c_int)
-            - 1 as ::core::ffi::c_int) as int16;
-        if v12 as ::core::ffi::c_int <= 0 as ::core::ffi::c_int {
-            let mut v13: int16 =
-                (((*ci).ci_r18_r20 >> 16 as ::core::ffi::c_int) + v12 as int32) as int16;
-            if (v13 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
-                v13 = 0 as int16;
-            }
-            (*ci).ci_r18_r20 = ((v13 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) as int32;
-            return 1 as uint8;
-        } else {
-            return 0 as uint8;
-        }
+unsafe fn BlockColl_Vert_Slope_NonSquare(ci: *mut CollInfo, k: uint16, game: &mut Game) -> uint8 {
+    let direction = u16::from_le_bytes([game.g_ram[0xb02], game.g_ram[0xb03]]);
+    let upward = direction & 1 != 0;
+    let x_position = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
+    // The SNES division register receives only the low byte of room width.
+    let width = game.room_width_in_blocks() as u8;
+    let block = game.cur_block_index();
+    let column = if width == 0 {
+        block
     } else {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            >> 4 as ::core::ffi::c_int
-            != SnesModulus(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                    as *mut uint16),
-                *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as uint8,
-            ) as ::core::ffi::c_int
-        {
-            return 0 as uint8;
-        }
-        if *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x16402 as ::core::ffi::c_int as isize)
-            .offset(k as isize) as ::core::ffi::c_int
-            & 0x80 as ::core::ffi::c_int
-            == 0
-        {
-            return 0 as uint8;
-        }
-        let mut v4: uint16 = (if *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x16402 as ::core::ffi::c_int as isize)
-            .offset(k as isize) as ::core::ffi::c_int
-            & 0x40 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-        {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                ^ 0xf as ::core::ffi::c_int
-        } else {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-        }) as uint16;
-        let mut v5: uint16 = (16 as ::core::ffi::c_int
-            * (*(&raw mut game.g_ram as *mut uint8)
-                .offset(0x16402 as ::core::ffi::c_int as isize)
-                .offset(k as isize) as ::core::ffi::c_int
-                & 0x1f as ::core::ffi::c_int)
-            + (v4 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int))
-            as uint16;
-        let mut v6: int16 = ((kAlignYPos_Tab0[v5 as usize] as ::core::ffi::c_int
-            & 0x1f as ::core::ffi::c_int)
-            - ((*ci).ci_r24 as ::core::ffi::c_int
-                - *((&raw mut game.g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
-                & 0xf as ::core::ffi::c_int
-                ^ 0xf as ::core::ffi::c_int)
-            - 1 as ::core::ffi::c_int) as int16;
-        if v6 as ::core::ffi::c_int <= 0 as ::core::ffi::c_int {
-            let mut v7: int16 =
-                (((*ci).ci_r18_r20 >> 16 as ::core::ffi::c_int) + v6 as int32) as int16;
-            if (v7 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
-                v7 = 0 as int16;
-            }
-            (*ci).ci_r18_r20 = ((v7 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) as int32;
-            return 1 as uint8;
-        } else {
-            return 0 as uint8;
-        }
+        block % u16::from(width)
     };
+    if x_position >> 4 != column {
+        return 0;
+    }
+    let bts = game.g_ram[0x16402 + usize::from(k)];
+    if (bts & 0x80 != 0) == upward {
+        return 0;
+    }
+    let x_offset = if bts & 0x40 != 0 {
+        x_position ^ 15
+    } else {
+        x_position
+    };
+    let index = usize::from(bts & 0x1f) * 16 + usize::from(x_offset & 15);
+    let height = kAlignYPos_Tab0[index] & 0x1f;
+    let radius = u16::from_le_bytes([game.g_ram[0xb00], game.g_ram[0xb01]]);
+    let y_offset = if upward {
+        radius.wrapping_add((*ci).ci_r24).wrapping_sub(1) & 15
+    } else {
+        ((*ci).ci_r24.wrapping_sub(radius) & 15) ^ 15
+    };
+    let adjustment = (height as i16) - (y_offset as i16) - 1;
+    if adjustment > 0 {
+        return 0;
+    }
+    let displacement = (((*ci).ci_r18_r20 >> 16) as i16)
+        .wrapping_add(adjustment)
+        .max(0);
+    (*ci).ci_r18_r20 = i32::from(displacement) << 16;
+    1
 }
 pub unsafe fn Samus_AlignYPosSlope(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xa46 as ::core::ffi::c_int as isize)

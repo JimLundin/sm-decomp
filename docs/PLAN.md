@@ -1333,6 +1333,20 @@ unchanged. Next: vertical nonsquare slope collision, preserving low-byte
 room-width modulus (including zero), direction/BTS alignment and signed
 sixteen-bit displacement clamping.
 
+Vertical nonsquare slope collision now shares mirrored direction branches
+and uses byte-backed coordinates plus named live block/room-width access.
+The low-byte width modulus retains zero-divisor return, BTS orientation and
+mirror tests retain table coordinates, and displacement wraps to signed
+sixteen bits before the zero clamp. Prior Rust comparison passes 2,097,152
+full-RAM/context/return cases over every BTS/table coordinate, signed high
+word and room width, with matched/mismatched columns and separate BTS indexes.
+Stable optimized core/DLL build and direct format pass; Cargo fmt/build
+remain ASR-denied. Waver route: 58,109 frames, zero failures (82.53s); any%:
+129,712 frames, zero failures (178.91s). Raw offsets -19, cast lines -73,
+Rust lines -89; unsafe count unchanged. Next: square slope collision quadrant
+selection and eight-pixel boundary arithmetic, preserving directional flags
+and displacement-before-subposition writes.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
