@@ -1219,57 +1219,39 @@ pub unsafe fn SpawnRoomPLM(mut k: uint16, game: &mut Game) {
     );
 }
 pub unsafe fn PlmPreInstr_Empty2() {}
-pub unsafe fn SpawnPLM(mut a: uint16, game: &mut Game) -> uint8 {
-    let mut v1: uint16 = 78 as uint16;
-    while *((&raw mut game.g_ram as *mut uint8).offset(0x1c37 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-        != 0
-    {
-        v1 = (v1 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
-        if v1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
-            return 0 as uint8;
-        }
-    }
-    let mut v3: ::core::ffi::c_int = v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v3 as isize) = (2 as ::core::ffi::c_int
-        * *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1c37 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v3 as isize) = a;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1cd7 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v3 as isize) =
-        (0x84853d as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    let mut PH: *mut PlmHeader_Size4 = get_PlmHeader_Size4(a, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1d27 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v3 as isize) = (*PH).instr_list_ptr as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xde1c as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v3 as isize) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xde6c as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v3 as isize) = addr_kDefaultPlmDrawInstruction as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1d77 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v3 as isize) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1dc7 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v3 as isize) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdf0c as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v3 as isize) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1c27 as ::core::ffi::c_int as isize)
-        as *mut uint16) = v1;
-    return CallPlmHeaderFunc(
-        ((*PH).func_ptr as ::core::ffi::c_int | 0x840000 as ::core::ffi::c_int) as uint32,
-        v1,
-        game,
-    );
+/// Prepare a PLM slot at the current collision block and invoke its setup.
+///
+/// # Safety
+/// The selected setup callback requires the legacy game runtime to be initialized.
+pub unsafe fn SpawnPLM(header: uint16, game: &mut Game) -> uint8 {
+    let read_word = |game: &Game, offset: usize| {
+        u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
+    };
+    let write_word = |game: &mut Game, offset: usize, value: u16| {
+        game.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+    };
+    // Allocate from the last slot down, retaining the original full-table result.
+    let Some(slot) = (0..40)
+        .rev()
+        .find(|&slot| read_word(game, 0x1c37 + slot * 2) == 0)
+    else {
+        return 0;
+    };
+    let index = slot * 2;
+    write_word(game, 0x1c87 + index, game.cur_block_index().wrapping_mul(2));
+    write_word(game, 0x1c37 + index, header);
+    write_word(game, 0x1cd7 + index, 0x853d);
+    let instruction = game.read_rom_word(0x840000 | u32::from(header), 2);
+    write_word(game, 0x1d27 + index, instruction);
+    write_word(game, 0xde1c + index, 1);
+    write_word(game, 0xde6c + index, addr_kDefaultPlmDrawInstruction as u16);
+    write_word(game, 0x1d77 + index, 0);
+    write_word(game, 0x1dc7 + index, 0);
+    write_word(game, 0xdf0c + index, 0);
+    write_word(game, 0x1c27, index as u16);
+    // Read setup after preparing the slot, at the original callback boundary.
+    let setup = game.read_rom_word(0x840000 | u32::from(header), 0);
+    CallPlmHeaderFunc(0x840000 | u32::from(setup), index as u16, game)
 }
 pub unsafe fn PlmHandler_Async(game: &mut Game) -> CoroutineRet {
     let mut _state_variable_: *mut uint8 =

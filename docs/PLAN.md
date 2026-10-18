@@ -1076,6 +1076,22 @@ Next: audit remaining unsafe shared movement dependencies, starting with
 horizontal slope dispatch and the spike/PLM boundary, without concealing
 legacy runtime preconditions behind safe wrappers.
 
+Movement safety audit: horizontal slope dispatch only calls safe handlers
+and now is safe Rust. Spike collision still calls SpawnPLM, whose setup
+dispatch requires initialized legacy runtime state; movement cannot yet be
+made safe through that boundary. SpawnPLM slot preparation now uses
+little-endian RAM bytes and checked live-ROM words instead of typed pointers.
+The descending 40-slot allocation, zero result when full, all write ordering
+and callback result remain unchanged. Instruction is read after header/pre
+setup, and the setup pointer is read after the final current-slot write.
+SpawnPLM stays unsafe with its callback precondition documented.
+Stable optimized core/DLL build and direct format pass; Cargo fmt/build
+remain ASR-denied. Updated Waver route passes 58,109 frames, zero failures
+(83.57s); any% passes 129,712 frames, zero failures (183.94s).
+Raw offsets -12, unsafe functions -1, cast lines
+-21, Rust lines -21. Next: byte-backed PLM setup handlers reached by enemy
+spikes, retaining their callback effects before removing movement's unsafe.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

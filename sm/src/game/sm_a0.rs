@@ -10506,10 +10506,7 @@ unsafe fn EnemyBlockCollReact_Spike(_collision: &mut EnemyBlockCollInfo, game: &
     SpawnPLM(plm, game);
     0
 }
-unsafe fn EnemyBlockCollHorizReact_Slope(
-    collision: &mut EnemyBlockCollInfo,
-    game: &mut Game,
-) -> uint8 {
+fn EnemyBlockCollHorizReact_Slope(collision: &mut EnemyBlockCollInfo, game: &mut Game) -> uint8 {
     let bts = game.current_block_bts();
     if bts & 0x1f >= 5 {
         game.set_current_slope_bts(u16::from(bts));
