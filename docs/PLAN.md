@@ -4197,7 +4197,8 @@ joypad timing, DMA rewind/event timing, enabled-render Waver71, held HDMA
 and complete boot-to-credits remain open.
 
 Independent DMA resume QC (2026-10-18): frozen candidate channel/timing
-snapshot code matches the live production body.1,536 constructed resumed
+snapshot hunks match live source; a later three-line SNES open-bus restore
+is absent from the tested freeze and needs separate integration.1,536 resumed
 transfers pass: eight channels xeight transfer modes xboth directions xthree
 source-address steps (increment/fixed/decrement) xfour scheduler phases.
 Each starts seven bytes through dma_startDma, advances0/4/8/12 dma_cycle calls,
