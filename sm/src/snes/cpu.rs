@@ -1559,7 +1559,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             59 => {
                 (*cpu).a = (*cpu).sp;
-                cpu_setZN(cpu, (*cpu).a, false_0 != 0);
+                cpu_setZN(cpu, (*cpu).a, false);
                 break;
             }
             60 => {
@@ -1803,7 +1803,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             91 => {
                 (*cpu).dp = (*cpu).a;
-                cpu_setZN(cpu, (*cpu).dp, false_0 != 0);
+                cpu_setZN(cpu, (*cpu).dp, false);
                 break;
             }
             92 => {
@@ -2073,7 +2073,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             123 => {
                 (*cpu).a = (*cpu).dp;
-                cpu_setZN(cpu, (*cpu).a, false_0 != 0);
+                cpu_setZN(cpu, (*cpu).a, false);
                 break;
             }
             124 => {

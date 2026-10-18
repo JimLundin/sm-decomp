@@ -7880,6 +7880,24 @@ unchanged. Live arm matches verified source. Hardware/render/audio timing
 and credits remain open; held HDMA diagnosis stays stopped. Continue
 executed stack transfer/push opcode cleanup.
 
+CPU word-transfer flag cleanup (2026-10-19): TSC/TCD/TDC use native false
+literals for their unconditional word-sized Z/N updates. Assignments and
+existing emulation behavior remain exact. Actual old/current instructions
+pass 1,966,080 pairs over every source word, distinct destination patterns,
+independent native M/X, emulation byte mode and PC 8000/FFFF. Independent
+word transfer and Z/N expectations match complete named CPU state, preserved
+registers/control flags, PC wrap, cycles, open bus and PC-history updates.
+Instrumented any% prefix passes 3,600/0 (1.03s), native exit 0; TSC/TCD/TDC
+native/emulation calls are 0/0, 3,601/0 and 0/0. Dedicated pairs supply TSC/
+TDC and emulation execution. Clean frozen
+832f9b18ee79f68654e039f894096709e7189dab plus only these three literals
+passes any% 129,712/0 (52.41s), native exit 0. Cargo fmt/check, direct format,
+normal-core metadata and optimized clean/probe core/DLL builds pass. Full
+Cargo release fails frontend link for missing SDL2, exit 101. Progress/diff
+pass; all focused counters unchanged. Live arms match verified source.
+Hardware/render/audio timing and credits remain open; held HDMA diagnosis
+stays stopped. Continue executed push opcode cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
