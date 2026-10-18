@@ -8440,6 +8440,20 @@ clean full any% 129,712/0 (52.40s), native exit 0. All progress counters are
 unchanged. Replay does not establish every branch; exact numeric conversion
 supports unexercised labels. Gameplay and rendering/audio remain open.
 
+CPU safe-immediate cleanup (2026-10-19): immediate addressing takes `&mut Cpu`
+and contains no unsafe operations; 11 dispatcher callers convert their raw CPU
+pointer at the call boundary. The reference is confined to the bus-free helper.
+Frozen HEAD `4988ab002f512def3a22675259bd50ed6721b8c3` plus this interface change
+passes 2,097,152 actual old/current helper pairs across every PC, four banks and
+all accumulator/index width selectors, comparing expected address pairs and
+complete named CPU state. Prefix 3,600/0 (0.95s) exercises all four selector/
+width combinations: 460,929/199,600 accumulator word/byte and 51,349/106,539
+index word/byte calls. Clean full any% 129,712/0 (53.60s), native exit 0.
+Cargo fmt/check, release library, normal metadata and optimized core/DLL builds
+pass; full frontend linking still lacks SDL2. Live source matches verified
+source. Unsafe functions -1; other counters unchanged. Complete gameplay and
+rendering/audio fidelity remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

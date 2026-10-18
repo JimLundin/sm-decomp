@@ -240,17 +240,17 @@ unsafe fn cpu_doInterrupt(cpu: *mut Cpu, irq: bool, game: &mut Game) {
     };
     (*cpu).pc = cpu_readWord(cpu, vector, vector + 1, game);
 }
-unsafe fn address_immediate(cpu: *mut Cpu, xFlag: bool) -> (u32, u32) {
-    let byte = if xFlag { (*cpu).xf } else { (*cpu).mf };
-    let pc = (*cpu).pc;
-    (*cpu).pc = (*cpu).pc.wrapping_add(1);
-    let low = u32::from((*cpu).k) << 16 | u32::from(pc);
+fn address_immediate(cpu: &mut Cpu, xFlag: bool) -> (u32, u32) {
+    let byte = if xFlag { cpu.xf } else { cpu.mf };
+    let pc = cpu.pc;
+    cpu.pc = cpu.pc.wrapping_add(1);
+    let low = u32::from(cpu.k) << 16 | u32::from(pc);
     let high = if byte {
         0
     } else {
-        let pc = (*cpu).pc;
-        (*cpu).pc = (*cpu).pc.wrapping_add(1);
-        u32::from((*cpu).k) << 16 | u32::from(pc)
+        let pc = cpu.pc;
+        cpu.pc = cpu.pc.wrapping_add(1);
+        u32::from(cpu.k) << 16 | u32::from(pc)
     };
     (low, high)
 }
@@ -934,7 +934,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0x09 => {
-                let (low, high) = address_immediate(cpu, false);
+                let (low, high) = address_immediate(&mut *cpu, false);
                 cpu_ora(cpu, low, high, game);
                 break;
             }
@@ -1104,7 +1104,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0x29 => {
-                let (low, high) = address_immediate(cpu, false);
+                let (low, high) = address_immediate(&mut *cpu, false);
                 cpu_and(cpu, low, high, game);
                 break;
             }
@@ -1297,7 +1297,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0x49 => {
-                let (low, high) = address_immediate(cpu, false);
+                let (low, high) = address_immediate(&mut *cpu, false);
                 cpu_eor(cpu, low, high, game);
                 break;
             }
@@ -1522,7 +1522,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0x69 => {
-                let (low, high) = address_immediate(cpu, false);
+                let (low, high) = address_immediate(&mut *cpu, false);
                 cpu_adc(cpu, low, high, game);
                 break;
             }
@@ -1849,7 +1849,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0xa0 => {
-                let (low, high) = address_immediate(cpu, true);
+                let (low, high) = address_immediate(&mut *cpu, true);
                 cpu_ldy(cpu, low, high, game);
                 break;
             }
@@ -1859,7 +1859,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0xa2 => {
-                let (low, high) = address_immediate(cpu, true);
+                let (low, high) = address_immediate(&mut *cpu, true);
                 cpu_ldx(cpu, low, high, game);
                 break;
             }
@@ -1898,7 +1898,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0xa9 => {
-                let (low, high) = address_immediate(cpu, false);
+                let (low, high) = address_immediate(&mut *cpu, false);
                 cpu_lda(cpu, low, high, game);
                 break;
             }
@@ -2023,7 +2023,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0xc0 => {
-                let (low, high) = address_immediate(cpu, true);
+                let (low, high) = address_immediate(&mut *cpu, true);
                 cpu_cpy(cpu, low, high, game);
                 break;
             }
@@ -2071,7 +2071,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0xc9 => {
-                let (low, high) = address_immediate(cpu, false);
+                let (low, high) = address_immediate(&mut *cpu, false);
                 cpu_cmp(cpu, low, high, game);
                 break;
             }
@@ -2191,7 +2191,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0xe0 => {
-                let (low, high) = address_immediate(cpu, true);
+                let (low, high) = address_immediate(&mut *cpu, true);
                 cpu_cpx(cpu, low, high, game);
                 break;
             }
@@ -2239,7 +2239,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0xe9 => {
-                let (low, high) = address_immediate(cpu, false);
+                let (low, high) = address_immediate(&mut *cpu, false);
                 cpu_sbc(cpu, low, high, game);
                 break;
             }
