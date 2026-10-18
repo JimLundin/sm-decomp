@@ -4366,6 +4366,32 @@ not hardware bus-update accuracy, status-register residual equality or natural
 instruction coverage. Rendering/Waver71, events, audio timing and credits
 remain open; held HDMA diagnosis stays stopped.
 
+Independent DMA register-write QC (2026-10-18): the frozen cleanup's
+dma_write body matches live source exactly.100,663,296 actual A-bus partial-
+word writes cover six address/size/table low/high registers xevery65,536
+previous word x256 input bytes; channels rotate through all eight indexes.
+An independent byte-array replacement checks the retained other byte and
+every semantic field of the target channel. Bus writes use bank80 aliases.
+The separate16,777,216 direct address/value cases cover every16-bit address
+x256 bytes: low-nibble decoding, channel bits4..6, ignored higher bits,
+DMAP flag unpacking, byte fields, partial words, ignored offsetsC..E and
+unused-byte B/F mirroring. Every semantic field in all eight channels matches
+independent expectations. Nativeexit0 for both matrices in the same process.
+
+These controls use maintained Rust functions and bus routing; they establish
+register-write preservation, not independent hardware register accuracy,
+transfer timing or movie execution. The implementing session owns its full
+any% replay. No production edits enter this QC; only this note changes.
+Frozen source includes then-current CPU/audio/demo/PPU peer edits; subsequent
+integration remains separate. Isolated optimized core/DLL builds, direct
+full-source rustfmt and progress pass; Cargo fmt/check and release remain
+denied at cargo.exe launch. No fresh movie result is claimed and no focused
+Rust/residue counts change. Diagnostic sources/logs and ROM assets stay
+ignored. Next: split naturally persistent DMA/HDMA timer observations and
+continue actual event/bus coverage. Held HDMA diagnosis remains stopped;
+enabled-render Waver71, hires, audio timing, masked RAM and boot-to-credits
+coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
