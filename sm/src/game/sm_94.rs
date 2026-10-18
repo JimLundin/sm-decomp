@@ -3246,14 +3246,12 @@ pub unsafe fn Samus_MoveDown_NoSolidColl(mut amt: int32, game: &mut Game) -> int
     );
     return amt;
 }
-unsafe fn BlockInsideReact_Slope(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    return 0 as uint8;
+fn BlockInsideReact_Slope(_ci: *mut CollInfo, _game: &mut Game) -> uint8 {
+    0
 }
-unsafe fn BlockInsideReact_ShootableAir(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa6c as ::core::ffi::c_int as isize)
-        as *mut uint16) =
-        (addr_kSamusSpeedTable_Normal_X as ::core::ffi::c_int + 12 as ::core::ffi::c_int) as uint16;
-    return 0 as uint8;
+fn BlockInsideReact_ShootableAir(_ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    BlockInsideReact_SpecialAir_Default(game);
+    0
 }
 unsafe fn ClearCarry_8(game: &mut Game) {}
 unsafe fn nullsub_165(game: &mut Game) {}
@@ -3315,16 +3313,13 @@ unsafe fn BlockInsideReact_SpikeAir(mut ci: *mut CollInfo, game: &mut Game) -> u
         .expect("non-null function pointer")(game);
     return 0 as uint8;
 }
-unsafe fn BlockInsideReact_Special_(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa6c as ::core::ffi::c_int as isize)
-        as *mut uint16) =
-        (addr_kSamusSpeedTable_Normal_X as ::core::ffi::c_int + 12 as ::core::ffi::c_int) as uint16;
-    return 0 as uint8;
+fn BlockInsideReact_Special_(_ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    BlockInsideReact_SpecialAir_Default(game);
+    0
 }
-unsafe fn BlockInsideReact_SpecialAir_Default(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa6c as ::core::ffi::c_int as isize)
-        as *mut uint16) =
-        (addr_kSamusSpeedTable_Normal_X as ::core::ffi::c_int + 12 as ::core::ffi::c_int) as uint16;
+fn BlockInsideReact_SpecialAir_Default(game: &mut Game) {
+    let speed_table = (addr_kSamusSpeedTable_Normal_X as u16).wrapping_add(12);
+    game.g_ram[0xa6c..0xa6e].copy_from_slice(&speed_table.to_le_bytes());
 }
 unsafe fn BlockInsideReact_SpecialAir_8(game: &mut Game) {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)

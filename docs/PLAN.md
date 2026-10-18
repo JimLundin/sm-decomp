@@ -1414,6 +1414,16 @@ and direct format pass; Cargo fmt/build remain ASR-denied. Waver route:
 unchanged. Next: inert slope/default-speed inside reactions, then spike-air
 reactions, preserving their contact gates and speed-table writes.
 
+The inert slope and three default-speed inside reactions are now safe
+functions. Shootable/special reactions share the byte-backed default write;
+source audit confirms unchanged A6C..A6D range, 9F55 value and zero returns.
+No collision context is dereferenced. Stable optimized core/DLL build and
+direct format pass; Cargo fmt/build remain ASR-denied. Waver route: 58,109
+frames, zero failures (83.07s); any%: 129,712 frames, zero failures (183.50s).
+Raw offsets -3, unsafe functions -4, cast lines -6, Rust lines -5. Next:
+spike-air inside reactions, retaining contact gates, damage/knockback writes,
+final speed-table write and the existing out-of-range BTS panic behavior.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
