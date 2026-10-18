@@ -1675,6 +1675,21 @@ cast lines -61, Rust lines -95; all other counters unchanged. Next: replace
 the private post-grapple raw context pointers with references and descriptive
 fields, then remove unsafe from its completed byte-backed collision chain.
 
+Post-grapple traversal now shares one helper across both axes and directions.
+Vertical coordinates use explicit wrapping edge/row arithmetic; both axes
+retain low-byte initial row multiplication, signed-result filtering, live
+maximum-distance reads and sample decrement order. Horizontal steps read
+full live width after collision; vertical steps remain two bytes. Prior Rust
+comparisons pass 655,388 full-RAM/context/callback cases per axis over all
+position/width words, radius/count boundaries and callback mutations. Stable
+optimized final-source core/DLL build and direct format pass; Cargo fmt/build
+remain ASR-denied. Final-source Waver route: 58,109 frames, zero failures
+(104.85s); any%: 129,712 frames, zero failures (217.78s), run alongside the
+preceding vertical-only DLL. Raw offsets -26, unsafe functions -4, cast
+lines -61, Rust lines -95. Next: post-grapple context ownership and solid
+distance reads, removing remaining raw context pointers without altering
+slope sampling or traversal lifetime.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
