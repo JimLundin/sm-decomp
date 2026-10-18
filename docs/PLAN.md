@@ -3363,6 +3363,51 @@ unchanged. No probes or ROM-derived assets committed. Next: M7SEL flag
 writes, preserving large-field/character-fill/Y-flip/X-flip store order and
 ignored bits; hardware accuracy and complete route coverage remain open.
 
+Rendering coverage correction (2026-10-18): snes_init allocates Snes
+with malloc but does not initialize disableRender; reset leaves it untouched.
+The frontend sets it before drawing; headless verification does not. Frozen
+actual-call probes on then-current source report zero ppu_runLine calls over
+full any% 129,712/0 and Waver 58,109/0. The initial first-row observer likewise
+recorded zero and cannot establish hires absence. Short tracing finds 7,200
+draw calls and 1,627,200 draw-loop iterations, no pending NMI at draw entry,
+but zero PPU calls. The skip is inside the render guard, not the draw loop.
+An isolated explicit disableRender=false produces 1,620,000 actual PPU calls
+in 3,600/0, native exit 0.
+
+A one-line snes_init initializer was tested and WITHDRAWN because enabled
+rendering exposes new Waver failures. Frozen candidate Verified 129712 frames: 0 failing frames (416.81s) (native
+exit 0); Verified 58109 frames: 71 failing frames (208.24s) (native exit 1). Actual line totals: HIRES_COUNTS [0, 0, 40250316, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18120084, 0];
+HIRES_COUNTS [0, 0, 23619704, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2529346, 0]. Only modes 1 and 7 execute in these candidate replays; no hires
+mode/pseudo-hires calls occur. First Waver failure is frame 28,228 at pixel
+(255,223), byte 1, mine00/theirs84, with zero RAM differences. This coincides
+with the documented window-boundary/HDMA discrepancy, but the 71 failing
+frames are not all classified. The held HDMA diagnosis is not resumed.
+
+Earlier zero-render movie passes do not establish pixel or rendering-path
+equivalence. RAM/register comparison, deliberate pixel faults and constructed
+renderer probes retain only their explicit scope. This supersedes broader
+render-enabled claims for those runs. No hardware-accuracy or credits proof
+follows. The initializer remains absent to honor the no-new-failing-frames
+rule; the headless render guard's uninitialized state remains an open bug.
+Next: resolve the 71 enabled-render Waver failures before landing deterministic
+render initialization, then require actual render execution in movie checks.
+Do not normalize pixels or disable comparisons to hide them.
+
+Independent output-contract probing passes 128 actual rows / 32,768 sampled
+positions across modes0/1/5/6, pseudo-hires off/on, four brightness levels and
+four constructed states. It compares actual output with actual main/subscreen
+getters:17,436 distinct subscreen samples are absent. A512-pixel supplied row
+leaves the latter256 untouched; scale always1, frontend copy always256. This
+proves omission rather than independent SNES color/phase accuracy. Hires,
+fast BG interlace and whole-line Mode7 direct color remain open renderer gaps.
+
+Only this diagnosis note is committed; no maintained Rust change or focused
+residue increase remains. Progress script passes. Direct optimized probes,
+normal-core metadata and full-source rustfmt check pass. Cargo fmt/check/
+release attempts remain denied executing cargo.exe. Probe/ROM assets ignored;
+concurrent source work remains separate. Audio timing, held window-boundary/
+HDMA, masked RAM, hardware accuracy and complete-route coverage stay open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
