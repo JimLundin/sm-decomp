@@ -5738,7 +5738,7 @@ ram_map names the word REMOVED_samus_bottom_boundary_position. Rust
 BlockInsideDetection computes its boundary locally; explicit maintained
 gameplay accesses to this word were not found. Indirect accesses and Rust
 counterfactual behavior are not established by that search. The oracle
-still copies the ROM word into mine before comparison; no mask, comparison,
+still copies the Rust word into theirs before comparison; no mask, comparison,
 recovery or input scheduling changes. All four observed bus consumers,
 paired loop, normalization and BlockInsideDetection body match live after
 stripping TEMP counters. Optimized observer core/DLL, direct format,
@@ -5748,6 +5748,31 @@ final state8/DF8D and zero credits frames. Arbitrary inputs, other masks,
 rendering/audio/hardware accuracy and held diagnoses remain open. Only this
 PLAN note changes; probes/assets stay TEMP/ignored. Partner independently
 checks the fixture, final logs and scope.
+
+Independent masked draw-phase consumer audit (2026-10-18): paired full
+any% completes 129,712/0 (258.99s), native exit zero. Each byte 0E32/0E33
+has 2,414,960 actual ROM reads and 870,317 writes; neither is read before
+its first write that emulated frame. Direct 7E:0E32 and WRAM-port 0E33
+incoming-read self-controls pass before resetting counters. First actual
+read is frame8,324 at continuation PC A0:8867, value zero for both bytes.
+The bank-A0 log and ignored ROM bytes identify LDA $0E32 at A0:8864,
+preceded by STZ $0E32 at A0:8861 in the draw-layer loop. INC at A0:88B7
+advances the layer; Rust uses local phase_varE32 in
+DrawSamusEnemiesAndProjectiles. First observed write is boot frame0 at
+continuation PC80:8451; its recorded byte is the old value before writing.
+
+This classifies real draw-loop consumers and shows the incoming adopted
+word is overwritten before use in this movie. Rust counterfactual behavior,
+other inputs and removal of the wider 0E20..0E45 mask remain unverified.
+The mask copies mine into theirs: VerifySnapshotsEq parameters are b=mine,
+a=theirs. The preceding bottom-boundary note's reversed direction has been
+corrected; its runtime counts remain valid. No comparison/recovery/input
+scheduling changed. Observed bus consumers, paired loop, mask and Rust draw
+body match live after stripping TEMP counters. Optimized observer core/DLL,
+direct format, normal-core metadata and progress pass; Cargo launch remains
+denied. Coverage remains six Ceres rooms, three enemy definitions and zero
+credits frames. Only PLAN changes; probes/assets stay TEMP/ignored. Partner
+independently reviews logs, source attribution and scope.
 
 Independent native control-write candidate QC (2026-10-18): 73,728 actual
 old/current byte STA instructions pass through banks 00/80 at 4200/4201/420D.
