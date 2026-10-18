@@ -2285,9 +2285,9 @@ A fresh initial any% build passes 129,712/0 (220.83s), native exit 0.
 Its build overlapped concurrent audio-oracle files, so a separate build
 uses committed 146e84a5 oracle/module files plus this gameplay rewrite;
 its any% passes 129,712/0 (214.81s), native exit 0; its gunship replay
-passes 22,631 frames with zero failures and native exit 0. Optimized core/DLL
-and normal-core metadata builds pass. Gameplay formatting passes; full
-Cargo formatting currently reports the other session's audio-module order.
+passes 22,631/0 (36.05s), native exit 0. Optimized core/DLL
+and normal-core metadata builds pass. Gameplay and final Cargo formatting pass. An earlier concurrent audio-module
+ordering issue was resolved by its owner before this checkpoint.
 Cargo release remains denied at khronos_api (OS error 5). Raw offsets -16,
 unsafe functions -1, cast lines -37, Rust lines -14 for this gameplay change;
 concurrent audio/PPU counters are separate. No probe or ROM-derived assets
