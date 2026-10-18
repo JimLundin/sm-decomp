@@ -5794,6 +5794,22 @@ Cargo launch remains denied. Coverage remains six Ceres rooms, three enemy
 definitions and zero credits frames. Only PLAN changes; probes/assets stay
 TEMP/ignored. Partner independently checks fixture, final logs and scope.
 
+Independent CPU long-indirect candidate QC (2026-10-18): 4,718,592 actual
+old/current LDA/STA opcode pairs pass through cpu_adrIdl/cpu_adrIly, native
+exit zero. Every Y word, operands 00/01/FF and both accumulator widths are
+exercised with cancelling pointers to 7F:1900, 00:1900 and 7E:FFFF. Independent
+expectations check cycles, accumulator, PC, preserved Y/DP/DB, flags and
+written bytes. Indexed 24-bit wrapping, bank carry, DB independence and
+word data crossing 7E:FFFF into 7F:0000 execute. Changing only Ily's pointer
+bank-byte shift from 16 to 15 causes the expected accumulator assertion,
+native exit 3221226505. The pointer bytes are mapped ordinary RAM at 1800;
+pointer-location wrapping, other opcodes/devices and hardware timing are
+outside this probe. Both changed helpers and opcode dispatch match live;
+optimized probe core/DLL, direct full-source format, normal-core metadata
+and progress pass. Independent partner fixture review finds no issue.
+Cargo launch remains denied. Implementer retains production ownership and
+full-movie integration; only PLAN changes and probes/assets stay TEMP.
+
 Independent native control-write candidate QC (2026-10-18): 73,728 actual
 old/current byte STA instructions pass through banks 00/80 at 4200/4201/420D.
 All 256 written bytes, 16 initial control-flag combinations and autojoy
