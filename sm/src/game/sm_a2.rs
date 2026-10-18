@@ -2403,6 +2403,9 @@ impl<'a> MiniCrocomireState<'a> {
     fn set_var_c(&mut self, value: u16) {
         self.write(core::mem::offset_of!(Enemy_MiniCrocomire, mce_var_C), value);
     }
+    fn preinstruction(&self) -> u16 {
+        self.read(core::mem::offset_of!(Enemy_MiniCrocomire, mce_var_F))
+    }
     fn set_preinstruction(&mut self, value: u16) {
         self.write(core::mem::offset_of!(Enemy_MiniCrocomire, mce_var_F), value);
     }
@@ -2434,15 +2437,9 @@ pub fn MiniCrocomire_Init(game: &mut Game) {
     }
 }
 pub unsafe fn MiniCrocomire_Main(game: &mut Game) {
-    let mut E: *mut Enemy_MiniCrocomire = Get_MiniCrocomire(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    CallEnemyPreInstr(
-        ((*E).mce_var_F as ::core::ffi::c_int | 0xa20000 as ::core::ffi::c_int) as uint32,
-        game,
-    );
+    let index = game.cur_enemy_index();
+    let preinstruction = MiniCrocomireState::new(game, index).preinstruction();
+    CallEnemyPreInstr(u32::from(preinstruction) | 0xa20000, game);
 }
 pub fn MiniCrocomire_Func1(game: &mut Game) {
     let index = game.cur_enemy_index();

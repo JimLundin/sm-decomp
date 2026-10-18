@@ -2544,6 +2544,15 @@ and APU-read fixes; audio equivalence and complete route coverage remain
 unverified. Next: Mini Crocomire Main captured-slot dispatch, then movement
 callbacks retaining live index reads across calls.
 
+Mini Crocomire Main now reads its captured-slot pre-instruction through the
+byte-backed state view and dispatches the same bank-A2 address. Unsafe remains
+at the existing CallEnemyPreInstr boundary. Direct full-source format and
+stable optimized core/DLL build pass; Cargo fmt/build remain access-denied.
+Final-source any% passes 129,712/0 (190.66s); Waver passes 58,109/0 (86.44s),
+both process exits 0. Raw offsets -1, cast lines -3, Rust lines -3; other
+counters unchanged. Next: Mini Crocomire movement/pre-instruction callbacks,
+retaining live index reads after movement, animation and RNG calls.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
