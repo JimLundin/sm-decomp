@@ -1384,6 +1384,39 @@ or audio equality. Prototype code and outputs remain temporary. Next: compare
 actual ROM/Rust upload entries and return state before adopting this transport.
 No maintained Rust or residue counters change in this diagnostic.
 
+Natural physical upload-entry diagnostic (2026-10-18): the temporary native
+integration copy independently records original ROM PC 808028 entries and
+Rust native-upload entries during unmodified any% inputs. A 43,200-frame
+prefix completes 43,200/0 (87.92s), native exit 0, but selection differs:
+eleven ROM calls versus twelve Rust calls. The additional Rust CF8000 call
+is frame 43,188; all eleven ROM frame/source pairs are present in Rust.
+No call is discarded to claim upload-selection equality. This reproduces the
+previously classified reset boundary mismatch with physical audio selected.
+
+A separate 400-frame natural-state probe compares full APU RAM/value state,
+SPC registers/flags, DSP/channel/echo state and buffered samples, complete
+APU write history and fractional catchup without replacing either entry seed.
+Frames 150/160/315 match all captured entry and return fields; original
+returns are observed at 80F1 before RTS, native after clearing 0617/0618.
+The diagnostic completes 400/0, native exit 0. This comparator does not cover
+WRAM effects or ordered RAM/DSP/sample events, and pairs the latest record
+by frame/source rather than a general repeated-call ordinal. General audio
+runtime equivalence and timeout-boundary claims are not established. Independent
+source review confirms field coverage and these limits; probe code and all
+ROM-derived observations remain temporary. No maintained Rust/counters change.
+Next: correct the oracle's reset upload entry alignment before enabling native
+transport in maintained source.
+
+Extended natural-state prefix completes 43,200/0 (95.36s), native exit 0.
+All eleven paired uploads match captured entry and return fields; the extra
+frame-43,188 Rust upload is explicitly unpaired at both boundaries. Each side
+has at most one upload per observed frame, so latest-record pairing is
+unambiguous for this prefix. Mutating captured entry-RAM text is detected at
+frame 150 and exits 3 with the comparator-fault marker; this tests comparator
+detection, not a state producer fault. Entry/return matching does not replace
+the failed selection result. Current integrated hardware still follows the
+ROM branch on frame adoption; native-only audio continuation remains unproved.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read
