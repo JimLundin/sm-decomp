@@ -1417,6 +1417,29 @@ detection, not a state producer fault. Entry/return matching does not replace
 the failed selection result. Current integrated hardware still follows the
 ROM branch on frame adoption; native-only audio continuation remains unproved.
 
+Reset-entry alignment experiment (2026-10-18): changing the temporary BOTH
+reset redirect from 808462 to 808459 includes the eleven skipped startup
+uploads. Default any% passes 129,712/0 (273.39s); the physical native prototype
+passes 129,712/0 (291.22s), with exactly equal 45-call ROM/Rust frame/source
+vectors and all 90 captured natural entry/return field comparisons matching.
+Captured source/order/omission vector faults are detected. Native transport
+and diagnostic outputs remain temporary; no audio equality is inferred.
+
+Independent review identifies a blocking lifecycle difference. 8459 calls
+the upload wrapper, then returns to 8460's branch to 8482. That branch skips
+8462's CPU-mode and stack initialization, which the maintained redirect
+executes. A full precondition trace passes 129,712/0 (292.56s) and verifies
+native mode, word accumulator/index and direct page zero at all eleven
+reset entries, but entry stacks decrease by three bytes each reset, from
+1FFC to 1FDE. These route checks therefore do not prove reset behavior is
+preserved. The one-line redirect proposal is withdrawn; maintained PC8462
+is retained. Preserve CPU/stack initialization when adding the reset upload
+rather than accepting movie-only evidence. No maintained Rust/counters change
+for this experiment; concurrent edits remain separately owned. Cargo fmt/check
+and optimized core/DLL/metadata builds pass; Cargo release remains denied
+executing khronos_api's build script (OS error 5). Next: implement a reset
+transition that includes the upload and retains the original initialization.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read
