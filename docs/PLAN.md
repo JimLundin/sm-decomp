@@ -686,8 +686,11 @@ mandatory delay followed by a fresh acknowledgement.
 The exact 59,942-frame input then passes the unmodified verifier DLL built
 from committed Func2/slope/sound gameplay at 4c125ea2: 59,942/0 (108.03s),
 explicit native exit 0, with final gameplay in 99BD. This replay predates
-the pending VRAM read-latch change and must not be described as verifying
-that change. Inputs remain ignored; no maintained Rust or residue counters
+the VRAM read-latch change and must not be described as verifying
+that change. The same exact route subsequently passes the maintained
+read-latch DLL at d16a7786: 59,942/0 (104.96s), explicit native exit 0.
+That run predates the separate four-field VRAM port change. Inputs remain
+ignored; no maintained Rust or residue counters
 change. Next: continue from 99BD toward wider playable coverage, using
 actual control bindings and function-hit evidence. Turtle execution and
 boot-to-credits remain unproved.
