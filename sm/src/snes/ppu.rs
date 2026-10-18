@@ -3892,31 +3892,21 @@ pub unsafe fn ppu_write(mut ppu: *mut Ppu, mut adr: uint8_t, mut val: uint8_t) {
             current_block_164 = 16754622181974910496;
         }
         44 => {
-            (*ppu).screenEnabled[0 as ::core::ffi::c_int as usize] = val;
-            (*ppu).layer[0 as ::core::ffi::c_int as usize].mainScreenEnabled =
-                val as ::core::ffi::c_int & 0x1 as ::core::ffi::c_int != 0;
-            (*ppu).layer[1 as ::core::ffi::c_int as usize].mainScreenEnabled =
-                val as ::core::ffi::c_int & 0x2 as ::core::ffi::c_int != 0;
-            (*ppu).layer[2 as ::core::ffi::c_int as usize].mainScreenEnabled =
-                val as ::core::ffi::c_int & 0x4 as ::core::ffi::c_int != 0;
-            (*ppu).layer[3 as ::core::ffi::c_int as usize].mainScreenEnabled =
-                val as ::core::ffi::c_int & 0x8 as ::core::ffi::c_int != 0;
-            (*ppu).layer[4 as ::core::ffi::c_int as usize].mainScreenEnabled =
-                val as ::core::ffi::c_int & 0x10 as ::core::ffi::c_int != 0;
+            (*ppu).screenEnabled[0] = val;
+            (*ppu).layer[0].mainScreenEnabled = val & 0x01 != 0;
+            (*ppu).layer[1].mainScreenEnabled = val & 0x02 != 0;
+            (*ppu).layer[2].mainScreenEnabled = val & 0x04 != 0;
+            (*ppu).layer[3].mainScreenEnabled = val & 0x08 != 0;
+            (*ppu).layer[4].mainScreenEnabled = val & 0x10 != 0;
             current_block_164 = 16754622181974910496;
         }
         45 => {
-            (*ppu).screenEnabled[1 as ::core::ffi::c_int as usize] = val;
-            (*ppu).layer[0 as ::core::ffi::c_int as usize].subScreenEnabled =
-                val as ::core::ffi::c_int & 0x1 as ::core::ffi::c_int != 0;
-            (*ppu).layer[1 as ::core::ffi::c_int as usize].subScreenEnabled =
-                val as ::core::ffi::c_int & 0x2 as ::core::ffi::c_int != 0;
-            (*ppu).layer[2 as ::core::ffi::c_int as usize].subScreenEnabled =
-                val as ::core::ffi::c_int & 0x4 as ::core::ffi::c_int != 0;
-            (*ppu).layer[3 as ::core::ffi::c_int as usize].subScreenEnabled =
-                val as ::core::ffi::c_int & 0x8 as ::core::ffi::c_int != 0;
-            (*ppu).layer[4 as ::core::ffi::c_int as usize].subScreenEnabled =
-                val as ::core::ffi::c_int & 0x10 as ::core::ffi::c_int != 0;
+            (*ppu).screenEnabled[1] = val;
+            (*ppu).layer[0].subScreenEnabled = val & 0x01 != 0;
+            (*ppu).layer[1].subScreenEnabled = val & 0x02 != 0;
+            (*ppu).layer[2].subScreenEnabled = val & 0x04 != 0;
+            (*ppu).layer[3].subScreenEnabled = val & 0x08 != 0;
+            (*ppu).layer[4].subScreenEnabled = val & 0x10 != 0;
             current_block_164 = 16754622181974910496;
         }
         46 => {

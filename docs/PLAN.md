@@ -2655,6 +2655,34 @@ maintained renderer and do not prove SNES accuracy or all routing effects.
 Next: window definition and color-composition snapshot state. Audio timing,
 HDMA, masked RAM and boot-to-credits coverage remain open.
 
+TM/TS register cleanup (2026-10-18): ppu_write $212C/$212D now use
+literal layer indices and native byte masks. Each retains the full raw byte
+in screenEnabled, including bits 5..7, before the five BG/OBJ enable stores.
+Main/subscreen selection, write order and control flow stay exact; no Ppu,
+RAM, save-state or rendering layout changes.
+
+Independent actual writer checks pass 8,192 complete-Ppu byte comparisons:
+both registers, all 256 values and sixteen seeded states, with independent
+expected effects and unchanged unrelated fields. Actual rendered continuation
+matches the extracted original writer in 2,048 rows / 2,097,152 BGRA bytes,
+covering modes 0/1 and whole-line/per-pixel rendering; 72 outputs are distinct
+and all rows are nonuniform. This proves preserved behavior for those cases,
+not independent compositor or SNES accuracy. An observed normal startup replay
+passes 3,600/0, native exit 0; TM/TS execute 7,210/7,208 times across both
+implementations, including initialization. It has zero gameplay frames.
+Private observations strip to the exact maintained PPU body. Independent
+implementation and behavior review have no findings.
+
+Frozen 0ff5736f plus only this PPU change passes any% 129,712/0 (290.16s)
+and Waver 58,109/0 (119.61s), both native exits 0. Later concurrent audio/
+gameplay edits are outside those replays. Cargo fmt/check, direct optimized
+core/DLL and normal-core metadata builds pass. Cargo release remains denied
+executing khronos_api's build script (OS error 5). Progress: cast lines -22,
+Rust lines -10; other focused counters unchanged. No probes or ROM-derived
+assets enter the commit. Next: TMW/TSW screen-window register cleanup,
+preserving raw bytes and main/subscreen window store order; coordinate
+composition snapshot enforcement separately.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
