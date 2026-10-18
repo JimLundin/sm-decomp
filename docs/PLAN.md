@@ -8342,6 +8342,17 @@ their gameplay coverage. Clean full any% 129,712/0 (53.86s), native exit 0.
 Rust lines +4 solely from formatter reflow of longer readable names; all other
 counters unchanged. Gameplay and rendering/audio completeness remain open.
 
+CPU local-address cleanup (2026-10-19): 177 numbered address pairs become
+`low`/`high` within their individual opcode scopes. Exact scoped inverse
+renaming reconstructs every original arm; calls and expressions remain exact.
+Frozen HEAD `9507fdd2235fa1a4cf3e936bb788c7f3a67e19e4` plus this rename matches
+live source. Cargo fmt/check, release library, frozen normal metadata and
+optimized core/DLL builds pass; full frontend linking still lacks SDL2.
+Prefix 3,600/0 (1.03s) executes 10,363,030 dispatcher calls; clean full any%
+129,712/0 (47.85s), native exit 0. Every progress counter is unchanged.
+Replay does not prove every opcode branch; exact scoped rename and compilation
+support unexercised sites. Complete gameplay and rendering/audio remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

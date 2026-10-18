@@ -913,28 +913,28 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             3 => {
-                let (low_0, high_0) = address_stack_relative(cpu, game);
-                cpu_ora(cpu, low_0, high_0, game);
+                let (low, high) = address_stack_relative(cpu, game);
+                cpu_ora(cpu, low, high, game);
                 break;
             }
             4 => {
-                let (low_1, high_1) = address_direct_page(cpu, game);
-                cpu_tsb(cpu, low_1, high_1, game);
+                let (low, high) = address_direct_page(cpu, game);
+                cpu_tsb(cpu, low, high, game);
                 break;
             }
             5 => {
-                let (low_2, high_2) = address_direct_page(cpu, game);
-                cpu_ora(cpu, low_2, high_2, game);
+                let (low, high) = address_direct_page(cpu, game);
+                cpu_ora(cpu, low, high, game);
                 break;
             }
             6 => {
-                let (low_3, high_3) = address_direct_page(cpu, game);
-                cpu_asl(cpu, low_3, high_3, game);
+                let (low, high) = address_direct_page(cpu, game);
+                cpu_asl(cpu, low, high, game);
                 break;
             }
             7 => {
-                let (low_4, high_4) = address_direct_page_indirect_long(cpu, game);
-                cpu_ora(cpu, low_4, high_4, game);
+                let (low, high) = address_direct_page_indirect_long(cpu, game);
+                cpu_ora(cpu, low, high, game);
                 break;
             }
             8 => {
@@ -942,8 +942,8 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             9 => {
-                let (low_5, high_5) = address_immediate(cpu, false);
-                cpu_ora(cpu, low_5, high_5, game);
+                let (low, high) = address_immediate(cpu, false);
+                cpu_ora(cpu, low, high, game);
                 break;
             }
             10 => {
@@ -962,23 +962,23 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             12 => {
-                let (low_6, high_6) = address_absolute(cpu, game);
-                cpu_tsb(cpu, low_6, high_6, game);
+                let (low, high) = address_absolute(cpu, game);
+                cpu_tsb(cpu, low, high, game);
                 break;
             }
             13 => {
-                let (low_7, high_7) = address_absolute(cpu, game);
-                cpu_ora(cpu, low_7, high_7, game);
+                let (low, high) = address_absolute(cpu, game);
+                cpu_ora(cpu, low, high, game);
                 break;
             }
             14 => {
-                let (low_8, high_8) = address_absolute(cpu, game);
-                cpu_asl(cpu, low_8, high_8, game);
+                let (low, high) = address_absolute(cpu, game);
+                cpu_asl(cpu, low, high, game);
                 break;
             }
             15 => {
-                let (low_9, high_9) = address_absolute_long(cpu, game);
-                cpu_ora(cpu, low_9, high_9, game);
+                let (low, high) = address_absolute_long(cpu, game);
+                cpu_ora(cpu, low, high, game);
                 break;
             }
             16 => {
@@ -986,38 +986,38 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             17 => {
-                let (low_10, high_10) = address_direct_page_indirect_y(cpu, false, game);
-                cpu_ora(cpu, low_10, high_10, game);
+                let (low, high) = address_direct_page_indirect_y(cpu, false, game);
+                cpu_ora(cpu, low, high, game);
                 break;
             }
             18 => {
-                let (low_11, high_11) = address_direct_page_indirect(cpu, game);
-                cpu_ora(cpu, low_11, high_11, game);
+                let (low, high) = address_direct_page_indirect(cpu, game);
+                cpu_ora(cpu, low, high, game);
                 break;
             }
             19 => {
-                let (low_12, high_12) = address_stack_relative_indirect_y(cpu, game);
-                cpu_ora(cpu, low_12, high_12, game);
+                let (low, high) = address_stack_relative_indirect_y(cpu, game);
+                cpu_ora(cpu, low, high, game);
                 break;
             }
             20 => {
-                let (low_13, high_13) = address_direct_page(cpu, game);
-                cpu_trb(cpu, low_13, high_13, game);
+                let (low, high) = address_direct_page(cpu, game);
+                cpu_trb(cpu, low, high, game);
                 break;
             }
             21 => {
-                let (low_14, high_14) = address_direct_page_x(cpu, game);
-                cpu_ora(cpu, low_14, high_14, game);
+                let (low, high) = address_direct_page_x(cpu, game);
+                cpu_ora(cpu, low, high, game);
                 break;
             }
             22 => {
-                let (low_15, high_15) = address_direct_page_x(cpu, game);
-                cpu_asl(cpu, low_15, high_15, game);
+                let (low, high) = address_direct_page_x(cpu, game);
+                cpu_asl(cpu, low, high, game);
                 break;
             }
             23 => {
-                let (low_16, high_16) = address_direct_page_indirect_long_y(cpu, game);
-                cpu_ora(cpu, low_16, high_16, game);
+                let (low, high) = address_direct_page_indirect_long_y(cpu, game);
+                cpu_ora(cpu, low, high, game);
                 break;
             }
             24 => {
@@ -1025,8 +1025,8 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             25 => {
-                let (low_17, high_17) = address_absolute_y(cpu, false, game);
-                cpu_ora(cpu, low_17, high_17, game);
+                let (low, high) = address_absolute_y(cpu, false, game);
+                cpu_ora(cpu, low, high, game);
                 break;
             }
             26 => {
@@ -1043,23 +1043,23 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             28 => {
-                let (low_18, high_18) = address_absolute(cpu, game);
-                cpu_trb(cpu, low_18, high_18, game);
+                let (low, high) = address_absolute(cpu, game);
+                cpu_trb(cpu, low, high, game);
                 break;
             }
             29 => {
-                let (low_19, high_19) = address_absolute_x(cpu, false, game);
-                cpu_ora(cpu, low_19, high_19, game);
+                let (low, high) = address_absolute_x(cpu, false, game);
+                cpu_ora(cpu, low, high, game);
                 break;
             }
             30 => {
-                let (low_20, high_20) = address_absolute_x(cpu, true, game);
-                cpu_asl(cpu, low_20, high_20, game);
+                let (low, high) = address_absolute_x(cpu, true, game);
+                cpu_asl(cpu, low, high, game);
                 break;
             }
             31 => {
-                let (low_21, high_21) = address_absolute_long_x(cpu, game);
-                cpu_ora(cpu, low_21, high_21, game);
+                let (low, high) = address_absolute_long_x(cpu, game);
+                cpu_ora(cpu, low, high, game);
                 break;
             }
             32 => {
@@ -1069,8 +1069,8 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             33 => {
-                let (low_22, high_22) = address_direct_page_indexed_indirect(cpu, game);
-                cpu_and(cpu, low_22, high_22, game);
+                let (low, high) = address_direct_page_indexed_indirect(cpu, game);
+                cpu_and(cpu, low, high, game);
                 break;
             }
             34 => {
@@ -1083,28 +1083,28 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             35 => {
-                let (low_23, high_23) = address_stack_relative(cpu, game);
-                cpu_and(cpu, low_23, high_23, game);
+                let (low, high) = address_stack_relative(cpu, game);
+                cpu_and(cpu, low, high, game);
                 break;
             }
             36 => {
-                let (low_24, high_24) = address_direct_page(cpu, game);
-                cpu_bit(cpu, low_24, high_24, game);
+                let (low, high) = address_direct_page(cpu, game);
+                cpu_bit(cpu, low, high, game);
                 break;
             }
             37 => {
-                let (low_25, high_25) = address_direct_page(cpu, game);
-                cpu_and(cpu, low_25, high_25, game);
+                let (low, high) = address_direct_page(cpu, game);
+                cpu_and(cpu, low, high, game);
                 break;
             }
             38 => {
-                let (low_26, high_26) = address_direct_page(cpu, game);
-                cpu_rol(cpu, low_26, high_26, game);
+                let (low, high) = address_direct_page(cpu, game);
+                cpu_rol(cpu, low, high, game);
                 break;
             }
             39 => {
-                let (low_27, high_27) = address_direct_page_indirect_long(cpu, game);
-                cpu_and(cpu, low_27, high_27, game);
+                let (low, high) = address_direct_page_indirect_long(cpu, game);
+                cpu_and(cpu, low, high, game);
                 break;
             }
             40 => {
@@ -1112,8 +1112,8 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             41 => {
-                let (low_28, high_28) = address_immediate(cpu, false);
-                cpu_and(cpu, low_28, high_28, game);
+                let (low, high) = address_immediate(cpu, false);
+                cpu_and(cpu, low, high, game);
                 break;
             }
             42 => {
@@ -1134,23 +1134,23 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             44 => {
-                let (low_29, high_29) = address_absolute(cpu, game);
-                cpu_bit(cpu, low_29, high_29, game);
+                let (low, high) = address_absolute(cpu, game);
+                cpu_bit(cpu, low, high, game);
                 break;
             }
             45 => {
-                let (low_30, high_30) = address_absolute(cpu, game);
-                cpu_and(cpu, low_30, high_30, game);
+                let (low, high) = address_absolute(cpu, game);
+                cpu_and(cpu, low, high, game);
                 break;
             }
             46 => {
-                let (low_31, high_31) = address_absolute(cpu, game);
-                cpu_rol(cpu, low_31, high_31, game);
+                let (low, high) = address_absolute(cpu, game);
+                cpu_rol(cpu, low, high, game);
                 break;
             }
             47 => {
-                let (low_32, high_32) = address_absolute_long(cpu, game);
-                cpu_and(cpu, low_32, high_32, game);
+                let (low, high) = address_absolute_long(cpu, game);
+                cpu_and(cpu, low, high, game);
                 break;
             }
             48 => {
@@ -1158,38 +1158,38 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             49 => {
-                let (low_33, high_33) = address_direct_page_indirect_y(cpu, false, game);
-                cpu_and(cpu, low_33, high_33, game);
+                let (low, high) = address_direct_page_indirect_y(cpu, false, game);
+                cpu_and(cpu, low, high, game);
                 break;
             }
             50 => {
-                let (low_34, high_34) = address_direct_page_indirect(cpu, game);
-                cpu_and(cpu, low_34, high_34, game);
+                let (low, high) = address_direct_page_indirect(cpu, game);
+                cpu_and(cpu, low, high, game);
                 break;
             }
             51 => {
-                let (low_35, high_35) = address_stack_relative_indirect_y(cpu, game);
-                cpu_and(cpu, low_35, high_35, game);
+                let (low, high) = address_stack_relative_indirect_y(cpu, game);
+                cpu_and(cpu, low, high, game);
                 break;
             }
             52 => {
-                let (low_36, high_36) = address_direct_page_x(cpu, game);
-                cpu_bit(cpu, low_36, high_36, game);
+                let (low, high) = address_direct_page_x(cpu, game);
+                cpu_bit(cpu, low, high, game);
                 break;
             }
             53 => {
-                let (low_37, high_37) = address_direct_page_x(cpu, game);
-                cpu_and(cpu, low_37, high_37, game);
+                let (low, high) = address_direct_page_x(cpu, game);
+                cpu_and(cpu, low, high, game);
                 break;
             }
             54 => {
-                let (low_38, high_38) = address_direct_page_x(cpu, game);
-                cpu_rol(cpu, low_38, high_38, game);
+                let (low, high) = address_direct_page_x(cpu, game);
+                cpu_rol(cpu, low, high, game);
                 break;
             }
             55 => {
-                let (low_39, high_39) = address_direct_page_indirect_long_y(cpu, game);
-                cpu_and(cpu, low_39, high_39, game);
+                let (low, high) = address_direct_page_indirect_long_y(cpu, game);
+                cpu_and(cpu, low, high, game);
                 break;
             }
             56 => {
@@ -1197,8 +1197,8 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             57 => {
-                let (low_40, high_40) = address_absolute_y(cpu, false, game);
-                cpu_and(cpu, low_40, high_40, game);
+                let (low, high) = address_absolute_y(cpu, false, game);
+                cpu_and(cpu, low, high, game);
                 break;
             }
             58 => {
@@ -1216,23 +1216,23 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             60 => {
-                let (low_41, high_41) = address_absolute_x(cpu, false, game);
-                cpu_bit(cpu, low_41, high_41, game);
+                let (low, high) = address_absolute_x(cpu, false, game);
+                cpu_bit(cpu, low, high, game);
                 break;
             }
             61 => {
-                let (low_42, high_42) = address_absolute_x(cpu, false, game);
-                cpu_and(cpu, low_42, high_42, game);
+                let (low, high) = address_absolute_x(cpu, false, game);
+                cpu_and(cpu, low, high, game);
                 break;
             }
             62 => {
-                let (low_43, high_43) = address_absolute_x(cpu, true, game);
-                cpu_rol(cpu, low_43, high_43, game);
+                let (low, high) = address_absolute_x(cpu, true, game);
+                cpu_rol(cpu, low, high, game);
                 break;
             }
             63 => {
-                let (low_44, high_44) = address_absolute_long_x(cpu, game);
-                cpu_and(cpu, low_44, high_44, game);
+                let (low, high) = address_absolute_long_x(cpu, game);
+                cpu_and(cpu, low, high, game);
                 break;
             }
             64 => {
@@ -1245,8 +1245,8 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             65 => {
-                let (low_45, high_45) = address_direct_page_indexed_indirect(cpu, game);
-                cpu_eor(cpu, low_45, high_45, game);
+                let (low, high) = address_direct_page_indexed_indirect(cpu, game);
+                cpu_eor(cpu, low, high, game);
                 break;
             }
             66 => {
@@ -1254,8 +1254,8 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             67 => {
-                let (low_46, high_46) = address_stack_relative(cpu, game);
-                cpu_eor(cpu, low_46, high_46, game);
+                let (low, high) = address_stack_relative(cpu, game);
+                cpu_eor(cpu, low, high, game);
                 break;
             }
             68 => {
@@ -1281,18 +1281,18 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             69 => {
-                let (low_47, high_47) = address_direct_page(cpu, game);
-                cpu_eor(cpu, low_47, high_47, game);
+                let (low, high) = address_direct_page(cpu, game);
+                cpu_eor(cpu, low, high, game);
                 break;
             }
             70 => {
-                let (low_48, high_48) = address_direct_page(cpu, game);
-                cpu_lsr(cpu, low_48, high_48, game);
+                let (low, high) = address_direct_page(cpu, game);
+                cpu_lsr(cpu, low, high, game);
                 break;
             }
             71 => {
-                let (low_49, high_49) = address_direct_page_indirect_long(cpu, game);
-                cpu_eor(cpu, low_49, high_49, game);
+                let (low, high) = address_direct_page_indirect_long(cpu, game);
+                cpu_eor(cpu, low, high, game);
                 break;
             }
             72 => {
@@ -1305,8 +1305,8 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             73 => {
-                let (low_50, high_50) = address_immediate(cpu, false);
-                cpu_eor(cpu, low_50, high_50, game);
+                let (low, high) = address_immediate(cpu, false);
+                cpu_eor(cpu, low, high, game);
                 break;
             }
             74 => {
@@ -1328,18 +1328,18 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             77 => {
-                let (low_51, high_51) = address_absolute(cpu, game);
-                cpu_eor(cpu, low_51, high_51, game);
+                let (low, high) = address_absolute(cpu, game);
+                cpu_eor(cpu, low, high, game);
                 break;
             }
             78 => {
-                let (low_52, high_52) = address_absolute(cpu, game);
-                cpu_lsr(cpu, low_52, high_52, game);
+                let (low, high) = address_absolute(cpu, game);
+                cpu_lsr(cpu, low, high, game);
                 break;
             }
             79 => {
-                let (low_53, high_53) = address_absolute_long(cpu, game);
-                cpu_eor(cpu, low_53, high_53, game);
+                let (low, high) = address_absolute_long(cpu, game);
+                cpu_eor(cpu, low, high, game);
                 break;
             }
             80 => {
@@ -1347,18 +1347,18 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             81 => {
-                let (low_54, high_54) = address_direct_page_indirect_y(cpu, false, game);
-                cpu_eor(cpu, low_54, high_54, game);
+                let (low, high) = address_direct_page_indirect_y(cpu, false, game);
+                cpu_eor(cpu, low, high, game);
                 break;
             }
             82 => {
-                let (low_55, high_55) = address_direct_page_indirect(cpu, game);
-                cpu_eor(cpu, low_55, high_55, game);
+                let (low, high) = address_direct_page_indirect(cpu, game);
+                cpu_eor(cpu, low, high, game);
                 break;
             }
             83 => {
-                let (low_56, high_56) = address_stack_relative_indirect_y(cpu, game);
-                cpu_eor(cpu, low_56, high_56, game);
+                let (low, high) = address_stack_relative_indirect_y(cpu, game);
+                cpu_eor(cpu, low, high, game);
                 break;
             }
             84 => {
@@ -1384,18 +1384,18 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             85 => {
-                let (low_57, high_57) = address_direct_page_x(cpu, game);
-                cpu_eor(cpu, low_57, high_57, game);
+                let (low, high) = address_direct_page_x(cpu, game);
+                cpu_eor(cpu, low, high, game);
                 break;
             }
             86 => {
-                let (low_58, high_58) = address_direct_page_x(cpu, game);
-                cpu_lsr(cpu, low_58, high_58, game);
+                let (low, high) = address_direct_page_x(cpu, game);
+                cpu_lsr(cpu, low, high, game);
                 break;
             }
             87 => {
-                let (low_59, high_59) = address_direct_page_indirect_long_y(cpu, game);
-                cpu_eor(cpu, low_59, high_59, game);
+                let (low, high) = address_direct_page_indirect_long_y(cpu, game);
+                cpu_eor(cpu, low, high, game);
                 break;
             }
             88 => {
@@ -1403,8 +1403,8 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             89 => {
-                let (low_60, high_60) = address_absolute_y(cpu, false, game);
-                cpu_eor(cpu, low_60, high_60, game);
+                let (low, high) = address_absolute_y(cpu, false, game);
+                cpu_eor(cpu, low, high, game);
                 break;
             }
             90 => {
@@ -1440,18 +1440,18 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             93 => {
-                let (low_61, high_61) = address_absolute_x(cpu, false, game);
-                cpu_eor(cpu, low_61, high_61, game);
+                let (low, high) = address_absolute_x(cpu, false, game);
+                cpu_eor(cpu, low, high, game);
                 break;
             }
             94 => {
-                let (low_62, high_62) = address_absolute_x(cpu, true, game);
-                cpu_lsr(cpu, low_62, high_62, game);
+                let (low, high) = address_absolute_x(cpu, true, game);
+                cpu_lsr(cpu, low, high, game);
                 break;
             }
             95 => {
-                let (low_63, high_63) = address_absolute_long_x(cpu, game);
-                cpu_eor(cpu, low_63, high_63, game);
+                let (low, high) = address_absolute_long_x(cpu, game);
+                cpu_eor(cpu, low, high, game);
                 break;
             }
             96 => {
@@ -1485,8 +1485,8 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             97 => {
-                let (low_64, high_64) = address_direct_page_indexed_indirect(cpu, game);
-                cpu_adc(cpu, low_64, high_64, game);
+                let (low, high) = address_direct_page_indexed_indirect(cpu, game);
+                cpu_adc(cpu, low, high, game);
                 break;
             }
             98 => {
@@ -1495,28 +1495,28 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             99 => {
-                let (low_65, high_65) = address_stack_relative(cpu, game);
-                cpu_adc(cpu, low_65, high_65, game);
+                let (low, high) = address_stack_relative(cpu, game);
+                cpu_adc(cpu, low, high, game);
                 break;
             }
             100 => {
-                let (low_66, high_66) = address_direct_page(cpu, game);
-                cpu_stz(cpu, low_66, high_66, game);
+                let (low, high) = address_direct_page(cpu, game);
+                cpu_stz(cpu, low, high, game);
                 break;
             }
             101 => {
-                let (low_67, high_67) = address_direct_page(cpu, game);
-                cpu_adc(cpu, low_67, high_67, game);
+                let (low, high) = address_direct_page(cpu, game);
+                cpu_adc(cpu, low, high, game);
                 break;
             }
             102 => {
-                let (low_68, high_68) = address_direct_page(cpu, game);
-                cpu_ror(cpu, low_68, high_68, game);
+                let (low, high) = address_direct_page(cpu, game);
+                cpu_ror(cpu, low, high, game);
                 break;
             }
             103 => {
-                let (low_69, high_69) = address_direct_page_indirect_long(cpu, game);
-                cpu_adc(cpu, low_69, high_69, game);
+                let (low, high) = address_direct_page_indirect_long(cpu, game);
+                cpu_adc(cpu, low, high, game);
                 break;
             }
             104 => {
@@ -1530,8 +1530,8 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             105 => {
-                let (low_70, high_70) = address_immediate(cpu, false);
-                cpu_adc(cpu, low_70, high_70, game);
+                let (low, high) = address_immediate(cpu, false);
+                cpu_adc(cpu, low, high, game);
                 break;
             }
             106 => {
@@ -1580,18 +1580,18 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             109 => {
-                let (low_71, high_71) = address_absolute(cpu, game);
-                cpu_adc(cpu, low_71, high_71, game);
+                let (low, high) = address_absolute(cpu, game);
+                cpu_adc(cpu, low, high, game);
                 break;
             }
             110 => {
-                let (low_72, high_72) = address_absolute(cpu, game);
-                cpu_ror(cpu, low_72, high_72, game);
+                let (low, high) = address_absolute(cpu, game);
+                cpu_ror(cpu, low, high, game);
                 break;
             }
             111 => {
-                let (low_73, high_73) = address_absolute_long(cpu, game);
-                cpu_adc(cpu, low_73, high_73, game);
+                let (low, high) = address_absolute_long(cpu, game);
+                cpu_adc(cpu, low, high, game);
                 break;
             }
             112 => {
@@ -1599,38 +1599,38 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             113 => {
-                let (low_74, high_74) = address_direct_page_indirect_y(cpu, false, game);
-                cpu_adc(cpu, low_74, high_74, game);
+                let (low, high) = address_direct_page_indirect_y(cpu, false, game);
+                cpu_adc(cpu, low, high, game);
                 break;
             }
             114 => {
-                let (low_75, high_75) = address_direct_page_indirect(cpu, game);
-                cpu_adc(cpu, low_75, high_75, game);
+                let (low, high) = address_direct_page_indirect(cpu, game);
+                cpu_adc(cpu, low, high, game);
                 break;
             }
             115 => {
-                let (low_76, high_76) = address_stack_relative_indirect_y(cpu, game);
-                cpu_adc(cpu, low_76, high_76, game);
+                let (low, high) = address_stack_relative_indirect_y(cpu, game);
+                cpu_adc(cpu, low, high, game);
                 break;
             }
             116 => {
-                let (low_77, high_77) = address_direct_page_x(cpu, game);
-                cpu_stz(cpu, low_77, high_77, game);
+                let (low, high) = address_direct_page_x(cpu, game);
+                cpu_stz(cpu, low, high, game);
                 break;
             }
             117 => {
-                let (low_78, high_78) = address_direct_page_x(cpu, game);
-                cpu_adc(cpu, low_78, high_78, game);
+                let (low, high) = address_direct_page_x(cpu, game);
+                cpu_adc(cpu, low, high, game);
                 break;
             }
             118 => {
-                let (low_79, high_79) = address_direct_page_x(cpu, game);
-                cpu_ror(cpu, low_79, high_79, game);
+                let (low, high) = address_direct_page_x(cpu, game);
+                cpu_ror(cpu, low, high, game);
                 break;
             }
             119 => {
-                let (low_80, high_80) = address_direct_page_indirect_long_y(cpu, game);
-                cpu_adc(cpu, low_80, high_80, game);
+                let (low, high) = address_direct_page_indirect_long_y(cpu, game);
+                cpu_adc(cpu, low, high, game);
                 break;
             }
             120 => {
@@ -1638,8 +1638,8 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             121 => {
-                let (low_81, high_81) = address_absolute_y(cpu, false, game);
-                cpu_adc(cpu, low_81, high_81, game);
+                let (low, high) = address_absolute_y(cpu, false, game);
+                cpu_adc(cpu, low, high, game);
                 break;
             }
             122 => {
@@ -1662,18 +1662,18 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             125 => {
-                let (low_82, high_82) = address_absolute_x(cpu, false, game);
-                cpu_adc(cpu, low_82, high_82, game);
+                let (low, high) = address_absolute_x(cpu, false, game);
+                cpu_adc(cpu, low, high, game);
                 break;
             }
             126 => {
-                let (low_83, high_83) = address_absolute_x(cpu, true, game);
-                cpu_ror(cpu, low_83, high_83, game);
+                let (low, high) = address_absolute_x(cpu, true, game);
+                cpu_ror(cpu, low, high, game);
                 break;
             }
             127 => {
-                let (low_84, high_84) = address_absolute_long_x(cpu, game);
-                cpu_adc(cpu, low_84, high_84, game);
+                let (low, high) = address_absolute_long_x(cpu, game);
+                cpu_adc(cpu, low, high, game);
                 break;
             }
             128 => {
@@ -1683,8 +1683,8 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             129 => {
-                let (low_85, high_85) = address_direct_page_indexed_indirect(cpu, game);
-                cpu_sta(cpu, low_85, high_85, game);
+                let (low, high) = address_direct_page_indexed_indirect(cpu, game);
+                cpu_sta(cpu, low, high, game);
                 break;
             }
             130 => {
@@ -1693,28 +1693,28 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             131 => {
-                let (low_86, high_86) = address_stack_relative(cpu, game);
-                cpu_sta(cpu, low_86, high_86, game);
+                let (low, high) = address_stack_relative(cpu, game);
+                cpu_sta(cpu, low, high, game);
                 break;
             }
             132 => {
-                let (low_87, high_87) = address_direct_page(cpu, game);
-                cpu_sty(cpu, low_87, high_87, game);
+                let (low, high) = address_direct_page(cpu, game);
+                cpu_sty(cpu, low, high, game);
                 break;
             }
             133 => {
-                let (low_88, high_88) = address_direct_page(cpu, game);
-                cpu_sta(cpu, low_88, high_88, game);
+                let (low, high) = address_direct_page(cpu, game);
+                cpu_sta(cpu, low, high, game);
                 break;
             }
             134 => {
-                let (low_89, high_89) = address_direct_page(cpu, game);
-                cpu_stx(cpu, low_89, high_89, game);
+                let (low, high) = address_direct_page(cpu, game);
+                cpu_stx(cpu, low, high, game);
                 break;
             }
             135 => {
-                let (low_90, high_90) = address_direct_page_indirect_long(cpu, game);
-                cpu_sta(cpu, low_90, high_90, game);
+                let (low, high) = address_direct_page_indirect_long(cpu, game);
+                cpu_sta(cpu, low, high, game);
                 break;
             }
             136 => {
@@ -1751,23 +1751,23 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             140 => {
-                let (low_91, high_91) = address_absolute(cpu, game);
-                cpu_sty(cpu, low_91, high_91, game);
+                let (low, high) = address_absolute(cpu, game);
+                cpu_sty(cpu, low, high, game);
                 break;
             }
             141 => {
-                let (low_92, high_92) = address_absolute(cpu, game);
-                cpu_sta(cpu, low_92, high_92, game);
+                let (low, high) = address_absolute(cpu, game);
+                cpu_sta(cpu, low, high, game);
                 break;
             }
             142 => {
-                let (low_93, high_93) = address_absolute(cpu, game);
-                cpu_stx(cpu, low_93, high_93, game);
+                let (low, high) = address_absolute(cpu, game);
+                cpu_stx(cpu, low, high, game);
                 break;
             }
             143 => {
-                let (low_94, high_94) = address_absolute_long(cpu, game);
-                cpu_sta(cpu, low_94, high_94, game);
+                let (low, high) = address_absolute_long(cpu, game);
+                cpu_sta(cpu, low, high, game);
                 break;
             }
             144 => {
@@ -1775,38 +1775,38 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             145 => {
-                let (low_95, high_95) = address_direct_page_indirect_y(cpu, true, game);
-                cpu_sta(cpu, low_95, high_95, game);
+                let (low, high) = address_direct_page_indirect_y(cpu, true, game);
+                cpu_sta(cpu, low, high, game);
                 break;
             }
             146 => {
-                let (low_96, high_96) = address_direct_page_indirect(cpu, game);
-                cpu_sta(cpu, low_96, high_96, game);
+                let (low, high) = address_direct_page_indirect(cpu, game);
+                cpu_sta(cpu, low, high, game);
                 break;
             }
             147 => {
-                let (low_97, high_97) = address_stack_relative_indirect_y(cpu, game);
-                cpu_sta(cpu, low_97, high_97, game);
+                let (low, high) = address_stack_relative_indirect_y(cpu, game);
+                cpu_sta(cpu, low, high, game);
                 break;
             }
             148 => {
-                let (low_98, high_98) = address_direct_page_x(cpu, game);
-                cpu_sty(cpu, low_98, high_98, game);
+                let (low, high) = address_direct_page_x(cpu, game);
+                cpu_sty(cpu, low, high, game);
                 break;
             }
             149 => {
-                let (low_99, high_99) = address_direct_page_x(cpu, game);
-                cpu_sta(cpu, low_99, high_99, game);
+                let (low, high) = address_direct_page_x(cpu, game);
+                cpu_sta(cpu, low, high, game);
                 break;
             }
             150 => {
-                let (low_100, high_100) = address_direct_page_y(cpu, game);
-                cpu_stx(cpu, low_100, high_100, game);
+                let (low, high) = address_direct_page_y(cpu, game);
+                cpu_stx(cpu, low, high, game);
                 break;
             }
             151 => {
-                let (low_101, high_101) = address_direct_page_indirect_long_y(cpu, game);
-                cpu_sta(cpu, low_101, high_101, game);
+                let (low, high) = address_direct_page_indirect_long_y(cpu, game);
+                cpu_sta(cpu, low, high, game);
                 break;
             }
             152 => {
@@ -1819,8 +1819,8 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             153 => {
-                let (low_102, high_102) = address_absolute_y(cpu, true, game);
-                cpu_sta(cpu, low_102, high_102, game);
+                let (low, high) = address_absolute_y(cpu, true, game);
+                cpu_sta(cpu, low, high, game);
                 break;
             }
             154 => {
@@ -1837,63 +1837,63 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             156 => {
-                let (low_103, high_103) = address_absolute(cpu, game);
-                cpu_stz(cpu, low_103, high_103, game);
+                let (low, high) = address_absolute(cpu, game);
+                cpu_stz(cpu, low, high, game);
                 break;
             }
             157 => {
-                let (low_104, high_104) = address_absolute_x(cpu, true, game);
-                cpu_sta(cpu, low_104, high_104, game);
+                let (low, high) = address_absolute_x(cpu, true, game);
+                cpu_sta(cpu, low, high, game);
                 break;
             }
             158 => {
-                let (low_105, high_105) = address_absolute_x(cpu, true, game);
-                cpu_stz(cpu, low_105, high_105, game);
+                let (low, high) = address_absolute_x(cpu, true, game);
+                cpu_stz(cpu, low, high, game);
                 break;
             }
             159 => {
-                let (low_106, high_106) = address_absolute_long_x(cpu, game);
-                cpu_sta(cpu, low_106, high_106, game);
+                let (low, high) = address_absolute_long_x(cpu, game);
+                cpu_sta(cpu, low, high, game);
                 break;
             }
             160 => {
-                let (low_107, high_107) = address_immediate(cpu, true);
-                cpu_ldy(cpu, low_107, high_107, game);
+                let (low, high) = address_immediate(cpu, true);
+                cpu_ldy(cpu, low, high, game);
                 break;
             }
             161 => {
-                let (low_108, high_108) = address_direct_page_indexed_indirect(cpu, game);
-                cpu_lda(cpu, low_108, high_108, game);
+                let (low, high) = address_direct_page_indexed_indirect(cpu, game);
+                cpu_lda(cpu, low, high, game);
                 break;
             }
             162 => {
-                let (low_109, high_109) = address_immediate(cpu, true);
-                cpu_ldx(cpu, low_109, high_109, game);
+                let (low, high) = address_immediate(cpu, true);
+                cpu_ldx(cpu, low, high, game);
                 break;
             }
             163 => {
-                let (low_110, high_110) = address_stack_relative(cpu, game);
-                cpu_lda(cpu, low_110, high_110, game);
+                let (low, high) = address_stack_relative(cpu, game);
+                cpu_lda(cpu, low, high, game);
                 break;
             }
             164 => {
-                let (low_111, high_111) = address_direct_page(cpu, game);
-                cpu_ldy(cpu, low_111, high_111, game);
+                let (low, high) = address_direct_page(cpu, game);
+                cpu_ldy(cpu, low, high, game);
                 break;
             }
             165 => {
-                let (low_112, high_112) = address_direct_page(cpu, game);
-                cpu_lda(cpu, low_112, high_112, game);
+                let (low, high) = address_direct_page(cpu, game);
+                cpu_lda(cpu, low, high, game);
                 break;
             }
             166 => {
-                let (low_113, high_113) = address_direct_page(cpu, game);
-                cpu_ldx(cpu, low_113, high_113, game);
+                let (low, high) = address_direct_page(cpu, game);
+                cpu_ldx(cpu, low, high, game);
                 break;
             }
             167 => {
-                let (low_114, high_114) = address_direct_page_indirect_long(cpu, game);
-                cpu_lda(cpu, low_114, high_114, game);
+                let (low, high) = address_direct_page_indirect_long(cpu, game);
+                cpu_lda(cpu, low, high, game);
                 break;
             }
             168 => {
@@ -1906,8 +1906,8 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             169 => {
-                let (low_115, high_115) = address_immediate(cpu, false);
-                cpu_lda(cpu, low_115, high_115, game);
+                let (low, high) = address_immediate(cpu, false);
+                cpu_lda(cpu, low, high, game);
                 break;
             }
             170 => {
@@ -1925,23 +1925,23 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             172 => {
-                let (low_116, high_116) = address_absolute(cpu, game);
-                cpu_ldy(cpu, low_116, high_116, game);
+                let (low, high) = address_absolute(cpu, game);
+                cpu_ldy(cpu, low, high, game);
                 break;
             }
             173 => {
-                let (low_117, high_117) = address_absolute(cpu, game);
-                cpu_lda(cpu, low_117, high_117, game);
+                let (low, high) = address_absolute(cpu, game);
+                cpu_lda(cpu, low, high, game);
                 break;
             }
             174 => {
-                let (low_118, high_118) = address_absolute(cpu, game);
-                cpu_ldx(cpu, low_118, high_118, game);
+                let (low, high) = address_absolute(cpu, game);
+                cpu_ldx(cpu, low, high, game);
                 break;
             }
             175 => {
-                let (low_119, high_119) = address_absolute_long(cpu, game);
-                cpu_lda(cpu, low_119, high_119, game);
+                let (low, high) = address_absolute_long(cpu, game);
+                cpu_lda(cpu, low, high, game);
                 break;
             }
             176 => {
@@ -1949,38 +1949,38 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             177 => {
-                let (low_120, high_120) = address_direct_page_indirect_y(cpu, false, game);
-                cpu_lda(cpu, low_120, high_120, game);
+                let (low, high) = address_direct_page_indirect_y(cpu, false, game);
+                cpu_lda(cpu, low, high, game);
                 break;
             }
             178 => {
-                let (low_121, high_121) = address_direct_page_indirect(cpu, game);
-                cpu_lda(cpu, low_121, high_121, game);
+                let (low, high) = address_direct_page_indirect(cpu, game);
+                cpu_lda(cpu, low, high, game);
                 break;
             }
             179 => {
-                let (low_122, high_122) = address_stack_relative_indirect_y(cpu, game);
-                cpu_lda(cpu, low_122, high_122, game);
+                let (low, high) = address_stack_relative_indirect_y(cpu, game);
+                cpu_lda(cpu, low, high, game);
                 break;
             }
             180 => {
-                let (low_123, high_123) = address_direct_page_x(cpu, game);
-                cpu_ldy(cpu, low_123, high_123, game);
+                let (low, high) = address_direct_page_x(cpu, game);
+                cpu_ldy(cpu, low, high, game);
                 break;
             }
             181 => {
-                let (low_124, high_124) = address_direct_page_x(cpu, game);
-                cpu_lda(cpu, low_124, high_124, game);
+                let (low, high) = address_direct_page_x(cpu, game);
+                cpu_lda(cpu, low, high, game);
                 break;
             }
             182 => {
-                let (low_125, high_125) = address_direct_page_y(cpu, game);
-                cpu_ldx(cpu, low_125, high_125, game);
+                let (low, high) = address_direct_page_y(cpu, game);
+                cpu_ldx(cpu, low, high, game);
                 break;
             }
             183 => {
-                let (low_126, high_126) = address_direct_page_indirect_long_y(cpu, game);
-                cpu_lda(cpu, low_126, high_126, game);
+                let (low, high) = address_direct_page_indirect_long_y(cpu, game);
+                cpu_lda(cpu, low, high, game);
                 break;
             }
             184 => {
@@ -1988,8 +1988,8 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             185 => {
-                let (low_127, high_127) = address_absolute_y(cpu, false, game);
-                cpu_lda(cpu, low_127, high_127, game);
+                let (low, high) = address_absolute_y(cpu, false, game);
+                cpu_lda(cpu, low, high, game);
                 break;
             }
             186 => {
@@ -2011,33 +2011,33 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             188 => {
-                let (low_128, high_128) = address_absolute_x(cpu, false, game);
-                cpu_ldy(cpu, low_128, high_128, game);
+                let (low, high) = address_absolute_x(cpu, false, game);
+                cpu_ldy(cpu, low, high, game);
                 break;
             }
             189 => {
-                let (low_129, high_129) = address_absolute_x(cpu, false, game);
-                cpu_lda(cpu, low_129, high_129, game);
+                let (low, high) = address_absolute_x(cpu, false, game);
+                cpu_lda(cpu, low, high, game);
                 break;
             }
             190 => {
-                let (low_130, high_130) = address_absolute_y(cpu, false, game);
-                cpu_ldx(cpu, low_130, high_130, game);
+                let (low, high) = address_absolute_y(cpu, false, game);
+                cpu_ldx(cpu, low, high, game);
                 break;
             }
             191 => {
-                let (low_131, high_131) = address_absolute_long_x(cpu, game);
-                cpu_lda(cpu, low_131, high_131, game);
+                let (low, high) = address_absolute_long_x(cpu, game);
+                cpu_lda(cpu, low, high, game);
                 break;
             }
             192 => {
-                let (low_132, high_132) = address_immediate(cpu, true);
-                cpu_cpy(cpu, low_132, high_132, game);
+                let (low, high) = address_immediate(cpu, true);
+                cpu_cpy(cpu, low, high, game);
                 break;
             }
             193 => {
-                let (low_133, high_133) = address_direct_page_indexed_indirect(cpu, game);
-                cpu_cmp(cpu, low_133, high_133, game);
+                let (low, high) = address_direct_page_indexed_indirect(cpu, game);
+                cpu_cmp(cpu, low, high, game);
                 break;
             }
             194 => {
@@ -2045,28 +2045,28 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             195 => {
-                let (low_134, high_134) = address_stack_relative(cpu, game);
-                cpu_cmp(cpu, low_134, high_134, game);
+                let (low, high) = address_stack_relative(cpu, game);
+                cpu_cmp(cpu, low, high, game);
                 break;
             }
             196 => {
-                let (low_135, high_135) = address_direct_page(cpu, game);
-                cpu_cpy(cpu, low_135, high_135, game);
+                let (low, high) = address_direct_page(cpu, game);
+                cpu_cpy(cpu, low, high, game);
                 break;
             }
             197 => {
-                let (low_136, high_136) = address_direct_page(cpu, game);
-                cpu_cmp(cpu, low_136, high_136, game);
+                let (low, high) = address_direct_page(cpu, game);
+                cpu_cmp(cpu, low, high, game);
                 break;
             }
             198 => {
-                let (low_137, high_137) = address_direct_page(cpu, game);
-                cpu_dec(cpu, low_137, high_137, game);
+                let (low, high) = address_direct_page(cpu, game);
+                cpu_dec(cpu, low, high, game);
                 break;
             }
             199 => {
-                let (low_138, high_138) = address_direct_page_indirect_long(cpu, game);
-                cpu_cmp(cpu, low_138, high_138, game);
+                let (low, high) = address_direct_page_indirect_long(cpu, game);
+                cpu_cmp(cpu, low, high, game);
                 break;
             }
             200 => {
@@ -2079,8 +2079,8 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             201 => {
-                let (low_139, high_139) = address_immediate(cpu, false);
-                cpu_cmp(cpu, low_139, high_139, game);
+                let (low, high) = address_immediate(cpu, false);
+                cpu_cmp(cpu, low, high, game);
                 break;
             }
             202 => {
@@ -2097,23 +2097,23 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             204 => {
-                let (low_140, high_140) = address_absolute(cpu, game);
-                cpu_cpy(cpu, low_140, high_140, game);
+                let (low, high) = address_absolute(cpu, game);
+                cpu_cpy(cpu, low, high, game);
                 break;
             }
             205 => {
-                let (low_141, high_141) = address_absolute(cpu, game);
-                cpu_cmp(cpu, low_141, high_141, game);
+                let (low, high) = address_absolute(cpu, game);
+                cpu_cmp(cpu, low, high, game);
                 break;
             }
             206 => {
-                let (low_142, high_142) = address_absolute(cpu, game);
-                cpu_dec(cpu, low_142, high_142, game);
+                let (low, high) = address_absolute(cpu, game);
+                cpu_dec(cpu, low, high, game);
                 break;
             }
             207 => {
-                let (low_143, high_143) = address_absolute_long(cpu, game);
-                cpu_cmp(cpu, low_143, high_143, game);
+                let (low, high) = address_absolute_long(cpu, game);
+                cpu_cmp(cpu, low, high, game);
                 break;
             }
             208 => {
@@ -2121,38 +2121,38 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             209 => {
-                let (low_144, high_144) = address_direct_page_indirect_y(cpu, false, game);
-                cpu_cmp(cpu, low_144, high_144, game);
+                let (low, high) = address_direct_page_indirect_y(cpu, false, game);
+                cpu_cmp(cpu, low, high, game);
                 break;
             }
             210 => {
-                let (low_145, high_145) = address_direct_page_indirect(cpu, game);
-                cpu_cmp(cpu, low_145, high_145, game);
+                let (low, high) = address_direct_page_indirect(cpu, game);
+                cpu_cmp(cpu, low, high, game);
                 break;
             }
             211 => {
-                let (low_146, high_146) = address_stack_relative_indirect_y(cpu, game);
-                cpu_cmp(cpu, low_146, high_146, game);
+                let (low, high) = address_stack_relative_indirect_y(cpu, game);
+                cpu_cmp(cpu, low, high, game);
                 break;
             }
             212 => {
-                let (low_147, high_147) = address_direct_page(cpu, game);
-                cpu_pushWord(cpu, cpu_readWord(cpu, low_147, high_147, game), game);
+                let (low, high) = address_direct_page(cpu, game);
+                cpu_pushWord(cpu, cpu_readWord(cpu, low, high, game), game);
                 break;
             }
             213 => {
-                let (low_148, high_148) = address_direct_page_x(cpu, game);
-                cpu_cmp(cpu, low_148, high_148, game);
+                let (low, high) = address_direct_page_x(cpu, game);
+                cpu_cmp(cpu, low, high, game);
                 break;
             }
             214 => {
-                let (low_149, high_149) = address_direct_page_x(cpu, game);
-                cpu_dec(cpu, low_149, high_149, game);
+                let (low, high) = address_direct_page_x(cpu, game);
+                cpu_dec(cpu, low, high, game);
                 break;
             }
             215 => {
-                let (low_150, high_150) = address_direct_page_indirect_long_y(cpu, game);
-                cpu_cmp(cpu, low_150, high_150, game);
+                let (low, high) = address_direct_page_indirect_long_y(cpu, game);
+                cpu_cmp(cpu, low, high, game);
                 break;
             }
             216 => {
@@ -2160,8 +2160,8 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             217 => {
-                let (low_151, high_151) = address_absolute_y(cpu, false, game);
-                cpu_cmp(cpu, low_151, high_151, game);
+                let (low, high) = address_absolute_y(cpu, false, game);
+                cpu_cmp(cpu, low, high, game);
                 break;
             }
             218 => {
@@ -2184,28 +2184,28 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             221 => {
-                let (low_152, high_152) = address_absolute_x(cpu, false, game);
-                cpu_cmp(cpu, low_152, high_152, game);
+                let (low, high) = address_absolute_x(cpu, false, game);
+                cpu_cmp(cpu, low, high, game);
                 break;
             }
             222 => {
-                let (low_153, high_153) = address_absolute_x(cpu, true, game);
-                cpu_dec(cpu, low_153, high_153, game);
+                let (low, high) = address_absolute_x(cpu, true, game);
+                cpu_dec(cpu, low, high, game);
                 break;
             }
             223 => {
-                let (low_154, high_154) = address_absolute_long_x(cpu, game);
-                cpu_cmp(cpu, low_154, high_154, game);
+                let (low, high) = address_absolute_long_x(cpu, game);
+                cpu_cmp(cpu, low, high, game);
                 break;
             }
             224 => {
-                let (low_155, high_155) = address_immediate(cpu, true);
-                cpu_cpx(cpu, low_155, high_155, game);
+                let (low, high) = address_immediate(cpu, true);
+                cpu_cpx(cpu, low, high, game);
                 break;
             }
             225 => {
-                let (low_156, high_156) = address_direct_page_indexed_indirect(cpu, game);
-                cpu_sbc(cpu, low_156, high_156, game);
+                let (low, high) = address_direct_page_indexed_indirect(cpu, game);
+                cpu_sbc(cpu, low, high, game);
                 break;
             }
             226 => {
@@ -2213,28 +2213,28 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             227 => {
-                let (low_157, high_157) = address_stack_relative(cpu, game);
-                cpu_sbc(cpu, low_157, high_157, game);
+                let (low, high) = address_stack_relative(cpu, game);
+                cpu_sbc(cpu, low, high, game);
                 break;
             }
             228 => {
-                let (low_158, high_158) = address_direct_page(cpu, game);
-                cpu_cpx(cpu, low_158, high_158, game);
+                let (low, high) = address_direct_page(cpu, game);
+                cpu_cpx(cpu, low, high, game);
                 break;
             }
             229 => {
-                let (low_159, high_159) = address_direct_page(cpu, game);
-                cpu_sbc(cpu, low_159, high_159, game);
+                let (low, high) = address_direct_page(cpu, game);
+                cpu_sbc(cpu, low, high, game);
                 break;
             }
             230 => {
-                let (low_160, high_160) = address_direct_page(cpu, game);
-                cpu_inc(cpu, low_160, high_160, game);
+                let (low, high) = address_direct_page(cpu, game);
+                cpu_inc(cpu, low, high, game);
                 break;
             }
             231 => {
-                let (low_161, high_161) = address_direct_page_indirect_long(cpu, game);
-                cpu_sbc(cpu, low_161, high_161, game);
+                let (low, high) = address_direct_page_indirect_long(cpu, game);
+                cpu_sbc(cpu, low, high, game);
                 break;
             }
             232 => {
@@ -2247,8 +2247,8 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             233 => {
-                let (low_162, high_162) = address_immediate(cpu, false);
-                cpu_sbc(cpu, low_162, high_162, game);
+                let (low, high) = address_immediate(cpu, false);
+                cpu_sbc(cpu, low, high, game);
                 break;
             }
             235 => {
@@ -2257,23 +2257,23 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             236 => {
-                let (low_164, high_164) = address_absolute(cpu, game);
-                cpu_cpx(cpu, low_164, high_164, game);
+                let (low, high) = address_absolute(cpu, game);
+                cpu_cpx(cpu, low, high, game);
                 break;
             }
             237 => {
-                let (low_165, high_165) = address_absolute(cpu, game);
-                cpu_sbc(cpu, low_165, high_165, game);
+                let (low, high) = address_absolute(cpu, game);
+                cpu_sbc(cpu, low, high, game);
                 break;
             }
             238 => {
-                let (low_166, high_166) = address_absolute(cpu, game);
-                cpu_inc(cpu, low_166, high_166, game);
+                let (low, high) = address_absolute(cpu, game);
+                cpu_inc(cpu, low, high, game);
                 break;
             }
             239 => {
-                let (low_167, high_167) = address_absolute_long(cpu, game);
-                cpu_sbc(cpu, low_167, high_167, game);
+                let (low, high) = address_absolute_long(cpu, game);
+                cpu_sbc(cpu, low, high, game);
                 break;
             }
             240 => {
@@ -2281,18 +2281,18 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             241 => {
-                let (low_168, high_168) = address_direct_page_indirect_y(cpu, false, game);
-                cpu_sbc(cpu, low_168, high_168, game);
+                let (low, high) = address_direct_page_indirect_y(cpu, false, game);
+                cpu_sbc(cpu, low, high, game);
                 break;
             }
             242 => {
-                let (low_169, high_169) = address_direct_page_indirect(cpu, game);
-                cpu_sbc(cpu, low_169, high_169, game);
+                let (low, high) = address_direct_page_indirect(cpu, game);
+                cpu_sbc(cpu, low, high, game);
                 break;
             }
             243 => {
-                let (low_170, high_170) = address_stack_relative_indirect_y(cpu, game);
-                cpu_sbc(cpu, low_170, high_170, game);
+                let (low, high) = address_stack_relative_indirect_y(cpu, game);
+                cpu_sbc(cpu, low, high, game);
                 break;
             }
             244 => {
@@ -2304,18 +2304,18 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             245 => {
-                let (low_171, high_171) = address_direct_page_x(cpu, game);
-                cpu_sbc(cpu, low_171, high_171, game);
+                let (low, high) = address_direct_page_x(cpu, game);
+                cpu_sbc(cpu, low, high, game);
                 break;
             }
             246 => {
-                let (low_172, high_172) = address_direct_page_x(cpu, game);
-                cpu_inc(cpu, low_172, high_172, game);
+                let (low, high) = address_direct_page_x(cpu, game);
+                cpu_inc(cpu, low, high, game);
                 break;
             }
             247 => {
-                let (low_173, high_173) = address_direct_page_indirect_long_y(cpu, game);
-                cpu_sbc(cpu, low_173, high_173, game);
+                let (low, high) = address_direct_page_indirect_long_y(cpu, game);
+                cpu_sbc(cpu, low, high, game);
                 break;
             }
             248 => {
@@ -2323,8 +2323,8 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             249 => {
-                let (low_174, high_174) = address_absolute_y(cpu, false, game);
-                cpu_sbc(cpu, low_174, high_174, game);
+                let (low, high) = address_absolute_y(cpu, false, game);
+                cpu_sbc(cpu, low, high, game);
                 break;
             }
             250 => {
@@ -2351,18 +2351,18 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             253 => {
-                let (low_175, high_175) = address_absolute_x(cpu, false, game);
-                cpu_sbc(cpu, low_175, high_175, game);
+                let (low, high) = address_absolute_x(cpu, false, game);
+                cpu_sbc(cpu, low, high, game);
                 break;
             }
             254 => {
-                let (low_176, high_176) = address_absolute_x(cpu, true, game);
-                cpu_inc(cpu, low_176, high_176, game);
+                let (low, high) = address_absolute_x(cpu, true, game);
+                cpu_inc(cpu, low, high, game);
                 break;
             }
             255 => {
-                let (low_177, high_177) = address_absolute_long_x(cpu, game);
-                cpu_sbc(cpu, low_177, high_177, game);
+                let (low, high) = address_absolute_long_x(cpu, game);
+                cpu_sbc(cpu, low, high, game);
                 break;
             }
             234 | _ => {
