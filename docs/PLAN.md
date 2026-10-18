@@ -2232,6 +2232,22 @@ owns the pending cpu_infra.rs CGRAM change; these replay results use the
 pre-CGRAM DLL. Next: bank-specific enemy instruction field access after
 the oracle audit finishes its source-bound verification.
 
+Mini Crocomire's three instruction callbacks now use the live named enemy
+index, explicit projectile argument capture and safe byte-backed pre-
+instruction/state stores. The passed k remains ignored; F writes precede E,
+with original 8A43/0 and 8A5C/1 values. Projectile spawn captures parameter
+and index before the callback and retains the argument pointer advance.
+Independent extracted comparison passes 1,189,824 full-RAM/return-pointer/
+spawn-trace/RNG checks across every index/parameter word and random high/odd/
+overlapping slots with mutating callbacks. Stable optimized core/DLL build
+and direct full-source format pass; Cargo fmt/build remain ASR-denied.
+CGRAM-enabled any%: 129,712 frames, zero failures (209.45s); Waver route:
+58,109 frames, zero failures (97.72s). Raw offsets -3, unsafe functions -2,
+cast lines -9; Rust lines +3 provide the shared ordered field writer. Other
+counters unchanged. Concurrent rendered-buffer verification belongs to the
+oracle audit session; these replays precede that change. Next: Bouncing
+Goofball instruction callbacks after the oracle session finishes its verify.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

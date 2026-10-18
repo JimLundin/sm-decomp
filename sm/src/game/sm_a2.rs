@@ -2296,47 +2296,33 @@ pub unsafe fn BouncingGoofball_Instr_88C6(
     return jp;
 }
 pub unsafe fn MiniCrocomire_Instr_897E(
-    mut k: uint16,
-    mut jp: *const uint16,
+    _k: uint16,
+    jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    SpawnEprojWithGfx(
-        *jp,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16),
-        addr_Eproj_DBF2 as ::core::ffi::c_int as uint16,
-        game,
-    );
-    return jp.offset(1 as ::core::ffi::c_int as isize);
+    let parameter = *jp;
+    let index = game.cur_enemy_index();
+    SpawnEprojWithGfx(parameter, index, addr_Eproj_DBF2 as u16, game);
+    jp.add(1)
 }
-pub unsafe fn MiniCrocomire_Instr_8990(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut E: *mut Enemy_MiniCrocomire = Get_MiniCrocomire(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    (*E).mce_var_F = (0xa28a43 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    (*E).mce_var_E = 0 as uint16;
-    return jp;
+pub fn MiniCrocomire_Instr_8990(_k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let index = game.cur_enemy_index();
+    set_mini_crocomire_preinstruction(index, 0x8a43, 0, game);
+    jp
 }
-pub unsafe fn MiniCrocomire_Instr_899D(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut E: *mut Enemy_MiniCrocomire = Get_MiniCrocomire(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    (*E).mce_var_F = (0xa28a5c as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    (*E).mce_var_E = 1 as uint16;
-    return jp;
+pub fn MiniCrocomire_Instr_899D(_k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let index = game.cur_enemy_index();
+    set_mini_crocomire_preinstruction(index, 0x8a5c, 1, game);
+    jp
 }
+fn set_mini_crocomire_preinstruction(index: u16, preinstruction: u16, state: u16, game: &mut Game) {
+    let base = 0xf78 + usize::from(index);
+    let field = base + core::mem::offset_of!(Enemy_MiniCrocomire, mce_var_F);
+    game.g_ram[field..field + 2].copy_from_slice(&preinstruction.to_le_bytes());
+    let field = base + core::mem::offset_of!(Enemy_MiniCrocomire, mce_var_E);
+    game.g_ram[field..field + 2].copy_from_slice(&state.to_le_bytes());
+}
+
 pub unsafe fn MiniCrocomire_Init(game: &mut Game) {
     let mut E: *mut Enemy_MiniCrocomire = Get_MiniCrocomire(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
