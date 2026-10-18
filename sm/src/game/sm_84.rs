@@ -4221,28 +4221,21 @@ pub fn PlmSetup_QuicksandSurface_2(j: uint16, game: &mut Game) {
     game.g_ram[0xb5b..0xb5d].copy_from_slice(&g_word_84B48B[usize::from(j >> 1)].to_le_bytes());
     game.g_ram[0xaf4..0xaf6].fill(0);
 }
-pub unsafe fn PlmSetup_B71F_SubmergingQuicksand(mut j: uint16, game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaf4 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb5a as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0x2000 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb5c as ::core::ffi::c_int as isize)
-        as *mut uint16) = 1 as uint16;
-    return 0 as uint8;
+pub fn PlmSetup_B71F_SubmergingQuicksand(_j: uint16, game: &mut Game) -> uint8 {
+    game.g_ram[0xaf4..0xaf6].fill(0);
+    game.g_ram[0xb5a..0xb5c].copy_from_slice(&0x2000u16.to_le_bytes());
+    game.g_ram[0xb5c..0xb5e].copy_from_slice(&1u16.to_le_bytes());
+    0
 }
-pub unsafe fn PlmSetup_B723_SandfallsSlow(mut j: uint16, game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb5a as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0x4000 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb5c as ::core::ffi::c_int as isize)
-        as *mut uint16) = 1 as uint16;
-    return 0 as uint8;
+pub fn PlmSetup_B723_SandfallsSlow(_j: uint16, game: &mut Game) -> uint8 {
+    game.g_ram[0xb5a..0xb5c].copy_from_slice(&0x4000u16.to_le_bytes());
+    game.g_ram[0xb5c..0xb5e].copy_from_slice(&1u16.to_le_bytes());
+    0
 }
-pub unsafe fn PlmSetup_B727_SandFallsFast(mut j: uint16, game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb5a as ::core::ffi::c_int as isize)
-        as *mut uint16) = -(16384 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb5c as ::core::ffi::c_int as isize)
-        as *mut uint16) = 1 as uint16;
-    return 0 as uint8;
+pub fn PlmSetup_B727_SandFallsFast(_j: uint16, game: &mut Game) -> uint8 {
+    game.g_ram[0xb5a..0xb5c].copy_from_slice(&0xc000u16.to_le_bytes());
+    game.g_ram[0xb5c..0xb5e].copy_from_slice(&1u16.to_le_bytes());
+    0
 }
 pub unsafe fn PlmSetup_QuicksandSurfaceB(mut j: uint16, game: &mut Game) -> uint8 {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize)
@@ -4313,19 +4306,15 @@ pub unsafe fn PlmSetup_QuicksandSurfaceB(mut j: uint16, game: &mut Game) -> uint
     }
     return 0 as uint8;
 }
-pub unsafe fn PlmSetup_B737_SubmergingQuicksand(mut j: uint16, game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb2c as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb2e as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb32 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb34 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    return 0 as uint8;
+pub fn PlmSetup_B737_SubmergingQuicksand(_j: uint16, game: &mut Game) -> uint8 {
+    game.g_ram[0xb2c..0xb2e].fill(0);
+    game.g_ram[0xb2e..0xb30].fill(0);
+    game.g_ram[0xb32..0xb34].fill(0);
+    game.g_ram[0xb34..0xb36].fill(0);
+    0
 }
-pub unsafe fn PlmSetup_B73B_B73F_SandFalls(mut j: uint16) -> uint8 {
-    return 0 as uint8;
+pub fn PlmSetup_B73B_B73F_SandFalls(_j: uint16) -> uint8 {
+    0
 }
 pub unsafe fn PlmSetup_ClearShitroidInvisibleWall(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v2: int16 = 0;

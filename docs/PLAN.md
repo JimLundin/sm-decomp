@@ -1173,6 +1173,19 @@ direct comparison supplies the handler check. Raw offsets -26, unsafe
 functions -4, cast lines -48, Rust lines -56. Next: submerging quicksand and
 sandfall setup writes, then the collision-side quicksand context boundary.
 
+Both submerging-quicksand setups and all three sandfall setups are now safe
+byte-backed Rust. Inside reactions retain displacement words 2000/4000/C000
+followed by 0001; collision-side submerging retains all four speed/acceleration
+resets in order. Return values remain zero. Direct comparison with prior
+Rust passes 1,280 full-RAM/return cases over 256 fill patterns. Stable
+optimized core/DLL build and direct format pass; Cargo fmt/build remain
+ASR-denied. Waver route: 58,109 frames, zero failures (83.01s); any%: 129,712
+frames, zero failures (182.84s). These routes do not prove sandfall coverage.
+Raw offsets -11, unsafe functions -5, cast lines -12, Rust lines -11.
+Next: collision-side quicksand RAM/arithmetic cleanup, retaining its unsafe
+active-context precondition; the raw displacement pointer is installed and
+cleared by both Samus collision dispatchers in bank 94.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
