@@ -3090,6 +3090,33 @@ snapshot coverage. Known whole-line Mode 7 direct-color hardware accuracy,
 held window-boundary/HDMA diagnosis, audio timing, masked RAM and complete
 route coverage remain open.
 
+SETINI register cleanup (2026-10-18): ppu_write $2133 now uses native
+byte masks for interlace, OBJ interlace, overscan, pseudo-hires and EXTBG.
+The five stores retain order and bits 4/5/7 remain ignored. No Ppu/RAM/save
+layout or renderer behavior changes.
+
+Independent actual writer checks pass 16,384 complete-Ppu register cases,
+8,192 overscan/vblank/status-read continuations and 20,480 old/current
+rendered row plus complete-Ppu continuation cases. Another 1,024 actual
+SNES position-handler cases pass vblank/NMI boundaries and overscan line225
+rendering. Both render paths exercise EXTBG and OBJ interlace; per-pixel
+modes5/6 exercise BG interlace. Fast BG modes5/6 still ignore interlace,
+and the current256-pixel writer discards pseudo-hires second pixels. These
+are preserved limitations, not fixes or proof of complete display accuracy.
+Normal startup passes3,600/0 (8.09s), nativeexit0, with7,208 actual SETINI
+writes and zero gameplay frames. Private counter/getter instrumentation
+strips to exact frozen source. Independent implementation/review find no issues.
+
+Frozen f6a321f3 plus only this PPU change passes any%129,712/0 (283.69s)
+and Waver58,109/0 (144.04s), both nativeexits0. Later concurrent changes
+are outside those replays. Cargo fmt/check, direct optimized core/DLL and
+normal-core metadata builds pass. Cargo release remains denied executing
+khronos_api and sm build scripts (OSerror5). Progress: cast lines-5,
+Rust lines unchanged; other focused counters unchanged. No probes or ROM-
+derived assets committed. Next: remaining BG scroll-write latch arithmetic
+in ppu_write, preserving horizontal/vertical formulas and write order.
+Fast BG interlace, pseudo-hires and Mode7 direct color remain separate gaps.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

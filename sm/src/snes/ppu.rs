@@ -3955,11 +3955,11 @@ pub unsafe fn ppu_write(mut ppu: *mut Ppu, mut adr: uint8_t, mut val: uint8_t) {
             current_block_164 = 16754622181974910496;
         }
         51 => {
-            (*ppu).interlace = val as ::core::ffi::c_int & 0x1 as ::core::ffi::c_int != 0;
-            (*ppu).objInterlace = val as ::core::ffi::c_int & 0x2 as ::core::ffi::c_int != 0;
-            (*ppu).overscan = val as ::core::ffi::c_int & 0x4 as ::core::ffi::c_int != 0;
-            (*ppu).pseudoHires = val as ::core::ffi::c_int & 0x8 as ::core::ffi::c_int != 0;
-            (*ppu).m7extBg = val as ::core::ffi::c_int & 0x40 as ::core::ffi::c_int != 0;
+            (*ppu).interlace = val & 0x01 != 0;
+            (*ppu).objInterlace = val & 0x02 != 0;
+            (*ppu).overscan = val & 0x04 != 0;
+            (*ppu).pseudoHires = val & 0x08 != 0;
+            (*ppu).m7extBg = val & 0x40 != 0;
             current_block_164 = 16754622181974910496;
         }
         _ => {
