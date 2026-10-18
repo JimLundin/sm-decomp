@@ -9260,83 +9260,45 @@ pub unsafe fn EnemyFunc_ACA8(base_pt: Point16U, samus_pt: Point16U, game: &mut G
         j: direction,
     }
 }
-pub unsafe fn CheckIfEnemyIsOnScreen(game: &mut Game) -> uint16 {
-    let mut v0: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    return ((((*v0).x_pos as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
-        < 0 as ::core::ffi::c_int
-        || ((*((&raw mut game.g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + 256 as ::core::ffi::c_int
-            - (*v0).x_pos as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
-            < 0 as ::core::ffi::c_int
-        || (((*v0).y_pos as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
-            < 0 as ::core::ffi::c_int
-        || ((*((&raw mut game.g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + 256 as ::core::ffi::c_int
-            - (*v0).y_pos as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
-            < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
+fn enemy_axis_outside_screen(
+    position: u16,
+    camera: u16,
+    lower_padding: u16,
+    upper_edge: u16,
+) -> bool {
+    (position.wrapping_add(lower_padding).wrapping_sub(camera) as i16) < 0
+        || (camera.wrapping_add(upper_edge).wrapping_sub(position) as i16) < 0
 }
-pub unsafe fn EnemyFunc_ADA3(mut a: uint16, game: &mut Game) -> uint16 {
-    let mut E: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    return (((a as ::core::ffi::c_int + (*E).x_pos as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
-        < 0 as ::core::ffi::c_int
-        || ((a as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-            + 256 as ::core::ffi::c_int
-            - (*E).x_pos as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
-            < 0 as ::core::ffi::c_int
-        || ((a as ::core::ffi::c_int + (*E).y_pos as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
-            < 0 as ::core::ffi::c_int
-        || ((a as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-            + 256 as ::core::ffi::c_int
-            - (*E).y_pos as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
-            < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
+
+pub fn CheckIfEnemyIsOnScreen(game: &mut Game) -> uint16 {
+    let enemy = SolidEnemyCollisionBody::new(game, game.cur_enemy_index());
+    u16::from(
+        enemy_axis_outside_screen(enemy.x_pos(), game.layer1_x_pos(), 0, 256)
+            || enemy_axis_outside_screen(enemy.y_pos(), game.layer1_y_pos(), 0, 256),
+    )
 }
-pub unsafe fn EnemyWithNormalSpritesIsOffScreen(game: &mut Game) -> uint16 {
-    let mut E: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    return ((((*E).x_width as ::core::ffi::c_int + (*E).x_pos as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
-        < 0 as ::core::ffi::c_int
-        || (((*E).x_width as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-            + 256 as ::core::ffi::c_int
-            - (*E).x_pos as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
-            < 0 as ::core::ffi::c_int
-        || (((*E).y_pos as ::core::ffi::c_int + 8 as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
-            < 0 as ::core::ffi::c_int
-        || ((*((&raw mut game.g_ram as *mut uint8).offset(0x915 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + 248 as ::core::ffi::c_int
-            - (*E).y_pos as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
-            < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
+pub fn EnemyFunc_ADA3(a: uint16, game: &mut Game) -> uint16 {
+    let enemy = SolidEnemyCollisionBody::new(game, game.cur_enemy_index());
+    u16::from(
+        enemy_axis_outside_screen(enemy.x_pos(), game.layer1_x_pos(), a, a.wrapping_add(256))
+            || enemy_axis_outside_screen(
+                enemy.y_pos(),
+                game.layer1_y_pos(),
+                a,
+                a.wrapping_add(256),
+            ),
+    )
+}
+pub fn EnemyWithNormalSpritesIsOffScreen(game: &mut Game) -> uint16 {
+    let enemy = SolidEnemyCollisionBody::new(game, game.cur_enemy_index());
+    u16::from(
+        enemy_axis_outside_screen(
+            enemy.x_pos(),
+            game.layer1_x_pos(),
+            enemy.x_width(),
+            enemy.x_width().wrapping_add(256),
+        ) || enemy_axis_outside_screen(enemy.y_pos(), game.layer1_y_pos(), 8, 248),
+    )
 }
 pub unsafe fn DetermineDirectionOfSamusFromEnemy(game: &mut Game) -> uint16 {
     if IsSamusWithinEnemy_Y(

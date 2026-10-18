@@ -107,6 +107,16 @@ impl Game {
         start
     }
 
+    /// layer1_x_pos ($7E:0911 in ram_map).
+    pub fn layer1_x_pos(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x911], self.g_ram[0x912]])
+    }
+
+    /// layer1_y_pos ($7E:0915 in ram_map).
+    pub fn layer1_y_pos(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x915], self.g_ram[0x916]])
+    }
+
     /// samus_x_pos ($7E:0AF6 in ram_map).
     pub fn samus_x_pos(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0xaf6], self.g_ram[0xaf7]])

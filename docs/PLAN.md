@@ -1885,6 +1885,22 @@ zero failures (88.61s). Cast lines -6, Rust lines -12; other counters unchanged.
 Next: enemy screen-boundary checks with named byte-backed camera/enemy
 reads, retaining signed-word gates and the 256-pixel inclusive boundary.
 
+The three enemy screen-boundary checks now share safe signed-word axis
+arithmetic with named byte-backed camera and enemy reads. Zero-margin,
+symmetric margin and normal-sprite horizontal radius gates retain their
+inclusive 256 edge; normal-sprite vertical edges remain +8 and +248, ignoring
+Y radius. Odd camera addresses 0911/0915 retain little-endian byte access.
+All three functions are safe and leave RAM unchanged. Prior Rust comparison
+passes 8,060,928 full-RAM/return checks; independent final-helper comparison
+passes 2,523,846 axis/full-function cases with wrapped coordinates, margins
+and arbitrary/high/unaligned enemy indexes. Stable optimized final-source
+core/DLL build and direct full-source format pass; Cargo fmt/build remain
+ASR-denied. Any%: 129,712 frames, zero failures (194.80s); Waver route:
+58,109 frames, zero failures (92.28s). Raw offsets -15, unsafe functions -3,
+cast lines -63, Rust lines -28; other counters unchanged. Next: Samus/enemy
+relative-position and within-radius helpers, preserving signed deltas and
+strict magnitude comparisons before direction selection.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
