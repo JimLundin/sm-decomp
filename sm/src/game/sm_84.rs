@@ -4209,18 +4209,15 @@ pub unsafe fn PlmSetup_ReturnCarryClear(mut j: uint16) -> uint8 {
 pub unsafe fn PlmSetup_ReturnCarrySet(mut j: uint16) -> uint8 {
     return 1 as uint8;
 }
-pub unsafe fn PlmSetup_D094_EnemyBreakableBlock(mut j: uint16, game: &mut Game) -> uint8 {
-    let mut v1: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1c87 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-        as ::core::ffi::c_int
-        >> 1 as ::core::ffi::c_int;
-    let ref mut fresh14 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x10002 as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset(v1 as isize);
-    *fresh14 = (*fresh14 as ::core::ffi::c_int & 0xfff as ::core::ffi::c_int) as uint16;
-    return 0 as uint8;
+pub fn PlmSetup_D094_EnemyBreakableBlock(j: uint16, game: &mut Game) -> uint8 {
+    // Both indices are byte offsets; the original word indexing rounds them down.
+    let slot_offset = 0x1c87 + usize::from(j & !1);
+    let block_index = u16::from_le_bytes([game.g_ram[slot_offset], game.g_ram[slot_offset + 1]]);
+    let block_offset = 0x10002 + usize::from(block_index & !1);
+    let block = u16::from_le_bytes([game.g_ram[block_offset], game.g_ram[block_offset + 1]]);
+    // Turn the spike into air, retaining its tile and flip bits.
+    game.g_ram[block_offset..block_offset + 2].copy_from_slice(&(block & 0x0fff).to_le_bytes());
+    0
 }
 pub unsafe fn UNUSED_sub_84B3E3(mut j: uint16) -> uint8 {
     '_c2rust_label: {

@@ -1092,6 +1092,19 @@ Raw offsets -12, unsafe functions -1, cast lines
 -21, Rust lines -21. Next: byte-backed PLM setup handlers reached by enemy
 spikes, retaining their callback effects before removing movement's unsafe.
 
+Enemy-breakable spike setup now uses safe little-endian RAM access, retaining
+both word-index roundings, the low twelve block bits and its zero return.
+The bank A0 log confirms the spike table has sixteen entries, only BTS 0F
+spawning D094 (setup B3D4). The collision code still reads the live ROM with
+the original 7F mask; out-of-table BTS values and patched setup pointers are
+not restricted. SpawnPLM and movement remain unsafe because arbitrary setup
+dispatch still reaches legacy callbacks. Stable optimized core/DLL build and
+direct format pass; Cargo fmt/build remain ASR-denied. Updated Waver route:
+58,109 frames, zero failures (88.18s); any%: 129,712 frames, zero failures
+(190.15s). Raw offsets -2, unsafe functions -1, cast lines -6, Rust lines -3.
+Next: deepen the PLM setup boundary incrementally, starting with block
+deactivation and carry-only setups; preserve live-ROM callback dispatch.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
