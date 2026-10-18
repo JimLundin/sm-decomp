@@ -6240,6 +6240,45 @@ Later peer integration, hardware/audio timing, rendering/Waver71, masked RAM
 and credits remain open; held HDMA diagnosis stays stopped. Continue executed
 hardware paths and route coverage.
 
+Upper99BD tuning stopped near its one-hour bound (2026-10-18):
+all-five-slot/timer/cooldown audit of the existing delayed sequence completes
+60217/71 (170.44s), nativeexit1. It proves only two bombs spawn. At input
+60028 slot5 starts0500/timer59 atX113/Y1177, cooldown16. At60085 slot6
+starts0500/timer59 atX113/Y1167, so the second bomb is ALREADY airborne,
+not on the ground as earlier sampled-position notes inferred. At60096 the
+third shoot enters with cooldown6 and spawns no slot. Slots7..9 remain empty.
+Lift begins before timer zero: first moves at60081/timer6; type0501 appears
+at60087/timer0. Do not equate lift start with explosion initialization.
+
+Moving only the third shoot60096->60103 completes60217/71 (184.63s),
+nativeexit1. Cooldown0 accepts it: slot5 is reused0500/timer59 atY1142.
+This three-spawn sequence reachesY1127 at60163, then hits solid ceiling
+atX113. It establishes a higher lift; it does not reach theX48 hatch.
+A final left/run continuation from60158 for23frames, then shoot1/neutral100,
+completes60282/71 (176.37s), nativeexit1. Horizontal movement starts only
+at60167, reachesX94/Y1140 by60181 and spawns a bomb atX94/Y1138. It falls
+before reachingX48. No new room/item or hatch removal is established.
+All runs retain exactly the71 ordered rendered diagnostics of the frozen
+Waver baseline. Definitions still prove upper door destination965B only.
+
+Stop upper99BD ascent/input tuning here; do not repeat it on automatic
+continuation. Work began after21:12 and this final replay ended around22:10,
+near the per-item hour limit. Useful ignored cooldown-corrected input remains
+at target/route-all-bombs/cooldown-corrected.inputs; all-slot observations
+and controller prefixes stay ignored. Earlier ground/Morph, hatch weapon
+and bomb timing findings above remain, with the airborne-second-bomb and
+pre-explosion-lift corrections in this note. Held9AD9 ammunition/HDMA work
+stay held. No maintained Rust edits or own residue delta. Direct full-source
+formatting passes; Cargo fmt/check and release remain launch-denied OSerror5.
+Prior same-DLL explicit-render any%129712/0 (414.98s) remains regression;
+concurrent hardware source/totals are separate.
+
+Next independent coverage candidate: inspect the bomb-equipped Parlor return
+toward the landing site/92B3 using existing normal-input prefixes, establish
+source door/block requirements and actual traversal. Do not resume the held
+upper99BD ascent or claim965B coverage from destination definitions. Credits,
+full hardware/gameplay fidelity, rendering/audio and masked RAM remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
