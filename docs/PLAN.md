@@ -877,6 +877,36 @@ hardware equivalence. Diagnostic source and outputs stay ignored.
 Next: resolve HDMA edge-pass differences and other omitted hardware state;
 full gameplay coverage, reset/upload boundaries and audio timing remain open.
 
+PPU open-bus enforcement (2026-10-18): an isolated c810d527 probe confirms
+that ppu1openBus/ppu2openBus faults are accepted by snapshot comparison and
+survive rewind. Actual reads then return 01 instead of 00 from a PPU1
+write-only port, and 92 instead of 12 from the palette high-byte port.
+Snapshots now capture, restore and compare both bytes before recovery.
+This closes two demonstrated verifier gaps without changing PPU read logic,
+g_ram or serialized PPU layout.
+
+Actual-function checks cover all 65,536 bus-byte combinations, poisoned
+before RestoreSnapshot, followed by write-only-port reads and $213E,
+$213B, $213C, $213D and $213F reads with independent retained-bit masks.
+Other palette/counter/phase/status fields are fixed. All 16 single-bit
+faults fail comparison; equality passes. Separate frame-200 PPU1 and PPU2
+injections each produce exactly one failure over 3,600 frames, zero RAM
+differences and native exit 1. Independent source review finds no defect;
+another session executes the existing probe with native exit 0 and confirms
+stripping its observations restores the exact maintained body. These tests
+exercise the changed snapshot paths and resulting reads in context.
+
+The frozen maintained-source DLL is c810d527 plus these 19 source lines.
+Any% passes 129,712/0 (224.51s); Waver passes 58,109/0 (108.84s), both
+native exits 0. Cargo fmt/check, optimized core/DLL and normal-core metadata
+builds pass; Cargo release still fails executing khronos_api's build script
+(OS error 5). Rust lines +19 implement the two fields, diagnostics and
+capture/restore; all other residue counters unchanged. Diagnostic source
+and outputs stay ignored. Counter/phase/status fields, the SNES CPU open
+bus and other PPU state remain outside this enforcement; this is not full
+hardware equivalence. Next: resolve HDMA edge-pass differences and remaining
+oracle state gaps alongside actual gameplay coverage and audio timing.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
