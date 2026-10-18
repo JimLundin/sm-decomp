@@ -7055,6 +7055,40 @@ Cartesian coverage, independent M/X combinations, hardware/render/audio
 timing and credits remain open; held HDMA diagnosis stays stopped.
 Continue executed store/bit helpers.
 
+APU reader cleanup (2026-10-18): apu_cpuRead uses native word/byte dispatch,
+bounded indexes and a scoped timer capture/clear. F4..F9 retains six input
+ports; FD..FF returns the prior counter and clears only that timer. DSP
+reads retain the live address & 7F, and FFC0..FFFF retains the boot-ROM gate.
+No boot-ROM literal, write handler or layout changes. Read-only subagent
+finds no defect; all other maintained source in this file is unchanged.
+
+Actual old/current reads pass 33,554,432 cases over every word address,
+both boot gates and all 256 seed/DSP-address values. Independent return and
+all timer fields pass per case; whole RAM, DSP bytes, ports and selected APU
+state remain unchanged at gate boundaries. Independent QC passes 44,544
+actual SPC MOV A,abs pairs across F0..FF, FFBF..FFFF and ordinary RAM, with
+both boot gates/all byte values. Results, N/Z, timer read-clear and selected
+preserved SPC/APU state match. A retained-counter mutation is detected
+(counter 1 versus 0), native assertion exit 3221226505. Frozen/live reader
+matches QC after removing only the TEMP read-hit counter.
+
+Normal instrumented 3,600-frame verification passes 3,600/0 (8.86s), native
+exit 0, but reads only two boot bytes. A separate probe disables the custom
+audio driver before SnesInit, preserving actual ROM upload and SPC execution:
+3,600/0 (7.70s), native exit 0. Actual reader calls for zero registers, DSP
+address/data, ports, timers, boot and RAM are respectively
+11/303,376/303,376/1,242,030/1,639,658/3,370,298/41,490,312. This proves
+execution of device paths; it does not establish Rust/ROM audio equivalence.
+Clean frozen 6326a282 plus only this reader passes any% 129,712/0
+(253.59s), native exit 0. Direct full-source format, normal-core metadata
+and optimized clean/probe core/DLL builds pass; Cargo fmt/check/release
+remain launch-denied, so the required Cargo check stays unmet. Progress/diff
+pass: focused cast lines -8, Rust lines -12, other categories unchanged.
+Later peer integration, hardware/audio timing, rendering/Waver71, masked RAM
+and credits remain open. Held HDMA diagnosis stays stopped. Continue executed
+APU/SPC hardware paths and route coverage with independent subagents; peer
+owns remote sync.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

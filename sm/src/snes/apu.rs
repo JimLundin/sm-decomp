@@ -190,36 +190,24 @@ pub unsafe fn apu_cycle(mut apu: *mut Apu, game: &mut Game) {
     }
     (*apu).cycles = (*apu).cycles.wrapping_add(1);
 }
-pub unsafe fn apu_cpuRead(mut apu: *mut Apu, mut adr: uint16_t) -> uint8_t {
-    match adr as ::core::ffi::c_int {
-        240 | 241 | 250 | 251 | 252 => return 0 as uint8_t,
-        242 => return (*apu).dspAdr,
-        243 => {
-            return dsp_read(
-                (*apu).dsp,
-                ((*apu).dspAdr as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int) as uint8_t,
-            );
-        }
-        244 | 245 | 246 | 247 | 248 | 249 => {
-            return (*apu).inPorts
-                [(adr as ::core::ffi::c_int - 0xf4 as ::core::ffi::c_int) as usize];
-        }
-        253 | 254 | 255 => {
-            let mut ret: uint8_t = (*apu).timer
-                [(adr as ::core::ffi::c_int - 0xfd as ::core::ffi::c_int) as usize]
-                .counter;
-            (*apu).timer[(adr as ::core::ffi::c_int - 0xfd as ::core::ffi::c_int) as usize]
-                .counter = 0 as uint8_t;
-            return ret;
+pub unsafe fn apu_cpuRead(apu: *mut Apu, adr: u16) -> u8 {
+    match adr {
+        0xf0 | 0xf1 | 0xfa..=0xfc => return 0,
+        0xf2 => return (*apu).dspAdr,
+        0xf3 => return dsp_read((*apu).dsp, (*apu).dspAdr & 0x7f),
+        0xf4..=0xf9 => return (*apu).inPorts[usize::from(adr - 0xf4)],
+        0xfd..=0xff => {
+            let timer = &mut (*apu).timer[usize::from(adr - 0xfd)];
+            let value = timer.counter;
+            timer.counter = 0;
+            return value;
         }
         _ => {}
     }
-    if (*apu).romReadable as ::core::ffi::c_int != 0
-        && adr as ::core::ffi::c_int >= 0xffc0 as ::core::ffi::c_int
-    {
-        return bootRom[(adr as ::core::ffi::c_int - 0xffc0 as ::core::ffi::c_int) as usize];
+    if (*apu).romReadable && adr >= 0xffc0 {
+        return bootRom[usize::from(adr - 0xffc0)];
     }
-    return (*apu).ram[adr as usize];
+    (*apu).ram[usize::from(adr)]
 }
 pub unsafe fn apu_cpuWrite(mut apu: *mut Apu, mut adr: uint16_t, mut val: uint8_t) {
     match adr as ::core::ffi::c_int {
