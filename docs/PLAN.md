@@ -7539,6 +7539,38 @@ cleanup and remote sync; route/oracle assets remain ignored. Credits,
 complete gameplay/hardware, rendering/audio fidelity and masked RAM remain
 unfinished.
 
+SPC stack cleanup (2026-10-18): four private stack helpers use native byte/
+word interfaces and explicit byte conversion. Pull increments SP before the
+APU read; push writes before decrementing live SP. Word pulls read low then
+high; word pushes write high then low. Actual APU bus calls and callback-
+mutated SP/device reads remain ordered. Read-only subagent finds no defect;
+only these four helpers change.
+
+Actual old/current APU-bus helpers pass 33,685,504 pairs: every SP and word
+for push/pull plus every SP and byte for push/pull. Independent byte-order,
+value and wrapping expectations pass; the stack-page final check passes.
+The TEMP-only probe required an explicit reference for its slice check;
+correcting that compile error leaves maintained source and the original clean
+replay unchanged. Independent QC passes 327,680 actual PUSH/POP/RETI/BRK/MOV
+consumer pairs plus 196,608 CALL/PCALL/RET pairs, covering all CALL destinations
+and RET words across stack boundaries. PC, return bytes, stack/flag/cycle
+expectations and paired RAM/state pass. Reversing push-word bytes is detected
+by BRK state/RAM comparison, native assertion exit 3221226505. Frozen/live
+helper equality and independent review pass.
+
+Normal instrumented verification passes 3,600/0 (6.79s), native exit 0,
+with zero stack-helper calls. Actual ROM/SPC boot with custom audio disabled
+before SnesInit passes 3,600/0 (7.30s), native exit 0. Pull-byte/push-byte/
+pull-word/push-word calls are 930,213/930,225/426,250/425,817. Clean frozen
+012e8bee plus only these helpers passes any% 129,712/0 (254.57s), native
+exit 0. Direct full-source format, normal-core metadata and optimized clean/
+probe core/DLL builds pass; Cargo fmt/check/release remain launch-denied,
+so the required Cargo check stays unmet. Progress/diff pass: focused cast
+lines -6, Rust lines -13; other categories unchanged. Later peer integration,
+hardware/audio timing, rendering/Waver71, masked RAM and credits remain open.
+Held HDMA diagnosis stays stopped. Continue SPC word bus/instruction helpers
+with independent subagents; peer owns remote sync.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

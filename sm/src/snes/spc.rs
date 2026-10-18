@@ -369,36 +369,23 @@ unsafe fn spc_doBranch(mut spc: *mut Spc, mut value: uint8_t, mut check: bool) {
             ((*spc).pc as ::core::ffi::c_int + value as int8_t as ::core::ffi::c_int) as uint16_t;
     }
 }
-unsafe fn spc_pullByte(mut spc: *mut Spc) -> uint8_t {
+unsafe fn spc_pullByte(spc: *mut Spc) -> u8 {
     (*spc).sp = (*spc).sp.wrapping_add(1);
-    return spc_read(
-        spc,
-        (0x100 as ::core::ffi::c_int | (*spc).sp as ::core::ffi::c_int) as uint16_t,
-    );
+    spc_read(spc, 0x100 | u16::from((*spc).sp))
 }
-unsafe fn spc_pushByte(mut spc: *mut Spc, mut value: uint8_t) {
-    spc_write(
-        spc,
-        (0x100 as ::core::ffi::c_int | (*spc).sp as ::core::ffi::c_int) as uint16_t,
-        value,
-    );
+unsafe fn spc_pushByte(spc: *mut Spc, value: u8) {
+    spc_write(spc, 0x100 | u16::from((*spc).sp), value);
     (*spc).sp = (*spc).sp.wrapping_sub(1);
 }
-unsafe fn spc_pullWord(mut spc: *mut Spc) -> uint16_t {
-    let mut value: uint8_t = spc_pullByte(spc);
-    return (value as ::core::ffi::c_int
-        | (spc_pullByte(spc) as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
-        as uint16_t;
+unsafe fn spc_pullWord(spc: *mut Spc) -> u16 {
+    let low = spc_pullByte(spc);
+    let high = spc_pullByte(spc);
+    u16::from_le_bytes([low, high])
 }
-unsafe fn spc_pushWord(mut spc: *mut Spc, mut value: uint16_t) {
-    spc_pushByte(
-        spc,
-        (value as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint8_t,
-    );
-    spc_pushByte(
-        spc,
-        (value as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint8_t,
-    );
+unsafe fn spc_pushWord(spc: *mut Spc, value: u16) {
+    let [low, high] = value.to_le_bytes();
+    spc_pushByte(spc, high);
+    spc_pushByte(spc, low);
 }
 unsafe fn spc_readWord(mut spc: *mut Spc, mut adrl: uint16_t, mut adrh: uint16_t) -> uint16_t {
     let mut value: uint8_t = spc_read(spc, adrl);
