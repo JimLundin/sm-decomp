@@ -3433,6 +3433,46 @@ release attempts remain denied executing cargo.exe. Probe/ROM assets ignored;
 concurrent source work remains separate. Audio timing, held window-boundary/
 HDMA, masked RAM, hardware accuracy and complete-route coverage stay open.
 
+PPU save/load routing audit (2026-10-18): ppu_saveload copies 67,305
+bytes from vram, ending at Ppu offset67,313. Raw windowsel is at67,316 and
+screenEnabled at67,323; screenWindowed is also beyond the serialized range.
+The semantic layer/window fields are inside it. Actual ppu_saveload checks
+pass1,792 register cases (seven addresses x256 bytes): save, mutate routing,
+load restores the semantic flags/logic but retains the mutated raw routing.
+This proves stale duplicate renderer inputs after load, not a save byte-size
+regression introduced by current snapshot work.
+
+Sixteen constructed states through the actual SaveSnesState/LoadSnesState
+path reproduce different next whole-line rows after loading saved main-screen
+BG1 enable: the semantic flag returns true while raw screenEnabled remains0.
+Reapplying the saved $212C byte in a diagnostic control restores each original
+row exactly. Initial route probing had a redundant intermediate PPU load;
+removing it and rerunning preserves the result. All probes nativeexit0.
+LoadSnesState's synchronization callback is None in SnesInit; the normal route
+does not reconstruct these renderer fields. Public filesystem/recorder wrapper
+round trips are not tested here, and no natural movie/save-state divergence
+is claimed. Both renderer sides share this serialization, so ordinary frame
+comparison cannot establish save/load equivalence.
+
+No maintained source or serialized layout changes in this audit. A fix needs
+to reconstruct the fast renderer's duplicate routing from serialized semantic
+fields after load while preserving current save-file sizes and save-time state;
+reserved/raw register bits and brightness/cache continuation need explicit
+coverage. Extending the fixed copy would change the save format and is not a
+verified solution. Next: repair this demonstrated load continuation gap with
+actual save/load and next-render controls, then test public save/replay paths.
+The headless disableRender initialization bug and71 enabled-render Waver
+failures remain unresolved; held HDMA diagnosis is not resumed.
+
+Only this note is committed. Direct optimized diagnostic core/DLL and full-
+source rustfmt check pass; Cargo release is denied executing cargo.exe.
+Progress script passes with no focused residue changes. The last enabled-
+render any%129,712/0 and Waver58,109/71 describe their frozen sources; no new
+movie result is claimed for this documentation-only audit. Probe/ROM-derived
+assets remain ignored and concurrent edits separate. Hires sample loss,
+audio timing, masked RAM, shared hardware accuracy and boot-to-credits
+coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
