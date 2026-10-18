@@ -1168,6 +1168,36 @@ ignored. Next: implement the exact writes with caller/adjacent-state checks,
 fault controls and full any%/Waver raw-state verification before committing
 gameplay or removing the HDMA comparison mask.
 
+Imported movie/input delivery audit (2026-10-18): all three local LSMV
+archives match their manifest SHA-256 values and embedded ROM identity.
+Fresh imports match every existing controller word: any% 129,712, low%
+167,797 and 100% 222,788, totaling 520,297 words. An independent manual
+character-to-SNES-bit mapping check agrees without using the importer.
+The source any% archive really begins by alternating Start/A; this is not
+a conversion artifact. No input files are changed or committed.
+
+An isolated observer on b7f58945 counts actual $4218 low-port reads inside
+snes_readReg, filtered separately to ROM/Rust versions 1/2. A 12,000-frame
+any% prefix passes 12,000/0 (17.08s), native exit 0. Both sides perform
+11,657 reads: exactly one on 11,657 input frames and none on 343, with
+zero read-count-disagreement frames. Logged reads at frames 150..249
+receive the expected alternating 1000/0080 hardware words on both sides.
+This measures low-port delivery in this prefix, not every register read,
+subframe timing or complete movie playback against bsnes.
+
+The source still forces NMI between CPU yield PCs in
+RunOneFrameOfGame_Emulated, while $4218/$4219 return the current supplied
+pad through SwapInputBits. The paired oracle therefore agrees under its
+own schedule; matching imports and read counts do not prove that schedule
+matches the original movie. Boot-to-credits coverage remains unproved.
+No maintained Rust or residue counters change; probe source/logs stay
+ignored. The generated importer bytecode was removed from tools/.
+Next: compare actual controller-poll/yield cadence against movie timing
+before treating the imported route categories as execution coverage.
+HDMA diagnosis has exceeded the one-hour item limit: its findings and
+verified isolated candidate are recorded above; stop work on that item
+until it is explicitly resumed with a focused next step.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
