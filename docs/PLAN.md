@@ -7429,6 +7429,32 @@ Later peer integration, hardware/audio timing, rendering/Waver71, masked RAM
 and credits remain open. Held HDMA diagnosis stays stopped. Continue executed
 SPC flags and instruction helpers with independent subagents; peer owns sync.
 
+CPU TSB/TRB cleanup (2026-10-18): cpu_tsb/trb use native byte/word masks,
+wrapping cycle increments and boolean literals. Operand reads precede the
+first accumulator read; Z updates precede the second live accumulator read
+and writes. Word writes remain high-byte first. Actual old/current helpers
+pass 2,359,296 ordered substituted-bus cases over every accumulator word,
+nine operand patterns, both widths and both helpers. Complete named CPU
+state and address/value/cycle/C/Z/N traces match independent expected results;
+Z reflects the pre-write intersection, other flags stay unchanged. Actual
+absolute WRAM passes 3,145,728 old/current instruction pairs across every
+accumulator, eight operand patterns and native byte/word plus emulation byte
+modes, crossing 7E:FFFF to 7F:0000. Result bytes, flags, PC, cycles and open
+bus match. Constructed instruction contexts establish changed-path execution,
+not physical hardware accuracy. Instrumented any% prefix passes 3,600/0
+(7.45s), native exit 0; TSB/TRB word/byte calls are 9/0 and 4/0. Dedicated
+instructions supply both byte paths. Clean frozen
+8cab90ad86f1f964f8c34710db78d0e048b53109 plus only these helpers passes any%
+129,712/0 (264.11s), native exit 0. Direct full-source format, normal-core
+metadata and optimized clean/probe core/DLL builds pass; required Cargo
+fmt/release remain launch-denied. Progress/diff pass: focused cast lines -20,
+Rust lines -38, other categories unchanged. Live helpers match verified
+bodies. Later peer hardware/performance changes are outside this replay.
+Full operand Cartesian coverage, arbitrary bus mutation, other addressing
+modes, hardware/render/audio timing and credits remain open; held HDMA
+diagnosis stays stopped. Continue executed accumulator/register opcode
+arithmetic; decimal ADC/SBC helpers remain generated.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
