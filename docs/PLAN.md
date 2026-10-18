@@ -2940,6 +2940,35 @@ SNES accuracy remain unproved. Next: color-math enable/clip/mode snapshot
 state. Known window-boundary/HDMA, audio timing,masked RAM and complete-route
 gaps remain open.
 
+CGADSUB register cleanup (2026-10-18): ppu_write $2131 now uses native
+byte flag masks and an ascending Rust loop for the six math-enable stores.
+Subtract, half, BG1..BG4, OBJ and backdrop write order remains exact; shifts
+stay within 0..5. No Ppu/RAM/save layout or rendering changes.
+
+Independent actual writer checks pass 8,192 complete-Ppu byte comparisons,
+all 256 values and 32 seeded states, with independently computed effects and
+unchanged unrelated fields. Actual old/current rendered output matches in
+6,656 rows / 6,815,744 BGRA bytes. Per-pixel mode 0 covers all six math bits;
+whole-line mode 1 covers its five supported layers. Fixed/subscreen sources,
+enabled math, subtraction, halving, unrelated bits and low-palette OBJ math
+exemption execute. An initial subtraction-effect fixture saturated to zero
+on both writers; lowering its subscreen palette makes the intended difference
+visible and passes without source changes. These compare preserved behavior,
+not independent SNES accuracy. Normal startup passes 3,600/0 (12.14s),
+native exit 0, with 13,328 actual CGADSUB writes and zero gameplay frames.
+Private observations strip to the exact frozen PPU body; independent
+implementation and review have no findings.
+
+Frozen 8bd11e09 plus only this PPU change passes any% 129,712/0 (334.02s)
+and Waver 58,109/0 (100.67s), both native exits 0. Later concurrent source
+changes are outside those replays. Cargo fmt/check, direct optimized core/
+DLL and normal-core metadata builds pass. Cargo release remains denied
+executing khronos_api's build script (OS error 5). Progress: cast lines -6,
+Rust lines -3; other focused counters unchanged. No probes or ROM-derived
+assets committed. Next: COLDATA fixed-color register stores, preserving
+blue/green/red conditional order and unselected channels; keep Mode 7
+whole-line direct-color accuracy as a separate open investigation.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

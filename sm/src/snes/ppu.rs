@@ -3935,13 +3935,10 @@ pub unsafe fn ppu_write(mut ppu: *mut Ppu, mut adr: uint8_t, mut val: uint8_t) {
             current_block_164 = 16754622181974910496;
         }
         49 => {
-            (*ppu).subtractColor = val as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0;
-            (*ppu).halfColor = val as ::core::ffi::c_int & 0x40 as ::core::ffi::c_int != 0;
-            let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-            while i < 6 as ::core::ffi::c_int {
-                (*ppu).mathEnabled[i as usize] =
-                    val as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << i != 0;
-                i += 1;
+            (*ppu).subtractColor = val & 0x80 != 0;
+            (*ppu).halfColor = val & 0x40 != 0;
+            for layer in 0..6 {
+                (*ppu).mathEnabled[layer] = val & (1 << layer) != 0;
             }
             current_block_164 = 16754622181974910496;
         }
