@@ -7571,6 +7571,30 @@ hardware/audio timing, rendering/Waver71, masked RAM and credits remain open.
 Held HDMA diagnosis stays stopped. Continue SPC word bus/instruction helpers
 with independent subagents; peer owns remote sync.
 
+CPU accumulator shift cleanup (2026-10-18): ASL A/ROL A/LSR A/ROR A use
+native unsigned shifts/masks and boolean widening. Byte operations preserve
+the accumulator high byte; ROL retains a widened carry intermediate. Carry,
+accumulator and Z/N update order remain exact. Actual old/current instructions
+pass 5,242,880 pairs across every accumulator word, both incoming carry states,
+independent native M/X combinations, emulation byte mode, four opcodes and
+PC 8000/FFFF. Independent result/high-byte/carry/Z/N checks pass, as do
+complete named CPU state, preserved registers/flags, PC wrap, cycles, open bus
+and PC-history updates. Raw high index words in byte mode test inherited
+software behavior, not canonical hardware states. Instrumented any% prefix
+passes 3,600/0 (6.15s), native exit 0; ASL A/ROL A/LSR A/ROR A word/byte
+calls are 110,634/10,768, 2,016/0, 121,923/5 and 0/0. Dedicated instruction
+pairs supply ROR A and byte ROL A execution. Clean frozen
+b293d688cda7fe2dc590d8e1248ddd7477f63191 plus only these four arms passes
+any% 129,712/0 (254.44s), native exit 0. Direct full-source format, normal-core
+metadata and optimized clean/probe core/DLL builds pass; required Cargo
+fmt/release remain launch-denied. TEMP extraction initially stopped at a
+nested brace, mixing old/new ROL types; compiler rejection caught this.
+Corrected extraction captures whole opcode arms; live/verified bodies match.
+Progress/diff pass: focused cast lines -25, Rust lines -17, other categories
+unchanged. Later peer performance/SPC changes are outside this replay.
+Hardware/render/audio timing and credits remain open; held HDMA diagnosis
+stays stopped. Continue executed immediate BIT/register transfer arithmetic.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

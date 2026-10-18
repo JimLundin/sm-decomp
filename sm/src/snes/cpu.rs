@@ -1252,15 +1252,11 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             10 => {
                 if (*cpu).mf {
-                    (*cpu).c = (*cpu).a as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0;
-                    (*cpu).a = ((*cpu).a as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int
-                        | ((*cpu).a as ::core::ffi::c_int) << 1 as ::core::ffi::c_int
-                            & 0xff as ::core::ffi::c_int)
-                        as uint16_t;
+                    (*cpu).c = (*cpu).a & 0x80 != 0;
+                    (*cpu).a = (*cpu).a & 0xff00 | ((*cpu).a << 1 & 0xff);
                 } else {
-                    (*cpu).c = (*cpu).a as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0;
-                    (*cpu).a =
-                        (((*cpu).a as ::core::ffi::c_int) << 1 as ::core::ffi::c_int) as uint16_t;
+                    (*cpu).c = (*cpu).a & 0x8000 != 0;
+                    (*cpu).a <<= 1;
                 }
                 cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
                 break;
@@ -1456,17 +1452,13 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
                 break;
             }
             42 => {
-                let mut result: ::core::ffi::c_int = ((*cpu).a as ::core::ffi::c_int)
-                    << 1 as ::core::ffi::c_int
-                    | (*cpu).c as ::core::ffi::c_int;
+                let result = (u32::from((*cpu).a) << 1) | u32::from((*cpu).c);
                 if (*cpu).mf {
-                    (*cpu).c = result & 0x100 as ::core::ffi::c_int != 0;
-                    (*cpu).a = ((*cpu).a as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int
-                        | result & 0xff as ::core::ffi::c_int)
-                        as uint16_t;
+                    (*cpu).c = result & 0x100 != 0;
+                    (*cpu).a = (*cpu).a & 0xff00 | (result as u16 & 0xff);
                 } else {
-                    (*cpu).c = result & 0x10000 as ::core::ffi::c_int != 0;
-                    (*cpu).a = result as uint16_t;
+                    (*cpu).c = result & 0x10000 != 0;
+                    (*cpu).a = result as u16;
                 }
                 cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
                 break;
@@ -1684,15 +1676,11 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
                 break;
             }
             74 => {
-                (*cpu).c = (*cpu).a as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0;
+                (*cpu).c = (*cpu).a & 1 != 0;
                 if (*cpu).mf {
-                    (*cpu).a = ((*cpu).a as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int
-                        | (*cpu).a as ::core::ffi::c_int >> 1 as ::core::ffi::c_int
-                            & 0x7f as ::core::ffi::c_int)
-                        as uint16_t;
+                    (*cpu).a = (*cpu).a & 0xff00 | ((*cpu).a >> 1 & 0x7f);
                 } else {
-                    (*cpu).a =
-                        ((*cpu).a as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16_t;
+                    (*cpu).a >>= 1;
                 }
                 cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
                 break;
@@ -1950,17 +1938,12 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
                 break;
             }
             106 => {
-                let mut carry: bool = (*cpu).a as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0;
+                let carry = (*cpu).a & 1 != 0;
                 if (*cpu).mf {
-                    (*cpu).a = ((*cpu).a as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int
-                        | (*cpu).a as ::core::ffi::c_int >> 1 as ::core::ffi::c_int
-                            & 0x7f as ::core::ffi::c_int
-                        | ((*cpu).c as ::core::ffi::c_int) << 7 as ::core::ffi::c_int)
-                        as uint16_t;
+                    (*cpu).a =
+                        (*cpu).a & 0xff00 | ((*cpu).a >> 1 & 0x7f) | (u16::from((*cpu).c) << 7);
                 } else {
-                    (*cpu).a = ((*cpu).a as ::core::ffi::c_int >> 1 as ::core::ffi::c_int
-                        | ((*cpu).c as ::core::ffi::c_int) << 15 as ::core::ffi::c_int)
-                        as uint16_t;
+                    (*cpu).a = (*cpu).a >> 1 | (u16::from((*cpu).c) << 15);
                 }
                 (*cpu).c = carry;
                 cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
