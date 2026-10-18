@@ -4772,6 +4772,25 @@ or comparison-rule changes. Probe and ROM assets stay untracked. Hardware
 timing, rendering/Waver71, held HDMA diagnosis, audio timing and credits
 coverage remain open; continue actual scheduling and route coverage work.
 
+Independent DMA PPU transfer-byte QC (2026-10-18): helper cleanup now
+committed as e0cf3bf2 passes 16,384 actual old/current transfer bytes. Both
+WRAM banks, addresses 0000/0001/FFFE/FFFF, all 256 seeded values and four
+ports run both directions: forward scroll writes 2110..2113 and reverse
+OAM/VRAM/CGRAM reads 2138..213B. Complete RAM and 67,305 serialized PPU
+bytes match after every transfer from identical starting state; failure
+flags also match. Seeded OAM/VRAM/CGRAM vary returned data and port side
+effects. Changing only the forward destination to the adjacent port fails
+the serialized PPU comparison. Original/control native exits are zero/nonzero.
+Tested helper matches live source after undoing the TEMP control.
+
+Optimized probe core/DLL, normal-core metadata and direct full-source rustfmt
+pass; Cargo execution remains denied as documented. Only this note changes,
+with no maintained Rust/residue changes; probes stay TEMP. This supplements
+the WRAM alias QC with actual PPU consumer preservation, not all bus devices
+or independent hardware accuracy. The implementing commit owns clean any%
+129,712/0 integration. APU devices, rendering/Waver71, event timing, audio
+timing and credits remain open; held HDMA diagnosis stays stopped.
+
 Current broad-route revalidation (2026-10-18): committed d217ea15 source
 replays the retained 62,817-frame lead-9ad9-arrive.inputs through the standard
 verifier, passing 62,817/0 (117.57s), native exit 0. It observes 48,819
