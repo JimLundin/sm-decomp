@@ -8272,6 +8272,21 @@ full frontend linking still lacks SDL2. Live source matches verified source.
 Cast lines -62, Rust lines -37; other counters unchanged. Complete gameplay
 and rendering/audio fidelity remain open.
 
+CPU PER cleanup (2026-10-19): the pushed relative address uses an explicit
+signed displacement and `wrapping_add_signed`, retaining operand-fetch-before-
+PC-use and high/low stack-write order. Frozen HEAD
+`f556b37fdce7f4257ca293973a12d6ba6afc7589` plus only opcode 62 edits passes
+2,097,152 actual old/current instructions over every displacement, four fetch
+positions (including FFFD/FFFE/FFFF), four stacks and both CPU modes. Expected
+PC/SP/stack bytes, full RAM, named CPU state, cycles, history and bus counters
+match, including native ROM-mapped stack writes that leave RAM unchanged.
+Prefix 3,600/0 (0.90s) has zero PER calls; dedicated actual instruction execution
+supplies hardware path coverage. Clean full any% 129,712/0 (53.05s), native
+exit 0. Cargo fmt/check, release library, frozen normal metadata and optimized
+core/DLL builds pass; full frontend linking still lacks SDL2. Live source matches
+verified source. Cast lines -1, Rust lines -5; other counters unchanged.
+Complete gameplay and rendering/audio fidelity remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

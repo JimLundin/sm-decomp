@@ -1529,13 +1529,8 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             98 => {
-                let mut value_2: uint16_t = cpu_readOpcodeWord(cpu, game);
-                cpu_pushWord(
-                    cpu,
-                    ((*cpu).pc as ::core::ffi::c_int + value_2 as int16_t as ::core::ffi::c_int)
-                        as uint16_t,
-                    game,
-                );
+                let displacement = cpu_readOpcodeWord(cpu, game) as i16;
+                cpu_pushWord(cpu, (*cpu).pc.wrapping_add_signed(displacement), game);
                 break;
             }
             99 => {
