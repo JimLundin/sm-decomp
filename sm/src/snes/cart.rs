@@ -195,23 +195,11 @@ unsafe fn cart_readLorom(
     Die(b"The game crashed in cart_readLorom\0" as *const u8 as *const ::core::ffi::c_char);
     return (*(*cart).snes).openBus;
 }
-unsafe fn cart_writeLorom(
-    mut cart: *mut Cart,
-    mut bank: uint8_t,
-    mut adr: uint16_t,
-    mut val: uint8_t,
-) {
-    if (bank as ::core::ffi::c_int >= 0x70 as ::core::ffi::c_int
-        && (bank as ::core::ffi::c_int) < 0x7e as ::core::ffi::c_int
-        || bank as ::core::ffi::c_int > 0xf0 as ::core::ffi::c_int)
-        && (adr as ::core::ffi::c_int) < 0x8000 as ::core::ffi::c_int
-        && (*cart).ramSize > 0 as uint32_t
-    {
-        *(*cart).ram.offset(
-            (((bank as ::core::ffi::c_int & 0xf as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-                | adr as ::core::ffi::c_int) as uint32_t
-                & (*cart).ramSize.wrapping_sub(1 as uint32_t)) as isize,
-        ) = val;
+unsafe fn cart_writeLorom(cart: *mut Cart, bank: u8, address: u16, value: u8) {
+    if (matches!(bank, 0x70..=0x7d) || bank > 0xf0) && address < 0x8000 && (*cart).ramSize > 0 {
+        let index =
+            ((u32::from(bank & 0xf) << 15) | u32::from(address)) & (*cart).ramSize.wrapping_sub(1);
+        *(*cart).ram.offset(index as isize) = value;
     }
 }
 unsafe fn cart_readHirom(mut cart: *mut Cart, mut bank: uint8_t, mut adr: uint16_t) -> uint8_t {

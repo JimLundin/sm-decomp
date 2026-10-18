@@ -6809,6 +6809,31 @@ arbitrary device side effects, hardware/render/audio timing and credits
 remain open; held HDMA diagnosis stays stopped. Continue executed CPU
 load/store/compare helpers, preserving bus sequencing and flags.
 
+LoROM SRAM writer cleanup (2026-10-18): cart_writeLorom uses native
+bank/address values and unsigned address masks. The inherited write-bank
+test remains strict > F0, unlike read >= F0; banks 70..7D, address < 8000 and
+nonzero SRAM size retain their gates. Size-minus-one bitmask aliasing remains
+exact even for non-power-of-two sizes. Actual old/current SRAM writes pass
+67,108,864 cases over every bank/address and sizes 0/1/8192/65535, with
+independent write/no-write expectations. Independent QC passes 86,016 actual
+STA pairs over all 256 banks, six offset boundaries, eight bytes and seven
+sizes including zero/null, 1,3,255,256,4096,8192. Whole SRAM expectations,
+WRAM and CPU bus state match. Injecting >= F0 is detected at F0:0000, size 1,
+native assertion exit 3221226505. Read-only subagent finds no defect.
+
+Instrumented any% passes 12,000/0 (25.67s), native exit 0. ROM helper calls
+have 20,863,661 no-writes and 13,048 stores; Rust has 1,569,421 no-writes and
+zero stores. Actual CPU checks supply stored-path boundary coverage. Clean
+frozen 2a9b849e plus only this helper passes any% 129,712/0 (252.49s), native
+exit 0. Direct full-source format, normal-core metadata and optimized clean/
+probe core/DLL builds pass. Cargo fmt/build --release remain denied at
+cargo.exe launch; that required check stays unmet. Probe matches maintained
+helper after removing counter. Progress/diff pass: focused cast lines -6,
+Rust lines -12, other categories unchanged. Later peer integration, hardware/
+audio timing, rendering/Waver71, masked RAM and credits remain open. Held
+HDMA diagnosis stays stopped. Continue executed cartridge boundaries and
+route coverage with useful independent subagents. Peer owns remote sync.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
