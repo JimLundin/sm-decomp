@@ -105,6 +105,7 @@ pub struct Snapshot {
     pub high_oam: [uint8; 32],
     pub sprite: SpriteSnapshot,
     pub counters: CounterSnapshot,
+    pub status_flags: [bool; 3],
     pub cgram: [uint16; 256],
     pub write_latches: [uint8; 3],
     pub cgram_pointer: uint8,
@@ -895,6 +896,17 @@ unsafe fn VerifySnapshotsEq(
             }
         }
     }
+    if (*b).status_flags != (*a).status_flags {
+        game.g_fail = true;
+        if report_details {
+            eprintln!(
+                "@{}: PPU status flags (rangeOver, timeOver, evenFrame) compare failed: mine {:?} != theirs {:?}",
+                game.snes_frame_counter,
+                (*b).status_flags,
+                (*a).status_flags
+            );
+        }
+    }
     if (*b).counters != (*a).counters {
         game.g_fail = true;
         if report_details {
@@ -1556,6 +1568,7 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
         (::core::mem::size_of::<uint16>() as size_t).wrapping_mul(0x8000 as size_t),
     );
     let ppu = &*(*game.g_snes).ppu;
+    (*s).status_flags = [ppu.rangeOver, ppu.timeOver, ppu.evenFrame];
     (*s).counters = CounterSnapshot {
         horizontal: ppu.hCount,
         vertical: ppu.vCount,
@@ -1581,6 +1594,7 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
 }
 unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     let ppu = &mut *(*game.g_snes).ppu;
+    [ppu.rangeOver, ppu.timeOver, ppu.evenFrame] = (*s).status_flags;
     [ppu.scrollPrev, ppu.scrollPrev2, ppu.m7prev] = (*s).write_latches;
     (*(*game.g_snes).ppu).cgram = (*s).cgram;
     (*(*game.g_snes).ppu).cgramPointer = (*s).cgram_pointer;

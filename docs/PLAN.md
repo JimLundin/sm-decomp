@@ -1662,6 +1662,41 @@ rewind/continuation behavior, not SNES hardware accuracy. Next: investigate
 omitted PPU status flags and their actual register reads; audio timing, HDMA,
 masked RAM and boot-to-credits coverage remain open.
 
+PPU status-flag enforcement (2026-10-18): snapshots now capture, restore
+and compare rangeOver, timeOver and evenFrame, with named bounded diagnostics.
+Actual pre-change probes confirm all three omissions are accepted and survive
+rewind, changing the next $213E/$213F read. No natural gameplay divergence is
+claimed. Ppu, g_ram and serialized save layouts are unchanged.
+
+Final-source controls pass all 64 saved/mutated flag combinations: 56 mismatch
+and 72 equality checks, 128 actual restored status reads, eight line-zero
+reset/parity checks and three named diagnostics. True flags restore as well as
+false flags. STAT77 retains overflow flags; STAT78 retains these three flags
+while clearing counter latch/read phases. Probe source matches maintained
+cpu_infra.rs exactly after removing its appended wrapper. Three actual Ppu
+frame-200 faults injected after rendering each produce 3,600/1, named status
+diagnostics, zero RAM differences and native exit 1. All control probes exit 0.
+
+An additional isolated actual ppu_evaluateSprites probe passes six constructed
+cases: zero sprites; 32/33 small sprites; 17/18 large sprites (34/36 tiles);
+and 33 large sprites. Line zero first clears overflow and toggles parity;
+$213E reports generated flags. Tile overflow ends evaluation before the 33rd
+large sprite, so that case sets timeOver without rangeOver. The initial probe
+incorrectly expected both flags and failed; corrected expectation follows the
+maintained early exit. Production sprite evaluation is unchanged. These cases
+use zero tile data and no interlace; they do not prove hardware accuracy or
+interlace rendering.
+
+Fresh dedicated maintained-source any% passes 129,712/0 (262.50s); Waver passes
+58,109/0 (123.88s), both native exits 0. These DLLs predate the concurrent health
+counter edits and do not verify them. Cargo fmt/fmt --check and direct optimized
+core/DLL/normal-core metadata builds pass. Cargo release remains blocked by
+khronos_api build-script execution (OS error 5). Rust lines +14 provide status
+snapshot coverage and diagnostics; other counters unchanged for this change.
+Only this source hunk and note are committed; probes/ROM-derived data stay
+ignored. Next: classify remaining omitted display/register state; audio timing,
+HDMA, masked RAM and boot-to-credits coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
