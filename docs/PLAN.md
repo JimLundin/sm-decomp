@@ -1620,6 +1620,20 @@ Rust lines -72; unsafe count unchanged. Next: vertical post-grapple nonsquare
 collision, preserving its orientation fallback, column alignment and signed
 boundary/complement returns, then square slope sampling.
 
+Vertical post-grapple nonsquare collision now shares mirrored branches and
+uses named byte-backed coordinates with explicit signed boundary arithmetic.
+Low-byte width modulus retains zero-divisor behavior; the passed slope index
+stays separate from live column alignment. Orientation fallback and negative
+complement returns remain exact. Prior Rust comparison passes 1,835,008
+RAM/context/return cases over every BTS byte, table/edge coordinate, room
+width word and X position, with direction and column-match boundaries;
+the full-X sweep uses zero width so all positions reach slope calculation.
+Stable optimized core/DLL build and direct format pass; Cargo fmt/build
+remain ASR-denied. Waver route: 58,109 frames, zero failures (84.23s); any%:
+129,712 frames, zero failures (181.50s). Raw offsets -15, cast lines -65,
+Rust lines -77; unsafe count unchanged. Next: post-grapple square-slope
+sampling, retaining first/last sample tests and mirrored quadrant selection.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
