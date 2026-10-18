@@ -1440,6 +1440,45 @@ and optimized core/DLL/metadata builds pass; Cargo release remains denied
 executing khronos_api's build script (OS error 5). Next: implement a reset
 transition that includes the upload and retains the original initialization.
 
+Two-stage reset transition (2026-10-18): BOTH now redirects soft reset to
+808459, but the next emulated frame executes the upload wrapper only through
+its return at 808460, then enters 808462. This intentionally skips the branch
+to 8482 and retains the existing CPU-mode/direct-page/data-bank/stack
+initialization. Rust coroutine state 3 remains unchanged. The frame's bug-fix
+counter is saved before the prelude; initial boot is not intercepted because
+the prelude tests the full frame-entry bank/PC. Snapshot recovery and retries
+repeat the same prelude from the saved CPU phase. No native transport or
+backend default change enters maintained source.
+
+The frozen maintained transition passes default any% 129,712/0 (288.11s),
+native exit 0, executing all eleven reset redirects. Cargo fmt/check,
+optimized core/DLL and normal-core metadata builds pass; Cargo release still
+fails khronos_api build-script execution (OS error 5). Rust lines +5 implement
+the reset prelude; other counters unchanged for this focused change. Concurrent
+mosaic, post-save physical rewind and Samus initialization edits are separately
+owned; the frozen verifier includes their then-current source. Native upload
+transport, ordered natural event/WRAM comparison and full audio equality remain
+unfinished. Probe code and ROM-derived observations remain temporary.
+
+The final-order physical native prototype completes any% 129,712/0
+(279.54s), native exit 0, with exactly equal 45-call ROM/Rust
+frame/source vectors, all 90 natural upload boundary field checks matching,
+and eleven reset-wrapper stack entries all 1FFC. Observed DP/mode/word-register
+preconditions pass without normalization. A 43,600-frame reset control passes
+43,600/0, and omitting the post-upload initialization remains gameplay-clean
+but the stack classifier detects drift to 1FF9 at the second reset. Thus
+movie equality alone still cannot replace lifecycle checks.
+
+Enhanced failure and debug-retry controls each complete 43,600 frames with
+exactly one injected failing frame, native exit 1. Both execute two frame-43,188
+upload preludes; recovery runs Rust once, debug retry twice. Prelude-local
+assertions cover both version-1 and version-FF recovery entry modes, DP and
+stack; the next reset again starts at 1FFC. These prove reset-initialization
+multiplicity/stability, not complete audio recovery equality or disk-save
+serialization. Independent source/evidence review has no blockers. Next:
+route maintained physical uploads to native Rust transport with backend
+selection preserved, retaining separate normal-audio equivalence checks.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read

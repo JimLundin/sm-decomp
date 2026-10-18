@@ -3125,6 +3125,11 @@ pub unsafe fn RunOneFrameOfGame_Emulated(game: &mut Game) {
     let mut bug_fix_bak: uint16 = *((&raw mut game.g_ram as *mut uint8)
         .offset(0xc2 as ::core::ffi::c_int as isize)
         as *mut uint16);
+    let cpu = (*game.g_snes).cpu;
+    if (*cpu).k == 0x80 && (*cpu).pc == 0x8459 {
+        RunCpuUntilPC(0x808460, 0x808460, game);
+        (*cpu).pc = 0x8462;
+    }
     RunCpuUntilPC(0x808343 as uint32, 0x85813c as uint32, game);
     (*(*game.g_snes).cpu).nmiWanted = true_0 != 0;
     RunCpuUntilPC(0x80834a as uint32, 0x858142 as uint32, game);
@@ -3326,7 +3331,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
         == 0xffff as ::core::ffi::c_int
     {
         (*(*game.g_snes).cpu).k = 0x80 as uint8_t;
-        (*(*game.g_snes).cpu).pc = 0x8462 as uint16_t;
+        (*(*game.g_snes).cpu).pc = 0x8459 as uint16_t;
         *(&raw mut game.g_ram as *mut uint8).offset(0x611 as ::core::ffi::c_int as isize) =
             3 as uint8;
     }
