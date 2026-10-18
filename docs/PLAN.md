@@ -5941,6 +5941,20 @@ native write-routing edits; later integration remains separate. Only this
 note changes, probes and ROM assets remain TEMP/ignored. Next classify a
 focused additional non-HDMA consumer; held HDMA diagnosis stays stopped.
 
+Independent write-routing candidate QC (2026-10-18): 1,179,648 actual
+old/current byte long-STA instructions pass across all physical WRAM
+addresses and every low-RAM offset in all 128 mirrored banks. Independent
+target byte, accumulator, PC and cycles match. Target/instruction aliases
+7F0000..3 restore the original installed program byte before the second
+execution. A TEMP wrong 7F selector fails actual target byte 143 versus 127,
+native exit 3221226505; unmodified native exit is zero. Frozen native write
+router and CPU-write consumer match live. Optimized probe core/DLL,
+normal-core metadata, direct full-source format/progress and independent
+partner fixture/source review pass. This establishes exercised target-RAM
+mapping; extraneous writes, cartridge fallback, other devices and word writes
+remain outside this probe. Implementing agent retains production ownership;
+only the QC note changes.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
