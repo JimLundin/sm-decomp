@@ -1392,6 +1392,24 @@ Next: use the living 59-health checkpoint to kill another reachable enemy
 and observe missile pickup kind 8 plus an actual missile-count increase.
 No maintained Rust or residue counters change; all inputs/probes stay ignored.
 
+9AD9 ammunition item stopped under the one-hour rule (2026-10-18):
+after the verified first kill/large-health collection, the west trial
+passes 64,110/0 (100.61s), native exit 0, but the western enemy is already
+above Samus: slot 1138 remains 30 HP at X88/Y789, while Samus ends
+X110/Y1097, health 49, missiles 0. The lower trial passes 64,664/0
+(121.15s), native exit 0, ending on a ledge at X147/Y1449 with health 39;
+slot 10F8 remains 30 HP at X136/Y1574. Its bomb observations do not prove
+a hit. The final Morph/descent suffix passes 65,195 frames with zero
+failures and native exit 0. It reaches X116/Y1529, health 39, missiles 0;
+slot 10F8 disappears and F345 appears at X93/Y1528, selecting kind 2
+(small health). That drop is still observed at the endpoint, with no
+health or missile increase. Thus a second death/drop is observed, but
+collection and ammunition acquisition remain unproved. Do not repeat
+these suffixes or resume uncovered Turtle cleanup as though this cleared
+the resource obstacle. Resume only with a materially different route or
+target/timing analysis; retained ignored inputs identify the checkpoints.
+No maintained gameplay changes or ROM-derived assets are committed.
+
 HDMA remaining-byte classification (2026-10-18): the preserved 462-byte
 offscreen candidate's detailed 35,000-frame run passes the enforced oracle
 (62.50s), native exit 0, while still recording 34 raw table-difference
