@@ -4897,6 +4897,34 @@ ignored. Continue actual device/event coverage without resuming held HDMA.
 Render initialization/Waver71, hires, hardware/audio timing, masked RAM and
 boot-to-credits remain open.
 
+CPU disk-load continuation audit (2026-10-18):4,096 complete
+SaveSnesState/reset/LoadSnesState/next-opcode comparisons cover all256 status
+bytes x16 waiting/stopped/IRQ/NMI masks in native mode. Restored architectural
+fields and pending/control flags match saved values; next actual opcode
+matches uninterrupted CPU fields, complete RAM, cycle return and open bus.
+Owner pointer remains unchanged and spBreakpoint clears. Nativeexit0.
+The27-byte CPU save range begins at A offset10 and includes waiting35 and
+stopped36; cyclesUsed37 is outside. cpu_runOpcode resets cyclesUsed before
+any stopped/wait/interrupt/opcode path, so its prior unsaved value does not
+affect these continuations. The initial fixture incorrectly required that
+scratch value to restore; corrected next-opcode checks establish behavior.
+
+A TEMP control truncating the CPU range to26 bytes loses stopped=true and
+fails restored-field equality, nativeexit3221226505. No CPU save-format fix
+is justified by these checks. Emulation saves are not covered: LoadSnesState
+explicitly forces native mode. Interrupt vectors use the loaded local ROM;
+this compares uninterrupted/resumed maintained behavior rather than proves
+hardware IRQ/NMI timing or all vector instructions independently.
+
+Only this note changes; no maintained Rust/residue changes. Frozen source
+includes then-current CPU/DMA/PPU edits; later integration is separate.
+Isolated optimized core/DLL, direct full-source rustfmt and progress pass;
+Cargo fmt/check and release remain denied at cargo.exe launch. No fresh movie
+result claimed; probes/save/ROM assets stay ignored. Replacement QC session
+owns DMA reset coverage. Continue actual device/event work without resuming
+held HDMA; rendering/Waver71, hires, hardware/audio timing, masked RAM and
+boot-to-credits remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
