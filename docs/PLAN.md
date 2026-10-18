@@ -1158,6 +1158,21 @@ Raw offsets -5, unsafe functions -1, cast lines -15, Rust lines -12.
 Next: quicksand surface dispatcher and its three movement handlers,
 preserving the overlapping middle-word writes at B2D/B5B.
 
+Quicksand surface setup and all three movement handlers are now safe
+byte-backed Rust, with direct direction dispatch replacing the callback
+table. Momentum/boost/run-speed resets retain their order, the base subspeed
+retains its low fifteen bits, and equipment/reaction-point tests remain live.
+Middle-word speed/displacement writes retain B2D/B5B byte ranges and the
+unsigned strict speed clamp. Direct comparison against prior Rust source
+passes 524,291 RAM/return cases: all 65,536 middle-word speeds, both equipment
+choices, four directions and nonzero reaction points. Stable optimized
+core/DLL build and direct format pass; Cargo fmt/build remain ASR-denied.
+Waver route: 58,109 frames, zero failures (83.92s); any%: 129,712 frames,
+zero failures (183.17s). These routes do not prove quicksand coverage; the
+direct comparison supplies the handler check. Raw offsets -26, unsafe
+functions -4, cast lines -48, Rust lines -56. Next: submerging quicksand and
+sandfall setup writes, then the collision-side quicksand context boundary.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

@@ -4171,111 +4171,55 @@ pub fn PlmSetup_B70F_IcePhysics(_j: uint16, game: &mut Game) -> uint8 {
     }
     0
 }
-static kPlmSetup_QuicksandSurface: [Option<Func_Y_V>; 4] = unsafe {
-    [
-        Some(PlmSetup_QuicksandSurface_0 as unsafe fn(uint16, &mut Game) -> ()),
-        Some(PlmSetup_QuicksandSurface_1 as unsafe fn(uint16, &mut Game) -> ()),
-        Some(PlmSetup_QuicksandSurface_2 as unsafe fn(uint16, &mut Game) -> ()),
-        Some(PlmSetup_QuicksandSurface_0 as unsafe fn(uint16, &mut Game) -> ()),
-    ]
-};
-static g_word_84B48B: [uint16; 2] = [
-    0x200 as ::core::ffi::c_int as uint16,
-    0x200 as ::core::ffi::c_int as uint16,
-];
-static g_word_84B48F: [uint16; 2] = [
-    0x120 as ::core::ffi::c_int as uint16,
-    0x100 as ::core::ffi::c_int as uint16,
-];
-static g_word_84B493: [uint16; 2] = [
-    0x280 as ::core::ffi::c_int as uint16,
-    0x380 as ::core::ffi::c_int as uint16,
-];
-pub unsafe fn PlmSetup_QuicksandSurface(mut j: uint16, game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb3c as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb3e as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb40 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb44 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb42 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    let ref mut fresh13 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb48 as ::core::ffi::c_int as isize) as *mut uint16);
-    *fresh13 = (*fresh13 as ::core::ffi::c_int & !(0x8000 as ::core::ffi::c_int)) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb46 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    let mut v1: uint16 = 0 as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 0x20 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
-    {
-        v1 = 2 as uint16;
+static g_word_84B48B: [uint16; 2] = [0x200, 0x200];
+static g_word_84B48F: [uint16; 2] = [0x120, 0x100];
+static g_word_84B493: [uint16; 2] = [0x280, 0x380];
+pub fn PlmSetup_QuicksandSurface(_j: uint16, game: &mut Game) -> uint8 {
+    // Clear momentum, boost and extra running speed in the original order.
+    for offset in [0xb3c, 0xb3e, 0xb40, 0xb44, 0xb42] {
+        game.g_ram[offset..offset + 2].fill(0);
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x1e73 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        == 0
-    {
-        kPlmSetup_QuicksandSurface[(*((&raw mut game.g_ram as *mut uint8)
-            .offset(0xb36 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            & 3 as ::core::ffi::c_int) as usize]
-            .expect("non-null function pointer")(v1, game);
+    game.g_ram[0xb49] &= 0x7f;
+    game.g_ram[0xb46..0xb48].fill(0);
+    let equipped_items = u16::from_le_bytes([game.g_ram[0x9a2], game.g_ram[0x9a3]]);
+    let physics_index = if equipped_items & 0x20 != 0 { 2 } else { 0 };
+    let reaction_point = u16::from_le_bytes([game.g_ram[0x1e73], game.g_ram[0x1e74]]);
+    if reaction_point == 0 {
+        let y_direction = u16::from_le_bytes([game.g_ram[0xb36], game.g_ram[0xb37]]);
+        match y_direction & 3 {
+            0 | 3 => PlmSetup_QuicksandSurface_0(physics_index, game),
+            1 => PlmSetup_QuicksandSurface_1(physics_index, game),
+            2 => PlmSetup_QuicksandSurface_2(physics_index, game),
+            _ => unreachable!(),
+        }
     }
-    return 0 as uint8;
+    0
 }
-pub unsafe fn PlmSetup_QuicksandSurface_0(mut j: uint16, game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb2c as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb2e as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb5a as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb5c as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *(((&raw mut game.g_ram as *mut uint8).offset(0xb5a as ::core::ffi::c_int as isize)
-        as *mut uint16 as *mut uint8)
-        .offset(1 as ::core::ffi::c_int as isize) as *mut uint16) =
-        g_word_84B48F[(j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize];
+pub fn PlmSetup_QuicksandSurface_0(j: uint16, game: &mut Game) {
+    game.g_ram[0xb2c..0xb2e].fill(0);
+    game.g_ram[0xb2e..0xb30].fill(0);
+    game.g_ram[0xb5a..0xb5c].fill(0);
+    game.g_ram[0xb5c..0xb5e].fill(0);
+    // Write the middle word of the extra 16.16 Y displacement.
+    game.g_ram[0xb5b..0xb5d].copy_from_slice(&g_word_84B48F[usize::from(j >> 1)].to_le_bytes());
 }
-pub unsafe fn PlmSetup_QuicksandSurface_1(mut j: uint16, game: &mut Game) {
-    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    if (g_word_84B493[v1 as usize] as ::core::ffi::c_int)
-        < *(((&raw mut game.g_ram as *mut uint8).offset(0xb2c as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
-            .offset(1 as ::core::ffi::c_int as isize) as *mut uint16)
-            as ::core::ffi::c_int
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb2c as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb2e as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *(((&raw mut game.g_ram as *mut uint8).offset(0xb2c as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
-            .offset(1 as ::core::ffi::c_int as isize) as *mut uint16) = g_word_84B493[v1 as usize];
+pub fn PlmSetup_QuicksandSurface_1(j: uint16, game: &mut Game) {
+    let physics_index = usize::from(j >> 1);
+    let y_speed_middle = u16::from_le_bytes([game.g_ram[0xb2d], game.g_ram[0xb2e]]);
+    if g_word_84B493[physics_index] < y_speed_middle {
+        game.g_ram[0xb2c..0xb2e].fill(0);
+        game.g_ram[0xb2e..0xb30].fill(0);
+        game.g_ram[0xb2d..0xb2f].copy_from_slice(&g_word_84B493[physics_index].to_le_bytes());
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb5a as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb5c as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *(((&raw mut game.g_ram as *mut uint8).offset(0xb5a as ::core::ffi::c_int as isize)
-        as *mut uint16 as *mut uint8)
-        .offset(1 as ::core::ffi::c_int as isize) as *mut uint16) = g_word_84B48B[v1 as usize];
+    game.g_ram[0xb5a..0xb5c].fill(0);
+    game.g_ram[0xb5c..0xb5e].fill(0);
+    game.g_ram[0xb5b..0xb5d].copy_from_slice(&g_word_84B48B[physics_index].to_le_bytes());
 }
-pub unsafe fn PlmSetup_QuicksandSurface_2(mut j: uint16, game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb5a as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb5c as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *(((&raw mut game.g_ram as *mut uint8).offset(0xb5a as ::core::ffi::c_int as isize)
-        as *mut uint16 as *mut uint8)
-        .offset(1 as ::core::ffi::c_int as isize) as *mut uint16) =
-        g_word_84B48B[(j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize];
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaf4 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+pub fn PlmSetup_QuicksandSurface_2(j: uint16, game: &mut Game) {
+    game.g_ram[0xb5a..0xb5c].fill(0);
+    game.g_ram[0xb5c..0xb5e].fill(0);
+    game.g_ram[0xb5b..0xb5d].copy_from_slice(&g_word_84B48B[usize::from(j >> 1)].to_le_bytes());
+    game.g_ram[0xaf4..0xaf6].fill(0);
 }
 pub unsafe fn PlmSetup_B71F_SubmergingQuicksand(mut j: uint16, game: &mut Game) -> uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xaf4 as ::core::ffi::c_int as isize)
