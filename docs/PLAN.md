@@ -5277,6 +5277,29 @@ device addresses do not establish physical device side-effect equivalence;
 hardware/render/audio timing and credits remain open. Held HDMA diagnosis
 stays stopped. Continue remaining executed CPU fetch/address helpers.
 
+Failure recovery now draws the rerun ROM frame (2026-10-18): after
+pre-frame restore and emulated rerun, DrawFrameToPpu completes the same render
+phase used by both comparison branches. Previously recovery kept old drawn
+pixels while register/parity/mosaic state could remain different. TEMP
+explicit-render forced failures at200/9,000 in10,000 frames now havezero
+serialized PPU and pixel differences after recovery, exactlytwo intentional
+failures, nativeexit1 and no cascade (25.15s draw-only candidate). Actual
+PPU calls reach90,675/4,050,900 at the controls. Independent partner QC also
+exposes the old parity difference through actual STAT78 reads.
+
+A candidate additionally set runningWhichVersion=1; removing that unrelated
+assignment preserves passing PPU controls. Only the draw call is maintained.
+Clean frozen live-source optimized core/DLL any% passes129,712/0 (278.84s),
+nativeexit0. This includes then-current CPU/PPU/SNES peer edits; subsequent
+peer commits require separate integration. Direct full-source format and
+optimized builds pass. Cargo is absent from PATH and absolute cargo.exe
+fmt/build remains Access denied; that required check stays unmet. Progress
+passes: focused Rust lines+1 completes recovery rendering; other counters
+unchanged. Success/retry paths, disk layout and RAM bytes are unchanged.
+Probes/ROM assets remain ignored; only the recovery line and this note are
+committed. Enabled-render Waver71, hires, hardware/audio timing, masked RAM
+and boot-to-credits remain open; held HDMA diagnosis stays stopped.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

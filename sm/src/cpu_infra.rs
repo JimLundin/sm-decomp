@@ -3600,6 +3600,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
             queue_before.restore(game);
             game.g_snapshot_before.player.restore(game.g_spc_player);
             RunOneFrameOfGame_Emulated(game);
+            DrawFrameToPpu(game);
             if game.g_use_my_apu_code {
                 game.g_snapshot_mine.player.restore(game.g_spc_player);
             }
