@@ -6218,6 +6218,21 @@ changes are outside this replay. JSR consumer, arbitrary bank/device bus
 side effects, hardware/render/audio timing and credits remain open; held
 HDMA diagnosis stays stopped. Continue remaining indirect address helpers.
 
+Independent direct-page indirect QC (2026-10-18): cpu_adrIdp/Idx candidate
+passes 442,362 actual old/current byte/word LDA instructions, native exit
+zero. Idx executes all DP words with operand 00/01/FF and cancelling X to
+read the pointer at low WRAM 1800 (393,216 cases). Idp executes each supported
+low-WRAM pointer 0000..1FFE with the same three operands and both widths
+(49,146 cases). Both load independently installed data at 7F1800; expected
+A, PC, preserved DP/X/Y/SP and the unaligned-DP cycle penalty match. A TEMP
+omitted Idx penalty fails actual cycles six versus seven, native exit
+3221226505. Tested helper bodies match live. Optimized core/probe DLL,
+normal-core metadata, direct formatting and progress pass; partner reviews
+fixture, count and mapped pointer scope. Native mode is exercised; Idp FFFF
+successor wrapping, arbitrary devices, emulation rules, Cartesian index
+coverage and full-movie integration remain separate. No production edits;
+only this note changes and probes/assets stay TEMP/ignored.
+
 Independent indexed-indirect jump QC (2026-10-18): cpu_adrIax candidate
 passes 393,216 actual old/current JMP(abs,X) instructions, native exit zero.
 All operand words use cancelling X at pointer offsets 0000, 0001, 00FF,
