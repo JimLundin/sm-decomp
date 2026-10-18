@@ -2508,77 +2508,18 @@ unsafe fn BlockColl_Vert_Slope_Square(
     }
     1
 }
-unsafe fn BlockColl_SpikeBlock_BTS0(game: &mut Game) {
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        != 3 as ::core::ffi::c_int
-        || CheckBossBitForCurArea(1 as uint16, game) as ::core::ffi::c_int
-            & 1 as ::core::ffi::c_int
-            != 0)
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            == 0
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 60 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x18aa as ::core::ffi::c_int as isize)
-            as *mut uint16) = 10 as uint16;
-        let ref mut fresh14 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xa50 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        *fresh14 = (*fresh14 as ::core::ffi::c_int + 60 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa54 as ::core::ffi::c_int as isize)
-            as *mut uint16) =
-            ((*(&raw mut game.g_ram as *mut uint8).offset(0xa1e as ::core::ffi::c_int as isize)
-                as ::core::ffi::c_int
-                ^ 0xc as ::core::ffi::c_int)
-                & 8 as ::core::ffi::c_int
-                != 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
+fn apply_spike_block_damage(amount: u16, game: &mut Game) {
+    let invincibility = u16::from_le_bytes([game.g_ram[0x18a8], game.g_ram[0x18a9]]);
+    if invincibility != 0 {
+        return;
     }
-}
-unsafe fn BlockColl_SpikeBlock_BTS1(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        == 0
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 60 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x18aa as ::core::ffi::c_int as isize)
-            as *mut uint16) = 10 as uint16;
-        let ref mut fresh13 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xa50 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        *fresh13 = (*fresh13 as ::core::ffi::c_int + 16 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa54 as ::core::ffi::c_int as isize)
-            as *mut uint16) =
-            ((*(&raw mut game.g_ram as *mut uint8).offset(0xa1e as ::core::ffi::c_int as isize)
-                as ::core::ffi::c_int
-                ^ 0xc as ::core::ffi::c_int)
-                & 8 as ::core::ffi::c_int
-                != 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
-    }
-}
-unsafe fn BlockColl_SpikeBlock_BTS3(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        == 0
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 60 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x18aa as ::core::ffi::c_int as isize)
-            as *mut uint16) = 10 as uint16;
-        let ref mut fresh12 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xa50 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        *fresh12 = (*fresh12 as ::core::ffi::c_int + 16 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa54 as ::core::ffi::c_int as isize)
-            as *mut uint16) =
-            ((*(&raw mut game.g_ram as *mut uint8).offset(0xa1e as ::core::ffi::c_int as isize)
-                as ::core::ffi::c_int
-                ^ 0xc as ::core::ffi::c_int)
-                & 8 as ::core::ffi::c_int
-                != 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
-    }
+    game.g_ram[0x18a8..0x18aa].copy_from_slice(&60u16.to_le_bytes());
+    game.g_ram[0x18aa..0x18ac].copy_from_slice(&10u16.to_le_bytes());
+    let damage = u16::from_le_bytes([game.g_ram[0xa50], game.g_ram[0xa51]]);
+    game.g_ram[0xa50..0xa52].copy_from_slice(&damage.wrapping_add(amount).to_le_bytes());
+    // Spike blocks read only the facing byte, unlike the spike-air reaction.
+    let knockback = u16::from((game.g_ram[0xa1e] ^ 12) & 8 != 0);
+    game.g_ram[0xa54..0xa56].copy_from_slice(&knockback.to_le_bytes());
 }
 fn ClearCarry_4(_ci: *mut CollInfo, _game: &mut Game) -> uint8 {
     0
@@ -2636,46 +2577,29 @@ fn ClearCarry_5(_ci: *mut CollInfo, _game: &mut Game) -> uint8 {
 fn BlockColl_Vert_SpikeAir(_ci: *mut CollInfo, _game: &mut Game) -> uint8 {
     0
 }
-unsafe fn SetCarry_Spikeblk(game: &mut Game) {}
-static kBlockColl_SpikeBlock: [Option<Func_V>; 16] = unsafe {
-    [
-        Some(BlockColl_SpikeBlock_BTS0 as unsafe fn(&mut Game) -> ()),
-        Some(BlockColl_SpikeBlock_BTS1 as unsafe fn(&mut Game) -> ()),
-        Some(SetCarry_Spikeblk as unsafe fn(&mut Game) -> ()),
-        Some(BlockColl_SpikeBlock_BTS3 as unsafe fn(&mut Game) -> ()),
-        Some(SetCarry_Spikeblk as unsafe fn(&mut Game) -> ()),
-        Some(SetCarry_Spikeblk as unsafe fn(&mut Game) -> ()),
-        Some(SetCarry_Spikeblk as unsafe fn(&mut Game) -> ()),
-        Some(SetCarry_Spikeblk as unsafe fn(&mut Game) -> ()),
-        Some(SetCarry_Spikeblk as unsafe fn(&mut Game) -> ()),
-        Some(SetCarry_Spikeblk as unsafe fn(&mut Game) -> ()),
-        Some(SetCarry_Spikeblk as unsafe fn(&mut Game) -> ()),
-        Some(SetCarry_Spikeblk as unsafe fn(&mut Game) -> ()),
-        Some(SetCarry_Spikeblk as unsafe fn(&mut Game) -> ()),
-        Some(SetCarry_Spikeblk as unsafe fn(&mut Game) -> ()),
-        Some(SetCarry_Spikeblk as unsafe fn(&mut Game) -> ()),
-        Some(SetCarry_Spikeblk as unsafe fn(&mut Game) -> ()),
-    ]
-};
-unsafe fn BlockColl_Horiz_SpikeBlock(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    kBlockColl_SpikeBlock[*(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as usize]
-        .expect("non-null function pointer")(game);
-    return BlockColl_Horiz_SolidShootGrappleBlock(ci, game);
+unsafe fn react_to_spike_block(game: &mut Game) {
+    let bts = game.current_block_bts();
+    // Preserve the former sixteen-entry table's panic before solid collision.
+    assert!(bts < 16, "spike-block BTS index out of bounds: {bts}");
+    match bts {
+        0 => {
+            let area = u16::from_le_bytes([game.g_ram[0x79f], game.g_ram[0x7a0]]);
+            // Check the boss before reading the live invincibility timer.
+            if area != 3 || CheckBossBitForCurArea(1, game) & 1 != 0 {
+                apply_spike_block_damage(60, game);
+            }
+        }
+        1 | 3 => apply_spike_block_damage(16, game),
+        _ => {}
+    }
 }
-unsafe fn BlockColl_Vert_SpikeBlock(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    kBlockColl_SpikeBlock[*(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as usize]
-        .expect("non-null function pointer")(game);
-    return BlockColl_Vert_SolidShootGrappleBlock(ci, game);
+unsafe fn BlockColl_Horiz_SpikeBlock(ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    react_to_spike_block(game);
+    BlockColl_Horiz_SolidShootGrappleBlock(ci, game)
+}
+unsafe fn BlockColl_Vert_SpikeBlock(ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    react_to_spike_block(game);
+    BlockColl_Vert_SolidShootGrappleBlock(ci, game)
 }
 // High-bit BTS values select an area-specific table in the live ROM.
 unsafe fn special_collision_plm(bts: u8, area_tables: u32, game: &mut Game) -> u16 {

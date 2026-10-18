@@ -1567,6 +1567,19 @@ pointer; all other counters unchanged. Next: spike-block contact dispatch
 and byte-backed damage writes, preserving boss-check order, facing-byte
 reads and invalid-BTS panic before solid collision.
 
+Spike-block contact now uses direct BTS selection and shared safe byte-backed
+damage writes. BTS 0 retains the area/boss check before live invincibility;
+damage wraps, timers precede damage/knockback and facing remains a byte read.
+Invalid BTS >= 16 still panics before solid collision. Prior Rust comparison
+passes 491,520 full-RAM/callback/context/return/panic cases over every damage
+word and BTS byte, facing/invincibility/area/boss boundaries and boss callbacks
+mutating live RAM. Stable optimized core/DLL build and direct format pass;
+Cargo fmt/build remain ASR-denied. Waver route: 58,109 frames, zero failures
+(83.59s); any%: 129,712 frames, zero failures (181.80s). Raw offsets -23,
+unsafe functions -3, cast lines -42, Rust lines -76. Next: post-grapple
+collision type dispatch, preserving slope selection and solid low-nibble
+returns before cleaning its coordinate sampling and slope arithmetic.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
