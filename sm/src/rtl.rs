@@ -1388,9 +1388,7 @@ pub unsafe fn RtlApuWrite(mut adr: uint32, mut val: uint8, game: &mut Game) {
         (*(*game.g_snes).apu).inPorts[(adr & 0x3 as uint32) as usize] = val as uint8_t;
         return;
     }
-    if (*game.g_snes).runningWhichVersion as ::core::ffi::c_int != 2 as ::core::ffi::c_int {
-        game.g_apu_write.ports[(adr & 0x3 as uint32) as usize] = val;
-    }
+    game.g_apu_write.ports[(adr & 0x3 as uint32) as usize] = val;
 }
 unsafe fn IsFrameEmpty(mut w: *mut ApuWriteEnt) -> bool {
     return (*w).ports[0 as ::core::ffi::c_int as usize] as ::core::ffi::c_int
@@ -1497,6 +1495,21 @@ unsafe fn RtlResetApuQueue(game: &mut Game) {
     );
 }
 pub unsafe fn RtlApuUpload(mut p: *const uint8, game: &mut Game) {
+    let version = if game.g_snes.is_null() {
+        0
+    } else {
+        (*game.g_snes).runningWhichVersion
+    };
+    if version == 1 || version == 2 {
+        let startup = p == RomPtr(0xcf8000, game);
+        let snapshot = if version == 1 {
+            &mut game.g_snapshot_theirs
+        } else {
+            &mut game.g_snapshot_mine
+        };
+        snapshot.apu_upload_count = snapshot.apu_upload_count.saturating_add(1);
+        snapshot.apu_startup_upload = startup;
+    }
     RtlApuLock();
     RtlResetApuQueue(game);
     SpcPlayer_Upload(game.g_spc_player as *mut SpcPlayer, p as *const uint8_t);

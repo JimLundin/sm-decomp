@@ -383,6 +383,41 @@ sound-command enforcement remain separate work. No maintained Rust change;
 residue counters unchanged. Sound-source a86198ac any% 129,712/0 and Waver
 58,109/0 remain the gameplay baseline. No ROM-derived state is committed.
 
+Queued custom-audio commands are now enforced independently (2026-10-18).
+Both implementations start from the same pending four-port entry; final
+entries compare before queue consumption, and the ROM entry is restored
+for consumption or recovery. FF remains distinct from zero except for the
+independently tested startup reset: exactly one actual CF8000 upload,
+empty initial/resulting queue, reset counters, state 1/room 0 and the exact
+[00, FF, 00, FF] versus all-zero vectors. Upload observations are per-run
+diagnostics, not serialized audio state. Null-SNES isolated players retain
+their upload behavior.
+
+Implementing lead and independent subagents reviewed semantics and recovery;
+5,635 extracted production-guard checks pass. An actual Rust SFX1 write
+mutation at frame 8,640 (31 to 30) produces exactly one failing frame in
+50,000 frames (108.15s), with no RAM difference or subsequent failures.
+The current-source upload-consumption probe passes 15,360 paired frames and
+16,404,480 sample values. Final source includes dispatch 717c6b52: any%
+passes 129,712/0 (281.82s), Waver passes 58,109/0 (131.45s). Replay shell
+exit 1 reflects PowerShell stderr handling; complete zero-failure summaries
+and the inspected verifier return path establish the DLL result, rather
+than an independently captured native process exit. No repeat was needed.
+Cargo fmt --check, stable optimized core/DLL and normal metadata builds pass;
+Cargo release still fails managed dependency build-script execution, OS
+error 5. Rust lines +54 implement command capture, comparison and recovery;
+cast lines -1, all other counters unchanged. No ROM-derived assets committed.
+
+This verifies final queued custom-audio commands only. Upload contents,
+repeated-write ordering, direct-emulated APU writes, cross-driver state and
+exact sample timing remain unverified. Masked RAM, hidden display state and
+boot-to-credits coverage remain gaps; current any% covers six Ceres rooms,
+while Waver covers seventeen rooms/enemy definitions and ends in room 990D.
+Next: compare upload contents and command-latch delivery independently,
+while extending the surviving controller route toward the southwest Energy
+Tank and room 99BD. Do not infer credits or exercised AI from movie names
+or enemy-definition presence.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

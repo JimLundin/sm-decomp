@@ -79,6 +79,9 @@ pub struct Snapshot {
     pub sram: [uint8; 8192],
     pub oam: [uint16; 288],
     pub cgram: [uint16; 256],
+    // Per-run observations, not emulated or serialized audio state.
+    pub apu_upload_count: u32,
+    pub apu_startup_upload: bool,
 }
 pub const RM_MINE: RunMode = 1;
 pub const RM_BOTH: RunMode = 0;
@@ -2918,11 +2921,20 @@ unsafe fn report_first_verify_failure(game: &mut Game) {
 pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
     (*game.g_snes).ppu = (*game.g_snes).snes_ppu;
     MakeSnapshot(&raw mut game.g_snapshot_before, game);
+    let apu_before = game.g_apu_write;
+    let apu_queue_before = game.g_apu_queue_size;
     loop {
+        game.g_apu_write = apu_before;
+        game.g_snapshot_theirs.apu_upload_count = 0;
+        game.g_snapshot_theirs.apu_startup_upload = false;
         (*game.g_snes).runningWhichVersion = 1 as uint8_t;
         RunOneFrameOfGame_Emulated(game);
         DrawFrameToPpu(game);
         MakeSnapshot(&raw mut game.g_snapshot_theirs, game);
+        let apu_theirs = game.g_apu_write;
+        game.g_apu_write = apu_before;
+        game.g_snapshot_mine.apu_upload_count = 0;
+        game.g_snapshot_mine.apu_startup_upload = false;
         (*game.g_snes).ppu = (*game.g_snes).my_ppu;
         RestoreSnapshot(&raw mut game.g_snapshot_before, game);
         (*game.g_snes).runningWhichVersion = 2 as uint8_t;
@@ -2936,6 +2948,34 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
             &raw mut game.g_snapshot_before,
             game,
         );
+        // Check commands before queue consumption/driver latching. The patched
+        // ROM skips uploads; mine supplies the single runtime upload/reset.
+        // Only this independently probed startup reset permits absent SFX
+        // writes instead of zero writes. FF remains distinct everywhere else.
+        let startup_reset = game.g_use_my_apu_code
+            && game.g_snapshot_theirs.apu_upload_count == 0
+            && game.g_snapshot_mine.apu_upload_count == 1
+            && game.g_snapshot_mine.apu_startup_upload
+            && apu_queue_before == 0
+            && apu_before.ports == [0xff; 4]
+            && game.g_apu_queue_size == 0
+            && game.g_apu_write_ent_pos == 0
+            && game.g_apu_time_since_empty == 0
+            && game.g_snapshot_mine.ram[0x998..0x99a] == [1, 0]
+            && game.g_snapshot_mine.ram[0x79b..0x79d] == [0, 0]
+            && game.g_apu_write.ports == [0, 0xff, 0, 0xff]
+            && apu_theirs.ports == [0; 4];
+        if game.g_apu_write.ports != apu_theirs.ports && !startup_reset {
+            game.g_fail = true;
+            if !game.VERIFY_ACTIVE || game.VERIFY_FAILURES == 0 {
+                eprintln!(
+                    "@{}: APU queued ports compare failed: mine {:02X?} != theirs {:02X?}",
+                    game.snes_frame_counter, game.g_apu_write.ports, apu_theirs.ports
+                );
+            }
+        }
+        // Never deliver mine's captured commands to the shared audio player.
+        game.g_apu_write = apu_theirs;
         if game.g_fail {
             if game.VERIFY_ACTIVE {
                 game.VERIFY_FAILURES += 1;
@@ -2953,6 +2993,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
                 continue;
             }
             SaveBugSnapshot(game);
+            game.g_apu_write = apu_before;
             RunOneFrameOfGame_Emulated(game);
             break;
         } else {
