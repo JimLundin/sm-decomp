@@ -532,6 +532,29 @@ restore and comparison with fault detection before considering broader
 PPU enforcement. No maintained Rust or residue counters changed; all
 instrumentation and ROM-derived outputs remain ignored.
 
+HDMA window producer trace (2026-10-18): extend the same isolated 2c7be10d
+probe to record DMA source addresses and original CPU RAM writes. The
+28,232-frame source run passes 28,232/0 (58.85s), native exit 0. At frame
+28,228, line zero reads 7E:9101=00 on both sides. Line 223 reads the same
+7E:92BF address on both sides but sees FF from ROM and 00 from Rust; this
+is a table-byte difference, not different DMA source addressing.
+92BF lies inside the inherited 9100..92CD comparison mask, explaining why
+the differing transfer remains hidden by RAM verification. Do not remove
+that mask wholesale without classifying its other differences.
+
+The CPU producer run passes 28,232/0 (49.34s), native exit 0. At frames
+28,228 and 28,229, ROM first writes 00 to 7E:92BF at CPU 91:C89C, then
+overwrites it with FF at 91:C8C5. The latter is an 8-bit indirect indexed
+store in the X-ray HDMA ramp generator; the transfer later consumes FF.
+Maintained CalculateXrayHdmaTableInner and XrayFillDownRamped combine
+left/right ramp processing into word writes and an empty-window gate.
+This locates the producer for the observed difference but does not yet
+prove which clipping/overflow condition differs or justify a fix.
+Next: compare the actual ramp inputs and byte-store saturation at these
+PCs against the Rust helper, then validate any focused change against raw
+table/window fields and the existing RAM/pixel/audio oracle. No maintained
+Rust or counters changed; source/opcode traces stay ignored.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
