@@ -7288,6 +7288,31 @@ hardware/audio timing, rendering/Waver71, masked RAM and credits remain open.
 Held HDMA diagnosis stays stopped. Continue executed APU/SPC paths and route
 coverage with independent subagents; peer owns remote sync.
 
+CPU memory shift cleanup (2026-10-18): cpu_ror/rol/lsr/asl use native
+unsigned shifts, carry masks and wrapping cycle increments. Left shifts
+retain widened intermediates; ROR updates carry after writes and Z/N, while
+ROL/LSR/ASL update carry before writes. Word writes remain high-byte first,
+and final Z/N uses the live M flag. Actual old/current helpers pass 1,048,576
+ordered substituted-bus cases over every operand, both widths/carry states
+and four helpers. Complete named CPU state and read/write address/value/
+cycle/C/Z/N traces match; independent expected results and carry pass.
+Actual absolute WRAM instructions pass 1,572,864 old/current pairs over every
+operand, incoming carry, four opcodes and native byte/word plus emulation
+byte modes, crossing 7E:FFFF to 7F:0000. Result bytes, flags, unchanged
+control state, PC, cycles and open bus match. These constructed instruction
+contexts establish changed-path execution, not physical hardware accuracy.
+Instrumented any% prefix passes 3,600/0 (6.40s), native exit 0; ROR/ROL/LSR/
+ASL word/byte calls are 3/0, 5,089/0, 0/0 and 1/0. Dedicated instruction
+checks supply absent LSR/byte coverage. Clean frozen
+049c0e055d2148f1f3643617e346a87ac518ee0a plus only these helpers passes any%
+129,712/0 (234.52s), native exit 0. Direct full-source format, normal-core
+metadata and optimized clean/probe core/DLL builds pass; required Cargo
+fmt/release remain launch-denied. Progress/diff pass: focused cast lines -29,
+Rust lines -7, other categories unchanged. Live helpers match verified bodies.
+Later peer APU changes are outside this replay. Arbitrary bus mutation, other
+addressing modes, hardware/render/audio timing and credits remain open;
+held HDMA diagnosis stays stopped. Continue executed increment/decrement.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
