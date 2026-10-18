@@ -2138,6 +2138,36 @@ Next: choose/check the derived-cache invariant, then continue omitted semantic
 display state. Audio timing, HDMA, masked RAM, shared hardware accuracy and
 boot-to-credits coverage remain open.
 
+Derived brightness-cache enforcement (2026-10-18): the verifier now checks
+both live PPU caches against their generation marker before recovery. Valid
+markers 0..15 require all 63 normal and 64 half table bytes to match the
+independent brightness formula. Markers above15 force regeneration on the
+next row; coherent caches may differ from restored brightness. Rewind marks
+an incoherent cache255 so the existing renderer regenerates it. This checks
+derived-state consistency without adding cache bytes to semantic snapshots.
+
+Actual VerifySnapshotsEq detects32,512 table-bit faults (both sides,16 levels,
+127 bytes,8 bits);32 valid generation states,512 coherent stale-brightness
+states,240 regeneration markers and reset controls pass. An actual corrupt-cache
+RestoreSnapshot/next-row probe confirms invalidation and regeneration. Its
+first run incorrectly restored the other PPU; selecting the modified PPU
+corrects the probe and passes, rather than changing the implementation.
+Three post-render frame200 cache faults each produce3,600/1 and nativeexit1
+with named cache diagnostics before recovery. This establishes constructed
+fault detection/recovery, not a naturally occurring cache bug or SNES accuracy.
+
+Dedicated maintained-source replays: Verified 129712 frames: 0 failing frames (259.29s); Verified 58109 frames: 0 failing frames (117.79s); nativeexits0.
+The DLL includes then-current audio work but predates later concurrent
+gameplay edits; those edits require their own verification. Cargo fmt/fmt
+--check and direct optimized core/DLL/normal-core metadata builds pass;
+Cargo release remains blocked executing khronos_api's build script (OSerror5).
+Progress run passes: focused Rust lines+35 implement the invariant, diagnostics
+and recovery; other counters unchanged for this change. Only these CPU hunks
+and this note are staged; concurrent source edits and ROM/probe assets remain
+separate. No Ppu/RAM/save layout changes. Next: investigate omitted semantic
+display/register state. Audio timing, shared hardware accuracy, HDMA, masked
+RAM and boot-to-credits coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

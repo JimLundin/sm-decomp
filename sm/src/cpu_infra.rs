@@ -869,6 +869,24 @@ pub unsafe fn HookedFunctionRts(mut is_long: ::core::ffi::c_int, game: &mut Game
     };
     return false_0 != 0;
 }
+fn brightness_cache_is_valid(ppu: &Ppu) -> bool {
+    let brightness = ppu.lastBrightnessMult;
+    // An invalid marker forces regeneration before the next rendered row.
+    if brightness > 15 {
+        return true;
+    }
+    let scaled =
+        |level: usize| (((level << 3) | (level >> 2)) * usize::from(brightness) / 15) as u8;
+    ppu.brightnessMult
+        .iter()
+        .enumerate()
+        .all(|(i, value)| *value == scaled(i.min(31)))
+        && ppu
+            .brightnessMultHalf
+            .iter()
+            .enumerate()
+            .all(|(i, value)| *value == scaled(i / 2))
+}
 unsafe fn VerifySnapshotsEq(
     mut b: *mut Snapshot,
     mut a: *mut Snapshot,
@@ -877,6 +895,20 @@ unsafe fn VerifySnapshotsEq(
 ) {
     // Keep checking every frame, but bound headless logs to the first failure.
     let report_details = !game.VERIFY_ACTIVE || game.VERIFY_FAILURES == 0;
+    for (side, ppu) in [
+        ("mine", &*(*game.g_snes).my_ppu),
+        ("theirs", &*(*game.g_snes).snes_ppu),
+    ] {
+        if !brightness_cache_is_valid(ppu) {
+            game.g_fail = true;
+            if report_details {
+                eprintln!(
+                    "@{}: {side} brightness cache invalid for marker {}",
+                    game.snes_frame_counter, ppu.lastBrightnessMult
+                );
+            }
+        }
+    }
     if game.VERIFY_ACTIVE {
         // Both headless hosts register initialized 256x240 BGRA buffers with
         // pitch 1024. Compare before recovery so a failed mine frame is visible.
@@ -1648,6 +1680,9 @@ unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     let ppu = &mut *(*game.g_snes).ppu;
     ppu.brightness = (*s).brightness;
     ppu.forcedBlank = (*s).forced_blank;
+    if !brightness_cache_is_valid(ppu) {
+        ppu.lastBrightnessMult = 255;
+    }
     ppu.m7matrix = (*s).mode7_matrix;
     [
         ppu.m7largeField,
