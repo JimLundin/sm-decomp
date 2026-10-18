@@ -4456,6 +4456,34 @@ layout or normal success-path behavior changes. Concurrent demo/DMA/PPU edits
 are excluded. ROM-derived saves stay TEMP; audio timing, hardware events,
 rendering/HDMA and complete boot-to-credits coverage remain open.
 
+Independent dma_doDma execution QC (2026-10-18): the pending arithmetic/
+index cleanup passes 395,274 old/current actual routine comparisons. The
+264,192 transfer/scheduler steps cover all eight selected channels and modes,
+both directions, fixed/increment/decrement A addresses, four initial offset
+phases, lengths 0/1/7 and A addresses 0000/0001/FFFE/FFFF. Forward transfers
+write PPU scroll ports 2110..2113; reverse transfers read 2138..213B. Every
+step compares complete RAM, 67,305 serialized PPU bytes, all semantic channel
+and timer/busy fields, WRAM-port address, failure flag and owner pointer from
+identical initial state against the previous maintained Rust routine. Length
+zero cases compare their first size-underflow step only, not a full 65,536-
+byte transfer. Each scenario has one active channel; simultaneous-channel
+priority and the bank80 warning branch are outside this matrix.
+
+The remaining 131,082 timer/idle cases cover every 16-bit DMA timer plus
+65536/7FFFFFFF/80000000/FFFFFFFE/FFFFFFFF with and without an active channel.
+Odd-timer subtraction retains its inherited wrapping behavior. Changing only
+the candidate's increment from one to two fails the first actual transfer's
+channel-address comparison (0002 versus 0001). Frozen dma_doDma matches live
+source after undoing that TEMP control. Optimized probe core/DLL, normal-core
+metadata and final direct full-source rustfmt pass; an earlier live format
+check caught a peer's in-progress demo signature, subsequently formatted.
+Cargo execution remains denied as documented. Only this QC note changes;
+probes stay TEMP and no maintained Rust/residue counters change. These are
+actual hardware-consumer preservation checks, not independent SNES timing
+accuracy or a new movie pass. The implementing session owns clean any%
+integration. Rendering/Waver71, event generation, audio timing and credits
+remain open; held HDMA diagnosis stays stopped.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
