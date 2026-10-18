@@ -2509,6 +2509,30 @@ unchanged. No probe or ROM-derived assets are committed. Next: Samus
 initialization RAM/arithmetic, measuring actual initialization calls and
 retaining descending clear order; stopped ammo trials remain held.
 
+Samus initialization workspace clear now iterates directly over the
+byte-backed g_ram range 0A02..0E0B in descending order, replacing the
+transpiled decrement/signed-exit loop and RomPtr_RAM calls. The preceding
+captured r18 read stays before the clear; subsequent initialization and
+callback order are untouched. RomPtr_RAM only asserted addresses below
+2000 and returned the corresponding RAM byte; all 1,034 fixed addresses
+stay within that bound. Independent old/new address-sequence comparison
+matches all 1,034 stores exactly; full-RAM/adjacent-byte checks pass.
+
+The rewritten actual Samus_Initialize executes three times on Rust side 2
+in the normal boot/gunship route, at SNES counters 298, 8,256 and 20,817.
+Its observed replay passes 22,631/0 (39.39s), native exit 0. Removing the
+sole call observation restores exact maintained source. This establishes
+execution of the changed clear path, not every later initialization branch.
+Full any% passes 129,712/0 (207.91s), native exit 0, on committed
+ab3ae6f6 source with only the
+focused sm_91.rs change, excluding later concurrent audio-oracle changes.
+Cargo fmt/check, optimized core/DLL and normal-core metadata builds pass;
+Cargo release remains denied at khronos_api's build script (OS error 5).
+Cast lines -3, Rust lines -8; other gameplay counters unchanged. No probe
+or ROM-derived assets are committed. Next: initialization callback/pose
+setup fields and projectile preinstruction initialization, retaining live
+reads and write order; the stopped ammo route remains held.
+
 
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve

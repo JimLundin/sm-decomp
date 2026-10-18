@@ -4856,17 +4856,9 @@ pub unsafe fn Samus_Initialize(game: &mut Game) {
     static word_909EA7: uint16 = 0 as uint16;
     let mut r18: uint16 = *((&raw mut game.g_ram as *mut uint8)
         .offset(0xde0 as ::core::ffi::c_int as isize) as *mut uint16);
-    let mut v0: uint16 = 0xe0b as uint16;
-    loop {
-        let fresh44 = v0;
-        v0 = v0.wrapping_sub(1);
-        *RomPtr_RAM(fresh44, game) = 0 as uint8;
-        if !((v0 as ::core::ffi::c_int - 0xa02 as ::core::ffi::c_int) as int16
-            as ::core::ffi::c_int
-            >= 0 as ::core::ffi::c_int)
-        {
-            break;
-        }
+    // Clear the original Samus workspace from its last byte to its first.
+    for address in (0xa02..=0xe0b).rev() {
+        game.g_ram[address] = 0;
     }
     if *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
