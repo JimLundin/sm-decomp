@@ -13,6 +13,33 @@ pub(crate) struct ApuQueueSnapshot {
 }
 
 impl ApuQueueSnapshot {
+    pub(crate) fn to_bytes(self) -> [u8; 71] {
+        let mut bytes = [0; 71];
+        bytes[..4].copy_from_slice(&self.pending.ports);
+        for (entry, ports) in self.entries.iter().zip(bytes[4..68].chunks_exact_mut(4)) {
+            ports.copy_from_slice(&entry.ports);
+        }
+        bytes[68..].copy_from_slice(&[self.size, self.position, self.time_since_empty]);
+        bytes
+    }
+
+    pub(crate) fn from_bytes(bytes: &[u8; 71]) -> Self {
+        assert!(bytes[68] <= 16, "invalid saved APU queue size");
+        let mut entries = [ApuWriteEnt { ports: [0; 4] }; 16];
+        for (entry, ports) in entries.iter_mut().zip(bytes[4..68].chunks_exact(4)) {
+            entry.ports.copy_from_slice(ports);
+        }
+        Self {
+            pending: ApuWriteEnt {
+                ports: bytes[..4].try_into().unwrap(),
+            },
+            entries,
+            size: bytes[68],
+            position: bytes[69],
+            time_since_empty: bytes[70],
+        }
+    }
+
     pub(crate) fn first_difference(&self, other: &Self) -> Option<&'static str> {
         let Self {
             pending: ApuWriteEnt { ports: pending },

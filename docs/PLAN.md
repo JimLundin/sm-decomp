@@ -1647,6 +1647,38 @@ save APIs, broader queue cases, normal any% and custom-save regression checks
 before committing a serialization change. Do not replace this with save-time
 rendering or command draining, which would alter uninterrupted audio timing.
 
+Physical filesystem queue preservation (2026-10-18): version-2 saves now use
+reserved header words 10/11 for APQ1 and length 71, followed by an explicit
+physical queue trailer after the unchanged SNES snapshot. The trailer stores
+all four pending ports, sixteen four-port ring entries, size, position and
+empty-time counter. Normal physical load restores it after existing music
+restore clears the queue; files without the marker retain legacy loading.
+Custom saves retain their existing driver normalization and layout. Replay
+ignores the final-state trailer because it starts from the recording's base
+snapshot. Neither saving nor loading drains commands or advances audio.
+
+The frozen focused source passes all twenty public physical continuation cases:
+4,810 resumed frames and 5,137,080 sample values match, with final game RAM
+and active oracle clean. Both real pending-SFX failures at 8,640 now pass.
+Complete queue/file roundtrips at sizes 0, 1 and 16, position 255 and empty-time
+32 pass exact pending/ring/counter equality plus subsequent audio and RAM.
+Eight pending custom-driver cases (both save APIs, four boot/gameplay points)
+pass. A marker-free version-2 file loads through the legacy path; replay with
+a sixteen-entry final queue does not apply that queue to its base state.
+Mutating the saved active command still fails resumed samples at frame 3,
+confirming the actual stored command controls continuation. Temporary saves
+are removed and no ROM-derived data or harness code enters maintained source.
+
+Cargo fmt/check, optimized core/DLL and metadata builds pass. Cargo release
+remains denied executing khronos_api's build script (OS error 5). The focused
+change adds 47 Rust lines for explicit queue encoding and file integration;
+other residue counters unchanged by it. Full default any% passes 129,712/0
+(325.53s), physical any% passes 129,712/0 (384.02s), native exits 0.
+Independent source/caller/evidence review finds no blockers. Concurrent
+gameplay/display edits are excluded from this frozen
+source. Cross-driver loading and replay-base queue serialization remain separate
+questions; this change preserves normal physical filesystem continuation.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read

@@ -776,6 +776,15 @@ pub unsafe fn StateRecorder_Load(
     if !is_reset {
         RtlRestoreMusicAfterLoad_Locked(false_0 != 0, game);
     }
+    // The extension describes the final snapshot, not a replay's base state.
+    if !replay_mode && hdr[10] == u32::from_le_bytes(*b"APQ1") {
+        assert_eq!(hdr[11], 71, "invalid saved APU queue length");
+        let mut bytes = [0u8; 71];
+        ReadFromFile(f, bytes.as_mut_ptr().cast(), bytes.len());
+        if !game.g_use_my_apu_code {
+            crate::audio_snapshot::ApuQueueSnapshot::from_bytes(&bytes).restore(game);
+        }
+    }
     RtlUpdateSnesPatchForBugfix(game);
 }
 pub unsafe fn StateRecorder_Save(
@@ -849,6 +858,14 @@ pub unsafe fn StateRecorder_Save(
     }
     hdr[9 as ::core::ffi::c_int as usize] =
         (saving_with_bug as ::core::ffi::c_int * 1 as ::core::ffi::c_int) as uint32;
+    // Reserved version-2 header words identify a physical host-queue trailer.
+    // Custom saves retain their existing driver-state normalization policy.
+    let audio_queue = (!game.g_use_my_apu_code)
+        .then(|| crate::audio_snapshot::ApuQueueSnapshot::capture(game).to_bytes());
+    if audio_queue.is_some() {
+        hdr[10] = u32::from_le_bytes(*b"APQ1");
+        hdr[11] = 71;
+    }
     fwrite(
         &raw mut hdr as *mut uint32 as *const ::core::ffi::c_void,
         1 as size_t,
@@ -873,6 +890,9 @@ pub unsafe fn StateRecorder_Save(
         arr.size,
         f,
     );
+    if let Some(bytes) = audio_queue {
+        fwrite(bytes.as_ptr().cast(), 1, bytes.len(), f);
+    }
     ByteArray_Destroy(&raw mut arr);
 }
 pub unsafe fn StateRecorder_ClearKeyLog(mut sr: *mut StateRecorder, game: &mut Game) {
