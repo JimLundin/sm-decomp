@@ -8300,6 +8300,18 @@ replay does not establish every opcode path; type-only binding changes are
 additionally checked by exact reconstruction and compilation. Gameplay and
 rendering/audio completeness remain open.
 
+CPU boolean-literal cleanup (2026-10-19): 16 true and 32 false generated
+constant comparisons become native literals; the two now-unused CPU integer
+constants are removed. Frozen HEAD `307357249c1e120868efe5aee603a46a9a4c4aec`
+plus exactly those substitutions matches live source. Addressing arguments and
+flag assignments retain their values and order. Cargo fmt/check, release
+library, normal metadata and optimized core/DLL builds pass; full frontend
+linking still lacks SDL2. Prefix 3,600/0 (0.98s) executes 10,363,030 dispatcher
+calls; clean full any% 129,712/0 (52.48s), native exit 0. Replay does not prove
+every opcode branch; exact constant substitution supports the unexercised
+literal sites. Cast lines -2, Rust lines -2; other counters unchanged.
+Gameplay and rendering/audio completeness remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

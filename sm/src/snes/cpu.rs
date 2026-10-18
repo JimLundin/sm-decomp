@@ -26,8 +26,6 @@ pub use crate::types::{
     Cpu, Dma, DmaChannel, Dsp, DspChannel, DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs,
     PpuZbufType, SaveLoadFunc, Snes, Spc, Timer, WindowLayer,
 };
-pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
-pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
 static cyclesPerOpcode: [u8; 256] = [
     7, 6, 7, 4, 5, 3, 5, 6, 3, 2, 2, 4, 6, 4, 6, 5, 2, 5, 5, 7, 5, 4, 6, 6, 2, 4, 2, 2, 6, 4, 7, 5,
     6, 6, 8, 4, 3, 3, 5, 6, 4, 2, 2, 5, 4, 4, 6, 5, 2, 5, 5, 7, 4, 4, 6, 6, 2, 4, 2, 2, 4, 4, 7, 5,
@@ -880,8 +878,8 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 cpu_pushWord(cpu, (*cpu).pc, game);
                 cpu_pushByte(cpu, cpu_getFlags(cpu), game);
                 (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-                (*cpu).i = true_0 != 0;
-                (*cpu).d = false_0 != 0;
+                (*cpu).i = true;
+                (*cpu).d = false;
                 (*cpu).k = 0 as uint8_t;
                 (*cpu).pc = cpu_readWord(cpu, 0xffe4 as uint32_t, 0xffe5 as uint32_t, game);
                 break;
@@ -922,7 +920,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             9 => {
                 let mut low_5: uint32_t = 0;
-                let high_5 = cpu_adrImm(cpu, &raw mut low_5, false_0 != 0);
+                let high_5 = cpu_adrImm(cpu, &raw mut low_5, false);
                 cpu_ora(cpu, low_5, high_5, game);
                 break;
             }
@@ -971,7 +969,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             17 => {
                 let mut low_10: uint32_t = 0;
-                let high_10 = cpu_adrIdy(cpu, &raw mut low_10, false_0 != 0, game);
+                let high_10 = cpu_adrIdy(cpu, &raw mut low_10, false, game);
                 cpu_ora(cpu, low_10, high_10, game);
                 break;
             }
@@ -1017,7 +1015,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             25 => {
                 let mut low_17: uint32_t = 0;
-                let high_17 = cpu_adrAby(cpu, &raw mut low_17, false_0 != 0, game);
+                let high_17 = cpu_adrAby(cpu, &raw mut low_17, false, game);
                 cpu_ora(cpu, low_17, high_17, game);
                 break;
             }
@@ -1042,13 +1040,13 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             29 => {
                 let mut low_19: uint32_t = 0;
-                let high_19 = cpu_adrAbx(cpu, &raw mut low_19, false_0 != 0, game);
+                let high_19 = cpu_adrAbx(cpu, &raw mut low_19, false, game);
                 cpu_ora(cpu, low_19, high_19, game);
                 break;
             }
             30 => {
                 let mut low_20: uint32_t = 0;
-                let high_20 = cpu_adrAbx(cpu, &raw mut low_20, true_0 != 0, game);
+                let high_20 = cpu_adrAbx(cpu, &raw mut low_20, true, game);
                 cpu_asl(cpu, low_20, high_20, game);
                 break;
             }
@@ -1115,7 +1113,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             41 => {
                 let mut low_28: uint32_t = 0;
-                let high_28 = cpu_adrImm(cpu, &raw mut low_28, false_0 != 0);
+                let high_28 = cpu_adrImm(cpu, &raw mut low_28, false);
                 cpu_and(cpu, low_28, high_28, game);
                 break;
             }
@@ -1166,7 +1164,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             49 => {
                 let mut low_33: uint32_t = 0;
-                let high_33 = cpu_adrIdy(cpu, &raw mut low_33, false_0 != 0, game);
+                let high_33 = cpu_adrIdy(cpu, &raw mut low_33, false, game);
                 cpu_and(cpu, low_33, high_33, game);
                 break;
             }
@@ -1212,7 +1210,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             57 => {
                 let mut low_40: uint32_t = 0;
-                let high_40 = cpu_adrAby(cpu, &raw mut low_40, false_0 != 0, game);
+                let high_40 = cpu_adrAby(cpu, &raw mut low_40, false, game);
                 cpu_and(cpu, low_40, high_40, game);
                 break;
             }
@@ -1232,19 +1230,19 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             60 => {
                 let mut low_41: uint32_t = 0;
-                let high_41 = cpu_adrAbx(cpu, &raw mut low_41, false_0 != 0, game);
+                let high_41 = cpu_adrAbx(cpu, &raw mut low_41, false, game);
                 cpu_bit(cpu, low_41, high_41, game);
                 break;
             }
             61 => {
                 let mut low_42: uint32_t = 0;
-                let high_42 = cpu_adrAbx(cpu, &raw mut low_42, false_0 != 0, game);
+                let high_42 = cpu_adrAbx(cpu, &raw mut low_42, false, game);
                 cpu_and(cpu, low_42, high_42, game);
                 break;
             }
             62 => {
                 let mut low_43: uint32_t = 0;
-                let high_43 = cpu_adrAbx(cpu, &raw mut low_43, true_0 != 0, game);
+                let high_43 = cpu_adrAbx(cpu, &raw mut low_43, true, game);
                 cpu_rol(cpu, low_43, high_43, game);
                 break;
             }
@@ -1330,7 +1328,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             73 => {
                 let mut low_50: uint32_t = 0;
-                let high_50 = cpu_adrImm(cpu, &raw mut low_50, false_0 != 0);
+                let high_50 = cpu_adrImm(cpu, &raw mut low_50, false);
                 cpu_eor(cpu, low_50, high_50, game);
                 break;
             }
@@ -1376,7 +1374,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             81 => {
                 let mut low_54: uint32_t = 0;
-                let high_54 = cpu_adrIdy(cpu, &raw mut low_54, false_0 != 0, game);
+                let high_54 = cpu_adrIdy(cpu, &raw mut low_54, false, game);
                 cpu_eor(cpu, low_54, high_54, game);
                 break;
             }
@@ -1438,7 +1436,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             89 => {
                 let mut low_60: uint32_t = 0;
-                let high_60 = cpu_adrAby(cpu, &raw mut low_60, false_0 != 0, game);
+                let high_60 = cpu_adrAby(cpu, &raw mut low_60, false, game);
                 cpu_eor(cpu, low_60, high_60, game);
                 break;
             }
@@ -1476,13 +1474,13 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             93 => {
                 let mut low_61: uint32_t = 0;
-                let high_61 = cpu_adrAbx(cpu, &raw mut low_61, false_0 != 0, game);
+                let high_61 = cpu_adrAbx(cpu, &raw mut low_61, false, game);
                 cpu_eor(cpu, low_61, high_61, game);
                 break;
             }
             94 => {
                 let mut low_62: uint32_t = 0;
-                let high_62 = cpu_adrAbx(cpu, &raw mut low_62, true_0 != 0, game);
+                let high_62 = cpu_adrAbx(cpu, &raw mut low_62, true, game);
                 cpu_lsr(cpu, low_62, high_62, game);
                 break;
             }
@@ -1575,7 +1573,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             105 => {
                 let mut low_70: uint32_t = 0;
-                let high_70 = cpu_adrImm(cpu, &raw mut low_70, false_0 != 0);
+                let high_70 = cpu_adrImm(cpu, &raw mut low_70, false);
                 cpu_adc(cpu, low_70, high_70, game);
                 break;
             }
@@ -1648,7 +1646,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             113 => {
                 let mut low_74: uint32_t = 0;
-                let high_74 = cpu_adrIdy(cpu, &raw mut low_74, false_0 != 0, game);
+                let high_74 = cpu_adrIdy(cpu, &raw mut low_74, false, game);
                 cpu_adc(cpu, low_74, high_74, game);
                 break;
             }
@@ -1694,7 +1692,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             121 => {
                 let mut low_81: uint32_t = 0;
-                let high_81 = cpu_adrAby(cpu, &raw mut low_81, false_0 != 0, game);
+                let high_81 = cpu_adrAby(cpu, &raw mut low_81, false, game);
                 cpu_adc(cpu, low_81, high_81, game);
                 break;
             }
@@ -1719,13 +1717,13 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             125 => {
                 let mut low_82: uint32_t = 0;
-                let high_82 = cpu_adrAbx(cpu, &raw mut low_82, false_0 != 0, game);
+                let high_82 = cpu_adrAbx(cpu, &raw mut low_82, false, game);
                 cpu_adc(cpu, low_82, high_82, game);
                 break;
             }
             126 => {
                 let mut low_83: uint32_t = 0;
-                let high_83 = cpu_adrAbx(cpu, &raw mut low_83, true_0 != 0, game);
+                let high_83 = cpu_adrAbx(cpu, &raw mut low_83, true, game);
                 cpu_ror(cpu, low_83, high_83, game);
                 break;
             }
@@ -1845,7 +1843,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             145 => {
                 let mut low_95: uint32_t = 0;
-                let high_95 = cpu_adrIdy(cpu, &raw mut low_95, true_0 != 0, game);
+                let high_95 = cpu_adrIdy(cpu, &raw mut low_95, true, game);
                 cpu_sta(cpu, low_95, high_95, game);
                 break;
             }
@@ -1896,7 +1894,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             153 => {
                 let mut low_102: uint32_t = 0;
-                let high_102 = cpu_adrAby(cpu, &raw mut low_102, true_0 != 0, game);
+                let high_102 = cpu_adrAby(cpu, &raw mut low_102, true, game);
                 cpu_sta(cpu, low_102, high_102, game);
                 break;
             }
@@ -1921,13 +1919,13 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             157 => {
                 let mut low_104: uint32_t = 0;
-                let high_104 = cpu_adrAbx(cpu, &raw mut low_104, true_0 != 0, game);
+                let high_104 = cpu_adrAbx(cpu, &raw mut low_104, true, game);
                 cpu_sta(cpu, low_104, high_104, game);
                 break;
             }
             158 => {
                 let mut low_105: uint32_t = 0;
-                let high_105 = cpu_adrAbx(cpu, &raw mut low_105, true_0 != 0, game);
+                let high_105 = cpu_adrAbx(cpu, &raw mut low_105, true, game);
                 cpu_stz(cpu, low_105, high_105, game);
                 break;
             }
@@ -1939,7 +1937,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             160 => {
                 let mut low_107: uint32_t = 0;
-                let high_107 = cpu_adrImm(cpu, &raw mut low_107, true_0 != 0);
+                let high_107 = cpu_adrImm(cpu, &raw mut low_107, true);
                 cpu_ldy(cpu, low_107, high_107, game);
                 break;
             }
@@ -1951,7 +1949,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             162 => {
                 let mut low_109: uint32_t = 0;
-                let high_109 = cpu_adrImm(cpu, &raw mut low_109, true_0 != 0);
+                let high_109 = cpu_adrImm(cpu, &raw mut low_109, true);
                 cpu_ldx(cpu, low_109, high_109, game);
                 break;
             }
@@ -1996,7 +1994,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             169 => {
                 let mut low_115: uint32_t = 0;
-                let high_115 = cpu_adrImm(cpu, &raw mut low_115, false_0 != 0);
+                let high_115 = cpu_adrImm(cpu, &raw mut low_115, false);
                 cpu_lda(cpu, low_115, high_115, game);
                 break;
             }
@@ -2044,7 +2042,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             177 => {
                 let mut low_120: uint32_t = 0;
-                let high_120 = cpu_adrIdy(cpu, &raw mut low_120, false_0 != 0, game);
+                let high_120 = cpu_adrIdy(cpu, &raw mut low_120, false, game);
                 cpu_lda(cpu, low_120, high_120, game);
                 break;
             }
@@ -2090,7 +2088,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             185 => {
                 let mut low_127: uint32_t = 0;
-                let high_127 = cpu_adrAby(cpu, &raw mut low_127, false_0 != 0, game);
+                let high_127 = cpu_adrAby(cpu, &raw mut low_127, false, game);
                 cpu_lda(cpu, low_127, high_127, game);
                 break;
             }
@@ -2114,19 +2112,19 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             188 => {
                 let mut low_128: uint32_t = 0;
-                let high_128 = cpu_adrAbx(cpu, &raw mut low_128, false_0 != 0, game);
+                let high_128 = cpu_adrAbx(cpu, &raw mut low_128, false, game);
                 cpu_ldy(cpu, low_128, high_128, game);
                 break;
             }
             189 => {
                 let mut low_129: uint32_t = 0;
-                let high_129 = cpu_adrAbx(cpu, &raw mut low_129, false_0 != 0, game);
+                let high_129 = cpu_adrAbx(cpu, &raw mut low_129, false, game);
                 cpu_lda(cpu, low_129, high_129, game);
                 break;
             }
             190 => {
                 let mut low_130: uint32_t = 0;
-                let high_130 = cpu_adrAby(cpu, &raw mut low_130, false_0 != 0, game);
+                let high_130 = cpu_adrAby(cpu, &raw mut low_130, false, game);
                 cpu_ldx(cpu, low_130, high_130, game);
                 break;
             }
@@ -2138,7 +2136,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             192 => {
                 let mut low_132: uint32_t = 0;
-                let high_132 = cpu_adrImm(cpu, &raw mut low_132, true_0 != 0);
+                let high_132 = cpu_adrImm(cpu, &raw mut low_132, true);
                 cpu_cpy(cpu, low_132, high_132, game);
                 break;
             }
@@ -2193,7 +2191,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             201 => {
                 let mut low_139: uint32_t = 0;
-                let high_139 = cpu_adrImm(cpu, &raw mut low_139, false_0 != 0);
+                let high_139 = cpu_adrImm(cpu, &raw mut low_139, false);
                 cpu_cmp(cpu, low_139, high_139, game);
                 break;
             }
@@ -2240,7 +2238,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             209 => {
                 let mut low_144: uint32_t = 0;
-                let high_144 = cpu_adrIdy(cpu, &raw mut low_144, false_0 != 0, game);
+                let high_144 = cpu_adrIdy(cpu, &raw mut low_144, false, game);
                 cpu_cmp(cpu, low_144, high_144, game);
                 break;
             }
@@ -2286,7 +2284,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             217 => {
                 let mut low_151: uint32_t = 0;
-                let high_151 = cpu_adrAby(cpu, &raw mut low_151, false_0 != 0, game);
+                let high_151 = cpu_adrAby(cpu, &raw mut low_151, false, game);
                 cpu_cmp(cpu, low_151, high_151, game);
                 break;
             }
@@ -2300,7 +2298,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             219 => {
-                (*cpu).stopped = true_0 != 0;
+                (*cpu).stopped = true;
                 break;
             }
             220 => {
@@ -2311,13 +2309,13 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             221 => {
                 let mut low_152: uint32_t = 0;
-                let high_152 = cpu_adrAbx(cpu, &raw mut low_152, false_0 != 0, game);
+                let high_152 = cpu_adrAbx(cpu, &raw mut low_152, false, game);
                 cpu_cmp(cpu, low_152, high_152, game);
                 break;
             }
             222 => {
                 let mut low_153: uint32_t = 0;
-                let high_153 = cpu_adrAbx(cpu, &raw mut low_153, true_0 != 0, game);
+                let high_153 = cpu_adrAbx(cpu, &raw mut low_153, true, game);
                 cpu_dec(cpu, low_153, high_153, game);
                 break;
             }
@@ -2329,7 +2327,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             224 => {
                 let mut low_155: uint32_t = 0;
-                let high_155 = cpu_adrImm(cpu, &raw mut low_155, true_0 != 0);
+                let high_155 = cpu_adrImm(cpu, &raw mut low_155, true);
                 cpu_cpx(cpu, low_155, high_155, game);
                 break;
             }
@@ -2384,7 +2382,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             233 => {
                 let mut low_162: uint32_t = 0;
-                let high_162 = cpu_adrImm(cpu, &raw mut low_162, false_0 != 0);
+                let high_162 = cpu_adrImm(cpu, &raw mut low_162, false);
                 cpu_sbc(cpu, low_162, high_162, game);
                 break;
             }
@@ -2423,7 +2421,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             241 => {
                 let mut low_168: uint32_t = 0;
-                let high_168 = cpu_adrIdy(cpu, &raw mut low_168, false_0 != 0, game);
+                let high_168 = cpu_adrIdy(cpu, &raw mut low_168, false, game);
                 cpu_sbc(cpu, low_168, high_168, game);
                 break;
             }
@@ -2471,7 +2469,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             249 => {
                 let mut low_174: uint32_t = 0;
-                let high_174 = cpu_adrAby(cpu, &raw mut low_174, false_0 != 0, game);
+                let high_174 = cpu_adrAby(cpu, &raw mut low_174, false, game);
                 cpu_sbc(cpu, low_174, high_174, game);
                 break;
             }
@@ -2500,13 +2498,13 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             253 => {
                 let mut low_175: uint32_t = 0;
-                let high_175 = cpu_adrAbx(cpu, &raw mut low_175, false_0 != 0, game);
+                let high_175 = cpu_adrAbx(cpu, &raw mut low_175, false, game);
                 cpu_sbc(cpu, low_175, high_175, game);
                 break;
             }
             254 => {
                 let mut low_176: uint32_t = 0;
-                let high_176 = cpu_adrAbx(cpu, &raw mut low_176, true_0 != 0, game);
+                let high_176 = cpu_adrAbx(cpu, &raw mut low_176, true, game);
                 cpu_inc(cpu, low_176, high_176, game);
                 break;
             }
