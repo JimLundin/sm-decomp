@@ -6998,6 +6998,37 @@ rustfmt passes; Cargo fmt/check and release fail at launch OSerror5.
 Prior same-DLL explicit-render any%129712/0 (414.98s) remains regression
 for these input-only trials. Inputs/probes/ROM-derived outputs stay ignored.
 
+Cartridge dispatcher cleanup (2026-10-18): cart_read/cart_write use native
+byte/word parameters and match the byte cartridge tag directly. Write arms
+call the same handlers once; all 254 unsupported tags remain no-ops. Read
+type zero retains assertion line 57 and unknown tags line 62, including
+exact diagnostic strings and inherited fallback bodies. No mapper/lifecycle
+behavior changes. Read-only subagent finds no defect and confirms type aliases.
+
+Actual old/current dispatch functions pass 9,443,840 pairs: all 256 write
+tags, all banks, six address boundaries, eight bytes and SRAM sizes 0/1/8191;
+successful LoROM/HiROM reads have independent mask expectations. Whole SRAM
+is checked at each tag boundary, with expected touched cells checked/reset
+per case. Invalid reads are excluded from that matrix, not bypassed.
+Independent QC passes 7,088 actual CPU byte/word LDA/STA pairs for tags
+0/1/2/3/255, eight banks, four offsets, SRAM 0/null,1,3,8192, ROM 65535 and
+four accumulator values. Independent buffers/results/flags/cycles/bus pass.
+Real invalid read tags 0/3/255 have identical old/current outputs and native
+exit 2. Mutating tag-1 reads to HiROM is caught at 70:6000, SRAM size 1,
+native assertion exit 3221226505. Frozen/live dispatchers match QC bodies.
+
+Instrumented any% passes 12,000/0 (23.40s), native exit 0; tag-1 read/write counts are
+120,114,294/20,876,709 for theirs and 3,795,480/1,569,421 for mine. HiROM
+and unsupported tags are exercised only by constructed runtime/CPU checks.
+Clean frozen 04b5602a plus only these dispatchers passes any% 129,712/0
+(257.77s), native exit 0. Direct full-source format, normal-core metadata
+and optimized clean/probe core/DLL builds pass; Cargo fmt/check/release
+remain launch-denied, so that required check stays unmet. Progress/diff pass:
+focused cast lines -2, Rust lines -14, other categories unchanged. Later peer
+integration, hardware/audio timing, rendering/Waver71, masked RAM and credits
+remain open. Held HDMA diagnosis stays stopped. Continue executed hardware
+paths and route coverage with useful independent subagents; peer owns sync.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

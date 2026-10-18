@@ -90,13 +90,8 @@ pub unsafe fn cart_load(
         romSize as size_t,
     );
 }
-pub unsafe fn cart_read(
-    mut cart: *mut Cart,
-    mut bank: uint8_t,
-    mut adr: uint16_t,
-    game: &mut Game,
-) -> uint8_t {
-    match (*cart).type_0 as ::core::ffi::c_int {
+pub unsafe fn cart_read(cart: *mut Cart, bank: u8, adr: u16, game: &mut Game) -> u8 {
+    match (*cart).type_0 {
         0 => {
             '_c2rust_label: {
                 __assert_fail(
@@ -124,20 +119,11 @@ pub unsafe fn cart_read(
     };
     return (*(*cart).snes).openBus;
 }
-pub unsafe fn cart_write(
-    mut cart: *mut Cart,
-    mut bank: uint8_t,
-    mut adr: uint16_t,
-    mut val: uint8_t,
-) {
-    match (*cart).type_0 as ::core::ffi::c_int {
-        1 => {
-            cart_writeLorom(cart, bank, adr, val);
-        }
-        2 => {
-            cart_writeHirom(cart, bank, adr, val);
-        }
-        0 | _ => {}
+pub unsafe fn cart_write(cart: *mut Cart, bank: u8, adr: u16, val: u8) {
+    match (*cart).type_0 {
+        1 => cart_writeLorom(cart, bank, adr, val),
+        2 => cart_writeHirom(cart, bank, adr, val),
+        _ => {}
     };
 }
 unsafe fn cart_readLorom(cart: *mut Cart, mut bank: u8, adr: u16, game: &mut Game) -> u8 {
