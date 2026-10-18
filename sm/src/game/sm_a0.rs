@@ -9655,46 +9655,30 @@ pub fn EnemyFunc_BF8A(k: uint16, a: uint16, amt: int32, game: &mut Game) -> uint
         block_offset += 2;
     }
 }
-pub unsafe fn CalculateAngleOfSamusFromEproj(mut k: uint16, game: &mut Game) -> uint16 {
-    let mut j: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    return CalculateAngleFromXY(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(j as isize) as ::core::ffi::c_int) as uint16,
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(j as isize) as ::core::ffi::c_int) as uint16,
-        game,
-    );
+pub unsafe fn CalculateAngleOfSamusFromEproj(k: uint16, game: &mut Game) -> uint16 {
+    let x = game
+        .samus_x_pos()
+        .wrapping_sub(game.enemy_projectile_x_pos(k));
+    let y = game
+        .samus_y_pos()
+        .wrapping_sub(game.enemy_projectile_y_pos(k));
+    CalculateAngleFromXY(x, y, game)
 }
-pub unsafe fn CalculateAngleOfSamusFromEnemy(mut k: uint16, game: &mut Game) -> uint16 {
-    let mut E: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);
-    return CalculateAngleFromXY(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - (*E).x_pos as ::core::ffi::c_int) as uint16,
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - (*E).y_pos as ::core::ffi::c_int) as uint16,
-        game,
-    );
+pub unsafe fn CalculateAngleOfSamusFromEnemy(k: uint16, game: &mut Game) -> uint16 {
+    let x = GetSamusEnemyDelta_X(k, game);
+    let y = GetSamusEnemyDelta_Y(k, game);
+    CalculateAngleFromXY(x, y, game)
 }
-pub unsafe fn CalculateAngleOfEnemyXfromEnemyY(
-    mut k: uint16,
-    mut j: uint16,
-    game: &mut Game,
-) -> uint16 {
-    let mut Ek: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);
-    let mut Ej: *mut EnemyData = gEnemyData(j as ::core::ffi::c_int, game);
-    return CalculateAngleFromXY(
-        ((*Ek).x_pos as ::core::ffi::c_int - (*Ej).x_pos as ::core::ffi::c_int) as uint16,
-        ((*Ek).y_pos as ::core::ffi::c_int - (*Ej).y_pos as ::core::ffi::c_int) as uint16,
-        game,
-    );
+pub unsafe fn CalculateAngleOfEnemyXfromEnemyY(k: uint16, j: uint16, game: &mut Game) -> uint16 {
+    let x = game
+        .enemy_coordinates(k)
+        .x_pos()
+        .wrapping_sub(game.enemy_coordinates(j).x_pos());
+    let y = game
+        .enemy_coordinates(k)
+        .y_pos()
+        .wrapping_sub(game.enemy_coordinates(j).y_pos());
+    CalculateAngleFromXY(x, y, game)
 }
 unsafe fn CalculateAngleFromXY_0(mut div: uint16, game: &mut Game) -> uint8 {
     return ((div as ::core::ffi::c_int >> 3 as ::core::ffi::c_int) + 64 as ::core::ffi::c_int)

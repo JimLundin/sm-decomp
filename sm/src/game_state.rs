@@ -352,6 +352,18 @@ impl Game {
         u16::from_le_bytes([self.g_ram[offset], self.g_ram[offset + 1]])
     }
 
+    /// Enemy projectile X position ($7E:1A4B in ram_map); odd indexes round down.
+    pub fn enemy_projectile_x_pos(&self, index: u16) -> u16 {
+        let offset = 0x1a4b + usize::from(index & !1);
+        u16::from_le_bytes([self.g_ram[offset], self.g_ram[offset + 1]])
+    }
+
+    /// Enemy projectile Y position ($7E:1A93 in ram_map); odd indexes round down.
+    pub fn enemy_projectile_y_pos(&self, index: u16) -> u16 {
+        let offset = 0x1a93 + usize::from(index & !1);
+        u16::from_le_bytes([self.g_ram[offset], self.g_ram[offset + 1]])
+    }
+
     /// Room width in blocks ($7E:07A5 in ram_map).
     pub fn room_width_in_blocks(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0x7a5], self.g_ram[0x7a6]])

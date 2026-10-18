@@ -2065,6 +2065,21 @@ functions -1, cast lines -27, Rust lines -10; other counters unchanged.
 Next: adjacent Samus/projectile/enemy angle wrappers, retaining wrapped
 deltas, odd projectile index rounding and callback argument capture.
 
+The three Samus/projectile/enemy angle wrappers now use named coordinate
+reads and explicit wrapped deltas. Projectile word indexes still round odd
+byte offsets down at the odd 1A4B/1A93 bases; enemy-to-enemy arguments retain
+k-minus-j direction. Both deltas are captured before the single angle call,
+including mutating callbacks. Unsafe remains only for that legacy helper.
+Prior Rust comparison passes 1,966,080 return/full-RAM/callback-argument
+checks; independent comparison passes 3,352,512 checks across all coordinate
+and index words plus random high/odd/overlapping slots. Stable optimized
+core/DLL build and direct full-source format pass; Cargo fmt/build remain
+ASR-denied. Any%: 129,712 frames, zero failures (196.33s); Waver route:
+58,109 frames, zero failures (93.90s). Raw offsets -6, cast lines -20,
+Rust lines -4; other counters unchanged. Next: CalculateAngleFromXY direct
+quadrant arithmetic, retaining wrapped magnitudes, low-byte denominators
+and zero-denominator division behavior.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
