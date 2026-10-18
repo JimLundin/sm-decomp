@@ -4587,6 +4587,32 @@ and its post-interpreter input-copy stores, then clean executed RAM accesses
 while retaining live reads and copy order. Set 3, uncovered demo operations/
 preinstructions and stopped ammo coverage remain held.
 
+DemoObjectInputHandler now uses named byte-backed enable/pointer gates and
+six ordered input-copy stores. The interpreter call remains before every
+live source read. Previous input/new-input go to Samus filters before current
+input updates joypad/history; each repeated input read stays separate. Copies
+still run after Finish clears the instruction pointer. Eleven accessors
+match ram_map at 008B/008F/0A84/0A86/0A88/0A8C/0A8E/0DFE/0E00; shared HDMA
+aliases stay byte-compatible. Unsafe remains at the interpreter boundary.
+
+Committed 7de5cf47 baseline attract passes 30,000/0 (64.07s), native exit 0.
+Baseline and rewritten attract observe 13,294 handler entries and 13,292
+post-interpreter copy sequences, all Rust side 2; complete entry/copy traces
+match. All 13,292 copied-word observations retain equal joypad/history pairs;
+the SNES-counter-19,711 Finish call copies zero current/new inputs afterward.
+Removing observations restores exact maintained source. Rewritten Verified 30000 frames: 0 failing frames (53.53s);
+Start-exit Verified 5000 frames: 0 failing frames (9.88s); full any% Verified 129712 frames: 0 failing frames (230.77s); native exits 0.
+Dedicated source freezes 7de5cf47 plus this sm_91.rs/game_state.rs change;
+concurrent oracle/runtime/display changes need their own integration checks.
+Direct full-source rustfmt check, optimized core/DLL and normal-core metadata
+builds pass. Required Cargo fmt/check/build attempts remain denied launching
+Cargo (OS error 5). Progress passes: raw offsets -14, cast lines -17;
+Rust lines +24 provide eleven field accessors, other focused counters unchanged.
+No probes or ROM-derived assets committed. Next: measure EnableDemoInput,
+DisableDemoInput and ResetDemoData calls, then clean executed enable/reset
+stores while retaining ordered writes and shared HDMA aliases. Set 3,
+uncovered demo operations/preinstructions and stopped ammo coverage remain held.
+
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
 the original `SignExtend8(0x8000)` initialization and the middle-byte velocity

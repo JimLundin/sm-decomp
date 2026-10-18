@@ -1063,40 +1063,15 @@ pub unsafe fn LoadDemoInputObject(mut a: uint16, mut j: uint16, game: &mut Game)
         as *mut uint16) = 0 as uint16;
 }
 pub unsafe fn DemoObjectInputHandler(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa88 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
-    {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xa7e as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            != 0
-        {
+    if game.demo_enable() & 0x8000 != 0 {
+        if game.demo_input_instr_ptr() != 0 {
             ProcessDemoInputObject(game);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdfe as ::core::ffi::c_int as isize)
-                as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xa8c as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe00 as ::core::ffi::c_int as isize)
-                as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xa8e as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x8b as ::core::ffi::c_int as isize)
-                as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xa84 as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa8c as ::core::ffi::c_int as isize)
-                as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xa84 as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-                as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xa86 as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa8e as ::core::ffi::c_int as isize)
-                as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xa86 as ::core::ffi::c_int as isize)
-                as *mut uint16);
+            game.set_joypad1_input_samusfilter(game.demo_input_prev());
+            game.set_joypad1_newinput_samusfilter(game.demo_input_prev_new());
+            game.set_joypad1_lastkeys(game.demo_input());
+            game.set_demo_input_prev(game.demo_input());
+            game.set_joypad1_newkeys(game.demo_input_new());
+            game.set_demo_input_prev_new(game.demo_input_new());
         }
     }
 }

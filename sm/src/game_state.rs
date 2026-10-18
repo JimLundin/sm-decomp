@@ -342,6 +342,10 @@ impl Game {
         u16::from_le_bytes([self.g_ram[0x8b], self.g_ram[0x8c]])
     }
 
+    pub fn set_joypad1_lastkeys(&mut self, value: u16) {
+        self.g_ram[0x8b..0x8d].copy_from_slice(&value.to_le_bytes());
+    }
+
     /// input_to_pose_calc ($7E:0DC6 in ram_map).
     pub fn set_input_to_pose_calc(&mut self, value: u16) {
         self.g_ram[0xdc6..0xdc8].copy_from_slice(&value.to_le_bytes());
@@ -662,13 +666,54 @@ impl Game {
     }
 
     /// demo_input ($7E:0A84 in ram_map).
+    pub fn demo_input(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xa84], self.g_ram[0xa85]])
+    }
+
     pub fn set_demo_input(&mut self, value: u16) {
         self.g_ram[0xa84..0xa86].copy_from_slice(&value.to_le_bytes());
     }
 
     /// demo_input_new ($7E:0A86 in ram_map).
+    pub fn demo_input_new(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xa86], self.g_ram[0xa87]])
+    }
+
     pub fn set_demo_input_new(&mut self, value: u16) {
         self.g_ram[0xa86..0xa88].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// demo_enable ($7E:0A88 in ram_map), shared with hdma_ptr_1.
+    pub fn demo_enable(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xa88], self.g_ram[0xa89]])
+    }
+
+    /// demo_input_prev ($7E:0A8C in ram_map).
+    pub fn demo_input_prev(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xa8c], self.g_ram[0xa8d]])
+    }
+
+    pub fn set_demo_input_prev(&mut self, value: u16) {
+        self.g_ram[0xa8c..0xa8e].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// demo_input_prev_new ($7E:0A8E in ram_map), shared with hdma_ptr_3.
+    pub fn demo_input_prev_new(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xa8e], self.g_ram[0xa8f]])
+    }
+
+    pub fn set_demo_input_prev_new(&mut self, value: u16) {
+        self.g_ram[0xa8e..0xa90].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// joypad1_input_samusfilter ($7E:0DFE in ram_map).
+    pub fn set_joypad1_input_samusfilter(&mut self, value: u16) {
+        self.g_ram[0xdfe..0xe00].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// joypad1_newinput_samusfilter ($7E:0E00 in ram_map).
+    pub fn set_joypad1_newinput_samusfilter(&mut self, value: u16) {
+        self.g_ram[0xe00..0xe02].copy_from_slice(&value.to_le_bytes());
     }
 
     /// frame_handler_alfa ($7E:0A42 in ram_map).
@@ -734,6 +779,10 @@ impl Game {
     /// joypad1_newkeys ($7E:008F in ram_map).
     pub fn joypad1_newkeys(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0x8f], self.g_ram[0x90]])
+    }
+
+    pub fn set_joypad1_newkeys(&mut self, value: u16) {
+        self.g_ram[0x8f..0x91].copy_from_slice(&value.to_le_bytes());
     }
 
     /// collision_detection_index ($7E:18A6 in ram_map).
