@@ -111,6 +111,20 @@ not yet enforced. Next: classify all twelve mismatch frames and compare
 upload-aware queue consumption before comparing the driver against emulated
 SPC/DSP. No maintained Rust source or residue counters changed in this probe.
 
+All twelve any% sound mismatches are now classified on gameplay source
+bee5c66a: frames 150, 43188, 43542, 44392, 44810, 44965, 45544, 47613,
+48322, 95066, 97204 and 97542. Every one coincides with a Rust sound upload,
+game state 1, room 0000 and an empty queue; every one is the same
+[00, FF, 00, FF] versus [00, 00, 00, 00] difference. No gameplay queued-port
+mismatch occurs in full any%. Multiple startup/reset passes in the imported
+inputs explain the repeated cases. This narrows the problem to reset/upload
+command handling, rather than twelve distinct gameplay regressions. The
+classifier passes 129,712 frames with zero enforced RAM/palette/pixel
+failures. Upload contents, write ordering and driver output are still
+uncompared, so this does not establish sound equivalence. Next: isolate
+reset/upload queue consumption and prove its driver effects before enforcing
+sound checks. Probe changes stayed outside maintained source; counters unchanged.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
