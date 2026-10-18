@@ -3597,6 +3597,36 @@ boundary analysis. SNES clock/IRQ latch state and full hardware event ordering
 remain separate omissions before hardware-clock scheduling can replace the
 paired yield loop. Rendering/HDMA, audio timing and credits gaps remain open.
 
+PPU load brightness-cache audit (2026-10-18): brightness is inside the
+serialized PPU range, while lastBrightnessMult and lookup tables are outside.
+This omission does not by itself imply incorrect continuation: coherent later
+caches either already match the restored brightness or regenerate on the next
+actual row. No additional invalidation is justified by the observed behavior.
+
+Actual SaveSnesState/LoadSnesState continuation checks pass16,384 rows and
+4,194,304 independently expected backdrop pixels. Coverage is all16 saved
+brightness values x16 later brightness values x32 backdrop levels xhalf/full,
+with fixed RGB3, addition, mode1, forcedBlank false and whole-line rendering.
+The later state is actually rendered before load to generate its coherent
+cache. Load restores saved brightness and retains the later generation marker;
+the next row restores the original row and sets the marker to saved brightness.
+1,024 rows exercise coherent cache reuse;15,360 exercise regeneration. The
+expected pixel model independently expands five-bit levels and scales by
+brightness. Probe nativeexit0. Arbitrary corrupted caches, populated BG/OBJ,
+windows, subscreen, subtraction and public filesystem brightness round trips
+are outside this audit; prior fault/cache probes retain their own scope.
+
+No maintained source or save-format changes. Only this note is committed;
+progress script and full-source rustfmt check pass, direct optimized diagnostic
+core/DLL builds pass. No new movie result is claimed for this documentation-
+only audit. Routing repair34e671a9 retains its explicit public save/load and
+replay evidence; ordinary any%/Waver passes remain limited by uninitialized
+headless disableRender. Next: remaining saved renderer-state dependencies and
+actual rendered coverage, without revisiting the held HDMA diagnosis. Enabled-
+render Waver71 failures, hires sample loss, audio timing, masked RAM, shared
+hardware accuracy and complete boot-to-credits coverage remain open. Probe/
+ROM-derived assets stay ignored; concurrent working edits remain separate.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
