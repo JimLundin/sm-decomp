@@ -324,6 +324,21 @@ impl Game {
         self.g_ram[0xb14..0xb16].copy_from_slice(&value.to_le_bytes());
     }
 
+    /// samus_new_pose ($7E:0A28 in ram_map).
+    pub fn set_samus_new_pose(&mut self, value: u16) {
+        self.g_ram[0xa28..0xa2a].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_new_pose_interrupted ($7E:0A2A in ram_map).
+    pub fn set_samus_new_pose_interrupted(&mut self, value: u16) {
+        self.g_ram[0xa2a..0xa2c].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_new_pose_transitional ($7E:0A2C in ram_map).
+    pub fn set_samus_new_pose_transitional(&mut self, value: u16) {
+        self.g_ram[0xa2c..0xa2e].copy_from_slice(&value.to_le_bytes());
+    }
+
     /// samus_pose_x_dir ($7E:0A1E in ram_map); this is a byte, not a word.
     pub fn samus_pose_x_dir(&self) -> u8 {
         self.g_ram[0xa1e]

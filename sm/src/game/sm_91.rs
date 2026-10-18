@@ -4907,12 +4907,9 @@ pub unsafe fn Samus_Initialize(game: &mut Game) {
                 as *mut uint16) = r18;
         }
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa28 as ::core::ffi::c_int as isize)
-        as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa2a as ::core::ffi::c_int as isize)
-        as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa2c as ::core::ffi::c_int as isize)
-        as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
+    game.set_samus_new_pose(u16::MAX);
+    game.set_samus_new_pose_interrupted(u16::MAX);
+    game.set_samus_new_pose_transitional(u16::MAX);
     if *((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         == 6 as ::core::ffi::c_int

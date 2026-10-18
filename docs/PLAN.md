@@ -2701,6 +2701,28 @@ unchanged. Concurrent audio lines are separate. No probe or ROM-derived
 assets are committed. Next: initialization callback/pose setup fields,
 retaining live reads and store order; the stopped ammo route stays held.
 
+Samus initialization's three pending-pose sentinels now use named
+byte-backed setters for samus_new_pose, samus_new_pose_interrupted and
+samus_new_pose_transitional at 0A28/0A2A/0A2C. Each still writes FFFF,
+in that order, after the initial callback branch and before the live
+area-index read. No branch, callback or RAM layout changes.
+
+The observed boot/gunship replay passes 22,631/0 (44.58s), native exit 0.
+Each changed store executes on Rust side 2 at SNES counters 298, 8,256
+and 20,817; its immediate read-back is FFFF and the three addresses retain
+their order. Removing each observation restores the preceding source
+exactly. Full any% passes 129,712/0 (229.01s), native exit 0, on committed
+a53c3331 source with only this sm_91.rs/game_state.rs change. Later
+concurrent brightness-cache and audio commits are outside that replay's
+scope. These calls establish the changed unconditional stores, not all
+initialization branches. Cargo fmt/check, optimized core/DLL and normal-
+core metadata builds pass; Cargo release remains denied at khronos_api's
+build script (OS error 5). Raw offsets -3, cast lines -6; Rust lines +12
+provide the three named setters. Other gameplay counters unchanged.
+No probe or ROM-derived assets are committed. Next: initialization callback
+setup fields, preserving live reads and the original callback/store order;
+the stopped ammo route remains held.
+
 
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
