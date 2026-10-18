@@ -1959,6 +1959,39 @@ this note are staged; ROM/probe assets stay ignored. No Ppu/RAM/save layout
 changes. Remaining hardware accuracy, other display state, audio timing,
 HDMA, masked RAM and boot-to-credits coverage gaps stay open.
 
+INIDISP snapshot gap (2026-10-18): brightness and forcedBlank, written
+by $2100, are absent from current frame snapshots. An isolated actual
+MakeSnapshot/VerifySnapshotsEq/RestoreSnapshot probe demonstrates both faults
+are accepted and survive rewind. From saved brightness15/nonblank white,
+brightness7 renders the next row [119,119,119,0] rather than[255,255,255,0];
+forcedBlank renders[0,0,0,0] rather than white. The probe compares unchanged
+registered frame buffers before continuation, so detection is not attributed
+to a coincident current-pixel difference. This proves future output can differ
+after an accepted snapshot; no natural movie divergence is claimed.
+
+An independent byte brightness model passes1,024 actual default whole-line
+rows (two blank states x16 brightness values x32 varying RGB palettes),
+checking all262,144 pixel positions. All256 actual $2100 writes also match
+brightness low-nibble / forced-blank high-bit selection, including ignored
+bits. Native exit0. Production PPU body matches82d97424 after appended wrapper
+removal. Frozen snapshot source contains the concurrent audio WIP and omits
+both fields; no audio equivalence claim is made from this probe.
+
+The constructed rows use backdrop only, no enabled BG/sprites, no color math,
+windows, interlace or pseudo-hires, with brightness cache recalculation forced.
+They demonstrate actual render behavior, not every brightness/cache state or
+SNES accuracy. Next focused change: capture/restore/compare both INIDISP fields,
+prove equal/bidirectional restored state and next-row behavior, then exercise
+actual frame faults and final-source replays. Keep derived brightness cache
+classification separate; do not restore $2100 through writes that alter other
+state. Coordinate cpu_infra changes with the active audio snapshot session.
+
+No maintained source or this probe's residue counters changed. Cargo
+fmt --check and optimized isolated probe build pass. Existing82d97424 any%
+129,712/0 andWaver58,109/0 remain that source's general regression results.
+Probe/ROM-derived assets stay ignored. Shared renderer accuracy, other display
+state, audio timing, HDMA, masked RAM and boot-to-credits gaps remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
