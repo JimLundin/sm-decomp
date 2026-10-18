@@ -8480,6 +8480,65 @@ frontend linking still lacks SDL2. Live source matches verified source.
 Unsafe functions -1; other counters unchanged. Complete gameplay and
 rendering/audio remain open.
 
+9B9D four-kill quota and map-acquired return to9AD9 verified
+(2026-10-19): read-only EnemyData position/HP observations andE50/E52
+show the prior standing-fire trial kills the platform crawler at71285,
+quota1/4. Retain return-standing-fire.inputs through71372, aliveX341/Y80,
+health9. The later fatal collision isD93F nearX580, not the lower crawler.
+Up/shoot160 from that prefix does not kill it. Right/run/shoot25,
+shoot160, neutral30 stopsX437/Y75, killsD93F and collects5health:
+71587/71 (171.23s), health14, quota2/4. Retain enemy-pirate-fire.inputs.
+Right/run/shoot40, shoot240, neutral30 kills the east crawler and
+collects5health:71897/71 (168.21s), X625/Y139 health19, quota3/4.
+Only the west crawler remains atX40/Y84, HP30. The alternate Bomb trial
+leaves the east crawler10HP alive; do not retain it as a third-kill prefix.
+
+Westward jump/run attempt stops at platform edgeX517/Y153, health19:
+72286/71 (157.26s). Up1, neutral20, left/jump/shoot65,
+left/run/shoot45, neutral20, Down1, neutral8, Down1, neutral12,
+left30, shoot1, neutral90, left/shoot55, neutral30, shoot1,
+neutral90, left/shoot100, neutral30 crosses both Bomb blocks and
+kills the last crawler at72725. Quota4/4, all four enemy slots absent.
+This suffix takes10contact damage; at72755 X37/Y153 health9.
+The full suffix accidentally exits west to9C35:72886/71 (157.17s).
+Retain enemy-west-edge.inputs only through72756, before that transition.
+The gray door PLM has advanced toBE9C with linkBEA8 after quota completion.
+
+From that retained four-kill prefix: Up1, neutral20, Jump10,
+Down/Jump1, Jump2, Down/Jump1, right/Jump20, right45, shoot1,
+neutral90, right/shoot70, neutral30, shoot1, neutral90,
+right/shoot165, neutral30, Up1, neutral20, right/run/shoot110,
+neutral120 crosses the now-cleared room and opens the east gray door.
+Transition73378,9AD9 load73396, gameplay73483 X39/Y1163.
+FinalX60/Y1163 health14/199 map1, missiles0/5, items1004:
+73584/71 (159.25s), nativeexit1. Retain quota-east-tunnel.inputs.
+The observed5health gain during this crossing is recorded without claiming
+a particular drop source. No RAM/ROM edits or injected state are used.
+The return item is complete within its one-hour allowance.
+
+All nine ordered diagnostics exactly match frozen d217ea15 Waver71;
+no new failing frames. Completed replays, all nativeexit1:
+enemy-standing-probe: 71602/71 (169.41s)
+enemy-fresh-crouch: 71623/71 (170.23s)
+enemy-aim-up: 71802/71 (171.14s)
+enemy-pirate-fire: 71587/71 (171.23s)
+enemy-east-fire: 71897/71 (168.21s)
+enemy-east-bomb: 71811/71 (169.37s)
+enemy-west-return: 72286/71 (157.26s)
+enemy-west-edge: 72886/71 (157.17s)
+quota-east-tunnel: 73584/71 (159.25s)
+
+Next: inspect accessible alternate exits from the returned9AD9 prefix,
+including door requirements, then verify onward normal-input passage.
+Held9AD9 ammunition, upper99BD ascent, cliff tuning and HDMA stay held.
+Frozen same-DLL explicit-render any%129712/0 (414.98s) remains input-only
+regression; peer hardware owns its replays. Cargo fmt/check, release-library
+build and progress pass; full frontend release link still lacksSDL2.
+Own maintained-source/residue delta zero. ROM-derived observations/inputs
+stay ignored; peer owns hardware edits, cleanup and remote sync. Credits,
+complete gameplay/hardware, render/audio fidelity, masked RAM and ownership
+remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
