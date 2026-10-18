@@ -4052,6 +4052,24 @@ Rust/residue counters unchanged. Next: audit remaining DMA execution context
 without resuming held HDMA diagnosis. Rendering initialization/Waver71,
 WRIO/autojoy, interrupt events, audio timing and credits coverage stay open.
 
+Independent WRAM-port rewind QC (2026-10-18): the live candidate's
+production snapshot body matches the frozen tested source. Actual2181..2183
+writes select every131,072 valid port addresses. Capture,2180 read/write
+mutation and rewind restore both RAM and ramAdr. Real byte-mode CPU LDA/STA
+absolute then read/write2180 at the saved address, increment once and wrap
+1FFFF to0. All262,144 continuations pass, nativeexit0. Addresses overlapping
+the TEMP instruction bytes are explicitly checked against the bytes actually
+fetched/written. Removing only ramAdr restoration fails the first saved
+address comparison (2 instead of0). This establishes CPU-port continuation,
+not DMA transfer timing, every DMA mode or natural port use on movie frames.
+
+No production source change in this QC. Direct full-source rustfmt,
+normal-core metadata, optimized core/DLL and progress checks pass. Only this
+note is committed; probes stay TEMP, no fresh movie result claimed. The
+implementation session owns the focused production restore and its BOTH
+success/recovery/debug integration. WRIO/autojoy, DMA context, event timing,
+enabled-render Waver71, held HDMA and boot-to-credits remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
