@@ -4928,6 +4928,25 @@ proves executed maintained register semantics, not SNES event/autojoy timing.
 Movie integration, rendering/Waver71, recovery integration, audio timing and
 credits remain separately open. Held HDMA diagnosis remains stopped.
 
+Independent rendered Waver recovery integration (2026-10-18): frozen current
+source after recovery draw fix 9976a0e6 replays the full 58,109-frame
+west-door-contact.inputs route with explicit disableRender=false. It retains
+the established 71 failing frames (184.24s), native exit 1, with no additional
+failure count. The first is still frame 28,228, pixel (255,223), channel byte
+1: 00 versus 84, with zero differing RAM bytes. TEMP observations confirm
+the new recovery DrawFrameToPpu call actually executes 71 times, once per
+natural failing frame. This is a rendered regression check of the changed
+recovery path, not a clean Waver result or resolution of its pixel defect.
+
+The full frozen comparison/recovery body matches live after removing only
+the TEMP counter. Frozen source also contains then-pending CPU fetch, PPU
+M7SEL and SNES register-read edits; later changes need separate integration.
+Optimized frozen core/DLL, normal-core metadata, direct full-source rustfmt
+and progress pass. Only this note changes; no maintained code/residue or
+tooling is added. ROM/movie/probe assets stay ignored or TEMP. The independent
+held HDMA table/window diagnosis is not resumed. Rendering initialization,
+Waver71, hires, hardware/audio timing, masked RAM and credits remain open.
+
 Current broad-route revalidation (2026-10-18): committed d217ea15 source
 replays the retained 62,817-frame lead-9ad9-arrive.inputs through the standard
 verifier, passing 62,817/0 (117.57s), native exit 0. It observes 48,819
