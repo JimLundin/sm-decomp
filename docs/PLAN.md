@@ -833,6 +833,38 @@ is now classified, not exempted: upload equality and audible equivalence
 remain unproved. Next: compare additional gameplay-selected bank payloads
 through actual ROM upload calls before choosing an enforcement boundary.
 
+Gameplay-selected bank payload audit (2026-10-18): complete actual ROM
+selection records from full any% (34 calls) and the 59,942-frame 99BD route
+(13 calls) identify nine distinct banks. An isolated harness links the
+earlier 3eac6b6a payload-audit library, boots 400 frames with the ROM upload
+enabled, then invokes actual ROM 80:8028 for the six additional sources.
+Direct page zero, clear ROM upload guard, receiver D7 14, exact source
+sequence and completed/empty transaction guards pass. A 30-second child
+process timeout bounds each suite case. No shared payload parser supplies
+the independently observed SPC and actual Rust assignment streams.
+
+All nine complete ordered destination/value streams match: 213,479 writes,
+including 114,862 from the six new banks. New-bank counts are DCFAC7 13,861,
+DAD63B 19,900, D9B67B 16,202, D7BF73 23,079, D1B62A 21,128 and D288CA
+20,692. The normal suite returns native exit 0. Value, destination and
+omission faults in the captured Rust vector each fail at transaction 3,
+byte 17 and return native exit 1. These controls mutate observations, not
+the Rust upload producer. Independent source/record reviews find no blocker.
+
+This covers the banks observed in those two recorded routes through
+constructed sequential ROM calls. It does not prove natural upload order,
+unobserved banks, arbitrary receiver code, terminator/reset effects,
+handshake or sample timing. Full any% source equality still fails at the
+classified reset bypasses; this payload result does not exempt them.
+Maintained Rust and residue counters are unchanged. Cargo fmt --check and
+the isolated optimized harness build pass; Cargo release remains denied
+executing khronos_api's build script (OS error 5). This frozen-source payload
+probe is not a current-source gameplay integration replay. All diagnostic
+code/logs and ROM-derived data remain outside tracked files. Next: compare
+upload terminator/reset effects and command-latch delivery independently
+before adding upload enforcement. Complete route/audio equivalence remains
+unproved.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read
