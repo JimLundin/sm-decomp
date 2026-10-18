@@ -5378,6 +5378,21 @@ Probes/ROM assets remain ignored; only the recovery line and this note are
 committed. Enabled-render Waver71, hires, hardware/audio timing, masked RAM
 and boot-to-credits remain open; held HDMA diagnosis stays stopped.
 
+Independent debug-retry continuation QC (2026-10-18): two explicitly
+rendered any% 10,000-frame runs force one failure at 200 or 9,000, enter
+the actual debug continue once, then clear only the TEMP debug flag to bound
+the retry. Each selected frame executes two ROM/Rust attempts and one retry;
+both runs finish with exactly one intentional failure, native exit 1,
+28.48s/31.70s and no cascade. After the successful retry, serialized PPU
+bytes and all 256x240 BGRA pixels equal the completed second ROM attempt;
+independent PPU copies execute STAT78 reads yielding 83/83. The reference
+updates on each attempt; no first-attempt parity equality is assumed.
+Normal failure rerun DrawFrameToPpu is bypassed by debug continue, so this
+extends retry continuation coverage rather than proving execution of that
+new line. Renderer caches after lastBrightnessMult and natural debug retry
+failures remain outside this probe. Optimized probe core/DLL, direct full
+format and progress pass; only the note changes and probes stay TEMP.
+
 Actual CPU bus-clock gap audit (2026-10-18):4,096 snes_cpuRead
 controls cover every byte counter seed xMEMSEL off/on xeight addresses:
 WRAM7E1000, low-bank RAM001000, PPU002100, arithmetic004214, controller004218,
