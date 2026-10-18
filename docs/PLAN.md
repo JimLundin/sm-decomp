@@ -6514,6 +6514,36 @@ audio timing, rendering/Waver71, masked RAM and credits remain open. Held
 HDMA diagnosis stays stopped. Continue executed hardware paths and route
 coverage with useful independent subagents.
 
+APU catchup cleanup (2026-10-18): snes_catchupApu uses native float
+literals, a frozen i32 cycle count, a range loop and f64::from subtraction.
+The positive 10000 clamp, saturating Rust float cast, empty negative loops,
+per-cycle APU pointer read and subtraction from live callback-modified debt
+remain exact. Actual old/current routine/callback comparisons pass 80,032
+cases over integer/fractional debts, signed zero, subnormals, infinities,
+NaN payloads, i32 edges and optional per-cycle debt mutation. Cycle traces
+and exact final float bits match independent expectations.
+
+Independent real-APU QC passes 352 pairs: 22 edge debts, eight evolving APU
+contexts and callback-debt mutation off/on. Real apu_cycle counts and cloned
+APU/SPC/DSP state plus remainder bits match. A callback overwrites debt 123.5;
+final subtraction retains that live mutation. One fewer cycle is detected,
+native assertion exit 3221226505. Read-only subagent review finds no defect.
+The actual fixture initially referenced a nonexistent owner field, corrected
+before successful execution; no production behavior changed by probe setup.
+
+Instrumented any% passes 12,000/0 (26.06s), native exit 0, with zero catchup
+hits; direct real-APU cases supply execution coverage. Clean frozen 990e70fe
+plus only this routine passes any% 129,712/0 (244.77s), native exit 0. Direct
+full-source format, normal-core metadata and optimized clean/probe core/DLL
+builds pass. Cargo fmt/build --release remain denied at cargo.exe launch;
+that required check stays unmet. Probe matches maintained routine after
+stripping counters/substitution. Progress/diff pass: focused cast lines -4,
+Rust lines -2, other categories unchanged. Later peer integration, hardware/
+audio scheduling, rendering/Waver71, masked RAM and credits remain open.
+Preserving catchup behavior does not establish audio timing equivalence.
+Held HDMA diagnosis stays stopped. Continue executed hardware paths and
+route coverage with useful independent subagents.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

@@ -182,17 +182,15 @@ pub unsafe fn snes_handle_pos_stuff(mut snes: *mut Snes, game: &mut Game) {
         }
     }
 }
-pub unsafe fn snes_catchupApu(mut snes: *mut Snes, game: &mut Game) {
-    if (*snes).apuCatchupCycles > 10000 as ::core::ffi::c_int as ::core::ffi::c_double {
-        (*snes).apuCatchupCycles = 10000 as ::core::ffi::c_int as ::core::ffi::c_double;
+pub unsafe fn snes_catchupApu(snes: *mut Snes, game: &mut Game) {
+    if (*snes).apuCatchupCycles > 10000.0 {
+        (*snes).apuCatchupCycles = 10000.0;
     }
-    let mut catchupCycles: ::core::ffi::c_int = (*snes).apuCatchupCycles as ::core::ffi::c_int;
-    let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    while i < catchupCycles {
+    let cycles = (*snes).apuCatchupCycles as i32;
+    for _ in 0..cycles {
         apu_cycle((*snes).apu, game);
-        i += 1;
     }
-    (*snes).apuCatchupCycles -= catchupCycles as ::core::ffi::c_double;
+    (*snes).apuCatchupCycles -= f64::from(cycles);
 }
 pub unsafe fn snes_readBBus(snes: *mut Snes, address: u8, game: &mut Game) -> u8 {
     match address {
