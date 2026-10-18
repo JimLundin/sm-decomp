@@ -337,36 +337,29 @@ unsafe fn spc_readOpcodeWord(mut spc: *mut Spc) -> uint16_t {
         | (spc_readOpcode(spc) as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
         as uint16_t;
 }
-unsafe fn spc_getFlags(mut spc: *mut Spc) -> uint8_t {
-    let mut val: uint8_t = (((*spc).n as ::core::ffi::c_int) << 7 as ::core::ffi::c_int) as uint8_t;
-    val = (val as ::core::ffi::c_int | ((*spc).v as ::core::ffi::c_int) << 6 as ::core::ffi::c_int)
-        as uint8_t;
-    val = (val as ::core::ffi::c_int | ((*spc).p as ::core::ffi::c_int) << 5 as ::core::ffi::c_int)
-        as uint8_t;
-    val = (val as ::core::ffi::c_int | ((*spc).b as ::core::ffi::c_int) << 4 as ::core::ffi::c_int)
-        as uint8_t;
-    val = (val as ::core::ffi::c_int | ((*spc).h as ::core::ffi::c_int) << 3 as ::core::ffi::c_int)
-        as uint8_t;
-    val = (val as ::core::ffi::c_int | ((*spc).i as ::core::ffi::c_int) << 2 as ::core::ffi::c_int)
-        as uint8_t;
-    val = (val as ::core::ffi::c_int | ((*spc).z as ::core::ffi::c_int) << 1 as ::core::ffi::c_int)
-        as uint8_t;
-    val = (val as ::core::ffi::c_int | (*spc).c as ::core::ffi::c_int) as uint8_t;
-    return val;
+unsafe fn spc_getFlags(spc: *mut Spc) -> u8 {
+    (u8::from((*spc).n) << 7)
+        | (u8::from((*spc).v) << 6)
+        | (u8::from((*spc).p) << 5)
+        | (u8::from((*spc).b) << 4)
+        | (u8::from((*spc).h) << 3)
+        | (u8::from((*spc).i) << 2)
+        | (u8::from((*spc).z) << 1)
+        | u8::from((*spc).c)
 }
-unsafe fn spc_setFlags(mut spc: *mut Spc, mut val: uint8_t) {
-    (*spc).n = val as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0;
-    (*spc).v = val as ::core::ffi::c_int & 0x40 as ::core::ffi::c_int != 0;
-    (*spc).p = val as ::core::ffi::c_int & 0x20 as ::core::ffi::c_int != 0;
-    (*spc).b = val as ::core::ffi::c_int & 0x10 as ::core::ffi::c_int != 0;
-    (*spc).h = val as ::core::ffi::c_int & 8 as ::core::ffi::c_int != 0;
-    (*spc).i = val as ::core::ffi::c_int & 4 as ::core::ffi::c_int != 0;
-    (*spc).z = val as ::core::ffi::c_int & 2 as ::core::ffi::c_int != 0;
-    (*spc).c = val as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0;
+unsafe fn spc_setFlags(spc: *mut Spc, val: u8) {
+    (*spc).n = val & 0x80 != 0;
+    (*spc).v = val & 0x40 != 0;
+    (*spc).p = val & 0x20 != 0;
+    (*spc).b = val & 0x10 != 0;
+    (*spc).h = val & 0x08 != 0;
+    (*spc).i = val & 0x04 != 0;
+    (*spc).z = val & 0x02 != 0;
+    (*spc).c = val & 0x01 != 0;
 }
-unsafe fn spc_setZN(mut spc: *mut Spc, mut value: uint8_t) {
-    (*spc).z = value as ::core::ffi::c_int == 0 as ::core::ffi::c_int;
-    (*spc).n = value as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0;
+unsafe fn spc_setZN(spc: *mut Spc, value: u8) {
+    (*spc).z = value == 0;
+    (*spc).n = value & 0x80 != 0;
 }
 unsafe fn spc_doBranch(mut spc: *mut Spc, mut value: uint8_t, mut check: bool) {
     if check {

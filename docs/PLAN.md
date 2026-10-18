@@ -7455,6 +7455,36 @@ modes, hardware/render/audio timing and credits remain open; held HDMA
 diagnosis stays stopped. Continue executed accumulator/register opcode
 arithmetic; decimal ADC/SBC helpers remain generated.
 
+SPC flags cleanup (2026-10-18): spc_getFlags/spc_setFlags/spc_setZN use
+native byte packing, ordered masks and direct Z/N comparisons. N/V/P/B/H/I/Z/C
+retain bits 7..0; Z/N updates affect only those two flags in their prior order.
+Private pointer interfaces and all instruction/callsite sequencing remain
+unchanged. Read-only subagent finds no defect; only these three helpers change.
+
+Actual old/current helper checks pass 131,328 cases: all packed states and
+all initial-flag/value combinations for unpacking and Z/N, with independent
+mask/result and selected preserved-register expectations. Independent QC
+passes 327,680 actual PUSH PSW, POP PSW, RETI, BRK and MOV immediate old/
+current instruction pairs over all flag bytes and stack/value bytes. Packed
+flags, stack wrapping/order, PC/vector, Z/N, cycles and paired full RAM/state
+pass. Mutating P packing from bit 5 to bit 4 is caught by PUSH (16 versus 32),
+native assertion exit 3221226505. Frozen/live helper equality passes after
+removing only three TEMP hit-counter statements.
+
+Normal instrumented verification passes 3,600/0 (6.16s), native exit 0,
+with no flag-helper calls. Actual ROM/SPC boot with custom audio disabled
+before SnesInit passes 3,600/0 (7.30s), native exit 0, with 8,314,576 Z/N calls
+and zero pack/unpack calls. Constructed actual opcode QC supplies pack/unpack
+execution in context; boot does not establish those paths or audio fidelity.
+Clean frozen e27ca352 plus only these helpers passes any% 129,712/0
+(233.24s), native exit 0. Direct full-source format, normal-core metadata
+and optimized clean/probe core/DLL builds pass; Cargo fmt/check/release remain
+launch-denied, so the required Cargo check stays unmet. Progress/diff pass:
+focused cast lines -18, Rust lines -7; other categories unchanged. Later peer
+integration, hardware/audio timing, rendering/Waver71, masked RAM and credits
+remain open. Held HDMA diagnosis stays stopped. Continue SPC stack/instruction
+helpers with independent subagents; peer owns remote sync.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
