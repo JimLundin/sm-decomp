@@ -1116,6 +1116,29 @@ OS error 5. Diagnostic code/logs and ROM-derived state stay untracked.
 Next: classify the first active sample/state divergence, including upload
 duration and driver command/timer state, before changing runtime behavior.
 
+First active upload difference (2026-10-18): a guarded extension of the
+same fixture locates boot-3,600 divergence at scalar sample zero. Sixteen
+independent DSP/RAM copies test all preparation subsets with either entry
+RAM or the actual instantaneous Rust upload's RAM, before generation.
+At timer phase zero these first 32 stereo samples precede Rust's first
+driver tick. Unchanged entry DSP/RAM reproduces all 64 ROM values; full
+preparation plus uploaded RAM reproduces all 64 actual Rust values.
+EVOLL alone and KOF alone each change scalar zero; EVOLR alone changes
+scalar one. Payload alone first changes scalar 14. Exact signature guards
+pass. Thus immediate register writes and payload replacement each have
+early output effects; no exclusive cause is assigned to echo volume.
+
+Two independent reviews find no blocking causal-copy issue. Actual ROM
+DSP writes begin after seven stereo samples in this span; unchanged-copy
+output equality does not prove those writes leave all state unchanged.
+Three final diagnostics return native exit 0; the copy-sample fault returns
+1. First-cause logs are separate, and the original runtime suite is rerun
+successfully after restoring its log identity. This shared-DSP, constructed
+fixture does not justify removing preparation writes or choosing an arbitrary
+delay. Maintained source/counters stay unchanged; preceding build limits
+apply. Next: test preparation in the executing ROM upload with live SPC
+feedback, then derive a timing change from the actual protocol.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read
