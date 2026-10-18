@@ -198,32 +198,31 @@ pub unsafe fn snes_catchupApu(mut snes: *mut Snes, game: &mut Game) {
     }
     (*snes).apuCatchupCycles -= catchupCycles as ::core::ffi::c_double;
 }
-pub unsafe fn snes_readBBus(mut snes: *mut Snes, mut adr: uint8_t, game: &mut Game) -> uint8_t {
-    if (adr as ::core::ffi::c_int) < 0x40 as ::core::ffi::c_int {
-        return ppu_read((*snes).ppu, adr);
+pub unsafe fn snes_readBBus(snes: *mut Snes, address: u8, game: &mut Game) -> u8 {
+    match address {
+        0x00..=0x3f => ppu_read((*snes).ppu, address),
+        0x40..=0x7f => {
+            (*snes).apuCatchupCycles = 32.0;
+            snes_catchupApu(snes, game);
+            (*(*snes).apu).outPorts[usize::from(address & 3)]
+        }
+        0x80 => {
+            let address = (*snes).ramAdr;
+            (*snes).ramAdr = (*snes).ramAdr.wrapping_add(1);
+            let value = *(*snes).ram.offset(address as isize);
+            (*snes).ramAdr &= 0x1ffff;
+            value
+        }
+        _ => {
+            __assert_fail(
+                b"0\0" as *const u8 as *const ::core::ffi::c_char,
+                b"src/snes/snes.c\0" as *const u8 as *const ::core::ffi::c_char,
+                197 as ::core::ffi::c_uint,
+                b"uint8_t snes_readBBus(Snes *, uint8_t)\0" as *const u8
+                    as *const ::core::ffi::c_char,
+            );
+        }
     }
-    if (adr as ::core::ffi::c_int) < 0x80 as ::core::ffi::c_int {
-        (*snes).apuCatchupCycles = 32 as ::core::ffi::c_int as ::core::ffi::c_double;
-        snes_catchupApu(snes, game);
-        return (*(*snes).apu).outPorts
-            [(adr as ::core::ffi::c_int & 0x3 as ::core::ffi::c_int) as usize];
-    }
-    if adr as ::core::ffi::c_int == 0x80 as ::core::ffi::c_int {
-        let fresh0 = (*snes).ramAdr;
-        (*snes).ramAdr = (*snes).ramAdr.wrapping_add(1);
-        let mut ret: uint8_t = *(*snes).ram.offset(fresh0 as isize);
-        (*snes).ramAdr &= 0x1ffff as uint32_t;
-        return ret;
-    }
-    '_c2rust_label_0: {
-        __assert_fail(
-            b"0\0" as *const u8 as *const ::core::ffi::c_char,
-            b"src/snes/snes.c\0" as *const u8 as *const ::core::ffi::c_char,
-            197 as ::core::ffi::c_uint,
-            b"uint8_t snes_readBBus(Snes *, uint8_t)\0" as *const u8 as *const ::core::ffi::c_char,
-        );
-    };
-    return (*snes).openBus;
 }
 pub unsafe fn snes_writeBBus(snes: *mut Snes, address: u8, value: u8, game: &mut Game) {
     match address {

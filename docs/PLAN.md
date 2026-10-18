@@ -6190,6 +6190,40 @@ metadata, direct full-source format and progress pass. Native mode is
 exercised; arbitrary pointer locations, pointer-high wrapping, other devices,
 emulation rules and movie integration remain separate. No production edits.
 
+SNES B-bus reader cleanup (2026-10-18): snes_readBBus now uses native byte
+dispatch and port indexing. APU reads still replace catchup with 32.0, run
+catchup, then read the updated output port; WRAM reads retain captured
+address, increment, read and final mask order. Invalid assertion diagnostics
+are unchanged; the removed trailing open-bus return followed a diverging
+assertion. Actual old/current comparisons pass 33,587,200 cases: every valid
+WRAM pointer and byte, plus all PPU/APU forwarding addresses and byte states.
+A substituted catchup mutates output ports to detect stale pre-catchup reads;
+independent forwarding, result and wrap expectations pass.
+
+Independent QC passes 8,624 actual LDA pairs over sampled PPU ports, all 64
+APU mirrors, seven WRAM boundaries, banks 00/80 and eight states. Actual APU
+catchup executes 32 cycles and overwrites fractional catchup state; cloned
+APU/SPC/DSP, PPU/WRAM and CPU bus context match. Shifted WRAM reads fail,
+native assertion exit 3221226505. All 127 invalid ports 81..FF have 254 old/
+current calls with identical diagnostics and native exit 2. The invalid harness
+may include a negative WRAM-only branch during rebuild; invalid branches
+remain untouched. Read-only subagent source/coverage review finds no defect
+and confirms stale-output and invalid-path checks cover its concerns.
+User explicitly renewed subagent delegation; the existing QC peer was reminded
+to use beneficial parallel delegation and relay that reminder.
+
+Instrumented any% passes 12,000/0 (23.91s), native exit 0, with 60,830 reads
+each at PPU 38/39 on both sides. APU/WRAM paths have no movie hits; actual CPU
+checks above supply coverage. Clean frozen 0d4fdfe4 plus only this reader
+passes any% 129,712/0 (243.14s), native exit 0. Direct full-source format,
+normal-core metadata and optimized clean/probe core/DLL builds pass; Cargo
+fmt/build --release remain denied at cargo.exe launch, so that check stays
+unmet. Probe matches maintained reader after stripping counters/substitutions.
+Progress/diff pass: focused cast lines -5, Rust lines -1, other categories unchanged.
+Later peer integration, hardware/audio timing, rendering/Waver71, masked RAM
+and credits remain open; held HDMA diagnosis stays stopped. Continue executed
+hardware paths and route coverage.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
