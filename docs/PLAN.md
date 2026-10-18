@@ -6364,6 +6364,39 @@ hardware/audio timing, rendering/Waver71, masked RAM and credits remain
 open. Held HDMA diagnosis stays stopped. Continue executed hardware paths
 and route coverage with useful independent subagents.
 
+Bomb-equipped Parlor return succeeds (2026-10-18): source-door BTS1
+at Parlor upper-right block79,rows6..9 selects83896A/destination91F8.
+From the verified56786-frame hill-top prefix, right/run/shoot95, neutral100,
+right/run/shoot65, neutral120 completes57166/71 (140.27s), nativeexit1.
+Door contact at56883, landing-site room loads56903, gameplay resumes57005
+atX39/Y1163. Final alive state8/91F8,X200/Y1211, Morph/Bombs1004,
+missiles0/5. This proves actual bomb-equipped return to the landing site.
+It revisits a known room;16rooms/16enemy definitions, no new coverage claim.
+
+Extending right/run/shoot225, neutral90, Down1, neutral600 completes
+58082/71 (175.93s), nativeexit1. FinalX1229/Y1216 pose0027 (crouch),
+missiles still0/5. No gunship entry/refill occurs. Maintained gunship gate
+requires standing movement and a fresh Down press inside its strict X
+window (shipX-8 < SamusX <= shipX+8) and upper64-pixel Y window.
+The trial is on the ground beside the ship, not its top trigger; do not
+repeat neutral/Down waits there as ammunition restoration trials.
+Next: from this alive landing-site return, jump onto the gunship top and
+align nearX1152 before Down, checking actual entry/refill. Then inspect
+normal ascent toward the landing-site left exit atY608.
+
+Read-only source BTS audit confirms landing-site leftY608 door index2
+selects83892E/destination92B3. Landing-site lower-leftY1120 door isindex0
+and returnsParlor.92B3 definitions show bomb-block barriers and exits
+91F8/965B; it remains unreached. No destination definition substitutes for
+traversal. Both replays have exactly the71 ordered rendered diagnostics
+of frozen d217ea15 Waver baseline; prior same-DLL explicit-render any%
+129712/0 (414.98s) remains regression for these input-only trials.
+No maintained Rust edits/own residue change. Direct full-source rustfmt
+passes; Cargo fmt/check and release again fail at launch OSerror5.
+Concurrent hardware edits/totals are separate. Inputs/probes/decompressed
+ROM assets stay ignored. Upper99BD tuning,9AD9 ammo and HDMA remain held;
+credits and full hardware/gameplay fidelity are unproved.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
