@@ -2124,6 +2124,20 @@ Rust lines +40 provide named instruction-field accessors. Other counters
 unchanged. Next: shared enemy instruction timer/branch callbacks, retaining
 the relative branch's low-byte-only timer decrement and pointer steps.
 
+Six shared enemy timer/branch callbacks now use direct pointer steps and
+named byte-backed timer fields. Full-word decrement branches on the prior
+word being one; relative decrement touches only the low byte and branches
+on its prior byte being one. Branch arguments remain read after decrement,
+including RAM aliasing; signed relative offsets and one/two-byte steps stay
+exact. Independent extracted comparison passes 2,772,864 full-RAM/normalized-
+return-pointer checks across all timer/argument words, neighboring/external
+RAM arguments and random aliases. Stable optimized core/DLL build and direct
+full-source format pass; Cargo fmt/build remain ASR-denied. Any%: 129,712
+frames, zero failures (188.79s); Waver route: 58,109 frames, zero failures
+(88.88s). Cast lines -11; Rust lines +5 provide the timer word/low-byte
+accessors. Other counters unchanged. Next: shared enemy Sleep/WaitNframes
+callbacks, retaining captured ROM bank and timer-before-instruction writes.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

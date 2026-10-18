@@ -75,6 +75,18 @@ impl Game {
 }
 
 impl EnemyInstructions<'_> {
+    pub(crate) fn timer(&self) -> u16 {
+        self.read(core::mem::offset_of!(EnemyData, timer))
+    }
+    pub(crate) fn set_timer(&mut self, value: u16) {
+        self.write(core::mem::offset_of!(EnemyData, timer), value);
+    }
+    pub(crate) fn timer_low(&self) -> u8 {
+        self.bytes[core::mem::offset_of!(EnemyData, timer)]
+    }
+    pub(crate) fn set_timer_low(&mut self, value: u8) {
+        self.bytes[core::mem::offset_of!(EnemyData, timer)] = value;
+    }
     fn read(&self, offset: usize) -> u16 {
         u16::from_le_bytes([self.bytes[offset], self.bytes[offset + 1]])
     }

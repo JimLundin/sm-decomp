@@ -2009,53 +2009,46 @@ pub unsafe fn EnemyInstr_StopScript(
         | kEnemyProps_Deleted as ::core::ffi::c_int) as uint16;
     return ::core::ptr::null::<uint16>();
 }
-pub unsafe fn EnemyInstr_Goto(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
-    return *jp as uintptr_t as *const uint16;
+pub unsafe fn EnemyInstr_Goto(_k: uint16, jp: *const uint16) -> *const uint16 {
+    *jp as usize as *const uint16
 }
-pub unsafe fn EnemyInstr_GotoRel(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
-    return (jp as *mut uint8).offset(*(jp as *mut int8) as ::core::ffi::c_int as isize)
-        as *const uint16;
+pub unsafe fn EnemyInstr_GotoRel(_k: uint16, jp: *const uint16) -> *const uint16 {
+    (jp as *const uint8).offset(isize::from(*(jp as *const int8))) as *const uint16
 }
 pub unsafe fn EnemyInstr_DecTimerAndGoto(
-    mut k: uint16,
-    mut jp: *const uint16,
+    k: uint16,
+    jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    let mut v2: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);
-    let fresh1 = (*v2).timer;
-    (*v2).timer = (*v2).timer.wrapping_sub(1);
-    if fresh1 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
-        return jp.offset(1 as ::core::ffi::c_int as isize);
+    let timer = game.enemy_instructions(k).timer();
+    let decremented = game.enemy_instructions(k).timer().wrapping_sub(1);
+    game.enemy_instructions(k).set_timer(decremented);
+    if timer == 1 {
+        jp.add(1)
     } else {
-        return EnemyInstr_Goto(k, jp);
-    };
+        EnemyInstr_Goto(k, jp)
+    }
 }
 pub unsafe fn EnemyInstr_DecTimerAndGotoRel(
-    mut k: uint16,
-    mut jp: *const uint16,
+    k: uint16,
+    jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    let mut v2: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);
-    let ref mut fresh44 =
-        *(&raw mut (*v2).timer as *mut uint8).offset(0 as ::core::ffi::c_int as isize);
-    let fresh45 = *fresh44;
-    *fresh44 = (*fresh44).wrapping_sub(1);
-    if fresh45 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
-        return (jp as *mut uint8).offset(1 as ::core::ffi::c_int as isize) as *const uint16;
+    let timer = game.enemy_instructions(k).timer_low();
+    let decremented = game.enemy_instructions(k).timer_low().wrapping_sub(1);
+    game.enemy_instructions(k).set_timer_low(decremented);
+    if timer == 1 {
+        (jp as *const uint8).add(1) as *const uint16
     } else {
-        return EnemyInstr_GotoRel(k, jp);
-    };
+        EnemyInstr_GotoRel(k, jp)
+    }
 }
-pub unsafe fn EnemyInstr_SetTimer(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    (*gEnemyData(k as ::core::ffi::c_int, game)).timer = *jp;
-    return jp.offset(1 as ::core::ffi::c_int as isize);
+pub unsafe fn EnemyInstr_SetTimer(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    game.enemy_instructions(k).set_timer(*jp);
+    jp.add(1)
 }
-pub unsafe fn EnemyInstr_Skip2bytes(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
-    return jp.offset(1 as ::core::ffi::c_int as isize);
+pub unsafe fn EnemyInstr_Skip2bytes(_k: uint16, jp: *const uint16) -> *const uint16 {
+    jp.add(1)
 }
 pub unsafe fn EnemyInstr_Sleep(
     mut k: uint16,
