@@ -5771,6 +5771,28 @@ Next: Morph while still on the entry ledge, then use a measured bomb-jump
 approach toward the left hatch. Retain read-only block/position observation.
 Held9AD9 ammunition and HDMA work stay held; credits remain unproved.
 
+CPU immediate-address cleanup (2026-10-18): cpu_adrImm selects M/X width
+with booleans, shares its first PC increment and address write, and widens
+bank/PC natively. Width is captured before the low output write; word mode
+rereads PC and bank afterward. Byte mode still returns zero for high address.
+Actual old/current helpers pass 134,217,728 cases: every PC/bank pair and
+all eight M/X/selector combinations. Independent low/high address, PC and
+selected unchanged-register/cycle checks pass. Another 1,048,576 cases alias
+output with aligned SP/PC or DP/K/DB fields, matching final fields and high
+address. Physical WRAM executes 9,437,184 LDA/LDX/LDY immediate instructions
+over every value, both WRAM banks, six boundary PCs and all M/X widths.
+Loaded value, byte accumulator-high preservation, Z/N, PC, bank and cycles
+pass. Instrumented any% prefix passes 3,600/0, native exit 0; accumulator
+word/byte and index word/byte counts are 460,929/199,600/51,349/106,539.
+Clean frozen 3ea1288fa3ae7e857ad697bf24de6da369dc372c plus only this helper
+passes any% 129,712/0 (234.45s), native exit 0. Direct full-source format,
+normal-core metadata and optimized clean/probe core/DLL builds pass;
+Cargo fmt/release remain launch-denied. Focused cast lines -8 and Rust
+lines -7; other residue categories unchanged. Progress/diff checks pass.
+Later peer edits are outside this frozen replay. Physical ROM/device,
+emulation hardware timing, rendered/audio output and credits remain open;
+held HDMA diagnosis stays stopped. Continue executed CPU address helpers.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

@@ -506,25 +506,18 @@ unsafe fn cpu_doInterrupt(mut cpu: *mut Cpu, mut irq: bool, game: &mut Game) {
     };
     (*cpu).pc = cpu_readWord(cpu, vector, vector + 1, game);
 }
-unsafe fn cpu_adrImm(mut cpu: *mut Cpu, mut low: *mut uint32_t, mut xFlag: bool) -> uint32_t {
-    if xFlag as ::core::ffi::c_int != 0 && (*cpu).xf as ::core::ffi::c_int != 0
-        || !xFlag && (*cpu).mf as ::core::ffi::c_int != 0
-    {
-        let fresh1 = (*cpu).pc;
-        (*cpu).pc = (*cpu).pc.wrapping_add(1);
-        *low = (((*cpu).k as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-            | fresh1 as ::core::ffi::c_int) as uint32_t;
-        return 0 as uint32_t;
+unsafe fn cpu_adrImm(cpu: *mut Cpu, low: *mut uint32_t, xFlag: bool) -> uint32_t {
+    let byte = if xFlag { (*cpu).xf } else { (*cpu).mf };
+    let pc = (*cpu).pc;
+    (*cpu).pc = (*cpu).pc.wrapping_add(1);
+    *low = u32::from((*cpu).k) << 16 | u32::from(pc);
+    if byte {
+        0
     } else {
-        let fresh2 = (*cpu).pc;
+        let pc = (*cpu).pc;
         (*cpu).pc = (*cpu).pc.wrapping_add(1);
-        *low = (((*cpu).k as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-            | fresh2 as ::core::ffi::c_int) as uint32_t;
-        let fresh3 = (*cpu).pc;
-        (*cpu).pc = (*cpu).pc.wrapping_add(1);
-        return (((*cpu).k as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-            | fresh3 as ::core::ffi::c_int) as uint32_t;
-    };
+        u32::from((*cpu).k) << 16 | u32::from(pc)
+    }
 }
 unsafe fn cpu_adrDp(cpu: *mut Cpu, low: *mut uint32_t, game: &mut Game) -> uint32_t {
     let adr = u16::from(cpu_readOpcode(cpu, game));
