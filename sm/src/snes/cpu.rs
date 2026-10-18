@@ -1336,7 +1336,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
                 break;
             }
             24 => {
-                (*cpu).c = false_0 != 0;
+                (*cpu).c = false;
                 break;
             }
             25 => {
@@ -1539,7 +1539,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
                 break;
             }
             56 => {
-                (*cpu).c = true_0 != 0;
+                (*cpu).c = true;
                 break;
             }
             57 => {
@@ -1783,7 +1783,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
                 break;
             }
             88 => {
-                (*cpu).i = false_0 != 0;
+                (*cpu).i = false;
                 break;
             }
             89 => {
@@ -2054,7 +2054,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
                 break;
             }
             120 => {
-                (*cpu).i = true_0 != 0;
+                (*cpu).i = true;
                 break;
             }
             121 => {
@@ -2450,7 +2450,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
                 break;
             }
             184 => {
-                (*cpu).v = false_0 != 0;
+                (*cpu).v = false;
                 break;
             }
             185 => {
@@ -2514,12 +2514,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
                 break;
             }
             194 => {
-                cpu_setFlags(
-                    cpu,
-                    (cpu_getFlags(cpu) as ::core::ffi::c_int
-                        & !(cpu_readOpcode(cpu, game) as ::core::ffi::c_int))
-                        as uint8_t,
-                );
+                cpu_setFlags(cpu, cpu_getFlags(cpu) & !cpu_readOpcode(cpu, game));
                 break;
             }
             195 => {
@@ -2651,7 +2646,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
                 break;
             }
             216 => {
-                (*cpu).d = false_0 != 0;
+                (*cpu).d = false;
                 break;
             }
             217 => {
@@ -2721,12 +2716,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
                 break;
             }
             226 => {
-                cpu_setFlags(
-                    cpu,
-                    (cpu_getFlags(cpu) as ::core::ffi::c_int
-                        | cpu_readOpcode(cpu, game) as ::core::ffi::c_int)
-                        as uint8_t,
-                );
+                cpu_setFlags(cpu, cpu_getFlags(cpu) | cpu_readOpcode(cpu, game));
                 break;
             }
             227 => {
@@ -2857,7 +2847,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
                 break;
             }
             248 => {
-                (*cpu).d = true_0 != 0;
+                (*cpu).d = true;
                 break;
             }
             249 => {
@@ -2877,7 +2867,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
                 break;
             }
             251 => {
-                let mut temp: bool = (*cpu).c;
+                let temp = (*cpu).c;
                 (*cpu).c = (*cpu).e;
                 (*cpu).e = temp;
                 cpu_setFlags(cpu, cpu_getFlags(cpu));

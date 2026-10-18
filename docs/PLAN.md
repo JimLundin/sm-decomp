@@ -7782,6 +7782,30 @@ zero. Inputs/ROM-derived probes stay ignored; peer owns hardware edits,
 cleanup and remote sync. Credits, complete gameplay/hardware, rendering/
 audio fidelity, masked RAM and ownership remain unfinished.
 
+CPU status opcode cleanup (2026-10-19): CLC/SEC/CLI/SEI/CLV/CLD/SED use
+native booleans; REP/SEP use native byte masks, retaining flag capture before
+operand fetch. XCE's saved carry is immutable; exchange and normalization
+order remain exact. Actual old/current instructions pass 1,597,440 pairs
+across every status byte, native/emulation inputs, three register/stack
+patterns, ten opcodes, all REP/SEP masks and PC 8000/FFFF. Independent flag
+and emulation normalization expectations match complete named CPU state,
+register truncation, stack-page handling, PC wrap, cycles, open bus and PC
+history. Raw noncanonical emulation inputs test inherited software behavior.
+Instrumented any% prefix passes 3,600/0 (1.05s), native exit 0; CLC/SEC/CLI/
+SEI/CLV/CLD/SED/REP/SEP/XCE native/emulation calls are 188,149/1, 45,015/0,
+1/0, 0/1, 0/0, 0/0, 0/0, 195,476/0, 108,914/0 and 0/1. Dedicated
+instructions supply paths absent from the prefix. Clean frozen
+953d41c9d620fb9421172863013156104d0932cf plus only these ten arms passes
+any% 129,712/0 (55.32s), native exit 0. Cargo fmt/check and release library
+build now pass. Full release initially failed denied GL build-script execution;
+retry reaches frontend link and fails missing SDL2 (-lSDL2), exit 101.
+Direct full-source format, normal-core metadata and optimized clean/probe
+core/DLL builds pass. Progress/diff pass: focused cast lines -4, Rust lines
+-10, other categories unchanged. Live arms match verified source. Later peer
+SPC changes are outside this replay. Hardware/render/audio timing and credits
+remain open; held HDMA diagnosis stays stopped. Continue executed stack
+transfer/push/pull cleanup, preserving existing emulation quirks.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
