@@ -1293,6 +1293,19 @@ Custom SpcPlayer remains shared, debug retry is not established for the full
 audio runtime, and audio equality/backend integration remain unfinished.
 Next: isolate the custom-player transition before native upload integration.
 
+Independent queue operation checks (2026-10-18): exact maintained queue
+helpers and actual RtlPushApuState/RtlPopApuState bodies pass 34,816 cases,
+optimized DLL and host exit 0. All 256 byte-sized positions, sizes 0..16,
+empty/nonempty commands and empty-time values 0/31/32/255 are exercised.
+Distinct Rust/ROM arrays verify all sixteen selected entries and pending
+ports under both backend policies. Actual operations preserve full-ring
+FF merging, position/time wrapping, empty throttling and delivery to the
+chosen physical or custom ports. Export visibility and appended test
+wrappers are the only helper-source differences. These checks supplement
+the committed custom-mode frame controls; physical-mode BOTH and shared
+custom-player debug-retry behavior remain unverified. No maintained source
+or progress counters changed; temporary probes remain untracked.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read
