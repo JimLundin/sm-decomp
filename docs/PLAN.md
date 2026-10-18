@@ -5588,6 +5588,19 @@ native-mode word paths, not every bus device, emulation-mode rule or movie
 integration. The candidate remains owned by its implementing agent; this
 commit changes only the QC note and leaves their production edits untouched.
 
+Independent unindexed direct-page QC (2026-10-18): 4,193,792 actual LDA
+instructions cover every supported low-WRAM target 0000..1FFE, all 256
+operand bytes and byte/word widths. The independently computed address/value,
+final PC, Z/N, preserved X/Y/DP and unaligned-DP cycle penalty match. Wrapped
+DP sums, operand/data aliases and selected emulation-mode byte cases execute;
+the word successor stays within supported low WRAM. Replacing full-word
+address carry with low-byte page wrapping fails the loaded accumulator,
+23295 versus 23041, native exit 3221226505; production exits zero.
+The tested cpu_adrDp body matches current source. Optimized core/probe DLL,
+normal-core metadata, direct full-source format and progress pass. This
+extends the preceding helper QC; other bus devices, hardware emulation-mode
+accuracy and full-movie integration remain separate. No production edits.
+
 Masked RAM continuation audit (2026-10-18): actual VerifySnapshotsEq
 and RestoreSnapshot calls confirm that normalization changes the state
 adopted after a passing comparison. Of 1,412 masked bytes, 1,117 copy mine
