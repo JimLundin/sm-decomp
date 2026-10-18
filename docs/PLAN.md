@@ -3263,6 +3263,35 @@ assets are committed. Next: obtain actual demo-transition initialization
 coverage through normal inputs before cleaning LoadDemoData or claiming all
 Samus_Initialize paths covered. The stopped ammo route stays held.
 
+Normal neutral-input boot now demonstrates attract-demo initialization.
+A 30,000-frame committed 3aa74ea8 replay passes 30,000/0 (80.33s), native
+exit 0. Read-only call observations show Samus_Initialize and LoadDemoData
+executing 26 times each on Rust side 2 with game state 40. Scenes 0 through
+5 of demo sets 0, 1 and 2 all execute; set 0 repeats all scenes and set 1
+begins repeating. The first call is at SNES counter 2,619. Thus the earlier
+unproved demo skip/loading branch in Samus_Initialize now has actual oracle
+execution. This is attract playback, not user-controlled boot-to-credits
+coverage; set 3 and demo interruption remain outside the run.
+
+LoadDemoData's five post-dispatch callback/transition stores now use existing
+named setters and callback constants. Alfa E6C9, beta E7F5 and the three
+zero transition indices retain their original order after scene dispatch
+and before palette loading. No ROM-derived table or changed RAM layout.
+The rewritten observed neutral-input replay passes 30,000/0 (76.51s),
+native exit 0, with all five stores in each of 26 actual Rust-side-2 calls
+(130 stores). All words match expected values. Removing the observations
+restores exact maintained source.
+
+Full any% passes 129,712/0 (275.53s), native exit 0, using committed
+3aa74ea8 source with only this sm_91.rs change. Later concurrent queue/
+renderer/oracle commits are outside that replay's scope. Cargo fmt/check,
+optimized core/DLL and normal-core metadata builds pass; Cargo release
+remains denied at khronos_api's build script (OS error 5). Raw offsets -5,
+cast lines -7, Rust lines -5; other gameplay counters unchanged. Probe and
+neutral inputs remain ignored; no ROM-derived assets are committed. Next:
+LoadDemoData inventory stores, preserving ROM reads and capacity/count
+write order and measuring demo execution. The stopped ammo route stays held.
+
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
 the original `SignExtend8(0x8000)` initialization and the middle-byte velocity

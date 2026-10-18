@@ -1428,16 +1428,11 @@ pub unsafe fn LoadDemoData(game: &mut Game) {
                 as *mut uint16) as isize,
         ))
     .expect("non-null function pointer")(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa42 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (0x90e6c9 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa44 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (0x90e7f5 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa2e as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa30 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa32 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    game.set_frame_handler_alfa(fnSamus_FrameHandlerAlfa_Func12 as u16);
+    game.set_frame_handler_beta(fnSamus_FrameHandlerBeta_Func14 as u16);
+    game.set_samus_momentum_routine_index(0);
+    game.set_samus_special_transgfx_index(0);
+    game.set_samus_hurt_switch_index(0);
     Samus_LoadSuitPalette(game);
     UpdateBeamTilesAndPalette(game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x9aa as ::core::ffi::c_int as isize)
