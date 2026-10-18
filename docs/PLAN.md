@@ -8287,6 +8287,19 @@ core/DLL builds pass; full frontend linking still lacks SDL2. Live source matche
 verified source. Cast lines -1, Rust lines -5; other counters unchanged.
 Complete gameplay and rendering/audio fidelity remain open.
 
+CPU address-binding cleanup (2026-10-19): all 178 dispatcher address pairs
+use plain typed zero for the mutable low output and inferred immutable high
+results. Exact inverse text transformation reconstructs the original source;
+calls, arguments and order remain identical. Frozen HEAD
+`6b464914e3fac697129f49eff9a181263c8d8c52` plus only this mechanical edit passes
+Cargo fmt/check, release library, normal metadata and optimized core/DLL builds.
+Full frontend linking still lacks SDL2. Prefix 3,600/0 (1.07s) executes
+10,363,030 dispatcher calls; clean full any% 129,712/0 (57.51s), native exit 0.
+Live source matches verified source; all progress counters unchanged. The
+replay does not establish every opcode path; type-only binding changes are
+additionally checked by exact reconstruction and compilation. Gameplay and
+rendering/audio completeness remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
