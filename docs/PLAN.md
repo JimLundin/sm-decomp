@@ -1319,6 +1319,20 @@ build and direct format pass; Cargo fmt/build remain ASR-denied. Waver route:
 unchanged. Next: horizontal nonsquare slope displacement arithmetic and
 byte-backed speed reads, retaining signed-shift truncation and multiplication.
 
+Horizontal nonsquare slope collision now uses named saved-BTS access,
+byte-backed vertical speed and explicit middle-word displacement arithmetic.
+The bit-7/speed early returns, signed right-shift truncation, unsigned
+sixteen-bit negation and product sign remain exact. Prior Rust comparison
+passes 5,505,024 full-RAM/displacement/return cases: every middle word with
+both signs and all slope factors, plus every saved BTS word, five speed
+boundaries and four displacement boundaries. Stable optimized core/DLL
+build and direct format pass; Cargo fmt/build remain ASR-denied. Waver route:
+58,109 frames, zero failures (85.02s); any%: 129,712 frames, zero failures
+(185.51s). Raw offsets -4, cast lines -19, Rust lines -13; unsafe count
+unchanged. Next: vertical nonsquare slope collision, preserving low-byte
+room-width modulus (including zero), direction/BTS alignment and signed
+sixteen-bit displacement clamping.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

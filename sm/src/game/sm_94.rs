@@ -2301,43 +2301,30 @@ pub unsafe fn PostGrappleCollisionDetect_Y(game: &mut Game) {
     PostGrappleCollisionDetect_Down(game);
     PostGrappleCollisionDetect_Up(game);
 }
-unsafe fn BlockColl_Horiz_Slope_NonSquare(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x1e77 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 0x80 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
-        || (*((&raw mut game.g_ram as *mut uint8).offset(0xb2e as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint32)
-            << 16 as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0xb2c as ::core::ffi::c_int as isize)
-                as *mut uint16) as uint32
-            != 0
-    {
-        return 0 as uint8;
+unsafe fn BlockColl_Horiz_Slope_NonSquare(ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    let bts = game.current_slope_bts();
+    if bts & 0x80 != 0 {
+        return 0;
     }
-    let mut v1: uint16 = (4 as ::core::ffi::c_int
-        * (*((&raw mut game.g_ram as *mut uint8).offset(0x1e77 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            & 0x1f as ::core::ffi::c_int)) as uint16;
-    let mut v2: uint16 = ((*ci).ci_r18_r20 >> 8 as ::core::ffi::c_int) as uint16;
-    if (*ci).ci_r18_r20 >= 0 as int32 {
-        (*ci).ci_r18_r20 = Multiply16x16(
-            v2,
-            kBlockColl_Horiz_Slope_NonSquare_Tab[((v1 as ::core::ffi::c_int
-                >> 1 as ::core::ffi::c_int)
-                + 1 as ::core::ffi::c_int)
-                as usize],
-        ) as int32;
+    let y_speed = u32::from_le_bytes([
+        game.g_ram[0xb2c],
+        game.g_ram[0xb2d],
+        game.g_ram[0xb2e],
+        game.g_ram[0xb2f],
+    ]);
+    if y_speed != 0 {
+        return 0;
+    }
+    let displacement = (*ci).ci_r18_r20;
+    // Keep the middle sixteen bits of the arithmetic right shift.
+    let shifted = (displacement >> 8) as u16;
+    let factor = u32::from(kBlockColl_Horiz_Slope_NonSquare_Tab[usize::from(bts & 0x1f) * 2 + 1]);
+    (*ci).ci_r18_r20 = if displacement >= 0 {
+        (u32::from(shifted) * factor) as i32
     } else {
-        (*ci).ci_r18_r20 = -(Multiply16x16(
-            -(v2 as ::core::ffi::c_int) as uint16,
-            kBlockColl_Horiz_Slope_NonSquare_Tab[((v1 as ::core::ffi::c_int
-                >> 1 as ::core::ffi::c_int)
-                + 1 as ::core::ffi::c_int)
-                as usize],
-        ) as int32);
-    }
-    return 0 as uint8;
+        ((u32::from(shifted.wrapping_neg()) * factor) as i32).wrapping_neg()
+    };
+    0
 }
 unsafe fn BlockColl_Vert_Slope_NonSquare(
     mut ci: *mut CollInfo,
