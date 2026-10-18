@@ -1229,6 +1229,17 @@ Raw offsets -6, cast lines -16, Rust lines -15; unsafe count unchanged.
 Next: direct Samus collision type matches, then carry/extension handler
 cleanup, keeping raw callback context until the stored bridge is removed.
 
+Samus horizontal/vertical collision type dispatch now uses direct matches.
+All thirty-two handler selections retain the original table order and
+direction-specific spike-air behavior. Both retry loops, live block reads,
+raw callback context and displacement cleanup are unchanged. Comparison of
+all 131,072 level-word/direction selections agrees with the prior tables.
+Stable optimized core/DLL build and direct format pass; Cargo fmt/build
+remain ASR-denied. Waver route: 58,109 frames, zero failures (83.91s); any%:
+129,712 frames, zero failures (183.99s). Rust lines -24; other counters
+unchanged. Next: carry/extension handlers, retaining signed BTS offsets,
+full room width, wrapping block indexes and high-bit retry results.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

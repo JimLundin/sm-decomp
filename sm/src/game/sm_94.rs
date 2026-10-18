@@ -3489,52 +3489,6 @@ unsafe fn Samus_GetXposSpan(game: &mut Game) -> uint16 {
         >> 4 as ::core::ffi::c_int) as uint16;
     return r26;
 }
-static kBlockColl_Horiz_CheckColl: [Option<Func_CollInfo_U8>; 16] = unsafe {
-    [
-        Some(ClearCarry_4 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockColl_Horiz_Slope as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(ClearCarry_5 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockColl_Horiz_SpecialAir as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(ClearCarry_4 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockReact_HorizExt as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(ClearCarry_4 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockColl_Horiz_BombableAir as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(
-            BlockColl_Horiz_SolidShootGrappleBlock as unsafe fn(*mut CollInfo, &mut Game) -> uint8,
-        ),
-        Some(BlockColl_Horiz_Door as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockColl_Horiz_SpikeBlock as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockColl_Horiz_SpecialBlock as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(
-            BlockColl_Horiz_SolidShootGrappleBlock as unsafe fn(*mut CollInfo, &mut Game) -> uint8,
-        ),
-        Some(BlockReact_VertExt as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(
-            BlockColl_Horiz_SolidShootGrappleBlock as unsafe fn(*mut CollInfo, &mut Game) -> uint8,
-        ),
-        Some(BlockColl_Horiz_BombBlock as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-    ]
-};
-static kBlockColl_Vert_CheckColl: [Option<Func_CollInfo_U8>; 16] = unsafe {
-    [
-        Some(ClearCarry_4 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockColl_Vert_Slope as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockColl_Vert_SpikeAir as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockColl_Vert_SpecialAir as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(ClearCarry_4 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockReact_HorizExt as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(ClearCarry_4 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockColl_Vert_BombableAir as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockColl_Vert_SolidShootGrappleBlock as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockColl_Vert_Door as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockColl_Vert_SpikeBlock as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockColl_Vert_SpecialBlock as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockColl_Vert_SolidShootGrappleBlock as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockReact_VertExt as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockColl_Vert_SolidShootGrappleBlock as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockColl_Vert_BombBlock as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-    ]
-};
 unsafe fn BlockColl_Horiz_CheckColl(ci: &mut CollInfo, k: uint16, game: &mut Game) -> uint8 {
     game.set_cur_block_index(k >> 1);
     // Derive both legacy pointers from this borrow. Do not reborrow the context
@@ -3542,10 +3496,21 @@ unsafe fn BlockColl_Horiz_CheckColl(ci: &mut CollInfo, k: uint16, game: &mut Gam
     let context = ci as *mut CollInfo;
     game.cur_coll_amt32 = &raw mut (*context).ci_r18_r20;
     let result = loop {
-        let block_type = usize::from(game.current_level_block() >> 12);
-        let result = kBlockColl_Horiz_CheckColl[block_type].expect("non-null function pointer")(
-            context, game,
-        );
+        let result = match game.current_level_block() >> 12 {
+            0 | 4 | 6 => ClearCarry_4(context, game),
+            1 => BlockColl_Horiz_Slope(context, game),
+            2 => ClearCarry_5(context, game),
+            3 => BlockColl_Horiz_SpecialAir(context, game),
+            5 => BlockReact_HorizExt(context, game),
+            7 => BlockColl_Horiz_BombableAir(context, game),
+            8 | 12 | 14 => BlockColl_Horiz_SolidShootGrappleBlock(context, game),
+            9 => BlockColl_Horiz_Door(context, game),
+            10 => BlockColl_Horiz_SpikeBlock(context, game),
+            11 => BlockColl_Horiz_SpecialBlock(context, game),
+            13 => BlockReact_VertExt(context, game),
+            15 => BlockColl_Horiz_BombBlock(context, game),
+            _ => unreachable!(),
+        };
         if result & 0x80 == 0 {
             break result;
         }
@@ -3559,10 +3524,21 @@ unsafe fn BlockColl_Vert_CheckColl(ci: &mut CollInfo, k: uint16, game: &mut Game
     let context = ci as *mut CollInfo;
     game.cur_coll_amt32 = &raw mut (*context).ci_r18_r20;
     let result = loop {
-        let block_type = usize::from(game.current_level_block() >> 12);
-        let result = kBlockColl_Vert_CheckColl[block_type].expect("non-null function pointer")(
-            context, game,
-        );
+        let result = match game.current_level_block() >> 12 {
+            0 | 4 | 6 => ClearCarry_4(context, game),
+            1 => BlockColl_Vert_Slope(context, game),
+            2 => BlockColl_Vert_SpikeAir(context, game),
+            3 => BlockColl_Vert_SpecialAir(context, game),
+            5 => BlockReact_HorizExt(context, game),
+            7 => BlockColl_Vert_BombableAir(context, game),
+            8 | 12 | 14 => BlockColl_Vert_SolidShootGrappleBlock(context, game),
+            9 => BlockColl_Vert_Door(context, game),
+            10 => BlockColl_Vert_SpikeBlock(context, game),
+            11 => BlockColl_Vert_SpecialBlock(context, game),
+            13 => BlockReact_VertExt(context, game),
+            15 => BlockColl_Vert_BombBlock(context, game),
+            _ => unreachable!(),
+        };
         if result & 0x80 == 0 {
             break result;
         }
