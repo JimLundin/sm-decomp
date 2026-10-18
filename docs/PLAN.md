@@ -3777,6 +3777,34 @@ timer and audio recovery changes need their own checks. No fresh full-any%
 result is claimed; enabled-render Waver71, held HDMA and credits gaps remain
 open. Next: QC actual enable/timer rewind and its event consumers.
 
+Independent interrupt-enable/timer QC (2026-10-18): candidate snapshot
+rewind passes5,376 actual register-write controls. All256 NMITIMEN bytes
+with five timer boundary values, then all512 horizontal timer values paired
+with complementary vertical values under all eight interrupt-enable masks,
+are saved, changed through4200/4207..420A writes and restored. Subsequent
+low/high timer writes preserve the restored other byte and mask high-byte
+reserved bits. Disabling both IRQ modes clears the restored IRQ latch and
+CPU pending flag. Removing only the enable/hTimer restore fails immediately
+with true/true/true instead of saved false/false/false. Nativeexit0 after
+correcting missing render-buffer registration in the event fixture.
+
+Actual event consumers expose separate open gaps: vblank entry requests NMI
+with NMITIMEN's NMI enable both off and on. One complete682-step video line
+with HIRQ enabled and HTIME1 produces neither hardware nor CPU IRQ pending.
+Source search agrees: timer/enable fields are reset/written, IRQ disables
+consume the mode flags, but position handling has no timer-match generation
+and CPU opcode service consumes pending flags without NMI-enable gating.
+These findings confirm existing event-generation omissions; snapshot rewind
+success does not establish interrupt delivery or hardware scheduling accuracy.
+No event implementation or normalization is introduced by this QC.
+
+Only this note changes. Direct full-source rustfmt, normal-core metadata and
+progress checks pass; probes/save assets remain TEMP. The frozen snapshot
+body matches the candidate examined; later concurrent changes need their own
+integration checks. No fresh movie result is claimed. Next: actual interrupt
+generation/gating needs focused oracle work before hardware-clock scheduling;
+continue QC of new gameplay work without resuming held HDMA diagnosis.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
