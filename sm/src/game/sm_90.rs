@@ -17316,41 +17316,22 @@ pub unsafe fn Samus_UpdateSpeedEchoPos(game: &mut Game) {
             as *mut uint16) = v2;
     }
 }
-pub unsafe fn Samus_PostGrappleCollisionDetect(game: &mut Game) {
+pub fn Samus_PostGrappleCollisionDetect(game: &mut Game) {
     PostGrappleCollisionDetect_X(game);
     PostGrappleCollisionDetect_Y(game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xe0a as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        == 0
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xe08 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            == 0
-    {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xe08 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            != 0
-        {
-            let ref mut fresh153 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xafa as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            *fresh153 = (*fresh153 as ::core::ffi::c_int
-                - *((&raw mut game.g_ram as *mut uint8).offset(0xe08 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int) as uint16;
-            if *((&raw mut game.g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                - 16 as ::core::ffi::c_int
-                & 0x8000 as ::core::ffi::c_int
-                == 0
-            {
+    if game.distance_to_eject_samus_down() == 0 || game.distance_to_eject_samus_up() == 0 {
+        if game.distance_to_eject_samus_up() != 0 {
+            game.set_samus_y_pos(
+                game.samus_y_pos()
+                    .wrapping_sub(game.distance_to_eject_samus_up()),
+            );
+            // Keep the sixteen-bit sign test, including extreme radius values.
+            if game.samus_y_radius().wrapping_sub(16) & 0x8000 == 0 {
                 PostGrappleCollisionDetect_Y(game);
-                let ref mut fresh154 = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0xafa as ::core::ffi::c_int as isize)
-                    as *mut uint16);
-                *fresh154 = (*fresh154 as ::core::ffi::c_int
-                    - *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xe08 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int)
-                    as uint16;
+                game.set_samus_y_pos(
+                    game.samus_y_pos()
+                        .wrapping_sub(game.distance_to_eject_samus_up()),
+                );
             }
         }
     }

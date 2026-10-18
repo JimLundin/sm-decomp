@@ -1717,6 +1717,20 @@ build and direct format pass; Cargo fmt/build remain ASR-denied. Waver route:
 unchanged. Next: Samus post-grapple ejection caller arithmetic and byte-backed
 Y writes, retaining the second vertical check after the first adjustment.
 
+Samus post-grapple ejection is now safe Rust using named byte-backed upward/
+downward distances and a Y-position setter. X/Y probe order, short-circuit
+contact gates, wrapping Y subtraction and the signed-bit radius-minus-16
+second-probe gate remain exact, including extreme radii. The second correction
+reads live Y and upward distance after probing. Prior Rust comparison passes
+2,097,152 full-RAM/probe-trace cases across every Y/radius/distance word and
+probes mutating Y, radius and distances. Stable optimized core/DLL build and
+direct full-source format check pass; Cargo fmt/build remain ASR-denied.
+Any%: 129,712 frames, zero failures (212.71s); Waver route: 58,109 frames,
+zero failures (99.28s). Raw offsets -8, unsafe functions -1, cast lines -15,
+Rust lines -5; other counters unchanged. Next: Samus_GrappleWallJumpCheck
+collision caller, preserving facing-byte direction selection, enemy/block
+probe order and live jump-button/contact reads.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

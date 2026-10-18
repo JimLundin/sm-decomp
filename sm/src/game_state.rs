@@ -126,6 +126,20 @@ impl Game {
         u16::from_le_bytes([self.g_ram[0xafa], self.g_ram[0xafb]])
     }
 
+    pub fn set_samus_y_pos(&mut self, value: u16) {
+        self.g_ram[0xafa..0xafc].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// distance_to_eject_samus_up ($7E:0E08 in ram_map).
+    pub fn distance_to_eject_samus_up(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xe08], self.g_ram[0xe09]])
+    }
+
+    /// distance_to_eject_samus_down ($7E:0E0A in ram_map).
+    pub fn distance_to_eject_samus_down(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xe0a], self.g_ram[0xe0b]])
+    }
+
     /// samus_y_subpos ($7E:0AFC in ram_map).
     pub fn samus_y_subpos(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0xafc], self.g_ram[0xafd]])
