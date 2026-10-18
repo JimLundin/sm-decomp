@@ -5868,6 +5868,36 @@ separate integration. Hardware/audio timing, rendering/Waver71, masked RAM
 and credits remain open; held HDMA diagnosis stays stopped. Continue executed
 hardware paths and route coverage.
 
+Entry-ledge Morph and bomb lift (2026-10-18): first ground-Morph
+suffix completes60183/71 (187.72s), nativeexit1. Down taps separated by
+only two neutral frames leave pose0028 (crouch), not Morph; no bombs spawn.
+Do not treat its subsequent fall as a bomb-jump experiment.
+
+Spaced taps establish actual Morph on the ledge. Left32, neutral12, Down1,
+neutral20, Down1, neutral20, shoot1, neutral68, left28, shoot1, neutral110
+extends the59942-frame prefix to60236/71 (193.97s), nativeexit1. Observer
+showsX113/Y1177 pose0041 (Morph ground) by frame60015 and actual0500
+bomb slot by60030. At60085 the ball lifts toY1165; at60095 it reachesY1148.
+At60100..60110 it reachesY1144..1142, then falls. Leftward movement starts
+near the apex, reachesX67/Y1156 by60125 and places the second0500 bomb
+while falling. FinalX67/Y1257; left hatch wordB2B6 stays intact throughout.
+All18rooms/19enemy definitions; no hatch removal or new room is proved.
+
+Both trials retain exactly the71 ordered rendered diagnostics of frozen
+d217ea15 Waver baseline. This establishes working ledge Morph/bomb lift
+and its sampled height/timing; it does not establish a two-bomb ascent.
+Next: use the spaced-Morph prefix, place the second bomb nearer the first
+lift apex and measure whether another lift can reach the left hatch.
+Single lift fromY1177 reaches only aboutY1142; hatch beginsY1104.
+Held9AD9 ammunition and HDMA work stay held.
+
+No maintained Rust changes or own residue delta. Direct full-source
+rustfmt passes; Cargo fmt/check and release fail at cargo.exe launch,
+OSerror5. Prior same-DLL rendered any%129712/0 (414.98s) remains the
+regression result; no changed source to retest here. Concurrent hardware
+edits/totals are separate. Inputs/probes/ROM-derived outputs stay ignored.
+Credits, full rendering/audio and masked RAM remain unproved.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
