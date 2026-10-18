@@ -914,6 +914,39 @@ Full any% passes 129,712 frames, zero failures (188.48s). Direct rustfmt
 passes; Cargo fmt/build are still ASR-denied. No source changes; all residue
 counters are unchanged, and prior Linux validation applies to source 90889612.
 
+Bomb Torizo defeat now passes the standard oracle: target/awake-return/
+fight-right-tap.inputs, 52,820 frames, zero failures (81.22s). The read-only
+probe observes EEFF health falling to zero by frame 51,500, its slot clearing
+by 51,900, and BAF4 changing from boss-death preinstruction BDF2 to the normal
+shot handler BD0F. Samus survives with 23 health, Morph/Bombs 1004 and
+missiles 0/5; final room 9804, gameplay state 8, X135/Y187.
+The successful combat prefix retains bomb-exit-up.inputs, turns right for
+one frame and holds beam fire until frame 50,400. Run/right/jump/shoot 65,
+left/shoot 1 and shoot 230 cross the approaching boss and face it from
+X118/Y187. The next crossing starts at 50,696; retain its first four frames
+through frame 50,700, then shoot 1 / neutral 9 repeated 200 times, neutral
+120. This stops the second crossing early and settles facing left near
+X116, shooting Torizo at the left wall. All actions are normal controller
+inputs. Held Bomb fire did no damage; repeated full-room crossings and
+stationary beam fire died. Six-frame beam taps also defeat the boss from
+the frame-50,500 prefix (52,720/0 probe), but the standard-verified ten-frame
+route remains the canonical continuation.
+The post-defeat door needs a beam shot, then a separate jump after its
+opening animation. torizo-exit.inputs passes the standard oracle for
+53,110 frames, zero failures (78.44s), removes BAF4 and ends X37/Y187 below
+the door. Neutral 5, left/jump/shoot 90 and neutral 120 then crosses into
+9879 (torizo-exit-hop.inputs, 53,325/0 standard, 76.23s), X728/Y139.
+Left/shoot 250, neutral 5, left/jump/shoot 70 and neutral 120 reaches the
+corridor's west cap at X37/Y139. A second fresh jump (neutral 5,
+left/jump/shoot 90, neutral 140) returns to Parlor, X975/Y651:
+torizo-return-door.inputs passes the standard oracle for 54,005 frames,
+zero failures (79.69s). The route preserves Morph/Bombs
+1004 and missiles 0/5. Next: climb the eastern Parlor passage, return to
+the upper hall and use Bombs to reach a Waver room. No source changes;
+direct rustfmt and progress checks pass with all counters unchanged.
+Full any% passes 129,712 frames, zero failures (190.40s). Cargo fmt/build
+remain ASR-denied; prior Linux validation applies to source 90889612.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
