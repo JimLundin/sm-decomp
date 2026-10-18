@@ -3319,132 +3319,34 @@ fn BlockInsideReact_SpecialAir_11(game: &mut Game) {
     BlockInsideReact_SpecialAir_Default(game);
 }
 unsafe fn BlockInsideReact_SpecialAir_70(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x1e73 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        == 1 as ::core::ffi::c_int
-    {
-        SpawnPLM(addr_kPlmHeader_B6FF as ::core::ffi::c_int as uint16, game);
+    let sample = u16::from_le_bytes([game.g_ram[0x1e73], game.g_ram[0x1e74]]);
+    if sample == 1 {
+        SpawnPLM(addr_kPlmHeader_B6FF as u16, game);
     }
 }
-static g_off_949B06: [uint16; 8] = [
-    0x9a06 as ::core::ffi::c_int as uint16,
-    0x9a26 as ::core::ffi::c_int as uint16,
-    0x9a46 as ::core::ffi::c_int as uint16,
-    0x9a66 as ::core::ffi::c_int as uint16,
-    0x9a86 as ::core::ffi::c_int as uint16,
-    0x9aa6 as ::core::ffi::c_int as uint16,
-    0x9ac6 as ::core::ffi::c_int as uint16,
-    0x9ae6 as ::core::ffi::c_int as uint16,
+const SPECIAL_AIR_PLM_TABLES: [u16; 8] = [
+    0x9a06, 0x9a26, 0x9a46, 0x9a66, 0x9a86, 0x9aa6, 0x9ac6, 0x9ae6,
 ];
-static off_949966: [Option<Func_V>; 80] = unsafe {
-    [
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_8 as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_9 as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_10 as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_11 as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_70 as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpecialAir_Default as unsafe fn(&mut Game) -> ()),
-    ]
-};
-unsafe fn BlockInsideReact_SpecialAir(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    let mut v0: uint8 = *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        );
-    if v0 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0 {
-        let mut v3: *const uint8 = RomPtr_94(
-            g_off_949B06[*((&raw mut game.g_ram as *mut uint8)
-                .offset(0x79f as ::core::ffi::c_int as isize)
-                as *mut uint16) as usize],
-            game,
-        );
-        SpawnPLM(
-            *(v3.offset(
-                (2 as ::core::ffi::c_int * (v0 as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int))
-                    as isize,
-            ) as *const uint8 as *mut uint16),
-            game,
-        );
+unsafe fn BlockInsideReact_SpecialAir(_ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    let bts = game.current_block_bts();
+    if bts & 0x80 != 0 {
+        let area = u16::from_le_bytes([game.g_ram[0x79f], game.g_ram[0x7a0]]);
+        let table = SPECIAL_AIR_PLM_TABLES[usize::from(area)];
+        let plm = game.read_rom_word(0x940000 | u32::from(table), usize::from(bts & 0x7f) * 2);
+        SpawnPLM(plm, game);
     } else {
-        off_949966[v0 as usize].expect("non-null function pointer")(game);
+        // Preserve the former eighty-entry dispatch table's invalid-BTS panic.
+        assert!(bts < 80, "special-air BTS index out of bounds: {bts}");
+        match bts {
+            8 => BlockInsideReact_SpecialAir_8(game),
+            9 => BlockInsideReact_SpecialAir_9(game),
+            10 => BlockInsideReact_SpecialAir_10(game),
+            11 => BlockInsideReact_SpecialAir_11(game),
+            70 => BlockInsideReact_SpecialAir_70(game),
+            _ => BlockInsideReact_SpecialAir_Default(game),
+        }
     }
-    return 0 as uint8;
+    0
 }
 unsafe fn dispatch_block_inside(ci: *mut CollInfo, game: &mut Game) -> uint8 {
     match game.current_level_block() >> 12 {

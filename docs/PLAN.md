@@ -1449,6 +1449,20 @@ failures (82.11s); any%: 129,712 frames, zero failures (177.99s). Raw offsets
 inside selection and reaction 70, retaining area-table bounds, PLM setup
 order and the default-reaction dispatch table's invalid-BTS panic.
 
+Special-air inside selection now uses direct reaction matches and checked
+live-ROM PLM words. The eight area-table bounds, linear BTS word offset,
+ignored spawn return and low-BTS >= 80 panic remain. Reaction 70 reads its
+phase from backing bytes, spawns only at phase one and retains its unsafe
+runtime contract for SpawnPLM. Prior Rust comparison passes 78,336 full-RAM,
+selection, callback and panic cases over all BTS bytes, ten area boundaries,
+five phases and every reaction-70 phase word; spawn mutates live RAM.
+Stable optimized core/DLL build and direct format pass; Cargo fmt/build
+remain ASR-denied. Waver route: 58,109 frames, zero failures (85.77s); any%:
+129,712 frames, zero failures (183.74s). Raw offsets -4, cast lines -17,
+Rust lines -98; unsafe count unchanged. Next: consolidate block-inside
+sample execution around its private collision context, preserving callback
+reads and retry lifetime, before cleaning remaining Samus movement callers.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
