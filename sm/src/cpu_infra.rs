@@ -114,6 +114,7 @@ pub struct Snapshot {
     pub bgmode: (uint8, bool, [bool; 4]),
     pub bg_scroll: [(uint16, uint16); 4],
     pub bg_address: [(bool, bool, uint16, uint16); 4],
+    pub screen_routing: ([uint8; 2], [uint8; 2], [[bool; 4]; 5]),
     pub brightness: uint8,
     pub forced_blank: bool,
     pub cgram: [uint16; 256],
@@ -971,6 +972,15 @@ unsafe fn VerifySnapshotsEq(
             );
         }
     }
+    if (*b).screen_routing != (*a).screen_routing {
+        game.g_fail = true;
+        if report_details {
+            eprintln!(
+                "@{}: Screen routing (enables, windows, layer flags) compare failed: mine {:?} != theirs {:?}",
+                game.snes_frame_counter, (*b).screen_routing, (*a).screen_routing
+            );
+        }
+    }
     if (*b).bg_address != (*a).bg_address {
         game.g_fail = true;
         if report_details {
@@ -1696,6 +1706,18 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     let ppu = &*(*game.g_snes).ppu;
     (*s).brightness = ppu.brightness;
     (*s).forced_blank = ppu.forcedBlank;
+    (*s).screen_routing = (
+        ppu.screenEnabled,
+        ppu.screenWindowed,
+        ppu.layer.map(|layer| {
+            [
+                layer.mainScreenEnabled,
+                layer.subScreenEnabled,
+                layer.mainScreenWindowed,
+                layer.subScreenWindowed,
+            ]
+        }),
+    );
     (*s).bg_address = ppu
         .bgLayer
         .map(|bg| (bg.tilemapWider, bg.tilemapHigher, bg.tilemapAdr, bg.tileAdr));
@@ -1743,6 +1765,17 @@ unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     let ppu = &mut *(*game.g_snes).ppu;
     ppu.brightness = (*s).brightness;
     ppu.forcedBlank = (*s).forced_blank;
+    let (enabled, windowed, layers) = (*s).screen_routing;
+    ppu.screenEnabled = enabled;
+    ppu.screenWindowed = windowed;
+    for (layer, flags) in ppu.layer.iter_mut().zip(layers) {
+        [
+            layer.mainScreenEnabled,
+            layer.subScreenEnabled,
+            layer.mainScreenWindowed,
+            layer.subScreenWindowed,
+        ] = flags;
+    }
     for (bg, (wide, high, tilemap, tiles)) in ppu.bgLayer.iter_mut().zip((*s).bg_address) {
         bg.tilemapWider = wide;
         bg.tilemapHigher = high;

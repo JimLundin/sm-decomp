@@ -2624,6 +2624,37 @@ other focused counters unchanged. No probes or ROM-derived assets committed.
 Next: TM/TS screen-enable register cleanup, preserving full raw bytes and
 main/subscreen store order; coordinate composition snapshots separately.
 
+Screen-routing snapshot gap and enforcement (2026-10-18): TM/TS/TMW/TSW
+raw bytes and their20 per-layer flags were absent from frame snapshots.
+Actual register mutation probes accept all four changes against identical
+registered buffers, leave them live after rewind and change the next Mode7
+BG1 row. Subscreen cases use color math; window cases cross an enabled
+window. This proves future display divergence after an accepted snapshot,
+not natural gameplay divergence or every layer/composition combination.
+
+Snapshots now capture, compare and directly restore both raw-byte arrays
+and all20 layer flags. Different render paths consume these separate forms;
+retaining both detects independent flag corruption instead of silently
+normalizing it. Controls pass256 related register-generated equality states
+and13,312 actual mutation/capture/restore cases:8,192 register-bit faults
+plus5,120 individual layer-flag faults. All four prior continuation faults
+restore identical rows. Independent bit mappings pass1,024 actual TM/TS/
+TMW/TSW writes. Probe nativeexit0. Four actual post-render frame200 register
+faults each produce3,600/1, named routing diagnostics and nativeexit1 with
+no later cascade. Reserved raw bits are retained exactly, not masked.
+
+Dedicated maintained-source Verified 129712 frames: 0 failing frames (315.25s); Verified 58109 frames: 0 failing frames (149.25s); nativeexits0.
+Cargo fmt/fmt--check and direct optimized core/DLL/normal-core metadata builds
+pass; Cargo release remains blocked executing khronos_api's build script
+(OSerror5). Progress run: focused Rust lines+33 provide state/capture/restore/
+diagnostics; other counters unchanged for this change. Builds include
+then-current independent audio work; later concurrent changes require their
+own replays. Only these CPU hunks and note enter this commit. Ppu/RAM/save
+layouts unchanged; ROM/probe assets ignored. Continuation rows share the
+maintained renderer and do not prove SNES accuracy or all routing effects.
+Next: window definition and color-composition snapshot state. Audio timing,
+HDMA, masked RAM and boot-to-credits coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
