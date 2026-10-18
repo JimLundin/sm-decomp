@@ -5835,6 +5835,39 @@ core/probe DLL, normal-core metadata, direct full-source format and progress
 pass. Other bus devices, arbitrary operand-value coverage, emulation hardware
 accuracy and movie integration are outside this probe. No production edits.
 
+SNES memory-read routing (2026-10-18): snes_read now splits a native byte
+bank and word offset, then matches WRAM banks and mirrored device ranges.
+The redundant controller-register range is removed; cartridge fallback,
+high address-byte truncation and inherited 4016/4017 assertion diagnostics
+remain exact. Actual old/current routing passes 67,108,864 comparisons:
+every 24-bit address with high bytes 00/55/AA/FF. WRAM accesses are real;
+substituted B-bus/register/DMA/cartridge traces verify dispatch and arguments,
+including unsupported addresses, without claiming real device behavior.
+Independent real-device QC passes 155,648 LDA pairs across all 256 banks,
+sampled valid RAM/PPU/WRAM-port/status/DMA/cartridge addresses and 32 seeds,
+plus 262,144 high-byte truncation comparisons. CPU results/bus counters,
+IRQ and PPU/WRAM-port effects match. Misrouting 7F to 7E is detected, native
+assertion exit 3221226505. Six invalid old/current process pairs (12 calls)
+retain exit 2 and identical diagnostics for 004016/17,804016/17,0021FF,002000.
+That invalid harness could include the negative WRAM branch during rebuilding;
+its invalid branches are untouched and audited. Invalid LoROM/BBUS addresses
+were removed from the positive real-device fixture after inherited assertions.
+
+Instrumented any% passes 12,000/0 (29.77s), native exit 0. RAM/B-bus/register/
+DMA/cartridge read counts are ROM[53904621,121660,330448,0,120114294] and
+Rust[27989073,121660,23314,0,3795480]; real-device QC supplies DMA coverage.
+Clean frozen bd8b8fb0 plus only this router passes any% 129,712/0 (288.00s),
+native exit 0. A TEMP wrapper variable shadow caused log-close failure after
+capturing native exit 0; the completed replay log confirms the frame summary.
+Direct full-source format, normal-core metadata and optimized clean/probe
+core/DLL builds pass. Cargo fmt/build --release remain denied at cargo.exe
+launch; that required check stays unmet. Probe router matches maintained
+source after stripping observation/substitutions. Progress/diff pass: focused
+cast lines -7, Rust lines -17, other categories unchanged. Later peer changes need
+separate integration. Hardware/audio timing, rendering/Waver71, masked RAM
+and credits remain open; held HDMA diagnosis stays stopped. Continue executed
+hardware paths and route coverage.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

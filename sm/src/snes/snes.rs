@@ -371,30 +371,18 @@ unsafe fn snes_writeReg(snes: *mut Snes, adr: u16, val: u8, game: &mut Game) {
         _ => {}
     };
 }
-pub unsafe fn snes_read(mut snes: *mut Snes, mut adr: uint32_t, game: &mut Game) -> uint8_t {
-    let mut bank: uint8_t = (adr >> 16 as ::core::ffi::c_int) as uint8_t;
-    adr &= 0xffff as uint32_t;
-    if bank as ::core::ffi::c_int == 0x7e as ::core::ffi::c_int
-        || bank as ::core::ffi::c_int == 0x7f as ::core::ffi::c_int
-    {
-        return *(*snes).ram.offset(
-            (((bank as ::core::ffi::c_int & 1 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int)
-                as uint32_t
-                | adr) as isize,
-        );
+pub unsafe fn snes_read(snes: *mut Snes, address: u32, game: &mut Game) -> u8 {
+    let bank = (address >> 16) as u8;
+    let offset = address as u16;
+    if matches!(bank, 0x7e | 0x7f) {
+        let index = (usize::from(bank & 1) << 16) | usize::from(offset);
+        return *(*snes).ram.add(index);
     }
-    if (bank as ::core::ffi::c_int) < 0x40 as ::core::ffi::c_int
-        || bank as ::core::ffi::c_int >= 0x80 as ::core::ffi::c_int
-            && (bank as ::core::ffi::c_int) < 0xc0 as ::core::ffi::c_int
-    {
-        if adr < 0x2000 as uint32_t {
-            return *(*snes).ram.offset(adr as isize);
-        }
-        if adr >= 0x2100 as uint32_t && adr < 0x2200 as uint32_t {
-            return snes_readBBus(snes, (adr & 0xff as uint32_t) as uint8_t, game);
-        }
-        if adr == 0x4016 as uint32_t || adr == 0x4017 as uint32_t {
-            '_c2rust_label: {
+    if matches!(bank, 0x00..=0x3f | 0x80..=0xbf) {
+        match offset {
+            0x0000..=0x1fff => return *(*snes).ram.add(usize::from(offset)),
+            0x2100..=0x21ff => return snes_readBBus(snes, offset as u8, game),
+            0x4016 | 0x4017 => {
                 __assert_fail(
                     b"0\0" as *const u8 as *const ::core::ffi::c_char,
                     b"src/snes/snes.c\0" as *const u8 as *const ::core::ffi::c_char,
@@ -402,18 +390,13 @@ pub unsafe fn snes_read(mut snes: *mut Snes, mut adr: uint32_t, game: &mut Game)
                     b"uint8_t snes_read(Snes *, uint32_t)\0" as *const u8
                         as *const ::core::ffi::c_char,
                 );
-            };
-        }
-        if adr >= 0x4200 as uint32_t && adr < 0x4220 as uint32_t
-            || adr >= 0x4218 as uint32_t && adr < 0x4220 as uint32_t
-        {
-            return snes_readReg(snes, adr as uint16_t);
-        }
-        if adr >= 0x4300 as uint32_t && adr < 0x4380 as uint32_t {
-            return dma_read((*snes).dma, adr as uint16_t);
+            }
+            0x4200..=0x421f => return snes_readReg(snes, offset),
+            0x4300..=0x437f => return dma_read((*snes).dma, offset),
+            _ => {}
         }
     }
-    return cart_read((*snes).cart, bank, adr as uint16_t, game);
+    cart_read((*snes).cart, bank, offset, game)
 }
 pub unsafe fn LogWrite(mut snes: *mut Snes, mut adr: uint32_t, mut val: uint8_t, game: &mut Game) {
     printf(
