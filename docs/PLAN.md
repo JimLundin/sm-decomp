@@ -3914,6 +3914,38 @@ timer-write behavior and exercised handlers, not timer IRQ generation or
 NMI gating. Those event gaps, rendering/HDMA, audio timing and boot-to-credits
 coverage remain open; continue their focused oracle work.
 
+Independent WRIO/autojoy rewind audit (2026-10-18): ppuLatch,
+autoJoyRead and autoJoyTimer are not captured by current Snapshot. Actual
+4201 writes followed by capture, opposite-latch write and rewind reproduce
+32 WRIO losses: both saved latch values xfour horizontal xfour vertical
+positions. RDIO4213 retains the later value. The next4201 falling-edge write
+therefore latches counters when it should not, or fails to latch when it
+should. PPU hCount/vCount/countersLatched already restore correctly; the
+omitted WRIO edge-control state is the demonstrated cause.
+
+All65,536 autojoy timer values are captured with automatic reading enabled,
+then disabled through4200 and rewound. The enable stays false and timer0;
+HVBJOY's busy bit is wrong for all65,535 nonzero saved timers. These are
+constructed actual-register states, not naturally observed busy periods.
+Source inspection finds only zero writes to autoJoyTimer in maintained
+reset/vblank/disable paths, no busy-period start/countdown.4218/4219 return
+the current controller word directly after bit swapping. Therefore these
+checks prove rewind omissions, not a working automatic joypad latch/timer.
+
+A TEMP-only candidate captures/restores the three fields and passes the same
+65,568 actual continuations, including the correct post-rewind WRIO edge and
+HVBJOY busy bit. Nativeexits0 for baseline defect checks and candidate controls.
+No production fix enters this QC while the other session owns snapshot edits;
+candidate full-movie, BOTH recovery/debug paths and disabled-to-enabled autojoy
+rewind remain untested. Next: implement the focused context restore with actual
+frame-path controls; controller latching/timing needs separate event work.
+
+Only this note changes. Direct full-source rustfmt, normal-core metadata,
+optimized diagnostic core/DLL and progress checks pass. Probes stay TEMP;
+no new movie result or natural WRIO/autojoy execution is claimed. Arithmetic
+rewind and other concurrent source changes remain separate. Enabled-render
+Waver71, held HDMA, interrupt generation/gating and credits gaps remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
