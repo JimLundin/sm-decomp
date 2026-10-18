@@ -6322,6 +6322,33 @@ source door/block requirements and actual traversal. Do not resume the held
 upper99BD ascent or claim965B coverage from destination definitions. Credits,
 full hardware/gameplay fidelity, rendering/audio and masked RAM remain open.
 
+CPU bus-wrapper cleanup (2026-10-18): snes_cpuRead/Write use native
+signatures and byte wrapping_add(8). Each retains memory-op increment,
+cycle increment and full-address dispatch in the original order. Actual
+old/current wrappers pass 1,048,576 cases covering every pair of byte
+counter seeds, WRAM/mirrors, IRQ reads/control writes and high address-byte
+truncation. Results, storage, IRQ/autojoy state and bus counters match.
+Independent QC passes 262,144 actual LDA/STA pairs across every counter
+seed pair with WRAM and IRQ-read/multiply-write devices. An observer at
+actual snes_read/write entry checks that both counters already advanced;
+independent four-access/+32-cycle final expectations pass. A +7 cycle fault
+is detected at entry, native assertion exit 3221226505. This control tests
+the increment; source review preserves the exact statement order. Read-only
+subagent review finds no defect; its dispatch-entry coverage concern is met.
+
+Instrumented any% passes 12,000/0 (22.77s), native exit 0, with 142,686,492
+reads and 20,817,219 writes through the wrappers. Clean frozen 2b71baa7 plus
+only these wrappers passes any% 129,712/0 (229.02s), native exit 0. Direct
+full-source format, normal-core metadata and optimized clean/probe core/DLL
+builds pass. Cargo fmt/build --release remain denied at cargo.exe launch;
+that required check stays unmet. Probe wrappers match maintained source
+after removing counters. Progress/diff pass: focused cast lines -2, Rust
+lines -7, other categories unchanged. Later peer changes need separate
+integration. Byte bookkeeping does not resolve bus/device scheduling;
+hardware/audio timing, rendering/Waver71, masked RAM and credits remain
+open. Held HDMA diagnosis stays stopped. Continue executed hardware paths
+and route coverage with useful independent subagents.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

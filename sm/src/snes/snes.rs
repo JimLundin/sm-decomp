@@ -412,20 +412,13 @@ pub unsafe fn snes_write(snes: *mut Snes, address: u32, value: u8, game: &mut Ga
     }
     cart_write((*snes).cart, bank, offset, value);
 }
-pub unsafe fn snes_cpuRead(mut snes: *mut Snes, mut adr: uint32_t, game: &mut Game) -> uint8_t {
+pub unsafe fn snes_cpuRead(snes: *mut Snes, address: u32, game: &mut Game) -> u8 {
     (*snes).cpuMemOps = (*snes).cpuMemOps.wrapping_add(1);
-    (*snes).cpuCyclesLeft =
-        ((*snes).cpuCyclesLeft as ::core::ffi::c_int + 8 as ::core::ffi::c_int) as uint8_t;
-    return snes_read(snes, adr, game);
+    (*snes).cpuCyclesLeft = (*snes).cpuCyclesLeft.wrapping_add(8);
+    snes_read(snes, address, game)
 }
-pub unsafe fn snes_cpuWrite(
-    mut snes: *mut Snes,
-    mut adr: uint32_t,
-    mut val: uint8_t,
-    game: &mut Game,
-) {
+pub unsafe fn snes_cpuWrite(snes: *mut Snes, address: u32, value: u8, game: &mut Game) {
     (*snes).cpuMemOps = (*snes).cpuMemOps.wrapping_add(1);
-    (*snes).cpuCyclesLeft =
-        ((*snes).cpuCyclesLeft as ::core::ffi::c_int + 8 as ::core::ffi::c_int) as uint8_t;
-    snes_write(snes, adr, val, game);
+    (*snes).cpuCyclesLeft = (*snes).cpuCyclesLeft.wrapping_add(8);
+    snes_write(snes, address, value, game);
 }
