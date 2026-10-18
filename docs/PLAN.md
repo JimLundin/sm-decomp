@@ -1424,6 +1424,18 @@ Raw offsets -3, unsafe functions -4, cast lines -6, Rust lines -5. Next:
 spike-air inside reactions, retaining contact gates, damage/knockback writes,
 final speed-table write and the existing out-of-range BTS panic behavior.
 
+Spike-air inside reactions now use safe byte-backed contact, invincibility,
+damage and knockback access with direct BTS selection. Only BTS 2 changes
+RAM; contact/invincibility gates, timer ordering, wrapping damage and final
+default-speed write remain exact. BTS >= 16 still panics before mutation.
+Prior Rust comparison passes 458,752 full-RAM/return/panic cases over every
+damage word and BTS byte, six facing boundaries and contact/invincibility
+boundaries. Stable optimized core/DLL build and direct format pass; Cargo
+fmt/build remain ASR-denied. Waver route: 58,109 frames, zero failures
+(84.58s); any%: 129,712 frames, zero failures (182.62s). Raw offsets -10,
+unsafe functions -4, cast lines -16, Rust lines -35. Next: special-air
+movement reactions 8..11, preserving boss-check order and live speed reads.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

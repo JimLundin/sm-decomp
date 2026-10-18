@@ -3253,65 +3253,30 @@ fn BlockInsideReact_ShootableAir(_ci: *mut CollInfo, game: &mut Game) -> uint8 {
     BlockInsideReact_SpecialAir_Default(game);
     0
 }
-unsafe fn ClearCarry_8(game: &mut Game) {}
-unsafe fn nullsub_165(game: &mut Game) {}
-unsafe fn BlockInsideReact_SpikeAir_BTS2(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa6e as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        == 0
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            == 0
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 60 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x18aa as ::core::ffi::c_int as isize)
-            as *mut uint16) = 10 as uint16;
-        let ref mut fresh16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xa50 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        *fresh16 = (*fresh16 as ::core::ffi::c_int + 16 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa54 as ::core::ffi::c_int as isize)
-            as *mut uint16) =
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0xa1e as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                ^ 0xc as ::core::ffi::c_int)
-                & 8 as ::core::ffi::c_int
-                != 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
+fn BlockInsideReact_SpikeAir_BTS2(game: &mut Game) {
+    let contact_damage = u16::from_le_bytes([game.g_ram[0xa6e], game.g_ram[0xa6f]]);
+    if contact_damage == 0 {
+        let invincibility = u16::from_le_bytes([game.g_ram[0x18a8], game.g_ram[0x18a9]]);
+        if invincibility == 0 {
+            game.g_ram[0x18a8..0x18aa].copy_from_slice(&60u16.to_le_bytes());
+            game.g_ram[0x18aa..0x18ac].copy_from_slice(&10u16.to_le_bytes());
+            let damage = u16::from_le_bytes([game.g_ram[0xa50], game.g_ram[0xa51]]);
+            game.g_ram[0xa50..0xa52].copy_from_slice(&damage.wrapping_add(16).to_le_bytes());
+            let facing = u16::from_le_bytes([game.g_ram[0xa1e], game.g_ram[0xa1f]]);
+            let knockback = u16::from((facing ^ 12) & 8 != 0);
+            game.g_ram[0xa54..0xa56].copy_from_slice(&knockback.to_le_bytes());
+        }
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa6c as ::core::ffi::c_int as isize)
-        as *mut uint16) =
-        (addr_kSamusSpeedTable_Normal_X as ::core::ffi::c_int + 12 as ::core::ffi::c_int) as uint16;
+    BlockInsideReact_SpecialAir_Default(game);
 }
-static kBlockInsideReact_SpikeAir: [Option<Func_V>; 16] = unsafe {
-    [
-        Some(ClearCarry_8 as unsafe fn(&mut Game) -> ()),
-        Some(ClearCarry_8 as unsafe fn(&mut Game) -> ()),
-        Some(BlockInsideReact_SpikeAir_BTS2 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_165 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_165 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_165 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_165 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_165 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_165 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_165 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_165 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_165 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_165 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_165 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_165 as unsafe fn(&mut Game) -> ()),
-        Some(nullsub_165 as unsafe fn(&mut Game) -> ()),
-    ]
-};
-unsafe fn BlockInsideReact_SpikeAir(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    kBlockInsideReact_SpikeAir[*(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as usize]
-        .expect("non-null function pointer")(game);
-    return 0 as uint8;
+fn BlockInsideReact_SpikeAir(_ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    let bts = game.current_block_bts();
+    // Keep the former sixteen-entry table's rejection of invalid BTS values.
+    assert!(bts < 16, "spike-air BTS index out of bounds: {bts}");
+    if bts == 2 {
+        BlockInsideReact_SpikeAir_BTS2(game);
+    }
+    0
 }
 fn BlockInsideReact_Special_(_ci: *mut CollInfo, game: &mut Game) -> uint8 {
     BlockInsideReact_SpecialAir_Default(game);
