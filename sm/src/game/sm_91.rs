@@ -1144,19 +1144,11 @@ pub unsafe fn CallDemoInstr(
     };
 }
 pub unsafe fn ProcessDemoInputObject(game: &mut Game) {
-    CallDemoPreInstr(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xa7a as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            | 0x910000 as ::core::ffi::c_int) as uint32,
-        game,
-    );
-    let ref mut fresh30 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xa7c as ::core::ffi::c_int as isize) as *mut uint16);
-    *fresh30 = (*fresh30).wrapping_sub(1);
-    if *fresh30 == 0 {
-        let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xa7e as ::core::ffi::c_int as isize)
-            as *mut uint16);
+    CallDemoPreInstr(0x910000 | u32::from(game.demo_input_pre_instr()), game);
+    let timer = game.demo_input_instr_timer().wrapping_sub(1);
+    game.set_demo_input_instr_timer(timer);
+    if timer == 0 {
+        let mut v0: uint16 = game.demo_input_instr_ptr();
         let mut v1: *mut uint16 = ::core::ptr::null_mut::<uint16>();
         loop {
             v1 = RomPtr_91(v0 as uint16_t, game) as *mut uint16;
@@ -1174,15 +1166,11 @@ pub unsafe fn ProcessDemoInputObject(game: &mut Game) {
                 return;
             }
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa7c as ::core::ffi::c_int as isize)
-            as *mut uint16) = *v1;
+        game.set_demo_input_instr_timer(*v1);
         let mut v3: *const uint8 = RomPtr_91(v0 as uint16_t, game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa84 as ::core::ffi::c_int as isize)
-            as *mut uint16) = *(v3.offset(2 as ::core::ffi::c_int as isize) as *mut uint16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa86 as ::core::ffi::c_int as isize)
-            as *mut uint16) = *(v3.offset(4 as ::core::ffi::c_int as isize) as *mut uint16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa7e as ::core::ffi::c_int as isize)
-            as *mut uint16) = (v0 as ::core::ffi::c_int + 6 as ::core::ffi::c_int) as uint16;
+        game.set_demo_input(*(v3.offset(2 as ::core::ffi::c_int as isize) as *mut uint16));
+        game.set_demo_input_new(*(v3.offset(4 as ::core::ffi::c_int as isize) as *mut uint16));
+        game.set_demo_input_instr_ptr(v0.wrapping_add(6));
     }
 }
 pub fn DemoInstr_Finish(_k: u16, _j: u16, game: &mut Game) -> u16 {
