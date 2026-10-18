@@ -4098,51 +4098,35 @@ fn setup_scroll_block(j: uint16, block_type_and_bts: u16, game: &mut Game) -> ui
     SkipDebugDrawInstructionsForScrollPlms(j, game);
     0
 }
-pub unsafe fn PlmSetup_B6FF_ScrollBlockTouch(mut j: uint16, game: &mut Game) -> uint8 {
-    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1c87 as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset(v1 as isize);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v1 as isize) = 0 as uint16;
-    let mut v3: uint16 = 78 as uint16;
-    while v2 as ::core::ffi::c_int
-        != *((&raw mut game.g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-            as ::core::ffi::c_int
-    {
-        v3 = (v3 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16;
-        if v3 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
-            loop {}
-        }
+pub fn PlmSetup_B6FF_ScrollBlockTouch(j: uint16, game: &mut Game) -> uint8 {
+    let read_word = |game: &Game, offset: usize| {
+        u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
+    };
+    let write_word = |game: &mut Game, offset: usize, value: u16| {
+        game.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+    };
+    let block_offset = 0x1c87 + usize::from(j & !1);
+    let block_index = read_word(game, block_offset);
+    write_word(game, block_offset, 0);
+    // Search after clearing our block index, including our own slot as before.
+    let Some(slot) = (0..40)
+        .rev()
+        .find(|&slot| read_word(game, 0x1c87 + slot * 2) == block_index)
+    else {
+        // The original handler hangs when no matching scroll PLM exists.
+        loop {}
+    };
+    let index = slot * 2;
+    if read_word(game, 0x1e17 + index) & 0x8000 == 0 {
+        write_word(game, 0x1e17 + index, 0x8000);
+        // Retain both separate instruction writes before setting its timer.
+        let instruction = read_word(game, 0x1d27 + index).wrapping_add(1);
+        write_word(game, 0x1d27 + index, instruction);
+        let instruction = read_word(game, 0x1d27 + index).wrapping_add(1);
+        write_word(game, 0x1d27 + index, instruction);
+        write_word(game, 0xde1c + index, 1);
     }
-    let mut v4: ::core::ffi::c_int = v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x1e17 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v4 as isize) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1e17 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v4 as isize) = 0x8000 as uint16;
-        let ref mut fresh16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x1d27 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v4 as isize);
-        *fresh16 = (*fresh16).wrapping_add(1);
-        let ref mut fresh17 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x1d27 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v4 as isize);
-        *fresh17 = (*fresh17).wrapping_add(1);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xde1c as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v4 as isize) = 1 as uint16;
-    }
-    return 0 as uint8;
+    0
 }
 pub fn PlmSetup_DeactivatePlm(j: uint16, game: &mut Game) -> uint8 {
     retain_plm_block_bits(j, 0x8fff, game);

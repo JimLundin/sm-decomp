@@ -1136,6 +1136,17 @@ failures (188.61s). Raw offsets -5, unsafe functions -3, cast lines -9,
 Rust lines -10. Next: scroll-block touch, retaining descending slot search,
 the no-match infinite loop and the two separate wrapping instruction writes.
 
+Scroll-block touch now uses safe byte-backed RAM access. It clears its own
+block index before searching all forty slots from last to first, preserving
+zero-index self-matches and the no-match infinite loop. The selected slot's
+8000 variable test, full 8000 write, both separate instruction increments
+and final timer write remain ordered as before. Stable optimized core/DLL
+build and direct format pass; Cargo fmt/build remain ASR-denied. Waver route:
+58,109 frames, zero failures (84.91s); any%: 129,712 frames, zero failures
+(183.58s). Raw offsets -8, unsafe functions -1, cast lines -18, Rust lines -16.
+Next: ice-physics setup and then quicksand setup dependencies, retaining
+their exact position tests and physics writes.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
