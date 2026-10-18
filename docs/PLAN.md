@@ -6708,6 +6708,33 @@ full Cartesian coverage, hardware/render/audio timing and credits remain
 open; held HDMA diagnosis stays stopped. Address-helper arithmetic cleanup
 is complete; continue executed CPU data-operation helpers.
 
+Ship exit and restored free movement verified (2026-10-18): from
+59071-frame top-center.inputs, confirm0080 once, neutral600, left/run/shoot80,
+neutral120 completes59872/71 (147.89s), nativeexit1. Samus rises from inside
+the shipY1138 toY1088 around59855 but remains in forward pose0000. The
+movement suffix arrives during the remaining ship animation; it does not
+prove controller handoff.
+
+Adding neutral300, left/run/shoot110, neutral120 completes60402/71
+(181.23s), nativeexit1. Actual movement starts after60172: X1151/Y1091
+at60175, X1117 at60195, then falls off the ship toward the ground. Final
+alive state8/91F8,X781/Y1211, health99/99, missiles5/5, Morph/Bombs1004.
+This closes the ship-entry/refill/exit/free-movement milestone with ordinary
+controller inputs.16rooms/16enemy definitions remain: no new-room or credits
+claim. Both ordered rendered diagnostic lists exactly match frozen d217ea15
+Waver's71 baseline failures. No inventory/state injection or RAM edits.
+
+Useful current route input is target/route-gunship-top/ship-free-movement.inputs.
+Next: inspect and traverse the landing-site ascent from this restored route
+toward its leftY608 sourceBTS2 exit to92B3. Preserve the successful ship-top
+prefix if starting the ascent from higher ground is useful. Upper99BD tuning,
+9AD9 ammo and HDMA remain held. No maintained Rust edits or own residue delta;
+concurrent hardware work is separate. Direct full-source rustfmt passes;
+Cargo fmt/check and release remain launch-denied OSerror5. Prior same-DLL
+explicit-render any%129712/0 (414.98s) remains regression for input-only work.
+Inputs/probes/ROM-derived outputs stay ignored. Full fidelity and credits
+remain unproved.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
