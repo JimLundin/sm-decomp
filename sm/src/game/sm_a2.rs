@@ -2278,22 +2278,20 @@ pub unsafe fn BouncingGoofball_Func3(game: &mut Game) {
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
 }
-pub unsafe fn BouncingGoofball_Instr_88C5(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
-    return jp;
+pub fn BouncingGoofball_Instr_88C5(_k: uint16, jp: *const uint16) -> *const uint16 {
+    jp
 }
 pub unsafe fn BouncingGoofball_Instr_88C6(
-    mut k: uint16,
-    mut jp: *const uint16,
+    _k: uint16,
+    jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*Get_BouncingGoofball(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    ))
-    .bgl_var_02 = 0 as uint16;
-    QueueSfx2_Max6(0xe as uint16, game);
-    return jp;
+    let index = game.cur_enemy_index();
+    let offset =
+        0xf78 + usize::from(index) + core::mem::offset_of!(Enemy_BouncingGoofball, bgl_var_02);
+    game.g_ram[offset..offset + 2].copy_from_slice(&0u16.to_le_bytes());
+    QueueSfx2_Max6(0xe, game);
+    jp
 }
 pub unsafe fn MiniCrocomire_Instr_897E(
     _k: uint16,

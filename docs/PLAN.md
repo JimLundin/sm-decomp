@@ -2264,6 +2264,20 @@ counters unchanged. Concurrent rendered-buffer verification belongs to the
 oracle audit session; these replays precede that change. Next: Bouncing
 Goofball instruction callbacks after the oracle session finishes its verify.
 
+Bouncing Goofball's two instruction callbacks now use a safe no-op pointer
+pass-through and byte-backed bgl_var_02 clear at the live enemy index. The
+clear still precedes QueueSfx2_Max6(0E); passed k stays ignored and the returned
+pointer is unchanged. Unsafe remains for the sound boundary. Independent
+extracted comparison passes 924,288 full-RAM/return-pointer/SFX-trace/RNG
+checks across every index, null/integer pointer pass-throughs and random
+high/odd slots with mutating sound callbacks. Stable optimized core/DLL build
+and direct full-source format pass; Cargo fmt/build remain ASR-denied.
+CGRAM/render-enabled any%: 129,712 frames, zero failures (213.55s); Waver
+route: 58,109 frames, zero failures (96.77s). Raw offsets -1, unsafe functions
+-1, cast lines -2, Rust lines -2; other counters unchanged. Next: Bouncing
+Goofball animation setup and state fields, retaining live slot capture and
+instruction/timer write order.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
