@@ -2094,6 +2094,20 @@ cast lines -18, Rust lines -55; other counters unchanged. Next:
 IsEnemyLeavingScreen signed horizontal gates, retaining negative-position
 rejection and its exclusive 256 boundary.
 
+IsEnemyLeavingScreen now uses safe borrowed enemy bytes and the named odd-
+address camera read. Negative signed enemy X still rejects immediately;
+both width/position/camera gates retain wrapped signed-word comparisons and
+the exclusive 256 boundary. The function is safe and leaves RAM unchanged.
+Prior Rust comparison passes 2,031,616 full-RAM/return checks; independent
+comparison passes 2,297,152 checks across all coordinate/radius/camera/index
+words and random high/odd/overlapping slots. Stable optimized core/DLL build
+and direct full-source format pass; Cargo fmt/build remain ASR-denied. Any%:
+129,712 frames, zero failures (190.82s); Waver route: 58,109 frames, zero
+failures (91.49s). Raw offsets -1, unsafe functions -1, cast lines -11,
+Rust lines -8; other counters unchanged. Next: ProcessEnemyInstructions
+live timer/instruction slot reads and writes, retaining callback order and
+ROM-bank instruction dispatch.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

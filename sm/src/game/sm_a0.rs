@@ -9701,26 +9701,18 @@ pub unsafe fn CalculateAngleFromXY(x: uint16, y: uint16, game: &mut Game) -> uin
     };
     u16::from(angle)
 }
-pub unsafe fn IsEnemyLeavingScreen(mut k: uint16, game: &mut Game) -> uint8 {
-    let mut x_pos: int16 = 0;
-    let mut v3: int16 = 0;
-    let mut E: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);
-    x_pos = (*E).x_pos as int16;
-    if x_pos as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
-        v3 = ((*E).x_width as ::core::ffi::c_int + x_pos as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0x911 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as int16;
-        if v3 as ::core::ffi::c_int >= 0 as ::core::ffi::c_int
-            && ((v3 as ::core::ffi::c_int
-                - 256 as ::core::ffi::c_int
-                - (*E).x_width as ::core::ffi::c_int) as int16
-                as ::core::ffi::c_int)
-                < 0 as ::core::ffi::c_int
-        {
-            return 0 as uint8;
-        }
+pub fn IsEnemyLeavingScreen(k: uint16, game: &mut Game) -> uint8 {
+    let enemy = SolidEnemyCollisionBody::new(game, k);
+    let x = enemy.x_pos();
+    if (x as i16) < 0 {
+        return 1;
     }
-    return 1 as uint8;
+    let edge = enemy
+        .x_width()
+        .wrapping_add(x)
+        .wrapping_sub(game.layer1_x_pos());
+    let past_screen = edge.wrapping_sub(256).wrapping_sub(enemy.x_width());
+    u8::from((edge as i16) < 0 || (past_screen as i16) >= 0)
 }
 pub unsafe fn ProcessEnemyInstructions(game: &mut Game) {
     let mut E: *mut EnemyData = gEnemyData(
