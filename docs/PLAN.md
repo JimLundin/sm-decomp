@@ -7978,6 +7978,27 @@ replay. Arbitrary device pointer reads, full pointer Cartesian coverage,
 hardware/render/audio timing and credits remain open; held HDMA diagnosis
 stays stopped. Continue executed jump/call opcode cleanup.
 
+CPU indirect JMP cleanup (2026-10-19): opcode 6C uses native widening and
+a wrapping word offset for bank-zero pointer reads. Operand fetch/read order,
+PC assignment and unchanged program bank remain exact. Actual old/current
+instructions pass 4,915,200 pairs over every target word, three WRAM pointer
+locations and adjacent-byte patterns, independent native M/X, emulation byte
+mode and PC 8000/FFFF (overlapping pointer/operand case skipped). Independent
+target and complete named CPU state, cycles, open bus and PC history match.
+Four actual FFFE/FFFF pointer controls include ROM-mapped bytes and wrapping
+low-WRAM reads; expected bytes come from the actual bus. Instrumented any%
+prefix passes 3,600/0 (1.10s), native exit 0; native/emulation calls are
+11,555/0. Dedicated pairs cover emulation. Clean frozen
+2b231067ab29dbc7a475e289d2af00dad57eaab4 plus only this arm passes any%
+129,712/0 (60.86s), native exit 0. Cargo fmt/check, direct format, normal-core
+metadata and optimized clean/probe core/DLL builds pass. Full Cargo release
+fails frontend link for missing SDL2, exit 101. Progress/diff pass: focused
+cast lines -2, Rust lines -6, other categories unchanged. Live arm matches
+verified source; peer PPU changes are outside this replay. Arbitrary device
+pointer reads, full pointer Cartesian coverage, hardware/render/audio timing
+and credits remain open; held HDMA diagnosis stays stopped. Continue
+executed jump/call opcode cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

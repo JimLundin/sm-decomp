@@ -1977,14 +1977,8 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
                 break;
             }
             108 => {
-                let mut adr: uint16_t = cpu_readOpcodeWord(cpu, game);
-                (*cpu).pc = cpu_readWord(
-                    cpu,
-                    adr as uint32_t,
-                    (adr as ::core::ffi::c_int + 1 as ::core::ffi::c_int
-                        & 0xffff as ::core::ffi::c_int) as uint32_t,
-                    game,
-                );
+                let adr = cpu_readOpcodeWord(cpu, game);
+                (*cpu).pc = cpu_readWord(cpu, u32::from(adr), u32::from(adr.wrapping_add(1)), game);
                 break;
             }
             109 => {
