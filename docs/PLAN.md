@@ -6588,6 +6588,38 @@ Preserving catchup behavior does not establish audio timing equivalence.
 Held HDMA diagnosis stays stopped. Continue executed hardware paths and
 route coverage with useful independent subagents.
 
+Bomb-equipped gunship refill succeeds (2026-10-18): top-center.inputs
+retains the alive58082-frame landing-site ground prefix. Up1/neutral12,
+right/shoot35/neutral12, vertical jump/shoot10, left/run/jump/shoot85,
+neutral100 reaches a stable top landingX1187/Y1083. Retain this continuation
+through input58337, then left/shoot13, neutral20, Down1, neutral700.
+Final59071/71 (171.83s), nativeexit1, state8/91F8 inside gunshipX1152/Y1138.
+Health restores5->99/99 and missiles0->5/5 with Morph/Bombs1004 retained.
+This proves actual normal-controller ship entry and refill after Bombs;
+exit back to free gameplay is not yet proved by this endpoint.
+
+Five focused trials all retain exactly the71 ordered rendered diagnostics
+of frozen d217ea15 Waver baseline. First58948/71 (152.12s) hits underside
+nearX1229/Y1179. Outside59020/71 (176.58s) reachesY1069 but lands outside
+atX1257. Earlier left/run59038/71 (152.95s) lands on shipX1187/Y1083.
+Left17 alignment59075/71 (151.49s) crossesX1151 then brakes toX1142,
+outside strict trigger; shortening to13 yields successful entry/refill.
+Read-only host observes position, pose, health09C2/09C4 and missiles09C6/09C8.
+All16rooms/16enemy definitions: this revisits existing coverage, not a new
+room or credits. No gameplay state or inventory writes were injected.
+
+Next: finish the ship's refill/save/exit sequence with normal controls and
+establish free movement with restored inventory. Then use the landing-site
+geometry and sourceBTS2 door toward92B3 to seek broader route coverage.
+Do not splice this refill into an unrelated prefix without traversal proof.
+Upper99BD tuning,9AD9 ammo and HDMA remain held. No maintained Rust edits,
+own residue delta zero; concurrent hardware edits/totals are separate.
+Direct full-source rustfmt passes. Cargo fmt/check and release again fail
+at cargo.exe launch OSerror5. Prior same-DLL explicit-render any%129712/0
+(414.98s) remains regression for these input-only trials. Inputs/probes and
+ROM-derived outputs stay ignored; full hardware/gameplay fidelity and credits
+remain unproved.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
