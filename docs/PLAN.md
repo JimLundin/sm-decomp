@@ -3593,6 +3593,34 @@ unchanged. No probe or ROM-derived assets are committed. Next: LoadDemoData
 ROM definition selection and scene dispatch, preserving live indices, word
 wrapping and callback order. The stopped ammo route remains held.
 
+LoadDemoData definition selection now uses named byte-backed demo_set /
+demo_scene getters at 1F55/1F57, a checked live ROM table-word read at
+918885, and explicit wrapping scene stride/addition. Scene reads before set;
+the table uses a linear two-byte set offset, then the final definition
+address wraps to a word. Definition fields remain live raw ROM reads for
+this change. The demo object is reread after input reset/enable as before.
+Dispatch rereads set and scene after LoadDemoInputObject; callback selection
+retains the existing unsafe pointer boundary and callback order. Meaningful
+locals replace v0 and the null-initialized definition pointer.
+
+Observed attract replay passes 30,000/0 (72.12s), native exit 0, with definition
+selection, demo-object read and dispatch observed in all 26 actual Rust-side-2
+LoadDemoData calls (78 observations). Removing observations restores exact
+maintained source. The existing sets 0..2/scenes 0..5 route exercises the
+changed selection and dispatch. All 65,536 scene values against five boundary
+table words (327,680 comparisons) preserve the old wrapped address arithmetic;
+these comparisons are supporting evidence, not additional movie coverage.
+
+Full any% passes 129,712/0 (316.53s), native exit 0, on committed 26721955
+source with only this sm_91.rs/game_state.rs change. Later concurrent window
+and audio-save commits are outside that replay's scope. Cargo fmt/check,
+optimized core/DLL and normal-core metadata builds pass; Cargo release stays
+denied at khronos_api's build script (OS error 5). Raw offsets -4, cast lines
+-17, Rust lines -7; other gameplay counters unchanged. No probe or ROM-derived
+assets are committed. Next: replace LoadDemoData's raw definition-field ROM
+reads with checked live words, preserving field/store order and linear offsets.
+The stopped ammo route stays held.
+
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
 the original `SignExtend8(0x8000)` initialization and the middle-byte velocity

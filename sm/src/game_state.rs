@@ -628,6 +628,16 @@ impl Game {
         self.g_ram[0xdfc..0xdfe].copy_from_slice(&value.to_le_bytes());
     }
 
+    /// demo_set ($7E:1F55 in ram_map).
+    pub fn demo_set(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x1f55], self.g_ram[0x1f56]])
+    }
+
+    /// demo_scene ($7E:1F57 in ram_map).
+    pub fn demo_scene(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x1f57], self.g_ram[0x1f58]])
+    }
+
     /// frame_handler_alfa ($7E:0A42 in ram_map).
     pub fn set_frame_handler_alfa(&mut self, value: u16) {
         self.g_ram[0xa42..0xa44].copy_from_slice(&value.to_le_bytes());

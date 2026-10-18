@@ -1369,47 +1369,30 @@ static kDemoSetFuncPtrs: [&'static [Option<Func_V>]; 4] = [
     &kDemoSetFuncPtrs_3,
 ];
 pub unsafe fn LoadDemoData(game: &mut Game) {
-    let mut DemoSetDef: *mut DemoSetDef = ::core::ptr::null_mut::<DemoSetDef>();
-    let mut v0: uint16 = (16 as ::core::ffi::c_int
-        * *((&raw mut game.g_ram as *mut uint8).offset(0x1f57 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-        + *(game.g_rom.offset(
-            (((0x918885 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x918885 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
-            .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1f55 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
-            ) as ::core::ffi::c_int) as uint16;
-    DemoSetDef = get_DemoSetDef(v0, game);
-    game.set_collected_items((*DemoSetDef).items);
+    let scene_offset = game.demo_scene().wrapping_mul(16);
+    let set_offset = game.read_rom_word(0x918885, usize::from(game.demo_set()) * 2);
+    let definition_offset = scene_offset.wrapping_add(set_offset);
+    let definition = get_DemoSetDef(definition_offset, game);
+    game.set_collected_items((*definition).items);
     game.set_equipped_items(game.collected_items());
-    game.set_samus_max_missiles((*DemoSetDef).missiles);
+    game.set_samus_max_missiles((*definition).missiles);
     game.set_samus_missiles(game.samus_max_missiles());
-    game.set_samus_max_super_missiles((*DemoSetDef).super_missiles);
+    game.set_samus_max_super_missiles((*definition).super_missiles);
     game.set_samus_super_missiles(game.samus_max_super_missiles());
-    game.set_samus_max_power_bombs((*DemoSetDef).power_bombs);
+    game.set_samus_max_power_bombs((*definition).power_bombs);
     game.set_samus_power_bombs(game.samus_max_power_bombs());
-    game.set_samus_max_health((*DemoSetDef).health);
+    game.set_samus_max_health((*definition).health);
     game.set_samus_health(game.samus_max_health());
-    game.set_collected_beams((*DemoSetDef).beams);
-    game.set_equipped_beams((*DemoSetDef).equipped_beams_);
+    game.set_collected_beams((*definition).beams);
+    game.set_equipped_beams((*definition).equipped_beams_);
     game.set_samus_reserve_health(0);
     ResetDemoData(game);
     EnableDemoInput(game);
-    let mut demo_obj: uint16 = (*get_DemoSetDef(v0, game)).demo_obj as uint16;
+    let demo_obj = (*get_DemoSetDef(definition_offset, game)).demo_obj;
     LoadDemoInputObject(demo_obj, demo_obj, game);
-    (*kDemoSetFuncPtrs[*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1f55 as ::core::ffi::c_int as isize) as *mut uint16)
-        as usize]
-        .as_ptr()
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1f57 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ))
-    .expect("non-null function pointer")(game);
+    let set = usize::from(game.demo_set());
+    let scene = usize::from(game.demo_scene());
+    (*kDemoSetFuncPtrs[set].as_ptr().add(scene)).expect("non-null function pointer")(game);
     game.set_frame_handler_alfa(fnSamus_FrameHandlerAlfa_Func12 as u16);
     game.set_frame_handler_beta(fnSamus_FrameHandlerBeta_Func14 as u16);
     game.set_samus_momentum_routine_index(0);
