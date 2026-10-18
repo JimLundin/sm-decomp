@@ -5920,6 +5920,25 @@ regression result; no changed source to retest here. Concurrent hardware
 edits/totals are separate. Inputs/probes/ROM-derived outputs stay ignored.
 Credits, full rendering/audio and masked RAM remain unproved.
 
+Independent masked 0DD4/0DD5 consumer audit (2026-10-18): recovered the
+already-running frozen observer after its owning partner errored; no replay
+restart. OS process inspection confirmed the wrapper and verifier running,
+then terminal. Completed full any% log reports 129,712/0 (273.04s), with
+484,010 reads and 484,030 writes per byte, zero reads before the first
+ROM-branch write in each frame and no incoming-read location. The original
+tool handle and native exit were not recovered, so this is a completed-log
+result, not an independently captured exit claim. The initial same-DLL
+12,000-frame run has native exit zero and the same ordering (25,451 reads,
+25,455 writes per byte). Actual synthetic direct-WRAM and WRAM-port reads
+before a write are detected, then counters reset before movie execution.
+Hooks cover direct WRAM, all low-RAM mirrors and port 2180 before address
+increment; partner independently reviews scope. This classifies overwrite
+ordering on this movie only; it does not remove masks, prove other routes or
+claim complete game equivalence. Frozen movie predates the later BBus write
+candidate. Direct formatting, normal-core metadata and progress pass; only
+this note changes and all probes/assets remain TEMP/ignored. Held HDMA stays
+stopped.
+
 Focused masked-field consumer audit (2026-10-18): actual ROM-branch bus
 read/write observation covers 060B/060C through direct WRAM, every low-RAM
 mirror and WRAM port 2180. The full any% input finishes 129,712/0 (275.80s),
