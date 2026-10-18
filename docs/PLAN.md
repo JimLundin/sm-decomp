@@ -3627,6 +3627,45 @@ render Waver71 failures, hires sample loss, audio timing, masked RAM, shared
 hardware accuracy and complete boot-to-credits coverage remain open. Probe/
 ROM-derived assets stay ignored; concurrent working edits remain separate.
 
+Remaining PPU save-range dependency audit (2026-10-18): omitted
+bgBuffers, objBuffer and lineHasSprites are scanline scratch. Actual complete
+SaveSnesState/LoadSnesState controls save a rendered state, replace both BG
+buffers and the OBJ buffer with unrelated words, invert sprite presence,
+load, then execute the next actual row. All512 continuations /131,072 pixels
+match the saved row across both renderers, modes1/7, blank/nonblank, fixed/
+subscreen math and32 constructed BG/OBJ states;256 rows contain nonzero
+pixels. Probe nativeexit0. This is exact continuation comparison under shared
+rendering, not an independent hardware/composition model. Other modes, window
+combinations and arbitrary scanline positions remain outside these cases.
+
+Source inspection matches the controls: ppu_runLine clears/evaluates OBJ and
+assigns lineHasSprites before composition; whole-line drawing clears main BG
+scratch and clears subscreen scratch whenever that branch consumes it. No
+extra serialization or invalidation is justified for those tested fields.
+RenderBuffer/renderPitch are host-owned and deliberately retained by reset,
+copy and load; prior public save/load controls establish registered-buffer
+continuation, not capacity validation for arbitrary caller buffers.
+
+The remaining extraLeftCur/extraRightCur/extraLeftRight fields have no explicit
+maintained writers; PPU reset zeros them. Likewise raw mosaicEnabled and
+mosaicModulo have no maintained writes beyond whole-PPU reset, while semantic
+BG mosaic flags are actively written and route enabled mosaic to the pixel
+renderer. These dormant fields do not supply proof of supported extra-width
+or fast-mosaic behavior; those branches remain unvalidated. Do not enable them
+by copying semantic mosaic bits: the fast Mode1 path contains assertions and
+its modulo cache is not populated. Existing mosaic/hires limitations retain
+their earlier explicit evidence.
+
+Only this note is committed; no maintained source or save layout changed.
+Direct optimized probe core/DLL, full-source rustfmt check and progress script
+pass with no focused residue change. No fresh movie result is claimed for
+this documentation-only audit. Next: improve actual rendering verification
+once the held enabled-render Waver failures can be addressed, or audit another
+unverified hardware boundary independently. Headless render initialization,
+Waver71 failures, held HDMA diagnosis, hires, audio timing, masked RAM, shared
+hardware accuracy and complete-route coverage remain open. Probe/ROM assets
+stay ignored; concurrent edits remain separate.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
