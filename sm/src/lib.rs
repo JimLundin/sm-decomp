@@ -74,6 +74,7 @@ pub mod platform {
     pub mod opengl;
 }
 
+pub(crate) mod audio_snapshot;
 /// Config file parsing.
 #[cfg(all(not(sm_verify_dll), feature = "frontend"))]
 pub mod config;

@@ -1217,6 +1217,38 @@ by this prototype. Isolated optimized builds and Cargo fmt/check pass;
 Cargo release remains blocked by khronos_api execution (OS error 5).
 All probe code/logs and ROM-derived state remain outside tracked files.
 
+Physical APU rewind (2026-10-18): per-frame snapshots now capture the
+complete emulated APU, SPC and DSP values plus pending fractional APU
+catchup cycles. Snapshot allocation links are cleared; restoration retains
+the destination's three allocations and rebinds SPC/APU and DSP/RAM links.
+This includes RAM, ports, timers, driver registers, channel/envelope/echo
+state, history and buffered samples. Serialized saves and g_ram layout
+are unchanged. Audio state is restored but not compared or normalized.
+
+Actual MakeSnapshot/RestoreSnapshot controls at boot 160/400/3,600 restore
+mutated state against independent pre-mutation RAM/semantic-field/sample-
+buffer/history/catchup observations. Cross-allocation restoration preserves
+destination pointers; 65,536 subsequent actual APU cycles match RAM,
+fields and samples. Custom-player RAM/timer remain untouched. All three
+processes return native exit 0. Omitting DSP restoration or catchup
+restoration separately in isolated source copies fails the corresponding
+baseline check before continuation, native exit 1. Independent implementing
+subagent review finds no blocking ownership/wiring issue.
+
+The frozen final audio/CPU bodies pass any% 129,712 frames with zero
+failures (223.39s), native exit 0, exercising snapshots on every paired frame.
+This replay excludes the concurrent EXTBG rendering change. Cargo fmt/check,
+optimized core/DLL and normal-core metadata builds pass; Cargo release still
+fails executing khronos_api's build script (OS error 5). Rust lines +46 and
+unsafe functions +2 provide physical rewind; gameplay residue is unchanged.
+Probe code and ROM-derived outputs remain outside tracked files.
+
+This closes physical APU rewind only. The custom SpcPlayer and queue
+bookkeeping remain shared by the inherited runtime; normal sound delivery,
+backend selection and full audio equality remain unfinished. Next: isolate
+the queue/player transition needed by the emulated-audio backend before
+enabling native upload transport in the differential frame loop.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read

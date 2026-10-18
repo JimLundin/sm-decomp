@@ -88,6 +88,7 @@ pub struct CounterSnapshot {
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Snapshot {
+    pub audio: crate::audio_snapshot::AudioSnapshot,
     pub a: uint16,
     pub x: uint16,
     pub y: uint16,
@@ -1549,6 +1550,7 @@ unsafe fn VerifySnapshotsEq(
     }
 }
 unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
+    (*s).audio.capture(game.g_snes);
     (*s).write_latches = [
         (*(*game.g_snes).ppu).scrollPrev,
         (*(*game.g_snes).ppu).scrollPrev2,
@@ -1625,6 +1627,7 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     };
 }
 unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
+    (*s).audio.restore(game.g_snes);
     let ppu = &mut *(*game.g_snes).ppu;
     ppu.m7matrix = (*s).mode7_matrix;
     [
