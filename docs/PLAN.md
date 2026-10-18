@@ -1012,6 +1012,20 @@ Next trial starts vertically before steering left over the hill. The main
 upper hall and Waver remain unproved; no gameplay state was injected.
 Source/counters unchanged; any% and formatting results above apply.
 
+The vertical-start hill crossing is now standard-verified:
+target/awake-return/parlor-return-hill-top.inputs, 56,786 frames, zero
+failures (92.15s), standing X965/Y91, items 1004 and missiles 0/5.
+From parlor-return-hall-west.inputs, neutral 5, jump/shoot 24,
+left/jump/shoot 60 and neutral 120 clears the eastern side of the hill.
+Run/left/shoot 300 and neutral 120 crosses most of the main hall but drops
+through the central hatch near X391, ending X277/Y289 (57,206/0 probe).
+Retaining that run only through frame 56,920 and appending a running left
+jump clears the hatch geometrically but dies (57,105/0 probe, state 24).
+Keep the safe hill-top prefix; further westward travel must account for
+Samus's low health and enemy contacts. The Bomb-sealed western exit and
+Waver presence remain unproved. No source changes; counters and full any%
+remain unchanged from this pass's checks.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
