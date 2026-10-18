@@ -4674,6 +4674,22 @@ and serialized/ROM assets stay ignored. Continue remaining disk-state/event
 coverage without resuming held HDMA diagnosis. Rendering/Waver71, hires,
 hardware/audio timing, masked RAM and credits remain open.
 
+CPU Z/N cleanup (2026-10-18): cpu_setZN now uses native word masks for
+byte/word zero and negative flags. Zero remains assigned before negative;
+byte mode ignores the high byte. Actual old/current helpers pass 33,554,432
+cases across both widths, all input words and all initial flag bytes, with
+unrelated registers preserved. Another 131,072 actual LDA immediate
+continuations check result flags, PC and cycles. Instrumented any% prefix
+passes 3,600/0, native exit 0, with 3,654,753 word and 1,291,132 byte calls.
+Clean frozen d217ea153dff5363603ae7fb49223698886f2977 plus only this helper
+change passes any% 129,712/0 (249.44s), native exit 0. Independent load-opcode
+QC follows. Direct full-source format, normal-core metadata and optimized
+clean/probe core/DLL builds pass; Cargo fmt/release remain denied at launch.
+Progress and diff checks pass; focused cast lines -4 and Rust lines -1,
+other residue categories unchanged. Later peer changes are outside this
+frozen replay. Hardware/render/audio timing and boot-to-credits remain open;
+held HDMA diagnosis stays stopped. Continue remaining executed CPU helpers.
+
 Independent CPU Z/N load-consumer QC (2026-10-18): pending cpu_setZN
 mask cleanup passes 25,165,824 actual immediate LDA/LDX/LDY instructions.
 All 65,536 input words, byte/word widths and 64 combinations of initial

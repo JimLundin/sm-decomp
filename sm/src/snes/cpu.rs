@@ -424,15 +424,14 @@ pub unsafe fn cpu_setFlags(cpu: *mut Cpu, val: uint8_t) {
         (*cpu).y &= 0xff;
     }
 }
-unsafe fn cpu_setZN(mut cpu: *mut Cpu, mut value: uint16_t, mut byte: bool) {
+unsafe fn cpu_setZN(cpu: *mut Cpu, value: uint16_t, byte: bool) {
     if byte {
-        (*cpu).z =
-            value as ::core::ffi::c_int & 0xff as ::core::ffi::c_int == 0 as ::core::ffi::c_int;
-        (*cpu).n = value as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0;
+        (*cpu).z = value & 0xff == 0;
+        (*cpu).n = value & 0x80 != 0;
     } else {
-        (*cpu).z = value as ::core::ffi::c_int == 0 as ::core::ffi::c_int;
-        (*cpu).n = value as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0;
-    };
+        (*cpu).z = value == 0;
+        (*cpu).n = value & 0x8000 != 0;
+    }
 }
 unsafe fn cpu_doBranch(mut cpu: *mut Cpu, mut value: uint8_t, mut check: bool) {
     if check {
