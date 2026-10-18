@@ -8539,6 +8539,18 @@ stay ignored; peer owns hardware edits, cleanup and remote sync. Credits,
 complete gameplay/hardware, render/audio fidelity, masked RAM and ownership
 remain unfinished.
 
+CPU safe-status-read cleanup (2026-10-19): `cpu_getFlags` takes `&Cpu` and is
+safe; six CPU callers and snapshot capture create a shared reference confined
+to the bus-free status read. Status bit layout is unchanged. Frozen HEAD
+`c967caa3c31e224c50a9529f48aa0eb107b99112` plus this interface change passes
+512 actual old/current reads covering all status-bit combinations and both
+CPU modes, with expected bytes matching. Prefix 3,600/0 (0.97s) executes
+446,341 status reads. Clean full any% 129,712/0 (45.93s), native exit 0.
+Cargo fmt/check, release library, normal metadata and optimized core/DLL builds
+pass; full frontend linking still lacks SDL2. Live CPU source and snapshot
+caller match frozen verified source. Unsafe functions -1; other counters
+unchanged. Complete gameplay and rendering/audio remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

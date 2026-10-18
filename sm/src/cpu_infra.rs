@@ -1753,7 +1753,7 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     (*s).db = (*c).db as uint8;
     (*s).pc = (*c).pc as uint16;
     (*s).k = (*c).k as uint8;
-    (*s).flags = cpu_getFlags(c) as uint8;
+    (*s).flags = cpu_getFlags(&*c) as uint8;
     (*s).cpu_waiting = (*c).waiting;
     (*s).cpu_emulation = (*c).e;
     (*s).cpu_stopped = (*c).stopped;

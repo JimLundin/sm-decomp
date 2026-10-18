@@ -130,15 +130,15 @@ unsafe fn cpu_readOpcodeWord(cpu: *mut Cpu, game: &mut Game) -> u16 {
     let high = cpu_readOpcode(cpu, game);
     u16::from_le_bytes([low, high])
 }
-pub unsafe fn cpu_getFlags(cpu: *mut Cpu) -> u8 {
-    (u8::from((*cpu).n) << 7)
-        | (u8::from((*cpu).v) << 6)
-        | (u8::from((*cpu).mf) << 5)
-        | (u8::from((*cpu).xf) << 4)
-        | (u8::from((*cpu).d) << 3)
-        | (u8::from((*cpu).i) << 2)
-        | (u8::from((*cpu).z) << 1)
-        | u8::from((*cpu).c)
+pub fn cpu_getFlags(cpu: &Cpu) -> u8 {
+    (u8::from(cpu.n) << 7)
+        | (u8::from(cpu.v) << 6)
+        | (u8::from(cpu.mf) << 5)
+        | (u8::from(cpu.xf) << 4)
+        | (u8::from(cpu.d) << 3)
+        | (u8::from(cpu.i) << 2)
+        | (u8::from(cpu.z) << 1)
+        | u8::from(cpu.c)
 }
 pub unsafe fn cpu_setFlags(cpu: *mut Cpu, val: u8) {
     (*cpu).n = val & 0x80 != 0;
@@ -226,7 +226,7 @@ unsafe fn cpu_doInterrupt(cpu: *mut Cpu, irq: bool, game: &mut Game) {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
     }
     cpu_pushWord(cpu, (*cpu).pc, game);
-    let flags = cpu_getFlags(cpu);
+    let flags = cpu_getFlags(&*cpu);
     // Bit 4 is the cleared B flag on an emulation-mode hardware interrupt.
     cpu_pushByte(cpu, if (*cpu).e { flags & !0x10 } else { flags }, game);
     (*cpu).i = true;
@@ -896,7 +896,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 cpu_readOpcode(cpu, game);
                 cpu_pushByte(cpu, (*cpu).k, game);
                 cpu_pushWord(cpu, (*cpu).pc, game);
-                cpu_pushByte(cpu, cpu_getFlags(cpu), game);
+                cpu_pushByte(cpu, cpu_getFlags(&*cpu), game);
                 (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
                 (*cpu).i = true;
                 (*cpu).d = false;
@@ -930,7 +930,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0x08 => {
-                cpu_pushByte(cpu, cpu_getFlags(cpu), game);
+                cpu_pushByte(cpu, cpu_getFlags(&*cpu), game);
                 break;
             }
             0x09 => {
@@ -2033,7 +2033,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0xc2 => {
-                cpu_setFlags(cpu, cpu_getFlags(cpu) & !cpu_readOpcode(cpu, game));
+                cpu_setFlags(cpu, cpu_getFlags(&*cpu) & !cpu_readOpcode(cpu, game));
                 break;
             }
             0xc3 => {
@@ -2201,7 +2201,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0xe2 => {
-                cpu_setFlags(cpu, cpu_getFlags(cpu) | cpu_readOpcode(cpu, game));
+                cpu_setFlags(cpu, cpu_getFlags(&*cpu) | cpu_readOpcode(cpu, game));
                 break;
             }
             0xe3 => {
@@ -2333,7 +2333,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 let temp = (*cpu).c;
                 (*cpu).c = (*cpu).e;
                 (*cpu).e = temp;
-                cpu_setFlags(cpu, cpu_getFlags(cpu));
+                cpu_setFlags(cpu, cpu_getFlags(&*cpu));
                 break;
             }
             0xfc => {
