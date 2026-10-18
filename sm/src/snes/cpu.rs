@@ -463,52 +463,27 @@ unsafe fn cpu_pushWord(cpu: *mut Cpu, value: uint16_t, game: &mut Game) {
     cpu_pushByte(cpu, high, game);
     cpu_pushByte(cpu, low, game);
 }
-unsafe fn cpu_readWord(
-    mut cpu: *mut Cpu,
-    mut adrl: uint32_t,
-    mut adrh: uint32_t,
-    game: &mut Game,
-) -> uint16_t {
-    let mut value: uint8_t = cpu_read(cpu, adrl, game);
-    return (value as ::core::ffi::c_int
-        | (cpu_read(cpu, adrh, game) as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
-        as uint16_t;
+unsafe fn cpu_readWord(cpu: *mut Cpu, adrl: uint32_t, adrh: uint32_t, game: &mut Game) -> uint16_t {
+    let low = cpu_read(cpu, adrl, game);
+    let high = cpu_read(cpu, adrh, game);
+    u16::from_le_bytes([low, high])
 }
 unsafe fn cpu_writeWord(
-    mut cpu: *mut Cpu,
-    mut adrl: uint32_t,
-    mut adrh: uint32_t,
-    mut value: uint16_t,
-    mut reversed: bool,
+    cpu: *mut Cpu,
+    adrl: uint32_t,
+    adrh: uint32_t,
+    value: uint16_t,
+    reversed: bool,
     game: &mut Game,
 ) {
+    let [low, high] = value.to_le_bytes();
     if reversed {
-        cpu_write(
-            cpu,
-            adrh,
-            (value as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint8_t,
-            game,
-        );
-        cpu_write(
-            cpu,
-            adrl,
-            (value as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint8_t,
-            game,
-        );
+        cpu_write(cpu, adrh, high, game);
+        cpu_write(cpu, adrl, low, game);
     } else {
-        cpu_write(
-            cpu,
-            adrl,
-            (value as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint8_t,
-            game,
-        );
-        cpu_write(
-            cpu,
-            adrh,
-            (value as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint8_t,
-            game,
-        );
-    };
+        cpu_write(cpu, adrl, low, game);
+        cpu_write(cpu, adrh, high, game);
+    }
 }
 unsafe fn cpu_doInterrupt(mut cpu: *mut Cpu, mut irq: bool, game: &mut Game) {
     if !(*cpu).e {

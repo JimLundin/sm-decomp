@@ -5253,6 +5253,30 @@ untracked. Controller cadence, rendering/Waver71, held HDMA diagnosis,
 hardware/audio timing and credits coverage remain open; continue actual
 scheduling and route coverage work.
 
+CPU word-memory cleanup (2026-10-18): cpu_readWord uses two ordered byte
+reads and little-endian assembly; cpu_writeWord splits the value once and
+retains low/high or reversed high/low writes. Separate address arguments
+remain unchanged, including identical addresses and bank boundaries.
+Actual old/current helpers pass 1,966,080 ordered substituted-bus traces:
+every word value across ten address pairs, reads and both write orders.
+Independent expected traces check addresses, values and order. Physical
+WRAM checks execute 1,376,256 STA/LDA/INC instructions over every value and
+seven addresses, including 7E:FFFF/7F:0000: RAM, load/increment results,
+Z/N, PC and cycles pass. Instrumented any% prefix passes 3,600/0, native
+exit 0; read/normal-write/reversed-write counts are
+2,187,003/989,046/72,344. Clean frozen
+3e4bc235523c521672caee7f8348658c9ff7f23f plus only these two helpers passes
+any% 129,712/0 (263.48s), native exit 0. Direct full-source format,
+normal-core metadata and optimized clean/probe core/DLL builds pass;
+Cargo fmt/release remain launch-denied. TEMP generator initially omitted
+the probe source write, then duplicated an export; corrected probe setup
+passes without altering production behavior. Focused cast lines -7 and
+Rust lines -25; other residue categories unchanged. Progress and diff
+checks pass. Later peer edits are outside this frozen replay. Trace-only
+device addresses do not establish physical device side-effect equivalence;
+hardware/render/audio timing and credits remain open. Held HDMA diagnosis
+stays stopped. Continue remaining executed CPU fetch/address helpers.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
