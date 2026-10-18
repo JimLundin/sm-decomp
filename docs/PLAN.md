@@ -2368,11 +2368,11 @@ ROM/probe assets ignored. Ppu/RAM/save layouts unchanged. Next: remaining
 semantic display/register snapshot gaps. Audio timing, shared hardware
 accuracy, HDMA, masked RAM and boot-to-credits coverage remain open.
 
-Mosaic commit record: the verified21-line snapshot change and its note were
-concurrently included in9534fcee while staged, alongside Samus initialization
-work. The separate commit attempt found an empty index. Shared history is
-preserved; the mosaic evidence above remains scoped to its dedicated builds.
-This collision mixed focused changes despite hunk isolation.
+Mosaic commit record: concurrent staging briefly combined this verified
+21-line snapshot change with Samus initialization in9534fcee. The other
+session then split that commit: e191844e contains only the mosaic CPU hunks
+and verification note; eeacef8e owns Samus initialization. Final history keeps
+the focused changes separate. Evidence above is scoped to dedicated builds.
 
 ## Definition of done for any change
 
