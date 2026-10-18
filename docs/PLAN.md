@@ -2048,6 +2048,23 @@ unsafe functions -1, cast lines -24, Rust lines -2; other counters unchanged.
 Next: EnemyFunc_BF8A mode-selected vertical block scan, preserving bit-zero
 add/subtract selection and its untruncated cursor.
 
+EnemyFunc_BF8A now uses safe byte-backed coordinates and level-block reads
+with explicit wrapping arithmetic. Mode bit zero alone chooses fixed-point
+addition with bottom edge y+height-1 or subtraction with top edge y-height;
+amount sign does not choose the branch. Aligned left span, inclusive column
+count, low-byte row product, untruncated block cursor and decrement-before-
+increment order remain exact. Prior Rust comparison passes 46,137,344
+full-RAM/return checks across mode variants and coordinate/radius/fraction/
+width/index boundaries; independent comparison passes 6,306,437 checks,
+including every mode word and random states. Comparisons cover valid backing-
+RAM reads; prior out-of-RAM reads were undefined and now fail bounds checking.
+Stable optimized core/DLL build and direct full-source format pass; Cargo
+fmt/build remain ASR-denied. Any%: 129,712 frames, zero failures (205.97s);
+Waver route: 58,109 frames, zero failures (101.87s). Raw offsets -2, unsafe
+functions -1, cast lines -27, Rust lines -10; other counters unchanged.
+Next: adjacent Samus/projectile/enemy angle wrappers, retaining wrapped
+deltas, odd projectile index rounding and callback argument capture.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
