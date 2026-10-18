@@ -2998,6 +2998,32 @@ unchanged; probes and ROM-derived assets stay ignored. Next: CGWSEL clip,
 math-prevention, subscreen and direct-color snapshot state. Held window-boundary/
 HDMA diagnosis, audio timing, masked RAM and complete-route gaps remain open.
 
+COLDATA register cleanup (2026-10-18): ppu_write $2132 now uses native
+byte masks. Independent blue, green and red conditional stores retain their
+order and five-bit payload; unselected channels stay unchanged. No Ppu/RAM/
+save layout or rendering changes.
+
+Independent actual writer checks pass 8,192 complete-Ppu cases (all 256
+values and 32 seeded states) plus 8,192 complementary sequential writes,
+with independently computed expected effects and unchanged unrelated bytes.
+Actual old/current output matches in 4,096 rows / 4,194,304 BGRA bytes across
+both renderers, addition/subtraction, half/full and math enabled/disabled.
+Selected channel writes affect their corresponding output component; no-
+selection writes preserve output and disabled math ignores fixed-color changes.
+This proves preserved exercised behavior, not independent SNES accuracy.
+Normal startup passes 3,600/0 (7.80s), native exit 0, with 24,048 actual
+COLDATA writes and zero gameplay frames. Private observations strip to the
+exact frozen source; independent implementation and review have no findings.
+
+Frozen 26fcd628 plus only this PPU change passes any% 129,712/0 (329.15s)
+and Waver 58,109/0 (135.39s), both native exits 0. Later concurrent source
+changes are outside those replays. Cargo fmt/check, direct optimized core/
+DLL and normal-core metadata builds pass. Cargo release remains denied
+executing khronos_api's build script (OS error 5). Progress: cast lines -6,
+Rust lines -3; other focused counters unchanged. No probes or ROM-derived
+assets committed. Next: SETINI display flags, preserving store order and
+ignored bits; retain whole-line Mode 7 direct-color accuracy for separate work.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

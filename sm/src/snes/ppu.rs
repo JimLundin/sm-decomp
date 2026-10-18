@@ -3943,17 +3943,14 @@ pub unsafe fn ppu_write(mut ppu: *mut Ppu, mut adr: uint8_t, mut val: uint8_t) {
             current_block_164 = 16754622181974910496;
         }
         50 => {
-            if val as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0 {
-                (*ppu).fixedColorB =
-                    (val as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int) as uint8_t;
+            if val & 0x80 != 0 {
+                (*ppu).fixedColorB = val & 0x1f;
             }
-            if val as ::core::ffi::c_int & 0x40 as ::core::ffi::c_int != 0 {
-                (*ppu).fixedColorG =
-                    (val as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int) as uint8_t;
+            if val & 0x40 != 0 {
+                (*ppu).fixedColorG = val & 0x1f;
             }
-            if val as ::core::ffi::c_int & 0x20 as ::core::ffi::c_int != 0 {
-                (*ppu).fixedColorR =
-                    (val as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int) as uint8_t;
+            if val & 0x20 != 0 {
+                (*ppu).fixedColorR = val & 0x1f;
             }
             current_block_164 = 16754622181974910496;
         }
