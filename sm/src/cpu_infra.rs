@@ -3424,11 +3424,11 @@ pub unsafe fn DrawFrameToPpu(game: &mut Game) {
     (*game.g_snes).vPos = 0 as uint16_t;
     (*game.g_snes).hPos = (*game.g_snes).vPos;
     while !(*(*game.g_snes).cpu).nmiWanted {
-        loop {
-            snes_handle_pos_stuff(game.g_snes as *mut Snes, game);
-            if !((*game.g_snes).hPos as ::core::ffi::c_int != 0 as ::core::ffi::c_int) {
-                break;
-            }
+        // No CPU or APU advances between these calls. Only scanline start,
+        // drawing and HDMA positions have events; the last step wraps the row.
+        for position in [0, 512, 1024, 1362] {
+            (*game.g_snes).hPos = position;
+            snes_handle_pos_stuff(game.g_snes, game);
         }
         if (*game.g_snes).vIrqEnabled as ::core::ffi::c_int != 0
             && (*game.g_snes).vPos as ::core::ffi::c_int - 1 as ::core::ffi::c_int

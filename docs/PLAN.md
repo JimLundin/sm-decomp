@@ -7623,6 +7623,37 @@ OSerror5. Own source/residue delta zero. Inputs and ROM-derived probes remain
 ignored. Peer owns hardware edits, cleanup and remote sync. Credits, full
 gameplay/hardware fidelity, rendering/audio and masked RAM remain open.
 
+Verifier throughput (2026-10-18): prioritize the verify run itself for the
+user's throughput goal. DrawFrameToPpu previously called snes_handle_pos_stuff
+682 times per scanline, although only positions 0, 512 and 1024 dispatch
+scanline/PPU/HDMA events. It now calls those positions and 1362 to wrap the
+row. No CPU/APU advances between these calls; IRQ dispatch remains after the
+row, and the shared event handler still owns each event. Calls per row fall
+from 682 to four. Snapshot masks, comparison and recovery remain unchanged.
+
+Frozen initialized-render baseline and candidate pass any% 129,712/0 in
+399.53s and 197.41s respectively. The same-source 20,000-frame paired QC
+passes 20,000/0 in 62.43s and 34.97s; all 60,000 snapshot-boundary hashes
+match. Enabled-render Waver passes its known baseline count: 58,109/71 in
+196.30s and 127.39s, both exit 1, with identical first failure at 28,228,
+pixel (255,223), channel 1, mine 00/theirs 84. All 174,327 boundary hashes
+match, including CPU, RAM/VRAM/SRAM, display/register state, DMA channels/
+timers and rendered buffers. Hash equality supports preservation, not an
+independent hardware accuracy claim. No render initializer is committed;
+the previously documented uninitialized disableRender gap stays open.
+
+Frozen final-source normal headless any% passes 129,712/0 (70.04s), exit 0;
+this run skips rendering and is not a rendering-throughput claim. Direct
+optimized core/DLL, normal-core metadata and full-source rustfmt checks pass.
+Required Cargo fmt/check/release attempts remain denied at Cargo launch,
+OS error 5. Progress/diff checks pass: cast lines -1, Rust lines unchanged,
+all other focused counters unchanged. Temporary timing/hash probes stay
+outside maintained source. A paired end-of-run SRAM warning occurred in one
+candidate timing run; its oracle still completed with zero failing frames.
+Next throughput work: profile the now-dominant actual PPU rendering path
+with rendering explicitly enabled in isolated probes, then optimize its
+measured hotspots without reducing checks or changing the Waver71 baseline.
+
 990D Energy Tank collected with normal inputs (2026-10-18): from
 62814-frame refilled-west prefix X1480/Y139, left/run/shoot410, neutral120
 descends the diagonal room and collects the Energy Tank nearX112/Y672.
