@@ -1717,6 +1717,40 @@ Concurrent gameplay/display edits are outside this frozen source.
 Next: normalize and independently verify custom-driver replay-base capture,
 then continue actual room/route coverage toward credits.
 
+Custom replay-base capture (2026-10-18): ClearKeyLog now serializes the live
+custom driver into the emulated APU staging state before capturing its base.
+It snapshots and restores both audio engines around serialization, including
+DSP buffers/history and allocation links, so recording does not change live
+playback. Replay-base ABQ1 metadata now preserves the complete queue for both
+backends. Base normalization does not fold queued commands into input ports;
+replay restores and consumes that queue in its original order. Filesystem
+final-save normalization still folds queued commands under its existing
+policy; the final APQ1 extension remains physical-only. Header and SNES
+snapshot sizes stay unchanged. Cross-driver loading is not established.
+
+Focused frozen-source checks pass custom replay at 160, 400, 3,600 and 8,640
+frames, each with consumed and pending audio, comparing every subsequent
+sample and final game RAM over 240 input frames. Natural backlogs of 2, 4 and
+16 entries and a synthetic four-entry backlog with a command only in its
+last entry also replay exactly. Custom normal-load/resave replay passes.
+Both public filesystem save APIs pass the active pending boundary for both
+backends. Source review finds no blockers. A saved queued-command mutation
+fails custom continuation at frame 2 (68 sample differences) and physical
+continuation at frame 3 (300 differences). Removing ABQ1 from consumed
+400-frame bases still passes for both backends. Four independent pairs of
+capture/no-capture controls (both backends, natural and synthetic backlogs)
+match all 260,592 sample values and final game RAM per pair. Capture also
+preserves complete physical audio and queue semantics, custom RAM and input
+ports immediately. Full default any% passes 129,712/0
+(328.97s), physical any% passes 129,712/0 (357.84s), native exits 0.
+Cargo formatting and direct optimized core/DLL and metadata builds pass;
+Cargo release still fails executing khronos_api's build script (OS error 5).
+This fix adds 23 Rust lines for staging/restore and separate queue handling;
+other residue categories are unchanged by it. Concurrent gameplay and PPU
+edits are outside the frozen source.
+Next: continue actual room/route coverage toward credits; these any% runs
+still finish in gameplay with only six rooms and three enemy definitions.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read

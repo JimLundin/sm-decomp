@@ -806,7 +806,7 @@ pub unsafe fn StateRecorder_Load(
         }
         ReadFromFile(f, (*sr).base_audio_queue.as_mut_ptr().cast(), 71);
         (*sr).has_base_audio_queue = (*sr).base_snapshot.size > 8192;
-        if replay_mode && !game.g_use_my_apu_code && !is_reset {
+        if replay_mode && !is_reset {
             crate::audio_snapshot::ApuQueueSnapshot::from_bytes(&(*sr).base_audio_queue)
                 .restore(game);
         }
@@ -884,8 +884,8 @@ pub unsafe fn StateRecorder_Save(
     }
     hdr[9 as ::core::ffi::c_int as usize] =
         (saving_with_bug as ::core::ffi::c_int * 1 as ::core::ffi::c_int) as uint32;
-    // Reserved version-2 header words identify a physical host-queue trailer.
-    // Custom saves retain their existing driver-state normalization policy.
+    // Reserved version-2 header words identify a final physical queue trailer.
+    // Replay bases retain the host queue for either audio backend.
     let audio_queue = (!game.g_use_my_apu_code)
         .then(|| crate::audio_snapshot::ApuQueueSnapshot::capture(game).to_bytes());
     if audio_queue.is_some() {
@@ -931,10 +931,25 @@ pub unsafe fn StateRecorder_Save(
 pub unsafe fn StateRecorder_ClearKeyLog(mut sr: *mut StateRecorder, game: &mut Game) {
     printf(b"Clearing key log!\n\0" as *const u8 as *const ::core::ffi::c_char);
     (*sr).base_snapshot.size = 0 as size_t;
-    (*sr).has_base_audio_queue = !game.g_use_my_apu_code;
-    if (*sr).has_base_audio_queue {
-        (*sr).base_audio_queue = crate::audio_snapshot::ApuQueueSnapshot::capture(game).to_bytes();
-    }
+    (*sr).has_base_audio_queue = true;
+    (*sr).base_audio_queue = crate::audio_snapshot::ApuQueueSnapshot::capture(game).to_bytes();
+    let live_audio = if game.g_use_my_apu_code {
+        // These snapshots contain only zero-valid scalars, arrays and pointers.
+        // Initialize on the heap to avoid large stack temporaries.
+        let mut storage = Box::<(
+            crate::audio_snapshot::AudioSnapshot,
+            crate::audio_snapshot::PlayerSnapshot,
+        )>::new_uninit();
+        core::ptr::write_bytes(storage.as_mut_ptr(), 0, 1);
+        let mut snapshots = storage.assume_init();
+        snapshots.0.capture(game.g_snes);
+        snapshots.1.capture(game.g_spc_player);
+        // Replay restores the queue separately, so do not deliver it early.
+        RtlSaveMusicStateToRam_Locked(game, false);
+        Some(snapshots)
+    } else {
+        None
+    };
     SaveSnesState(
         Some(
             saveFunc
@@ -948,6 +963,10 @@ pub unsafe fn StateRecorder_ClearKeyLog(mut sr: *mut StateRecorder, game: &mut G
         &raw mut (*sr).base_snapshot as *mut ::core::ffi::c_void,
         game,
     );
+    if let Some(snapshots) = live_audio {
+        snapshots.0.restore(game.g_snes);
+        snapshots.1.restore(game.g_spc_player);
+    }
     let mut old_log: ByteArray = (*sr).log;
     let mut old_frames_since_last: ::core::ffi::c_int =
         (*sr).frames_since_last as ::core::ffi::c_int;
@@ -1200,7 +1219,7 @@ pub unsafe fn RtlSaveSnapshot(
     let mut f: *mut FILE =
         fopen(filename, b"wb\0" as *const u8 as *const ::core::ffi::c_char) as *mut FILE;
     RtlApuLock();
-    RtlSaveMusicStateToRam_Locked(game);
+    RtlSaveMusicStateToRam_Locked(game, true);
     StateRecorder_Save(&raw mut game.state_recorder, f, saving_with_bug, game);
     RtlApuUnlock();
     fclose(f);
@@ -1591,10 +1610,14 @@ unsafe fn RtlRestoreMusicAfterLoad_Locked(mut is_reset: bool, game: &mut Game) {
     }
     RtlResetApuQueue(game);
 }
-unsafe fn RtlSaveMusicStateToRam_Locked(game: &mut Game) {
+unsafe fn RtlSaveMusicStateToRam_Locked(game: &mut Game, include_queued_commands: bool) {
     if game.g_use_my_apu_code {
         let mut spc_player: *mut SpcPlayer = game.g_spc_player as *mut SpcPlayer;
-        let mut i: ::core::ffi::c_int = game.g_apu_queue_size as ::core::ffi::c_int;
+        let mut i: ::core::ffi::c_int = if include_queued_commands {
+            game.g_apu_queue_size as ::core::ffi::c_int
+        } else {
+            0
+        };
         while i != 0 {
             let mut we: *mut ApuWriteEnt = (&raw mut game.g_apu_write_ents as *mut ApuWriteEnt)
                 .offset(
