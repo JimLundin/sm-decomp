@@ -5628,227 +5628,68 @@ pub unsafe fn Samus_GrappleWallJumpCheck(amt: int32, game: &mut Game) -> uint8 {
     game.set_enemy_index_to_shake(enemy);
     1
 }
-pub unsafe fn Samus_WallJumpCheck(mut amt: int32, game: &mut Game) -> uint8 {
-    let mut current_block: u64;
-    let mut cres: CheckEnemyColl_Result = CheckSolidEnemyColl_Result {
-        collision: 0,
-        amt: 0,
-    };
-    if *(&raw mut game.g_ram as *mut uint8).offset(0xa27 as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
-        != 3 as ::core::ffi::c_int
-        && *(&raw mut game.g_ram as *mut uint8).offset(0xa27 as ::core::ffi::c_int as isize)
-            as ::core::ffi::c_int
-            != 20 as ::core::ffi::c_int
-    {
-        return 0 as uint8;
+pub unsafe fn Samus_WallJumpCheck(amt: int32, game: &mut Game) -> uint8 {
+    if !matches!(game.g_ram[0xa27], 3 | 20) {
+        return 0;
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        == kPose_81_FaceR_Screwattack as ::core::ffi::c_int
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            == kPose_82_FaceL_Screwattack as ::core::ffi::c_int
-    {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - 27 as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            == 0
-        {
-            current_block = 10931223485667004002;
-        } else {
-            current_block = 9270328834339962093;
-        }
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        - 11 as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        != 0
-    {
-        current_block = 9270328834339962093;
+    let pose = u16::from_le_bytes([game.g_ram[0xa1c], game.g_ram[0xa1d]]);
+    let screw_attack =
+        (pose == kPose_81_FaceR_Screwattack as u16 || pose == kPose_82_FaceL_Screwattack as u16);
+    let animation = u16::from_le_bytes([game.g_ram[0xa96], game.g_ram[0xa97]]);
+    let threshold = if screw_attack { 27 } else { 11 };
+    let ready = animation.wrapping_sub(threshold) & 0x8000 == 0;
+    if ready {
+        game.set_enemy_index_to_shake(0xffff);
+    }
+    let held = u16::from_le_bytes([game.g_ram[0x8b], game.g_ram[0x8c]]);
+    // Left takes precedence when both directions are held.
+    let left = if held & kButton_Left as u16 != 0 {
+        true
+    } else if held & kButton_Right as u16 != 0 {
+        false
     } else {
-        current_block = 10931223485667004002;
-    }
-    match current_block {
-        9270328834339962093 => {
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x8b as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                & kButton_Left as ::core::ffi::c_int
-                == 0 as ::core::ffi::c_int
-            {
-                if *((&raw mut game.g_ram as *mut uint8).offset(0x8b as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
-                    & kButton_Right as ::core::ffi::c_int
-                    == 0 as ::core::ffi::c_int
-                {
-                    return 0 as uint8;
-                }
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 0 as uint16;
-                cres = Samus_CheckSolidEnemyColl(amt, game);
-                amt = cres.amt;
-                if cres.collision == 0 {
-                    amt = WallJumpBlockCollDetect(-amt, game);
-                    if *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xdd0 as ::core::ffi::c_int as isize)
-                        as *mut uint16)
-                        == 0
-                    {
-                        return 0 as uint8;
-                    }
-                }
-            } else {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 1 as uint16;
-                cres = Samus_CheckSolidEnemyColl(amt, game);
-                amt = cres.amt;
-                if cres.collision == 0 {
-                    amt = WallJumpBlockCollDetect(amt, game);
-                    if *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xdd0 as ::core::ffi::c_int as isize)
-                        as *mut uint16)
-                        == 0
-                    {
-                        return 0 as uint8;
-                    }
-                }
-            }
-            if *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                == kPose_81_FaceR_Screwattack as ::core::ffi::c_int
-                || *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0xa1c as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
-                    == kPose_82_FaceL_Screwattack as ::core::ffi::c_int
-            {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa94 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 1 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 26 as uint16;
-            } else {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa94 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 1 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa96 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 10 as uint16;
-            }
-            return 0 as uint8;
-        }
-        _ => {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe1c as ::core::ffi::c_int as isize)
-                as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x8b as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                & kButton_Left as ::core::ffi::c_int
-                != 0 as ::core::ffi::c_int
-            {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 1 as uint16;
-                cres = Samus_CheckSolidEnemyColl(amt, game);
-                amt = cres.amt;
-                if cres.collision == 0 {
-                    amt = WallJumpBlockCollDetect(amt, game);
-                    if *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xdd0 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int
-                        != 0
-                        && *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x9b4 as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int
-                            & *((&raw mut game.g_ram as *mut uint8)
-                                .offset(0x8f as ::core::ffi::c_int as isize)
-                                as *mut uint16) as ::core::ffi::c_int
-                            != 0 as ::core::ffi::c_int
-                    {
-                        current_block = 17114735350089217247;
-                    } else {
-                        return 0 as uint8;
-                    }
-                } else {
-                    if *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x9b4 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int
-                        & *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x8f as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int
-                        == 0 as ::core::ffi::c_int
-                    {
-                        return 0 as uint8;
-                    }
-                    current_block = 11864030878112954706;
-                }
-            } else {
-                if *((&raw mut game.g_ram as *mut uint8).offset(0x8b as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
-                    & kButton_Right as ::core::ffi::c_int
-                    == 0 as ::core::ffi::c_int
-                {
-                    return 0 as uint8;
-                }
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 0 as uint16;
-                cres = Samus_CheckSolidEnemyColl(amt, game);
-                amt = cres.amt;
-                if cres.collision == 0 {
-                    amt = -amt;
-                    WallJumpBlockCollDetect(amt, game);
-                    if *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xdd0 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int
-                        != 0
-                        && *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x9b4 as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int
-                            & *((&raw mut game.g_ram as *mut uint8)
-                                .offset(0x8f as ::core::ffi::c_int as isize)
-                                as *mut uint16) as ::core::ffi::c_int
-                            != 0 as ::core::ffi::c_int
-                    {
-                        current_block = 17114735350089217247;
-                    } else {
-                        return 0 as uint8;
-                    }
-                } else {
-                    if *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x9b4 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int
-                        & *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x8f as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int
-                        == 0 as ::core::ffi::c_int
-                    {
-                        return 0 as uint8;
-                    }
-                    current_block = 11864030878112954706;
-                }
-            }
-            match current_block {
-                11864030878112954706 => {
-                    if (amt >> 16 as ::core::ffi::c_int) - 8 as int32 & 0x8000 as int32 != 0 {
-                        *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xdc6 as ::core::ffi::c_int as isize)
-                            as *mut uint16) = 5 as uint16;
-                        *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xe1c as ::core::ffi::c_int as isize)
-                            as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x18a6 as ::core::ffi::c_int as isize)
-                            as *mut uint16);
-                        return 1 as uint8;
-                    }
-                    return 0 as uint8;
-                }
-                _ => {
-                    if (amt >> 16 as ::core::ffi::c_int) - 8 as int32 & 0x8000 as int32 != 0 {
-                        *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0xdc6 as ::core::ffi::c_int as isize)
-                            as *mut uint16) = 5 as uint16;
-                        return 1 as uint8;
-                    }
-                    return 0 as uint8;
-                }
-            }
-        }
+        return 0;
     };
+    game.set_samus_collision_direction(u16::from(left));
+    let result = Samus_CheckSolidEnemyColl(amt, game);
+    let enemy_contact = result.collision != 0;
+    let mut distance = result.amt;
+    if !enemy_contact {
+        if left {
+            distance = WallJumpBlockCollDetect(distance, game);
+        } else {
+            distance = distance.wrapping_neg();
+            WallJumpBlockCollDetect(distance, game);
+        }
+        if game.samus_collision_flag() == 0 {
+            return 0;
+        }
+    }
+    if !ready {
+        // Probes may change the pose before choosing the animation to hold.
+        let pose = u16::from_le_bytes([game.g_ram[0xa1c], game.g_ram[0xa1d]]);
+        let frame = if (pose == kPose_81_FaceR_Screwattack as u16
+            || pose == kPose_82_FaceL_Screwattack as u16)
+        {
+            26u16
+        } else {
+            10
+        };
+        game.g_ram[0xa94..0xa96].copy_from_slice(&1u16.to_le_bytes());
+        game.g_ram[0xa96..0xa98].copy_from_slice(&frame.to_le_bytes());
+        return 0;
+    }
+    if game.button_config_jump_a() & game.joypad1_newkeys() == 0 {
+        return 0;
+    }
+    if ((distance >> 16) - 8) & 0x8000 == 0 {
+        return 0;
+    }
+    game.g_ram[0xdc6..0xdc8].copy_from_slice(&5u16.to_le_bytes());
+    if enemy_contact {
+        game.set_enemy_index_to_shake(game.collision_detection_index());
+    }
+    1
 }
 pub unsafe fn Samus_Movement_07_Unused(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xdc6 as ::core::ffi::c_int as isize)

@@ -1761,6 +1761,21 @@ cast lines -24; Rust lines +8 provide five named RAM accessors; other counters
 unchanged. Next: Samus_WallJumpCheck movement/pose/animation gates and probe
 routing, retaining short-circuit reads and callback-adjusted displacement.
 
+Regular wall-jump checking now uses direct movement/pose/animation gates and
+shared directional collision routing. The signed animation test, ready-only
+shake-target reset, left precedence and enemy-before-block probes remain exact.
+Animation holds re-read live pose after probes; left retains block-returned
+displacement while right retains its negated enemy displacement. Live jump
+and enemy-index reads and high-word-minus-eight gate are unchanged. Prior
+Rust comparison passes 2,622,200 full-RAM/probe-trace/return cases, including
+pose-mutating callbacks; independent review passes another 2,784,768 cases
+with pose/animation/input/contact/index mutations. Stable optimized core/DLL
+build and direct full-source format pass; Cargo fmt/build remain ASR-denied.
+Any%: 129,712 frames, zero failures (192.20s); Waver route: 58,109 frames,
+zero failures (88.53s). Raw offsets -37, cast lines -84, Rust lines -159;
+other counters unchanged. Next: name the regular wall-jump movement, pose,
+held-input, animation and input-to-pose RAM accesses.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
