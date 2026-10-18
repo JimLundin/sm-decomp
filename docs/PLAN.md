@@ -1580,6 +1580,19 @@ unsafe functions -3, cast lines -42, Rust lines -76. Next: post-grapple
 collision type dispatch, preserving slope selection and solid low-nibble
 returns before cleaning its coordinate sampling and slope arithmetic.
 
+Post-grapple collision now selects block types directly, using named live
+block access. Type 1 retains slope dispatch, types 8..15 retain solid
+low-nibble returns and the remaining types return FFFF; block-index writes
+still precede selection. Prior Rust comparison passes 917,504 RAM/context/
+return/selection cases over every level word, both axes and seven valid
+backing indexes; synthetic slope callbacks mutate the index and context.
+Stable optimized core/DLL build and direct format pass; Cargo fmt/build
+remain ASR-denied. Waver route: 58,109 frames, zero failures (84.55s); any%:
+129,712 frames, zero failures (194.17s). Raw offsets -4, unsafe functions -1,
+cast lines -15, Rust lines -87. Next: post-grapple slope selection with named
+live block/BTS access, retaining the low-five-bit square threshold, then
+coordinate sampling and slope arithmetic.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

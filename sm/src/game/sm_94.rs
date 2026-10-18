@@ -1870,9 +1870,6 @@ unsafe fn PostGrappleColl_Vertical_Slope_Square(
             ^ 7 as ::core::ffi::c_int) as uint16;
     };
 }
-unsafe fn ClearCarry_0(mut pgci: *mut PostGrappleCollInfo, game: &mut Game) -> uint16 {
-    return -(1 as ::core::ffi::c_int) as uint16;
-}
 unsafe fn PostGrappleColl_Horiz_Slope(
     mut pgci: *mut PostGrappleCollInfo,
     game: &mut Game,
@@ -1941,113 +1938,29 @@ unsafe fn PostGrappleColl_Vert_Solid(
 ) -> uint16 {
     return ((*pgci).pgci_r32 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int) as uint16;
 }
-static kPostGrappleColl_Horiz: [Option<Func_PostGrappleCollInfo_U16>; 16] = unsafe {
-    [
-        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16),
-        Some(
-            PostGrappleColl_Horiz_Slope as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16,
-        ),
-        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16),
-        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16),
-        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16),
-        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16),
-        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16),
-        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16),
-        Some(
-            PostGrappleColl_Horiz_Solid as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Horiz_Solid as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Horiz_Solid as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Horiz_Solid as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Horiz_Solid as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Horiz_Solid as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Horiz_Solid as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Horiz_Solid as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16,
-        ),
-    ]
-};
-static kPostGrappleColl_Vert: [Option<Func_PostGrappleCollInfo_U16>; 16] = unsafe {
-    [
-        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16),
-        Some(
-            PostGrappleColl_Vert_Slope as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16,
-        ),
-        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16),
-        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16),
-        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16),
-        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16),
-        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16),
-        Some(ClearCarry_0 as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16),
-        Some(
-            PostGrappleColl_Vert_Solid as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Vert_Solid as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Vert_Solid as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Vert_Solid as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Vert_Solid as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Vert_Solid as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Vert_Solid as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16,
-        ),
-        Some(
-            PostGrappleColl_Vert_Solid as unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16,
-        ),
-    ]
-};
 unsafe fn PostGrappleColl_Horiz(
-    mut pgci: *mut PostGrappleCollInfo,
-    mut k: uint16,
+    pgci: *mut PostGrappleCollInfo,
+    k: uint16,
     game: &mut Game,
 ) -> uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
-    return kPostGrappleColl_Horiz[((*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x10002 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-        as ::core::ffi::c_int
-        & 0xf000 as ::core::ffi::c_int)
-        >> 12 as ::core::ffi::c_int) as usize]
-        .expect("non-null function pointer")(pgci, game);
+    game.set_cur_block_index(k >> 1);
+    match game.current_level_block() >> 12 {
+        1 => PostGrappleColl_Horiz_Slope(pgci, game),
+        8..=15 => PostGrappleColl_Horiz_Solid(pgci, game),
+        _ => 0xffff,
+    }
 }
 unsafe fn PostGrappleColl_Vert(
-    mut pgci: *mut PostGrappleCollInfo,
-    mut k: uint16,
+    pgci: *mut PostGrappleCollInfo,
+    k: uint16,
     game: &mut Game,
 ) -> uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
-    return kPostGrappleColl_Vert[((*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x10002 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-        as ::core::ffi::c_int
-        & 0xf000 as ::core::ffi::c_int)
-        >> 12 as ::core::ffi::c_int) as usize]
-        .expect("non-null function pointer")(pgci, game);
+    game.set_cur_block_index(k >> 1);
+    match game.current_level_block() >> 12 {
+        1 => PostGrappleColl_Vert_Slope(pgci, game),
+        8..=15 => PostGrappleColl_Vert_Solid(pgci, game),
+        _ => 0xffff,
+    }
 }
 unsafe fn PostGrappleCollisionDetect_Right(game: &mut Game) {
     let mut v0: int16 = 0;
