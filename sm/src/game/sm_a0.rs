@@ -304,7 +304,7 @@ use crate::game::sm_b4::{
     ClearSpriteObjects, CreateSpriteAtPos, DrawSpriteObjects, HandleSpriteObjects,
 };
 use crate::game_state::Game;
-use crate::rtl::{Load24, Mult8x8, RomPtr, SnesDivide, SnesModulus, Unreachable};
+use crate::rtl::{Load24, Mult8x8, RomPtr, SnesDivide, Unreachable};
 extern "C" {
     fn __assert_fail(
         __assertion: *const ::core::ffi::c_char,
@@ -10518,10 +10518,7 @@ unsafe fn EnemyBlockCollHorizReact_Slope(
         EnemyBlockCollHorizReact_Slope_Square(collision, bts, game)
     }
 }
-unsafe fn EnemyBlockCollVertReact_Slope(
-    collision: &mut EnemyBlockCollInfo,
-    game: &mut Game,
-) -> uint8 {
+fn EnemyBlockCollVertReact_Slope(collision: &mut EnemyBlockCollInfo, game: &mut Game) -> uint8 {
     let bts = game.current_block_bts();
     if bts & 0x1f >= 5 {
         EnemyBlockCollVertReact_Slope_NonSquare(collision, game)
@@ -10623,137 +10620,50 @@ fn EnemyBlockCollHorizReact_Slope_NonSquare(
     collision.ebci_r18_r20 = displacement.wrapping_mul(multiplier);
     0
 }
-unsafe fn EnemyBlockCollVertReact_Slope_NonSquare(
-    mut ebci: &mut EnemyBlockCollInfo,
+fn EnemyBlockCollVertReact_Slope_NonSquare(
+    collision: &mut EnemyBlockCollInfo,
     game: &mut Game,
 ) -> uint8 {
-    let mut v3: int16 = 0;
-    let mut v5: int16 = 0;
-    let mut v6: int16 = 0;
-    let mut v7: uint16 = 0;
-    let mut v8: int16 = 0;
-    let mut v11: int16 = 0;
-    let mut v12: int16 = 0;
-    let mut x_pos: int16 = 0;
-    let mut v14: uint16 = 0;
-    let mut v15: int16 = 0;
-    let mut mod_0: uint16 = SnesModulus(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-            as *mut uint16),
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
-    );
-    let mut E: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xdc4 as ::core::ffi::c_int as isize) as *mut uint16);
-    if ebci.ebci_r18_r20 < 0 as int32 {
-        v11 = ((*E).x_pos as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as int16;
-        if v11 as ::core::ffi::c_int != mod_0 as ::core::ffi::c_int {
-            return 0 as uint8;
-        }
-        let mut temp_collision_DD4: uint16 = (ebci.ebci_r24 as ::core::ffi::c_int
-            - (*E).y_height as ::core::ffi::c_int
-            & 0xf as ::core::ffi::c_int
-            ^ 0xf as ::core::ffi::c_int) as uint16;
-        let mut temp_collision_DD6: uint16 = (16 as ::core::ffi::c_int
-            * (*(&raw mut game.g_ram as *mut uint8)
-                .offset(0x16402 as ::core::ffi::c_int as isize)
-                .offset(v1 as isize) as ::core::ffi::c_int
-                & 0x1f as ::core::ffi::c_int))
-            as uint16;
-        v12 = ((*(&raw mut game.g_ram as *mut uint8)
-            .offset(0x16402 as ::core::ffi::c_int as isize)
-            .offset(v1 as isize) as ::core::ffi::c_int)
-            << 8 as ::core::ffi::c_int) as int16;
-        if (v12 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int && {
-            if v12 as ::core::ffi::c_int & 0x4000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
-                x_pos = ((*E).x_pos as ::core::ffi::c_int ^ 0xf as ::core::ffi::c_int) as int16;
-            } else {
-                x_pos = (*E).x_pos as int16;
-            };
-            v14 = (temp_collision_DD6 as ::core::ffi::c_int
-                + (x_pos as ::core::ffi::c_int & 0xf as ::core::ffi::c_int))
-                as uint16;
-            v15 = ((*(game.g_rom.offset(
-                (((0x948b2b as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x948b2b as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint8)
-                .offset(v14 as isize) as ::core::ffi::c_int
-                & 0x1f as ::core::ffi::c_int)
-                - temp_collision_DD4 as ::core::ffi::c_int
-                - 1 as ::core::ffi::c_int) as int16;
-            v15 as ::core::ffi::c_int <= 0 as ::core::ffi::c_int
-        } {
-            (*E).y_pos =
-                (ebci.ebci_r24 as ::core::ffi::c_int - v15 as ::core::ffi::c_int) as uint16;
-            (*E).y_subpos = 0 as uint16;
-            return 1 as uint8;
-        } else {
-            return 0 as uint8;
-        }
+    let block = game.cur_block_index();
+    // The SNES modulus uses only the low byte of room width and returns the
+    // dividend unchanged when that byte is zero.
+    let width = u16::from(game.room_width_in_blocks() as u8);
+    let block_column = if width == 0 { block } else { block % width };
+    let enemy_index = game.cur_enemy_index();
+    let enemy = game.enemy_coordinates(enemy_index);
+    let x_pos = enemy.x_pos();
+    let height = enemy.y_height();
+    if x_pos >> 4 != block_column {
+        return 0;
+    }
+    let moving_up = collision.ebci_r18_r20 < 0;
+    let bts = game.current_block_bts();
+    if (bts & 0x80 != 0) != moving_up {
+        return 0;
+    }
+    let edge = if moving_up {
+        (collision.ebci_r24.wrapping_sub(height) & 0xf) ^ 0xf
     } else {
-        v3 = ((*E).x_pos as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as int16;
-        if v3 as ::core::ffi::c_int != mod_0 as ::core::ffi::c_int {
-            return 0 as uint8;
-        }
-        let mut temp_collision_DD4_0: uint16 = ((*E).y_height as ::core::ffi::c_int
-            + ebci.ebci_r24 as ::core::ffi::c_int
-            - 1 as ::core::ffi::c_int
-            & 0xf as ::core::ffi::c_int) as uint16;
-        let mut temp_collision_DD6_0: uint16 = (16 as ::core::ffi::c_int
-            * (*(&raw mut game.g_ram as *mut uint8)
-                .offset(0x16402 as ::core::ffi::c_int as isize)
-                .offset(v1 as isize) as ::core::ffi::c_int
-                & 0x1f as ::core::ffi::c_int))
-            as uint16;
-        v5 = ((*(&raw mut game.g_ram as *mut uint8)
-            .offset(0x16402 as ::core::ffi::c_int as isize)
-            .offset(v1 as isize) as ::core::ffi::c_int)
-            << 8 as ::core::ffi::c_int) as int16;
-        if v5 as ::core::ffi::c_int >= 0 as ::core::ffi::c_int && {
-            if v5 as ::core::ffi::c_int & 0x4000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
-                v6 = ((*E).x_pos as ::core::ffi::c_int ^ 0xf as ::core::ffi::c_int) as int16;
-            } else {
-                v6 = (*E).x_pos as int16;
-            };
-            v7 = (temp_collision_DD6_0 as ::core::ffi::c_int
-                + (v6 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int))
-                as uint16;
-            v8 = ((*(game.g_rom.offset(
-                (((0x948b2b as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x948b2b as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint8)
-                .offset(v7 as isize) as ::core::ffi::c_int
-                & 0x1f as ::core::ffi::c_int)
-                - temp_collision_DD4_0 as ::core::ffi::c_int
-                - 1 as ::core::ffi::c_int) as int16;
-            (*(game.g_rom.offset(
-                (((0x948b2b as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x948b2b as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint8)
-                .offset(v7 as isize) as ::core::ffi::c_int
-                & 0x1f as ::core::ffi::c_int)
-                - temp_collision_DD4_0 as ::core::ffi::c_int
-                == 1 as ::core::ffi::c_int
-                || (v8 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int
-        } {
-            (*E).y_pos = (ebci.ebci_r24 as ::core::ffi::c_int + v8 as ::core::ffi::c_int) as uint16;
-            (*E).y_subpos = -(1 as ::core::ffi::c_int) as uint16;
-            return 1 as uint8;
-        } else {
-            return 0 as uint8;
-        }
+        height.wrapping_add(collision.ebci_r24).wrapping_sub(1) & 0xf
     };
+    let x_in_block = (x_pos ^ if bts & 0x40 != 0 { 0xf } else { 0 }) & 0xf;
+    let table_offset = usize::from(bts & 0x1f) * 16 + usize::from(x_in_block);
+    let surface = game.read_rom_byte(0x948b2b, table_offset) & 0x1f;
+    let correction = i16::from(surface) - edge as i16 - 1;
+    // Downward movement accepts both the original equality case and negative
+    // corrections; upward movement accepts nonpositive corrections directly.
+    if correction > 0 {
+        return 0;
+    }
+    let position = if moving_up {
+        collision.ebci_r24.wrapping_sub(correction as u16)
+    } else {
+        collision.ebci_r24.wrapping_add(correction as u16)
+    };
+    let mut enemy = game.enemy_coordinates(enemy_index);
+    enemy.set_y_pos(position);
+    enemy.set_y_subpos(if moving_up { 0 } else { u16::MAX });
+    1
 }
 fn EnemyBlockCollReact_HorizExt(_collision: &mut EnemyBlockCollInfo, game: &mut Game) -> uint8 {
     let offset = game.current_block_bts() as i8 as i16;

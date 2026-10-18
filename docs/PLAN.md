@@ -1057,6 +1057,25 @@ remain ASR-denied. Updated-source any% passes 129,712 frames, zero failures
 Raw offsets -1, unsafe functions -1, cast lines -20, Rust lines -12.
 Next: vertical nonsquare slope handler, preserving its edge tests and writes.
 
+Vertical nonsquare slope cleanup now uses byte-backed enemy coordinates,
+named block/BTS access and checked live-ROM bytes. Upward/downward paths
+share their offset and correction calculation; the original downward
+equality case and negative correction test are equivalent to a nonpositive
+correction. Position writes still precede subposition writes: upward sets
+subposition 0000, downward FFFF. The low byte of room width still controls
+modulus, including the original unchanged dividend on a zero divisor.
+Both the handler and vertical slope dispatcher are safe Rust; no RAM borrow
+crosses a call that can mutate coordinates. Independent comparison passes
+4,194,304 orientation/offset/contact cases with boundary positions, 589,824
+edge pairs and 16,777,216 modulus cases. Stable optimized core/DLL build and
+direct formatting pass; Cargo fmt/build remain ASR-denied.
+Updated Waver-route passes 58,109 frames, zero failures (88.44s); any%
+passes 129,712 frames, zero failures (189.29s). Raw offsets -8, unsafe
+functions -2, cast lines -70, Rust lines -90.
+Next: audit remaining unsafe shared movement dependencies, starting with
+horizontal slope dispatch and the spike/PLM boundary, without concealing
+legacy runtime preconditions behind safe wrappers.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
