@@ -6952,6 +6952,33 @@ and credits remain open. Held HDMA diagnosis stays stopped. Continue executed
 cartridge routing and route coverage with useful independent subagents.
 Peer owns remote sync.
 
+First landing-site wall jump established (2026-10-18): from restored
+60402-frame ship-free-movement input, left/run/shoot22, neutral15, left4,
+left/jump40, right2, right/jump25, left/jump35, neutral120 completes60665/71
+(171.19s), nativeexit1. Spin approach reachesX641/Y1104 at60480. At60485
+Samus has pose0083 FaceR_Walljump, X635/Y1103; it persists through60505.
+Peak sampledY1098 at60490 then falls, finalX615/Y1195. Health99/99,
+missiles5/5 and Morph/Bombs1004 remain. This establishes wall-jump movement
+in normal controls, not a completed cliff ascent or individual callback hits.
+
+The otherwise identical earlier-turn sequence with left/jump20 completes
+60645/71 (193.51s): turn begins before wall contact nearX664/Y1138,
+only spin poses0019/001A, finalX633/Y1195. Correction to earlier notes:
+0019/001A ARE spin-jump poses; they establish spin jumping but do not
+establish wall jumping. Wall-jump pose0083 distinguishes the later result.
+Both ordered diagnostics exactly match frozen d217ea15 Waver baseline71.
+No new rooms/definitions/credits;16rooms/16enemy definitions remain.
+
+Next: inspect ceiling aroundX624..640/Y1088 and shorten the away phase to
+return to the wall while rising; measure whether successive wall jumps gain
+height rather than repeat the same blocked arc. Retain the proven40-frame
+approach as a timing reference. Upper99BD tuning,9AD9 ammo and HDMA remain
+held. No maintained Rust edits or own residue change; concurrent hardware
+source changes and remote sync belong to their sessions. Direct full-source
+rustfmt passes; Cargo fmt/check and release fail at launch OSerror5.
+Prior same-DLL explicit-render any%129712/0 (414.98s) remains regression
+for these input-only trials. Inputs/probes/ROM-derived outputs stay ignored.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
