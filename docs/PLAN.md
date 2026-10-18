@@ -7595,6 +7595,34 @@ unchanged. Later peer performance/SPC changes are outside this replay.
 Hardware/render/audio timing and credits remain open; held HDMA diagnosis
 stays stopped. Continue executed immediate BIT/register transfer arithmetic.
 
+Refilled Parlor hill and western door crossed (2026-10-18): from
+61295-frame refilled-hill-second prefix X1092/Y171, left/run/shoot6,
+left/run/jump/shoot65, neutral120 clears the mound and landsX989/Y91.
+61486/71 (175.45s), nativeexit1; health89/99, missiles5/5, items1004.
+No extra damage occurs in this jump. The older vertical-start setup was
+not needed from this approach; actual landing establishes the hill crossing.
+
+From this hill-top, left/run/shoot139 then the established suffix following
+parlor-return-before-hatch.inputs crosses the central hatch, Bomb wall and
+west blue door. Five extra run frames compensate for the24px farther-right
+hill landing versus oldX965.62814/71 (196.12s), nativeexit1. Transition
+starts62644 in92FD, loads990D at62662, returns to gameplay62749 X1496/Y139;
+finalX1480/Y139. Health89/99, missiles5/5, Morph/Bombs1004 preserved.
+Both ordered diagnostics exactly match frozen d217ea15 Waver71. Coverage
+returns to17rooms/17enemy definitions, includingD63F Waver, not a new room
+or credits. This establishes a healthier normal-controller onward prefix.
+
+Next: descend990D toward Energy Tank PLMEED7 atX112/Y672 using the
+refilled-west prefix, observe actual pickup and max-health change before
+claiming acquisition. This is independent of the held Upper99BD ascent;
+do not resume that ascent, cliff tuning,9AD9 ammunition or HDMA diagnosis.
+Current gameplay source untouched; frozen same-DLL explicit-render any%
+129712/0 remains input-only regression, not verification of peer hardware.
+Direct full-source format passes; Cargo fmt/release again fail at launch
+OSerror5. Own source/residue delta zero. Inputs and ROM-derived probes remain
+ignored. Peer owns hardware edits, cleanup and remote sync. Credits, full
+gameplay/hardware fidelity, rendering/audio and masked RAM remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
