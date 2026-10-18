@@ -4029,6 +4029,29 @@ no fresh movie result is claimed. Arithmetic residual equality remains
 unenforced; WRIO/autojoy integration, event generation, Waver71, held HDMA,
 audio timing and boot-to-credits stay open.
 
+Arithmetic partial-write rewind QC (2026-10-18): frozen production
+capture/restore matches81cea54a; concurrent WRAM-port/audio edits are separate.
+All65,536 word inputs establish operands and independent product/quotient
+residuals through actual4202..4206 writes, capture, overwrite with the opposite
+word, and restore. Complete4214..4217 reads and a multiply trigger use saved
+state. A low-only dividend write retains the restored high byte, then a
+high-only write retains the updated low byte. Divide-by3 and divide-by0
+produce independently expected quotient/remainder pairs. All65,536 cases
+pass with nativeexit0. Removing only arithmetic restore fails input0:
+actual(255,42075,65535,257), expected(0,0,0,65535), nativeexit3221226505.
+This adds partial-register continuation evidence to the separate CPU-opcode
+QC; arithmetic residual equality and hardware latency remain unproved.
+
+PowerShell initially treated the passing diagnostic stderr as an error;
+direct Python subprocess capture confirms authoritative native exits for
+both candidate and knockout. Only this note changes. Isolated optimized
+core/DLL builds, direct full-source rustfmt and progress pass; Cargo fmt/check
+and release are still denied at cargo.exe launch. No fresh movie run or
+integration claim is made; probes and ROM assets stay ignored, maintained
+Rust/residue counters unchanged. Next: audit remaining DMA execution context
+without resuming held HDMA diagnosis. Rendering initialization/Waver71,
+WRIO/autojoy, interrupt events, audio timing and credits coverage stay open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
