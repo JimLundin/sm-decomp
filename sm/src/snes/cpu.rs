@@ -890,24 +890,20 @@ pub unsafe fn DumpCpuHistory(game: &mut Game) {
         i += 1;
     }
 }
-unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
-    let mut cur_pc: uint32 = (((*cpu).k as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-        | (*cpu).pc as ::core::ffi::c_int - 1 as ::core::ffi::c_int)
-        as uint32;
-    game.pc_hist[game.pc_hist_ctr as usize] = cur_pc as uint32_t;
-    game.pc_hist_ctr = game.pc_hist_ctr.wrapping_add(1 as uint32_t) & 7 as uint32_t;
-    if cur_pc == game.pc_bp {
-        opcode = (opcode as ::core::ffi::c_int + 0 as ::core::ffi::c_int) as uint8_t;
-    }
+unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
+    // Preserve the inherited history value of 0xffffffff when PC is zero.
+    let cur_pc = (i32::from((*cpu).k) << 16 | (i32::from((*cpu).pc) - 1)) as u32;
+    game.pc_hist[game.pc_hist_ctr as usize] = cur_pc;
+    game.pc_hist_ctr = game.pc_hist_ctr.wrapping_add(1) & 7;
     loop {
-        match opcode as ::core::ffi::c_int {
+        match opcode {
             0 => {
                 let mut addr: uint32_t =
                     (((*cpu).k as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
                         | (*cpu).pc as ::core::ffi::c_int
                         | 0x800000 as ::core::ffi::c_int) as uint32_t;
                 opcode = CpuOpcodeHook((addr as uint32).wrapping_sub(1 as uint32), game) as uint8_t;
-                match opcode as ::core::ffi::c_int {
+                match opcode {
                     0 => {
                         break;
                     }

@@ -8167,6 +8167,21 @@ full frontend linking still lacks SDL2. Live source matches verified source.
 Cast lines -3, Rust lines -2; other counters unchanged. Gameplay and hardware
 completeness remain open.
 
+CPU dispatch/history cleanup (2026-10-19): opcode matches use the byte
+directly, history arithmetic uses explicit native types and the breakpoint
+branch that only added zero is removed. PC zero still records FFFFFFFF;
+history slot order and wrapping remain exact. Frozen HEAD
+`85ce0e498d5302ebb477427ed585d76be6defaa7` plus only this dispatch edit passes
+16,777,216 bank/PC expression comparisons and 2,097,152 actual old/current
+NOP dispatch pairs across every PC, four banks, eight slots and matching/
+nonmatching breakpoints. Named CPU state and expected history match. Prefix
+3,600/0 (1.11s) executes 10,363,030 dispatch calls; clean full any% 129,712/0
+(56.58s), native exit 0. Cargo fmt/check, release library, frozen normal
+metadata and optimized core/DLL builds pass; full frontend linking still
+lacks SDL2. Live source matches verified source. Cast lines -5, Rust lines -4;
+other counters unchanged. Dedicated NOP coverage does not establish every
+opcode branch; full gameplay, rendering and audio completeness remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
