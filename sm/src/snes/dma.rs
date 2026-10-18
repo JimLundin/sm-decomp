@@ -202,78 +202,30 @@ pub unsafe fn dma_read(mut dma: *mut Dma, mut adr: uint16_t) -> uint8_t {
         }
     };
 }
-pub unsafe fn dma_write(mut dma: *mut Dma, mut adr: uint16_t, mut val: uint8_t) {
-    let mut c: uint8_t = ((adr as ::core::ffi::c_int & 0x70 as ::core::ffi::c_int)
-        >> 4 as ::core::ffi::c_int) as uint8_t;
-    match adr as ::core::ffi::c_int & 0xf as ::core::ffi::c_int {
+pub unsafe fn dma_write(dma: *mut Dma, address: u16, value: u8) {
+    let channel = &mut (*dma).channel[usize::from((address >> 4) & 7)];
+    match address & 0x0f {
         0 => {
-            (*dma).channel[c as usize].mode =
-                (val as ::core::ffi::c_int & 0x7 as ::core::ffi::c_int) as uint8_t;
-            (*dma).channel[c as usize].fixed =
-                val as ::core::ffi::c_int & 0x8 as ::core::ffi::c_int != 0;
-            (*dma).channel[c as usize].decrement =
-                val as ::core::ffi::c_int & 0x10 as ::core::ffi::c_int != 0;
-            (*dma).channel[c as usize].unusedBit =
-                val as ::core::ffi::c_int & 0x20 as ::core::ffi::c_int != 0;
-            (*dma).channel[c as usize].indirect =
-                val as ::core::ffi::c_int & 0x40 as ::core::ffi::c_int != 0;
-            (*dma).channel[c as usize].fromB =
-                val as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0;
+            channel.mode = value & 7;
+            channel.fixed = value & 0x08 != 0;
+            channel.decrement = value & 0x10 != 0;
+            channel.unusedBit = value & 0x20 != 0;
+            channel.indirect = value & 0x40 != 0;
+            channel.fromB = value & 0x80 != 0;
         }
-        1 => {
-            (*dma).channel[c as usize].bAdr = val;
-        }
-        2 => {
-            (*dma).channel[c as usize].aAdr =
-                ((*dma).channel[c as usize].aAdr as ::core::ffi::c_int
-                    & 0xff00 as ::core::ffi::c_int
-                    | val as ::core::ffi::c_int) as uint16_t;
-        }
-        3 => {
-            (*dma).channel[c as usize].aAdr =
-                ((*dma).channel[c as usize].aAdr as ::core::ffi::c_int & 0xff as ::core::ffi::c_int
-                    | (val as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
-                    as uint16_t;
-        }
-        4 => {
-            (*dma).channel[c as usize].aBank = val;
-        }
-        5 => {
-            (*dma).channel[c as usize].size =
-                ((*dma).channel[c as usize].size as ::core::ffi::c_int
-                    & 0xff00 as ::core::ffi::c_int
-                    | val as ::core::ffi::c_int) as uint16_t;
-        }
-        6 => {
-            (*dma).channel[c as usize].size =
-                ((*dma).channel[c as usize].size as ::core::ffi::c_int & 0xff as ::core::ffi::c_int
-                    | (val as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
-                    as uint16_t;
-        }
-        7 => {
-            (*dma).channel[c as usize].indBank = val;
-        }
-        8 => {
-            (*dma).channel[c as usize].tableAdr =
-                ((*dma).channel[c as usize].tableAdr as ::core::ffi::c_int
-                    & 0xff00 as ::core::ffi::c_int
-                    | val as ::core::ffi::c_int) as uint16_t;
-        }
-        9 => {
-            (*dma).channel[c as usize].tableAdr = ((*dma).channel[c as usize].tableAdr
-                as ::core::ffi::c_int
-                & 0xff as ::core::ffi::c_int
-                | (val as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
-                as uint16_t;
-        }
-        10 => {
-            (*dma).channel[c as usize].repCount = val;
-        }
-        11 | 15 => {
-            (*dma).channel[c as usize].unusedByte = val;
-        }
+        1 => channel.bAdr = value,
+        2 => channel.aAdr = (channel.aAdr & 0xff00) | u16::from(value),
+        3 => channel.aAdr = (channel.aAdr & 0x00ff) | (u16::from(value) << 8),
+        4 => channel.aBank = value,
+        5 => channel.size = (channel.size & 0xff00) | u16::from(value),
+        6 => channel.size = (channel.size & 0x00ff) | (u16::from(value) << 8),
+        7 => channel.indBank = value,
+        8 => channel.tableAdr = (channel.tableAdr & 0xff00) | u16::from(value),
+        9 => channel.tableAdr = (channel.tableAdr & 0x00ff) | (u16::from(value) << 8),
+        10 => channel.repCount = value,
+        11 | 15 => channel.unusedByte = value,
         _ => {}
-    };
+    }
 }
 pub unsafe fn dma_doDma(mut dma: *mut Dma, game: &mut Game) {
     if (*dma).dmaTimer > 0 as uint32_t {

@@ -4392,6 +4392,26 @@ continue actual event/bus coverage. Held HDMA diagnosis remains stopped;
 enabled-render Waver71, hires, audio timing, masked RAM and boot-to-credits
 coverage remain open.
 
+DMA register writer cleanup (2026-10-18): dma_write now selects its channel
+with native word masks and uses direct byte/word operations. Flag store order,
+low/high partial writes, unused-byte B/F mirror and ignored C/D/E offsets
+remain exact. Actual checks pass 117,440,512 cases: all 65,536 addresses and
+256 input bytes, then all previous words/input bytes for six partial-word
+registers. A 12,000-frame any% prefix passes 12,000/0 (21.38s), native exit 0;
+both implementations execute arms 0..9, including 18 table-address low/high
+writes each. Arms 10..15 are established by constructed calls only.
+
+Clean frozen e18135b5 plus only this writer change passes any% 129,712/0
+(252.48s), native exit 0. The freeze includes committed DMA rewind; later
+open-bus/demo/PPU changes are outside these checks. Direct full-source
+formatting, normal-core metadata and optimized clean/observed core/DLL builds
+pass; Cargo fmt/build remain denied at cargo.exe launch. Progress: cast lines
+-25, Rust lines -48; other focused counters unchanged. No layout or scheduling
+changes; probe and ROM-derived assets remain untracked. Register semantics
+and executed setup are covered, not independent transfer timing or remaining
+hardware accuracy. Continue actual DMA consumer coverage, event scheduling
+and boot-to-credits work; held HDMA diagnosis and Waver71 remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
