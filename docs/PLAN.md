@@ -5582,6 +5582,33 @@ fmt/release remain denied launching cargo.exe, as checked this turn. No
 fresh movie result claimed. Peer CPU/PPU/SNES edits are excluded. Rendering,
 hardware/audio timing and boot-to-credits coverage remain open.
 
+SNES arithmetic-register writes (2026-10-18): 4202..4206 now use native
+byte/word multiplication, dividend-byte merges and quotient/remainder.
+Zero divisor still yields FFFF and the original dividend as remainder;
+other register arms and scheduling remain unchanged. Actual old/current
+snes_cpuWrite passes 50,462,720 cases: every dividend word and divisor byte,
+all dividend byte merges, all multiplication factors and operand stores.
+Independent expected arithmetic, result-register readbacks, untouched byte,
+open bus and wrapping bus counters pass. Independent QC executes 1,179,648
+actual STA cases across all accumulator words, banks00/80, byte4202..4206
+and word4202..4205, plus 4,718,592 result readback bytes. Sequential word
+effects, CPU state/flags and unrelated timers/bus match; forcing zero-divisor
+quotient0 instead ofFFFF is detected, native assertion exit3221226505.
+
+Instrumented any% passes12,000/0 (22.85s), native exit0. Writes4202..4206
+are ROM[129192,129215,46823,24196,24196] and Rust[3,3,3,3,3]. Clean frozen
+6d44298a plus only this arithmetic change passes any%129,712/0 (251.27s),
+native exit0. Direct full-source format, normal-core metadata and optimized
+clean/probe core/DLL builds pass. Cargo fmt/build --release remain denied
+at cargo.exe launch; that required check stays unmet. A misplaced TEMP hit
+counter initially failed compilation; corrected writer-only observation
+passes and matches production after removing the counter. The original
+clean replay continued unchanged and its native exit was captured directly.
+Progress/diff pass: focused cast lines-8, Rust lines-6, other categories
+unchanged. Later peer changes require separate integration. Hardware/audio
+timing, rendering/Waver71, masked RAM and credits remain open; held HDMA
+diagnosis stays stopped. Continue executed hardware paths and route coverage.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

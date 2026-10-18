@@ -321,27 +321,21 @@ unsafe fn snes_writeReg(mut snes: *mut Snes, mut adr: uint16_t, mut val: uint8_t
             (*snes).multiplyA = val;
         }
         16899 => {
-            (*snes).multiplyResult =
-                ((*snes).multiplyA as ::core::ffi::c_int * val as ::core::ffi::c_int) as uint16_t;
+            (*snes).multiplyResult = u16::from((*snes).multiplyA) * u16::from(val);
         }
         16900 => {
-            (*snes).divideA = ((*snes).divideA as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int
-                | val as ::core::ffi::c_int) as uint16_t;
+            (*snes).divideA = ((*snes).divideA & 0xff00) | u16::from(val);
         }
         16901 => {
-            (*snes).divideA = ((*snes).divideA as ::core::ffi::c_int & 0xff as ::core::ffi::c_int
-                | (val as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
-                as uint16_t;
+            (*snes).divideA = ((*snes).divideA & 0xff) | (u16::from(val) << 8);
         }
         16902 => {
-            if val as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-                (*snes).divideResult = 0xffff as uint16_t;
+            if val == 0 {
+                (*snes).divideResult = 0xffff;
                 (*snes).multiplyResult = (*snes).divideA;
             } else {
-                (*snes).divideResult =
-                    ((*snes).divideA as ::core::ffi::c_int / val as ::core::ffi::c_int) as uint16_t;
-                (*snes).multiplyResult =
-                    ((*snes).divideA as ::core::ffi::c_int % val as ::core::ffi::c_int) as uint16_t;
+                (*snes).divideResult = (*snes).divideA / u16::from(val);
+                (*snes).multiplyResult = (*snes).divideA % u16::from(val);
             }
         }
         16903 => {
