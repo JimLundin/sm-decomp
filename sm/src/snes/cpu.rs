@@ -168,10 +168,10 @@ fn set_zero_negative(value: u16, byte: bool, cpu: &mut Cpu) {
         cpu.n = value & 0x8000 != 0;
     }
 }
-unsafe fn cpu_doBranch(cpu: *mut Cpu, value: u8, check: bool) {
+fn branch_relative(value: u8, check: bool, cpu: &mut Cpu) {
     if check {
-        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        (*cpu).pc = (*cpu).pc.wrapping_add_signed(value as i8 as i16);
+        cpu.cyclesUsed = cpu.cyclesUsed.wrapping_add(1);
+        cpu.pc = cpu.pc.wrapping_add_signed(value as i8 as i16);
     }
 }
 unsafe fn cpu_pullByte(cpu: *mut Cpu, game: &mut Game) -> u8 {
@@ -974,7 +974,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0x10 => {
-                cpu_doBranch(cpu, cpu_readOpcode(cpu, game), !(*cpu).n);
+                branch_relative(cpu_readOpcode(cpu, game), !(*cpu).n, &mut *cpu);
                 break;
             }
             0x11 => {
@@ -1146,7 +1146,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0x30 => {
-                cpu_doBranch(cpu, cpu_readOpcode(cpu, game), (*cpu).n);
+                branch_relative(cpu_readOpcode(cpu, game), (*cpu).n, &mut *cpu);
                 break;
             }
             0x31 => {
@@ -1335,7 +1335,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0x50 => {
-                cpu_doBranch(cpu, cpu_readOpcode(cpu, game), !(*cpu).v);
+                branch_relative(cpu_readOpcode(cpu, game), !(*cpu).v, &mut *cpu);
                 break;
             }
             0x51 => {
@@ -1587,7 +1587,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0x70 => {
-                cpu_doBranch(cpu, cpu_readOpcode(cpu, game), (*cpu).v);
+                branch_relative(cpu_readOpcode(cpu, game), (*cpu).v, &mut *cpu);
                 break;
             }
             0x71 => {
@@ -1763,7 +1763,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0x90 => {
-                cpu_doBranch(cpu, cpu_readOpcode(cpu, game), !(*cpu).c);
+                branch_relative(cpu_readOpcode(cpu, game), !(*cpu).c, &mut *cpu);
                 break;
             }
             0x91 => {
@@ -1937,7 +1937,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0xb0 => {
-                cpu_doBranch(cpu, cpu_readOpcode(cpu, game), (*cpu).c);
+                branch_relative(cpu_readOpcode(cpu, game), (*cpu).c, &mut *cpu);
                 break;
             }
             0xb1 => {
@@ -2109,7 +2109,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0xd0 => {
-                cpu_doBranch(cpu, cpu_readOpcode(cpu, game), !(*cpu).z);
+                branch_relative(cpu_readOpcode(cpu, game), !(*cpu).z, &mut *cpu);
                 break;
             }
             0xd1 => {
@@ -2269,7 +2269,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0xf0 => {
-                cpu_doBranch(cpu, cpu_readOpcode(cpu, game), (*cpu).z);
+                branch_relative(cpu_readOpcode(cpu, game), (*cpu).z, &mut *cpu);
                 break;
             }
             0xf1 => {

@@ -8466,6 +8466,20 @@ library, normal metadata and optimized core/DLL builds pass; full frontend
 linking still lacks SDL2. Live source matches verified source. Unsafe functions
 -1; other counters unchanged. Complete gameplay and rendering/audio remain open.
 
+CPU safe-branch cleanup (2026-10-19): `branch_relative` takes a safe mutable
+CPU reference after displacement and condition. Its eight callers preserve
+fetch, condition read and branch update order; the helper only updates PC and
+cycles, with no bus calls. Frozen HEAD
+`3430632e2741618b7b4d5387c81b8e0946772d0a` plus this interface change passes
+33,554,432 actual old/current helper pairs over every PC/displacement and both
+conditions, checking expected signed wrapping PC, cycle increment and complete
+named CPU state. Prefix 3,600/0 (0.99s) executes 415,977 untaken and 1,111,395
+taken calls. Clean full any% 129,712/0 (52.89s), native exit 0. Cargo fmt/check,
+release library, normal metadata and optimized core/DLL builds pass; full
+frontend linking still lacks SDL2. Live source matches verified source.
+Unsafe functions -1; other counters unchanged. Complete gameplay and
+rendering/audio remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
