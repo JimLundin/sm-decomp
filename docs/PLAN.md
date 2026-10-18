@@ -5830,6 +5830,25 @@ and progress pass. Independent partner fixture review finds no issue.
 Cargo launch remains denied. Implementer retains production ownership and
 full-movie integration; only PLAN changes and probes/assets stay TEMP.
 
+Independent logical CPU candidate QC (2026-10-18): 4,718,592 actual
+old/current absolute AND/ORA/EOR pairs pass, native exit zero. Every
+accumulator word, six operand patterns and both widths exercise ordinary
+WRAM, byte reads through 2180 and word reads through arithmetic result
+4214/4215. Independent accumulator/N/Z, PC, cycles, preserved flags/registers
+and WRAM-port increment expectations pass. A TEMP byte-AND high-byte loss
+fails actual accumulator zero versus 256, native exit 3221226505.
+
+The first fixture incorrectly treated absolute word 2180/2181 as two WRAM
+data reads; the maintained 2181 assertion returned native exit2. Partner
+caught this fixture error before any passing claim. The corrected fixture
+uses the real byte port and valid adjacent arithmetic registers, with no
+assertion bypass. Tested logical bodies match live; optimized probe
+core/DLL, direct format, normal-core metadata and progress pass. Cargo
+launch remains denied. This proves exercised absolute logical paths;
+other addressing modes, port wrapping, hardware accuracy and full-movie
+integration remain separate. Only PLAN changes; probes/assets stay TEMP.
+Partner independently reviews corrected fixture, final logs and scope.
+
 Independent native control-write candidate QC (2026-10-18): 73,728 actual
 old/current byte STA instructions pass through banks 00/80 at 4200/4201/420D.
 All 256 written bytes, 16 initial control-flag combinations and autojoy
