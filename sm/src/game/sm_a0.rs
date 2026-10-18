@@ -9393,28 +9393,14 @@ pub fn CosineMult8bitFull(phase: uint16, amplitude: uint16, game: &mut Game) -> 
 pub fn SineMult8bitFull(phase: uint16, amplitude: uint16, game: &mut Game) -> uint32 {
     SineMult8bitInner(amplitude, phase.wrapping_add(0x80) as u8 as u16, game)
 }
-pub unsafe fn ConvertAngleToXy(mut r18: uint16, mut r20: uint16, game: &mut Game) -> Point32 {
-    let mut ss: uint32 = (*(game.g_rom.offset(
-        (((0xa0b7ee as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xa0b7ee as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
-        .offset(
-            (r18 as ::core::ffi::c_int + 0x40 as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int)
-                as isize,
-        ) as ::core::ffi::c_int
-        * r20 as ::core::ffi::c_int) as uint32;
-    let mut tt: uint32 = (*(game.g_rom.offset(
-        (((0xa0b7ee as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xa0b7ee as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
-        .offset(
-            (r18 as ::core::ffi::c_int + 0x80 as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int)
-                as isize,
-        ) as ::core::ffi::c_int
-        * r20 as ::core::ffi::c_int) as uint32;
-    return Point32 { x: ss, y: tt };
+pub fn ConvertAngleToXy(phase: uint16, amplitude: uint16, game: &mut Game) -> Point32 {
+    let x_index = usize::from(phase.wrapping_add(0x40) & 0x7f);
+    let x_sample = game.read_rom_word(0xa0b7ee, x_index * 2);
+    let x = u32::from(x_sample) * u32::from(amplitude);
+    let y_index = usize::from(phase.wrapping_add(0x80) & 0x7f);
+    let y_sample = game.read_rom_word(0xa0b7ee, y_index * 2);
+    let y = u32::from(y_sample) * u32::from(amplitude);
+    Point32 { x, y }
 }
 pub unsafe fn EnemyFunc_B691(mut varE20: uint16, mut pt: Point32, game: &mut Game) {
     let mut E: *mut EnemyData = gEnemyData(

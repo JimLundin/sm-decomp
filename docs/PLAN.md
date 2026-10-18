@@ -1942,6 +1942,20 @@ Unsafe functions -4, cast lines -8, Rust lines -3; other counters unchanged.
 Next: ConvertAngleToXy live-ROM table reads and unsigned product arithmetic,
 retaining phase masking, table stride and full 32-bit products.
 
+ConvertAngleToXy now uses checked live-ROM word reads and explicit unsigned
+32-bit products. Wrapped phase additions, seven-bit masks, two-byte table
+stride and X-before-Y reads remain exact. Full product bits retain the
+optimized prior signed-multiply result even at FFFF * FFFF. The function
+is safe Rust and embeds no ROM-derived values. Prior Rust comparison passes
+2,293,760 live-table phase/product cases; independent comparison passes
+11,075,584 live-ROM/RAM/return cases with all phase/amplitude/sample words
+and table mutations. Stable optimized core/DLL build and direct full-source
+format pass; Cargo fmt/build remain ASR-denied. Any%: 129,712 frames, zero
+failures (193.18s); Waver route: 58,109 frames, zero failures (90.36s).
+Unsafe functions -1, cast lines -12, Rust lines -14; other counters unchanged.
+Next: EnemyFunc_B691 enemy position addition, retaining phase sign bits,
+independent X/Y fixed-point carries and byte-backed slot writes.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
