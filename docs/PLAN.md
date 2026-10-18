@@ -3973,6 +3973,42 @@ emulated-helper paths or hardware latency; immediate results, final residual
 comparison, WRIO/autojoy, DMA state, interrupts/events, rendering/HDMA, audio
 timing and boot-to-credits remain open.
 
+Full-route arithmetic dependency audit (2026-10-18): isolated counters
+reset at each ROM/Rust branch entry and observe actual snes_readReg/writeReg.
+Each quotient/result byte read requires a preceding producing trigger in
+that branch; multiplication triggers require a preceding WRMPYA write,
+division triggers require both dividend bytes. Multiplication only produces
+the shared product/remainder bytes; division produces all four result bytes.
+Seven intentional inherited operand/result controls are detected exactly
+once each; initialized multiply/divide negative controls add no detections.
+The control replay passes3,600/0 and exits0.
+
+Full any% passes129,712/0 (276.93s), Waver58,109/0 (133.35s), both native
+process exits0. ROM result-byte counts [quotient low/high, product low/high]
+are [755136,755136,1345055,1274337] and
+[334588,334588,889210,902850] respectively:6,590,900 reads total.
+All seven inherited-dependency counters are zero on both sides in both
+movies. Rust performs no arithmetic-result reads, and writes each operand/
+trigger register17 times in any%,4 in Waver (initialization sequences).
+ROM write counts [4202,4203,4204,4205,4206] are
+[1330376,1386905,1224430,763162,763162] and
+[853317,940517,547916,349858,349858]. Thus these actual routes do not
+consume arithmetic state inherited from a prior frame. This does not prove
+other routes/emulated helpers are safe or remove the known rewind omission.
+
+Source was frozen before the concurrent arithmetic snapshot implementation;
+the probe does not capture, restore or compare arithmetic residuals. It
+includes then-current peer timer/audio/PPU edits and is not an integration
+claim for later commits. No residual equality or normalization is introduced.
+Only this note changes; isolated optimized core/DLL builds, direct full-source
+rustfmt and progress pass. Cargo fmt/check and release remain denied at
+cargo.exe launch. Diagnostic sources/logs and ROM inputs remain ignored;
+no maintained Rust/residue counters change. Rendering initialization/Waver71,
+hires, arithmetic latency, audio timing, masked RAM, hardware scheduling and
+boot-to-credits coverage remain open. Next: independently QC the coordinated
+arithmetic rewind change without enforcing direct-Rust residual equality;
+held HDMA diagnosis remains stopped.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
