@@ -9680,81 +9680,26 @@ pub unsafe fn CalculateAngleOfEnemyXfromEnemyY(k: uint16, j: uint16, game: &mut 
         .wrapping_sub(game.enemy_coordinates(j).y_pos());
     CalculateAngleFromXY(x, y, game)
 }
-unsafe fn CalculateAngleFromXY_0(mut div: uint16, game: &mut Game) -> uint8 {
-    return ((div as ::core::ffi::c_int >> 3 as ::core::ffi::c_int) + 64 as ::core::ffi::c_int)
-        as uint8;
-}
-unsafe fn CalculateAngleFromXY_1(mut div: uint16, game: &mut Game) -> uint8 {
-    return (0x80 as ::core::ffi::c_int - (div as ::core::ffi::c_int >> 3 as ::core::ffi::c_int))
-        as uint8;
-}
-unsafe fn CalculateAngleFromXY_2(mut div: uint16, game: &mut Game) -> uint8 {
-    return (div as ::core::ffi::c_int >> 3 as ::core::ffi::c_int) as uint8;
-}
-unsafe fn CalculateAngleFromXY_3(mut div: uint16, game: &mut Game) -> uint8 {
-    return (64 as ::core::ffi::c_int - (div as ::core::ffi::c_int >> 3 as ::core::ffi::c_int))
-        as uint8;
-}
-unsafe fn CalculateAngleFromXY_4(mut div: uint16, game: &mut Game) -> uint8 {
-    return ((div as ::core::ffi::c_int >> 3 as ::core::ffi::c_int) + 0x80 as ::core::ffi::c_int)
-        as uint8;
-}
-unsafe fn CalculateAngleFromXY_5(mut div: uint16, game: &mut Game) -> uint8 {
-    return (-(64 as ::core::ffi::c_int) - (div as ::core::ffi::c_int >> 3 as ::core::ffi::c_int))
-        as uint8;
-}
-unsafe fn CalculateAngleFromXY_6(mut div: uint16, game: &mut Game) -> uint8 {
-    return ((div as ::core::ffi::c_int >> 3 as ::core::ffi::c_int) - 64 as ::core::ffi::c_int)
-        as uint8;
-}
-unsafe fn CalculateAngleFromXY_7(mut div: uint16, game: &mut Game) -> uint8 {
-    return (0 as ::core::ffi::c_int - (div as ::core::ffi::c_int >> 3 as ::core::ffi::c_int))
-        as uint8;
-}
-static funcs_758EE: [Option<CalculateAngleFromXYFunc>; 4] = unsafe {
-    [
-        Some(CalculateAngleFromXY_1 as unsafe fn(uint16, &mut Game) -> uint8),
-        Some(CalculateAngleFromXY_2 as unsafe fn(uint16, &mut Game) -> uint8),
-        Some(CalculateAngleFromXY_4 as unsafe fn(uint16, &mut Game) -> uint8),
-        Some(CalculateAngleFromXY_7 as unsafe fn(uint16, &mut Game) -> uint8),
-    ]
-};
-static funcs_7587D: [Option<CalculateAngleFromXYFunc>; 4] = unsafe {
-    [
-        Some(CalculateAngleFromXY_0 as unsafe fn(uint16, &mut Game) -> uint8),
-        Some(CalculateAngleFromXY_3 as unsafe fn(uint16, &mut Game) -> uint8),
-        Some(CalculateAngleFromXY_5 as unsafe fn(uint16, &mut Game) -> uint8),
-        Some(CalculateAngleFromXY_6 as unsafe fn(uint16, &mut Game) -> uint8),
-    ]
-};
-pub unsafe fn CalculateAngleFromXY(
-    mut x_r18: uint16,
-    mut y_r20: uint16,
-    game: &mut Game,
-) -> uint16 {
-    let mut idx: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    if x_r18 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
-        idx += 2 as ::core::ffi::c_int;
-        x_r18 = -(x_r18 as ::core::ffi::c_int) as uint16;
-    }
-    if y_r20 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
-        idx += 1 as ::core::ffi::c_int;
-        y_r20 = -(y_r20 as ::core::ffi::c_int) as uint16;
-    }
-    if (y_r20 as ::core::ffi::c_int) < x_r18 as ::core::ffi::c_int {
-        let mut div: uint16 = SnesDivide(
-            ((y_r20 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16,
-            x_r18 as uint8,
-        );
-        return funcs_7587D[idx as usize].expect("non-null function pointer")(div, game) as uint16;
-    } else {
-        let mut div_0: uint16 = SnesDivide(
-            ((x_r18 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16,
-            y_r20 as uint8,
-        );
-        return funcs_758EE[idx as usize].expect("non-null function pointer")(div_0, game)
-            as uint16;
+pub unsafe fn CalculateAngleFromXY(x: uint16, y: uint16, game: &mut Game) -> uint16 {
+    let quadrant = (u8::from(x & 0x8000 != 0) << 1) | u8::from(y & 0x8000 != 0);
+    let x = Abs16(x);
+    let y = Abs16(y);
+    let x_dominant = y < x;
+    let (numerator, denominator) = if x_dominant { (y, x) } else { (x, y) };
+    let div = SnesDivide(numerator.wrapping_shl(8), denominator as u8);
+    let offset = (div >> 3) as u8;
+    let angle = match (x_dominant, quadrant) {
+        (true, 0) => offset.wrapping_add(64),
+        (true, 1) => 64u8.wrapping_sub(offset),
+        (true, 2) => 192u8.wrapping_sub(offset),
+        (true, 3) => offset.wrapping_sub(64),
+        (false, 0) => 128u8.wrapping_sub(offset),
+        (false, 1) => offset,
+        (false, 2) => offset.wrapping_add(128),
+        (false, 3) => 0u8.wrapping_sub(offset),
+        _ => unreachable!(),
     };
+    u16::from(angle)
 }
 pub unsafe fn IsEnemyLeavingScreen(mut k: uint16, game: &mut Game) -> uint8 {
     let mut x_pos: int16 = 0;

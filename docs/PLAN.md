@@ -2080,6 +2080,20 @@ Rust lines -4; other counters unchanged. Next: CalculateAngleFromXY direct
 quadrant arithmetic, retaining wrapped magnitudes, low-byte denominators
 and zero-denominator division behavior.
 
+CalculateAngleFromXY now uses direct quadrant arithmetic instead of eight
+private callbacks and two Option function-pointer tables. Wrapped magnitudes
+including 8000, Y<X dominance (ties choose Y), truncated numerator shift,
+low-byte denominator and SnesDivide zero-denominator behavior remain exact.
+Offset arithmetic wraps as a byte before widening the result. Unsafe remains
+for SnesDivide. Prior Rust comparison passes 8,684,672 checks; independent
+exhaustive comparison passes all 4,294,967,296 u16 X/Y pairs with RAM unchanged.
+Stable optimized core/DLL build and direct full-source format pass; Cargo
+fmt/build remain ASR-denied. Any%: 129,712 frames, zero failures (201.17s);
+Waver route: 58,109 frames, zero failures (96.48s). Unsafe functions -8,
+cast lines -18, Rust lines -55; other counters unchanged. Next:
+IsEnemyLeavingScreen signed horizontal gates, retaining negative-position
+rejection and its exclusive 256 boundary.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
