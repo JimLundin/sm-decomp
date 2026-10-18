@@ -5016,6 +5016,33 @@ known 71 rendered baseline failures and recording any new ones separately.
 The stopped 9AD9 ammunition suffix experiments remain held. Credits are
 unproved; these runs still end in gameplay.
 
+Failure-recovery clock/DMA audit (2026-10-18): the failed-frame path
+reruns RunOneFrameOfGame_Emulated without the comparison branches' subsequent
+DrawFrameToPpu. Two TEMP forced-g_fail controls test actual recovery with
+disableRender explicitlyfalse: startup frame200 in3,600 frames and gameplay
+frame9,000 in10,000 frames. Both complete with exactlyone intentional failure,
+nativeexit1 and no cascade. Immediately after recovery rerun, actual
+(hPos,vPos,frames)=(0,226,0) matches the previously captured ROM branch;
+DMA(hdmaTimer,dmaTimer,busy)=(0,0,false) also matches in both controls.
+Thus the source call difference alone does not reproduce a clock/DMA defect
+in these tested contexts. PPU pixels/routing and other recovered fields are
+not compared by this audit, nor are later HDMA-active recovery contexts.
+
+The initial probe expected unequal clocks and aborted when actual values
+matched. Corrected equality checks finish both runs; no production fix is
+justified from that abandoned hypothesis. Explicit renderer enable is set,
+but actual PPU-call counting is outside these controls. The generated
+gameplay script reuses the generator filename while its frozen output/DLL
+directory is distinct; no loaded DLL is rebuilt. Only this note changes;
+no maintained Rust/residue changes. Frozen source includes then-current
+CPU/DMA/PPU edits; later integration is separate. Isolated optimized core/DLL,
+direct full-source rustfmt and progress pass; Cargo fmt/check and release
+remain denied at cargo.exe launch. No clean full-movie result is claimed.
+Probe and ROM assets stay ignored. Next: independently compare recovered
+PPU state/output before assuming the rerun completes the same render state;
+held HDMA diagnosis stays stopped. Rendering/Waver71, hardware/audio timing,
+masked RAM and boot-to-credits remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
