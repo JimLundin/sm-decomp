@@ -1,5 +1,5 @@
 use crate::game::sm_80::{CheckBossBitForCurArea, Multiply16x16};
-use crate::game::sm_84::SpawnPLM;
+use crate::game::sm_84::{SpawnPLM, SpawnPLMWithCollision};
 use crate::game::sm_90::KillProjectile;
 use crate::game::sm_a0::CalculateAngleFromXY;
 use crate::game_state::Game;
@@ -2692,10 +2692,10 @@ unsafe fn special_collision_plm(bts: u8, area_tables: u32, game: &mut Game) -> u
         game.read_rom_word(0x949139, usize::from(bts) * 2)
     }
 }
-unsafe fn BlockColl_Horiz_SpecialAir(_ci: *mut CollInfo, game: &mut Game) -> uint8 {
+unsafe fn BlockColl_Horiz_SpecialAir(ci: *mut CollInfo, game: &mut Game) -> uint8 {
     let bts = game.current_block_bts();
     let header = special_collision_plm(bts, 0x9492d9, game);
-    let result = SpawnPLM(header, game);
+    let result = SpawnPLMWithCollision(header, &raw mut (*ci).ci_r18_r20, game);
     if bts & 0x80 != 0 {
         result & 1
     } else {
@@ -2708,7 +2708,7 @@ unsafe fn BlockColl_Vert_SpecialAir(ci: *mut CollInfo, game: &mut Game) -> uint8
 unsafe fn BlockColl_Horiz_SpecialBlock(ci: *mut CollInfo, game: &mut Game) -> uint8 {
     let bts = game.current_block_bts();
     let header = special_collision_plm(bts, 0x9492e9, game);
-    let result = SpawnPLM(header, game) & 1;
+    let result = SpawnPLMWithCollision(header, &raw mut (*ci).ci_r18_r20, game) & 1;
     if result != 0 {
         // Setup can adjust displacement or Samus RAM; collision reads remain live.
         BlockColl_Horiz_SolidShootGrappleBlock(ci, game)
@@ -2719,18 +2719,18 @@ unsafe fn BlockColl_Horiz_SpecialBlock(ci: *mut CollInfo, game: &mut Game) -> ui
 unsafe fn BlockColl_Vert_SpecialBlock(ci: *mut CollInfo, game: &mut Game) -> uint8 {
     let bts = game.current_block_bts();
     let header = special_collision_plm(bts, 0x9492e9, game);
-    let result = SpawnPLM(header, game) & 1;
+    let result = SpawnPLMWithCollision(header, &raw mut (*ci).ci_r18_r20, game) & 1;
     if result != 0 {
         BlockColl_Vert_SolidShootGrappleBlock(ci, game)
     } else {
         result
     }
 }
-unsafe fn BlockColl_Horiz_BombableAir(_ci: *mut CollInfo, game: &mut Game) -> uint8 {
+unsafe fn BlockColl_Horiz_BombableAir(ci: *mut CollInfo, game: &mut Game) -> uint8 {
     let bts = game.current_block_bts();
     if bts & 0x80 == 0 {
         let header = game.read_rom_word(0x94936b, usize::from(bts) * 2);
-        SpawnPLM(header, game);
+        SpawnPLMWithCollision(header, &raw mut (*ci).ci_r18_r20, game);
     }
     0
 }
@@ -2743,7 +2743,7 @@ unsafe fn BlockColl_Horiz_BombBlock(ci: *mut CollInfo, game: &mut Game) -> uint8
         return BlockColl_Horiz_SolidShootGrappleBlock(ci, game);
     }
     let header = game.read_rom_word(0x94936b, usize::from(bts) * 2);
-    let result = SpawnPLM(header, game) & 1;
+    let result = SpawnPLMWithCollision(header, &raw mut (*ci).ci_r18_r20, game) & 1;
     if result != 0 {
         // Setup may adjust the displacement and Samus RAM before collision.
         BlockColl_Horiz_SolidShootGrappleBlock(ci, game)
@@ -2757,7 +2757,7 @@ unsafe fn BlockColl_Vert_BombBlock(ci: *mut CollInfo, game: &mut Game) -> uint8 
         return BlockColl_Vert_SolidShootGrappleBlock(ci, game);
     }
     let header = game.read_rom_word(0x94936b, usize::from(bts) * 2);
-    let result = SpawnPLM(header, game) & 1;
+    let result = SpawnPLMWithCollision(header, &raw mut (*ci).ci_r18_r20, game) & 1;
     if result != 0 {
         BlockColl_Vert_SolidShootGrappleBlock(ci, game)
     } else {
@@ -2853,10 +2853,8 @@ fn Samus_GetXposSpan(game: &mut Game) -> uint16 {
 }
 unsafe fn BlockColl_Horiz_CheckColl(ci: &mut CollInfo, k: uint16, game: &mut Game) -> uint8 {
     game.set_cur_block_index(k >> 1);
-    // Derive both legacy pointers from this borrow. Do not reborrow the context
-    // while callbacks can access its displacement through Game.
+    // Keep the raw context alive across retries and nested PLM setup calls.
     let context = ci as *mut CollInfo;
-    game.cur_coll_amt32 = &raw mut (*context).ci_r18_r20;
     let result = loop {
         let result = match game.current_level_block() >> 12 {
             0 | 4 | 6 => ClearCarry_4(context, game),
@@ -2877,14 +2875,12 @@ unsafe fn BlockColl_Horiz_CheckColl(ci: &mut CollInfo, k: uint16, game: &mut Gam
             break result;
         }
     };
-    game.cur_coll_amt32 = core::ptr::null_mut();
     result
 }
 unsafe fn BlockColl_Vert_CheckColl(ci: &mut CollInfo, k: uint16, game: &mut Game) -> uint8 {
     game.set_cur_block_index(k >> 1);
     // Keep the same raw context valid across every extension-block retry.
     let context = ci as *mut CollInfo;
-    game.cur_coll_amt32 = &raw mut (*context).ci_r18_r20;
     let result = loop {
         let result = match game.current_level_block() >> 12 {
             0 | 4 | 6 => ClearCarry_4(context, game),
@@ -2905,7 +2901,6 @@ unsafe fn BlockColl_Vert_CheckColl(ci: &mut CollInfo, k: uint16, game: &mut Game
             break result;
         }
     };
-    game.cur_coll_amt32 = core::ptr::null_mut();
     result
 }
 unsafe fn BlockColl_Handle_Horiz(amt: int32, game: &mut Game) -> Pair_Bool_Amt {

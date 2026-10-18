@@ -1083,7 +1083,15 @@ pub unsafe fn ClearPLMs(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1c2d as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
 }
-pub unsafe fn SpawnHardcodedPlm(mut p: SpawnHardcodedPlmArgs, game: &mut Game) {
+pub unsafe fn SpawnHardcodedPlm(p: SpawnHardcodedPlmArgs, game: &mut Game) {
+    spawn_hardcoded_plm(p, core::ptr::null_mut(), game);
+}
+// Nested setup spawns retain the calling collision's displacement.
+unsafe fn spawn_hardcoded_plm(
+    mut p: SpawnHardcodedPlmArgs,
+    displacement: *mut i32,
+    game: &mut Game,
+) {
     let mut pp: *mut SpawnHardcodedPlmArgs = &raw mut p;
     let mut v1: uint16 = 78 as uint16;
     while *((&raw mut game.g_ram as *mut uint8).offset(0x1c37 as ::core::ffi::c_int as isize)
@@ -1138,7 +1146,7 @@ pub unsafe fn SpawnHardcodedPlm(mut p: SpawnHardcodedPlmArgs, game: &mut Game) {
     CallPlmHeaderFunc(
         ((*PH).func_ptr as ::core::ffi::c_int | 0x840000 as ::core::ffi::c_int) as uint32,
         v1,
-        game.cur_coll_amt32,
+        displacement,
         game,
     );
 }
@@ -1206,7 +1214,7 @@ pub unsafe fn SpawnRoomPLM(mut k: uint16, game: &mut Game) {
     CallPlmHeaderFunc(
         ((*PH).func_ptr as ::core::ffi::c_int | 0x840000 as ::core::ffi::c_int) as uint32,
         v1,
-        game.cur_coll_amt32,
+        core::ptr::null_mut(),
         game,
     );
 }
@@ -1216,6 +1224,18 @@ pub unsafe fn PlmPreInstr_Empty2() {}
 /// # Safety
 /// The selected setup callback requires the legacy game runtime to be initialized.
 pub unsafe fn SpawnPLM(header: uint16, game: &mut Game) -> uint8 {
+    SpawnPLMWithCollision(header, core::ptr::null_mut(), game)
+}
+/// Prepare a PLM while retaining the caller's active collision displacement.
+///
+/// # Safety
+/// Setup requires initialized runtime state. A non-null `displacement` must
+/// remain live and writable through setup and any nested PLM spawns.
+pub unsafe fn SpawnPLMWithCollision(
+    header: uint16,
+    displacement: *mut i32,
+    game: &mut Game,
+) -> uint8 {
     let read_word = |game: &Game, offset: usize| {
         u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
     };
@@ -1246,7 +1266,7 @@ pub unsafe fn SpawnPLM(header: uint16, game: &mut Game) -> uint8 {
     CallPlmHeaderFunc(
         0x840000 | u32::from(setup),
         index as u16,
-        game.cur_coll_amt32,
+        displacement,
         game,
     )
 }
@@ -4248,7 +4268,7 @@ pub fn PlmSetup_B727_SandFallsFast(_j: uint16, game: &mut Game) -> uint8 {
 ///
 /// # Safety
 /// A non-null `displacement` must point to a live, writable i32 for the
-/// duration of this call, as installed by the Samus collision dispatcher.
+/// duration of this call, as passed through collision PLM setup.
 pub unsafe fn PlmSetup_QuicksandSurfaceB(
     _j: uint16,
     displacement: *mut i32,
@@ -6216,7 +6236,11 @@ pub unsafe fn PlmPreInstr_DeletePlmAndSpawnTriggerIfBlockDestroyed(mut k: uint16
             ) = 0 as uint16;
     }
 }
-pub unsafe fn PlmSetup_D6DA_LowerNorfairChozoHandTrigger(mut j: uint16, game: &mut Game) -> uint8 {
+pub unsafe fn PlmSetup_D6DA_LowerNorfairChozoHandTrigger(
+    mut j: uint16,
+    displacement: *mut i32,
+    game: &mut Game,
+) -> uint8 {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x9a4 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         & 0x200 as ::core::ffi::c_int
@@ -6252,12 +6276,13 @@ pub unsafe fn PlmSetup_D6DA_LowerNorfairChozoHandTrigger(mut j: uint16, game: &m
             .offset(v2 as isize);
         *fresh3 = (*fresh3 as ::core::ffi::c_int & 0xfff as ::core::ffi::c_int) as uint16;
         CallSomeSamusCode(0 as uint16, game);
-        SpawnHardcodedPlm(
+        spawn_hardcoded_plm(
             SpawnHardcodedPlmArgs {
                 field_0: 0xc as uint8,
                 field_1: 0x1d as uint8,
                 field_2: 0xd113 as VoidP,
             },
+            displacement,
             game,
         );
     }
@@ -6576,7 +6601,11 @@ pub unsafe fn PlmSetup_MakeBllockChozoHandTrigger(mut j: uint16, game: &mut Game
     );
     return 0 as uint8;
 }
-pub unsafe fn PlmSetup_D6F2_WreckedShipChozoHandTrigger(mut j: uint16, game: &mut Game) -> uint8 {
+pub unsafe fn PlmSetup_D6F2_WreckedShipChozoHandTrigger(
+    mut j: uint16,
+    displacement: *mut i32,
+    game: &mut Game,
+) -> uint8 {
     if CheckBossBitForCurArea(1 as uint16, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
         != 0
         && *((&raw mut game.g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize)
@@ -6616,12 +6645,13 @@ pub unsafe fn PlmSetup_D6F2_WreckedShipChozoHandTrigger(mut j: uint16, game: &mu
             .offset(v1 as isize);
         *fresh2 = (*fresh2 as ::core::ffi::c_int & 0xfff as ::core::ffi::c_int) as uint16;
         CallSomeSamusCode(0 as uint16, game);
-        SpawnHardcodedPlm(
+        spawn_hardcoded_plm(
             SpawnHardcodedPlmArgs {
                 field_0: 0x17 as uint8,
                 field_1: 0x1d as uint8,
                 field_2: 0xd6f8 as VoidP,
             },
+            displacement,
             game,
         );
     }
@@ -7619,11 +7649,11 @@ pub unsafe fn CallPlmHeaderFunc(
         8704264 => return PlmSetup_D113_LowerNorfairChozoRoomPlug(j, game),
         8704279 => return PlmSetup_D127(j, game),
         8704299 => return PlmSetup_D138(j, game),
-        8704399 => return PlmSetup_D6DA_LowerNorfairChozoHandTrigger(j, game),
+        8704399 => return PlmSetup_D6DA_LowerNorfairChozoHandTrigger(j, displacement, game),
         8705526 => return PlmSetup_MotherBrainGlass(j, game),
         8705542 => return PlmSetup_DeletePlmIfAreaTorizoDead(j, game),
         8705558 => return PlmSetup_MakeBllockChozoHandTrigger(j, game),
-        8705568 => return PlmSetup_D6F2_WreckedShipChozoHandTrigger(j, game),
+        8705568 => return PlmSetup_D6F2_WreckedShipChozoHandTrigger(j, displacement, game),
         8705663 => return PlmSetup_D700_MakePlmAirBlock_Unused(j, game),
         8705673 => return PlmSetup_D704_AlteranateLowerNorfairChozoHand_Unused(j, game),
         8705683 => return PlmSetup_D708_LowerNorfairChozoBlockUnused(j, game),

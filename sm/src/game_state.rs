@@ -14,7 +14,6 @@ pub struct Game {
     pub eproj_spawn_r22: u16,
     pub eproj_spawn_pt: Point16U,
     pub eproj_spawn_varE24: u16,
-    pub cur_coll_amt32: *mut i32,
     pub message_box_das0l_value: u16,
     pub k_out: u16,
 

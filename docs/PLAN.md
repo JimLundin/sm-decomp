@@ -1551,6 +1551,22 @@ accessors; all other counters unchanged. Next: remove the active-displacement
 Game bridge by passing it through collision PLM spawning and the two nested
 Chozo setup/hardcoded-spawn paths, preserving live-ROM setup selection.
 
+The active collision displacement no longer lives in Game. Six collision
+spawn sites pass it explicitly; both Chozo setup callbacks forward it through
+nested hardcoded spawns, retaining live-ROM setup selection. Noncollision
+spawn entry points pass null. Source audit confirms unchanged spawn/setup
+bodies apart from argument routing and no remaining stored bridge. Prior
+Rust comparison passes 15,375 full-RAM/displacement/callback cases across
+all slot capacities, direction/pose gates, boundary amounts and both nested
+Chozo paths; quicksand dispatch comparison passes 8,388,608 cases. Stable
+optimized core/DLL build and direct format pass; Cargo fmt/build remain
+ASR-denied. Waver route: 58,109 frames, zero failures (85.10s); any%: 129,712
+frames, zero failures (183.62s). Rust lines +24 and unsafe functions +2 are
+the explicit collision and nested-spawn entry points replacing the stored
+pointer; all other counters unchanged. Next: spike-block contact dispatch
+and byte-backed damage writes, preserving boss-check order, facing-byte
+reads and invalid-BTS panic before solid collision.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
