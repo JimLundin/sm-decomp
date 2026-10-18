@@ -1465,7 +1465,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             43 => {
                 (*cpu).dp = cpu_pullWord(cpu, game);
-                cpu_setZN(cpu, (*cpu).dp, false_0 != 0);
+                cpu_setZN(cpu, (*cpu).dp, false);
                 break;
             }
             44 => {
@@ -1921,9 +1921,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             104 => {
                 if (*cpu).mf {
-                    (*cpu).a = ((*cpu).a as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int
-                        | cpu_pullByte(cpu, game) as ::core::ffi::c_int)
-                        as uint16_t;
+                    (*cpu).a = (*cpu).a & 0xff00 | u16::from(cpu_pullByte(cpu, game));
                 } else {
                     (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
                     (*cpu).a = cpu_pullWord(cpu, game);
@@ -2065,7 +2063,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             122 => {
                 if (*cpu).xf {
-                    (*cpu).y = cpu_pullByte(cpu, game) as uint16_t;
+                    (*cpu).y = u16::from(cpu_pullByte(cpu, game));
                 } else {
                     (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
                     (*cpu).y = cpu_pullWord(cpu, game);
@@ -2376,7 +2374,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             171 => {
                 (*cpu).db = cpu_pullByte(cpu, game);
-                cpu_setZN(cpu, (*cpu).db as uint16_t, true_0 != 0);
+                cpu_setZN(cpu, u16::from((*cpu).db), true);
                 break;
             }
             172 => {
@@ -2858,7 +2856,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             250 => {
                 if (*cpu).xf {
-                    (*cpu).x = cpu_pullByte(cpu, game) as uint16_t;
+                    (*cpu).x = u16::from(cpu_pullByte(cpu, game));
                 } else {
                     (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
                     (*cpu).x = cpu_pullWord(cpu, game);

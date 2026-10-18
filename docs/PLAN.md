@@ -7806,6 +7806,29 @@ SPC changes are outside this replay. Hardware/render/audio timing and credits
 remain open; held HDMA diagnosis stays stopped. Continue executed stack
 transfer/push/pull cleanup, preserving existing emulation quirks.
 
+CPU pull opcode cleanup (2026-10-19): PLD/PLA/PLY/PLB/PLX use native byte
+widening and boolean literals. PLA's retained high byte is captured before
+the pull; stack read order, word cycle increments and final flag updates
+remain exact. Actual old/current instructions pass 6,553,600 pairs over every
+pulled word, independent native M/X, emulation byte mode, five opcodes and
+stack 01FE/01FF/1FFD/FFFF. Physical WRAM supplies each ordered stack byte;
+opcode fetch at 7E:FFFF wraps PC to zero. Independent loaded values/high-byte
+retention, stack-page wrap, Z/N and complete named CPU state match, as do
+cycles, open bus and PC history. Raw noncanonical emulation stack inputs
+test inherited software behavior. Instrumented any% prefix passes 3,600/0
+(1.23s), native exit 0; PLD/PLA/PLY/PLB/PLX native/emulation calls are
+3,600/0, 28,699/0, 33,017/0, 127,435/0 and 97,558/0. Dedicated pairs
+cover emulation and both width paths. Clean frozen
+3d6c087c3ef60e671e9e4eb591fc351be78af9aa plus only these five arms passes
+any% 129,712/0 (53.77s), native exit 0. Cargo fmt/check, direct full-source
+format, normal-core metadata and optimized clean/probe core/DLL builds pass.
+Full Cargo release reaches frontend link but fails missing SDL2, exit 101.
+An overbroad TEMP literal replacement touched TCD; diff review reverted it
+before verification/staging. Progress/diff pass: focused cast lines -2,
+Rust lines -2, other categories unchanged. Live arms match verified source.
+Hardware/render/audio timing and credits remain open; held HDMA diagnosis
+stays stopped. Continue executed push/stack transfer opcode cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
