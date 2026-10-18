@@ -116,6 +116,7 @@ pub struct Snapshot {
     pub bg_address: [(bool, bool, uint16, uint16); 4],
     pub screen_routing: ([uint8; 2], [uint8; 2], [[bool; 4]; 5]),
     pub window_select: (uint32, [(bool, bool, bool, bool, uint8); 6]),
+    pub fixed_color: [uint8; 3],
     pub brightness: uint8,
     pub forced_blank: bool,
     pub cgram: [uint16; 256],
@@ -973,6 +974,17 @@ unsafe fn VerifySnapshotsEq(
             );
         }
     }
+    if (*b).fixed_color != (*a).fixed_color {
+        game.g_fail = true;
+        if report_details {
+            eprintln!(
+                "@{}: Fixed color (R, G, B) compare failed: mine {:?} != theirs {:?}",
+                game.snes_frame_counter,
+                (*b).fixed_color,
+                (*a).fixed_color
+            );
+        }
+    }
     if (*b).window_select != (*a).window_select {
         game.g_fail = true;
         if report_details {
@@ -1716,6 +1728,7 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     let ppu = &*(*game.g_snes).ppu;
     (*s).brightness = ppu.brightness;
     (*s).forced_blank = ppu.forcedBlank;
+    (*s).fixed_color = [ppu.fixedColorR, ppu.fixedColorG, ppu.fixedColorB];
     (*s).window_select = (
         ppu.windowsel,
         ppu.windowLayer.map(|w| {
@@ -1787,6 +1800,7 @@ unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     let ppu = &mut *(*game.g_snes).ppu;
     ppu.brightness = (*s).brightness;
     ppu.forcedBlank = (*s).forced_blank;
+    [ppu.fixedColorR, ppu.fixedColorG, ppu.fixedColorB] = (*s).fixed_color;
     let (raw, windows) = (*s).window_select;
     ppu.windowsel = raw;
     for (w, (enabled1, enabled2, inverted1, inverted2, logic)) in

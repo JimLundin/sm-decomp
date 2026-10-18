@@ -2909,6 +2909,37 @@ No probes or ROM-derived assets committed. Next: CGADSUB arithmetic and
 six layer math-enable stores, preserving flags and loop write order; retain
 the whole-line Mode 7 direct-color gap for a separate focused investigation.
 
+Fixed-color snapshot gap and enforcement (2026-10-18): the three fixed
+RGB components were absent from snapshots. Actual COLDATA mutations on
+backdrop color-math rows are accepted against identical registered buffers,
+survive rewind and change the next default-renderer row. An initial probe
+left reset forcedBlank enabled and got black equal rows; correcting that
+setup demonstrates all three faults. The failed initial control is not
+evidence. No natural movie divergence is claimed.
+
+Snapshots now capture, compare and directly restore all three components.
+Actual controls pass32 related RGB equality states and480 component-bit/
+capture/restore faults (3components x5bits x32values). All three continuation
+faults restore identical rows. Independent color arithmetic passes4,096
+actual backdrop rows/1,048,576 pixels over32 base levels x32 related fixed
+RGB triples xadd/subtract xhalf/full. All8,388,608 actual COLDATA writes
+match selective-component mapping across every starting RGB triple and byte.
+Probe nativeexit0. Three actual frame200 component faults each produce
+3,600/1 and nativeexit1, named diagnostics and no later cascade.
+
+Dedicated source Verified 129712 frames: 0 failing frames (327.01s); Verified 58109 frames: 0 failing frames (167.11s); nativeexits0. Cargo fmt/fmt--check
+and direct optimized core/DLL/normal-core metadata builds pass; Cargo release
+remains blocked executing khronos_api's build script (OSerror5). Progress run:
+focused Rust lines+14 implement state/capture/restore/diagnostics; other
+counters unchanged for this change. Builds include then-current independent
+audio work; later concurrent edits need separate verification. Only these
+CPU hunks and note enter this commit; Ppu/RAM/save layouts unchanged and
+ROM/probe assets ignored. Model scope is backdrop color math at brightness15,
+without windows/sprites/BGs/subscreen/interlace; broader composition and
+SNES accuracy remain unproved. Next: color-math enable/clip/mode snapshot
+state. Known window-boundary/HDMA, audio timing,masked RAM and complete-route
+gaps remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
