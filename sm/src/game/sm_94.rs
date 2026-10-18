@@ -3359,6 +3359,21 @@ unsafe fn dispatch_block_inside(ci: *mut CollInfo, game: &mut Game) -> uint8 {
         _ => BlockInsideReact_Special_(ci, game),
     }
 }
+unsafe fn react_inside_sample(x: u16, y: u16, game: &mut Game) {
+    CalculateBlockAt(x, y, 0, 0, game);
+    let mut context = CollInfo {
+        ci_r18_r20: 0,
+        ci_r24: 0,
+        ci_r26: x,
+        ci_r28: y,
+        ci_r30: 0,
+        ci_r32: 0,
+        ci_r38: 0,
+        ci_r40: 0,
+    };
+    // Keep the same context alive across retries and callback-adjusted block indexes.
+    while dispatch_block_inside(&raw mut context, game) & 0x80 != 0 {}
+}
 pub unsafe fn BlockInsideDetection(game: &mut Game) {
     game.g_ram[0xb4c..0xb4e].copy_from_slice(&0u16.to_le_bytes());
     game.g_ram[0xb56..0xb58].copy_from_slice(&0u16.to_le_bytes());
@@ -3371,46 +3386,13 @@ pub unsafe fn BlockInsideDetection(game: &mut Game) {
     let y = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
     let samus_bottom_boundary_position = radius.wrapping_add(y).wrapping_sub(1);
     let mut r28 = samus_bottom_boundary_position;
-    CalculateBlockAt(r26, r28, 0, 0, game);
-    let mut ci: CollInfo = CollInfo {
-        ci_r18_r20: 0,
-        ci_r24: 0,
-        ci_r26: r26,
-        ci_r28: r28,
-        ci_r30: 0,
-        ci_r32: 0,
-        ci_r38: 0,
-        ci_r40: 0,
-    };
-    let mut rv: uint8 = 0;
-    loop {
-        rv = dispatch_block_inside(&raw mut ci, game);
-        if rv & 0x80 == 0 {
-            break;
-        }
-    }
+    react_inside_sample(r26, r28, game);
     game.g_ram[0x1e73..0x1e75].copy_from_slice(&1u16.to_le_bytes());
     let y = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
     if (samus_bottom_boundary_position ^ y) & 0xfff0 != 0 {
         r26 = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
         r28 = y;
-        CalculateBlockAt(r26, r28, 0, 0, game);
-        let mut ci_0: CollInfo = CollInfo {
-            ci_r18_r20: 0,
-            ci_r24: 0,
-            ci_r26: r26,
-            ci_r28: r28,
-            ci_r30: 0,
-            ci_r32: 0,
-            ci_r38: 0,
-            ci_r40: 0,
-        };
-        loop {
-            rv = dispatch_block_inside(&raw mut ci_0, game);
-            if rv & 0x80 == 0 {
-                break;
-            }
-        }
+        react_inside_sample(r26, r28, game);
     }
     game.g_ram[0x1e73..0x1e75].copy_from_slice(&2u16.to_le_bytes());
     let y = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
@@ -3421,23 +3403,7 @@ pub unsafe fn BlockInsideDetection(game: &mut Game) {
     if changed_row_bits != 0 && (y ^ changed_row_bits) & 0xfff0 != 0 {
         r26 = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
         r28 = top;
-        CalculateBlockAt(r26, r28, 0, 0, game);
-        let mut ci_1: CollInfo = CollInfo {
-            ci_r18_r20: 0,
-            ci_r24: 0,
-            ci_r26: r26,
-            ci_r28: r28,
-            ci_r30: 0,
-            ci_r32: 0,
-            ci_r38: 0,
-            ci_r40: 0,
-        };
-        loop {
-            rv = dispatch_block_inside(&raw mut ci_1, game);
-            if rv & 0x80 == 0 {
-                break;
-            }
-        }
+        react_inside_sample(r26, r28, game);
     }
 }
 fn CalculateBlockAt(x: uint16, y: uint16, x_offset: uint16, y_offset: uint16, game: &mut Game) {

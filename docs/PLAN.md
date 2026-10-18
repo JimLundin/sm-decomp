@@ -1463,6 +1463,19 @@ Rust lines -98; unsafe count unchanged. Next: consolidate block-inside
 sample execution around its private collision context, preserving callback
 reads and retry lifetime, before cleaning remaining Samus movement callers.
 
+Block-inside samples now share a private-context helper for coordinate
+lookup and retry execution. Each sample initializes the same fields, keeps
+one raw context alive across retries and reads the live block after callbacks.
+Center/top gates and phase writes remain in their original order. Prior Rust
+comparison passes 721,920 full-RAM/context/callback cases over level words,
+retry counts, every initial/callback Y and seven radius boundaries. Stable
+optimized core/DLL build and direct format pass; Cargo fmt/build remain
+ASR-denied. Waver route: 58,109 frames, zero failures (82.31s); any%: 129,712
+frames, zero failures (178.74s). Rust lines -34; unsafe functions +1 is the
+shared private-context callback helper; other counters unchanged. Next:
+Samus no-solid-collision movement arithmetic and byte-backed position writes,
+preserving signed high-word clamp and fractional carry behavior.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
