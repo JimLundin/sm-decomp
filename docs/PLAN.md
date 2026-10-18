@@ -1660,6 +1660,21 @@ Raw offsets -28, cast lines -67, Rust lines -78; unsafe functions +1 is the
 shared callback traversal helper. Next: vertical post-grapple coordinates
 and traversal, retaining wrapping edge/row arithmetic and distance writes.
 
+Post-grapple coordinate sampling and traversal now share one helper for all
+four directions. Byte-backed positions, radii and ejection distances retain
+wrapped edges/columns, low-byte initial row multiplication, full live room
+width for horizontal steps and constant two-byte vertical steps. Signed
+result filtering, >= maximum writes and callback-adjusted sample decrement
+remain exact. Prior Rust comparison passes 1,048,576 full-RAM/context/trace
+cases across every coordinate/width word, extreme radii and callbacks changing
+width, count, edge, positions and maximum distances. Stable optimized
+core/DLL build and direct full-source format check pass; Cargo fmt/build
+remain ASR-denied. Any%: 129,712 frames, zero failures (226.11s); Waver route:
+58,109 frames, zero failures (92.24s). Raw offsets -26, unsafe functions -4,
+cast lines -61, Rust lines -95; all other counters unchanged. Next: replace
+the private post-grapple raw context pointers with references and descriptive
+fields, then remove unsafe from its completed byte-backed collision chain.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

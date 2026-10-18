@@ -1671,28 +1671,43 @@ unsafe fn PostGrappleColl_Vert(
         _ => 0xffff,
     }
 }
-unsafe fn PostGrappleCollisionDetect_Right(game: &mut Game) {
-    post_grapple_horizontal(true, game);
-}
-unsafe fn PostGrappleCollisionDetect_Left(game: &mut Game) {
-    post_grapple_horizontal(false, game);
-}
-unsafe fn post_grapple_horizontal(right: bool, game: &mut Game) {
-    game.set_samus_collision_direction(u16::from(right));
-    let distance_offset = if right { 0xe04 } else { 0xe06 };
-    game.g_ram[distance_offset..distance_offset + 2].fill(0);
-    let span = Samus_GetYposSpan(game);
-    let row = (game.samus_y_pos().wrapping_sub(game.samus_y_radius()) >> 4) as u8;
-    let width = game.room_width_in_blocks() as u8;
-    let row_start = u16::from(row) * u16::from(width);
-    let x = game.samus_x_pos();
-    let radius = game.samus_x_radius();
-    let edge = if right {
-        radius.wrapping_add(x).wrapping_sub(1)
-    } else {
-        x.wrapping_sub(radius)
+unsafe fn post_grapple_traverse(horizontal: bool, positive: bool, game: &mut Game) {
+    let (direction, distance_offset) = match (horizontal, positive) {
+        (true, true) => (1, 0xe04),   // distance_to_eject_samus_left
+        (true, false) => (0, 0xe06),  // distance_to_eject_samus_right
+        (false, true) => (3, 0xe08),  // distance_to_eject_samus_up
+        (false, false) => (2, 0xe0a), // distance_to_eject_samus_down
     };
-    game.set_cur_block_index(row_start.wrapping_add(edge >> 4));
+    game.set_samus_collision_direction(direction);
+    game.g_ram[distance_offset..distance_offset + 2].fill(0);
+    let span = if horizontal {
+        Samus_GetYposSpan(game)
+    } else {
+        Samus_GetXposSpan(game)
+    };
+    let (position, radius) = if horizontal {
+        (game.samus_x_pos(), game.samus_x_radius())
+    } else {
+        (game.samus_y_pos(), game.samus_y_radius())
+    };
+    let edge = if positive {
+        position.wrapping_add(radius).wrapping_sub(1)
+    } else {
+        position.wrapping_sub(radius)
+    };
+    let row = if horizontal {
+        game.samus_y_pos().wrapping_sub(game.samus_y_radius()) >> 4
+    } else {
+        edge >> 4
+    };
+    let column = if horizontal {
+        edge >> 4
+    } else {
+        game.samus_x_pos().wrapping_sub(game.samus_x_radius()) >> 4
+    };
+    // The initial row multiply uses only the low bytes of row and room width.
+    let row_start = u16::from(row as u8) * u16::from(game.room_width_in_blocks() as u8);
+    game.set_cur_block_index(row_start.wrapping_add(column));
     let mut block_offset = game.cur_block_index().wrapping_mul(2);
     let mut context = PostGrappleCollInfo {
         pgci_r26: span,
@@ -1700,7 +1715,11 @@ unsafe fn post_grapple_horizontal(right: bool, game: &mut Game) {
         pgci_r32: edge,
     };
     loop {
-        let result = PostGrappleColl_Horiz(&raw mut context, block_offset, game) as i16;
+        let result = if horizontal {
+            PostGrappleColl_Horiz(&raw mut context, block_offset, game)
+        } else {
+            PostGrappleColl_Vert(&raw mut context, block_offset, game)
+        } as i16;
         if result >= 0 {
             let distance = (result as u16).wrapping_add(1);
             let maximum =
@@ -1710,140 +1729,26 @@ unsafe fn post_grapple_horizontal(right: bool, game: &mut Game) {
                     .copy_from_slice(&distance.to_le_bytes());
             }
         }
-        // Each collision can change the full room width and remaining sample count.
-        block_offset = block_offset.wrapping_add(game.room_width_in_blocks().wrapping_mul(2));
+        // Horizontal samples use the full live width after the collision callback.
+        let step = if horizontal {
+            game.room_width_in_blocks().wrapping_mul(2)
+        } else {
+            2
+        };
+        block_offset = block_offset.wrapping_add(step);
         context.pgci_r26 = context.pgci_r26.wrapping_sub(1);
         if context.pgci_r26 & 0x8000 != 0 {
             break;
         }
     }
 }
-unsafe fn PostGrappleCollisionDetect_Down(game: &mut Game) {
-    let mut v0: int16 = 0;
-    let mut v2: int16 = 0;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 3 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xe08 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    let mut r28: uint16 = Samus_GetXposSpan(game);
-    let mut r24: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xafa as ::core::ffi::c_int as isize) as *mut uint16);
-    let mut R32: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb00 as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-        - 1 as ::core::ffi::c_int) as uint16;
-    let mut prod: uint16 = Mult8x8(
-        (R32 as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint8,
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
-    );
-    v0 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xafe as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
-        >> 4 as ::core::ffi::c_int) as int16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (prod as ::core::ffi::c_int + v0 as ::core::ffi::c_int) as uint16;
-    let mut v1: uint16 = (2 as ::core::ffi::c_int
-        * *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16;
-    let mut pgci: PostGrappleCollInfo = PostGrappleCollInfo {
-        pgci_r26: r28,
-        pgci_r28: r28,
-        pgci_r32: R32,
-    };
-    loop {
-        v2 = PostGrappleColl_Vert(&raw mut pgci, v1, game) as int16;
-        if v2 as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
-            let mut v3: uint16 = (v2 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16;
-            if v3 as ::core::ffi::c_int
-                >= *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0xe08 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
-            {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe08 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = v3;
-            }
-        }
-        v1 = (v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
-        pgci.pgci_r26 = pgci.pgci_r26.wrapping_sub(1);
-        if !(pgci.pgci_r26 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int)
-        {
-            break;
-        }
-    }
-}
-unsafe fn PostGrappleCollisionDetect_Up(game: &mut Game) {
-    let mut v0: int16 = 0;
-    let mut v2: int16 = 0;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 2 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xe0a as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    let mut r28: uint16 = Samus_GetXposSpan(game);
-    let mut r24: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xafa as ::core::ffi::c_int as isize) as *mut uint16);
-    let mut R32: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0xafa as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16;
-    let mut prod: uint16 = Mult8x8(
-        ((*((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
-            >> 4 as ::core::ffi::c_int) as uint8,
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
-    );
-    v0 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xafe as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
-        >> 4 as ::core::ffi::c_int) as int16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (prod as ::core::ffi::c_int + v0 as ::core::ffi::c_int) as uint16;
-    let mut v1: uint16 = (2 as ::core::ffi::c_int
-        * *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16;
-    let mut pgci: PostGrappleCollInfo = PostGrappleCollInfo {
-        pgci_r26: r28,
-        pgci_r28: r28,
-        pgci_r32: R32,
-    };
-    loop {
-        v2 = PostGrappleColl_Vert(&raw mut pgci, v1, game) as int16;
-        if v2 as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
-            let mut v3: uint16 = (v2 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16;
-            if v3 as ::core::ffi::c_int
-                >= *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0xe0a as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
-            {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe0a as ::core::ffi::c_int as isize)
-                    as *mut uint16) = v3;
-            }
-        }
-        v1 = (v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
-        pgci.pgci_r26 = pgci.pgci_r26.wrapping_sub(1);
-        if !(pgci.pgci_r26 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int)
-        {
-            break;
-        }
-    }
-}
 pub unsafe fn PostGrappleCollisionDetect_X(game: &mut Game) {
-    PostGrappleCollisionDetect_Right(game);
-    PostGrappleCollisionDetect_Left(game);
+    post_grapple_traverse(true, true, game);
+    post_grapple_traverse(true, false, game);
 }
 pub unsafe fn PostGrappleCollisionDetect_Y(game: &mut Game) {
-    PostGrappleCollisionDetect_Down(game);
-    PostGrappleCollisionDetect_Up(game);
+    post_grapple_traverse(false, true, game);
+    post_grapple_traverse(false, false, game);
 }
 unsafe fn BlockColl_Horiz_Slope_NonSquare(ci: *mut CollInfo, game: &mut Game) -> uint8 {
     let bts = game.current_slope_bts();
