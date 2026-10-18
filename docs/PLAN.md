@@ -1614,6 +1614,39 @@ gameplay, custom-driver sample timing and different audio callback schedules
 remain unproved. Next: exercise supported save/load continuation with physical
 audio after native adoption and extend room/gameplay coverage toward credits.
 
+Native physical save/load diagnosis (2026-10-18): a frozen f3054251 public-API
+audit uses RM_BOTH with physical audio selected before SnesInit, the maintained
+native adoption path and the active oracle. At movie boundaries 160, 400,
+3,600, 8,640 and 12,000, test RtlSaveLoad(Save) and RtlSaveSnapshot(false),
+then RtlSaveLoad(Load), both after audio consumption and after the next game
+frame before consumption. Eighteen of twenty cases match all 240/241 resumed
+frames' samples and final game RAM. Both pre-consumption saves at 8,640 fail:
+the first sample difference is continuation frame 3 (300 differing values).
+The after-consumption cases at that boundary pass. This contradicts complete
+save/load continuation for pending physical commands; earlier boot-only green
+snapshot checks did not exercise this command.
+
+Actual queue/port observations isolate the cause. At save frame 8,641, the
+latest ring entry is [FF,31,FF,FF], size 1, position 193, with physical input
+ports [06,00,00,00,00,00]. After load the input ports match exactly, but size
+and position are zero. SNES serialization excludes the host queue, physical
+RtlSaveMusicStateToRam_Locked leaves it untouched, and restore clears it.
+Redelivering only port-1 command 31 after load makes all 257,388 resumed
+sample values and final RAM match; the unmodified repeated case still fails.
+This separates lost command delivery from APU serialization or frame position.
+The audit deletes its temporary save files and commits no ROM-derived output.
+No maintained Rust changes or residue-counter changes are made in this audit.
+The review agent was contacted, but its turns failed with transport/decryption
+errors; source and runtime evidence were inspected by the implementing agent.
+
+Next: preserve the complete physical pending/ring queue in public filesystem
+snapshots, including position and empty-time counters, with backward-compatible
+loading of existing version-2 files. Keep custom-driver serialization and replay
+base-snapshot policy explicit. Re-run the active-command failure through both
+save APIs, broader queue cases, normal any% and custom-save regression checks
+before committing a serialization change. Do not replace this with save-time
+rendering or command draining, which would alter uninterrupted audio timing.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read
