@@ -5688,6 +5688,21 @@ execution on a size-expression parser and a mistaken179-byte expectation;
 corrected unique v3 build supports the results above. Probe/ROM outputs stay
 ignored. No maintained source or normalization behavior changes.
 
+Independent native control-write candidate QC (2026-10-18): 73,728 actual
+old/current byte STA instructions pass through banks 00/80 at 4200/4201/420D.
+All 256 written bytes, 16 initial control-flag combinations and autojoy
+timer seeds 0/1/FFFF are exercised. Enable/timer/IRQ/WRIO/MEMSEL state,
+CPU PC/accumulator/IRQ result/cycles and serialized PPU state match; independent
+expectations check retained-versus-cleared busy timer, IRQ clear gate and
+latch/MEMSEL bits. Real WRIO falling-edge reads execute ppu_read(37).
+Removing that read in TEMP produces a serialized PPU assertion failure,
+native exit 3221226505; unmodified native exit is zero. Frozen register
+dispatch and bus consumers match the current candidate; optimized probe
+core/DLL, normal-core metadata, direct full-source format and progress pass.
+Independent partner review finds no fixture issue. This covers the changed
+control paths; DMA/HDMA trigger dispatch and hardware timing are outside this
+probe. Implementing agent retains source ownership; only this note changes.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
