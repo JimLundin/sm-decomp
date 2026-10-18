@@ -324,6 +324,41 @@ impl Game {
         self.g_ram[0xb14..0xb16].copy_from_slice(&value.to_le_bytes());
     }
 
+    /// frame_handler_alfa ($7E:0A42 in ram_map).
+    pub fn set_frame_handler_alfa(&mut self, value: u16) {
+        self.g_ram[0xa42..0xa44].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// frame_handler_beta ($7E:0A44 in ram_map).
+    pub fn set_frame_handler_beta(&mut self, value: u16) {
+        self.g_ram[0xa44..0xa46].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// frame_handler_gamma ($7E:0A5A in ram_map).
+    pub fn set_frame_handler_gamma(&mut self, value: u16) {
+        self.g_ram[0xa5a..0xa5c].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_movement_handler ($7E:0A58 in ram_map).
+    pub fn set_samus_movement_handler(&mut self, value: u16) {
+        self.g_ram[0xa58..0xa5a].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_draw_handler ($7E:0A5C in ram_map).
+    pub fn set_samus_draw_handler(&mut self, value: u16) {
+        self.g_ram[0xa5c..0xa5e].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_input_handler ($7E:0A60 in ram_map).
+    pub fn set_samus_input_handler(&mut self, value: u16) {
+        self.g_ram[0xa60..0xa62].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// grapple_beam_function ($7E:0D32 in ram_map).
+    pub fn set_grapple_beam_function(&mut self, value: u16) {
+        self.g_ram[0xd32..0xd34].copy_from_slice(&value.to_le_bytes());
+    }
+
     /// samus_new_pose ($7E:0A28 in ram_map).
     pub fn set_samus_new_pose(&mut self, value: u16) {
         self.g_ram[0xa28..0xa2a].copy_from_slice(&value.to_le_bytes());

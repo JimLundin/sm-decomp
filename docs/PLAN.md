@@ -2787,6 +2787,33 @@ setup fields, preserving live reads and the original callback/store order;
 the stopped ammo route remains held.
 
 
+Samus initialization callback stores now use seven named byte-backed
+setters and existing callback constants, truncating to the same low words.
+The fields match ram_map at 0A42/0A44/0A5A/0A58/0A5C/0A60/0D32.
+The live game-state, saved-state and area reads, palette call, captured
+r18 restoration, and every store position retain their original order.
+No RAM layout or dispatch behavior changes.
+
+Observed normal boot/gunship passes 22,631/0 (50.36s), native exit 0.
+Three actual Rust-side-2 initialization calls at SNES counters 298, 8,256
+and 20,817 each show seven changed stores in order: alfa, beta, draw,
+input, gamma, movement, grapple. Beta is E86A/E86A/E8DC and gamma is
+E90E/E0E6/E90E across these calls; the other words are E8CD, EB52, E913,
+A337 and C4F0. Thus both beta and gamma alternatives, including the
+palette-calling branch, execute against the oracle. The demo-transition
+skip remains unproved. Removing all eleven source-site observations
+restores exact maintained source.
+
+Full any% passes 129,712/0 (244.29s), native exit 0, on committed
+24a44073 source with only this sm_91.rs/game_state.rs change. Later
+concurrent native-upload and mosaic work is outside that replay's scope.
+Cargo fmt/check, optimized core/DLL and normal-core metadata builds pass;
+Cargo release remains denied at khronos_api's build script (OS error 5).
+Raw offsets -11, cast lines -22; Rust lines +15 provide the named setters.
+Other gameplay counters unchanged. No probe or ROM-derived assets are
+committed. Next: initialization ramp-table and scalar setup, preserving
+write order and byte/word widths; the stopped ammo route stays held.
+
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
 the original `SignExtend8(0x8000)` initialization and the middle-byte velocity

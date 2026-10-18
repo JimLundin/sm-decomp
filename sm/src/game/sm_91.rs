@@ -4864,19 +4864,13 @@ pub unsafe fn Samus_Initialize(game: &mut Game) {
         as *mut uint16) as ::core::ffi::c_int
         != kGameState_40_TransitionToDemo as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa42 as ::core::ffi::c_int as isize)
-            as *mut uint16) =
-            (0x90e8cd as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        game.set_frame_handler_alfa(fnEmptyFunction as u16);
         if *((&raw mut game.g_ram as *mut uint8).offset(0xd914 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int
             == kGameState_34_CeresGoesBoom as ::core::ffi::c_int
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa44 as ::core::ffi::c_int as isize)
-                as *mut uint16) =
-                (0x90e8dc as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa5c as ::core::ffi::c_int as isize)
-                as *mut uint16) =
-                (0x90eb52 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+            game.set_frame_handler_beta(fnSetContactDamageIndexAndUpdateMinimap as u16);
+            game.set_samus_draw_handler(fnSamusDrawHandler_Default as u16);
             *((&raw mut game.g_ram as *mut uint8).offset(0xa2e as ::core::ffi::c_int as isize)
                 as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0xa30 as ::core::ffi::c_int as isize)
@@ -4884,25 +4878,17 @@ pub unsafe fn Samus_Initialize(game: &mut Game) {
             *((&raw mut game.g_ram as *mut uint8).offset(0xa32 as ::core::ffi::c_int as isize)
                 as *mut uint16) = 0 as uint16;
             Samus_LoadSuitPalette(game);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa60 as ::core::ffi::c_int as isize)
-                as *mut uint16) =
-                (0x90e913 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+            game.set_samus_input_handler(fnSamus_InputHandler_E913 as u16);
         } else {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa44 as ::core::ffi::c_int as isize)
-                as *mut uint16) =
-                (0x90e86a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa5c as ::core::ffi::c_int as isize)
-                as *mut uint16) =
-                (0x90eb52 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+            game.set_frame_handler_beta(fnSamus_Func16 as u16);
+            game.set_samus_draw_handler(fnSamusDrawHandler_Default as u16);
             *((&raw mut game.g_ram as *mut uint8).offset(0xa2e as ::core::ffi::c_int as isize)
                 as *mut uint16) = 0 as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0xa30 as ::core::ffi::c_int as isize)
                 as *mut uint16) = 0 as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0xa32 as ::core::ffi::c_int as isize)
                 as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa60 as ::core::ffi::c_int as isize)
-                as *mut uint16) =
-                (0x90e913 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+            game.set_samus_input_handler(fnSamus_InputHandler_E913 as u16);
             *((&raw mut game.g_ram as *mut uint8).offset(0xde0 as ::core::ffi::c_int as isize)
                 as *mut uint16) = r18;
         }
@@ -4914,16 +4900,11 @@ pub unsafe fn Samus_Initialize(game: &mut Game) {
         as *mut uint16) as ::core::ffi::c_int
         == 6 as ::core::ffi::c_int
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa5a as ::core::ffi::c_int as isize)
-            as *mut uint16) =
-            (0x90e0e6 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        game.set_frame_handler_gamma(fnSamus_Func3 as u16);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xa5a as ::core::ffi::c_int as isize)
-            as *mut uint16) =
-            (0x90e90e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+        game.set_frame_handler_gamma(fnnullsub_152 as u16);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa58 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (0x90a337 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    game.set_samus_movement_handler(fnSamus_MovementHandler_Normal as u16);
     *((&raw mut game.g_ram as *mut uint8).offset(0xa5e as ::core::ffi::c_int as isize)
         as *mut uint16) = -(2764 as ::core::ffi::c_int) as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xa12 as ::core::ffi::c_int as isize)
@@ -4933,8 +4914,7 @@ pub unsafe fn Samus_Initialize(game: &mut Game) {
     for slot in 0..10 {
         game.set_projectile_bomb_pre_instruction(slot, fnProjPreInstr_Empty as u16);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xd32 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (0x9bc4f0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    game.set_grapple_beam_function(fnGrappleBeamFunc_Inactive as u16);
     *((&raw mut game.g_ram as *mut uint8).offset(0xa46 as ::core::ffi::c_int as isize)
         as *mut uint16) = 3 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xa48 as ::core::ffi::c_int as isize)
