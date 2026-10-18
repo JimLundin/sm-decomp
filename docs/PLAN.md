@@ -279,6 +279,29 @@ approximation must be explicit in the plan. No maintained source changed;
 only isolated probes use tracing. Gameplay verify remains the sound-source
 baseline a86198ac (any% 129,712/0; Waver 58,109/0). Residue counters unchanged.
 
+Recorded timer-group comparison (2026-10-18): replay the actual 999 timer
+read groups (1,001 ticks, including both two-tick reads) from the active
+3,600-frame ROM/SPC clock trace through independent ROM and Rust drivers.
+All 10,096 ordered DSP writes and 128,128 synchronized sample values match
+(maximum 18 writes/group). This includes the active-SFX transition that
+moved by a loop under independent clocks. The result narrows that divergence
+to scheduling/grouping for this scenario; it does not prove arbitrary
+normal-clock behavior. No driver behavior change is justified by this probe.
+
+Comparing every field covered by kSpcPlayer_Maps and kChannel_Maps still
+finds mapped state differences across these groups: SPC offsets 0000..0003
+(input ports), 0010..0012 (temporary accumulator/ttt), and 0014..0019
+(address fields and LFSR). The recurring 01C9 RAM difference is unmapped.
+Other mapped fields match in this scenario, but these differences have not
+been proven irrelevant to future commands or save/load. Do not blanket-mask
+them or call complete driver-state equivalence established. Next: classify
+mapped transient/address/LFSR fields and test save/restore continuation;
+then enforce independently captured sound commands with explicit upload
+and command-latch handling. Full sample timing remains a separate gap.
+Probe source is isolated; no maintained Rust changes or residue-counter
+changes. Existing sound source a86198ac any% 129,712/0 and Waver 58,109/0
+remain the baseline. ROM-derived timer events stay in ignored target files.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
