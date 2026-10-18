@@ -2623,61 +2623,58 @@ pub fn MaridiaBeybladeTurtle_Func1(k: uint16, game: &mut Game) {
     let field = base + core::mem::offset_of!(Enemy_MaridiaBeybladeTurtle, mbte_var_A);
     game.g_ram[field..field + 2].copy_from_slice(&0x8e0au16.to_le_bytes());
 }
-pub unsafe fn MaridiaBeybladeTurtle_Func2(mut k: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_MaridiaBeybladeTurtle =
-        Get_MaridiaBeybladeTurtle(k as ::core::ffi::c_int, game);
-    if (*E).mbte_var_F != 0 {
-        (*E).base.y_height = 0 as uint16;
-        let mut xd: uint16 = ((*E).base.x_pos as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16;
-        let mut v2: uint16 = abs16(xd);
-        if v2 as ::core::ffi::c_int - 24 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
-            if xd as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
-                v2 = (v2 as ::core::ffi::c_int + 24 as ::core::ffi::c_int) as uint16;
-            }
-            let mut v3: uint16 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xe54 as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            (*E).base.y_height = -(g_word_A28E80[v2 as usize] as ::core::ffi::c_int) as uint16;
-            (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
-                | 0x8000 as ::core::ffi::c_int) as uint16;
-            if CheckIfEnemyTouchesSamus(v3, game) != 0 {
-                let mut r18: uint16 = ((*E).base.y_pos as ::core::ffi::c_int
-                    - (*E).base.y_height as ::core::ffi::c_int)
-                    as uint16;
-                if (*((&raw mut game.g_ram as *mut uint8)
-                    .offset(0xb00 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
-                    + *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xafa as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int
-                    - r18 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
-                    >= 0 as ::core::ffi::c_int
-                {
-                    let ref mut fresh22 = *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xb5c as ::core::ffi::c_int as isize)
-                        as *mut uint16);
-                    *fresh22 = (*fresh22 as ::core::ffi::c_int
-                        + (r18 as ::core::ffi::c_int
-                            - (*((&raw mut game.g_ram as *mut uint8)
-                                .offset(0xb00 as ::core::ffi::c_int as isize)
-                                as *mut uint16)
-                                as ::core::ffi::c_int
-                                + *((&raw mut game.g_ram as *mut uint8)
-                                    .offset(0xafa as ::core::ffi::c_int as isize)
-                                    as *mut uint16)
-                                    as ::core::ffi::c_int)))
-                        as uint16;
+pub fn MaridiaBeybladeTurtle_Func2(k: uint16, game: &mut Game) {
+    let base = 0xf78 + usize::from(k);
+    let field = base + core::mem::offset_of!(Enemy_MaridiaBeybladeTurtle, mbte_var_F);
+    let active = u16::from_le_bytes([game.g_ram[field], game.g_ram[field + 1]]);
+    if active != 0 {
+        game.enemy_coordinates(k).set_y_height(0);
+        let delta = game
+            .enemy_coordinates(k)
+            .x_pos()
+            .wrapping_sub(game.samus_x_pos());
+        let magnitude = if delta & 0x8000 != 0 {
+            delta.wrapping_neg()
+        } else {
+            delta
+        };
+        if magnitude < 24 {
+            let table_index = if delta & 0x8000 != 0 {
+                magnitude + 24
+            } else {
+                magnitude
+            };
+            let index = game.cur_enemy_index();
+            let radius = g_word_A28E80[usize::from(table_index)].wrapping_neg() as u16;
+            game.enemy_coordinates(k).set_y_height(radius);
+            let properties = game.enemy_instructions(k).properties();
+            game.enemy_instructions(k)
+                .set_properties(properties | 0x8000);
+            if CheckIfEnemyTouchesSamus(index, game) != 0 {
+                let top = game
+                    .enemy_coordinates(k)
+                    .y_pos()
+                    .wrapping_sub(game.enemy_coordinates(k).y_height());
+                let samus_radius = game.samus_y_radius();
+                let samus_y = game.samus_y_pos();
+                if (samus_radius.wrapping_add(samus_y).wrapping_sub(top) as i16) >= 0 {
+                    let displacement = game.extra_samus_y_displacement();
+                    let samus_radius = game.samus_y_radius();
+                    let samus_y = game.samus_y_pos();
+                    game.set_extra_samus_y_displacement(
+                        displacement
+                            .wrapping_add(top.wrapping_sub(samus_radius.wrapping_add(samus_y))),
+                    );
                 }
             }
         }
     } else {
-        (*E).mbte_var_A = (0xa28ee0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
-            & !(kEnemyProps_Tangible as ::core::ffi::c_int))
-            as uint16;
-    };
+        let field = base + core::mem::offset_of!(Enemy_MaridiaBeybladeTurtle, mbte_var_A);
+        game.g_ram[field..field + 2].copy_from_slice(&0x8ee0u16.to_le_bytes());
+        let properties = game.enemy_instructions(k).properties();
+        game.enemy_instructions(k)
+            .set_properties(properties & !(kEnemyProps_Tangible as u16));
+    }
 }
 pub unsafe fn MaridiaBeybladeTurtle_Func3(mut k: uint16, game: &mut Game) {
     MaridiaBeybladeTurtle_Func4(game);

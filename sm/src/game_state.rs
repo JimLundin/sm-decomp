@@ -179,6 +179,14 @@ impl Game {
         u16::from_le_bytes([self.g_ram[0xafe], self.g_ram[0xaff]])
     }
 
+    /// extra_samus_y_displacement ($7E:0B5C in ram_map).
+    pub fn extra_samus_y_displacement(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xb5c], self.g_ram[0xb5d]])
+    }
+    pub fn set_extra_samus_y_displacement(&mut self, value: u16) {
+        self.g_ram[0xb5c..0xb5e].copy_from_slice(&value.to_le_bytes());
+    }
+
     /// samus_y_radius ($7E:0B00 in ram_map).
     pub fn samus_y_radius(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0xb00], self.g_ram[0xb01]])

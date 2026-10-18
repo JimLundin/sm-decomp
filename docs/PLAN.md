@@ -3023,6 +3023,24 @@ mask removal own separate integration replays; no ROM-derived files are
 committed. Next: Mini Turtle touch/animation state fields and callbacks,
 preserving captured slots and live reads after collision calls.
 
+Maridia Beyblade Turtle Func2 now uses safe named coordinate/instruction
+access and byte-backed active/state fields. Active gate, radius clear before
+X reads, captured collision index before writes, captured Turtle slot across
+the callback and subsequent field rereads retain their order. Wrapping distance,
+table gate and correction arithmetic remain exact. Direct old/current function
+execution using the real collision callback matches complete RAM in 262,144
+constructed cases; all 65,536 distance deltas also pass gate/table-bound checks.
+Independent source review finds no behavior regression. This does not prove
+Turtle gameplay execution: current movies have no established Func2 hits, and
+a coordinated diagnostic callback-count replay is checking that gap. Direct
+format and stable optimized core/DLL build pass; Cargo release build scripts
+remain ASR-denied. Any% passes 129,712/0 (235.34s); Waver passes 58,109/0
+(106.28s), both process exits 0, with sound and unmasked slope checks. Raw
+offsets -7, unsafe functions -1, cast lines -29, Rust lines -7; named extra
+Samus Y displacement accessors replace the raw correction field. Other counters
+unchanged. Hold additional uncovered Turtle cleanup until the callback-hit
+probe resolves movie coverage; prioritize normal-input coverage or oracle gaps.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
