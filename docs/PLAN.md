@@ -7485,6 +7485,30 @@ integration, hardware/audio timing, rendering/Waver71, masked RAM and credits
 remain open. Held HDMA diagnosis stays stopped. Continue SPC stack/instruction
 helpers with independent subagents; peer owns remote sync.
 
+CPU register increment/decrement cleanup (2026-10-18): INC A/DEC A and
+DEY/INY/DEX/INX use wrapping word arithmetic with native byte masks. Byte
+accumulator operations preserve their high byte; byte index operations clear
+it. Final Z/N updates and dispatch order remain exact. Actual old/current
+instructions pass 3,932,160 pairs across every register word, independent
+native M/X combinations, emulation byte mode, six opcodes and PC 8000/FFFF.
+Independent result/high-byte/Z/N checks pass, as do complete named CPU state,
+preserved registers/flags, cycles, PC wrap, open bus and PC-history updates.
+Raw high index words in byte mode exercise inherited software behavior,
+not canonical hardware states. Instrumented any% prefix passes 3,600/0
+(5.90s), native exit 0; INC A/DEC A/DEY/INY/DEX/INX word/byte calls are
+10,777/496, 15,248/3,510, 107,452/0, 189,873/14,546, 561,921/8 and
+244,027/87,134. Dedicated instruction pairs supply byte DEY coverage.
+Clean frozen 96fe2d980c17fe16ab203339e5ab2bef0a03c5ed plus only these six
+arms passes any% 129,712/0 (247.30s), native exit 0. Direct full-source
+format, normal-core metadata and optimized clean/probe core/DLL builds pass;
+required Cargo fmt/release remain launch-denied. TEMP old-runner extraction
+initially duplicated fetch helpers; compiler rejection caught it and the
+corrected boundary builds. Progress/diff pass: focused cast lines -14,
+Rust lines -10, other categories unchanged. Live arms match verified source.
+Later peer performance/SPC changes are outside this replay. Hardware/render/
+audio timing and credits remain open; held HDMA diagnosis stays stopped.
+Continue executed accumulator shift/rotate opcode arithmetic.
+
 Refilled landing-site return to Parlor established (2026-10-18): from
 60402-frame ship-free-movement prefix, left/run/shoot190, neutral120 ends
 X26/Y1163 at the lower-left source door, health99/99, missiles5/5 and

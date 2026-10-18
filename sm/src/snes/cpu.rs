@@ -1351,10 +1351,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             26 => {
                 if (*cpu).mf {
-                    (*cpu).a = ((*cpu).a as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int
-                        | (*cpu).a as ::core::ffi::c_int + 1 as ::core::ffi::c_int
-                            & 0xff as ::core::ffi::c_int)
-                        as uint16_t;
+                    (*cpu).a = (*cpu).a & 0xff00 | ((*cpu).a.wrapping_add(1) & 0xff);
                 } else {
                     (*cpu).a = (*cpu).a.wrapping_add(1);
                 }
@@ -1561,10 +1558,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             58 => {
                 if (*cpu).mf {
-                    (*cpu).a = ((*cpu).a as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int
-                        | (*cpu).a as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-                            & 0xff as ::core::ffi::c_int)
-                        as uint16_t;
+                    (*cpu).a = (*cpu).a & 0xff00 | ((*cpu).a.wrapping_sub(1) & 0xff);
                 } else {
                     (*cpu).a = (*cpu).a.wrapping_sub(1);
                 }
@@ -2172,8 +2166,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             136 => {
                 if (*cpu).xf {
-                    (*cpu).y = ((*cpu).y as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-                        & 0xff as ::core::ffi::c_int) as uint16_t;
+                    (*cpu).y = (*cpu).y.wrapping_sub(1) & 0xff;
                 } else {
                     (*cpu).y = (*cpu).y.wrapping_sub(1);
                 }
@@ -2592,8 +2585,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             200 => {
                 if (*cpu).xf {
-                    (*cpu).y = ((*cpu).y as ::core::ffi::c_int + 1 as ::core::ffi::c_int
-                        & 0xff as ::core::ffi::c_int) as uint16_t;
+                    (*cpu).y = (*cpu).y.wrapping_add(1) & 0xff;
                 } else {
                     (*cpu).y = (*cpu).y.wrapping_add(1);
                 }
@@ -2608,8 +2600,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             202 => {
                 if (*cpu).xf {
-                    (*cpu).x = ((*cpu).x as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-                        & 0xff as ::core::ffi::c_int) as uint16_t;
+                    (*cpu).x = (*cpu).x.wrapping_sub(1) & 0xff;
                 } else {
                     (*cpu).x = (*cpu).x.wrapping_sub(1);
                 }
@@ -2801,8 +2792,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             232 => {
                 if (*cpu).xf {
-                    (*cpu).x = ((*cpu).x as ::core::ffi::c_int + 1 as ::core::ffi::c_int
-                        & 0xff as ::core::ffi::c_int) as uint16_t;
+                    (*cpu).x = (*cpu).x.wrapping_add(1) & 0xff;
                 } else {
                     (*cpu).x = (*cpu).x.wrapping_add(1);
                 }
