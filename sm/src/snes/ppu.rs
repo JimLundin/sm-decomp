@@ -667,7 +667,8 @@ pub unsafe fn ppu_runLine(mut ppu: *mut Ppu, mut line: ::core::ffi::c_int, game:
         ClearBackdrop(&raw mut (*ppu).objBuffer);
         (*ppu).lineHasSprites = !(*ppu).forcedBlank
             && ppu_evaluateSprites(ppu, line - 1 as ::core::ffi::c_int) as ::core::ffi::c_int != 0;
-        if game.g_new_ppu {
+        // EXTBG layer priorities and color composition use the per-pixel path.
+        if game.g_new_ppu && !((*ppu).mode == 7 && (*ppu).m7extBg) {
             PpuDrawWholeLine(ppu, line as uint);
         } else {
             if (*ppu).mode as ::core::ffi::c_int == 7 as ::core::ffi::c_int {

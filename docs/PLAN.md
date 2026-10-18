@@ -1926,6 +1926,39 @@ Cargo fmt --check passes; committed86a7a3d6 any%129,712/0 andWaver58,109/0
 remain its regression results. Probe/source/ROM-derived assets stay ignored.
 Audio, other display state, HDMA, masked RAM and complete route gaps remain.
 
+EXTBG renderer dispatch fix (2026-10-18): default rendering now routes
+Mode7 with m7extBg enabled through the maintained per-pixel compositor. Other
+rows retain the whole-line implementation. This preserves existing EXTBG
+layer/priority, window and color behavior rather than adding a second partial
+implementation. It fixes the recorded BG1 omission: all120 complete BGRA row
+cases now match, including the40 previously divergent EXTBG rows /7,690 pixels.
+
+An independent priority/palette model passes40,960 actual pixel cases covering
+all256 pixel bytes, eight BG0/BG1/sprite screen masks, four sprite priorities
+plus absent sprites, main/sub selection and window masking. Actual default
+EXTBG dispatch matches the existing per-pixel renderer in1,024 full BGRA row
+cases (963 nonzero), with varied windows, sprites, direct color, brightness,
+clip/prevent-math, fixed/subscreen addition, subtraction, halving and blank.
+This comparison validates the selected compositor's existing behavior; it is
+not independent proof of complete color-math/SNES hardware accuracy. The
+synthetic scenarios omit interlace and mosaic. Tested production PPU body
+matches maintained source after removing appended wrappers. All native probes
+exit0. A repeated1,024 two-renderer row-pair run takes0.393s, including process
+startup and synthetic-state setup; this is not a full-game performance claim.
+
+Dedicated maintained-source any% passes129,712/0 (233.52s); Waver passes
+58,109/0 (107.82s), both native exits0. Constructed cases demonstrate actual
+EXTBG dispatch execution; movie passes are general regression checks and do
+not establish natural EXTBG coverage. These DLLs predate later concurrent
+audio/gameplay commits and do not verify those changes. Cargo fmt/fmt --check,
+direct optimized core/DLL/normal-core metadata builds pass; Cargo release
+remains blocked executing khronos_api's build script (OS error5).
+The focused source change is one dispatch condition plus its comment: Rust
+lines+1, all other counters unchanged for this change. Only PPU source and
+this note are staged; ROM/probe assets stay ignored. No Ppu/RAM/save layout
+changes. Remaining hardware accuracy, other display state, audio timing,
+HDMA, masked RAM and boot-to-credits coverage gaps stay open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
