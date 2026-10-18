@@ -812,8 +812,18 @@ are unchanged by this route note.
 2. The verify run (phase 1) over the any% movie has no new failing frames
    compared with `main`.
 3. `sh tools/progress.sh` numbers did not go up, or the commit says why.
+4. Every rewritten routine actually executes in the verification scenario.
+   For gameplay, demonstrate calls on movie frames that exercise the changed
+   logic and compare those frames against the oracle. For hardware or verifier
+   changes, exercise the actual changed paths and their resulting behavior.
+   A green replay with zero calls is only a general regression check; extracted
+   comparisons and source reviews are supporting evidence, not a substitute
+   for execution in context. If a routine has no demonstrated execution, its
+   minimal verification remains incomplete; obtain coverage before further
+   cleanup of that routine. Hits establish only the paths exercised, not all
+   branches or states.
 
-A commit with these three is finished. No evidence files, receipts, ticket
+A commit with these four is finished. No evidence files, receipts, ticket
 directories or acceptance documents. The commit message is the record.
 
 ## Layout
