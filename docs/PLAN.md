@@ -2413,6 +2413,36 @@ session then split that commit: e191844e contains only the mosaic CPU hunks
 and verification note; eeacef8e owns Samus initialization. Final history keeps
 the focused changes separate. Evidence above is scoped to dedicated builds.
 
+BGMODE snapshot gap and enforcement (2026-10-18): mode, BG3 priority
+and four BG tile-size flags were absent from frame snapshots. Actual
+MakeSnapshot/VerifySnapshotsEq/RestoreSnapshot probes accept each mutation
+against identical registered buffers, leave it live after rewind and render
+a different next row. Patterned Mode1 exercises mode/priority/BG1/2/3 size;
+Mode0 exercises BG4 size. Mosaic selects the per-pixel path so BG3 priority
+and all four backgrounds actually execute. This proves future output can
+differ after an accepted snapshot; natural movie divergence is not claimed.
+
+Snapshots now capture, compare and restore all six BGMODE fields directly.
+All256 actual $2105 values match the independent bit mapping. Actual
+snapshot controls pass256 equality states and2,048 register-bit mutation/
+capture/restore cases; all six prior faults restore identical rows. Probe
+nativeexit0. Six actual post-render frame200 faults each produce3,600/1,
+named BGMODE diagnostics and nativeexit1, including flags inactive in the
+current rendered frame. No post-fault cascade is observed.
+
+Dedicated maintained-source Verified 129712 frames: 0 failing frames (230.21s); Verified 58109 frames: 0 failing frames (113.64s); nativeexits0.
+Cargo fmt/fmt--check and direct optimized core/DLL/normal-core metadata builds
+pass; Cargo release remains blocked executing khronos_api's build script
+(OSerror5). Progress run: focused Rust lines+17 implement state/capture/
+restore/diagnostics; other counters unchanged for this change. Builds include
+then-current concurrent native-audio work; later edits require their own
+replays. Only these CPU hunks and note enter this commit. Ppu/RAM/save layouts
+unchanged; ROM/probe assets ignored. The continuation rows use constructed
+tiles and the maintained renderer; they do not establish SNES hardware
+accuracy, every display mode/composition or natural gameplay coverage.
+Next: remaining BG address/scroll and composition snapshot gaps. Audio timing,
+HDMA, masked RAM, shared hardware accuracy and boot-to-credits remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

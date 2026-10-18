@@ -111,6 +111,7 @@ pub struct Snapshot {
     pub mode7_matrix: [i16; 8],
     pub mode7_flags: [bool; 5],
     pub mosaic: ([bool; 4], uint8, uint8),
+    pub bgmode: (uint8, bool, [bool; 4]),
     pub brightness: uint8,
     pub forced_blank: bool,
     pub cgram: [uint16; 256],
@@ -957,6 +958,15 @@ unsafe fn VerifySnapshotsEq(
             );
         }
     }
+    if (*b).bgmode != (*a).bgmode {
+        game.g_fail = true;
+        if report_details {
+            eprintln!(
+                "@{}: BGMODE (mode, BG3 priority, tile sizes) compare failed: mine {:?} != theirs {:?}",
+                game.snes_frame_counter, (*b).bgmode, (*a).bgmode
+            );
+        }
+    }
     if (*b).mosaic != (*a).mosaic {
         game.g_fail = true;
         if report_details {
@@ -1653,6 +1663,7 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     let ppu = &*(*game.g_snes).ppu;
     (*s).brightness = ppu.brightness;
     (*s).forced_blank = ppu.forcedBlank;
+    (*s).bgmode = (ppu.mode, ppu.bg3priority, ppu.bgLayer.map(|bg| bg.bigTiles));
     (*s).mosaic = (
         ppu.bgLayer.map(|bg| bg.mosaicEnabled),
         ppu.mosaicSize,
@@ -1695,6 +1706,12 @@ unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     let ppu = &mut *(*game.g_snes).ppu;
     ppu.brightness = (*s).brightness;
     ppu.forcedBlank = (*s).forced_blank;
+    let (mode, bg3_priority, big_tiles) = (*s).bgmode;
+    ppu.mode = mode;
+    ppu.bg3priority = bg3_priority;
+    for (bg, big_tiles) in ppu.bgLayer.iter_mut().zip(big_tiles) {
+        bg.bigTiles = big_tiles;
+    }
     let (enabled, size, start_line) = (*s).mosaic;
     for (bg, enabled) in ppu.bgLayer.iter_mut().zip(enabled) {
         bg.mosaicEnabled = enabled;
