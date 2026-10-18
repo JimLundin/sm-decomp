@@ -2407,6 +2407,36 @@ concurrent audio/PPU counters are separate. No probe or ROM-derived assets
 are committed. Next: super-missile and power-bomb restoration, measuring
 each actual rewritten entry on the gunship route before claiming coverage.
 
+Super-missile and power-bomb restoration now use named byte-backed
+count/capacity fields and word-wrapping addition. Initial count store,
+signed wrapped subtraction gate, explicit inequality check, maximum reread
+and final store retain their order. Six accessors match ram_map at
+09CA/09CC/09CE/09D0 without changing g_ram layout. The two routines share
+one mechanical change; ordinary unsigned saturation would change their
+high-word/wrap quirks and is not substituted.
+
+Before cleanup, a committed-source gunship call probe passes 22,631/0
+(41.89s), native exit 0: each routine executes once on Rust side 2, amount
+2 at SNES counter 21,944. After cleanup the same input passes 22,631/0
+(37.27s), native exit 0, with both calls retained. Stripping the two call
+observations restores exact maintained sm_91.rs. Capacity is zero, so this
+proves the zero-capacity clamp path, not acquired ammo or nonzero-capacity
+pickup behavior. Old/new actual bodies also match complete RAM in 2,001,458
+cases: for each routine, 729 combinations of nine boundary values across
+count/capacity/amount plus one million random states. These comparisons
+support other arithmetic paths; they are not movie-execution claims.
+
+Full any% passes 129,712/0 (204.72s), native exit 0, using committed
+fea44ba9 source with only sm_91.rs/game_state.rs replaced by this change.
+Concurrent audio isolation/recovery and EXTBG commits are outside this
+frozen replay's scope. Cargo fmt/check, optimized core/DLL and normal-core
+metadata builds pass. Cargo release remains denied executing khronos_api's
+build script (OS error 5). Raw offsets -12, unsafe functions -2, cast lines
+-26, Rust lines +2 provide the six named accessors; other gameplay counters
+unchanged. No probe or ROM-derived assets are committed. Next: Samus
+initialization RAM/arithmetic, measuring actual initialization calls and
+retaining descending clear order; stopped ammo trials remain held.
+
 
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve

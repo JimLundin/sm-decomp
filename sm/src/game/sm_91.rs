@@ -4829,46 +4829,22 @@ pub fn Samus_RestoreMissiles(amount: u16, game: &mut Game) {
         game.set_samus_missiles(game.samus_max_missiles());
     }
 }
-pub unsafe fn Samus_RestoreSuperMissiles(mut a: uint16, game: &mut Game) {
-    let mut v1: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9ca as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
-        + a as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9ca as ::core::ffi::c_int as isize)
-        as *mut uint16) = v1;
-    if (v1 as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0x9cc as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
-        >= 0 as ::core::ffi::c_int
-        && v1 as ::core::ffi::c_int
-            != *((&raw mut game.g_ram as *mut uint8).offset(0x9cc as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+pub fn Samus_RestoreSuperMissiles(amount: u16, game: &mut Game) {
+    let ammo = game.samus_super_missiles().wrapping_add(amount);
+    game.set_samus_super_missiles(ammo);
+    if (ammo.wrapping_sub(game.samus_max_super_missiles()) as i16) >= 0
+        && ammo != game.samus_max_super_missiles()
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9ca as ::core::ffi::c_int as isize)
-            as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x9cc as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        game.set_samus_super_missiles(game.samus_max_super_missiles());
     }
 }
-pub unsafe fn Samus_RestorePowerBombs(mut a: uint16, game: &mut Game) {
-    let mut v1: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9ce as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
-        + a as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9ce as ::core::ffi::c_int as isize)
-        as *mut uint16) = v1;
-    if (v1 as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0x9d0 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
-        >= 0 as ::core::ffi::c_int
-        && v1 as ::core::ffi::c_int
-            != *((&raw mut game.g_ram as *mut uint8).offset(0x9d0 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
+pub fn Samus_RestorePowerBombs(amount: u16, game: &mut Game) {
+    let ammo = game.samus_power_bombs().wrapping_add(amount);
+    game.set_samus_power_bombs(ammo);
+    if (ammo.wrapping_sub(game.samus_max_power_bombs()) as i16) >= 0
+        && ammo != game.samus_max_power_bombs()
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9ce as ::core::ffi::c_int as isize)
-            as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x9d0 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        game.set_samus_power_bombs(game.samus_max_power_bombs());
     }
 }
 pub unsafe fn Samus_Initialize(game: &mut Game) {

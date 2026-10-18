@@ -66,6 +66,32 @@ struct LoadedRom {
 
 // Initialize the large RAM and oracle snapshots directly on the heap.
 impl Game {
+    /// super_missiles count/capacity in the original RAM layout.
+    pub fn samus_super_missiles(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x9ca], self.g_ram[0x9cb]])
+    }
+
+    pub fn set_samus_super_missiles(&mut self, value: u16) {
+        self.g_ram[0x9ca..0x9cc].copy_from_slice(&value.to_le_bytes());
+    }
+
+    pub fn samus_max_super_missiles(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x9cc], self.g_ram[0x9cd]])
+    }
+
+    /// power_bombs count/capacity in the original RAM layout.
+    pub fn samus_power_bombs(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x9ce], self.g_ram[0x9cf]])
+    }
+
+    pub fn set_samus_power_bombs(&mut self, value: u16) {
+        self.g_ram[0x9ce..0x9d0].copy_from_slice(&value.to_le_bytes());
+    }
+
+    pub fn samus_max_power_bombs(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x9d0], self.g_ram[0x9d1]])
+    }
+
     /// Health and reserve fields retain their original byte-backed RAM layout.
     pub fn samus_health(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0x9c2], self.g_ram[0x9c3]])
