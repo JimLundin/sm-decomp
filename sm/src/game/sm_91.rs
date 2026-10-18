@@ -4788,29 +4788,18 @@ pub fn Samus_RestoreHealth(amount: u16, game: &mut Game) {
         game.set_samus_health(game.samus_max_health());
     }
 }
-pub unsafe fn Samus_DealDamage(mut a: uint16, game: &mut Game) {
-    if a as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-        if a as ::core::ffi::c_int != 300 as ::core::ffi::c_int
-            && *((&raw mut game.g_ram as *mut uint8).offset(0xa78 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                == 0
-        {
-            let ref mut fresh39 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x9c2 as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            *fresh39 = (*fresh39 as ::core::ffi::c_int - a as ::core::ffi::c_int) as uint16;
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                & 0x8000 as ::core::ffi::c_int
-                != 0 as ::core::ffi::c_int
-            {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 0 as uint16;
+pub unsafe fn Samus_DealDamage(amount: u16, game: &mut Game) {
+    if amount & 0x8000 == 0 {
+        if amount != 300 && game.time_is_frozen_flag() == 0 {
+            let health = game.samus_health().wrapping_sub(amount);
+            game.set_samus_health(health);
+            if game.samus_health() & 0x8000 != 0 {
+                game.set_samus_health(0);
             }
         }
     } else {
         InvalidInterrupt_Crash(game);
-    };
+    }
 }
 pub unsafe fn Samus_RestoreMissiles(mut a: uint16, game: &mut Game) {
     let mut v1: uint16 = (*((&raw mut game.g_ram as *mut uint8)

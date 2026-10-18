@@ -2085,6 +2085,38 @@ Probe code and ROM-derived assets stay ignored. Next: health-damage word
 arithmetic and state gates, with actual damage calls measured in context;
 the stalled ammunition route and uncovered Turtle cleanup remain held.
 
+Health damage now uses the existing named health/frozen-time accessors
+and explicit word-wrapping subtraction. The amount-300 short circuit,
+frozen-time gate, initial health store, live health reread/high-bit clear
+and negative-word InvalidInterrupt_Crash boundary retain their order.
+High initial health and zero-damage quirks are preserved; this is not
+unsigned saturating subtraction. Unsafe remains at the crash boundary.
+Independent source/order review finds no functional blocker.
+
+The actual old/new returning bodies match complete RAM in 1,524,288 cases:
+all 65,536 amounts at eight boundary health values with the frozen flag
+paired by amount parity, plus one million random cases. Negative-word
+cases compare extracted bodies with an observed crash-call replacement;
+the maintained nonreturning crash is not executed by that comparison.
+These checks support arithmetic/guard preservation rather than prove
+all possible health/amount/frozen combinations or crash behavior in-game.
+
+Fresh maintained-source any% passes 129,712/0 (242.93s), native exit 0.
+The normal-input route passes 63,610/0 (120.52s), native exit 0, with
+34 actual Samus_DealDamage calls, all runningWhichVersion 2 (Rust).
+At SNES frame counter 63,005 an amount-10 call reads health 49; the
+counter is not presented as independently measured input-frame timing.
+Stripping the sole observation line restores exact maintained source.
+These calls establish ordinary damage and zero-damage execution; the
+special guards/high-bit/crash branches are not claimed as movie-executed.
+The frozen build includes the separately committed a24fdb32 Mode 7 matrix
+oracle change. Cargo fmt/check, optimized core/DLL and normal-core metadata
+builds pass; Cargo release remains ASR-denied at khronos_api (OS error 5).
+Raw offsets -4, cast lines -10, Rust lines -11; other counters unchanged.
+No diagnostic or ROM-derived artifacts are committed. Next: missile
+restoration arithmetic and overflow fields, after measuring actual calls;
+ammunition route trials and uncovered Turtle cleanup remain held.
+
 
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
