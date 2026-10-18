@@ -1347,6 +1347,21 @@ Rust lines -89; unsafe count unchanged. Next: square slope collision quadrant
 selection and eight-pixel boundary arithmetic, preserving directional flags
 and displacement-before-subposition writes.
 
+Both square slope collision handlers now share readable quadrant selection
+and eight-pixel boundary arithmetic, with byte-backed coordinate writes.
+The first/last sample tests, orientation XOR, signed truncation before clamp
+and displacement-before-subposition writes retain behavior; only vertical
+nonnegative collision writes the slope-position flag. Prior Rust comparison
+passes 3,964,928 full-RAM/context/return cases over all five shapes/BTS bytes,
+quadrant sample combinations and every position with six radius/edge pairs,
+four displacement boundaries and both axes; a fully occupied shape ensures
+the boundary sweep reaches displacement writes. Stable optimized core/DLL
+build and direct format pass; Cargo fmt/build remain ASR-denied. Waver route:
+58,109 frames, zero failures (84.93s); any%: 129,712 frames, zero failures
+(185.58s). Raw offsets -23, cast lines -83, Rust lines -96; unsafe count
+unchanged. Next: Samus slope alignment RAM/arithmetic, preserving the second
+block lookup after the first position adjustment and strict/non-strict tests.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
