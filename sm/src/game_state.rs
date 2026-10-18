@@ -277,6 +277,47 @@ impl Game {
         u16::from_le_bytes([self.g_ram[0xa1c], self.g_ram[0xa1d]])
     }
 
+    /// samus_pose ($7E:0A1C in ram_map).
+    pub fn set_samus_pose(&mut self, value: u16) {
+        self.g_ram[0xa1c..0xa1e].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_prev_pose ($7E:0A20 in ram_map).
+    pub fn set_samus_prev_pose(&mut self, value: u16) {
+        self.g_ram[0xa20..0xa22].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_last_different_pose ($7E:0A24 in ram_map).
+    pub fn set_samus_last_different_pose(&mut self, value: u16) {
+        self.g_ram[0xa24..0xa26].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_pose_x_dir / samus_movement_type ($7E:0A1E/0A1F).
+    /// Preserve the original paired-byte word store.
+    pub fn set_samus_pose_direction_and_movement_type(&mut self, direction: u8, movement_type: u8) {
+        self.g_ram[0xa1e..0xa20].copy_from_slice(&[direction, movement_type]);
+    }
+
+    /// samus_prev_pose_x_dir / samus_prev_movement_type2 ($7E:0A22/0A23).
+    /// Preserve the original paired-byte word store.
+    pub fn set_samus_prev_pose_direction_and_movement_type(
+        &mut self,
+        direction: u8,
+        movement_type: u8,
+    ) {
+        self.g_ram[0xa22..0xa24].copy_from_slice(&[direction, movement_type]);
+    }
+
+    /// samus_last_different_pose_x_dir / samus_last_different_pose_movement_type ($7E:0A26/0A27).
+    /// Preserve the original paired-byte word store.
+    pub fn set_samus_last_different_pose_direction_and_movement_type(
+        &mut self,
+        direction: u8,
+        movement_type: u8,
+    ) {
+        self.g_ram[0xa26..0xa28].copy_from_slice(&[direction, movement_type]);
+    }
+
     /// samus_last_different_pose_movement_type ($7E:0A27 in ram_map).
     pub fn samus_last_different_pose_movement_type(&self) -> u8 {
         self.g_ram[0xa27]

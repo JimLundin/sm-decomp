@@ -3061,6 +3061,31 @@ No probe or ROM-derived assets are committed. Next: mixed pose-byte setup
 and remaining initialization state reads, preserving widths and order;
 the stopped ammo route stays held.
 
+Samus initialization pose setup now uses three named word setters and
+three paired direction/movement-type byte setters. They match ram_map:
+pose words at 0A1C/0A20/0A24 and direction/movement pairs at
+0A1E..0A1F/0A22..0A23/0A26..0A27. Each pair still writes both bytes at
+the original word-store position; the high movement byte is not omitted.
+All six stores retain ascending word order after cinematic_function and
+before enemy_index_to_shake. RAM layout and callback order are unchanged.
+
+Observed boot/gunship passes 22,631/0 (42.20s), native exit 0. All six
+changed stores execute with word 0000 in each actual Rust-side-2
+Samus_Initialize call at SNES counters 298/8,256/20,817 (18 total).
+Removing the six source-site observations restores exact maintained source.
+This establishes the unconditional initialization stores, not nonzero setter
+arguments or the later demo-loading branch.
+
+Full any% passes 129,712/0 (264.36s), native exit 0, on committed d0051b37
+source with only this sm_91.rs/game_state.rs change. Concurrent verifier/
+audio work is outside that replay's scope. Cargo fmt/check, optimized
+core/DLL and normal-core metadata builds pass; Cargo release remains denied
+at khronos_api's build script (OS error 5). Raw offsets -6, cast lines -7;
+Rust lines +35 provide the six setters. Other gameplay counters unchanged.
+No probe or ROM-derived assets are committed. Next: remaining initialization
+state reads and local constants; keep reads live and preserve callback order.
+The stopped ammo route stays held.
+
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
 the original `SignExtend8(0x8000)` initialization and the middle-byte velocity

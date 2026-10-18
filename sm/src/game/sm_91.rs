@@ -4921,18 +4921,12 @@ pub unsafe fn Samus_Initialize(game: &mut Game) {
     game.set_lava_acid_y_pos(u16::MAX);
     UpdateBeamTilesAndPalette(game);
     game.set_cinematic_function(0);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-        as *mut uint16) = kPose_00_FaceF_Powersuit as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa1e as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa20 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa22 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa24 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa26 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    game.set_samus_pose(kPose_00_FaceF_Powersuit as u16);
+    game.set_samus_pose_direction_and_movement_type(0, 0);
+    game.set_samus_prev_pose(0);
+    game.set_samus_prev_pose_direction_and_movement_type(0, 0);
+    game.set_samus_last_different_pose(0);
+    game.set_samus_last_different_pose_direction_and_movement_type(0, 0);
     game.set_enemy_index_to_shake(u16::MAX);
     game.set_hud_item_index(0);
     game.set_samus_auto_cancel_hud_item_index(0);
