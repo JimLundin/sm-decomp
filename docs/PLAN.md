@@ -4154,6 +4154,27 @@ launch. No fresh movie result is claimed. Probe sources and ROM assets stay
 ignored. Rendering initialization/Waver71, held HDMA, WRIO/autojoy, interrupt
 events, audio timing and boot-to-credits coverage remain open.
 
+WRIO/autojoy execution-context restore (2026-10-18): snapshots now capture
+and restore ppuLatch, autoJoyRead and autoJoyTimer. Actual controls cover
+131,104 cases: both WRIO latch values across sixteen clock positions and
+all 65,536 timer values with autojoy enabled and disabled. Opposite-control
+writes then rewind reproduce omissions when restore is disabled; candidate
+restores RDIO, the next falling-edge counter latch and HVBJOY busy status.
+Timer states are constructed; this does not establish natural autojoy timing.
+
+Temporary BOTH frame-200 register disturbances pass normal 3,600/0, forced
+recovery 3,600/1 and debug retry 3,600/1, native exits 0/1/1 with one
+intentional failure and no cascade. Clean frozen e4078af8 plus only this
+three-line fix passes any% 129,712/0 (244.91s), native exit 0, without
+instrumentation. Direct full-source format, normal-core metadata and
+optimized clean/probe core/DLL builds pass; Cargo fmt/check and release
+remain denied at launch. Focused Rust lines +3 preserve input control;
+other residue categories unchanged. CPU/SNES layouts, RAM and disk saves
+are unchanged. Concurrent WRAM-port/audio/PPU changes are excluded.
+Controller latching/busy-period scheduling, remaining DMA/register state,
+interrupt generation, rendering/HDMA, audio timing and boot-to-credits
+coverage remain open; the held HDMA investigation stays held.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
