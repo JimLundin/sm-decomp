@@ -6735,6 +6735,38 @@ explicit-render any%129712/0 (414.98s) remains regression for input-only work.
 Inputs/probes/ROM-derived outputs stay ignored. Full fidelity and credits
 remain unproved.
 
+SNES position-handler cleanup (2026-10-18): snes_handle_pos_stuff uses
+native comparisons/booleans and wrapping horizontal addition. Vblank,
+overscan, rendering, HDMA and frame-counter order and live callback rereads
+remain exact. Actual old/current entries pass 16,777,216 cases over every
+horizontal word, eight vertical boundary values and 32 flag combinations.
+Substituted event traces and independent horizontal/vertical/frame wrap
+expectations match, including FFFE horizontal wrap without line advance and
+FFFF vertical wrap without frame increment. Read-only subagent review finds
+no defect and confirms repeated 225 vblank, suppressed 240 repeat, live PPU
+overscan calls and NMI requests regardless of enable retain their quirks.
+
+Independent real-device QC passes 800 old/current cases with PPU overscan/
+vblank/render-line and DMA callbacks, entry-state/order traces, full Snes/
+CPU/PPU/DMA state and initialized pixels. Rendering uses controlled forced
+blank/per-pixel/zero expansion; HDMA channels are inactive. Active transfers
+and sprite rendering remain outside this direct fixture. Unsupported h512
+rows above 239 are excluded. Earlier fixture access violations came from an
+accidentally changed row guard that admitted 65535; corrected fixture exits 0.
+Horizontal +1 instead of +2 is detected, native assertion exit 3221226505.
+
+Instrumented any% passes 12,000/0 (25.56s), native exit 0, with 3,699,168,000
+position-handler calls. Clean frozen b6847b83 plus only this routine passes
+any% 129,712/0 (263.00s), native exit 0. Direct full-source format, normal-core
+metadata and optimized clean/probe core/DLL builds pass. Cargo fmt/build
+--release remain denied at cargo.exe launch; that required check stays unmet.
+Probe matches maintained routine after stripping counter/substitutions.
+Progress/diff pass: focused cast lines -10, Rust lines unchanged; other
+categories unchanged. Later peer integration, hardware/audio scheduling,
+rendering/Waver71, masked RAM and credits remain open. Held HDMA diagnosis
+stays stopped. Continue executed hardware paths and route coverage with
+useful independent subagents.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

@@ -138,44 +138,44 @@ pub unsafe fn snes_reset(snes: *mut Snes, hard: bool, game: &mut Game) {
     (*snes).fastMem = false;
     (*snes).openBus = 0;
 }
-pub unsafe fn snes_handle_pos_stuff(mut snes: *mut Snes, game: &mut Game) {
-    if (*snes).hPos as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-        let mut startingVblank: bool = false_0 != 0;
-        if (*snes).vPos as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-            (*snes).inVblank = false_0 != 0;
-            (*snes).inNmi = false_0 != 0;
+pub unsafe fn snes_handle_pos_stuff(snes: *mut Snes, game: &mut Game) {
+    if (*snes).hPos == 0 {
+        let mut startingVblank = false;
+        if (*snes).vPos == 0 {
+            (*snes).inVblank = false;
+            (*snes).inNmi = false;
             dma_initHdma((*snes).dma, game);
-        } else if (*snes).vPos as ::core::ffi::c_int == 225 as ::core::ffi::c_int {
+        } else if (*snes).vPos == 225 {
             startingVblank = !ppu_checkOverscan((*snes).ppu);
-        } else if (*snes).vPos as ::core::ffi::c_int == 240 as ::core::ffi::c_int {
+        } else if (*snes).vPos == 240 {
             if !(*snes).inVblank {
-                startingVblank = true_0 != 0;
+                startingVblank = true;
             }
         }
         if startingVblank {
             ppu_handleVblank((*snes).ppu);
-            (*snes).inVblank = true_0 != 0;
-            (*snes).inNmi = true_0 != 0;
-            (*(*snes).cpu).nmiWanted = true_0 != 0;
+            (*snes).inVblank = true;
+            (*snes).inNmi = true;
+            (*(*snes).cpu).nmiWanted = true;
             if (*snes).autoJoyRead {
-                (*snes).autoJoyTimer = 0 as uint16_t;
+                (*snes).autoJoyTimer = 0;
             }
         }
-    } else if (*snes).hPos as ::core::ffi::c_int == 512 as ::core::ffi::c_int {
+    } else if (*snes).hPos == 512 {
         if !(*snes).inVblank && !(*snes).disableRender {
-            ppu_runLine((*snes).ppu, (*snes).vPos as ::core::ffi::c_int, game);
+            ppu_runLine((*snes).ppu, i32::from((*snes).vPos), game);
         }
-    } else if (*snes).hPos as ::core::ffi::c_int == 1024 as ::core::ffi::c_int {
+    } else if (*snes).hPos == 1024 {
         if !(*snes).inVblank {
             dma_doHdma((*snes).dma, game);
         }
     }
-    (*snes).hPos = ((*snes).hPos as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16_t;
-    if (*snes).hPos as ::core::ffi::c_int == 1364 as ::core::ffi::c_int {
-        (*snes).hPos = 0 as uint16_t;
+    (*snes).hPos = (*snes).hPos.wrapping_add(2);
+    if (*snes).hPos == 1364 {
+        (*snes).hPos = 0;
         (*snes).vPos = (*snes).vPos.wrapping_add(1);
-        if (*snes).vPos as ::core::ffi::c_int == 262 as ::core::ffi::c_int {
-            (*snes).vPos = 0 as uint16_t;
+        if (*snes).vPos == 262 {
+            (*snes).vPos = 0;
             (*snes).frames = (*snes).frames.wrapping_add(1);
         }
     }
