@@ -1436,6 +1436,19 @@ fmt/build remain ASR-denied. Waver route: 58,109 frames, zero failures
 unsafe functions -4, cast lines -16, Rust lines -35. Next: special-air
 movement reactions 8..11, preserving boss-check order and live speed reads.
 
+Special-air movement reactions 8..11 now share byte-backed displacement
+writes and the default-speed write. Conditional reactions keep the area-3
+boss check before the live vertical-speed read; unconditional 10/11 are safe.
+Prior Rust comparison passes 2,228,224 full-RAM/callback cases over every
+speed, area and boss return, including boss callbacks changing speed/area.
+The low displacement word precedes the signed two-pixel high word, then
+default speed, as before. Stable optimized core/DLL build and direct format
+pass; Cargo fmt/build remain ASR-denied. Waver route: 58,109 frames, zero
+failures (82.11s); any%: 129,712 frames, zero failures (177.99s). Raw offsets
+-16, unsafe functions -1, cast lines -30, Rust lines -26. Next: special-air
+inside selection and reaction 70, retaining area-table bounds, PLM setup
+order and the default-reaction dispatch table's invalid-BTS panic.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

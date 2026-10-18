@@ -3286,63 +3286,37 @@ fn BlockInsideReact_SpecialAir_Default(game: &mut Game) {
     let speed_table = (addr_kSamusSpeedTable_Normal_X as u16).wrapping_add(12);
     game.g_ram[0xa6c..0xa6e].copy_from_slice(&speed_table.to_le_bytes());
 }
-unsafe fn BlockInsideReact_SpecialAir_8(game: &mut Game) {
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        != 3 as ::core::ffi::c_int
-        || CheckBossBitForCurArea(1 as uint16, game) as ::core::ffi::c_int
-            & 1 as ::core::ffi::c_int
-            != 0)
-        && *((&raw mut game.g_ram as *mut uint8).offset(0xb2e as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            == 0
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb56 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb58 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 2 as uint16;
+unsafe fn special_air_movement_enabled(game: &mut Game) -> bool {
+    let area = u16::from_le_bytes([game.g_ram[0x79f], game.g_ram[0x7a0]]);
+    if area == 3 && CheckBossBitForCurArea(1, game) & 1 == 0 {
+        return false;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa6c as ::core::ffi::c_int as isize)
-        as *mut uint16) =
-        (addr_kSamusSpeedTable_Normal_X as ::core::ffi::c_int + 12 as ::core::ffi::c_int) as uint16;
+    let speed = u16::from_le_bytes([game.g_ram[0xb2e], game.g_ram[0xb2f]]);
+    speed == 0
+}
+fn set_special_air_displacement(displacement: u16, game: &mut Game) {
+    game.g_ram[0xb56..0xb58].copy_from_slice(&0u16.to_le_bytes());
+    game.g_ram[0xb58..0xb5a].copy_from_slice(&displacement.to_le_bytes());
+}
+unsafe fn BlockInsideReact_SpecialAir_8(game: &mut Game) {
+    if special_air_movement_enabled(game) {
+        set_special_air_displacement(2, game);
+    }
+    BlockInsideReact_SpecialAir_Default(game);
 }
 unsafe fn BlockInsideReact_SpecialAir_9(game: &mut Game) {
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x79f as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        != 3 as ::core::ffi::c_int
-        || CheckBossBitForCurArea(1 as uint16, game) as ::core::ffi::c_int
-            & 1 as ::core::ffi::c_int
-            != 0)
-        && *((&raw mut game.g_ram as *mut uint8).offset(0xb2e as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            == 0
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb56 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb58 as ::core::ffi::c_int as isize)
-            as *mut uint16) = -(2 as ::core::ffi::c_int) as uint16;
+    if special_air_movement_enabled(game) {
+        set_special_air_displacement(0xfffe, game);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa6c as ::core::ffi::c_int as isize)
-        as *mut uint16) =
-        (addr_kSamusSpeedTable_Normal_X as ::core::ffi::c_int + 12 as ::core::ffi::c_int) as uint16;
+    BlockInsideReact_SpecialAir_Default(game);
 }
-unsafe fn BlockInsideReact_SpecialAir_10(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb56 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb58 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 2 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa6c as ::core::ffi::c_int as isize)
-        as *mut uint16) =
-        (addr_kSamusSpeedTable_Normal_X as ::core::ffi::c_int + 12 as ::core::ffi::c_int) as uint16;
+fn BlockInsideReact_SpecialAir_10(game: &mut Game) {
+    set_special_air_displacement(2, game);
+    BlockInsideReact_SpecialAir_Default(game);
 }
-unsafe fn BlockInsideReact_SpecialAir_11(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb56 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb58 as ::core::ffi::c_int as isize)
-        as *mut uint16) = -(2 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa6c as ::core::ffi::c_int as isize)
-        as *mut uint16) =
-        (addr_kSamusSpeedTable_Normal_X as ::core::ffi::c_int + 12 as ::core::ffi::c_int) as uint16;
+fn BlockInsideReact_SpecialAir_11(game: &mut Game) {
+    set_special_air_displacement(0xfffe, game);
+    BlockInsideReact_SpecialAir_Default(game);
 }
 unsafe fn BlockInsideReact_SpecialAir_70(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1e73 as ::core::ffi::c_int as isize)
