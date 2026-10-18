@@ -4791,6 +4791,27 @@ or independent hardware accuracy. The implementing commit owns clean any%
 129,712/0 integration. APU devices, rendering/Waver71, event timing, audio
 timing and credits remain open; held HDMA diagnosis stays stopped.
 
+Independent CPU conditional-branch QC (2026-10-18): pending cpu_doBranch
+signed-wrapping cleanup passes 268,435,456 actual conditional branch
+instructions. All eight N/V/C/Z branch opcodes execute every 65,536 starting
+PCs, all 256 displacement bytes and both taken/not-taken outcomes through
+maintained cpu_runOpcode in WRAM bank 7E, including instruction fetch and
+destination wrapping. Independent signed i32/modulo expectations check PC;
+two/three cycles, flags, A/X/Y/SP, bank registers and mode bits stay exact.
+Emulation/native modes and unrelated initial flags are sampled throughout.
+Changing only the displacement addition to unsigned fails opcode 10 at
+PC0000, displacement80, taken: result0082 versus expectedFF82. Original
+and TEMP-control native exits are zero/nonzero. The frozen helper matches
+current source. This proves maintained branch semantics, not hardware
+page-cross cycle accuracy or interrupted/waiting instruction entry.
+
+Optimized probe core/DLL, normal-core metadata and direct full-source
+rustfmt pass; Cargo execution remains denied as documented. Only this note
+changes, with no maintained Rust/residue changes; probes stay TEMP. Full
+any% integration remains the implementing session's separate check.
+Rendering/Waver71, event timing, audio timing and credits remain open;
+held HDMA diagnosis stays stopped.
+
 Current broad-route revalidation (2026-10-18): committed d217ea15 source
 replays the retained 62,817-frame lead-9ad9-arrive.inputs through the standard
 verifier, passing 62,817/0 (117.57s), native exit 0. It observes 48,819
