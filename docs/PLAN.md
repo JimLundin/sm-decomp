@@ -1541,6 +1541,16 @@ and direct format pass; Cargo fmt/build remain ASR-denied. Waver route:
 unchanged. Next: Samus collision RAM names/accessors for position and flags,
 then remove the active-displacement Game bridge across PLM setup callbacks.
 
+Samus collision positions, radii and flags now use named byte-backed Game
+accessors matching ram_map. Accessor expansion audit confirms the original
+byte expressions, values and read/write order; RAM layout stays unchanged.
+Stable optimized core/DLL build and direct format pass; Cargo fmt/build
+remain ASR-denied. Waver route: 58,109 frames, zero failures (83.90s); any%:
+129,712 frames, zero failures (185.45s). Rust lines +78 provide the named
+accessors; all other counters unchanged. Next: remove the active-displacement
+Game bridge by passing it through collision PLM spawning and the two nested
+Chozo setup/hardcoded-spawn paths, preserving live-ROM setup selection.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

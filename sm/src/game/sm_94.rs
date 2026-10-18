@@ -2327,9 +2327,9 @@ unsafe fn BlockColl_Horiz_Slope_NonSquare(ci: *mut CollInfo, game: &mut Game) ->
     0
 }
 unsafe fn BlockColl_Vert_Slope_NonSquare(ci: *mut CollInfo, k: uint16, game: &mut Game) -> uint8 {
-    let direction = u16::from_le_bytes([game.g_ram[0xb02], game.g_ram[0xb03]]);
+    let direction = game.samus_collision_direction();
     let upward = direction & 1 != 0;
-    let x_position = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
+    let x_position = game.samus_x_pos();
     // The SNES division register receives only the low byte of room width.
     let width = game.room_width_in_blocks() as u8;
     let block = game.cur_block_index();
@@ -2352,7 +2352,7 @@ unsafe fn BlockColl_Vert_Slope_NonSquare(ci: *mut CollInfo, k: uint16, game: &mu
     };
     let index = usize::from(bts & 0x1f) * 16 + usize::from(x_offset & 15);
     let height = kAlignYPos_Tab0[index] & 0x1f;
-    let radius = u16::from_le_bytes([game.g_ram[0xb00], game.g_ram[0xb01]]);
+    let radius = game.samus_y_radius();
     let y_offset = if upward {
         radius.wrapping_add((*ci).ci_r24).wrapping_sub(1) & 15
     } else {
@@ -2373,46 +2373,46 @@ pub unsafe fn Samus_AlignYPosSlope(game: &mut Game) {
     if movement_flags & 2 == 0 {
         return;
     }
-    let x = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
-    let y = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
-    let radius = u16::from_le_bytes([game.g_ram[0xb00], game.g_ram[0xb01]]);
+    let x = game.samus_x_pos();
+    let y = game.samus_y_pos();
+    let radius = game.samus_y_radius();
     CalculateBlockAt(x, radius.wrapping_add(y).wrapping_sub(1), 0, 0, game);
     if game.current_level_block() & 0xf000 == 0x1000 && game.current_block_bts() & 0x1f >= 5 {
-        let radius = u16::from_le_bytes([game.g_ram[0xb00], game.g_ram[0xb01]]);
-        let y = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
+        let radius = game.samus_y_radius();
+        let y = game.samus_y_pos();
         let offset = radius.wrapping_add(y).wrapping_sub(1) & 15;
         let bts = game.current_block_bts();
         if bts & 0x80 == 0 {
-            let x = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
+            let x = game.samus_x_pos();
             let x = if bts & 0x40 != 0 { x ^ 15 } else { x };
             let index = usize::from(bts & 0x1f) * 16 + usize::from(x & 15);
             let adjustment = i16::from(kAlignYPos_Tab0[index] & 0x1f) - offset as i16 - 1;
             if adjustment < 0 {
                 game.g_ram[0xafa..0xafc]
                     .copy_from_slice(&y.wrapping_add(adjustment as u16).to_le_bytes());
-                game.g_ram[0xdba..0xdbc].copy_from_slice(&1u16.to_le_bytes());
+                game.set_samus_pos_adjusted_by_slope_flag(1);
             }
         }
     }
     // Re-read the position after the bottom-edge alignment before looking up the top block.
-    let x = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
-    let y = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
-    let radius = u16::from_le_bytes([game.g_ram[0xb00], game.g_ram[0xb01]]);
+    let x = game.samus_x_pos();
+    let y = game.samus_y_pos();
+    let radius = game.samus_y_radius();
     CalculateBlockAt(x, y.wrapping_sub(radius), 0, 0, game);
     if game.current_level_block() & 0xf000 == 0x1000 && game.current_block_bts() & 0x1f >= 5 {
-        let y = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
-        let radius = u16::from_le_bytes([game.g_ram[0xb00], game.g_ram[0xb01]]);
+        let y = game.samus_y_pos();
+        let radius = game.samus_y_radius();
         let offset = (y.wrapping_sub(radius) & 15) ^ 15;
         let bts = game.current_block_bts();
         if bts & 0x80 != 0 {
-            let x = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
+            let x = game.samus_x_pos();
             let x = if bts & 0x40 != 0 { x ^ 15 } else { x };
             let index = usize::from(bts & 0x1f) * 16 + usize::from(x & 15);
             let adjustment = i16::from(kAlignYPos_Tab0[index] & 0x1f) - offset as i16 - 1;
             if adjustment <= 0 {
                 game.g_ram[0xafa..0xafc]
                     .copy_from_slice(&y.wrapping_sub(adjustment as u16).to_le_bytes());
-                game.g_ram[0xdba..0xdbc].copy_from_slice(&1u16.to_le_bytes());
+                game.set_samus_pos_adjusted_by_slope_flag(1);
             }
         }
     }
@@ -2455,8 +2455,8 @@ unsafe fn BlockColl_Horiz_Slope_Square(
     let index = slope
         .wrapping_mul(4)
         .wrapping_add(orientation ^ (((*ci).ci_r32 & 8) >> 3));
-    let perpendicular_position = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
-    let perpendicular_radius = u16::from_le_bytes([game.g_ram[0xb00], game.g_ram[0xb01]]);
+    let perpendicular_position = game.samus_y_pos();
+    let perpendicular_radius = game.samus_y_radius();
     if !square_slope_occupied(
         index,
         (*ci).ci_r26,
@@ -2468,11 +2468,11 @@ unsafe fn BlockColl_Horiz_Slope_Square(
         return 0;
     }
     let negative = (*ci).ci_r18_r20 < 0;
-    let radius = u16::from_le_bytes([game.g_ram[0xafe], game.g_ram[0xaff]]);
-    let position = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
+    let radius = game.samus_x_radius();
+    let position = game.samus_x_pos();
     (*ci).ci_r18_r20 = square_slope_delta((*ci).ci_r32, radius, position, negative);
     let subposition = if negative { 0u16 } else { 0xffff };
-    game.g_ram[0xaf8..0xafa].copy_from_slice(&subposition.to_le_bytes());
+    game.set_samus_x_subpos(subposition);
     1
 }
 unsafe fn BlockColl_Vert_Slope_Square(
@@ -2485,8 +2485,8 @@ unsafe fn BlockColl_Vert_Slope_Square(
     let index = slope
         .wrapping_mul(4)
         .wrapping_add(orientation ^ (((*ci).ci_r32 & 8) >> 2));
-    let perpendicular_position = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
-    let perpendicular_radius = u16::from_le_bytes([game.g_ram[0xafe], game.g_ram[0xaff]]);
+    let perpendicular_position = game.samus_x_pos();
+    let perpendicular_radius = game.samus_x_radius();
     if !square_slope_occupied(
         index,
         (*ci).ci_r26,
@@ -2498,13 +2498,13 @@ unsafe fn BlockColl_Vert_Slope_Square(
         return 0;
     }
     let negative = (*ci).ci_r18_r20 < 0;
-    let radius = u16::from_le_bytes([game.g_ram[0xb00], game.g_ram[0xb01]]);
-    let position = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
+    let radius = game.samus_y_radius();
+    let position = game.samus_y_pos();
     (*ci).ci_r18_r20 = square_slope_delta((*ci).ci_r32, radius, position, negative);
     let subposition = if negative { 0u16 } else { 0xffff };
-    game.g_ram[0xafc..0xafe].copy_from_slice(&subposition.to_le_bytes());
+    game.set_samus_y_subpos(subposition);
     if !negative {
-        game.g_ram[0xdba..0xdbc].copy_from_slice(&1u16.to_le_bytes());
+        game.set_samus_pos_adjusted_by_slope_flag(1);
     }
     1
 }
@@ -2598,20 +2598,20 @@ fn solid_collision_delta(edge: u16, radius: u16, position: u16, negative: bool) 
 // Keep the context raw: PLM callbacks can also access its active displacement.
 unsafe fn BlockColl_Horiz_SolidShootGrappleBlock(ci: *mut CollInfo, game: &mut Game) -> uint8 {
     let negative = (*ci).ci_r18_r20 < 0;
-    let radius = u16::from_le_bytes([game.g_ram[0xafe], game.g_ram[0xaff]]);
-    let position = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
+    let radius = game.samus_x_radius();
+    let position = game.samus_x_pos();
     (*ci).ci_r18_r20 = solid_collision_delta((*ci).ci_r32, radius, position, negative);
     let subposition = if negative { 0u16 } else { 0xffff };
-    game.g_ram[0xaf8..0xafa].copy_from_slice(&subposition.to_le_bytes());
+    game.set_samus_x_subpos(subposition);
     1
 }
 unsafe fn BlockColl_Vert_SolidShootGrappleBlock(ci: *mut CollInfo, game: &mut Game) -> uint8 {
     let negative = (*ci).ci_r18_r20 < 0;
-    let radius = u16::from_le_bytes([game.g_ram[0xb00], game.g_ram[0xb01]]);
-    let position = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
+    let radius = game.samus_y_radius();
+    let position = game.samus_y_pos();
     (*ci).ci_r18_r20 = solid_collision_delta((*ci).ci_r32, radius, position, negative);
     let subposition = if negative { 0u16 } else { 0xffff };
-    game.g_ram[0xafc..0xafe].copy_from_slice(&subposition.to_le_bytes());
+    game.set_samus_y_subpos(subposition);
     1
 }
 unsafe fn BlockColl_Horiz_Slope(ci: *mut CollInfo, game: &mut Game) -> uint8 {
@@ -2842,13 +2842,13 @@ fn samus_block_span(position: u16, radius: u16) -> u16 {
         >> 4
 }
 fn Samus_GetYposSpan(game: &mut Game) -> uint16 {
-    let position = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
-    let radius = u16::from_le_bytes([game.g_ram[0xb00], game.g_ram[0xb01]]);
+    let position = game.samus_y_pos();
+    let radius = game.samus_y_radius();
     samus_block_span(position, radius)
 }
 fn Samus_GetXposSpan(game: &mut Game) -> uint16 {
-    let position = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
-    let radius = u16::from_le_bytes([game.g_ram[0xafe], game.g_ram[0xaff]]);
+    let position = game.samus_x_pos();
+    let radius = game.samus_x_radius();
     samus_block_span(position, radius)
 }
 unsafe fn BlockColl_Horiz_CheckColl(ci: &mut CollInfo, k: uint16, game: &mut Game) -> uint8 {
@@ -2910,16 +2910,16 @@ unsafe fn BlockColl_Vert_CheckColl(ci: &mut CollInfo, k: uint16, game: &mut Game
 }
 unsafe fn BlockColl_Handle_Horiz(amt: int32, game: &mut Game) -> Pair_Bool_Amt {
     let span = Samus_GetYposSpan(game);
-    let y = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
-    let y_radius = u16::from_le_bytes([game.g_ram[0xb00], game.g_ram[0xb01]]);
+    let y = game.samus_y_pos();
+    let y_radius = game.samus_y_radius();
     let row = (y.wrapping_sub(y_radius) >> 4) as u8;
     let width = game.room_width_in_blocks() as u8;
     let row_start = u16::from(row) * u16::from(width);
-    let x = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
-    let fraction = u16::from_le_bytes([game.g_ram[0xaf8], game.g_ram[0xaf9]]);
+    let x = game.samus_x_pos();
+    let fraction = game.samus_x_subpos();
     let target =
         (((u32::from(x) << 16) | u32::from(fraction)).wrapping_add(amt as u32) >> 16) as u16;
-    let radius = u16::from_le_bytes([game.g_ram[0xafe], game.g_ram[0xaff]]);
+    let radius = game.samus_x_radius();
     let edge = if amt >= 0 {
         radius.wrapping_add(target).wrapping_sub(1)
     } else {
@@ -2964,11 +2964,11 @@ unsafe fn handle_vertical_collision(
     game: &mut Game,
 ) -> Pair_Bool_Amt {
     let span = Samus_GetXposSpan(game);
-    let y = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
-    let fraction = u16::from_le_bytes([game.g_ram[0xafc], game.g_ram[0xafd]]);
+    let y = game.samus_y_pos();
+    let fraction = game.samus_y_subpos();
     let target =
         (((u32::from(y) << 16) | u32::from(fraction)).wrapping_add(amt as u32) >> 16) as u16;
-    let radius = u16::from_le_bytes([game.g_ram[0xb00], game.g_ram[0xb01]]);
+    let radius = game.samus_y_radius();
     let edge = if amt >= 0 {
         radius.wrapping_add(target).wrapping_sub(1)
     } else {
@@ -2977,8 +2977,8 @@ unsafe fn handle_vertical_collision(
     let row = (edge >> 4) as u8;
     let width = game.room_width_in_blocks() as u8;
     let row_start = u16::from(row) * u16::from(width);
-    let x = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
-    let radius = u16::from_le_bytes([game.g_ram[0xafe], game.g_ram[0xaff]]);
+    let x = game.samus_x_pos();
+    let radius = game.samus_x_radius();
     let column = if right_to_left {
         radius.wrapping_add(x).wrapping_sub(1) >> 4
     } else {
@@ -3023,12 +3023,12 @@ unsafe fn handle_vertical_collision(
     }
 }
 fn prepare_pose_collision(game: &mut Game) {
-    let direction = u16::from_le_bytes([game.g_ram[0xb02], game.g_ram[0xb03]]);
-    game.g_ram[0xb02..0xb04].copy_from_slice(&(direction | 15).to_le_bytes());
-    game.g_ram[0x1e71..0x1e73].copy_from_slice(&0u16.to_le_bytes());
+    let direction = game.samus_collision_direction();
+    game.set_samus_collision_direction((direction | 15));
+    game.set_flag_samus_in_quicksand(0);
 }
 fn finish_pose_collision(pair: Pair_Bool_Amt, game: &mut Game) -> i32 {
-    game.g_ram[0xdd0..0xdd2].copy_from_slice(&u16::from(pair.flag).to_le_bytes());
+    game.set_samus_collision_flag(u16::from(pair.flag));
     pair.amt.wrapping_abs()
 }
 pub unsafe fn WallJumpBlockCollDetect(amt: int32, game: &mut Game) -> int32 {
@@ -3053,7 +3053,7 @@ pub unsafe fn Samus_CollDetectChangedPose(amt: int32, game: &mut Game) -> int32 
     }
     let probe = i32::from(((integer as u16 & 0xfff0) | 8) as i16) << 16;
     let adjusted = CollDetectDueToPoseChange_SingleBlock(probe, game);
-    let collided = u16::from_le_bytes([game.g_ram[0xdd0], game.g_ram[0xdd1]]);
+    let collided = game.samus_collision_flag();
     if collided != 0 {
         return adjusted;
     }
@@ -3069,21 +3069,21 @@ fn add_samus_position(position: &mut [u8], amount: i32) {
 }
 pub unsafe fn Samus_MoveRight_NoSolidColl(mut amt: int32, game: &mut Game) -> int32 {
     let collided = if amt != 0 {
-        game.g_ram[0x1e71..0x1e73].copy_from_slice(&0u16.to_le_bytes());
+        game.set_flag_samus_in_quicksand(0);
         let pair = BlockColl_Handle_Horiz(amt, game);
         amt = pair.amt;
         pair.flag
     } else {
         false
     };
-    game.g_ram[0xdd0..0xdd2].copy_from_slice(&u16::from(collided).to_le_bytes());
+    game.set_samus_collision_flag(u16::from(collided));
     add_samus_position(&mut game.g_ram[0xaf6..0xafa], amt);
     amt
 }
 pub unsafe fn Samus_MoveDown_NoSolidColl(mut amt: int32, game: &mut Game) -> int32 {
     if amt != 0 {
-        game.g_ram[0xdba..0xdbc].copy_from_slice(&0u16.to_le_bytes());
-        game.g_ram[0x1e71..0x1e73].copy_from_slice(&0u16.to_le_bytes());
+        game.set_samus_pos_adjusted_by_slope_flag(0);
+        game.set_flag_samus_in_quicksand(0);
         let frame = u16::from_le_bytes([game.g_ram[0x5b6], game.g_ram[0x5b7]]);
         let pair = if frame & 1 == 0 {
             BlockColl_Handle_Vert_LeftToRight(amt, game)
@@ -3092,13 +3092,13 @@ pub unsafe fn Samus_MoveDown_NoSolidColl(mut amt: int32, game: &mut Game) -> int
         };
         amt = pair.amt;
         if pair.flag {
-            game.g_ram[0xdd0..0xdd2].copy_from_slice(&1u16.to_le_bytes());
+            game.set_samus_collision_flag(1);
             add_samus_position(&mut game.g_ram[0xafa..0xafe], amt);
             return amt;
         }
     }
-    let slope_collision = u16::from_le_bytes([game.g_ram[0x1e71], game.g_ram[0x1e72]]);
-    game.g_ram[0xdd0..0xdd2].copy_from_slice(&u16::from(slope_collision != 0).to_le_bytes());
+    let slope_collision = game.flag_samus_in_quicksand();
+    game.set_samus_collision_flag(u16::from(slope_collision != 0));
     add_samus_position(&mut game.g_ram[0xafa..0xafe], amt);
     amt
 }
@@ -3175,7 +3175,7 @@ fn BlockInsideReact_SpecialAir_11(game: &mut Game) {
     BlockInsideReact_SpecialAir_Default(game);
 }
 unsafe fn BlockInsideReact_SpecialAir_70(game: &mut Game) {
-    let sample = u16::from_le_bytes([game.g_ram[0x1e73], game.g_ram[0x1e74]]);
+    let sample = game.inside_block_reaction_samus_point();
     if sample == 1 {
         SpawnPLM(addr_kPlmHeader_B6FF as u16, game);
     }
@@ -3236,28 +3236,28 @@ pub unsafe fn BlockInsideDetection(game: &mut Game) {
     game.g_ram[0xb58..0xb5a].copy_from_slice(&0u16.to_le_bytes());
     game.g_ram[0xb5a..0xb5c].copy_from_slice(&0u16.to_le_bytes());
     game.g_ram[0xb5c..0xb5e].copy_from_slice(&0u16.to_le_bytes());
-    game.g_ram[0x1e73..0x1e75].copy_from_slice(&0u16.to_le_bytes());
-    let mut r26 = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
-    let radius = u16::from_le_bytes([game.g_ram[0xb00], game.g_ram[0xb01]]);
-    let y = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
+    game.set_inside_block_reaction_samus_point(0);
+    let mut r26 = game.samus_x_pos();
+    let radius = game.samus_y_radius();
+    let y = game.samus_y_pos();
     let samus_bottom_boundary_position = radius.wrapping_add(y).wrapping_sub(1);
     let mut r28 = samus_bottom_boundary_position;
     react_inside_sample(r26, r28, game);
-    game.g_ram[0x1e73..0x1e75].copy_from_slice(&1u16.to_le_bytes());
-    let y = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
+    game.set_inside_block_reaction_samus_point(1);
+    let y = game.samus_y_pos();
     if (samus_bottom_boundary_position ^ y) & 0xfff0 != 0 {
-        r26 = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
+        r26 = game.samus_x_pos();
         r28 = y;
         react_inside_sample(r26, r28, game);
     }
-    game.g_ram[0x1e73..0x1e75].copy_from_slice(&2u16.to_le_bytes());
-    let y = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
-    let radius = u16::from_le_bytes([game.g_ram[0xb00], game.g_ram[0xb01]]);
+    game.set_inside_block_reaction_samus_point(2);
+    let y = game.samus_y_pos();
+    let radius = game.samus_y_radius();
     let top = y.wrapping_sub(radius);
     let changed_row_bits = (samus_bottom_boundary_position ^ top) & 0xfff0;
     // Preserve the original XOR test; this is not a simple center/top comparison.
     if changed_row_bits != 0 && (y ^ changed_row_bits) & 0xfff0 != 0 {
-        r26 = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
+        r26 = game.samus_x_pos();
         r28 = top;
         react_inside_sample(r26, r28, game);
     }

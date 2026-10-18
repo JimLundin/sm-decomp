@@ -108,6 +108,84 @@ impl Game {
         start
     }
 
+    /// samus_x_pos ($7E:0AF6 in ram_map).
+    pub fn samus_x_pos(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xaf6], self.g_ram[0xaf7]])
+    }
+
+    /// samus_x_subpos ($7E:0AF8 in ram_map).
+    pub fn samus_x_subpos(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xaf8], self.g_ram[0xaf9]])
+    }
+
+    pub fn set_samus_x_subpos(&mut self, value: u16) {
+        self.g_ram[0xaf8..0xafa].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_y_pos ($7E:0AFA in ram_map).
+    pub fn samus_y_pos(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xafa], self.g_ram[0xafb]])
+    }
+
+    /// samus_y_subpos ($7E:0AFC in ram_map).
+    pub fn samus_y_subpos(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xafc], self.g_ram[0xafd]])
+    }
+
+    pub fn set_samus_y_subpos(&mut self, value: u16) {
+        self.g_ram[0xafc..0xafe].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_x_radius ($7E:0AFE in ram_map).
+    pub fn samus_x_radius(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xafe], self.g_ram[0xaff]])
+    }
+
+    /// samus_y_radius ($7E:0B00 in ram_map).
+    pub fn samus_y_radius(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xb00], self.g_ram[0xb01]])
+    }
+
+    /// samus_collision_direction ($7E:0B02 in ram_map).
+    pub fn samus_collision_direction(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xb02], self.g_ram[0xb03]])
+    }
+
+    pub fn set_samus_collision_direction(&mut self, value: u16) {
+        self.g_ram[0xb02..0xb04].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_collision_flag ($7E:0DD0 in ram_map).
+    pub fn samus_collision_flag(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xdd0], self.g_ram[0xdd1]])
+    }
+
+    pub fn set_samus_collision_flag(&mut self, value: u16) {
+        self.g_ram[0xdd0..0xdd2].copy_from_slice(&value.to_le_bytes());
+    }
+
+    pub fn set_samus_pos_adjusted_by_slope_flag(&mut self, value: u16) {
+        self.g_ram[0xdba..0xdbc].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// flag_samus_in_quicksand ($7E:1E71 in ram_map).
+    pub fn flag_samus_in_quicksand(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x1e71], self.g_ram[0x1e72]])
+    }
+
+    pub fn set_flag_samus_in_quicksand(&mut self, value: u16) {
+        self.g_ram[0x1e71..0x1e73].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// inside_block_reaction_samus_point ($7E:1E73 in ram_map).
+    pub fn inside_block_reaction_samus_point(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x1e73], self.g_ram[0x1e74]])
+    }
+
+    pub fn set_inside_block_reaction_samus_point(&mut self, value: u16) {
+        self.g_ram[0x1e73..0x1e75].copy_from_slice(&value.to_le_bytes());
+    }
+
     /// Current collision block index ($7E:0DC4 in ram_map).
     pub fn cur_block_index(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0xdc4], self.g_ram[0xdc5]])
