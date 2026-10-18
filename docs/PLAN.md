@@ -1518,6 +1518,39 @@ enforce independent physical upload/command checks and verify native-only
 continuation. Ordinary command timing and full audible equivalence remain open;
 BOTH's adoption of ROM physical state does not prove native-only continuation.
 
+Physical audio frame-state enforcement (2026-10-18): the oracle now compares
+every semantic APU/SPC/DSP snapshot field before normalization and adoption
+when physical audio is selected. Full APU RAM, all timer/channel values,
+ports, DSP sample buffers, write history and exact catchup bits are included;
+allocation links and layout padding are excluded. Exhaustive struct patterns
+require future fields to be explicitly handled. The first differing field
+uses the existing failing-frame diagnostics and recovery. Custom audio keeps
+its independently enforced queued-command comparison and remains the default.
+Set SM_VERIFY_PHYSICAL_AUDIO before invoking the headless verifier to select
+physical audio before backend-specific patches are installed by SnesInit.
+
+The frozen 7aea2fa9 whole-frame probe completes 129,712/0 (287.42s), native
+exit 0, with no physical audio state differences. Live frame-200 mutations
+of RAM, input port, timer counter, SPC PC, DSP channel gain, last sample-buffer
+value, history value and catchup fraction each produce exactly one failing
+frame in 3,600, native exit 1, with no later failures. These use the actual
+maintained comparator, snapshot capture and recovery, not mutated log text.
+Independent review finds no omitted semantic fields or integration blocker.
+The same live port fault with custom audio passes 3,600/0, confirming the
+physical-only guard. Exact maintained-source any% passes with default audio
+129,712/0 (280.46s) and physical audio 129,712/0 (302.06s), native exits 0.
+Exact maintained-source optimized core/DLL and metadata builds pass; Cargo
+fmt/check passes, while release still cannot execute dependency/project build
+scripts (OS error 5). This change adds 156 Rust lines for complete comparison,
+diagnostics and verifier backend selection; other residue counters unchanged.
+Concurrent gameplay/display edits are excluded from its frozen source.
+
+Frame-state equality is separate from ordinary command timing, custom-driver
+sample equivalence and autonomous RM_MINE gameplay. The physical verifier
+still adopts ROM state after comparison. Native APU continuation within BOTH
+is being checked independently; complete queue adoption and rendered waveform
+comparison remain distinct from the new snapshot guard.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read

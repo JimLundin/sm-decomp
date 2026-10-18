@@ -1,6 +1,6 @@
 //! Rewind the emulated APU without transferring ownership of its allocations.
 
-use crate::types::{Apu, Dsp, DspRegWriteHistory, Snes, Spc, SpcPlayer};
+use crate::types::{Apu, Dsp, DspChannel, DspRegWriteHistory, Snes, Spc, SpcPlayer, Timer};
 use crate::{game_state::Game, rtl::ApuWriteEnt};
 
 #[derive(Copy, Clone)]
@@ -96,6 +96,147 @@ pub struct AudioSnapshot {
 }
 
 impl AudioSnapshot {
+    /// Compare emulated values, excluding allocation links and layout padding.
+    pub(crate) fn first_difference(&self, other: &Self) -> Option<&'static str> {
+        macro_rules! fields {
+            ($ty:ident, $left:expr, $right:expr, [$($excluded:ident),*], $($field:ident),+ $(,)?) => {
+                // Exhaustive patterns make added fields require an explicit choice.
+                let $ty { $($excluded: _,)* $($field: _,)+ } = $left;
+                let left = $left;
+                let right = $right;
+                $(if left.$field != right.$field {
+                    return Some(concat!(stringify!($ty), ".", stringify!($field)));
+                })+
+            };
+        }
+        fields!(
+            Apu,
+            &self.apu,
+            &other.apu,
+            [spc, dsp, pad, timer, c2rust_unnamed],
+            ram,
+            romReadable,
+            dspAdr,
+            cycles,
+            inPorts,
+            outPorts,
+            cpuCyclesLeft
+        );
+        for (left, right) in self.apu.timer.iter().zip(&other.apu.timer) {
+            fields!(
+                Timer,
+                left,
+                right,
+                [],
+                cycles,
+                divider,
+                target,
+                counter,
+                enabled
+            );
+        }
+        fields!(
+            Spc,
+            &self.spc,
+            &other.spc,
+            [apu],
+            a,
+            x,
+            y,
+            sp,
+            pc,
+            c,
+            z,
+            v,
+            n,
+            i,
+            h,
+            p,
+            b,
+            stopped,
+            cyclesUsed
+        );
+        fields!(
+            Dsp,
+            &self.dsp,
+            &other.dsp,
+            [apu_ram, channel],
+            ram,
+            dirPage,
+            evenCycle,
+            mute,
+            reset,
+            masterVolumeL,
+            masterVolumeR,
+            noiseSample,
+            noiseRate,
+            noiseCounter,
+            echoWrites,
+            echoVolumeL,
+            echoVolumeR,
+            feedbackVolume,
+            echoBufferAdr,
+            echoDelay,
+            echoRemain,
+            echoBufferIndex,
+            firBufferIndex,
+            firValues,
+            firBufferL,
+            firBufferR,
+            sampleBuffer,
+            sampleOffset
+        );
+        for (left, right) in self.dsp.channel.iter().zip(&other.dsp.channel) {
+            fields!(
+                DspChannel,
+                left,
+                right,
+                [],
+                pitch,
+                pitchCounter,
+                pitchModulation,
+                decodeBuffer,
+                srcn,
+                decodeOffset,
+                previousFlags,
+                old,
+                older,
+                useNoise,
+                adsrRates,
+                rateCounter,
+                adsrState,
+                sustainLevel,
+                useGain,
+                gainMode,
+                directGain,
+                gainValue,
+                gain,
+                keyOn,
+                keyOff,
+                sampleOut,
+                volumeL,
+                volumeR,
+                echoEnable
+            );
+        }
+        // The maintained APU uses the history member of this layout union.
+        unsafe {
+            fields!(
+                DspRegWriteHistory,
+                &self.apu.c2rust_unnamed.hist,
+                &other.apu.c2rust_unnamed.hist,
+                [],
+                count,
+                addr,
+                val
+            );
+        }
+        if self.catchup_cycles.to_bits() != other.catchup_cycles.to_bits() {
+            return Some("Snes.apuCatchupCycles");
+        }
+        None
+    }
+
     /// The SNES and all three audio allocations must be initialized and live.
     pub(crate) unsafe fn capture(&mut self, snes: *mut Snes) {
         let apu = (*snes).apu;

@@ -134,6 +134,10 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
         game.VERIFY_ACTIVE = true;
         game.VERIFY_FAILURES = 0;
         game.g_runmode = sm::cpu_infra::RM_BOTH as u8;
+        // Backend-specific ROM patches are installed during initialization.
+        if std::env::var_os("SM_VERIFY_PHYSICAL_AUDIO").is_some() {
+            game.g_use_my_apu_code = false;
+        }
         let snes = sm::cpu_infra::SnesInit(filename.as_ptr(), game);
         if snes.is_null() {
             return Err("unable to load ROM".into());

@@ -936,6 +936,17 @@ unsafe fn VerifySnapshotsEq(
             }
         }
     }
+    if !game.g_use_my_apu_code {
+        if let Some(field) = (*b).audio.first_difference(&(*a).audio) {
+            game.g_fail = true;
+            if report_details {
+                eprintln!(
+                    "@{}: Physical APU state compare failed: {}",
+                    game.snes_frame_counter, field
+                );
+            }
+        }
+    }
     if (*b).status_flags != (*a).status_flags {
         game.g_fail = true;
         if report_details {
