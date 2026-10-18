@@ -9460,302 +9460,69 @@ pub fn EnemyFunc_B7A1(game: &mut Game) {
         game.set_samus_prev_x_pos(previous);
     }
 }
-pub unsafe fn Enemy_ItemDrop_MiniKraid(mut k: uint16, game: &mut Game) {
-    let mut n: ::core::ffi::c_int = 4 as ::core::ffi::c_int;
-    loop {
-        game.eproj_spawn_pt.x = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0xf434 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + (NextRandom(game) as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int)
-            - 16 as ::core::ffi::c_int) as uint16;
-        game.eproj_spawn_pt.y = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0xf436 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + ((*((&raw mut game.g_ram as *mut uint8).offset(0x5e5 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                & 0x1f00 as ::core::ffi::c_int)
-                >> 8 as ::core::ffi::c_int)
-            - 16 as ::core::ffi::c_int) as uint16;
-        SpawnEnemyDrops(
-            addr_kEnemyDef_E0FF as ::core::ffi::c_int as uint16,
-            k,
-            0 as uint16,
-            game,
-        );
-        n -= 1;
-        if !(n != 0) {
-            break;
-        }
+unsafe fn spawn_nearby_enemy_item_drops(definition: u16, index: u16, count: u16, game: &mut Game) {
+    for _ in 0..count {
+        // X origin is read before RNG; Y origin and random high byte are live afterward.
+        let x = game.special_death_item_drop_x_origin_pos();
+        let random = NextRandom(game);
+        game.eproj_spawn_pt.x = x.wrapping_add(random & 0x1f).wrapping_sub(16);
+        let y = game.special_death_item_drop_y_origin_pos();
+        let random_y = (game.random_number() & 0x1f00) >> 8;
+        game.eproj_spawn_pt.y = y.wrapping_add(random_y).wrapping_sub(16);
+        SpawnEnemyDrops(definition, index, 0, game);
     }
 }
-pub unsafe fn Enemy_ItemDrop_LowerNorfairSpacePirate(mut k: uint16, game: &mut Game) {
-    let mut n: ::core::ffi::c_int = 5 as ::core::ffi::c_int;
-    loop {
-        game.eproj_spawn_pt.x = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0xf434 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + (NextRandom(game) as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int)
-            - 16 as ::core::ffi::c_int) as uint16;
-        game.eproj_spawn_pt.y = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0xf436 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + ((*((&raw mut game.g_ram as *mut uint8).offset(0x5e5 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                & 0x1f00 as ::core::ffi::c_int)
-                >> 8 as ::core::ffi::c_int)
-            - 16 as ::core::ffi::c_int) as uint16;
-        SpawnEnemyDrops(
-            addr_kEnemyDef_F593 as ::core::ffi::c_int as uint16,
-            k,
-            0 as uint16,
-            game,
-        );
-        n -= 1;
-        if !(n != 0) {
-            break;
-        }
+
+unsafe fn spawn_area_enemy_item_drops(
+    definition: u16,
+    index: u16,
+    x: u16,
+    y: u16,
+    x_mask: u16,
+    game: &mut Game,
+) {
+    for _ in 0..16 {
+        game.eproj_spawn_pt.x = (NextRandom(game) & x_mask).wrapping_add(x);
+        game.eproj_spawn_pt.y = ((game.random_number() & 0x3f00) >> 8).wrapping_add(y);
+        SpawnEnemyDrops(definition, index, 0, game);
     }
 }
-pub unsafe fn Enemy_ItemDrop_Metroid(mut k: uint16, game: &mut Game) {
-    let mut n: ::core::ffi::c_int = 5 as ::core::ffi::c_int;
-    loop {
-        game.eproj_spawn_pt.x = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0xf434 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + (NextRandom(game) as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int)
-            - 16 as ::core::ffi::c_int) as uint16;
-        game.eproj_spawn_pt.y = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0xf436 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + ((*((&raw mut game.g_ram as *mut uint8).offset(0x5e5 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                & 0x1f00 as ::core::ffi::c_int)
-                >> 8 as ::core::ffi::c_int)
-            - 16 as ::core::ffi::c_int) as uint16;
-        SpawnEnemyDrops(
-            addr_kEnemyDef_DD7F as ::core::ffi::c_int as uint16,
-            k,
-            0 as uint16,
-            game,
-        );
-        n -= 1;
-        if !(n != 0) {
-            break;
-        }
-    }
+
+pub unsafe fn Enemy_ItemDrop_MiniKraid(k: uint16, game: &mut Game) {
+    spawn_nearby_enemy_item_drops(addr_kEnemyDef_E0FF as u16, k, 4, game);
 }
-pub unsafe fn Enemy_ItemDrop_Ridley(mut k: uint16, game: &mut Game) {
-    let mut n: ::core::ffi::c_int = 16 as ::core::ffi::c_int;
-    loop {
-        game.eproj_spawn_pt.x = ((NextRandom(game) as ::core::ffi::c_int
-            & 0x7f as ::core::ffi::c_int)
-            + 64 as ::core::ffi::c_int) as uint16;
-        game.eproj_spawn_pt.y = (((*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x5e5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            & 0x3f00 as ::core::ffi::c_int)
-            >> 8 as ::core::ffi::c_int)
-            + 320 as ::core::ffi::c_int) as uint16;
-        SpawnEnemyDrops(
-            addr_kEnemyDef_E17F as ::core::ffi::c_int as uint16,
-            k,
-            0 as uint16,
-            game,
-        );
-        n -= 1;
-        if !(n != 0) {
-            break;
-        }
-    }
+pub unsafe fn Enemy_ItemDrop_LowerNorfairSpacePirate(k: uint16, game: &mut Game) {
+    spawn_nearby_enemy_item_drops(addr_kEnemyDef_F593 as u16, k, 5, game);
 }
-pub unsafe fn Enemy_ItemDrop_Crocomire(mut k: uint16, game: &mut Game) {
-    let mut n: ::core::ffi::c_int = 16 as ::core::ffi::c_int;
-    loop {
-        game.eproj_spawn_pt.x = ((NextRandom(game) as ::core::ffi::c_int
-            & 0x7f as ::core::ffi::c_int)
-            + 576 as ::core::ffi::c_int) as uint16;
-        game.eproj_spawn_pt.y = (((*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x5e5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            & 0x3f00 as ::core::ffi::c_int)
-            >> 8 as ::core::ffi::c_int)
-            + 96 as ::core::ffi::c_int) as uint16;
-        SpawnEnemyDrops(
-            addr_kEnemyDef_DDBF as ::core::ffi::c_int as uint16,
-            k,
-            0 as uint16,
-            game,
-        );
-        n -= 1;
-        if !(n != 0) {
-            break;
-        }
-    }
+pub unsafe fn Enemy_ItemDrop_Metroid(k: uint16, game: &mut Game) {
+    spawn_nearby_enemy_item_drops(addr_kEnemyDef_DD7F as u16, k, 5, game);
 }
-pub unsafe fn Enemy_ItemDrop_Phantoon(mut k: uint16, game: &mut Game) {
-    let mut n: ::core::ffi::c_int = 16 as ::core::ffi::c_int;
-    loop {
-        game.eproj_spawn_pt.x = ((NextRandom(game) as ::core::ffi::c_int
-            & 0x7f as ::core::ffi::c_int)
-            + 64 as ::core::ffi::c_int) as uint16;
-        game.eproj_spawn_pt.y = (((*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x5e5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            & 0x3f00 as ::core::ffi::c_int)
-            >> 8 as ::core::ffi::c_int)
-            + 96 as ::core::ffi::c_int) as uint16;
-        SpawnEnemyDrops(
-            addr_kEnemyDef_E4BF as ::core::ffi::c_int as uint16,
-            k,
-            0 as uint16,
-            game,
-        );
-        n -= 1;
-        if !(n != 0) {
-            break;
-        }
-    }
+pub unsafe fn Enemy_ItemDrop_Ridley(k: uint16, game: &mut Game) {
+    spawn_area_enemy_item_drops(addr_kEnemyDef_E17F as u16, k, 64, 320, 127, game);
 }
-pub unsafe fn Enemy_ItemDrop_Botwoon(mut k: uint16, game: &mut Game) {
-    let mut n: ::core::ffi::c_int = 16 as ::core::ffi::c_int;
-    loop {
-        game.eproj_spawn_pt.x = ((NextRandom(game) as ::core::ffi::c_int
-            & 0x7f as ::core::ffi::c_int)
-            + 64 as ::core::ffi::c_int) as uint16;
-        game.eproj_spawn_pt.y = (((*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x5e5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            & 0x3f00 as ::core::ffi::c_int)
-            >> 8 as ::core::ffi::c_int)
-            + 128 as ::core::ffi::c_int) as uint16;
-        SpawnEnemyDrops(
-            addr_kEnemyDef_F293 as ::core::ffi::c_int as uint16,
-            k,
-            0 as uint16,
-            game,
-        );
-        n -= 1;
-        if !(n != 0) {
-            break;
-        }
-    }
+pub unsafe fn Enemy_ItemDrop_Crocomire(k: uint16, game: &mut Game) {
+    spawn_area_enemy_item_drops(addr_kEnemyDef_DDBF as u16, k, 576, 96, 127, game);
 }
-pub unsafe fn Enemy_ItemDrop_Kraid(mut k: uint16, game: &mut Game) {
-    let mut n: ::core::ffi::c_int = 16 as ::core::ffi::c_int;
-    loop {
-        game.eproj_spawn_pt.x =
-            (NextRandom(game) as uint8 as ::core::ffi::c_int + 128 as ::core::ffi::c_int) as uint16;
-        game.eproj_spawn_pt.y = (((*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x5e5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            & 0x3f00 as ::core::ffi::c_int)
-            >> 8 as ::core::ffi::c_int)
-            + 352 as ::core::ffi::c_int) as uint16;
-        SpawnEnemyDrops(
-            addr_kEnemyDef_E2BF as ::core::ffi::c_int as uint16,
-            k,
-            0 as uint16,
-            game,
-        );
-        n -= 1;
-        if !(n != 0) {
-            break;
-        }
-    }
+pub unsafe fn Enemy_ItemDrop_Phantoon(k: uint16, game: &mut Game) {
+    spawn_area_enemy_item_drops(addr_kEnemyDef_E4BF as u16, k, 64, 96, 127, game);
 }
-pub unsafe fn Enemy_ItemDrop_BombTorizo(mut k: uint16, game: &mut Game) {
-    let mut n: ::core::ffi::c_int = 16 as ::core::ffi::c_int;
-    loop {
-        game.eproj_spawn_pt.x = ((NextRandom(game) as ::core::ffi::c_int
-            & 0x7f as ::core::ffi::c_int)
-            + 64 as ::core::ffi::c_int) as uint16;
-        game.eproj_spawn_pt.y = (((*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x5e5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            & 0x3f00 as ::core::ffi::c_int)
-            >> 8 as ::core::ffi::c_int)
-            + 96 as ::core::ffi::c_int) as uint16;
-        SpawnEnemyDrops(
-            addr_kEnemyDef_EEFF as ::core::ffi::c_int as uint16,
-            k,
-            0 as uint16,
-            game,
-        );
-        n -= 1;
-        if !(n != 0) {
-            break;
-        }
-    }
+pub unsafe fn Enemy_ItemDrop_Botwoon(k: uint16, game: &mut Game) {
+    spawn_area_enemy_item_drops(addr_kEnemyDef_F293 as u16, k, 64, 128, 127, game);
 }
-pub unsafe fn Enemy_ItemDrop_GoldenTorizo(mut k: uint16, game: &mut Game) {
-    let mut n: ::core::ffi::c_int = 16 as ::core::ffi::c_int;
-    loop {
-        game.eproj_spawn_pt.x =
-            (NextRandom(game) as uint8 as ::core::ffi::c_int + 128 as ::core::ffi::c_int) as uint16;
-        game.eproj_spawn_pt.y = (((*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x5e5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            & 0x3f00 as ::core::ffi::c_int)
-            >> 8 as ::core::ffi::c_int)
-            + 288 as ::core::ffi::c_int) as uint16;
-        SpawnEnemyDrops(
-            addr_kEnemyDef_EEFF as ::core::ffi::c_int as uint16,
-            k,
-            0 as uint16,
-            game,
-        );
-        n -= 1;
-        if !(n != 0) {
-            break;
-        }
-    }
+pub unsafe fn Enemy_ItemDrop_Kraid(k: uint16, game: &mut Game) {
+    spawn_area_enemy_item_drops(addr_kEnemyDef_E2BF as u16, k, 128, 352, 255, game);
 }
-pub unsafe fn Enemy_ItemDrop_SporeSpawn(mut k: uint16, game: &mut Game) {
-    let mut n: ::core::ffi::c_int = 16 as ::core::ffi::c_int;
-    loop {
-        game.eproj_spawn_pt.x = ((NextRandom(game) as ::core::ffi::c_int
-            & 0x7f as ::core::ffi::c_int)
-            + 64 as ::core::ffi::c_int) as uint16;
-        game.eproj_spawn_pt.y = (((*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x5e5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            & 0x3f00 as ::core::ffi::c_int)
-            >> 8 as ::core::ffi::c_int)
-            + 528 as ::core::ffi::c_int) as uint16;
-        SpawnEnemyDrops(
-            addr_kEnemyDef_DF3F as ::core::ffi::c_int as uint16,
-            k,
-            0 as uint16,
-            game,
-        );
-        n -= 1;
-        if !(n != 0) {
-            break;
-        }
-    }
+pub unsafe fn Enemy_ItemDrop_BombTorizo(k: uint16, game: &mut Game) {
+    spawn_area_enemy_item_drops(addr_kEnemyDef_EEFF as u16, k, 64, 96, 127, game);
 }
-pub unsafe fn Enemy_ItemDrop_Draygon(mut k: uint16, game: &mut Game) {
-    let mut n: ::core::ffi::c_int = 16 as ::core::ffi::c_int;
-    loop {
-        game.eproj_spawn_pt.x =
-            (NextRandom(game) as uint8 as ::core::ffi::c_int + 128 as ::core::ffi::c_int) as uint16;
-        game.eproj_spawn_pt.y = (((*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x5e5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            & 0x3f00 as ::core::ffi::c_int)
-            >> 8 as ::core::ffi::c_int)
-            + 352 as ::core::ffi::c_int) as uint16;
-        SpawnEnemyDrops(
-            addr_kEnemyDef_DE3F as ::core::ffi::c_int as uint16,
-            k,
-            0 as uint16,
-            game,
-        );
-        n -= 1;
-        if !(n != 0) {
-            break;
-        }
-    }
+pub unsafe fn Enemy_ItemDrop_GoldenTorizo(k: uint16, game: &mut Game) {
+    spawn_area_enemy_item_drops(addr_kEnemyDef_EEFF as u16, k, 128, 288, 255, game);
+}
+pub unsafe fn Enemy_ItemDrop_SporeSpawn(k: uint16, game: &mut Game) {
+    spawn_area_enemy_item_drops(addr_kEnemyDef_DF3F as u16, k, 64, 528, 127, game);
+}
+pub unsafe fn Enemy_ItemDrop_Draygon(k: uint16, game: &mut Game) {
+    spawn_area_enemy_item_drops(addr_kEnemyDef_DE3F as u16, k, 128, 352, 255, game);
 }
 pub unsafe fn CompareDistToSamus_X(mut k: uint16, mut a: uint16, game: &mut Game) -> uint8 {
     let mut i: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);

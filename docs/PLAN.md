@@ -1983,6 +1983,22 @@ Raw offsets -12, unsafe functions -1, cast lines -30, Rust lines -5; other
 counters unchanged. Next: repeated enemy item-drop positioning loops, retaining
 live RNG/drop coordinates, per-drop callbacks and original counts.
 
+Twelve special enemy item-drop entries now share nearby-origin and fixed-area
+positioning loops, with named live RNG/origin reads. Nearby X origin still
+reads before NextRandom; Y origin and stored RNG high byte read afterward.
+Every iteration retains X-then-Y assignments followed by one SpawnEnemyDrops,
+with original counts, definition selection, masks and fixed coordinates.
+Callback mutations remain live on the next iteration. Prior Rust comparison
+passes 3,145,728 full-RAM/RNG/drop-trace cases; independent comparison passes
+6,291,456 RAM/context/trace cases with separately varied returned/stored RNG,
+mutating origins and spawn callbacks. Stable optimized core/DLL build and
+direct full-source format pass; Cargo fmt/build remain ASR-denied. Any%:
+129,712 frames, zero failures (198.64s); Waver route: 58,109 frames, zero
+failures (92.74s). Raw offsets -18, cast lines -123, Rust lines -218; unsafe
+functions +2 are the shared loops calling the legacy spawn boundary.
+Next: CompareDistToSamus_X/Y safe magnitude comparisons, retaining unsigned
+threshold behavior distinct from the within-radius signed-bit helpers.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

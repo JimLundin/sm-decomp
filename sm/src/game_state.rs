@@ -107,6 +107,21 @@ impl Game {
         start
     }
 
+    /// random_number ($7E:05E5 in ram_map).
+    pub fn random_number(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x5e5], self.g_ram[0x5e6]])
+    }
+
+    /// special_death_item_drop_x_origin_pos ($7E:F434 in ram_map).
+    pub fn special_death_item_drop_x_origin_pos(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xf434], self.g_ram[0xf435]])
+    }
+
+    /// special_death_item_drop_y_origin_pos ($7E:F436 in ram_map).
+    pub fn special_death_item_drop_y_origin_pos(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xf436], self.g_ram[0xf437]])
+    }
+
     /// layer1_x_pos ($7E:0911 in ram_map).
     pub fn layer1_x_pos(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0x911], self.g_ram[0x912]])
