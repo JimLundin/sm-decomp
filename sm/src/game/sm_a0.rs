@@ -10603,41 +10603,25 @@ fn EnemyBlockCollVertReact_Slope_Square(
     }
     u8::from(byte_A0C435[index ^ 1] & 0x80 != 0)
 }
-unsafe fn EnemyBlockCollHorizReact_Slope_NonSquare(
-    mut ebci: &mut EnemyBlockCollInfo,
+fn EnemyBlockCollHorizReact_Slope_NonSquare(
+    collision: &mut EnemyBlockCollInfo,
     game: &mut Game,
 ) -> uint8 {
-    if ebci.ebci_r32 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int
-    {
-        return (ebci.ebci_r32 as ::core::ffi::c_int & 0x4000 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
+    if collision.ebci_r32 & 0x8000 == 0 {
+        return u8::from(collision.ebci_r32 & 0x4000 != 0);
     }
-    let mut i: ::core::ffi::c_int = 2 as ::core::ffi::c_int
-        * (*((&raw mut game.g_ram as *mut uint8).offset(0x1e77 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            & 0x1f as ::core::ffi::c_int);
-    if ebci.ebci_r18_r20 >= 0 as int32 {
-        ebci.ebci_r18_r20 = (ebci.ebci_r18_r20 >> 8 as ::core::ffi::c_int)
-            * *(game.g_rom.offset(
-                (((0xa0c49f as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0xa0c49f as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
-                .offset((i + 1 as ::core::ffi::c_int) as isize) as int32;
+    let slope = usize::from(game.current_slope_bts() & 0x1f);
+    let multiplier = i32::from(game.read_rom_word(0xa0c49f, (slope * 2 + 1) * 2));
+    let displacement = collision.ebci_r18_r20 >> 8;
+    // Negative movement truncates the shifted displacement to a signed word.
+    // Keep this asymmetry: positive movement retains all 24 shifted bits.
+    let displacement = if collision.ebci_r18_r20 < 0 {
+        i32::from(displacement as i16)
     } else {
-        ebci.ebci_r18_r20 = -(-((ebci.ebci_r18_r20 >> 8 as ::core::ffi::c_int) as int16
-            as ::core::ffi::c_int)
-            * *(game.g_rom.offset(
-                (((0xa0c49f as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0xa0c49f as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
-                .offset((i + 1 as ::core::ffi::c_int) as isize) as ::core::ffi::c_int)
-            as int32;
-    }
-    return 0 as uint8;
+        displacement
+    };
+    collision.ebci_r18_r20 = displacement.wrapping_mul(multiplier);
+    0
 }
 unsafe fn EnemyBlockCollVertReact_Slope_NonSquare(
     mut ebci: &mut EnemyBlockCollInfo,

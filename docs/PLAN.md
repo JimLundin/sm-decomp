@@ -1026,6 +1026,37 @@ Samus's low health and enemy contacts. The Bomb-sealed western exit and
 Waver presence remain unproved. No source changes; counters and full any%
 remain unchanged from this pass's checks.
 
+Waver coverage is now reached with normal inputs and the standard oracle:
+target/awake-return/west-door-contact.inputs, 58,109 frames, zero failures
+(86.55s), ending 990D X1480/Y139 with Morph/Bombs 1004, missiles 0/5.
+Room 990D loads D63F Wavers; this route now sees seventeen rooms and
+seventeen enemy definitions, eighteen rooms in union with the retained 9A44
+branch. The previous fatal westward jump hits DCFF near X286/Y105 with
+Samus at 5 health. From parlor-return-before-hatch.inputs, run/left/jump/shoot
+38, right/shoot 10, shoot 80, neutral 120 brakes and lands X397/Y235 alive
+(west-brake.inputs). Run/left/shoot 6, run/left/jump/shoot 55, neutral 120
+then reaches X298/Y150 (west-from-island.inputs, 57,349/0 probe).
+Fresh Down, neutral 8, fresh Down, neutral 12, left 10, shoot 1,
+neutral 90, left/shoot 30, neutral 90, shoot 1, neutral 90, neutral 120
+reaches X239/Y153 in ball form through the Bomb wall (west-bomb-wall.inputs,
+57,803/0 probe). Left/shoot 45, neutral 20, Up 1, neutral 20,
+left/shoot 100 and neutral 120 crosses the blue door into 990D.
+Samus preserves 5 health through the Parlor exit. No gameplay state was
+injected. Baseline any% passes 129,712 frames, zero failures (187.87s).
+This closes the Waver-presence gap; resume deferred nonsquare slope work.
+
+Horizontal nonsquare slope cleanup uses named saved BTS access, checked
+live-ROM words and wrapping multiplication. Negative displacement retains
+the original signed-16-bit truncation after shifting; positive displacement
+retains all shifted bits. Independent arithmetic comparison covers all
+16,777,216 shifted displacements with seven multiplier boundaries
+(117,440,512 combinations), plus all 65,536 flags/table offsets.
+Stable optimized core/DLL build and direct format pass; Cargo fmt/build
+remain ASR-denied. Updated-source any% passes 129,712 frames, zero failures
+(187.68s); Waver-route passes 58,109 frames, zero failures (86.27s).
+Raw offsets -1, unsafe functions -1, cast lines -20, Rust lines -12.
+Next: vertical nonsquare slope handler, preserving its edge tests and writes.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

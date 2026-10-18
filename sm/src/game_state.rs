@@ -127,6 +127,10 @@ impl Game {
         self.g_ram[0x1e77..0x1e79].copy_from_slice(&bts.to_le_bytes());
     }
 
+    pub fn current_slope_bts(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x1e77], self.g_ram[0x1e78]])
+    }
+
     /// Live level-data word selected by the collision block index.
     pub fn current_level_block(&self) -> u16 {
         let offset = 0x10002 + usize::from(self.cur_block_index()) * 2;
