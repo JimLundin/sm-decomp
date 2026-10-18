@@ -8415,6 +8415,20 @@ CPU counts. Inputs/ROM-derived probes stay ignored. Peer owns cleanup and
 remote sync. Credits, full gameplay/hardware, rendering/audio fidelity,
 masked RAM and ownership remain unfinished.
 
+CPU native-type cleanup (2026-10-19): CPU signatures/locals/casts now use
+native u8/u16/u32/i8/i16/usize types in place of exact generated aliases; the
+module imports only Cpu, SaveLoadFunc and Snes. Shared layout definitions stay
+unchanged. Frozen HEAD `a6e67ec57790066b64250db0e9f0eebf9e4fb8ac` plus alias
+replacement/import cleanup matches live source, preserving assertion strings.
+Initial compilation caught a missed int8_t alias; it was corrected before all
+passing checks. Cargo fmt/check, release library, frozen normal metadata and
+optimized core/DLL builds pass; full frontend linking still lacks SDL2. Prefix
+3,600/0 (1.10s), clean full any% 129,712/0 (51.00s), native exit 0. Temporary
+dispatcher instrumentation matched the old type spelling and supplied no hit
+counts; alias definitions and compilation prove type equivalence, while replay
+provides regression coverage. Rust lines -8; other counters unchanged.
+Gameplay and rendering/audio completeness remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

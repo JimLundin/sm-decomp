@@ -4,12 +4,12 @@ use crate::host::Die;
 use crate::snes::snes::{snes_cpuRead, snes_cpuWrite};
 extern "C" {
     fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
-    fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
+    fn malloc(__size: usize) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
     fn memset(
         __s: *mut ::core::ffi::c_void,
         __c: ::core::ffi::c_int,
-        __n: size_t,
+        __n: usize,
     ) -> *mut ::core::ffi::c_void;
 
     fn __assert_fail(
@@ -20,12 +20,7 @@ extern "C" {
     ) -> !;
 
 }
-pub use crate::types::{
-    __int16_t, __int32_t, __int8_t, __uint16_t, __uint32_t, __uint8_t, int16_t, int32_t, int8_t,
-    size_t, uint16_t, uint32, uint32_t, uint8_t, Apu, ApuHistory as C2RustUnnamed, BgLayer, Cart,
-    Cpu, Dma, DmaChannel, Dsp, DspChannel, DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs,
-    PpuZbufType, SaveLoadFunc, Snes, Spc, Timer, WindowLayer,
-};
+use crate::types::{Cpu, SaveLoadFunc, Snes};
 static cyclesPerOpcode: [u8; 256] = [
     7, 6, 7, 4, 5, 3, 5, 6, 3, 2, 2, 4, 6, 4, 6, 5, 2, 5, 5, 7, 5, 4, 6, 6, 2, 4, 2, 2, 6, 4, 7, 5,
     6, 6, 8, 4, 3, 3, 5, 6, 4, 2, 2, 5, 4, 4, 6, 5, 2, 5, 5, 7, 4, 4, 6, 6, 2, 4, 2, 2, 4, 4, 7, 5,
@@ -36,24 +31,24 @@ static cyclesPerOpcode: [u8; 256] = [
     2, 6, 3, 4, 3, 3, 5, 6, 2, 2, 2, 3, 4, 4, 6, 5, 2, 5, 5, 7, 6, 4, 6, 6, 2, 4, 3, 3, 6, 4, 7, 5,
     2, 6, 3, 4, 3, 3, 5, 6, 2, 2, 2, 3, 4, 4, 6, 5, 2, 5, 5, 7, 5, 4, 6, 6, 2, 4, 4, 2, 8, 4, 7, 5,
 ];
-unsafe fn cpu_read(mut cpu: *mut Cpu, mut adr: uint32_t, game: &mut Game) -> uint8_t {
+unsafe fn cpu_read(mut cpu: *mut Cpu, mut adr: u32, game: &mut Game) -> u8 {
     return snes_cpuRead((*cpu).mem as *mut Snes, adr, game);
 }
-unsafe fn cpu_write(mut cpu: *mut Cpu, mut adr: uint32_t, mut val: uint8_t, game: &mut Game) {
+unsafe fn cpu_write(mut cpu: *mut Cpu, mut adr: u32, mut val: u8, game: &mut Game) {
     snes_cpuWrite((*cpu).mem as *mut Snes, adr, val, game);
 }
 pub unsafe fn cpu_init(
     mut mem: *mut ::core::ffi::c_void,
     mut memType: ::core::ffi::c_int,
 ) -> *mut Cpu {
-    let mut cpu: *mut Cpu = malloc(::core::mem::size_of::<Cpu>() as size_t) as *mut Cpu;
+    let mut cpu: *mut Cpu = malloc(::core::mem::size_of::<Cpu>() as usize) as *mut Cpu;
     memset(
         cpu as *mut ::core::ffi::c_void,
         0 as ::core::ffi::c_int,
-        ::core::mem::size_of::<Cpu>() as size_t,
+        ::core::mem::size_of::<Cpu>() as usize,
     );
     (*cpu).mem = mem;
-    (*cpu).memType = memType as uint8_t;
+    (*cpu).memType = memType as u8;
     return cpu;
 }
 pub unsafe fn cpu_free(mut cpu: *mut Cpu) {
@@ -92,10 +87,10 @@ pub unsafe fn cpu_saveload(
     func.expect("non-null function pointer")(
         ctx,
         &raw mut (*cpu).a as *mut ::core::ffi::c_void,
-        (37 as size_t).wrapping_sub(10 as size_t),
+        (37 as usize).wrapping_sub(10 as usize),
         game,
     );
-    (*cpu).spBreakpoint = 0 as uint16_t;
+    (*cpu).spBreakpoint = 0 as u16;
 }
 pub unsafe fn cpu_runOpcode(cpu: *mut Cpu, game: &mut Game) -> ::core::ffi::c_int {
     (*cpu).cyclesUsed = 0;
@@ -125,17 +120,17 @@ pub unsafe fn cpu_runOpcode(cpu: *mut Cpu, game: &mut Game) -> ::core::ffi::c_in
     cpu_doOpcode(cpu, opcode, game);
     i32::from((*cpu).cyclesUsed)
 }
-unsafe fn cpu_readOpcode(cpu: *mut Cpu, game: &mut Game) -> uint8_t {
+unsafe fn cpu_readOpcode(cpu: *mut Cpu, game: &mut Game) -> u8 {
     let pc = (*cpu).pc;
     (*cpu).pc = (*cpu).pc.wrapping_add(1);
     cpu_read(cpu, u32::from((*cpu).k) << 16 | u32::from(pc), game)
 }
-unsafe fn cpu_readOpcodeWord(cpu: *mut Cpu, game: &mut Game) -> uint16_t {
+unsafe fn cpu_readOpcodeWord(cpu: *mut Cpu, game: &mut Game) -> u16 {
     let low = cpu_readOpcode(cpu, game);
     let high = cpu_readOpcode(cpu, game);
     u16::from_le_bytes([low, high])
 }
-pub unsafe fn cpu_getFlags(cpu: *mut Cpu) -> uint8_t {
+pub unsafe fn cpu_getFlags(cpu: *mut Cpu) -> u8 {
     (u8::from((*cpu).n) << 7)
         | (u8::from((*cpu).v) << 6)
         | (u8::from((*cpu).mf) << 5)
@@ -145,7 +140,7 @@ pub unsafe fn cpu_getFlags(cpu: *mut Cpu) -> uint8_t {
         | (u8::from((*cpu).z) << 1)
         | u8::from((*cpu).c)
 }
-pub unsafe fn cpu_setFlags(cpu: *mut Cpu, val: uint8_t) {
+pub unsafe fn cpu_setFlags(cpu: *mut Cpu, val: u8) {
     (*cpu).n = val & 0x80 != 0;
     (*cpu).v = val & 0x40 != 0;
     (*cpu).mf = val & 0x20 != 0;
@@ -164,7 +159,7 @@ pub unsafe fn cpu_setFlags(cpu: *mut Cpu, val: uint8_t) {
         (*cpu).y &= 0xff;
     }
 }
-unsafe fn cpu_setZN(cpu: *mut Cpu, value: uint16_t, byte: bool) {
+unsafe fn cpu_setZN(cpu: *mut Cpu, value: u16, byte: bool) {
     if byte {
         (*cpu).z = value & 0xff == 0;
         (*cpu).n = value & 0x80 != 0;
@@ -173,46 +168,46 @@ unsafe fn cpu_setZN(cpu: *mut Cpu, value: uint16_t, byte: bool) {
         (*cpu).n = value & 0x8000 != 0;
     }
 }
-unsafe fn cpu_doBranch(cpu: *mut Cpu, value: uint8_t, check: bool) {
+unsafe fn cpu_doBranch(cpu: *mut Cpu, value: u8, check: bool) {
     if check {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
         (*cpu).pc = (*cpu).pc.wrapping_add_signed(value as i8 as i16);
     }
 }
-unsafe fn cpu_pullByte(cpu: *mut Cpu, game: &mut Game) -> uint8_t {
+unsafe fn cpu_pullByte(cpu: *mut Cpu, game: &mut Game) -> u8 {
     (*cpu).sp = (*cpu).sp.wrapping_add(1);
     if (*cpu).e {
         (*cpu).sp = (*cpu).sp & 0xff | 0x100;
     }
     cpu_read(cpu, u32::from((*cpu).sp), game)
 }
-unsafe fn cpu_pushByte(cpu: *mut Cpu, value: uint8_t, game: &mut Game) {
+unsafe fn cpu_pushByte(cpu: *mut Cpu, value: u8, game: &mut Game) {
     cpu_write(cpu, u32::from((*cpu).sp), value, game);
     (*cpu).sp = (*cpu).sp.wrapping_sub(1);
     if (*cpu).e {
         (*cpu).sp = (*cpu).sp & 0xff | 0x100;
     }
 }
-unsafe fn cpu_pullWord(cpu: *mut Cpu, game: &mut Game) -> uint16_t {
+unsafe fn cpu_pullWord(cpu: *mut Cpu, game: &mut Game) -> u16 {
     let low = cpu_pullByte(cpu, game);
     let high = cpu_pullByte(cpu, game);
     u16::from_le_bytes([low, high])
 }
-unsafe fn cpu_pushWord(cpu: *mut Cpu, value: uint16_t, game: &mut Game) {
+unsafe fn cpu_pushWord(cpu: *mut Cpu, value: u16, game: &mut Game) {
     let [low, high] = value.to_le_bytes();
     cpu_pushByte(cpu, high, game);
     cpu_pushByte(cpu, low, game);
 }
-unsafe fn cpu_readWord(cpu: *mut Cpu, adrl: uint32_t, adrh: uint32_t, game: &mut Game) -> uint16_t {
+unsafe fn cpu_readWord(cpu: *mut Cpu, adrl: u32, adrh: u32, game: &mut Game) -> u16 {
     let low = cpu_read(cpu, adrl, game);
     let high = cpu_read(cpu, adrh, game);
     u16::from_le_bytes([low, high])
 }
 unsafe fn cpu_writeWord(
     cpu: *mut Cpu,
-    adrl: uint32_t,
-    adrh: uint32_t,
-    value: uint16_t,
+    adrl: u32,
+    adrh: u32,
+    value: u16,
     reversed: bool,
     game: &mut Game,
 ) {
@@ -461,7 +456,7 @@ unsafe fn address_absolute_long_x(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) 
         adr.wrapping_add(u32::from((*cpu).x)).wrapping_add(1) & 0xffffff,
     )
 }
-unsafe fn address_absolute_indexed_indirect(cpu: *mut Cpu, game: &mut Game) -> uint16_t {
+unsafe fn address_absolute_indexed_indirect(cpu: *mut Cpu, game: &mut Game) -> u16 {
     let adr = cpu_readOpcodeWord(cpu, game);
     cpu_readWord(
         cpu,
@@ -470,7 +465,7 @@ unsafe fn address_absolute_indexed_indirect(cpu: *mut Cpu, game: &mut Game) -> u
         game,
     )
 }
-unsafe fn cpu_and(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
+unsafe fn cpu_and(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
         let value = u16::from(cpu_read(cpu, low, game));
         (*cpu).a = (*cpu).a & 0xff00 | ((*cpu).a & value) & 0xff;
@@ -481,7 +476,7 @@ unsafe fn cpu_and(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
     }
     cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
 }
-unsafe fn cpu_ora(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
+unsafe fn cpu_ora(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
         let value = u16::from(cpu_read(cpu, low, game));
         (*cpu).a = (*cpu).a & 0xff00 | ((*cpu).a | value) & 0xff;
@@ -492,7 +487,7 @@ unsafe fn cpu_ora(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
     }
     cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
 }
-unsafe fn cpu_eor(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
+unsafe fn cpu_eor(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
         let value = u16::from(cpu_read(cpu, low, game));
         (*cpu).a = (*cpu).a & 0xff00 | ((*cpu).a ^ value) & 0xff;
@@ -503,9 +498,9 @@ unsafe fn cpu_eor(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
     }
     cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
 }
-unsafe fn cpu_adc(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
+unsafe fn cpu_adc(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
-        let value: uint8_t = cpu_read(cpu, low, game);
+        let value: u8 = cpu_read(cpu, low, game);
         let mut result: i32 = 0;
         if (*cpu).d {
             result = (i32::from((*cpu).a) & 0xf) + (i32::from(value) & 0xf) + i32::from((*cpu).c);
@@ -522,10 +517,10 @@ unsafe fn cpu_adc(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
             result += 0x60;
         }
         (*cpu).c = result > 0xff;
-        (*cpu).a = (i32::from((*cpu).a) & 0xff00 | result & 0xff) as uint16_t;
+        (*cpu).a = (i32::from((*cpu).a) & 0xff00 | result & 0xff) as u16;
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        let value_0: uint16_t = cpu_readWord(cpu, low, high, game);
+        let value_0: u16 = cpu_readWord(cpu, low, high, game);
         let mut result_0: i32 = 0;
         if (*cpu).d {
             result_0 =
@@ -551,11 +546,11 @@ unsafe fn cpu_adc(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
             result_0 += 0x6000;
         }
         (*cpu).c = result_0 > 0xffff;
-        (*cpu).a = result_0 as uint16_t;
+        (*cpu).a = result_0 as u16;
     }
     cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
 }
-unsafe fn cpu_sbc(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
+unsafe fn cpu_sbc(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
         let value = !cpu_read(cpu, low, game);
         let mut result: i32 = 0;
@@ -574,7 +569,7 @@ unsafe fn cpu_sbc(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
             result -= 0x60;
         }
         (*cpu).c = result > 0xff;
-        (*cpu).a = (i32::from((*cpu).a) & 0xff00 | result & 0xff) as uint16_t;
+        (*cpu).a = (i32::from((*cpu).a) & 0xff00 | result & 0xff) as u16;
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
         let value_0 = !cpu_readWord(cpu, low, high, game);
@@ -608,11 +603,11 @@ unsafe fn cpu_sbc(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
             result_0 -= 0x6000;
         }
         (*cpu).c = result_0 > 0xffff;
-        (*cpu).a = result_0 as uint16_t;
+        (*cpu).a = result_0 as u16;
     }
     cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
 }
-unsafe fn cpu_cmp(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
+unsafe fn cpu_cmp(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).mf {
         let value = cpu_read(cpu, low, game);
         let result = u32::from((*cpu).a & 0xff) + u32::from(!value) + 1;
@@ -627,7 +622,7 @@ unsafe fn cpu_cmp(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
     };
     cpu_setZN(cpu, result as u16, (*cpu).mf);
 }
-unsafe fn cpu_cpx(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
+unsafe fn cpu_cpx(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).xf {
         let value = cpu_read(cpu, low, game);
         let result = u32::from((*cpu).x & 0xff) + u32::from(!value) + 1;
@@ -642,7 +637,7 @@ unsafe fn cpu_cpx(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
     };
     cpu_setZN(cpu, result as u16, (*cpu).xf);
 }
-unsafe fn cpu_cpy(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
+unsafe fn cpu_cpy(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).xf {
         let value = cpu_read(cpu, low, game);
         let result = u32::from((*cpu).y & 0xff) + u32::from(!value) + 1;
@@ -657,7 +652,7 @@ unsafe fn cpu_cpy(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
     };
     cpu_setZN(cpu, result as u16, (*cpu).xf);
 }
-unsafe fn cpu_bit(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
+unsafe fn cpu_bit(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
         let value = cpu_read(cpu, low, game);
         (*cpu).z = (*cpu).a as u8 & value == 0;
@@ -671,7 +666,7 @@ unsafe fn cpu_bit(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
         (*cpu).v = value & 0x4000 != 0;
     }
 }
-unsafe fn cpu_lda(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
+unsafe fn cpu_lda(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
         (*cpu).a = (*cpu).a & 0xff00 | u16::from(cpu_read(cpu, low, game));
     } else {
@@ -680,7 +675,7 @@ unsafe fn cpu_lda(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
     }
     cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
 }
-unsafe fn cpu_ldx(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
+unsafe fn cpu_ldx(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).xf {
         (*cpu).x = u16::from(cpu_read(cpu, low, game));
     } else {
@@ -689,7 +684,7 @@ unsafe fn cpu_ldx(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
     }
     cpu_setZN(cpu, (*cpu).x, (*cpu).xf);
 }
-unsafe fn cpu_ldy(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
+unsafe fn cpu_ldy(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).xf {
         (*cpu).y = u16::from(cpu_read(cpu, low, game));
     } else {
@@ -698,7 +693,7 @@ unsafe fn cpu_ldy(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
     }
     cpu_setZN(cpu, (*cpu).y, (*cpu).xf);
 }
-unsafe fn cpu_sta(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
+unsafe fn cpu_sta(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
         cpu_write(cpu, low, (*cpu).a as u8, game);
     } else {
@@ -706,7 +701,7 @@ unsafe fn cpu_sta(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
         cpu_writeWord(cpu, low, high, (*cpu).a, false, game);
     }
 }
-unsafe fn cpu_stx(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
+unsafe fn cpu_stx(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).xf {
         cpu_write(cpu, low, (*cpu).x as u8, game);
     } else {
@@ -714,7 +709,7 @@ unsafe fn cpu_stx(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
         cpu_writeWord(cpu, low, high, (*cpu).x, false, game);
     }
 }
-unsafe fn cpu_sty(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
+unsafe fn cpu_sty(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).xf {
         cpu_write(cpu, low, (*cpu).y as u8, game);
     } else {
@@ -722,7 +717,7 @@ unsafe fn cpu_sty(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
         cpu_writeWord(cpu, low, high, (*cpu).y, false, game);
     }
 }
-unsafe fn cpu_stz(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
+unsafe fn cpu_stz(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
         cpu_write(cpu, low, 0, game);
     } else {
@@ -730,7 +725,7 @@ unsafe fn cpu_stz(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
         cpu_writeWord(cpu, low, high, 0, false, game);
     }
 }
-unsafe fn cpu_ror(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
+unsafe fn cpu_ror(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let (result, carry) = if (*cpu).mf {
         let value = cpu_read(cpu, low, game);
         let carry = value & 1 != 0;
@@ -748,7 +743,7 @@ unsafe fn cpu_ror(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
     cpu_setZN(cpu, result, (*cpu).mf);
     (*cpu).c = carry;
 }
-unsafe fn cpu_rol(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
+unsafe fn cpu_rol(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).mf {
         let result = (u32::from(cpu_read(cpu, low, game)) << 1) | u32::from((*cpu).c);
         (*cpu).c = result & 0x100 != 0;
@@ -763,7 +758,7 @@ unsafe fn cpu_rol(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
     };
     cpu_setZN(cpu, result as u16, (*cpu).mf);
 }
-unsafe fn cpu_lsr(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
+unsafe fn cpu_lsr(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).mf {
         let value = cpu_read(cpu, low, game);
         (*cpu).c = value & 1 != 0;
@@ -780,7 +775,7 @@ unsafe fn cpu_lsr(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
     };
     cpu_setZN(cpu, result, (*cpu).mf);
 }
-unsafe fn cpu_asl(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
+unsafe fn cpu_asl(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).mf {
         let result = u32::from(cpu_read(cpu, low, game)) << 1;
         (*cpu).c = result & 0x100 != 0;
@@ -795,7 +790,7 @@ unsafe fn cpu_asl(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
     };
     cpu_setZN(cpu, result as u16, (*cpu).mf);
 }
-unsafe fn cpu_inc(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
+unsafe fn cpu_inc(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).mf {
         let result = u16::from(cpu_read(cpu, low, game)).wrapping_add(1);
         cpu_write(cpu, low, result as u8, game);
@@ -808,7 +803,7 @@ unsafe fn cpu_inc(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
     };
     cpu_setZN(cpu, result, (*cpu).mf);
 }
-unsafe fn cpu_dec(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
+unsafe fn cpu_dec(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).mf {
         let result = u16::from(cpu_read(cpu, low, game)).wrapping_sub(1);
         cpu_write(cpu, low, result as u8, game);
@@ -821,7 +816,7 @@ unsafe fn cpu_dec(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
     };
     cpu_setZN(cpu, result, (*cpu).mf);
 }
-unsafe fn cpu_tsb(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
+unsafe fn cpu_tsb(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
         let value = cpu_read(cpu, low, game);
         (*cpu).z = (*cpu).a as u8 & value == 0;
@@ -833,7 +828,7 @@ unsafe fn cpu_tsb(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game)
         cpu_writeWord(cpu, low, high, value | (*cpu).a, true, game);
     }
 }
-unsafe fn cpu_trb(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
+unsafe fn cpu_trb(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
         let value = cpu_read(cpu, low, game);
         (*cpu).z = (*cpu).a as u8 & value == 0;
@@ -851,12 +846,12 @@ pub unsafe fn DumpCpuHistory(game: &mut Game) {
     while i < 8 as ::core::ffi::c_int {
         printf(
             b"PC history: 0x%x\n\0" as *const u8 as *const ::core::ffi::c_char,
-            game.pc_hist[(game.pc_hist_ctr.wrapping_add(i as uint32_t) & 7 as uint32_t) as usize],
+            game.pc_hist[(game.pc_hist_ctr.wrapping_add(i as u32) & 7 as u32) as usize],
         );
         i += 1;
     }
 }
-unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
+unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
     // Preserve the inherited history value of 0xffffffff when PC is zero.
     let cur_pc = (i32::from((*cpu).k) << 16 | (i32::from((*cpu).pc) - 1)) as u32;
     game.pc_hist[game.pc_hist_ctr as usize] = cur_pc;
@@ -864,25 +859,22 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
     loop {
         match opcode {
             0 => {
-                let mut addr: uint32_t =
-                    (((*cpu).k as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                        | (*cpu).pc as ::core::ffi::c_int
-                        | 0x800000 as ::core::ffi::c_int) as uint32_t;
-                opcode = CpuOpcodeHook((addr as uint32).wrapping_sub(1 as uint32), game) as uint8_t;
+                let mut addr: u32 = (((*cpu).k as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
+                    | (*cpu).pc as ::core::ffi::c_int
+                    | 0x800000 as ::core::ffi::c_int) as u32;
+                opcode = CpuOpcodeHook((addr as u32).wrapping_sub(1 as u32), game) as u8;
                 match opcode {
                     0 => {
                         break;
                     }
                     1 => {
                         (*cpu).pc = (cpu_pullWord(cpu, game) as ::core::ffi::c_int
-                            + 1 as ::core::ffi::c_int)
-                            as uint16_t;
+                            + 1 as ::core::ffi::c_int) as u16;
                         break;
                     }
                     2 => {
                         (*cpu).pc = (cpu_pullWord(cpu, game) as ::core::ffi::c_int
-                            + 1 as ::core::ffi::c_int)
-                            as uint16_t;
+                            + 1 as ::core::ffi::c_int) as u16;
                         (*cpu).k = cpu_pullByte(cpu, game);
                         break;
                     }
@@ -908,8 +900,8 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
                 (*cpu).i = true;
                 (*cpu).d = false;
-                (*cpu).k = 0 as uint8_t;
-                (*cpu).pc = cpu_readWord(cpu, 0xffe4 as uint32_t, 0xffe5 as uint32_t, game);
+                (*cpu).k = 0 as u8;
+                (*cpu).pc = cpu_readWord(cpu, 0xffe4 as u32, 0xffe5 as u32, game);
                 break;
             }
             3 => {
@@ -1422,8 +1414,8 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             92 => {
-                let mut value_1: uint16_t = cpu_readOpcodeWord(cpu, game);
-                let mut new_k: uint8_t = cpu_readOpcode(cpu, game);
+                let mut value_1: u16 = cpu_readOpcodeWord(cpu, game);
+                let mut new_k: u8 = cpu_readOpcode(cpu, game);
                 if new_k as ::core::ffi::c_int == 0x80 as ::core::ffi::c_int
                     && value_1 as ::core::ffi::c_int == 0x8573 as ::core::ffi::c_int
                 {
@@ -1473,7 +1465,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                             );
                         }
                     };
-                    (*cpu).spBreakpoint = 0 as uint16_t;
+                    (*cpu).spBreakpoint = 0 as u16;
                     if HookedFunctionRts(
                         (delta == 2 as ::core::ffi::c_int) as ::core::ffi::c_int,
                         game,
@@ -1565,7 +1557,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                             );
                         }
                     };
-                    (*cpu).spBreakpoint = 0 as uint16_t;
+                    (*cpu).spBreakpoint = 0 as u16;
                     if HookedFunctionRts(0 as ::core::ffi::c_int, game) {
                         return;
                     }
@@ -1678,7 +1670,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
             }
             128 => {
                 // Relative branches start after the displacement operand.
-                let displacement = cpu_readOpcode(cpu, game) as int8_t;
+                let displacement = cpu_readOpcode(cpu, game) as i8;
                 (*cpu).pc = (*cpu).pc.wrapping_add_signed(displacement as i16);
                 break;
             }
@@ -1688,7 +1680,7 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             130 => {
-                let displacement = cpu_readOpcodeWord(cpu, game) as int16_t;
+                let displacement = cpu_readOpcodeWord(cpu, game) as i16;
                 (*cpu).pc = (*cpu).pc.wrapping_add_signed(displacement);
                 break;
             }
@@ -2296,9 +2288,9 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             244 => {
-                let mut w: uint16_t = cpu_readOpcodeWord(cpu, game);
+                let mut w: u16 = cpu_readOpcodeWord(cpu, game);
                 if w as ::core::ffi::c_int == 0xc2ae as ::core::ffi::c_int {
-                    (*cpu).y = 0 as uint16_t;
+                    (*cpu).y = 0 as u16;
                 }
                 cpu_pushWord(cpu, w, game);
                 break;
