@@ -6024,6 +6024,38 @@ peer changes require separate integration. Hardware/audio timing, rendering/
 Waver71, masked RAM and credits remain open; held HDMA diagnosis stays
 stopped. Continue executed hardware paths and route coverage.
 
+Second-lift timing audit (2026-10-18): three normal-controller trials
+retain spaced ledge Morph. Apex-bomb60196/71 (182.37s) places another0500
+slot at frame60095 nearY1148; Samus landsY1177 by60135 before it explodes
+around60155, and no second lift occurs. HatchB2B6 stays intact.
+
+The three-shoot sequence60217/71 (160.16s) places a second ground bomb
+before the first lift and shoots again near the apex. Bomb counter reaches2;
+slots5/6 show the ground bomb exploding around60135 while Samus lands.
+No second lift occurs. Delaying the second ground shoot10 frames, while
+keeping the final shoot frame fixed, completes60217/71 (194.48s). It DOES
+produce a second ordinary lift: Y1177 at60135, Y1170 at60140, Y1150 at60150,
+and Y1142 at60160. It never climbs above the first lift's measured height.
+FinalX113/Y1177; no hatch removal, new room or item. All nativeexit1 and
+exactly the same71 ordered rendered diagnostics as frozen Waver baseline.
+
+Do not claim a successful three-bomb chain or that every shoot spawned a
+bomb. Existing probe reads only slots5/6; the early three-shoot trial has
+counter2 with only slot6 visible after60100, indicating another slot outside
+this observation. The delayed trial shows only counter1 after60105; input
+alone does not prove the last bomb was accepted. Next: observe all five bomb
+slots, timers and shoot cooldown around the existing delayed sequence before
+more timing trials. Determine actual spawn/explosion timing and rejected
+shoot input first. This upper-exit investigation began after21:12 and has
+approached its one-hour bound across turns; stop and record findings if the
+next bounded audit cannot resolve it. Held9AD9 ammunition/HDMA stay held.
+
+No maintained Rust edits or own residue delta. Direct full-source formatting
+passes; Cargo fmt/check and release again fail at launch OSerror5. Prior
+same-DLL rendered any%129712/0 (414.98s) remains regression coverage for
+these input-only trials. Concurrent hardware work is separate; assets/probes
+stay ignored. Credits and complete hardware/gameplay fidelity remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
