@@ -4845,6 +4845,29 @@ production edits or maintained tooling are added. This proves executed
 reset behavior, not DMA transfer/device accuracy or full-movie integration,
 which remain separately owned. Held HDMA diagnosis remains stopped.
 
+Independent full-length DMA scheduler QC (2026-10-18): 640 completed runs
+execute 25,170,432 real transfers through dma_cycle and the unchanged byte
+consumer. There are 384 complete initially-zero-size transfers (65,536
+bytes each), spanning all eight channels, all eight modes, both directions
+and fixed/increment/decrement addressing. All 256 simultaneous-channel masks
+also execute, with distinct per-channel sizes. TEMP transfer observations
+match independent channel-priority, address wrapping, remaining-size and
+four-phase offset traces. Exact scheduler cycle-call counts include setup,
+per-byte timer waits and per-channel completion; selected channels finish
+inactive with zero size/offset and expected address. Real PPU scroll writes and
+OAM/VRAM reads consume the transfers, but output-byte/device correctness is
+owned by separate prior tests. No HDMA path is exercised.
+
+A TEMP saturating size decrement wrongly completes the first zero-size
+transfer after 17 cycle calls versus 262,157 expected and fails immediately.
+Original/control native exits are zero/nonzero. Tested dma_doDma, dma_cycle,
+dma_startDma and dma_transferByte bodies match live source. Optimized probe
+core/DLL, normal-core metadata, direct full-source rustfmt and progress pass.
+Only this note changes; no new production code or residue changes. Probes
+remain TEMP; full-movie integration and hardware cycle accuracy stay outside
+this scheduler-semantics claim. Rendering/Waver71, audio/event timing and
+credits remain open; held HDMA diagnosis remains stopped.
+
 Current broad-route revalidation (2026-10-18): committed d217ea15 source
 replays the retained 62,817-frame lead-9ad9-arrive.inputs through the standard
 verifier, passing 62,817/0 (117.57s), native exit 0. It observes 48,819
