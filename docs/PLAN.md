@@ -170,7 +170,14 @@ was not the cause. Only the branch fix enters maintained source in this
 commit; the port-read assertion remains a separate gap. Normal verification
 still uses the Rust audio driver, so its passing replays do not establish
 ROM-driver equivalence. Next: enable valid emulated APU port reads, verify
-the upload path, then compare independently emulated driver output.
+the upload path, then compare independently emulated driver output. Stable
+optimized core/DLL,
+normal-core metadata and direct full-source format pass; Cargo fmt/build
+remain ASR-denied. Dedicated DLL gameplay matches 6b5dee8e; any% passes
+129,712/0 (214.80s), Waver 58,109/0 (103.70s), both process exits 0.
+The focused branch change removes two cast lines; Rust line count and
+other residue counters are unchanged. No diagnostic instrumentation or
+ROM-derived assets enter this commit.
 
 ## Definition of done for any change
 

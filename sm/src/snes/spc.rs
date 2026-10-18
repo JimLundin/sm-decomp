@@ -963,9 +963,9 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
             );
         }
         47 => {
-            (*spc).pc = ((*spc).pc as ::core::ffi::c_int
-                + spc_readOpcode(spc) as int8_t as ::core::ffi::c_int)
-                as uint16_t;
+            // BRA is relative to PC after consuming its displacement byte.
+            let displacement = spc_readOpcode(spc) as i8;
+            (*spc).pc = (*spc).pc.wrapping_add(displacement as u16);
         }
         48 => {
             spc_doBranch(spc, spc_readOpcode(spc), (*spc).n);
