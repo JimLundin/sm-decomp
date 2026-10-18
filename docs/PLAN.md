@@ -947,6 +947,18 @@ direct rustfmt and progress checks pass with all counters unchanged.
 Full any% passes 129,712 frames, zero failures (190.40s). Cargo fmt/build
 remain ASR-denied; prior Linux validation applies to source 90889612.
 
+Post-Bomb Parlor climb preparation now reaches X842/Y459 in normal gameplay:
+target/awake-return/parlor-return-run.inputs passes the standard oracle for
+54,686 frames, zero failures (76.67s). From torizo-return-door.inputs, neutral 5,
+left/jump/shoot 35, neutral 120 reaches X933/Y641; neutral 5,
+left/jump/shoot 60, neutral 120 reaches X837/Y619; neutral 5,
+right/jump/shoot 55, neutral 120 reaches X915/Y539. The next ledge needs
+run/left/shoot 6 before run/left/jump/shoot 30 and neutral 120, landing
+X842/Y459. Ordinary diagonal jumps and a vertical start fall back to the
+Y539 shelf; the running approach clears the overhang. Morph/Bombs remain
+1004 and missiles 0/5. Upper-hall return and Waver presence remain unproved;
+continue from this prefix before the deferred gameplay cleanup.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
