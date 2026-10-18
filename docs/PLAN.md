@@ -329,6 +329,32 @@ remains unresolved. No maintained Rust changes; residue counters unchanged.
 The sound source remains a86198ac, with its any% 129,712/0 and Waver
 58,109/0 baseline.
 
+Cross-driver continuation probe (2026-10-18): after synchronized Rust/
+ROM processing and SFX commands, clone the emulated SPC registers/hardware
+at the timer boundary, replace RAM/DSP with serialized Rust state, then
+continue both emulated SPC instances. All three boot boundaries fail:
+continuation stalls after 6 / 3 / 2 ticks (160 / 400 / 3,600). Preserving
+the ROM stack page does not resolve it. Replacing only mapped driver fields
+while preserving unmapped ROM RAM also stalls at the same points. Thus this
+probe does not establish cross-driver compatibility; matching custom-driver
+roundtrips cannot be generalized to emulated SPC continuation.
+
+At the active 3,600 boundary, preserving the ROM's entire 0000..0019 range
+while copying the other mapped Rust fields permits 512 continuation ticks,
+65,536 sample values and ordered DSP writes to match. Preserving only
+0014..0017 avoids the stall but differs in DSP writes at tick 10; preserving
+ports, temporary fields or LFSR alone does not pass. Combined partial ranges
+also fail. This narrows the discrepancy to serialized low driver state in
+this controlled transfer, but individual causes remain unclassified.
+The test uses copied SPC registers at a boundary, not the application's
+snapshot/mode-switch flow; no production defect is claimed from it alone.
+Next: inspect exact low-state differences and the actual snapshot CPU-state
+setup before changing serialization. Full audio timing, independently
+captured command enforcement and route coverage remain open. No maintained
+source changed; only isolated wrappers/probes were used. Sound source is
+unchanged from a86198ac, whose any% 129,712/0 and Waver 58,109/0 baseline
+still applies. No ROM-derived state is committed.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
