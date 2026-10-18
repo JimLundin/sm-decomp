@@ -1956,6 +1956,20 @@ Unsafe functions -1, cast lines -12, Rust lines -14; other counters unchanged.
 Next: EnemyFunc_B691 enemy position addition, retaining phase sign bits,
 independent X/Y fixed-point carries and byte-backed slot writes.
 
+EnemyFunc_B691 vector position updates now use a safe byte-backed coordinate
+adder. Phase-plus-64/128 sign bits, full-word wrapping negation including
+80000000, independent integer/fraction carries and fraction-before-integer
+writes remain exact. X precedes Y and both retain the slot captured before
+writes, including runtime-field aliasing. Prior Rust comparison passes
+4,259,840 full-RAM cases; independent comparison passes 2,297,152 cases across
+every phase/position/fraction word, u32 boundaries and all enemy indexes.
+Stable optimized core/DLL build and direct full-source format pass; Cargo
+fmt/build remain ASR-denied. Any%: 129,712 frames, zero failures (201.80s);
+Waver route: 58,109 frames, zero failures (98.04s). Raw offsets -1, unsafe
+functions -1, cast lines -6, Rust lines -3; other counters unchanged.
+Next: EnemyFunc_B7A1 Samus previous-position corrections, preserving signed
+word gates, wrapped 12-pixel limits and write order.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

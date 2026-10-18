@@ -9402,34 +9402,31 @@ pub fn ConvertAngleToXy(phase: uint16, amplitude: uint16, game: &mut Game) -> Po
     let y = u32::from(y_sample) * u32::from(amplitude);
     Point32 { x, y }
 }
-pub unsafe fn EnemyFunc_B691(mut varE20: uint16, mut pt: Point32, game: &mut Game) {
-    let mut E: *mut EnemyData = gEnemyData(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    if varE20 as ::core::ffi::c_int + 64 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
-    {
-        AddToHiLo(
-            &raw mut (*E).x_pos,
-            &raw mut (*E).x_subpos,
-            -(pt.x as int32) as uint32,
-        );
+fn add_enemy_vector_coordinate(bytes: &mut [u8], amount: u32) {
+    let integer = u16::from_le_bytes([bytes[0], bytes[1]]);
+    let fraction = u16::from_le_bytes([bytes[2], bytes[3]]);
+    let position = (u32::from(integer) << 16) | u32::from(fraction);
+    let adjusted = position.wrapping_add(amount);
+    bytes[2..4].copy_from_slice(&(adjusted as u16).to_le_bytes());
+    bytes[0..2].copy_from_slice(&((adjusted >> 16) as u16).to_le_bytes());
+}
+
+pub fn EnemyFunc_B691(phase: uint16, pt: Point32, game: &mut Game) {
+    let slot = 0xf78 + usize::from(game.cur_enemy_index());
+    let x = if phase.wrapping_add(64) & 0x80 != 0 {
+        pt.x.wrapping_neg()
     } else {
-        AddToHiLo(&raw mut (*E).x_pos, &raw mut (*E).x_subpos, pt.x);
-    }
-    if varE20 as ::core::ffi::c_int + 128 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
-    {
-        AddToHiLo(
-            &raw mut (*E).y_pos,
-            &raw mut (*E).y_subpos,
-            -(pt.y as int32) as uint32,
-        );
-    } else {
-        AddToHiLo(&raw mut (*E).y_pos, &raw mut (*E).y_subpos, pt.y);
+        pt.x
     };
+    let offset = slot + core::mem::offset_of!(EnemyData, x_pos);
+    add_enemy_vector_coordinate(&mut game.g_ram[offset..offset + 4], x);
+    let y = if phase.wrapping_add(128) & 0x80 != 0 {
+        pt.y.wrapping_neg()
+    } else {
+        pt.y
+    };
+    let offset = slot + core::mem::offset_of!(EnemyData, y_pos);
+    add_enemy_vector_coordinate(&mut game.g_ram[offset..offset + 4], y);
 }
 pub unsafe fn EnemyFunc_Divide(mut a: uint32, mut b: uint32) -> uint32 {
     return if a != 0 {
