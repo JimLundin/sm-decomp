@@ -7921,6 +7921,42 @@ pass; all focused counters unchanged. Live arms match verified source.
 Hardware/render/audio timing and credits remain open; held HDMA diagnosis
 stays stopped. Continue executed control-flow opcode cleanup.
 
+Missile-equipped route opens9AD9 door into9B9D (2026-10-19): from
+65850-frame refilled-9938 input, left24, neutral20, Down1, neutral1100,
+left35, neutral90, right38, neutral120 verifies elevator arrival and control.
+67278/71 (157.36s), nativeexit1; final9AD9 X101/Y907, health69/199,
+missiles5/5, items1004. Enemy contact changes the old endpoint but control
+is proved.21rooms/24enemy definitions restored.
+
+Left/shoot50, neutral60, right/shoot55, neutral70, left/shoot90, neutral120
+reaches the left missile capX37/Y1163. Select1, neutral30, shoot1,
+neutral90, left/shoot100, neutral120 completes68065/71 (155.08s), native
+exit1; still9AD9 with3/5 missiles. Two missiles fired, no passage. Read-only
+ROM instruction listC37A links toC38C: IncrementDoorHitCounterAndJGE takes
+threshold5. The earlier any-missile preinstruction identifies eligible hits,
+not the total required to open this cap.
+
+Three additional fresh shoot presses separated byneutral90, then left/
+shoot100, neutral120 completes68558/71 (156.94s), nativeexit1. Actual room
+transition enters9B9D; final gameplayX731/Y140, health49/199, missiles0/5,
+Morph/Bombs1004. Fifth missile opens the cap. Enemy contact near the endpoint
+reduces health69->49; Samus remains alive. Coverage expands to22rooms/
+25enemy definitions. All three ordered diagnostic lists exactly match
+frozen d217ea15 Waver71; no new failures. No state/inventory writes or ROM
+patches are injected. Retain missile-door-five.inputs as onward prefix.
+
+Next: inspect actual9B9D room geometry/enemies and continue normal movement
+toward progression with49health, preserving this newly opened door. Held
+9AD9 ammunition experiments remain stopped; this passage used the gunship-
+refilled five missiles and does not resume those experiments. Upper99BD
+ascent, cliff tuning and HDMA stay held. Frozen same-DLL explicit-render
+any%129712/0 remains input-only regression, not verification of peer source.
+Cargo fmt/check pass; release-library completion is recorded above; full
+frontend build still fails missingSDL2. Own source/residue delta zero;
+progress changes belong to peer hardware work. Inputs/ROM-derived probes
+stay ignored. Peer owns cleanup and remote sync. Credits, complete gameplay/
+hardware, rendering/audio fidelity, masked RAM and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
