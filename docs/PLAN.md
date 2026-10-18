@@ -6242,6 +6242,30 @@ changes are outside this replay. JSR consumer, arbitrary bank/device bus
 side effects, hardware/render/audio timing and credits remain open; held
 HDMA diagnosis stays stopped. Continue remaining indirect address helpers.
 
+CPU direct-page indirect cleanup (2026-10-18): cpu_adrIdp/Idx use native
+operand/pointer widening, wrapping word pointer offsets and native bank sums.
+Fetch, unaligned-DP penalty and ordered pointer reads remain exact; high target
+address still rereads DB after the low output write. Actual old/current helpers
+pass 33,554,432 substituted-bus cases over every DP/operand pair and both modes,
+with varying X/pointer/DB. Independent addresses/cycles and ordered read traces
+pass. Another 262,144 aliased-output cases match high target and CPU fields.
+Physical WRAM executes 2,097,152 STA/LDA instructions across every value, both
+accumulator widths, four DP boundaries and both indirect modes, including
+unaligned-DP penalties and 7E:FFFF/7F:0000 target-word carry. RAM/value, DP,
+Z/N, PC and cycles pass. Independent physical-bus QC follows. Instrumented
+any% prefix passes 3,600/0 (6.75s), native exit 0, with Idp 34,066 and Idx
+zero calls. Initial probe wrongly required movie hits for both helpers and
+aborted after its passing replay; corrected coverage assertion retains the
+zero-hit report. Dedicated instructions establish Idx execution, not movie
+coverage. Clean frozen 7047eb6f59b50aafe9889d5411822cfed64b66d8 plus only these
+helpers passes any% 129,712/0 (245.46s), native exit 0. Direct full-source
+format, normal-core metadata and optimized clean/probe core/DLL builds pass;
+Cargo fmt/release remain launch-denied. Progress/diff checks pass; focused
+cast lines -26 and Rust lines -11, other categories unchanged. Later peer
+changes are outside this replay. Physical device/ROM pointers, full Cartesian
+input coverage, hardware/render/audio timing and credits remain open; held
+HDMA diagnosis stays stopped. Continue remaining indirect address helpers.
+
 Independent direct-page indirect QC (2026-10-18): cpu_adrIdp/Idx candidate
 passes 442,362 actual old/current byte/word LDA instructions, native exit
 zero. Idx executes all DP words with operand 00/01/FF and cancelling X to
