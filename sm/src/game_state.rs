@@ -364,6 +364,21 @@ impl Game {
         u16::from_le_bytes([self.g_ram[offset], self.g_ram[offset + 1]])
     }
 
+    /// VRAM write queue byte cursor ($7E:0330 in ram_map).
+    pub fn vram_write_queue_tail(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x330], self.g_ram[0x331]])
+    }
+
+    pub fn set_vram_write_queue_tail(&mut self, value: u16) {
+        self.g_ram[0x330..0x332].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// Write a word in the backing VRAM queue, including overlapping fields.
+    pub fn write_vram_queue_word(&mut self, cursor: u16, field: usize, value: u16) {
+        let offset = 0xd0 + usize::from(cursor) + field;
+        self.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+    }
+
     /// Room width in blocks ($7E:07A5 in ram_map).
     pub fn room_width_in_blocks(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0x7a5], self.g_ram[0x7a6]])

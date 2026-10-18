@@ -2163,6 +2163,24 @@ failures (86.76s). Unsafe functions -4, cast lines -12, Rust lines -4; other
 counters unchanged. Next: EnemyInstr_CopyToVram ordered queue writes,
 retaining overlapping source-word writes and wrapped queue-tail advance.
 
+EnemyInstr_CopyToVram now uses named byte-backed queue writes and explicit
+unaligned source-word reads. Reads precede their writes in the original
+0/2/3/5 order, including overlapping source-address words. The captured tail
+advances by seven with word wrapping; the returned pointer advances by seven
+with integer wrapping. Independent exact comparison passes 1,445,184 full-
+RAM/return cases with separate source allocation across all queue tails,
+and 265,536 disjoint-in-RAM cases. Aliased raw-source comparisons were
+optimizer-sensitive (the prior code uses unaligned dereferences and aliased
+mutable RAM); diagnostic/unoptimized variants match, but no stable optimized
+alias-equivalence claim is made. Ordered reads/writes were audited explicitly.
+Stable optimized final-source core/DLL build and direct full-source format
+pass; Cargo fmt/build remain ASR-denied. Final-source any%: 129,712 frames,
+zero failures (196.26s); Waver route: 58,109 frames, zero failures (95.54s).
+Raw offsets -3, cast lines -10; Rust lines +11 provide named queue accessors
+and explicit source-read sequencing. Other counters unchanged. Next: remove
+the now-unused bank-A0 VRAM entry pointer helper, then continue enemy
+instruction field access in the bank-specific callbacks.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

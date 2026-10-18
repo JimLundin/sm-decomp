@@ -2059,27 +2059,23 @@ pub unsafe fn EnemyInstr_WaitNframes(
     core::ptr::null()
 }
 pub unsafe fn EnemyInstr_CopyToVram(
-    mut k: uint16,
-    mut jp: *const uint16,
+    _k: uint16,
+    jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    let mut v4: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
-    let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x330 as ::core::ffi::c_int as isize) as *mut uint16);
-    let mut v3: *mut uint8 = jp as *mut uint8;
-    v4 = gVramWriteEntry(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    (*v4).size = *(v3 as *mut uint16);
-    (*v4).src.addr = *(v3.offset(2 as ::core::ffi::c_int as isize) as *mut uint16) as VoidP;
-    *((&raw mut (*v4).src.addr as *mut uint8).offset(1 as ::core::ffi::c_int as isize)
-        as *mut VoidP) = *(v3.offset(3 as ::core::ffi::c_int as isize) as *mut uint16) as VoidP;
-    (*v4).vram_dst = *(v3.offset(5 as ::core::ffi::c_int as isize) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (v2 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
-    return (jp as uintptr_t).wrapping_add(7 as ::core::ffi::c_int as uintptr_t) as *const uint16;
+    let tail = game.vram_write_queue_tail();
+    let cursor = game.vram_write_queue_tail();
+    let source = jp as *const uint8;
+    let word = (source as *const uint16).read_unaligned();
+    game.write_vram_queue_word(cursor, 0, word);
+    let word = (source.add(2) as *const uint16).read_unaligned();
+    game.write_vram_queue_word(cursor, 2, word);
+    let word = (source.add(3) as *const uint16).read_unaligned();
+    game.write_vram_queue_word(cursor, 3, word);
+    let word = (source.add(5) as *const uint16).read_unaligned();
+    game.write_vram_queue_word(cursor, 5, word);
+    game.set_vram_write_queue_tail(tail.wrapping_add(7));
+    (jp as usize).wrapping_add(7) as *const uint16
 }
 pub fn EnemyInstr_EnableOffScreenProcessing(
     k: uint16,
