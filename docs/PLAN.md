@@ -7751,6 +7751,37 @@ lines -13; other categories unchanged. CPU peer edits remain outside the
 frozen replay and this commit. Hardware/audio fidelity, Waver71, masked RAM
 and credits remain open; held HDMA diagnosis stays stopped.
 
+Energy Tank dismissal and refilled99BD entry verified (2026-10-19):
+from63344-frame pickup prefix, freshJump1, neutral120, right/shoot25,
+neutral60 completes63550/71 (143.01s), nativeexit1, stillX131/Y667 pose0054.
+The early acknowledgement occurs during mandatory delay and is ignored.
+HandleMessageBoxInteraction_Async waits360 frames for ordinary pickups,
+then accepts normal input; the prior inference that any fresh press could
+immediately dismiss this message was incomplete.
+
+Waiting neutral300 before freshJump1, neutral120, right/shoot25, neutral60
+completes63850/71 (170.01s), nativeexit1. Message closes; movement reaches
+X194/Y685, standing pose0001, health199/199, missiles5/5, items1004. This
+establishes actual free control after pickup. From there left/run/shoot20,
+left/run/jump/shoot50, left/run/shoot80, neutral120 crosses the lower-left
+blue door and completes64120/71 (166.27s), nativeexit1.99BD gameplay resumes
+64058 X216/Y1163; finalX192/Y1163, health199/199, missiles5/5, items1004.
+All three ordered diagnostic lists exactly match frozen d217ea15 Waver71.
+18rooms/19enemy definitions are restored route coverage, not new rooms or
+credits. No state/inventory writes are injected. Retain refilled-990d-exit
+input as the stronger onward prefix.
+
+Next: follow the established lower99BD descent toward9969 with this healthy
+missile-equipped prefix, then seek onward normal-input coverage. This is
+independent of held upper99BD ascent; do not automatically resume that
+ascent, landing-site cliff tuning,9AD9 ammunition or HDMA diagnosis. Frozen
+same-DLL explicit-render any%129712/0 remains input-only regression; peer
+hardware changes own their replays. Direct full-source format passes;
+Cargo fmt/release remain launch-denied OSerror5. Own source/residue delta
+zero. Inputs/ROM-derived probes stay ignored; peer owns hardware edits,
+cleanup and remote sync. Credits, complete gameplay/hardware, rendering/
+audio fidelity, masked RAM and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
