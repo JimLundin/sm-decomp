@@ -3786,10 +3786,10 @@ pub unsafe fn ppu_write(mut ppu: *mut Ppu, mut adr: uint8_t, mut val: uint8_t) {
             current_block_164 = 16754622181974910496;
         }
         26 => {
-            (*ppu).m7largeField = val as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0;
-            (*ppu).m7charFill = val as ::core::ffi::c_int & 0x40 as ::core::ffi::c_int != 0;
-            (*ppu).m7yFlip = val as ::core::ffi::c_int & 0x2 as ::core::ffi::c_int != 0;
-            (*ppu).m7xFlip = val as ::core::ffi::c_int & 0x1 as ::core::ffi::c_int != 0;
+            (*ppu).m7largeField = val & 0x80 != 0;
+            (*ppu).m7charFill = val & 0x40 != 0;
+            (*ppu).m7yFlip = val & 0x02 != 0;
+            (*ppu).m7xFlip = val & 0x01 != 0;
             current_block_164 = 16754622181974910496;
         }
         27 | 28 | 29 | 30 => {

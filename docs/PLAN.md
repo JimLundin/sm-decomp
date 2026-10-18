@@ -7232,6 +7232,29 @@ cleanup peer retired six unused historical Waver probe directories to TEMP
 while preserving all route dependencies. Upper99BD tuning,9AD9 ammunition
 and HDMA stay held. Inputs/probes/ROM-derived outputs remain ignored.
 
+M7SEL mask cleanup (2026-10-18): ppu_write register 26 now uses native
+byte masks for large-field, character-fill, Y-flip and X-flip. Assignment
+order and all other PPU source are unchanged. Independent read-only review
+passes all 1,024 value/mask comparisons. Actual ppu_write passes 8,192
+whole-Ppu cases across all 256 values and 32 initialized states; only the
+four expected booleans change. Mode 7 rendering passes 4,096 paired selected
+1,024-byte rows in both renderer paths and 4,096 ignored-bit comparisons
+(8,388,608 bytes). All four meaningful bits visibly affect both renderers.
+The rendering baseline executes extracted old assignments, not a complete
+old ppu_write; constructed state/row coverage does not establish full-frame
+or gameplay equivalence.
+
+Clean frozen 3ecde6a4 plus this four-mask change excludes concurrent
+uncommitted APU/CPU edits. Full any% passes 129,712/0 (244.62s), native exit 0.
+This replay is general regression coverage; the direct register/render
+fixtures supply execution evidence. Earlier owner logs ended without a
+final replay result and are not counted. Stable optimized core/DLL,
+normal-core metadata and direct full-source format pass. Cargo fmt/build
+were attempted but Windows denies cargo.exe execution. Progress cast lines
+-4; all other focused counters unchanged. No probes or ROM-derived assets
+enter this commit. Existing explicit-render Waver baseline failures and
+complete boot-to-credits coverage remain separate plan gaps.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
