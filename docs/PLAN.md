@@ -2391,6 +2391,21 @@ Rust lines +28 provide named state-field reads/writes. Other counters
 unchanged. Next: Goofball Func1 initial movement accumulation, retaining
 ROM reads, signed exit gate and phase/active/animation-ready write order.
 
+Goofball Func1 now uses the safe ROM-product helper and byte-backed state
+fields. Product, accumulated distance and phase stores retain their order;
+the signed wrapped accumulated-minus-distance exit and final limit/active/
+animation-ready writes remain exact. No production iteration limit is added.
+Main is now safe because its last unsafe gameplay call is gone. Independent
+extracted comparison passes 1,560,835 full-RAM cases across all input words
+and random states: terminating inputs use exact unbounded bodies, arbitrary
+potentially nonterminating inputs compare 32 iterations, and long exact loops
+cross phase/clamp/wrap boundaries. Stable optimized core/DLL build and direct
+full-source format pass; Cargo fmt/build remain ASR-denied. CGRAM/render-
+enabled any%: 129,712 frames, zero failures (209.76s); Waver route: 58,109
+frames, zero failures (99.12s). Unsafe functions -2, cast lines -13,
+Rust lines -3; other counters unchanged. Next: remove the now-unused
+Get_BouncingGoofball pointer helper, then Mini Crocomire animation setup.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
