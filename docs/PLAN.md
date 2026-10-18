@@ -5274,6 +5274,29 @@ then simplify executed dispatch while retaining the dormant recognized arms
 and unknown-address behavior. Disable, set 3, uncovered demo operations/
 preinstructions and stopped ammo stay held.
 
+CallDemoPreInstr now dispatches through direct match arms using explicit
+hexadecimal bank addresses and a named address argument. All five recognized
+addresses, callback calls, no-op and discarded Unreachable return stay exact.
+Callback bodies remain unchanged, including uncovered branches.
+
+Committed 2e1bd7d4 baseline attract passes 30,000/0 (60.45s), native exit 0;
+normal Start-exit passes 5,000/0 (9.73s), native exit 0. Baseline and rewritten
+attract each observe 13,291 actual Rust-side-2 dispatches to 918A9B and one
+918AB0 dispatch; complete ordered address traces match. Start-exit address
+traces also match. These dispatch calls do not prove the special leave-body
+branch or dormant 83BF/864F/866A arms; they remain held. Rewritten Verified 30000 frames: 0 failing frames (47.18s);
+Start-exit Verified 5000 frames: 0 failing frames (7.12s); full any% Verified 129712 frames: 0 failing frames (285.67s); native exits 0.
+Removing probes restores exact maintained source. Dedicated source freezes
+2e1bd7d4 plus only this sm_91.rs change; later concurrent oracle/hardware work
+requires its own integration. Direct full-source rustfmt check, optimized
+core/DLL and normal-core metadata builds pass. Required Cargo fmt/check/build
+attempts remain denied launching Cargo (OS error 5). Progress passes:
+Rust lines -12, all other focused counters unchanged. No probes or ROM-derived
+assets committed. Next: measure the DemoPreInstr_8AB0 taken-body branch from
+its observed single attract call before cleaning its movement-type gate and
+ordered preinstruction/instruction/timer stores. Disable, set 3, other
+uncovered demo operations/preinstructions and stopped ammo remain held.
+
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
 the original `SignExtend8(0x8000)` initialization and the middle-byte velocity

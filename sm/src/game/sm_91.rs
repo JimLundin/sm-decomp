@@ -1056,29 +1056,17 @@ pub unsafe fn DemoObjectInputHandler(game: &mut Game) {
         }
     }
 }
-pub unsafe fn CallDemoPreInstr(mut ea: uint32, game: &mut Game) {
-    match ea {
-        9536447 => return,
-        9537103 => {
-            DemoPreInstr_864F(game);
-            return;
-        }
-        9537130 => {
-            DemoPreInstr_866A(game);
-            return;
-        }
-        9538203 => {
-            DemoPreInstr_CheckLeaveDemo(game);
-            return;
-        }
-        9538224 => {
-            DemoPreInstr_8AB0(game);
-            return;
-        }
+pub unsafe fn CallDemoPreInstr(address: u32, game: &mut Game) {
+    match address {
+        0x9183bf => (),
+        0x91864f => DemoPreInstr_864F(game),
+        0x91866a => DemoPreInstr_866A(game),
+        0x918a9b => DemoPreInstr_CheckLeaveDemo(game),
+        0x918ab0 => DemoPreInstr_8AB0(game),
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
 pub unsafe fn CallDemoInstr(
     mut ea: uint32,
