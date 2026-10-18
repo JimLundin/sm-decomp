@@ -4831,6 +4831,20 @@ any% integration remains the implementing session's separate check.
 Rendering/Waver71, event timing, audio timing and credits remain open;
 held HDMA diagnosis stays stopped.
 
+Independent DMA reset QC (2026-10-18): pending loop/literal cleanup passes
+65,536 actual old/current dma_reset pairs from deliberately varied valid
+channel state. Every semantic channel field and global timer/busy state
+matches; owner pointer and explicit pad bytes remain unchanged. All 104
+readable channel register bytes return FF after each reset. This includes
+every 16-bit timer value and varied high/low DMA timer halves. Omitting only
+channel 7 from the TEMP reset loop fails immediately at seed zero. Positive
+and negative native exits are zero/nonzero; frozen reset body matches live
+source. Optimized probe core/DLL, normal-core metadata and full-source
+direct rustfmt pass. Progress counters do not change from this note; no
+production edits or maintained tooling are added. This proves executed
+reset behavior, not DMA transfer/device accuracy or full-movie integration,
+which remain separately owned. Held HDMA diagnosis remains stopped.
+
 Current broad-route revalidation (2026-10-18): committed d217ea15 source
 replays the retained 62,817-frame lead-9ad9-arrive.inputs through the standard
 verifier, passing 62,817/0 (117.57s), native exit 0. It observes 48,819
