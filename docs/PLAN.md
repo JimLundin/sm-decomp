@@ -1999,6 +1999,21 @@ functions +2 are the shared loops calling the legacy spawn boundary.
 Next: CompareDistToSamus_X/Y safe magnitude comparisons, retaining unsigned
 threshold behavior distinct from the within-radius signed-bit helpers.
 
+CompareDistToSamus_X/Y now use the safe delta and Abs16 helpers with direct
+unsigned magnitude >= threshold comparisons. Wrapped deltas, abs16 including
+8000 and byte return values remain exact; these gates deliberately differ
+from the signed wrapped subtraction used by within-radius helpers. Both
+functions are safe and leave RAM unchanged. Prior Rust comparison passes
+5,373,952 full-RAM/return checks across every coordinate/threshold/enemy-index
+word; independent comparison passes 4,332,160 checks including random states
+and arbitrary/high/unaligned enemy slots. Stable optimized core/DLL build and
+direct full-source format pass; Cargo fmt/build remain ASR-denied. Any%:
+129,712 frames, zero failures (201.32s); Waver route: 58,109 frames, zero
+failures (96.24s). Raw offsets -2, unsafe functions -2, cast lines -12,
+Rust lines -10; other counters unchanged. Next: EnemyFunc_BBBF block scan,
+retaining low-byte row multiplication, fixed-point displacement, wrapped
+block offsets and inclusive row traversal.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

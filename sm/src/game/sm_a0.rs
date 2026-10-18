@@ -9524,23 +9524,13 @@ pub unsafe fn Enemy_ItemDrop_SporeSpawn(k: uint16, game: &mut Game) {
 pub unsafe fn Enemy_ItemDrop_Draygon(k: uint16, game: &mut Game) {
     spawn_area_enemy_item_drops(addr_kEnemyDef_DE3F as u16, k, 128, 352, 255, game);
 }
-pub unsafe fn CompareDistToSamus_X(mut k: uint16, mut a: uint16, game: &mut Game) -> uint8 {
-    let mut i: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);
-    return (abs16(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - (*i).x_pos as ::core::ffi::c_int) as uint16,
-    ) as ::core::ffi::c_int
-        >= a as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
+pub fn CompareDistToSamus_X(k: uint16, a: uint16, game: &mut Game) -> uint8 {
+    let delta = GetSamusEnemyDelta_X(k, game);
+    u8::from(Abs16(delta) >= a)
 }
-pub unsafe fn CompareDistToSamus_Y(mut k: uint16, mut a: uint16, game: &mut Game) -> uint8 {
-    let mut i: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);
-    return (abs16(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - (*i).y_pos as ::core::ffi::c_int) as uint16,
-    ) as ::core::ffi::c_int
-        >= a as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
+pub fn CompareDistToSamus_Y(k: uint16, a: uint16, game: &mut Game) -> uint8 {
+    let delta = GetSamusEnemyDelta_Y(k, game);
+    u8::from(Abs16(delta) >= a)
 }
 pub unsafe fn EnemyFunc_BBBF(mut k: uint16, mut amt: int32, game: &mut Game) -> uint8 {
     let mut E: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);
