@@ -71,6 +71,27 @@ impl Game {
         u16::from_le_bytes([self.g_ram[0x9c2], self.g_ram[0x9c3]])
     }
 
+    /// Missile fields in ram_map at $7E:09C6/09C8/09D8.
+    pub fn samus_missiles(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x9c6], self.g_ram[0x9c7]])
+    }
+
+    pub fn set_samus_missiles(&mut self, value: u16) {
+        self.g_ram[0x9c6..0x9c8].copy_from_slice(&value.to_le_bytes());
+    }
+
+    pub fn samus_max_missiles(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x9c8], self.g_ram[0x9c9]])
+    }
+
+    pub fn samus_reserve_missiles(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x9d8], self.g_ram[0x9d9]])
+    }
+
+    pub fn set_samus_reserve_missiles(&mut self, value: u16) {
+        self.g_ram[0x9d8..0x9da].copy_from_slice(&value.to_le_bytes());
+    }
+
     pub fn set_samus_health(&mut self, value: u16) {
         self.g_ram[0x9c2..0x9c4].copy_from_slice(&value.to_le_bytes());
     }

@@ -2259,6 +2259,41 @@ No diagnostic or ROM-derived artifacts are committed. Next: missile
 restoration arithmetic and overflow fields, after measuring actual calls;
 ammunition route trials and uncovered Turtle cleanup remain held.
 
+Missile restoration execution and cleanup (2026-10-18): the 63,610-frame
+health-pickup route passes 63,610/0 (105.85s), native exit 0, but records
+zero Samus_RestoreMissiles calls. A different normal-input suffix waits at
+the landing-site gunship, presses Down once, then waits. This 22,631-frame
+candidate passes 22,631/0 (38.60s), native exit 0, and records one amount-2
+call on Rust side 2 at SNES counter 21,944. Missile capacity is zero;
+this proves refill execution, not missile acquisition or the stalled route.
+
+Samus_RestoreMissiles now uses five named byte-backed missile accessors
+and explicit word arithmetic. Initial missile store, signed wrapped gate,
+both original maximum-versus-99 branches, reserve store/reread/cap order
+and final maximum reread/store remain exact. The duplicated branches retain
+their distinct signed gates; no unsigned saturation is substituted. RAM
+fields match ram_map at 09C6/09C8/09D8. Actual old/new bodies match complete
+RAM in 1,014,641 cases: all 11 boundary-value combinations across four
+inputs (14,641), plus one million random states. This is not exhaustive
+over all words. The rewritten gunship call probe passes 22,631/0 (37.86s),
+native exit 0, with the same side-2 amount-2 call. Removing its sole
+observation restores the maintained source exactly. This exercises the
+zero-capacity reserve/cap path; other caps and missile pickup remain
+comparison-tested rather than movie-executed.
+
+A fresh initial any% build passes 129,712/0 (220.83s), native exit 0.
+Its build overlapped concurrent audio-oracle files, so a separate build
+uses committed 146e84a5 oracle/module files plus this gameplay rewrite;
+its any% passes 129,712/0 (214.81s), native exit 0; its gunship replay
+passes 22,631 frames with zero failures and native exit 0. Optimized core/DLL
+and normal-core metadata builds pass. Gameplay formatting passes; full
+Cargo formatting currently reports the other session's audio-module order.
+Cargo release remains denied at khronos_api (OS error 5). Raw offsets -16,
+unsafe functions -1, cast lines -37, Rust lines -14 for this gameplay change;
+concurrent audio/PPU counters are separate. No probe or ROM-derived assets
+are committed. Next: super-missile and power-bomb restoration, measuring
+each actual rewritten entry on the gunship route before claiming coverage.
+
 
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve

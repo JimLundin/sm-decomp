@@ -4801,67 +4801,32 @@ pub unsafe fn Samus_DealDamage(amount: u16, game: &mut Game) {
         InvalidInterrupt_Crash(game);
     }
 }
-pub unsafe fn Samus_RestoreMissiles(mut a: uint16, game: &mut Game) {
-    let mut v1: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9c6 as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
-        + a as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9c6 as ::core::ffi::c_int as isize)
-        as *mut uint16) = v1;
-    if (v1 as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0x9c8 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
-        >= 0 as ::core::ffi::c_int
-    {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x9c8 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - 99 as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            != 0
-        {
-            let ref mut fresh47 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x9d8 as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            *fresh47 = (*fresh47 as ::core::ffi::c_int
-                + (v1 as ::core::ffi::c_int
-                    - *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x9c8 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int)) as uint16;
-            if (*((&raw mut game.g_ram as *mut uint8).offset(0x9d8 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                - *((&raw mut game.g_ram as *mut uint8).offset(0x9c8 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int) as int16
-                as ::core::ffi::c_int
-                >= 0 as ::core::ffi::c_int
+pub fn Samus_RestoreMissiles(amount: u16, game: &mut Game) {
+    let missiles = game.samus_missiles().wrapping_add(amount);
+    game.set_samus_missiles(missiles);
+    if (missiles.wrapping_sub(game.samus_max_missiles()) as i16) >= 0 {
+        if game.samus_max_missiles().wrapping_sub(99) & 0x8000 != 0 {
+            let reserve = game
+                .samus_reserve_missiles()
+                .wrapping_add(missiles.wrapping_sub(game.samus_max_missiles()));
+            game.set_samus_reserve_missiles(reserve);
+            if (game
+                .samus_reserve_missiles()
+                .wrapping_sub(game.samus_max_missiles()) as i16)
+                >= 0
             {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9d8 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x9c8 as ::core::ffi::c_int as isize)
-                    as *mut uint16);
+                game.set_samus_reserve_missiles(game.samus_max_missiles());
             }
         } else {
-            let ref mut fresh48 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x9d8 as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            *fresh48 = (*fresh48 as ::core::ffi::c_int
-                + (v1 as ::core::ffi::c_int
-                    - *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x9c8 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int)) as uint16;
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x9d8 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                - 99 as ::core::ffi::c_int
-                & 0x8000 as ::core::ffi::c_int
-                == 0
-            {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x9d8 as ::core::ffi::c_int as isize)
-                    as *mut uint16) = 99 as uint16;
+            let reserve = game
+                .samus_reserve_missiles()
+                .wrapping_add(missiles.wrapping_sub(game.samus_max_missiles()));
+            game.set_samus_reserve_missiles(reserve);
+            if game.samus_reserve_missiles().wrapping_sub(99) & 0x8000 == 0 {
+                game.set_samus_reserve_missiles(99);
             }
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9c6 as ::core::ffi::c_int as isize)
-            as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x9c8 as ::core::ffi::c_int as isize)
-            as *mut uint16);
+        game.set_samus_missiles(game.samus_max_missiles());
     }
 }
 pub unsafe fn Samus_RestoreSuperMissiles(mut a: uint16, game: &mut Game) {
