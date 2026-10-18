@@ -754,6 +754,32 @@ Cargo release remains blocked executing dependency build scripts (OS error
 5). Next: independently capture Rust gameplay upload sources/order and
 compare them with ROM transactions before enforcing upload equivalence.
 
+VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
+restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
+vramRemapMode before normalization/recovery, alongside the committed read
+latch. These four omitted fields control subsequent VRAM memory accesses.
+The serialized save-state format and g_ram layout remain unchanged; other
+PPU state and the masked HDMA discrepancy remain separate gaps.
+
+Actual-function checks pass 4,096 restored read/write cases: all 256 VMAIN
+control bytes across 16 address/remapping/wrap boundaries. A second isolated
+probe sets addresses through $2116/$2117 and computes expected remapped
+indexes, byte writes, buffered reads and pointer increments independently.
+All 41 field-bit mutations are detected, and equal-state comparison passes.
+An isolated address-bit fault at frame 200 produces exactly one failure over
+3,600 frames, zero RAM differences and native exit 1. Independent source
+review finds no blocking issue. Diagnostic source and outputs stay ignored.
+
+The frozen maintained-source DLL includes d16a7786 plus these 33 source
+lines; concurrent commits change only PLAN. Any% passes 129,712/0 (219.80s)
+and Waver passes 58,109/0 (104.61s), both native exits 0. Cargo fmt/check,
+optimized core/DLL and normal-core metadata builds pass. Cargo release
+remains blocked executing khronos_api's build script (OS error 5). Progress:
+Rust lines +33 implement fields, diagnostics and capture/restore; all other
+counters unchanged. This proves the tested port behavior, not complete PPU
+or boot-to-credits equivalence. Next: resolve the separate HDMA edge-pass
+discrepancy and continue normal-input gameplay coverage.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
