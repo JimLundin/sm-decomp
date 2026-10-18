@@ -4315,6 +4315,34 @@ implement hardware bus updates or impose residual equality. Bus behavior,
 interrupt generation, input timing, rendering/HDMA, audio timing and complete
 boot-to-credits coverage remain open.
 
+DMA timer-boundary rewind QC (2026-10-18): frozen production DMA
+capture/restore matches571d9275.524,288 actual capture/overwrite/restore/
+dma_cycle continuations cover every even16-bit HDMA delay, eight even DMA
+timer boundaries (0,2,6,16,FFFE,10000,7FFFFFFE,FFFFFFFE) and both busy states.
+Independent next-cycle expectations verify HDMA-delay priority over DMA,
+two-unit countdown, idle timer retention and busy clearing with no active
+channels. All cases pass, nativeexit0; owner pointer stays unchanged.
+Removing only dma_timing restore fails the first tuple: expected(0,0,false),
+actual(65534,4294967294,true), nativeexit3221226505. This supplements the
+existing1,536 resumed mode/direction/phase cases rather than rerunning them.
+
+Only even delays are covered: reset/start/transfer/event delays and countdown
+use two-unit steps. No arbitrary odd-delay validity or hardware timing claim
+is made. Full-route nonzero-timer observations remain combined; this matrix
+does not establish which timer persists naturally or compare branch residuals.
+Next: split actual DMA/HDMA boundary timer observations and QC the coordinated
+DMA register-write cleanup with exercised bus calls. Held HDMA table/window
+diagnosis remains stopped.
+
+Only this note changes; no maintained Rust/residue counters change. Frozen
+source includes the then-current open-bus/audio/PPU peer edits and predates
+the DMA register-write cleanup; later integration is separate. Isolated
+optimized core/DLL builds, direct full-source rustfmt and progress pass;
+Cargo fmt/check and release remain denied at cargo.exe launch. No fresh
+movie result is claimed; diagnostic sources and ROM assets stay ignored.
+Rendering initialization/Waver71, hires, hardware events, audio timing,
+masked RAM and boot-to-credits coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
