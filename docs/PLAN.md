@@ -5920,6 +5920,20 @@ regression result; no changed source to retest here. Concurrent hardware
 edits/totals are separate. Inputs/probes/ROM-derived outputs stay ignored.
 Credits, full rendering/audio and masked RAM remain unproved.
 
+Independent BBus WRAM-read candidate QC (2026-10-18): 262,144 actual
+old/current byte LDA 2180 pairs pass, native exit zero. Every physical WRAM
+pointer executes through CPU banks 00 and 80, including address wrap and
+installed-program aliases. Independent installed byte, accumulator, PC,
+cycle cost and incremented/masked pointer match; target RAM remains exact.
+Old/current Z/N and CPU memory accounting also match. A TEMP premature read
+target increment fails actual loaded A 43776 versus 43777, native exit
+3221226505. Frozen BBus read body matches live. Optimized core/probe DLL,
+direct formatting, normal-core metadata and progress pass; partner reviews
+fixture, routing, count and alias expectations. This exercises the WRAM
+read port only; PPU/APU reads, word loads, arbitrary bus mirrors, unsupported
+port assertions and full-movie integration remain separate. No production
+edits; only this note changes and all probes/assets stay TEMP/ignored.
+
 Independent BBus WRAM-write candidate QC (2026-10-18): 2,097,152 actual
 old/current absolute STA pairs pass, native exit zero. Port 2180 executes
 at all 131,072 physical WRAM addresses, including wrap and installed-program
