@@ -1370,6 +1370,20 @@ other counters are unchanged for this fix. The custom startup exemption remains
 a separate cleanup. Native transport and full audio equality remain unfinished.
 Next: compare natural physical upload selection, boundary state and timing.
 
+Native integration replay diagnostic (2026-10-18): the temporary Rust
+handshake prototype, with physical backend selected before SnesInit and the
+two forced-custom frame assignments removed, completes full any% 129,712/0
+(249.02s), native exit 0. Rust gameplay executes 45 uploads across seven
+sources, including repeated startup uploads, with the committed four-port
+startup correction. Maintained gameplay/PPU checks and final queued ports
+pass; physical APU state/output is restored but still not compared. ROM and
+Rust upload source/count, entry clocks and natural terminal state are not
+independently captured by this run. The known extra reset uploads therefore
+remain unclassified here; zero frame failures do not close native integration
+or audio equality. Prototype code and outputs remain temporary. Next: compare
+actual ROM/Rust upload entries and return state before adopting this transport.
+No maintained Rust or residue counters change in this diagnostic.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read
