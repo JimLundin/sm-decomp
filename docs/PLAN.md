@@ -1105,6 +1105,16 @@ direct format pass; Cargo fmt/build remain ASR-denied. Updated Waver route:
 Next: deepen the PLM setup boundary incrementally, starting with block
 deactivation and carry-only setups; preserve live-ROM callback dispatch.
 
+PLM deactivation and both carry-only setups are now safe Rust. Deactivation
+shares byte-backed block masking with the enemy-breakable setup, preserving
+the original 8FFF mask and both rounded word indexes. Carry returns remain
+zero and one; no callback dispatch changes. Stable optimized core/DLL build
+and direct format pass; Cargo fmt/build remain ASR-denied. Updated Waver
+route passes 58,109 frames, zero failures (87.70s); any% passes 129,712
+frames, zero failures (189.33s). Raw offsets -2, unsafe functions -3,
+cast lines -6, Rust lines -6. Next: the shared block-type/BTS writer and PLM
+deletion used by extension setups, preserving their byte write order.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
