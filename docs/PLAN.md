@@ -4432,6 +4432,35 @@ canonical LoROM mapping, diagnostic calls, linear offsets and callback order.
 Set 3, uncovered instruction operations/preinstructions and stopped ammo
 coverage remain held.
 
+ProcessDemoInputObject ROM records now use checked live word reads and
+named instruction pointer/address locals. Both original instruction-word
+reads remain separate, followed by the live duration read and input/new-input
+reads at linear offsets 2/4. Each original RomPtr_91 mapping site still runs
+its invalid-window diagnostic/g_fail call when bit 15 is clear, then reads
+through the equivalent canonical LoROM window. Input callback order and
+word-wrapped argument/next-record pointers remain exact. All 196,608 mapped
+pointer/offset positions and allocation bounds pass across all 65,536 words;
+this address audit supports, rather than replaces, oracle execution.
+
+Rewritten Verified 30000 frames: 0 failing frames (73.20s); Start-exit Verified 5000 frames: 0 failing frames (11.74s); full any% Verified 129712 frames: 0 failing frames (237.90s);
+native exits 0. Attract observes 836 instruction reads, 836 separate gates,
+835 duration reads, 835 input reads and 835 new-input reads, all Rust side 2.
+Its complete entry/expiry/setup trace equals the prior committed baseline:
+13,292 / 836 / 835 observations. Removing probes restores exact maintained
+source. Invalid-window diagnostics and bank-edge reads are preserved by
+source/mapping audit but are not naturally exercised by this attract run.
+
+Dedicated build freezes 73055243 plus only this sm_91.rs change; concurrent
+hardware/oracle work needs its own integration. Optimized core/DLL and
+normal-core metadata builds, direct full-source rustfmt check and diff check
+pass. Required Cargo fmt/check/build attempts remain denied launching Cargo
+(OS error 5). Progress passes: cast lines -5; Rust lines +4 retain two
+invalid-window diagnostic gates, with other focused counters unchanged.
+No probes or ROM-derived assets committed. Next: measure DemoObjectInputHandler
+and its post-interpreter input-copy stores, then clean executed RAM accesses
+while retaining live reads and copy order. Set 3, uncovered demo operations/
+preinstructions and stopped ammo coverage remain held.
+
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
 the original `SignExtend8(0x8000)` initialization and the middle-byte velocity

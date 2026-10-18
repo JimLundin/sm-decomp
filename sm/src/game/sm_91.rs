@@ -1148,29 +1148,33 @@ pub unsafe fn ProcessDemoInputObject(game: &mut Game) {
     let timer = game.demo_input_instr_timer().wrapping_sub(1);
     game.set_demo_input_instr_timer(timer);
     if timer == 0 {
-        let mut v0: uint16 = game.demo_input_instr_ptr();
-        let mut v1: *mut uint16 = ::core::ptr::null_mut::<uint16>();
-        loop {
-            v1 = RomPtr_91(v0 as uint16_t, game) as *mut uint16;
-            let mut v2: uint16 = *v1;
-            if *v1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-                break;
+        let mut instruction_ptr = game.demo_input_instr_ptr();
+        let record_address = loop {
+            if instruction_ptr & 0x8000 == 0 {
+                RomPtr_91(instruction_ptr, game);
             }
-            v0 = CallDemoInstr(
-                (v2 as ::core::ffi::c_int | 0x910000 as ::core::ffi::c_int) as uint32,
-                0 as uint16,
-                (v0 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16,
+            let address = 0x918000 | u32::from(instruction_ptr);
+            let instruction = game.read_rom_word(address, 0);
+            if game.read_rom_word(address, 0) & 0x8000 == 0 {
+                break address;
+            }
+            instruction_ptr = CallDemoInstr(
+                0x910000 | u32::from(instruction),
+                0,
+                instruction_ptr.wrapping_add(2),
                 game,
             );
-            if v0 == 0 {
+            if instruction_ptr == 0 {
                 return;
             }
+        };
+        game.set_demo_input_instr_timer(game.read_rom_word(record_address, 0));
+        if instruction_ptr & 0x8000 == 0 {
+            RomPtr_91(instruction_ptr, game);
         }
-        game.set_demo_input_instr_timer(*v1);
-        let mut v3: *const uint8 = RomPtr_91(v0 as uint16_t, game);
-        game.set_demo_input(*(v3.offset(2 as ::core::ffi::c_int as isize) as *mut uint16));
-        game.set_demo_input_new(*(v3.offset(4 as ::core::ffi::c_int as isize) as *mut uint16));
-        game.set_demo_input_instr_ptr(v0.wrapping_add(6));
+        game.set_demo_input(game.read_rom_word(record_address, 2));
+        game.set_demo_input_new(game.read_rom_word(record_address, 4));
+        game.set_demo_input_instr_ptr(instruction_ptr.wrapping_add(6));
     }
 }
 pub fn DemoInstr_Finish(_k: u16, _j: u16, game: &mut Game) -> u16 {
