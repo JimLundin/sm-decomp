@@ -6620,6 +6620,35 @@ at cargo.exe launch OSerror5. Prior same-DLL explicit-render any%129712/0
 ROM-derived outputs stay ignored; full hardware/gameplay fidelity and credits
 remain unproved.
 
+SNES save/load boundary cleanup (2026-10-18): snes_saveload now states
+the legacy byte lengths directly: hPos block 54, WRAM 131072 and ramAdr 4.
+Native parameter bindings and version 0 replace redundant casts/mutability;
+component and callback order, expect checks and byte ranges are unchanged.
+Actual old/current save/restore comparisons pass 512 cases over 256 seeded
+states, matching entire streams and callback addresses/lengths/order. Direct
+tail expectations and restore/resave identity pass. Independent QC passes
+512 disk/reset/load/resave cases with temporary file read/write/removal,
+complete stream consumption, restored RAM/context and version reset. A
+54-to-53-byte range fault is detected through actual stream/resave mismatch,
+native assertion exit 3221226505. This tests raw disk storage through actual
+snes_saveload callbacks, not every public frontend snapshot flow.
+
+Read-only subagent verifies maintained repr(C) hPos offset 92 through openBus
+offset 145 inclusive is 54 bytes and confirms the existing input/inactive-PPU/
+renderer-tail omissions remain untouched. Cross-platform layout is unproved.
+Instrumented any% passes 12,000/0 (26.14s), native exit 0, with zero save/load
+hits; direct stream/disk cases provide execution coverage. Clean frozen
+ca1cd37e plus only this routine passes any% 129,712/0 (238.84s), native exit 0.
+Direct full-source format, normal-core metadata and optimized clean/probe
+core/DLL builds pass. Cargo fmt/build --release remain denied at cargo.exe
+launch; that required check stays unmet. Probe matches maintained routine
+after removing its counter. Progress/diff pass: focused cast lines -1, Rust
+lines -2, other categories unchanged. Later peer integration, hardware/audio
+timing, rendering/Waver71, masked RAM and credits remain open. Held HDMA
+diagnosis stays stopped. Continue executed hardware paths and route coverage
+with useful independent subagents. Peer owns remote synchronization; root
+probes run in TEMP and require no legacy target outputs.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

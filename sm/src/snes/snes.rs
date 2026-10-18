@@ -66,9 +66,9 @@ pub unsafe fn snes_free(mut snes: *mut Snes) {
     free(snes as *mut ::core::ffi::c_void);
 }
 pub unsafe fn snes_saveload(
-    mut snes: *mut Snes,
-    mut func: Option<SaveLoadFunc>,
-    mut ctx: *mut ::core::ffi::c_void,
+    snes: *mut Snes,
+    func: Option<SaveLoadFunc>,
+    ctx: *mut ::core::ffi::c_void,
     game: &mut Game,
 ) {
     cpu_saveload((*snes).cpu, func, ctx, game);
@@ -79,24 +79,22 @@ pub unsafe fn snes_saveload(
     func.expect("non-null function pointer")(
         ctx,
         &raw mut (*snes).hPos as *mut ::core::ffi::c_void,
-        (145 as size_t)
-            .wrapping_add(1 as size_t)
-            .wrapping_sub(92 as size_t),
+        54,
         game,
     );
     func.expect("non-null function pointer")(
         ctx,
         (*snes).ram as *mut ::core::ffi::c_void,
-        0x20000 as ::core::ffi::c_int as size_t,
+        0x20000,
         game,
     );
     func.expect("non-null function pointer")(
         ctx,
         &raw mut (*snes).ramAdr as *mut ::core::ffi::c_void,
-        4 as size_t,
+        4,
         game,
     );
-    (*snes).runningWhichVersion = 0 as uint8_t;
+    (*snes).runningWhichVersion = 0;
 }
 pub unsafe fn snes_reset(snes: *mut Snes, hard: bool, game: &mut Game) {
     cart_reset((*snes).cart);
