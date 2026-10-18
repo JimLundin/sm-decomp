@@ -8221,6 +8221,24 @@ Peer CPU cleanup separately reduces casts/lines (observed85730/257774).
 Peer owns cleanup/remote sync. Credits, complete gameplay/hardware,
 render/audio fidelity, masked RAM and ownership remain unfinished.
 
+CPU block-move cleanup (2026-10-19): MVP/MVN use native bank/index address
+assembly, wrapping repeat-PC subtraction and direct byte-index masks. Operand
+fetch, destination-bank assignment, read-before-write and post-copy register
+order remain exact. Frozen HEAD `33f52913741f322a2929e207caf8f161d0c4d68f`
+plus only these two opcode edits passes 262,144 actual old/current instruction
+pairs over every count/X value and complementary Y, both index widths and
+varied modes, with expected copied byte, full RAM, CPU state, cycles, history
+and bus counters matching. These are constructed RAM-bank transfers, not all
+device/bank combinations. Prefix 3,600/0 (0.97s) and full instrumented any%
+129,712/0 (53.82s) have zero MVP/MVN calls; dedicated actual instruction
+execution supplies hardware path coverage. Clean full any% 129,712/0 (53.77s),
+native exit 0. PowerShell's redirected instrumented invocation reported a
+stderr wrapper error despite its zero-failure replay result. Cargo fmt/check,
+release library, frozen normal metadata and optimized core/DLL builds pass;
+full frontend linking still lacks SDL2. Live edited arms match verified source.
+Cast lines -16, Rust lines -18; other counters unchanged. Gameplay and hardware
+completeness remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

@@ -1341,33 +1341,24 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             68 => {
-                let mut dest: uint8_t = cpu_readOpcode(cpu, game);
-                let mut src: uint8_t = cpu_readOpcode(cpu, game);
+                let dest = cpu_readOpcode(cpu, game);
+                let src = cpu_readOpcode(cpu, game);
                 (*cpu).db = dest;
                 cpu_write(
                     cpu,
-                    ((dest as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                        | (*cpu).y as ::core::ffi::c_int) as uint32_t,
-                    cpu_read(
-                        cpu,
-                        ((src as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                            | (*cpu).x as ::core::ffi::c_int) as uint32_t,
-                        game,
-                    ),
+                    u32::from(dest) << 16 | u32::from((*cpu).y),
+                    cpu_read(cpu, u32::from(src) << 16 | u32::from((*cpu).x), game),
                     game,
                 );
                 (*cpu).a = (*cpu).a.wrapping_sub(1);
                 (*cpu).x = (*cpu).x.wrapping_sub(1);
                 (*cpu).y = (*cpu).y.wrapping_sub(1);
-                if (*cpu).a as ::core::ffi::c_int != 0xffff as ::core::ffi::c_int {
-                    (*cpu).pc =
-                        ((*cpu).pc as ::core::ffi::c_int - 3 as ::core::ffi::c_int) as uint16_t;
+                if (*cpu).a != 0xffff {
+                    (*cpu).pc = (*cpu).pc.wrapping_sub(3);
                 }
                 if (*cpu).xf {
-                    (*cpu).x =
-                        ((*cpu).x as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint16_t;
-                    (*cpu).y =
-                        ((*cpu).y as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint16_t;
+                    (*cpu).x &= 0xff;
+                    (*cpu).y &= 0xff;
                 }
                 break;
             }
@@ -1463,33 +1454,24 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) {
                 break;
             }
             84 => {
-                let mut dest_0: uint8_t = cpu_readOpcode(cpu, game);
-                let mut src_0: uint8_t = cpu_readOpcode(cpu, game);
+                let dest_0 = cpu_readOpcode(cpu, game);
+                let src_0 = cpu_readOpcode(cpu, game);
                 (*cpu).db = dest_0;
                 cpu_write(
                     cpu,
-                    ((dest_0 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                        | (*cpu).y as ::core::ffi::c_int) as uint32_t,
-                    cpu_read(
-                        cpu,
-                        ((src_0 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                            | (*cpu).x as ::core::ffi::c_int) as uint32_t,
-                        game,
-                    ),
+                    u32::from(dest_0) << 16 | u32::from((*cpu).y),
+                    cpu_read(cpu, u32::from(src_0) << 16 | u32::from((*cpu).x), game),
                     game,
                 );
                 (*cpu).a = (*cpu).a.wrapping_sub(1);
                 (*cpu).x = (*cpu).x.wrapping_add(1);
                 (*cpu).y = (*cpu).y.wrapping_add(1);
-                if (*cpu).a as ::core::ffi::c_int != 0xffff as ::core::ffi::c_int {
-                    (*cpu).pc =
-                        ((*cpu).pc as ::core::ffi::c_int - 3 as ::core::ffi::c_int) as uint16_t;
+                if (*cpu).a != 0xffff {
+                    (*cpu).pc = (*cpu).pc.wrapping_sub(3);
                 }
                 if (*cpu).xf {
-                    (*cpu).x =
-                        ((*cpu).x as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint16_t;
-                    (*cpu).y =
-                        ((*cpu).y as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint16_t;
+                    (*cpu).x &= 0xff;
+                    (*cpu).y &= 0xff;
                 }
                 break;
             }
