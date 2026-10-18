@@ -4252,6 +4252,44 @@ Continue actual register/transfer consumer coverage before broader enforcement;
 held HDMA diagnosis, rendering/Waver71, event generation, audio timing and
 boot-to-credits remain open.
 
+Full-route ordinary DMA dependency audit (2026-10-18): actual dma_read,
+dma_write and non-HDMA dma_startDma observers reset written-register masks
+at each ROM/Rust branch entry. Any%129,712/0 (280.38s), Waver58,109/0
+(130.51s), nativeexits0. Neither side reads DMA registers on either complete
+route. All active ordinary-DMA channels have registers0..6 written within
+their branch before every start: inherited-setup counters allzero. Starts
+per side are703,813 any%,310,286 Waver (including zero-mask starts).
+Thirteen deliberate inherited-read andseven incomplete-setup controls fire
+exactly once each; initialized configuration and B/F mirror negative
+controls add no detections. The control replay passes3,600/0, nativeexit0.
+
+No branch entry has dmaBusy true. At7,841 any% and3,731 Waver entries per
+side, at least one DMA/HDMA timer is nonzero. The combined counter does not
+identify which timer or show equality; scheduler state is not cleared merely
+because ordinary DMA is idle. This establishes complete setup for these
+routes, not all helpers, retry/failure contexts or hardware transfer timing.
+HDMA starts/implicit table consumers and transfer-mode B-bus sequences are
+outside this audit; held HDMA diagnosis remains stopped.
+
+ROM/Rust register-write counts differ despite clean RAM/output comparison.
+For registers0..6, any% ROM counts are
+[614512,614512,1098665,1224711,630312,1033455,833855], Rust
+[614512,614512,1098665,1098665,630312,833883,833855]; Waver ROM
+[258509,258509,444678,507858,271924,456038,366557], Rust
+[258509,258509,444678,444678,271924,366585,366557]. Counts alone do not prove
+equivalent transfer contents or justify raw DMA residual equality. Next:
+QC the coordinated channel/timer rewind implementation and split actual
+timer observations before claiming scheduler isolation.
+
+Only this note changes. Source was frozen before the coordinated DMA snapshot
+candidate and includes then-current input/WRAM/audio/PPU edits; later commits
+need separate integration checks. Isolated optimized core/DLL builds, direct
+full-source rustfmt and progress pass; Cargo fmt/check and release remain
+denied at cargo.exe launch. No maintained Rust/residue counters change;
+probe and ROM-derived inputs remain ignored. Ordinary rendering comparison
+retains the known initialization limitation. Enabled-render Waver71, hires,
+hardware events/timing, audio timing, masked RAM and credits remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
