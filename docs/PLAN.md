@@ -4537,6 +4537,29 @@ stay untracked. These checks establish maintained transfer equivalence, not
 independent hardware timing or credits coverage. Continue actual scheduling
 and route work; the held HDMA window diagnosis remains held.
 
+Independent CPU flag opcode QC (2026-10-18): pending cpu_getFlags/
+cpu_setFlags cleanup passes 33,554,432 actual PHP/PLP instruction pairs.
+Every packed status byte and index word runs in native and emulation modes;
+Y is the word XOR A55A, so every Y word is also covered. PHP writes the
+independently assembled expected byte through the actual stack bus; PLP
+pulls a different byte (status XOR A5). All eight flag fields, forced M/X
+in emulation, X/Y truncation, unchanged accumulator/E, PC, stack location
+and three/four opcode cycles match independent expectations. Native stack
+positions span 1800..1FFF; emulation spans 0100..01FF including wrap. Native
+16-bit stack wrap and independently arbitrary X/Y combinations are outside
+this matrix. Deliberately changing only emulation M forcing to false fails
+the actual PLP flag check; the unmodified probe exits 0.
+
+Tested getter/setter bodies match current source after undoing that TEMP
+control. Optimized probe core/DLL, normal-core metadata and direct full-source
+rustfmt pass. Cargo execution remains denied as documented. Only this note
+changes; no maintained Rust/residue counters change and probes remain TEMP.
+This proves executed flag-consumer behavior for the selected instructions,
+not all CPU instructions or independent hardware accuracy. The implementing
+session owns clean full-any% integration; concurrent demo/DMA/PPU changes
+require their own evidence. Rendering/Waver71, events, audio timing and
+credits remain open; held HDMA diagnosis stays stopped.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
