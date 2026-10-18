@@ -666,6 +666,32 @@ No maintained instrumentation, residue-counter changes or ROM-derived
 assets enter this audit. Next: verify new room 99BD with the current oracle
 and extend normal inputs toward currently unexecuted gameplay paths.
 
+Energy Tank and 99BD route milestone (2026-10-18): normal controls in
+target/awake-return/qa-waver-tank-xfire-exit.inputs reach the Energy Tank
+and open the southwest blue door. The read-only diagnostic on 33d74e6c
+passes 59,942/0 (117.61s), ends alive in state 8/99BD, health 189/199,
+with 18 observed rooms and 19 enemy definitions. Pickup previously filled
+health to 199/199. At frame 59,722, actual shoot input spawns a projectile
+and door PLM C8A8; its instruction advances before transition into 99BD
+at 59,771, followed by gameplay at 59,879. Independent review confirms
+the diagnostic does not alter maintained gameplay or weaken the oracle.
+
+Runtime bindings prove shoot 0040, jump 0080, run 8000, cancel 4000.
+Earlier 4200 suffixes never fired; the wrong labels caused failed exit
+experiments. The successful Energy Tank suffix included 0040 and remains
+valid. Pose 008A is running into a wall, not crouching; geometry guesses
+based on the incorrect name are retired. Message dismissal requires its
+mandatory delay followed by a fresh acknowledgement.
+
+The exact 59,942-frame input then passes the unmodified verifier DLL built
+from committed Func2/slope/sound gameplay at 4c125ea2: 59,942/0 (108.03s),
+explicit native exit 0, with final gameplay in 99BD. This replay predates
+the pending VRAM read-latch change and must not be described as verifying
+that change. Inputs remain ignored; no maintained Rust or residue counters
+change. Next: continue from 99BD toward wider playable coverage, using
+actual control bindings and function-hit evidence. Turtle execution and
+boot-to-credits remain unproved.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
