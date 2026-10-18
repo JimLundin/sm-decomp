@@ -382,6 +382,34 @@ impl Game {
         self.g_ram[0xe7e..0xe80].copy_from_slice(&value.to_le_bytes());
     }
 
+    /// nmi_flag_bg2_enemy_vram_transfer ($7E:0E1E in ram_map).
+    pub fn nmi_flag_bg2_enemy_vram_transfer(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xe1e], self.g_ram[0xe1f]])
+    }
+
+    pub fn set_nmi_flag_bg2_enemy_vram_transfer(&mut self, value: u16) {
+        self.g_ram[0xe1e..0xe20].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// enemy_bg2_tilemap_size ($7E:179A in ram_map).
+    pub fn enemy_bg2_tilemap_size(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x179a], self.g_ram[0x179b]])
+    }
+
+    /// debug_time_frozen_for_enemies ($7E:185E in ram_map).
+    pub fn debug_time_frozen_for_enemies(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x185e], self.g_ram[0x185f]])
+    }
+
+    /// time_is_frozen_flag ($7E:0A78 in ram_map).
+    pub fn time_is_frozen_flag(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xa78], self.g_ram[0xa79]])
+    }
+
+    pub fn write_vram_queue_byte(&mut self, cursor: u16, field: usize, value: u8) {
+        self.g_ram[0xd0 + usize::from(cursor) + field] = value;
+    }
+
     /// VRAM write queue byte cursor ($7E:0330 in ram_map).
     pub fn vram_write_queue_tail(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0x330], self.g_ram[0x331]])

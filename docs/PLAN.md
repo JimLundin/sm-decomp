@@ -2196,6 +2196,22 @@ cast lines -26, Rust lines -10; other counters unchanged. Next:
 QueueEnemyBG2TilemapTransfers, preserving its live tail read after entry
 writes and unconditional request clearing; then remove gVramWriteEntry.
 
+QueueEnemyBG2TilemapTransfers now uses safe named RAM reads and byte-backed
+queue writes. Request/freeze gates, source 2000, bank byte 7E, destination
+4800 and ordered entry stores remain exact. Tail advance reads the live tail
+after stores, including queue overlap; request clears unconditionally.
+The last bank-A0 gVramWriteEntry caller is gone and its private raw helper
+is removed. Independent extracted comparison passes 1,051,968 complete-RAM
+cases across every tail/gate/size word, overlapping queue entries and random
+states. Stable optimized core/DLL build and direct full-source format pass;
+Cargo fmt/build remain ASR-denied. Any%: 129,712 frames, zero failures
+(207.01s); Waver route: 58,109 frames, zero failures (92.88s). Raw offsets -10,
+unsafe functions -2, cast lines -15; Rust lines +6 provide named fields and
+a queue byte writer. Other counters unchanged. A concurrent oracle audit
+owns the pending cpu_infra.rs CGRAM change; these replay results use the
+pre-CGRAM DLL. Next: bank-specific enemy instruction field access after
+the oracle audit finishes its source-bound verification.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

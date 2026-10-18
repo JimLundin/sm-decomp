@@ -711,11 +711,6 @@ unsafe fn RomBankBase(mut bank: uint8, game: &mut Game) -> *const uint8 {
     .offset(-(0x8000 as ::core::ffi::c_int as isize));
 }
 #[inline]
-unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int, game: &mut Game) -> *mut VramWriteEntry {
-    return (&raw mut game.g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
-        as *mut uint8 as *mut VramWriteEntry;
-}
-#[inline]
 unsafe fn get_EnemyDef_A2(mut a: uint16, game: &mut Game) -> *mut EnemyDef {
     return RomPtr(
         (0xa00000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t,
@@ -6647,38 +6642,21 @@ pub unsafe fn ProcessExtendedTilemap(mut db: uint8, mut r22: uint16, game: &mut 
         .offset(0xe1e as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh22 = (*fresh22).wrapping_add(1);
 }
-pub unsafe fn QueueEnemyBG2TilemapTransfers(game: &mut Game) {
-    let mut v0: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xe1e as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        != 0
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x185e as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0xa78 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-            == 0
+pub fn QueueEnemyBG2TilemapTransfers(game: &mut Game) {
+    if game.nmi_flag_bg2_enemy_vram_transfer() != 0
+        && game.debug_time_frozen_for_enemies() | game.time_is_frozen_flag() == 0
     {
-        v0 = gVramWriteEntry(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int,
-            game,
-        );
-        (*v0).size = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x179a as ::core::ffi::c_int as isize) as *mut uint16);
-        (*v0).src.addr = ((&raw mut game.g_ram as *mut uint8)
-            .offset(0x2000 as ::core::ffi::c_int as isize) as *mut uint16
-            as *mut uint8)
-            .offset_from(&raw mut game.g_ram as *mut uint8)
-            as ::core::ffi::c_long as VoidP;
-        (*v0).src.bank = 126 as uint8;
-        (*v0).vram_dst = addr_unk_604800 as ::core::ffi::c_int as uint16;
-        let ref mut fresh42 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x330 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        *fresh42 = (*fresh42 as ::core::ffi::c_int + 7 as ::core::ffi::c_int) as uint16;
+        let cursor = game.vram_write_queue_tail();
+        let size = game.enemy_bg2_tilemap_size();
+        game.write_vram_queue_word(cursor, 0, size);
+        game.write_vram_queue_word(cursor, 2, 0x2000);
+        game.write_vram_queue_byte(cursor, 4, 126);
+        game.write_vram_queue_word(cursor, 5, addr_unk_604800 as u16);
+        // Entry writes can overlap the tail; advance its live value.
+        let tail = game.vram_write_queue_tail().wrapping_add(7);
+        game.set_vram_write_queue_tail(tail);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xe1e as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    game.set_nmi_flag_bg2_enemy_vram_transfer(0);
 }
 pub unsafe fn EnemyCollisionHandler(game: &mut Game) {
     if (*gEnemyData(
