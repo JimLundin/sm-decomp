@@ -2064,6 +2064,43 @@ Next: classify derived brightness cache and remaining omitted display/register
 state. Audio timing, shared hardware accuracy, HDMA, masked RAM and full-route
 coverage remain open.
 
+Derived brightness-cache classification (2026-10-18): actual snapshot
+faults confirm brightnessMult, brightnessMultHalf and lastBrightnessMult are
+not verified or rewound. A normal-table byte mutation produces next-row white
+254 instead of255; a consumed half-table byte produces122 instead of123;
+a brightness7 table falsely marked15 produces119 instead of255. All are
+accepted before continued rendering. The initial half-table injection targeted
+unused entry62 and did not change output; corrected entry31 is consumed by
+white halved to level15. Failed initial control is not counted as evidence.
+
+This differs from a normal INIDISP rewind defect: all512 coherent saved/live
+brightness transitions pass (16x16 brightness pairs xnormal/half output).
+Actual RestoreSnapshot restores brightness but leaves the cache/marker at the
+live brightness; the next actual render regenerates when the marker differs,
+or reuses a correct table when it agrees. No ordinary brightness-transition
+bug is established. Independent cache generation models pass2,032 table-byte
+values across16 brightness levels:63 normal entries and64 half entries each.
+Native exit0 for corrected fault/model/transition probes. Actual PPU production
+body exactly matches1f2acc8e after removing appended wrappers.
+
+The remaining blind spot is table corruption or a false valid marker,
+not coherent cache reuse. Full sm/src reference search finds generated table
+writes only in ppu_runLine (apart from reset/load of Ppu). Brightness cache
+needs either a checked generation invariant or explicit snapshot coverage;
+do not blindly treat arbitrary cache bytes as semantic register state or
+invalidate them without deciding how oracle detection should behave. Controls
+here use backdrop white, no sprites/windows/math except normal/half selection,
+and actual default renderer. Startup/reset/load and all color sums/cache
+indices remain outside these cases. Snapshot source was frozen with concurrent
+audio WIP, so no audio claims follow from these tests.
+
+No maintained source or this probe's residue counters changed. Cargo fmt
+--check and direct optimized probe builds pass. Existing INIDISP any%129,712/0
+andWaver58,109/0 remain its regression results. Probe/ROM assets ignored.
+Next: choose/check the derived-cache invariant, then continue omitted semantic
+display state. Audio timing, HDMA, masked RAM, shared hardware accuracy and
+boot-to-credits coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
