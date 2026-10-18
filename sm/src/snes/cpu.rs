@@ -702,43 +702,36 @@ unsafe fn cpu_adrIax(cpu: *mut Cpu, game: &mut Game) -> uint16_t {
         game,
     )
 }
-unsafe fn cpu_and(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t, game: &mut Game) {
+unsafe fn cpu_and(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
     if (*cpu).mf {
-        let mut value: uint8_t = cpu_read(cpu, low, game);
-        (*cpu).a = ((*cpu).a as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int
-            | (*cpu).a as ::core::ffi::c_int
-                & value as ::core::ffi::c_int
-                & 0xff as ::core::ffi::c_int) as uint16_t;
+        let value = u16::from(cpu_read(cpu, low, game));
+        (*cpu).a = (*cpu).a & 0xff00 | ((*cpu).a & value) & 0xff;
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        let mut value_0: uint16_t = cpu_readWord(cpu, low, high, game);
-        (*cpu).a = ((*cpu).a as ::core::ffi::c_int & value_0 as ::core::ffi::c_int) as uint16_t;
+        let value = cpu_readWord(cpu, low, high, game);
+        (*cpu).a &= value;
     }
     cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
 }
-unsafe fn cpu_ora(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t, game: &mut Game) {
+unsafe fn cpu_ora(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
     if (*cpu).mf {
-        let mut value: uint8_t = cpu_read(cpu, low, game);
-        (*cpu).a = ((*cpu).a as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int
-            | ((*cpu).a as ::core::ffi::c_int | value as ::core::ffi::c_int)
-                & 0xff as ::core::ffi::c_int) as uint16_t;
+        let value = u16::from(cpu_read(cpu, low, game));
+        (*cpu).a = (*cpu).a & 0xff00 | ((*cpu).a | value) & 0xff;
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        let mut value_0: uint16_t = cpu_readWord(cpu, low, high, game);
-        (*cpu).a = ((*cpu).a as ::core::ffi::c_int | value_0 as ::core::ffi::c_int) as uint16_t;
+        let value = cpu_readWord(cpu, low, high, game);
+        (*cpu).a |= value;
     }
     cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
 }
-unsafe fn cpu_eor(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t, game: &mut Game) {
+unsafe fn cpu_eor(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
     if (*cpu).mf {
-        let mut value: uint8_t = cpu_read(cpu, low, game);
-        (*cpu).a = ((*cpu).a as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int
-            | ((*cpu).a as ::core::ffi::c_int ^ value as ::core::ffi::c_int)
-                & 0xff as ::core::ffi::c_int) as uint16_t;
+        let value = u16::from(cpu_read(cpu, low, game));
+        (*cpu).a = (*cpu).a & 0xff00 | ((*cpu).a ^ value) & 0xff;
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        let mut value_0: uint16_t = cpu_readWord(cpu, low, high, game);
-        (*cpu).a = ((*cpu).a as ::core::ffi::c_int ^ value_0 as ::core::ffi::c_int) as uint16_t;
+        let value = cpu_readWord(cpu, low, high, game);
+        (*cpu).a ^= value;
     }
     cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
 }

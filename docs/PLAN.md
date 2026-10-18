@@ -6786,6 +6786,29 @@ rendering/Waver71, masked RAM and credits remain open. Held HDMA diagnosis
 stays stopped. Continue executed hardware paths and route coverage with
 useful independent subagents.
 
+CPU logical-operation cleanup (2026-10-18): cpu_and/ora/eor use native word
+operations and retain accumulator high bytes in byte mode. Width gate,
+word-mode cycle increment, ordered operand reads and final live-width Z/N
+updates remain exact. Actual old/current helpers pass 4,325,376 cases over
+every accumulator word, eleven operand patterns, both widths and all three
+operations. Independent result/flags, preserved selected registers/control
+flags and ordered read/cycle traces pass, including byte cycle overflow.
+Physical WRAM executes 3,145,728 immediate AND/ORA/EOR instructions over
+every accumulator, eight operand patterns and both widths: result, Z/N,
+other flags, PC and cycles pass. Independent device/opcode QC is recorded
+above. Instrumented any% prefix passes 3,600/0 (6.75s), native exit 0;
+AND word/byte, OR word/byte and XOR word/byte counts are
+231,044/39,120/88,666/814/10,863/527. Clean frozen
+373dd00be5bbe8b8f2ccc23cd01e5288e04b669f plus only these three helpers passes
+any% 129,712/0 (246.92s), native exit 0. Direct full-source format,
+normal-core metadata and optimized clean/probe core/DLL builds pass;
+Cargo fmt/release remain launch-denied. Progress/diff checks pass; focused
+cast lines -13 and Rust lines -7, other categories unchanged. Later peer
+changes are outside this replay. Full word-input Cartesian coverage,
+arbitrary device side effects, hardware/render/audio timing and credits
+remain open; held HDMA diagnosis stays stopped. Continue executed CPU
+load/store/compare helpers, preserving bus sequencing and flags.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
