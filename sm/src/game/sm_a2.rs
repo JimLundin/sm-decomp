@@ -2597,43 +2597,31 @@ pub unsafe fn MaridiaBeybladeTurtle_Main(game: &mut Game) {
     let live_index = game.cur_enemy_index();
     CallMaridiaBeybladeTurtleFunc(0xa20000 | u32::from(preinstruction), live_index, game);
 }
-pub unsafe fn MaridiaBeybladeTurtle_Func1(mut k: uint16, game: &mut Game) {
-    let mut palette_index: uint16 = (*Get_MaridiaBeybladeTurtle(k as ::core::ffi::c_int, game))
-        .base
-        .palette_index;
-    (*Get_MaridiaBeybladeTurtle(k as ::core::ffi::c_int + 64 as ::core::ffi::c_int, game))
-        .base
-        .palette_index = palette_index;
-    (*Get_MaridiaBeybladeTurtle(k as ::core::ffi::c_int + 128 as ::core::ffi::c_int, game))
-        .base
-        .palette_index = palette_index;
-    (*Get_MaridiaBeybladeTurtle(k as ::core::ffi::c_int + 192 as ::core::ffi::c_int, game))
-        .base
-        .palette_index = palette_index;
-    (*Get_MaridiaBeybladeTurtle(k as ::core::ffi::c_int + 256 as ::core::ffi::c_int, game))
-        .base
-        .palette_index = palette_index;
-    let mut vram_tiles_index: uint16 = (*Get_MaridiaBeybladeTurtle(k as ::core::ffi::c_int, game))
-        .base
-        .vram_tiles_index;
-    let mut E1: *mut Enemy_MaridiaBeybladeTurtle =
-        Get_MaridiaBeybladeTurtle(k as ::core::ffi::c_int + 64 as ::core::ffi::c_int, game);
-    (*E1).base.vram_tiles_index = vram_tiles_index;
-    let mut E2: *mut Enemy_MaridiaBeybladeTurtle =
-        Get_MaridiaBeybladeTurtle(k as ::core::ffi::c_int + 128 as ::core::ffi::c_int, game);
-    (*E2).base.vram_tiles_index = vram_tiles_index;
-    let mut E3: *mut Enemy_MaridiaBeybladeTurtle =
-        Get_MaridiaBeybladeTurtle(k as ::core::ffi::c_int + 192 as ::core::ffi::c_int, game);
-    (*E3).base.vram_tiles_index = vram_tiles_index;
-    let mut E4: *mut Enemy_MaridiaBeybladeTurtle =
-        Get_MaridiaBeybladeTurtle(k as ::core::ffi::c_int + 256 as ::core::ffi::c_int, game);
-    (*E4).base.vram_tiles_index = vram_tiles_index;
-    (*E1).mbte_var_B = k;
-    (*E2).mbte_var_B = k;
-    (*E3).mbte_var_B = k;
-    (*E4).mbte_var_B = k;
-    (*Get_MaridiaBeybladeTurtle(k as ::core::ffi::c_int, game)).mbte_var_A =
-        (0xa28e0a as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+pub fn MaridiaBeybladeTurtle_Func1(k: uint16, game: &mut Game) {
+    let base = 0xf78 + usize::from(k);
+    let palette_field = core::mem::offset_of!(Enemy_MaridiaBeybladeTurtle, base)
+        + core::mem::offset_of!(EnemyBase, palette_index);
+    let field = base + palette_field;
+    let palette = [game.g_ram[field], game.g_ram[field + 1]];
+    // Child offsets remain wide even when k is near the end of a word.
+    for child in [64usize, 128, 192, 256] {
+        let field = base + child + palette_field;
+        game.g_ram[field..field + 2].copy_from_slice(&palette);
+    }
+    let tiles_field = core::mem::offset_of!(Enemy_MaridiaBeybladeTurtle, base)
+        + core::mem::offset_of!(EnemyBase, vram_tiles_index);
+    let field = base + tiles_field;
+    let tiles = [game.g_ram[field], game.g_ram[field + 1]];
+    for child in [64usize, 128, 192, 256] {
+        let field = base + child + tiles_field;
+        game.g_ram[field..field + 2].copy_from_slice(&tiles);
+    }
+    for child in [64usize, 128, 192, 256] {
+        let field = base + child + core::mem::offset_of!(Enemy_MaridiaBeybladeTurtle, mbte_var_B);
+        game.g_ram[field..field + 2].copy_from_slice(&k.to_le_bytes());
+    }
+    let field = base + core::mem::offset_of!(Enemy_MaridiaBeybladeTurtle, mbte_var_A);
+    game.g_ram[field..field + 2].copy_from_slice(&0x8e0au16.to_le_bytes());
 }
 pub unsafe fn MaridiaBeybladeTurtle_Func2(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_MaridiaBeybladeTurtle =

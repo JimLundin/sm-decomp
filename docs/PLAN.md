@@ -2914,6 +2914,19 @@ counters unchanged. These routes still do not prove exercised Turtle AI or
 boot-to-credits coverage. Next: Turtle Func1 replicated palette/tile/state
 fields, preserving read-before-copy order and wide adjacent-slot offsets.
 
+Maridia Beyblade Turtle Func1 now uses safe byte-backed copies to set up its
+four child slots. Palette writes all precede the parent tile read; tile writes
+precede parent-link writes; parent state 8E0A remains last. Child offsets retain
+wide arithmetic for high/odd parent indexes. Address bounds and disjoint parent
+source fields pass all 65,536 indexes; this is an address audit, not a full-RAM
+behavior comparison. Direct full-source format and stable optimized core/DLL
+build pass; Cargo release build scripts remain ASR-denied. Final-source any%
+passes 129,712/0 (245.34s); Waver passes 58,109/0 (110.93s), both process exits
+0, including sound-command enforcement. Unsafe functions -1, cast lines -11,
+Rust lines -12; other counters unchanged. Turtle route coverage remains
+unproven. Next: the coordinated gameplay session owns Mini Maridia Beyblade
+Turtle Main, retaining parent-clear aliases and captured-slot dispatch reads.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
