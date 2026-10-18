@@ -2014,6 +2014,23 @@ Rust lines -10; other counters unchanged. Next: EnemyFunc_BBBF block scan,
 retaining low-byte row multiplication, fixed-point displacement, wrapped
 block offsets and inclusive row traversal.
 
+EnemyFunc_BBBF now uses safe byte-backed enemy coordinates and level-block
+reads with explicit wrapping arithmetic. Top alignment, inclusive row count,
+low-byte initial row multiplication, full-word traversal stride, fixed-point
+X displacement and directional radius edges remain exact. The first block
+is checked before decrementing the row count; block offsets wrap as words.
+Prior Rust comparison passes 5,767,168 full-RAM/return checks; independent
+comparison passes 1,983,687 checks across coordinate/radius/fraction/width/
+index words, displacement boundaries and mixed solidity. These comparisons
+cover valid backing-RAM reads: byte offset FFFE would read one past g_ram
+in the prior unsafe code and now fails bounds checking. Stable optimized
+core/DLL build and direct full-source format pass; Cargo fmt/build remain
+ASR-denied. Any%: 129,712 frames, zero failures (195.20s); Waver route:
+58,109 frames, zero failures (93.05s). Raw offsets -3, unsafe functions -1,
+cast lines -27, Rust lines -7; other counters unchanged. Next: EnemyFunc_BC76
+vertical block scan, retaining its untruncated horizontal block cursor and
+inclusive column traversal.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
