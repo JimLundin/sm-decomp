@@ -394,22 +394,16 @@ unsafe fn snes_writeReg(mut snes: *mut Snes, mut adr: uint16_t, mut val: uint8_t
             }
         }
         16903 => {
-            (*snes).hTimer = ((*snes).hTimer as ::core::ffi::c_int & 0x100 as ::core::ffi::c_int
-                | val as ::core::ffi::c_int) as uint16_t;
+            (*snes).hTimer = ((*snes).hTimer & 0x100) | u16::from(val);
         }
         16904 => {
-            (*snes).hTimer = ((*snes).hTimer as ::core::ffi::c_int & 0xff as ::core::ffi::c_int
-                | (val as ::core::ffi::c_int & 1 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
-                as uint16_t;
+            (*snes).hTimer = ((*snes).hTimer & 0xff) | (u16::from(val & 1) << 8);
         }
         16905 => {
-            (*snes).vTimer = ((*snes).vTimer as ::core::ffi::c_int & 0x100 as ::core::ffi::c_int
-                | val as ::core::ffi::c_int) as uint16_t;
+            (*snes).vTimer = ((*snes).vTimer & 0x100) | u16::from(val);
         }
         16906 => {
-            (*snes).vTimer = ((*snes).vTimer as ::core::ffi::c_int & 0xff as ::core::ffi::c_int
-                | (val as ::core::ffi::c_int & 1 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
-                as uint16_t;
+            (*snes).vTimer = ((*snes).vTimer & 0xff) | (u16::from(val & 1) << 8);
         }
         16907 => {
             if val as ::core::ffi::c_int == 2 as ::core::ffi::c_int {

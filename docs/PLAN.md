@@ -3896,6 +3896,24 @@ TEMP; no ROM-derived assets committed. No fresh full-any% or Waver result
 is claimed. Headless rendering initialization, enabled-render Waver71,
 held HDMA, interrupt generation/gating and boot-to-credits remain open.
 
+Timer-register word arithmetic (2026-10-18): HTIMEL/HTIMEH and VTIMEL/VTIMEH
+now use native u16 masks and shifts. Low writes retain bit eight; high writes
+retain the low byte and accept only input bit zero. Register order and the
+existing event schedule are unchanged. Actual snes_write controls pass all
+67,108,864 previous-word/input-byte/register combinations, including the
+opposite timer remaining unchanged. An instrumented full any% replay executes
+each changed handler 206,986 times on each implementation and passes
+129,712/0, native exit 0. A separate clean frozen c70019b3 plus only this
+change also passes 129,712/0, native exit 0; concurrent snapshot/demo/PPU
+changes are outside these runs. Direct full-source formatting, normal-core
+metadata and optimized core/DLL builds pass. Cargo fmt/build remain denied
+at cargo.exe launch (OS error 5), so the Cargo requirement remains unmet.
+Progress: cast lines -8, Rust lines -6; other focused counters unchanged.
+Probe and ROM-derived assets remain outside tracked files. This establishes
+timer-write behavior and exercised handlers, not timer IRQ generation or
+NMI gating. Those event gaps, rendering/HDMA, audio timing and boot-to-credits
+coverage remain open; continue their focused oracle work.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
