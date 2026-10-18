@@ -712,14 +712,10 @@ unsafe fn cpu_adrIsy(mut cpu: *mut Cpu, mut low: *mut uint32_t, game: &mut Game)
         + 1 as ::core::ffi::c_int
         & 0xffffff as ::core::ffi::c_int) as uint32_t;
 }
-unsafe fn cpu_adrAbs(mut cpu: *mut Cpu, mut low: *mut uint32_t, game: &mut Game) -> uint32_t {
-    let mut adr: uint16_t = cpu_readOpcodeWord(cpu, game);
-    *low = ((((*cpu).db as ::core::ffi::c_int) << 16 as ::core::ffi::c_int)
-        + adr as ::core::ffi::c_int) as uint32_t;
-    return ((((*cpu).db as ::core::ffi::c_int) << 16 as ::core::ffi::c_int)
-        + adr as ::core::ffi::c_int
-        + 1 as ::core::ffi::c_int
-        & 0xffffff as ::core::ffi::c_int) as uint32_t;
+unsafe fn cpu_adrAbs(cpu: *mut Cpu, low: *mut uint32_t, game: &mut Game) -> uint32_t {
+    let adr = u32::from(cpu_readOpcodeWord(cpu, game));
+    *low = (u32::from((*cpu).db) << 16) + adr;
+    ((u32::from((*cpu).db) << 16) + adr + 1) & 0xffffff
 }
 unsafe fn cpu_adrAbx(
     mut cpu: *mut Cpu,
@@ -771,12 +767,11 @@ unsafe fn cpu_adrAby(
         + 1 as ::core::ffi::c_int
         & 0xffffff as ::core::ffi::c_int) as uint32_t;
 }
-unsafe fn cpu_adrAbl(mut cpu: *mut Cpu, mut low: *mut uint32_t, game: &mut Game) -> uint32_t {
-    let mut adr: uint32_t = cpu_readOpcodeWord(cpu, game) as uint32_t;
-    adr |=
-        ((cpu_readOpcode(cpu, game) as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) as uint32_t;
+unsafe fn cpu_adrAbl(cpu: *mut Cpu, low: *mut uint32_t, game: &mut Game) -> uint32_t {
+    let mut adr = u32::from(cpu_readOpcodeWord(cpu, game));
+    adr |= u32::from(cpu_readOpcode(cpu, game)) << 16;
     *low = adr;
-    return adr.wrapping_add(1 as uint32_t) & 0xffffff as uint32_t;
+    adr.wrapping_add(1) & 0xffffff
 }
 unsafe fn cpu_adrAlx(mut cpu: *mut Cpu, mut low: *mut uint32_t, game: &mut Game) -> uint32_t {
     let mut adr: uint32_t = cpu_readOpcodeWord(cpu, game) as uint32_t;

@@ -5821,6 +5821,28 @@ source/fixture review finds no issue. Cartridge/PPU/register/DMA routing,
 word reads and hardware timing remain outside this actual RAM-data probe.
 Implementing agent retains source ownership; only this note changes.
 
+CPU absolute-address cleanup (2026-10-18): cpu_adrAbs and cpu_adrAbl widen
+operand/bank bytes natively and retain 24-bit high-address wrapping. Absolute
+mode rereads DB after writing the low output; long mode retains its captured
+address. Ordered two/three-byte operand fetches are unchanged. Actual
+old/current helpers pass 33,554,432 cases across every operand word, all
+banks and both modes, checking addresses, fetch traces, final PC and selected
+unchanged fields. Another 262,144 cases alias output with aligned SP/PC or
+DP/K/DB fields, matching high address and final fields. Physical WRAM runs
+1,048,576 word STA/LDA instructions over all values and four address
+boundaries in both modes, including 7E:FFFF/7F:0000. RAM, result, Z/N, PC
+and cycles pass. Independent physical-bus QC follows. Instrumented any%
+prefix passes 3,600/0, native exit 0, with 1,667,088 absolute and 2,418 long
+calls. Clean frozen bd8b8fb0b0e93541bdd79dddf8c0cc190dadbafd plus only these
+two helpers passes any% 129,712/0 (262.14s), native exit 0. Direct full-source
+format, normal-core metadata and optimized clean/probe core/DLL builds pass;
+Cargo fmt/release remain launch-denied. Progress/diff checks pass; focused
+cast lines -7 and Rust lines -5, other categories unchanged. Later peer
+changes are outside this frozen replay. Substituted all-bank traces do not
+prove physical device/ROM behavior; hardware/render/audio timing and credits
+remain open. Held HDMA diagnosis stays stopped. Continue executed indexed
+address helpers while retaining current cycle rules.
+
 Independent absolute/long-address QC (2026-10-18): candidate cpu_adrAbs
 and cpu_adrAbl pass 1,048,572 actual old/current LDA instructions. Every
 physical WRAM target executes byte/word reads with ordinary and wrapped
