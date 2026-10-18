@@ -843,6 +843,40 @@ committed. Next: continue normal inputs from 9969 toward further gameplay;
 keep uncovered Turtle cleanup on hold. Maintained Rust and residue counters
 are unchanged by this route note.
 
+CGRAM port-state enforcement (2026-10-18): an isolated probe on e23c9141
+shows that palette pointer, second-byte phase and pending low-byte faults
+are accepted by VerifySnapshotsEq and survive RestoreSnapshot. Actual
+$213B reads then return 78/12 instead of 34; a pending-byte fault makes
+the next $2122 write store 2A01 instead of 2A00. These are demonstrated
+verifier/rewind gaps, not observed movie gameplay regressions.
+
+Snapshots now capture, restore and compare cgramPointer, cgramSecondWrite
+and cgramBuffer before normalization/recovery. Actual-function checks
+cover all 131,072 pointer/phase/buffer combinations, including address
+255 wrapping, followed by four actual byte writes and four buffered reads
+against independently computed memory, pointer and phase expectations.
+All 17 field-bit faults fail comparison; equality passes. An isolated
+frame-200 address fault produces exactly one failure in 3,600 frames,
+zero RAM differences and native exit 1. Independent review finds no
+blocking source defect; another session executes the functional probe
+with native exit 0 and confirms stripping instrumentation restores the
+exact maintained body. This exercises the changed snapshot paths and
+resulting port behavior, satisfying the execution-in-context minimum.
+
+The frozen maintained-source DLL is e23c9141 plus these 28 source lines;
+concurrent commits change only PLAN. Any% passes 129,712/0 (203.59s),
+Waver 58,109/0 (93.94s), both native exits 0. Cargo fmt/check, optimized
+core/DLL and normal-core metadata builds pass; Cargo release remains
+blocked executing khronos_api's build script (OS error 5). Rust lines
++28 implement the three fields, comparison and capture/restore; all other
+residue counters unchanged. g_ram and serialized PPU layout are unchanged.
+The $213B high-read bit seven also depends on ppu2openBus, which remains
+outside snapshot enforcement; tests hold that starting state equal and
+track it independently. This does not prove complete palette-port or
+hardware equivalence. Diagnostic source and outputs stay ignored.
+Next: resolve HDMA edge-pass differences and other omitted hardware state;
+full gameplay coverage, reset/upload boundaries and audio timing remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

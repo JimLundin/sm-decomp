@@ -79,6 +79,9 @@ pub struct Snapshot {
     pub sram: [uint8; 8192],
     pub oam: [uint16; 288],
     pub cgram: [uint16; 256],
+    pub cgram_pointer: uint8,
+    pub cgram_second_write: bool,
+    pub cgram_buffer: uint8,
     pub vram_read_buffer: uint16,
     pub vram_pointer: uint16,
     pub vram_increment: uint16,
@@ -862,6 +865,25 @@ unsafe fn VerifySnapshotsEq(
             }
         }
     }
+    let mine_cgram_port = (
+        (*b).cgram_pointer,
+        (*b).cgram_second_write,
+        (*b).cgram_buffer,
+    );
+    let their_cgram_port = (
+        (*a).cgram_pointer,
+        (*a).cgram_second_write,
+        (*a).cgram_buffer,
+    );
+    if mine_cgram_port != their_cgram_port {
+        game.g_fail = true;
+        if report_details {
+            eprintln!(
+                "@{}: CGRAM port (address, second byte, buffer) compare failed: mine {:?} != theirs {:?}",
+                game.snes_frame_counter, mine_cgram_port, their_cgram_port
+            );
+        }
+    }
     let mine_vram_port = (
         (*b).vram_pointer,
         (*b).vram_increment,
@@ -1423,6 +1445,9 @@ unsafe fn VerifySnapshotsEq(
 }
 unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     (*s).cgram = (*(*game.g_snes).ppu).cgram;
+    (*s).cgram_pointer = (*(*game.g_snes).ppu).cgramPointer;
+    (*s).cgram_second_write = (*(*game.g_snes).ppu).cgramSecondWrite;
+    (*s).cgram_buffer = (*(*game.g_snes).ppu).cgramBuffer;
     (*s).vram_read_buffer = (*(*game.g_snes).ppu).vramReadBuffer;
     (*s).vram_pointer = (*(*game.g_snes).ppu).vramPointer;
     (*s).vram_increment = (*(*game.g_snes).ppu).vramIncrement;
@@ -1462,6 +1487,9 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
 }
 unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     (*(*game.g_snes).ppu).cgram = (*s).cgram;
+    (*(*game.g_snes).ppu).cgramPointer = (*s).cgram_pointer;
+    (*(*game.g_snes).ppu).cgramSecondWrite = (*s).cgram_second_write;
+    (*(*game.g_snes).ppu).cgramBuffer = (*s).cgram_buffer;
     (*(*game.g_snes).ppu).vramReadBuffer = (*s).vram_read_buffer;
     (*(*game.g_snes).ppu).vramPointer = (*s).vram_pointer;
     (*(*game.g_snes).ppu).vramIncrement = (*s).vram_increment;
