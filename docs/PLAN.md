@@ -5794,6 +5794,26 @@ Cargo launch remains denied. Coverage remains six Ceres rooms, three enemy
 definitions and zero credits frames. Only PLAN changes; probes/assets stay
 TEMP/ignored. Partner independently checks fixture, final logs and scope.
 
+Independent masked 0933-word audit (2026-10-18): paired full any% passes
+129,712/0 (226.63s), native exit zero. Each byte 0933/0934 has 219,011 ROM
+reads and 160,813 writes; neither is read before a ROM write in its frame.
+Direct 7E:0933 and WRAM-port 0934 incoming-read self-controls pass before
+observations reset. First natural read is frame8325, continuation PC80:A791,
+word 001F; bank-80 log identifies ADC at A78E after STY at A77A stores the
+maximum offset from the upper scroll position at the room bottom. This is
+camera-boundary execution, not proof that every local var933 counterpart
+or layer-2 branch executes. Boot first writes are at continuation 80:8451.
+
+The ROM consumes its own rewritten word in this movie, rather than the
+adopted Rust bytes. The ten-byte 0933..093C mask still copies mine into
+theirs; other bytes, arbitrary inputs and mask removal remain unverified.
+Observed bus consumers, paired loop, normalization and layer-2 X/Y bodies
+match current source. Optimized observer core/DLL, direct format, normal-core
+metadata and progress pass; Cargo launch remains denied. Coverage remains
+six Ceres rooms, three enemy definitions and zero credits frames. Only PLAN
+changes; probes/assets stay TEMP/ignored. Partner independently reviews
+fixture, final logs, source attribution and scope.
+
 Independent CPU long-indirect candidate QC (2026-10-18): 4,718,592 actual
 old/current LDA/STA opcode pairs pass through cpu_adrIdl/cpu_adrIly, native
 exit zero. Every Y word, operands 00/01/FF and both accumulator widths are
