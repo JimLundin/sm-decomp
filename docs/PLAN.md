@@ -1508,6 +1508,37 @@ Cargo fmt --check and the isolated optimized build pass. Probe wrappers
 and ROM-derived data stay ignored. Next: investigate omitted counter and
 register latches while preserving the demonstrated sprite snapshot scope.
 
+Counter-state enforcement (2026-10-18): actual-function faults show five
+omissions in frame snapshots: hCount, vCount, both second-byte read phases
+and countersLatched. Before the fix, VerifySnapshotsEq accepts each altered
+field and RestoreSnapshot leaves it altered; the next actual $213C/$213D/
+$213F read differs. All five demonstrations return native exit 0.
+
+Snapshots now capture, restore and compare these fields through a named
+CounterSnapshot, with bounded failure diagnostics. Ppu, g_ram and serialized
+save layouts are unchanged. Actual-function checks detect all 35 individual
+state-bit mutations and accept equal restored snapshots. All 524,288 restored
+read cases pass: every 16-bit horizontal count, a vertical count paired by
+XOR 96A5 (also exhausting that domain), and all eight phase/latch combinations.
+Each case poisons the five fields, restores them, performs two actual reads
+of each counter against a byte/bus model, then checks $213F latch/phase reset.
+These are paired count values, not every horizontal/vertical Cartesian pair;
+open bus A6 and evenFrame false are fixed. Another 35 actual $2137 reads cover
+sampled horizontal/vertical positions and maintained hPos/4 latch semantics.
+This verifies restored behavior of the maintained PPU, not hardware accuracy.
+
+Each of five isolated frame-200 faults produces exactly one failed frame in
+3,600, a counter diagnostic, zero RAM differences and native exit 1. Frozen
+probe bodies match the maintained source after removing appended wrappers.
+Maintained-source any% passes 129,712/0 (238.58s); Waver passes 58,109/0
+(119.30s), both native exits 0. Cargo fmt and fmt --check, isolated optimized
+core/DLL and normal-core metadata builds pass. Cargo build --release remains
+blocked executing khronos_api's build script (Access is denied, OS error 5).
+Rust lines +32 provide the explicit snapshot and diagnostics; other progress
+counters are unchanged. No probe or ROM-derived assets are committed. Next:
+classify remaining omitted register/write latches; audio timing, masked RAM,
+HDMA and complete route coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

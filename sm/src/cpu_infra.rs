@@ -77,6 +77,14 @@ pub struct SpriteSnapshot {
     // Preserve the inherited cache coverage without depending on Ppu layout.
     pub legacy_pixel_prefix: [uint8; 19],
 }
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub struct CounterSnapshot {
+    pub horizontal: uint16,
+    pub vertical: uint16,
+    pub horizontal_second_byte: bool,
+    pub vertical_second_byte: bool,
+    pub latched: bool,
+}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Snapshot {
@@ -96,6 +104,7 @@ pub struct Snapshot {
     pub oam: [uint16; 256],
     pub high_oam: [uint8; 32],
     pub sprite: SpriteSnapshot,
+    pub counters: CounterSnapshot,
     pub cgram: [uint16; 256],
     pub cgram_pointer: uint8,
     pub cgram_second_write: bool,
@@ -885,6 +894,17 @@ unsafe fn VerifySnapshotsEq(
             }
         }
     }
+    if (*b).counters != (*a).counters {
+        game.g_fail = true;
+        if report_details {
+            eprintln!(
+                "@{}: PPU counter compare failed: mine {:?} != theirs {:?}",
+                game.snes_frame_counter,
+                (*b).counters,
+                (*a).counters
+            );
+        }
+    }
     if ((*b).ppu1_open_bus, (*b).ppu2_open_bus) != ((*a).ppu1_open_bus, (*a).ppu2_open_bus) {
         game.g_fail = true;
         if report_details {
@@ -1519,6 +1539,13 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
         (::core::mem::size_of::<uint16>() as size_t).wrapping_mul(0x8000 as size_t),
     );
     let ppu = &*(*game.g_snes).ppu;
+    (*s).counters = CounterSnapshot {
+        horizontal: ppu.hCount,
+        vertical: ppu.vCount,
+        horizontal_second_byte: ppu.hCountSecond,
+        vertical_second_byte: ppu.vCountSecond,
+        latched: ppu.countersLatched,
+    };
     (*s).oam = ppu.oam;
     (*s).high_oam = ppu.highOam;
     (*s).sprite = SpriteSnapshot {
@@ -1574,6 +1601,11 @@ unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
         (::core::mem::size_of::<uint16>() as size_t).wrapping_mul(0x8000 as size_t),
     );
     let ppu = &mut *(*game.g_snes).ppu;
+    ppu.hCount = (*s).counters.horizontal;
+    ppu.vCount = (*s).counters.vertical;
+    ppu.hCountSecond = (*s).counters.horizontal_second_byte;
+    ppu.vCountSecond = (*s).counters.vertical_second_byte;
+    ppu.countersLatched = (*s).counters.latched;
     ppu.oam = (*s).oam;
     ppu.highOam = (*s).high_oam;
     ppu.oamAdr = (*s).sprite.address;
