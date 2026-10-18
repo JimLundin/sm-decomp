@@ -1307,6 +1307,18 @@ Rust lines -31; unsafe count unchanged. Next: Samus slope dispatch uses
 existing live block/BTS accessors, preserving square/nonsquare selection
 and the saved BTS write before entering nonsquare handlers.
 
+Both Samus slope dispatchers now use existing live block/BTS accessors.
+The low-five-bit < 5 square threshold, full saved BTS word, block arguments
+and write-before-nonsquare-call order remain exact. Prior Rust comparison
+passes 3,584 full-RAM/context/return/selection cases over every BTS byte,
+seven valid backing indexes and both directions; synthetic handlers mutate
+the block index/BTS and inspect the saved word. Stable optimized core/DLL
+build and direct format pass; Cargo fmt/build remain ASR-denied. Waver route:
+58,109 frames, zero failures (85.02s); any%: 129,712 frames, zero failures
+(183.61s). Raw offsets -13, cast lines -19, Rust lines -41; unsafe count
+unchanged. Next: horizontal nonsquare slope displacement arithmetic and
+byte-backed speed reads, retaining signed-shift truncation and multiplication.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

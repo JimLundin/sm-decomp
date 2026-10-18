@@ -2922,62 +2922,21 @@ unsafe fn BlockColl_Vert_SolidShootGrappleBlock(ci: *mut CollInfo, game: &mut Ga
     game.g_ram[0xafc..0xafe].copy_from_slice(&subposition.to_le_bytes());
     1
 }
-unsafe fn BlockColl_Horiz_Slope(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    let mut v0: uint16 = (*(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as ::core::ffi::c_int
-        & 0x1f as ::core::ffi::c_int) as uint16;
-    if (v0 as ::core::ffi::c_int) < 5 as ::core::ffi::c_int {
-        return BlockColl_Horiz_Slope_Square(
-            ci,
-            v0,
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            game,
-        );
+unsafe fn BlockColl_Horiz_Slope(ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    let slope = u16::from(game.current_block_bts() & 0x1f);
+    if slope < 5 {
+        return BlockColl_Horiz_Slope_Square(ci, slope, game.cur_block_index(), game);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1e77 as ::core::ffi::c_int as isize)
-        as *mut uint16) = *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as uint16;
-    return BlockColl_Horiz_Slope_NonSquare(ci, game);
+    game.set_current_slope_bts(u16::from(game.current_block_bts()));
+    BlockColl_Horiz_Slope_NonSquare(ci, game)
 }
-unsafe fn BlockColl_Vert_Slope(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    let mut v0: uint16 = (*(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as ::core::ffi::c_int
-        & 0x1f as ::core::ffi::c_int) as uint16;
-    if (v0 as ::core::ffi::c_int) < 5 as ::core::ffi::c_int {
-        return BlockColl_Vert_Slope_Square(
-            ci,
-            v0,
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            game,
-        );
+unsafe fn BlockColl_Vert_Slope(ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    let slope = u16::from(game.current_block_bts() & 0x1f);
+    if slope < 5 {
+        return BlockColl_Vert_Slope_Square(ci, slope, game.cur_block_index(), game);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1e77 as ::core::ffi::c_int as isize)
-        as *mut uint16) = *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as uint16;
-    return BlockColl_Vert_Slope_NonSquare(
-        ci,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-            as *mut uint16),
-        game,
-    );
+    game.set_current_slope_bts(u16::from(game.current_block_bts()));
+    BlockColl_Vert_Slope_NonSquare(ci, game.cur_block_index(), game)
 }
 fn ClearCarry_5(_ci: *mut CollInfo, _game: &mut Game) -> uint8 {
     0
