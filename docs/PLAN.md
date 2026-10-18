@@ -2034,6 +2034,36 @@ fmt --check and optimized isolated probe build pass. Existing82d97424 any%
 Probe/ROM-derived assets stay ignored. Shared renderer accuracy, other display
 state, audio timing, HDMA, masked RAM and boot-to-credits gaps remain open.
 
+INIDISP state enforcement (2026-10-18): snapshots now capture, restore
+and compare brightness and forcedBlank with bounded diagnostics. Both proven
+pre-change mutations are detected and the next restored default-renderer row
+matches saved white. Ppu/RAM/save layout and register/render arithmetic stay
+unchanged. Direct field restoration leaves brightness cache classification
+separate; the normal rendering path updates its cache when brightness changes.
+
+Actual controls pass all1,024 saved/mutated INIDISP state pairs,992 mismatch
+and1,056 equality comparisons, restoring both directions. The constructed
+continuations pass1,024 independently modeled brightness/blank rows (262,144
+pixel positions) and256 actual $2100 write values. Two actual post-render
+frame-200 faults each produce3,600/1, named INIDISP diagnostics and nativeexit1.
+Probe nativeexit0. The frozen probe differs from the saved pre-edit cpu_infra
+body only by the focused17 added snapshot/comparison/capture/restore lines.
+Backdrop-only render controls omit enabled BG/sprites/windows/color math and
+force cache recalculation; they do not establish every cache state or SNES
+hardware accuracy. No brightness/blank normalization is applied.
+
+Dedicated source any% passes129,712/0 (209.95s); Waver passes58,109/0 (97.35s),
+both nativeexits0. Builds include the then-current independent audio/queue
+work; later gameplay edits are outside these frozen results. Cargo fmt/fmt
+--check and direct optimized core/DLL/normal-core metadata builds pass.
+Cargo release remains blocked executing khronos_api's build script (OSerror5).
+Rust lines+17 provide explicit INIDISP state and diagnostics; other counters
+unchanged for this focused change. Only cpu_infra hunk and this note staged;
+other active-session source edits remain separate. ROM/probe assets ignored.
+Next: classify derived brightness cache and remaining omitted display/register
+state. Audio timing, shared hardware accuracy, HDMA, masked RAM and full-route
+coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

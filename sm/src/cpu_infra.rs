@@ -109,6 +109,8 @@ pub struct Snapshot {
     pub status_flags: [bool; 3],
     pub mode7_matrix: [i16; 8],
     pub mode7_flags: [bool; 5],
+    pub brightness: uint8,
+    pub forced_blank: bool,
     pub cgram: [uint16; 256],
     pub write_latches: [uint8; 3],
     pub cgram_pointer: uint8,
@@ -910,6 +912,17 @@ unsafe fn VerifySnapshotsEq(
             );
         }
     }
+    if ((*b).brightness, (*b).forced_blank) != ((*a).brightness, (*a).forced_blank) {
+        game.g_fail = true;
+        if report_details {
+            eprintln!(
+                "@{}: INIDISP (brightness, forced blank) compare failed: mine {:?} != theirs {:?}",
+                game.snes_frame_counter,
+                ((*b).brightness, (*b).forced_blank),
+                ((*a).brightness, (*a).forced_blank)
+            );
+        }
+    }
     if (*b).mode7_flags != (*a).mode7_flags {
         game.g_fail = true;
         if report_details {
@@ -1594,6 +1607,8 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
         (::core::mem::size_of::<uint16>() as size_t).wrapping_mul(0x8000 as size_t),
     );
     let ppu = &*(*game.g_snes).ppu;
+    (*s).brightness = ppu.brightness;
+    (*s).forced_blank = ppu.forcedBlank;
     (*s).mode7_matrix = ppu.m7matrix;
     (*s).mode7_flags = [
         ppu.m7largeField,
@@ -1629,6 +1644,8 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
 unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     (*s).audio.restore(game.g_snes);
     let ppu = &mut *(*game.g_snes).ppu;
+    ppu.brightness = (*s).brightness;
+    ppu.forcedBlank = (*s).forced_blank;
     ppu.m7matrix = (*s).mode7_matrix;
     [
         ppu.m7largeField,
