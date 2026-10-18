@@ -1105,6 +1105,33 @@ Next: obtain ammunition through normal gameplay or identify an accessible
 alternate route before repeating this door trial. No maintained Rust or
 ROM-derived artifacts are committed; residue counters are unchanged.
 
+HDMA remaining-byte classification (2026-10-18): the preserved 462-byte
+offscreen candidate's detailed 35,000-frame run passes the enforced oracle
+(62.50s), native exit 0, while still recording 34 raw table-difference
+frames and two window-difference frames. Every remaining table difference
+is one high byte, Rust 00 versus ROM FF, on an on-screen call. Frames
+28,228/28,229 differ at 92BF; frame 28,311 differs at 92BD, and later
+single-byte differences move through the table. The offscreen interval
+28,428..28,479 has no remaining raw difference in this candidate.
+
+A combined isolated candidate retains the corrected offscreen separate
+passes/gradient assignment and removes the left>=10000 empty-window gate
+only for the on-screen down-right branch. Its full Waver replay passes
+58,109/0 (90.96s), native exit 0, with zero raw 9100..92CD table and
+window1right differences. Actual changed-path counters report 177
+on-screen calls and 75 offscreen calls. This establishes executed candidate
+behavior on the complete tested route, rather than only a masked pass.
+
+This is still a diagnostic prototype, not a maintained correction: its
+offscreen branch builds/copies a whole 462-byte table and returns early;
+intermediate byte-store order, aliases, caller scratch state, other origins
+and complete destination ranges are not proved. No maintained Rust or
+residue counters change. Cargo fmt --check and isolated optimized core/DLL
+builds pass; all instrumentation, candidates and ROM-derived outputs stay
+ignored. Next: implement the exact writes with caller/adjacent-state checks,
+fault controls and full any%/Waver raw-state verification before committing
+gameplay or removing the HDMA comparison mask.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
