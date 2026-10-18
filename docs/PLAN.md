@@ -4600,6 +4600,29 @@ launch. Focused cast lines -20 and Rust lines -8; other residue categories
 unchanged. Concurrent demo/PPU changes are excluded. Hardware timing,
 rendering/HDMA, audio timing and boot-to-credits coverage remain open.
 
+Independent executed demo instruction-dispatch QC (2026-10-18): frozen
+CallDemoInstr cleanup, now committed as 0fc2e6d6, passes explicitly rendered
+normal zero-input attract 30,000/0 (76.54s), native exit 0, with 13,500,000
+actual PPU line calls. Its address counters are [1,0,0,0,0,0,0,0,0,0] for
+Finish/SetPreInstr/ClearPreInstr/Goto/DecTimerAndGoto/SetTimer/Func2/Disable/
+Func3/unknown. Every actual dispatcher call asserts Rust side 2 and compares
+the previous maintained dispatcher from identical entry RAM and live ROM:
+return value, complete RAM and failure flag match. Only Finish executes;
+the other eight callbacks and unknown-address return are outside this movie
+claim. A source audit retains all nine decimal-to-hex address mappings and
+callback arguments. The probe deliberately rejects unexpected Func3/unknown
+calls rather than attempting unsupported isolated callback execution.
+
+Removing observations restores the live dispatcher exactly. Optimized probe
+core/DLL, normal-core metadata and direct full-source rustfmt pass; Cargo
+execution remains denied as documented. Only this note changes; no maintained
+Rust/residue counters change and diagnostics stay TEMP. Frozen peer hardware
+edits are separate integration work; this does not supply their movie proof.
+The implementing commit owns clean any%129,712/0 and attract30,000/0 results.
+Continue only demonstrated gameplay paths; dormant demo operations/set 3,
+render initialization/Waver71, hardware events, audio timing and credits
+remain open. Held HDMA diagnosis stays stopped.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
