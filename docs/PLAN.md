@@ -452,6 +452,25 @@ exception; this snapshot probe predates that change. Next: retain exact
 audio timing and cross-driver switching as open questions, then audit
 masked RAM and boot-to-credits coverage.
 
+Waver continuation trials (2026-10-18) use normal recorded controls on the
+pinned pre-audio verifier at gameplay commit 87ca3dd0. The ignored route
+target/awake-return/qa-waver-aimL-run.inputs passes 58,539/0 (124.66s),
+ends alive in state 8/room 990D, and traces X563/Y546 at frame 58,500 with
+Morph/Bombs 1004 and missiles 0/5. Its suffix is left/run/shoot/L (4260)
+for 370 frames, then neutral 60. An independent subagent confirmed the
+aim pose and route geometry. Further suffixes pass 58,804/0, 58,804/0 and
+58,829/0 but die before the Energy Tank: first death-state coordinates
+are X222..225/Y699 near frames 58,681..58,683. Later Y160/Y187 values are
+death-animation screen coordinates. No energy pickup, health increase or
+room 99BD entry is proved; room/enemy-definition coverage remains 17/17.
+Preserve the successful aim/run route and ignored
+qa-waver-tank-before-contact.inputs for the next focused obstacle experiment;
+the latter is extracted from a verified alive interval and has no separate
+complete-run result. Identify the live contact before choosing shooting or
+Bomb timing. All controller workers are terminal; no maintained source or
+residue counters changed. New milestones must also pass the current oracle,
+including committed sound-command enforcement. Credits remain unproved.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
