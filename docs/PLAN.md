@@ -5126,6 +5126,38 @@ Later CPU/PPU work is outside the clean replay; probes and ROM assets remain
 untracked. Hardware scheduling, rendering/Waver71, held HDMA diagnosis,
 audio timing and boot-to-credits remain open; continue actual route work.
 
+Failure-recovery PPU-state gap (2026-10-18): explicitly rendered
+10,000-frame any% prefix injects forced g_fail at200 and9,000, captures the
+completed ROM branch's67,305 serialized PPU bytes/pixels, then compares actual
+recovery rerun. Nativeexit1 with exactlytwo intentional failures and no later
+cascade. Pixels match at both frames, but PPU serialized state differs by2
+bytes at200 and11 at9,000. Actual PPU calls total90,450 and4,050,450 at the
+comparison points, confirming rendering occurs rather than only enabled flags.
+
+At200, mosaicStartLine offset67185 and evenFrame67288 are expected1/actual0.
+At9,000 differences are66606,66608,67185,67275,67276,67279,67280,67283,
+67286,67287,67288. Runtime field offsets identify mosaic start, mathEnabled
+bits0/1/4/5, a fixed-color component, mode(expected7/actual1), BG3 priority
+(0/1) and parity(0/1);66606/66608 remain unclassified here. Offsets are from
+the serialized VRAM base, not SNES RAM addresses. Thus matching recovery
+clocks/pixels does not establish recovered PPU register-state equivalence.
+The ROM pixel buffer already exists before recovery and the rerun does not
+draw again. This is a forced-failure recovery-state gap, not another natural
+movie failure or proof of subsequent visual corruption.
+
+Initial state-equality assertion correctly aborted on the first difference;
+observational rerun records fields while requiring pixel equality and actual
+PPU calls. A subsequent runtime-offset rerun reproduces the findings. No
+production correction or masking enters this audit. Next: isolate recovery
+PPU restoration/rerun write routing and test a focused correction in actual
+success/failure/retry contexts before landing. Held HDMA table/window diagnosis
+is not resumed. Only this note changes; maintained Rust/residue counts stay
+unchanged. Frozen source includes then-current CPU/DMA/PPU edits; later
+integration is separate. Isolated optimized core/DLL, direct rustfmt and
+progress pass; Cargo fmt/check and release remain denied at launch. No clean
+full-movie result claimed; diagnostics/ROM assets stay ignored. Rendering/
+Waver71, hires, hardware/audio timing, masked RAM and credits remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
