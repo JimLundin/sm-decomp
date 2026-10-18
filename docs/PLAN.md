@@ -5158,6 +5158,30 @@ progress pass; Cargo fmt/check and release remain denied at launch. No clean
 full-movie result claimed; diagnostics/ROM assets stay ignored. Rendering/
 Waver71, hires, hardware/audio timing, masked RAM and credits remain open.
 
+Alternate route inspection (2026-10-18): 9938 has only its return door
+to 9969 and the known elevator to 9AD9; no independent exit is established.
+Read-only room/definition inspection identifies two other 99BD exits. A
+different lower-right-door trial retains the existing descent through frame
+60,800, then right/run/shoot 200 and neutral 120. It completes 61,120 frames
+with the same 71 ordered rendered-failure diagnostics as the frozen Waver
+baseline (177.48s), native exit 1. Trace ends 99BD X219/Y1675, Morph/Bombs
+1004, missiles 0/5; no new room or item is reached. The initial trial used
+an incorrectly reversed movie word and exited 2 before any replay frames;
+correcting to the existing hardware-layout 8140 movie word runs normally.
+
+Door PLM C88A's live-ROM definition selects C318, which installs BD50,
+PlmPreInstr_GoToLinkInstrIfShotWithAnyMissile. Maintained code accepts
+projectile types 0100/0200; ordinary beams do not open this gate. The
+right-side destination A5ED is inferred from room definitions, not crossed.
+Do not repeat beam suffixes against this measured ammunition obstacle.
+This is separate from the held 9AD9 ammunition trial, which stays held.
+No gameplay state/gate changes or maintained Rust edits; residue counters
+unchanged. Inputs/probes and ROM-derived outputs stay ignored.
+Next: inspect the upper 99BD exit toward 965B and its bomb/shot shaft
+requirements using existing item-bearing prefixes; verify actual source
+door BTS and controller traversal before claiming a new room. Credits,
+held rendering/HDMA gaps and complete gameplay coverage remain unproved.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
