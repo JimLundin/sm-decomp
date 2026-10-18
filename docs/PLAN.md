@@ -2031,6 +2031,23 @@ cast lines -27, Rust lines -7; other counters unchanged. Next: EnemyFunc_BC76
 vertical block scan, retaining its untruncated horizontal block cursor and
 inclusive column traversal.
 
+EnemyFunc_BC76 now uses safe byte-backed enemy coordinates and level-block
+reads with explicit wrapping arithmetic. Left alignment, inclusive column
+count, low-byte row multiplication, fixed-point Y displacement and signed
+movement edges remain exact. Its block cursor retains the original
+untruncated integer sum and two-byte increments, unlike BBBF's word cursor;
+column decrement still precedes the increment. Prior Rust comparison passes
+5,767,168 full-RAM/return checks; independent comparison passes 1,678,733
+checks across all coordinate/radius/Y-fraction/width/index words, signed
+displacement boundaries and random states. Both cover valid backing-RAM
+reads; prior out-of-RAM pointer reads were undefined and now fail bounds
+checking. Stable optimized core/DLL build and direct full-source format
+pass; Cargo fmt/build remain ASR-denied. Any%: 129,712 frames, zero failures
+(200.68s); Waver route: 58,109 frames, zero failures (95.51s). Raw offsets -2,
+unsafe functions -1, cast lines -24, Rust lines -2; other counters unchanged.
+Next: EnemyFunc_BF8A mode-selected vertical block scan, preserving bit-zero
+add/subtract selection and its untruncated cursor.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

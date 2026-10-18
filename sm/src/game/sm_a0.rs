@@ -9572,48 +9572,46 @@ pub fn EnemyFunc_BBBF(k: uint16, amt: int32, game: &mut Game) -> uint8 {
         }
     }
 }
-pub unsafe fn EnemyFunc_BC76(mut k: uint16, mut amt: int32, game: &mut Game) -> uint8 {
-    let mut E: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);
-    let mut R26: uint16 = ((*E).x_pos as ::core::ffi::c_int - (*E).x_width as ::core::ffi::c_int
-        & 0xfff0 as ::core::ffi::c_int) as uint16;
-    R26 = (((*E).x_width as ::core::ffi::c_int + (*E).x_pos as ::core::ffi::c_int
-        - 1 as ::core::ffi::c_int
-        - R26 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
-        >> 4 as ::core::ffi::c_int) as uint16;
-    let mut i: uint16 = ((amt as uint32)
-        .wrapping_add(((*E).y_pos as uint32) << 16 as ::core::ffi::c_int | (*E).y_subpos as uint32)
-        >> 16 as ::core::ffi::c_int) as uint16;
-    let mut j: uint16 = 0;
-    if amt as ::core::ffi::c_uint & 0x80000000 as ::core::ffi::c_uint != 0 {
-        j = (i as ::core::ffi::c_int - (*E).y_height as ::core::ffi::c_int) as uint16;
-    } else {
-        j = ((*E).y_height as ::core::ffi::c_int + i as ::core::ffi::c_int
-            - 1 as ::core::ffi::c_int) as uint16;
-    }
-    let mut R34: uint16 = j;
-    let mut prod: uint16 = Mult8x8(
-        (j as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint8,
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
+pub fn EnemyFunc_BC76(k: uint16, amt: int32, game: &mut Game) -> uint8 {
+    let left = game
+        .enemy_coordinates(k)
+        .x_pos()
+        .wrapping_sub(game.enemy_coordinates(k).x_width());
+    let mut columns = game
+        .enemy_coordinates(k)
+        .x_width()
+        .wrapping_add(game.enemy_coordinates(k).x_pos())
+        .wrapping_sub(1)
+        .wrapping_sub(left & 0xfff0)
+        >> 4;
+    let position = (amt as u32).wrapping_add(
+        (u32::from(game.enemy_coordinates(k).y_pos()) << 16)
+            | u32::from(game.enemy_coordinates(k).y_subpos()),
     );
-    let mut v4: int16 = (((*E).x_pos as ::core::ffi::c_int - (*E).x_width as ::core::ffi::c_int)
-        as uint16 as ::core::ffi::c_int
-        >> 4 as ::core::ffi::c_int) as int16;
-    let mut i_0: ::core::ffi::c_int =
-        2 as ::core::ffi::c_int * (prod as ::core::ffi::c_int + v4 as ::core::ffi::c_int);
-    while *((&raw mut game.g_ram as *mut uint8).offset(0x10002 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset((i_0 >> 1 as ::core::ffi::c_int) as isize) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
-    {
-        R26 = R26.wrapping_sub(1);
-        if R26 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
-            return 0 as uint8;
+    let y = (position >> 16) as u16;
+    let edge = if amt < 0 {
+        y.wrapping_sub(game.enemy_coordinates(k).y_height())
+    } else {
+        game.enemy_coordinates(k)
+            .y_height()
+            .wrapping_add(y)
+            .wrapping_sub(1)
+    };
+    let row_offset = u16::from((edge >> 4) as u8) * u16::from(game.room_width_in_blocks() as u8);
+    // This cursor is not truncated to a word as the horizontal scan's is.
+    let mut block_offset = 2 * (usize::from(row_offset) + usize::from(left >> 4));
+    loop {
+        let offset = 0x10002 + block_offset;
+        let block = u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]]);
+        if block & 0x8000 != 0 {
+            return 1;
         }
-        i_0 += 2 as ::core::ffi::c_int;
+        columns = columns.wrapping_sub(1);
+        if columns & 0x8000 != 0 {
+            return 0;
+        }
+        block_offset += 2;
     }
-    return 1 as uint8;
 }
 pub unsafe fn EnemyFunc_BF8A(
     mut k: uint16,
