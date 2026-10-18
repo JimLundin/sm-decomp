@@ -8353,6 +8353,68 @@ Prefix 3,600/0 (1.03s) executes 10,363,030 dispatcher calls; clean full any%
 Replay does not prove every opcode branch; exact scoped rename and compilation
 support unexercised sites. Complete gameplay and rendering/audio remain open.
 
+Map-acquired return to9B9D and Bomb tunnel verified (2026-10-19): from
+70544-frame map-held-start.inputs, neutral1, right/jump/shoot60,
+right/shoot60, neutral120 opens/crosses9C35 east door. Transition70622,
+9B9D load70640, gameplay70727; finalX55/Y139 health19/199 map1.
+70785/71 (162.43s), nativeexit1. Retain map-east-jump.inputs.
+
+Moving jump18 before two Down presses reachesX59/Y85, takes10damage and
+fails to morph before contact. Earlier moving-jump morph also stopsX59.
+Vertical jump succeeds: neutral1, Jump10, Down/Jump1, Jump2,
+Down/Jump1, right/Jump20, right45, shoot1, neutral90, right/shoot70,
+neutral30 reachesX203/Y89 in ball form, health9/199.71056/71 (169.59s).
+Retain return-neutral-jump.inputs. Shoot1, neutral90, right/shoot100
+crosses the second Bomb block: X273 at71170, X354 at71195, X387 at71205.
+Contact at71208 X397 kills Samus. No map/health writes injected.
+Retain only through71191 for a living X338/Y89 prefix from
+return-second-bomb.inputs; the full suffix ends dead71518/71 (158.90s).
+
+Unmorph/jump fromX273 orX338 hits the low ceiling, lands atY75 and dies
+nearX413/415. Holding Jump through landing does not launch again.
+Three bombs20frames apart from retained71196 X354, neutral90,
+right/shoot90 passes the first contact point alive throughX470 at71365,
+then diesX476 at71367. Retain through71346 X405 from
+return-contact-bombs.inputs as another living prefix. Waiting there with
+bombs diesX408 at71420; moving bomb/hop also dies. Down/shoot remorphs,
+so the crouch-fire trial establishes no beam hits. Unmorph1, neutral60,
+shoot120 retains crouched pose0027 atX341/Y80 but later movement still
+dies; actual enemy hits/kill/drop counters remain unobserved.
+
+The east gray doorC842 argument0C25 selects gray condition index6:
+setup extracts(high_arg&7C)>>1, table84BE4B+6 isBE01,
+PlmPreInstr_GotoLinkIfEnemyDeathQuotaOk. It requires killsE50>=quotaE52.
+Neither passage nor quota satisfaction is established. Next: read-only
+enemy positions/HP and kill/quota observations around the livingX338/X405
+prefixes, then normal-input beam/bomb timing; obtain actual kills and
+east-door transition before claiming return to9AD9. This return task has
+not reached its one-hour stop limit. Held upper99BD ascent, cliff tuning,
+9AD9 ammunition and HDMA remain held.
+
+All thirteen ordered diagnostic streams exactly match frozen d217ea15
+Waver71; no new failing frames. Completed replays, all nativeexit1:
+map-east-jump: 70785/71 (162.43s)
+return-pocket: 71014/71 (159.23s)
+return-early-morph: 71052/71 (168.81s)
+return-neutral-jump: 71056/71 (169.59s)
+return-second-bomb: 71518/71 (158.90s)
+return-enemy-jump: 71457/71 (165.00s)
+return-enemy-bomb: 71473/71 (167.30s)
+return-late-jump: 71472/71 (166.59s)
+return-contact-bombs: 71449/71 (167.61s)
+return-second-enemy-bombs: 71619/71 (151.72s)
+return-bomb-hop: 71669/71 (160.00s)
+return-crouch-fire: 71572/71 (165.54s)
+return-standing-fire: 71602/71 (158.15s)
+
+Frozen explicit-render same-DLL any%129712/0 (414.98s) remains input-only
+regression; peer hardware owns its replays. Cargo fmt/check and progress
+pass; release library builds, full frontend link still lacksSDL2.
+Own maintained source/residue delta zero; peer cleanup separately changes
+CPU counts. Inputs/ROM-derived probes stay ignored. Peer owns cleanup and
+remote sync. Credits, full gameplay/hardware, rendering/audio fidelity,
+masked RAM and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
