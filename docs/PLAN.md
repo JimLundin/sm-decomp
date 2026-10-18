@@ -1253,6 +1253,21 @@ remain ASR-denied. Waver route: 58,109 frames, zero failures (83.35s); any%:
 cast lines -16, Rust lines -33. Next: Samus special-air/block PLM selection
 reads, preserving area-specific tables and callback-adjusted collision state.
 
+Special-air/block collision now shares named live BTS and byte-backed area
+reads plus checked live-ROM PLM selection. Air retains the original BTS
+across setup and ignores low-BTS carry; special blocks invoke the correct
+solid handler after setup, keeping collision reads live. Invalid area-table
+windows still call the legacy diagnostic and set g_fail before mapping the
+same bytes. Synthetic prior-source comparison passes 2,883,584 selection,
+callback-order, return and diagnostic cases over every BTS/return value,
+eleven area boundaries and all four handlers. Stable optimized core/DLL
+build and direct format pass; Cargo fmt/build remain ASR-denied. Final-source
+Waver route: 58,109 frames, zero failures (84.34s); any%: 129,712 frames,
+zero failures (184.78s). Raw offsets -12, cast lines -64, Rust lines -131;
+unsafe functions +1 for the shared selector retaining legacy diagnostics.
+Next: bombable-air/bomb-block PLM selection reads, retaining carry handling
+and live collision state after setup.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
