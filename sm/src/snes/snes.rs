@@ -294,42 +294,40 @@ unsafe fn snes_readReg(snes: *mut Snes, address: u16) -> u8 {
         _ => (*snes).openBus,
     }
 }
-unsafe fn snes_writeReg(mut snes: *mut Snes, mut adr: uint16_t, mut val: uint8_t, game: &mut Game) {
-    match adr as ::core::ffi::c_int {
-        16896 => {
-            (*snes).autoJoyRead = val as ::core::ffi::c_int & 0x1 as ::core::ffi::c_int != 0;
+unsafe fn snes_writeReg(snes: *mut Snes, adr: u16, val: u8, game: &mut Game) {
+    match adr {
+        0x4200 => {
+            (*snes).autoJoyRead = val & 0x1 != 0;
             if !(*snes).autoJoyRead {
-                (*snes).autoJoyTimer = 0 as uint16_t;
+                (*snes).autoJoyTimer = 0;
             }
-            (*snes).hIrqEnabled = val as ::core::ffi::c_int & 0x10 as ::core::ffi::c_int != 0;
-            (*snes).vIrqEnabled = val as ::core::ffi::c_int & 0x20 as ::core::ffi::c_int != 0;
-            (*snes).nmiEnabled = val as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0;
+            (*snes).hIrqEnabled = val & 0x10 != 0;
+            (*snes).vIrqEnabled = val & 0x20 != 0;
+            (*snes).nmiEnabled = val & 0x80 != 0;
             if !(*snes).hIrqEnabled && !(*snes).vIrqEnabled {
-                (*snes).inIrq = false_0 != 0;
-                (*(*snes).cpu).irqWanted = false_0 != 0;
+                (*snes).inIrq = false;
+                (*(*snes).cpu).irqWanted = false;
             }
         }
-        16897 => {
-            if val as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int == 0
-                && (*snes).ppuLatch as ::core::ffi::c_int != 0
-            {
-                ppu_read((*snes).ppu, 0x37 as uint8_t);
+        0x4201 => {
+            if val & 0x80 == 0 && (*snes).ppuLatch {
+                ppu_read((*snes).ppu, 0x37);
             }
-            (*snes).ppuLatch = val as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0;
+            (*snes).ppuLatch = val & 0x80 != 0;
         }
-        16898 => {
+        0x4202 => {
             (*snes).multiplyA = val;
         }
-        16899 => {
+        0x4203 => {
             (*snes).multiplyResult = u16::from((*snes).multiplyA) * u16::from(val);
         }
-        16900 => {
+        0x4204 => {
             (*snes).divideA = ((*snes).divideA & 0xff00) | u16::from(val);
         }
-        16901 => {
+        0x4205 => {
             (*snes).divideA = ((*snes).divideA & 0xff) | (u16::from(val) << 8);
         }
-        16902 => {
+        0x4206 => {
             if val == 0 {
                 (*snes).divideResult = 0xffff;
                 (*snes).multiplyResult = (*snes).divideA;
@@ -338,19 +336,19 @@ unsafe fn snes_writeReg(mut snes: *mut Snes, mut adr: uint16_t, mut val: uint8_t
                 (*snes).multiplyResult = (*snes).divideA % u16::from(val);
             }
         }
-        16903 => {
+        0x4207 => {
             (*snes).hTimer = ((*snes).hTimer & 0x100) | u16::from(val);
         }
-        16904 => {
+        0x4208 => {
             (*snes).hTimer = ((*snes).hTimer & 0xff) | (u16::from(val & 1) << 8);
         }
-        16905 => {
+        0x4209 => {
             (*snes).vTimer = ((*snes).vTimer & 0x100) | u16::from(val);
         }
-        16906 => {
+        0x420a => {
             (*snes).vTimer = ((*snes).vTimer & 0xff) | (u16::from(val & 1) << 8);
         }
-        16907 => {
+        0x420b => {
             if val as ::core::ffi::c_int == 2 as ::core::ffi::c_int {
                 let mut t: uint32_t = (((*(*snes).dma).channel[1 as ::core::ffi::c_int as usize]
                     .aBank as ::core::ffi::c_int)
@@ -364,11 +362,11 @@ unsafe fn snes_writeReg(mut snes: *mut Snes, mut adr: uint16_t, mut val: uint8_t
             dma_startDma((*snes).dma, val, false_0 != 0);
             while dma_cycle((*snes).dma, game) {}
         }
-        16908 => {
+        0x420c => {
             dma_startDma((*snes).dma, val, true_0 != 0);
         }
-        16909 => {
-            (*snes).fastMem = val as ::core::ffi::c_int & 0x1 as ::core::ffi::c_int != 0;
+        0x420d => {
+            (*snes).fastMem = val & 0x1 != 0;
         }
         _ => {}
     };

@@ -5703,6 +5703,32 @@ Independent partner review finds no fixture issue. This covers the changed
 control paths; DMA/HDMA trigger dispatch and hardware timing are outside this
 probe. Implementing agent retains source ownership; only this note changes.
 
+SNES control-register writes (2026-10-18): snes_writeReg uses native byte
+masks for NMITIMEN/WRIO/MEMSEL and hexadecimal register dispatch. Autojoy
+disable still resets its timer; disabling both IRQ sources clears both IRQ
+flags. WRIO falling edge still reads PPU 37 before writing ppuLatch. DMA and
+arithmetic/timer arm bodies are unchanged. Actual old/current snes_cpuWrite
+passes 2,359,296 cases across all byte values, 128 control/IRQ contexts,
+timers 0/1/FFFF, Hpos 0/1023/1024/FFFF, banks 00/80 and registers 4200/4201/420D.
+Independent state expectations verify IRQ, autojoy, MEMSEL, counter sampling,
+open bus and wrapping bus counters. Independent QC passes 262,144 actual
+STA byte/word cases; word 4200 preserves ordered NMITIMEN then WRIO effects.
+CPU flags/state, unrelated timers and PPU counter read phases match. Actual
+PPU 37 entry sees the old true latch; premature clear is detected, native
+assertion exit 3221226505. Probe writer matches maintained source.
+
+Instrumented any% passes 12,000/0 (22.41s), native exit 0. Both sides write
+4200=12,023, 4201=3, 420D=4; all 14 dispatch arms have hits. Clean frozen
+22dff8a2 plus only this writer change passes any% 129,712/0 (250.12s), native
+exit 0. Direct full-source format, normal-core metadata and optimized
+clean/probe core/DLL builds pass. Cargo fmt/build --release remain Access
+denied at cargo.exe launch; that required check stays unmet. Progress/diff
+pass: focused cast lines -9, Rust lines -2, other categories unchanged. Later
+peer changes require separate integration. Control writes preserve existing
+behavior, without proving device event/autojoy timing. Hardware/audio timing,
+rendering/Waver71, masked RAM and credits remain open; held HDMA diagnosis
+stays stopped. Continue executed hardware paths and route coverage.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
