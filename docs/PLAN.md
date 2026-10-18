@@ -1047,6 +1047,37 @@ All diagnostic code/logs and ROM-derived state remain outside tracked
 files. Next: compare the actual CPU upload-entry boundary and earlier
 handshaking, then actual Rust scheduling before changing upload behavior.
 
+CPU upload-entry replay (2026-10-18): the next isolated variant consumes
+its capture arm at actual CPU 808028 before opcode fetch, with custom audio
+off. The original wrapper's handshaking and payload transfer now precede
+the next SPC 15BF boundary in the recorded span. Constructed DCFAC7 calls
+after boots 160/400/3,600 record respectively 28,511/28,788/29,582 SPC RAM
+stores, 230/323/170 DSP writes and 30,708/31,864/29,788 scalar samples.
+The CPU-entry capture count is exactly one. Exact event count guards pass;
+baseline replay matches every actual sample and
+complete terminal APU RAM before continuation at all three boundaries.
+
+Preparation at CPU entry, followed by those same events, differs in
+0/0/29,779 sample values. Subsequent 2,048-stereo-sample DSP-only
+continuation differs in 0/0/4,092 values, with 0/0/3,662 differing RAM
+bytes afterward. The boot-400 effect seen at receiver entry disappears
+with this earlier placement; placement cannot be treated as interchangeable.
+Three final diagnostics and the active identical-copy control return native
+exit 0; the control has zero sample/RAM differences. A captured sample-bit
+fault returns exit 1 with the mismatch marker and no completion marker.
+Independent review finds no blocking boundary/order/ownership issue.
+
+This remains a constructed-call, fixed-ROM-trace DSP intervention on
+3eac6b6a-derived source. Preparation's changed SPC feedback and schedule
+are excluded by replaying the original RAM stores and commands; future
+continuation runs DSP alone, and full DSP-field state equality is untested.
+Maintained Rust and residue counters are unchanged. Isolated optimized
+builds pass; the preceding Cargo fmt/check passes and OS-error-5 release
+block still apply. No current-source gameplay or runtime audio equivalence
+is claimed. Diagnostic code/logs and ROM-derived state remain untracked.
+Next: compare actual Rust upload execution and independently evolving SPC
+feedback/scheduling before changing behavior or enforcing audio equality.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read
