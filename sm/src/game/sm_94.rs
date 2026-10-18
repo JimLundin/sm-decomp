@@ -1492,115 +1492,43 @@ static kBlockColl_Horiz_Slope_NonSquare_Tab: [uint16; 64] = [
     0x50 as ::core::ffi::c_int as uint16,
 ];
 unsafe fn PostGrappleColl_Horiz_Slope_NonSquare(
-    mut pgci: *mut PostGrappleCollInfo,
-    mut k: uint16,
+    pgci: *mut PostGrappleCollInfo,
+    k: uint16,
     game: &mut Game,
 ) -> uint16 {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 1 as ::core::ffi::c_int
-        == 0
-    {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            >> 4 as ::core::ffi::c_int
-            != SnesModulus(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                    as *mut uint16),
-                *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as uint8,
-            ) as ::core::ffi::c_int
-        {
-            return -(1 as ::core::ffi::c_int) as uint16;
-        }
-        if *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x16402 as ::core::ffi::c_int as isize)
-            .offset(k as isize) as ::core::ffi::c_int
-            & 0x40 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
-        {
-            return PostGrappleColl_Horiz_Solid(pgci, game);
-        }
-        let mut v3: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            ^ (if *(&raw mut game.g_ram as *mut uint8)
-                .offset(0x16402 as ::core::ffi::c_int as isize)
-                .offset(k as isize) as ::core::ffi::c_int
-                & 0x80 as ::core::ffi::c_int
-                != 0
-            {
-                0xf as ::core::ffi::c_int
-            } else {
-                0 as ::core::ffi::c_int
-            })) as uint16;
-        let mut v4: uint16 = (16 as ::core::ffi::c_int
-            * (*(&raw mut game.g_ram as *mut uint8)
-                .offset(0x16402 as ::core::ffi::c_int as isize)
-                .offset(k as isize) as ::core::ffi::c_int
-                & 0x1f as ::core::ffi::c_int)
-            + (v3 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int))
-            as uint16;
-        let mut result: int16 = ((kAlignPos_Tab1[v4 as usize] as ::core::ffi::c_int
-            & 0x1f as ::core::ffi::c_int)
-            - ((*pgci).pgci_r32 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
-            - 1 as ::core::ffi::c_int) as int16;
-        return (if result as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
-            result as ::core::ffi::c_int
-        } else {
-            -(1 as ::core::ffi::c_int)
-        }) as uint16;
+    let negative = game.samus_collision_direction() & 1 != 0;
+    let x = game.samus_x_pos();
+    let block = game.cur_block_index();
+    let width = game.room_width_in_blocks() as u8;
+    let column = if width == 0 {
+        block
     } else {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            >> 4 as ::core::ffi::c_int
-            != SnesModulus(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                    as *mut uint16),
-                *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as uint8,
-            ) as ::core::ffi::c_int
-        {
-            return -(1 as ::core::ffi::c_int) as uint16;
-        }
-        if *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x16402 as ::core::ffi::c_int as isize)
-            .offset(k as isize) as ::core::ffi::c_int
-            & 0x40 as ::core::ffi::c_int
-            != 0
-        {
-            return PostGrappleColl_Horiz_Solid(pgci, game);
-        }
-        let mut v6: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            ^ (if *(&raw mut game.g_ram as *mut uint8)
-                .offset(0x16402 as ::core::ffi::c_int as isize)
-                .offset(k as isize) as ::core::ffi::c_int
-                & 0x80 as ::core::ffi::c_int
-                != 0
-            {
-                0xf as ::core::ffi::c_int
-            } else {
-                0 as ::core::ffi::c_int
-            })) as uint16;
-        let mut v7: uint16 = (16 as ::core::ffi::c_int
-            * (*(&raw mut game.g_ram as *mut uint8)
-                .offset(0x16402 as ::core::ffi::c_int as isize)
-                .offset(k as isize) as ::core::ffi::c_int
-                & 0x1f as ::core::ffi::c_int)
-            + (v6 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int))
-            as uint16;
-        let mut result_0: int16 = ((kAlignPos_Tab1[v7 as usize] as ::core::ffi::c_int
-            & 0x1f as ::core::ffi::c_int)
-            - ((*pgci).pgci_r32 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
-            - 1 as ::core::ffi::c_int) as int16;
-        return (if result_0 as ::core::ffi::c_int <= 0 as ::core::ffi::c_int {
-            !(result_0 as ::core::ffi::c_int)
-        } else {
-            -(1 as ::core::ffi::c_int)
-        }) as uint16;
+        block % u16::from(width)
     };
+    if x >> 4 != column {
+        return 0xffff;
+    }
+    // k selects the slope bytes even when the live collision index differs.
+    let bts = game.g_ram[0x16402 + usize::from(k)];
+    if (bts & 0x40 != 0) == negative {
+        return PostGrappleColl_Horiz_Solid(pgci, game);
+    }
+    let y = game.samus_y_pos();
+    let y = if bts & 0x80 != 0 { y ^ 15 } else { y };
+    let index = usize::from(bts & 0x1f) * 16 + usize::from(y & 15);
+    let boundary = i16::from(kAlignPos_Tab1[index] & 0x1f);
+    let difference = boundary - ((*pgci).pgci_r32 & 15) as i16 - 1;
+    if negative {
+        if difference <= 0 {
+            !(difference as u16)
+        } else {
+            0xffff
+        }
+    } else if difference >= 0 {
+        difference as u16
+    } else {
+        0xffff
+    }
 }
 unsafe fn PostGrappleColl_Vert_Slope_NonSquare(
     mut pgci: *mut PostGrappleCollInfo,

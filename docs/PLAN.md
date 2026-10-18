@@ -1605,6 +1605,21 @@ unchanged. Next: horizontal post-grapple nonsquare slope coordinates and
 boundary arithmetic, retaining zero-width modulus and complement return
 for negative direction, then its vertical counterpart.
 
+Horizontal post-grapple nonsquare collision now shares mirrored branches
+and uses named byte-backed coordinates with explicit boundary arithmetic.
+Column alignment retains low-byte room-width modulus including zero;
+the passed slope-byte index remains separate from the live collision index.
+Orientation fallback, signed boundary tests and negative-direction bitwise
+complement returns are unchanged. Prior Rust comparison passes 1,835,008
+RAM/context/return cases over all BTS bytes, table/edge coordinates, room
+width words and Y positions with direction and column-match boundaries.
+Stable optimized core/DLL build and direct format pass; Cargo fmt/build
+remain ASR-denied. Waver route: 58,109 frames, zero failures (82.74s); any%:
+129,712 frames, zero failures (182.90s). Raw offsets -15, cast lines -62,
+Rust lines -72; unsafe count unchanged. Next: vertical post-grapple nonsquare
+collision, preserving its orientation fallback, column alignment and signed
+boundary/complement returns, then square slope sampling.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
