@@ -418,6 +418,40 @@ while extending the surviving controller route toward the southwest Energy
 Tank and room 99BD. Do not infer credits or exercised AI from movie names
 or enemy-definition presence.
 
+Application snapshot audit (2026-10-18): test both public save entry points,
+RtlSaveLoad(Save) and RtlSaveSnapshot(false), followed by RtlSaveLoad(Load).
+Actual movie playback reaches frames 160, 400 and 3,600 separately with
+custom audio and emulated SPC audio; custom audio uses RM_BOTH so its
+startup bank is genuinely uploaded. Save either after audio consumption or
+after the next game frame before consuming its queued audio. Record 240
+later frames uninterrupted, reload the file, and repeat identical inputs
+through RtlRunFrame/RtlRenderAudio. All 24 cases pass: 5,772 continuation
+frames, 6,164,496 sample values and final game RAM match, including nonzero
+active audio in every case. A restored custom-player key-off bit fault is
+detected on the first resumed frame (1,000 differing sample values), process
+exit 1. Unmodified cases return process exit 0; temporary snapshots are
+removed. The earlier silent custom/RM_THEIRS setup was invalid because the
+ROM upload is bypassed without the Rust side, and is excluded from results.
+
+This closes the tested filesystem snapshot continuation gap for each mode
+restored into itself. It does not establish cross-driver snapshot switching,
+exact Rust-versus-SPC sample timing, threaded frontend behavior or hardware
+DSP fidelity. The frontend exposes no configuration for switching
+g_use_my_apu_code; these checks do not determine whether cross-driver
+switching is intended to be supported or justify handshake conversion.
+The probe builds isolated committed source at 3e97807e, without concurrent
+checkout changes. Direct optimized core/DLL build, normal-core metadata
+and full-source formatting pass; current Cargo formatting also passes.
+Cargo release remains blocked by managed build-script execution. No
+maintained Rust source or residue counters change, and no ROM-derived
+snapshots or diagnostic code enter the commit. Full any% verification of
+this frozen source passes 129,712/0 (238.42s), native process exit 0.
+The separately committed d1adcfb9 now enforces
+final queued custom-audio commands with its explicitly tested startup
+exception; this snapshot probe predates that change. Next: retain exact
+audio timing and cross-driver switching as open questions, then audit
+masked RAM and boot-to-credits coverage.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
