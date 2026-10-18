@@ -2950,6 +2950,23 @@ Rust lines -12; other counters unchanged. Turtle route coverage remains
 unproven. Next: the coordinated gameplay session owns Mini Maridia Beyblade
 Turtle Main, retaining parent-clear aliases and captured-slot dispatch reads.
 
+Mini Maridia Beyblade Turtle Main now uses byte-backed parent/state access
+and an ordered parent trigger clear. Parent capture, clear, captured-slot
+preinstruction read and subsequent live callback index read remain exact,
+including exact and one-byte field overlaps at high/odd indexes. Independent
+extracted comparison passes 513,044 full-RAM/dispatch-trace/RNG cases;
+implementing subagent and independent session confirm the formatted live body
+with no findings. Cargo fmt and fmt --check, stable optimized core/DLL and
+normal-core metadata builds pass; Cargo release still fails managed dependency
+build-script execution (OS error 5). Dedicated pre-slope-fix source includes
+sound-command enforcement: any% 129,712/0 (240.70s), Waver 58,109/0 (107.81s),
+both native process exits 0. Raw offsets -2, cast lines -6; Rust lines +3
+name the parent/trigger/preinstruction fields and retain clear-before-read
+sequencing. Other counters unchanged. The concurrent vertical slope fix and
+mask removal own separate integration replays; no ROM-derived files are
+committed. Next: Mini Turtle touch/animation state fields and callbacks,
+preserving captured slots and live reads after collision calls.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

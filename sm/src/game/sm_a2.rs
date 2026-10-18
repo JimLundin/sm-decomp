@@ -2922,18 +2922,21 @@ pub unsafe fn MaridiaBeybladeTurtle_Func11(mut k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn MiniMaridiaBeybladeTurtle_Main(game: &mut Game) {
-    let mut E: *mut Enemy_MiniMaridiaTurtle = Get_MiniMaridiaTurtle(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    (*Get_MiniMaridiaTurtle((*E).mmte_var_B as ::core::ffi::c_int, game)).mmte_var_06 = 0 as uint16;
-    CallMaridiaBeybladeTurtleFunc(
-        ((*E).mmte_var_A as ::core::ffi::c_int | 0xa20000 as ::core::ffi::c_int) as uint32,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16),
-        game,
-    );
+    let index = game.cur_enemy_index();
+    let base = 0xf78 + usize::from(index);
+    let parent_offset = base + core::mem::offset_of!(Enemy_MiniMaridiaTurtle, mmte_var_B);
+    let parent = u16::from_le_bytes([game.g_ram[parent_offset], game.g_ram[parent_offset + 1]]);
+    let parent_trigger_offset =
+        0xf78 + usize::from(parent) + core::mem::offset_of!(Enemy_MiniMaridiaTurtle, mmte_var_06);
+    game.g_ram[parent_trigger_offset..parent_trigger_offset + 2]
+        .copy_from_slice(&0u16.to_le_bytes());
+    let preinstruction_offset = base + core::mem::offset_of!(Enemy_MiniMaridiaTurtle, mmte_var_A);
+    let preinstruction = u16::from_le_bytes([
+        game.g_ram[preinstruction_offset],
+        game.g_ram[preinstruction_offset + 1],
+    ]);
+    let live_index = game.cur_enemy_index();
+    CallMaridiaBeybladeTurtleFunc(0xa20000 | u32::from(preinstruction), live_index, game);
 }
 pub unsafe fn MiniMaridiaBeybladeTurtle_Func1(mut k: uint16, game: &mut Game) {
     if CheckIfEnemyTouchesSamus(k, game) != 0 {
