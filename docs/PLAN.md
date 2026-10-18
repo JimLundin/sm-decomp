@@ -981,6 +981,33 @@ bus and other PPU state remain outside this enforcement; this is not full
 hardware equivalence. Next: resolve HDMA edge-pass differences and remaining
 oracle state gaps alongside actual gameplay coverage and audio timing.
 
+Normal-input coverage reaches 9938 and 9AD9 (2026-10-18): from the
+61,032-frame lead-99bd-bottom-left.inputs endpoint in 9969, six pairs of
+left/run/shoot 35 and left/run/shoot/jump 35, then left/run/shoot 100 and
+neutral 120 cross the room. Room 9938 loads at frame 61,529; gameplay resumes
+at 61,616. The ignored lead-9969-cross-left.inputs route passes 61,672/0
+(97.19s) in the diagnostic host, ending X195/Y139 with 49/199 health.
+Independent standard replay on c810d527 passes 61,672/0 (114.48s), native
+exit 0. Its live collision map shows a central elevator shaft. Left 32
+overshoots to X109 and a Down press does not activate it; that 62,325-frame
+trial remains in 9938 and is not counted as elevator coverage.
+
+The accepted suffix uses left 24, neutral 20, fresh Down one, then neutral
+1,100. Elevator transition begins at 61,772; room 9AD9 loads at 61,838,
+and gameplay resumes at 61,933 during downward travel. Samus reaches
+X128/Y680 by frame 62,400 and stays there through the endpoint, with 49/199
+health. This demonstrates elevator activation, descent and stable arrival;
+control release is not yet established by subsequent movement or elevator
+state reads. The ignored lead-9ad9-arrive.inputs route contains 62,817
+frames. Diagnostic replay passes 62,817/0 (94.33s), native exit 0; independent
+standard replay on committed 97309b4a passes 62,817/0 (91.86s), native exit
+0, with RAM/palette/pixel/sound/slope and VRAM/CGRAM port/PPU bus checks.
+Observed coverage is 21 rooms and 24 enemy definitions, not proof of their
+AI callbacks or all paths. No maintained gameplay source or ROM-derived
+artifacts are committed. Next: verify movement control after elevator
+arrival, then continue normal inputs in 9AD9; uncovered Turtle cleanup
+remains held. Rust residue counters are unchanged.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
