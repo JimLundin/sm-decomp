@@ -203,15 +203,6 @@ pub unsafe fn snes_readBBus(mut snes: *mut Snes, mut adr: uint8_t, game: &mut Ga
         return ppu_read((*snes).ppu, adr);
     }
     if (adr as ::core::ffi::c_int) < 0x80 as ::core::ffi::c_int {
-        '_c2rust_label: {
-            __assert_fail(
-                b"0\0" as *const u8 as *const ::core::ffi::c_char,
-                b"src/snes/snes.c\0" as *const u8 as *const ::core::ffi::c_char,
-                186 as ::core::ffi::c_uint,
-                b"uint8_t snes_readBBus(Snes *, uint8_t)\0" as *const u8
-                    as *const ::core::ffi::c_char,
-            );
-        };
         (*snes).apuCatchupCycles = 32 as ::core::ffi::c_int as ::core::ffi::c_double;
         snes_catchupApu(snes, game);
         return (*(*snes).apu).outPorts

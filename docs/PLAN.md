@@ -179,6 +179,26 @@ The focused branch change removes two cast lines; Rust line count and
 other residue counters are unchanged. No diagnostic instrumentation or
 ROM-derived assets enter this commit.
 
+Emulated APU reads (2026-10-18): snes_readBBus no longer unconditionally
+aborts on valid $2140..217F port reads. Existing mirrored-port selection and
+32-cycle catchup behavior are preserved. The actual read function fails
+before the change and passes 16,384 address/value cases afterward, checking
+all 64 mirrors, all byte values, cycle advance and one DSP sample per read.
+Maintained source with the committed SPC BRA fix now completes both 400-
+and 3,600-frame ROM/SPC boot probes; the longer run generates 3,361,274
+nonzero sample values and handles later music/SFX activity. The ROM upload
+routine stays enabled by setting custom audio off before SnesInit; no
+instrumentation, patched assertion bypass or altered write routing is needed.
+This establishes an executable independent driver path, not Rust/ROM audio
+equivalence. Next: compare uploads and ordered DSP/driver behavior with
+independent players, while accounting for the inherited 32-cycle port-read
+scheduling. The focused source change removes nine Rust lines; other
+residue counters are unchanged. Stable optimized core/DLL, normal-core
+metadata and direct full-source format pass; Cargo fmt/build remain
+ASR-denied. Dedicated DLL gameplay matches c8eead63. Any% passes
+129,712/0 (198.06s); Waver passes 58,109/0 (97.70s), both process exits 0.
+No ROM-derived assets or diagnostic code are committed.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
