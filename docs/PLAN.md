@@ -1214,6 +1214,21 @@ Rust lines +20 expose/document the context; all other counters unchanged.
 Next: replace Samus collision context parameters with references, preserving
 the active displacement's retry-loop scope before removing the stored bridge.
 
+Samus horizontal/vertical collision dispatch entry points now take mutable
+context references. Both legacy context/displacement pointers derive from
+one borrow and stay raw throughout the retry loop, avoiding a reborrow while
+callbacks access displacement through Game. Named live block reads replace
+typed RAM pointers; the stored context is still cleared after dispatch.
+Direct comparison with prior Rust passes 4,096 synthetic callback cases over
+both directions, all block types, 0..15 retries and eight displacement
+boundaries; callbacks modify the live block index and displacement, and
+final RAM/returns/context cleanup agree. Stable optimized core/DLL build and
+direct format pass; Cargo fmt/build remain ASR-denied. Waver route: 58,109
+frames, zero failures (83.72s); any%: 129,712 frames, zero failures (181.44s).
+Raw offsets -6, cast lines -16, Rust lines -15; unsafe count unchanged.
+Next: direct Samus collision type matches, then carry/extension handler
+cleanup, keeping raw callback context until the stored bridge is removed.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

@@ -3535,55 +3535,40 @@ static kBlockColl_Vert_CheckColl: [Option<Func_CollInfo_U8>; 16] = unsafe {
         Some(BlockColl_Vert_BombBlock as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
     ]
 };
-unsafe fn BlockColl_Horiz_CheckColl(
-    mut ci: *mut CollInfo,
-    mut k: uint16,
-    game: &mut Game,
-) -> uint8 {
-    let mut rv: uint8 = 0;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
-    game.cur_coll_amt32 = &raw mut (*ci).ci_r18_r20;
-    loop {
-        rv = kBlockColl_Horiz_CheckColl[((*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x10002 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
-            ) as ::core::ffi::c_int
-            & 0xf000 as ::core::ffi::c_int)
-            >> 12 as ::core::ffi::c_int) as usize]
-            .expect("non-null function pointer")(ci, game);
-        if !(rv as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0) {
-            break;
+unsafe fn BlockColl_Horiz_CheckColl(ci: &mut CollInfo, k: uint16, game: &mut Game) -> uint8 {
+    game.set_cur_block_index(k >> 1);
+    // Derive both legacy pointers from this borrow. Do not reborrow the context
+    // while callbacks can access its displacement through Game.
+    let context = ci as *mut CollInfo;
+    game.cur_coll_amt32 = &raw mut (*context).ci_r18_r20;
+    let result = loop {
+        let block_type = usize::from(game.current_level_block() >> 12);
+        let result = kBlockColl_Horiz_CheckColl[block_type].expect("non-null function pointer")(
+            context, game,
+        );
+        if result & 0x80 == 0 {
+            break result;
         }
-    }
-    game.cur_coll_amt32 = ::core::ptr::null_mut::<int32>();
-    return rv;
+    };
+    game.cur_coll_amt32 = core::ptr::null_mut();
+    result
 }
-unsafe fn BlockColl_Vert_CheckColl(mut ci: *mut CollInfo, mut k: uint16, game: &mut Game) -> uint8 {
-    let mut rv: uint8 = 0;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
-    game.cur_coll_amt32 = &raw mut (*ci).ci_r18_r20;
-    loop {
-        rv = kBlockColl_Vert_CheckColl[((*((&raw mut game.g_ram as *mut uint8)
-            .offset(0x10002 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as isize,
-            ) as ::core::ffi::c_int
-            & 0xf000 as ::core::ffi::c_int)
-            >> 12 as ::core::ffi::c_int) as usize]
-            .expect("non-null function pointer")(ci, game);
-        if !(rv as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0) {
-            break;
+unsafe fn BlockColl_Vert_CheckColl(ci: &mut CollInfo, k: uint16, game: &mut Game) -> uint8 {
+    game.set_cur_block_index(k >> 1);
+    // Keep the same raw context valid across every extension-block retry.
+    let context = ci as *mut CollInfo;
+    game.cur_coll_amt32 = &raw mut (*context).ci_r18_r20;
+    let result = loop {
+        let block_type = usize::from(game.current_level_block() >> 12);
+        let result = kBlockColl_Vert_CheckColl[block_type].expect("non-null function pointer")(
+            context, game,
+        );
+        if result & 0x80 == 0 {
+            break result;
         }
-    }
-    game.cur_coll_amt32 = ::core::ptr::null_mut::<int32>();
-    return rv;
+    };
+    game.cur_coll_amt32 = core::ptr::null_mut();
+    result
 }
 unsafe fn BlockColl_Handle_Horiz(mut amt: int32, game: &mut Game) -> Pair_Bool_Amt {
     let mut r28: uint16 = Samus_GetYposSpan(game);
@@ -3628,7 +3613,7 @@ unsafe fn BlockColl_Handle_Horiz(mut amt: int32, game: &mut Game) -> Pair_Bool_A
         ci_r38: 0,
         ci_r40: 0,
     };
-    while BlockColl_Horiz_CheckColl(&raw mut ci, v2, game) as ::core::ffi::c_int
+    while BlockColl_Horiz_CheckColl(&mut ci, v2, game) as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
         == 0
     {
@@ -3697,7 +3682,7 @@ unsafe fn BlockColl_Handle_Vert_LeftToRight(mut amt: int32, game: &mut Game) -> 
     let mut i: ::core::ffi::c_int = 2 as ::core::ffi::c_int
         * *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int;
-    while BlockColl_Vert_CheckColl(&raw mut ci, i as uint16, game) as ::core::ffi::c_int
+    while BlockColl_Vert_CheckColl(&mut ci, i as uint16, game) as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
         == 0
     {
@@ -3765,7 +3750,7 @@ unsafe fn BlockColl_Handle_Vert_RightToLeft(mut amt: int32, game: &mut Game) -> 
     let mut i: ::core::ffi::c_int = 2 as ::core::ffi::c_int
         * *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
             as *mut uint16) as ::core::ffi::c_int;
-    while BlockColl_Vert_CheckColl(&raw mut ci, i as uint16, game) as ::core::ffi::c_int
+    while BlockColl_Vert_CheckColl(&mut ci, i as uint16, game) as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
         == 0
     {
