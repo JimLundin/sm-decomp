@@ -4118,6 +4118,42 @@ DLL and progress checks pass. Probes/native saves stay TEMP; no new full-any%
 or Waver result claimed. WRAM-port landingea9f65ec has its separate evidence.
 DMA/event timing, enabled-render Waver71, held HDMA and credits remain open.
 
+DMA execution-context audit (2026-10-18): Snapshot contains no DMA
+channel/register or scheduler state. Actual dma_write/dma_read around
+MakeSnapshot/RestoreSnapshot reproduce26,624 register losses: eight channels
+x13 readable/writable register offsets x256 values. Every complemented later
+write survives rewind, including partial address/size/table writes and the
+unused-byte mirror at offsetsB/F. This proves omission; no hardware accuracy
+claim follows from matching the existing register implementation.
+
+Seventy-two constructed pending transfers (eight channels xthree source
+addresses xincrement/fixed/decrement modes) are started through dma_startDma,
+startup delay drained, captured, reset and rewound. Baseline dma_cycle returns
+false: the saved pending transfer is lost. A TEMP-only complete Dma copy in
+Snapshot restores all26,624 register cases and72 next-byte transfers: WRAM
+destination receives5A, size becomes1, source wraps/increments/decrements or
+stays fixed as expected, and the WRAM destination port advances once. Both
+baseline defect assertions and candidate controls exit0 under native Python
+subprocess capture. PowerShell stderr reports from initial runs are not used
+as process status. This temporary whole-struct copy includes the owner pointer;
+it is an omission control, not a proposed maintained snapshot interface.
+
+The current420B handler drains DMA synchronously, so constructed queued-state
+loss is not evidence of naturally pending work at a movie frame boundary.
+DMA registers can persist across branches even when busy clears. Next: trace
+actual full-route register consumers/partial writes and branch-entry busy/
+timer state before choosing execution-context capture or end-state checks.
+No HDMA table/window investigation is resumed, and these tests do not cover
+HDMA scheduling, transfer-mode B-bus sequences or timing equivalence.
+
+Only this note changes; no maintained source/residue counters change. Frozen
+source includes then-current input/WRAM/audio/PPU peer edits; later integration
+is separate. Isolated optimized core/DLL builds, direct full-source rustfmt
+and progress pass; Cargo fmt/check and release remain denied at cargo.exe
+launch. No fresh movie result is claimed. Probe sources and ROM assets stay
+ignored. Rendering initialization/Waver71, held HDMA, WRIO/autojoy, interrupt
+events, audio timing and boot-to-credits coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
