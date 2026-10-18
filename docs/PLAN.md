@@ -4094,6 +4094,30 @@ clean replay; their integration remains separate. Input/DMA context, event
 generation, rendering/HDMA, audio timing and boot-to-credits remain open.
 Probe source, logs and ROM-derived assets stay outside tracked files.
 
+Independent input-control frame QC (2026-10-18): frozen candidate captures
+and restores ppuLatch/autoJoyRead/autoJoyTimer. TEMP frame200 controls execute
+4201/4200 writes after the ROM snapshot and change the busy timer, then assert
+the actual restored fields before Rust runs. Explicitly rendered any% prefixes
+pass normal3,600/0 (9.69s), forced mismatch recovery3,600/1 (9.80s), and debug
+retry3,600/1 (8.25s), nativeexits0/1/1. The only intentional failed frame is200,
+with no RAM differences or cascade. Restore checks execute2/2/4 times.
+The debug fixture clears its injected debug flag after one retry to bound the
+run; this does not claim unbounded interactive debugging behavior.
+
+Removing only input-control restoration aborts at the frame200 rewind with
+later(true,false,321) instead of saved(false,true,0). This proves execution
+in the changed BOTH success/recovery/retry paths, extending prior isolated
+WRIO/autojoy controls. The initial TEMP builder had an unnecessary uniqueness
+assertion for a shared source line; removing it produced the passing probes.
+No natural busy-period timing or automatic input latching is established.
+
+Only this note changes; the implementation session owns production landing
+and its clean full-movie run. Candidate input-control hunks remain present in
+live source. Direct full-source rustfmt, normal-core metadata, optimized core/
+DLL and progress checks pass. Probes/native saves stay TEMP; no new full-any%
+or Waver result claimed. WRAM-port landingea9f65ec has its separate evidence.
+DMA/event timing, enabled-render Waver71, held HDMA and credits remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
