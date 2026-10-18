@@ -4946,6 +4946,31 @@ the clean replay; probes and ROM assets remain untracked. Hardware scheduling,
 rendering/Waver71, held HDMA diagnosis, audio timing and boot-to-credits remain
 open; continue actual scheduling and route coverage work.
 
+Independent DMA/APU transfer-byte QC (2026-10-18): committed e0cf3bf2's
+helper passes 208,896 actual old/current transfers through physical APU and
+host sound-queue paths. Both WRAM banks, addresses1000/FFFE/FFFF and all
+256 values run all64 reverse APU-port mirrors, plus four forward ports
+with physical/queued routing selected independently. Complete RAM,
+AudioSnapshot semantic state and all71 sound-queue bytes match after each
+pair from identical initial state. Independent expectations also check the
+returned mirror byte, selected physical/queued destination and catchup
+remainder. Changing only the reverse port to its neighbor fails RAM equality;
+original/control native exits are zero/nonzero.
+
+SPC is deliberately stopped to isolate device routing and existing catchup
+behavior: reverse reads advance32 APU cycles; physical writes consume the
+seeded3.75-cycle backlog and leave0.75; queued writes leave it unchanged.
+This verifies transfer preservation, not active driver command/sample timing,
+hardware latency or mirrored forward writes (RtlApuWrite accepts2140..2143).
+Frozen transfer/bus/delivery/AudioSnapshot bodies match current source.
+Optimized probe core/DLL, normal-core metadata, direct full-source rustfmt
+and progress pass; Cargo execution remains denied as documented. Initial
+fixture compilation used four entries for six-byte inPorts and was corrected
+before the passing run. Only this note changes; probes remain TEMP and no
+maintained Rust/residue changes occur. Implementing commit owns full-any%
+integration. Rendering/Waver71, event/audio timing and credits stay open;
+held HDMA diagnosis stays stopped.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
