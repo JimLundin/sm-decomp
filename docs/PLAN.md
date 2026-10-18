@@ -5366,6 +5366,32 @@ Cargo fmt/check and release remain denied at cargo.exe launch. No fresh movie
 result claimed; probes/ROM assets stay ignored. Render initialization/Waver71,
 hires, audio timing, masked RAM and boot-to-credits remain open.
 
+SNES register-reader cleanup (2026-10-18): snes_readReg now dispatches on
+hexadecimal addresses and builds native byte results. RDNMI keeps its inherited
+no-clear behavior; TIMEUP captures IRQ before clearing inIrq and cpu.irqWanted.
+Open-bus masks, Hblank threshold, WRIO latch, arithmetic/controller bytes and
+zero reads retain their existing semantics. Actual snes_read versus the old
+reader passes 3,538,944 cases over all open-bus bytes, status combinations,
+H positions 0/1023/1024/65535, autojoy timers 0/1/65535, all 4200..421F
+addresses and every arithmetic/controller word. IRQ side effects match.
+Independent QC passes 196,608 old/current LDA pairs (393,216 instructions),
+including byte status/default reads and ordered word4210 reads in banks00/80;
+manual results/flags/PC/cycles and unrelated state match. Retaining irqWanted
+instead of clearing it is detected. The separate 1,835,008-instruction QC
+above supplies additional arithmetic/zero-register CPU coverage.
+
+Instrumented any% passes 12,000/0 (27.51s), native exit0. ROM-side reads:
+4210=12,000, 4214/4215=24,183 each, 4216=129,201, 4217=117,567;
+4218/4219=11,657 each on both sides. Clean frozen75c38996 plus only this
+reader change passes any%129,712/0 (294.47s), native exit0. Direct full-source
+format, normal-core metadata and optimized clean/probe core/DLL builds pass.
+Cargo fmt/build --release remain Access denied at cargo.exe launch; that
+required check stays unmet. Progress/diff checks pass: focused cast lines-28,
+Rust lines-41, other categories unchanged. Later peer changes are outside this
+frozen replay. Hardware scheduling, rendering/Waver71, audio timing, masked
+RAM and credits remain open; held HDMA diagnosis stays stopped. Continue
+executed hardware register paths and route coverage. Probes stay in TEMP.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

@@ -268,72 +268,31 @@ pub unsafe fn snes_writeBBus(
 fn SwapInputBits(input: u16) -> u16 {
     input.reverse_bits()
 }
-unsafe fn snes_readReg(mut snes: *mut Snes, mut adr: uint16_t) -> uint8_t {
-    match adr as ::core::ffi::c_int {
-        16912 => {
-            let mut val: uint8_t = 0x2 as uint8_t;
-            val = (val as ::core::ffi::c_int
-                | ((*snes).inNmi as ::core::ffi::c_int) << 7 as ::core::ffi::c_int)
-                as uint8_t;
-            return (val as ::core::ffi::c_int
-                | (*snes).openBus as ::core::ffi::c_int & 0x70 as ::core::ffi::c_int)
-                as uint8_t;
+unsafe fn snes_readReg(snes: *mut Snes, address: u16) -> u8 {
+    match address {
+        0x4210 => 2 | (u8::from((*snes).inNmi) << 7) | ((*snes).openBus & 0x70),
+        0x4211 => {
+            let irq = u8::from((*snes).inIrq) << 7;
+            (*snes).inIrq = false;
+            (*(*snes).cpu).irqWanted = false;
+            irq | ((*snes).openBus & 0x7f)
         }
-        16913 => {
-            let mut val_0: uint8_t =
-                (((*snes).inIrq as ::core::ffi::c_int) << 7 as ::core::ffi::c_int) as uint8_t;
-            (*snes).inIrq = false_0 != 0;
-            (*(*snes).cpu).irqWanted = false_0 != 0;
-            return (val_0 as ::core::ffi::c_int
-                | (*snes).openBus as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int)
-                as uint8_t;
+        0x4212 => {
+            u8::from((*snes).autoJoyTimer > 0)
+                | (u8::from((*snes).hPos >= 1024) << 6)
+                | (u8::from((*snes).inVblank) << 7)
+                | ((*snes).openBus & 0x3e)
         }
-        16914 => {
-            let mut val_1: uint8_t = ((*snes).autoJoyTimer as ::core::ffi::c_int
-                > 0 as ::core::ffi::c_int)
-                as ::core::ffi::c_int as uint8_t;
-            val_1 = (val_1 as ::core::ffi::c_int
-                | (((*snes).hPos as ::core::ffi::c_int >= 1024 as ::core::ffi::c_int)
-                    as ::core::ffi::c_int)
-                    << 6 as ::core::ffi::c_int) as uint8_t;
-            val_1 = (val_1 as ::core::ffi::c_int
-                | ((*snes).inVblank as ::core::ffi::c_int) << 7 as ::core::ffi::c_int)
-                as uint8_t;
-            return (val_1 as ::core::ffi::c_int
-                | (*snes).openBus as ::core::ffi::c_int & 0x3e as ::core::ffi::c_int)
-                as uint8_t;
-        }
-        16915 => {
-            return (((*snes).ppuLatch as ::core::ffi::c_int) << 7 as ::core::ffi::c_int)
-                as uint8_t;
-        }
-        16916 => {
-            return ((*snes).divideResult as ::core::ffi::c_int & 0xff as ::core::ffi::c_int)
-                as uint8_t;
-        }
-        16917 => {
-            return ((*snes).divideResult as ::core::ffi::c_int >> 8 as ::core::ffi::c_int)
-                as uint8_t;
-        }
-        16918 => {
-            return ((*snes).multiplyResult as ::core::ffi::c_int & 0xff as ::core::ffi::c_int)
-                as uint8_t;
-        }
-        16919 => {
-            return ((*snes).multiplyResult as ::core::ffi::c_int >> 8 as ::core::ffi::c_int)
-                as uint8_t;
-        }
-        16920 => {
-            return (SwapInputBits((*(*snes).input1).currentState) as ::core::ffi::c_int
-                & 0xff as ::core::ffi::c_int) as uint8_t;
-        }
-        16921 => {
-            return (SwapInputBits((*(*snes).input1).currentState) as ::core::ffi::c_int
-                >> 8 as ::core::ffi::c_int) as uint8_t;
-        }
-        16922 | 16924 | 16926 | 16923 | 16925 | 16927 => return 0 as uint8_t,
-        _ => return (*snes).openBus,
-    };
+        0x4213 => u8::from((*snes).ppuLatch) << 7,
+        0x4214 => (*snes).divideResult as u8,
+        0x4215 => ((*snes).divideResult >> 8) as u8,
+        0x4216 => (*snes).multiplyResult as u8,
+        0x4217 => ((*snes).multiplyResult >> 8) as u8,
+        0x4218 => SwapInputBits((*(*snes).input1).currentState) as u8,
+        0x4219 => (SwapInputBits((*(*snes).input1).currentState) >> 8) as u8,
+        0x421a..=0x421f => 0,
+        _ => (*snes).openBus,
+    }
 }
 unsafe fn snes_writeReg(mut snes: *mut Snes, mut adr: uint16_t, mut val: uint8_t, game: &mut Game) {
     match adr as ::core::ffi::c_int {
