@@ -5941,6 +5941,21 @@ native write-routing edits; later integration remains separate. Only this
 note changes, probes and ROM assets remain TEMP/ignored. Next classify a
 focused additional non-HDMA consumer; held HDMA diagnosis stays stopped.
 
+Removed collision-field consumer QC (2026-10-18): the same actual direct
+WRAM/mirror/2180 observer covers 060D..0610 on a full any% replay, finishing
+129,712/0 (261.98s), native exit zero. Read counts are [86440,86440,0,0]
+and write counts [81499,81499,2865,2865]. No byte is read before its first
+ROM-branch write in that frame. Thus observed ROM consumers of 060D/060E
+overwrite the incoming values first on this movie; 060F/0610 have actual
+writes but no observed ROM reads, so consumer behavior is unproved there.
+Positive actual direct/port incoming-read controls pass before counters reset.
+No masks, inputs or recovery change, and rendering is outside this claim.
+The frozen movie predates later BBus-write cleanup and subsequent CPU edits;
+their integration remains separate. Optimized observer core/DLL, normal-core
+metadata, direct full-source format and progress pass. Independent partner
+fixture review confirms the observation scope. Only this note changes;
+other routes and independent full-game equivalence remain unproved.
+
 Independent write-routing candidate QC (2026-10-18): 1,179,648 actual
 old/current byte long-STA instructions pass across all physical WRAM
 addresses and every low-RAM offset in all 128 mirrored banks. Independent
