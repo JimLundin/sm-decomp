@@ -6853,6 +6853,35 @@ audio timing, rendering/Waver71, masked RAM and credits remain open. Held
 HDMA diagnosis stays stopped. Continue executed cartridge boundaries and
 route coverage with useful independent subagents. Peer owns remote sync.
 
+Landing-site western cliff approach (2026-10-18): read-only geometry
+shows the western mass occupying roughlyX256..640 at many heights above
+Y1152, with lower ground beneath it. The92B3 source door remains leftY608,
+separated by this cliff and the bomb barriers nearX496..623/Y592..655.
+No ordinary ledge staircase has been established from the lower path.
+
+From60402-frame restored free-movement input, left/run/shoot6 then
+left/run/jump/shoot60, neutral120 completes60588/71 (172.48s), nativeexit1.
+Jump reachesY1101 nearX700, then falls and landsX615/Y1195. All health99/99,
+missiles5/5 and Morph/Bombs1004 remain. Next left6, left/jump22, right2,
+right/jump18, left/jump30, neutral120 completes60786/71 (184.25s), nativeexit1.
+This does NOT establish a wall jump: sampled poses0019/001A are ordinary
+jump poses and no wall-jump pose is seen. From beneath the overhang the
+jump clips the ceiling aroundY1164; it endsX557/Y1195, alive and refilled.
+Do not repeat the away/jump suffix there expecting an exposed vertical wall.
+
+Next: move right out from beneath the overhang, then initiate a spin jump
+against the cliff's exposed right face; observe movement type/pose and actual
+wall-jump calls before claiming ascent. Existing restored ship-free-movement
+prefix or higher ship-top prefix may provide a better launch.92B3/new rooms
+and credits remain unreached. Upper99BD tuning,9AD9 ammo and HDMA stay held.
+Both diagnostic lists exactly match frozen d217ea15 Waver's71 baseline
+render failures.16rooms/16enemy definitions; no new coverage claim.
+No maintained Rust edits/own residue delta; concurrent hardware work and
+cleanup stay separate. Direct full-source rustfmt passes; Cargo fmt/check
+and release again fail at launch OSerror5. Prior same-DLL explicit-render
+any%129712/0 (414.98s) remains regression for these input-only trials.
+Inputs/probes/ROM-derived outputs stay ignored.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
