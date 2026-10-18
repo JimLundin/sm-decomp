@@ -1343,6 +1343,33 @@ upload/backend integration and normal runtime audio equality remain open.
 Next: enable native transport with explicit backend selection and compare
 actual independent upload and command delivery in the differential loop.
 
+Startup sound-port writes (2026-10-18): Vector_RESET_Async now writes zero
+to ports 1 and 3 alongside its existing port-0/2 writes, preserving order
+2140/2141/2142/2143 after EnableNMI. A temporary physical-backend frame-150
+trace independently observes original ROM word stores at CPU 80851E and
+808521 writing all four bytes; Rust previously wrote only ports 0/2. The
+unfixed physical integration probe reports exactly one queued-command failure
+over 400 frames, no RAM difference, native exit 1. This omission was hidden
+by the narrowly tested custom-driver startup exemption.
+
+Actual startup runs in a 400-frame default control capture matching all-zero
+four-port commands, native exit 0. Omitting either new write separately fails
+the dedicated snapshot assertion (native 3221226505), with FF remaining only
+at the omitted port. Independent source/trace review finds no blockers. A
+separate native-upload integration prototype passes 3,600/0 (7.95s), native
+exit 0, with five uploads and all four startup writes. It stays outside
+maintained source and does not establish physical audio equality.
+
+Frozen maintained startup bodies pass any% 129,712/0 (248.70s),
+native exit 0. The replay includes then-current brightness-cache enforcement,
+post-save physical rewind and Samus pending-pose accessors; concurrent projectile
+initialization has separate verification. Cargo fmt/check, optimized core/DLL
+and normal-core metadata builds pass; Cargo release still fails khronos_api
+build-script execution (OS error 5). Rust lines +2 add the missing bytes;
+other counters are unchanged for this fix. The custom startup exemption remains
+a separate cleanup. Native transport and full audio equality remain unfinished.
+Next: compare natural physical upload selection, boundary state and timing.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read

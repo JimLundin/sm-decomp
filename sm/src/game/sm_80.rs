@@ -805,7 +805,9 @@ pub unsafe fn Vector_RESET_Async(game: &mut Game) -> CoroutineRet {
                 as *mut uint16) = 0 as uint16;
             EnableNMI(game);
             RtlApuWrite(APUI00 as ::core::ffi::c_int as uint32, 0 as uint8, game);
+            RtlApuWrite(APUI01 as ::core::ffi::c_int as uint32, 0 as uint8, game);
             RtlApuWrite(APUI02 as ::core::ffi::c_int as uint32, 0 as uint8, game);
+            RtlApuWrite(APUI03 as ::core::ffi::c_int as uint32, 0 as uint8, game);
             *((&raw mut game.g_ram as *mut uint8).offset(0x5e5 as ::core::ffi::c_int as isize)
                 as *mut uint16) = 97 as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0x63f as ::core::ffi::c_int as isize)
