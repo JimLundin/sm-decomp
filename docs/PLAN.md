@@ -4948,6 +4948,26 @@ tooling is added. ROM/movie/probe assets stay ignored or TEMP. The independent
 held HDMA table/window diagnosis is not resumed. Rendering initialization,
 Waver71, hires, hardware/audio timing, masked RAM and credits remain open.
 
+Independent SNES arithmetic-write cleanup QC (2026-10-18): 16,908,288
+operation cases execute actual CPU STA triggers and LDA result reads.
+All 256x256 multiplication inputs produce exact word results; every 65,536
+dividend x256 divisor pair verifies quotient/remainder, including divisor
+zero's FFFF quotient and unchanged-dividend remainder. Word STA4204 exercises
+ordered low/high dividend writes. Another 65,536 split-byte packs verify
+untouched-half preservation across separate STA4204/4205 calls. Each divide
+case performs actual STA4206, LDA4214 and LDA4216; PC and opcode cycle returns
+also match. Expected products and widened division/remainder are independent
+of the cleaned register code. This verifies maintained immediate arithmetic
+behavior, not physical SNES multiply/divide latency.
+
+A TEMP zero-divisor quotient changed to zero fails immediately (0000 versus
+FFFF). Original/control native exits are zero/nonzero. Frozen/live full
+snes_writeReg body matches. Optimized probe core/DLL, normal-core metadata,
+direct full-source rustfmt and progress pass. Only this note changes; no
+production code/residue or maintained tooling is added. Movie integration,
+render initialization/Waver71, hardware/audio timing and credits remain
+separate. Held HDMA diagnosis stays stopped; probes remain TEMP.
+
 Current broad-route revalidation (2026-10-18): committed d217ea15 source
 replays the retained 62,817-frame lead-9ad9-arrive.inputs through the standard
 verifier, passing 62,817/0 (117.57s), native exit 0. It observes 48,819
