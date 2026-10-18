@@ -7364,6 +7364,42 @@ bodies. Later peer hardware changes are outside this replay. Arbitrary bus
 mutation, other addressing modes, hardware/render/audio timing and credits
 remain open; held HDMA diagnosis stays stopped. Continue executed TSB/TRB.
 
+Landing-site cliff tuning held near accumulated hour limit (2026-10-18):
+four more normal-input trials preserve the exact ordered frozen d217ea15
+Waver71 diagnostics. Intermediate left/run22 plus28-frame running spin
+approach completes60664/71 (179.51s), nativeexit1; it misses wall readiness.
+Changing only ground run22->24 completes60666/71 (161.98s), nativeexit1.
+At60455 X630/Y1118 animation11 is ready;60456 launches atX629/Y1118,
+speed0004.A000. At60462 X636/Y1096 upward collision1 resets speed while
+Jump stays held. Second launch60486 X632/Y1124 reachesX642/Y1091 at60494
+and resets on upward collision. FinalX624/Y1195, healthy99/99, missiles5/5.
+The two-frame ground approach difference establishes a useful contact bound,
+not a cleared slope or new ledge. No callback-hit counts are inferred.
+
+Holding left/jump26 before away2/freshjump launches at60482 X629/Y1105,
+then collides immediately at60483. This completes60704/71 (180.10s), native
+exit1. Holding left/jump40 instead, away2, right/jump30, left/jump35,
+neutral120 completes60681/71 (169.67s), nativeexit1. Launch60496 X629/Y1131
+has full speed0004.A000; at60506 X642/Y1091 it again collides upward while
+Jump remains held. FinalX626/Y1195, health99/99, missiles5/5, items1004.
+Waiting lower increases travel before collision but does not clear this
+protrusion.16rooms/16enemy definitions remain;92B3 and credits unreached.
+
+Stop landing-site cliff input tuning here under the item time limit; retain
+contact/final-descent inputs and read-only velocity observer for explicit
+future resumption. Do not automatically resume this item, Upper99BD ascent,
+9AD9 ammunition or HDMA diagnosis. Next independent normal-input coverage:
+return from the refilled landing-site prefix to Parlor and follow the
+established Bomb-equipped west-door route into990D with restored health/
+missiles, then explore onward; do not infer traversal from destination doors.
+Prior frozen same-DLL explicit-render any%129712/0 remains regression for
+these input-only trials, not verification of peer hardware edits. Direct
+full-source format passes; Cargo fmt/release again fail at launch OSerror5.
+Own maintained source/residue delta zero; live counters include peer work.
+All route/oracle inputs and ROM-derived probes remain ignored. Peer owns
+hardware changes, cleanup and remote sync. Credits, complete gameplay,
+render/audio fidelity, masked RAM and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
