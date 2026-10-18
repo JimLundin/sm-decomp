@@ -7340,6 +7340,30 @@ integration, hardware/audio timing, rendering/Waver71, masked RAM and credits
 remain open. Held HDMA diagnosis stays stopped. Continue executed APU/SPC
 paths and route coverage with independent subagents; peer owns remote sync.
 
+CPU memory increment/decrement cleanup (2026-10-18): cpu_inc/dec use native
+word wrapping arithmetic and cycle increments. Byte operands retain a word
+intermediate (0100 on FF increment, FFFF on zero decrement) for the final
+live-width Z/N update. Word writes remain high-byte first and flags follow
+writes. Actual old/current helpers pass 524,288 ordered substituted-bus cases
+over every operand, both widths/carry states and both helpers. Complete named
+CPU state and address/value/cycle/C/Z/N traces match independent expected
+results; carry and other flags remain unchanged. Actual absolute WRAM passes
+786,432 old/current instruction pairs across every operand and carry state,
+native byte/word plus emulation byte modes, crossing 7E:FFFF to 7F:0000.
+Result bytes, flags, PC, cycles and open bus match. Constructed instruction
+contexts establish execution, not physical hardware accuracy.
+Instrumented any% prefix passes 3,600/0 (6.17s), native exit 0; INC/DEC
+word/byte calls are 11,230/438 and 56,008/996. Clean frozen
+36a741c5ec4b498b8a2e11d35eac4fcd43ed8670 plus only these helpers passes any%
+129,712/0 (235.87s), native exit 0. Direct full-source format, normal-core
+metadata and optimized clean/probe core/DLL builds pass; required Cargo
+fmt/release remain launch-denied. TEMP probe counter array-length typo was
+fixed after compiler rejection. Progress/diff pass: focused cast lines -8,
+Rust lines unchanged, other categories unchanged. Live helpers match verified
+bodies. Later peer hardware changes are outside this replay. Arbitrary bus
+mutation, other addressing modes, hardware/render/audio timing and credits
+remain open; held HDMA diagnosis stays stopped. Continue executed TSB/TRB.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
