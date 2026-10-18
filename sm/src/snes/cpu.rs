@@ -433,11 +433,10 @@ unsafe fn cpu_setZN(cpu: *mut Cpu, value: uint16_t, byte: bool) {
         (*cpu).n = value & 0x8000 != 0;
     }
 }
-unsafe fn cpu_doBranch(mut cpu: *mut Cpu, mut value: uint8_t, mut check: bool) {
+unsafe fn cpu_doBranch(cpu: *mut Cpu, value: uint8_t, check: bool) {
     if check {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        (*cpu).pc =
-            ((*cpu).pc as ::core::ffi::c_int + value as int8_t as ::core::ffi::c_int) as uint16_t;
+        (*cpu).pc = (*cpu).pc.wrapping_add_signed(value as i8 as i16);
     }
 }
 unsafe fn cpu_pullByte(mut cpu: *mut Cpu, game: &mut Game) -> uint8_t {

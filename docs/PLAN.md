@@ -4791,6 +4791,25 @@ or independent hardware accuracy. The implementing commit owns clean any%
 129,712/0 integration. APU devices, rendering/Waver71, event timing, audio
 timing and credits remain open; held HDMA diagnosis stays stopped.
 
+CPU conditional-branch cleanup (2026-10-18): cpu_doBranch replaces promoted
+C integer addition/truncation with explicit signed wrapping word addition.
+Taken branches still increment the byte cycle count before changing PC;
+untaken branches change neither. Actual old/current helpers pass 33,554,432
+cases spanning every PC/displacement pair and both outcomes, including all
+cycle-byte values. Another 11,534,336 actual conditional branch instructions
+cover all eight opcodes, every flag/displacement byte, both CPU modes and
+11 wrap/page-boundary PCs. PC, cycles, flags and unrelated registers match
+independent expectations. Instrumented any% prefix passes 3,600/0, native
+exit 0, with 415,977 untaken and 1,111,395 taken calls. Independent exhaustive
+opcode QC follows. Clean frozen e0cf3bf228034ca0b0841c7d116d6cfbcc3671f5 plus
+only this helper passes any% 129,712/0 (283.35s), native exit 0. Direct
+full-source format, normal-core metadata and optimized clean/probe core/DLL
+builds pass; Cargo fmt/release remain denied at launch. Progress and diff
+checks pass; focused cast lines -1 and Rust lines -1, other categories
+unchanged. Later peer changes are outside this frozen replay. Hardware
+page-cross timing, rendering, audio timing and credits remain open;
+held HDMA diagnosis stays stopped. Continue remaining executed CPU helpers.
+
 Independent CPU conditional-branch QC (2026-10-18): pending cpu_doBranch
 signed-wrapping cleanup passes 268,435,456 actual conditional branch
 instructions. All eight N/V/C/Z branch opcodes execute every 65,536 starting
