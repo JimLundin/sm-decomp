@@ -1679,6 +1679,44 @@ gameplay/display edits are excluded from this frozen
 source. Cross-driver loading and replay-base queue serialization remain separate
 questions; this change preserves normal physical filesystem continuation.
 
+Physical replay-base queue preservation (2026-10-18): the public ClearKeyLog
+path captures a full SNES replay base while a real frame-8,640 SFX1 command
+31 is still queued. At base frame 8,641, size is 1 and position 193. Saving
+the later recording and loading with Replay previously clears that queue:
+the initial render plus 240 replayed input frames diverge at continuation
+frame 3 (300 sample values). Controls starting after audio consumption at
+400 and 8,640 pass. This is separate from the final-snapshot queue trailer.
+
+StateRecorder now retains a physical base queue captured with the base SNES
+state. Reserved version-2 words 12/13 identify ABQ1/71; a second trailer follows
+the final SNES/APQ1 data, preserving both SNES byte layouts and lengths.
+Normal load retains base metadata for re-saving; replay skips the final data
+and restores the base queue after music reset. Initialization and replacement
+with an SRAM-only base clear metadata; custom ClearKeyLog does not set it.
+The actual SRAM replacement control confirms clearing. Existing marker-free
+recordings retain their legacy behavior. No audio is rendered or drained at
+capture, save or load, and no ROM-derived data enters the commit.
+
+The fixed real-command replay passes all 241 resumed frames, 257,388 sample
+values and final RAM, with no oracle failures. Normal-load/re-save/replay also
+passes, and the two after-consumption controls stay green. Mutating only the
+stored base command reproduces frame-3/300 sample differences. Normal physical
+and custom filesystem saves at the active pending-command boundary still pass.
+Independent source/cursor/evidence review finds no blockers. A custom replay
+base at the same pending boundary fails immediately (1,068 values) identically
+on baseline e69711a9 and candidate: custom ClearKeyLog still captures physical
+APU state without custom-driver normalization. This remains a separate actual
+gap, not a claimed passing custom replay check.
+
+Cargo fmt/check, direct optimized core/DLL and metadata builds pass; Cargo
+release remains denied executing khronos_api's build script (OS error 5).
+This focused change adds 38 Rust lines for base metadata and file integration;
+other residue counters unchanged by it. Full default any% passes 129,712/0
+(348.17s), physical any% passes 129,712/0 (392.87s), native exits 0.
+Concurrent gameplay/display edits are outside this frozen source.
+Next: normalize and independently verify custom-driver replay-base capture,
+then continue actual room/route coverage toward credits.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read

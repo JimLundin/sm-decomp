@@ -105,6 +105,8 @@ pub struct StateRecorder {
     pub replay_mode: bool,
     pub log: ByteArray,
     pub base_snapshot: ByteArray,
+    pub has_base_audio_queue: bool,
+    pub base_audio_queue: [u8; 71],
 }
 pub use crate::types::{
     ByteArray, Channel, SaveLoadFunc, SaveLoadOperation as C2RustUnnamed_0, SfxChan, SfxRegs,
@@ -659,6 +661,7 @@ pub unsafe fn StateRecorder_Load(
         (*sr).base_snapshot.data as *mut ::core::ffi::c_void,
         (*sr).base_snapshot.size,
     );
+    (*sr).has_base_audio_queue = false;
     (*sr).snapshot_flags = hdr[9 as ::core::ffi::c_int as usize];
     (*sr).replay_next_cmd_at = 0 as uint32;
     (*sr).replay_mode = replay_mode;
@@ -785,6 +788,29 @@ pub unsafe fn StateRecorder_Load(
             crate::audio_snapshot::ApuQueueSnapshot::from_bytes(&bytes).restore(game);
         }
     }
+    if hdr[12] == u32::from_le_bytes(*b"ABQ1") {
+        assert_eq!(hdr[13], 71, "invalid replay base APU queue length");
+        if replay_mode {
+            // Replay read the base snapshot, leaving the final snapshot unread.
+            let final_queue_size = if hdr[10] == u32::from_le_bytes(*b"APQ1") {
+                assert_eq!(hdr[11], 71);
+                71
+            } else {
+                0
+            };
+            let skip = ::core::ffi::c_long::try_from(hdr[6])
+                .unwrap()
+                .checked_add(final_queue_size)
+                .unwrap();
+            assert_eq!(fseek(f, skip, 1), 0);
+        }
+        ReadFromFile(f, (*sr).base_audio_queue.as_mut_ptr().cast(), 71);
+        (*sr).has_base_audio_queue = (*sr).base_snapshot.size > 8192;
+        if replay_mode && !game.g_use_my_apu_code && !is_reset {
+            crate::audio_snapshot::ApuQueueSnapshot::from_bytes(&(*sr).base_audio_queue)
+                .restore(game);
+        }
+    }
     RtlUpdateSnesPatchForBugfix(game);
 }
 pub unsafe fn StateRecorder_Save(
@@ -866,6 +892,10 @@ pub unsafe fn StateRecorder_Save(
         hdr[10] = u32::from_le_bytes(*b"APQ1");
         hdr[11] = 71;
     }
+    if (*sr).has_base_audio_queue {
+        hdr[12] = u32::from_le_bytes(*b"ABQ1");
+        hdr[13] = 71;
+    }
     fwrite(
         &raw mut hdr as *mut uint32 as *const ::core::ffi::c_void,
         1 as size_t,
@@ -893,11 +923,18 @@ pub unsafe fn StateRecorder_Save(
     if let Some(bytes) = audio_queue {
         fwrite(bytes.as_ptr().cast(), 1, bytes.len(), f);
     }
+    if (*sr).has_base_audio_queue {
+        fwrite((*sr).base_audio_queue.as_ptr().cast(), 1, 71, f);
+    }
     ByteArray_Destroy(&raw mut arr);
 }
 pub unsafe fn StateRecorder_ClearKeyLog(mut sr: *mut StateRecorder, game: &mut Game) {
     printf(b"Clearing key log!\n\0" as *const u8 as *const ::core::ffi::c_char);
     (*sr).base_snapshot.size = 0 as size_t;
+    (*sr).has_base_audio_queue = !game.g_use_my_apu_code;
+    if (*sr).has_base_audio_queue {
+        (*sr).base_audio_queue = crate::audio_snapshot::ApuQueueSnapshot::capture(game).to_bytes();
+    }
     SaveSnesState(
         Some(
             saveFunc
@@ -1705,6 +1742,7 @@ pub unsafe fn RtlReadSram(game: &mut Game) {
         fclose(f);
         RtlSynchronizeWholeState(game);
         ByteArray_Resize(&raw mut game.state_recorder.base_snapshot, 8192 as size_t);
+        game.state_recorder.has_base_audio_queue = false;
         memcpy(
             game.state_recorder.base_snapshot.data as *mut ::core::ffi::c_void,
             game.g_sram as *const ::core::ffi::c_void,
