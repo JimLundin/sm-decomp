@@ -3538,6 +3538,33 @@ Next: audit brightness/cache continuation after load before broader saved-route
 claims. Hires, audio timing, masked RAM, shared hardware accuracy and complete
 boot-to-credits coverage remain open.
 
+Independent public-load QC (2026-10-18): the frozen routing repair's rtl.rs
+and snes/ppu.rs match the live source at 34e671a9. Both public save APIs,
+ordinary load and recorder-base replay pass 64 constructed BG/window states
+covering all sixteen window inversion/logic combinations. Saved reserved
+screen/window bits do not change the restored fast-render rows; load rebuilds
+effective routing and copies it to the second PPU. Save and base-recording
+leave live routing unchanged. Immediate next-row comparisons pass without
+register reapplication. Corrupting main-screen routing changes the row, and
+removing only the LoadSnesState reconstruction hook fails the first public
+load case. These controls prove execution of the changed public load path.
+
+Eight frame-8640 continuation processes pass: load/replay, custom/physical
+audio and both public save APIs, each with a queued frame at the save boundary.
+Each compares 240 newly rendered frames, 257,388 audio samples (including the
+pending audio frame) and final RAM; all match with zero oracle failures.
+Rendering is explicitly enabled and buffers clear before each new frame.
+The initial probe also compared the already-drawn host buffer at the pending
+audio boundary; that buffer is not serialized. Removing that invalid comparison
+leaves all newly rendered continuation checks passing. This extends tested
+save/replay behavior, not independent renderer accuracy or credits coverage.
+
+No production source changes in this QC. Full-source direct rustfmt and progress
+checks pass; native probes remain TEMP and their save slots are removed. The
+known enabled-render Waver71 failures and held HDMA diagnosis stay open; no
+new full-movie result is claimed. Brightness/cache load continuation remains
+the next focused audit.
+
 CPU control-context rewind (2026-10-18): snapshots now capture/restore E,
 stopped and pending IRQ/NMI in addition to waiting. E restores before
 cpu_setFlags, which uses it to constrain M/X, index widths and stack page.
