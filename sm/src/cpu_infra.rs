@@ -108,6 +108,7 @@ pub struct Snapshot {
     pub interrupt_latches: (bool, bool, bool),
     pub interrupt_enables: (bool, bool, bool),
     pub h_timer: uint16_t,
+    pub snes_open_bus: uint8_t,
     pub input_control: (bool, bool, uint16_t),
     pub wram_port_address: uint32_t,
     pub dma_channels: [crate::types::DmaChannel; 8],
@@ -1763,6 +1764,7 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     (*s).interrupt_latches = (snes.inNmi, snes.inIrq, snes.inVblank);
     (*s).interrupt_enables = (snes.hIrqEnabled, snes.vIrqEnabled, snes.nmiEnabled);
     (*s).h_timer = snes.hTimer;
+    (*s).snes_open_bus = snes.openBus;
     (*s).input_control = (snes.ppuLatch, snes.autoJoyRead, snes.autoJoyTimer);
     (*s).wram_port_address = snes.ramAdr;
     let dma = &*snes.dma;
@@ -1985,6 +1987,7 @@ unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     (snes.inNmi, snes.inIrq, snes.inVblank) = (*s).interrupt_latches;
     (snes.hIrqEnabled, snes.vIrqEnabled, snes.nmiEnabled) = (*s).interrupt_enables;
     snes.hTimer = (*s).h_timer;
+    snes.openBus = (*s).snes_open_bus;
     (snes.ppuLatch, snes.autoJoyRead, snes.autoJoyTimer) = (*s).input_control;
     snes.ramAdr = (*s).wram_port_address;
     let dma = &mut *snes.dma;

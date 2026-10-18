@@ -4290,6 +4290,31 @@ probe and ROM-derived inputs remain ignored. Ordinary rendering comparison
 retains the known initialization limitation. Enabled-render Waver71, hires,
 hardware events/timing, audio timing, masked RAM and credits remain open.
 
+SNES open-bus execution-context rewind (2026-10-18): snapshots now capture
+and restore Snes.openBus. Actual register/CPU controls cover all 256 byte
+values and sixteen NMI/IRQ/vblank/hblank combinations, plus 255 soft-reset
+continuations: 4,351 cases. Complemented later state survives when restore
+is omitted; candidate restores unimplemented-register, RDNMI, TIMEUP and
+HVBJOY read bits and an actual CPU LDA result. Reset's zero bus value also
+rewinds to the saved byte. Controls seed bus values, not naturally observed
+hardware bus transitions.
+
+Temporary BOTH frame-200 faults pass normal 3,600/0, forced recovery 3,600/1
+and debug retry 3,600/1, native exits 0/1/1 with one intentional failure and
+no cascade. Clean frozen 9e182b28 plus only this three-line change passes
+any% 129,712/0 (239.26s), native exit 0, without instrumentation. Direct
+full-source format, normal-core metadata and optimized clean/probe core/DLL
+builds pass; Cargo fmt/check and release remain denied at launch. Focused
+Rust lines +3 preserve bus context; other residue counts unchanged. RAM,
+CPU/SNES layouts and disk saves are unchanged; concurrent DMA/audio/PPU
+changes are excluded from this replay.
+
+Actual WRAM CPU read/write controls retain a seeded bus byte. Source search
+finds reset as its only maintained writer; this snapshot fix does not
+implement hardware bus updates or impose residual equality. Bus behavior,
+interrupt generation, input timing, rendering/HDMA, audio timing and complete
+boot-to-credits coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
