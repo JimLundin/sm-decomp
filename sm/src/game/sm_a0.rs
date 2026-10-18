@@ -9348,25 +9348,22 @@ pub fn IsSamusWithinEnemy_X(k: uint16, a: uint16, game: &mut Game) -> uint16 {
     let distance = (delta as i16).wrapping_abs() as u16;
     u16::from((distance.wrapping_sub(a) as i16) < 0)
 }
-pub unsafe fn SignExtend8(mut a: uint16) -> uint16 {
-    return (if a as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0 {
-        a as ::core::ffi::c_int | 0xff00 as ::core::ffi::c_int
+pub fn SignExtend8(a: uint16) -> uint16 {
+    // Preserve the input high byte when bit 7 is clear.
+    if a & 0x80 != 0 {
+        a | 0xff00
     } else {
-        a as ::core::ffi::c_int
-    }) as uint16;
+        a
+    }
 }
-pub unsafe fn Mult32(mut a: uint16) -> uint16 {
-    return (32 as ::core::ffi::c_int * a as ::core::ffi::c_int) as uint16;
+pub fn Mult32(a: uint16) -> uint16 {
+    a.wrapping_mul(32)
 }
-pub unsafe fn Abs16(mut a: uint16) -> uint16 {
-    return (if a as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
-        -(a as ::core::ffi::c_int)
-    } else {
-        a as ::core::ffi::c_int
-    }) as uint16;
+pub fn Abs16(a: uint16) -> uint16 {
+    (a as i16).wrapping_abs() as u16
 }
-pub unsafe fn SubtractThenAbs16(mut k: uint16, mut j: uint16) -> uint16 {
-    return Abs16((j as ::core::ffi::c_int - k as ::core::ffi::c_int) as uint16);
+pub fn SubtractThenAbs16(k: uint16, j: uint16) -> uint16 {
+    Abs16(j.wrapping_sub(k))
 }
 fn SineMult8bitInner(amplitude: uint16, phase: uint16, game: &Game) -> uint32 {
     let sample = game.read_rom_byte(0xa0b143, usize::from(phase & 0x7f));

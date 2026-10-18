@@ -1930,6 +1930,18 @@ functions -1, cast lines -22, Rust lines -40; other counters unchanged.
 Next: shared SignExtend8/Mult32/Abs16/SubtractThenAbs16 word arithmetic,
 retaining high-byte sign-extension quirks and wrapping magnitudes.
 
+Shared SignExtend8/Mult32/Abs16/SubtractThenAbs16 helpers now use safe word
+arithmetic. SignExtend8 retains the full high byte when bit 7 is clear and
+ORs FF00 when set; multiplication and subtraction wrap as words, and abs16
+retains 8000. Prior and independent extracted comparisons each pass 851,968
+checks covering every unary word and every wrapped difference across ten
+base boundaries. Stable optimized core/DLL build and direct full-source
+format pass; Cargo fmt/build remain ASR-denied. Any%: 129,712 frames, zero
+failures (188.07s); Waver route: 58,109 frames, zero failures (86.98s).
+Unsafe functions -4, cast lines -8, Rust lines -3; other counters unchanged.
+Next: ConvertAngleToXy live-ROM table reads and unsigned product arithmetic,
+retaining phase masking, table stride and full 32-bit products.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
