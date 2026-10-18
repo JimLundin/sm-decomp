@@ -586,6 +586,31 @@ state or Turtle callback. Next: finish the controller exit into 99BD,
 continue classifying masked HDMA/display state and independently compare
 sound uploads. Boot-to-credits and complete gameplay coverage remain open.
 
+X-ray ramp saturation classification (2026-10-18): isolated CPU/Rust
+traces at frame 28,228 show equal initial left/right 5900 and steps 011A.
+At table byte offset 446 (display line 223), both Rust accumulators reach
+00010070. Rust's downward ramp clamps each edge to FF, then its
+left>=10000 empty-window gate replaces the word with 00FF. ROM first
+fills the low byte with FF after right-ramp carry, then fills the high
+byte with FF after left-ramp carry, producing FFFF. The actual instruction
+trace confirms carry at 91:C883 and the later byte store at C8C5.
+The 28,231-frame trace passes 28,231/0 (52.85s), native exit 0.
+
+An isolated candidate removes only the left>=10000 empty-window condition
+from XrayFillDownRamped. On committed e842ea38 it passes any% 129,712/0
+(226.75s), raw table/window differing frames 0/0, native exit 0; an SRAM
+write warning appears from concurrent shared-save access. Waver passes
+58,109/0 (104.46s), native exit 0, but still has 38 raw table and window
+differences. The two first-frame mismatches are resolved; this candidate
+does not close the discrepancy. A 35,000-frame candidate trace passes
+35,000/0 (64.75s), native exit 0, locating the remaining intervals at
+28,428..28,442 and 28,457..28,479, each with left FF on both and right
+00/FF. Do not commit the partial candidate or claim HDMA equivalence.
+Next: trace the ramp direction and source-byte producer in those intervals,
+compare saturation cases independently, and verify the complete correction
+with raw table/window checks before enforcing those fields. No maintained
+Rust or residue counters changed; all candidate/probe assets stay ignored.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
