@@ -5084,6 +5084,29 @@ get_DemoInputObject helper call with RomPtr_91 and remove the unused private
 pointer helper, retaining the exact invalid-address diagnostic. Disable,
 set 3, uncovered demo operations/preinstructions and stopped ammo stay held.
 
+Removed private get_DemoInputObject after replacing its diagnostic-only
+loader call with RomPtr_91. Full sm/src search found only definition/call
+before and no occurrences afterward. Both wrappers pass identical bank-91
+addresses to RomPtr; only the removed wrapper cast the discarded return
+pointer. Invalid-window diagnostic/g_fail location, angle store and checked
+field reads remain exact. The next helper retains its inline attribute.
+
+Rewritten Verified 30000 frames: 0 failing frames (56.19s); Start-exit Verified 5000 frames: 0 failing frames (7.92s); full any% Verified 129712 frames: 0 failing frames (270.12s);
+native exits 0. The 26 actual Rust-side-2 loader entry/five-field observation
+traces equal the prior final-source attract run exactly. Removing probes
+restores exact maintained source. Normal object pointers select valid LoROM
+windows; diagnostic-branch equivalence is a source audit, not movie coverage.
+Dedicated source freezes 2f3ca647 plus only this sm_91.rs change; concurrent
+oracle/hardware work needs its own integration. Direct full-source rustfmt
+check, optimized core/DLL and normal-core metadata builds pass. Required
+Cargo fmt/check/build attempts remain denied launching Cargo (OS error 5).
+Progress passes: unsafe functions -1, cast lines -1, Rust lines -7; other
+focused counters unchanged. No probes or ROM-derived assets committed.
+Next: measure CallDemoPreInstr dispatch addresses in normal attract/Start-exit,
+then simplify executed dispatch while retaining the dormant recognized arms
+and unknown-address behavior. Disable, set 3, uncovered demo operations/
+preinstructions and stopped ammo stay held.
+
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
 the original `SignExtend8(0x8000)` initialization and the middle-byte velocity

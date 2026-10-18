@@ -516,13 +516,6 @@ unsafe fn get_PoseEntry(mut a: uint16, game: &mut Game) -> *mut PoseEntry {
     ) as *mut PoseEntry;
 }
 #[inline]
-unsafe fn get_DemoInputObject(mut a: uint16, game: &mut Game) -> *mut DemoInputObject {
-    return RomPtr(
-        (0x910000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t,
-        game,
-    ) as *mut DemoInputObject;
-}
-#[inline]
 unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
     let mut t: uint32 = ((*lo as ::core::ffi::c_int
         + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
@@ -1038,7 +1031,7 @@ pub fn ResetDemoData(game: &mut Game) {
 pub unsafe fn LoadDemoInputObject(angle: u16, object_ptr: u16, game: &mut Game) {
     game.set_xray_angle(angle);
     if object_ptr & 0x8000 == 0 {
-        get_DemoInputObject(object_ptr, game);
+        RomPtr_91(object_ptr, game);
     }
     let address = 0x918000 | u32::from(object_ptr);
     game.set_demo_input_pre_instr(
