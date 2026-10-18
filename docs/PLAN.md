@@ -3867,6 +3867,35 @@ Ordinary movie pixel checks retain their known render-initialization limit.
 Rendering/Waver71 failures, hires, audio timing, masked RAM, shared hardware
 accuracy and boot-to-credits coverage remain open.
 
+Independent demo-loader/timer-write QC (2026-10-18): frozen candidate
+LoadDemoInputObject passes65,536 actual calls across every object pointer.
+Independent byte reads map the old LoROM base before adding offsets2/4;
+complete RAM output matches the five ordered angle/preinstruction/pointer/
+timer/counter stores. Odd pointers, end-of-bank linear reads and all32,768
+invalid low-window diagnostic/g_fail cases pass. This uses ignored ROM bytes
+in process and does not replace game-frame oracle coverage.
+
+Explicitly rendered attract passes30,000/0 (88.76s), nativeexit0, with
+13,500,000 actual PPU calls and26 Rust-side2 loader calls. All26 use nonzero
+angles and valid object pointers; every full-RAM post-call comparison passes.
+Invalid-window paths are exercised only by the constructed actual-call matrix,
+not this replay. The loader body matches live source after observations are
+stripped. Concurrent gameplay work requires separate execution checks.
+
+The timer-register cleanup independently passes67,108,864 actual snes_write
+calls: all four4207..420A addresses x65,536 previous word values x256 input
+bytes. An independent mask/assembly model checks the resulting timer and the
+untouched other timer. This covers high reserved bits and partial-write
+behavior in the real bus/register path, not interrupt generation or latency.
+The tested snes.rs production body matches the live candidate exactly.
+
+Only this note changes. Direct full-source rustfmt, normal-core metadata,
+optimized core/DLL and progress checks pass; Cargo fmt/check and release
+remain denied executing Cargo (OS error5). Probes and native output stay
+TEMP; no ROM-derived assets committed. No fresh full-any% or Waver result
+is claimed. Headless rendering initialization, enabled-render Waver71,
+held HDMA, interrupt generation/gating and boot-to-credits remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
