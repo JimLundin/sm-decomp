@@ -529,18 +529,31 @@ unsafe fn cpu_writeWord(
     };
 }
 unsafe fn cpu_doInterrupt(mut cpu: *mut Cpu, mut irq: bool, game: &mut Game) {
-    cpu_pushByte(cpu, (*cpu).k, game);
+    if !(*cpu).e {
+        cpu_pushByte(cpu, (*cpu).k, game);
+        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
+    }
     cpu_pushWord(cpu, (*cpu).pc, game);
-    cpu_pushByte(cpu, cpu_getFlags(cpu), game);
-    (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
+    let flags = cpu_getFlags(cpu);
+    // Bit 4 is the cleared B flag on an emulation-mode hardware interrupt.
+    cpu_pushByte(cpu, if (*cpu).e { flags & !0x10 } else { flags }, game);
     (*cpu).i = true_0 != 0;
     (*cpu).d = false_0 != 0;
     (*cpu).k = 0 as uint8_t;
-    if irq {
-        (*cpu).pc = cpu_readWord(cpu, 0xffee as uint32_t, 0xffef as uint32_t, game);
+    let vector = if (*cpu).e {
+        if irq {
+            0xfffe
+        } else {
+            0xfffa
+        }
     } else {
-        (*cpu).pc = cpu_readWord(cpu, 0xffea as uint32_t, 0xffeb as uint32_t, game);
+        if irq {
+            0xffee
+        } else {
+            0xffea
+        }
     };
+    (*cpu).pc = cpu_readWord(cpu, vector, vector + 1, game);
 }
 unsafe fn cpu_adrImm(mut cpu: *mut Cpu, mut low: *mut uint32_t, mut xFlag: bool) -> uint32_t {
     if xFlag as ::core::ffi::c_int != 0 && (*cpu).xf as ::core::ffi::c_int != 0
@@ -1821,9 +1834,11 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
             }
             64 => {
                 cpu_setFlags(cpu, cpu_pullByte(cpu, game));
-                (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
                 (*cpu).pc = cpu_pullWord(cpu, game);
-                (*cpu).k = cpu_pullByte(cpu, game);
+                if !(*cpu).e {
+                    (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
+                    (*cpu).k = cpu_pullByte(cpu, game);
+                }
                 break;
             }
             65 => {

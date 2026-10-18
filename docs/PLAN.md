@@ -2166,6 +2166,39 @@ frame loop; the next experiment needs actual bus-clock/event ordering and
 original wait bytes before a movie-sync or full-route claim. All diagnostic
 source and ROM-derived data remain temporary; residue counters unchanged.
 
+Emulation-mode interrupt frames (2026-10-18): IRQ/NMI previously always
+pushed PBR and selected native vectors; RTI always pulled PBR. E-mode entry
+now pushes PC/status only with stacked B clear, sets I/clears D, selects
+FFFA (NMI) or FFFE (IRQ) and enters bank zero. E-mode RTI restores status/PC,
+retains current PBR and reports six nominal cycles. Native bank push/pull,
+vectors and seven-cycle RTI remain unchanged. WDC's W65C816S datasheet,
+tables 5-2/5-3 and the PBR/RTI caveat, specify these mode differences:
+https://www.westerndesigncenter.com/wdc/documentation/w65c816s.pdf.
+
+The baseline 72fe1d31 actual-opcode harness fails its first E-mode NMI:
+handler PC 9001 instead of 9201. Candidate passes 3,079 IRQ/NMI/RTI cases:
+both modes, all status inputs permitted for each interrupt, four stack-page
+edge positions, independently expected stack bytes/wrap and return state.
+Six standalone E-mode RTI cases retain banks 7E/7F; WAI-to-NMI returns after
+WAI with the correct three-byte stack. Synthetic handlers/vectors exist only
+in probe memory. This executes both changed paths without ROM-derived files.
+The matrix holds interrupted PC 2345/PBR 7E fixed and uses selected stack
+positions; it is not exhaustive register/address coverage. Independent
+source and harness review finds no blockers.
+Interrupt service and the first ISR opcode still share one call. Service
+plus synthetic NOP reports 2 cycles in both modes instead of 9 (E) or 10
+(native), directly reproducing the separate accounting gap.
+Service-cycle accounting, hardware event timing, COP/BRK and full CPU
+accuracy stay open. CPU/SNES/RAM layouts and the paired yield schedule
+are unchanged.
+Direct rustfmt, optimized core/DLL and normal-core metadata builds pass;
+Cargo fmt/release remain denied launching cargo.exe (OS error 5). Full any%
+passes 129,712/0 (298.53s), native exit 0. Focused Rust lines +15 implement
+mode-aware frame handling;
+other residue categories unchanged. Concurrent edits are excluded from the
+frozen 72fe1d31 source. Next: account interrupt service work and then return
+to actual clock/event ordering and movie synchronization.
+
 HDMA diagnosis has exceeded the one-hour item limit: its findings and
 verified isolated candidate are recorded above; stop work on that item
 until it is explicitly resumed with a focused next step.
