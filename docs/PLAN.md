@@ -3005,6 +3005,32 @@ gameplay counters unchanged. No probe or ROM-derived assets are committed.
 Next: remaining initialization scalar and mixed pose-byte setup, preserving
 write order and widths; the stopped ammo route stays held.
 
+Samus initialization scalar stores now use thirteen named byte-backed
+setters and the existing enemy_index_to_shake setter. Original word values,
+store order, both hurt-flash clears and the initial previous-health value
+50 are retained. The final previous-health store still reads live health
+after the possible LoadDemoData call. The unused 0A5E word retains F534
+through explicit word-wrapping negation; FX/lava and enemy-shake sentinels
+remain FFFF. Mixed pose-byte stores are unchanged.
+
+Observed boot/gunship passes 22,631/0 (42.43s), native exit 0. Each of three
+actual Rust-side-2 Samus_Initialize calls at SNES counters 298/8,256/20,817
+executes all sixteen changed stores (48 total), in the original order.
+Previous health stores 0032 then 0063; both hurt-flash clears execute.
+The other values match their original constants. Removing the observation
+lines restores exact maintained source. The final store is exercised in
+ordinary initialization; the demo-loading branch remains unproved.
+
+Full any% passes 129,712/0 (251.25s), native exit 0, on committed 66549ca0
+source with only this sm_91.rs/game_state.rs change. Concurrent native-audio
+work is outside that replay's scope. Cargo fmt/check, optimized core/DLL
+and normal-core metadata builds pass; Cargo release remains denied at
+khronos_api's build script (OS error 5). Raw offsets -17, cast lines -21;
+Rust lines +48 provide the named setters. Other gameplay counters unchanged.
+No probe or ROM-derived assets are committed. Next: mixed pose-byte setup
+and remaining initialization state reads, preserving widths and order;
+the stopped ammo route stays held.
+
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
 the original `SignExtend8(0x8000)` initialization and the middle-byte velocity

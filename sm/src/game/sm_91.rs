@@ -4897,22 +4897,16 @@ pub unsafe fn Samus_Initialize(game: &mut Game) {
         game.set_frame_handler_gamma(fnnullsub_152 as u16);
     }
     game.set_samus_movement_handler(fnSamus_MovementHandler_Normal as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa5e as ::core::ffi::c_int as isize)
-        as *mut uint16) = -(2764 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa12 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 50 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa72 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 1537 as uint16;
+    game.set_unused_word_7e0a5e(0u16.wrapping_sub(2764));
+    game.set_samus_prev_health_for_flash(50);
+    game.set_samus_visor_palette_timer_index(1537);
     for slot in 0..10 {
         game.set_projectile_bomb_pre_instruction(slot, fnProjPreInstr_Empty as u16);
     }
     game.set_grapple_beam_function(fnGrappleBeamFunc_Inactive as u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa46 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 3 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa48 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa4a as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    game.set_enable_horiz_slope_coll(3);
+    game.set_samus_hurt_flash_counter(0);
+    game.set_samus_special_super_palette_flags(0);
     game.set_absolute_moved_last_frame_x_fract(word_909EAF);
     game.set_absolute_moved_last_frame_x(word_909EAD);
     game.set_absolute_moved_last_frame_y_fract(word_909EB3);
@@ -4923,13 +4917,10 @@ pub unsafe fn Samus_Initialize(game: &mut Game) {
     }
     game.set_samus_y_subaccel(word_909EA1);
     game.set_samus_y_accel(word_909EA7);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x195e as ::core::ffi::c_int as isize)
-        as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1962 as ::core::ffi::c_int as isize)
-        as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
+    game.set_fx_y_pos(u16::MAX);
+    game.set_lava_acid_y_pos(u16::MAX);
     UpdateBeamTilesAndPalette(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1f51 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    game.set_cinematic_function(0);
     *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
         as *mut uint16) = kPose_00_FaceF_Powersuit as ::core::ffi::c_int as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xa1e as ::core::ffi::c_int as isize)
@@ -4942,18 +4933,12 @@ pub unsafe fn Samus_Initialize(game: &mut Game) {
         as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xa26 as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xe1c as ::core::ffi::c_int as isize)
-        as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9d2 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa04 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x18a8 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x18aa as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa48 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    game.set_enemy_index_to_shake(u16::MAX);
+    game.set_hud_item_index(0);
+    game.set_samus_auto_cancel_hud_item_index(0);
+    game.set_samus_invincibility_timer(0);
+    game.set_samus_knockback_timer(0);
+    game.set_samus_hurt_flash_counter(0);
     game.set_debug_invincibility(0);
     if *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
@@ -4961,9 +4946,7 @@ pub unsafe fn Samus_Initialize(game: &mut Game) {
     {
         LoadDemoData(game);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa12 as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9c2 as ::core::ffi::c_int as isize) as *mut uint16);
+    game.set_samus_prev_health_for_flash(game.samus_health());
 }
 pub unsafe fn Xray_Initialize(game: &mut Game) -> uint8 {
     static byte_91E291: [uint8; 28] = [

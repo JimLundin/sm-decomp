@@ -378,6 +378,71 @@ impl Game {
         u16::from_le_bytes([self.g_ram[0xde0], self.g_ram[0xde1]])
     }
 
+    /// unused_word_7e0a5e ($7E:0A5E in ram_map).
+    pub fn set_unused_word_7e0a5e(&mut self, value: u16) {
+        self.g_ram[0xa5e..0xa60].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_prev_health_for_flash ($7E:0A12 in ram_map).
+    pub fn set_samus_prev_health_for_flash(&mut self, value: u16) {
+        self.g_ram[0xa12..0xa14].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_visor_palette_timer_index ($7E:0A72 in ram_map).
+    pub fn set_samus_visor_palette_timer_index(&mut self, value: u16) {
+        self.g_ram[0xa72..0xa74].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// enable_horiz_slope_coll ($7E:0A46 in ram_map).
+    pub fn set_enable_horiz_slope_coll(&mut self, value: u16) {
+        self.g_ram[0xa46..0xa48].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_hurt_flash_counter ($7E:0A48 in ram_map).
+    pub fn set_samus_hurt_flash_counter(&mut self, value: u16) {
+        self.g_ram[0xa48..0xa4a].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_special_super_palette_flags ($7E:0A4A in ram_map).
+    pub fn set_samus_special_super_palette_flags(&mut self, value: u16) {
+        self.g_ram[0xa4a..0xa4c].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// fx_y_pos ($7E:195E in ram_map).
+    pub fn set_fx_y_pos(&mut self, value: u16) {
+        self.g_ram[0x195e..0x1960].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// lava_acid_y_pos ($7E:1962 in ram_map).
+    pub fn set_lava_acid_y_pos(&mut self, value: u16) {
+        self.g_ram[0x1962..0x1964].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// cinematic_function ($7E:1F51 in ram_map).
+    pub fn set_cinematic_function(&mut self, value: u16) {
+        self.g_ram[0x1f51..0x1f53].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// hud_item_index ($7E:09D2 in ram_map).
+    pub fn set_hud_item_index(&mut self, value: u16) {
+        self.g_ram[0x9d2..0x9d4].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_auto_cancel_hud_item_index ($7E:0A04 in ram_map).
+    pub fn set_samus_auto_cancel_hud_item_index(&mut self, value: u16) {
+        self.g_ram[0xa04..0xa06].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_invincibility_timer ($7E:18A8 in ram_map).
+    pub fn set_samus_invincibility_timer(&mut self, value: u16) {
+        self.g_ram[0x18a8..0x18aa].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_knockback_timer ($7E:18AA in ram_map).
+    pub fn set_samus_knockback_timer(&mut self, value: u16) {
+        self.g_ram[0x18aa..0x18ac].copy_from_slice(&value.to_le_bytes());
+    }
+
     /// frame_handler_alfa ($7E:0A42 in ram_map).
     pub fn set_frame_handler_alfa(&mut self, value: u16) {
         self.g_ram[0xa42..0xa44].copy_from_slice(&value.to_le_bytes());
