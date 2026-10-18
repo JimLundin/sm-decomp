@@ -1186,6 +1186,20 @@ Next: collision-side quicksand RAM/arithmetic cleanup, retaining its unsafe
 active-context precondition; the raw displacement pointer is installed and
 cleared by both Samus collision dispatchers in bank 94.
 
+Collision-side quicksand now uses byte-backed collision-direction/contact
+reads and wrapping quicksand-counter writes. The displacement clamp retains
+its unsigned middle-word comparison and both outside bytes. Raw active
+displacement access and the original null-context branch remain; the handler
+stays unsafe with a documented live/writable pointer requirement. Direct
+comparison against prior Rust passes 8,388,608 displacement/RAM/return cases
+(all middle words, four directions, sixteen collision flags, two contact
+branches), including counter wrap. Stable optimized core/DLL build and direct
+format pass; Cargo fmt/build remain ASR-denied. Waver route: 58,109 frames,
+zero failures (84.57s); any%: 129,712 frames, zero failures (183.99s).
+Raw offsets -7, cast lines -24, Rust lines -21; unsafe count unchanged.
+Next: make the Samus collision displacement context explicit across its PLM
+callback boundary, preserving retries, callback order and live RAM reads.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

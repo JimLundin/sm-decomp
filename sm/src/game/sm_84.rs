@@ -4237,13 +4237,17 @@ pub fn PlmSetup_B727_SandFallsFast(_j: uint16, game: &mut Game) -> uint8 {
     game.g_ram[0xb5c..0xb5e].copy_from_slice(&1u16.to_le_bytes());
     0
 }
-pub unsafe fn PlmSetup_QuicksandSurfaceB(mut j: uint16, game: &mut Game) -> uint8 {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 2 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
-    {
-        return 0 as uint8;
+/// Apply the collision-side quicksand reaction to the active displacement.
+///
+/// # Safety
+/// A non-null `cur_coll_amt32` must point to a live, writable i32 for the
+/// duration of this call, as installed by the Samus collision dispatcher.
+pub unsafe fn PlmSetup_QuicksandSurfaceB(_j: uint16, game: &mut Game) -> uint8 {
+    let read_word = |game: &Game, offset: usize| {
+        u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
+    };
+    if read_word(game, 0xb02) & 2 == 0 {
+        return 0;
     }
     if game.cur_coll_amt32.is_null() {
         printf(
@@ -4253,58 +4257,33 @@ pub unsafe fn PlmSetup_QuicksandSurfaceB(mut j: uint16, game: &mut Game) -> uint
         Unreachable(game);
         return 0 as uint8;
     }
-    match *((&raw mut game.g_ram as *mut uint8).offset(0xb36 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 3 as ::core::ffi::c_int
-    {
+    match read_word(game, 0xb36) & 3 {
         0 | 3 => {
-            if *((&raw mut game.g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                & 0xf as ::core::ffi::c_int
-                == 3 as ::core::ffi::c_int
-            {
-                if *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0xa6e as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
-                    == 1 as ::core::ffi::c_int
-                {
-                    *game.cur_coll_amt32 = 0 as ::core::ffi::c_int as int32;
-                    return 1 as uint8;
-                } else {
-                    if (*game.cur_coll_amt32 >> 8 as ::core::ffi::c_int) as uint16
-                        as ::core::ffi::c_int
-                        > 0x30 as ::core::ffi::c_int
-                    {
-                        *game.cur_coll_amt32 = (*game.cur_coll_amt32 as ::core::ffi::c_uint
-                            & 0xff0000ff as ::core::ffi::c_uint
-                            | 0x3000 as ::core::ffi::c_uint)
-                            as int32;
-                    }
-                    let ref mut fresh11 = *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x1e71 as ::core::ffi::c_int as isize)
-                        as *mut uint16);
-                    *fresh11 = (*fresh11).wrapping_add(1);
+            if read_word(game, 0xb02) & 0x0f == 3 {
+                if read_word(game, 0xa6e) == 1 {
+                    *game.cur_coll_amt32 = 0;
+                    return 1;
                 }
+                // Compare the unsigned middle word; retain both outside bytes.
+                if (*game.cur_coll_amt32 >> 8) as u16 > 0x30 {
+                    *game.cur_coll_amt32 =
+                        ((*game.cur_coll_amt32 as u32 & 0xff0000ff) | 0x3000) as i32;
+                }
+                let in_quicksand = read_word(game, 0x1e71).wrapping_add(1);
+                game.g_ram[0x1e71..0x1e73].copy_from_slice(&in_quicksand.to_le_bytes());
             }
         }
         2 => {
-            if *((&raw mut game.g_ram as *mut uint8).offset(0xa6e as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                == 1 as ::core::ffi::c_int
-            {
-                *game.cur_coll_amt32 = 0 as ::core::ffi::c_int as int32;
-                return 1 as uint8;
-            } else {
-                let ref mut fresh12 = *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x1e71 as ::core::ffi::c_int as isize)
-                    as *mut uint16);
-                *fresh12 = (*fresh12).wrapping_add(1);
-                return 0 as uint8;
+            if read_word(game, 0xa6e) == 1 {
+                *game.cur_coll_amt32 = 0;
+                return 1;
             }
+            let in_quicksand = read_word(game, 0x1e71).wrapping_add(1);
+            game.g_ram[0x1e71..0x1e73].copy_from_slice(&in_quicksand.to_le_bytes());
         }
         _ => {}
     }
-    return 0 as uint8;
+    0
 }
 pub fn PlmSetup_B737_SubmergingQuicksand(_j: uint16, game: &mut Game) -> uint8 {
     game.g_ram[0xb2c..0xb2e].fill(0);
