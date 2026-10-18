@@ -5774,6 +5774,26 @@ denied. Coverage remains six Ceres rooms, three enemy definitions and zero
 credits frames. Only PLAN changes; probes/assets stay TEMP/ignored. Partner
 independently reviews logs, source attribution and scope.
 
+Independent masked my_counter audit (2026-10-18): paired full any%
+completes 129,712/0 (252.29s), native exit zero. ROM reads of 077E/077F
+are both zero, with 13 writes apiece and no incoming reads. First writes
+occur at boot frame0, continuation PC80:8451; recorded bytes are the old
+values before writing. Direct 7E:077E and WRAM-port 077F incoming-read
+self-controls pass before resetting observations. This establishes that
+the ROM does not consume the adopted counter in this movie, even though
+the natural-mask audit found 241 differing frames for its low byte.
+
+Rust source reads this named word across asynchronous music, title/message
+and Kraid waits; those specific Rust counter branches were not instrumented
+here, so their movie execution is not claimed. The five-byte 077E..0782
+mask still copies mine into theirs; other counter bytes, arbitrary inputs
+and mask removal remain unverified. Observed bus consumers, paired loop,
+normalization and Play20FramesOfMusic_Async body match live. Optimized
+observer core/DLL, direct format, normal-core metadata and progress pass;
+Cargo launch remains denied. Coverage remains six Ceres rooms, three enemy
+definitions and zero credits frames. Only PLAN changes; probes/assets stay
+TEMP/ignored. Partner independently checks fixture, final logs and scope.
+
 Independent native control-write candidate QC (2026-10-18): 73,728 actual
 old/current byte STA instructions pass through banks 00/80 at 4200/4201/420D.
 All 256 written bytes, 16 initial control-flag combinations and autojoy
