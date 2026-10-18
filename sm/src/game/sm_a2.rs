@@ -2587,17 +2587,15 @@ pub unsafe fn CallMaridiaBeybladeTurtleFunc(ea: uint32, k: uint16, game: &mut Ga
 }
 
 pub unsafe fn MaridiaBeybladeTurtle_Main(game: &mut Game) {
-    let mut E: *mut Enemy_MaridiaBeybladeTurtle = Get_MaridiaBeybladeTurtle(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    CallMaridiaBeybladeTurtleFunc(
-        ((*E).mbte_var_A as ::core::ffi::c_int | 0xa20000 as ::core::ffi::c_int) as uint32,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16),
-        game,
-    );
+    let index = game.cur_enemy_index();
+    let preinstruction_offset =
+        0xf78 + usize::from(index) + core::mem::offset_of!(Enemy_MaridiaBeybladeTurtle, mbte_var_A);
+    let preinstruction = u16::from_le_bytes([
+        game.g_ram[preinstruction_offset],
+        game.g_ram[preinstruction_offset + 1],
+    ]);
+    let live_index = game.cur_enemy_index();
+    CallMaridiaBeybladeTurtleFunc(0xa20000 | u32::from(preinstruction), live_index, game);
 }
 pub unsafe fn MaridiaBeybladeTurtle_Func1(mut k: uint16, game: &mut Game) {
     let mut palette_index: uint16 = (*Get_MaridiaBeybladeTurtle(k as ::core::ffi::c_int, game))

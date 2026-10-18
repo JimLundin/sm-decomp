@@ -2862,6 +2862,21 @@ explicit byte-backed state reads/writes. Other counters unchanged. Next:
 the coordinated gameplay session owns Maridia Beyblade Turtle Main's captured-
 slot dispatch read; then continue its state/setup callbacks.
 
+Maridia Beyblade Turtle Main now reads its captured-slot preinstruction
+through byte-backed RAM with the named enemy layout, then rereads the live
+index before dispatch. Bank A2 assembly, callback order and the existing
+unsafe dispatcher boundary remain exact. Independent extracted comparison
+passes 527,680 full-RAM/dispatch-trace/RNG cases; implementing subagent and
+independent session reviews confirm the formatted live body with no findings.
+Cargo fmt and fmt --check, stable optimized core/DLL and normal-core metadata
+builds pass. Cargo build --release remains denied executing a dependency build
+script (OS error 5). Dedicated final-source replays include sound-command
+comparison: any% 129,712/0 (228.33s), Waver 58,109/0 (113.71s), both native
+process exits 0. Raw offsets -2, cast lines -4, Rust lines -2; all other
+counters unchanged. These routes still do not prove exercised Turtle AI or
+boot-to-credits coverage. Next: Turtle Func1 replicated palette/tile/state
+fields, preserving read-before-copy order and wide adjacent-slot offsets.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
