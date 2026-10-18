@@ -974,6 +974,43 @@ ROM-derived state remain outside tracked files. Next: measure actual DSP
 sample positions of upload preparation/housekeeping and compare state
 continuation before deciding the maintained driver's timing behavior.
 
+Measured upload-return DSP schedule (2026-10-18): the isolated
+3eac6b6a-derived probe records actual DSP writes and sample events between
+CPU upload return and the next SPC 15BF boundary. Each apu_cycle executes
+its SPC instruction before a same-cycle DSP sample; replay preserves that
+ordering. Constructed DCFAC7 uploads after boots at 160/400/3,600 complete
+this interval in 562/565/568 APU cycles. Each has ten register writes and
+17 stereo samples, with writes spread across sample positions 3..16 or
+4..16 rather than applied as one batch.
+
+An independently owned RAM/DSP copy of the return state reproduces all
+34 observed sample values at every boundary. Another copy adds only the
+three preparation writes at return and follows the same measured events.
+Boots 160/400 have zero differing values during the measured interval and
+2,048-sample DSP-only continuation. Active boot 3,600 differs in all 34
+initial values and 902 continuation values; its two DSP-owned RAM copies
+differ in 437 bytes afterward, first at 0500. Three diagnostic processes
+return native exit 0. Exact write/sample guards and active-effect checks
+pass; these are causal effects for the declared late placement.
+
+The active identical-copy control has zero sample/RAM differences, native
+exit 0. A captured baseline sample bit fault fails comparison against the
+actual ROM observation, returns native exit 1 and omits the completion
+marker. Independent review confirms event order and independent RAM pointers.
+Non-DSP SPC RAM writes are omitted from replay; matching sampled output
+does not prove complete ROM state equality. Continuation holds future
+driver commands/timers still. Preparation is injected after ROM return,
+whereas Rust issues it before payload transfer; actual runtime effects and
+audible equivalence therefore remain unproved.
+
+Maintained Rust and residue counters are unchanged. Cargo fmt --check and
+isolated optimized builds pass; Cargo release remains denied executing
+khronos_api's build script (OS error 5). This is not current-source gameplay
+integration verification. All diagnostic code/logs and ROM-derived state
+remain outside tracked files. Next: compare at the actual pre-payload
+boundary, including ordered RAM stores and DSP sample timing, before
+changing upload behavior or enforcing audio equality.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read
