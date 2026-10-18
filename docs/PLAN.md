@@ -5707,6 +5707,29 @@ attract/Start-exit and simplify its executed dispatch, retaining all recognized
 arms and the unknown-address return. Disable, set 3, other uncovered demo
 operations/preinstructions and stopped ammo remain held.
 
+CallDemoInstr now uses a direct returning match with hexadecimal bank
+addresses and immutable typed address/k/j arguments. All nine recognized
+addresses retain their callback and arguments; unknown addresses still return
+Unreachable's discarded-to-word result. No operation body changes.
+
+Committed 1bd08d52 baseline attract passes 30,000/0 (55.64s), native exit 0;
+Start-exit passes 5,000/0 (9.39s), native exit 0. Attract observes one actual
+Rust-side-2 dispatch at SNES counter 19,711: Finish 918427, k=0, j=9DAE.
+Baseline and rewritten complete dispatch/argument traces match for both
+movies. Other eight operations and unknown addresses are not executed by
+these movies; their preservation is a source audit, not route coverage.
+Rewritten Verified 30000 frames: 0 failing frames (47.51s); Start-exit Verified 5000 frames: 0 failing frames (7.87s); full any% Verified 129712 frames: 0 failing frames (241.93s);
+native exits 0. Removing probes restores exact maintained source. Dedicated
+source freezes 1bd08d52 plus only this sm_91.rs change; concurrent hardware/
+oracle work requires its own integration. Direct full-source rustfmt/check,
+optimized core/DLL and normal-core metadata builds pass. Required Cargo
+fmt/check/build attempts remain denied launching Cargo (OS error 5).
+Progress passes: Rust lines -5, all other focused counters unchanged. No
+probes or ROM-derived assets committed. Next: return to actual boot-to-credits
+coverage and locate the current live room/route coverage item; normal sets
+0..2 demo cleanup is complete for proved routines. Disable, set 3, uncovered
+demo operations/preinstructions and stopped ammo coverage remain held.
+
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
 the original `SignExtend8(0x8000)` initialization and the middle-byte velocity

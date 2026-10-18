@@ -1068,24 +1068,19 @@ pub unsafe fn CallDemoPreInstr(address: u32, game: &mut Game) {
         }
     }
 }
-pub unsafe fn CallDemoInstr(
-    mut ea: uint32,
-    mut k: uint16,
-    mut j: uint16,
-    game: &mut Game,
-) -> uint16 {
-    match ea {
-        9536551 => return DemoInstr_Finish(k, j, game),
-        9536564 => return DemoInstr_SetPreInstr(k, j, game),
-        9536575 => return DemoInstr_ClearPreInstr(k, j, game),
-        9536584 => return DemoInstr_Goto(k, j, game),
-        9536591 => return DemoInstr_DecTimerAndGoto(k, j, game),
-        9536601 => return DemoInstr_SetTimer(k, j, game),
-        9537020 => return DemoInstr_Func2(k, j, game),
-        9537154 => return DemoInstr_Disable(k, j, game),
-        9537337 => return DemoInstr_Func3(k, j, game),
-        _ => return Unreachable(game) as uint16,
-    };
+pub unsafe fn CallDemoInstr(address: u32, k: u16, j: u16, game: &mut Game) -> u16 {
+    match address {
+        0x918427 => DemoInstr_Finish(k, j, game),
+        0x918434 => DemoInstr_SetPreInstr(k, j, game),
+        0x91843f => DemoInstr_ClearPreInstr(k, j, game),
+        0x918448 => DemoInstr_Goto(k, j, game),
+        0x91844f => DemoInstr_DecTimerAndGoto(k, j, game),
+        0x918459 => DemoInstr_SetTimer(k, j, game),
+        0x9185fc => DemoInstr_Func2(k, j, game),
+        0x918682 => DemoInstr_Disable(k, j, game),
+        0x918739 => DemoInstr_Func3(k, j, game),
+        _ => Unreachable(game) as u16,
+    }
 }
 pub unsafe fn ProcessDemoInputObject(game: &mut Game) {
     CallDemoPreInstr(0x910000 | u32::from(game.demo_input_pre_instr()), game);
