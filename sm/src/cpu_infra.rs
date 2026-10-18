@@ -108,6 +108,7 @@ pub struct Snapshot {
     pub interrupt_latches: (bool, bool, bool),
     pub interrupt_enables: (bool, bool, bool),
     pub h_timer: uint16_t,
+    pub arithmetic: (uint8_t, uint16_t, uint16_t, uint16_t),
     pub vTimer: uint16_t,
     pub ram: [uint8; 131072],
     pub vram: [uint16; 32768],
@@ -1758,6 +1759,12 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     (*s).interrupt_latches = (snes.inNmi, snes.inIrq, snes.inVblank);
     (*s).interrupt_enables = (snes.hIrqEnabled, snes.vIrqEnabled, snes.nmiEnabled);
     (*s).h_timer = snes.hTimer;
+    (*s).arithmetic = (
+        snes.multiplyA,
+        snes.multiplyResult,
+        snes.divideA,
+        snes.divideResult,
+    );
     (*s).vTimer = (*game.g_snes).vTimer;
     memcpy(
         &raw mut (*s).ram as *mut uint8 as *mut ::core::ffi::c_void,
@@ -1969,6 +1976,12 @@ unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     (snes.inNmi, snes.inIrq, snes.inVblank) = (*s).interrupt_latches;
     (snes.hIrqEnabled, snes.vIrqEnabled, snes.nmiEnabled) = (*s).interrupt_enables;
     snes.hTimer = (*s).h_timer;
+    (
+        snes.multiplyA,
+        snes.multiplyResult,
+        snes.divideA,
+        snes.divideResult,
+    ) = (*s).arithmetic;
     memcpy(
         (*game.g_snes).ram as *mut ::core::ffi::c_void,
         &raw mut (*s).ram as *mut uint8 as *const ::core::ffi::c_void,

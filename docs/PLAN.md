@@ -3946,6 +3946,33 @@ no new movie result or natural WRIO/autojoy execution is claimed. Arithmetic
 rewind and other concurrent source changes remain separate. Enabled-render
 Waver71, held HDMA, interrupt generation/gating and credits gaps remain open.
 
+Arithmetic execution-context rewind (2026-10-18): snapshots now capture and
+restore multiplyA/multiplyResult/divideA/divideResult without adding residual
+comparison or normalization. Each branch starts from saved pre-frame hardware
+state; existing successful ROM snapshot adoption and failure rewind remain.
+Direct Rust arithmetic may leave different final hardware residuals, as the
+prior traces show; this change preserves isolation rather than claiming their
+equivalence or altering Mult8x8/SnesDivide/SnesModulus.
+
+Actual snapshot controls cover 2,058 operand/dividend/divisor combinations,
+including zero divisors, shared multiplication/remainder storage and resumed
+division. Actual 16-bit CPU LDA instructions read product and quotient after
+rewind. Omitting restore produces the expected stale values; candidate reads
+saved products and divides saved dividends. Temporary BOTH frame-200 faults
+pass normal 3,600/0, forced recovery 3,600/1 and debug retry 3,600/1, native
+exits 0/1/1 with one intentional failure and no cascade.
+
+Clean frozen 4f9d65d7 plus only this snapshot change passes any% 129,712/0
+(273.60s), native exit 0, without instrumentation. Direct optimized clean/probe
+core/DLL, normal-core metadata and full-source format checks pass; Cargo
+fmt/check and release remain denied at launch. Progress passes: focused Rust
+lines +13 preserve arithmetic state; other residue categories unchanged.
+CPU/SNES layouts, RAM and disk saves are unchanged. Concurrent audio/demo/PPU
+changes are excluded. Selected CPU controls establish continuation, not all
+emulated-helper paths or hardware latency; immediate results, final residual
+comparison, WRIO/autojoy, DMA state, interrupts/events, rendering/HDMA, audio
+timing and boot-to-credits remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
