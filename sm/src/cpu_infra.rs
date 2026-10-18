@@ -78,6 +78,7 @@ pub struct Snapshot {
     pub vram: [uint16; 32768],
     pub sram: [uint8; 8192],
     pub oam: [uint16; 288],
+    pub cgram: [uint16; 256],
 }
 pub const RM_MINE: RunMode = 1;
 pub const RM_BOTH: RunMode = 0;
@@ -828,6 +829,20 @@ unsafe fn VerifySnapshotsEq(
 ) {
     // Keep checking every frame, but bound headless logs to the first failure.
     let report_details = !game.VERIFY_ACTIVE || game.VERIFY_FAILURES == 0;
+    if (*b).cgram != (*a).cgram {
+        game.g_fail = true;
+        if report_details {
+            eprintln!(
+                "@{}: CGRAM compare failed (mine != theirs)",
+                game.snes_frame_counter
+            );
+            for (index, (&mine, &theirs)) in (*b).cgram.iter().zip(&(*a).cgram).enumerate() {
+                if mine != theirs {
+                    eprintln!("CGRAM ${index:03X}: ${mine:04X} != ${theirs:04X}");
+                }
+            }
+        }
+    }
     memcpy(
         (&raw mut (*b).ram as *mut uint8).offset(0 as ::core::ffi::c_int as isize) as *mut uint8
             as *mut ::core::ffi::c_void,
@@ -1349,6 +1364,7 @@ unsafe fn VerifySnapshotsEq(
     }
 }
 unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
+    (*s).cgram = (*(*game.g_snes).ppu).cgram;
     let mut c: *mut Cpu = game.g_cpu;
     (*s).a = (*c).a as uint16;
     (*s).x = (*c).x as uint16;
@@ -1382,6 +1398,7 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     );
 }
 unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
+    (*(*game.g_snes).ppu).cgram = (*s).cgram;
     let mut c: *mut Cpu = game.g_cpu;
     (*c).a = (*s).a as uint16_t;
     (*c).x = (*s).x as uint16_t;

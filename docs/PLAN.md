@@ -59,6 +59,26 @@ This is the same method snesrev used to build the C version, and it is the only
 correctness check this project needs. It does not depend on C, lsnes, Mesen or
 any external emulator.
 
+Oracle audit (2026-10-18): fault injection confirms that the inherited RAM
+normalization masks 1,414 bytes in 38 ranges, including cur_enemy_index,
+current_slope_bts and HDMA tables. VRAM, OAM and SRAM mutations are detected.
+Palette RAM was absent from snapshots; snapshots now capture, restore and
+compare all 256 CGRAM words, including failure diagnostics. All 8,192 palette
+bit mutations are detected; equal palettes and 768 capture/restore field
+checks pass. Full any% and the Waver route pass on fbb94329 plus this change:
+129,712/0 and 58,109/0 failing frames. Stable optimized core/DLL and normal
+core metadata builds and direct full-source format pass; local Cargo
+fmt/build remain ASR-denied. Rust lines +17 implement palette verification;
+other progress counters are unchanged. Linux frontend validation is pending.
+Separate observation probes found no palette/sampled-register differences
+over full any%, and no expanded display-field/rendered-buffer differences
+over the Waver route. These fields are not yet enforced by the verifier.
+Audio writes from mine are discarded by RtlApuWrite during comparison;
+rendering audio once afterward does not verify audio equivalence. Next oracle
+work: compare display state/output, then isolate and compare sound commands
+and driver behavior. Masked RAM and boot-to-credits coverage remain gaps;
+zero failing frames alone does not prove complete game equivalence.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
