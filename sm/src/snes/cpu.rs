@@ -61,31 +61,29 @@ pub unsafe fn cpu_init(
 pub unsafe fn cpu_free(mut cpu: *mut Cpu) {
     free(cpu as *mut ::core::ffi::c_void);
 }
-pub unsafe fn cpu_reset(mut cpu: *mut Cpu, game: &mut Game) {
-    (*cpu).a = 0 as uint16_t;
-    (*cpu).x = 0 as uint16_t;
-    (*cpu).y = 0 as uint16_t;
-    (*cpu).sp = 0x100 as uint16_t;
-    (*cpu).pc = (cpu_read(cpu, 0xfffc as uint32_t, game) as ::core::ffi::c_int
-        | (cpu_read(cpu, 0xfffd as uint32_t, game) as ::core::ffi::c_int)
-            << 8 as ::core::ffi::c_int) as uint16_t;
-    (*cpu).dp = 0 as uint16_t;
-    (*cpu).k = 0 as uint8_t;
-    (*cpu).db = 0 as uint8_t;
-    (*cpu).c = false_0 != 0;
-    (*cpu).z = false_0 != 0;
-    (*cpu).v = false_0 != 0;
-    (*cpu).n = false_0 != 0;
-    (*cpu).i = true_0 != 0;
-    (*cpu).d = false_0 != 0;
-    (*cpu).xf = true_0 != 0;
-    (*cpu).mf = true_0 != 0;
-    (*cpu).e = true_0 != 0;
-    (*cpu).irqWanted = false_0 != 0;
-    (*cpu).nmiWanted = false_0 != 0;
-    (*cpu).waiting = false_0 != 0;
-    (*cpu).stopped = false_0 != 0;
-    (*cpu).cyclesUsed = 0 as uint8_t;
+pub unsafe fn cpu_reset(cpu: *mut Cpu, game: &mut Game) {
+    (*cpu).a = 0;
+    (*cpu).x = 0;
+    (*cpu).y = 0;
+    (*cpu).sp = 0x100;
+    (*cpu).pc = cpu_readWord(cpu, 0xfffc, 0xfffd, game);
+    (*cpu).dp = 0;
+    (*cpu).k = 0;
+    (*cpu).db = 0;
+    (*cpu).c = false;
+    (*cpu).z = false;
+    (*cpu).v = false;
+    (*cpu).n = false;
+    (*cpu).i = true;
+    (*cpu).d = false;
+    (*cpu).xf = true;
+    (*cpu).mf = true;
+    (*cpu).e = true;
+    (*cpu).irqWanted = false;
+    (*cpu).nmiWanted = false;
+    (*cpu).waiting = false;
+    (*cpu).stopped = false;
+    (*cpu).cyclesUsed = 0;
 }
 pub unsafe fn cpu_saveload(
     mut cpu: *mut Cpu,

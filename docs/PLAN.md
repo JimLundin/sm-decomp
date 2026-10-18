@@ -8152,6 +8152,21 @@ core/DLL builds pass; full frontend linking still lacks SDL2. Live source
 matches verified source. Rust lines -7; all other counters unchanged. This
 does not close gameplay, rendering or audio completeness.
 
+CPU reset cleanup (2026-10-19): reset uses native initialization literals and
+the existing ordered `cpu_readWord` helper for FFFC/FFFD. Register-write order
+and preserved fields remain exact. Frozen HEAD
+`9d76b86e32e2d06513ca4df248a8cca0f14b6491` plus only reset edits passes 65,536
+actual old/current resets, covering every vector word with varied initial CPU
+state. Expected named CPU state, preserved breakpoint/in_emu fields, full RAM,
+history and bus counters match. Vector reads leave open bus unchanged in the
+current bus implementation; the probe's initial high-byte open-bus assumption
+was corrected before the passing run. Prefix 3,600/0 (0.99s) demonstrates one
+actual reset; clean full any% 129,712/0 (51.65s), native exit 0. Cargo fmt/check,
+release library, frozen normal metadata and optimized core/DLL builds pass;
+full frontend linking still lacks SDL2. Live source matches verified source.
+Cast lines -3, Rust lines -2; other counters unchanged. Gameplay and hardware
+completeness remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
