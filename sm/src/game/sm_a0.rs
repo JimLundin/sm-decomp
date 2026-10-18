@@ -9370,35 +9370,23 @@ pub unsafe fn DetermineDirectionOfSamusFromEnemy(game: &mut Game) -> uint16 {
         return 3 as uint16;
     };
 }
-pub unsafe fn GetSamusEnemyDelta_Y(mut k: uint16, game: &mut Game) -> uint16 {
-    return (*((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        - (*gEnemyData(k as ::core::ffi::c_int, game)).y_pos as ::core::ffi::c_int)
-        as uint16;
+pub fn GetSamusEnemyDelta_Y(k: uint16, game: &mut Game) -> uint16 {
+    let enemy = SolidEnemyCollisionBody::new(game, k);
+    game.samus_y_pos().wrapping_sub(enemy.y_pos())
 }
-pub unsafe fn GetSamusEnemyDelta_X(mut k: uint16, game: &mut Game) -> uint16 {
-    return (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        - (*gEnemyData(k as ::core::ffi::c_int, game)).x_pos as ::core::ffi::c_int)
-        as uint16;
+pub fn GetSamusEnemyDelta_X(k: uint16, game: &mut Game) -> uint16 {
+    let enemy = SolidEnemyCollisionBody::new(game, k);
+    game.samus_x_pos().wrapping_sub(enemy.x_pos())
 }
-pub unsafe fn IsSamusWithinEnemy_Y(mut k: uint16, mut a: uint16, game: &mut Game) -> uint16 {
-    return (((SubtractThenAbs16(
-        (*gEnemyData(k as ::core::ffi::c_int, game)).y_pos,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16),
-    ) as ::core::ffi::c_int
-        - a as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
-        < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
+pub fn IsSamusWithinEnemy_Y(k: uint16, a: uint16, game: &mut Game) -> uint16 {
+    let delta = GetSamusEnemyDelta_Y(k, game);
+    let distance = (delta as i16).wrapping_abs() as u16;
+    u16::from((distance.wrapping_sub(a) as i16) < 0)
 }
-pub unsafe fn IsSamusWithinEnemy_X(mut k: uint16, mut a: uint16, game: &mut Game) -> uint16 {
-    return (((SubtractThenAbs16(
-        (*gEnemyData(k as ::core::ffi::c_int, game)).x_pos,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16),
-    ) as ::core::ffi::c_int
-        - a as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
-        < 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
+pub fn IsSamusWithinEnemy_X(k: uint16, a: uint16, game: &mut Game) -> uint16 {
+    let delta = GetSamusEnemyDelta_X(k, game);
+    let distance = (delta as i16).wrapping_abs() as u16;
+    u16::from((distance.wrapping_sub(a) as i16) < 0)
 }
 pub unsafe fn SignExtend8(mut a: uint16) -> uint16 {
     return (if a as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0 {

@@ -1901,6 +1901,21 @@ cast lines -63, Rust lines -28; other counters unchanged. Next: Samus/enemy
 relative-position and within-radius helpers, preserving signed deltas and
 strict magnitude comparisons before direction selection.
 
+The four Samus/enemy delta and within-radius helpers now use safe borrowed
+enemy bytes and named Samus positions. Deltas wrap as words; magnitude
+retains abs16 including 8000. Within-radius gates retain signed wrapped
+magnitude-minus-radius tests, rather than unsigned comparisons at extreme
+radii. All four functions are safe and leave RAM unchanged. Prior Rust
+comparison passes 10,747,904 full-RAM/return checks; independent comparison
+passes 8,664,320 checks across every coordinate/radius word and arbitrary
+high/unaligned enemy indexes. Stable optimized core/DLL build and direct
+full-source format pass; Cargo fmt/build remain ASR-denied. Any%: 129,712
+frames, zero failures (195.71s); Waver route: 58,109 frames, zero failures
+(92.65s). Raw offsets -4, unsafe functions -4, cast lines -16, Rust lines -12;
+other counters unchanged. Next: DetermineDirectionOfSamusFromEnemy direct
+branch selection and live enemy-index reads, preserving axis-priority gates
+and directional return codes.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
