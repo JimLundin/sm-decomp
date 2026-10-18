@@ -8551,6 +8551,20 @@ pass; full frontend linking still lacks SDL2. Live CPU source and snapshot
 caller match frozen verified source. Unsafe functions -1; other counters
 unchanged. Complete gameplay and rendering/audio remain open.
 
+CPU safe-status-write cleanup (2026-10-19): `cpu_setFlags` takes its status
+byte before a safe mutable CPU reference; five CPU callers and snapshot restore
+finish their input reads before creating it. Flag assignment, emulation stack
+adjustment and index truncation order remain exact. Frozen HEAD
+`33e780d11947ea6e7844ee4e0c58b058f0e2e8d2` plus this interface change passes
+33,554,432 actual old/current setter comparisons over every flag byte/register
+word and both modes, checking expected flags, SP/X/Y and complete named CPU
+state. Prefix 3,600/0 (1.01s) executes 442,740 native and one emulation setter
+calls. Clean full any% 129,712/0 (48.27s), native exit 0. Cargo fmt/check,
+release library, normal metadata and optimized core/DLL builds pass; full
+frontend linking still lacks SDL2. Live CPU/snapshot caller match verified
+source. Unsafe functions -1; other counters unchanged. Complete gameplay and
+rendering/audio remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

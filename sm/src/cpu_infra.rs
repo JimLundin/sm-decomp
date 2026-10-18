@@ -1980,7 +1980,7 @@ unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     (*c).stopped = (*s).cpu_stopped;
     (*c).irqWanted = (*s).cpu_irq_pending;
     (*c).nmiWanted = (*s).cpu_nmi_pending;
-    cpu_setFlags(c, (*s).flags as uint8_t);
+    cpu_setFlags((*s).flags as uint8_t, &mut *c);
     (*c).waiting = (*s).cpu_waiting;
     let snes = &mut *game.g_snes;
     (snes.hPos, snes.vPos, snes.frames) = (*s).video_clock;
