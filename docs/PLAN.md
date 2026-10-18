@@ -4223,6 +4223,34 @@ not proved by this matrix. The implementation session owns production landing
 and BOTH recovery/debug integration; held window/HDMA diagnosis is not resumed.
 Enabled-render Waver71, event timing and boot-to-credits remain open.
 
+DMA execution-context restore (2026-10-18): snapshots now capture all eight
+DmaChannel values and hdmaTimer/dmaTimer/dmaBusy, preserving the live owner
+pointer and excluding padding. Baseline actual register mutation survives
+rewind at the first $4300 case. Candidate passes 26,896 actual controls:
+26,624 register byte cases, sixteen timer/busy tuples and 256 complete WRAM
+transfers. Transfers cover all channels, both directions, fixed/increment/
+decrement source modes and lengths 1/2/7/16. Repeating saved transfers matches
+complete RAM, WRAM-port address, call count and terminal transfer fields.
+These controls exercise maintained behavior, not independent hardware timing
+or all B-bus transfer modes. The separate omission audit above remains the
+evidence for lost pending transfers; no natural pending-boundary claim follows.
+
+Frame-200 DMA reset disturbances pass ordinary BOTH rewind 3,600/0 and forced
+failed-frame recovery 3,600/1, native exits 0/1, with one intentional failure
+and no cascade. Assertions compare all channel fields and scheduler values
+immediately after the actual restore calls. Clean frozen ea9f65ec plus only
+this eight-line snapshot change passes any% 129,712/0 (280.41s), native exit
+0. Direct full-source format, normal-core metadata and optimized clean/probe
+core/DLL builds pass. Cargo fmt/build remain denied at cargo.exe launch.
+Progress: Rust lines +8 preserve DMA context; other focused counters unchanged.
+SNES/DMA/CPU layouts, g_ram and disk-save layout are unchanged. Final DMA-state
+equality is not enforced; register dependency and natural pending-state
+coverage remain separate work. Concurrent input/audio/demo/PPU changes are
+outside these frozen checks. Probe and ROM-derived assets remain untracked.
+Continue actual register/transfer consumer coverage before broader enforcement;
+held HDMA diagnosis, rendering/Waver71, event generation, audio timing and
+boot-to-credits remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
