@@ -8107,6 +8107,20 @@ Own source/residue delta zero. Inputs/ROM-derived probes stay ignored;
 peer owns hardware edits, cleanup and remote sync. Credits, complete
 gameplay/hardware, render/audio fidelity, masked RAM and ownership remain open.
 
+CPU cycle-table cleanup (2026-10-19): the 256 opcode base-cycle entries are
+now `u8`, matching `cyclesUsed`; lookup uses `usize::from(opcode)` without a
+narrowing cast. Every table value is identical, and all 65,536 byte starting
+cycle/value combinations preserve wrapping addition. Frozen source is HEAD
+`a54071e457fd6335f325cdce37e2f1e27374d33d` plus only this cleanup.
+Instrumented prefix passes 3,600/0 (1.02s), exercising the actual lookup
+10,363,030 times over 144 distinct opcodes and checking old/new values at each
+hit. Clean full any% passes 129,712/0 (51.39s), native exit 0. Cargo fmt/check,
+release library and frozen optimized core/DLL builds pass; full frontend
+release linking still fails on missing SDL2. Live CPU source matches the
+frozen verified source. Cast lines -256, Rust lines -248; other counters
+unchanged. Replay remains CPU regression evidence, not complete gameplay or
+render/audio proof.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
