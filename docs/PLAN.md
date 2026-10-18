@@ -2716,6 +2716,33 @@ assets enter the commit. Next: TMW/TSW screen-window register cleanup,
 preserving raw bytes and main/subscreen window store order; coordinate
 composition snapshot enforcement separately.
 
+Window-boundary snapshot gap revalidated (2026-10-18): all four WH0/1/2/3
+bytes remain absent from snapshots. Actual register mutations on constructed
+Mode7 BG1 windowed rows are accepted against identical registered buffers,
+survive RestoreSnapshot and change the next rendered row for each boundary.
+All1,024 actual boundary-register writes match independent byte mapping.
+Probe nativeexit0. No maintained PPU/CPU changes are made in this audit.
+
+A fresh current-source observer compares the four live boundaries before
+VerifySnapshotsEq without changing failure behavior. Verified 129712 frames: 0 failing frames (294.70s) with zero
+boundary-difference frames; Verified 58109 frames: 0 failing frames (136.76s) with40 boundary-difference frames;
+both nativeexits0. Every Waver difference is WH1 Rust0/ROM255 with WH0=255
+and WH2/3=0 on both; first frames28,228/28,229, then28,428/28,429. Removing
+the diagnostic hook reproduces the maintained CPU body exactly at inspection.
+The green enforced Waver replay therefore still conceals actual window state
+differences. It does not prove those writes harmless or windows equivalent.
+
+Window-boundary enforcement is held: adding comparison now would introduce
+known failing Waver frames, and the separate HDMA item already exceeded its
+one-hour limit. This audit does not resume that diagnosis, normalize the
+boundary difference or adopt its partial prototype. The implementation must
+resolve the existing producer/caller/order problem before enforcing these
+four fields. Continue independent window-select/logic and color-state audits.
+Cargo fmt--check and optimized diagnostic core/DLL build pass; Cargo release
+still cannot execute khronos_api's build script (OSerror5). Progress unchanged
+for this diagnostic-only work. ROM/probe assets stay ignored. Audio timing,
+HDMA, masked RAM, hardware accuracy and boot-to-credits coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
