@@ -902,6 +902,42 @@ timer groups and command latches across upload/receiver phases before
 comparing reset effects or enforcing upload equality. Audio timing and
 complete gameplay equivalence remain open.
 
+Upload phase alignment (2026-10-18): extend the preceding isolated
+400-frame/DCFAC7 probe with a single ordered trace of actual SPC timer,
+port-read, low-state-store and DSP-write events. Normal driver port reads
+include three FF music-latch reads at 1623/1626/1629 after tick 11; a
+last-value-only summary had concealed them. All other captured normal
+driver reads are zero. Receiver entry 1E8D reads FF after tick 32, with
+310 DSP writes before entry and ten after. Assertions check those values,
+tick counts and ordering independently of Rust's reconstruction.
+
+A separate Rust player starts from the same pre-upload RAM/DSP boundary,
+receives FF on tick 11, processes 32 one-tick groups, uploads after the
+last Part2 and then runs Part1. Part2 writes are collected before upload
+so they cannot be hidden in its preparation stream; every collected Rust
+history segment rejects truncation. All 320 housekeeping
+writes match the ROM's ordered register/value stream. Main tempo accumulator,
+echo time, key-off and SFX accumulator match at 0/2/0/128. Normal diagnostic
+exit is 0. Flipping the actual reconstructed player's key-off before the
+last Part1 fails the housekeeping comparison, aborts with native code
+3221226505 and omits the completion marker. Independent review passes.
+
+Rust's three upload-preparation writes remain additional: 2C:00, 3C:00,
+5C:FF. Including them at the observed upload boundary gives 323 writes
+versus ROM 320; strict comparison returns native exit 1. They are reported,
+not normalized or discarded to claim full equivalence. Feeding commands
+at Part2 entry and uploading after Part2 approximates the ROM's nested
+handlers for this sampled state. Natural delivery timing, intermediate
+state, sample effects and other boot states remain unproved.
+
+Maintained Rust and residue counters are unchanged. Cargo fmt --check and
+isolated optimized builds pass; Cargo release remains denied executing
+khronos_api's build script (OS error 5). The frozen 3eac6b6a-derived probe
+is not current-source integration verification; all diagnostic code/logs
+and ROM-derived data remain outside tracked files. Next: compare effects
+of the three preparation writes with synchronized DSP sampling before
+deciding whether upload enforcement needs an explicit timing boundary.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read
