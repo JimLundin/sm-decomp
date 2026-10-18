@@ -7718,6 +7718,39 @@ are outside this replay. Hardware/render/audio timing and credits remain
 open; held HDMA diagnosis stays stopped. Continue executed status/stack
 transfer opcode cleanup, preserving existing emulation quirks.
 
+SPC word bus cleanup recovered (2026-10-19): spc_readWord/writeWord use
+native word interfaces and explicit little-endian conversion. Independent
+low/high addresses and low-before-high APU bus calls remain exact. Only these
+two helpers change; live bodies match the checked frozen source. The hardware
+session repeatedly failed with a transport/decryption error, so the sync/QC
+session finished verification and this focused commit instead of leaving an
+orphaned source edit.
+
+Independent actual INCW/DECW/MOVW-read QC passes 393,216 old/current pairs
+across all direct-page offsets, both P pages and 256 byte patterns, including
+APU I/O. Independent RAM/result/Z/N/PC/cycle and timer-read clearing checks,
+paired complete RAM, ports, timers, DSP bytes and write history pass. Reversing
+write callback order is detected, native assertion exit 3221226505. Separate
+recovery of the original helper probe passes 592,896 checks over four ordinary/
+alias/wrapping address pairs and every word, timer aliases/ports/DSP/boot reads,
+and every word written through F2/F3. Its original expectation incorrectly
+assumed ENDX retains writes; maintained dsp_write clears register 7C. Only
+that TEMP expectation changes, preserving this hardware quirk.
+
+Recovered normal prefix passes 3,600/0 (7.35s), native exit 0, with zero word
+helper calls. Custom-driver-off ROM/SPC boot passes 3,600/0 (6.91s), native
+exit 0, with 356,663 reads and 18 writes. Original frozen clean replay reports
+129,712/0 (242.24s), but its native exit was lost with the failed builder. A
+new run of the same existing clean DLL closes that gap: 129,712/0 (225.40s),
+native exit 0. No replay was restarted while live. Direct optimized probe/core/
+DLL builds and candidate/frozen equality pass. Cargo fmt --check now passes;
+Cargo build --release --lib passes. Full cargo build --release compiles the
+core but fails frontend linking because SDL2 is unavailable; the full-build
+requirement remains unmet. Progress/diff pass: focused cast lines -6, Rust
+lines -13; other categories unchanged. CPU peer edits remain outside the
+frozen replay and this commit. Hardware/audio fidelity, Waver71, masked RAM
+and credits remain open; held HDMA diagnosis stays stopped.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

@@ -387,28 +387,15 @@ unsafe fn spc_pushWord(spc: *mut Spc, value: u16) {
     spc_pushByte(spc, high);
     spc_pushByte(spc, low);
 }
-unsafe fn spc_readWord(mut spc: *mut Spc, mut adrl: uint16_t, mut adrh: uint16_t) -> uint16_t {
-    let mut value: uint8_t = spc_read(spc, adrl);
-    return (value as ::core::ffi::c_int
-        | (spc_read(spc, adrh) as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
-        as uint16_t;
+unsafe fn spc_readWord(spc: *mut Spc, adrl: u16, adrh: u16) -> u16 {
+    let low = spc_read(spc, adrl);
+    let high = spc_read(spc, adrh);
+    u16::from_le_bytes([low, high])
 }
-unsafe fn spc_writeWord(
-    mut spc: *mut Spc,
-    mut adrl: uint16_t,
-    mut adrh: uint16_t,
-    mut value: uint16_t,
-) {
-    spc_write(
-        spc,
-        adrl,
-        (value as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint8_t,
-    );
-    spc_write(
-        spc,
-        adrh,
-        (value as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint8_t,
-    );
+unsafe fn spc_writeWord(spc: *mut Spc, adrl: u16, adrh: u16, value: u16) {
+    let [low, high] = value.to_le_bytes();
+    spc_write(spc, adrl, low);
+    spc_write(spc, adrh, high);
 }
 unsafe fn spc_adrDp(mut spc: *mut Spc) -> uint16_t {
     return (spc_readOpcode(spc) as ::core::ffi::c_int
