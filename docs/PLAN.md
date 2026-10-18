@@ -5701,6 +5701,30 @@ execution on a size-expression parser and a mistaken179-byte expectation;
 corrected unique v3 build supports the results above. Probe/ROM outputs stay
 ignored. No maintained source or normalization behavior changes.
 
+Independent masked coroutine consumer audit (2026-10-18): recovered the
+existing TEMP observer DLL after its owner errored. The 3,600-frame prefix
+log completed but its process handle was missing; no native-exit claim is
+made for that prefix. OS inspection found no duplicate live process before
+a full run of the same DLL. Full any% completes 129,712/0 (271.74s), native
+exit zero captured directly. ROM reads of 0611/0612 are both zero; each has
+13 writes, and neither has a read before that frame's first write. Ordinary
+7E:0611 and WRAM-port 0612 self-controls detect incoming reads before their
+counters are reset, so the zero-read result is not a dead observation hook.
+
+Actual Rust RunOneFrameOfGameInner entry values at 0611 are 0:125,439,
+1:1, 2:150, 3:11, 21:3,843 and 40:268, totaling all 129,712 frames. This
+proves reset and resumed coroutine dispatch execute while the corresponding
+ROM bytes are not read in this movie. Rust 0612 reads were not instrumented;
+the remaining coroutine bytes, arbitrary inputs and mask removal are not
+verified. No comparison, recovery or input scheduling changed. All four
+observed bus consumers, paired loop, normalization and Rust entry body match
+live after removing TEMP counters. Direct format/normal-core metadata and
+progress pass; existing optimized observer core/DLL build completed. Cargo
+launch remains denied. Coverage is 94,445 gameplay frames, six Ceres rooms,
+three enemy definitions, final state8/DF8D and zero credits frames. Rendering,
+audio/hardware accuracy and held diagnoses remain open. Only PLAN changes;
+observer/ROM outputs stay TEMP/ignored. Partner independently reviews scope.
+
 Independent native control-write candidate QC (2026-10-18): 73,728 actual
 old/current byte STA instructions pass through banks 00/80 at 4200/4201/420D.
 All 256 written bytes, 16 initial control-flag combinations and autojoy
@@ -6174,6 +6198,25 @@ cast lines -16 and Rust lines -11, other categories unchanged. Later peer
 changes are outside this replay. Physical device/ROM pointers, full input
 Cartesian coverage, hardware/render/audio timing and credits remain open;
 held HDMA diagnosis stays stopped. Continue executed indirect CPU helpers.
+
+CPU indexed-indirect jump cleanup (2026-10-18): cpu_adrIax uses native
+bank widening and wrapping word pointer offsets. Operand fetch and ordered
+low/high pointer reads retain PC updates and same-bank FFFF/0000 wrapping.
+Actual old/current helpers pass 1,835,008 substituted-bus traces over every
+operand word, seven X boundaries and four banks. Independent address/PC
+traces, return value and selected unchanged fields/cycles pass. Physical
+WRAM executes 3,932,160 JMP(abs,X) instructions over all target words, two
+banks, six pointer boundaries and five X boundaries: target PC, bank, X,
+flags and six cycles pass. Independent actual-opcode QC follows.
+Instrumented any% prefix passes 3,600/0, native exit 0, with 35,617 helper
+calls. Clean frozen e1789d2fc030463e7c1bbf37f28a936b618b8cb8 plus only this
+helper passes any% 129,712/0 (263.67s), native exit 0. Direct full-source
+format, normal-core metadata and optimized clean/probe core/DLL builds pass;
+Cargo fmt/release remain launch-denied. Progress/diff checks pass; focused
+cast lines -6 and Rust lines -4, other categories unchanged. Later peer
+changes are outside this replay. JSR consumer, arbitrary bank/device bus
+side effects, hardware/render/audio timing and credits remain open; held
+HDMA diagnosis stays stopped. Continue remaining indirect address helpers.
 
 Independent indexed-indirect jump QC (2026-10-18): cpu_adrIax candidate
 passes 393,216 actual old/current JMP(abs,X) instructions, native exit zero.
