@@ -1870,33 +1870,14 @@ unsafe fn PostGrappleColl_Vertical_Slope_Square(
             ^ 7 as ::core::ffi::c_int) as uint16;
     };
 }
-unsafe fn PostGrappleColl_Horiz_Slope(
-    mut pgci: *mut PostGrappleCollInfo,
-    game: &mut Game,
-) -> uint16 {
-    if (*(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as ::core::ffi::c_int
-        & 0x1f as ::core::ffi::c_int)
-        < 5 as ::core::ffi::c_int
-    {
-        return PostGrappleColl_Horiz_Slope_Square(
-            pgci,
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            game,
-        );
+unsafe fn PostGrappleColl_Horiz_Slope(pgci: *mut PostGrappleCollInfo, game: &mut Game) -> uint16 {
+    let slope = game.current_block_bts() & 0x1f;
+    let block = game.cur_block_index();
+    if slope < 5 {
+        PostGrappleColl_Horiz_Slope_Square(pgci, block, game)
     } else {
-        return PostGrappleColl_Horiz_Slope_NonSquare(
-            pgci,
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            game,
-        );
-    };
+        PostGrappleColl_Horiz_Slope_NonSquare(pgci, block, game)
+    }
 }
 unsafe fn PostGrappleColl_Horiz_Solid(
     mut pgci: *mut PostGrappleCollInfo,
@@ -1904,33 +1885,14 @@ unsafe fn PostGrappleColl_Horiz_Solid(
 ) -> uint16 {
     return ((*pgci).pgci_r32 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int) as uint16;
 }
-unsafe fn PostGrappleColl_Vert_Slope(
-    mut pgci: *mut PostGrappleCollInfo,
-    game: &mut Game,
-) -> uint16 {
-    if (*(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ) as ::core::ffi::c_int
-        & 0x1f as ::core::ffi::c_int)
-        < 5 as ::core::ffi::c_int
-    {
-        return PostGrappleColl_Vertical_Slope_Square(
-            pgci,
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            game,
-        );
+unsafe fn PostGrappleColl_Vert_Slope(pgci: *mut PostGrappleCollInfo, game: &mut Game) -> uint16 {
+    let slope = game.current_block_bts() & 0x1f;
+    let block = game.cur_block_index();
+    if slope < 5 {
+        PostGrappleColl_Vertical_Slope_Square(pgci, block, game)
     } else {
-        return PostGrappleColl_Vert_Slope_NonSquare(
-            pgci,
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            game,
-        );
-    };
+        PostGrappleColl_Vert_Slope_NonSquare(pgci, block, game)
+    }
 }
 unsafe fn PostGrappleColl_Vert_Solid(
     mut pgci: *mut PostGrappleCollInfo,

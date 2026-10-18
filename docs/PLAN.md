@@ -1593,6 +1593,18 @@ cast lines -15, Rust lines -87. Next: post-grapple slope selection with named
 live block/BTS access, retaining the low-five-bit square threshold, then
 coordinate sampling and slope arithmetic.
 
+Both post-grapple slope dispatchers now use named live block/BTS access.
+The low-five-bit < 5 square threshold and block argument are unchanged.
+Prior Rust comparison passes 3,584 full-RAM/context/selection/return cases
+over every BTS byte, seven valid backing indexes and both axes; synthetic
+handlers mutate the live index and context. Stable optimized core/DLL build
+and direct format pass; Cargo fmt/build remain ASR-denied. Waver route:
+58,109 frames, zero failures (84.73s); any%: 129,712 frames, zero failures
+(184.58s). Raw offsets -8, cast lines -14, Rust lines -38; unsafe count
+unchanged. Next: horizontal post-grapple nonsquare slope coordinates and
+boundary arithmetic, retaining zero-width modulus and complement return
+for negative direction, then its vertical counterpart.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
