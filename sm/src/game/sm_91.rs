@@ -523,13 +523,6 @@ unsafe fn get_DemoInputObject(mut a: uint16, game: &mut Game) -> *mut DemoInputO
     ) as *mut DemoInputObject;
 }
 #[inline]
-unsafe fn get_DemoSetDef(mut a: uint16, game: &mut Game) -> *mut DemoSetDef {
-    return RomPtr(
-        (0x910000 as ::core::ffi::c_int | a as ::core::ffi::c_int) as uint32_t,
-        game,
-    ) as *mut DemoSetDef;
-}
-#[inline]
 unsafe fn AddToHiLo(mut hi: *mut uint16, mut lo: *mut uint16, mut v: uint32) {
     let mut t: uint32 = ((*lo as ::core::ffi::c_int
         + ((*hi as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
@@ -1372,23 +1365,53 @@ pub unsafe fn LoadDemoData(game: &mut Game) {
     let scene_offset = game.demo_scene().wrapping_mul(16);
     let set_offset = game.read_rom_word(0x918885, usize::from(game.demo_set()) * 2);
     let definition_offset = scene_offset.wrapping_add(set_offset);
-    let definition = get_DemoSetDef(definition_offset, game);
-    game.set_collected_items((*definition).items);
+    let definition_address = 0x910000 | u32::from(definition_offset);
+    if definition_offset & 0x8000 == 0 {
+        // Retain RomPtr's diagnostic/failed-frame flag for invalid windows.
+        RomPtr(definition_address, game);
+    }
+    let definition_address = definition_address | 0x8000;
+    game.set_collected_items(
+        game.read_rom_word(definition_address, core::mem::offset_of!(DemoSetDef, items)),
+    );
     game.set_equipped_items(game.collected_items());
-    game.set_samus_max_missiles((*definition).missiles);
+    game.set_samus_max_missiles(game.read_rom_word(
+        definition_address,
+        core::mem::offset_of!(DemoSetDef, missiles),
+    ));
     game.set_samus_missiles(game.samus_max_missiles());
-    game.set_samus_max_super_missiles((*definition).super_missiles);
+    game.set_samus_max_super_missiles(game.read_rom_word(
+        definition_address,
+        core::mem::offset_of!(DemoSetDef, super_missiles),
+    ));
     game.set_samus_super_missiles(game.samus_max_super_missiles());
-    game.set_samus_max_power_bombs((*definition).power_bombs);
+    game.set_samus_max_power_bombs(game.read_rom_word(
+        definition_address,
+        core::mem::offset_of!(DemoSetDef, power_bombs),
+    ));
     game.set_samus_power_bombs(game.samus_max_power_bombs());
-    game.set_samus_max_health((*definition).health);
+    game.set_samus_max_health(game.read_rom_word(
+        definition_address,
+        core::mem::offset_of!(DemoSetDef, health),
+    ));
     game.set_samus_health(game.samus_max_health());
-    game.set_collected_beams((*definition).beams);
-    game.set_equipped_beams((*definition).equipped_beams_);
+    game.set_collected_beams(
+        game.read_rom_word(definition_address, core::mem::offset_of!(DemoSetDef, beams)),
+    );
+    game.set_equipped_beams(game.read_rom_word(
+        definition_address,
+        core::mem::offset_of!(DemoSetDef, equipped_beams_),
+    ));
     game.set_samus_reserve_health(0);
     ResetDemoData(game);
     EnableDemoInput(game);
-    let demo_obj = (*get_DemoSetDef(definition_offset, game)).demo_obj;
+    if definition_offset & 0x8000 == 0 {
+        RomPtr(0x910000 | u32::from(definition_offset), game);
+    }
+    let demo_obj = game.read_rom_word(
+        definition_address,
+        core::mem::offset_of!(DemoSetDef, demo_obj),
+    );
     LoadDemoInputObject(demo_obj, demo_obj, game);
     let set = usize::from(game.demo_set());
     let scene = usize::from(game.demo_scene());

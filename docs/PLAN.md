@@ -3749,6 +3749,36 @@ assets are committed. Next: replace LoadDemoData's raw definition-field ROM
 reads with checked live words, preserving field/store order and linear offsets.
 The stopped ammo route stays held.
 
+LoadDemoData definition fields now use checked live little-endian ROM
+word reads with offset_of!(DemoSetDef, field). The packed layout remains
+eight words at offsets 0/2/4/6/8/10/12/14. Offsets are added after LoROM
+mapping, preserving linear reads across word/bank boundaries. Each field
+is read at its original inventory-store point; demo_obj remains a later
+read after ResetDemoData/EnableDemoInput. The unused raw definition-pointer
+helper is removed. LoadDemoData stays unsafe for legacy calls and dispatch.
+
+Invalid definition windows retain both original RomPtr diagnostics and
+g_fail writes at the original two lookup points. Checked field reads select
+the equivalent canonical LoROM window; all 65,536 word offsets map to the
+same allocation position before field offsets. Out-of-allocation reads
+are rejected by the existing checked reader. The first rewrite omitted
+legacy invalid-window diagnostics; it was corrected before final validation.
+Its earlier green replay is not the final-source verification.
+
+Final observed attract replay passes 30,000/0 (49.40s), native exit 0,
+with eight actual checked field reads in each of 26 Rust-side-2 calls
+(208 total), retaining field order. Removing observations restores exact
+maintained source. This covers the existing sets 0..2 route; invalid-window
+faults, set 3 and interruption are outside the movie execution claim.
+Full any% passes 129,712/0 (255.46s), native exit 0, on committed b954e080
+source with only this sm_91.rs change. Later concurrent fixed-color changes
+are outside that replay's scope. Cargo fmt/check, optimized core/DLL and
+normal-core metadata builds pass; Cargo release remains denied at khronos_api's
+build script (OS error 5). Unsafe functions -1, cast lines -1; Rust lines +23
+provide checked reads and retained diagnostics. Other gameplay counters unchanged.
+No probe or ROM-derived assets committed. Next: demonstrate demo set 3 / leave
+coverage and deepen scene dispatch; stopped ammo route held.
+
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
 the original `SignExtend8(0x8000)` initialization and the middle-byte velocity
