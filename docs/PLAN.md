@@ -8035,6 +8035,27 @@ Known render initialization/Waver71 and broader hardware/audio/route gaps remain
 Next: measure the color-math conversion path and sprite evaluation under
 explicit rendering, then optimize measured hotspots without reducing checks.
 
+CPU call return-address cleanup (2026-10-19): JSR/JSL/indexed-indirect JSR
+use wrapping word subtraction for saved return PCs and immutable operands.
+Operand/pointer fetches, bank push before return-PC capture in JSL, high-byte-
+first return pushes and target assignments remain exact. Actual old/current
+instructions pass 3,538,944 pairs over every target word, native/emulation
+inputs, stack 0100/0101/1FFF and PC 8000/FFFD/FFFF. Indexed pointers resolve
+through real WRAM at 7E:3000; independent return bytes/stack-page wrap, target
+PC/bank and complete named CPU state match, as do cycles, open bus and PC
+history. Instrumented any% prefix passes 3,600/0 (1.06s), native exit 0;
+JSR/JSL/indexed-indirect JSR native/emulation calls are 132,117/0, 74,052/0
+and 31,462/0. Dedicated pairs cover emulation. Clean frozen
+9d65366952f281a2b4ffea5c5501ce525819fcfd plus only these three arms passes
+any% 129,712/0 (52.11s), native exit 0. Cargo fmt/check, direct format,
+normal-core metadata and optimized clean/probe core/DLL builds pass. Full
+Cargo release fails frontend link for missing SDL2, exit 101. Progress/diff
+pass: focused cast lines -3, Rust lines -12, other categories unchanged.
+Live arms match verified source; later peer PPU changes are outside this
+replay. Arbitrary stack/device mutation, hardware/render/audio timing and
+credits remain open; held HDMA diagnosis stays stopped. Continue executed
+return opcode cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

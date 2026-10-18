@@ -1383,12 +1383,8 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
                 break;
             }
             32 => {
-                let mut value: uint16_t = cpu_readOpcodeWord(cpu, game);
-                cpu_pushWord(
-                    cpu,
-                    ((*cpu).pc as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16_t,
-                    game,
-                );
+                let value = cpu_readOpcodeWord(cpu, game);
+                cpu_pushWord(cpu, (*cpu).pc.wrapping_sub(1), game);
                 (*cpu).pc = value;
                 break;
             }
@@ -1399,14 +1395,10 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
                 break;
             }
             34 => {
-                let mut value_0: uint16_t = cpu_readOpcodeWord(cpu, game);
-                let mut newK: uint8_t = cpu_readOpcode(cpu, game);
+                let value_0 = cpu_readOpcodeWord(cpu, game);
+                let newK = cpu_readOpcode(cpu, game);
                 cpu_pushByte(cpu, (*cpu).k, game);
-                cpu_pushWord(
-                    cpu,
-                    ((*cpu).pc as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16_t,
-                    game,
-                );
+                cpu_pushWord(cpu, (*cpu).pc.wrapping_sub(1), game);
                 (*cpu).pc = value_0;
                 (*cpu).k = newK;
                 break;
@@ -2850,12 +2842,8 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
                 break;
             }
             252 => {
-                let mut value_3: uint16_t = cpu_adrIax(cpu, game);
-                cpu_pushWord(
-                    cpu,
-                    ((*cpu).pc as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16_t,
-                    game,
-                );
+                let value_3 = cpu_adrIax(cpu, game);
+                cpu_pushWord(cpu, (*cpu).pc.wrapping_sub(1), game);
                 (*cpu).pc = value_3;
                 break;
             }
