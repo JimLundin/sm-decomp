@@ -3473,6 +3473,34 @@ assets remain ignored and concurrent edits separate. Hires sample loss,
 audio timing, masked RAM, shared hardware accuracy and boot-to-credits
 coverage remain open.
 
+CPU waiting snapshot rewind (2026-10-18): Snapshot now captures and restores
+Cpu.waiting beside the CPU flags. Previously, executing WAI after capture
+and then rewinding left waiting true at the restored pre-WAI PC, preventing
+the next instruction fetch. Restore retains the captured value in both
+directions rather than clearing waiting unconditionally. CPU/SNES layouts,
+g_ram and the separate disk-save serializer are unchanged. This is restored
+oracle execution context, not a new ROM/Rust gameplay comparison field.
+
+Actual WAI execution inside temporary BOTH frame-200 probes exercises mine,
+success, mismatch recovery and debug continue/retry rewinds. Omitting the
+restore aborts before mine; the candidate passes normal 3,600/0, forced
+recovery 3,600/1 and debug retry 3,600/1, with one intentional failure at
+frame 200 and no cascade. Actual-opcode controls also restore a snapshot
+taken while waiting, retain its idle PC and wake on masked IRQ. These are
+injected verifier-path controls, not natural movie WAI usage or clock proof.
+
+Clean frozen 14c08cb2 plus only this three-line fix passes any% 129,712/0
+(274.52s), native exit 0, without probe instrumentation. Earlier independent
+recovery candidate on 0f3c045a passes any% 129,712/0 (287.96s). Direct
+optimized core/DLL, normal-core metadata and full-source rustfmt checks pass;
+Cargo fmt/release remain denied at cargo.exe launch (OS error 5). Focused
+Rust lines +3 preserve waiting state; other residue counters are unchanged.
+Concurrent audio-save recovery, later demo/display and interrupt-accounting
+changes are outside the clean replay. Earlier rendering claims retain the
+limitations recorded above; audio timing, CPU context omissions, hardware
+event ordering and boot-to-credits coverage remain open. Next: audit remaining
+CPU execution context before changing the hardware-clock frame schedule.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

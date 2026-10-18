@@ -99,6 +99,7 @@ pub struct Snapshot {
     pub k: uint8,
     pub db: uint8,
     pub flags: uint8,
+    pub cpu_waiting: bool,
     pub vTimer: uint16_t,
     pub ram: [uint8; 131072],
     pub vram: [uint16; 32768],
@@ -1739,6 +1740,7 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     (*s).pc = (*c).pc as uint16;
     (*s).k = (*c).k as uint8;
     (*s).flags = cpu_getFlags(c) as uint8;
+    (*s).cpu_waiting = (*c).waiting;
     (*s).vTimer = (*game.g_snes).vTimer;
     memcpy(
         &raw mut (*s).ram as *mut uint8 as *mut ::core::ffi::c_void,
@@ -1940,6 +1942,7 @@ unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     (*c).k = (*s).k as uint8_t;
     (*game.g_snes).vTimer = (*s).vTimer;
     cpu_setFlags(c, (*s).flags as uint8_t);
+    (*c).waiting = (*s).cpu_waiting;
     memcpy(
         (*game.g_snes).ram as *mut ::core::ffi::c_void,
         &raw mut (*s).ram as *mut uint8 as *const ::core::ffi::c_void,
