@@ -3829,6 +3829,44 @@ need actual event implementation and verification before hardware-clock
 scheduling; remaining input/register/DMA state, rendering/HDMA, audio
 timing and boot-to-credits coverage remain open.
 
+Arithmetic consumer trace (2026-10-18): actual snes_writeReg/readReg
+instrumentation over the first21,000 frames of each movie narrows the sampled
+residual differences. At8,256 ROM resets arithmetic registers at82:81B4..81C0,
+then writes WRMPYA10/WRMPYB30 at82:DEDF/DEE5; Rust performs only zero reset
+writes. Waver20,817 similarly writes90 x50 after reset. Thus the observed
+ROM products0300/2D00 are left by operations after initialization, while
+Rust's direct calculations leave hardware state zero. LoadRoomHeader uses
+Mult8x8 for room width/height and stores twice the product in room-size bytes.
+Mult8x8, SnesDivide and SnesModulus compute directly without hardware writes.
+The trace establishes register order and sampled PCs; no bank-log address
+mapping or general routine equivalence is inferred solely from those PCs.
+
+Both traced prefixes pass21,000/0, nativeexit0 (40.92s any%,40.94s Waver).
+Actual arithmetic-result reads by runningWhichVersion[0,1,2] are
+[0,627316,0] any% and[0,779655,0] Waver: ROM reads results extensively,
+while the Rust branch performs none in these prefixes. First reads include
+80:8124/8137, demonstrating real result consumption rather than unused
+registers. This covers numeric and named accesses routed through snes_readReg
+in the sampled runtime; it does not prove zero Rust/emulated-helper reads
+on later routes or changed states. One end-of-frame difference occurs in
+any% prefix, two in Waver, matching prior full observers.
+
+No blanket normalization or arithmetic snapshot enforcement is justified.
+Exact hardware residual equality conflicts with direct Rust arithmetic even
+when game RAM agrees; omitted rewind still permits injected result/operand
+state to survive, as proved earlier. Next: classify what a pending arithmetic
+value can reach through emulated helpers and establish a replay-safe rewind
+policy separately from optional end-of-frame residual comparison. Immediate
+result timing also remains outside arithmetic-value validation. Held HDMA
+diagnosis is not resumed.
+
+Only this note is committed; no maintained source or layout change. Direct
+optimized trace core/DLL, full-source rustfmt and progress checks pass. Probe
+and ROM assets remain ignored; concurrent arithmetic/PPU edits separate.
+Ordinary movie pixel checks retain their known render-initialization limit.
+Rendering/Waver71 failures, hires, audio timing, masked RAM, shared hardware
+accuracy and boot-to-credits coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
