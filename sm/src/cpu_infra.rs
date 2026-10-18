@@ -3158,18 +3158,20 @@ unsafe fn report_first_verify_failure(game: &mut Game) {
 pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
     (*game.g_snes).ppu = (*game.g_snes).snes_ppu;
     MakeSnapshot(&raw mut game.g_snapshot_before, game);
-    let apu_before = game.g_apu_write;
-    let apu_queue_before = game.g_apu_queue_size;
+    let queue_before = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
+    let apu_before = queue_before.pending;
+    let apu_queue_before = queue_before.size;
     loop {
-        game.g_apu_write = apu_before;
+        queue_before.restore(game);
         game.g_snapshot_theirs.apu_upload_count = 0;
         game.g_snapshot_theirs.apu_startup_upload = false;
         (*game.g_snes).runningWhichVersion = 1 as uint8_t;
         RunOneFrameOfGame_Emulated(game);
         DrawFrameToPpu(game);
         MakeSnapshot(&raw mut game.g_snapshot_theirs, game);
-        let apu_theirs = game.g_apu_write;
-        game.g_apu_write = apu_before;
+        let queue_theirs = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
+        let apu_theirs = queue_theirs.pending;
+        queue_before.restore(game);
         game.g_snapshot_mine.apu_upload_count = 0;
         game.g_snapshot_mine.apu_startup_upload = false;
         (*game.g_snes).ppu = (*game.g_snes).my_ppu;
@@ -3177,6 +3179,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
         (*game.g_snes).runningWhichVersion = 2 as uint8_t;
         RunOneFrameOfGame(game);
         DrawFrameToPpu(game);
+        let queue_mine = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
         MakeSnapshot(&raw mut game.g_snapshot_mine, game);
         (*game.g_snes).runningWhichVersion = 0xff as uint8_t;
         VerifySnapshotsEq(
@@ -3212,7 +3215,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
             }
         }
         // Never deliver mine's captured commands to the shared audio player.
-        game.g_apu_write = apu_theirs;
+        queue_mine.select_runtime(queue_theirs, game);
         if game.g_fail {
             if game.VERIFY_ACTIVE {
                 game.VERIFY_FAILURES += 1;
@@ -3230,8 +3233,10 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
                 continue;
             }
             SaveBugSnapshot(game);
-            game.g_apu_write = apu_before;
+            queue_before.restore(game);
             RunOneFrameOfGame_Emulated(game);
+            let queue_rerun = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
+            queue_mine.select_runtime(queue_rerun, game);
             break;
         } else {
             (*game.g_snes).ppu = (*game.g_snes).snes_ppu;

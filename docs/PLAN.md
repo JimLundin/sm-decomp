@@ -1264,6 +1264,35 @@ physical recovery checks, not custom-player/queue isolation or audio
 comparison. No maintained source or progress counters change; temporary
 probe code and ROM-derived state remain untracked.
 
+Audio queue rewind (2026-10-18): BOTH now captures/restores the pending
+ports, all sixteen queued entries and size/position/empty-time counters at
+both branch entries. Custom audio keeps Rust's upload/reset bookkeeping
+while selecting ROM pending commands; physical audio selects the complete
+ROM queue. Failure recovery preserves that selected view through the
+existing bug-snapshot side effects, restores the pre-frame queue for the
+ROM rerun, then reapplies the same backend policy to the rerun result.
+
+Actual 3,600-frame controls mutate the ROM ring/counters and confirm complete
+restoration before Rust runs (native exit 0). A distinct Rust ring entry and
+position/time values plus one forced frame-200 mismatch check the complete
+selected ring and pending ports before SaveBugSnapshot, the complete
+pre-frame queue at ROM rerun entry, and the final Rust ring/ROM rerun ports.
+That control reports exactly one failing frame and native exit 1. Omitting
+the before-Rust restore or post-rerun selection separately aborts at its
+corresponding assertion (native 3221226505). Actual helper calls additionally
+pass 256 queue fixtures and both backend selection policies. Independent
+source review finds no blocking issue; instrumentation remains temporary.
+
+The frozen maintained queue/CPU bodies pass any% 129,712/0 (224.05s), native
+exit 0, exercising queue snapshots on every paired frame. This replay includes
+EXTBG and predates concurrent special-ammo/INIDISP changes. Cargo fmt/check,
+optimized core/DLL and normal-core metadata builds pass; Cargo release still
+fails executing khronos_api's build script (OS error 5). Rust lines +44 store
+and restore the complete queue; other counters are unchanged for this change.
+Custom SpcPlayer remains shared, debug retry is not established for the full
+audio runtime, and audio equality/backend integration remain unfinished.
+Next: isolate the custom-player transition before native upload integration.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read

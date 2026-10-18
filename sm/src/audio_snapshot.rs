@@ -1,6 +1,45 @@
 //! Rewind the emulated APU without transferring ownership of its allocations.
 
 use crate::types::{Apu, Dsp, Snes, Spc};
+use crate::{game_state::Game, rtl::ApuWriteEnt};
+
+#[derive(Copy, Clone)]
+pub(crate) struct ApuQueueSnapshot {
+    pub pending: ApuWriteEnt,
+    entries: [ApuWriteEnt; 16],
+    pub size: u8,
+    pub position: u8,
+    pub time_since_empty: u8,
+}
+
+impl ApuQueueSnapshot {
+    pub(crate) fn capture(game: &Game) -> Self {
+        Self {
+            pending: game.g_apu_write,
+            entries: game.g_apu_write_ents,
+            size: game.g_apu_queue_size,
+            position: game.g_apu_write_ent_pos,
+            time_since_empty: game.g_apu_time_since_empty,
+        }
+    }
+
+    pub(crate) fn restore(self, game: &mut Game) {
+        game.g_apu_write = self.pending;
+        game.g_apu_write_ents = self.entries;
+        game.g_apu_queue_size = self.size;
+        game.g_apu_write_ent_pos = self.position;
+        game.g_apu_time_since_empty = self.time_since_empty;
+    }
+
+    pub(crate) fn select_runtime(self, theirs: Self, game: &mut Game) {
+        if game.g_use_my_apu_code {
+            self.restore(game);
+            game.g_apu_write = theirs.pending;
+        } else {
+            theirs.restore(game);
+        }
+    }
+}
 
 #[derive(Copy, Clone)]
 pub struct AudioSnapshot {
