@@ -2557,74 +2557,30 @@ pub unsafe fn MiniMaridiaBeybladeTurtle_Init(game: &mut Game) {
     }
     (*E).base.current_instruction = v1;
 }
-pub unsafe fn CallMaridiaBeybladeTurtleFunc(mut ea: uint32, mut k: uint16, game: &mut Game) {
+pub unsafe fn CallMaridiaBeybladeTurtleFunc(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
-        10653144 => {
-            MaridiaBeybladeTurtle_Func1(k, game);
-            return;
-        }
-        10653194 => {
-            MaridiaBeybladeTurtle_Func2(k, game);
-            return;
-        }
-        10653408 => {
-            MaridiaBeybladeTurtle_Func3(k, game);
-            return;
-        }
-        10653503 => {
-            MaridiaBeybladeTurtle_Func5(k, game);
-            return;
-        }
-        10653581 => {
-            MaridiaBeybladeTurtle_Func7(k, game);
-            return;
-        }
-        10653675 => {
-            MaridiaBeybladeTurtle_Func8(k, game);
-            return;
-        }
-        10653827 => {
-            MaridiaBeybladeTurtle_Func9(k, game);
-            return;
-        }
-        10653900 => {
-            MaridiaBeybladeTurtle_Func10(k, game);
-            return;
-        }
-        10653921 => {
-            MaridiaBeybladeTurtle_Func11(k, game);
-            return;
-        }
-        10653193 => return,
-        10654018 => {
-            MiniMaridiaBeybladeTurtle_Func1(k, game);
-            return;
-        }
-        10654062 => {
-            MiniMaridiaBeybladeTurtle_Func2(k, game);
-            return;
-        }
-        10654104 => {
-            MiniMaridiaBeybladeTurtle_Func3(k, game);
-            return;
-        }
-        10654200 => {
-            MiniMaridiaBeybladeTurtle_Func4(k, game);
-            return;
-        }
-        10654265 => {
-            MiniMaridiaBeybladeTurtle_Func6(k, game);
-            return;
-        }
-        10654302 => {
-            MiniMaridiaBeybladeTurtle_Func7(game);
-            return;
-        }
+        0xa28dd8 => MaridiaBeybladeTurtle_Func1(k, game),
+        0xa28e0a => MaridiaBeybladeTurtle_Func2(k, game),
+        0xa28ee0 => MaridiaBeybladeTurtle_Func3(k, game),
+        0xa28f3f => MaridiaBeybladeTurtle_Func5(k, game),
+        0xa28f8d => MaridiaBeybladeTurtle_Func7(k, game),
+        0xa28feb => MaridiaBeybladeTurtle_Func8(k, game),
+        0xa29083 => MaridiaBeybladeTurtle_Func9(k, game),
+        0xa290cc => MaridiaBeybladeTurtle_Func10(k, game),
+        0xa290e1 => MaridiaBeybladeTurtle_Func11(k, game),
+        0xa28e09 => {}
+        0xa29142 => MiniMaridiaBeybladeTurtle_Func1(k, game),
+        0xa2916e => MiniMaridiaBeybladeTurtle_Func2(k, game),
+        0xa29198 => MiniMaridiaBeybladeTurtle_Func3(k, game),
+        0xa291f8 => MiniMaridiaBeybladeTurtle_Func4(k, game),
+        0xa29239 => MiniMaridiaBeybladeTurtle_Func6(k, game),
+        0xa2925e => MiniMaridiaBeybladeTurtle_Func7(game),
         _ => {
             Unreachable(game);
         }
-    };
+    }
 }
+
 pub unsafe fn MaridiaBeybladeTurtle_Main(game: &mut Game) {
     let mut E: *mut Enemy_MaridiaBeybladeTurtle = Get_MaridiaBeybladeTurtle(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)

@@ -2720,6 +2720,21 @@ field operations. Other counters unchanged. Next: the coordinated dispatch
 session owns CallMaridiaBeybladeTurtleFunc cleanup and its dedicated verification;
 then continue Mini Maridia Beyblade Turtle initialization.
 
+Maridia Beyblade Turtle dispatch now uses direct match arms and hexadecimal
+bank addresses. All sixteen recognized addresses, callback arguments, the
+no-op and discarded Unreachable return remain exact. Independent extracted
+comparison passes 1,310,725 dispatch cases; separate behavior review has no
+findings. Cargo fmt and fmt --check, stable optimized core/DLL and normal-core
+metadata builds pass. Cargo build --release remains blocked by dependency
+build-script execution (OS error 5). Dedicated pre-sound-enforcement any%
+passes 129,712/0 (277.00s); Waver passes 58,109/0 (121.49s), both native process
+exits 0. Direct subprocess capture resolves PowerShell stderr trace errors
+from the first completed runs; no gameplay failures were reported. Rust lines
+-44; all other counters unchanged for this focused dispatch change. Concurrent
+sound-command enforcement is separate and requires its integration replays.
+Next: Mini Maridia Beyblade Turtle initialization, preserving captured slots,
+wrapped coordinate subtraction and signed parameter selection.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
