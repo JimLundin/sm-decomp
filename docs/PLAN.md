@@ -830,6 +830,45 @@ A recovered cycle starting X401/Y1443 now reaches X401/Y1187 without
 another hit (38,742/0 probe). The combined exit remains unproved.
 No gameplay source or residue counters changed; useful inputs are retained.
 
+The complete item-bearing return is now verified by the standard oracle:
+target/awake-return/parlor-hatch-current.inputs passes 42,651 frames,
+zero failures (61.66s, independently repeated), ending in Parlor at
+X371/Y1211, facing left, with Morph 0004 and missiles 5/5. The recovered
+awake shaft cycles and unique upper shelves reach the ceiling hatch normally;
+this supersedes the earlier unproved grafts. Fourteen rooms and fourteen
+enemy definitions are present on this route; retained-route union is fifteen
+rooms. No gameplay state was injected.
+The actual Parlor ascent is also verified: target/awake-return/
+item-shelf443-right.inputs passes the standard oracle for 46,133 frames,
+zero failures (66.76s), ending X795/Y171 with Morph and missiles 5/5.
+The empty-room suffix alone stalls after enemy contact on the first ledge.
+Recovery from frame 42,940 moves left/shoot 8, shoot 30, then resumes the
+prepared Parlor suffix at offset 293. At frame 44,650, a fresh left press
+and neutral 20 precede its offset-1307 running jump; beam fire through this
+middle section reaches X444/Y443. At frame 45,210, right/shoot 14 and
+shoot 120 settle at X459/Y443; the original suffix from offset 1850 then
+reaches the upper hall. Beam fire is unselected throughout; missiles stay 5/5.
+Morph entry toward bombs now passes the standard oracle as well:
+target/awake-return/bomb-morph-entry.inputs, 46,435 frames, zero failures
+(65.99s), ending X883/Y409 in Parlor. From the upper-hall prefix, fresh
+Down, neutral 8, fresh Down, neutral 12, right/shoot 80, down/shoot 80,
+neutral 120 enter the low passage. Continuing right reaches X1003/Y494
+in ball form (bomb-descent.inputs, 46,755/0 standard). The alternative
+bomb-left-drop.inputs route under the same directory reaches X964/Y537 in
+ball form (46,760/0 standard). Unmorphing there and moving right reaches
+X987/Y523 (bomb-left-unmorph.inputs, 47,031/0 standard, 67.75s).
+The left/shoot 25, shoot 100, right/shoot 80 continuation passes its probe
+for 47,356 frames with zero failures but returns to X987/Y523. Shooting
+sideways alone does not resolve the lower passage. Inspect the live floor
+and try downward shots or a leftward Morph descent before repeating it.
+No additional room or Bomb pickup is proved yet. Next: descend the remaining
+Parlor passage to its lower-right door, confirm 9879 by replay, then proceed
+toward the bomb-room red cap using the five preserved missiles.
+Full any% regression passes 129,712 frames, zero failures (186.68s).
+Direct rustfmt checks pass; Cargo fmt/build remain ASR-denied on this host.
+Tracked source and all progress counters are unchanged; the unchanged source
+90889612 retains its passing Linux stable build and four original replays.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
