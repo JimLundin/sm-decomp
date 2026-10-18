@@ -354,6 +354,13 @@ pub unsafe fn cpu_runOpcode(mut cpu: *mut Cpu, game: &mut Game) -> ::core::ffi::
     if (*cpu).stopped {
         return 1 as ::core::ffi::c_int;
     }
+    if (*cpu).waiting {
+        if !(*cpu).irqWanted && !(*cpu).nmiWanted {
+            return 1;
+        }
+        // IRQ wakes WAI even when I prevents interrupt service.
+        (*cpu).waiting = false;
+    }
     if !(*cpu).i && (*cpu).irqWanted as ::core::ffi::c_int != 0
         || (*cpu).nmiWanted as ::core::ffi::c_int != 0
     {
@@ -2827,15 +2834,7 @@ unsafe fn cpu_doOpcode(mut cpu: *mut Cpu, mut opcode: uint8_t, game: &mut Game) 
                 break;
             }
             203 => {
-                '_c2rust_label_1: {
-                    __assert_fail(
-                        b"0\0" as *const u8 as *const ::core::ffi::c_char,
-                        b"src/snes/cpu.c\0" as *const u8 as *const ::core::ffi::c_char,
-                        2059 as ::core::ffi::c_uint,
-                        b"void cpu_doOpcode(Cpu *, uint8_t)\0" as *const u8
-                            as *const ::core::ffi::c_char,
-                    );
-                };
+                (*cpu).waiting = true;
                 break;
             }
             204 => {

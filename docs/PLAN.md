@@ -2119,6 +2119,53 @@ frames, gate NMI and latch controller input at hardware boundaries before
 changing the maintained paired schedule. Do not compensate by skipping
 zero-poll inputs or treat this credits guard as resolving route coverage.
 
+WAI CPU prerequisite (2026-10-18): opcode CB previously asserted instead
+of waiting. It now enters Cpu.waiting after its three-cycle instruction;
+subsequent calls idle without fetching or changing PC until IRQ or NMI is
+pending. A masked IRQ wakes it without interrupt service; unmasked IRQ and
+NMI use the existing service path. STP remains higher priority and reset
+clears waiting. CPU/SNES/RAM layouts and the default paired schedule stay
+unchanged. Bank 80's actual $8338 wait routine uses LDA/BNE, so this closes
+a CPU instruction gap rather than fixing vanilla movie synchronization.
+
+The same actual-opcode harness asserts on baseline 012591be at cpu.c:2059
+and passes with this change: eighteen native-mode cases, including 12,288
+idle calls retaining PC and performing no memory reads. Cases cover two
+WRAM banks, page-edge addresses, both I flags, masked/unmasked IRQ, NMI with
+either I flag and competing IRQ, STP and reset. Independent source review
+confirms cycle-table CB=3 and finds no blockers. Emulation-mode interrupt
+stack/vector behavior and service-cycle accounting are inherited open gaps;
+this test does not establish them or hardware clock accuracy.
+Direct rustfmt, optimized core/DLL and normal-core metadata builds pass;
+Cargo fmt and release are denied launching cargo.exe itself (OS error 5).
+Full default any% passes 129,712/0 (287.01s), native exit 0. Progress:
+focused Rust lines -1; other
+residue categories unchanged. Concurrent display/gameplay edits are outside
+the frozen 012591be plus this CPU change. Probe assets remain temporary.
+Next: isolate video-clock NMI/input delivery through the existing software
+wait loop, retaining the remaining scheduler/ROM-patch limitations above.
+
+Bounded clock-sensitivity probe (2026-10-18): a TEMP-only patched-oracle
+CPU run retains PC across 900 video frames, advances h/v after instructions,
+gates vblank NMI by nmiEnabled, and supplies hardware-layout controller words
+through a latched port with an autojoy busy timer. It uses nominal opcode
+cycles times eight, extra interrupt cost and DMA-loop ticks; rendering is
+disabled and custom audio is not rendered. At video frame 400 it remains
+in state 2; intro cinematic state 30 starts at frame 448 and remains at 900.
+The ordinary forced-yield prefix reached state 30 at input index 297.
+Native exit 0; 11,201,858 opcode calls, 881 NMI-service observations and
+4,703,475 DMA-loop ticks. Review independently confirms logged counts.
+
+This establishes cadence sensitivity only. There is no paired comparison
+or raw-ROM synchronization proof. SnesInit's ROM patches remain; bus/DMA
+side effects happen before their charged time, address-dependent bus speed,
+refresh and HDMA timing are incomplete, autojoy results become available
+early, and enable-during-vblank NMI/IRQ behavior is absent. WAI execution
+was not counted in this probe. Keep this approximation out of the maintained
+frame loop; the next experiment needs actual bus-clock/event ordering and
+original wait bytes before a movie-sync or full-route claim. All diagnostic
+source and ROM-derived data remain temporary; residue counters unchanged.
+
 HDMA diagnosis has exceeded the one-hour item limit: its findings and
 verified isolated candidate are recorded above; stop work on that item
 until it is explicitly resumed with a focused next step.
