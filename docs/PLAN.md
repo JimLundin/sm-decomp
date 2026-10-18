@@ -3337,6 +3337,32 @@ counters unchanged. No probes or ROM-derived assets committed. Next:
 Mode7 coefficient/center writes in ppu_write, preserving raw signed-word
 storage, thirteen-bit centers and shared m7prev sequencing.
 
+Mode7 coefficient/center write cleanup (2026-10-18): ppu_write
+$211B..2120 now use native layer indices and word packing. Coefficients
+preserve full signed sixteen-bit patterns; centers preserve raw thirteen-bit
+values. Matrix stores still precede m7prev updates. No Ppu/RAM/save layout
+or rendering changes.
+
+Independent actual writer checks pass1,572,864 complete-Ppu cases across
+six registers/all input and previous bytes/four seeds,4,718,592 multiplier
+read checks including open-bus effects, and98,304 mixed scroll/matrix shared-
+latch writes. Actual original/current output matches12,288 Mode7 rows /
+12,582,912 BGRA bytes across both renderers. Nonidentity transforms make
+center effects visible; an identity transform cancels those effects by
+construction. These prove preserved behavior for exercised cases, not SNES
+accuracy. Normal3,600-frame startup passes with nativeexit0; actual site
+counts for registers27..32 are194/196/196/196/196/196. Private observations
+strip to exact frozen source; independent implementation/review find no issues.
+
+Frozen0f3c045a plus only this PPU change passes any%129,712/0 (300.58s)
+and Waver58,109/0 (119.10s), both nativeexits0. Later concurrent changes
+are outside those replays. Direct optimized core/DLL, normal-core metadata
+and full-source rustfmt checks pass; Cargo fmt/build remain denied at launch,
+OSerror5. Progress: cast lines-7, Rust lines-3; other focused counters
+unchanged. No probes or ROM-derived assets committed. Next: M7SEL flag
+writes, preserving large-field/character-fill/Y-flip/X-flip store order and
+ignored bits; hardware accuracy and complete route coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
