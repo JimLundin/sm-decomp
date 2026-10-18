@@ -1240,6 +1240,19 @@ remain ASR-denied. Waver route: 58,109 frames, zero failures (83.91s); any%:
 unchanged. Next: carry/extension handlers, retaining signed BTS offsets,
 full room width, wrapping block indexes and high-bit retry results.
 
+Samus extension reactions now use named live BTS/block/room-width access and
+explicit wrapping arithmetic. Zero BTS still returns zero without writing;
+nonzero signed BTS offsets update the block index and return FF. Vertical
+extension retains the full sixteen-bit room width. Both clear-carry handlers
+and the inert vertical spike-air handler are safe zero-return functions.
+Direct comparison with prior Rust passes 33,554,432 extension cases over all
+BTS bytes, all room widths and both axes with varied valid backing indexes.
+Stable optimized core/DLL build and direct format pass; Cargo fmt/build
+remain ASR-denied. Waver route: 58,109 frames, zero failures (83.35s); any%:
+129,712 frames, zero failures (182.10s). Raw offsets -11, unsafe functions -5,
+cast lines -16, Rust lines -33. Next: Samus special-air/block PLM selection
+reads, preserving area-specific tables and callback-adjusted collision state.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

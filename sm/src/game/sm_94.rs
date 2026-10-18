@@ -2888,8 +2888,8 @@ unsafe fn BlockColl_SpikeBlock_BTS3(game: &mut Game) {
                 != 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
     }
 }
-unsafe fn ClearCarry_4(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    return 0 as uint8;
+fn ClearCarry_4(_ci: *mut CollInfo, _game: &mut Game) -> uint8 {
+    0
 }
 unsafe fn BlockColl_Horiz_SolidShootGrappleBlock(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
     if (*ci).ci_r18_r20 < 0 as int32 {
@@ -3010,11 +3010,11 @@ unsafe fn BlockColl_Vert_Slope(mut ci: *mut CollInfo, game: &mut Game) -> uint8 
         game,
     );
 }
-unsafe fn ClearCarry_5(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    return 0 as uint8;
+fn ClearCarry_5(_ci: *mut CollInfo, _game: &mut Game) -> uint8 {
+    0
 }
-unsafe fn BlockColl_Vert_SpikeAir(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    return 0 as uint8;
+fn BlockColl_Vert_SpikeAir(_ci: *mut CollInfo, _game: &mut Game) -> uint8 {
+    0
 }
 unsafe fn SetCarry_Spikeblk(game: &mut Game) {}
 static kBlockColl_SpikeBlock: [Option<Func_V>; 16] = unsafe {
@@ -3407,55 +3407,22 @@ pub unsafe fn BlockColl_Vert_Door(mut ci: *mut CollInfo, game: &mut Game) -> uin
         return 0 as uint8;
     };
 }
-unsafe fn BlockReact_HorizExt(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    if *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        )
-        != 0
-    {
-        let ref mut fresh2 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xdc4 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        *fresh2 = (*fresh2 as ::core::ffi::c_int
-            + *(&raw mut game.g_ram as *mut uint8)
-                .offset(0x16402 as ::core::ffi::c_int as isize)
-                .offset(
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xdc4 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as isize,
-                ) as int8 as ::core::ffi::c_int) as uint16;
-        return 0xff as uint8;
+fn BlockReact_HorizExt(_ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    let offset = i16::from(game.current_block_bts() as i8);
+    if offset == 0 {
+        return 0;
     }
-    return 0 as uint8;
+    game.set_cur_block_index(game.cur_block_index().wrapping_add(offset as u16));
+    0xff
 }
-unsafe fn BlockReact_VertExt(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    if *(&raw mut game.g_ram as *mut uint8)
-        .offset(0x16402 as ::core::ffi::c_int as isize)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        )
-        != 0
-    {
-        let ref mut fresh1 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0xdc4 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        *fresh1 = (*fresh1 as ::core::ffi::c_int
-            + *(&raw mut game.g_ram as *mut uint8)
-                .offset(0x16402 as ::core::ffi::c_int as isize)
-                .offset(
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xdc4 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as isize,
-                ) as int8 as ::core::ffi::c_int
-                * *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int) as uint16;
-        return 0xff as uint8;
+fn BlockReact_VertExt(_ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    let offset = i16::from(game.current_block_bts() as i8);
+    if offset == 0 {
+        return 0;
     }
-    return 0 as uint8;
+    let block_offset = (offset as u16).wrapping_mul(game.room_width_in_blocks());
+    game.set_cur_block_index(game.cur_block_index().wrapping_add(block_offset));
+    0xff
 }
 unsafe fn Samus_GetYposSpan(game: &mut Game) -> uint16 {
     let mut r26: uint16 = (*((&raw mut game.g_ram as *mut uint8)
