@@ -6138,6 +6138,21 @@ need separate integration. Hardware/audio timing, rendering/Waver71, masked
 RAM and credits remain open; held HDMA diagnosis stays stopped. Continue
 executed hardware paths and route coverage.
 
+Independent stack-address QC (2026-10-18): candidate cpu_adrSr/Isy pass
+4,587,008 actual old/current LDA instructions. Sr covers every supported
+low-WRAM target 0000..1FFE, every operand byte and byte/word accumulator
+widths, including full-word SP wrapping. Isy covers every Y word with
+operands 00/01/FF and both accumulator widths; a pointer at 1800 cancels Y
+to physical WRAM 7F1800 while DB adjustment exercises bank carry. Loaded A,
+final PC, cycles and SP match independent expectations and prior execution;
+Sr also checks Z/N, Isy preserved Y/DB. Low-byte page wrapping instead of
+full-word Sr address carry fails actual loaded A 23295 versus 23041, native
+exit 3221226505; production exits zero. Tested helpers match current source;
+independent partner fixture review, optimized core/probe DLL, normal-core
+metadata, direct full-source format and progress pass. Native mode is
+exercised; arbitrary pointer locations, pointer-high wrapping, other devices,
+emulation rules and movie integration remain separate. No production edits.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
