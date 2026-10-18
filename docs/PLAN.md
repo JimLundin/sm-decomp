@@ -8121,6 +8121,22 @@ frozen verified source. Cast lines -256, Rust lines -248; other counters
 unchanged. Replay remains CPU regression evidence, not complete gameplay or
 render/audio proof.
 
+CPU runner cleanup (2026-10-19): `cpu_runOpcode` uses native IRQ/NMI booleans,
+literal interrupt arguments and lossless `i32::from` for returned cycles.
+Stopped priority, masked IRQ wake-up, NMI priority and interrupt-before-fetch
+order are unchanged. Frozen HEAD
+`9fb12c8e45120ffcbdeba0a9d44edb65dfb97d61` plus only the runner edit passes
+16,384 actual old/current runner pairs over all flag bytes, both CPU modes,
+two stacks and every stopped/waiting/IRQ/NMI combination. CPU state, full RAM,
+returned cycles, history, open bus and memory-operation count match; expected
+halt and NOP/interrupt timing also pass. Prefix 3,600/0 (1.05s) executes
+10,363,030 runner calls and 3,600 NMIs; IRQ/WAI/stopped paths have dedicated
+coverage only. Full any% 129,712/0 (49.21s), native exit 0. Cargo fmt/check,
+release library, frozen normal metadata and optimized core/DLL builds pass;
+full frontend linking still lacks SDL2. Live source matches verified source.
+Cast lines -4, Rust lines -2; other counters unchanged. Full gameplay and
+render/audio completeness remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

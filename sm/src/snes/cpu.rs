@@ -101,10 +101,10 @@ pub unsafe fn cpu_saveload(
     );
     (*cpu).spBreakpoint = 0 as uint16_t;
 }
-pub unsafe fn cpu_runOpcode(mut cpu: *mut Cpu, game: &mut Game) -> ::core::ffi::c_int {
-    (*cpu).cyclesUsed = 0 as uint8_t;
+pub unsafe fn cpu_runOpcode(cpu: *mut Cpu, game: &mut Game) -> ::core::ffi::c_int {
+    (*cpu).cyclesUsed = 0;
     if (*cpu).stopped {
-        return 1 as ::core::ffi::c_int;
+        return 1;
     }
     if (*cpu).waiting {
         if !(*cpu).irqWanted && !(*cpu).nmiWanted {
@@ -113,23 +113,21 @@ pub unsafe fn cpu_runOpcode(mut cpu: *mut Cpu, game: &mut Game) -> ::core::ffi::
         // IRQ wakes WAI even when I prevents interrupt service.
         (*cpu).waiting = false;
     }
-    if !(*cpu).i && (*cpu).irqWanted as ::core::ffi::c_int != 0
-        || (*cpu).nmiWanted as ::core::ffi::c_int != 0
-    {
-        (*cpu).cyclesUsed = 7 as uint8_t;
+    if (!(*cpu).i && (*cpu).irqWanted) || (*cpu).nmiWanted {
+        (*cpu).cyclesUsed = 7;
         if (*cpu).nmiWanted {
-            (*cpu).nmiWanted = false_0 != 0;
-            cpu_doInterrupt(cpu, false_0 != 0, game);
+            (*cpu).nmiWanted = false;
+            cpu_doInterrupt(cpu, false, game);
         } else {
-            cpu_doInterrupt(cpu, true_0 != 0, game);
+            cpu_doInterrupt(cpu, true, game);
         }
     }
-    let mut opcode: uint8_t = cpu_readOpcode(cpu, game);
+    let opcode = cpu_readOpcode(cpu, game);
     (*cpu).cyclesUsed = (*cpu)
         .cyclesUsed
         .wrapping_add(cyclesPerOpcode[usize::from(opcode)]);
     cpu_doOpcode(cpu, opcode, game);
-    return (*cpu).cyclesUsed as ::core::ffi::c_int;
+    i32::from((*cpu).cyclesUsed)
 }
 unsafe fn cpu_readOpcode(cpu: *mut Cpu, game: &mut Game) -> uint8_t {
     let pc = (*cpu).pc;
