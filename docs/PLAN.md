@@ -1916,6 +1916,20 @@ other counters unchanged. Next: DetermineDirectionOfSamusFromEnemy direct
 branch selection and live enemy-index reads, preserving axis-priority gates
 and directional return codes.
 
+Samus direction selection now uses direct priority branches and a quadrant
+match with named live enemy-index reads. Y-within priority, subsequent
+X-within test, signed delta bits and return codes 7/2/0/4/8/6/1/3 remain exact.
+The current index is re-read before each probe, retaining callback-observable
+read/call order. The selector is safe Rust. Prior Rust comparison passes
+8,388,608 return/RAM/probe-trace cases; independent comparison passes
+16,877,216 cases across every callback return/index word and mutating probes.
+Stable optimized core/DLL build and direct full-source format pass; Cargo
+fmt/build remain ASR-denied. Any%: 129,712 frames, zero failures (200.33s);
+Waver route: 58,109 frames, zero failures (94.73s). Raw offsets -7, unsafe
+functions -1, cast lines -22, Rust lines -40; other counters unchanged.
+Next: shared SignExtend8/Mult32/Abs16/SubtractThenAbs16 word arithmetic,
+retaining high-byte sign-extension quirks and wrapping magnitudes.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

@@ -9300,75 +9300,35 @@ pub fn EnemyWithNormalSpritesIsOffScreen(game: &mut Game) -> uint16 {
         ) || enemy_axis_outside_screen(enemy.y_pos(), game.layer1_y_pos(), 8, 248),
     )
 }
-pub unsafe fn DetermineDirectionOfSamusFromEnemy(game: &mut Game) -> uint16 {
-    if IsSamusWithinEnemy_Y(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16),
-        0x20 as uint16,
-        game,
-    ) != 0
-    {
-        if GetSamusEnemyDelta_X(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            game,
-        ) as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-        {
-            return 7 as uint16;
-        }
-        return 2 as uint16;
-    } else if IsSamusWithinEnemy_X(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16),
-        0x20 as uint16,
-        game,
-    ) != 0
-    {
-        if GetSamusEnemyDelta_Y(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            game,
-        ) as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-        {
-            return 0 as uint16;
-        }
-        return 4 as uint16;
-    } else if GetSamusEnemyDelta_X(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16),
-        game,
-    ) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
-    {
-        if GetSamusEnemyDelta_Y(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            game,
-        ) as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-        {
-            return 8 as uint16;
-        }
-        return 6 as uint16;
-    } else {
-        if GetSamusEnemyDelta_Y(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            game,
-        ) as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-        {
-            return 1 as uint16;
-        }
-        return 3 as uint16;
-    };
+pub fn DetermineDirectionOfSamusFromEnemy(game: &mut Game) -> uint16 {
+    let index = game.cur_enemy_index();
+    if IsSamusWithinEnemy_Y(index, 32, game) != 0 {
+        let index = game.cur_enemy_index();
+        return if GetSamusEnemyDelta_X(index, game) & 0x8000 != 0 {
+            7
+        } else {
+            2
+        };
+    }
+    let index = game.cur_enemy_index();
+    if IsSamusWithinEnemy_X(index, 32, game) != 0 {
+        let index = game.cur_enemy_index();
+        return if GetSamusEnemyDelta_Y(index, game) & 0x8000 != 0 {
+            0
+        } else {
+            4
+        };
+    }
+    let index = game.cur_enemy_index();
+    let left = GetSamusEnemyDelta_X(index, game) & 0x8000 != 0;
+    let index = game.cur_enemy_index();
+    let above = GetSamusEnemyDelta_Y(index, game) & 0x8000 != 0;
+    match (left, above) {
+        (true, true) => 8,
+        (true, false) => 6,
+        (false, true) => 1,
+        (false, false) => 3,
+    }
 }
 pub fn GetSamusEnemyDelta_Y(k: uint16, game: &mut Game) -> uint16 {
     let enemy = SolidEnemyCollisionBody::new(game, k);
