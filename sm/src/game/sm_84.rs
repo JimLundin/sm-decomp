@@ -4162,26 +4162,14 @@ pub unsafe fn UNUSED_sub_84B3E3(mut j: uint16) -> uint8 {
     };
     return 0 as uint8;
 }
-pub unsafe fn PlmSetup_B70F_IcePhysics(mut j: uint16, game: &mut Game) -> uint8 {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-        - 1 as ::core::ffi::c_int
-        & 0xf as ::core::ffi::c_int
-        == 7 as ::core::ffi::c_int
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-            - 1 as ::core::ffi::c_int
-            & 0xf as ::core::ffi::c_int
-            == 15 as ::core::ffi::c_int
-    {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb4c as ::core::ffi::c_int as isize)
-            as *mut uint16) = 16 as uint16;
+pub fn PlmSetup_B70F_IcePhysics(_j: uint16, game: &mut Game) -> uint8 {
+    let y_radius = u16::from_le_bytes([game.g_ram[0xb00], game.g_ram[0xb01]]);
+    let y_pos = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
+    let bottom = y_pos.wrapping_add(y_radius).wrapping_sub(1);
+    if bottom & 0x0f == 7 || bottom & 0x0f == 15 {
+        game.g_ram[0xb4c..0xb4e].copy_from_slice(&16u16.to_le_bytes());
     }
-    return 0 as uint8;
+    0
 }
 static kPlmSetup_QuicksandSurface: [Option<Func_Y_V>; 4] = unsafe {
     [

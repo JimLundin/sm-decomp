@@ -1147,6 +1147,17 @@ build and direct format pass; Cargo fmt/build remain ASR-denied. Waver route:
 Next: ice-physics setup and then quicksand setup dependencies, retaining
 their exact position tests and physics writes.
 
+Ice-physics setup now uses safe byte-backed Samus position/radius reads and
+wrapping bottom-edge arithmetic. All 131,071 possible promoted bottom-edge
+sums retain the same low-nibble 7/15 alignment test. The deceleration write
+still covers two bytes at B4C, including the following byte, despite ram_map
+naming the field uint8. Stable optimized core/DLL build and direct format
+pass; Cargo fmt/build remain ASR-denied. Waver route: 58,109 frames, zero
+failures (84.27s); any%: 129,712 frames, zero failures (184.85s).
+Raw offsets -5, unsafe functions -1, cast lines -15, Rust lines -12.
+Next: quicksand surface dispatcher and its three movement handlers,
+preserving the overlapping middle-word writes at B2D/B5B.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
