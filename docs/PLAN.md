@@ -4175,6 +4175,27 @@ Controller latching/busy-period scheduling, remaining DMA/register state,
 interrupt generation, rendering/HDMA, audio timing and boot-to-credits
 coverage remain open; the held HDMA investigation stays held.
 
+Independent demo-preinstruction dispatch QC (2026-10-18): frozen candidate
+CallDemoPreInstr passes an explicitly rendered30,000-frame attract replay
+with0 failures (95.71s), nativeexit0 and13,500,000 actual PPU calls. All
+13,292 dispatcher entries are Rust side2. Arms918A9B/918AB0 execute13,291/1
+times;83BF/864F/866A and unknown-address arms have zero hits. Each actual
+dispatcher call is compared against its unchanged directly called callback
+on the same complete RAM state, and the oracle checks the resulting frame.
+All full-RAM callback comparisons pass. Those callbacks touch RAM only in
+the observed bodies; the TEMP comparison Game has no loaded hardware.
+
+Removing observations restores the live dispatcher exactly. Decimal-to-hex
+address mapping and unknown Unreachable behavior are source-preserved, but
+this movie does not prove the dormant arms or every callback branch. Do not
+extend gameplay coverage claims to them. Only this note changes; direct
+full-source rustfmt, normal-core metadata, optimized core/DLL and progress
+checks pass. Probes stay TEMP; no new full-any% or Waver result is claimed.
+The implementation session owns dispatcher landing and its clean regression
+runs. WRIO/autojoy landing8c75e6dd has separate clean any% evidence; automatic
+joypad timing, DMA rewind/event timing, enabled-render Waver71, held HDMA
+and complete boot-to-credits remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
