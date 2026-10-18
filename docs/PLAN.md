@@ -1294,6 +1294,19 @@ zero failures (183.21s). Raw offsets -16, cast lines -36, Rust lines -22;
 unsafe count unchanged. Next: solid collision boundary arithmetic and
 byte-backed Samus coordinates, preserving live context after PLM callbacks.
 
+Solid horizontal/vertical collision now shares explicit wrapping boundary
+arithmetic and reads/writes Samus coordinates through backing RAM bytes.
+The difference still truncates to signed sixteen bits before clamping; raw
+live context and displacement-before-subposition write order remain. Prior
+Rust comparison passes 4,194,304 full-RAM/context/return cases over every
+position, eight edge/radius pairs, four displacement values and both axes.
+Stable optimized core/DLL build and direct format pass; Cargo fmt/build
+remain ASR-denied. Waver route: 58,109 frames, zero failures (84.65s); any%:
+129,712 frames, zero failures (186.84s). Raw offsets -12, cast lines -36,
+Rust lines -31; unsafe count unchanged. Next: Samus slope dispatch uses
+existing live block/BTS accessors, preserving square/nonsquare selection
+and the saved BTS write before entering nonsquare handlers.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

@@ -2891,67 +2891,36 @@ unsafe fn BlockColl_SpikeBlock_BTS3(game: &mut Game) {
 fn ClearCarry_4(_ci: *mut CollInfo, _game: &mut Game) -> uint8 {
     0
 }
-unsafe fn BlockColl_Horiz_SolidShootGrappleBlock(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    if (*ci).ci_r18_r20 < 0 as int32 {
-        let mut v2: int16 = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0xafe as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + ((*ci).ci_r32 as ::core::ffi::c_int | 0xf as ::core::ffi::c_int)
-            + 1 as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as int16;
-        if v2 as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
-            v2 = 0 as int16;
-        }
-        (*ci).ci_r18_r20 = ((v2 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) as int32;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xaf8 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        return 1 as uint8;
+// The boundary difference wraps to signed sixteen bits before the direction clamp.
+fn solid_collision_delta(edge: u16, radius: u16, position: u16, negative: bool) -> i32 {
+    let delta = if negative {
+        radius
+            .wrapping_add(edge | 15)
+            .wrapping_add(1)
+            .wrapping_sub(position) as i16
     } else {
-        let mut v0: int16 = (((*ci).ci_r32 as ::core::ffi::c_int & 0xfff0 as ::core::ffi::c_int)
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xafe as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as int16;
-        if (v0 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
-            v0 = 0 as int16;
-        }
-        (*ci).ci_r18_r20 = ((v0 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) as int32;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xaf8 as ::core::ffi::c_int as isize)
-            as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
-        return 1 as uint8;
+        (edge & 0xfff0).wrapping_sub(radius).wrapping_sub(position) as i16
     };
+    i32::from(if negative { delta.min(0) } else { delta.max(0) }) << 16
 }
-unsafe fn BlockColl_Vert_SolidShootGrappleBlock(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    if (*ci).ci_r18_r20 < 0 as int32 {
-        let mut v2: int16 = (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0xb00 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + ((*ci).ci_r32 as ::core::ffi::c_int | 0xf as ::core::ffi::c_int)
-            + 1 as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as int16;
-        if v2 as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
-            v2 = 0 as int16;
-        }
-        (*ci).ci_r18_r20 = ((v2 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) as int32;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xafc as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        return 1 as uint8;
-    } else {
-        let mut v0: int16 = (((*ci).ci_r32 as ::core::ffi::c_int & 0xfff0 as ::core::ffi::c_int)
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as int16;
-        if (v0 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
-            v0 = 0 as int16;
-        }
-        (*ci).ci_r18_r20 = ((v0 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) as int32;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xafc as ::core::ffi::c_int as isize)
-            as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
-        return 1 as uint8;
-    };
+// Keep the context raw: PLM callbacks can also access its active displacement.
+unsafe fn BlockColl_Horiz_SolidShootGrappleBlock(ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    let negative = (*ci).ci_r18_r20 < 0;
+    let radius = u16::from_le_bytes([game.g_ram[0xafe], game.g_ram[0xaff]]);
+    let position = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
+    (*ci).ci_r18_r20 = solid_collision_delta((*ci).ci_r32, radius, position, negative);
+    let subposition = if negative { 0u16 } else { 0xffff };
+    game.g_ram[0xaf8..0xafa].copy_from_slice(&subposition.to_le_bytes());
+    1
+}
+unsafe fn BlockColl_Vert_SolidShootGrappleBlock(ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    let negative = (*ci).ci_r18_r20 < 0;
+    let radius = u16::from_le_bytes([game.g_ram[0xb00], game.g_ram[0xb01]]);
+    let position = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
+    (*ci).ci_r18_r20 = solid_collision_delta((*ci).ci_r32, radius, position, negative);
+    let subposition = if negative { 0u16 } else { 0xffff };
+    game.g_ram[0xafc..0xafe].copy_from_slice(&subposition.to_le_bytes());
+    1
 }
 unsafe fn BlockColl_Horiz_Slope(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
     let mut v0: uint16 = (*(&raw mut game.g_ram as *mut uint8)
