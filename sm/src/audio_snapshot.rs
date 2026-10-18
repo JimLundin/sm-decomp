@@ -1,6 +1,6 @@
 //! Rewind the emulated APU without transferring ownership of its allocations.
 
-use crate::types::{Apu, Dsp, Snes, Spc};
+use crate::types::{Apu, Dsp, DspRegWriteHistory, Snes, Spc, SpcPlayer};
 use crate::{game_state::Game, rtl::ApuWriteEnt};
 
 #[derive(Copy, Clone)]
@@ -37,6 +37,52 @@ impl ApuQueueSnapshot {
             game.g_apu_write = theirs.pending;
         } else {
             theirs.restore(game);
+        }
+    }
+}
+
+#[derive(Copy, Clone)]
+pub struct PlayerSnapshot {
+    valid: bool,
+    player: SpcPlayer,
+    dsp: Dsp,
+    has_history: bool,
+    history: DspRegWriteHistory,
+}
+
+impl PlayerSnapshot {
+    /// The player, DSP and any attached history must be live and exclusive.
+    pub(crate) unsafe fn capture(&mut self, player: *mut SpcPlayer) {
+        self.valid = !player.is_null();
+        if !self.valid {
+            return;
+        }
+        self.player = *player;
+        self.dsp = *(*player).dsp;
+        self.has_history = !(*player).reg_write_history.is_null();
+        if self.has_history {
+            self.history = *(*player).reg_write_history;
+        }
+        self.player.dsp = core::ptr::null_mut();
+        self.player.reg_write_history = core::ptr::null_mut();
+        self.dsp.apu_ram = core::ptr::null_mut();
+    }
+
+    /// Destination allocations must be live with the same history topology.
+    pub(crate) unsafe fn restore(&self, player: *mut SpcPlayer) {
+        if !self.valid {
+            return;
+        }
+        let dsp = (*player).dsp;
+        let history = (*player).reg_write_history;
+        assert_eq!(self.has_history, !history.is_null());
+        *player = self.player;
+        (*player).dsp = dsp;
+        (*player).reg_write_history = history;
+        *dsp = self.dsp;
+        (*dsp).apu_ram = (*player).ram.as_mut_ptr();
+        if self.has_history {
+            *history = self.history;
         }
     }
 }

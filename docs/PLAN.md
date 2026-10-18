@@ -1306,6 +1306,43 @@ the committed custom-mode frame controls; physical-mode BOTH and shared
 custom-player debug-retry behavior remain unverified. No maintained source
 or progress counters changed; temporary probes remain untracked.
 
+Custom-player rewind (2026-10-18): per-frame snapshots capture the complete
+SpcPlayer, its DSP and optional attached write history. Saved allocation links
+are cleared; restoration retains destination player/DSP/history ownership and
+rebinds DSP RAM to the destination player. History topology must match. BOTH
+explicitly restores the pre-frame player before each branch and retry;
+general RestoreSnapshot still restores physical audio only. Custom runtime
+adopts Rust player state; physical runtime adopts ROM state. Failed custom
+recovery retains the post-save player, then restores pre-frame state for the
+ROM rerun and readopts that post-save state afterward.
+
+Temporary actual-loop controls compare every player/DSP value field, complete
+RAM/sample buffers and attached history. Normal 500-frame execution passes
+500/0; forced recovery and one debug retry each report exactly 500/1, native
+exits 0/1/1. ROM-entry checks cover both initial and retried branch entry.
+The recovery control invokes actual RtlSaveMusicStateToRam_Locked and retains
+its effects plus a distinctive post-save RAM mutation across the ROM rerun;
+disk bug-save serialization is not tested. Omitting before-Rust, retry-entry
+or recovery adoption separately aborts at the corresponding field assertion
+(native 3221226505). Cross-allocation fixtures at boot 160/400/3,600 preserve
+independent DSP/history pointers with absent and attached histories, restore
+mutated state, then match full state across twelve actual GenerateSamples
+calls for each history choice. All three processes return native exit 0.
+Physical-backend branch adoption is source-reviewed, not execution-proved.
+
+Frozen player/CPU bodies pass any% 129,712/0 (243.64s), native exit 0; player
+capture/restore executes each paired frame. This includes INIDISP enforcement,
+but predates concurrent Samus workspace, brightness-cache and post-save
+physical-APU recovery edits. Independent source/evidence review has no blockers.
+Cargo fmt/check, optimized core/DLL and normal-core metadata builds pass;
+Cargo release still fails khronos_api build-script execution (OS error 5).
+Rust lines +66 and unsafe functions +2 provide persistent player snapshots
+and explicit branch adoption; other counters unchanged for this change.
+Diagnostic code and ROM-derived state remain outside tracked files. Native
+upload/backend integration and normal runtime audio equality remain open.
+Next: enable native transport with explicit backend selection and compare
+actual independent upload and command delivery in the differential loop.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read

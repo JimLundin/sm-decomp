@@ -89,6 +89,7 @@ pub struct CounterSnapshot {
 #[repr(C)]
 pub struct Snapshot {
     pub audio: crate::audio_snapshot::AudioSnapshot,
+    pub player: crate::audio_snapshot::PlayerSnapshot,
     pub a: uint16,
     pub x: uint16,
     pub y: uint16,
@@ -1563,6 +1564,7 @@ unsafe fn VerifySnapshotsEq(
     }
 }
 unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
+    (*s).player.capture(game.g_spc_player);
     (*s).audio.capture(game.g_snes);
     (*s).write_latches = [
         (*(*game.g_snes).ppu).scrollPrev,
@@ -3180,6 +3182,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
     let apu_queue_before = queue_before.size;
     loop {
         queue_before.restore(game);
+        game.g_snapshot_before.player.restore(game.g_spc_player);
         game.g_snapshot_theirs.apu_upload_count = 0;
         game.g_snapshot_theirs.apu_startup_upload = false;
         (*game.g_snes).runningWhichVersion = 1 as uint8_t;
@@ -3189,6 +3192,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
         let queue_theirs = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
         let apu_theirs = queue_theirs.pending;
         queue_before.restore(game);
+        game.g_snapshot_before.player.restore(game.g_spc_player);
         game.g_snapshot_mine.apu_upload_count = 0;
         game.g_snapshot_mine.apu_startup_upload = false;
         (*game.g_snes).ppu = (*game.g_snes).my_ppu;
@@ -3246,18 +3250,33 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
             }
             (*game.g_snes).ppu = (*game.g_snes).snes_ppu;
             RestoreSnapshot(&raw mut game.g_snapshot_before, game);
+            if game.g_use_my_apu_code {
+                game.g_snapshot_mine.player.restore(game.g_spc_player);
+            } else {
+                game.g_snapshot_theirs.player.restore(game.g_spc_player);
+            }
             if game.g_debug_flag {
                 continue;
             }
             SaveBugSnapshot(game);
+            game.g_snapshot_mine.player.capture(game.g_spc_player);
             queue_before.restore(game);
+            game.g_snapshot_before.player.restore(game.g_spc_player);
             RunOneFrameOfGame_Emulated(game);
+            if game.g_use_my_apu_code {
+                game.g_snapshot_mine.player.restore(game.g_spc_player);
+            }
             let queue_rerun = crate::audio_snapshot::ApuQueueSnapshot::capture(game);
             queue_mine.select_runtime(queue_rerun, game);
             break;
         } else {
             (*game.g_snes).ppu = (*game.g_snes).snes_ppu;
             RestoreSnapshot(&raw mut game.g_snapshot_theirs, game);
+            if game.g_use_my_apu_code {
+                game.g_snapshot_mine.player.restore(game.g_spc_player);
+            } else {
+                game.g_snapshot_theirs.player.restore(game.g_spc_player);
+            }
             break;
         }
     }
