@@ -2199,6 +2199,31 @@ other residue categories unchanged. Concurrent edits are excluded from the
 frozen 72fe1d31 source. Next: account interrupt service work and then return
 to actual clock/event ordering and movie synchronization.
 
+Interrupt-service cycle accounting (2026-10-18): cpu_runOpcode no longer
+overwrites the accumulated IRQ/NMI entry cost with the first ISR opcode's
+base cost. The opcode cost adds to the existing seven E-mode/eight native
+service cycles, including later width/direct-page adjustments. The public
+call still services an interrupt and executes its first instruction together;
+CPU state transitions, layouts and the paired yield schedule are unchanged.
+
+The actual-opcode cycle harness fails on the pre-change core for native NMI
+plus NOP (reported 2, expected 10). Candidate passes 122 controls: NOP,
+immediate/direct-page LDA, RTI and WAI across E/native modes, supported
+operand widths, aligned/unaligned direct page, ordinary execution, NMI,
+unmasked IRQ and masked IRQ. Idle WAI/STP retain return 1 and stored cost 0.
+Totals include NMI/IRQ plus NOP 9 E/10 native and immediate RTI 13 E/15
+native. Two initial fixture errors (unmapped standalone RTI stack and wrong
+immediate-return PC expectation) were corrected without source changes.
+These are selected instruction cases, not full opcode/address timing proof.
+Indexed-read page penalties, bus clocks, refresh/DMA/event ordering and
+movie synchronization remain open. Direct rustfmt, optimized core/DLL and
+normal-core metadata builds pass; Cargo fmt/release remain access-denied
+launching cargo.exe (OS error 5). Full any% passes 129,712/0 (290.48s),
+native exit 0. Independent source/harness review finds no blockers. Focused Rust
+lines +2 preserve entry work; other residue categories unchanged. Frozen
+0f3c045a plus this CPU edit excludes concurrent work. No probe/ROM data is
+committed. Next: actual bus-clock/event ordering through the ROM wait loop.
+
 HDMA diagnosis has exceeded the one-hour item limit: its findings and
 verified isolated candidate are recorded above; stop work on that item
 until it is explicitly resumed with a focused next step.

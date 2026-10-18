@@ -373,7 +373,9 @@ pub unsafe fn cpu_runOpcode(mut cpu: *mut Cpu, game: &mut Game) -> ::core::ffi::
         }
     }
     let mut opcode: uint8_t = cpu_readOpcode(cpu, game);
-    (*cpu).cyclesUsed = cyclesPerOpcode[opcode as usize] as uint8_t;
+    (*cpu).cyclesUsed = (*cpu)
+        .cyclesUsed
+        .wrapping_add(cyclesPerOpcode[opcode as usize] as uint8_t);
     cpu_doOpcode(cpu, opcode, game);
     return (*cpu).cyclesUsed as ::core::ffi::c_int;
 }
