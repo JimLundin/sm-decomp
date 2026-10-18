@@ -5920,6 +5920,27 @@ regression result; no changed source to retest here. Concurrent hardware
 edits/totals are separate. Inputs/probes/ROM-derived outputs stay ignored.
 Credits, full rendering/audio and masked RAM remain unproved.
 
+Focused masked-field consumer audit (2026-10-18): actual ROM-branch bus
+read/write observation covers 060B/060C through direct WRAM, every low-RAM
+mirror and WRAM port 2180. The full any% input finishes 129,712/0 (275.80s),
+native exit zero. Each byte has 202,498 reads and 193,166 writes; zero reads
+occur before its first ROM-branch write in that frame. Thus the naturally
+differing adopted values documented above are overwritten before observed
+ROM consumption for these two bytes on this movie. This does not classify
+other fields/routes, remove the mask, or prove independent game equivalence.
+Actual synthetic direct and port reads before a write are detected by the
+observer controls; counters reset before movie execution. No normalization,
+recovery or input scheduling changes. Rendering is outside this run's claim.
+The initial direct-only 12,000-frame observation had the same ordering;
+the corrected port-complete build also passes 12,000/0. A concurrent read
+parameter rename caused one TEMP compile failure before correction.
+Optimized observer core/DLL, normal-core metadata, direct full-source format
+and progress pass; partner independently reviews routing and observer scope.
+The frozen movie includes then-current read routing but predates subsequent
+native write-routing edits; later integration remains separate. Only this
+note changes, probes and ROM assets remain TEMP/ignored. Next classify a
+focused additional non-HDMA consumer; held HDMA diagnosis stays stopped.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
