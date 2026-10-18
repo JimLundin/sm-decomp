@@ -1444,11 +1444,10 @@ pub unsafe fn LoadDemoData(game: &mut Game) {
 }
 pub unsafe fn DemoSetFunc_0(game: &mut Game) {
     MakeSamusFaceForward(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa5c as ::core::ffi::c_int as isize)
-        as *mut uint16) = (0x90eb52 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    game.set_samus_draw_handler(fnSamusDrawHandler_Default as u16);
 }
 pub unsafe fn DemoSetFunc_3(game: &mut Game) {
-    DemoSetFunc_Common(0x1f as uint16, game);
+    DemoSetFunc_Common(kPose_1F_MoveL_Morphball_Ground as u16, game);
 }
 pub unsafe fn DemoSetFunc_7(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x9c2 as ::core::ffi::c_int as isize)
@@ -1456,28 +1455,24 @@ pub unsafe fn DemoSetFunc_7(game: &mut Game) {
     DemoSetFunc_2(game);
 }
 pub unsafe fn DemoSetFunc_2(game: &mut Game) {
-    DemoSetFunc_Common(2 as uint16, game);
+    DemoSetFunc_Common(kPose_02_FaceL_Normal as u16, game);
 }
 pub unsafe fn DemoSetFunc_4(game: &mut Game) {
-    DemoSetFunc_Common(0x2a as uint16, game);
+    DemoSetFunc_Common(kPose_2A_FaceL_Fall as u16, game);
 }
 pub unsafe fn DemoSetFunc_1(game: &mut Game) {
-    DemoSetFunc_Common(1 as uint16, game);
+    DemoSetFunc_Common(kPose_01_FaceR_Normal as u16, game);
 }
-pub unsafe fn DemoSetFunc_Common(mut a: uint16, game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-        as *mut uint16) = a;
+pub unsafe fn DemoSetFunc_Common(pose: u16, game: &mut Game) {
+    game.set_samus_pose(pose);
     SamusFunc_F433(game);
     Samus_SetAnimationFrameIfPoseChanged(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa5c as ::core::ffi::c_int as isize)
-        as *mut uint16) = (0x90eb52 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    game.set_samus_draw_handler(fnSamusDrawHandler_Default as u16);
 }
 pub unsafe fn DemoSetFunc_5(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa5c as ::core::ffi::c_int as isize)
-        as *mut uint16) = (0x90eb52 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+    game.set_samus_draw_handler(fnSamusDrawHandler_Default as u16);
     Projectile_Func7_Shinespark(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-        as *mut uint16) = kPose_CD_FaceR_Shinespark_Diag as ::core::ffi::c_int as uint16;
+    game.set_samus_pose(kPose_CD_FaceR_Shinespark_Diag as u16);
     SamusFunc_F433(game);
     Samus_SetAnimationFrameIfPoseChanged(game);
 }

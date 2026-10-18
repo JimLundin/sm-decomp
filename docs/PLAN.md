@@ -4004,6 +4004,27 @@ assets committed. Next: measure actual DemoSetFunc entries and clean the
 executed scene initializers, retaining callback and pose-update order.
 Set 3, special leave-preinstruction and stopped ammo coverage remain held.
 
+Demo scene initializers 0..5 now use existing byte-backed pose/draw-handler
+stores and named pose/default-draw constants. Common pose setup retains its
+pose store, F433, animation-update, draw-handler order; diagonal shinespark
+retains draw-handler, projectile callback, pose store and pose-update order.
+Unsafe remains at existing callback boundaries. Initializers 6/7 are untouched.
+
+Committed 53f1d3d5 baseline attract passes 30,000/0 (62.90s), native exit 0.
+Both baseline and rewritten attract observe Rust-side-2 initializer calls
+0:2, 1:12, 2:8, 3:2, 4:1, 5:1, Common:23 across sets 0..2. No 6/7 call.
+Removing probes restores exact maintained source. Rewritten Verified 30000 frames: 0 failing frames (102.56s);
+Start-exit Verified 5000 frames: 0 failing frames (10.80s); full any% Verified 129712 frames: 0 failing frames (301.56s); native exits 0.
+Dedicated source freezes 53f1d3d5 with only this sm_91.rs change; subsequent
+concurrent oracle/audio/renderer commits require their own integration replays.
+Cargo fmt/check, optimized core/DLL and normal-core metadata builds pass;
+Cargo release remains denied at khronos_api's build script (OS error 5).
+Progress passes: focused raw offsets -5, cast lines -9, Rust lines -5;
+other focused counters unchanged. No ROM-derived assets or probes committed.
+Next: measure DemoPreInstr_864F/866A execution and taken-body coverage before
+cleaning their ordered preinstruction/instruction/timer stores. Set 3,
+special leave-preinstruction and stopped ammo coverage remain held.
+
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
 the original `SignExtend8(0x8000)` initialization and the middle-byte velocity
