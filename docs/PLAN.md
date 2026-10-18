@@ -5868,6 +5868,25 @@ arbitrary read side effects, hardware accuracy and full-movie integration
 remain separate. Only PLAN changes; probes/assets stay TEMP. Implementer
 retains production ownership and full-movie verification.
 
+Independent LoROM reader candidate QC (2026-10-18): 3,000 actual
+old/current absolute LDA bus pairs pass, native exit zero. Nine bank
+boundaries, six offsets, six SRAM/ROM size pairs, five initial accumulator
+words and both widths exercise mapped SRAM/ROM reads, including word
+7FFF-to-8000 SRAM/ROM crossing and inclusive F0 reads. Unsupported bank-80
+lower addresses are excluded. Independent masks/result, N/Z, PC, cycles,
+selected preserved flags/registers and paired open-bus/bus-state checks pass.
+A TEMP F0-read exclusion fault returns ROM byte 170 instead of SRAM byte 85
+at F0:0000 with both sizes one, native exit 3221226505.
+
+Synthetic buffers remain allocated even when reported sizes are zero,
+preserving the inherited zero-size mask behavior safely. Both reader paths
+use the same maintained LDA helper to isolate the cartridge change. No
+invalid-read assertion or diagnostic bypass is used. Tested reader body
+matches live; optimized probe core/DLL, normal-core metadata, direct format
+and progress pass. Independent partner fixture review finds no issue.
+Hardware accuracy, arbitrary addressing and full-movie integration remain
+separate. Only PLAN changes; synthetic probes/assets stay TEMP.
+
 Independent native control-write candidate QC (2026-10-18): 73,728 actual
 old/current byte STA instructions pass through banks 00/80 at 4200/4201/420D.
 All 256 written bytes, 16 initial control-flag combinations and autojoy
