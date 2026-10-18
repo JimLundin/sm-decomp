@@ -5338,6 +5338,34 @@ Probes/ROM assets remain ignored; only the recovery line and this note are
 committed. Enabled-render Waver71, hires, hardware/audio timing, masked RAM
 and boot-to-credits remain open; held HDMA diagnosis stays stopped.
 
+Actual CPU bus-clock gap audit (2026-10-18):4,096 snes_cpuRead
+controls cover every byte counter seed xMEMSEL off/on xeight addresses:
+WRAM7E1000, low-bank RAM001000, PPU002100, arithmetic004214, controller004218,
+ROM008000/808000/C08000. Every read increments cpuMemOps by1 and wraps
+cpuCyclesLeft by8 while hPos123/vPos45/frames678 remain unchanged.2,304 actual
+snes_cpuWrite controls cover all seeds xRAM7E1000/001000/MEMSEL00420D xbytes
+0/1/FF, with identical counter/clock behavior. An actual WRAM NOP returns
+two opcode cycles, records one8-unit bus read and leaves the video clock
+unchanged. Nativeexit0. Source search confirms fastMem is reset/written but
+has no timing consumer; SNES counter fields are reset/incremented without a
+maintained CPU bus scheduler consuming them.
+
+This confirms shared bus-speed/event scheduling gaps in actual maintained
+paths. It does not establish independent hardware cycle costs or propose a
+timing patch: CPU opcode cycles, bus counters and forced frame/NMI scheduling
+are separate in the current oracle. Snapshot/disk context success and green
+paired movies cannot establish console timing equivalence. Next: integrate
+actual bus/internal-cycle progression and device event ordering through the
+verify run before making hardware-timing claims; keep gameplay preservation
+separate from that hardware work. Held HDMA diagnosis remains stopped.
+
+Only this note changes; no maintained Rust/residue changes. Frozen source
+includes then-current CPU/PPU/SNES peer edits; later integration is separate.
+Isolated optimized core/DLL, direct full-source rustfmt and progress pass;
+Cargo fmt/check and release remain denied at cargo.exe launch. No fresh movie
+result claimed; probes/ROM assets stay ignored. Render initialization/Waver71,
+hires, audio timing, masked RAM and boot-to-credits remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
