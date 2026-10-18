@@ -1078,6 +1078,44 @@ is claimed. Diagnostic code/logs and ROM-derived state remain untracked.
 Next: compare actual Rust upload execution and independently evolving SPC
 feedback/scheduling before changing behavior or enforcing audio equality.
 
+Actual Rust upload continuation (2026-10-18): the isolated CPU-entry
+fixture now calls SpcPlayer_Upload and SpcPlayer_GenerateSamples on two
+independently allocated Rust players. Each imports the captured entry RAM
+through CopyVariablesFromRam and receives a copied DSP with its RAM pointer
+rebound. The actual RomPtr selects DCFAC7. Upload history is exactly
+2C:00, 3C:00, 5C:FF; every generation call checks history below its capacity.
+The two Rust outputs match, and a sample-bit fault in one copy returns
+native exit 1 through the copy comparator with no completion marker.
+
+The recorded ROM upload baseline still reproduces every sample and its
+full terminal RAM before continuation. After that boundary the original
+SPC and DSP evolve independently through actual apu_cycle calls; future
+SPC writes are no longer held fixed. Rust generates the same number of
+sample values from CPU entry, with its instantaneous upload preceding them.
+Both output lengths are asserted equal before comparison. At Rust timer
+phase zero, boots 160/400/3,600 differ in 0/52/29,779 upload-span values
+and 0/0/10,732 continuation values. Total compared scalar values are
+41,652/42,720/40,584. Native exit 0 means diagnostic completion, not
+Rust/ROM agreement. No Rust terminal-RAM equality is claimed.
+
+At boot 400, phases 0/16/32/48/63 yield 52/20/0/0/0 differing upload-span
+values and zero continuation differences. At active boot 3,600, nine phases
+0/8/16/24/32/40/48/56/63 yield 29,779..29,780 upload-span differences and
+10,732 continuation differences each. A tested phase can remove the quiet
+boundary difference; the active boundary is not resolved by these phases.
+
+Independent source reviews find no blocking ordering/ownership issue.
+This constructed 3eac6b6a-derived fixture imports canonical Rust fields,
+not SPC instruction phase, timer divider or complete live command state.
+Ordinal sample alignment does not synchronize those states; natural
+runtime audio equivalence and the cause of active divergence remain open.
+Maintained Rust and this probe's counters are unchanged; concurrent PPU
+work adds its own 32 lines. Isolated optimized build and Cargo fmt/check
+pass; Cargo release still fails at khronos_api build-script execution with
+OS error 5. Diagnostic code/logs and ROM-derived state stay untracked.
+Next: classify the first active sample/state divergence, including upload
+duration and driver command/timer state, before changing runtime behavior.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read
