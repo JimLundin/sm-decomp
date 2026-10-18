@@ -2617,6 +2617,16 @@ other counters unchanged. Full sm/src search now finds Get_MiniCrocomire
 only at its definition. Next: remove that unused private pointer helper,
 then continue the next bank-A2 enemy's state/initialization access.
 
+Removed the unused private Get_MiniCrocomire pointer helper. Full sm/src
+search confirmed definition-only before removal and no occurrences afterward;
+the exact nine-line deletion preserves the next helper's inline attribute.
+Direct full-source format and stable optimized core/DLL build pass; Cargo
+build scripts remain ASR-denied. Final-source any% passes 129,712/0 (193.44s);
+Waver passes 58,109/0 (86.55s), both process exits 0. Raw offsets -1, unsafe
+functions -1, cast lines -1, Rust lines -9; other counters unchanged. Next:
+Maridia Beyblade Turtle initialization, retaining its ordered properties,
+spritemap, timers, radius, instruction and state writes.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

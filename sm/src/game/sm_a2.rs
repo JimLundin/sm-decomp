@@ -1857,15 +1857,6 @@ unsafe fn Get_MaridiaTurtle(
         .offset(o as isize) as *mut Enemy_MaridiaTurtle;
 }
 #[inline]
-unsafe fn Get_MiniCrocomire(
-    mut o: ::core::ffi::c_int,
-    game: &mut Game,
-) -> *mut Enemy_MiniCrocomire {
-    return (&raw mut game.g_ram as *mut uint8)
-        .offset(0xf78 as ::core::ffi::c_int as isize)
-        .offset(o as isize) as *mut Enemy_MiniCrocomire;
-}
-#[inline]
 unsafe fn Get_MiniMaridiaBeybladeTurtle(
     mut o: ::core::ffi::c_int,
     game: &mut Game,
