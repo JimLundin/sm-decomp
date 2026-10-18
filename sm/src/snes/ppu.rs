@@ -3928,12 +3928,10 @@ pub unsafe fn ppu_write(mut ppu: *mut Ppu, mut adr: uint8_t, mut val: uint8_t) {
             current_block_164 = 16754622181974910496;
         }
         48 => {
-            (*ppu).directColor = val as ::core::ffi::c_int & 0x1 as ::core::ffi::c_int != 0;
-            (*ppu).addSubscreen = val as ::core::ffi::c_int & 0x2 as ::core::ffi::c_int != 0;
-            (*ppu).preventMathMode = ((val as ::core::ffi::c_int & 0x30 as ::core::ffi::c_int)
-                >> 4 as ::core::ffi::c_int) as uint8_t;
-            (*ppu).clipMode = ((val as ::core::ffi::c_int & 0xc0 as ::core::ffi::c_int)
-                >> 6 as ::core::ffi::c_int) as uint8_t;
+            (*ppu).directColor = val & 0x01 != 0;
+            (*ppu).addSubscreen = val & 0x02 != 0;
+            (*ppu).preventMathMode = (val & 0x30) >> 4;
+            (*ppu).clipMode = (val & 0xc0) >> 6;
             current_block_164 = 16754622181974910496;
         }
         49 => {

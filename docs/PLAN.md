@@ -2841,6 +2841,36 @@ boolean model tests the pixel window path,not all whole-line rendering or
 SNES accuracy. Next: color-composition snapshot state. Audio timing,HDMA,
 masked RAM,hardware accuracy and boot-to-credits remain open.
 
+CGWSEL register cleanup (2026-10-18): ppu_write $2130 now uses native
+byte masks/shifts for directColor, addSubscreen, preventMathMode and clipMode.
+The four stores retain their order, both mode fields stay two-bit values,
+and bits 2/3 remain ignored. No Ppu/RAM/save layout or rendering changes.
+
+Independent actual writer checks pass 8,192 complete-Ppu byte comparisons:
+all 256 inputs and 32 seeded states, with independently computed expected
+fields and unchanged unrelated bytes. Actual rendered rows match the original
+writer in 2,560 comparisons / 2,621,440 BGRA bytes, with 2,040 nonuniform
+rows. Cases cover modes 1/7 in both renderers and mode 3 in the per-pixel
+renderer. Clip, math-window and subscreen effects execute in each scene;
+direct-color effects execute in per-pixel modes 3/7. Whole-line Mode 7 does
+not consume directColor, so no equivalence claim follows for that missing
+behavior. These are preserved-behavior comparisons, not SNES accuracy proof.
+Normal startup passes 3,600/0 (7.47s), native exit 0, with 7,208 actual
+CGWSEL writes across both implementations including initialization and zero
+gameplay frames. Private instrumentation differs only by its counter/getter;
+the tested PPU body matches the frozen maintained source. Independent
+implementation and behavior review have no findings.
+
+Frozen 26721955 plus only this PPU change passes any% 129,712/0 (317.67s)
+and Waver 58,109/0 (135.64s), both native exits 0. Later concurrent audio,
+window snapshot and gameplay changes are outside those replays. Cargo fmt/
+check, direct optimized core/DLL and normal-core metadata builds pass.
+Cargo release remains denied executing khronos_api's build script (OS error 5).
+Progress: cast lines -6, Rust lines -2; other focused counters unchanged.
+No probes or ROM-derived assets committed. Next: CGADSUB arithmetic and
+six layer math-enable stores, preserving flags and loop write order; retain
+the whole-line Mode 7 direct-color gap for a separate focused investigation.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
