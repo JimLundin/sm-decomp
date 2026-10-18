@@ -2806,6 +2806,41 @@ assets committed. Next: CGWSEL color-window selection register cleanup,
 preserving direct-color/subscreen flags and clip/prevent-math bit fields;
 coordinate window snapshot/HDMA diagnosis separately.
 
+Window-selection snapshot gap and enforcement (2026-10-18): windowsel
+and all six nested window enable/inversion/logic records were omitted.
+Thirty actual nested-field faults pass comparison against identical registered
+buffers, survive rewind and change actual per-pixel window decisions. All24
+register-used raw selector bits are likewise accepted/unrestored. This shows
+future clipping can differ; it is not a naturally observed gameplay fault.
+
+An independent boolean model passes491,520 actual ppu_getWindowState decisions
+(6layers x16enable/invert flags x4logic x5boundary sets x256pixels), including
+empty/reversed, full and single-pixel windows. All1,280 actual selector/logic
+register writes match independent bit mappings. A diagnostic pre-comparison
+observer finds zero raw/nested selection differences on full any%129,712/0
+and Waver58,109/0, both nativeexits0. This separates selection state from the
+known40 WH1 boundary differences; those boundaries remain unenforced and the
+stopped HDMA item is not resumed or normalized.
+
+Snapshots now capture, compare and directly restore raw selector and all30
+nested fields. Controls pass64 related flag/logic equality states and4,352
+actual bit/capture/restore faults:36 nested bits plus32 raw bits perstate.
+All30 prior nested faults restore original per-pixel decisions. Raw reserved
+bits are retained, not masked. Probe nativeexit0. Eight actual frame200 faults
+(6layer logic,raw selector,independent enable) each produce3,600/1 and native
+exit1 with named diagnostics and no later cascade.
+
+Dedicated enforced source Verified 129712 frames: 0 failing frames (312.83s); Verified 58109 frames: 0 failing frames (143.13s); nativeexits0. Cargo
+fmt/fmt--check and direct optimized core/DLL/normal-core metadata builds pass;
+Cargo release remains blocked executing khronos_api's build script (OSerror5).
+Progress run: focused Rust lines+33 provide state/capture/restore/diagnostics;
+other counters unchanged. Builds include then-current independent audio work;
+later edits need separate verification. Only these CPU hunks and note enter
+this commit; Ppu/RAM/save layouts unchanged,ROM/probe assets ignored. The
+boolean model tests the pixel window path,not all whole-line rendering or
+SNES accuracy. Next: color-composition snapshot state. Audio timing,HDMA,
+masked RAM,hardware accuracy and boot-to-credits remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

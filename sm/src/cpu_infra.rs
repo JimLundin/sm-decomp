@@ -115,6 +115,7 @@ pub struct Snapshot {
     pub bg_scroll: [(uint16, uint16); 4],
     pub bg_address: [(bool, bool, uint16, uint16); 4],
     pub screen_routing: ([uint8; 2], [uint8; 2], [[bool; 4]; 5]),
+    pub window_select: (uint32, [(bool, bool, bool, bool, uint8); 6]),
     pub brightness: uint8,
     pub forced_blank: bool,
     pub cgram: [uint16; 256],
@@ -972,6 +973,15 @@ unsafe fn VerifySnapshotsEq(
             );
         }
     }
+    if (*b).window_select != (*a).window_select {
+        game.g_fail = true;
+        if report_details {
+            eprintln!(
+                "@{}: Window selection (raw, enables, inversion, logic) compare failed: mine {:?} != theirs {:?}",
+                game.snes_frame_counter, (*b).window_select, (*a).window_select
+            );
+        }
+    }
     if (*b).screen_routing != (*a).screen_routing {
         game.g_fail = true;
         if report_details {
@@ -1706,6 +1716,18 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     let ppu = &*(*game.g_snes).ppu;
     (*s).brightness = ppu.brightness;
     (*s).forced_blank = ppu.forcedBlank;
+    (*s).window_select = (
+        ppu.windowsel,
+        ppu.windowLayer.map(|w| {
+            (
+                w.window1enabled,
+                w.window2enabled,
+                w.window1inversed,
+                w.window2inversed,
+                w.maskLogic,
+            )
+        }),
+    );
     (*s).screen_routing = (
         ppu.screenEnabled,
         ppu.screenWindowed,
@@ -1765,6 +1787,17 @@ unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     let ppu = &mut *(*game.g_snes).ppu;
     ppu.brightness = (*s).brightness;
     ppu.forcedBlank = (*s).forced_blank;
+    let (raw, windows) = (*s).window_select;
+    ppu.windowsel = raw;
+    for (w, (enabled1, enabled2, inverted1, inverted2, logic)) in
+        ppu.windowLayer.iter_mut().zip(windows)
+    {
+        w.window1enabled = enabled1;
+        w.window2enabled = enabled2;
+        w.window1inversed = inverted1;
+        w.window2inversed = inverted2;
+        w.maskLogic = logic;
+    }
     let (enabled, windowed, layers) = (*s).screen_routing;
     ppu.screenEnabled = enabled;
     ppu.screenWindowed = windowed;
