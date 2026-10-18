@@ -311,14 +311,12 @@ pub struct CollInfo {
 }
 pub type Func_CollInfo_U8 = unsafe fn(*mut CollInfo, &mut Game) -> uint8;
 pub use crate::types::Pair_Bool_Amt;
-#[derive(Copy, Clone)]
-#[repr(C)]
-pub struct PostGrappleCollInfo {
-    pub pgci_r26: uint16,
-    pub pgci_r28: uint16,
-    pub pgci_r32: uint16,
+/// Stack-owned sample state for checking Samus's edges after releasing grapple.
+struct PostGrappleCollisionSample {
+    remaining_span: u16,
+    initial_span: u16,
+    edge_position: u16,
 }
-pub type Func_PostGrappleCollInfo_U16 = unsafe fn(*mut PostGrappleCollInfo, &mut Game) -> uint16;
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const true_0: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
 pub const false_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -1491,8 +1489,8 @@ static kBlockColl_Horiz_Slope_NonSquare_Tab: [uint16; 64] = [
     0x6000 as ::core::ffi::c_int as uint16,
     0x50 as ::core::ffi::c_int as uint16,
 ];
-unsafe fn PostGrappleColl_Horiz_Slope_NonSquare(
-    pgci: *mut PostGrappleCollInfo,
+fn PostGrappleColl_Horiz_Slope_NonSquare(
+    sample: &PostGrappleCollisionSample,
     k: uint16,
     game: &mut Game,
 ) -> uint16 {
@@ -1511,13 +1509,13 @@ unsafe fn PostGrappleColl_Horiz_Slope_NonSquare(
     // k selects the slope bytes even when the live collision index differs.
     let bts = game.g_ram[0x16402 + usize::from(k)];
     if (bts & 0x40 != 0) == negative {
-        return PostGrappleColl_Horiz_Solid(pgci, game);
+        return PostGrappleColl_Horiz_Solid(sample, game);
     }
     let y = game.samus_y_pos();
     let y = if bts & 0x80 != 0 { y ^ 15 } else { y };
     let index = usize::from(bts & 0x1f) * 16 + usize::from(y & 15);
     let boundary = i16::from(kAlignPos_Tab1[index] & 0x1f);
-    let difference = boundary - ((*pgci).pgci_r32 & 15) as i16 - 1;
+    let difference = boundary - (sample.edge_position & 15) as i16 - 1;
     if negative {
         if difference <= 0 {
             !(difference as u16)
@@ -1530,8 +1528,8 @@ unsafe fn PostGrappleColl_Horiz_Slope_NonSquare(
         0xffff
     }
 }
-unsafe fn PostGrappleColl_Vert_Slope_NonSquare(
-    pgci: *mut PostGrappleCollInfo,
+fn PostGrappleColl_Vert_Slope_NonSquare(
+    sample: &PostGrappleCollisionSample,
     k: uint16,
     game: &mut Game,
 ) -> uint16 {
@@ -1547,11 +1545,11 @@ unsafe fn PostGrappleColl_Vert_Slope_NonSquare(
     if x >> 4 != column {
         return 0xffff;
     }
-    let edge = (*pgci).pgci_r32 & 15;
+    let edge = sample.edge_position & 15;
     // The passed index selects slope bytes independently of column alignment.
     let bts = game.g_ram[0x16402 + usize::from(k)];
     if (bts & 0x80 != 0) == negative {
-        return PostGrappleColl_Vert_Solid(pgci, game);
+        return PostGrappleColl_Vert_Solid(sample, game);
     }
     let x = if bts & 0x40 != 0 { x ^ 15 } else { x };
     let index = usize::from(bts & 0x1f) * 16 + usize::from(x & 15);
@@ -1569,109 +1567,101 @@ unsafe fn PostGrappleColl_Vert_Slope_NonSquare(
         0xffff
     }
 }
-unsafe fn PostGrappleColl_Horiz_Slope_Square(
-    pgci: *mut PostGrappleCollInfo,
+fn PostGrappleColl_Horiz_Slope_Square(
+    sample: &PostGrappleCollisionSample,
     k: uint16,
     game: &mut Game,
 ) -> uint16 {
     let bts = game.g_ram[0x16402 + usize::from(k)];
-    let index = u16::from(bts & 0x1f) * 4 + (u16::from(bts >> 6) ^ (((*pgci).pgci_r32 & 8) >> 3));
+    let index =
+        u16::from(bts & 0x1f) * 4 + (u16::from(bts >> 6) ^ ((sample.edge_position & 8) >> 3));
     if !square_slope_occupied(
         index,
-        (*pgci).pgci_r26,
-        (*pgci).pgci_r28,
+        sample.remaining_span,
+        sample.initial_span,
         game.samus_y_pos(),
         game.samus_y_radius(),
         2,
     ) {
         return 0xffff;
     }
-    let distance = (*pgci).pgci_r32 & 7;
+    let distance = sample.edge_position & 7;
     if game.samus_collision_direction() & 1 != 0 {
         distance
     } else {
         distance ^ 7
     }
 }
-unsafe fn PostGrappleColl_Vertical_Slope_Square(
-    pgci: *mut PostGrappleCollInfo,
+fn PostGrappleColl_Vertical_Slope_Square(
+    sample: &PostGrappleCollisionSample,
     k: uint16,
     game: &mut Game,
 ) -> uint16 {
     let bts = game.g_ram[0x16402 + usize::from(k)];
-    let index = u16::from(bts & 0x1f) * 4 + (u16::from(bts >> 6) ^ (((*pgci).pgci_r32 & 8) >> 2));
+    let index =
+        u16::from(bts & 0x1f) * 4 + (u16::from(bts >> 6) ^ ((sample.edge_position & 8) >> 2));
     if !square_slope_occupied(
         index,
-        (*pgci).pgci_r26,
-        (*pgci).pgci_r28,
+        sample.remaining_span,
+        sample.initial_span,
         game.samus_x_pos(),
         game.samus_x_radius(),
         1,
     ) {
         return 0xffff;
     }
-    let distance = (*pgci).pgci_r32 & 7;
+    let distance = sample.edge_position & 7;
     if game.samus_collision_direction() & 1 != 0 {
         distance
     } else {
         distance ^ 7
     }
 }
-unsafe fn PostGrappleColl_Horiz_Slope(pgci: *mut PostGrappleCollInfo, game: &mut Game) -> uint16 {
+fn PostGrappleColl_Horiz_Slope(sample: &PostGrappleCollisionSample, game: &mut Game) -> uint16 {
     let slope = game.current_block_bts() & 0x1f;
     let block = game.cur_block_index();
     if slope < 5 {
-        PostGrappleColl_Horiz_Slope_Square(pgci, block, game)
+        PostGrappleColl_Horiz_Slope_Square(sample, block, game)
     } else {
-        PostGrappleColl_Horiz_Slope_NonSquare(pgci, block, game)
+        PostGrappleColl_Horiz_Slope_NonSquare(sample, block, game)
     }
 }
-unsafe fn PostGrappleColl_Horiz_Solid(
-    mut pgci: *mut PostGrappleCollInfo,
-    game: &mut Game,
-) -> uint16 {
-    return ((*pgci).pgci_r32 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int) as uint16;
+fn PostGrappleColl_Horiz_Solid(sample: &PostGrappleCollisionSample, game: &mut Game) -> uint16 {
+    sample.edge_position & 0xf
 }
-unsafe fn PostGrappleColl_Vert_Slope(pgci: *mut PostGrappleCollInfo, game: &mut Game) -> uint16 {
+fn PostGrappleColl_Vert_Slope(sample: &PostGrappleCollisionSample, game: &mut Game) -> uint16 {
     let slope = game.current_block_bts() & 0x1f;
     let block = game.cur_block_index();
     if slope < 5 {
-        PostGrappleColl_Vertical_Slope_Square(pgci, block, game)
+        PostGrappleColl_Vertical_Slope_Square(sample, block, game)
     } else {
-        PostGrappleColl_Vert_Slope_NonSquare(pgci, block, game)
+        PostGrappleColl_Vert_Slope_NonSquare(sample, block, game)
     }
 }
-unsafe fn PostGrappleColl_Vert_Solid(
-    mut pgci: *mut PostGrappleCollInfo,
-    game: &mut Game,
-) -> uint16 {
-    return ((*pgci).pgci_r32 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int) as uint16;
+fn PostGrappleColl_Vert_Solid(sample: &PostGrappleCollisionSample, game: &mut Game) -> uint16 {
+    sample.edge_position & 0xf
 }
-unsafe fn PostGrappleColl_Horiz(
-    pgci: *mut PostGrappleCollInfo,
+fn PostGrappleColl_Horiz(
+    sample: &PostGrappleCollisionSample,
     k: uint16,
     game: &mut Game,
 ) -> uint16 {
     game.set_cur_block_index(k >> 1);
     match game.current_level_block() >> 12 {
-        1 => PostGrappleColl_Horiz_Slope(pgci, game),
-        8..=15 => PostGrappleColl_Horiz_Solid(pgci, game),
+        1 => PostGrappleColl_Horiz_Slope(sample, game),
+        8..=15 => PostGrappleColl_Horiz_Solid(sample, game),
         _ => 0xffff,
     }
 }
-unsafe fn PostGrappleColl_Vert(
-    pgci: *mut PostGrappleCollInfo,
-    k: uint16,
-    game: &mut Game,
-) -> uint16 {
+fn PostGrappleColl_Vert(sample: &PostGrappleCollisionSample, k: uint16, game: &mut Game) -> uint16 {
     game.set_cur_block_index(k >> 1);
     match game.current_level_block() >> 12 {
-        1 => PostGrappleColl_Vert_Slope(pgci, game),
-        8..=15 => PostGrappleColl_Vert_Solid(pgci, game),
+        1 => PostGrappleColl_Vert_Slope(sample, game),
+        8..=15 => PostGrappleColl_Vert_Solid(sample, game),
         _ => 0xffff,
     }
 }
-unsafe fn post_grapple_traverse(horizontal: bool, positive: bool, game: &mut Game) {
+fn post_grapple_traverse(horizontal: bool, positive: bool, game: &mut Game) {
     let (direction, distance_offset) = match (horizontal, positive) {
         (true, true) => (1, 0xe04),   // distance_to_eject_samus_left
         (true, false) => (0, 0xe06),  // distance_to_eject_samus_right
@@ -1709,16 +1699,16 @@ unsafe fn post_grapple_traverse(horizontal: bool, positive: bool, game: &mut Gam
     let row_start = u16::from(row as u8) * u16::from(game.room_width_in_blocks() as u8);
     game.set_cur_block_index(row_start.wrapping_add(column));
     let mut block_offset = game.cur_block_index().wrapping_mul(2);
-    let mut context = PostGrappleCollInfo {
-        pgci_r26: span,
-        pgci_r28: span,
-        pgci_r32: edge,
+    let mut context = PostGrappleCollisionSample {
+        remaining_span: span,
+        initial_span: span,
+        edge_position: edge,
     };
     loop {
         let result = if horizontal {
-            PostGrappleColl_Horiz(&raw mut context, block_offset, game)
+            PostGrappleColl_Horiz(&context, block_offset, game)
         } else {
-            PostGrappleColl_Vert(&raw mut context, block_offset, game)
+            PostGrappleColl_Vert(&context, block_offset, game)
         } as i16;
         if result >= 0 {
             let distance = (result as u16).wrapping_add(1);
@@ -1736,17 +1726,17 @@ unsafe fn post_grapple_traverse(horizontal: bool, positive: bool, game: &mut Gam
             2
         };
         block_offset = block_offset.wrapping_add(step);
-        context.pgci_r26 = context.pgci_r26.wrapping_sub(1);
-        if context.pgci_r26 & 0x8000 != 0 {
+        context.remaining_span = context.remaining_span.wrapping_sub(1);
+        if context.remaining_span & 0x8000 != 0 {
             break;
         }
     }
 }
-pub unsafe fn PostGrappleCollisionDetect_X(game: &mut Game) {
+pub fn PostGrappleCollisionDetect_X(game: &mut Game) {
     post_grapple_traverse(true, true, game);
     post_grapple_traverse(true, false, game);
 }
-pub unsafe fn PostGrappleCollisionDetect_Y(game: &mut Game) {
+pub fn PostGrappleCollisionDetect_Y(game: &mut Game) {
     post_grapple_traverse(false, true, game);
     post_grapple_traverse(false, false, game);
 }

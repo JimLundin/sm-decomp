@@ -1690,6 +1690,20 @@ lines -61, Rust lines -95. Next: post-grapple context ownership and solid
 distance reads, removing remaining raw context pointers without altering
 slope sampling or traversal lifetime.
 
+Post-grapple collision samples now use a private stack-owned context with
+remaining/initial span and edge-position names. All handlers borrow it by
+shared reference; only traversal decrements the remaining span. The unused
+raw callback alias and C representation are removed. All thirteen functions,
+including both public collision entries, are safe Rust. Mechanical source
+audit confirms unchanged bodies apart from reference/field conversion and
+the two solid low-nibble return simplifications; no raw context pointers
+remain. Stable optimized core/DLL build and direct full-source format check
+pass; Cargo fmt/build remain ASR-denied. Any%: 129,712 frames, zero failures
+(206.32s); Waver route: 58,109 frames, zero failures (101.25s). Unsafe functions
+-13, cast lines -2, Rust lines -10; other counters unchanged. Next: bank-90
+Samus_PostGrappleCollisionDetect correction caller, preserving live ejection
+distances, wrapping Y subtraction and the radius-gated second vertical probe.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
