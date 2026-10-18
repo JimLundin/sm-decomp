@@ -224,6 +224,33 @@ Next: compare normal command-delivery timing and classify remaining driver
 RAM differences before enforcing audio checks; then compare DSP/sample
 output with explicitly synchronized clocks. ROM assets stay ignored.
 
+DSP/sample probe (2026-10-18): extend the three independent driver
+boundaries above by generating 64 DSP samples after each synchronized tick.
+All 1,536 ticks, 16,040 ordered DSP writes and 196,608 sample values match;
+181,493 sample values are nonzero. An injected sample bit at tick 10,
+value index 7 is detected and returns exit 1. Both paths use the maintained
+DSP implementation with independently owned RAM; this tests driver-induced
+sample behavior under a shared schedule, not DSP accuracy against hardware.
+
+Normal-clock follow-up compares apu_cycle with SpcPlayer_GenerateSamples
+for 120 frames from each same boot boundary. The first frame's 1,068 sample
+values and 80 DSP writes match at phase zero, but later write sequences and
+samples diverge. With six subsequent commands, differing sample values are
+92,129 / 91,894 / 122,446 for boot boundaries 160 / 400 / 3,600; differing
+DSP-write frames are 103 / 99 / 111. This is diagnostic output, not an
+asserted gameplay failure. Removing all new commands from the 3,600 boundary
+still diverges at all nine sampled Rust timer phases (0, 8, 16, 24, 32, 40,
+48, 56, 63): 122,338..122,588 differing values of 128,160. Initial RAM/DSP
+state is shared, but command latches, SPC/timer phase and instruction-level
+DSP write timing are not fully synchronized. A simple initial timer-phase
+choice does not resolve this probe. Do not infer audible equivalence from
+matched synchronized ticks or change the driver on this evidence alone.
+Next: classify first normal-clock divergence by timer reads, command latch
+state and DSP write sample positions; distinguish scheduling differences
+from logic/state errors before enforcing sound checks. All probe changes
+stay outside maintained source. Sound source remains a86198ac; existing
+any% 129,712/0 and Waver 58,109/0 apply. Residue counters unchanged.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
