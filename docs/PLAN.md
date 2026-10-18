@@ -1804,6 +1804,23 @@ Rust lines -68; other counters unchanged. Next: solid-enemy contact selection,
 retaining promoted negative-edge equality versus truncated positive-edge
 equality, exact-contact Y-fraction clearing and collision-index writes.
 
+Solid-enemy contact selection now uses explicit directional distance/exact
+predicates instead of numeric branch state. Negative directions retain the
+promoted position-minus-radius comparison against a wrapped enemy edge;
+positive directions retain truncated i16 zero equality. Exact contact still
+clears Y fraction even horizontally before writing the directional collision
+index; nonexact nonnegative contact retains signed distance shifted by 16.
+Overlap/list traversal and the rest of the bank remain unchanged. Prior Rust
+comparison passes 2,166,288 complete-function full-RAM/return cases;
+independent contact comparison passes 9,437,184 full-RAM/return cases across
+all position/radius/enemy-position words and direction low bits. Stable
+optimized core/DLL build and direct full-source format pass; Cargo fmt/build
+remain ASR-denied. Any%: 129,712 frames, zero failures (199.10s); Waver route:
+58,109 frames, zero failures (96.73s). Raw offsets -26, cast lines -77,
+Rust lines -131; other counters unchanged. Next: solid-enemy overlap checks
+and list/index byte-backed access, preserving wrapped abs16, strict radius
+comparisons, frozen/property gate and sentinel traversal.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

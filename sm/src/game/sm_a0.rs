@@ -9064,9 +9064,6 @@ fn solid_enemy_probe_position(amount: i32, game: &Game) -> PositionAndWidth {
 }
 
 pub unsafe fn Samus_CheckSolidEnemyColl(mut amt: int32, game: &mut Game) -> CheckEnemyColl_Result {
-    let mut current_block: u64;
-    let mut v18: int16 = 0;
-    let mut varE32: uint16 = 0;
     if *((&raw mut game.g_ram as *mut uint8).offset(0x17a6 as ::core::ffi::c_int as isize)
         as *mut uint16)
         == 0
@@ -9122,199 +9119,71 @@ pub unsafe fn Samus_CheckSolidEnemyColl(mut amt: int32, game: &mut Game) -> Chec
                     || (v15 as ::core::ffi::c_int)
                         < *v10.offset(5 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
                 {
-                    match *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xb02 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int
-                        & 3 as ::core::ffi::c_int
-                    {
-                        0 => {
-                            varE32 = ((*ED).x_width as ::core::ffi::c_int
-                                + (*ED).x_pos as ::core::ffi::c_int)
-                                as uint16;
-                            v18 = (*((&raw mut game.g_ram as *mut uint8)
-                                .offset(0xaf6 as ::core::ffi::c_int as isize)
-                                as *mut uint16)
-                                as ::core::ffi::c_int
-                                - *((&raw mut game.g_ram as *mut uint8)
-                                    .offset(0xafe as ::core::ffi::c_int as isize)
-                                    as *mut uint16)
-                                    as ::core::ffi::c_int
-                                - varE32 as ::core::ffi::c_int)
-                                as int16;
-                            if *((&raw mut game.g_ram as *mut uint8)
-                                .offset(0xaf6 as ::core::ffi::c_int as isize)
-                                as *mut uint16) as ::core::ffi::c_int
-                                - *((&raw mut game.g_ram as *mut uint8)
-                                    .offset(0xafe as ::core::ffi::c_int as isize)
-                                    as *mut uint16)
-                                    as ::core::ffi::c_int
-                                == varE32 as ::core::ffi::c_int
+                    let direction = game.samus_collision_direction() & 3;
+                    let (distance, exact) = match direction {
+                        0 | 2 => {
+                            let (position, radius, enemy_position, enemy_radius) = if direction == 0
                             {
-                                current_block = 12683681397317680405;
-                            } else if (*((&raw mut game.g_ram as *mut uint8)
-                                .offset(0xaf6 as ::core::ffi::c_int as isize)
-                                as *mut uint16)
-                                as ::core::ffi::c_int
-                                - *((&raw mut game.g_ram as *mut uint8)
-                                    .offset(0xafe as ::core::ffi::c_int as isize)
-                                    as *mut uint16)
-                                    as ::core::ffi::c_int
-                                - varE32 as ::core::ffi::c_int)
-                                as int16 as ::core::ffi::c_int
-                                >= 0 as ::core::ffi::c_int
+                                (
+                                    game.samus_x_pos(),
+                                    game.samus_x_radius(),
+                                    (*ED).x_pos,
+                                    (*ED).x_width,
+                                )
+                            } else {
+                                (
+                                    game.samus_y_pos(),
+                                    game.samus_y_radius(),
+                                    (*ED).y_pos,
+                                    (*ED).y_height,
+                                )
+                            };
+                            let enemy_edge = enemy_position.wrapping_add(enemy_radius);
+                            // Negative-edge equality uses the unwrapped Samus subtraction.
+                            let samus_edge = i32::from(position) - i32::from(radius);
+                            (
+                                (samus_edge - i32::from(enemy_edge)) as i16,
+                                samus_edge == i32::from(enemy_edge),
+                            )
+                        }
+                        1 | 3 => {
+                            let (position, radius, enemy_position, enemy_radius) = if direction == 1
                             {
-                                current_block = 3392087639489470149;
+                                (
+                                    game.samus_x_pos(),
+                                    game.samus_x_radius(),
+                                    (*ED).x_pos,
+                                    (*ED).x_width,
+                                )
                             } else {
-                                current_block = 14136749492126903395;
-                            }
+                                (
+                                    game.samus_y_pos(),
+                                    game.samus_y_radius(),
+                                    (*ED).y_pos,
+                                    (*ED).y_height,
+                                )
+                            };
+                            let distance = (i32::from(enemy_position)
+                                - i32::from(enemy_radius)
+                                - i32::from(radius)
+                                - i32::from(position))
+                                as i16;
+                            (distance, distance == 0)
                         }
-                        1 => {
-                            varE32 = (*((&raw mut game.g_ram as *mut uint8)
-                                .offset(0xafe as ::core::ffi::c_int as isize)
-                                as *mut uint16)
-                                as ::core::ffi::c_int
-                                + *((&raw mut game.g_ram as *mut uint8)
-                                    .offset(0xaf6 as ::core::ffi::c_int as isize)
-                                    as *mut uint16)
-                                    as ::core::ffi::c_int)
-                                as uint16;
-                            v18 = ((*ED).x_pos as ::core::ffi::c_int
-                                - (*ED).x_width as ::core::ffi::c_int
-                                - (*((&raw mut game.g_ram as *mut uint8)
-                                    .offset(0xafe as ::core::ffi::c_int as isize)
-                                    as *mut uint16)
-                                    as ::core::ffi::c_int
-                                    + *((&raw mut game.g_ram as *mut uint8)
-                                        .offset(0xaf6 as ::core::ffi::c_int as isize)
-                                        as *mut uint16)
-                                        as ::core::ffi::c_int))
-                                as int16;
-                            if v18 == 0 {
-                                current_block = 12683681397317680405;
-                            } else if v18 as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
-                                current_block = 3392087639489470149;
-                            } else {
-                                current_block = 14136749492126903395;
-                            }
+                        _ => unreachable!(),
+                    };
+                    if exact || distance >= 0 {
+                        if exact {
+                            // Exact contact clears Y fraction even for horizontal probes.
+                            game.set_samus_y_subpos(0);
                         }
-                        2 => {
-                            varE32 = ((*ED).y_height as ::core::ffi::c_int
-                                + (*ED).y_pos as ::core::ffi::c_int)
-                                as uint16;
-                            v18 = (*((&raw mut game.g_ram as *mut uint8)
-                                .offset(0xafa as ::core::ffi::c_int as isize)
-                                as *mut uint16)
-                                as ::core::ffi::c_int
-                                - *((&raw mut game.g_ram as *mut uint8)
-                                    .offset(0xb00 as ::core::ffi::c_int as isize)
-                                    as *mut uint16)
-                                    as ::core::ffi::c_int
-                                - varE32 as ::core::ffi::c_int)
-                                as int16;
-                            if *((&raw mut game.g_ram as *mut uint8)
-                                .offset(0xafa as ::core::ffi::c_int as isize)
-                                as *mut uint16) as ::core::ffi::c_int
-                                - *((&raw mut game.g_ram as *mut uint8)
-                                    .offset(0xb00 as ::core::ffi::c_int as isize)
-                                    as *mut uint16)
-                                    as ::core::ffi::c_int
-                                == varE32 as ::core::ffi::c_int
-                            {
-                                current_block = 12683681397317680405;
-                            } else if (*((&raw mut game.g_ram as *mut uint8)
-                                .offset(0xafa as ::core::ffi::c_int as isize)
-                                as *mut uint16)
-                                as ::core::ffi::c_int
-                                - *((&raw mut game.g_ram as *mut uint8)
-                                    .offset(0xb00 as ::core::ffi::c_int as isize)
-                                    as *mut uint16)
-                                    as ::core::ffi::c_int
-                                - varE32 as ::core::ffi::c_int)
-                                as int16 as ::core::ffi::c_int
-                                >= 0 as ::core::ffi::c_int
-                            {
-                                current_block = 3392087639489470149;
-                            } else {
-                                current_block = 14136749492126903395;
-                            }
-                        }
-                        3 => {
-                            varE32 = (*((&raw mut game.g_ram as *mut uint8)
-                                .offset(0xb00 as ::core::ffi::c_int as isize)
-                                as *mut uint16)
-                                as ::core::ffi::c_int
-                                + *((&raw mut game.g_ram as *mut uint8)
-                                    .offset(0xafa as ::core::ffi::c_int as isize)
-                                    as *mut uint16)
-                                    as ::core::ffi::c_int)
-                                as uint16;
-                            v18 = ((*ED).y_pos as ::core::ffi::c_int
-                                - (*ED).y_height as ::core::ffi::c_int
-                                - (*((&raw mut game.g_ram as *mut uint8)
-                                    .offset(0xb00 as ::core::ffi::c_int as isize)
-                                    as *mut uint16)
-                                    as ::core::ffi::c_int
-                                    + *((&raw mut game.g_ram as *mut uint8)
-                                        .offset(0xafa as ::core::ffi::c_int as isize)
-                                        as *mut uint16)
-                                        as ::core::ffi::c_int))
-                                as int16;
-                            if v18 == 0 {
-                                current_block = 12683681397317680405;
-                            } else if v18 as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
-                                current_block = 3392087639489470149;
-                            } else {
-                                current_block = 14136749492126903395;
-                            }
-                        }
-                        _ => {
-                            Unreachable(game);
-                            current_block = 14136749492126903395;
-                        }
-                    }
-                    match current_block {
-                        14136749492126903395 => {}
-                        _ => match current_block {
-                            12683681397317680405 => {
-                                *((&raw mut game.g_ram as *mut uint8)
-                                    .offset(0xafc as ::core::ffi::c_int as isize)
-                                    as *mut uint16) = 0 as uint16;
-                                let mut v23: ::core::ffi::c_int = *((&raw mut game.g_ram
-                                    as *mut uint8)
-                                    .offset(0xb02 as ::core::ffi::c_int as isize)
-                                    as *mut uint16)
-                                    as ::core::ffi::c_int
-                                    & 3 as ::core::ffi::c_int;
-                                *((&raw mut game.g_ram as *mut uint8)
-                                    .offset(0x182c as ::core::ffi::c_int as isize)
-                                    as *mut uint16)
-                                    .offset(v23 as isize) = *((&raw mut game.g_ram as *mut uint8)
-                                    .offset(0x18a6 as ::core::ffi::c_int as isize)
-                                    as *mut uint16);
-                                return CheckSolidEnemyColl_Result {
-                                    collision: -(1 as ::core::ffi::c_int) as uint16,
-                                    amt: 0 as int32,
-                                };
-                            }
-                            _ => {
-                                let mut v25: ::core::ffi::c_int = *((&raw mut game.g_ram
-                                    as *mut uint8)
-                                    .offset(0xb02 as ::core::ffi::c_int as isize)
-                                    as *mut uint16)
-                                    as ::core::ffi::c_int
-                                    & 3 as ::core::ffi::c_int;
-                                *((&raw mut game.g_ram as *mut uint8)
-                                    .offset(0x182c as ::core::ffi::c_int as isize)
-                                    as *mut uint16)
-                                    .offset(v25 as isize) = *((&raw mut game.g_ram as *mut uint8)
-                                    .offset(0x18a6 as ::core::ffi::c_int as isize)
-                                    as *mut uint16);
-                                return CheckSolidEnemyColl_Result {
-                                    collision: -(1 as ::core::ffi::c_int) as uint16,
-                                    amt: (v18 as int32) << 16 as ::core::ffi::c_int,
-                                };
-                            }
-                        },
+                        let index = game.collision_detection_index();
+                        let offset = 0x182c + usize::from(game.samus_collision_direction() & 3) * 2;
+                        game.g_ram[offset..offset + 2].copy_from_slice(&index.to_le_bytes());
+                        return CheckSolidEnemyColl_Result {
+                            collision: 0xffff,
+                            amt: if exact { 0 } else { i32::from(distance) << 16 },
+                        };
                     }
                 }
             }
