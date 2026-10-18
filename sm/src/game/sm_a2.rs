@@ -2112,49 +2112,77 @@ pub unsafe fn BouncingGoofball_Func1(mut k: uint16, game: &mut Game) {
     (*E).bgl_var_02 = 1 as uint16;
     (*E).bgl_var_04 = 1 as uint16;
 }
-static off_A28718: [Option<Func_V>; 2] = unsafe {
-    [
-        Some(BouncingGoofball_State0 as unsafe fn(&mut Game) -> ()),
-        Some(BouncingGoofball_State1 as unsafe fn(&mut Game) -> ()),
-    ]
-};
 pub unsafe fn BouncingGoofball_Main(game: &mut Game) {
-    let mut E: *mut Enemy_BouncingGoofball = Get_BouncingGoofball(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    if (*E).bgl_var_05 == 0 {
-        BouncingGoofball_Func1(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            game,
-        );
-        (*E).bgl_var_05 = 1 as uint16;
+    let index = game.cur_enemy_index();
+    if GoofballState::new(game, index).initialized() == 0 {
+        BouncingGoofball_Func1(game.cur_enemy_index(), game);
+        GoofballState::new(game, index).set_initialized(1);
         return;
     }
-    (*E).bgl_var_03 = (*E).bgl_var_A;
+    let scale = GoofballState::new(game, index).scale();
+    GoofballState::new(game, index).set_saved_scale(scale);
     if BouncingGoofball_SamusCloseX(game) != 0 {
-        (*E).bgl_var_02 = 0 as uint16;
-        (*E).bgl_var_04 = 0 as uint16;
-        if (*E).bgl_var_F == 0 {
-            (*E).bgl_var_F = 1 as uint16;
+        GoofballState::new(game, index).set_active(0);
+        GoofballState::new(game, index).set_animation_ready(0);
+        if GoofballState::new(game, index).animation_trigger() == 0 {
+            GoofballState::new(game, index).set_animation_trigger(1);
             BouncingGoofball_Func3(game);
         }
-    } else if !((*E).bgl_var_02 == 0) {
-        if (*E).bgl_var_04 == 0 {
-            (*E).bgl_var_04 = 1 as uint16;
+    } else if GoofballState::new(game, index).active() != 0 {
+        if GoofballState::new(game, index).animation_ready() == 0 {
+            GoofballState::new(game, index).set_animation_ready(1);
             BouncingGoofball_Func2(game);
         }
         return;
     }
-    (*E).bgl_var_A = (*E).bgl_var_03;
-    off_A28718[(*E).bgl_var_01 as usize].expect("non-null function pointer")(game);
+    let scale = GoofballState::new(game, index).saved_scale();
+    GoofballState::new(game, index).set_scale(scale);
+    match GoofballState::new(game, index).state() {
+        0 => BouncingGoofball_State0(game),
+        1 => BouncingGoofball_State1(game),
+        _ => panic!("invalid Goofball state"),
+    }
 }
 struct GoofballState<'a> {
     bytes: &'a mut [u8],
 }
 impl<'a> GoofballState<'a> {
+    fn initialized(&self) -> u16 {
+        self.read(core::mem::offset_of!(Enemy_BouncingGoofball, bgl_var_05))
+    }
+    fn set_initialized(&mut self, value: u16) {
+        self.write(
+            core::mem::offset_of!(Enemy_BouncingGoofball, bgl_var_05),
+            value,
+        );
+    }
+    fn saved_scale(&self) -> u16 {
+        self.read(core::mem::offset_of!(Enemy_BouncingGoofball, bgl_var_03))
+    }
+    fn set_saved_scale(&mut self, value: u16) {
+        self.write(
+            core::mem::offset_of!(Enemy_BouncingGoofball, bgl_var_03),
+            value,
+        );
+    }
+    fn animation_ready(&self) -> u16 {
+        self.read(core::mem::offset_of!(Enemy_BouncingGoofball, bgl_var_04))
+    }
+    fn set_animation_ready(&mut self, value: u16) {
+        self.write(
+            core::mem::offset_of!(Enemy_BouncingGoofball, bgl_var_04),
+            value,
+        );
+    }
+    fn active(&self) -> u16 {
+        self.read(core::mem::offset_of!(Enemy_BouncingGoofball, bgl_var_02))
+    }
+    fn animation_trigger(&self) -> u16 {
+        self.read(core::mem::offset_of!(Enemy_BouncingGoofball, bgl_var_F))
+    }
+    fn state(&self) -> u16 {
+        self.read(core::mem::offset_of!(Enemy_BouncingGoofball, bgl_var_01))
+    }
     fn parameter_low(&self) -> u8 {
         self.bytes[core::mem::offset_of!(Enemy_BouncingGoofball, bgl_parameter_1)]
     }

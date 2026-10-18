@@ -2377,6 +2377,20 @@ unsafe functions -1, cast lines -16; Rust lines +1 provide named parameter
 and state fields. Other counters unchanged. Next: Goofball Main captured-slot
 state access and direct dispatch, preserving live callback index reads.
 
+Goofball Main now uses named byte-backed state fields and direct state
+matching instead of the two-entry function table. Captured-slot writes,
+live index reads before callbacks, saved-scale restore and initialization/
+proximity/animation branch order remain exact. Invalid states still panic.
+Independent extracted comparison passes 1,773,376 full-RAM/callback-trace/
+RNG cases across every index/flag word and random cases with callbacks
+mutating indexes, fields and dispatch state. Stable optimized core/DLL build
+and direct full-source format pass; Cargo fmt/build remain ASR-denied.
+CGRAM/render-enabled any%: 129,712 frames, zero failures (203.23s); Waver
+route: 58,109 frames, zero failures (96.88s). Raw offsets -2, cast lines -3;
+Rust lines +28 provide named state-field reads/writes. Other counters
+unchanged. Next: Goofball Func1 initial movement accumulation, retaining
+ROM reads, signed exit gate and phase/active/animation-ready write order.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
