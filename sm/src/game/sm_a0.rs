@@ -8998,13 +8998,40 @@ pub unsafe fn CreateDudShot(game: &mut Game) {
         );
     *fresh13 = (*fresh13 as ::core::ffi::c_int | 0x10 as ::core::ffi::c_int) as uint16;
 }
-pub unsafe fn Samus_CheckSolidEnemyColl(mut amt: int32, game: &mut Game) -> CheckEnemyColl_Result {
-    let mut current_block: u64;
-    let mut v18: int16 = 0;
-    let mut r18: uint16 = (amt >> 16 as ::core::ffi::c_int) as uint16;
-    let mut r20: uint16 = amt as uint16;
-    let mut varE32: uint16 = 0;
-    let mut pos: PositionAndWidth = PositionAndWidth {
+fn solid_enemy_probe_coordinate(position: u16, fraction: u16, amount: i32, negative: bool) -> u16 {
+    let integer_amount = (amount >> 16) as u16;
+    let fractional_amount = amount as u16;
+    if negative {
+        let mut coordinate = position.wrapping_sub(integer_amount);
+        let mut exact = fraction == fractional_amount;
+        if fraction < fractional_amount {
+            // Borrow changes the rounding test to the integer before decrement.
+            exact = coordinate == 1;
+            coordinate = coordinate.wrapping_sub(1);
+        }
+        if !exact {
+            coordinate = coordinate.wrapping_sub(1);
+        }
+        coordinate
+    } else {
+        let mut coordinate = position.wrapping_add(integer_amount);
+        let sum = u32::from(fraction) + u32::from(fractional_amount);
+        let mut exact = sum == 0;
+        if sum > 0xffff {
+            // Carry changes the rounding test to the integer before increment.
+            exact = coordinate == 0xffff;
+            coordinate = coordinate.wrapping_add(1);
+        }
+        if !exact {
+            coordinate = coordinate.wrapping_add(1);
+        }
+        coordinate
+    }
+}
+
+fn solid_enemy_probe_position(amount: i32, game: &Game) -> PositionAndWidth {
+    let direction = game.samus_collision_direction() & 3;
+    let mut pos = PositionAndWidth {
         x_pos: 0,
         x_subpos: 0,
         y_pos: 0,
@@ -9012,6 +9039,34 @@ pub unsafe fn Samus_CheckSolidEnemyColl(mut amt: int32, game: &mut Game) -> Chec
         width: 0,
         height: 0,
     };
+    if direction < 2 {
+        pos.x_pos = solid_enemy_probe_coordinate(
+            game.samus_x_pos(),
+            game.samus_x_subpos(),
+            amount,
+            direction == 0,
+        );
+        pos.y_pos = game.samus_y_pos();
+        pos.y_subpos = game.samus_y_subpos();
+    } else {
+        pos.y_pos = solid_enemy_probe_coordinate(
+            game.samus_y_pos(),
+            game.samus_y_subpos(),
+            amount,
+            direction == 2,
+        );
+        pos.x_pos = game.samus_x_pos();
+        pos.x_subpos = game.samus_x_subpos();
+    }
+    pos.width = game.samus_x_radius();
+    pos.height = game.samus_y_radius();
+    pos
+}
+
+pub unsafe fn Samus_CheckSolidEnemyColl(mut amt: int32, game: &mut Game) -> CheckEnemyColl_Result {
+    let mut current_block: u64;
+    let mut v18: int16 = 0;
+    let mut varE32: uint16 = 0;
     if *((&raw mut game.g_ram as *mut uint8).offset(0x17a6 as ::core::ffi::c_int as isize)
         as *mut uint16)
         == 0
@@ -9021,130 +9076,7 @@ pub unsafe fn Samus_CheckSolidEnemyColl(mut amt: int32, game: &mut Game) -> Chec
             amt: amt,
         };
     }
-    match *((&raw mut game.g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & 3 as ::core::ffi::c_int
-    {
-        0 => {
-            pos.x_pos = (*((&raw mut game.g_ram as *mut uint8)
-                .offset(0xaf6 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                - r18 as ::core::ffi::c_int) as uint16;
-            let mut i: bool = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xaf8 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                == r20 as ::core::ffi::c_int;
-            if (*((&raw mut game.g_ram as *mut uint8).offset(0xaf8 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int)
-                < r20 as ::core::ffi::c_int
-            {
-                let fresh3 = pos.x_pos;
-                pos.x_pos = pos.x_pos.wrapping_sub(1);
-                i = fresh3 as ::core::ffi::c_int == 1 as ::core::ffi::c_int;
-            }
-            if !i {
-                pos.x_pos = pos.x_pos.wrapping_sub(1);
-            }
-            pos.y_pos = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xafa as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            pos.y_subpos = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xafc as ::core::ffi::c_int as isize)
-                as *mut uint16);
-        }
-        1 => {
-            pos.x_pos = (*((&raw mut game.g_ram as *mut uint8)
-                .offset(0xaf6 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                + r18 as ::core::ffi::c_int) as uint16;
-            let mut j: bool = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xaf8 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                + r20 as ::core::ffi::c_int
-                == 0 as ::core::ffi::c_int;
-            if __CFADD__uint16(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xaf8 as ::core::ffi::c_int as isize)
-                    as *mut uint16),
-                r20,
-            ) {
-                let fresh5 = pos.x_pos;
-                pos.x_pos = pos.x_pos.wrapping_add(1);
-                j = fresh5 as ::core::ffi::c_int == 0xffff as ::core::ffi::c_int;
-            }
-            if !j {
-                pos.x_pos = pos.x_pos.wrapping_add(1);
-            }
-            pos.y_pos = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xafa as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            pos.y_subpos = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xafc as ::core::ffi::c_int as isize)
-                as *mut uint16);
-        }
-        2 => {
-            pos.y_pos = (*((&raw mut game.g_ram as *mut uint8)
-                .offset(0xafa as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                - r18 as ::core::ffi::c_int) as uint16;
-            let mut v4: bool = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xafc as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                == r20 as ::core::ffi::c_int;
-            if (*((&raw mut game.g_ram as *mut uint8).offset(0xafc as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int)
-                < r20 as ::core::ffi::c_int
-            {
-                let fresh7 = pos.y_pos;
-                pos.y_pos = pos.y_pos.wrapping_sub(1);
-                v4 = fresh7 as ::core::ffi::c_int == 1 as ::core::ffi::c_int;
-            }
-            if !v4 {
-                pos.y_pos = pos.y_pos.wrapping_sub(1);
-            }
-            pos.x_pos = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xaf6 as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            pos.x_subpos = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xaf8 as ::core::ffi::c_int as isize)
-                as *mut uint16);
-        }
-        3 => {
-            pos.y_pos = (*((&raw mut game.g_ram as *mut uint8)
-                .offset(0xafa as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                + r18 as ::core::ffi::c_int) as uint16;
-            let mut v5: bool = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xafc as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                + r20 as ::core::ffi::c_int
-                == 0 as ::core::ffi::c_int;
-            if __CFADD__uint16(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xafc as ::core::ffi::c_int as isize)
-                    as *mut uint16),
-                r20,
-            ) {
-                let fresh9 = pos.y_pos;
-                pos.y_pos = pos.y_pos.wrapping_add(1);
-                v5 = fresh9 as ::core::ffi::c_int == 0xffff as ::core::ffi::c_int;
-            }
-            if !v5 {
-                pos.y_pos = pos.y_pos.wrapping_add(1);
-            }
-            pos.x_pos = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xaf6 as ::core::ffi::c_int as isize)
-                as *mut uint16);
-            pos.x_subpos = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0xaf8 as ::core::ffi::c_int as isize)
-                as *mut uint16);
-        }
-        _ => {
-            Unreachable(game);
-        }
-    }
-    pos.width = *((&raw mut game.g_ram as *mut uint8).offset(0xafe as ::core::ffi::c_int as isize)
-        as *mut uint16);
-    pos.height = *((&raw mut game.g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize)
-        as *mut uint16);
+    let mut pos = solid_enemy_probe_position(amt, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x18a6 as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
     let mut i_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;

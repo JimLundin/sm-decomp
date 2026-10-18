@@ -1788,6 +1788,22 @@ accessors; all other counters unchanged. Next: solid-enemy collision's
 initial Samus position construction, preserving fractional borrow/carry
 rounding before simplifying its contact selection.
 
+Solid-enemy collision now constructs its initial Samus probe through safe
+coordinate/position helpers with named byte-backed position, fraction and
+radius reads. Both axes share explicit wrapping integer arithmetic. Borrow
+and carry retain their unusual pre-adjustment integer equality tests; the
+positive fractional zero test remains an unwrapped sum. Perpendicular
+coordinates/fractions and zero movement-axis fraction are unchanged. The
+complete collision body from index reset onward is byte-for-byte unchanged.
+Prior Rust comparison passes 25,165,824 full-RAM/position boundary cases;
+independent comparison passes another 4,718,592 position cases. Stable
+optimized core/DLL build and direct full-source format pass; Cargo fmt/build
+remain ASR-denied. Any%: 129,712 frames, zero failures (203.24s); Waver route:
+58,109 frames, zero failures (92.31s). Raw offsets -23, cast lines -52,
+Rust lines -68; other counters unchanged. Next: solid-enemy contact selection,
+retaining promoted negative-edge equality versus truncated positive-edge
+equality, exact-contact Y-fraction clearing and collision-index writes.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
