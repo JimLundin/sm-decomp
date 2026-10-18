@@ -5742,6 +5742,35 @@ behavior, without proving device event/autojoy timing. Hardware/audio timing,
 rendering/Waver71, masked RAM and credits remain open; held HDMA diagnosis
 stays stopped. Continue executed hardware paths and route coverage.
 
+Left 99BD hatch approach (2026-10-18): three normal-input suffixes
+retain the59942-frame item-bearing prefix. First left60/jump10 then Morph
+and two bombs completes60266/71 (165.75s); its read-only observer repeats
+60266/71 (159.77s). At frame59985 Samus isX96/Y1163, then leaves the floor
+and falls before jumping. Actual0500 bombs spawn at frame60025,X72/Y1253,
+far below theY1104 hatch. All three observed hatch words remain intact.
+
+Moving left40 then jumping left18 before Morph completes60252/71
+(194.47s). This takes off while on the ledge, reachesX94/Y1132, and hits
+solid ceiling before reachingX48. Morph later succeeds and a0500 bomb
+spawns aroundX80/Y1161; the hatch staysB2B6. The early-Down variant
+completes60264/71 (172.69s), but Down taps during this jump do not enter
+Morph: pose0052 is FaceL_Jump_NoAim_MoveF, not Morph. No bombs spawn.
+It reachesX55 only atY1198 and endsX41/Y1243. Do not treat failed Morph
+input as a bomb-placement experiment. No hatch removal or new room proved.
+
+All native exits1 and exactly the same71 ordered rendered diagnostics
+as frozen d217ea15 Waver baseline. Observers read only maintained RAM:
+position/pose, left and right hatch words, bomb counter and slots5/6.
+First bomb evidence is actual spawned0500 slots, not merely shoot input.
+No ROM/state/geometry/probe artifact is committed. No maintained Rust edits;
+own residue delta zero, concurrent hardware totals change separately.
+Direct full-source rustfmt passes; Cargo fmt/check and release again fail
+at cargo.exe launch with OSerror5. Prior same-DLL rendered any%129712/0
+(414.98s) remains the regression result; no changed source to retest here.
+Next: Morph while still on the entry ledge, then use a measured bomb-jump
+approach toward the left hatch. Retain read-only block/position observation.
+Held9AD9 ammunition and HDMA work stay held; credits remain unproved.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
