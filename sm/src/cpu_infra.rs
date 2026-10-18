@@ -3382,13 +3382,11 @@ pub unsafe fn RtlRunFrameCompare(
         RunOneFrameOfGame_Emulated(game);
         DrawFrameToPpu(game);
     } else if game.g_runmode as ::core::ffi::c_int == RM_MINE as ::core::ffi::c_int {
-        game.g_use_my_apu_code = true_0 != 0;
         (*game.g_snes).runningWhichVersion = 0xff as uint8_t;
         RunOneFrameOfGame(game);
         DrawFrameToPpu(game);
         (*game.g_snes).runningWhichVersion = 0 as uint8_t;
     } else {
-        game.g_use_my_apu_code = true_0 != 0;
         RunOneFrameOfGame_Both(game);
     };
 }

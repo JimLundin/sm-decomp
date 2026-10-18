@@ -413,6 +413,7 @@ pub const fnDoorTransition_FadeInScreenAndFinish: ::core::ffi::c_int =
     0x82e737 as ::core::ffi::c_int;
 pub unsafe fn APU_UploadBank(mut addr: uint32, game: &mut Game) {
     if !game.g_use_my_apu_code {
+        crate::native_audio::upload(addr, game);
         return;
     }
     RtlApuUpload(RomPtr(addr as uint32_t, game), game);

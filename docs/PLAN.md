@@ -1479,6 +1479,45 @@ serialization. Independent source/evidence review has no blockers. Next:
 route maintained physical uploads to native Rust transport with backend
 selection preserved, retaining separate normal-audio equivalence checks.
 
+Maintained native upload transport (2026-10-18): APU_UploadBank now uses an
+address-based Rust handshake for physical audio; custom audio retains its
+existing player upload. RM_MINE/BOTH preserve the backend selected before
+SnesInit rather than forcing custom audio. Game's default remains custom.
+The transport uses maintained bus reads/writes and preserves source-bank
+completion stores, crossed header reads, first-wrap early source advance,
+token/acknowledgement order and permanent initial-timeout/block-timeout behavior.
+It initializes wrapper source bytes 00..02 without resetting the custom queue
+or player. Rust physical uploads never call ROM CPU code.
+
+The exact maintained uploader body, copied into the prior matched-entry
+protocol fixture, passes boots 160/400/3,600, all nine previously observed
+bank sources, stopped-SPC block timeout and synthetic empty headers at
+D0FFFE/D0FFFF (all native exits 0). Existing fixture comparison checks ordered
+SPC RAM/DSP/sample events, terminal APU/SPC/DSP/catchup and selected WRAM.
+These use the older instrumented hardware library, not current natural runtime;
+no patched ROM asset is written. Current-source physical gameplay fault injection
+at frame 160 flips a live return port, which the natural return-state comparator
+detects and exits 3. Independent source review finds no protocol-order blocker.
+
+Full frozen-source any% passes with the default custom backend: 129,712/0
+(261.07s), native exit 0. The physical-backend copy passes 129,712/0
+(286.25s), native exit 0, with exactly equal 45-call frame/source vectors
+and 90 equal natural entry/return APU/SPC/DSP/catchup field comparisons.
+Seven sources execute naturally; the nine-source edge fixtures are separate.
+Temporary observation/fault code is excluded from maintained source.
+Cargo fmt/check, optimized core/DLL builds and current-source metadata pass;
+Cargo release remains denied executing khronos_api's build script, OS error 5.
+This focused change adds 108 Rust lines and four unsafe bus/transport functions;
+other residue counters are unchanged by it. Concurrent gameplay/display edits
+are outside this commit and its frozen verification source.
+
+Physical audio must be selected before SnesInit installs backend-specific ROM
+patches; live backend switching is not established. Natural boundary comparison
+is still a temporary probe, not enforced by the maintained verifier. Next:
+enforce independent physical upload/command checks and verify native-only
+continuation. Ordinary command timing and full audible equivalence remain open;
+BOTH's adoption of ROM physical state does not prove native-only continuation.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read
