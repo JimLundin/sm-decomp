@@ -159,6 +159,31 @@ impl Game {
         u16::from_le_bytes([self.g_ram[0xb00], self.g_ram[0xb01]])
     }
 
+    /// samus_pose_x_dir ($7E:0A1E in ram_map); this is a byte, not a word.
+    pub fn samus_pose_x_dir(&self) -> u8 {
+        self.g_ram[0xa1e]
+    }
+
+    /// button_config_jump_a ($7E:09B4 in ram_map).
+    pub fn button_config_jump_a(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x9b4], self.g_ram[0x9b5]])
+    }
+
+    /// joypad1_newkeys ($7E:008F in ram_map).
+    pub fn joypad1_newkeys(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x8f], self.g_ram[0x90]])
+    }
+
+    /// collision_detection_index ($7E:18A6 in ram_map).
+    pub fn collision_detection_index(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x18a6], self.g_ram[0x18a7]])
+    }
+
+    /// enemy_index_to_shake ($7E:0E1C in ram_map).
+    pub fn set_enemy_index_to_shake(&mut self, value: u16) {
+        self.g_ram[0xe1c..0xe1e].copy_from_slice(&value.to_le_bytes());
+    }
+
     /// samus_collision_direction ($7E:0B02 in ram_map).
     pub fn samus_collision_direction(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0xb02], self.g_ram[0xb03]])

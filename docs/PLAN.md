@@ -1731,6 +1731,20 @@ Rust lines -5; other counters unchanged. Next: Samus_GrappleWallJumpCheck
 collision caller, preserving facing-byte direction selection, enemy/block
 probe order and live jump-button/contact reads.
 
+Grapple wall-jump checking now uses direct facing-byte selection and named
+byte-backed button/contact/shake-index access. Reset-before-facing order,
+enemy-before-block probes, callback-adjusted amount and live button/contact
+reads remain exact; enemy index is written only after a pressed jump on
+solid-enemy contact. Prior Rust comparison passes 786,552 full-RAM/probe-trace/
+return cases over every facing word and button/contact word, amount boundaries
+and callbacks mutating live buttons/contact/index. Final-source optimized
+core/DLL build and direct format pass; Cargo fmt/build remain ASR-denied.
+Waver route: 58,109 frames, zero failures (122.59s); any%: 129,712 frames,
+zero failures (235.64s), run alongside the earlier unnamed-access DLL.
+Raw offsets -12, cast lines -24; unsafe count unchanged. Rust lines +8 are
+named byte-backed accessors. Next: regular Samus_WallJumpCheck branch state
+and live input/contact arithmetic, preserving animation gates and probe order.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

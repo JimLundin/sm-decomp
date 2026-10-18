@@ -5601,49 +5601,32 @@ pub unsafe fn Samus_DetermineAccel_Y(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xb34 as ::core::ffi::c_int as isize)
         as *mut uint16) = g_word_909EA7;
 }
-pub unsafe fn Samus_GrappleWallJumpCheck(mut amt: int32, game: &mut Game) -> uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xe1c as ::core::ffi::c_int as isize)
-        as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
-    if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e as ::core::ffi::c_int as isize)
-        as ::core::ffi::c_int
-        != 4 as ::core::ffi::c_int
-    {
-        if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e as ::core::ffi::c_int as isize)
-            as ::core::ffi::c_int
-            != 8 as ::core::ffi::c_int
-        {
-            return 0 as uint8;
+pub unsafe fn Samus_GrappleWallJumpCheck(amt: int32, game: &mut Game) -> uint8 {
+    game.set_enemy_index_to_shake(0xffff);
+    let direction = match game.samus_pose_x_dir() {
+        4 => 0,
+        8 => 1,
+        _ => return 0,
+    };
+    game.set_samus_collision_direction(direction);
+    let result = Samus_CheckSolidEnemyColl(amt, game);
+    if result.collision == 0 {
+        WallJumpBlockCollDetect(result.amt, game);
+        if game.samus_collision_flag() == 0 {
+            return 0;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 1 as uint16;
-    } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb02 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
+        let jump = game.button_config_jump_a();
+        let pressed = game.joypad1_newkeys();
+        return u8::from(jump & pressed != 0);
     }
-    let mut cres: CheckEnemyColl_Result = Samus_CheckSolidEnemyColl(amt, game);
-    if cres.collision == 0 {
-        amt = WallJumpBlockCollDetect(cres.amt, game);
-        return (*((&raw mut game.g_ram as *mut uint8).offset(0xdd0 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            != 0
-            && *((&raw mut game.g_ram as *mut uint8).offset(0x9b4 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                & *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int
-                != 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint8;
+    let jump = game.button_config_jump_a();
+    let pressed = game.joypad1_newkeys();
+    if jump & pressed == 0 {
+        return 0;
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9b4 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int
-        & *((&raw mut game.g_ram as *mut uint8).offset(0x8f as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
-    {
-        return 0 as uint8;
-    }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xe1c as ::core::ffi::c_int as isize)
-        as *mut uint16) = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x18a6 as ::core::ffi::c_int as isize) as *mut uint16);
-    return 1 as uint8;
+    let enemy = game.collision_detection_index();
+    game.set_enemy_index_to_shake(enemy);
+    1
 }
 pub unsafe fn Samus_WallJumpCheck(mut amt: int32, game: &mut Game) -> uint8 {
     let mut current_block: u64;
