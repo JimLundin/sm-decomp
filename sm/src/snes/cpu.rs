@@ -229,7 +229,7 @@ unsafe fn cpu_writeWord(
         cpu_write(cpu, adrh, high, game);
     }
 }
-unsafe fn cpu_doInterrupt(mut cpu: *mut Cpu, mut irq: bool, game: &mut Game) {
+unsafe fn cpu_doInterrupt(cpu: *mut Cpu, irq: bool, game: &mut Game) {
     if !(*cpu).e {
         cpu_pushByte(cpu, (*cpu).k, game);
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
@@ -238,21 +238,14 @@ unsafe fn cpu_doInterrupt(mut cpu: *mut Cpu, mut irq: bool, game: &mut Game) {
     let flags = cpu_getFlags(cpu);
     // Bit 4 is the cleared B flag on an emulation-mode hardware interrupt.
     cpu_pushByte(cpu, if (*cpu).e { flags & !0x10 } else { flags }, game);
-    (*cpu).i = true_0 != 0;
-    (*cpu).d = false_0 != 0;
-    (*cpu).k = 0 as uint8_t;
-    let vector = if (*cpu).e {
-        if irq {
-            0xfffe
-        } else {
-            0xfffa
-        }
-    } else {
-        if irq {
-            0xffee
-        } else {
-            0xffea
-        }
+    (*cpu).i = true;
+    (*cpu).d = false;
+    (*cpu).k = 0;
+    let vector = match ((*cpu).e, irq) {
+        (false, false) => 0xffea,
+        (false, true) => 0xffee,
+        (true, false) => 0xfffa,
+        (true, true) => 0xfffe,
     };
     (*cpu).pc = cpu_readWord(cpu, vector, vector + 1, game);
 }

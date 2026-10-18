@@ -8137,6 +8137,21 @@ full frontend linking still lacks SDL2. Live source matches verified source.
 Cast lines -4, Rust lines -2; other counters unchanged. Full gameplay and
 render/audio completeness remain open.
 
+CPU interrupt-helper cleanup (2026-10-19): vector selection is an explicit
+match on emulation mode and IRQ/NMI; interrupt flags use native literals.
+Stack-write order, emulation B-bit clearing and low/high vector reads remain
+exact. Frozen HEAD `7df8bfbe3eafee200af5e0c02e27a5fa092e25eb` plus only this
+helper edit passes 16,384 actual old/current runner pairs over all flag bytes,
+both modes, two stacks and stopped/waiting/IRQ/NMI combinations. Four distinct
+in-memory vector targets check each selection; full RAM, named CPU state,
+cycles, history, open bus and memory-operation counts match. Prefix 3,600/0
+(1.00s) executes 3,600 native NMIs through the changed helper; the remaining
+vector branches have dedicated coverage. Full any% 129,712/0 (51.76s), native
+exit 0. Cargo fmt/check, release library, frozen normal metadata and optimized
+core/DLL builds pass; full frontend linking still lacks SDL2. Live source
+matches verified source. Rust lines -7; all other counters unchanged. This
+does not close gameplay, rendering or audio completeness.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
