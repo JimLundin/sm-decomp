@@ -324,6 +324,60 @@ impl Game {
         self.g_ram[0xb14..0xb16].copy_from_slice(&value.to_le_bytes());
     }
 
+    /// samus_momentum_routine_index ($7E:0A2E in ram_map).
+    pub fn set_samus_momentum_routine_index(&mut self, value: u16) {
+        self.g_ram[0xa2e..0xa30].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_special_transgfx_index ($7E:0A30 in ram_map).
+    pub fn set_samus_special_transgfx_index(&mut self, value: u16) {
+        self.g_ram[0xa30..0xa32].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_hurt_switch_index ($7E:0A32 in ram_map).
+    pub fn set_samus_hurt_switch_index(&mut self, value: u16) {
+        self.g_ram[0xa32..0xa34].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// absolute_moved_last_frame_x ($7E:0DA2 in ram_map).
+    pub fn set_absolute_moved_last_frame_x(&mut self, value: u16) {
+        self.g_ram[0xda2..0xda4].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// absolute_moved_last_frame_x_fract ($7E:0DA4 in ram_map).
+    pub fn set_absolute_moved_last_frame_x_fract(&mut self, value: u16) {
+        self.g_ram[0xda4..0xda6].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// absolute_moved_last_frame_y ($7E:0DA6 in ram_map).
+    pub fn set_absolute_moved_last_frame_y(&mut self, value: u16) {
+        self.g_ram[0xda6..0xda8].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// absolute_moved_last_frame_y_fract ($7E:0DA8 in ram_map).
+    pub fn set_absolute_moved_last_frame_y_fract(&mut self, value: u16) {
+        self.g_ram[0xda8..0xdaa].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_y_subaccel ($7E:0B32 in ram_map).
+    pub fn set_samus_y_subaccel(&mut self, value: u16) {
+        self.g_ram[0xb32..0xb34].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_y_accel ($7E:0B34 in ram_map).
+    pub fn set_samus_y_accel(&mut self, value: u16) {
+        self.g_ram[0xb34..0xb36].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// debug_invincibility ($7E:0DE0 in ram_map).
+    pub fn set_debug_invincibility(&mut self, value: u16) {
+        self.g_ram[0xde0..0xde2].copy_from_slice(&value.to_le_bytes());
+    }
+
+    pub fn debug_invincibility(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xde0], self.g_ram[0xde1]])
+    }
+
     /// frame_handler_alfa ($7E:0A42 in ram_map).
     pub fn set_frame_handler_alfa(&mut self, value: u16) {
         self.g_ram[0xa42..0xa44].copy_from_slice(&value.to_le_bytes());

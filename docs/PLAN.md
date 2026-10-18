@@ -2898,6 +2898,34 @@ counters unchanged. No probe or ROM-derived assets are committed.
 Next: remaining initialization scalar setup and mixed pose-byte fields,
 preserving write order and widths; the stopped ammo route stays held.
 
+Samus initialization movement setup now uses named byte-backed accessors
+for momentum/transition/hurt indices, previous-frame absolute displacement,
+vertical acceleration and debug_invincibility. The ten word fields match
+ram_map at 0A2E/0A30/0A32/0DA2/0DA4/0DA6/0DA8/0B32/0B34/0DE0.
+The invincibility read stays before the workspace clear, its conditional
+restore stays after input-handler setup, and its final zeroing stays before
+the demo-state read. Fractional displacement still stores before integer
+displacement on each axis; palette/callback and scalar-store order is retained.
+
+Observed boot/gunship passes 22,631/0 (51.29s), native exit 0. Three actual
+Rust-side-2 initialization calls at SNES counters 298/8,256/20,817 execute
+11/11/10 changed stores (32 total). Momentum is 0000/0000/FFFF across the
+calls; both transition-index branches execute. Displacement words retain
+0000/0001 for fraction/integer on each axis and vertical acceleration
+retains 1C00/0000. Invincibility is zero in all observed calls; nonzero
+restoration and the demo-transition skip remain unproved by this route.
+Removing all probe observations restores exact maintained source.
+
+Full any% passes 129,712/0 (279.17s), native exit 0, on committed c4807db4
+source with only this sm_91.rs/game_state.rs change. Concurrent reset-upload
+work is outside that replay's scope. Cargo fmt/check, optimized core/DLL
+and normal-core metadata builds pass; Cargo release remains denied at
+khronos_api's build script (OS error 5). Raw offsets -15, cast lines -16;
+Rust lines +39 provide ten setters and the invincibility getter. Other
+gameplay counters unchanged. No probe or ROM-derived assets are committed.
+Next: remaining initialization scalar and mixed pose-byte setup, preserving
+write order and widths; the stopped ammo route stays held.
+
 First subsystem: Waver (bank A3). Its four movement/animation functions now
 use explicit 8/16-bit wrapping arithmetic and direct ROM access. Preserve
 the original `SignExtend8(0x8000)` initialization and the middle-byte velocity

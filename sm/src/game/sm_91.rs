@@ -4854,8 +4854,7 @@ pub unsafe fn Samus_Initialize(game: &mut Game) {
     static word_909EB1: uint16 = 1 as uint16;
     static word_909EA1: uint16 = 0x1c00 as uint16;
     static word_909EA7: uint16 = 0 as uint16;
-    let mut r18: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xde0 as ::core::ffi::c_int as isize) as *mut uint16);
+    let r18 = game.debug_invincibility();
     // Clear the original Samus workspace from its last byte to its first.
     for address in (0xa02..=0xe0b).rev() {
         game.g_ram[address] = 0;
@@ -4871,26 +4870,19 @@ pub unsafe fn Samus_Initialize(game: &mut Game) {
         {
             game.set_frame_handler_beta(fnSetContactDamageIndexAndUpdateMinimap as u16);
             game.set_samus_draw_handler(fnSamusDrawHandler_Default as u16);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa2e as ::core::ffi::c_int as isize)
-                as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa30 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa32 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
+            game.set_samus_momentum_routine_index(u16::MAX);
+            game.set_samus_special_transgfx_index(0);
+            game.set_samus_hurt_switch_index(0);
             Samus_LoadSuitPalette(game);
             game.set_samus_input_handler(fnSamus_InputHandler_E913 as u16);
         } else {
             game.set_frame_handler_beta(fnSamus_Func16 as u16);
             game.set_samus_draw_handler(fnSamusDrawHandler_Default as u16);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa2e as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa30 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa32 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 0 as uint16;
+            game.set_samus_momentum_routine_index(0);
+            game.set_samus_special_transgfx_index(0);
+            game.set_samus_hurt_switch_index(0);
             game.set_samus_input_handler(fnSamus_InputHandler_E913 as u16);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xde0 as ::core::ffi::c_int as isize)
-                as *mut uint16) = r18;
+            game.set_debug_invincibility(r18);
         }
     }
     game.set_samus_new_pose(u16::MAX);
@@ -4921,22 +4913,16 @@ pub unsafe fn Samus_Initialize(game: &mut Game) {
         as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xa4a as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xda4 as ::core::ffi::c_int as isize)
-        as *mut uint16) = word_909EAF;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xda2 as ::core::ffi::c_int as isize)
-        as *mut uint16) = word_909EAD;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xda8 as ::core::ffi::c_int as isize)
-        as *mut uint16) = word_909EB3;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xda6 as ::core::ffi::c_int as isize)
-        as *mut uint16) = word_909EB1;
+    game.set_absolute_moved_last_frame_x_fract(word_909EAF);
+    game.set_absolute_moved_last_frame_x(word_909EAD);
+    game.set_absolute_moved_last_frame_y_fract(word_909EB3);
+    game.set_absolute_moved_last_frame_y(word_909EB1);
     // Initialize the hdma_table_1 from its last word to its first.
     for word in game.g_ram[0x9800..0x9a00].chunks_exact_mut(2).rev() {
         word.copy_from_slice(&255u16.to_le_bytes());
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb32 as ::core::ffi::c_int as isize)
-        as *mut uint16) = word_909EA1;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb34 as ::core::ffi::c_int as isize)
-        as *mut uint16) = word_909EA7;
+    game.set_samus_y_subaccel(word_909EA1);
+    game.set_samus_y_accel(word_909EA7);
     *((&raw mut game.g_ram as *mut uint8).offset(0x195e as ::core::ffi::c_int as isize)
         as *mut uint16) = -(1 as ::core::ffi::c_int) as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1962 as ::core::ffi::c_int as isize)
@@ -4968,8 +4954,7 @@ pub unsafe fn Samus_Initialize(game: &mut Game) {
         as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xa48 as ::core::ffi::c_int as isize)
         as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xde0 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    game.set_debug_invincibility(0);
     if *((&raw mut game.g_ram as *mut uint8).offset(0x998 as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
         == kGameState_40_TransitionToDemo as ::core::ffi::c_int
