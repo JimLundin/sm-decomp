@@ -959,6 +959,24 @@ Y539 shelf; the running approach clears the overhang. Morph/Bombs remain
 1004 and missiles 0/5. Upper-hall return and Waver presence remain unproved;
 continue from this prefix before the deferred gameplay cleanup.
 
+The post-Bomb climb now reaches X933/Y267 with the standard oracle:
+target/awake-return/parlor-return-left352.inputs, 55,153 frames, zero
+failures (80.26s). From parlor-return-run.inputs, run/right/shoot 6,
+run/right/jump/shoot 32 and neutral 120 reaches X915/Y395; another
+run/right/shoot 6, run/right/jump/shoot 25 and neutral 120 reaches
+X1003/Y336. Run/left/shoot 6, run/left/jump/shoot 32 and neutral 120 then
+lands on the higher shelf at X933/Y267. Jumping left directly from Y395
+falls back to Y459; the right-hand detour is required for this setup.
+A vertical jump from Y267 reaches Y175 but sideways movement stops at
+X933 on the left or X955 on the right. Read-only five-frame tracing shows
+the standing body blocked by the low roof. Early airborne Morph cancels
+the ascent; later Morph works but left movement still hits the column.
+Right movement during the Down presses retains a spin/turn pose instead
+of Morph. A delayed-right Morph continuation is being tested; upper-hall
+return and Waver remain unproved. All inputs are ordinary controller words.
+Full any% passes 129,712 frames, zero failures (190.43s). Direct rustfmt
+and progress pass; source/counters unchanged, Cargo remains ASR-denied.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
