@@ -984,28 +984,27 @@ unsafe fn cpu_bit(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t, game
         (*cpu).v = value_0 as ::core::ffi::c_int & 0x4000 as ::core::ffi::c_int != 0;
     };
 }
-unsafe fn cpu_lda(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t, game: &mut Game) {
+unsafe fn cpu_lda(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
     if (*cpu).mf {
-        (*cpu).a = ((*cpu).a as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int
-            | cpu_read(cpu, low, game) as ::core::ffi::c_int) as uint16_t;
+        (*cpu).a = (*cpu).a & 0xff00 | u16::from(cpu_read(cpu, low, game));
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
         (*cpu).a = cpu_readWord(cpu, low, high, game);
     }
     cpu_setZN(cpu, (*cpu).a, (*cpu).mf);
 }
-unsafe fn cpu_ldx(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t, game: &mut Game) {
+unsafe fn cpu_ldx(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
     if (*cpu).xf {
-        (*cpu).x = cpu_read(cpu, low, game) as uint16_t;
+        (*cpu).x = u16::from(cpu_read(cpu, low, game));
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
         (*cpu).x = cpu_readWord(cpu, low, high, game);
     }
     cpu_setZN(cpu, (*cpu).x, (*cpu).xf);
 }
-unsafe fn cpu_ldy(mut cpu: *mut Cpu, mut low: uint32_t, mut high: uint32_t, game: &mut Game) {
+unsafe fn cpu_ldy(cpu: *mut Cpu, low: uint32_t, high: uint32_t, game: &mut Game) {
     if (*cpu).xf {
-        (*cpu).y = cpu_read(cpu, low, game) as uint16_t;
+        (*cpu).y = u16::from(cpu_read(cpu, low, game));
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
         (*cpu).y = cpu_readWord(cpu, low, high, game);

@@ -6882,6 +6882,29 @@ and release again fail at launch OSerror5. Prior same-DLL explicit-render
 any%129712/0 (414.98s) remains regression for these input-only trials.
 Inputs/probes/ROM-derived outputs stay ignored.
 
+CPU load cleanup (2026-10-18): cpu_lda/ldx/ldy use native byte widening
+and accumulator masks. LDA captures its retained high byte before the read;
+LDX/LDY clear high bytes on byte loads. Width gates, word cycle increments,
+ordered reads and final live-width Z/N updates remain exact. Actual
+old/current helpers pass 2,752,512 cases over seven initial-register
+boundaries, every input word, both widths and all three loads, checking
+results/flags, selected unchanged state and matching bus traces. Physical
+WRAM executes 1,769,472 immediate load instructions across every value,
+three initial boundaries, native byte/word and emulation byte modes, with
+opcode at FFFF and operands wrapping to 0000/0001. Result/high-byte behavior,
+flags, PC and cycles pass. Independent real device/opcode QC is above.
+Instrumented any% prefix passes 3,600/0 (7.09s), native exit 0; LDA/LDX/LDY
+word/byte counts are 990,782/420,817, 171,669/246,437 and 36,080/19,911.
+Clean frozen 4b7b1461bcad050051c6a7e4feb9819c8f6ef582 plus only these helpers
+passes any% 129,712/0 (263.35s), native exit 0. Direct full-source format,
+normal-core metadata and optimized clean/probe core/DLL builds pass;
+Cargo fmt/release remain launch-denied. TEMP generator brace escaping was
+corrected before building probes. Progress/diff checks pass; focused cast
+lines -2 and Rust lines -1, other categories unchanged. Later peer edits
+are outside this replay. Full input Cartesian coverage, arbitrary bus
+mutation, hardware/render/audio timing and credits remain open; held HDMA
+diagnosis stays stopped. Continue executed store/compare helpers.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
