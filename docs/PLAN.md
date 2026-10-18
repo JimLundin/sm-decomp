@@ -1603,6 +1603,35 @@ counters are unchanged. No probe or ROM-derived assets are committed. Next:
 classify remaining omitted register/write latches; audio timing, masked RAM,
 HDMA and complete route coverage remain open.
 
+Shared PPU write-latch enforcement (2026-10-18): snapshots now capture,
+restore and compare scrollPrev, scrollPrev2 and m7prev, with named diagnostics
+through the existing bounded failure-report path. Independent isolated
+pre-change probes show each omission is accepted, survives rewind and changes
+the next actual BG scroll or Mode 7 write. Ppu, g_ram and save layouts stay
+unchanged; only the per-frame Snapshot gains three bytes.
+
+The final combined counter/write-latch source passes 65,536 restored actual
+BG3-horizontal/Mode7-A write cases. All scrollPrev/scrollPrev2 pairs are covered;
+m7prev is their wrapping sum, not an independent Cartesian third byte. Both
+writes use zero. All 24 snapshot-bit mutations are detected and equality passes.
+A strengthened actual-Ppu test separately mutates each of the 24 latch bits,
+captures it, detects it and restores the original fields. These probes return
+native exit 0 and their maintained source prefixes match exactly after removing
+appended wrappers. Each of three actual frame-200 Ppu latch faults yields
+3,600/1, named latch diagnostics, zero RAM differences and native exit 1.
+
+Fresh maintained-source any% passes 129,712/0 (243.10s); the original Waver
+route passes 58,109/0 (111.80s), both native exits 0. The any% run reports an
+SRAM output-write warning after verification; it does not establish successful
+save output. Cargo fmt/fmt --check, optimized isolated core/DLL and normal-core
+metadata builds pass. Cargo release remains blocked executing khronos_api's
+build script (Access is denied, OS error 5). Rust lines +19 provide snapshot
+capture/restore/comparison and diagnostics; other progress counters unchanged.
+No probe or ROM-derived assets committed. These checks verify maintained
+rewind/continuation behavior, not SNES hardware accuracy. Next: investigate
+omitted PPU status flags and their actual register reads; audio timing, HDMA,
+masked RAM and boot-to-credits coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

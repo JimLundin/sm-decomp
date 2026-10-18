@@ -106,6 +106,7 @@ pub struct Snapshot {
     pub sprite: SpriteSnapshot,
     pub counters: CounterSnapshot,
     pub cgram: [uint16; 256],
+    pub write_latches: [uint8; 3],
     pub cgram_pointer: uint8,
     pub cgram_second_write: bool,
     pub cgram_buffer: uint8,
@@ -969,6 +970,17 @@ unsafe fn VerifySnapshotsEq(
             );
         }
     }
+    if (*b).write_latches != (*a).write_latches {
+        game.g_fail = true;
+        if report_details {
+            eprintln!(
+                "@{}: PPU write latch compare failed (scrollPrev, scrollPrev2, m7prev): mine {:?} != theirs {:?}",
+                game.snes_frame_counter,
+                (*b).write_latches,
+                (*a).write_latches
+            );
+        }
+    }
     if (*b).cgram != (*a).cgram {
         game.g_fail = true;
         if report_details {
@@ -1501,6 +1513,11 @@ unsafe fn VerifySnapshotsEq(
     }
 }
 unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
+    (*s).write_latches = [
+        (*(*game.g_snes).ppu).scrollPrev,
+        (*(*game.g_snes).ppu).scrollPrev2,
+        (*(*game.g_snes).ppu).m7prev,
+    ];
     (*s).cgram = (*(*game.g_snes).ppu).cgram;
     (*s).cgram_pointer = (*(*game.g_snes).ppu).cgramPointer;
     (*s).cgram_second_write = (*(*game.g_snes).ppu).cgramSecondWrite;
@@ -1563,6 +1580,8 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     };
 }
 unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
+    let ppu = &mut *(*game.g_snes).ppu;
+    [ppu.scrollPrev, ppu.scrollPrev2, ppu.m7prev] = (*s).write_latches;
     (*(*game.g_snes).ppu).cgram = (*s).cgram;
     (*(*game.g_snes).ppu).cgramPointer = (*s).cgram_pointer;
     (*(*game.g_snes).ppu).cgramSecondWrite = (*s).cgram_second_write;
