@@ -1476,6 +1476,19 @@ shared private-context callback helper; other counters unchanged. Next:
 Samus no-solid-collision movement arithmetic and byte-backed position writes,
 preserving signed high-word clamp and fractional carry behavior.
 
+Samus no-solid-collision movement wrappers now use byte-backed flags and
+positions with shared wrapping fixed-point addition. Fraction writes still
+precede integer writes; collision callbacks run before the live position
+read. Zero-amount paths, vertical frame parity and slope-flag fallback retain
+behavior; displacement clamps remain in collision handlers. Prior Rust
+comparison passes 2,359,296 full-RAM/callback/return cases over every fraction,
+frame counter and slope flag, signed displacement boundaries and callback
+position mutations. Stable optimized core/DLL build and direct format pass;
+Cargo fmt/build remain ASR-denied. Waver route: 58,109 frames, zero failures
+(84.40s); any%: 129,712 frames, zero failures (184.74s). Raw offsets -14,
+cast lines -21, Rust lines -23; unsafe count unchanged. Next: Samus X/Y span
+calculations, retaining wrapped endpoint arithmetic and half-block span counts.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

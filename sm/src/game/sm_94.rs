@@ -3180,71 +3180,48 @@ pub unsafe fn Samus_CollDetectChangedPose(mut amt: int32, game: &mut Game) -> in
     }
     return CollDetectDueToPoseChange_SingleBlock(amt_backup, game);
 }
+fn add_samus_position(position: &mut [u8], amount: i32) {
+    // RAM stores the integer word first, then the fractional word.
+    let integer = u16::from_le_bytes([position[0], position[1]]);
+    let fraction = u16::from_le_bytes([position[2], position[3]]);
+    let result = ((u32::from(integer) << 16) | u32::from(fraction)).wrapping_add(amount as u32);
+    position[2..4].copy_from_slice(&(result as u16).to_le_bytes());
+    position[0..2].copy_from_slice(&((result >> 16) as u16).to_le_bytes());
+}
 pub unsafe fn Samus_MoveRight_NoSolidColl(mut amt: int32, game: &mut Game) -> int32 {
-    let mut pair: Pair_Bool_Amt = Pair_Bool_Amt {
-        flag: false,
-        amt: 0,
-    };
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdd0 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (amt != 0 as int32 && {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1e71 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        pair = BlockColl_Handle_Horiz(amt, game);
+    let collided = if amt != 0 {
+        game.g_ram[0x1e71..0x1e73].copy_from_slice(&0u16.to_le_bytes());
+        let pair = BlockColl_Handle_Horiz(amt, game);
         amt = pair.amt;
-        pair.flag as ::core::ffi::c_int != 0
-    }) as ::core::ffi::c_int as uint16;
-    AddToHiLo(
-        (&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16,
-        (&raw mut game.g_ram as *mut uint8).offset(0xaf8 as ::core::ffi::c_int as isize)
-            as *mut uint16,
-        amt as uint32,
-    );
-    return amt;
+        pair.flag
+    } else {
+        false
+    };
+    game.g_ram[0xdd0..0xdd2].copy_from_slice(&u16::from(collided).to_le_bytes());
+    add_samus_position(&mut game.g_ram[0xaf6..0xafa], amt);
+    amt
 }
 pub unsafe fn Samus_MoveDown_NoSolidColl(mut amt: int32, game: &mut Game) -> int32 {
     if amt != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xdba as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1e71 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        let mut pair: Pair_Bool_Amt = if *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x5b6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            & 1 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
-        {
+        game.g_ram[0xdba..0xdbc].copy_from_slice(&0u16.to_le_bytes());
+        game.g_ram[0x1e71..0x1e73].copy_from_slice(&0u16.to_le_bytes());
+        let frame = u16::from_le_bytes([game.g_ram[0x5b6], game.g_ram[0x5b7]]);
+        let pair = if frame & 1 == 0 {
             BlockColl_Handle_Vert_LeftToRight(amt, game)
         } else {
             BlockColl_Handle_Vert_RightToLeft(amt, game)
         };
         amt = pair.amt;
         if pair.flag {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdd0 as ::core::ffi::c_int as isize)
-                as *mut uint16) = 1 as uint16;
-            AddToHiLo(
-                (&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-                    as *mut uint16,
-                (&raw mut game.g_ram as *mut uint8).offset(0xafc as ::core::ffi::c_int as isize)
-                    as *mut uint16,
-                amt as uint32,
-            );
+            game.g_ram[0xdd0..0xdd2].copy_from_slice(&1u16.to_le_bytes());
+            add_samus_position(&mut game.g_ram[0xafa..0xafe], amt);
             return amt;
         }
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdd0 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1e71 as ::core::ffi::c_int as isize) as *mut uint16)
-        as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int) as ::core::ffi::c_int as uint16;
-    AddToHiLo(
-        (&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16,
-        (&raw mut game.g_ram as *mut uint8).offset(0xafc as ::core::ffi::c_int as isize)
-            as *mut uint16,
-        amt as uint32,
-    );
-    return amt;
+    let slope_collision = u16::from_le_bytes([game.g_ram[0x1e71], game.g_ram[0x1e72]]);
+    game.g_ram[0xdd0..0xdd2].copy_from_slice(&u16::from(slope_collision != 0).to_le_bytes());
+    add_samus_position(&mut game.g_ram[0xafa..0xafe], amt);
+    amt
 }
 fn BlockInsideReact_Slope(_ci: *mut CollInfo, _game: &mut Game) -> uint8 {
     0
