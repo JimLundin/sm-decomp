@@ -4196,6 +4196,33 @@ runs. WRIO/autojoy landing8c75e6dd has separate clean any% evidence; automatic
 joypad timing, DMA rewind/event timing, enabled-render Waver71, held HDMA
 and complete boot-to-credits remain open.
 
+Independent DMA resume QC (2026-10-18): frozen candidate channel/timing
+snapshot code matches the live production body.1,536 constructed resumed
+transfers pass: eight channels xeight transfer modes xboth directions xthree
+source-address steps (increment/fixed/decrement) xfour scheduler phases.
+Each starts seven bytes through dma_startDma, advances0/4/8/12 dma_cycle calls,
+captures, completes uninterrupted, resets DMA, rewinds and completes again.
+Remaining cycle-call count, complete RAM, readable channel registers, timing/
+busy state and WRAM port address match. The DMA owner pointer stays intact.
+Source addresses include wrap boundaries; offIndex clears at completion.
+
+Forward cases target PPU2100+10..13 (scroll-register mode sequences); reverse
+cases source2138..3B (PPU data ports). A strengthened rerun also compares the
+entire67,305-byte serialized PPU region after both continuations, detecting
+different destination register effects. All1,536 strengthened cases pass,
+nativeexit0. Removing only channel/timing restore fails immediately: resumed
+transfer ends after0 calls instead of41. These are real maintained DMA calls,
+not independent SNES timing/composition accuracy. PPU state is separately
+restored from a full TEMP copy before continuation to isolate DMA context.
+
+No production source changes in this QC. Direct full-source rustfmt,
+normal-core metadata, optimized core/DLL and progress checks pass. Only this
+note is committed; probes stay TEMP, no fresh movie result claimed. Pending
+DMA at natural movie boundaries, HDMA and other B-bus register targets are
+not proved by this matrix. The implementation session owns production landing
+and BOTH recovery/debug integration; held window/HDMA diagnosis is not resumed.
+Enabled-render Waver71, event timing and boot-to-credits remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
