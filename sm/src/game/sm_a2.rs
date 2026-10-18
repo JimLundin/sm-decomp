@@ -2424,45 +2424,27 @@ pub unsafe fn MiniCrocomire_Main(game: &mut Game) {
         game,
     );
 }
-pub unsafe fn MiniCrocomire_Func1(game: &mut Game) {
-    let mut E: *mut Enemy_MiniCrocomire = Get_MiniCrocomire(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.instruction_timer = 1 as uint16;
-    (*E).base.timer = 0 as uint16;
-    (*E).base.current_instruction = addr_kMiniCrocomire_Ilist_8932 as ::core::ffi::c_int as uint16;
+pub fn MiniCrocomire_Func1(game: &mut Game) {
+    let index = game.cur_enemy_index();
+    set_mini_crocomire_animation(index, addr_kMiniCrocomire_Ilist_8932 as u16, game);
 }
-pub unsafe fn MiniCrocomire_Func2(game: &mut Game) {
-    let mut E: *mut Enemy_MiniCrocomire = Get_MiniCrocomire(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.instruction_timer = 1 as uint16;
-    (*E).base.timer = 0 as uint16;
-    (*E).base.current_instruction = addr_kMiniCrocomire_Ilist_8948 as ::core::ffi::c_int as uint16;
+pub fn MiniCrocomire_Func2(game: &mut Game) {
+    let index = game.cur_enemy_index();
+    set_mini_crocomire_animation(index, addr_kMiniCrocomire_Ilist_8948 as u16, game);
 }
-pub unsafe fn MiniCrocomire_Func3(game: &mut Game) {
-    let mut E: *mut Enemy_MiniCrocomire = Get_MiniCrocomire(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.instruction_timer = 1 as uint16;
-    (*E).base.timer = 0 as uint16;
-    (*E).base.current_instruction = addr_kMiniCrocomire_Ilist_8958 as ::core::ffi::c_int as uint16;
+pub fn MiniCrocomire_Func3(game: &mut Game) {
+    let index = game.cur_enemy_index();
+    set_mini_crocomire_animation(index, addr_kMiniCrocomire_Ilist_8958 as u16, game);
 }
-pub unsafe fn MiniCrocomire_Func4(game: &mut Game) {
-    let mut E: *mut Enemy_MiniCrocomire = Get_MiniCrocomire(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.instruction_timer = 1 as uint16;
-    (*E).base.timer = 0 as uint16;
-    (*E).base.current_instruction = addr_kMiniCrocomire_Ilist_896E as ::core::ffi::c_int as uint16;
+pub fn MiniCrocomire_Func4(game: &mut Game) {
+    let index = game.cur_enemy_index();
+    set_mini_crocomire_animation(index, addr_kMiniCrocomire_Ilist_896E as u16, game);
+}
+fn set_mini_crocomire_animation(index: u16, instruction: u16, game: &mut Game) {
+    game.enemy_instructions(index).set_instruction_timer(1);
+    game.enemy_instructions(index).set_timer(0);
+    game.enemy_instructions(index)
+        .set_current_instruction(instruction);
 }
 pub unsafe fn MiniCrocomire_PreInstr5(mut k: uint16, game: &mut Game) {
     let mut E: *mut Enemy_MiniCrocomire = Get_MiniCrocomire(

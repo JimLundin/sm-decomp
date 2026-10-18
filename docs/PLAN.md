@@ -2444,6 +2444,20 @@ cast lines -1, Rust lines -9; other counters unchanged. These replays predate
 the concurrent SPC BRA fix owned by the oracle session. Next: Mini Crocomire
 animation setup, retaining instruction-timer, timer, then instruction order.
 
+Mini Crocomire's four animation setters now share safe named instruction
+fields. Each captures the live enemy slot and writes instruction timer one,
+timer zero, then its original instruction list, preserving the order distinct
+from Goofball setup. Independent extracted comparison passes 1,062,144
+complete-RAM cases across every enemy index and random high/odd slots and
+timer/instruction values. Stable optimized core/DLL build and direct full-
+source format pass; Cargo fmt/build remain ASR-denied. CGRAM/render-enabled
+any%: 129,712 frames, zero failures (212.47s); Waver route: 58,109 frames,
+zero failures (95.65s). Raw offsets -4, unsafe functions -4, cast lines -14,
+Rust lines -18; other counters unchanged. These replays include SPC BRA
+and predate the concurrent oracle session's APU-read assertion removal.
+Next: Mini Crocomire initialization safe ROM table reads and state fields,
+retaining wide parameter offsets and captured-slot callback writes.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
