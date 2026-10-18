@@ -3538,6 +3538,38 @@ Next: audit brightness/cache continuation after load before broader saved-route
 claims. Hires, audio timing, masked RAM, shared hardware accuracy and complete
 boot-to-credits coverage remain open.
 
+CPU control-context rewind (2026-10-18): snapshots now capture/restore E,
+stopped and pending IRQ/NMI in addition to waiting. E restores before
+cpu_setFlags, which uses it to constrain M/X, index widths and stack page.
+Baseline actual XCE then rewind from native mode leaves E set, truncates
+X1234/Y5678 to 0034/0078 and SP1FFF to 01FF; subsequent LDA consumes a byte
+instead of a word. STP survives rewind to runnable state, reset loses saved
+stopped state, NMI service loses saved pending NMI, and TIMEUP reads lose
+saved IRQ. Newly pending IRQ/NMI also survive rewind when originally absent.
+
+Actual XCE/STP/reset/NMI/TIMEUP controls reproduce all four omissions in
+both directions. The actual candidate restores saved mode/flags/registers/
+stack and executes expected LDA, NOP, IRQ/NMI and stopped continuations.
+Temporary BOTH frame-200 XCE/STP/pending-interrupt disturbances pass normal
+3,600/0, forced mismatch recovery 3,600/1 and debug retry 3,600/1, native
+exits 0/1/1 with one intentional failure and no cascade. These are injected
+execution-context checks, not natural movie instruction coverage or accuracy
+against hardware. Synthetic vectors exist only in process ROM allocation.
+
+Clean frozen 7de5cf47 plus only this twelve-line snapshot change passes any%
+129,712/0 (239.57s), native exit 0, without instrumentation. Direct full-source
+rustfmt, normal-core metadata and optimized clean/probe core/DLL builds pass.
+Cargo fmt/check and release remain Access-denied at cargo.exe launch. Progress
+script passes: focused Rust lines +12 save/restore context; other residue
+categories unchanged. CPU/SNES layout, g_ram and disk serialization are
+unchanged; execution context is restored, not compared as gameplay output.
+Concurrent audio, demo and PPU/save changes are outside the clean replay.
+cyclesUsed resets at every opcode call; in_emu has no consumers; spBreakpoint
+belongs to assembly-call return interception and needs separate runtime
+boundary analysis. SNES clock/IRQ latch state and full hardware event ordering
+remain separate omissions before hardware-clock scheduling can replace the
+paired yield loop. Rendering/HDMA, audio timing and credits gaps remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
