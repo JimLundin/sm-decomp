@@ -495,6 +495,43 @@ raw comparisons and injected-fault checks justify it. No maintained Rust,
 residue counters or ROM-derived artifacts changed; both probe processes
 are terminal. Do not normalize away the observed discrepancy.
 
+Expanded PPU-state audit (2026-10-18): an isolated field-by-field observer
+on committed 2c7be10d compares 165 PPU values, including register/address
+state, write latches, open buses, counters, nested background/window/layer
+fields and render caches. Arrays compare by value; host pointers, pitch and
+already-enforced VRAM/OAM/CGRAM are excluded. Full any% passes 129,712/0
+(228.12s), with zero observed PPU-field differences. The 58,109-frame Waver
+route passes 58,109/0 (97.04s), but window1right differs on 40 frames,
+first at 28,228; all other observed fields match. Both native processes
+exit 0. These differences are diagnostic and not enforced failures.
+
+A targeted actual-function fault probe confirms a separate blind spot:
+toggle bit zero in vramReadBuffer, capture otherwise identical snapshots,
+then compare and restore. Production VerifySnapshotsEq accepts the altered
+state and RestoreSnapshot leaves the latch altered. Independent ppu_read
+calls on copied PPU states return 00 versus 01 for $2139. Thus current
+frame pixels and memory equality do not prove future hardware reads agree.
+The fault probe's assertions pass, native process exit 0. This is proof
+of missing verifier coverage, not an observed gameplay regression.
+
+At Waver frames 28,228..28,229, window1right is 0/255 (mine/theirs),
+window1left is 255 on both, windowsel is 00200200 and screenWindowed is
+[00,04]. Frame 28,230 has right 255 on both and left 248. A focused
+28,500-frame rerun confirms these values and zero enforced failures
+(45.53s), native exit 0. The window is selected, so do not classify the
+difference as an inactive-register discrepancy without tracing its writes.
+An isolated B-bus write trace over 28,232 frames passes 28,232/0 (50.24s),
+native exit 0. At frame 28,228 both sides reset WH0/WH1 to zero during
+vblank, then write WH0=FF/WH1=00 at line zero through HDMA. At line 223,
+ROM writes WH1=FF while Rust writes WH1=00; the same occurs at 28,229.
+Thus actual register-write sequences differ, not merely cached field
+comparison. The selected window's pixel equality does not classify the
+HDMA table/transfer cause or prove it harmless for other displays.
+Next: trace the HDMA source/table timing, then add focused latch capture,
+restore and comparison with fault detection before considering broader
+PPU enforcement. No maintained Rust or residue counters changed; all
+instrumentation and ROM-derived outputs remain ignored.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
