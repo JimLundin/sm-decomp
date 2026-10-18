@@ -1501,6 +1501,19 @@ unsafe functions -2, cast lines -24, Rust lines -14. Next: horizontal Samus
 collision handler block coordinates and context initialization, retaining
 callback-adjusted displacement and row iteration.
 
+Horizontal Samus collision now uses byte-backed coordinates and explicit
+wrapping block arithmetic/context initialization. Initial row multiplication
+retains low-byte row/width, target X retains fractional carry, and row steps
+read full live width after callbacks. Remaining-row countdown and returned
+displacement remain callback-adjusted. Prior Rust comparison passes 919,136
+full-RAM/context/return cases over every target X/width, signed amounts,
+row boundaries and callbacks changing width/count/displacement. Stable
+optimized core/DLL build and direct format pass; Cargo fmt/build remain
+ASR-denied. Waver route: 58,109 frames, zero failures (85.22s); any%: 129,712
+frames, zero failures (183.52s). Raw offsets -8, cast lines -26, Rust lines
+-21; unsafe count unchanged. Next: vertical collision coordinate/context
+initialization, preserving left-to-right and right-to-left traversal.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

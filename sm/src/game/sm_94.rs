@@ -2908,70 +2908,49 @@ unsafe fn BlockColl_Vert_CheckColl(ci: &mut CollInfo, k: uint16, game: &mut Game
     game.cur_coll_amt32 = core::ptr::null_mut();
     result
 }
-unsafe fn BlockColl_Handle_Horiz(mut amt: int32, game: &mut Game) -> Pair_Bool_Amt {
-    let mut r28: uint16 = Samus_GetYposSpan(game);
-    let mut prod: uint16 = Mult8x8(
-        ((*((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
-            >> 4 as ::core::ffi::c_int) as uint8,
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint8,
-    );
-    let mut v1: uint16 = 0;
-    let mut v0: uint16 = ((amt as uint32).wrapping_add(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as uint32)
-            << 16 as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0xaf8 as ::core::ffi::c_int as isize)
-                as *mut uint16) as uint32,
-    ) >> 16 as ::core::ffi::c_int) as uint16;
-    let mut r24: uint16 = v0;
-    if amt >= 0 as int32 {
-        v1 = (*((&raw mut game.g_ram as *mut uint8).offset(0xafe as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            + v0 as ::core::ffi::c_int
-            - 1 as ::core::ffi::c_int) as uint16;
+unsafe fn BlockColl_Handle_Horiz(amt: int32, game: &mut Game) -> Pair_Bool_Amt {
+    let span = Samus_GetYposSpan(game);
+    let y = u16::from_le_bytes([game.g_ram[0xafa], game.g_ram[0xafb]]);
+    let y_radius = u16::from_le_bytes([game.g_ram[0xb00], game.g_ram[0xb01]]);
+    let row = (y.wrapping_sub(y_radius) >> 4) as u8;
+    let width = game.room_width_in_blocks() as u8;
+    let row_start = u16::from(row) * u16::from(width);
+    let x = u16::from_le_bytes([game.g_ram[0xaf6], game.g_ram[0xaf7]]);
+    let fraction = u16::from_le_bytes([game.g_ram[0xaf8], game.g_ram[0xaf9]]);
+    let target =
+        (((u32::from(x) << 16) | u32::from(fraction)).wrapping_add(amt as u32) >> 16) as u16;
+    let radius = u16::from_le_bytes([game.g_ram[0xafe], game.g_ram[0xaff]]);
+    let edge = if amt >= 0 {
+        radius.wrapping_add(target).wrapping_sub(1)
     } else {
-        v1 = (v0 as ::core::ffi::c_int
-            - *((&raw mut game.g_ram as *mut uint8).offset(0xafe as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int) as uint16;
-    }
-    let mut v2: uint16 = (2 as ::core::ffi::c_int
-        * (prod as ::core::ffi::c_int + (v1 as ::core::ffi::c_int >> 4 as ::core::ffi::c_int)))
-        as uint16;
-    let mut ci: CollInfo = CollInfo {
+        target.wrapping_sub(radius)
+    };
+    let mut block_offset = row_start.wrapping_add(edge >> 4).wrapping_mul(2);
+    let mut context = CollInfo {
         ci_r18_r20: amt,
-        ci_r24: r24,
-        ci_r26: r28,
-        ci_r28: r28,
+        ci_r24: target,
+        ci_r26: span,
+        ci_r28: span,
         ci_r30: 0,
-        ci_r32: v1,
+        ci_r32: edge,
         ci_r38: 0,
         ci_r40: 0,
     };
-    while BlockColl_Horiz_CheckColl(&mut ci, v2, game) as ::core::ffi::c_int
-        & 1 as ::core::ffi::c_int
-        == 0
-    {
-        v2 = (v2 as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0x7a5 as ::core::ffi::c_int as isize)
-                as *mut uint16) as ::core::ffi::c_int
-                * 2 as ::core::ffi::c_int) as uint16;
-        ci.ci_r26 = ci.ci_r26.wrapping_sub(1);
-        if ci.ci_r26 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int
-        {
+    while BlockColl_Horiz_CheckColl(&mut context, block_offset, game) & 1 == 0 {
+        // Callbacks can change the room width and remaining row count.
+        block_offset = block_offset.wrapping_add(game.room_width_in_blocks().wrapping_mul(2));
+        context.ci_r26 = context.ci_r26.wrapping_sub(1);
+        if context.ci_r26 & 0x8000 != 0 {
             return Pair_Bool_Amt {
-                flag: false_0 != 0,
-                amt: ci.ci_r18_r20,
+                flag: false,
+                amt: context.ci_r18_r20,
             };
         }
     }
-    return Pair_Bool_Amt {
-        flag: true_0 != 0,
-        amt: ci.ci_r18_r20,
-    };
+    Pair_Bool_Amt {
+        flag: true,
+        amt: context.ci_r18_r20,
+    }
 }
 unsafe fn BlockColl_Handle_Vert_LeftToRight(mut amt: int32, game: &mut Game) -> Pair_Bool_Amt {
     let mut r28: uint16 = Samus_GetXposSpan(game);
