@@ -6175,6 +6175,22 @@ changes are outside this replay. Physical device/ROM pointers, full input
 Cartesian coverage, hardware/render/audio timing and credits remain open;
 held HDMA diagnosis stays stopped. Continue executed indirect CPU helpers.
 
+Independent indexed-indirect jump QC (2026-10-18): cpu_adrIax candidate
+passes 393,216 actual old/current JMP(abs,X) instructions, native exit zero.
+All operand words use cancelling X at pointer offsets 0000, 0001, 00FF,
+0100, FFFE and FFFF in physical WRAM bank 7F. Expected jump PC, six-cycle
+cost and preserved registers match; the FFFF high byte comes from 0000 in
+the same bank. Installed instruction at 4000 does not alias the pointer
+table. A TEMP repeated-low-byte successor fails actual PC 23387 versus
+23131, native exit 3221226505. The first attempted negative spill was
+ineffective because OR with bank 7F already contains the carried bank bit;
+it passed and is not evidence of detecting a wrap defect. Frozen helper
+matches live. Optimized core/probe DLL, normal-core metadata, direct format
+and progress pass; partner independently reviews fixture and scope. This
+exercises native JMP pointer assembly; JSR, arbitrary banks/devices, bus
+callback mutation and full-movie integration remain separate. No production
+edits; only this note changes and probes/assets stay TEMP/ignored.
+
 Independent stack-address QC (2026-10-18): candidate cpu_adrSr/Isy pass
 4,587,008 actual old/current LDA instructions. Sr covers every supported
 low-WRAM target 0000..1FFE, every operand byte and byte/word accumulator
