@@ -9219,43 +9219,25 @@ pub fn CheckIfEnemyTouchesSamus(k: uint16, game: &mut Game) -> uint16 {
         0
     }
 }
-pub unsafe fn EnemyFunc_AC67(mut k: uint16, game: &mut Game) -> uint16 {
-    let mut E: *mut EnemyData = gEnemyData(k as ::core::ffi::c_int, game);
-    let mut i: uint16 = abs16(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - (*E).x_pos as ::core::ffi::c_int) as uint16,
-    );
-    let mut v3: bool = (i as ::core::ffi::c_int)
-        < *((&raw mut game.g_ram as *mut uint8).offset(0xafe as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int;
-    let mut v4: uint16 = (i as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xafe as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16;
-    if !v3
-        && v4 as ::core::ffi::c_int >= (*E).x_width as ::core::ffi::c_int
-        && v4 as ::core::ffi::c_int >= 8 as ::core::ffi::c_int
-    {
-        return 0 as uint16;
+pub fn EnemyFunc_AC67(k: uint16, game: &mut Game) -> uint16 {
+    let enemy = SolidEnemyCollisionBody::new(game, k);
+    let delta = game.samus_x_pos().wrapping_sub(enemy.x_pos());
+    let distance = (delta as i16).wrapping_abs() as u16;
+    let radius = game.samus_x_radius();
+    let gap = distance.wrapping_sub(radius);
+    if distance >= radius && gap >= enemy.x_width() && gap >= 8 {
+        return 0;
     }
-    let mut v6: uint16 = abs16(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xafa as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            - (*E).y_pos as ::core::ffi::c_int) as uint16,
-    );
-    v3 = (v6 as ::core::ffi::c_int)
-        < *((&raw mut game.g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int;
-    let mut v7: uint16 = (v6 as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int) as uint16;
-    if v3 as ::core::ffi::c_int != 0
-        || (v7 as ::core::ffi::c_int) < (*E).y_height as ::core::ffi::c_int
-    {
-        return -(1 as ::core::ffi::c_int) as uint16;
+    if solid_enemy_axis_overlaps(
+        game.samus_y_pos(),
+        enemy.y_pos(),
+        game.samus_y_radius(),
+        enemy.y_height(),
+    ) {
+        0xffff
     } else {
-        return 0 as uint16;
-    };
+        0
+    }
 }
 pub unsafe fn EnemyFunc_ACA8(
     mut base_pt: Point16U,

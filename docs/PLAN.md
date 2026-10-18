@@ -1855,6 +1855,21 @@ Raw offsets -7, unsafe functions -1, cast lines -29, Rust lines -17; other
 counters unchanged. Next: EnemyFunc_AC67 proximity overlap, retaining its
 horizontal eight-pixel fallback and strict vertical radius comparison.
 
+EnemyFunc_AC67 proximity overlap now uses the borrowed enemy byte view and
+shared safe vertical axis predicate. Horizontal distance retains wrapped
+abs16, radius subtraction and the strict eight-pixel fallback; vertical
+radius/height contact remains strict. The function is safe Rust and leaves
+RAM unchanged. Prior Rust comparison passes 3,742,113 complete-function
+full-RAM/return cases across all coordinates/radii/enemy indexes and eight-
+pixel boundaries; independent comparison passes another 3,788,944 cases
+including arbitrary/high/unaligned slots. Stable optimized core/DLL build
+and direct full-source format pass; Cargo fmt/build remain ASR-denied.
+Any%: 129,712 frames, zero failures (194.43s); Waver route: 58,109 frames,
+zero failures (89.27s). Raw offsets -6, unsafe functions -1, cast lines -24,
+Rust lines -18; other counters unchanged. Next: EnemyFunc_ACA8 relative-point
+angle/distance arithmetic, retaining signed-bit range gates and independent
+sine/cosine component magnitudes.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
