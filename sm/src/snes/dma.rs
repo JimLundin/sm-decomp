@@ -505,37 +505,30 @@ unsafe fn dma_transferByte(
         );
     };
 }
-pub unsafe fn dma_cycle(mut dma: *mut Dma, game: &mut Game) -> bool {
-    if (*dma).hdmaTimer as ::core::ffi::c_int > 0 as ::core::ffi::c_int {
-        (*dma).hdmaTimer =
-            ((*dma).hdmaTimer as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as uint16_t;
-        return true_0 != 0;
+pub unsafe fn dma_cycle(dma: *mut Dma, game: &mut Game) -> bool {
+    if (*dma).hdmaTimer > 0 {
+        (*dma).hdmaTimer = (*dma).hdmaTimer.wrapping_sub(2);
+        true
     } else if (*dma).dmaBusy {
         dma_doDma(dma, game);
-        return true_0 != 0;
+        true
+    } else {
+        false
     }
-    return false_0 != 0;
 }
-pub unsafe fn dma_startDma(mut dma: *mut Dma, mut val: uint8_t, mut hdma: bool) {
-    let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    while i < 8 as ::core::ffi::c_int {
+pub unsafe fn dma_startDma(dma: *mut Dma, mask: u8, hdma: bool) {
+    for i in 0..8 {
+        let active = mask & (1 << i) != 0;
         if hdma {
-            (*dma).channel[i as usize].hdmaActive =
-                val as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << i != 0;
+            (*dma).channel[i].hdmaActive = active;
         } else {
-            (*dma).channel[i as usize].dmaActive =
-                val as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << i != 0;
+            (*dma).channel[i].dmaActive = active;
         }
-        i += 1;
     }
     if !hdma {
-        (*dma).dmaBusy = val != 0;
-        (*dma).dmaTimer = (*dma).dmaTimer.wrapping_add(
-            (if (*dma).dmaBusy as ::core::ffi::c_int != 0 {
-                16 as ::core::ffi::c_int
-            } else {
-                0 as ::core::ffi::c_int
-            }) as uint32_t,
-        );
+        (*dma).dmaBusy = mask != 0;
+        (*dma).dmaTimer = (*dma)
+            .dmaTimer
+            .wrapping_add(if (*dma).dmaBusy { 16 } else { 0 });
     }
 }

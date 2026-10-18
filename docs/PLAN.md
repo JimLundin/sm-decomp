@@ -4623,6 +4623,28 @@ Continue only demonstrated gameplay paths; dormant demo operations/set 3,
 render initialization/Waver71, hardware events, audio timing and credits
 remain open. Held HDMA diagnosis stays stopped.
 
+DMA activation/cycle cleanup (2026-10-18): dma_startDma uses native channel
+mask bits and dma_cycle uses explicit wrapping delay subtraction and bool
+returns. HDMA activation still leaves ordinary DMA flags/timing untouched;
+ordinary activation retains the other flags, replaces busy from the mask and
+adds sixteen only for a nonzero mask. HDMA delay retains priority over DMA.
+Odd seeded delays keep inherited wrap behavior without claiming natural
+validity. No transfer, event, layout or scheduling policy changes.
+
+Actual old/current checks pass 1,703,936 cases: all masks/preexisting channel
+activations in both modes with seven wrapping timer boundaries, plus every
+16-bit HDMA delay, both busy states and six DMA timer boundaries. Instrumented
+any% prefix passes 12,000/0 (20.29s), native exit 0; each side executes
+126,151,774 cycle calls, 53,912 ordinary starts and 12,006 HDMA starts.
+Clean frozen 32d5db1d plus only this change passes any% 129,712/0 (229.07s),
+native exit 0. Later CPU/demo/PPU work is outside these frozen runs.
+Direct full-source formatting, normal-core metadata and optimized clean/probe
+core/DLL builds pass; Cargo fmt/build remain denied at cargo.exe launch.
+Progress: cast lines -9, Rust lines -7; other focused counters unchanged.
+Probes and ROM-derived assets remain untracked. Hardware event timing,
+rendering/Waver71, held HDMA diagnosis, audio timing and boot-to-credits
+remain open; continue actual scheduling and route coverage work.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
