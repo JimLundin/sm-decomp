@@ -3161,6 +3161,45 @@ derived assets committed. Next: remaining BG scroll-write latch arithmetic
 in ppu_write, preserving horizontal/vertical formulas and write order.
 Fast BG interlace, pseudo-hires and Mode7 direct color remain separate gaps.
 
+Display geometry snapshot gap and enforcement (2026-10-18): SETINI
+interlace, OBJ interlace, overscan and pseudo-hires plus frameInterlace and
+frameOverscan were omitted. Actual checks across all 64 combinations show
+384 mutations escape comparison and survive rewind. Interlaced Mode 5 BG
+sampling, interlaced OBJ sampling and ppu_checkOverscan continuations change
+with their respective omitted flags. Both frame latches currently have no
+rendering consumers beyond their assignment/return functions; state loss is
+proved, not an additional visible consequence.
+
+Snapshots now capture, compare and directly restore all six fields. All 64
+equalities and 384 faults pass; the three divergent continuations restore
+equal results. All 16,384 actual SETINI writes across 64 initial states and
+256 bytes match independent flag mapping and preserve frame latches; M7 EXTBG
+mapping stays checked. Sixteen actual overscan/vblank transitions match their
+independent latch assignments for blank/nonblank and both flag/prior values.
+Probe native exit 0. Six frame-200 field injections each produce 3,600/1,
+native exit 1, named diagnostics and no cascade.
+
+The initial probe expected pseudo-hires to change a constructed row and
+failed: pseudo-hires fetches subscreen RGB, but ppu_handlePixel writes only
+main RGB and discards r2/g2/b2. The corrected control confirms equal output
+under the flag toggle; this is an unresolved output/geometry gap, not proof
+of correct pseudo-hires rendering. Verifier and frontend both use 256-pixel rows
+and PpuGetCurrentRenderScale always returns one; an accurate pseudo-hires
+fix must resolve that output contract as well as the discarded samples.
+No rendering change or SNES accuracy claim enters this snapshot commit. Whole-line Mode 7 direct color also remains open.
+
+Dedicated source Verified 129712 frames: 0 failing frames (292.79s); Verified 58109 frames: 0 failing frames (140.69s); native exits 0. Direct optimized
+core/DLL, normal-core metadata and full-source rustfmt --check pass. Cargo
+fmt/check and release were attempted and denied executing cargo.exe itself
+(OS access denial), after an earlier fmt invocation formatted the new arrays.
+Progress run passes; focused Rust lines +26 implement state/diagnostics with
+other focused counters unchanged. Only these four CPU hunks and this note
+enter the commit; concurrent later edits need their own verification. Ppu/RAM/
+save layouts unchanged; probes and ROM-derived assets ignored. Next: diagnose
+the demonstrated pseudo-hires output omission against the current renderer
+buffer contract. Held HDMA/window-boundary diagnosis, audio timing, masked
+RAM, hardware accuracy and complete-route coverage remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

@@ -119,6 +119,7 @@ pub struct Snapshot {
     pub fixed_color: [uint8; 3],
     pub color_math: (bool, bool, [bool; 6]),
     pub color_selection: (uint8, uint8, bool, bool),
+    pub display_geometry: [bool; 6],
     pub brightness: uint8,
     pub forced_blank: bool,
     pub cgram: [uint16; 256],
@@ -976,6 +977,15 @@ unsafe fn VerifySnapshotsEq(
             );
         }
     }
+    if (*b).display_geometry != (*a).display_geometry {
+        game.g_fail = true;
+        if report_details {
+            eprintln!(
+                "@{}: Display geometry (interlace, OBJ interlace, overscan, pseudo-hires, frame interlace, frame overscan) compare failed: mine {:?} != theirs {:?}",
+                game.snes_frame_counter, (*b).display_geometry, (*a).display_geometry
+            );
+        }
+    }
     if (*b).color_selection != (*a).color_selection {
         game.g_fail = true;
         if report_details {
@@ -1750,6 +1760,14 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     (*s).forced_blank = ppu.forcedBlank;
     (*s).fixed_color = [ppu.fixedColorR, ppu.fixedColorG, ppu.fixedColorB];
     (*s).color_math = (ppu.subtractColor, ppu.halfColor, ppu.mathEnabled);
+    (*s).display_geometry = [
+        ppu.interlace,
+        ppu.objInterlace,
+        ppu.overscan,
+        ppu.pseudoHires,
+        ppu.frameInterlace,
+        ppu.frameOverscan,
+    ];
     (*s).color_selection = (
         ppu.clipMode,
         ppu.preventMathMode,
@@ -1829,6 +1847,14 @@ unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     ppu.forcedBlank = (*s).forced_blank;
     [ppu.fixedColorR, ppu.fixedColorG, ppu.fixedColorB] = (*s).fixed_color;
     (ppu.subtractColor, ppu.halfColor, ppu.mathEnabled) = (*s).color_math;
+    [
+        ppu.interlace,
+        ppu.objInterlace,
+        ppu.overscan,
+        ppu.pseudoHires,
+        ppu.frameInterlace,
+        ppu.frameOverscan,
+    ] = (*s).display_geometry;
     (
         ppu.clipMode,
         ppu.preventMathMode,
