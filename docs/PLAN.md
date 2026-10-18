@@ -2294,6 +2294,19 @@ route: 58,109 frames, zero failures (96.77s). Raw offsets -1, unsafe functions
 Goofball animation setup and state fields, retaining live slot capture and
 instruction/timer write order.
 
+Goofball proximity and animation setup now use safe byte-backed radius
+reads and named instruction fields. Captured slot/radius and live probe index
+reads remain ordered; both animation entries share instruction, instruction-
+timer, then timer writes on the captured slot. Independent extracted
+comparison passes 1,583,040 full-RAM/proximity-trace/RNG cases across every
+index/radius word and random high/odd slots with mutating probes. Stable
+optimized core/DLL build and direct full-source format pass; Cargo fmt/build
+remain ASR-denied. CGRAM/render-enabled any%: 129,712 frames, zero failures
+(205.87s); Waver route: 58,109 frames, zero failures (93.18s). Raw offsets -4,
+unsafe functions -3, cast lines -9, Rust lines -13; other counters unchanged.
+Next: Goofball State0/State1 byte-backed fields and wrapping movement,
+retaining ROM-read-before-clamp order and signed phase gates.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

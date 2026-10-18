@@ -2243,40 +2243,27 @@ pub unsafe fn BouncingGoofball_State1(game: &mut Game) {
         (*E).bgl_var_01 = 0 as uint16;
     }
 }
-pub unsafe fn BouncingGoofball_SamusCloseX(game: &mut Game) -> uint16 {
-    let mut E: *mut Enemy_BouncingGoofball = Get_BouncingGoofball(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    return IsSamusWithinEnemy_X(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16),
-        (*E).bgl_parameter_2,
-        game,
-    );
+pub fn BouncingGoofball_SamusCloseX(game: &mut Game) -> uint16 {
+    let slot = game.cur_enemy_index();
+    let index = game.cur_enemy_index();
+    let offset =
+        0xf78 + usize::from(slot) + core::mem::offset_of!(Enemy_BouncingGoofball, bgl_parameter_2);
+    let radius = u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]]);
+    IsSamusWithinEnemy_X(index, radius, game)
 }
-pub unsafe fn BouncingGoofball_Func2(game: &mut Game) {
-    let mut E: *mut Enemy_BouncingGoofball = Get_BouncingGoofball(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.current_instruction =
-        addr_kBouncingGoofball_Ilist_86A7 as ::core::ffi::c_int as uint16;
-    (*E).base.instruction_timer = 1 as uint16;
-    (*E).base.timer = 0 as uint16;
+pub fn BouncingGoofball_Func2(game: &mut Game) {
+    let index = game.cur_enemy_index();
+    set_goofball_animation(index, addr_kBouncingGoofball_Ilist_86A7 as u16, game);
 }
-pub unsafe fn BouncingGoofball_Func3(game: &mut Game) {
-    let mut E: *mut Enemy_BouncingGoofball = Get_BouncingGoofball(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xe54 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    (*E).base.current_instruction =
-        addr_kBouncingGoofball_Ilist_86BF as ::core::ffi::c_int as uint16;
-    (*E).base.instruction_timer = 1 as uint16;
-    (*E).base.timer = 0 as uint16;
+pub fn BouncingGoofball_Func3(game: &mut Game) {
+    let index = game.cur_enemy_index();
+    set_goofball_animation(index, addr_kBouncingGoofball_Ilist_86BF as u16, game);
+}
+fn set_goofball_animation(index: u16, instruction: u16, game: &mut Game) {
+    game.enemy_instructions(index)
+        .set_current_instruction(instruction);
+    game.enemy_instructions(index).set_instruction_timer(1);
+    game.enemy_instructions(index).set_timer(0);
 }
 pub fn BouncingGoofball_Instr_88C5(_k: uint16, jp: *const uint16) -> *const uint16 {
     jp
