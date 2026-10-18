@@ -1776,6 +1776,18 @@ zero failures (88.53s). Raw offsets -37, cast lines -84, Rust lines -159;
 other counters unchanged. Next: name the regular wall-jump movement, pose,
 held-input, animation and input-to-pose RAM accesses.
 
+Regular wall-jump movement/pose/held-input/animation and input-to-pose accesses
+now use seven named byte-backed Game methods matching ram_map widths and
+addresses. Mechanical expansion reproduces the complete previously verified
+function; independent whole-bank expansion and accessor audit also pass.
+Probe/read/write order and RAM layout are unchanged. Stable optimized
+core/DLL build and direct full-source format pass; Cargo fmt/build remain
+ASR-denied. Any%: 129,712 frames, zero failures (193.43s); Waver route:
+58,109 frames, zero failures (89.98s). Rust lines +34 provide the named
+accessors; all other counters unchanged. Next: solid-enemy collision's
+initial Samus position construction, preserving fractional borrow/carry
+rounding before simplifying its contact selection.
+
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 

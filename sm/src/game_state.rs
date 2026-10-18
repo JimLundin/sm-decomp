@@ -159,6 +159,40 @@ impl Game {
         u16::from_le_bytes([self.g_ram[0xb00], self.g_ram[0xb01]])
     }
 
+    /// samus_pose ($7E:0A1C in ram_map).
+    pub fn samus_pose(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xa1c], self.g_ram[0xa1d]])
+    }
+
+    /// samus_last_different_pose_movement_type ($7E:0A27 in ram_map).
+    pub fn samus_last_different_pose_movement_type(&self) -> u8 {
+        self.g_ram[0xa27]
+    }
+
+    /// samus_anim_frame_timer ($7E:0A94 in ram_map).
+    pub fn set_samus_anim_frame_timer(&mut self, value: u16) {
+        self.g_ram[0xa94..0xa96].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// samus_anim_frame ($7E:0A96 in ram_map).
+    pub fn samus_anim_frame(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0xa96], self.g_ram[0xa97]])
+    }
+
+    pub fn set_samus_anim_frame(&mut self, value: u16) {
+        self.g_ram[0xa96..0xa98].copy_from_slice(&value.to_le_bytes());
+    }
+
+    /// joypad1_lastkeys ($7E:008B in ram_map).
+    pub fn joypad1_lastkeys(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x8b], self.g_ram[0x8c]])
+    }
+
+    /// input_to_pose_calc ($7E:0DC6 in ram_map).
+    pub fn set_input_to_pose_calc(&mut self, value: u16) {
+        self.g_ram[0xdc6..0xdc8].copy_from_slice(&value.to_le_bytes());
+    }
+
     /// samus_pose_x_dir ($7E:0A1E in ram_map); this is a byte, not a word.
     pub fn samus_pose_x_dir(&self) -> u8 {
         self.g_ram[0xa1e]

@@ -5629,19 +5629,19 @@ pub unsafe fn Samus_GrappleWallJumpCheck(amt: int32, game: &mut Game) -> uint8 {
     1
 }
 pub unsafe fn Samus_WallJumpCheck(amt: int32, game: &mut Game) -> uint8 {
-    if !matches!(game.g_ram[0xa27], 3 | 20) {
+    if !matches!(game.samus_last_different_pose_movement_type(), 3 | 20) {
         return 0;
     }
-    let pose = u16::from_le_bytes([game.g_ram[0xa1c], game.g_ram[0xa1d]]);
+    let pose = game.samus_pose();
     let screw_attack =
         (pose == kPose_81_FaceR_Screwattack as u16 || pose == kPose_82_FaceL_Screwattack as u16);
-    let animation = u16::from_le_bytes([game.g_ram[0xa96], game.g_ram[0xa97]]);
+    let animation = game.samus_anim_frame();
     let threshold = if screw_attack { 27 } else { 11 };
     let ready = animation.wrapping_sub(threshold) & 0x8000 == 0;
     if ready {
         game.set_enemy_index_to_shake(0xffff);
     }
-    let held = u16::from_le_bytes([game.g_ram[0x8b], game.g_ram[0x8c]]);
+    let held = game.joypad1_lastkeys();
     // Left takes precedence when both directions are held.
     let left = if held & kButton_Left as u16 != 0 {
         true
@@ -5667,7 +5667,7 @@ pub unsafe fn Samus_WallJumpCheck(amt: int32, game: &mut Game) -> uint8 {
     }
     if !ready {
         // Probes may change the pose before choosing the animation to hold.
-        let pose = u16::from_le_bytes([game.g_ram[0xa1c], game.g_ram[0xa1d]]);
+        let pose = game.samus_pose();
         let frame = if (pose == kPose_81_FaceR_Screwattack as u16
             || pose == kPose_82_FaceL_Screwattack as u16)
         {
@@ -5675,8 +5675,8 @@ pub unsafe fn Samus_WallJumpCheck(amt: int32, game: &mut Game) -> uint8 {
         } else {
             10
         };
-        game.g_ram[0xa94..0xa96].copy_from_slice(&1u16.to_le_bytes());
-        game.g_ram[0xa96..0xa98].copy_from_slice(&frame.to_le_bytes());
+        game.set_samus_anim_frame_timer(1);
+        game.set_samus_anim_frame(frame);
         return 0;
     }
     if game.button_config_jump_a() & game.joypad1_newkeys() == 0 {
@@ -5685,7 +5685,7 @@ pub unsafe fn Samus_WallJumpCheck(amt: int32, game: &mut Game) -> uint8 {
     if ((distance >> 16) - 8) & 0x8000 == 0 {
         return 0;
     }
-    game.g_ram[0xdc6..0xdc8].copy_from_slice(&5u16.to_le_bytes());
+    game.set_input_to_pose_calc(5);
     if enemy_contact {
         game.set_enemy_index_to_shake(game.collision_detection_index());
     }
