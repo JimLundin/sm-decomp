@@ -4772,6 +4772,30 @@ or comparison-rule changes. Probe and ROM assets stay untracked. Hardware
 timing, rendering/Waver71, held HDMA diagnosis, audio timing and credits
 coverage remain open; continue actual scheduling and route coverage work.
 
+Current broad-route revalidation (2026-10-18): committed d217ea15 source
+replays the retained 62,817-frame lead-9ad9-arrive.inputs through the standard
+verifier, passing 62,817/0 (117.57s), native exit 0. It observes 48,819
+gameplay frames, 21 rooms and 24 enemy definitions, ending state 8 in 9AD9,
+X128/Y680, Morph/Bombs 1004 and missiles 0/5. No credits state occurs.
+This revalidates the existing route, not a newly reached room or pickup.
+
+The same frozen source/inputs with only an isolated explicit
+disableRender=false after SnesInit completes 62,817 frames with 71 failing
+frames (171.03s), native exit 1. Final route coverage/state/items are the
+same. This extends the known enabled-render Waver failure count to the
+21-room prefix; equal counts alone do not prove identical failure frames
+or causes. Do not interpret the default pass as rendered equivalence or
+extend gameplay cleanup using that claim. No pixels are normalized and no
+maintained rendering initializer lands. The held HDMA diagnosis remains held.
+Direct optimized core/DLL and full-source rustfmt check pass; required Cargo
+fmt/check/build remain denied launching Cargo (OS error 5). Progress passes;
+no maintained Rust or focused residue counter changes. Probe source and
+ROM-derived outputs stay ignored; concurrent hardware work remains separate.
+Next: compare the complete failing-frame diagnostics of this route against
+the retained explicit-render Waver run to determine whether failures recur
+only in the shared prefix before attempting broader normal-input coverage.
+Stopped ammunition trials and uncovered gameplay cleanup remain held.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
