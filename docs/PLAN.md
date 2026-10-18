@@ -1085,6 +1085,26 @@ copies and ROM-derived outputs stay ignored. Next: explain the remaining
 table bytes and on-screen cleanup, compare actual caller gradient selection
 and complete destination write ranges, then verify a complete correction.
 
+9AD9 control release and first-door obstacle (2026-10-18): the ignored
+lead-9ad9-descend-one.inputs extends the verified 62,817-frame arrival with
+Left 35, neutral 90, Right 38, neutral 120. Standard replay on the frozen
+97309b4a bus verifier passes 63,100/0 (106.45s), native exit 0. Actual traced
+frames show X128/Y680 at 62,800, X79/Y763 at 62,900 after Left, and
+X120/Y879 at 63,000 after Right. This establishes movement control after
+the elevator, beyond merely observing a stable platform endpoint.
+
+Further normal controls descend to X37/Y1163 beside the left door: the
+63,545-frame first-door route passes 63,545/0 (106.52s), native exit 0.
+Left/shoot 100 and neutral 120 then pass 63,765/0 (106.95s), native exit 0,
+but remain in 9AD9; there is no door transition. Read-only room-state data
+identifies the PLM at block (1,70) as C890. Its C37A instruction list installs
+BD50, the maintained PlmPreInstr_GoToLinkInstrIfShotWithAnyMissile. Current
+traces show missiles 0/5. Beam fire cannot satisfy that projectile-type
+condition. This is a route resource obstacle, not evidence of a game defect.
+Next: obtain ammunition through normal gameplay or identify an accessible
+alternate route before repeating this door trial. No maintained Rust or
+ROM-derived artifacts are committed; residue counters are unchanged.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
