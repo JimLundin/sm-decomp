@@ -5920,6 +5920,22 @@ regression result; no changed source to retest here. Concurrent hardware
 edits/totals are separate. Inputs/probes/ROM-derived outputs stay ignored.
 Credits, full rendering/audio and masked RAM remain unproved.
 
+Independent BBus WRAM-write candidate QC (2026-10-18): 2,097,152 actual
+old/current absolute STA pairs pass, native exit zero. Port 2180 executes
+at all 131,072 physical WRAM addresses, including wrap and installed-program
+aliases; ports 2181..2183 execute at every 17-bit pointer with byte values
+0, 1, 127, 128 and 255. CPU/SNES and the target byte restore between paired
+instructions. Independent expected pointer masks/increment, target byte,
+accumulator, PC, cycles and old/current CPU memory accounting match. A TEMP
+premature target increment fails the first actual port write (target 90
+versus 165), native exit 3221226505. Frozen changed BBus body matches live;
+partner independently reviews fixture, alias restoration and exact count.
+Optimized probe core/DLL, direct formatting, normal-core metadata and
+progress pass. This proves exercised WRAM-port and pointer-latch behavior;
+PPU/APU routing, all latch byte values, extraneous RAM writes, word stores
+and full-movie integration are outside this probe. Implementing agent owns
+production/integration; only this note changes, probes/assets stay TEMP.
+
 Independent masked 0DD4/0DD5 consumer audit (2026-10-18): recovered the
 already-running frozen observer after its owning partner errored; no replay
 restart. OS process inspection confirmed the wrapper and verifier running,
