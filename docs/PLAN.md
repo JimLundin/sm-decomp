@@ -6924,6 +6924,34 @@ are outside this replay. Full input Cartesian coverage, arbitrary bus
 mutation, hardware/render/audio timing and credits remain open; held HDMA
 diagnosis stays stopped. Continue executed store/compare helpers.
 
+LoROM reader cleanup (2026-10-18): cart_readLorom uses native byte/word
+values and unsigned mapping arithmetic. Reads retain >= F0 (writes > F0),
+banks 70..7D, the low-address/nonzero-SRAM gates, mirrored ROM banks and
+size-minus-one bitmask aliasing. Invalid-read diagnostics remain byte-identical.
+Actual old/current buffer reads pass 50,331,648 full bank/address cases with
+zero/single/non-power sizes. Zero ROM-size cases use allocated synthetic
+backing; invalid ranges are classified by TEMP-only early returns there.
+Independent QC executes 42,504 actual CPU LDA pairs over cartridge-routed
+banks, six boundaries, ROM sizes 1/4096/65535 and SRAM sizes
+0/null,1,3,255,256,4096,8192 with two patterns. A/flags/bus and unchanged
+buffers match. Real invalid 80:6000 processes have identical diagnostics and
+exit 2. Injecting strict > F0 in reads is caught at F0:0000, SRAM/ROM size 1,
+native assertion exit 3221226505. Read-only subagent finds no defect.
+
+Instrumented any% passes 12,000/0 (28.94s), native exit 0. ROM helper reads
+120,102,838 ROM and 11,456 SRAM bytes; Rust reads 3,795,480 ROM and zero SRAM
+bytes. Actual CPU QC supplies SRAM boundary coverage. Clean frozen
+3331c2ca plus only this helper passes any% 129,712/0 (252.75s), native
+exit 0. Direct full-source format, normal-core metadata and optimized clean/
+probe core/DLL builds pass; Cargo fmt/check/release remain launch-denied.
+That required Cargo check stays unmet. Frozen/live helper equality passes
+after removing only TEMP counters/invalid-classification lines. Progress/diff
+pass: focused cast lines -11, Rust lines -17, other categories unchanged.
+Later peer integration, hardware/audio timing, rendering/Waver71, masked RAM
+and credits remain open. Held HDMA diagnosis stays stopped. Continue executed
+cartridge routing and route coverage with useful independent subagents.
+Peer owns remote sync.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

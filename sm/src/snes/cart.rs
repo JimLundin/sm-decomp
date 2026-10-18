@@ -140,35 +140,18 @@ pub unsafe fn cart_write(
         0 | _ => {}
     };
 }
-unsafe fn cart_readLorom(
-    mut cart: *mut Cart,
-    mut bank: uint8_t,
-    mut adr: uint16_t,
-    game: &mut Game,
-) -> uint8_t {
+unsafe fn cart_readLorom(cart: *mut Cart, mut bank: u8, adr: u16, game: &mut Game) -> u8 {
     let original_bank = bank;
-    if (bank as ::core::ffi::c_int >= 0x70 as ::core::ffi::c_int
-        && (bank as ::core::ffi::c_int) < 0x7e as ::core::ffi::c_int
-        || bank as ::core::ffi::c_int >= 0xf0 as ::core::ffi::c_int)
-        && (adr as ::core::ffi::c_int) < 0x8000 as ::core::ffi::c_int
-        && (*cart).ramSize > 0 as uint32_t
-    {
-        return *(*cart).ram.offset(
-            (((bank as ::core::ffi::c_int & 0xf as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-                | adr as ::core::ffi::c_int) as uint32_t
-                & (*cart).ramSize.wrapping_sub(1 as uint32_t)) as isize,
-        );
+    if (matches!(bank, 0x70..=0x7d) || bank >= 0xf0) && adr < 0x8000 && (*cart).ramSize > 0 {
+        let index =
+            ((u32::from(bank & 0xf) << 15) | u32::from(adr)) & (*cart).ramSize.wrapping_sub(1);
+        return *(*cart).ram.offset(index as isize);
     }
-    bank = (bank as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int) as uint8_t;
-    if adr as ::core::ffi::c_int >= 0x8000 as ::core::ffi::c_int
-        || bank as ::core::ffi::c_int >= 0x40 as ::core::ffi::c_int
-    {
-        return *(*cart).rom.offset(
-            (((bank as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-                | adr as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                as uint32_t
-                & (*cart).romSize.wrapping_sub(1 as uint32_t)) as isize,
-        );
+    bank &= 0x7f;
+    if adr >= 0x8000 || bank >= 0x40 {
+        let index =
+            ((u32::from(bank) << 15) | u32::from(adr & 0x7fff)) & (*cart).romSize.wrapping_sub(1);
+        return *(*cart).rom.offset(index as isize);
     }
     printf(
         b"While trying to read from 0x%x\n\0" as *const u8 as *const ::core::ffi::c_char,
