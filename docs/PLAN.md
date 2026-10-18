@@ -2476,6 +2476,37 @@ accuracy, every display mode/composition or natural gameplay coverage.
 Next: remaining BG address/scroll and composition snapshot gaps. Audio timing,
 HDMA, masked RAM, shared hardware accuracy and boot-to-credits remain open.
 
+Background-scroll snapshot gap and enforcement (2026-10-18): all eight
+hScroll/vScroll fields were absent from snapshots. Actual snapshot probes
+accept each mutation against identical registered buffers, leave it live
+after rewind and change the next rendered row. Constructed Mode1 BG1/2/3
+and Mode0 BG4 rows use mosaic to select the per-pixel path. This establishes
+future display divergence after an accepted snapshot, not a natural movie bug.
+
+Snapshots now capture, compare and directly restore all four horizontal/
+vertical pairs, retaining separately verified write latches. Actual controls
+pass1,024 equality states and81,920 bit-mutation/capture/restore cases:
+every10-bit scroll value on all eight fields, with related vertical values
+rather than a full Cartesian product. All eight prior continuation faults
+now restore identical rows. Independent register formulas pass524,288 actual
+scroll writes (4BG x256 previous bytes x256 current bytes x2 axes). The
+second horizontal latch is sampled as73*previous, not exhaustively Cartesian.
+Probe nativeexit0. Eight actual post-render frame200 faults each produce
+3,600/1, named BG-scroll diagnostics and nativeexit1 with no later cascade.
+
+Dedicated source Verified 129712 frames: 0 failing frames (283.31s); Verified 58109 frames: 0 failing frames (127.76s); nativeexits0. Direct optimized
+core/DLL/normal-core metadata builds pass; Cargo release remains blocked
+executing khronos_api's build script (OSerror5). Cargo fmt/fmt--check pass
+after formatting a concurrent audio edit that briefly failed the full check.
+Progress run: focused Rust lines+17 provide state/capture/restore/diagnostics;
+other counters unchanged for this change. Builds include then-current
+independent native-audio work; later edits require separate verification.
+Only these CPU hunks and note enter this commit. No Ppu/RAM/save layout
+change; ROM/probe assets ignored. The row comparisons share the maintained
+renderer and do not establish hardware accuracy or every BG/scroll mode.
+Next: BG tilemap/tile-address and composition snapshot gaps. Audio timing,
+HDMA, masked RAM, shared hardware accuracy and boot-to-credits remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

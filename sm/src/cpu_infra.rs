@@ -112,6 +112,7 @@ pub struct Snapshot {
     pub mode7_flags: [bool; 5],
     pub mosaic: ([bool; 4], uint8, uint8),
     pub bgmode: (uint8, bool, [bool; 4]),
+    pub bg_scroll: [(uint16, uint16); 4],
     pub brightness: uint8,
     pub forced_blank: bool,
     pub cgram: [uint16; 256],
@@ -969,6 +970,17 @@ unsafe fn VerifySnapshotsEq(
             );
         }
     }
+    if (*b).bg_scroll != (*a).bg_scroll {
+        game.g_fail = true;
+        if report_details {
+            eprintln!(
+                "@{}: BG scroll (horizontal, vertical) compare failed: mine {:?} != theirs {:?}",
+                game.snes_frame_counter,
+                (*b).bg_scroll,
+                (*a).bg_scroll
+            );
+        }
+    }
     if (*b).bgmode != (*a).bgmode {
         game.g_fail = true;
         if report_details {
@@ -1674,6 +1686,7 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     let ppu = &*(*game.g_snes).ppu;
     (*s).brightness = ppu.brightness;
     (*s).forced_blank = ppu.forcedBlank;
+    (*s).bg_scroll = ppu.bgLayer.map(|bg| (bg.hScroll, bg.vScroll));
     (*s).bgmode = (ppu.mode, ppu.bg3priority, ppu.bgLayer.map(|bg| bg.bigTiles));
     (*s).mosaic = (
         ppu.bgLayer.map(|bg| bg.mosaicEnabled),
@@ -1717,6 +1730,10 @@ unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     let ppu = &mut *(*game.g_snes).ppu;
     ppu.brightness = (*s).brightness;
     ppu.forcedBlank = (*s).forced_blank;
+    for (bg, (horizontal, vertical)) in ppu.bgLayer.iter_mut().zip((*s).bg_scroll) {
+        bg.hScroll = horizontal;
+        bg.vScroll = vertical;
+    }
     let (mode, bg3_priority, big_tiles) = (*s).bgmode;
     ppu.mode = mode;
     ppu.bg3priority = bg3_priority;
