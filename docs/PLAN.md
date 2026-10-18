@@ -1169,6 +1169,54 @@ Maintained source/counters are unchanged; diagnostic code and ROM-derived
 outputs stay outside tracked files. Next: preserve actual upload protocol
 timing in the runtime comparison, rather than removing preparation blindly.
 
+Rust upload transport prototype (2026-10-18): the isolated fixture now
+implements the original CPU handshake in Rust through existing B-bus reads
+and APU writes. Native upload never calls ROM CPU code. From the same
+captured CPU-entry APU/SPC/DSP, WRAM and pending APU catchup state, original
+and native uploads match every ordered SPC RAM store, DSP write and sample.
+Terminal full APU RAM, explicit DSP/channel/SPC/timer/port/cycle fields,
+pending catchup and WRAM bytes 00/01/02/0617/0618/0641/0642 match.
+Three DCFAC7 boots and all nine observed bank sources pass at actual CPU
+wrapper return, before further driver activity can conceal port differences.
+The active return has 44,585 matching events and APU cycle 66,345,153.
+This compares selected WRAM effects, not complete CPU/WRAM equality.
+
+Actual oracle controls refine the protocol model. The 8100/8103 source
+advance helper passes 84 byte/word/bank boundary cases: first-increment
+wrap returns early at next-bank 8000 and increments WRAM byte 02, including
+FF-to-00 bank wrapping. The maintained cpu_adrAby reads a header's high
+byte at source+1 across a bank boundary; an earlier within-bank assumption
+was wrong. Synthetic empty headers at D0FFFE/D0FFFF each match 3,322 events,
+terminal state and cycle 10,128,129 at return. These headers exist only in
+the isolated process's ROM memory; no patched ROM asset is written.
+
+Completion and block-timeout STZ stores use the current source data bank,
+not bank zero. High ROM banks therefore do not clear APU ports. A stopped-
+SPC timeout pair matches original/native full APU state and cycle 4,699,361;
+input ports remain CC/01/60/6D for DCFAC7. Initial timeout is a permanent
+wait; block timeout returns through those banked stores. The prototype
+preserves these quirks. A captured event-bit comparator fault returns exit
+1 without completion. All successful runs return native exit 0. No source
+behavior change is justified by an assumed bank-zero cleanup.
+
+A normal-input original-ROM replay also captures its first DCFAC7 upload
+at frame 622 without source-pointer writes or a constructed call. Its
+30,672 scalar upload-span samples and terminal RAM replay faithfully;
+canonical Rust phase-zero continuation differs in 82 span values and zero
+later values. This is a natural ROM boundary with a seeded Rust comparison,
+not natural Rust runtime equivalence.
+
+Implementation remains unfinished after one hour on this item; stop here
+per the project rule. Next prerequisite: give each oracle side independent
+or restored APU/SPC/DSP/clocks before routing Rust gameplay to this transport.
+Current snapshots omit that audio state; RM_MINE/BOTH force the approximate
+driver and APU_UploadBank skips uploads when custom audio is off. Do not
+switch defaults or retain a permanent ROM upload fallback. Normal command
+delivery timing remains separate. Maintained Rust/counters are unchanged
+by this prototype. Isolated optimized builds and Cargo fmt/check pass;
+Cargo release remains blocked by khronos_api execution (OS error 5).
+All probe code/logs and ROM-derived state remain outside tracked files.
+
 VRAM port-state enforcement (2026-10-18): per-frame snapshots now capture,
 restore and compare vramPointer, vramIncrement, vramIncrementOnHigh and
 vramRemapMode before normalization/recovery, alongside the committed read
