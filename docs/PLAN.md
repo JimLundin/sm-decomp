@@ -3679,6 +3679,37 @@ Waver71 failures, held HDMA diagnosis, hires, audio timing, masked RAM, shared
 hardware accuracy and complete-route coverage remain open. Probe/ROM assets
 stay ignored; concurrent edits remain separate.
 
+SNES video-clock and interrupt-latch rewind (2026-10-18): snapshots now
+capture/restore hPos, vPos, frames and inNmi/inIrq/inVblank. Previously an
+actual TIMEUP read cleared the hardware IRQ latch; rewind restored the CPU
+pending flag but the next TIMEUP read still returned 00 instead of 80.
+Actual vblank/line-zero transitions similarly left RDNMI/HVBJOY reflecting
+the wrong boundary. Replaying a saved vblank boundary advanced hPos twice
+and lost the expected pending NMI because the boundary was no longer visited.
+
+Actual TIMEUP, vblank and line-zero checks reproduce both latch directions.
+Clock continuation checks include end-of-frame and u32 frame-count wrapping.
+The candidate restores expected reads, positions, frames and repeated NMI
+delivery. Temporary BOTH frame-200 clock/vblank/IRQ disturbances pass normal
+3,600/0, forced mismatch recovery 3,600/1 and debug retry 3,600/1, native
+exits 0/1/1 with one intentional failure and no cascade. These are injected
+rewind controls against maintained hardware behavior, not hardware accuracy
+or natural gameplay coverage of these boundaries.
+
+Clean frozen 8c3722a0 plus only this eight-line snapshot change passes any%
+129,712/0 (225.23s), native exit 0, without instrumentation. Direct full-source
+rustfmt, normal-core metadata and optimized clean/probe core/DLL builds pass.
+Cargo fmt/check and release remain denied at cargo.exe launch (OS error 5).
+Progress script passes: focused Rust lines +8 preserve clock/latch state;
+other residue categories unchanged. CPU/SNES layout, g_ram and disk saves
+are unchanged. Clock/latches restore as execution context; no gameplay
+comparison or scheduling rule changes. Concurrent audio, demo and PPU edits
+are outside this replay. IRQ generation, NMI enable gating, enable-during-
+vblank handling, bus/event ordering, remaining register/input/DMA state,
+rendering/HDMA, audio timing and boot-to-credits coverage remain open.
+Next: audit interrupt enable/timer rewind and actual event generation before
+replacing the paired yield schedule with hardware-clock execution.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

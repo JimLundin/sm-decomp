@@ -104,6 +104,8 @@ pub struct Snapshot {
     pub cpu_stopped: bool,
     pub cpu_irq_pending: bool,
     pub cpu_nmi_pending: bool,
+    pub video_clock: (uint16_t, uint16_t, uint32_t),
+    pub interrupt_latches: (bool, bool, bool),
     pub vTimer: uint16_t,
     pub ram: [uint8; 131072],
     pub vram: [uint16; 32768],
@@ -1749,6 +1751,9 @@ unsafe fn MakeSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     (*s).cpu_stopped = (*c).stopped;
     (*s).cpu_irq_pending = (*c).irqWanted;
     (*s).cpu_nmi_pending = (*c).nmiWanted;
+    let snes = &*game.g_snes;
+    (*s).video_clock = (snes.hPos, snes.vPos, snes.frames);
+    (*s).interrupt_latches = (snes.inNmi, snes.inIrq, snes.inVblank);
     (*s).vTimer = (*game.g_snes).vTimer;
     memcpy(
         &raw mut (*s).ram as *mut uint8 as *mut ::core::ffi::c_void,
@@ -1955,6 +1960,9 @@ unsafe fn RestoreSnapshot(mut s: *mut Snapshot, game: &mut Game) {
     (*c).nmiWanted = (*s).cpu_nmi_pending;
     cpu_setFlags(c, (*s).flags as uint8_t);
     (*c).waiting = (*s).cpu_waiting;
+    let snes = &mut *game.g_snes;
+    (snes.hPos, snes.vPos, snes.frames) = (*s).video_clock;
+    (snes.inNmi, snes.inIrq, snes.inVblank) = (*s).interrupt_latches;
     memcpy(
         (*game.g_snes).ram as *mut ::core::ffi::c_void,
         &raw mut (*s).ram as *mut uint8 as *const ::core::ffi::c_void,
