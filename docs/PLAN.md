@@ -4009,6 +4009,26 @@ boot-to-credits coverage remain open. Next: independently QC the coordinated
 arithmetic rewind change without enforcing direct-Rust residual equality;
 held HDMA diagnosis remains stopped.
 
+Independent arithmetic-opcode QC (2026-10-18): the frozen candidate's
+production snapshot code matches81cea54a plus the separately owned audio-save
+recovery edit.65,536 saved arithmetic-word tuples are overwritten through
+actual4202..4206 writes and restored. Each then executes real CPU LDA absolute
+reads at4214..4217 in both accumulator widths, including odd result-register
+pairs and the4217/4218 remainder/controller pair. Accumulator, PC, N/Z and
+4/5-cycle costs match independent expected bytes. Later multiply-by255 and
+divide-by31 consume restored operands. All655,360 continuations pass,
+nativeexit0. Removing only arithmetic restore fails the first saved-state
+case. This expands CPU-consumer coverage without proving hardware latency,
+arbitrary cross-field tuples or every emulated-helper route.
+
+The initial diagnostic build used the wrong CPU flag field name; correcting
+the TEMP probe to mf produced the passing actual-opcode run. No maintained
+source changes. Direct full-source rustfmt, normal-core metadata, optimized
+diagnostic core/DLL and progress checks pass. Only this note is committed;
+no fresh movie result is claimed. Arithmetic residual equality remains
+unenforced; WRIO/autojoy integration, event generation, Waver71, held HDMA,
+audio timing and boot-to-credits stay open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
