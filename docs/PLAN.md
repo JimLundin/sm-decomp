@@ -63,8 +63,9 @@ and source positions and all 6089 replacement result types. An independent
 reconstruction agrees with the complete transformation and intermediate bounds.
 Boundary checks pass 51818253 comparisons across 116 type/operator signatures,
 plus 1515 literal-expression checks; the final 6089 expressions are an exact
-subset of the tested family. Changed-result, saturation, sign-loss and reversed
-subtraction controls are rejected. This is not new gameplay coverage.
+subset of the tested family. A changed-result mutant is rejected by the same
+comparison run; separate examples distinguish saturation, sign loss and reversed
+subtraction. Those examples are not whole-harness mutants. This adds no gameplay coverage.
 
 Frozen 300bfd44 plus the arithmetic pass passes any% 129712/0 (166.47s)
 and Speed Booster 148406/0 (219.25s). The independent integration of current
@@ -1457,14 +1458,13 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `00a74e6e` plus the audited
-6089-expression arithmetic candidate passes uninterrupted full boot
+Latest reviewed integration (2026-10-19): frozen `bea38871` passes
+uninterrupted full boot
 any% 129712/0 (196.83s) and Speed Booster 148406/0 (260.79s),
 native exits 0. This combines the completed shared layouts, property OR
 helper, five projectile wrapping updates and cross-bank word arithmetic.
-The arithmetic candidate is still uncommitted at this review. Its exact
-31 files match the independently reconstructed and compiler-checked candidate;
-a later implementation commit must match these files before reusing this run.
+All 74 tested source/configuration/host/progress files match that commit.
+The exact committed source qualifies the completed runs without a rebuild.
 
 Both complete checkpoints, including all bindings and serialized payloads,
 are byte-identical to reviewed 8582a6ed. All bindings are independently
