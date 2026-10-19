@@ -35,6 +35,31 @@ Keep each commit one invariant, but apply it across the complete eligible family
 Rank by net deletion including shared code, unsafe operations removed and
 edit/build/verification cost. Prefer this work over further isolated cleanup.
 
+Integer comparison family (2026-10-19): simplify 4657 comparisons across
+31 gameplay files using compiler-resolved types and value-preserving ranges.
+Remove 7018 casts and 2807 Rust lines. Signed narrowing, operand evaluation,
+intermediate arithmetic and raw operations remain exact. Raw-offset lines
+rise by one through formatting; actual raw operations and unsafe counts do not.
+
+Compiler checks preserve 679372 retained expression kinds/types/positions
+(679332 with concurrent projectile edits) and all replacement operators and
+operand/result types. Source reconstruction and formatting checks pass.
+269 type/constant signatures pass 19692962 operand-pair checks, including
+negative constants; signedness and operand-order controls fail as expected.
+These sweeps are not every combination of wide integers. ast-grep misses
+21 original expressions at parser errors; compiler spans cover those too.
+The resulting gameplay source has no ast-grep parser errors.
+
+The cc17d506 snapshot plus this family passes any% 129712/0 (236.27s),
+Speed Booster 148406/0 (308.95s) and pause 40836/0 (77.81s), native exits 0.
+Normal release passes (28.41s frozen, 39.74s stable workspace), as do
+formatting/check and progress. Staged Rust matches that verified snapshot;
+independent projectile and PPU edits remain outside this commit.
+
+Use standard automatic fixes next: Clippy's isolated unused_parens trial
+fixes 8883 parenthesis pairs across 32 gameplay files. Keep each lint family
+in its own verified commit. The broader historical clone audit remains open.
+
 Pause-label family (2026-10-19): all three label modes and their 18 row
 loops now use one safe, ordered tile-palette update. The direct initialization
 call and function-pointer dispatch are included. Named left/start/right label

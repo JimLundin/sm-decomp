@@ -532,9 +532,10 @@ pub unsafe fn RoomCode_ScrollingSkyOcean_(game: &mut Game) {
 }
 pub unsafe fn RoomCode_GenRandomExplodes_Nonblank(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xa78) as *mut uint16) == 0
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x5b6) as *mut uint16) as ::core::ffi::c_int
-            & 1 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
+        && (*((&raw mut game.g_ram as *mut uint8).offset(0x5b6) as *mut uint16)
+            as ::core::ffi::c_int
+            & 1 as ::core::ffi::c_int)
+            == 0i32
     {
         let mut Random: uint16 = NextRandom(game);
         let mut x: uint16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16))
@@ -551,12 +552,12 @@ pub unsafe fn RoomCode_GenRandomExplodes_Nonblank(game: &mut Game) {
             (y as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint8,
             *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
         );
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16).offset(
+        if (*((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16).offset(
             (prod as ::core::ffi::c_int + (x as ::core::ffi::c_int >> 4 as ::core::ffi::c_int))
                 as isize,
         ) as ::core::ffi::c_int
-            & 0x3ff as ::core::ffi::c_int
-            != 255 as ::core::ffi::c_int
+            & 0x3ff as ::core::ffi::c_int)
+            != 255i32
         {
             RoomCode_GenRandomExplodes(x, y, game);
         }
@@ -575,9 +576,10 @@ pub unsafe fn RoomCode_ExplodeShakes(game: &mut Game) {
 }
 pub unsafe fn RoomCode_GenRandomExplodes_4th(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xa78) as *mut uint16) == 0
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x5b6) as *mut uint16) as ::core::ffi::c_int
-            & 3 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
+        && (*((&raw mut game.g_ram as *mut uint8).offset(0x5b6) as *mut uint16)
+            as ::core::ffi::c_int
+            & 3 as ::core::ffi::c_int)
+            == 0i32
     {
         let mut Random: uint16 = NextRandom(game);
         RoomCode_GenRandomExplodes(
@@ -598,7 +600,7 @@ pub unsafe fn RoomCode_GenRandomExplodes(mut x_r18: uint16, mut y_r20: uint16, g
     static kRoomCode_GenRandomExplodes_Sprite: [uint8; 8] = [3, 3, 9, 12, 12, 18, 18, 21];
     static kRoomCode_GenRandomExplodes_Sfx: [uint8; 8] = [0x24, 0, 0, 0x25, 0, 0, 0, 0];
     let mut v1: uint16 = ((NextRandom(game)) & (0xfu16));
-    if (v1 as ::core::ffi::c_int) < 8 as ::core::ffi::c_int {
+    if v1 < 8u16 {
         let mut v2: uint16 = kRoomCode_GenRandomExplodes_Sfx[v1 as usize] as uint16;
         if v2 != 0 {
             QueueSfx2_Max6(v2, game);
@@ -616,20 +618,15 @@ pub unsafe fn RoomCode_GenRandomExplodes(mut x_r18: uint16, mut y_r20: uint16, g
 pub unsafe fn RoomCode_ScrollRightDachora(game: &mut Game) {
     if *(&raw mut game.g_ram as *mut uint8)
         .offset(0xcd20)
-        .offset(11) as ::core::ffi::c_int
-        == 2 as ::core::ffi::c_int
-        && (*((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16)
-            as ::core::ffi::c_int)
-            < 0x500 as ::core::ffi::c_int
-        && (*((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16)
-            as ::core::ffi::c_int)
-            < 0x380 as ::core::ffi::c_int
+        .offset(11)
+        == 2u8
+        && *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16) < 0x500u16
+        && *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16) < 0x380u16
     {
         let ref mut fresh15 = *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16);
         *fresh15 = (*fresh15 as ::core::ffi::c_int
-            + ((*((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16)
+            + ((*((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16) >= 0x380u16)
                 as ::core::ffi::c_int
-                >= 0x380 as ::core::ffi::c_int) as ::core::ffi::c_int
                 + 3 as ::core::ffi::c_int)) as uint16;
     }
 }
@@ -660,10 +657,7 @@ pub unsafe fn PauseHook_DraygonRoom(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xa7) as *mut uint16) = 4 as uint16;
 }
 pub unsafe fn UnpauseHook_DraygonRoom(game: &mut Game) -> CoroutineRet {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x18b4) as *mut uint16).offset(1)
-        as ::core::ffi::c_int
-        == 8 as ::core::ffi::c_int
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x18b4) as *mut uint16).offset(1) == 8u16 {
         *((&raw mut game.g_ram as *mut uint8).offset(0xa7) as *mut uint16) = 12 as uint16;
     }
     return kCoroutineNone as CoroutineRet;
@@ -839,8 +833,8 @@ pub unsafe fn RoomCode_Elevatube(game: &mut Game) {
         as ::core::ffi::c_int
         + *((&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(4) as *mut uint8
             as *mut uint16) as ::core::ffi::c_int
-        + 3616 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int)
-        < 0x1c41 as ::core::ffi::c_int
+        + 3616 as ::core::ffi::c_int) as uint16)
+        < 0x1c41u16
     {
         let ref mut fresh14 = *((&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(4)
             as *mut uint8 as *mut uint16);
@@ -963,17 +957,11 @@ static kRoomCode_SpawnCeresFallingDebris_Tab: [uint16; 16] = [
     0x190,
 ];
 pub unsafe fn RoomCode_SpawnCeresFallingDebris(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x93f) as *mut uint16) as ::core::ffi::c_int
-        != 0
-        && {
-            let ref mut fresh12 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16);
-            *fresh12 = (*fresh12).wrapping_sub(1);
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut int16)
-                as ::core::ffi::c_int)
-                < 0 as ::core::ffi::c_int
-        }
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x93f) as *mut uint16) != 0u16 && {
+        let ref mut fresh12 = *((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16);
+        *fresh12 = (*fresh12).wrapping_sub(1);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut int16) < 0i16
+    } {
         *(&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(0) = 8 as uint8;
         *(&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(1) = 0 as uint8;
         let mut v0: uint16 = (if *((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
@@ -1016,7 +1004,7 @@ pub unsafe fn RoomCode_ShakeScreenHorizDiag(game: &mut Game) {
         } else {
             current_block_3 = 11006700562992250127;
         }
-    } else if (NextRandom(game) as ::core::ffi::c_int) < 0x200 as ::core::ffi::c_int {
+    } else if NextRandom(game) < 0x200u16 {
         strcpy(
             (&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut ::core::ffi::c_char,
             b"*\0" as *const u8 as *const ::core::ffi::c_char,
@@ -1046,7 +1034,7 @@ pub unsafe fn RoomCode_ShakeScreenHorizDiagStrong(game: &mut Game) {
         } else {
             current_block_3 = 11006700562992250127;
         }
-    } else if (NextRandom(game) as ::core::ffi::c_int) < 0x180 as ::core::ffi::c_int {
+    } else if NextRandom(game) < 0x180u16 {
         strcpy(
             (&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut ::core::ffi::c_char,
             b"*\0" as *const u8 as *const ::core::ffi::c_char,
@@ -1124,9 +1112,9 @@ pub unsafe fn RoomDefStateSelect_IsBossDead(mut k: uint16, game: &mut Game) -> u
     };
 }
 pub unsafe fn RoomDefStateSelect_MorphBallMissiles(mut k: uint16, game: &mut Game) -> uint16 {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9a4) as *mut uint16) as ::core::ffi::c_int
-        & 4 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x9a4) as *mut uint16) as ::core::ffi::c_int
+        & 4 as ::core::ffi::c_int)
+        == 0i32
         || *((&raw mut game.g_ram as *mut uint8).offset(0x9c8) as *mut uint16) == 0
     {
         return ((k).wrapping_add((2u16)));
@@ -1581,14 +1569,14 @@ pub unsafe fn RunDoorSetupCode(game: &mut Game) {
 }
 pub unsafe fn RoomCode_CrocomireShaking(game: &mut Game) {
     let mut ai_var_D: uint16 = 0;
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0)).properties
-        as ::core::ffi::c_int
-        & 0x200 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
+    if ((*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
+        .properties as ::core::ffi::c_int
+        & 0x200 as ::core::ffi::c_int)
+        == 0i32
     {
         if (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
-            .ai_var_A as ::core::ffi::c_int
-            == 64 as ::core::ffi::c_int
+            .ai_var_A
+            == 64u16
         {
             *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) =
                 ((*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(1))
@@ -1597,10 +1585,11 @@ pub unsafe fn RoomCode_CrocomireShaking(game: &mut Game) {
                         as ::core::ffi::c_int
                     + *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16)
                         as ::core::ffi::c_int) as uint16;
-        } else if (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
-            .ai_var_B as ::core::ffi::c_int
-            & 0x400 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
+        } else if ((*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData)
+            .offset(0))
+        .ai_var_B as ::core::ffi::c_int
+            & 0x400 as ::core::ffi::c_int)
+            != 0i32
         {
             let fresh5 = &raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0xf78)
                 as *mut EnemyData)
@@ -1629,21 +1618,21 @@ pub unsafe fn RoomCode_CrocomireShaking(game: &mut Game) {
             *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16) =
                 ((ai_var_D).wrapping_sub((48u16)));
         } else if (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
-            .ai_var_C as ::core::ffi::c_int
-            == 34 as ::core::ffi::c_int
+            .ai_var_C
+            == 34u16
             && (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
-                .ai_var_D as ::core::ffi::c_int
-                != 0
+                .ai_var_D
+                != 0u16
         {
             let fresh7 = &raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0xf78)
                 as *mut EnemyData)
                 .offset(0))
             .ai_var_D;
             fresh7.write_unaligned(fresh7.read_unaligned().wrapping_sub(1));
-            if (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
+            if ((*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
                 .ai_var_D as ::core::ffi::c_int
-                & 1 as ::core::ffi::c_int
-                != 0 as ::core::ffi::c_int
+                & 1 as ::core::ffi::c_int)
+                != 0i32
             {
                 let ref mut fresh8 =
                     *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16);

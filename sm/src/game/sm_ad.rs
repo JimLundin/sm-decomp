@@ -148,7 +148,7 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(
         )) as u16)
             | (0xff00u16));
         mbn_var_3F = mbn_var_3F.wrapping_sub(1);
-        if !(mbn_var_3F as ::core::ffi::c_int != 32 as ::core::ffi::c_int) {
+        if !(mbn_var_3F != 32u16) {
             break;
         }
     }
@@ -157,7 +157,7 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(
         v2 = v2.offset(-1);
         *fresh12 = 255 as uint16;
         mbn_var_3F = mbn_var_3F.wrapping_sub(1);
-        if !(mbn_var_3F as ::core::ffi::c_int != 32 as ::core::ffi::c_int) {
+        if !(mbn_var_3F != 32u16) {
             break;
         }
     }
@@ -178,7 +178,7 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(
         )) as u16)
             | (0xff00u16));
         var_3F = var_3F.wrapping_add(1);
-        if var_3F as ::core::ffi::c_int == 232 as ::core::ffi::c_int {
+        if var_3F == 232u16 {
             return;
         }
     }
@@ -187,7 +187,7 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(
         v5 = v5.offset(1);
         *fresh14 = 255 as uint16;
         var_3F = var_3F.wrapping_add(1);
-        if !(var_3F as ::core::ffi::c_int != 232 as ::core::ffi::c_int) {
+        if !(var_3F != 232u16) {
             break;
         }
     }
@@ -216,7 +216,7 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedUp(game: &mut Game) {
         -(25342 as ::core::ffi::c_int) as uint16;
     let mut v2: uint16 = (((*E).mbn_var_3D).wrapping_sub((32u16)));
     printf(b"Carry crap!\n\0" as *const u8 as *const ::core::ffi::c_char);
-    if v2 as ::core::ffi::c_int >= 0x80 as ::core::ffi::c_int {
+    if v2 >= 0x80u16 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x9c00).offset(6) as *mut uint8
             as *mut uint16) = (v2 as ::core::ffi::c_int - 127 as ::core::ffi::c_int
             | 0x80 as ::core::ffi::c_int) as uint16;
@@ -290,14 +290,14 @@ pub unsafe fn MotherBrain_CalcHdma_Up_UpRight(mut r22: uint16, mut r24: uint16, 
         let mut v8: uint16 = (R36 as ::core::ffi::c_int
             | v7 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int)
             as uint16;
-        if v8 as ::core::ffi::c_int == 0xffff as ::core::ffi::c_int {
+        if v8 == 0xffffu16 {
             v8 = 255 as uint16;
         }
         let fresh10 = v2;
         v2 = v2.offset(-1);
         *fresh10 = v8;
         mbn_var_3D = mbn_var_3D.wrapping_sub(1);
-        if !(mbn_var_3D as ::core::ffi::c_int != 32 as ::core::ffi::c_int) {
+        if !(mbn_var_3D != 32u16) {
             break;
         }
     }
@@ -323,7 +323,7 @@ pub unsafe fn MotherBrain_CalcHdma_Up_Up(mut r22: uint16, mut r24: uint16, game:
     *v2.offset(2) = 255 as uint16;
     loop {
         let mut v4: uint16 = ((r22).wrapping_sub((r18)));
-        if (r22 as ::core::ffi::c_int) < r18 as ::core::ffi::c_int {
+        if r22 < r18 {
             v4 = 0 as uint16;
         }
         r22 = v4;
@@ -337,14 +337,14 @@ pub unsafe fn MotherBrain_CalcHdma_Up_Up(mut r22: uint16, mut r24: uint16, game:
         let mut v8: uint16 = (r26 as ::core::ffi::c_int
             | v7 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int)
             as uint16;
-        if v8 as ::core::ffi::c_int == 0xffff as ::core::ffi::c_int {
+        if v8 == 0xffffu16 {
             v8 = 255 as uint16;
         }
         let fresh9 = v2;
         v2 = v2.offset(-1);
         *fresh9 = v8;
         mbn_var_3D = mbn_var_3D.wrapping_sub(1);
-        if !(mbn_var_3D as ::core::ffi::c_int != 32 as ::core::ffi::c_int) {
+        if !(mbn_var_3D != 32u16) {
             break;
         }
     }
@@ -373,27 +373,27 @@ pub unsafe fn MotherBrain_CalcHdma_Up_UpLeft(mut r22: uint16, mut r24: uint16, g
     *v2.offset(2) = 255 as uint16;
     loop {
         let mut v4: uint16 = ((r22).wrapping_sub((r18)));
-        if (r22 as ::core::ffi::c_int) < r18 as ::core::ffi::c_int {
+        if r22 < r18 {
             v4 = 0 as uint16;
         }
         r22 = v4;
         let mut R36: uint16 = (v4 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint16;
         let mut v7: uint16 = ((r24).wrapping_sub((r20)));
-        if (r24 as ::core::ffi::c_int) < r20 as ::core::ffi::c_int {
+        if r24 < r20 {
             v7 = 0 as uint16;
         }
         r24 = v7;
         let mut v8: uint16 = (R36 as ::core::ffi::c_int
             | v7 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int)
             as uint16;
-        if v8 as ::core::ffi::c_int == 0xffff as ::core::ffi::c_int {
+        if v8 == 0xffffu16 {
             v8 = 255 as uint16;
         }
         let fresh8 = v2;
         v2 = v2.offset(-1);
         *fresh8 = v8;
         mbn_var_3D = mbn_var_3D.wrapping_sub(1);
-        if !(mbn_var_3D as ::core::ffi::c_int != 32 as ::core::ffi::c_int) {
+        if !(mbn_var_3D != 32u16) {
             break;
         }
     }
@@ -475,14 +475,14 @@ pub unsafe fn MotherBrain_CalcHdma_Down_DownRight(
         let mut v8: uint16 = (r26 as ::core::ffi::c_int
             | v7 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int)
             as uint16;
-        if v8 as ::core::ffi::c_int == 0xffff as ::core::ffi::c_int {
+        if v8 == 0xffffu16 {
             v8 = 255 as uint16;
         }
         let fresh7 = dst;
         dst = dst.offset(1);
         *fresh7 = v8;
         mbn_var_3D = mbn_var_3D.wrapping_add(1);
-        if !(mbn_var_3D as ::core::ffi::c_int != 232 as ::core::ffi::c_int) {
+        if !(mbn_var_3D != 232u16) {
             break;
         }
     }
@@ -515,7 +515,7 @@ pub unsafe fn MotherBrain_CalcHdma_Down_Down(mut r22: uint16, mut r24: uint16, g
     let mut mbn_var_3D: uint16 = (*Get_MotherBrain(0 as ::core::ffi::c_int, game)).mbn_var_3D;
     loop {
         let mut v4: uint16 = ((r22).wrapping_sub((r18)));
-        if (r22 as ::core::ffi::c_int) < r18 as ::core::ffi::c_int {
+        if r22 < r18 {
             v4 = 0 as uint16;
         }
         r22 = v4;
@@ -528,14 +528,14 @@ pub unsafe fn MotherBrain_CalcHdma_Down_Down(mut r22: uint16, mut r24: uint16, g
         let mut v8: uint16 = (r26 as ::core::ffi::c_int
             | v7 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int)
             as uint16;
-        if v8 as ::core::ffi::c_int == 0xffff as ::core::ffi::c_int {
+        if v8 == 0xffffu16 {
             v8 = 255 as uint16;
         }
         let fresh5 = dst;
         dst = dst.offset(1);
         *fresh5 = v8;
         mbn_var_3D = mbn_var_3D.wrapping_add(1);
-        if !(mbn_var_3D as ::core::ffi::c_int != 232 as ::core::ffi::c_int) {
+        if !(mbn_var_3D != 232u16) {
             break;
         }
     }
@@ -575,14 +575,14 @@ pub unsafe fn MotherBrain_CalcHdma_Down_DownLeft(
     let mut mbn_var_3D: uint16 = (*Get_MotherBrain(0 as ::core::ffi::c_int, game)).mbn_var_3D;
     loop {
         let mut v4: uint16 = ((r22).wrapping_sub((r18)));
-        if (r22 as ::core::ffi::c_int) < r18 as ::core::ffi::c_int {
+        if r22 < r18 {
             v4 = 0 as uint16;
         }
         r22 = v4;
         let mut v5: uint16 = (v4 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint16;
         let mut r26: uint16 = v5;
         let mut v7: uint16 = ((r24).wrapping_sub((r20)));
-        if (r24 as ::core::ffi::c_int) < r20 as ::core::ffi::c_int {
+        if r24 < r20 {
             v7 = 0 as uint16;
         }
         r24 = v7;
@@ -596,7 +596,7 @@ pub unsafe fn MotherBrain_CalcHdma_Down_DownLeft(
         dst = dst.offset(1);
         *fresh3 = v8;
         mbn_var_3D = mbn_var_3D.wrapping_add(1);
-        if !(mbn_var_3D as ::core::ffi::c_int != 232 as ::core::ffi::c_int) {
+        if !(mbn_var_3D != 232u16) {
             break;
         }
     }
@@ -632,18 +632,16 @@ pub unsafe fn MotherBrain_SealWall(game: &mut Game) {
         (((0xa9881di32) as u16) & (0xffffu16));
 }
 pub unsafe fn MotherBrain_HealthBasedPaletteHandling(game: &mut Game) {
-    if (*Get_MotherBrain(0 as ::core::ffi::c_int, game)).mbn_var_1F as ::core::ffi::c_int
-        >= 2 as ::core::ffi::c_int
-    {
+    if (*Get_MotherBrain(0 as ::core::ffi::c_int, game)).mbn_var_1F >= 2u16 {
         let mut v0: uint16 = 0 as uint16;
         let mut health: uint16 = (*Get_MotherBrain(0x40 as ::core::ffi::c_int, game))
             .base
             .health;
-        if (health as ::core::ffi::c_int) < 0x2328 as ::core::ffi::c_int {
+        if health < 0x2328u16 {
             v0 = 2 as uint16;
-            if (health as ::core::ffi::c_int) < 0x1518 as ::core::ffi::c_int {
+            if health < 0x1518u16 {
                 v0 = 4 as uint16;
-                if (health as ::core::ffi::c_int) < 0x708 as ::core::ffi::c_int {
+                if health < 0x708u16 {
                     v0 = 6 as uint16;
                 }
             }

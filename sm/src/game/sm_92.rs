@@ -36,7 +36,7 @@ pub unsafe fn SetSamusTilesDefsForCurAnim(game: &mut Game) {
         as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x71d) as *mut uint16 as *mut uint8).offset(0) =
         1 as uint8;
-    if (*AD).bottom_half_idx as ::core::ffi::c_int != 255 as ::core::ffi::c_int {
+    if (*AD).bottom_half_idx != 255u8 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x721) as *mut uint16) =
             (7 as ::core::ffi::c_int * (*AD).bottom_half_pos as ::core::ffi::c_int
                 + *(game.g_rom.offset(crate::rtl::lorom_offset(0x92d938)) as *const uint8
@@ -52,9 +52,7 @@ pub unsafe fn SetSamusTilesDefsForCurAnim(game: &mut Game) {
 }
 pub unsafe fn PlaySamusFanfare(game: &mut Game) -> uint8 {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) != 0 {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) as ::core::ffi::c_int
-            == 5 as ::core::ffi::c_int
-        {
+        if *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) == 5u16 {
             PlayRoomMusicTrackAfterAFrames(0x168 as uint16, game);
         }
     } else {
@@ -88,10 +86,7 @@ pub unsafe fn Unused_SamusTileViewer(game: &mut Game) {
     DrawSamusSpritemap(0x185 as uint16, 0x80 as uint16, 0x50 as uint16, game);
 }
 pub unsafe fn DrawSamusSuitExploding(game: &mut Game) {
-    let mut r18: uint16 = (if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e)
-        as ::core::ffi::c_int
-        == 4 as ::core::ffi::c_int
-    {
+    let mut r18: uint16 = (if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8 {
         *((&raw mut game.g_ram as *mut uint8).offset(0xde4) as *mut uint16) as ::core::ffi::c_int
             + 2085 as ::core::ffi::c_int
     } else {

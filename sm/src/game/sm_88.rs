@@ -272,9 +272,9 @@ pub unsafe fn LayerBlendFunc_1C(mut j: uint16, game: &mut Game) -> uint16 {
 }
 pub unsafe fn LayerBlendFunc_18(mut j: uint16, game: &mut Game) -> uint16 {
     j = 2 as uint16;
-    if *(&raw mut game.g_ram as *mut uint8).offset(0x84) as ::core::ffi::c_int
-        & 0x30 as ::core::ffi::c_int
-        == 0x30 as ::core::ffi::c_int
+    if (*(&raw mut game.g_ram as *mut uint8).offset(0x84) as ::core::ffi::c_int
+        & 0x30 as ::core::ffi::c_int)
+        == 0x30i32
     {
         *(&raw mut game.g_ram as *mut uint8).offset(0x71) = 36 as uint8;
         *(&raw mut game.g_ram as *mut uint8).offset(0x6b) = 19 as uint8;
@@ -292,9 +292,9 @@ pub unsafe fn LayerBlendFunc_26(mut j: uint16, game: &mut Game) -> uint16 {
 pub unsafe fn LayerBlendFunc_28(mut j: uint16, game: &mut Game) -> uint16 {
     *(&raw mut game.g_ram as *mut uint8).offset(0x6e) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x71) = -(77 as ::core::ffi::c_int) as uint8;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x1986) as *mut uint16) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x1986) as *mut uint16) as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int)
+        == 0i32
     {
         *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) = 37 as uint8;
         *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) = 64 as uint8;
@@ -305,9 +305,9 @@ pub unsafe fn LayerBlendFunc_28(mut j: uint16, game: &mut Game) -> uint16 {
 pub unsafe fn LayerBlendFunc_2A(mut j: uint16, game: &mut Game) -> uint16 {
     *(&raw mut game.g_ram as *mut uint8).offset(0x6e) = 0 as uint8;
     *(&raw mut game.g_ram as *mut uint8).offset(0x71) = -(77 as ::core::ffi::c_int) as uint8;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x1986) as *mut uint16) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x1986) as *mut uint16) as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int)
+        == 0i32
     {
         *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) = 38 as uint8;
         *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) = 66 as uint8;
@@ -461,26 +461,26 @@ pub unsafe fn LayerBlendingHandler(game: &mut Game) {
         v0 = kLayerBlendFuncTable[(v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize]
             .expect("non-null function pointer")(v0, game);
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x1986) as *mut uint16) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x1986) as *mut uint16) as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int)
+        == 0i32
     {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x1986) as *mut uint16)
+        if (*((&raw mut game.g_ram as *mut uint8).offset(0x1986) as *mut uint16)
             as ::core::ffi::c_int
-            & 0x4000 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
+            & 0x4000 as ::core::ffi::c_int)
+            != 0i32
         {
             HandleLayerBlendingXrayCanShowBlocks(game);
-        } else if *((&raw mut game.g_ram as *mut uint8).offset(0x1986) as *mut uint16)
+        } else if (*((&raw mut game.g_ram as *mut uint8).offset(0x1986) as *mut uint16)
             as ::core::ffi::c_int
-            & 0x2000 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
+            & 0x2000 as ::core::ffi::c_int)
+            != 0i32
         {
             HandleLayerBlendingXrayCantShowBlocks(game);
-        } else if *((&raw mut game.g_ram as *mut uint8).offset(0x1986) as *mut uint16)
+        } else if (*((&raw mut game.g_ram as *mut uint8).offset(0x1986) as *mut uint16)
             as ::core::ffi::c_int
-            & 0x1000 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
+            & 0x1000 as ::core::ffi::c_int)
+            != 0i32
         {
             HandleLayerBlendingXrayFirefleaRoom(game);
         }
@@ -521,7 +521,7 @@ pub unsafe fn WaitUntilEndOfVblankAndClearHdma(game: &mut Game) {
 pub unsafe fn sub_8882AC(game: &mut Game) {
     *(&raw mut game.g_ram as *mut uint8).offset(0x85) = 0 as uint8;
     let mut i: ::core::ffi::c_int = 10 as ::core::ffi::c_int;
-    while i >= 0 as ::core::ffi::c_int {
+    while i >= 0i32 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x18b4) as *mut uint16)
             .offset((i >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
         i -= 2 as ::core::ffi::c_int;
@@ -548,7 +548,7 @@ pub unsafe fn InitializeSpecialEffectsForNewRoom(game: &mut Game) {
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x5f7) as *mut uint16) = 0 as uint16;
     let mut i: ::core::ffi::c_int = 32 as ::core::ffi::c_int;
-    while i != 0x80 as ::core::ffi::c_int {
+    while i != 0x80i32 {
         WriteReg(
             (i + 17152 as ::core::ffi::c_int) as SnesRegs as uint16,
             0 as uint8,
@@ -726,7 +726,7 @@ pub unsafe fn SpawnHdmaObject(
         }
         r20 = ((r20).wrapping_add((16u16)));
         v3 = ((v3).wrapping_add((2u16)));
-        if v3 as ::core::ffi::c_int == 12 as ::core::ffi::c_int {
+        if v3 == 12u16 {
             return -(1 as ::core::ffi::c_int) as uint16;
         }
     }
@@ -749,9 +749,10 @@ pub unsafe fn HdmaObjectHandler(game: &mut Game) {
     let mut v1: int8 = 0;
     HandleMusicQueue(game);
     if *((&raw mut game.g_ram as *mut uint8).offset(0xa78) as *mut uint16) == 0
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16) as ::core::ffi::c_int
-            & 0x4000 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
+        && (*((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16)
+            as ::core::ffi::c_int
+            & 0x4000 as ::core::ffi::c_int)
+            != 0i32
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16) = 0x8000 as uint16;
         static unk_8884D5: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
@@ -777,9 +778,9 @@ pub unsafe fn HdmaObjectHandler(game: &mut Game) {
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x1986) as *mut uint16) =
         *((&raw mut game.g_ram as *mut uint8).offset(0x1982) as *mut uint16);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x18b0) as *mut uint16) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x18b0) as *mut uint16) as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int)
+        != 0i32
     {
         *(&raw mut game.g_ram as *mut uint8).offset(0x85) = 0 as uint8;
         let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -795,7 +796,7 @@ pub unsafe fn HdmaObjectHandler(game: &mut Game) {
                     as ::core::ffi::c_int;
             }
             i += 2 as ::core::ffi::c_int;
-            if !(i != 12 as ::core::ffi::c_int) {
+            if !(i != 12i32) {
                 break;
             }
         }
@@ -817,7 +818,7 @@ pub unsafe fn HdmaobjInstructionHandler(mut k: uint8, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x18e4) as *mut uint16).offset(kh as isize);
     let fresh60 = *fresh59;
     *fresh59 = (*fresh59).wrapping_sub(1);
-    if fresh60 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
+    if fresh60 == 1u16 {
         let mut base: *const uint8 = RomBankBase(
             *((&raw mut game.g_ram as *mut uint8).offset(0x18c0) as *mut uint16 as *mut uint8)
                 .offset(k as ::core::ffi::c_int as isize)
@@ -987,7 +988,7 @@ pub unsafe fn HdmaobjInstr_DecrementAndGoto(
         *((&raw mut game.g_ram as *mut uint8).offset(0x1908) as *mut uint16).offset(v2 as isize);
     let fresh64 = *fresh63;
     *fresh63 = (*fresh63).wrapping_sub(1);
-    if fresh64 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
+    if fresh64 == 1u16 {
         return hdp.offset(2);
     } else {
         return *(hdp as *mut uint16) as uintptr_t as *const uint8;
@@ -1003,7 +1004,7 @@ pub unsafe fn HdmaobjInstr_DecrementAndGotoRel(
         *((&raw mut game.g_ram as *mut uint8).offset(0x1908) as *mut uint16).offset(v2 as isize);
     let fresh62 = *fresh61;
     *fresh61 = (*fresh61).wrapping_sub(1);
-    if fresh62 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
+    if fresh62 == 1u16 {
         return hdp.offset(1);
     } else {
         return hdp.offset(*hdp as int8 as ::core::ffi::c_int as isize);
@@ -1109,18 +1110,18 @@ pub unsafe fn HdmaobjInstr_Sleep(
     return ::core::ptr::null::<uint8>();
 }
 pub unsafe fn RaiseOrLowerFx(game: &mut Game) -> uint8 {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16) as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int)
+        != 0i32
     {
         return 1 as uint8;
     }
     let mut r24_r22: uint32 = ((*((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16)
         as int16 as ::core::ffi::c_int)
         << 8 as ::core::ffi::c_int) as uint32;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16) as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int)
+        == 0i32
     {
         let mut v2: uint16 = (r24_r22.wrapping_add(
             (*((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16) as uint32)
@@ -1129,14 +1130,11 @@ pub unsafe fn RaiseOrLowerFx(game: &mut Game) -> uint8 {
         ) >> 16 as ::core::ffi::c_int) as uint16;
         let ref mut fresh13 = *((&raw mut game.g_ram as *mut uint8).offset(0x1976) as *mut uint16);
         *fresh13 = (*fresh13 as uint32).wrapping_add(r24_r22) as uint16;
-        if v2 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
+        if (v2 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
             v2 = -(1 as ::core::ffi::c_int) as uint16;
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16) = v2;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16)
-            as ::core::ffi::c_int
-            >= v2 as ::core::ffi::c_int
-        {
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16) >= v2 {
             return 0 as uint8;
         } else {
             *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16) =
@@ -1152,27 +1150,23 @@ pub unsafe fn RaiseOrLowerFx(game: &mut Game) -> uint8 {
         ) >> 16 as ::core::ffi::c_int) as uint16;
         let ref mut fresh14 = *((&raw mut game.g_ram as *mut uint8).offset(0x1976) as *mut uint16);
         *fresh14 = (*fresh14 as uint32).wrapping_add(r24_r22) as uint16;
-        if v0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
+        if (v0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
             v0 = 0 as uint16;
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16) = v0;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16)
-            as ::core::ffi::c_int
-            >= v0 as ::core::ffi::c_int
-        {
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16) >= v0 {
             *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16) =
                 *((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16);
             *((&raw mut game.g_ram as *mut uint8).offset(0x1976) as *mut uint16) = 0 as uint16;
         }
-        return (*((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16)
-            as ::core::ffi::c_int
-            >= v0 as ::core::ffi::c_int) as uint8;
+        return (*((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16) >= v0)
+            as uint8;
     };
 }
 pub unsafe fn HdmaobjPreInstr_XrayFunc0_NoBeam(mut k: uint16, game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9b6) as *mut uint16) as ::core::ffi::c_int
-        & *((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16) as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x9b6) as *mut uint16) as ::core::ffi::c_int
+        & *((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16) as ::core::ffi::c_int)
+        != 0i32
     {
         CalculateXrayHdmaTable(game);
         let ref mut fresh137 = *((&raw mut game.g_ram as *mut uint8).offset(0xa7a) as *mut uint16);
@@ -1182,9 +1176,9 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc0_NoBeam(mut k: uint16, game: &mut Game) {
     };
 }
 pub unsafe fn HdmaobjPreInstr_XrayFunc1_BeamWidening(mut k: uint16, game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9b6) as *mut uint16) as ::core::ffi::c_int
-        & *((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16) as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x9b6) as *mut uint16) as ::core::ffi::c_int
+        & *((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16) as ::core::ffi::c_int)
+        != 0i32
     {
         AddToHiLo(
             (&raw mut game.g_ram as *mut uint8).offset(0xa7c) as *mut uint16,
@@ -1215,9 +1209,9 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc1_BeamWidening(mut k: uint16, game: &mut G
     };
 }
 pub unsafe fn HdmaobjPreInstr_XrayFunc2_FullBeam(mut k: uint16, game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9b6) as *mut uint16) as ::core::ffi::c_int
-        & *((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16) as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x9b6) as *mut uint16) as ::core::ffi::c_int
+        & *((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16) as ::core::ffi::c_int)
+        != 0i32
     {
         HandleMovingXrayUpDown(game);
         CalculateXrayHdmaTable(game);
@@ -1227,15 +1221,15 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc2_FullBeam(mut k: uint16, game: &mut Game)
     };
 }
 pub unsafe fn HandleMovingXrayUpDown(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9aa) as *mut uint16) as ::core::ffi::c_int
-        & *((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16) as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x9aa) as *mut uint16) as ::core::ffi::c_int
+        & *((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16) as ::core::ffi::c_int)
+        != 0i32
     {
         MoveXrayUp(game);
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x9ac) as *mut uint16)
+    } else if (*((&raw mut game.g_ram as *mut uint8).offset(0x9ac) as *mut uint16)
         as ::core::ffi::c_int
-        & *((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16) as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
+        & *((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16) as ::core::ffi::c_int)
+        != 0i32
     {
         MoveXrayDown(game);
     }
@@ -1248,19 +1242,17 @@ pub unsafe fn MoveXrayUp(game: &mut Game) {
         & 0x8000 as ::core::ffi::c_int
         != 0
     {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16) as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16)
             != *((&raw mut game.g_ram as *mut uint8).offset(0xa84) as *mut uint16)
-                as ::core::ffi::c_int
         {
-            if ((((*((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16)) as i16)
+            if ((*((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16)) as i16)
                 .wrapping_sub(
                     ((*((&raw mut game.g_ram as *mut uint8).offset(0xa84) as *mut uint16)) as i16),
-                )) as ::core::ffi::c_int)
-                < 0 as ::core::ffi::c_int
+                )
+                < 0i16
                 || {
-                    v0 = *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16)
-                        as ::core::ffi::c_int
-                        != 0 as ::core::ffi::c_int;
+                    v0 =
+                        *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16) != 0u16;
                     let ref mut fresh52 =
                         *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16);
                     *fresh52 = (*fresh52).wrapping_sub(1);
@@ -1268,26 +1260,25 @@ pub unsafe fn MoveXrayUp(game: &mut Game) {
                         as ::core::ffi::c_int
                         - (!v0 as ::core::ffi::c_int
                             + *((&raw mut game.g_ram as *mut uint8).offset(0xa84) as *mut uint16)
-                                as ::core::ffi::c_int)) as int16
-                        as ::core::ffi::c_int)
-                        < 0 as ::core::ffi::c_int
+                                as ::core::ffi::c_int)) as int16)
+                        < 0i16
                 }
             {
                 *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16) =
                     *((&raw mut game.g_ram as *mut uint8).offset(0xa84) as *mut uint16);
             }
         }
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0xa84) as *mut uint16)
+    } else if (*((&raw mut game.g_ram as *mut uint8).offset(0xa84) as *mut uint16)
         as ::core::ffi::c_int
-        + *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16) as ::core::ffi::c_int
-        != 256 as ::core::ffi::c_int
+        + *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16) as ::core::ffi::c_int)
+        != 256i32
     {
-        if (*((&raw mut game.g_ram as *mut uint8).offset(0xa84) as *mut uint16)
+        if ((*((&raw mut game.g_ram as *mut uint8).offset(0xa84) as *mut uint16)
             as ::core::ffi::c_int
             + *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16)
                 as ::core::ffi::c_int
-            - 256 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
-            >= 0 as ::core::ffi::c_int
+            - 256 as ::core::ffi::c_int) as int16)
+            >= 0i16
             || {
                 v1 = (((*((&raw mut game.g_ram as *mut uint8).offset(0xa84) as *mut uint16)
                     as uint32)
@@ -1304,9 +1295,7 @@ pub unsafe fn MoveXrayUp(game: &mut Game) {
                 let ref mut fresh53 =
                     *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16);
                 *fresh53 = (*fresh53).wrapping_add(1);
-                v1 as ::core::ffi::c_int != 256 as ::core::ffi::c_int
-                    && ((v1).wrapping_sub((256i16))) as ::core::ffi::c_int
-                        >= 0 as ::core::ffi::c_int
+                v1 != 256i16 && (v1).wrapping_sub((256i16)) >= 0i16
             }
         {
             *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16) = ((256u16)
@@ -1324,17 +1313,18 @@ pub unsafe fn MoveXrayDown(game: &mut Game) {
         & 0x8000 as ::core::ffi::c_int
         != 0
     {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xa84) as *mut uint16) as ::core::ffi::c_int
+        if (*((&raw mut game.g_ram as *mut uint8).offset(0xa84) as *mut uint16)
+            as ::core::ffi::c_int
             + *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16)
-                as ::core::ffi::c_int
-            != 128 as ::core::ffi::c_int
+                as ::core::ffi::c_int)
+            != 128i32
         {
-            if (*((&raw mut game.g_ram as *mut uint8).offset(0xa84) as *mut uint16)
+            if ((*((&raw mut game.g_ram as *mut uint8).offset(0xa84) as *mut uint16)
                 as ::core::ffi::c_int
                 + *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16)
                     as ::core::ffi::c_int
-                - 128 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
-                >= 0 as ::core::ffi::c_int
+                - 128 as ::core::ffi::c_int) as int16)
+                >= 0i16
                 || {
                     v0 = (((*((&raw mut game.g_ram as *mut uint8).offset(0xa84) as *mut uint16)
                         as uint32)
@@ -1351,9 +1341,7 @@ pub unsafe fn MoveXrayDown(game: &mut Game) {
                     let ref mut fresh50 =
                         *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16);
                     *fresh50 = (*fresh50).wrapping_add(1);
-                    v0 as ::core::ffi::c_int != 128 as ::core::ffi::c_int
-                        && ((v0).wrapping_sub((128i16))) as ::core::ffi::c_int
-                            >= 0 as ::core::ffi::c_int
+                    v0 != 128i16 && (v0).wrapping_sub((128i16)) >= 0i16
                 }
             {
                 *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16) = ((128u16)
@@ -1362,21 +1350,19 @@ pub unsafe fn MoveXrayDown(game: &mut Game) {
                     ));
             }
         }
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16)
+    } else if (*((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16)
         as ::core::ffi::c_int
-        - *((&raw mut game.g_ram as *mut uint8).offset(0xa84) as *mut uint16) as ::core::ffi::c_int
-        != 128 as ::core::ffi::c_int
+        - *((&raw mut game.g_ram as *mut uint8).offset(0xa84) as *mut uint16) as ::core::ffi::c_int)
+        != 128i32
     {
         if ((*((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16)
             as ::core::ffi::c_int
             - *((&raw mut game.g_ram as *mut uint8).offset(0xa84) as *mut uint16)
                 as ::core::ffi::c_int
-            - 128 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int)
-            < 0 as ::core::ffi::c_int
+            - 128 as ::core::ffi::c_int) as int16)
+            < 0i16
             || {
-                v1 = *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16)
-                    as ::core::ffi::c_int
-                    != 0 as ::core::ffi::c_int;
+                v1 = *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16) != 0u16;
                 let ref mut fresh51 =
                     *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16);
                 *fresh51 = (*fresh51).wrapping_sub(1);
@@ -1385,15 +1371,14 @@ pub unsafe fn MoveXrayDown(game: &mut Game) {
                     - (!v1 as ::core::ffi::c_int
                         + *((&raw mut game.g_ram as *mut uint8).offset(0xa84) as *mut uint16)
                             as ::core::ffi::c_int)
-                    != 128 as ::core::ffi::c_int
+                    != 128i32
                     && ((*((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16)
                         as ::core::ffi::c_int
                         - (!v1 as ::core::ffi::c_int
                             + *((&raw mut game.g_ram as *mut uint8).offset(0xa84) as *mut uint16)
                                 as ::core::ffi::c_int)
-                        - 128 as ::core::ffi::c_int) as int16
-                        as ::core::ffi::c_int)
-                        < 0 as ::core::ffi::c_int
+                        - 128 as ::core::ffi::c_int) as int16)
+                        < 0i16
             }
         {
             *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16) =
@@ -1404,9 +1389,7 @@ pub unsafe fn MoveXrayDown(game: &mut Game) {
 }
 pub unsafe fn CalculateXrayHdmaTable(game: &mut Game) {
     let mut v0: int16 = 0;
-    if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) as ::core::ffi::c_int
-        == 4 as ::core::ffi::c_int
-    {
+    if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8 {
         v0 = (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
             as ::core::ffi::c_int
             - *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16)
@@ -1420,9 +1403,7 @@ pub unsafe fn CalculateXrayHdmaTable(game: &mut Game) {
             + 3 as ::core::ffi::c_int) as int16;
     }
     let mut v1: uint16 = 0;
-    if *(&raw mut game.g_ram as *mut uint8).offset(0xa1f) as ::core::ffi::c_int
-        == 5 as ::core::ffi::c_int
-    {
+    if *(&raw mut game.g_ram as *mut uint8).offset(0xa1f) == 5u8 {
         v1 = (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)
             as ::core::ffi::c_int
             - *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16)
@@ -1436,16 +1417,14 @@ pub unsafe fn CalculateXrayHdmaTable(game: &mut Game) {
             - 16 as ::core::ffi::c_int) as uint16;
     }
     let mut current_block_11: u64;
-    if (v0 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
-        if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) as ::core::ffi::c_int
-            != 4 as ::core::ffi::c_int
-        {
+    if v0 < 0i16 {
+        if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) != 4u8 {
             current_block_11 = 13131151160068275183;
         } else {
             current_block_11 = 10599921512955367680;
         }
     } else {
-        if (((v0).wrapping_sub((256i16))) as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
+        if (v0).wrapping_sub((256i16)) < 0i16 {
             CalculateXrayHdmaTableInner(
                 v0 as uint16,
                 v1,
@@ -1457,9 +1436,7 @@ pub unsafe fn CalculateXrayHdmaTable(game: &mut Game) {
             );
             return;
         }
-        if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) as ::core::ffi::c_int
-            != 8 as ::core::ffi::c_int
-        {
+        if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) != 8u8 {
             current_block_11 = 13131151160068275183;
         } else {
             current_block_11 = 10599921512955367680;
@@ -1481,7 +1458,7 @@ pub unsafe fn CalculateXrayHdmaTable(game: &mut Game) {
         }
     }
     let mut i: ::core::ffi::c_int = 510 as ::core::ffi::c_int;
-    while i >= 0 as ::core::ffi::c_int {
+    while i >= 0i32 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x9800) as *mut uint16)
             .offset((i >> 1 as ::core::ffi::c_int) as isize) = 255 as uint16;
         i -= 2 as ::core::ffi::c_int;
@@ -1501,9 +1478,7 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc3_DeactivateBeam(mut k: uint16, game: &mut
     *((&raw mut game.g_ram as *mut uint8).offset(0xa90) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x9800) as *mut uint16).offset(0) = 255 as uint16;
     v1 = 4096 as int16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x196e) as *mut uint16) as ::core::ffi::c_int
-        != 36 as ::core::ffi::c_int
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x196e) as *mut uint16) != 36u16 {
         v1 = 0x2000 as int16;
         if CanXrayShowBlocks(game) {
             v1 = 0x4000 as int16;
@@ -1525,9 +1500,9 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc3_DeactivateBeam(mut k: uint16, game: &mut
                 as ::core::ffi::c_int as isize,
         );
     let mut v3: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
-    if ((((*((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16)) as i16)
-        .wrapping_sub((240i16))) as ::core::ffi::c_int)
-        < 0 as ::core::ffi::c_int
+    if ((*((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16)) as i16)
+        .wrapping_sub((240i16))
+        < 0i16
     {
         v4 = gVramWriteEntry(
             *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16)
@@ -1553,9 +1528,7 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc4_DeactivateBeam(mut k: uint16, game: &mut
     let mut v1: int16 = 0;
     let mut v3: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     v1 = 4096 as int16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x196e) as *mut uint16) as ::core::ffi::c_int
-        != 36 as ::core::ffi::c_int
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x196e) as *mut uint16) != 36u16 {
         v1 = 0x2000 as int16;
         if CanXrayShowBlocks(game) {
             v1 = 0x4000 as int16;
@@ -1564,9 +1537,9 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc4_DeactivateBeam(mut k: uint16, game: &mut
     let ref mut fresh131 = *((&raw mut game.g_ram as *mut uint8).offset(0x1986) as *mut uint16);
     *fresh131 = ((*fresh131) | ((v1) as u16));
     let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
-    if ((((*((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16)) as i16)
-        .wrapping_sub((240i16))) as ::core::ffi::c_int)
-        < 0 as ::core::ffi::c_int
+    if ((*((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16)) as i16)
+        .wrapping_sub((240i16))
+        < 0i16
     {
         v3 = gVramWriteEntry(
             *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16)
@@ -1593,9 +1566,7 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc4_DeactivateBeam(mut k: uint16, game: &mut
 pub unsafe fn HdmaobjPreInstr_XrayFunc5_DeactivateBeam(mut k: uint16, game: &mut Game) {
     let mut v1: int16 = 0;
     v1 = 4096 as int16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x196e) as *mut uint16) as ::core::ffi::c_int
-        != 36 as ::core::ffi::c_int
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x196e) as *mut uint16) != 36u16 {
         v1 = 0x2000 as int16;
         if CanXrayShowBlocks(game) {
             v1 = 0x4000 as int16;
@@ -1627,16 +1598,13 @@ pub unsafe fn HdmaobjPreInstr_XrayFunc5_DeactivateBeam(mut k: uint16, game: &mut
                 >> 1 as ::core::ffi::c_int) as isize,
         ) = 0 as uint16;
         QueueSfx1_Max6(0xa as uint16, game);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x196e) as *mut uint16) as uint8
-            as ::core::ffi::c_int
-            != 36 as ::core::ffi::c_int
-        {
+        if (*((&raw mut game.g_ram as *mut uint8).offset(0x196e) as *mut uint16) as uint8) != 36u8 {
             *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) = 0x80 as uint8;
             *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) = 64 as uint8;
             *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) = 32 as uint8;
         }
         let mut i: ::core::ffi::c_int = 510 as ::core::ffi::c_int / 2 as ::core::ffi::c_int;
-        while i >= 0 as ::core::ffi::c_int {
+        while i >= 0i32 {
             *((&raw mut game.g_ram as *mut uint8).offset(0x9800) as *mut uint16)
                 .offset(i as isize) = 0xff as uint16;
             i -= 1;
@@ -1660,9 +1628,7 @@ static kHdmaobjPreInstr_XrayFuncs: [Option<Func_Y_V>; 6] = unsafe {
 pub unsafe fn HdmaobjPreInstr_Xray(mut k: uint16, game: &mut Game) {
     let mut v1: int16 = 0;
     v1 = 4096 as int16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x196e) as *mut uint16) as ::core::ffi::c_int
-        != 36 as ::core::ffi::c_int
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x196e) as *mut uint16) != 36u16 {
         v1 = 0x2000 as int16;
         if CanXrayShowBlocks(game) {
             v1 = 0x4000 as int16;
@@ -1738,11 +1704,10 @@ pub unsafe fn Hdmaobj_ExplodeWhite(game: &mut Game) {
         addr_kPowerBombExplosionShapeDef0 as uint16;
 }
 pub unsafe fn Hdmaobj_CleanUpTryCrystalFlash(mut v0: uint16, game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) as ::core::ffi::c_int
-        != *((&raw mut game.g_ram as *mut uint8).offset(0xce2) as *mut uint16) as ::core::ffi::c_int
-        || *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
+        != *((&raw mut game.g_ram as *mut uint8).offset(0xce2) as *mut uint16)
+        || *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)
             != *((&raw mut game.g_ram as *mut uint8).offset(0xce4) as *mut uint16)
-                as ::core::ffi::c_int
         || Hdmaobj_CrystalFlash(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0xcee) as *mut uint16) = 0 as uint16;
@@ -1762,23 +1727,22 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_SetWindowConf(mut k: uint16, game
     *fresh129 = ((*fresh129) | (0x8000u16));
 }
 pub unsafe fn HdmaobjPreInstr_PowerBombExplode_Stage5_Afterglow(mut k: uint16, game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16) as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int)
+        != 0i32
     {
         let mut v1: ::core::ffi::c_int =
             k as uint8 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         let ref mut fresh125 = *((&raw mut game.g_ram as *mut uint8).offset(0x1908) as *mut uint16)
             .offset(v1 as isize);
         *fresh125 = (*fresh125).wrapping_sub(1);
-        if *fresh125 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int
-        {
+        if (*fresh125 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
             let ref mut fresh126 = *((&raw mut game.g_ram as *mut uint8).offset(0x1938)
                 as *mut uint16 as *mut uint8)
                 .offset(k as uint8 as ::core::ffi::c_int as isize);
             let fresh127 = *fresh126;
             *fresh126 = (*fresh126).wrapping_sub(1);
-            if fresh127 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
+            if fresh127 == 1u8 {
                 *((&raw mut game.g_ram as *mut uint8).offset(0x18e4) as *mut uint16)
                     .offset(v1 as isize) = 1 as uint16;
                 let ref mut fresh128 = *((&raw mut game.g_ram as *mut uint8).offset(0x18cc)
@@ -1786,9 +1750,10 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_Stage5_Afterglow(mut k: uint16, g
                     .offset(v1 as isize);
                 *fresh128 = ((*fresh128).wrapping_add((2u16)));
             } else {
-                if *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) as ::core::ffi::c_int
-                    & 0x1f as ::core::ffi::c_int
-                    != 0 as ::core::ffi::c_int
+                if (*(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0)
+                    as ::core::ffi::c_int
+                    & 0x1f as ::core::ffi::c_int)
+                    != 0i32
                 {
                     *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) =
                         ((*(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0)
@@ -1797,9 +1762,10 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_Stage5_Afterglow(mut k: uint16, g
                             - 1 as ::core::ffi::c_int
                             | 0x20 as ::core::ffi::c_int) as uint8;
                 }
-                if *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) as ::core::ffi::c_int
-                    & 0x1f as ::core::ffi::c_int
-                    != 0 as ::core::ffi::c_int
+                if (*(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1)
+                    as ::core::ffi::c_int
+                    & 0x1f as ::core::ffi::c_int)
+                    != 0i32
                 {
                     *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) =
                         ((*(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1)
@@ -1808,9 +1774,10 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_Stage5_Afterglow(mut k: uint16, g
                             - 1 as ::core::ffi::c_int
                             | 0x40 as ::core::ffi::c_int) as uint8;
                 }
-                if *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) as ::core::ffi::c_int
-                    & 0x1f as ::core::ffi::c_int
-                    != 0 as ::core::ffi::c_int
+                if (*(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2)
+                    as ::core::ffi::c_int
+                    & 0x1f as ::core::ffi::c_int)
+                    != 0i32
                 {
                     *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) =
                         ((*(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2)
@@ -1852,7 +1819,7 @@ pub unsafe fn CalculatePowerBombHdma_LeftOfScreen(
         }
         j = j.offset(1);
         k = k.wrapping_add(1);
-        if !(k as ::core::ffi::c_int != 192 as ::core::ffi::c_int) {
+        if !(k != 192u16) {
             break;
         }
     }
@@ -1870,7 +1837,7 @@ pub unsafe fn CalculatePowerBombHdma_OnScreen(mut k: uint16, mut j: *const uint8
         } else {
             c as ::core::ffi::c_int + w as ::core::ffi::c_int
         }) as uint8;
-        let mut left: uint8 = (if c as ::core::ffi::c_int >= w as ::core::ffi::c_int {
+        let mut left: uint8 = (if c >= w {
             c as ::core::ffi::c_int - w as ::core::ffi::c_int
         } else {
             0 as ::core::ffi::c_int
@@ -1883,7 +1850,7 @@ pub unsafe fn CalculatePowerBombHdma_OnScreen(mut k: uint16, mut j: *const uint8
             .offset(k as isize) = right;
         j = j.offset(1);
         k = k.wrapping_add(1);
-        if !(k as ::core::ffi::c_int != 192 as ::core::ffi::c_int) {
+        if !(k != 192u16) {
             break;
         }
     }
@@ -1895,10 +1862,7 @@ pub unsafe fn CalculatePowerBombHdma_RightOfScreen(
 ) {
     loop {
         let mut w: uint8 = *j;
-        if (*((&raw mut game.g_ram as *mut uint8).offset(0xce6) as *mut uint16) as uint8
-            as ::core::ffi::c_int)
-            < w as ::core::ffi::c_int
-        {
+        if (*((&raw mut game.g_ram as *mut uint8).offset(0xce6) as *mut uint16) as uint8) < w {
             *(&raw mut game.g_ram as *mut uint8)
                 .offset(0xc406)
                 .offset(k as isize) = (((*((&raw mut game.g_ram as *mut uint8).offset(0xce6)
@@ -1917,17 +1881,17 @@ pub unsafe fn CalculatePowerBombHdma_RightOfScreen(
         }
         j = j.offset(1);
         k = k.wrapping_add(1);
-        if !(k as ::core::ffi::c_int != 192 as ::core::ffi::c_int) {
+        if !(k != 192u16) {
             break;
         }
     }
 }
 pub unsafe fn CalculatePowerBombHdmaObjectTablePtrs(mut k: uint16, game: &mut Game) {
     let mut v1: uint16 = 0;
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0xce2) as *mut uint16) as ::core::ffi::c_int
+    if ((*((&raw mut game.g_ram as *mut uint8).offset(0xce2) as *mut uint16) as ::core::ffi::c_int
         - *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16) as ::core::ffi::c_int
-        + 256 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
-        >= 0x300 as ::core::ffi::c_int
+        + 256 as ::core::ffi::c_int) as uint16)
+        >= 0x300u16
         || {
             *((&raw mut game.g_ram as *mut uint8).offset(0xce6) as *mut uint16) =
                 (*((&raw mut game.g_ram as *mut uint8).offset(0xce2) as *mut uint16)
@@ -1940,7 +1904,7 @@ pub unsafe fn CalculatePowerBombHdmaObjectTablePtrs(mut k: uint16, game: &mut Ga
                 - *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16)
                     as ::core::ffi::c_int
                 + 256 as ::core::ffi::c_int) as uint16;
-            v1 as ::core::ffi::c_int >= 0x300 as ::core::ffi::c_int
+            v1 >= 0x300u16
         }
     {
         v1 = 0 as uint16;
@@ -1948,9 +1912,9 @@ pub unsafe fn CalculatePowerBombHdmaObjectTablePtrs(mut k: uint16, game: &mut Ga
     *((&raw mut game.g_ram as *mut uint8).offset(0xce8) as *mut uint16) =
         ((v1 as ::core::ffi::c_int ^ 0x3ff as ::core::ffi::c_int) - 256 as ::core::ffi::c_int)
             as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16) as ::core::ffi::c_int
-        & 0xff00 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16) as ::core::ffi::c_int
+        & 0xff00 as ::core::ffi::c_int)
+        == 0i32
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0xce8) as *mut uint16) = 0 as uint16;
     }
@@ -2005,13 +1969,13 @@ pub unsafe fn CalculatePowerBombHdmaScaled_LeftOfScreen(
             *(&raw mut game.g_ram as *mut uint8)
                 .offset(0xc506)
                 .offset(k as uint8 as isize) = v6;
-            if k as uint8 as ::core::ffi::c_int == r20 as ::core::ffi::c_int {
+            if (k as uint8) == r20 {
                 break;
             }
             *(&raw mut k as *mut uint8).offset(0) = (((k) as u8).wrapping_sub((1u8)));
         }
         *(&raw mut j as *mut uint8).offset(0) = (((j) as u8).wrapping_add((1u8)));
-        if !(j as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int == 0 as ::core::ffi::c_int) {
+        if !((j as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) == 0i32) {
             break;
         }
     }
@@ -2052,7 +2016,7 @@ pub unsafe fn CalculatePowerBombHdmaScaled_OnScreen(
         let mut v7: uint8 =
             *((&raw mut game.g_ram as *mut uint8).offset(0xce6) as *mut uint16) as uint8;
         let mut v8: uint8 = Reg;
-        v4 = (v7 as ::core::ffi::c_int) < v8 as ::core::ffi::c_int;
+        v4 = v7 < v8;
         v9 = ((v7).wrapping_sub((v8)));
         if v4 {
             v9 = 0 as uint8;
@@ -2064,13 +2028,13 @@ pub unsafe fn CalculatePowerBombHdmaScaled_OnScreen(
             *(&raw mut game.g_ram as *mut uint8)
                 .offset(0xc506)
                 .offset(k as uint8 as isize) = v6;
-            if k as uint8 as ::core::ffi::c_int == r20 as ::core::ffi::c_int {
+            if (k as uint8) == r20 {
                 break;
             }
             *(&raw mut k as *mut uint8).offset(0) = (((k) as u8).wrapping_sub((1u8)));
         }
         *(&raw mut j as *mut uint8).offset(0) = (((j) as u8).wrapping_add((1u8)));
-        if !(j as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int == 0 as ::core::ffi::c_int) {
+        if !((j as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) == 0i32) {
             break;
         }
     }
@@ -2105,7 +2069,7 @@ pub unsafe fn CalculatePowerBombHdmaScaled_RightOfScreen(
                 .offset(j as uint8 as isize),
         ) as ::core::ffi::c_int
             >> 8 as ::core::ffi::c_int) as uint8;
-        let mut v4: bool = (v2 as ::core::ffi::c_int) < Reg as ::core::ffi::c_int;
+        let mut v4: bool = v2 < Reg;
         v5 = (((v2) as i8).wrapping_sub(((Reg) as i8)));
         if v4 {
             v6 = v5;
@@ -2124,13 +2088,13 @@ pub unsafe fn CalculatePowerBombHdmaScaled_RightOfScreen(
             *(&raw mut game.g_ram as *mut uint8)
                 .offset(0xc506)
                 .offset(k as uint8 as isize) = v9;
-            if k as uint8 as ::core::ffi::c_int == r20 as ::core::ffi::c_int {
+            if (k as uint8) == r20 {
                 break;
             }
             *(&raw mut k as *mut uint8).offset(0) = (((k) as u8).wrapping_sub((1u8)));
         }
         *(&raw mut j as *mut uint8).offset(0) = (((j) as u8).wrapping_add((1u8)));
-        if !(j as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int == 0 as ::core::ffi::c_int) {
+        if !((j as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) == 0i32) {
             break;
         }
     }
@@ -2140,9 +2104,9 @@ pub unsafe fn CalculatePowerBombHdmaScaled_RightOfScreen(
 }
 pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionYellow(mut k: uint16, game: &mut Game) {
     let mut v2: uint16 = 0;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16) as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int)
+        == 0i32
     {
         return;
     }
@@ -2161,11 +2125,11 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionYellow(mut k: uint16, ga
         >> 8 as ::core::ffi::c_int
         != 0
     {
-        if (*((&raw mut game.g_ram as *mut uint8).offset(0xce6) as *mut uint16)
+        if ((*((&raw mut game.g_ram as *mut uint8).offset(0xce6) as *mut uint16)
             as ::core::ffi::c_int
             & 0xff00 as ::core::ffi::c_int)
-            >> 8 as ::core::ffi::c_int
-            == 1 as ::core::ffi::c_int
+            >> 8 as ::core::ffi::c_int)
+            == 1i32
         {
             v2 = CalculatePowerBombHdmaScaled_OnScreen(
                 kk as uint16,
@@ -2208,12 +2172,12 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionYellow(mut k: uint16, ga
             .offset(i as isize) = ((v2 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int)
             >> 8 as ::core::ffi::c_int) as uint8;
         i -= 1;
-        if !(i & 0x80 as ::core::ffi::c_int == 0 as ::core::ffi::c_int) {
+        if !((i & 0x80 as ::core::ffi::c_int) == 0i32) {
             break;
         }
     }
     let mut v3: ::core::ffi::c_int = kk + 1 as ::core::ffi::c_int;
-    while v3 != 0xc0 as ::core::ffi::c_int {
+    while v3 != 0xc0i32 {
         *(&raw mut game.g_ram as *mut uint8)
             .offset(0xc406)
             .offset(v3 as isize) = 255 as uint8;
@@ -2243,9 +2207,7 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionYellow(mut k: uint16, ga
     let ref mut fresh122 = *((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16);
     *fresh122 = ((*fresh122)
         .wrapping_add((*((&raw mut game.g_ram as *mut uint8).offset(0xcf0) as *mut uint16))));
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16) as ::core::ffi::c_int)
-        < 0x8600 as ::core::ffi::c_int
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16) < 0x8600u16 {
         let ref mut fresh123 = *((&raw mut game.g_ram as *mut uint8).offset(0xcf0) as *mut uint16);
         *fresh123 = ((*fresh123).wrapping_add((kPowerBombExplosionRadiusAccel)));
     } else {
@@ -2260,9 +2222,9 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionYellow(mut k: uint16, ga
     };
 }
 pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionWhite(mut k: uint16, game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16) as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int)
+        == 0i32
     {
         return;
     }
@@ -2276,11 +2238,11 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionWhite(mut k: uint16, gam
         >> 8 as ::core::ffi::c_int
         != 0
     {
-        if (*((&raw mut game.g_ram as *mut uint8).offset(0xce6) as *mut uint16)
+        if ((*((&raw mut game.g_ram as *mut uint8).offset(0xce6) as *mut uint16)
             as ::core::ffi::c_int
             & 0xff00 as ::core::ffi::c_int)
-            >> 8 as ::core::ffi::c_int
-            == 1 as ::core::ffi::c_int
+            >> 8 as ::core::ffi::c_int)
+            == 1i32
         {
             CalculatePowerBombHdma_OnScreen(0 as uint16, v1, game);
         } else {
@@ -2325,7 +2287,7 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionWhite(mut k: uint16, gam
     }
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xcf0) as *mut uint16) as ::core::ffi::c_int
         + *((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16) as ::core::ffi::c_int)
-        < 0x10000 as ::core::ffi::c_int
+        < 0x10000i32
     {
         let ref mut fresh120 = *((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16);
         *fresh120 = ((*fresh120)
@@ -2336,16 +2298,16 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionWhite(mut k: uint16, gam
 }
 pub unsafe fn CalculatePowerBombHdmaTablePointers(mut v0: uint16, game: &mut Game) {
     let mut v1: uint16 = 0;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16) as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int)
+        != 0i32
     {
-        if (*((&raw mut game.g_ram as *mut uint8).offset(0xce2) as *mut uint16)
+        if ((*((&raw mut game.g_ram as *mut uint8).offset(0xce2) as *mut uint16)
             as ::core::ffi::c_int
             - *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16)
                 as ::core::ffi::c_int
-            + 256 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
-            >= 0x300 as ::core::ffi::c_int
+            + 256 as ::core::ffi::c_int) as uint16)
+            >= 0x300u16
             || {
                 *((&raw mut game.g_ram as *mut uint8).offset(0xce6) as *mut uint16) =
                     (*((&raw mut game.g_ram as *mut uint8).offset(0xce2) as *mut uint16)
@@ -2358,7 +2320,7 @@ pub unsafe fn CalculatePowerBombHdmaTablePointers(mut v0: uint16, game: &mut Gam
                     - *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16)
                         as ::core::ffi::c_int
                     + 256 as ::core::ffi::c_int) as uint16;
-                v1 as ::core::ffi::c_int >= 0x300 as ::core::ffi::c_int
+                v1 >= 0x300u16
             }
         {
             v1 = 0 as uint16;
@@ -2366,9 +2328,10 @@ pub unsafe fn CalculatePowerBombHdmaTablePointers(mut v0: uint16, game: &mut Gam
         *((&raw mut game.g_ram as *mut uint8).offset(0xce8) as *mut uint16) =
             ((v1 as ::core::ffi::c_int ^ 0x3ff as ::core::ffi::c_int) - 256 as ::core::ffi::c_int)
                 as uint16;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xcec) as *mut uint16) as ::core::ffi::c_int
-            & 0xff00 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
+        if (*((&raw mut game.g_ram as *mut uint8).offset(0xcec) as *mut uint16)
+            as ::core::ffi::c_int
+            & 0xff00 as ::core::ffi::c_int)
+            == 0i32
         {
             *((&raw mut game.g_ram as *mut uint8).offset(0xce8) as *mut uint16) = 0 as uint16;
         }
@@ -2388,9 +2351,9 @@ pub unsafe fn CalculatePowerBombHdmaTablePointers(mut v0: uint16, game: &mut Gam
     }
 }
 pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionWhite(mut k: uint16, game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16) as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int)
+        == 0i32
     {
         return;
     }
@@ -2417,8 +2380,7 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionWhite(mut k: uint16, 
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
-        ) as ::core::ffi::c_int
-            == 1 as ::core::ffi::c_int
+        ) == 1u8
         {
             v2 = CalculatePowerBombHdmaScaled_OnScreen(
                 kk as uint16,
@@ -2470,12 +2432,12 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionWhite(mut k: uint16, 
                 .wrapping_sub(1 as usize) as isize,
         );
         i = i.wrapping_sub(1);
-        if !(i as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int == 0 as ::core::ffi::c_int) {
+        if !((i as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) == 0i32) {
             break;
         }
     }
     let mut v3: uint8 = (kk + 1 as ::core::ffi::c_int) as uint8;
-    while v3 as ::core::ffi::c_int != 0xc0 as ::core::ffi::c_int {
+    while v3 != 0xc0u8 {
         *(&raw mut game.g_ram as *mut uint8)
             .offset(0xc406)
             .offset(v3 as isize) = 255 as uint8;
@@ -2507,9 +2469,7 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionWhite(mut k: uint16, 
     let ref mut fresh115 = *((&raw mut game.g_ram as *mut uint8).offset(0xcec) as *mut uint16);
     *fresh115 = ((*fresh115)
         .wrapping_add((*((&raw mut game.g_ram as *mut uint8).offset(0xcf0) as *mut uint16))));
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0xcec) as *mut uint16) as ::core::ffi::c_int)
-        < 0x9200 as ::core::ffi::c_int
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xcec) as *mut uint16) < 0x9200u16 {
         let ref mut fresh116 = *((&raw mut game.g_ram as *mut uint8).offset(0xcf0) as *mut uint16);
         *fresh116 = ((*fresh116).wrapping_sub((kPowerBombPreExplosionRadiusAccel)));
     } else {
@@ -2523,9 +2483,9 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionWhite(mut k: uint16, 
     };
 }
 pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionYellow(mut k: uint16, game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16) as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int)
+        == 0i32
     {
         return;
     }
@@ -2539,11 +2499,11 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionYellow(mut k: uint16,
         >> 8 as ::core::ffi::c_int
         != 0
     {
-        if (*((&raw mut game.g_ram as *mut uint8).offset(0xce6) as *mut uint16)
+        if ((*((&raw mut game.g_ram as *mut uint8).offset(0xce6) as *mut uint16)
             as ::core::ffi::c_int
             & 0xff00 as ::core::ffi::c_int)
-            >> 8 as ::core::ffi::c_int
-            == 1 as ::core::ffi::c_int
+            >> 8 as ::core::ffi::c_int)
+            == 1i32
         {
             CalculatePowerBombHdma_OnScreen(0 as uint16, v1, game);
         } else {
@@ -2572,9 +2532,7 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionYellow(mut k: uint16,
             | (0x80u8));
     let ref mut fresh111 = *((&raw mut game.g_ram as *mut uint8).offset(0xcf2) as *mut uint16);
     *fresh111 = ((*fresh111).wrapping_add((192u16)));
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xcf2) as *mut uint16) as ::core::ffi::c_int
-        == 0xa206 as ::core::ffi::c_int
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xcf2) as *mut uint16) == 0xa206u16 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x18e4) as *mut uint16)
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 1 as uint16;
         let ref mut fresh112 = *((&raw mut game.g_ram as *mut uint8).offset(0x18cc) as *mut uint16)
@@ -2585,7 +2543,7 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionYellow(mut k: uint16,
     }
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xcf0) as *mut uint16) as ::core::ffi::c_int
         + *((&raw mut game.g_ram as *mut uint8).offset(0xcec) as *mut uint16) as ::core::ffi::c_int)
-        < 0x10000 as ::core::ffi::c_int
+        < 0x10000i32
     {
         let ref mut fresh113 = *((&raw mut game.g_ram as *mut uint8).offset(0xcec) as *mut uint16);
         *fresh113 = ((*fresh113)
@@ -2653,25 +2611,27 @@ pub unsafe fn HdmaobjPreInstr_CrystalFlash_CustomLayerBlend(mut k: uint16, game:
     *(&raw mut game.g_ram as *mut uint8).offset(0x6d) = 4 as uint8;
 }
 pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage2_AfterGlow(mut k: uint16, game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16) as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int)
+        != 0i32
     {
         let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         let ref mut fresh109 = *((&raw mut game.g_ram as *mut uint8).offset(0x1908) as *mut uint16)
             .offset(v1 as isize);
         *fresh109 = (*fresh109).wrapping_sub(1);
-        if *fresh109 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int
-        {
-            if (*(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) as ::core::ffi::c_int
-                | *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) as ::core::ffi::c_int
-                | *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) as ::core::ffi::c_int)
-                & 0x1f as ::core::ffi::c_int
-                != 0 as ::core::ffi::c_int
+        if (*fresh109 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
+            if ((*(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) as ::core::ffi::c_int
+                | *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1)
+                    as ::core::ffi::c_int
+                | *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0)
+                    as ::core::ffi::c_int)
+                & 0x1f as ::core::ffi::c_int)
+                != 0i32
             {
-                if *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) as ::core::ffi::c_int
-                    & 0x1f as ::core::ffi::c_int
-                    != 0 as ::core::ffi::c_int
+                if (*(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0)
+                    as ::core::ffi::c_int
+                    & 0x1f as ::core::ffi::c_int)
+                    != 0i32
                 {
                     *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) =
                         ((*(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0)
@@ -2680,9 +2640,10 @@ pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage2_AfterGlow(mut k: uint16, game:
                             - 1 as ::core::ffi::c_int
                             | 0x20 as ::core::ffi::c_int) as uint8;
                 }
-                if *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) as ::core::ffi::c_int
-                    & 0x1f as ::core::ffi::c_int
-                    != 0 as ::core::ffi::c_int
+                if (*(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1)
+                    as ::core::ffi::c_int
+                    & 0x1f as ::core::ffi::c_int)
+                    != 0i32
                 {
                     *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) =
                         ((*(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1)
@@ -2691,9 +2652,10 @@ pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage2_AfterGlow(mut k: uint16, game:
                             - 1 as ::core::ffi::c_int
                             | 0x40 as ::core::ffi::c_int) as uint8;
                 }
-                if *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) as ::core::ffi::c_int
-                    & 0x1f as ::core::ffi::c_int
-                    != 0 as ::core::ffi::c_int
+                if (*(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2)
+                    as ::core::ffi::c_int
+                    & 0x1f as ::core::ffi::c_int)
+                    != 0i32
                 {
                     *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) =
                         ((*(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2)
@@ -2718,10 +2680,10 @@ pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage2_AfterGlow(mut k: uint16, game:
 }
 pub unsafe fn CalculateCrystalFlashHdmaObjectTablePtrs(mut k: uint16, game: &mut Game) {
     let mut v1: uint16 = 0;
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0xce2) as *mut uint16) as ::core::ffi::c_int
+    if ((*((&raw mut game.g_ram as *mut uint8).offset(0xce2) as *mut uint16) as ::core::ffi::c_int
         - *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16) as ::core::ffi::c_int
-        + 256 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
-        >= 0x300 as ::core::ffi::c_int
+        + 256 as ::core::ffi::c_int) as uint16)
+        >= 0x300u16
         || {
             *((&raw mut game.g_ram as *mut uint8).offset(0xce6) as *mut uint16) =
                 (*((&raw mut game.g_ram as *mut uint8).offset(0xce2) as *mut uint16)
@@ -2734,7 +2696,7 @@ pub unsafe fn CalculateCrystalFlashHdmaObjectTablePtrs(mut k: uint16, game: &mut
                 - *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16)
                     as ::core::ffi::c_int
                 + 256 as ::core::ffi::c_int) as uint16;
-            v1 as ::core::ffi::c_int >= 0x300 as ::core::ffi::c_int
+            v1 >= 0x300u16
         }
     {
         v1 = 0 as uint16;
@@ -2742,9 +2704,9 @@ pub unsafe fn CalculateCrystalFlashHdmaObjectTablePtrs(mut k: uint16, game: &mut
     *((&raw mut game.g_ram as *mut uint8).offset(0xce8) as *mut uint16) =
         ((v1 as ::core::ffi::c_int ^ 0x3ff as ::core::ffi::c_int) - 256 as ::core::ffi::c_int)
             as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16) as ::core::ffi::c_int
-        & 0xff00 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16) as ::core::ffi::c_int
+        & 0xff00 as ::core::ffi::c_int)
+        == 0i32
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0xce8) as *mut uint16) = 0 as uint16;
     }
@@ -2788,12 +2750,12 @@ pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_LeftOfScreen(
             >> 8 as ::core::ffi::c_int) as uint8;
         let mut c: uint8 =
             *((&raw mut game.g_ram as *mut uint8).offset(0xce6) as *mut uint16) as uint8;
-        left = (if w as ::core::ffi::c_int + c as ::core::ffi::c_int >= 256 as ::core::ffi::c_int {
+        left = (if (w as ::core::ffi::c_int + c as ::core::ffi::c_int) >= 256i32 {
             0 as ::core::ffi::c_int
         } else {
             255 as ::core::ffi::c_int
         }) as uint8;
-        right = (if w as ::core::ffi::c_int + c as ::core::ffi::c_int >= 256 as ::core::ffi::c_int {
+        right = (if (w as ::core::ffi::c_int + c as ::core::ffi::c_int) >= 256i32 {
             w as ::core::ffi::c_int + c as ::core::ffi::c_int
         } else {
             0 as ::core::ffi::c_int
@@ -2805,13 +2767,13 @@ pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_LeftOfScreen(
             *(&raw mut game.g_ram as *mut uint8)
                 .offset(0xc506)
                 .offset(k as uint8 as isize) = right;
-            if k as uint8 as ::core::ffi::c_int == r20 as ::core::ffi::c_int {
+            if (k as uint8) == r20 {
                 break;
             }
             k = k.wrapping_sub(1);
         }
         j = j.wrapping_add(1);
-        if !(j as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int == 0 as ::core::ffi::c_int) {
+        if !((j as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) == 0i32) {
             break;
         }
     }
@@ -2847,13 +2809,12 @@ pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_OnScreen(
             >> 8 as ::core::ffi::c_int) as uint8;
         let mut c: uint8 =
             *((&raw mut game.g_ram as *mut uint8).offset(0xce6) as *mut uint16) as uint8;
-        right = (if (c as ::core::ffi::c_int + w as ::core::ffi::c_int) < 256 as ::core::ffi::c_int
-        {
+        right = (if (c as ::core::ffi::c_int + w as ::core::ffi::c_int) < 256i32 {
             c as ::core::ffi::c_int + w as ::core::ffi::c_int
         } else {
             255 as ::core::ffi::c_int
         }) as uint8;
-        left = (if c as ::core::ffi::c_int - w as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
+        left = (if (c as ::core::ffi::c_int - w as ::core::ffi::c_int) >= 0i32 {
             c as ::core::ffi::c_int - w as ::core::ffi::c_int
         } else {
             0 as ::core::ffi::c_int
@@ -2865,13 +2826,13 @@ pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_OnScreen(
             *(&raw mut game.g_ram as *mut uint8)
                 .offset(0xc506)
                 .offset(k as uint8 as isize) = right;
-            if k as uint8 as ::core::ffi::c_int == r20 as ::core::ffi::c_int {
+            if (k as uint8) == r20 {
                 break;
             }
             k = k.wrapping_sub(1);
         }
         j = j.wrapping_add(1);
-        if !(j as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int == 0 as ::core::ffi::c_int) {
+        if !((j as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) == 0i32) {
             break;
         }
     }
@@ -2907,12 +2868,12 @@ pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_RightOfScreen(
             >> 8 as ::core::ffi::c_int) as uint8;
         let mut c: uint8 =
             *((&raw mut game.g_ram as *mut uint8).offset(0xce6) as *mut uint16) as uint8;
-        right = (if (c as ::core::ffi::c_int) < w as ::core::ffi::c_int {
+        right = (if c < w {
             255 as ::core::ffi::c_int
         } else {
             0 as ::core::ffi::c_int
         }) as uint8;
-        left = (if (c as ::core::ffi::c_int) < w as ::core::ffi::c_int {
+        left = (if c < w {
             c as ::core::ffi::c_int - w as ::core::ffi::c_int
         } else {
             255 as ::core::ffi::c_int
@@ -2924,13 +2885,13 @@ pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_RightOfScreen(
             *(&raw mut game.g_ram as *mut uint8)
                 .offset(0xc506)
                 .offset(k as uint8 as isize) = right;
-            if k as uint8 as ::core::ffi::c_int == r20 as ::core::ffi::c_int {
+            if (k as uint8) == r20 {
                 break;
             }
             k = k.wrapping_sub(1);
         }
         j = j.wrapping_add(1);
-        if !(j as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int == 0 as ::core::ffi::c_int) {
+        if !((j as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) == 0i32) {
             break;
         }
     }
@@ -2939,9 +2900,9 @@ pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_RightOfScreen(
         as uint16;
 }
 pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage1_Explosion(mut k: uint16, game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16) as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int)
+        == 0i32
     {
         return;
     }
@@ -2961,11 +2922,11 @@ pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage1_Explosion(mut k: uint16, game:
         >> 8 as ::core::ffi::c_int
         != 0
     {
-        if (*((&raw mut game.g_ram as *mut uint8).offset(0xce6) as *mut uint16)
+        if ((*((&raw mut game.g_ram as *mut uint8).offset(0xce6) as *mut uint16)
             as ::core::ffi::c_int
             & 0xff00 as ::core::ffi::c_int)
-            >> 8 as ::core::ffi::c_int
-            == 1 as ::core::ffi::c_int
+            >> 8 as ::core::ffi::c_int)
+            == 1i32
         {
             v2 = CalculateCrystalFlashHdmaDataTablesScaled_OnScreen(
                 kk as uint16,
@@ -2997,12 +2958,12 @@ pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage1_Explosion(mut k: uint16, game:
             & 0xff00 as ::core::ffi::c_int)
             >> 8 as ::core::ffi::c_int) as uint8;
         i -= 1;
-        if !(i & 0x80 as ::core::ffi::c_int == 0 as ::core::ffi::c_int) {
+        if !((i & 0x80 as ::core::ffi::c_int) == 0i32) {
             break;
         }
     }
     let mut v3: uint8 = (kk + 1 as ::core::ffi::c_int) as uint8;
-    while v3 as ::core::ffi::c_int != 0xc0 as ::core::ffi::c_int {
+    while v3 != 0xc0u8 {
         *(&raw mut game.g_ram as *mut uint8)
             .offset(0xc406)
             .offset(v3 as isize) = 255 as uint8;
@@ -3034,9 +2995,7 @@ pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage1_Explosion(mut k: uint16, game:
     let ref mut fresh106 = *((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16);
     *fresh106 = ((*fresh106)
         .wrapping_add((*((&raw mut game.g_ram as *mut uint8).offset(0xcf0) as *mut uint16))));
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16) as ::core::ffi::c_int)
-        < 0x2000 as ::core::ffi::c_int
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16) < 0x2000u16 {
         let ref mut fresh107 = *((&raw mut game.g_ram as *mut uint8).offset(0xcf0) as *mut uint16);
         *fresh107 = ((*fresh107).wrapping_add((kPowerBombExplosionRadiusAccel)));
     } else {
@@ -3103,21 +3062,17 @@ unsafe fn SetupSomeHdmaTablesBG3(
     let mut r18: uint16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16))
         .wrapping_add((32u16)));
     let mut v2: uint16 = 0 as uint16;
-    while (((v1).wrapping_sub(
+    while (v1).wrapping_sub(
         ((*((RomPtr_88 as unsafe fn(uint16_t, &mut Game) -> *const uint8)(r0, game)
             .offset(v2 as isize) as *const uint8 as *mut uint16)) as i16),
-    )) as ::core::ffi::c_int)
-        < 0 as ::core::ffi::c_int
-        || ((v1).wrapping_sub(
+    ) < 0i16
+        || (v1).wrapping_sub(
             ((*((RomPtr_88 as unsafe fn(uint16_t, &mut Game) -> *const uint8)(r9, game)
                 .offset(v2 as isize) as *const uint8 as *mut uint16)) as i16),
-        )) as ::core::ffi::c_int
-            >= 0 as ::core::ffi::c_int
+        ) >= 0i16
     {
         v2 = ((v2).wrapping_add((6u16)));
-        if (((v2) as i16).wrapping_sub(((r24) as i16))) as ::core::ffi::c_int
-            >= 0 as ::core::ffi::c_int
-        {
+        if ((v2) as i16).wrapping_sub(((r24) as i16)) >= 0i16 {
             return v0;
         }
     }
@@ -3154,21 +3109,17 @@ unsafe fn SetupSomeHdmaTablesBG3(
         {
             break;
         }
-        while ((((r18) as i16).wrapping_sub(
+        while ((r18) as i16).wrapping_sub(
             ((*((RomPtr_88 as unsafe fn(uint16_t, &mut Game) -> *const uint8)(r0, game)
                 .offset(v2 as isize) as *const uint8 as *mut uint16)) as i16),
-        )) as ::core::ffi::c_int)
-            < 0 as ::core::ffi::c_int
-            || (((r18) as i16).wrapping_sub(
+        ) < 0i16
+            || ((r18) as i16).wrapping_sub(
                 ((*((RomPtr_88 as unsafe fn(uint16_t, &mut Game) -> *const uint8)(r9, game)
                     .offset(v2 as isize) as *const uint8 as *mut uint16)) as i16),
-            )) as ::core::ffi::c_int
-                >= 0 as ::core::ffi::c_int
+            ) >= 0i16
         {
             v2 = ((v2).wrapping_add((6u16)));
-            if (((v2) as i16).wrapping_sub(((r24) as i16))) as ::core::ffi::c_int
-                >= 0 as ::core::ffi::c_int
-            {
+            if ((v2) as i16).wrapping_sub(((r24) as i16)) >= 0i16 {
                 return v0;
             }
         }
@@ -3221,9 +3172,9 @@ pub unsafe fn HdmaobjPreInstr_BG3Xscroll(mut k: uint16, game: &mut Game) {
         & 0x8000 as ::core::ffi::c_int
         != 0
     {
-        if *(&raw mut game.g_ram as *mut uint8).offset(0x5b5) as ::core::ffi::c_int
-            & 1 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
+        if (*(&raw mut game.g_ram as *mut uint8).offset(0x5b5) as ::core::ffi::c_int
+            & 1 as ::core::ffi::c_int)
+            == 0i32
         {
             *((&raw mut game.g_ram as *mut uint8).offset(0x596) as *mut uint16) =
                 (*((&raw mut game.g_ram as *mut uint8).offset(0x596) as *mut uint16)
@@ -3241,9 +3192,7 @@ pub unsafe fn HdmaobjPreInstr_BG3Xscroll(mut k: uint16, game: &mut Game) {
                     .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
             v2 = ((v2).wrapping_add((2u16)));
             v1 = ((v1).wrapping_add((2u16)));
-            if !(((((v1) as i16).wrapping_sub((32i16))) as ::core::ffi::c_int)
-                < 0 as ::core::ffi::c_int)
-            {
+            if !(((v1) as i16).wrapping_sub((32i16)) < 0i16) {
                 break;
             }
         }
@@ -3253,7 +3202,7 @@ pub unsafe fn HdmaobjPreInstr_BG3Xscroll(mut k: uint16, game: &mut Game) {
             .offset(v3 as isize);
         let fresh105 = *fresh104;
         *fresh104 = (*fresh104).wrapping_sub(1);
-        if fresh105 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
+        if fresh105 == 1u16 {
             *((&raw mut game.g_ram as *mut uint8).offset(0x1920) as *mut uint16)
                 .offset(v3 as isize) = 6 as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0x1914) as *mut uint16)
@@ -3266,7 +3215,7 @@ pub unsafe fn HdmaobjPreInstr_BG3Xscroll(mut k: uint16, game: &mut Game) {
         let mut v5: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1914) as *mut uint16)
             .offset(v3 as isize);
         let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
-        while i >= 0 as ::core::ffi::c_int {
+        while i >= 0i32 {
             *((&raw mut game.g_ram as *mut uint8).offset(0x9e80) as *mut uint16)
                 .offset((v5 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
                 (((g_word_88C46E[(i >> 1 as ::core::ffi::c_int) as usize]) as u16).wrapping_add(
@@ -3314,7 +3263,7 @@ pub unsafe fn HdmaobjPreInstr_BG3Xscroll(mut k: uint16, game: &mut Game) {
         game,
     );
     v8 = ((224i16).wrapping_sub(((r18) as i16)));
-    while ((v8).wrapping_sub((16i16))) as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
+    while (v8).wrapping_sub((16i16)) >= 0i16 {
         v8 = ((v8).wrapping_sub((16i16)));
         *((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x9e00)
             as *mut ExpandingSquareTransitionHdma)
@@ -3381,12 +3330,10 @@ pub unsafe fn HdmaFunc_A786(
         .wrapping_sub((*((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16))));
     let mut r24: uint16 = ((1216u16)
         .wrapping_sub((*((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16))));
-    if ((1216i16).wrapping_sub(
+    if (1216i16).wrapping_sub(
         ((*((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16)) as i16),
-    )) as ::core::ffi::c_int
-        >= 0 as ::core::ffi::c_int
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16) as ::core::ffi::c_int
-            != 1216 as ::core::ffi::c_int
+    ) >= 0i16
+        && *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16) != 1216u16
     {
         if v1 as ::core::ffi::c_int - 128 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0
         {
@@ -3406,7 +3353,7 @@ pub unsafe fn HdmaFunc_A786(
             r24 = v1;
             loop {
                 v2 = (((v1) as i16).wrapping_sub((16i16)));
-                if (v2 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
+                if v2 < 0i16 {
                     break;
                 }
                 r24 = v2 as uint16;
@@ -3472,11 +3419,9 @@ pub unsafe fn RoomSetupAsm_ScrollingSkyOcean(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x59c) as *mut uint16) = 0 as uint16;
 }
 pub unsafe fn DamageSamusInTopRow(game: &mut Game) {
-    if ((((*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)) as i16)
-        .wrapping_sub(
-            ((*((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16)) as i16),
-        )) as ::core::ffi::c_int)
-        < 0 as ::core::ffi::c_int
+    if ((*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)) as i16).wrapping_sub(
+        ((*((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16)) as i16),
+    ) < 0i16
         || *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) as ::core::ffi::c_int
             - *((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16)
                 as ::core::ffi::c_int
@@ -3532,20 +3477,18 @@ pub unsafe fn HdmaobjPreInstr_SkyLandBG2XscrollInner(mut k: uint16, game: &mut G
     let mut v5: uint16 = 0 as uint16;
     let mut v6: uint16 = 3 as uint16;
     loop {
-        while (((r18) as i16).wrapping_sub(
+        while ((r18) as i16).wrapping_sub(
             (((*(game.g_rom.offset(crate::rtl::lorom_offset(0x88aec1)) as *const uint8
                 as *mut HdmaScrollEntry)
                 .offset(v5 as isize))
             .top_pos) as i16),
-        )) as ::core::ffi::c_int
-            >= 0 as ::core::ffi::c_int
-            && ((((r18) as i16).wrapping_sub(
+        ) >= 0i16
+            && ((r18) as i16).wrapping_sub(
                 (((*(game.g_rom.offset(crate::rtl::lorom_offset(0x88aec1)) as *const uint8
                     as *mut HdmaScrollEntry)
                     .offset((v5 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize))
                 .top_pos) as i16),
-            )) as ::core::ffi::c_int)
-                < 0 as ::core::ffi::c_int
+            ) < 0i16
         {
             let mut v8: uint16 = (((*(game.g_rom.offset(crate::rtl::lorom_offset(0x88aec1))
                 as *const uint8 as *mut HdmaScrollEntry)
@@ -3762,9 +3705,9 @@ pub unsafe fn HdmaobjPreInstr_FirefleaBG3XScroll(mut k: uint16, game: &mut Game)
             {
                 v1 = ((*((&raw mut game.g_ram as *mut uint8).offset(0x177a) as *mut uint16))
                     .wrapping_add((1u16)));
-                if ((*((&raw mut game.g_ram as *mut uint8).offset(0x177a) as *mut uint16))
-                    .wrapping_add((1u16))) as ::core::ffi::c_int
-                    >= 0xc as ::core::ffi::c_int
+                if (*((&raw mut game.g_ram as *mut uint8).offset(0x177a) as *mut uint16))
+                    .wrapping_add((1u16))
+                    >= 0xcu16
                 {
                     v1 = 0 as uint16;
                 }
@@ -3872,21 +3815,21 @@ static g_word_88B256: [uint16; 17] = [
 ];
 pub unsafe fn HandleEarthquakeSoundEffect(game: &mut Game) {
     let mut v1: int16 = 0;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x609) as *mut uint16) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x609) as *mut uint16) as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int)
+        == 0i32
         && {
             let ref mut fresh43 =
                 *((&raw mut game.g_ram as *mut uint8).offset(0x609) as *mut uint16);
             *fresh43 = (*fresh43).wrapping_sub(1);
-            *fresh43 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int
+            (*fresh43 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32
         }
     {
         let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x607) as *mut uint16);
         v1 = g_word_88B256[(*((&raw mut game.g_ram as *mut uint8).offset(0x607) as *mut uint16)
             as ::core::ffi::c_int
             >> 1 as ::core::ffi::c_int) as usize] as int16;
-        if (v1 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
+        if v1 < 0i16 {
             v0 = 0 as uint16;
             v1 = g_word_88B256[0 as ::core::ffi::c_int as usize] as int16;
         }
@@ -3961,9 +3904,9 @@ pub unsafe fn FxTypeFunc_4_Acid(game: &mut Game) {
 pub unsafe fn FxHandleTide(game: &mut Game) {
     let mut v2: uint16 = 0;
     let mut v5: uint16 = 0;
-    if (*(((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16 as *mut uint8)
-        .offset(1) as *mut int16) as ::core::ffi::c_int)
-        < 0 as ::core::ffi::c_int
+    if *(((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16 as *mut uint8).offset(1)
+        as *mut int16)
+        < 0i16
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1970) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1972) as *mut uint16) = 0 as uint16;
@@ -3975,8 +3918,8 @@ pub unsafe fn FxHandleTide(game: &mut Game) {
                     .wrapping_sub(1 as usize) as isize,
             ) as ::core::ffi::c_int;
         let mut v1: uint16 = ((8u16).wrapping_mul(((kSinCosTable8bit_Sext[v0 as usize]) as u16)));
-        if kSinCosTable8bit_Sext[v0 as usize] as ::core::ffi::c_int & 0x1000 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
+        if (kSinCosTable8bit_Sext[v0 as usize] as ::core::ffi::c_int & 0x1000 as ::core::ffi::c_int)
+            != 0i32
         {
             let ref mut fresh40 =
                 *((&raw mut game.g_ram as *mut uint8).offset(0x1972) as *mut uint16);
@@ -3984,8 +3927,8 @@ pub unsafe fn FxHandleTide(game: &mut Game) {
         }
         *(((&raw mut game.g_ram as *mut uint8).offset(0x1970) as *mut uint16 as *mut uint8)
             .offset(1) as *mut uint16) = v1;
-        if kSinCosTable8bit_Sext[v0 as usize] as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
+        if (kSinCosTable8bit_Sext[v0 as usize] as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int)
+            == 0i32
         {
             v2 = ((*((&raw mut game.g_ram as *mut uint8).offset(0x1974) as *mut uint16))
                 .wrapping_add((288u16)));
@@ -3994,10 +3937,10 @@ pub unsafe fn FxHandleTide(game: &mut Game) {
                 .wrapping_add((192u16)));
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0x1974) as *mut uint16) = v2;
-    } else if *(((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16 as *mut uint8)
+    } else if (*(((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16 as *mut uint8)
         .offset(1) as *mut uint16) as ::core::ffi::c_int
-        & 0x4000 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
+        & 0x4000 as ::core::ffi::c_int)
+        != 0i32
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1970) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1972) as *mut uint16) = 0 as uint16;
@@ -4009,8 +3952,8 @@ pub unsafe fn FxHandleTide(game: &mut Game) {
                     .wrapping_sub(1 as usize) as isize,
             ) as ::core::ffi::c_int;
         let mut v4: uint16 = ((32u16).wrapping_mul(((kSinCosTable8bit_Sext[v3 as usize]) as u16)));
-        if kSinCosTable8bit_Sext[v3 as usize] as ::core::ffi::c_int & 0x400 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
+        if (kSinCosTable8bit_Sext[v3 as usize] as ::core::ffi::c_int & 0x400 as ::core::ffi::c_int)
+            != 0i32
         {
             let ref mut fresh41 =
                 *((&raw mut game.g_ram as *mut uint8).offset(0x1972) as *mut uint16);
@@ -4018,8 +3961,8 @@ pub unsafe fn FxHandleTide(game: &mut Game) {
         }
         *(((&raw mut game.g_ram as *mut uint8).offset(0x1970) as *mut uint16 as *mut uint8)
             .offset(1) as *mut uint16) = v4;
-        if kSinCosTable8bit_Sext[v3 as usize] as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
+        if (kSinCosTable8bit_Sext[v3 as usize] as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int)
+            == 0i32
         {
             v5 = ((*((&raw mut game.g_ram as *mut uint8).offset(0x1974) as *mut uint16))
                 .wrapping_add((224u16)));
@@ -4032,30 +3975,22 @@ pub unsafe fn FxHandleTide(game: &mut Game) {
 }
 pub unsafe fn FxRisingFunction_LavaAcid(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16) != 0 {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16)
+        if (*((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16)
             as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
+            & 0x8000 as ::core::ffi::c_int)
+            == 0i32
         {
-            if (*((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16)
-                as ::core::ffi::c_int)
+            if *((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16)
                 < *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16)
-                    as ::core::ffi::c_int
                 || *((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16)
-                    as ::core::ffi::c_int
                     == *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16)
-                        as ::core::ffi::c_int
             {
                 return;
             }
         } else if !(*((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16)
-            as ::core::ffi::c_int
             != *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16)
-                as ::core::ffi::c_int
-            && (*((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16)
-                as ::core::ffi::c_int)
-                < *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16)
-                    as ::core::ffi::c_int)
+            && *((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16)
+                < *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16))
         {
             return;
         }
@@ -4171,16 +4106,16 @@ pub unsafe fn HdmaobjPreInstr_LavaAcidBG3YScroll(mut k: uint16, game: &mut Game)
                         as uint32,
             )
             >> 16 as ::core::ffi::c_int) as int16;
-        if v2 as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
+        if v2 >= 0i16 {
             v3 = ((v2).wrapping_sub(
                 ((*((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16)) as i16),
             ));
-            if v3 as ::core::ffi::c_int <= 0 as ::core::ffi::c_int {
+            if v3 <= 0i16 {
                 v4 = ((v3 as ::core::ffi::c_int ^ 0x1f as ::core::ffi::c_int)
                     & 0x1f as ::core::ffi::c_int
                     | 0x100 as ::core::ffi::c_int) as int16;
                 current_block = 135057599068437321;
-            } else if (v3 as uint16 as ::core::ffi::c_int) < 0x100 as ::core::ffi::c_int {
+            } else if (v3 as uint16) < 0x100u16 {
                 v4 = !(v3 as ::core::ffi::c_int) as uint8 as int16;
                 current_block = 135057599068437321;
             } else {
@@ -4197,13 +4132,11 @@ pub unsafe fn HdmaobjPreInstr_LavaAcidBG3YScroll(mut k: uint16, game: &mut Game)
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0x9c00).offset(2) as *mut uint8
             as *mut uint16) = v4 as uint16;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x196e) as *mut uint16)
-            as ::core::ffi::c_int
-            == 2 as ::core::ffi::c_int
-            && *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x196e) as *mut uint16) == 2u16
+            && (*((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
                 as ::core::ffi::c_int
-                & 0x8000 as ::core::ffi::c_int
-                == 0 as ::core::ffi::c_int
+                & 0x8000 as ::core::ffi::c_int)
+                == 0i32
         {
             let mut v5: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x18b2)
                 as *mut uint16) as uint8
@@ -4214,7 +4147,7 @@ pub unsafe fn HdmaobjPreInstr_LavaAcidBG3YScroll(mut k: uint16, game: &mut Game)
                 .offset(v5 as isize);
             let fresh102 = *fresh101;
             *fresh101 = (*fresh101).wrapping_sub(1);
-            if fresh102 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
+            if fresh102 == 1u16 {
                 *((&raw mut game.g_ram as *mut uint8).offset(0x192c) as *mut uint16)
                     .offset(v5 as isize) = 112 as uint16;
                 QueueSfx2_Max6(
@@ -4228,20 +4161,20 @@ pub unsafe fn HdmaobjPreInstr_LavaAcidBG3YScroll(mut k: uint16, game: &mut Game)
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16) =
             u16::swap_bytes(*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16));
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
+        if (*((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
             as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
+            & 0x8000 as ::core::ffi::c_int)
+            == 0i32
         {
             v8 = (*((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16)
                 as ::core::ffi::c_int
                 - *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16)
                     as ::core::ffi::c_int
                 + 256 as ::core::ffi::c_int) as int16;
-            if (v8 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
+            if v8 < 0i16 {
                 v8 = 255 as int16;
                 current_block = 7317190685143662286;
-            } else if (v8 as uint16 as ::core::ffi::c_int) < 0x200 as ::core::ffi::c_int {
+            } else if (v8 as uint16) < 0x200u16 {
                 current_block = 7317190685143662286;
             } else {
                 current_block = 11042950489265723346;
@@ -4281,15 +4214,15 @@ pub unsafe fn HdmaobjPreInstr_LavaAcidBG2YScroll(mut k: uint16, game: &mut Game)
     *((&raw mut game.g_ram as *mut uint8).offset(0x9c44) as *mut uint16) =
         *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16);
     if *((&raw mut game.g_ram as *mut uint8).offset(0xa78) as *mut uint16) == 0
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16)
+        && (*((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16)
             as ::core::ffi::c_int
-            & 6 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
+            & 6 as ::core::ffi::c_int)
+            != 0i32
     {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16)
+        if (*((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16)
             as ::core::ffi::c_int
-            & 2 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
+            & 2 as ::core::ffi::c_int)
+            != 0i32
         {
             Handle_LavaAcidBG2YScroll_Func3(k, game);
         } else {
@@ -4323,7 +4256,7 @@ pub unsafe fn Handle_LavaAcidBG2YScroll_Func1(mut v0: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x9c46) as *mut uint16)
             .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = v2;
         v1 = ((v1).wrapping_sub((2u8)));
-        if !(v1 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int == 0 as ::core::ffi::c_int) {
+        if !((v1 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) == 0i32) {
             break;
         }
     }
@@ -4341,7 +4274,7 @@ pub unsafe fn Handle_LavaAcidBG2YScroll_Func2(mut v0: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1920) as *mut uint16).offset(v1 as isize);
     let fresh55 = *fresh54;
     *fresh54 = (*fresh54).wrapping_sub(1);
-    if fresh55 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
+    if fresh55 == 1u16 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1920) as *mut uint16).offset(v1 as isize) =
             6 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1914) as *mut uint16).offset(v1 as isize) =
@@ -4373,7 +4306,7 @@ pub unsafe fn Handle_LavaAcidBG2YScroll_Func2(mut v0: uint16, game: &mut Game) {
         v4 = (v4 as ::core::ffi::c_int - 2 as ::core::ffi::c_int & 0x1e as ::core::ffi::c_int)
             as uint8;
         n -= 1;
-        if !(n >= 0 as ::core::ffi::c_int) {
+        if !(n >= 0i32) {
             break;
         }
     }
@@ -4391,7 +4324,7 @@ pub unsafe fn Handle_LavaAcidBG2YScroll_Func3(mut v0: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1920) as *mut uint16).offset(v1 as isize);
     let fresh57 = *fresh56;
     *fresh56 = (*fresh56).wrapping_sub(1);
-    if fresh57 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
+    if fresh57 == 1u16 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1920) as *mut uint16).offset(v1 as isize) =
             4 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1914) as *mut uint16).offset(v1 as isize) =
@@ -4433,7 +4366,7 @@ pub unsafe fn Handle_LavaAcidBG2YScroll_Func3(mut v0: uint16, game: &mut Game) {
         v3 = (v3 as ::core::ffi::c_int - 2 as ::core::ffi::c_int & 0x1e as ::core::ffi::c_int)
             as uint8;
         n -= 1;
-        if !(n >= 0 as ::core::ffi::c_int) {
+        if !(n >= 0i32) {
             break;
         }
     }
@@ -4458,9 +4391,9 @@ pub unsafe fn FxTypeFunc_6_Water(game: &mut Game) {
         &raw const unk_88C40F as *const ::core::ffi::c_void,
         game,
     );
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16) as ::core::ffi::c_int
-        & 2 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16) as ::core::ffi::c_int
+        & 2 as ::core::ffi::c_int)
+        != 0i32
     {
         SpawnHdmaObject(
             0x88 as uint8,
@@ -4472,30 +4405,22 @@ pub unsafe fn FxTypeFunc_6_Water(game: &mut Game) {
 }
 pub unsafe fn FxRisingFunction_C428_WaterNormal(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16) != 0 {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16)
+        if (*((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16)
             as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
+            & 0x8000 as ::core::ffi::c_int)
+            == 0i32
         {
-            if (*((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16)
-                as ::core::ffi::c_int)
+            if *((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16)
                 < *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16)
-                    as ::core::ffi::c_int
                 || *((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16)
-                    as ::core::ffi::c_int
                     == *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16)
-                        as ::core::ffi::c_int
             {
                 return;
             }
         } else if !(*((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16)
-            as ::core::ffi::c_int
             != *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16)
-                as ::core::ffi::c_int
-            && (*((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16)
-                as ::core::ffi::c_int)
-                < *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16)
-                    as ::core::ffi::c_int)
+            && *((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16)
+                < *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16))
         {
             return;
         }
@@ -4589,16 +4514,13 @@ pub unsafe fn HdmaobjPreInstr_WaterBG3XScroll(mut k: uint16, game: &mut Game) {
         .wrapping_sub(
             ((*((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16)) as i16),
         ));
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16) as int16
-        as ::core::ffi::c_int)
-        < 0 as ::core::ffi::c_int
-    {
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16) as int16) < 0i16 {
         *((&raw mut game.g_ram as *mut uint8).offset(0xcade) as *mut uint16) = 0 as uint16;
-    } else if v3 as ::core::ffi::c_int <= 0 as ::core::ffi::c_int {
+    } else if v3 <= 0i16 {
         *((&raw mut game.g_ram as *mut uint8).offset(0xcade) as *mut uint16) =
             ((v3 as ::core::ffi::c_int ^ 0x1f as ::core::ffi::c_int) & 0x1f as ::core::ffi::c_int
                 | 0x100 as ::core::ffi::c_int) as uint16;
-    } else if (v3 as uint16 as ::core::ffi::c_int) < 0x100 as ::core::ffi::c_int {
+    } else if (v3 as uint16) < 0x100u16 {
         *((&raw mut game.g_ram as *mut uint8).offset(0xcade) as *mut uint16) =
             !(v3 as ::core::ffi::c_int) as uint8 as uint16;
     } else {
@@ -4619,7 +4541,7 @@ pub unsafe fn HdmaobjPreInstr_WaterBG3XScroll(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1920) as *mut uint16).offset(v5 as isize);
     let fresh99 = *fresh98;
     *fresh98 = (*fresh98).wrapping_sub(1);
-    if fresh99 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
+    if fresh99 == 1u16 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1920) as *mut uint16).offset(v5 as isize) =
             10 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1914) as *mut uint16).offset(v5 as isize) =
@@ -4631,7 +4553,7 @@ pub unsafe fn HdmaobjPreInstr_WaterBG3XScroll(mut k: uint16, game: &mut Game) {
     let mut v7: uint8 = *((&raw mut game.g_ram as *mut uint8).offset(0x1914) as *mut uint16)
         .offset(v5 as isize) as uint8;
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
-    while i & 0x80 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+    while (i & 0x80 as ::core::ffi::c_int) == 0i32 {
         *((&raw mut game.g_ram as *mut uint8)
             .offset(0x9c00)
             .offset((v7 as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as isize)
@@ -4641,9 +4563,9 @@ pub unsafe fn HdmaobjPreInstr_WaterBG3XScroll(mut k: uint16, game: &mut Game) {
             as uint8;
         i -= 2 as ::core::ffi::c_int;
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16) as ::core::ffi::c_int
-        & 1 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16) as ::core::ffi::c_int
+        & 1 as ::core::ffi::c_int)
+        != 0i32
     {
         let ref mut fresh100 = *((&raw mut game.g_ram as *mut uint8).offset(0x192c) as *mut uint16)
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
@@ -4653,13 +4575,10 @@ pub unsafe fn HdmaobjPreInstr_WaterBG3XScroll(mut k: uint16, game: &mut Game) {
         as ::core::ffi::c_int
         - *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16) as ::core::ffi::c_int
         + 256 as ::core::ffi::c_int) as int16;
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16) as int16
-        as ::core::ffi::c_int)
-        < 0 as ::core::ffi::c_int
-    {
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16) as int16) < 0i16 {
         v9 = 511 as int16;
-    } else if v9 as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
-        if v9 as uint16 as ::core::ffi::c_int >= 0x200 as ::core::ffi::c_int {
+    } else if v9 >= 0i16 {
+        if (v9 as uint16) >= 0x200u16 {
             v9 = 511 as int16;
         }
     } else {
@@ -4687,10 +4606,10 @@ pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xb5) as *mut uint16);
     if *((&raw mut game.g_ram as *mut uint8).offset(0xa78) as *mut uint16) != 0 {
         HdmaobjPreInstr_WaterBG2XScroll_Func1(k, game);
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16)
+    } else if (*((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16)
         as ::core::ffi::c_int
-        & 2 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
+        & 2 as ::core::ffi::c_int)
+        == 0i32
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x18b4) as *mut uint16)
             .offset((k as uint8 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
@@ -4703,13 +4622,10 @@ pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll(mut k: uint16, game: &mut Game) {
         as ::core::ffi::c_int
         - *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16) as ::core::ffi::c_int
         + 256 as ::core::ffi::c_int) as int16;
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16) as int16
-        as ::core::ffi::c_int)
-        < 0 as ::core::ffi::c_int
-    {
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16) as int16) < 0i16 {
         v1 = 511 as int16;
-    } else if v1 as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
-        if v1 as uint16 as ::core::ffi::c_int >= 0x200 as ::core::ffi::c_int {
+    } else if v1 >= 0i16 {
+        if (v1 as uint16) >= 0x200u16 {
             v1 = 511 as int16;
         }
     } else {
@@ -4733,7 +4649,7 @@ pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll_Func2(mut k: uint16, game: &mut Ga
         *((&raw mut game.g_ram as *mut uint8).offset(0x1920) as *mut uint16).offset(v1 as isize);
     let fresh97 = *fresh96;
     *fresh96 = (*fresh96).wrapping_sub(1);
-    if fresh97 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
+    if fresh97 == 1u16 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1920) as *mut uint16).offset(v1 as isize) =
             6 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1914) as *mut uint16).offset(v1 as isize) =
@@ -4769,7 +4685,7 @@ pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll_Func2(mut k: uint16, game: &mut Ga
         v3 = (v3 as ::core::ffi::c_int - 2 as ::core::ffi::c_int & 0x1e as ::core::ffi::c_int)
             as uint8;
         n -= 1;
-        if !(n >= 0 as ::core::ffi::c_int) {
+        if !(n >= 0i32) {
             break;
         }
     }
@@ -4783,7 +4699,7 @@ pub unsafe fn HdmaobjPreInstr_WaterBG2XScroll_Func1(mut k: uint16, game: &mut Ga
                 as isize,
         ) = v2;
         v1 = ((v1).wrapping_sub((2u8)));
-        if !(v1 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int == 0 as ::core::ffi::c_int) {
+        if !((v1 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) == 0i32) {
             break;
         }
     }
@@ -5089,10 +5005,10 @@ pub unsafe fn HdmaobjPreInstr_CheckLotsOfEventsHappened(mut v0: uint16, game: &m
                     let ref mut fresh90 =
                         *((&raw mut game.g_ram as *mut uint8).offset(0x1e6f) as *mut uint16);
                     *fresh90 = ((*fresh90) | (0x10u16));
-                    if *((&raw mut game.g_ram as *mut uint8).offset(0x1e6f) as *mut uint16)
+                    if (*((&raw mut game.g_ram as *mut uint8).offset(0x1e6f) as *mut uint16)
                         as ::core::ffi::c_int
-                        & 0x8000 as ::core::ffi::c_int
-                        == 0 as ::core::ffi::c_int
+                        & 0x8000 as ::core::ffi::c_int)
+                        == 0i32
                     {
                         *((&raw mut game.g_ram as *mut uint8).offset(0x192c) as *mut uint16)
                             .offset(
@@ -5126,7 +5042,7 @@ pub unsafe fn HdmaobjPreInstr_DC23(mut k: uint16, game: &mut Game) {
     let ref mut fresh88 =
         *((&raw mut game.g_ram as *mut uint8).offset(0x192c) as *mut uint16).offset(v1 as isize);
     *fresh88 = (*fresh88).wrapping_sub(1);
-    if *fresh88 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
+    if (*fresh88 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
         SpawnEprojWithRoomGfx(
             addr_kEproj_TourianStatueDustClouds as uint16,
             0 as uint16,
@@ -5170,8 +5086,7 @@ pub unsafe fn HdmaobjPreInstr_DC69(mut k: uint16, game: &mut Game) {
             -(0x4000 as ::core::ffi::c_int) as uint32,
         );
         if *((&raw mut game.g_ram as *mut uint8).offset(0x1920) as *mut uint16).offset(v1 as isize)
-            as ::core::ffi::c_int
-            == 0xff10 as ::core::ffi::c_int
+            == 0xff10u16
         {
             SpawnHardcodedPlm(
                 SpawnHardcodedPlmArgs {
@@ -5311,8 +5226,7 @@ pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_FadingIn(mut k: uint16, gam
     *((&raw mut game.g_ram as *mut uint8).offset(0x1986) as *mut uint16) = 44 as uint16;
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1914) as *mut uint16)
         .offset((k as uint8 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-        as ::core::ffi::c_int
-        == 16 as ::core::ffi::c_int
+        == 16u16
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x18f0) as *mut uint16)
             .offset((k as uint8 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
@@ -5325,13 +5239,12 @@ pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_FadingIn(mut k: uint16, gam
         v1 = *((&raw mut game.g_ram as *mut uint8).offset(0x1914) as *mut uint16 as *mut uint8)
             .offset(k as uint8 as ::core::ffi::c_int as isize) as int8;
         let mut i: ::core::ffi::c_int = 15 as ::core::ffi::c_int;
-        while i >= 0 as ::core::ffi::c_int {
+        while i >= 0i32 {
             let mut r18: uint8 = v1 as uint8;
             *((&raw mut game.g_ram as *mut uint8).offset(0x9d00) as *mut uint16 as *mut uint8)
                 .offset(i as uint8 as ::core::ffi::c_int as isize) = ((r20) | ((v1) as u8));
             v1 = (((r18) as i8).wrapping_sub((1i8)));
-            if ((((r18) as i8).wrapping_sub((1i8))) as ::core::ffi::c_int) < 0 as ::core::ffi::c_int
-            {
+            if ((r18) as i8).wrapping_sub((1i8)) < 0i8 {
                 v1 = 0 as int8;
             }
             i -= 1;
@@ -5371,13 +5284,12 @@ pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_FadingOut(mut k: uint16, ga
         v1 = *((&raw mut game.g_ram as *mut uint8).offset(0x1914) as *mut uint16 as *mut uint8)
             .offset(k as uint8 as ::core::ffi::c_int as isize) as int8;
         let mut i: ::core::ffi::c_int = 15 as ::core::ffi::c_int;
-        while i >= 0 as ::core::ffi::c_int {
+        while i >= 0i32 {
             let mut r18: uint8 = v1 as uint8;
             *((&raw mut game.g_ram as *mut uint8).offset(0x9d00) as *mut uint16 as *mut uint8)
                 .offset(i as uint8 as ::core::ffi::c_int as isize) = ((r20) | ((v1) as u8));
             v1 = (((r18) as i8).wrapping_sub((1i8)));
-            if ((((r18) as i8).wrapping_sub((1i8))) as ::core::ffi::c_int) < 0 as ::core::ffi::c_int
-            {
+            if ((r18) as i8).wrapping_sub((1i8)) < 0i8 {
                 v1 = 0 as int8;
             }
             i -= 1;
@@ -5425,16 +5337,16 @@ pub unsafe fn sub_88DF46(game: &mut Game) {
 }
 pub unsafe fn HdmaobjPreInstr_DF94(mut v0: uint16, game: &mut Game) {
     let mut v1: int16 = 0;
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0)).properties
-        as ::core::ffi::c_int
-        & 0x200 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
-        && ((*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0)).x_pos
-            as ::core::ffi::c_int
+    if ((*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
+        .properties as ::core::ffi::c_int
+        & 0x200 as ::core::ffi::c_int)
+        == 0i32
+        && (((*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
+            .x_pos as ::core::ffi::c_int
             - *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16)
                 as ::core::ffi::c_int
-            + 64 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
-            >= 0 as ::core::ffi::c_int
+            + 64 as ::core::ffi::c_int) as int16)
+            >= 0i16
         && (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0)).x_pos
             as ::core::ffi::c_int
             - *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16)
@@ -5442,12 +5354,12 @@ pub unsafe fn HdmaobjPreInstr_DF94(mut v0: uint16, game: &mut Game) {
             - 320 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             != 0
-        && ((*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0)).y_pos
-            as ::core::ffi::c_int
+        && (((*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
+            .y_pos as ::core::ffi::c_int
             - *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16)
                 as ::core::ffi::c_int
-            + 16 as ::core::ffi::c_int) as int16 as ::core::ffi::c_int
-            >= 0 as ::core::ffi::c_int
+            + 16 as ::core::ffi::c_int) as int16)
+            >= 0i16
         && {
             v1 = ((((*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData)
                 .offset(0))
@@ -5557,7 +5469,7 @@ pub unsafe fn VariaSuitPickup_0_LightBeamAppears(game: &mut Game) -> uint8 {
             .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = g_word_88E0D5;
         v1 = ((v1).wrapping_add((2u16)));
         v0 -= 1;
-        if !(v0 as ::core::ffi::c_int > 0 as ::core::ffi::c_int) {
+        if !(v0 > 0i16) {
             break;
         }
     }
@@ -5568,7 +5480,7 @@ pub unsafe fn VariaSuitPickup_0_LightBeamAppears(game: &mut Game) -> uint8 {
             .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = g_word_88E0D5;
         v2 = ((v2).wrapping_sub((2u16)));
         v3 -= 1;
-        if !(v3 as ::core::ffi::c_int > 0 as ::core::ffi::c_int) {
+        if !(v3 > 0i16) {
             break;
         }
     }
@@ -5608,7 +5520,7 @@ pub unsafe fn VariaSuitPickup_1(game: &mut Game) -> uint8 {
         )),
     ));
     let mut i: ::core::ffi::c_int = 510 as ::core::ffi::c_int;
-    while i >= 0 as ::core::ffi::c_int {
+    while i >= 0i32 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x9800) as *mut uint16)
             .offset((i >> 1 as ::core::ffi::c_int) as isize) =
             *((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16);
@@ -5634,17 +5546,15 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> uint8 {
     let mut v8: int8 = 0;
     let mut v10: int8 = 0;
     AdvanceSuitPickupColorMathSubscreenToWhite(game);
-    let mut v0: bool = ((((*((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16))
-        as i8)
-        .wrapping_sub(
+    let mut v0: bool =
+        ((*((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16)) as i8).wrapping_sub(
             ((*((&raw mut game.g_ram as *mut uint8).offset(0xddc) as *mut uint16 as *mut uint8)
                 .offset(
                     (::core::mem::size_of::<uint16>())
                         .wrapping_div(::core::mem::size_of::<uint8>())
                         .wrapping_sub(1 as usize) as isize,
                 )) as i8),
-        )) as ::core::ffi::c_int)
-        < 0 as ::core::ffi::c_int;
+        ) < 0i8;
     *((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16 as *mut uint8).offset(0) =
         (((*((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16)) as u8)
             .wrapping_sub(
@@ -5706,7 +5616,7 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> uint8 {
                     as *mut uint8)
                     .offset(v3 as isize)) as i8),
             ));
-        if (v4 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
+        if v4 < 0i8 {
             v4 = 0 as int8;
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0x9800) as *mut uint16 as *mut uint8)
@@ -5741,7 +5651,7 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> uint8 {
             .offset(v5 as ::core::ffi::c_int as isize) = v6 as uint8;
         v2 = (((v5) as i16).wrapping_add((1i16)));
         v3 = v3.wrapping_add(1);
-        if !((v2 as ::core::ffi::c_int) < 0x100 as ::core::ffi::c_int) {
+        if !(v2 < 0x100i16) {
             break;
         }
     }
@@ -5753,7 +5663,7 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> uint8 {
                     as *mut uint8)
                     .offset(v7 as isize)) as i8),
             ));
-        if (v8 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
+        if v8 < 0i8 {
             v8 = 0 as int8;
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0x9800) as *mut uint16 as *mut uint8)
@@ -5788,15 +5698,13 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> uint8 {
             .offset(v9 as ::core::ffi::c_int as isize) = v10 as uint8;
         v2 = (((v9) as i16).wrapping_add((1i16)));
         v7 = v7.wrapping_sub(1);
-        if !((v2 as ::core::ffi::c_int) < 0x200 as ::core::ffi::c_int) {
+        if !(v2 < 0x200i16) {
             break;
         }
     }
     let ref mut fresh19 = *((&raw mut game.g_ram as *mut uint8).offset(0xddc) as *mut uint16);
     *fresh19 = ((*fresh19).wrapping_add((96u16)));
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16) as ::core::ffi::c_int
-        == 0xff00 as ::core::ffi::c_int
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16) == 0xff00u16 {
         let ref mut fresh20 = *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16);
         *fresh20 = (*fresh20).wrapping_add(1);
         let ref mut fresh21 = *((&raw mut game.g_ram as *mut uint8).offset(0xddc) as *mut uint16);
@@ -5825,7 +5733,7 @@ pub unsafe fn VariaSuitPickup_4_LightBeamShrinks(game: &mut Game) -> uint8 {
             .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 255 as uint16;
         v1 = ((v1).wrapping_add((2u16)));
         v0 -= 1;
-        if !(v0 as ::core::ffi::c_int > 0 as ::core::ffi::c_int) {
+        if !(v0 > 0i16) {
             break;
         }
     }
@@ -5838,7 +5746,7 @@ pub unsafe fn VariaSuitPickup_4_LightBeamShrinks(game: &mut Game) -> uint8 {
             .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 255 as uint16;
         v2 = ((v2).wrapping_sub((2u16)));
         v3 -= 1;
-        if !(v3 as ::core::ffi::c_int > 0 as ::core::ffi::c_int) {
+        if !(v3 > 0i16) {
             break;
         }
     }
@@ -5921,9 +5829,7 @@ pub unsafe fn GravitySuitPickup_6(game: &mut Game) -> uint8 {
     return 0 as uint8;
 }
 pub unsafe fn AdvanceSuitPickupColorMathSubscreenToWhite(game: &mut Game) -> uint8 {
-    if *(&raw mut game.g_ram as *mut uint8).offset(0xdf0) as ::core::ffi::c_int
-        != 63 as ::core::ffi::c_int
-    {
+    if *(&raw mut game.g_ram as *mut uint8).offset(0xdf0) != 63u8 {
         let ref mut fresh0 = *(&raw mut game.g_ram as *mut uint8).offset(0xdf0);
         *fresh0 = ((*fresh0).wrapping_add((2u8)));
         if *(&raw mut game.g_ram as *mut uint8).offset(0xdf0) as ::core::ffi::c_int
@@ -5934,9 +5840,7 @@ pub unsafe fn AdvanceSuitPickupColorMathSubscreenToWhite(game: &mut Game) -> uin
             *(&raw mut game.g_ram as *mut uint8).offset(0xdf0) = 63 as uint8;
         }
     }
-    if *(&raw mut game.g_ram as *mut uint8).offset(0xdf1) as ::core::ffi::c_int
-        != 95 as ::core::ffi::c_int
-    {
+    if *(&raw mut game.g_ram as *mut uint8).offset(0xdf1) != 95u8 {
         let ref mut fresh1 = *(&raw mut game.g_ram as *mut uint8).offset(0xdf1);
         *fresh1 = ((*fresh1).wrapping_add((2u8)));
         if *(&raw mut game.g_ram as *mut uint8).offset(0xdf1) as ::core::ffi::c_int
@@ -5947,9 +5851,7 @@ pub unsafe fn AdvanceSuitPickupColorMathSubscreenToWhite(game: &mut Game) -> uin
             *(&raw mut game.g_ram as *mut uint8).offset(0xdf1) = 95 as uint8;
         }
     }
-    if *(&raw mut game.g_ram as *mut uint8).offset(0xdf2) as ::core::ffi::c_int
-        != 0x9f as ::core::ffi::c_int
-    {
+    if *(&raw mut game.g_ram as *mut uint8).offset(0xdf2) != 0x9fu8 {
         let ref mut fresh2 = *(&raw mut game.g_ram as *mut uint8).offset(0xdf2);
         *fresh2 = ((*fresh2).wrapping_add((2u8)));
         if *(&raw mut game.g_ram as *mut uint8).offset(0xdf2) as ::core::ffi::c_int
@@ -5964,21 +5866,15 @@ pub unsafe fn AdvanceSuitPickupColorMathSubscreenToWhite(game: &mut Game) -> uin
     return 1 as uint8;
 }
 pub unsafe fn AdvanceSuitPickupColorMathToOrange(game: &mut Game) -> uint8 {
-    if *(&raw mut game.g_ram as *mut uint8).offset(0xdf0) as ::core::ffi::c_int
-        != 63 as ::core::ffi::c_int
-    {
+    if *(&raw mut game.g_ram as *mut uint8).offset(0xdf0) != 63u8 {
         let ref mut fresh6 = *(&raw mut game.g_ram as *mut uint8).offset(0xdf0);
         *fresh6 = (*fresh6).wrapping_sub(1);
     }
-    if *(&raw mut game.g_ram as *mut uint8).offset(0xdf1) as ::core::ffi::c_int
-        != 77 as ::core::ffi::c_int
-    {
+    if *(&raw mut game.g_ram as *mut uint8).offset(0xdf1) != 77u8 {
         let ref mut fresh7 = *(&raw mut game.g_ram as *mut uint8).offset(0xdf1);
         *fresh7 = (*fresh7).wrapping_sub(1);
     }
-    if *(&raw mut game.g_ram as *mut uint8).offset(0xdf2) as ::core::ffi::c_int
-        != 0x83 as ::core::ffi::c_int
-    {
+    if *(&raw mut game.g_ram as *mut uint8).offset(0xdf2) != 0x83u8 {
         let ref mut fresh8 = *(&raw mut game.g_ram as *mut uint8).offset(0xdf2);
         *fresh8 = (*fresh8).wrapping_sub(1);
     }
@@ -6029,30 +5925,24 @@ pub unsafe fn GravitySuitPickup_3(game: &mut Game) -> uint8 {
     return 1 as uint8;
 }
 pub unsafe fn AdvanceSuitPickupColorMathToBlue(game: &mut Game) -> uint8 {
-    if *(&raw mut game.g_ram as *mut uint8).offset(0xdf0) as ::core::ffi::c_int
-        != 48 as ::core::ffi::c_int
-    {
+    if *(&raw mut game.g_ram as *mut uint8).offset(0xdf0) != 48u8 {
         let ref mut fresh3 = *(&raw mut game.g_ram as *mut uint8).offset(0xdf0);
         *fresh3 = (*fresh3).wrapping_sub(1);
     }
-    if *(&raw mut game.g_ram as *mut uint8).offset(0xdf1) as ::core::ffi::c_int
-        != 73 as ::core::ffi::c_int
-    {
+    if *(&raw mut game.g_ram as *mut uint8).offset(0xdf1) != 73u8 {
         let ref mut fresh4 = *(&raw mut game.g_ram as *mut uint8).offset(0xdf1);
         *fresh4 = (*fresh4).wrapping_sub(1);
     }
-    if *(&raw mut game.g_ram as *mut uint8).offset(0xdf2) as ::core::ffi::c_int
-        != 0x90 as ::core::ffi::c_int
-    {
+    if *(&raw mut game.g_ram as *mut uint8).offset(0xdf2) != 0x90u8 {
         let ref mut fresh5 = *(&raw mut game.g_ram as *mut uint8).offset(0xdf2);
         *fresh5 = (*fresh5).wrapping_sub(1);
     }
     return 1 as uint8;
 }
 pub unsafe fn HdmaobjPreInstr_E449(mut k: uint16, game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x1988) as *mut uint16) as ::core::ffi::c_int
-        & 0x4000 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x1988) as *mut uint16) as ::core::ffi::c_int
+        & 0x4000 as ::core::ffi::c_int)
+        != 0i32
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1986) as *mut uint16) = 26 as uint16;
     } else if *(&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData)
@@ -6064,8 +5954,8 @@ pub unsafe fn HdmaobjPreInstr_E449(mut k: uint16, game: &mut Game) {
         if *(&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData)
             .offset(3))
         .parameter_1 as *mut uint8)
-            .offset(0) as ::core::ffi::c_int
-            == 0xff as ::core::ffi::c_int
+            .offset(0)
+            == 0xffu8
         {
             *((&raw mut game.g_ram as *mut uint8).offset(0x1986) as *mut uint16) = 4 as uint16;
             let mut v0: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x18b2)
@@ -6115,10 +6005,10 @@ pub unsafe fn HdmaobjInstr_E4BD(
         .parameter_1 = (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData)
         .offset(2))
     .parameter_1;
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(2))
+    if ((*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(2))
         .parameter_1 as ::core::ffi::c_int
-        & 1 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
+        & 1 as ::core::ffi::c_int)
+        != 0i32
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x9000) as *mut uint16) = 192 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x9006) as *mut uint16) = 192 as uint16;
@@ -6205,10 +6095,10 @@ pub unsafe fn HdmaobjPreInstr_E567(mut v0: uint16, game: &mut Game) {
         .parameter_1
         != 0
     {
-        if (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(1))
+        if ((*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(1))
             .parameter_1 as ::core::ffi::c_int
-            & 1 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
+            & 1 as ::core::ffi::c_int)
+            != 0i32
         {
             r28 = 4 as uint16;
             r30 = 128 as uint16;
@@ -6221,7 +6111,7 @@ pub unsafe fn HdmaobjPreInstr_E567(mut v0: uint16, game: &mut Game) {
             .offset(v2 as isize);
         let fresh80 = *fresh79;
         *fresh79 = (*fresh79).wrapping_sub(1);
-        if fresh80 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
+        if fresh80 == 1u16 {
             *((&raw mut game.g_ram as *mut uint8).offset(0x1920) as *mut uint16)
                 .offset(v2 as isize) = 1 as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0x1914) as *mut uint16)
@@ -6240,7 +6130,7 @@ pub unsafe fn HdmaobjPreInstr_E567(mut v0: uint16, game: &mut Game) {
             let mut v5: uint16 = r20;
             let mut v6: ::core::ffi::c_int = r20 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
             v7 = kSinCosTable8bit_Sext[(v6 + 64 as ::core::ffi::c_int) as usize];
-            if (v7 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
+            if v7 < 0i16 {
                 let mut r18: uint16 = -(v7 as ::core::ffi::c_int) as uint16;
                 let mut r22: uint16 = (Mult8x8(
                     -(v7 as int8 as ::core::ffi::c_int) as uint8,
@@ -6366,19 +6256,17 @@ pub unsafe fn HdmaobjPreInstr_E567(mut v0: uint16, game: &mut Game) {
                     ));
             }
             v4 = ((v8).wrapping_add((2u16)));
-            if !(((((v4) as i16).wrapping_sub(((r30) as i16))) as ::core::ffi::c_int)
-                < 0 as ::core::ffi::c_int)
-            {
+            if !(((v4) as i16).wrapping_sub(((r30) as i16)) < 0i16) {
                 break;
             }
         }
-        if (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(1))
+        if ((*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(1))
             .parameter_1 as ::core::ffi::c_int
-            & 1 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
+            & 1 as ::core::ffi::c_int)
+            != 0i32
         {
             let mut i: ::core::ffi::c_int = 126 as ::core::ffi::c_int;
-            while i >= 0 as ::core::ffi::c_int {
+            while i >= 0i32 {
                 *(((&raw mut game.g_ram as *mut uint8).offset(0x9180) as *mut uint16 as *mut uint8)
                     .offset(i as isize) as *mut uint16) =
                     (*((&raw mut game.g_ram as *mut uint8).offset(0xb5) as *mut uint16)
@@ -6393,8 +6281,7 @@ pub unsafe fn HdmaobjPreInstr_E567(mut v0: uint16, game: &mut Game) {
             }
         } else {
             j = 62 as uint16;
-            while j as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int
-            {
+            while (j as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32 {
                 *(((&raw mut game.g_ram as *mut uint8).offset(0x9140) as *mut uint16 as *mut uint8)
                     .offset(j as ::core::ffi::c_int as isize) as *mut uint16) =
                     (*((&raw mut game.g_ram as *mut uint8).offset(0xb5) as *mut uint16)
@@ -6460,9 +6347,7 @@ pub unsafe fn InitializeRainbowBeam(game: &mut Game) {
     MotherBrain_CalculateRainbowBeamHdma(game);
 }
 pub unsafe fn HdmaobjPreInstr_E7BC(mut k: uint16, game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) as ::core::ffi::c_int
-        == 19 as ::core::ffi::c_int
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) == 19u16 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x18b4) as *mut uint16).offset(
             (*((&raw mut game.g_ram as *mut uint8).offset(0x18b2) as *mut uint16)
                 as ::core::ffi::c_int
@@ -6470,9 +6355,7 @@ pub unsafe fn HdmaobjPreInstr_E7BC(mut k: uint16, game: &mut Game) {
         ) = 0 as uint16;
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1986) as *mut uint16) = 36 as uint16;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) as ::core::ffi::c_int
-            != 27 as ::core::ffi::c_int
-        {
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) != 27u16 {
             MotherBrain_CalculateRainbowBeamHdma(game);
             sub_88E7ED(game);
         }
@@ -6486,7 +6369,7 @@ pub unsafe fn sub_88E7ED(game: &mut Game) {
                 as ::core::ffi::c_int
                 >> 1 as ::core::ffi::c_int) as isize,
         );
-    if v0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+    if (v0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32 {
         let ref mut fresh75 =
             *((&raw mut game.g_ram as *mut uint8).offset(0x1914) as *mut uint16).offset(0);
         *fresh75 = (*fresh75).wrapping_add(1);
@@ -6772,10 +6655,7 @@ pub unsafe fn SpawnIntroCutsceneCrossfadeHdma(game: &mut Game) {
     );
 }
 pub unsafe fn HdmaobjPreInstr_IntroCutsceneCrossfade(mut k: uint16, game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(0)
-        as ::core::ffi::c_int
-        == 1 as ::core::ffi::c_int
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(0) == 1u16 {
         let mut v1: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x18b2)
             as *mut uint16) as ::core::ffi::c_int
             >> 1 as ::core::ffi::c_int;
@@ -6866,7 +6746,7 @@ pub unsafe fn HdmaobjPreInstr_ECB6(mut k: uint16, game: &mut Game) {
             let mut v5: uint16 = r20;
             let mut v6: ::core::ffi::c_int = r20 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
             v7 = kSinCosTable8bit_Sext[(v6 + 64 as ::core::ffi::c_int) as usize];
-            if (v7 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
+            if v7 < 0i16 {
                 let mut r18: uint16 = -(v7 as ::core::ffi::c_int) as uint16;
                 let mut r22: uint16 = (Mult8x8(
                     -(v7 as int8 as ::core::ffi::c_int) as uint8,
@@ -6952,14 +6832,12 @@ pub unsafe fn HdmaobjPreInstr_ECB6(mut k: uint16, game: &mut Game) {
                     ));
             }
             v4 = ((v8).wrapping_add((2u16)));
-            if !(((v4 as ::core::ffi::c_int - n) as int16 as ::core::ffi::c_int)
-                < 0 as ::core::ffi::c_int)
-            {
+            if !(((v4 as ::core::ffi::c_int - n) as int16) < 0i16) {
                 break;
             }
         }
         let mut i: ::core::ffi::c_int = 126 as ::core::ffi::c_int;
-        while i >= 0 as ::core::ffi::c_int {
+        while i >= 0i32 {
             *((&raw mut game.g_ram as *mut uint8).offset(0x9800) as *mut uint16)
                 .offset(((i >> 1 as ::core::ffi::c_int) + 64 as ::core::ffi::c_int) as isize) =
                 (*((&raw mut game.g_ram as *mut uint8).offset(0xb9) as *mut uint16)

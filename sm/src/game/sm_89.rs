@@ -104,7 +104,7 @@ static kFxTypeFuncPtrs: [Option<Func_V>; 23] = unsafe {
 };
 pub unsafe fn LoadFXHeader(game: &mut Game) {
     let mut entry_ptr: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x7cd) as *mut uint16);
-    if entry_ptr as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+    if entry_ptr == 0u16 {
         return;
     }
     loop {
@@ -112,13 +112,10 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
         if door_ptr == 0 {
             break;
         }
-        if door_ptr as ::core::ffi::c_int == 0xffff as ::core::ffi::c_int {
+        if door_ptr == 0xffffu16 {
             return;
         }
-        if door_ptr as ::core::ffi::c_int
-            == *((&raw mut game.g_ram as *mut uint8).offset(0x78d) as *mut uint16)
-                as ::core::ffi::c_int
-        {
+        if door_ptr == *((&raw mut game.g_ram as *mut uint8).offset(0x78d) as *mut uint16) {
             break;
         }
         entry_ptr = ((entry_ptr).wrapping_add((16u16)));
@@ -168,7 +165,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
             game,
         );
         let mut j: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-        while j != 16 as ::core::ffi::c_int {
+        while j != 16i32 {
             if bits & 1 as ::core::ffi::c_int != 0 {
                 SpawnPalfxObject(
                     *(v11.offset(j as isize) as *const uint8 as *mut uint16),
@@ -189,7 +186,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
             game,
         );
         let mut k: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-        while k != 16 as ::core::ffi::c_int {
+        while k != 16i32 {
             if bits_0 & 1 as ::core::ffi::c_int != 0 {
                 SpawnAnimtiles(
                     *(v14.offset(k as isize) as *const uint8 as *mut uint16),
@@ -203,18 +200,16 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
 }
 pub unsafe fn RoomCode_CeresElevatorShaft(game: &mut Game) {
     let mut v1: int16 = 0;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x93f) as *mut uint16) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x93f) as *mut uint16) as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int)
+        != 0i32
     {
-        if (((112i16).wrapping_sub(
+        if (112i16).wrapping_sub(
             ((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)) as i16),
-        )) as ::core::ffi::c_int)
-            < 0 as ::core::ffi::c_int
-            && ((144i16).wrapping_sub(
+        ) < 0i16
+            && (144i16).wrapping_sub(
                 ((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)) as i16),
-            )) as ::core::ffi::c_int
-                >= 0 as ::core::ffi::c_int
+            ) >= 0i16
             && *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)
                 as ::core::ffi::c_int
                 - 128 as ::core::ffi::c_int
@@ -239,9 +234,9 @@ pub unsafe fn RoomCode_CeresElevatorShaft(game: &mut Game) {
         let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(2)
             as *mut uint8 as *mut uint16);
         *fresh0 = (*fresh0).wrapping_sub(1);
-        if (*((&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(2) as *mut uint8
-            as *mut int16) as ::core::ffi::c_int)
-            < 0 as ::core::ffi::c_int
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(2) as *mut uint8
+            as *mut int16)
+            < 0i16
         {
             let mut v0: ::core::ffi::c_int = ((6u16).wrapping_mul(
                 (*((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16)),
@@ -264,16 +259,11 @@ pub unsafe fn RoomCode_CeresElevatorShaft(game: &mut Game) {
                     .offset((v0 + 2 as ::core::ffi::c_int) as isize);
             *((&raw mut game.g_ram as *mut uint8).offset(0x7e) as *mut uint16) =
                 *((&raw mut game.g_ram as *mut uint8).offset(0x78) as *mut uint16);
-            if (*((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut int16)
-                as ::core::ffi::c_int)
-                < 0 as ::core::ffi::c_int
-            {
+            if *((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut int16) < 0i16 {
                 v1 = (((*((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16))
                     as i16)
                     .wrapping_sub((1i16)));
-                if *((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16)
-                    as ::core::ffi::c_int
-                    == 0x8001 as ::core::ffi::c_int
+                if *((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16) == 0x8001u16
                 {
                     v1 = 0 as int16;
                 }
@@ -281,10 +271,7 @@ pub unsafe fn RoomCode_CeresElevatorShaft(game: &mut Game) {
                 v1 = (((*((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16))
                     as i16)
                     .wrapping_add((1i16)));
-                if *((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16)
-                    as ::core::ffi::c_int
-                    == 67 as ::core::ffi::c_int
-                {
+                if *((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16) == 67u16 {
                     v1 = -(32700 as ::core::ffi::c_int) as int16;
                 }
             }

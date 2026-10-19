@@ -65,7 +65,7 @@ pub unsafe fn DisablePaletteFx(game: &mut Game) {
 }
 pub unsafe fn ClearPaletteFXObjects(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 14 as ::core::ffi::c_int;
-    while i >= 0 as ::core::ffi::c_int {
+    while i >= 0i32 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1e7d) as *mut uint16)
             .offset((i >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
         i -= 2 as ::core::ffi::c_int;
@@ -79,7 +79,7 @@ pub unsafe fn SpawnPalfxObject(mut j: uint16, game: &mut Game) {
         != 0
     {
         v1 = ((v1).wrapping_sub((2u16)));
-        if v1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
+        if (v1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
             return;
         }
     }
@@ -105,12 +105,12 @@ pub unsafe fn SpawnPalfxObject(mut j: uint16, game: &mut Game) {
 }
 pub fn PalPreInstr_nullsub_129(mut k: uint16) {}
 pub unsafe fn PaletteFxHandler(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x1e79) as *mut uint16) as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x1e79) as *mut uint16) as ::core::ffi::c_int
+        & 0x8000 as ::core::ffi::c_int)
+        != 0i32
     {
         let mut i: ::core::ffi::c_int = 14 as ::core::ffi::c_int;
-        while i >= 0 as ::core::ffi::c_int {
+        while i >= 0i32 {
             *((&raw mut game.g_ram as *mut uint8).offset(0x1e7b) as *mut uint16) = i as uint16;
             if *((&raw mut game.g_ram as *mut uint8).offset(0x1e7d) as *mut uint16)
                 .offset((i >> 1 as ::core::ffi::c_int) as isize)
@@ -138,7 +138,7 @@ pub unsafe fn PalFx_ProcessOne(mut k: uint16, game: &mut Game) {
         .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     let fresh3 = *fresh2;
     *fresh2 = (*fresh2).wrapping_sub(1);
-    if fresh3 as ::core::ffi::c_int != 1 as ::core::ffi::c_int {
+    if fresh3 != 1u16 {
         return;
     }
     let mut j: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1ebd) as *mut uint16)
@@ -147,7 +147,7 @@ pub unsafe fn PalFx_ProcessOne(mut k: uint16, game: &mut Game) {
     loop {
         let mut p: *const uint16 = RomPtr_8D(j, game) as *const uint16;
         v6 = *p;
-        if *p as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+        if (*p as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32 {
             break;
         }
         let mut v7: PairU16 = CallPalInstr(
@@ -242,7 +242,7 @@ pub unsafe fn PalInstr_DecTimerGoto(mut k: uint16, mut j: uint16, game: &mut Gam
         *((&raw mut game.g_ram as *mut uint8).offset(0x1edd) as *mut uint16).offset(v2 as isize);
     let fresh5 = *fresh4;
     *fresh4 = (*fresh4).wrapping_sub(1);
-    if fresh5 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
+    if fresh5 == 1u16 {
         return MakePairU16(k, ((j).wrapping_add((2u16))));
     }
     v4 = PalInstr_Goto(k, j, game);
@@ -304,28 +304,26 @@ pub unsafe fn PalPreInstr_CheckEnemy0Health(mut k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn PalPreInstr_SamusInHeat(mut k: uint16, game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16) as ::core::ffi::c_int
-        & 0x21 as ::core::ffi::c_int
-        == 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16) as ::core::ffi::c_int
+        & 0x21 as ::core::ffi::c_int)
+        == 0i32
     {
         AddToHiLo(
             (&raw mut game.g_ram as *mut uint8).offset(0xa50) as *mut uint16,
             (&raw mut game.g_ram as *mut uint8).offset(0xa4e) as *mut uint16,
             0x4000 as uint32,
         );
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x5b6) as *mut uint16) as ::core::ffi::c_int
-            & 7 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int
-            && *((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16)
-                as ::core::ffi::c_int
-                > 0x46 as ::core::ffi::c_int
+        if (*((&raw mut game.g_ram as *mut uint8).offset(0x5b6) as *mut uint16)
+            as ::core::ffi::c_int
+            & 7 as ::core::ffi::c_int)
+            == 0i32
+            && *((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16) > 0x46u16
         {
             QueueSfx3_Max6(0x2d as uint16, game);
         }
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x1eed) as *mut uint16) as ::core::ffi::c_int
+    if *((&raw mut game.g_ram as *mut uint8).offset(0x1eed) as *mut uint16)
         != *((&raw mut game.g_ram as *mut uint8).offset(0x1eef) as *mut uint16)
-            as ::core::ffi::c_int
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1eef) as *mut uint16) =
             *((&raw mut game.g_ram as *mut uint8).offset(0x1eed) as *mut uint16);
@@ -335,15 +333,16 @@ pub unsafe fn PalPreInstr_SamusInHeat(mut k: uint16, game: &mut Game) {
         let mut v3: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1ecd) as *mut uint16).offset(v3 as isize) =
             1 as uint16;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16) as ::core::ffi::c_int
-            & 0x20 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
+        if (*((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16)
+            as ::core::ffi::c_int
+            & 0x20 as ::core::ffi::c_int)
+            != 0i32
         {
             v4 = addr_off_8DE3E0 as uint16;
-        } else if *((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16)
+        } else if (*((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16)
             as ::core::ffi::c_int
-            & 1 as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
+            & 1 as ::core::ffi::c_int)
+            != 0i32
         {
             v4 = addr_off_8DE400 as uint16;
         } else {
@@ -356,15 +355,15 @@ pub unsafe fn PalPreInstr_SamusInHeat(mut k: uint16, game: &mut Game) {
 }
 pub unsafe fn PalInit_F761_Norfair1(mut k: uint16, mut j: uint16, game: &mut Game) {
     let mut v2: uint16 = 0;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16) as ::core::ffi::c_int
-        & 0x20 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
+    if (*((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16) as ::core::ffi::c_int
+        & 0x20 as ::core::ffi::c_int)
+        != 0i32
     {
         v2 = addr_off_8DE8B6 as uint16;
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16)
+    } else if (*((&raw mut game.g_ram as *mut uint8).offset(0x9a2) as *mut uint16)
         as ::core::ffi::c_int
-        & 1 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
+        & 1 as ::core::ffi::c_int)
+        != 0i32
     {
         v2 = addr_off_8DE68A as uint16;
     } else {
@@ -374,9 +373,7 @@ pub unsafe fn PalInit_F761_Norfair1(mut k: uint16, mut j: uint16, game: &mut Gam
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = v2;
 }
 pub unsafe fn PalPreInstr_SwitchIfYpos(mut k: uint16, game: &mut Game) {
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) as ::core::ffi::c_int)
-        < 0x380 as ::core::ffi::c_int
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) < 0x380u16 {
         let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1ecd) as *mut uint16).offset(v2 as isize) =
             1 as uint16;
@@ -385,9 +382,7 @@ pub unsafe fn PalPreInstr_SwitchIfYpos(mut k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn PalPreInstr_SwitchIfYpos2(mut k: uint16, game: &mut Game) {
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) as ::core::ffi::c_int)
-        < 0x380 as ::core::ffi::c_int
-    {
+    if *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) < 0x380u16 {
         let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1ecd) as *mut uint16).offset(v2 as isize) =
             1 as uint16;
@@ -396,12 +391,12 @@ pub unsafe fn PalPreInstr_SwitchIfYpos2(mut k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn PalPreInstr_DeletePalfxIfMinibossDead(mut k: uint16, game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8)
+    if (*((&raw mut game.g_ram as *mut uint8)
         .offset(0xd828)
         .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize)
         as *mut uint8 as *mut uint16) as ::core::ffi::c_int
-        & 2 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
+        & 2 as ::core::ffi::c_int)
+        != 0i32
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1e7d) as *mut uint16)
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
@@ -422,12 +417,12 @@ pub unsafe fn PalPreInstr_F621(mut k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn PalInit_F779_Brinstar8(mut k: uint16, mut j: uint16, game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8)
+    if (*((&raw mut game.g_ram as *mut uint8)
         .offset(0xd828)
         .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize)
         as *mut uint8 as *mut uint16) as ::core::ffi::c_int
-        & 2 as ::core::ffi::c_int
-        != 0 as ::core::ffi::c_int
+        & 2 as ::core::ffi::c_int)
+        != 0i32
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1e7d) as *mut uint16)
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;

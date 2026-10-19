@@ -26,7 +26,7 @@ pub unsafe fn CreateSpriteAtPos(
         != 0
     {
         v0 -= 2 as ::core::ffi::c_int;
-        if v0 & 0x8000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
+        if (v0 & 0x8000 as ::core::ffi::c_int) != 0i32 {
             return 0xffff as uint16;
         }
     }
@@ -90,10 +90,10 @@ pub unsafe fn HandleSpriteObjects(game: &mut Game) {
         if !(*((&raw mut game.g_ram as *mut uint8).offset(0xef78) as *mut uint16)
             .offset(v0 as isize)
             == 0
-            || *((&raw mut game.g_ram as *mut uint8).offset(0xf2f8) as *mut uint16)
+            || (*((&raw mut game.g_ram as *mut uint8).offset(0xf2f8) as *mut uint16)
                 .offset(v0 as isize) as ::core::ffi::c_int
-                & 1 as ::core::ffi::c_int
-                != 0 as ::core::ffi::c_int)
+                & 1 as ::core::ffi::c_int)
+                != 0i32)
         {
             v1 = *((&raw mut game.g_ram as *mut uint8).offset(0xeff8) as *mut uint16)
                 .offset(v0 as isize);
@@ -102,7 +102,7 @@ pub unsafe fn HandleSpriteObjects(game: &mut Game) {
             } else {
                 *((&raw mut game.g_ram as *mut uint8).offset(0xeff8) as *mut uint16)
                     .offset(v0 as isize) = ((v1).wrapping_sub((1u16)));
-                if v1 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
+                if v1 == 1u16 {
                     let mut v3: uint16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xef78)
                         as *mut uint16)
                         .offset(v0 as isize))
@@ -178,7 +178,7 @@ pub unsafe fn SpriteObject_Instr_Goto(game: &mut Game) {
 }
 pub unsafe fn DrawSpriteObjects(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 62 as ::core::ffi::c_int;
-    while i >= 0 as ::core::ffi::c_int {
+    while i >= 0i32 {
         let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
         if *((&raw mut game.g_ram as *mut uint8).offset(0xef78) as *mut uint16).offset(v1 as isize)
             != 0
@@ -187,8 +187,7 @@ pub unsafe fn DrawSpriteObjects(game: &mut Game) {
                 as *mut uint16)
                 .offset(v1 as isize))
             .wrapping_sub((*((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16))));
-            if (((x) as i16).wrapping_add((16i16))) as ::core::ffi::c_int >= 0 as ::core::ffi::c_int
-            {
+            if ((x) as i16).wrapping_add((16i16)) >= 0i16 {
                 if x as ::core::ffi::c_int - 272 as ::core::ffi::c_int
                     & 0x8000 as ::core::ffi::c_int
                     != 0
@@ -200,7 +199,7 @@ pub unsafe fn DrawSpriteObjects(game: &mut Game) {
                             ((*((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16))
                                 as i16),
                         ));
-                    if y as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
+                    if y >= 0i16 {
                         if y as ::core::ffi::c_int - 272 as ::core::ffi::c_int
                             & 0x8000 as ::core::ffi::c_int
                             != 0
