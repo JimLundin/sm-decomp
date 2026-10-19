@@ -213,6 +213,18 @@ change and no new replay result belong to this cleanup.
 
 ## The oracle
 
+Combined committed-main QC (2026-10-19): frozen d196375a passes full any%
+129712/0 (234.77s), Waver 58109/0 (113.47s) and the 9BC8 left-ledge route
+69714/0 (136.79s), all native exits 0. The committed verifier build function
+builds the unchanged snapshot, including the item reads, eye-beam updater,
+direct X-ray context and complete window-table comparisons. All 65 archived
+source/config/build files match that commit after newline normalization.
+Replays use separate save directories and copied inputs; no save-write errors occur.
+This verifies those committed changes together and extends the ledge route
+check to the corrected X-ray boundary behavior. Later working edits are
+excluded; complete gameplay/credits and wider hardware/audio checks remain
+open. No maintained source or own residue-count change belongs to this audit.
+
 Window-table comparisons enabled (2026-10-19): remove the normalizations
 over 9100..92CD and 9800..99CD, including the redundant 99CC..99CD copy.
 The existing full-RAM comparison now enforces all 924 table bytes on every
