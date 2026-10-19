@@ -17066,6 +17066,33 @@ No probes or ROM-derived artifacts committed. Continue indexed projectile
 state/handler families; broader gameplay/credits, hardware/audio/masks and
 ownership remain unfinished.
 
+Area-dependent projectile property store (2026-10-19): the final
+indexed RAM word write now uses the existing byte-backed property setter.
+ROM pointer selection, repeated area reads and selected ROM word load retain
+their original order. ROM pointers derive from the separate ROM allocation;
+no RAM pointer survives the new mutable byte-backed store. Full-width slot
+rounding, written bits and existing unsafe ROM boundary remain unchanged.
+
+Frozen d56a46ba plus only this change passes
+any% 129712/0 (210.20s) and Warehouse 128547/0
+(237.21s), native exits 0. Observed any% 129712/0
+(234.04s) reaches the changed store 62 times.
+Every byte-backed write matches the original unaligned store over complete
+RAM. Clean/observed non-timing diagnostics match; source/DLL/ROM/input hashes
+remain fixed and maintained function matches verified source. The concurrent
+uint16_t alias-cast removal preserves the already-u16 ROM argument; its
+committed form remains intact.
+Extracted old/current routines match complete RAM and area-read traces in
+262144 cases: every 16-bit slot/table index and four area values covering
+all selection branches, including odd/high indices. Other frozen sources
+match HEAD after newline normalization; only the final store differs in bank.
+
+Cargo fmt/check, normal release build (18.66s) and progress pass. Net raw
+offsets -1, cast lines -1, Rust lines -1; unsafe functions and other own
+counters unchanged. No probes or ROM-derived artifacts committed. Continue
+indexed projectile state/handler families; broader gameplay/credits,
+hardware/audio/masks and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

@@ -2821,8 +2821,7 @@ pub unsafe fn SetAreaDependentEprojPropertiesEx(mut k: uint16, mut j: uint16, ga
     } else {
         v2 = *p.offset(0);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16)
-        .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = v2;
+    EprojStateMut(&mut game.g_ram).set_properties(usize::from(j >> 1), v2);
 }
 static kEprojInit_9634_Xvel: [int16; 4] = [
     -(0x200 as ::core::ffi::c_int) as int16,
