@@ -109,6 +109,24 @@ excluded; this supports the pending sprite change, not the whole moving
 worktree. Existing rendered failures and complete hardware/gameplay/credits
 coverage remain open.
 
+Sprite span optimization completed (2026-10-19): the four sprite bitplanes
+are packed through a byte-spread table, then drawn through a safe clipped
+destination span. Transparency, priority, flips and wrapping palette addition
+remain exact. Independent2,474,560 old/current span comparisons pass; actual
+16,000-frame rendered gameplay compares7,095,424 complete evaluator outputs
+against the old body, including overflow flags and returns. Five evaluator
+benchmarks favor the new body, median614.4ms versus395.3ms under concurrent
+load; this is a measured workload, not a whole-game speed claim.
+Final integration at431b9dcc plus only this sprite change includes both host
+initialization fixes and low-health cleanup: any%129,712/0 (178.82s), native
+exit0,57,794,240 evaluator calls; Waver58,109/71 (93.62s), native exit1,
+25,920,608 evaluator calls. All71 full ordered diagnostics equal the pinned
+explicit-render baseline. Live source equals frozen source after removing
+temporary counters. Cargo fmt/check and release pass. Cast lines-14; Rust
+lines+25 provide the table and safe span helper; other own counters unchanged.
+Later CPU/door-transition edits remain separate. Existing rendered failures
+and complete hardware/gameplay/credits/audio coverage remain open.
+
 The binary contains two complete implementations of each frame:
 
 - **theirs**: the original ROM code, run on the emulated 65816 in `sm/src/snes`.

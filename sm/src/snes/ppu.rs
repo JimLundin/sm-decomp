@@ -3365,32 +3365,17 @@ unsafe fn ppu_evaluateSprites(mut ppu: *mut Ppu, mut line: ::core::ffi::c_int) -
                                     .offset(x as isize)
                                     .offset(px_left as isize)
                                     .offset(kPpuExtraLeftRight as ::core::ffi::c_int as isize);
-                                let mut px: ::core::ffi::c_int = px_left;
-                                while px < px_right {
-                                    let mut shift: ::core::ffi::c_int =
-                                        if oam1 & 0x4000 as ::core::ffi::c_int != 0 {
-                                            px
-                                        } else {
-                                            7 as ::core::ffi::c_int - px
-                                        };
-                                    let mut bits: uint32 = plane >> shift;
-                                    let mut pixel: ::core::ffi::c_int =
-                                        (bits >> 0 as ::core::ffi::c_int & 1 as uint32
-                                            | bits >> 7 as ::core::ffi::c_int & 2 as uint32
-                                            | bits >> 14 as ::core::ffi::c_int & 4 as uint32
-                                            | bits >> 21 as ::core::ffi::c_int & 8 as uint32)
-                                            as ::core::ffi::c_int;
-                                    if pixel != 0 as ::core::ffi::c_int
-                                        && *dst.offset(0 as ::core::ffi::c_int as isize)
-                                            as ::core::ffi::c_int
-                                            & 0xff as ::core::ffi::c_int
-                                            == 0 as ::core::ffi::c_int
-                                    {
-                                        *dst.offset(0 as ::core::ffi::c_int as isize) =
-                                            (z as ::core::ffi::c_int + pixel) as PpuZbufType;
-                                    }
-                                    px += 1;
-                                    dst = dst.offset(1);
+                                if px_left < px_right {
+                                    draw_sprite_tile_span(
+                                        core::slice::from_raw_parts_mut(
+                                            dst,
+                                            (px_right - px_left) as usize,
+                                        ),
+                                        plane,
+                                        z,
+                                        px_left as u32,
+                                        hFlipped,
+                                    );
                                 }
                             }
                         }
@@ -4010,5 +3995,45 @@ fn draw_palette_span(
         *dst = u32::from(brightness[usize::from(color & mask)]) << 16
             | u32::from(brightness[usize::from((color >> 5) & mask)]) << 8
             | u32::from(brightness[usize::from((color >> 10) & mask)]);
+    }
+}
+
+const SPRITE_BIT_SPREAD: [u32; 256] = {
+    let mut table = [0; 256];
+    let mut byte = 0;
+    while byte < table.len() {
+        let mut bit = 0;
+        while bit < 8 {
+            table[byte] |= (((byte >> bit) & 1) as u32) << (bit * 4);
+            bit += 1;
+        }
+        byte += 1;
+    }
+    table
+};
+
+fn draw_sprite_tile_span(dst: &mut [u16], plane: u32, z: u16, px_left: u32, hflip: bool) {
+    let mut pixels = SPRITE_BIT_SPREAD[(plane & 0xff) as usize]
+        | (SPRITE_BIT_SPREAD[((plane >> 8) & 0xff) as usize] << 1)
+        | (SPRITE_BIT_SPREAD[((plane >> 16) & 0xff) as usize] << 2)
+        | (SPRITE_BIT_SPREAD[(plane >> 24) as usize] << 3);
+    if hflip {
+        pixels >>= px_left * 4;
+        for dst in dst {
+            let pixel = (pixels & 0xf) as u16;
+            if pixel != 0 && *dst & 0xff == 0 {
+                *dst = z.wrapping_add(pixel);
+            }
+            pixels >>= 4;
+        }
+    } else {
+        pixels <<= px_left * 4;
+        for dst in dst {
+            let pixel = (pixels >> 28) as u16;
+            if pixel != 0 && *dst & 0xff == 0 {
+                *dst = z.wrapping_add(pixel);
+            }
+            pixels <<= 4;
+        }
     }
 }
