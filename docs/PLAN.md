@@ -12549,6 +12549,24 @@ from this verified ledge into the Bomb passage and verify tank access from
 boot. Complete gameplay/credits, hardware/audio timing, masks and ownership
 remain open.
 
+Collected-item PLM argument read (2026-10-19): PlmInstr_SetItemBit
+reads plm_room_arguments through its byte-backed little-endian word. Keep
+k>>1 slot indexing, PrepareBitAccess ordering, high-bit gate, item-bit write and returned pointer unchanged. Frozen 255d6a3e plus only this change passes
+any%129712/0 (134.65s), nativeexit0, and the verified9BC8 missile
+pickup route68606/0 (84.85s), nativeexit0. Separate observed
+route68606/0 (87.02s) executes the changed read5 times.
+Maintained source contains no observation. Cargo fmt/check and release pass;
+progress own raw offsets-1, cast lines-1, Rust lines-1; peer changes excluded.
+
+Current Super Missile access attempts from the verifiedX89/Y347 ledge
+remain unsuccessful. Morph Ball alignmentX82/Y361 produces bomb jumps to
+roughlyY326; farther left drops back to the floor. Spin-jump alignment
+reachesX71/Y316 but ceiling collision cancels ascent; quick morph/bomb
+attempts fall below the passage. All probes retain zero comparisons, with
+no new item or room. Next: inspect the actual one-block passage geometry
+and reachable jump/bomb state before another timing sweep. Complete
+credits/gameplay, hardware/audio, remaining masks and ownership stay open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
