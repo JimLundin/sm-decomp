@@ -9579,6 +9579,23 @@ operand handling. Other own counters unchanged. Full word Cartesian, arbitrary
 MMIO and complete gameplay/render/audio remain open; TSX/ROR stay held.
 Continue covered CPU cleanup.
 
+CPU safe reset completion (2026-10-19): finish_reset owns the callback-free
+state writes after the reset vector fetch. A/X/Y/SP writes still precede the
+ordered two-byte vector read; PC stores afterward before the helper. Remaining
+DP/bank/flag/interrupt/wait/stop/cycle writes retain their order. The safe
+reference starts after bus callbacks and leaves memory owner/type, breakpoint
+and in_emu unchanged. Frozen `4e210338` plus this change passes 65,536 actual
+old/current resets across every vector word and varied initialized CPU state,
+checking all named CPU fields, three named bus fields, RAM and history. ROM
+vector mutations are temporary probe data outside the repo and restored.
+Prefix 3,600/0 (1.12s), native exit 0, executes reset once at boot. Clean full
+any% 129,712/0 (62.17s), native exit 0. Cargo fmt/check, full release and release-
+library builds with external SDL2, normal metadata and optimized frozen core/DLL
+builds pass. Live CPU matches verified source; peer PPU work is outside this
+replay. Rust lines +3 introduce the safe helper; other own counters unchanged.
+Arbitrary MMIO mutation and complete gameplay/render/audio remain open.
+Continue covered CPU cleanup; TSX/ROR stay held for contextual execution.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

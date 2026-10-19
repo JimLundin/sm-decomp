@@ -51,29 +51,32 @@ pub unsafe fn cpu_init(mem: *mut ::core::ffi::c_void, memType: ::core::ffi::c_in
 pub unsafe fn cpu_free(cpu: *mut Cpu) {
     free(cpu as *mut ::core::ffi::c_void);
 }
+fn finish_reset(cpu: &mut Cpu) {
+    cpu.dp = 0;
+    cpu.k = 0;
+    cpu.db = 0;
+    cpu.c = false;
+    cpu.z = false;
+    cpu.v = false;
+    cpu.n = false;
+    cpu.i = true;
+    cpu.d = false;
+    cpu.xf = true;
+    cpu.mf = true;
+    cpu.e = true;
+    cpu.irqWanted = false;
+    cpu.nmiWanted = false;
+    cpu.waiting = false;
+    cpu.stopped = false;
+    cpu.cyclesUsed = 0;
+}
 pub unsafe fn cpu_reset(cpu: *mut Cpu, game: &mut Game) {
     (*cpu).a = 0;
     (*cpu).x = 0;
     (*cpu).y = 0;
     (*cpu).sp = 0x100;
     (*cpu).pc = read_word(cpu, 0xfffc, 0xfffd, game);
-    (*cpu).dp = 0;
-    (*cpu).k = 0;
-    (*cpu).db = 0;
-    (*cpu).c = false;
-    (*cpu).z = false;
-    (*cpu).v = false;
-    (*cpu).n = false;
-    (*cpu).i = true;
-    (*cpu).d = false;
-    (*cpu).xf = true;
-    (*cpu).mf = true;
-    (*cpu).e = true;
-    (*cpu).irqWanted = false;
-    (*cpu).nmiWanted = false;
-    (*cpu).waiting = false;
-    (*cpu).stopped = false;
-    (*cpu).cyclesUsed = 0;
+    finish_reset(&mut *cpu);
 }
 pub unsafe fn cpu_saveload(
     cpu: *mut Cpu,
