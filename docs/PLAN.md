@@ -14525,6 +14525,26 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Door-dispatch address cleanup (2026-10-19): states 9 and 11 read the
+full selector through a named byte-backed word getter and explicitly widen
+it before adding bank $82. Frozen 19fc0e46 plus this change passes any%
+129712/0 (347.36s) and Waver 58109/0 (177.93s), native exits 0.
+Observed prefix 20000/0 and Waver 58109/0 check each actual argument against
+the exact original expression before forwarding the real dispatcher once,
+with unchanged returns and entry logging that preserves nested call order.
+Prefix state-9/state-11 counts are 7/771; Waver counts are 76/3084, over
+frames 11521..57940 and 11522..58044 respectively. Waver covers two state-9
+selectors and thirteen state-11 selectors; other selectors remain unobserved.
+A bank-bit fault is caught on first entry, frame 11521, before forwarding
+(native exit 91). Independent source/observer review, exact stripping,
+frozen source/input/ROM/DLL identity and complete clean/observed Waver
+non-timing diagnostics pass. Formatting, release build (39.44s) and progress
+pass. Own raw offsets -2 and cast lines -6; Rust lines and other own counters
+are unchanged. Shared verifier additions account for higher export/unsafe
+and source-line totals and retain separate verification. Next: the wrappers'
+return handling and live timer-status read; broader gameplay/credits,
+hardware/audio coverage and ownership remain unfinished.
+
 Samus drawing state (2026-10-19): Samus_Draw now uses named byte-backed
 flicker gates, sprite indexes and coordinates plus safe ROM-word reads.
 The top lookup keeps the full pose word; the lower lookup keeps the captured,

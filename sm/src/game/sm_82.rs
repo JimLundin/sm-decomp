@@ -9393,9 +9393,7 @@ pub unsafe fn CallDoorTransitionFunction_Async(mut ea: uint32, game: &mut Game) 
 }
 pub unsafe fn GameState_9_HitDoorBlock(game: &mut Game) -> CoroutineRet {
     return CallDoorTransitionFunction_Async(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x99c as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            | 0x820000 as ::core::ffi::c_int) as uint32,
+        u32::from(game.door_transition_function()) | 0x820000,
         game,
     );
 }
@@ -9600,9 +9598,7 @@ pub unsafe fn GameState_10_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRe
 }
 pub unsafe fn GameState_11_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRet {
     let mut _coret_: uint8 = CallDoorTransitionFunction_Async(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x99c as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            | 0x820000 as ::core::ffi::c_int) as uint32,
+        u32::from(game.door_transition_function()) | 0x820000,
         game,
     ) as uint8;
     if _coret_ != 0 {

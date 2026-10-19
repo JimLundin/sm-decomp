@@ -225,6 +225,10 @@ impl Game {
     }
 
     /// door_transition_function ($7E:099C in ram_map).
+    pub fn door_transition_function(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x99c], self.g_ram[0x99d]])
+    }
+
     pub fn set_door_transition_function(&mut self, value: u16) {
         self.g_ram[0x99c..0x99e].copy_from_slice(&value.to_le_bytes());
     }
