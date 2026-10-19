@@ -791,6 +791,37 @@ impl EprojState<'_> {
     }
 }
 
+struct EprojStateMut<'a>(&'a mut [u8]);
+impl EprojStateMut<'_> {
+    fn write(&mut self, base: usize, word_index: usize, value: u16) {
+        let address = base + word_index * 2;
+        self.0[address..address + 2].copy_from_slice(&value.to_le_bytes());
+    }
+    fn decrement_instruction_timer(&mut self, word_index: usize) -> u16 {
+        let timer = EprojState(self.0).slot_word(0x1b8f, word_index);
+        self.write(0x1b8f, word_index, timer.wrapping_sub(1));
+        timer
+    }
+    fn set_instruction_timer(&mut self, word_index: usize, value: u16) {
+        self.write(0x1b8f, word_index, value);
+    }
+    fn set_spritemap(&mut self, word_index: usize, value: u16) {
+        self.write(0x1b6b, word_index, value);
+    }
+    fn set_instruction(&mut self, word_index: usize, value: u16) {
+        self.write(0x1b47, word_index, value);
+    }
+    fn clear_spawn_variables(&mut self, word_index: usize) {
+        // E/F, timer, X/Y subpositions, then G, in the original store order.
+        for base in [0x1aff, 0x1b23, 0x19df, 0x1a27, 0x1a6f, 0x1bfb] {
+            self.write(base, word_index, 0);
+        }
+    }
+    fn set_index(&mut self, value: u16) {
+        self.write(0x1991, 0, value);
+    }
+}
+
 pub unsafe fn EnableEprojs(game: &mut Game) {
     let ref mut fresh18 = *((&raw mut game.g_ram as *mut uint8)
         .offset(0x198d as ::core::ffi::c_int as isize) as *mut uint16);
@@ -818,7 +849,7 @@ unsafe fn SpawnEprojInner(mut j: uint16, mut gfx_idx: uint16, game: &mut Game) {
             return;
         }
     }
-    let mut v4: ::core::ffi::c_int = v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let v4 = usize::from(v3 >> 1);
     *((&raw mut game.g_ram as *mut uint8).offset(0x19bb as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(v4 as isize) = gfx_idx;
@@ -829,39 +860,17 @@ unsafe fn SpawnEprojInner(mut j: uint16, mut gfx_idx: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a03 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(v4 as isize) = (*Edef).pre_instr_ptr as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1b47 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v4 as isize) = (*Edef).instr_list as uint16;
+    let value = (*Edef).instr_list as uint16;
+    EprojStateMut(&mut game.g_ram).set_instruction(v4, value);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1bb3 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(v4 as isize) = (*Edef).radius;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(v4 as isize) = (*Edef).properties;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v4 as isize) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1b6b as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v4 as isize) = 0x8000 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1aff as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v4 as isize) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1b23 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v4 as isize) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x19df as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v4 as isize) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a27 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v4 as isize) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a6f as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v4 as isize) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1bfb as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v4 as isize) = 0 as uint16;
+    EprojStateMut(&mut game.g_ram).set_instruction_timer(v4, 1);
+    EprojStateMut(&mut game.g_ram).set_spritemap(v4, 0x8000);
+    EprojStateMut(&mut game.g_ram).clear_spawn_variables(v4 as usize);
     CallEprojInit(
         ((*Edef).init_code_ptr as ::core::ffi::c_int | 0x860000 as ::core::ffi::c_int) as uint32,
         v3,
@@ -892,18 +901,12 @@ unsafe fn EprojRunOne(mut k: uint16, game: &mut Game) {
         game,
     );
     let mut v1: uint16 = EprojState(&game.g_ram).index();
-    let mut v2: ::core::ffi::c_int =
-        EprojState(&game.g_ram).index() as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let ref mut fresh19 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1b8f as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset(v2 as isize);
-    let fresh20 = *fresh19;
-    *fresh19 = (*fresh19).wrapping_sub(1);
+    let v2 = usize::from(EprojState(&game.g_ram).index() >> 1);
+    let fresh20 = EprojStateMut(&mut game.g_ram).decrement_instruction_timer(v2);
     if fresh20 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
         let mut base: *const uint8 = RomBankBase(0x86 as uint8, game);
-        let mut p: *const uint8 = base.offset(
-            EprojState(&game.g_ram).instruction(v2 as usize) as ::core::ffi::c_int as isize
-        );
+        let mut p: *const uint8 =
+            base.offset(EprojState(&game.g_ram).instruction(v2) as ::core::ffi::c_int as isize);
         while !(*(p as *mut uint16) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             == 0 as ::core::ffi::c_int)
         {
@@ -921,25 +924,21 @@ unsafe fn EprojRunOne(mut k: uint16, game: &mut Game) {
                 p = base.offset(p as uintptr_t as isize);
             }
         }
-        let mut v7: ::core::ffi::c_int = v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v7 as isize) = *(p as *mut uint16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1b6b as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v7 as isize) = *(p.offset(2 as ::core::ffi::c_int as isize) as *mut uint16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1b47 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v7 as isize) = p.offset(4 as ::core::ffi::c_int as isize).offset_from(base)
+        let v7 = usize::from(v1 >> 1);
+        let value = *(p as *mut uint16);
+        EprojStateMut(&mut game.g_ram).set_instruction_timer(v7, value);
+        let value = *(p.offset(2 as ::core::ffi::c_int as isize) as *mut uint16);
+        EprojStateMut(&mut game.g_ram).set_spritemap(v7, value);
+        let value = p.offset(4 as ::core::ffi::c_int as isize).offset_from(base)
             as ::core::ffi::c_long as uint16;
+        EprojStateMut(&mut game.g_ram).set_instruction(v7, value);
     }
 }
 pub unsafe fn EprojRunAll(game: &mut Game) {
     if EprojState(&game.g_ram).enabled() {
         let mut i: ::core::ffi::c_int = 34 as ::core::ffi::c_int;
         while i >= 0 as ::core::ffi::c_int {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1991 as ::core::ffi::c_int as isize)
-                as *mut uint16) = i as uint16;
+            EprojStateMut(&mut game.g_ram).set_index(i as u16);
             if EprojState(&game.g_ram).id((i >> 1) as usize) != 0 {
                 EprojRunOne(i as uint16, game);
                 i = EprojState(&game.g_ram).index() as ::core::ffi::c_int;

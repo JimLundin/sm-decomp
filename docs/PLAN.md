@@ -14535,6 +14535,35 @@ qualify this change independently of concurrent projectile-interface edits.
 Unexercised reads, indexed fields/updates, arithmetic cleanup, broader
 gameplay/credits, hardware/audio/masks and ownership remain unfinished.
 
+Enemy-projectile byte-backed updates (2026-10-19): reuse indexed timer,
+spritemap and instruction setters in SpawnEprojInner and EprojRunOne, and
+store EprojRunAll's live index through the same little-endian byte interface.
+The countdown returns its old word and wraps on decrement. Spawn clears
+E/F, timer, X/Y subpositions and G in their original order. ROM operand
+reads stay before their respective stores; callbacks and live index reads
+retain their order. Word indices use the original unsigned half-slot value.
+
+Frozen e26e0ffd plus only this change passes
+any%129712/0 (279.12s) and Hi-Jump99191/0 (248.07s),
+native exits0. Observed Hi-Jump99191/0 (361.41s) compares
+1457344 actual stores against the original unaligned word operation,
+checking all RAM after each store, plus 58435 old countdown reads.
+All ten field bases execute: 345 spawns and
+5512 instruction-update triples; old-one branch 5778,
+other countdowns 52657, including old-zero 56.
+Clean and observed non-timing diagnostics match after probe stripping.
+All other frozen source files and maintained region identity pass. This
+establishes exercised gameplay, not invalid-index or arbitrary alias coverage.
+A separate exact-helper check passes 402 complete-RAM cases spanning zero,
+one, sign-boundary and maximum words; normal, spill and high word indices
+up to32767; all field bases and ordered clears. This supplements movie
+coverage. No observers or local artifacts are committed; peer edits stay separate.
+
+Cargo fmt/check, normal release build and progress pass. Including shared
+definitions: raw offsets-14, cast lines-17, Rust lines-1; unsafe functions
+and other own counters unchanged. Further indexed-field/update cleanup,
+gameplay/credits, hardware/audio/masks and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
