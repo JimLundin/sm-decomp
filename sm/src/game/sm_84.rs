@@ -1798,34 +1798,24 @@ pub unsafe fn PlmInstr_SetItemBit(
     return plmp;
 }
 pub unsafe fn PlmInstr_PickupBeamAndShowMessage(
-    mut plmp: *const uint8,
-    mut k: uint16,
+    plmp: *const uint8,
+    _k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
-    let mut t: uint16 = *(plmp as *mut uint16);
-    let ref mut fresh59 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9a8 as ::core::ffi::c_int as isize) as *mut uint16);
-    *fresh59 = (*fresh59 as ::core::ffi::c_int | t as ::core::ffi::c_int) as uint16;
-    let ref mut fresh60 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9a6 as ::core::ffi::c_int as isize) as *mut uint16);
-    *fresh60 = (*fresh60 as ::core::ffi::c_int | t as ::core::ffi::c_int) as uint16;
-    let ref mut fresh61 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9a6 as ::core::ffi::c_int as isize) as *mut uint16);
-    *fresh61 = (*fresh61 as ::core::ffi::c_int
-        & !((t as ::core::ffi::c_int) << 1 as ::core::ffi::c_int & 8 as ::core::ffi::c_int))
-        as uint16;
-    let ref mut fresh62 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9a6 as ::core::ffi::c_int as isize) as *mut uint16);
-    *fresh62 = (*fresh62 as ::core::ffi::c_int
-        & !(t as ::core::ffi::c_int >> 1 as ::core::ffi::c_int & 4 as ::core::ffi::c_int))
-        as uint16;
+    let beam = u16::from_le_bytes([*plmp, *plmp.add(1)]);
+    let read_word = |game: &Game, offset: usize| {
+        u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
+    };
+    game.set_collected_beams(read_word(game, 0x9a8) | beam);
+    game.set_equipped_beams(read_word(game, 0x9a6) | beam);
+    // Spazer and Plasma are mutually exclusive; retain both ordered masks.
+    game.set_equipped_beams(read_word(game, 0x9a6) & !((beam << 1) & 8));
+    game.set_equipped_beams(read_word(game, 0x9a6) & !((beam >> 1) & 4));
     UpdateBeamTilesAndPalette(game);
-    PlayRoomMusicTrackAfterAFrames(0x168 as uint16, game);
-    DisplayMessageBox(
-        *plmp.offset(2 as ::core::ffi::c_int as isize) as uint16,
-        game,
-    );
-    return plmp.offset(3 as ::core::ffi::c_int as isize);
+    PlayRoomMusicTrackAfterAFrames(0x168, game);
+    let message = u16::from(*plmp.add(2));
+    DisplayMessageBox(message, game);
+    plmp.add(3)
 }
 pub unsafe fn PlmInstr_PickupEquipmentAndShowMessage(
     plmp: *const uint8,

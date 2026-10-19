@@ -13938,6 +13938,35 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Beam pickup cleanup (2026-10-19): PlmInstr_PickupBeamAndShowMessage now
+reads its little-endian operand and beam words as bytes, uses existing beam
+setters, and names the beam/message values. The collected OR, equipped OR
+and two separate Spazer/Plasma exclusion stores retain their original order.
+Each mask still reads the live equipped word. Beam graphics/palette update,
+music delay $0168, late message-byte read and message request retain their
+order, and the instruction pointer advances three bytes.
+
+Frozen a31170d6 plus only this function passes clean any% 129712/0 (271.46s)
+and Charge route 78380/0 (191.45s), native exits 0. All 68 frozen files match
+the stated scope after newline normalization and retain their hashes; inputs
+are copied and hashed, with isolated saves and SM_* overrides cleared.
+
+The observed Charge route on frozen 9c34f8a5 plus the cinematic fix and this
+function passes 78380/0 (188.23s), native exit 0. One actual pickup at frame
+index 77712, room $9D19, PLM 62, reads operand $1000 and changes equipped and
+collected beams from $0000 to $1000. Message 14 and measured return delta 3
+match. All 128 KiB RAM, g_fail and return pointers match the actual old/current
+calls; all three callback entries match full RAM, arguments and order.
+The unchanged call closure writes RAM only and reads ROM; g_fail is restored
+and compared, with no invalid-ROM diagnostics. Spazer/Plasma exclusion effects
+remain source-reviewed only: this movie operand clears neither beam bit.
+
+Independent candidate/source/observer review, exact observation stripping
+and immutable source hashes pass. Formatting, normal Cargo release (44.97s)
+and progress pass. Own raw offsets -4, cast lines -12 and Rust lines -10;
+other counters unchanged. No probes or ROM-derived assets are committed.
+Broader beam/gameplay/credits coverage and ownership remain unfinished.
+
 Room-state header cleanup (2026-10-19): LoadStateHeader uses named
 byte-backed setters for all eleven stores and a safe fixed-table lookup.
 Four pointers remain exactly three bytes; music data precedes track, and the
