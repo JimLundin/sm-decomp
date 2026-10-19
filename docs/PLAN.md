@@ -8824,6 +8824,19 @@ library, normal metadata and optimized core/DLL builds pass; full frontend
 linking still lacks SDL2. Live CPU matches verified source. Progress counters
 unchanged. Complete gameplay and rendering/audio remain open.
 
+CPU allocation expression cleanup (2026-10-19): cpu_init/cpu_free use
+immutable bindings, direct size_of and plain memset zero. Allocation, byte
+initialization, memory pointer/type assignment and free order remain exact.
+Frozen HEAD `79fa45bc` plus this change passes 2,048 actual old/current
+allocation/free cases: null/live memory pointers and memory types -512..511,
+covering every truncated byte and complete initialized CPU fields. Prefix
+3,600/0 (1.11s), clean full any% 129,712/0 (57.03s), native exits 0. Dedicated
+allocation/free calls exercise both changed routines. Cargo fmt/check, release
+library, normal metadata and optimized core/DLL builds pass; full frontend
+linking still lacks SDL2. Live CPU matches verified source. Cast lines -1,
+Rust lines -3; other counters unchanged. Complete gameplay and rendering/audio
+remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

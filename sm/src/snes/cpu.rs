@@ -37,21 +37,18 @@ unsafe fn read_byte(cpu: *mut Cpu, adr: u32, game: &mut Game) -> u8 {
 unsafe fn write_byte(cpu: *mut Cpu, adr: u32, val: u8, game: &mut Game) {
     snes_cpuWrite((*cpu).mem as *mut Snes, adr, val, game);
 }
-pub unsafe fn cpu_init(
-    mut mem: *mut ::core::ffi::c_void,
-    mut memType: ::core::ffi::c_int,
-) -> *mut Cpu {
-    let mut cpu: *mut Cpu = malloc(::core::mem::size_of::<Cpu>() as usize) as *mut Cpu;
+pub unsafe fn cpu_init(mem: *mut ::core::ffi::c_void, memType: ::core::ffi::c_int) -> *mut Cpu {
+    let cpu: *mut Cpu = malloc(::core::mem::size_of::<Cpu>()) as *mut Cpu;
     memset(
         cpu as *mut ::core::ffi::c_void,
-        0 as ::core::ffi::c_int,
-        ::core::mem::size_of::<Cpu>() as usize,
+        0,
+        ::core::mem::size_of::<Cpu>(),
     );
     (*cpu).mem = mem;
     (*cpu).memType = memType as u8;
     return cpu;
 }
-pub unsafe fn cpu_free(mut cpu: *mut Cpu) {
+pub unsafe fn cpu_free(cpu: *mut Cpu) {
     free(cpu as *mut ::core::ffi::c_void);
 }
 pub unsafe fn cpu_reset(cpu: *mut Cpu, game: &mut Game) {
