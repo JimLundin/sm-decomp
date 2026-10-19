@@ -120,10 +120,14 @@ pub unsafe fn cpu_runOpcode(cpu: *mut Cpu, game: &mut Game) -> ::core::ffi::c_in
     dispatch_opcode(cpu, opcode, game);
     i32::from((*cpu).cyclesUsed)
 }
+fn next_program_address(cpu: &mut Cpu) -> u32 {
+    let pc = cpu.pc;
+    cpu.pc = cpu.pc.wrapping_add(1);
+    u32::from(cpu.k) << 16 | u32::from(pc)
+}
 unsafe fn fetch_byte(cpu: *mut Cpu, game: &mut Game) -> u8 {
-    let pc = (*cpu).pc;
-    (*cpu).pc = (*cpu).pc.wrapping_add(1);
-    read_byte(cpu, u32::from((*cpu).k) << 16 | u32::from(pc), game)
+    let address = next_program_address(&mut *cpu);
+    read_byte(cpu, address, game)
 }
 unsafe fn fetch_word(cpu: *mut Cpu, game: &mut Game) -> u16 {
     let low = fetch_byte(cpu, game);
@@ -259,16 +263,8 @@ unsafe fn service_interrupt(cpu: *mut Cpu, irq: bool, game: &mut Game) {
 }
 fn address_immediate(cpu: &mut Cpu, xFlag: bool) -> (u32, u32) {
     let byte = if xFlag { cpu.xf } else { cpu.mf };
-    let pc = cpu.pc;
-    cpu.pc = cpu.pc.wrapping_add(1);
-    let low = u32::from(cpu.k) << 16 | u32::from(pc);
-    let high = if byte {
-        0
-    } else {
-        let pc = cpu.pc;
-        cpu.pc = cpu.pc.wrapping_add(1);
-        u32::from(cpu.k) << 16 | u32::from(pc)
-    };
+    let low = next_program_address(cpu);
+    let high = if byte { 0 } else { next_program_address(cpu) };
     (low, high)
 }
 unsafe fn address_direct_page(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {

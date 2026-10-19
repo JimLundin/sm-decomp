@@ -10484,6 +10484,23 @@ optimized core/DLL pass. Live CPU matches verified source; peer PPU work is
 outside this replay. All own progress counters unchanged. Prior CPU coverage
 holds and complete gameplay/render/audio remain open. Continue covered cleanup.
 
+CPU shared program-address advance (2026-10-19): safe next_program_address
+shares increment-before-address PC handling between byte fetching and
+immediate addressing. Word fetch still calls byte fetch twice; no CPU
+reference spans the read, so the second fetch observes callback PC/K changes.
+Frozen `f6ae4776` plus this change passes 1,048,576 old/current byte/word
+fetch traces (every PC, four banks, fixed/mutating PC/K callbacks) and
+134,217,728 actual old/current immediate-address cases (every PC/bank,
+independent MF/XF and selector). Named CPU state and access traces match;
+synthetic callback patterns do not exhaust MMIO behavior. Prefix 3,600/0
+(1.12s), native exit 0, executes fetch/immediate paths 20,261,630/818,417
+times. Clean full any% 129,712/0 (73.92s), native exit 0. Cargo fmt/check,
+full release/release-library builds with external SDL2, normal metadata and
+frozen optimized core/DLL pass. Live CPU matches verified source; peer
+gameplay/PPU work is outside this replay. Rust lines -4; other own counters
+unchanged. Prior CPU holds and complete gameplay/render/audio remain open.
+Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
