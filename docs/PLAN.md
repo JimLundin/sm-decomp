@@ -232,6 +232,19 @@ change and no new replay result belong to this cleanup.
 
 ## The oracle
 
+Reviewed-change integration QC (2026-10-19): frozen 626b0b7e plus the
+verified door fields and window-boundary snapshots passes any% 129712/0
+(320.99s), Waver 58109/0 (173.09s) and pickup 68606/0 (197.06s), all native
+exits 0. This combines the committed item check, typed X-ray dispatch and
+eye-beam widening with those two pending changes. All 69 archived source,
+build and config files match the commit after newline normalization except
+the declared sm_82.rs/cpu_infra.rs overlays; frozen hashes remain unchanged.
+Inputs are copied and hashed, saves are separate, and no save-write errors
+occur. Later bit-access, full-beam, X-ray arithmetic and snapshot-argument
+changes are excluded. Current workspace format/check, Cargo release and
+progress pass; the earlier build-script execution block no longer occurs.
+No maintained source or own residue change belongs to this integration audit.
+
 Independent window/door QC (2026-10-19): audited the actual WH0..WH3
 capture, comparison and restore controls: 16 injected faults, 2,048 byte
 continuations and 16 rendered continuations across both PPUs/renderers.
