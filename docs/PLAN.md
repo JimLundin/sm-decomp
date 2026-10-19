@@ -16665,6 +16665,32 @@ unchanged. No probes or ROM-derived artifacts committed. Continue indexed
 projectile state/handler families; broader gameplay/credits,
 hardware/audio/masks and ownership remain unfinished.
 
+Fireball child countdown (2026-10-19): instruction 9620 now uses a
+safe byte decrement in the existing byte-backed projectile writer and a
+copied handler word. Decrement keeps the full byte index; the subsequent
+handler read retains word-index rounding. The byte wraps before its signed
+comparison; handler read and spawn callback remain after the successful
+gate. Returned pointer and existing unsafe spawn boundary are unchanged.
+
+Frozen 823689c5 plus only this change passes
+any% 129712/0 (248.86s) and Warehouse 128547/0
+(281.51s), native exits 0. Observed any% 129712/0
+(276.10s) reaches both branches: spawn 26,
+skip 6. Byte-backed word stores match original unaligned
+stores over complete RAM. Clean/observed non-timing diagnostics match;
+source/DLL/ROM/input hashes remain fixed and maintained regions match.
+Extracted old/current handlers match complete RAM, callback arguments and
+return pointers in 69120 cases: every 16-bit index plus all 256 byte values
+at fourteen normal/odd/max/aliasing indices. Signed gate comparison matches
+all 256 inputs. Other frozen sources match HEAD after newline normalization;
+only the byte helper and this handler differ in the bank.
+
+Cargo fmt/check, normal release build and progress pass. Including helper,
+net raw offsets -2, cast lines -3, Rust lines -6; unsafe function count and
+other own counters unchanged. No probes or ROM-derived artifacts committed.
+Continue indexed projectile state/handler families; broader gameplay/credits,
+hardware/audio/masks and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

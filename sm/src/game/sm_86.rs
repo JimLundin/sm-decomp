@@ -586,6 +586,11 @@ impl EprojState<'_> {
 
 struct EprojStateMut<'a>(&'a mut [u8]);
 impl EprojStateMut<'_> {
+    fn decrement_byte(&mut self, base: usize, byte_index: usize) -> u8 {
+        let byte = &mut self.0[base + byte_index];
+        *byte = byte.wrapping_sub(1);
+        *byte
+    }
     fn write(&mut self, base: usize, word_index: usize, value: u16) {
         let address = base + word_index * 2;
         self.0[address..address + 2].copy_from_slice(&value.to_le_bytes());
@@ -3102,24 +3107,13 @@ pub unsafe fn EprojInstr_95ED(
     SpawnEprojWithRoomGfx(addr_stru_869696 as ::core::ffi::c_int as uint16, k, game);
     return epjp;
 }
-pub unsafe fn EprojInstr_9620(
-    mut k: uint16,
-    mut epjp: *const uint8,
-    game: &mut Game,
-) -> *const uint8 {
-    let ref mut fresh31 = *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16
-        as *mut uint8)
-        .offset(k as ::core::ffi::c_int as isize);
-    *fresh31 = (*fresh31).wrapping_sub(1);
-    if *fresh31 as int8 as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
-        SpawnEprojWithRoomGfx(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16)
-                .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize),
-            k,
-            game,
-        );
+pub unsafe fn EprojInstr_9620(k: uint16, epjp: *const uint8, game: &mut Game) -> *const uint8 {
+    let count = EprojStateMut(&mut game.g_ram).decrement_byte(0x1aff, usize::from(k));
+    if count as i8 >= 0 {
+        let handler = EprojState(&game.g_ram).slot_word(0x1b23, usize::from(k >> 1));
+        SpawnEprojWithRoomGfx(handler, k, game);
     }
-    return epjp;
+    epjp
 }
 fn EprojInit_9734_CeresFallingDebris(j: uint16, game: &mut Game) {
     let slot = usize::from(j >> 1);
