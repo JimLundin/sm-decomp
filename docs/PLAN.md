@@ -31,14 +31,16 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest focused check: frozen `186c269b` plus the X-ray context cleanup
-passes any% 129712/0 (135.23s) and Waver 58109/0 (66.25s), both native
-exit 0. The 252-frame checkpoint executes the rewritten context builder
-252 times with zero failures. Its local context now uses ordinary struct
-fields; arithmetic, ROM-read order and dispatch are unchanged. All 924
-window-table bytes remain enforced by the normal RAM comparison. The final
-maintained source matches the verified snapshot. Format, release build and
-progress checks pass; later peer source changes remain separate.
+Latest focused check: frozen `3d81e4d` plus typed X-ray direction
+dispatch passes any% 129712/0 (296.20s) and Waver 58109/0 (128.42s),
+both native exit 0. A private enum and exhaustive match replace the
+numeric selector and two nullable function-pointer tables; context setup,
+predicates, ROM reads and handler arguments are unchanged. The 252-frame
+checkpoint executes the builder 252 times with zero failures; 24 actual
+old/current comparisons match all 128 KiB RAM and cover all ten handler
+choices. All 924 window-table bytes remain enforced. The final maintained
+source equals the verified snapshot. Format, release build and progress
+checks pass; own cast lines -9 and Rust lines -8, other counters unchanged.
 
 Everything that existed before is in the branch `archive/pre-transpile-2026-10-17`.
 

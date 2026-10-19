@@ -456,7 +456,13 @@ pub struct XrayHdmaCtx {
     pub r18_avoid: uint16,
     pub dest: *mut uint16,
 }
-pub type XrayHdma0Func = unsafe fn(*mut XrayHdmaCtx, &mut Game) -> ();
+enum XrayBeamDirection {
+    Right,
+    Up,
+    Down,
+    Left,
+    Horizontal,
+}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Pair_R18_R20 {
@@ -2112,7 +2118,6 @@ pub unsafe fn CalculateXrayHdmaTableInner(
     mut dest_addr: *mut uint16,
     game: &mut Game,
 ) {
-    let mut v3: ::core::ffi::c_int = 0;
     let mut ctx = XrayHdmaCtx {
         r22: 0,
         r24: 0,
@@ -2173,11 +2178,11 @@ pub unsafe fn CalculateXrayHdmaTableInner(
                 ctx.r28 as ::core::ffi::c_int - 128 as ::core::ffi::c_int
             }) as isize,
         );
-    if r20 == 0
+    let direction = if r20 == 0
         && (r18 as ::core::ffi::c_int == 64 as ::core::ffi::c_int
             || r18 as ::core::ffi::c_int == 192 as ::core::ffi::c_int)
     {
-        v3 = 8 as ::core::ffi::c_int;
+        XrayBeamDirection::Horizontal
     } else if ctx.r26 as ::core::ffi::c_int - 128 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0
@@ -2185,53 +2190,40 @@ pub unsafe fn CalculateXrayHdmaTableInner(
         if ctx.r26 as ::core::ffi::c_int - 64 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             == 0
         {
-            v3 = 4 as ::core::ffi::c_int;
+            XrayBeamDirection::Down
         } else if ctx.r28 as ::core::ffi::c_int - 64 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             == 0
         {
-            v3 = 0 as ::core::ffi::c_int;
+            XrayBeamDirection::Right
         } else {
-            v3 = 2 as ::core::ffi::c_int;
+            XrayBeamDirection::Up
         }
     } else if ctx.r26 as ::core::ffi::c_int - 192 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         == 0
     {
-        v3 = 2 as ::core::ffi::c_int;
+        XrayBeamDirection::Up
     } else if ctx.r28 as ::core::ffi::c_int - 192 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         == 0
     {
-        v3 = 6 as ::core::ffi::c_int;
+        XrayBeamDirection::Left
     } else {
-        v3 = 4 as ::core::ffi::c_int;
-    }
-    if off_screen {
-        static kXrayHdmaFuncs: [Option<XrayHdma0Func>; 5] = unsafe {
-            [
-                Some(XrayHdmaFunc_BeamAimedR as unsafe fn(*mut XrayHdmaCtx, &mut Game) -> ()),
-                Some(XrayHdmaFunc_BeamAimedU as unsafe fn(*mut XrayHdmaCtx, &mut Game) -> ()),
-                Some(XrayHdmaFunc_BeamAimedD as unsafe fn(*mut XrayHdmaCtx, &mut Game) -> ()),
-                Some(XrayHdmaFunc_BeamAimedL as unsafe fn(*mut XrayHdmaCtx, &mut Game) -> ()),
-                Some(XrayHdmaFunc_BeamHoriz as unsafe fn(*mut XrayHdmaCtx, &mut Game) -> ()),
-            ]
-        };
-        kXrayHdmaFuncs[(v3 >> 1 as ::core::ffi::c_int) as usize]
-            .expect("non-null function pointer")(&raw mut ctx, game);
-    } else {
-        static kXrayHdmaOnScreen_Funcs: [Option<XrayHdma0Func>; 5] = unsafe {
-            [
-                Some(XrayHdmaOnScreen_BeamAimedR as unsafe fn(*mut XrayHdmaCtx, &mut Game) -> ()),
-                Some(XrayHdmaOnScreen_BeamAimedU as unsafe fn(*mut XrayHdmaCtx, &mut Game) -> ()),
-                Some(XrayHdmaOnScreen_BeamAimedD as unsafe fn(*mut XrayHdmaCtx, &mut Game) -> ()),
-                Some(XrayHdmaOnScreen_BeamAimedL as unsafe fn(*mut XrayHdmaCtx, &mut Game) -> ()),
-                Some(XrayHdmaOnScreen_BeamHoriz as unsafe fn(*mut XrayHdmaCtx, &mut Game) -> ()),
-            ]
-        };
-        kXrayHdmaOnScreen_Funcs[(v3 >> 1 as ::core::ffi::c_int) as usize]
-            .expect("non-null function pointer")(&raw mut ctx, game);
+        XrayBeamDirection::Down
     };
+    match (off_screen, direction) {
+        (true, XrayBeamDirection::Right) => XrayHdmaFunc_BeamAimedR(&raw mut ctx, game),
+        (true, XrayBeamDirection::Up) => XrayHdmaFunc_BeamAimedU(&raw mut ctx, game),
+        (true, XrayBeamDirection::Down) => XrayHdmaFunc_BeamAimedD(&raw mut ctx, game),
+        (true, XrayBeamDirection::Left) => XrayHdmaFunc_BeamAimedL(&raw mut ctx, game),
+        (true, XrayBeamDirection::Horizontal) => XrayHdmaFunc_BeamHoriz(&raw mut ctx, game),
+        (false, XrayBeamDirection::Right) => XrayHdmaOnScreen_BeamAimedR(&raw mut ctx, game),
+        (false, XrayBeamDirection::Up) => XrayHdmaOnScreen_BeamAimedU(&raw mut ctx, game),
+        (false, XrayBeamDirection::Down) => XrayHdmaOnScreen_BeamAimedD(&raw mut ctx, game),
+        (false, XrayBeamDirection::Left) => XrayHdmaOnScreen_BeamAimedL(&raw mut ctx, game),
+        (false, XrayBeamDirection::Horizontal) => XrayHdmaOnScreen_BeamHoriz(&raw mut ctx, game),
+    }
 }
 pub unsafe fn XrayRunHandler(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xa78 as ::core::ffi::c_int as isize)
