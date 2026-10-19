@@ -1977,21 +1977,17 @@ pub unsafe fn PlmInstr_CollectAmmoMissileTank(
     return plmp.offset(2 as ::core::ffi::c_int as isize);
 }
 pub unsafe fn PlmInstr_CollectAmmoSuperMissileTank(
-    mut plmp: *const uint8,
-    mut k: uint16,
+    plmp: *const uint8,
+    _k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
-    let mut t: uint16 = *(plmp as *mut uint16);
-    let ref mut fresh46 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9cc as ::core::ffi::c_int as isize) as *mut uint16);
-    *fresh46 = (*fresh46 as ::core::ffi::c_int + t as ::core::ffi::c_int) as uint16;
-    let ref mut fresh47 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x9ca as ::core::ffi::c_int as isize) as *mut uint16);
-    *fresh47 = (*fresh47 as ::core::ffi::c_int + t as ::core::ffi::c_int) as uint16;
+    let amount = u16::from_le_bytes([*plmp, *plmp.add(1)]);
+    game.set_samus_max_super_missiles(game.samus_max_super_missiles().wrapping_add(amount));
+    game.set_samus_super_missiles(game.samus_super_missiles().wrapping_add(amount));
     AddSuperMissilesToHudTilemap(game);
-    PlayRoomMusicTrackAfterAFrames(0x168 as uint16, game);
-    DisplayMessageBox(3 as uint16, game);
-    return plmp.offset(2 as ::core::ffi::c_int as isize);
+    PlayRoomMusicTrackAfterAFrames(0x168, game);
+    DisplayMessageBox(3, game);
+    plmp.add(2)
 }
 pub unsafe fn PlmInstr_CollectAmmoPowerBombTank(
     mut plmp: *const uint8,

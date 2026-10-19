@@ -13549,6 +13549,28 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Super Missile Tank collection (2026-10-19): the collector reads its operand
+as two little-endian bytes and uses named maximum/current ammunition accessors
+with explicit word wrapping. Operand capture before writes, maximum before
+current, HUD/music/message order and the two-byte pointer advance remain exact.
+Other item collectors retain their existing implementations.
+
+Frozen e1a9a3d3 plus only this function passes clean any%129712/0 (252.40s),
+Waver58109/0 (125.76s) and Super Missile route69700/0 (158.00s), all native
+exits0. A separate observed full Super Missile replay passes69700/0 (145.83s)
+and executes the collector once at frame index69235 in room9BC8: operand5,
+current/max ammunition0/0 -> 5/5. This supplies the actual pickup coverage
+missing from the earlier movies. Pointer advancement is source-reviewed;
+the observation's return-delta label is a literal, not a measured result.
+
+Independent source and observation-stripping review pass; all frozen source
+and input hashes remain unchanged. The fixture visits22 rooms/28 enemy
+definitions with no credits. Cargo formatting, normal release build and
+progress pass. Own raw offsets-2, cast lines-5 and Rust lines-4; other
+counters unchanged. Concurrent pending PLM graphics edits are excluded from
+the frozen source. No probes or ROM-derived assets are committed. Complete
+gameplay, other uncovered pickups and broader Phase3 remain unfinished.
+
 Background command callbacks (2026-10-19): replace the eight statically
 present Option callbacks with a direct function table and remove dispatch's
 redundant expect. Callback order/bodies, odd-command pairing, bounds checks,
