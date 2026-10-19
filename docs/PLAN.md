@@ -65,6 +65,22 @@ No source or residue changes; additional obsolete probe residue remains.
 
 ## The oracle
 
+PPU host-field initialization QC (2026-10-19): ppu_init initializes
+renderBuffer to null and renderPitch to zero before the first ppu_reset.
+Reset previously read and preserved both malloc-backed uninitialized fields.
+Actual poisoned SnesInit controls reproduce A5 buffer/pitch values before
+the fix and null/zero afterward; registered reset/copy buffers remain exact.
+Frozen87502ecf plus only the two maintained stores passes any%129,712/0
+(172.66s), native exit0, with57,794,240 actual sprite-evaluator calls. Waver
+58,109/71 (86.92s), native exit1, has25,920,608 evaluator calls; all71 full
+ordered diagnostics equal the explicit-render3974ccdf baseline. Cargo
+fmt/check and release build pass. One concurrent SRAM output attempt reported
+Unable to write saves/sm.srm after the replay; this run proves frame comparison,
+not concurrent save-file writing. PPU/RAM/save layouts unchanged. Rust lines+2
+initialize host fields; other own counters unchanged. Sprite/gameplay/CPU peer
+edits are excluded from these frozen runs. Complete game/hardware coverage,
+existing71 rendered failures, audio timing and masked RAM remain open.
+
 Render initialization QC (2026-10-19): snes_init now initializes disableRender
 to false. The malloc-backed field previously had no initialization or reset
 store; actual sprite probes completed green replays with zero renderer calls.

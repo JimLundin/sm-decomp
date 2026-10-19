@@ -435,6 +435,8 @@ static spriteSizes: [[::core::ffi::c_int; 2]; 8] = [
 ];
 pub unsafe fn ppu_init(mut snes: *mut Snes) -> *mut Ppu {
     let mut ppu: *mut Ppu = malloc(::core::mem::size_of::<Ppu>() as size_t) as *mut Ppu;
+    (*ppu).renderBuffer = core::ptr::null_mut();
+    (*ppu).renderPitch = 0;
     (*ppu).snes = snes;
     return ppu;
 }
