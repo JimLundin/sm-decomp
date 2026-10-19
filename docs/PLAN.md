@@ -1730,16 +1730,16 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `c66ea0b3` passes
-uninterrupted full boot any% 129712/0 (173.07s) and Speed Booster
-148406/0 (215.89s), native exits 0. All 74 source/configuration/host/
-progress inputs match that commit. This adds the shared HDMA table reads to
-the reviewed families below. Later projectile, parenthesis and hardware work
-retains its own checks outside this snapshot.
+Latest reviewed integration (2026-10-19): frozen `ea204f0d` passes
+uninterrupted full boot any% 129712/0 (177.75s) and Speed Booster
+148406/0 (228.35s), native exits 0. All 74 source/configuration/host/
+progress inputs match that commit. This adds the shared Mode7 sampling helper
+to the reviewed families below. Later projectile, parenthesis and hardware
+work retains its own checks outside this snapshot.
 
-Serialized checkpoint payloads are byte-identical to reviewed 3c93b8bc.
+Serialized checkpoint payloads are byte-identical to reviewed c66ea0b3.
 The only changed header field is the runtime-source fingerprint, independently
-recomputed from its actual inputs; only snes/dma.rs changes among those inputs.
+recomputed from its actual inputs; only snes/ppu.rs changes among those inputs.
 The Game declaration and checkpoint codec are unchanged. All other bindings,
 including the payload checksum, agree. No compatibility hash is patched and
 neither replay loads an earlier checkpoint. Complete non-timing diagnostics
@@ -1748,10 +1748,53 @@ and coverage agree, including the known fingernail diagnostic. Speed reaches
 pose $0089, health 46/399, missiles 6/15, Supers 0/5, items $3105 and
 beams $1004 equipped/collected. Kraid is defeated and all eight coroutine
 bytes are zero. Credits remain unexercised. The same build passes the full-boot
-pause route 40836/0 (58.30s), native exit 0, returning to gameplay in
+pause route 40836/0 (59.44s), native exit 0, returning to gameplay in
 room $96BA. Its payload and every non-runtime binding match the prior pause
 run, as do complete non-timing logs. Earlier mode observations retain their
 scope below.
+
+Independent Mode7 reconstruction covers all 74 integration inputs and all
+67 sources in the owner's snapshot. Replacing only the two sampling sequences,
+removing their dead locals and inserting the helper reconstructs the entire
+PPU. The original sampling controls and lookup expressions match after local
+and branch-label renaming. Both distinct store blocks remain exact, as do
+coordinate stepping, clipping and the captured outside/fill values. The
+legacy renderer, EXTBG handling and coordinate helper are unchanged.
+
+The tilemap index is at most 127*128+127=16383. The masked tile is 0..255,
+so the character index is at most 255*64+7*8+7=16383. All former wrapping
+operations therefore fit their new widths for every u32 coordinate. Both
+reads remain within the original VRAM array; tilemap low-byte selection and
+character high-byte selection are preserved. Rejection returns zero without
+reading VRAM; outside-map fill reads tile zero without reading the tilemap.
+No wider mutable PPU borrow or RAM/layout change is introduced.
+
+Fresh exact old sampling controls, the new helper and an independent division/
+modulo coordinate model agree in 16782992 cases. This includes 5776 explicit
+boundary cases and every 1024x1024 integer coordinate under four VRAM/high-bit
+patterns, both field limits and fill flags. Fractions span 0..255; exact field
+limits and adjacent positive/negative high-bit cases are included. Instrumented
+and uninstrumented values agree. Ordered read indices/values match the model,
+including zero reads for rejection and one for outside fill; every accessed
+index is below 16384. Wrong field comparison, tile mask, byte plane, missing
+fill and eager VRAM prefetch each fail the comparator. High-bit/fractional
+choices are correlated fixtures, not every combination of u32 coordinates.
+
+Fresh complete-draw comparisons pass 8192 cases using the actual Ppu layout
+from the independent release library, exact extracted old/new Mode7 routines
+and unchanged dependencies. Fixtures cross all 16 mosaic sizes and all 16
+flip/field/fill flag combinations, mosaic/single-pixel loops, both screens,
+disabled/enabled layers and four window/matrix patterns. Mosaic tables are
+constructed from their size; lines stay within 0..239. Complete initialized
+PPU bytes agree. All 4096 disabled cases remain unchanged, and 2694 enabled
+cases change their buffers. These execute extracted routines, not exported
+private entries or the complete frontend renderer.
+
+The owner's 67108864 sample values and 16384 actual PPU/pixel contexts retain
+checked source/library/input pins and full-boot logs. Its sample fractions
+cover 0..63, so the fresh boundary checks supplement that scope. Its non-Mode7
+probes use arbitrary tile bases; their counts do not prove hardware alignment
+or movie call-site coverage. Earlier coverage and alias limitations remain.
 
 Independent HDMA reconstruction covers all 74 integration inputs and all
 67 sources in the owner's comparison and final-replay snapshots. Replacing
@@ -2166,15 +2209,15 @@ dedicated 5544-case API checks and 24/24 site observations are recorded by
 implementation; this review verifies the source transformation. The movie
 replays do not establish frontend decoder execution coverage.
 
-The normal Cargo integration is independently built from frozen c66ea0b3.
+The normal Cargo integration is independently built from frozen ea204f0d.
 All 74 inputs, the fresh game library/DLL and copied fixtures stay fixed.
 Only registry dependencies seed this checkout, including existing registry
 build-script executable links. Formatting, normal release
-(29.24s), host build (4.16s) and progress pass. This family removes
-54 Rust lines and 28 c_int casts across 28 lines. Two private unsafe helpers
-own the repeated raw bus operations, raising unsafe functions by two; other
-progress counters are unchanged. Frozen totals: 192895 Rust lines,
-21355 raw-offset lines, 34440 c_int casts across 27468 lines and 6503 unsafe
+(36.64s), host build (4.02s) and progress pass. This family removes
+46 Rust lines and 20 c_int casts across 21 lines. One private unsafe helper
+owns the repeated raw VRAM reads, raising unsafe functions by one; other
+progress counters are unchanged. Frozen totals: 192849 Rust lines,
+21355 raw-offset lines, 34420 c_int casts across 27447 lines and 6504 unsafe
 functions. This audit changes no maintained Rust or assets; later peer work
 retains its own checks.
 
