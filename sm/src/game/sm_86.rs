@@ -876,35 +876,30 @@ pub unsafe fn SpawnEprojWithRoomGfx(mut j: uint16, mut a: uint16, game: &mut Gam
     SpawnEprojInner(j, 0, game)
         .unwrap_or_else(|| u16::from_le_bytes([game.g_ram[0x1997], game.g_ram[0x1998]]))
 }
-unsafe fn EprojRunOne(mut k: uint16, game: &mut Game) {
+unsafe fn EprojRunOne(k: uint16, game: &mut Game) {
     CallEprojPreInstr(
-        (EprojState(&game.g_ram).preinstruction(usize::from(k >> 1)) as ::core::ffi::c_int
-            | 0x860000 as ::core::ffi::c_int) as uint32,
+        0x860000 | u32::from(EprojState(&game.g_ram).preinstruction(usize::from(k >> 1))),
         k,
         game,
     );
-    let mut v1: uint16 = EprojState(&game.g_ram).index();
+    let v1 = EprojState(&game.g_ram).index();
     let v2 = usize::from(EprojState(&game.g_ram).index() >> 1);
     let fresh20 = EprojStateMut(&mut game.g_ram).decrement_instruction_timer(v2);
-    if fresh20 as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
-        let mut base: *const uint8 = RomBankBase(0x86 as uint8, game);
-        let mut p: *const uint8 =
-            base.offset(EprojState(&game.g_ram).instruction(v2) as ::core::ffi::c_int as isize);
-        while !(*(p as *mut uint16) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-            == 0 as ::core::ffi::c_int)
-        {
+    if fresh20 == 1 {
+        let base = RomBankBase(0x86, game);
+        let mut p = base.add(usize::from(EprojState(&game.g_ram).instruction(v2)));
+        while *(p as *const u16) & 0x8000 != 0 {
             p = CallEprojInstr(
-                (*(p as *mut uint16) as ::core::ffi::c_int | 0x860000 as ::core::ffi::c_int)
-                    as uint32,
+                0x860000 | u32::from(*(p as *const u16)),
                 v1,
                 p.offset(2),
                 game,
             );
-            if (p as uintptr_t) < 0x10000 as ::core::ffi::c_int as uintptr_t {
+            if (p as usize) < 0x10000 {
                 if p.is_null() {
                     return;
                 }
-                p = base.offset(p as uintptr_t as isize);
+                p = base.add(p as usize);
             }
         }
         let v7 = usize::from(v1 >> 1);

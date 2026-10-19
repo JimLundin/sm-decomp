@@ -15705,6 +15705,30 @@ Rust lines-1; casts, unsafe functions and other own counters unchanged.
 Further indexed updates, gameplay/credits, hardware/audio/masks and
 ownership remain unfinished.
 
+Enemy-projectile runner word widths (2026-10-19): EprojRunOne compares
+word timers/instructions directly and assembles bank86 addresses with u32.
+Unsigned instruction and returned low-pointer offsets use usize additions.
+The instruction-test and dispatch reads stay separate, live index reads
+remain after preinstruction, and callback/pointer-check/store order is exact.
+The existing c_long final pointer difference remains unchanged.
+
+Frozen 37692bd6 plus only this change passes
+any%129712/0 (262.40s) and Warehouse128547/0 (283.01s),
+native exits0. Observed Warehouse128547/0 (289.38s) executes
+107845 countdowns (old-one 8772, other 99073),
+4456 instruction dispatches, and 8427 update triples.
+Returned-pointer cases: null 345, low nonnull
+2517, full pointer 1594. All paths execute.
+The old/current instruction predicate matches at runtime and all65536 word
+values match timer/flag/half-slot predicates and bank-address assembly.
+Clean/observed non-timing diagnostics match after stripping; frozen source,
+DLL/ROM/input hashes remain stable and maintained body matches.
+
+Cargo fmt/check, normal release build and progress pass. Cast lines-8,
+Rust lines-5; raw offsets, unsafe functions and other own counters unchanged.
+No probes/artifacts committed. Further projectile cleanup and broader
+gameplay/credits, hardware/audio/masks and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
