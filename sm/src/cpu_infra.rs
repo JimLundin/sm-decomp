@@ -1571,11 +1571,10 @@ unsafe fn loadRom(name: *const ::core::ffi::c_char, snes: *mut Snes, game: &mut 
     free(file as *mut ::core::ffi::c_void);
     result
 }
-pub unsafe fn PatchBytes(addr: uint32, value: *const uint8, n: size_t, game: &mut Game) {
-    let mut i: size_t = 0 as size_t;
-    while i != n {
-        *SnesRomPtr(addr, game).offset(i as isize) = *value.offset(i as isize) as uint8_t;
-        i = i.wrapping_add(1);
+pub unsafe fn PatchBytes(addr: uint32, bytes: &[uint8], game: &mut Game) {
+    // Resolve the original base for every byte; RomPtr can update g_fail.
+    for (i, &byte) in bytes.iter().enumerate() {
+        *SnesRomPtr(addr, game).offset(i as isize) = byte;
     }
 }
 pub unsafe fn FixupCarry(addr: uint32, game: &mut Game) {
@@ -1584,54 +1583,32 @@ pub unsafe fn FixupCarry(addr: uint32, game: &mut Game) {
 
 pub unsafe fn RtlUpdateSnesPatchForBugfix(game: &mut Game) {
     game.currently_installed_bug_fix_counter = ram_word!(game, bug_fix_counter);
-    let mut t: [uint8; 4] = [
-        0x20 as ::core::ffi::c_int as uint8,
-        0x50 as ::core::ffi::c_int as uint8,
-        0x96 as ::core::ffi::c_int as uint8,
-        0x60 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x8584a3 as uint32,
-        &raw mut t as *mut uint8,
-        ::core::mem::size_of::<[uint8; 4]>() as size_t,
-        game,
-    );
-    let mut t_0: [uint8; 14] = [
-        0x20 as ::core::ffi::c_int as uint8,
-        0x36 as ::core::ffi::c_int as uint8,
-        0x81 as ::core::ffi::c_int as uint8,
-        0x22 as ::core::ffi::c_int as uint8,
-        0x59 as ::core::ffi::c_int as uint8,
-        0x94 as ::core::ffi::c_int as uint8,
-        0x80 as ::core::ffi::c_int as uint8,
-        0xc2 as ::core::ffi::c_int as uint8,
-        0x30 as ::core::ffi::c_int as uint8,
-        0xa5 as ::core::ffi::c_int as uint8,
-        (if (ram_word!(game, bug_fix_counter) as ::core::ffi::c_int) < 1 as ::core::ffi::c_int {
-            0x8f as ::core::ffi::c_int
-        } else {
-            0x8b as ::core::ffi::c_int
-        }) as uint8,
-        0xf0 as ::core::ffi::c_int as uint8,
-        0xf3 as ::core::ffi::c_int as uint8,
-        0x60 as ::core::ffi::c_int as uint8,
-    ];
+    PatchBytes(0x8584a3 as uint32, &[0x20, 0x50, 0x96, 0x60], game);
     PatchBytes(
         0x859650 as uint32,
-        &raw mut t_0 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 14]>() as size_t,
+        &[
+            0x20,
+            0x36,
+            0x81,
+            0x22,
+            0x59,
+            0x94,
+            0x80,
+            0xc2,
+            0x30,
+            0xa5,
+            (if (ram_word!(game, bug_fix_counter) as ::core::ffi::c_int) < 1 as ::core::ffi::c_int {
+                0x8f as ::core::ffi::c_int
+            } else {
+                0x8b as ::core::ffi::c_int
+            }) as uint8,
+            0xf0,
+            0xf3,
+            0x60,
+        ],
         game,
     );
-    let mut t_1: [uint8; 2] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x8584cc as uint32,
-        &raw mut t_1 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 2]>() as size_t,
-        game,
-    );
+    PatchBytes(0x8584cc as uint32, &[0x18, 0x18], game);
 }
 pub unsafe fn SnesInit(filename: *const ::core::ffi::c_char, game: &mut Game) -> *mut Snes {
     game.g_snes = snes_init(&raw mut game.g_ram as *mut uint8_t) as *mut Snes;
@@ -1650,1170 +1627,212 @@ pub unsafe fn SnesInit(filename: *const ::core::ffi::c_char, game: &mut Game) ->
         game,
     );
     *(&raw mut game.g_ram as *mut uint8).offset(0x611) = 1 as uint8;
-    let mut t: [uint8; 3] = [
-        0x20 as ::core::ffi::c_int as uint8,
-        0xf as ::core::ffi::c_int as uint8,
-        0xf7 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x82896b as uint32,
-        &raw mut t as *mut uint8,
-        3 as size_t,
-        game,
-    );
-    let mut t_0: [uint8; 3] = [
-        0x7c as ::core::ffi::c_int as uint8,
-        0x81 as ::core::ffi::c_int as uint8,
-        0x89 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x82f70f as uint32,
-        &raw mut t_0 as *mut uint8,
-        3 as size_t,
-        game,
-    );
-    let mut t_1: [uint8; 2] = [
-        0x5f as ::core::ffi::c_int as uint8,
-        0xf7 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x8ba362 as uint32,
-        &raw mut t_1 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 2]>() as size_t,
-        game,
-    );
-    let mut t_2: [uint8; 5] = [
-        0xc2 as ::core::ffi::c_int as uint8,
-        0x20 as ::core::ffi::c_int as uint8,
-        0x4c as ::core::ffi::c_int as uint8,
-        0x67 as ::core::ffi::c_int as uint8,
-        0xa3 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x8bf760 as uint32,
-        &raw mut t_2 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 5]>() as size_t,
-        game,
-    );
-    let mut t_3: [uint8; 2] = [
-        0xa as ::core::ffi::c_int as uint8,
-        0xa as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x8584b2 as uint32,
-        &raw mut t_3 as *mut uint8,
-        2 as size_t,
-        game,
-    );
-    let mut t_4: [uint8; 9] = [
-        0xc0 as ::core::ffi::c_int as uint8,
-        0 as ::core::ffi::c_int as uint8,
-        0 as ::core::ffi::c_int as uint8,
-        0xf0 as ::core::ffi::c_int as uint8,
-        0x3 as ::core::ffi::c_int as uint8,
-        0x20 as ::core::ffi::c_int as uint8,
-        0x64 as ::core::ffi::c_int as uint8,
-        0x87 as ::core::ffi::c_int as uint8,
-        0x60 as ::core::ffi::c_int as uint8,
-    ];
+    PatchBytes(0x82896b as uint32, &[0x20, 0xf, 0xf7], game);
+    PatchBytes(0x82f70f as uint32, &[0x7c, 0x81, 0x89], game);
+    PatchBytes(0x8ba362 as uint32, &[0x5f, 0xf7], game);
+    PatchBytes(0x8bf760 as uint32, &[0xc2, 0x20, 0x4c, 0x67, 0xa3], game);
+    PatchBytes(0x8584b2 as uint32, &[0xa, 0xa], game);
     PatchBytes(
         0x84efd3 as uint32,
-        &raw mut t_4 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 9]>() as size_t,
+        &[0xc0, 0, 0, 0xf0, 0x3, 0x20, 0x64, 0x87, 0x60],
         game,
     );
-    let mut t_5: [uint8; 2] = [
-        0xd3 as ::core::ffi::c_int as uint8,
-        0xef as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x848243 as uint32,
-        &raw mut t_5 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 2]>() as size_t,
-        game,
-    );
-    let mut t_6: [uint8; 6] = [
-        0xac as ::core::ffi::c_int as uint8,
-        0x91 as ::core::ffi::c_int as uint8,
-        0x19 as ::core::ffi::c_int as uint8,
-        0x4c as ::core::ffi::c_int as uint8,
-        0x76 as ::core::ffi::c_int as uint8,
-        0x86 as ::core::ffi::c_int as uint8,
-    ];
+    PatchBytes(0x848243 as uint32, &[0xd3, 0xef], game);
     PatchBytes(
         0x86f4a6 as uint32,
-        &raw mut t_6 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 6]>() as size_t,
+        &[0xac, 0x91, 0x19, 0x4c, 0x76, 0x86],
         game,
     );
-    let mut t_7: [uint8; 2] = [
-        0xa6 as ::core::ffi::c_int as uint8,
-        0xf4 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x8685bd as uint32,
-        &raw mut t_7 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 2]>() as size_t,
-        game,
-    );
-    let mut t_8: [uint8; 16] = [
-        0xc2 as ::core::ffi::c_int as uint8,
-        0x30 as ::core::ffi::c_int as uint8,
-        0x22 as ::core::ffi::c_int as uint8,
-        0x59 as ::core::ffi::c_int as uint8,
-        0x94 as ::core::ffi::c_int as uint8,
-        0x80 as ::core::ffi::c_int as uint8,
-        0x20 as ::core::ffi::c_int as uint8,
-        0x48 as ::core::ffi::c_int as uint8,
-        0x89 as ::core::ffi::c_int as uint8,
-        0x22 as ::core::ffi::c_int as uint8,
-        0x38 as ::core::ffi::c_int as uint8,
-        0x83 as ::core::ffi::c_int as uint8,
-        0x80 as ::core::ffi::c_int as uint8,
-        0x4c as ::core::ffi::c_int as uint8,
-        0x13 as ::core::ffi::c_int as uint8,
-        0xf7 as ::core::ffi::c_int as uint8,
-    ];
+    PatchBytes(0x8685bd as uint32, &[0xa6, 0xf4], game);
     PatchBytes(
         0x82f713 as uint32,
-        &raw mut t_8 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 16]>() as size_t,
+        &[
+            0xc2, 0x30, 0x22, 0x59, 0x94, 0x80, 0x20, 0x48, 0x89, 0x22, 0x38, 0x83, 0x80, 0x4c,
+            0x13, 0xf7,
+        ],
         game,
     );
-    let mut t_9: [uint8; 4] = [
-        0x58 as ::core::ffi::c_int as uint8,
-        0x4c as ::core::ffi::c_int as uint8,
-        0x13 as ::core::ffi::c_int as uint8,
-        0xf7 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x828944 as uint32,
-        &raw mut t_9 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 4]>() as size_t,
-        game,
-    );
-    let mut t_10: [uint8; 2] = [
-        0x28 as ::core::ffi::c_int as uint8,
-        0x60 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x82897a as uint32,
-        &raw mut t_10 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 2]>() as size_t,
-        game,
-    );
-    let mut t_11: [uint8; 7] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
+    PatchBytes(0x828944 as uint32, &[0x58, 0x4c, 0x13, 0xf7], game);
+    PatchBytes(0x82897a as uint32, &[0x28, 0x60], game);
     PatchBytes(
         0x80945c as uint32,
-        &raw mut t_11 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 7]>() as size_t,
+        &[0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
         game,
     );
-    let mut t_12: [uint8; 8] = [
-        0xbc as ::core::ffi::c_int as uint8,
-        0xaa as ::core::ffi::c_int as uint8,
-        0xf as ::core::ffi::c_int as uint8,
-        0xc9 as ::core::ffi::c_int as uint8,
-        0x6c as ::core::ffi::c_int as uint8,
-        0 as ::core::ffi::c_int as uint8,
-        0x10 as ::core::ffi::c_int as uint8,
-        0x1a as ::core::ffi::c_int as uint8,
-    ];
     PatchBytes(
         0xa8b237 as uint32,
-        &raw mut t_12 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 8]>() as size_t,
+        &[0xbc, 0xaa, 0xf, 0xc9, 0x6c, 0, 0x10, 0x1a],
         game,
     );
-    let mut t_13: [uint8; 6] = [
-        0x49 as ::core::ffi::c_int as uint8,
-        0xff as ::core::ffi::c_int as uint8,
-        0xff as ::core::ffi::c_int as uint8,
-        0x69 as ::core::ffi::c_int as uint8,
-        0 as ::core::ffi::c_int as uint8,
-        0 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0xa2904b as uint32,
-        &raw mut t_13 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 6]>() as size_t,
-        game,
-    );
-    let mut t_14: [uint8; 6] = [
-        0x49 as ::core::ffi::c_int as uint8,
-        0xff as ::core::ffi::c_int as uint8,
-        0xff as ::core::ffi::c_int as uint8,
-        0x69 as ::core::ffi::c_int as uint8,
-        0 as ::core::ffi::c_int as uint8,
-        0 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0xa29065 as uint32,
-        &raw mut t_14 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 6]>() as size_t,
-        game,
-    );
-    let mut t_15: [uint8; 1] = [0x6b as ::core::ffi::c_int as uint8];
-    PatchBytes(
-        0xa0896f as uint32,
-        &raw mut t_15 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 1]>() as size_t,
-        game,
-    );
-    let mut t_16: [uint8; 3] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0xa98c12 as uint32,
-        &raw mut t_16 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 3]>() as size_t,
-        game,
-    );
-    let mut t_17: [uint8; 1] = [0x60 as ::core::ffi::c_int as uint8];
-    PatchBytes(
-        0x8085f6 as uint32,
-        &raw mut t_17 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 1]>() as size_t,
-        game,
-    );
-    let mut t_18: [uint8; 10] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
+    PatchBytes(0xa2904b as uint32, &[0x49, 0xff, 0xff, 0x69, 0, 0], game);
+    PatchBytes(0xa29065 as uint32, &[0x49, 0xff, 0xff, 0x69, 0, 0], game);
+    PatchBytes(0xa0896f as uint32, &[0x6b], game);
+    PatchBytes(0xa98c12 as uint32, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x8085f6 as uint32, &[0x60], game);
     PatchBytes(
         0x80843c as uint32,
-        &raw mut t_18 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 10]>() as size_t,
+        &[0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
         game,
     );
-    let mut t_19: [uint8; 10] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
     PatchBytes(
         0x808475 as uint32,
-        &raw mut t_19 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 10]>() as size_t,
+        &[0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
         game,
     );
-    let mut t_20: [uint8; 10] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
     PatchBytes(
         0x808525 as uint32,
-        &raw mut t_20 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 10]>() as size_t,
+        &[0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
         game,
     );
-    let mut t_21: [uint8; 4] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x8882a1 as uint32,
-        &raw mut t_21 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 4]>() as size_t,
-        game,
-    );
-    let mut t_22: [uint8; 4] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x828533 as uint32,
-        &raw mut t_22 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 4]>() as size_t,
-        game,
-    );
-    let mut t_23: [uint8; 4] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x80837b as uint32,
-        &raw mut t_23 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 4]>() as size_t,
-        game,
-    );
-    let mut t_24: [uint8; 4] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x80838e as uint32,
-        &raw mut t_24 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 4]>() as size_t,
-        game,
-    );
-    let mut t_25: [uint8; 4] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x82df6c as uint32,
-        &raw mut t_25 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 4]>() as size_t,
-        game,
-    );
-    let mut t_26: [uint8; 4] = [
-        0x20 as ::core::ffi::c_int as uint8,
-        0x32 as ::core::ffi::c_int as uint8,
-        0x96 as ::core::ffi::c_int as uint8,
-        0x6b as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x80d000 as uint32,
-        &raw mut t_26 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 4]>() as size_t,
-        game,
-    );
-    let mut t_27: [uint8; 5] = [
-        0x22 as ::core::ffi::c_int as uint8,
-        0 as ::core::ffi::c_int as uint8,
-        0xd0 as ::core::ffi::c_int as uint8,
-        0x80 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x82e02c as uint32,
-        &raw mut t_27 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 5]>() as size_t,
-        game,
-    );
-    let mut t_28: [uint8; 5] = [
-        0x22 as ::core::ffi::c_int as uint8,
-        0 as ::core::ffi::c_int as uint8,
-        0xd0 as ::core::ffi::c_int as uint8,
-        0x80 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x82e06b as uint32,
-        &raw mut t_28 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 5]>() as size_t,
-        game,
-    );
-    let mut t_29: [uint8; 5] = [
-        0x22 as ::core::ffi::c_int as uint8,
-        0 as ::core::ffi::c_int as uint8,
-        0xd0 as ::core::ffi::c_int as uint8,
-        0x80 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x82e50d as uint32,
-        &raw mut t_29 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 5]>() as size_t,
-        game,
-    );
-    let mut t_30: [uint8; 5] = [
-        0x22 as ::core::ffi::c_int as uint8,
-        0 as ::core::ffi::c_int as uint8,
-        0xd0 as ::core::ffi::c_int as uint8,
-        0x80 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x82e609 as uint32,
-        &raw mut t_30 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 5]>() as size_t,
-        game,
-    );
-    let mut t_31: [uint8; 5] = [
-        0x22 as ::core::ffi::c_int as uint8,
-        0x4 as ::core::ffi::c_int as uint8,
-        0xd0 as ::core::ffi::c_int as uint8,
-        0x80 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x82e526 as uint32,
-        &raw mut t_31 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 5]>() as size_t,
-        game,
-    );
-    let mut t_32: [uint8; 10] = [
-        0x22 as ::core::ffi::c_int as uint8,
-        0x38 as ::core::ffi::c_int as uint8,
-        0x83 as ::core::ffi::c_int as uint8,
-        0x80 as ::core::ffi::c_int as uint8,
-        0xad as ::core::ffi::c_int as uint8,
-        0x31 as ::core::ffi::c_int as uint8,
-        0x9 as ::core::ffi::c_int as uint8,
-        0x10 as ::core::ffi::c_int as uint8,
-        0xf7 as ::core::ffi::c_int as uint8,
-        0x6b as ::core::ffi::c_int as uint8,
-    ];
+    PatchBytes(0x8882a1 as uint32, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x828533 as uint32, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x80837b as uint32, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x80838e as uint32, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x82df6c as uint32, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x80d000 as uint32, &[0x20, 0x32, 0x96, 0x6b], game);
+    PatchBytes(0x82e02c as uint32, &[0x22, 0, 0xd0, 0x80, 0x18], game);
+    PatchBytes(0x82e06b as uint32, &[0x22, 0, 0xd0, 0x80, 0x18], game);
+    PatchBytes(0x82e50d as uint32, &[0x22, 0, 0xd0, 0x80, 0x18], game);
+    PatchBytes(0x82e609 as uint32, &[0x22, 0, 0xd0, 0x80, 0x18], game);
+    PatchBytes(0x82e526 as uint32, &[0x22, 0x4, 0xd0, 0x80, 0x18], game);
     PatchBytes(
         0x80d004 as uint32,
-        &raw mut t_32 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 10]>() as size_t,
+        &[0x22, 0x38, 0x83, 0x80, 0xad, 0x31, 0x9, 0x10, 0xf7, 0x6b],
         game,
     );
-    let mut t_33: [uint8; 4] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x82e540 as uint32,
-        &raw mut t_33 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 4]>() as size_t,
-        game,
-    );
-    let mut t_34: [uint8; 4] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x8bc11e as uint32,
-        &raw mut t_34 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 4]>() as size_t,
-        game,
-    );
-    let mut t_35: [uint8; 4] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x8bd487 as uint32,
-        &raw mut t_35 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 4]>() as size_t,
-        game,
-    );
-    let mut t_36: [uint8; 3] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x858148 as uint32,
-        &raw mut t_36 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 3]>() as size_t,
-        game,
-    );
-    let mut t_37: [uint8; 3] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x8581b2 as uint32,
-        &raw mut t_37 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 3]>() as size_t,
-        game,
-    );
-    let mut t_38: [uint8; 8] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
+    PatchBytes(0x82e540 as uint32, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x8bc11e as uint32, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x8bd487 as uint32, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x858148 as uint32, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x8581b2 as uint32, &[0x18, 0x18, 0x18], game);
     PatchBytes(
         0x8581ea as uint32,
-        &raw mut t_38 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 8]>() as size_t,
+        &[0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
         game,
     );
-    let mut t_39: [uint8; 3] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x858203 as uint32,
-        &raw mut t_39 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 3]>() as size_t,
-        game,
-    );
-    let mut t_40: [uint8; 8] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
+    PatchBytes(0x858203 as uint32, &[0x18, 0x18, 0x18], game);
     PatchBytes(
         0x858236 as uint32,
-        &raw mut t_40 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 8]>() as size_t,
+        &[0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
         game,
     );
-    let mut t_41: [uint8; 11] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
     PatchBytes(
         0x8582b8 as uint32,
-        &raw mut t_41 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 11]>() as size_t,
+        &[
+            0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18,
+        ],
         game,
     );
-    let mut t_42: [uint8; 3] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x858321 as uint32,
-        &raw mut t_42 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 3]>() as size_t,
-        game,
-    );
-    let mut t_43: [uint8; 8] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
+    PatchBytes(0x858321 as uint32, &[0x18, 0x18, 0x18], game);
     PatchBytes(
         0x85835a as uint32,
-        &raw mut t_43 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 8]>() as size_t,
+        &[0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
         game,
     );
-    let mut t_44: [uint8; 3] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x858532 as uint32,
-        &raw mut t_44 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 3]>() as size_t,
-        game,
-    );
-    let mut t_45: [uint8; 8] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
+    PatchBytes(0x858532 as uint32, &[0x18, 0x18, 0x18], game);
     PatchBytes(
         0x85856b as uint32,
-        &raw mut t_45 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 8]>() as size_t,
+        &[0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18],
         game,
     );
-    let mut t_46: [uint8; 3] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x858096 as uint32,
-        &raw mut t_46 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 3]>() as size_t,
-        game,
-    );
-    let mut t_47: [uint8; 3] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x8580b4 as uint32,
-        &raw mut t_47 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 3]>() as size_t,
-        game,
-    );
-    let mut t_48: [uint8; 3] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x8580dc as uint32,
-        &raw mut t_48 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 3]>() as size_t,
-        game,
-    );
-    let mut t_49: [uint8; 3] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x8580f2 as uint32,
-        &raw mut t_49 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 3]>() as size_t,
-        game,
-    );
-    let mut t_50: [uint8; 3] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x85861c as uint32,
-        &raw mut t_50 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 3]>() as size_t,
-        game,
-    );
-    let mut t_51: [uint8; 3] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x858651 as uint32,
-        &raw mut t_51 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 3]>() as size_t,
-        game,
-    );
-    let mut t_52: [uint8; 4] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x858692 as uint32,
-        &raw mut t_52 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 4]>() as size_t,
-        game,
-    );
-    let mut t_53: [uint8; 4] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x858696 as uint32,
-        &raw mut t_53 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 4]>() as size_t,
-        game,
-    );
-    let mut t_54: [uint8; 6] = [
-        0x8 as ::core::ffi::c_int as uint8,
-        0xc2 as ::core::ffi::c_int as uint8,
-        0x30 as ::core::ffi::c_int as uint8,
-        0x4c as ::core::ffi::c_int as uint8,
-        0xa9 as ::core::ffi::c_int as uint8,
-        0x85 as ::core::ffi::c_int as uint8,
-    ];
+    PatchBytes(0x858096 as uint32, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x8580b4 as uint32, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x8580dc as uint32, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x8580f2 as uint32, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x85861c as uint32, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x858651 as uint32, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x858692 as uint32, &[0x18, 0x18, 0x18, 0x18], game);
+    PatchBytes(0x858696 as uint32, &[0x18, 0x18, 0x18, 0x18], game);
     PatchBytes(
         0x859660 as uint32,
-        &raw mut t_54 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 6]>() as size_t,
+        &[0x8, 0xc2, 0x30, 0x4c, 0xa9, 0x85],
         game,
     );
-    let mut t_55: [uint8; 3] = [
-        0x20 as ::core::ffi::c_int as uint8,
-        0x60 as ::core::ffi::c_int as uint8,
-        0x96 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x8583ba as uint32,
-        &raw mut t_55 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 3]>() as size_t,
-        game,
-    );
-    let mut t_56: [uint8; 17] = [
-        0x22 as ::core::ffi::c_int as uint8,
-        0x81 as ::core::ffi::c_int as uint8,
-        0x96 as ::core::ffi::c_int as uint8,
-        0x85 as ::core::ffi::c_int as uint8,
-        0xc9 as ::core::ffi::c_int as uint8,
-        0xff as ::core::ffi::c_int as uint8,
-        0xff as ::core::ffi::c_int as uint8,
-        0xd0 as ::core::ffi::c_int as uint8,
-        0x4 as ::core::ffi::c_int as uint8,
-        0x5c as ::core::ffi::c_int as uint8,
-        0x5f as ::core::ffi::c_int as uint8,
-        0xab as ::core::ffi::c_int as uint8,
-        0xa2 as ::core::ffi::c_int as uint8,
-        0x5c as ::core::ffi::c_int as uint8,
-        0x26 as ::core::ffi::c_int as uint8,
-        0xab as ::core::ffi::c_int as uint8,
-        0xa2 as ::core::ffi::c_int as uint8,
-    ];
+    PatchBytes(0x8583ba as uint32, &[0x20, 0x60, 0x96], game);
     PatchBytes(
         0x859670 as uint32,
-        &raw mut t_56 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 17]>() as size_t,
+        &[
+            0x22, 0x81, 0x96, 0x85, 0xc9, 0xff, 0xff, 0xd0, 0x4, 0x5c, 0x5f, 0xab, 0xa2, 0x5c,
+            0x26, 0xab, 0xa2,
+        ],
         game,
     );
-    let mut t_57: [uint8; 20] = [
-        0xcd as ::core::ffi::c_int as uint8,
-        0x1f as ::core::ffi::c_int as uint8,
-        0x1c as ::core::ffi::c_int as uint8,
-        0xd0 as ::core::ffi::c_int as uint8,
-        0x8 as ::core::ffi::c_int as uint8,
-        0x9c as ::core::ffi::c_int as uint8,
-        0x1f as ::core::ffi::c_int as uint8,
-        0x1c as ::core::ffi::c_int as uint8,
-        0xad as ::core::ffi::c_int as uint8,
-        0xf9 as ::core::ffi::c_int as uint8,
-        0x5 as ::core::ffi::c_int as uint8,
-        0x6b as ::core::ffi::c_int as uint8,
-        0xff as ::core::ffi::c_int as uint8,
-        0x8d as ::core::ffi::c_int as uint8,
-        0xc8 as ::core::ffi::c_int as uint8,
-        0xd as ::core::ffi::c_int as uint8,
-        0xa9 as ::core::ffi::c_int as uint8,
-        0xff as ::core::ffi::c_int as uint8,
-        0xff as ::core::ffi::c_int as uint8,
-        0x6b as ::core::ffi::c_int as uint8,
-    ];
     PatchBytes(
         0x859681 as uint32,
-        &raw mut t_57 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 20]>() as size_t,
+        &[
+            0xcd, 0x1f, 0x1c, 0xd0, 0x8, 0x9c, 0x1f, 0x1c, 0xad, 0xf9, 0x5, 0x6b, 0xff, 0x8d, 0xc8,
+            0xd, 0xa9, 0xff, 0xff, 0x6b,
+        ],
         game,
     );
-    let mut t_58: [uint8; 4] = [
-        0x5c as ::core::ffi::c_int as uint8,
-        0x70 as ::core::ffi::c_int as uint8,
-        0x96 as ::core::ffi::c_int as uint8,
-        0x85 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0xa2ab22 as uint32,
-        &raw mut t_58 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 4]>() as size_t,
-        game,
-    );
-    let mut t_59: [uint8; 17] = [
-        0x22 as ::core::ffi::c_int as uint8,
-        0xd4 as ::core::ffi::c_int as uint8,
-        0x8f as ::core::ffi::c_int as uint8,
-        0xa0 as ::core::ffi::c_int as uint8,
-        0xad as ::core::ffi::c_int as uint8,
-        0xc8 as ::core::ffi::c_int as uint8,
-        0xd as ::core::ffi::c_int as uint8,
-        0xf0 as ::core::ffi::c_int as uint8,
-        0x7 as ::core::ffi::c_int as uint8,
-        0x22 as ::core::ffi::c_int as uint8,
-        0x95 as ::core::ffi::c_int as uint8,
-        0x96 as ::core::ffi::c_int as uint8,
-        0x85 as ::core::ffi::c_int as uint8,
-        0x9c as ::core::ffi::c_int as uint8,
-        0xc8 as ::core::ffi::c_int as uint8,
-        0xd as ::core::ffi::c_int as uint8,
-        0x6b as ::core::ffi::c_int as uint8,
-    ];
+    PatchBytes(0xa2ab22 as uint32, &[0x5c, 0x70, 0x96, 0x85], game);
     PatchBytes(
         0x8596a0 as uint32,
-        &raw mut t_59 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 17]>() as size_t,
+        &[
+            0x22, 0xd4, 0x8f, 0xa0, 0xad, 0xc8, 0xd, 0xf0, 0x7, 0x22, 0x95, 0x96, 0x85, 0x9c, 0xc8,
+            0xd, 0x6b,
+        ],
         game,
     );
-    let mut t_60: [uint8; 4] = [
-        0x22 as ::core::ffi::c_int as uint8,
-        0xa0 as ::core::ffi::c_int as uint8,
-        0x96 as ::core::ffi::c_int as uint8,
-        0x85 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x828b65 as uint32,
-        &raw mut t_60 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 4]>() as size_t,
-        game,
-    );
-    let mut t_61: [uint8; 10] = [
-        0x20 as ::core::ffi::c_int as uint8,
-        0x89 as ::core::ffi::c_int as uint8,
-        0x85 as ::core::ffi::c_int as uint8,
-        0xa9 as ::core::ffi::c_int as uint8,
-        0x1c as ::core::ffi::c_int as uint8,
-        0 as ::core::ffi::c_int as uint8,
-        0x8d as ::core::ffi::c_int as uint8,
-        0x1f as ::core::ffi::c_int as uint8,
-        0x1c as ::core::ffi::c_int as uint8,
-        0x60 as ::core::ffi::c_int as uint8,
-    ];
+    PatchBytes(0x828b65 as uint32, &[0x22, 0xa0, 0x96, 0x85], game);
     PatchBytes(
         0x8596c0 as uint32,
-        &raw mut t_61 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 10]>() as size_t,
+        &[0x20, 0x89, 0x85, 0xa9, 0x1c, 0, 0x8d, 0x1f, 0x1c, 0x60],
         game,
     );
-    let mut t_62: [uint8; 3] = [
-        0x20 as ::core::ffi::c_int as uint8,
-        0xc0 as ::core::ffi::c_int as uint8,
-        0x96 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x8580e5 as uint32,
-        &raw mut t_62 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 3]>() as size_t,
-        game,
-    );
-    let mut t_63: [uint8; 25] = [
-        0xad as ::core::ffi::c_int as uint8,
-        0xc8 as ::core::ffi::c_int as uint8,
-        0xd as ::core::ffi::c_int as uint8,
-        0xf0 as ::core::ffi::c_int as uint8,
-        0x11 as ::core::ffi::c_int as uint8,
-        0x98 as ::core::ffi::c_int as uint8,
-        0x9d as ::core::ffi::c_int as uint8,
-        0x27 as ::core::ffi::c_int as uint8,
-        0x1d as ::core::ffi::c_int as uint8,
-        0xad as ::core::ffi::c_int as uint8,
-        0xc8 as ::core::ffi::c_int as uint8,
-        0xd as ::core::ffi::c_int as uint8,
-        0x22 as ::core::ffi::c_int as uint8,
-        0x95 as ::core::ffi::c_int as uint8,
-        0x96 as ::core::ffi::c_int as uint8,
-        0x85 as ::core::ffi::c_int as uint8,
-        0x9c as ::core::ffi::c_int as uint8,
-        0xc8 as ::core::ffi::c_int as uint8,
-        0xd as ::core::ffi::c_int as uint8,
-        0xbc as ::core::ffi::c_int as uint8,
-        0x27 as ::core::ffi::c_int as uint8,
-        0x1d as ::core::ffi::c_int as uint8,
-        0x4c as ::core::ffi::c_int as uint8,
-        0xee as ::core::ffi::c_int as uint8,
-        0x85 as ::core::ffi::c_int as uint8,
-    ];
+    PatchBytes(0x8580e5 as uint32, &[0x20, 0xc0, 0x96], game);
     PatchBytes(
         0x84efdc as uint32,
-        &raw mut t_63 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 25]>() as size_t,
+        &[
+            0xad, 0xc8, 0xd, 0xf0, 0x11, 0x98, 0x9d, 0x27, 0x1d, 0xad, 0xc8, 0xd, 0x22, 0x95, 0x96,
+            0x85, 0x9c, 0xc8, 0xd, 0xbc, 0x27, 0x1d, 0x4c, 0xee, 0x85,
+        ],
         game,
     );
-    let mut t_64: [uint8; 3] = [
-        0xf4 as ::core::ffi::c_int as uint8,
-        0xdb as ::core::ffi::c_int as uint8,
-        0xef as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x8485f7 as uint32,
-        &raw mut t_64 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 3]>() as size_t,
-        game,
-    );
-    let mut t_65: [uint8; 8] = [
-        0x8 as ::core::ffi::c_int as uint8,
-        0x8b as ::core::ffi::c_int as uint8,
-        0xda as ::core::ffi::c_int as uint8,
-        0x5a as ::core::ffi::c_int as uint8,
-        0x5c as ::core::ffi::c_int as uint8,
-        0x84 as ::core::ffi::c_int as uint8,
-        0x80 as ::core::ffi::c_int as uint8,
-        0x85 as ::core::ffi::c_int as uint8,
-    ];
+    PatchBytes(0x8485f7 as uint32, &[0xf4, 0xdb, 0xef], game);
     PatchBytes(
         0x859695 as uint32,
-        &raw mut t_65 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 8]>() as size_t,
+        &[0x8, 0x8b, 0xda, 0x5a, 0x5c, 0x84, 0x80, 0x85],
         game,
     );
-    let mut t_66: [uint8; 4] = [
-        0x8d as ::core::ffi::c_int as uint8,
-        0xc8 as ::core::ffi::c_int as uint8,
-        0xd as ::core::ffi::c_int as uint8,
-        0x6b as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x858080 as uint32,
-        &raw mut t_66 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 4]>() as size_t,
-        game,
-    );
-    let mut t_67: [uint8; 18] = [
-        0x22 as ::core::ffi::c_int as uint8,
-        0x81 as ::core::ffi::c_int as uint8,
-        0x96 as ::core::ffi::c_int as uint8,
-        0x85 as ::core::ffi::c_int as uint8,
-        0xc9 as ::core::ffi::c_int as uint8,
-        0xff as ::core::ffi::c_int as uint8,
-        0xff as ::core::ffi::c_int as uint8,
-        0xf0 as ::core::ffi::c_int as uint8,
-        0x4 as ::core::ffi::c_int as uint8,
-        0x5c as ::core::ffi::c_int as uint8,
-        0xfa as ::core::ffi::c_int as uint8,
-        0x8c as ::core::ffi::c_int as uint8,
-        0x84 as ::core::ffi::c_int as uint8,
-        0x7a as ::core::ffi::c_int as uint8,
-        0xfa as ::core::ffi::c_int as uint8,
-        0x88 as ::core::ffi::c_int as uint8,
-        0x88 as ::core::ffi::c_int as uint8,
-        0x60 as ::core::ffi::c_int as uint8,
-    ];
+    PatchBytes(0x858080 as uint32, &[0x8d, 0xc8, 0xd, 0x6b], game);
     PatchBytes(
         0x84f000 as uint32,
-        &raw mut t_67 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 18]>() as size_t,
+        &[
+            0x22, 0x81, 0x96, 0x85, 0xc9, 0xff, 0xff, 0xf0, 0x4, 0x5c, 0xfa, 0x8c, 0x84, 0x7a,
+            0xfa, 0x88, 0x88, 0x60,
+        ],
         game,
     );
-    let mut t_68: [uint8; 4] = [
-        0x5c as ::core::ffi::c_int as uint8,
-        0 as ::core::ffi::c_int as uint8,
-        0xf0 as ::core::ffi::c_int as uint8,
-        0x84 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x848cf6 as uint32,
-        &raw mut t_68 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 4]>() as size_t,
-        game,
-    );
-    let mut t_69: [uint8; 7] = [
-        0xa9 as ::core::ffi::c_int as uint8,
-        0xff as ::core::ffi::c_int as uint8,
-        0xff as ::core::ffi::c_int as uint8,
-        0x8d as ::core::ffi::c_int as uint8,
-        0x98 as ::core::ffi::c_int as uint8,
-        0x9 as ::core::ffi::c_int as uint8,
-        0x60 as ::core::ffi::c_int as uint8,
-    ];
+    PatchBytes(0x848cf6 as uint32, &[0x5c, 0, 0xf0, 0x84], game);
     PatchBytes(
         0x81f000 as uint32,
-        &raw mut t_69 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 7]>() as size_t,
+        &[0xa9, 0xff, 0xff, 0x8d, 0x98, 0x9, 0x60],
         game,
     );
-    let mut t_70: [uint8; 4] = [
-        0x5c as ::core::ffi::c_int as uint8,
-        0 as ::core::ffi::c_int as uint8,
-        0xf0 as ::core::ffi::c_int as uint8,
-        0x81 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x819027 as uint32,
-        &raw mut t_70 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 4]>() as size_t,
-        game,
-    );
-    let mut t_71: [uint8; 4] = [
-        0x5c as ::core::ffi::c_int as uint8,
-        0 as ::core::ffi::c_int as uint8,
-        0xf0 as ::core::ffi::c_int as uint8,
-        0x81 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x819112 as uint32,
-        &raw mut t_71 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 4]>() as size_t,
-        game,
-    );
-    let mut t_72: [uint8; 4] = [
-        0x5c as ::core::ffi::c_int as uint8,
-        0 as ::core::ffi::c_int as uint8,
-        0xf0 as ::core::ffi::c_int as uint8,
-        0x81 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x8194e9 as uint32,
-        &raw mut t_72 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 4]>() as size_t,
-        game,
-    );
-    let mut t_73: [uint8; 4] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x8095e1 as uint32,
-        &raw mut t_73 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 4]>() as size_t,
-        game,
-    );
+    PatchBytes(0x819027 as uint32, &[0x5c, 0, 0xf0, 0x81], game);
+    PatchBytes(0x819112 as uint32, &[0x5c, 0, 0xf0, 0x81], game);
+    PatchBytes(0x8194e9 as uint32, &[0x5c, 0, 0xf0, 0x81], game);
+    PatchBytes(0x8095e1 as uint32, &[0x18, 0x18, 0x18, 0x18], game);
     if game.g_use_my_apu_code {
-        let mut t_74: [uint8; 1] = [0x60 as ::core::ffi::c_int as uint8];
-        PatchBytes(
-            0x808028 as uint32,
-            &raw mut t_74 as *mut uint8,
-            ::core::mem::size_of::<[uint8; 1]>() as size_t,
-            game,
-        );
+        PatchBytes(0x808028 as uint32, &[0x60], game);
     }
-    let mut t_75: [uint8; 4] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x80 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x828a59 as uint32,
-        &raw mut t_75 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 4]>() as size_t,
-        game,
-    );
-    let mut t_76: [uint8; 3] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x828a72 as uint32,
-        &raw mut t_76 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 3]>() as size_t,
-        game,
-    );
-    let mut t_77: [uint8; 4] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x80 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x828a80 as uint32,
-        &raw mut t_77 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 4]>() as size_t,
-        game,
-    );
-    let mut t_78: [uint8; 1] = [0x6 as ::core::ffi::c_int as uint8];
-    PatchBytes(
-        0x828a67 as uint32,
-        &raw mut t_78 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 1]>() as size_t,
-        game,
-    );
-    let mut t_79: [uint8; 2] = [
-        0 as ::core::ffi::c_int as uint8,
-        0x2e as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x82831e as uint32,
-        &raw mut t_79 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 2]>() as size_t,
-        game,
-    );
-    let mut t_80: [uint8; 2] = [
-        0xa5 as ::core::ffi::c_int as uint8,
-        0x25 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x91c234 as uint32,
-        &raw mut t_80 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 2]>() as size_t,
-        game,
-    );
-    let mut t_81: [uint8; 4] = [
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-        0x18 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0x809af3 as uint32,
-        &raw mut t_81 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 4]>() as size_t,
-        game,
-    );
-    let mut t_82: [uint8; 23] = [
-        0xa5 as ::core::ffi::c_int as uint8,
-        0x12 as ::core::ffi::c_int as uint8,
-        0x48 as ::core::ffi::c_int as uint8,
-        0xa5 as ::core::ffi::c_int as uint8,
-        0x14 as ::core::ffi::c_int as uint8,
-        0x48 as ::core::ffi::c_int as uint8,
-        0xa5 as ::core::ffi::c_int as uint8,
-        0x16 as ::core::ffi::c_int as uint8,
-        0x48 as ::core::ffi::c_int as uint8,
-        0x22 as ::core::ffi::c_int as uint8,
-        0xa7 as ::core::ffi::c_int as uint8,
-        0xa6 as ::core::ffi::c_int as uint8,
-        0xa0 as ::core::ffi::c_int as uint8,
-        0x68 as ::core::ffi::c_int as uint8,
-        0x85 as ::core::ffi::c_int as uint8,
-        0x16 as ::core::ffi::c_int as uint8,
-        0x68 as ::core::ffi::c_int as uint8,
-        0x85 as ::core::ffi::c_int as uint8,
-        0x14 as ::core::ffi::c_int as uint8,
-        0x68 as ::core::ffi::c_int as uint8,
-        0x85 as ::core::ffi::c_int as uint8,
-        0x12 as ::core::ffi::c_int as uint8,
-        0x6b as ::core::ffi::c_int as uint8,
-    ];
+    PatchBytes(0x828a59 as uint32, &[0x18, 0x18, 0x18, 0x80], game);
+    PatchBytes(0x828a72 as uint32, &[0x18, 0x18, 0x18], game);
+    PatchBytes(0x828a80 as uint32, &[0x18, 0x18, 0x18, 0x80], game);
+    PatchBytes(0x828a67 as uint32, &[0x6], game);
+    PatchBytes(0x82831e as uint32, &[0, 0x2e], game);
+    PatchBytes(0x91c234 as uint32, &[0xa5, 0x25], game);
+    PatchBytes(0x809af3 as uint32, &[0x18, 0x18, 0x18, 0x18], game);
     PatchBytes(
         0xa7ff82 as uint32,
-        &raw mut t_82 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 23]>() as size_t,
+        &[
+            0xa5, 0x12, 0x48, 0xa5, 0x14, 0x48, 0xa5, 0x16, 0x48, 0x22, 0xa7, 0xa6, 0xa0, 0x68,
+            0x85, 0x16, 0x68, 0x85, 0x14, 0x68, 0x85, 0x12, 0x6b,
+        ],
         game,
     );
-    let mut t_83: [uint8; 4] = [
-        0x22 as ::core::ffi::c_int as uint8,
-        0x82 as ::core::ffi::c_int as uint8,
-        0xff as ::core::ffi::c_int as uint8,
-        0xa7 as ::core::ffi::c_int as uint8,
-    ];
-    PatchBytes(
-        0xa7b03a as uint32,
-        &raw mut t_83 as *mut uint8,
-        ::core::mem::size_of::<[uint8; 4]>() as size_t,
-        game,
-    );
+    PatchBytes(0xa7b03a as uint32, &[0x22, 0x82, 0xff, 0xa7], game);
     RtlUpdateSnesPatchForBugfix(game);
     let mut i: size_t = 0 as size_t;
     while i

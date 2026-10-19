@@ -58,6 +58,17 @@ Retain targeted comparisons for state/control-flow changes. Preserve read
 and write order; compound-assignment suggestions need alias/order review.
 Keep plan updates concise. The broader readability goal remains incomplete.
 
+ROM patch byte buffers (2026-10-19): all 88 stack arrays and raw borrows
+become borrowed byte slices. All 510 byte expressions, addresses, write order
+and fresh per-byte ROM lookups remain exact; the helper derives the length.
+Net Rust lines -981. Independent complete source reconstruction passes.
+
+Verification is combined with the indexed RAM family: frozen b0c02000 plus
+the reviewed patch source and indexed edits passes any% 129712/0
+(118.64s), native exit 0, normal release (23.96s), stable workspace
+release (26.08s), formatting/check and progress. The two focused commits share
+this combined run; no separate patch-only replay is claimed.
+
 Dispatch wrapper reduction (2026-10-19): ast-grep selects 2171 complete
 match arms across 26 files and replaces blocks containing one unit-returning
 call with direct call arms. Labels, calls and argument tokens remain exact.
