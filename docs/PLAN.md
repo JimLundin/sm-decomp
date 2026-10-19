@@ -9964,6 +9964,26 @@ own counters unchanged. Indexed-indirect remains held for movie execution,
 alongside TSX/accumulator ROR. Complete gameplay/render/audio remain open.
 Continue covered CPU cleanup.
 
+CPU indirect-Y direct-page pointer setup (2026-10-19): address_direct_page_
+indirect_y reuses safe direct_page_address for alignment cycles and captured
+pointer byte addresses. Safe reference ends before the two reads; inherited
+write/XF/page-cross gate and subsequent live Y/DB reads remain unchanged.
+Frozen `b8e35ac6` plus this change passes 134,201,344 actual old/current RAM-bus
+cases: pointer/bank combinations, correlated full Y values, both write/XF
+values, varied DP/MF/E and PC wrapping. The eight pointer values mapping to
+low address 1FFF are excluded to avoid MMIO. Address pairs, named CPU/bus
+fields, RAM and both cycle increments match; arbitrary MMIO and independent
+pointer/Y/address Cartesian coverage remain unproven. Full instrumented any%
+129,712/0 (49.07s), native exit 0, executes this helper 598,134 times, all
+write=false/XF=true. Other combinations have constructed coverage only.
+Initial prefix reports 3,600/0 (0.94s), then its all-combinations assertion
+aborts; it is not a successful process. Clean full any% 129,712/0 (47.30s),
+native exit 0. Cargo fmt/check, full release/release-library builds with
+external SDL2, normal metadata and frozen optimized core/DLL pass. Live CPU
+matches verified source; peer PPU work is outside these replays. Rust lines -7;
+other own counters unchanged. Indexed-indirect/TSX/accumulator ROR stay held.
+Complete gameplay/render/audio remain open. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
