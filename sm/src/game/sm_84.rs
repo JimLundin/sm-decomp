@@ -1162,41 +1162,26 @@ pub unsafe fn SpawnRoomPLM(mut k: uint16, game: &mut Game) {
             as *mut uint16) as uint8,
     );
     x_block = (*rpe).x_block as int16;
-    let mut v4: ::core::ffi::c_int = v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v4 as isize) = (2 as ::core::ffi::c_int
-        * (prod as ::core::ffi::c_int + x_block as ::core::ffi::c_int))
-        as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1dc7 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v4 as isize) = (*rpe).plm_room_argument;
-    let mut pp: uint16 = (*rpe).plm_header_ptr_ as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1c37 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v4 as isize) = (*rpe).plm_header_ptr_ as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdf0c as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v4 as isize) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1cd7 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v4 as isize) =
-        (0x8484e6 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-    let mut PH: *mut PlmHeader_Size4 = get_PlmHeader_Size4(pp, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1d27 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v4 as isize) = (*PH).instr_list_ptr as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xde1c as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v4 as isize) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xde6c as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v4 as isize) = addr_kDefaultPlmDrawInstruction as ::core::ffi::c_int as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1d77 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v4 as isize) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1c27 as ::core::ffi::c_int as isize)
-        as *mut uint16) = v1;
+    let index = usize::from(v1 >> 1) * 2;
+    let write_word = |game: &mut Game, offset: usize, value: u16| {
+        game.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+    };
+    let block_index = ((u32::from(prod) + x_block as u32) * 2) as u16;
+    write_word(game, 0x1c87 + index, block_index); // plm_block_indices
+    let argument = (*rpe).plm_room_argument;
+    write_word(game, 0x1dc7 + index, argument); // plm_room_arguments
+    let pp = (*rpe).plm_header_ptr_ as u16;
+    let header = (*rpe).plm_header_ptr_ as u16;
+    write_word(game, 0x1c37 + index, header); // plm_header_ptr
+    write_word(game, 0xdf0c + index, 0); // plm_variables
+    write_word(game, 0x1cd7 + index, 0x84e6); // plm_pre_instrs
+    let PH = get_PlmHeader_Size4(pp, game);
+    let instruction = (*PH).instr_list_ptr as u16;
+    write_word(game, 0x1d27 + index, instruction); // plm_instr_list_ptrs
+    write_word(game, 0xde1c + index, 1); // plm_instruction_timer
+    write_word(game, 0xde6c + index, addr_kDefaultPlmDrawInstruction as u16);
+    write_word(game, 0x1d77 + index, 0); // plm_timers
+    write_word(game, 0x1c27, v1); // plm_id
     CallPlmHeaderFunc(
         ((*PH).func_ptr as ::core::ffi::c_int | 0x840000 as ::core::ffi::c_int) as uint32,
         v1,
