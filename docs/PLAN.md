@@ -13224,6 +13224,33 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Morph Ball eye-beam fading (2026-10-19): rename EACB to
+HdmaobjPreInstr_MorphBallEyeBeamFading and name its dispatch constant.
+Byte-backed state retains the exact green-byte completion guard, updater-first
+fading and ordered wrapping color decrements at the post-updater current slot.
+Completion preserves fraction-before-whole clearing, descending 00FF table
+words, descriptor clearing, and the late current-slot instruction/timer stores.
+Colors retain byte indexing; width and instruction words retain rounded slots.
+
+Frozen f488a7ca plus only sm_88.rs passes any% 129712/0 (262.38s) and
+Waver 58109/0 (143.24s), native exits 0. The 772-frame checkpoint passes
+with 13 fading calls at frames 28505..28517 and completion at 28518. All
+128 KiB RAM matches baseline at updater entry/return and callback return.
+Green reaches 40 on frame 28517; completion advances E913 to E915 and sets
+timer 1 on the next frame. A table fault is detected at frame 28518, byte 9101.
+
+Independent comparisons pass 11,770 focused pairs (6,752 fading / 5,018
+completion) and 2,880 actual updater/table pairs. They cover every channel
+byte value, callback-mutated current slots, wrapping, odd/high slots and
+instruction/table/descriptor/width aliases. Stale-current, saturating-decrement
+and incorrect table-fill mutants are rejected. Instrumentation strips exactly
+to frozen source; maintained-candidate identity and independent review pass.
+Cargo fmt, fmt --check, release --locked (29.92s, native exit 0) and progress
+pass. Own raw offsets -25, cast lines -51, Rust lines -64; other counters
+unchanged. No probes or ROM-derived assets committed. Next: the beam
+initializer, retaining its eleven descriptor bytes through 900A and its
+whole-before-fraction width clearing. Remaining Phase 3 work stays open.
+
 Samus animation-delay reads (2026-10-19): the handler now uses safe live-ROM
 table reads, named pose/frame accessors and byte-backed scalar reads. It
 retains the captured delay list, rereads the frame after both callbacks, and

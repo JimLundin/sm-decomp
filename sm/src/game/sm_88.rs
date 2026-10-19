@@ -819,7 +819,7 @@ pub const fnHdmaobjPreInstr_E7BC: uint32 = 8972220 as uint32;
 pub const fnHdmaobjInstr_InitMorphBallEyeBeamHdma: uint32 = 8972567 as uint32;
 pub const fnHdmaobjPreInstr_MorphBallEyeBeamWidening: u32 = 0x88e9e6;
 pub const fnHdmaobjPreInstr_MorphBallEyeBeamFull: u32 = 0x88ea3c;
-pub const fnHdmaobjPreInstr_EACB: uint32 = 8973003 as uint32;
+pub const fnHdmaobjPreInstr_MorphBallEyeBeamFading: u32 = 0x88eacb;
 pub const fnHdmaobjInsr_ConfigTitleSequenceGradientHDMA: uint32 = 8973215 as uint32;
 pub const fnHdmaobjPreInstr_Backdrop_TitleSequenceGradient: uint32 = 8973232 as uint32;
 pub const fnHdmaobjPreInstr_ColorMathControlB_TitleGradient: uint32 = 8973266 as uint32;
@@ -8932,108 +8932,44 @@ pub unsafe fn HdmaobjPreInstr_MorphBallEyeBeamFull(k: u16, game: &mut Game) {
         game.g_ram[timer_offset..timer_offset + 2].copy_from_slice(&1u16.to_le_bytes());
     }
 }
-pub unsafe fn HdmaobjPreInstr_EACB(mut k: uint16, game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1986 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 16 as uint16;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x1914 as ::core::ffi::c_int as isize)
-        as *mut uint16 as *mut uint8)
-        .offset(k as ::core::ffi::c_int as isize)
-        .offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-        == 64 as ::core::ffi::c_int
-    {
-        *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x74 as ::core::ffi::c_int as isize)
-            .offset(0 as ::core::ffi::c_int as isize) = 32 as uint8;
-        *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x74 as ::core::ffi::c_int as isize)
-            .offset(1 as ::core::ffi::c_int as isize) = 64 as uint8;
-        *(&raw mut game.g_ram as *mut uint8)
-            .offset(0x74 as ::core::ffi::c_int as isize)
-            .offset(2 as ::core::ffi::c_int as isize) = 0x80 as uint8;
-        let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1938 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x192c as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v1 as isize) = 0 as uint16;
-        let mut i: ::core::ffi::c_int = 510 as ::core::ffi::c_int;
-        while i >= 0 as ::core::ffi::c_int {
-            *(((&raw mut game.g_ram as *mut uint8).offset(0x9100 as ::core::ffi::c_int as isize)
-                as *mut uint16 as *mut uint8)
-                .offset(i as uint16 as ::core::ffi::c_int as isize) as *mut uint16) = 255 as uint16;
-            i -= 2 as ::core::ffi::c_int;
+pub unsafe fn HdmaobjPreInstr_MorphBallEyeBeamFading(k: u16, game: &mut Game) {
+    game.g_ram[0x1986..0x1988].copy_from_slice(&16u16.to_le_bytes());
+    if game.g_ram[0x1915 + usize::from(k)] == 0x40 {
+        game.g_ram[0x74..0x77].copy_from_slice(&[0x20, 0x40, 0x80]);
+        let slot = usize::from(k & !1);
+        let width_fraction_offset = 0x1938 + slot;
+        game.g_ram[width_fraction_offset..width_fraction_offset + 2]
+            .copy_from_slice(&0u16.to_le_bytes());
+        let width_offset = 0x192c + slot;
+        game.g_ram[width_offset..width_offset + 2].copy_from_slice(&0u16.to_le_bytes());
+        for entry in game.g_ram[0x9100..0x9300].chunks_exact_mut(2).rev() {
+            entry.copy_from_slice(&0xffu16.to_le_bytes());
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9000 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9002 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9004 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9006 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x9008 as ::core::ffi::c_int as isize)
-            as *mut uint16) = 0 as uint16;
-        let mut v3: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x18b2 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int
-            >> 1 as ::core::ffi::c_int;
-        let ref mut fresh69 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x18cc as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v3 as isize);
-        *fresh69 = (*fresh69 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x18e4 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset(v3 as isize) = 1 as uint16;
+        game.g_ram[0x9000..0x900a].fill(0);
+
+        let current_slot = u16::from_le_bytes([game.g_ram[0x18b2], game.g_ram[0x18b3]]);
+        let current_offset = usize::from(current_slot & !1);
+        let instruction_offset = 0x18cc + current_offset;
+        let next_instruction = u16::from_le_bytes([
+            game.g_ram[instruction_offset],
+            game.g_ram[instruction_offset + 1],
+        ])
+        .wrapping_add(2);
+        game.g_ram[instruction_offset..instruction_offset + 2]
+            .copy_from_slice(&next_instruction.to_le_bytes());
+        let timer_offset = 0x18e4 + current_offset;
+        game.g_ram[timer_offset..timer_offset + 2].copy_from_slice(&1u16.to_le_bytes());
     } else {
         UpdateMorphBallEyeBeamHdma(k, game);
-        let mut v4: uint16 = *((&raw mut game.g_ram as *mut uint8)
-            .offset(0x18b2 as ::core::ffi::c_int as isize)
-            as *mut uint16);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x1914 as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
-            .offset(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x18b2 as ::core::ffi::c_int as isize)
-                    as *mut uint16) as ::core::ffi::c_int as isize,
-            ) as ::core::ffi::c_int
-            != 32 as ::core::ffi::c_int
-        {
-            let ref mut fresh70 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x1914 as ::core::ffi::c_int as isize)
-                as *mut uint16 as *mut uint8)
-                .offset(
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x18b2 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int as isize,
-                );
-            *fresh70 = (*fresh70).wrapping_sub(1);
+        let current_slot = u16::from_le_bytes([game.g_ram[0x18b2], game.g_ram[0x18b3]]);
+        // Colors use byte slots, including odd current object indices.
+        for (color_offset, black) in [(0x1914, 0x20), (0x1915, 0x40), (0x1920, 0x80)] {
+            let offset = color_offset + usize::from(current_slot);
+            if game.g_ram[offset] != black {
+                game.g_ram[offset] = game.g_ram[offset].wrapping_sub(1);
+            }
         }
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x1914 as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
-            .offset(v4 as ::core::ffi::c_int as isize)
-            .offset(1 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-            != 64 as ::core::ffi::c_int
-        {
-            let ref mut fresh71 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x1914 as ::core::ffi::c_int as isize)
-                as *mut uint16 as *mut uint8)
-                .offset(v4 as ::core::ffi::c_int as isize)
-                .offset(1 as ::core::ffi::c_int as isize);
-            *fresh71 = (*fresh71).wrapping_sub(1);
-        }
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x1920 as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
-            .offset(v4 as ::core::ffi::c_int as isize) as ::core::ffi::c_int
-            != 0x80 as ::core::ffi::c_int
-        {
-            let ref mut fresh72 = *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x1920 as ::core::ffi::c_int as isize)
-                as *mut uint16 as *mut uint8)
-                .offset(v4 as ::core::ffi::c_int as isize);
-            *fresh72 = (*fresh72).wrapping_sub(1);
-        }
-    };
+    }
 }
 pub unsafe fn SpawnTitleScreenGradientObjs(game: &mut Game) {
     static unk_88EB6B: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
@@ -9579,8 +9515,8 @@ pub unsafe fn CallHdmaobjPreInstr(mut ea: uint32, mut k: uint16, game: &mut Game
             HdmaobjPreInstr_MorphBallEyeBeamFull(k, game);
             return;
         }
-        8973003 => {
-            HdmaobjPreInstr_EACB(k, game);
+        fnHdmaobjPreInstr_MorphBallEyeBeamFading => {
+            HdmaobjPreInstr_MorphBallEyeBeamFading(k, game);
             return;
         }
         8973232 => {
