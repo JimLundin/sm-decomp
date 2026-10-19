@@ -507,66 +507,28 @@ pub unsafe fn WallSpacePirates_Init(game: &mut Game) {
 pub unsafe fn CallSpacePiratesEnemyFunc(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
         11698251 => (),
-        11726900 => {
-            SpacePirates_Func_1(k, game);
-        }
+        11726900 => SpacePirates_Func_1(k, game),
         11726927 => (),
-        11726928 => {
-            SpacePirates_Func_2(k, game);
-        }
-        11727048 => {
-            SpacePirates_Func_3(k, game);
-        }
+        11726928 => SpacePirates_Func_2(k, game),
+        11727048 => SpacePirates_Func_3(k, game),
         11727075 => (),
         11730506 => (),
-        11727076 => {
-            SpacePirates_Func_4(k, game);
-        }
-        11728553 => {
-            SpacePirates_Func_5(k, game);
-        }
-        11728612 => {
-            SpacePirates_Func_6(k, game);
-        }
-        11728919 => {
-            SpacePirates_Func_11(k, game);
-        }
-        11728972 => {
-            SpacePirates_Func_12(k, game);
-        }
-        11729040 => {
-            SpacePirates_Func_13(k, game);
-        }
-        11729093 => {
-            SpacePirates_Func_14(k, game);
-        }
-        11729161 => {
-            SpacePirates_Func_15(k, game);
-        }
-        11729285 => {
-            SpacePirates_F985(k, game);
-        }
-        11729345 => {
-            SpacePirates_F9C1(k, game);
-        }
-        11729429 => {
-            SpacePirates_FA15(k, game);
-        }
-        11729497 => {
-            SpacePirates_FA59(k, game);
-        }
-        11729557 => {
-            SpacePirates_FA95(k, game);
-        }
-        11729641 => {
-            SpacePirates_FAE9(k, game);
-        }
-        11730244 => {
-            WalkingSpacePirates_FD44(game);
-        }
-        11730382 => {
-            WalkingSpacePirates_FDCE(game);
-        }
+        11727076 => SpacePirates_Func_4(k, game),
+        11728553 => SpacePirates_Func_5(k, game),
+        11728612 => SpacePirates_Func_6(k, game),
+        11728919 => SpacePirates_Func_11(k, game),
+        11728972 => SpacePirates_Func_12(k, game),
+        11729040 => SpacePirates_Func_13(k, game),
+        11729093 => SpacePirates_Func_14(k, game),
+        11729161 => SpacePirates_Func_15(k, game),
+        11729285 => SpacePirates_F985(k, game),
+        11729345 => SpacePirates_F9C1(k, game),
+        11729429 => SpacePirates_FA15(k, game),
+        11729497 => SpacePirates_FA59(k, game),
+        11729557 => SpacePirates_FA95(k, game),
+        11729641 => SpacePirates_FAE9(k, game),
+        11730244 => WalkingSpacePirates_FD44(game),
+        11730382 => WalkingSpacePirates_FDCE(game),
         _ => {
             Unreachable(game);
         }

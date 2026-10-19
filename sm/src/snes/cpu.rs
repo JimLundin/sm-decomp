@@ -1733,9 +1733,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             let (low, high) = address_direct_page_indexed_indirect(cpu, game);
             compare_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
-        0xc2 => {
-            update_status_bits(cpu, false, game);
-        }
+        0xc2 => update_status_bits(cpu, false, game),
         0xc3 => {
             let (low, high) = address_stack_relative(cpu, game);
             compare_register(cpu, low, high, CpuRegister::Accumulator, game);
@@ -1854,9 +1852,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             let (low, high) = address_direct_page_indexed_indirect(cpu, game);
             subtract_with_carry(cpu, low, high, game);
         }
-        0xe2 => {
-            update_status_bits(cpu, true, game);
-        }
+        0xe2 => update_status_bits(cpu, true, game),
         0xe3 => {
             let (low, high) = address_stack_relative(cpu, game);
             subtract_with_carry(cpu, low, high, game);

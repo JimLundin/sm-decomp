@@ -845,24 +845,12 @@ pub unsafe fn Torizo_Hurt(game: &mut Game) {
 pub unsafe fn CallTorizoFunc(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
         11191979 => (),
-        11191999 => {
-            Torizo_Func_3(k, game);
-        }
-        11192006 => {
-            Torizo_Func_4(k, game);
-        }
-        11192063 => {
-            Torizo_Func_1(k, game);
-        }
-        11195842 => {
-            Torizo_Func_9(k, game);
-        }
-        11195871 => {
-            Torizo_Func_10(k, game);
-        }
-        11195878 => {
-            Torizo_D5E6(k, game);
-        }
+        11191999 => Torizo_Func_3(k, game),
+        11192006 => Torizo_Func_4(k, game),
+        11192063 => Torizo_Func_1(k, game),
+        11195842 => Torizo_Func_9(k, game),
+        11195871 => Torizo_Func_10(k, game),
+        11195878 => Torizo_D5E6(k, game),
         _ => {
             Unreachable(game);
         }

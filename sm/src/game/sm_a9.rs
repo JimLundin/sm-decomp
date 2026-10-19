@@ -682,78 +682,30 @@ static g_byte_A9F56A: [int8; 16] = [
 ];
 pub unsafe fn CallCorpseRottingMove(ea: uint32, k: uint16, j: uint16, game: &mut Game) {
     match ea {
-        11133835 => {
-            Torizo_CorpseRottingCopyFunc(k, j, game);
-        }
-        11134197 => {
-            Sidehopper_CorpseRottingCopyFunc_0(k, j, game);
-        }
-        11134454 => {
-            Sidehopper_CorpseRottingCopyFunc_2(k, j, game);
-        }
-        11134649 => {
-            Zoomer_CorpseRottingCopyFunc_0(k, j, game);
-        }
-        11134789 => {
-            Zoomer_CorpseRottingCopyFunc_2(k, j, game);
-        }
-        11134929 => {
-            Zoomer_CorpseRottingCopyFunc_4(k, j, game);
-        }
-        11135069 => {
-            Ripper_CorpseRottingCopyFunc_0(k, j, game);
-        }
-        11135209 => {
-            Ripper_CorpseRottingCopyFunc_2(k, j, game);
-        }
-        11135323 => {
-            Skree_CorpseRottingCopyFunc_0(k, j, game);
-        }
-        11135417 => {
-            Skree_CorpseRottingCopyFunc_2(k, j, game);
-        }
-        11135511 => {
-            Skree_CorpseRottingCopyFunc_4(k, j, game);
-        }
-        11135755 => {
-            MotherBrain_CorpseRottingCopyFunc(k, j, game);
-        }
-        11133554 => {
-            Torizo_CorpseRottingMoveFunc(k, j, game);
-        }
-        11134056 => {
-            Sidehopper_CorpseRottingMoveFunc_0(k, j, game);
-        }
-        11134308 => {
-            Sidehopper_CorpseRottingMoveFunc_2(k, j, game);
-        }
-        11134570 => {
-            Zoomer_CorpseRottingMoveFunc_0(k, j, game);
-        }
-        11134710 => {
-            Zoomer_CorpseRottingMoveFunc_2(k, j, game);
-        }
-        11134850 => {
-            Zoomer_CorpseRottingMoveFunc_4(k, j, game);
-        }
-        11134990 => {
-            Ripper_CorpseRottingMoveFunc_0(k, j, game);
-        }
-        11135130 => {
-            Ripper_CorpseRottingMoveFunc_2(k, j, game);
-        }
-        11135270 => {
-            Skree_CorpseRottingMoveFunc_0(k, j, game);
-        }
-        11135364 => {
-            Skree_CorpseRottingMoveFunc_2(k, j, game);
-        }
-        11135458 => {
-            Skree_CorpseRottingMoveFunc_4(k, j, game);
-        }
-        11135552 => {
-            MotherBrain_CorpseRottingMoveFunc(k, j, game);
-        }
+        11133835 => Torizo_CorpseRottingCopyFunc(k, j, game),
+        11134197 => Sidehopper_CorpseRottingCopyFunc_0(k, j, game),
+        11134454 => Sidehopper_CorpseRottingCopyFunc_2(k, j, game),
+        11134649 => Zoomer_CorpseRottingCopyFunc_0(k, j, game),
+        11134789 => Zoomer_CorpseRottingCopyFunc_2(k, j, game),
+        11134929 => Zoomer_CorpseRottingCopyFunc_4(k, j, game),
+        11135069 => Ripper_CorpseRottingCopyFunc_0(k, j, game),
+        11135209 => Ripper_CorpseRottingCopyFunc_2(k, j, game),
+        11135323 => Skree_CorpseRottingCopyFunc_0(k, j, game),
+        11135417 => Skree_CorpseRottingCopyFunc_2(k, j, game),
+        11135511 => Skree_CorpseRottingCopyFunc_4(k, j, game),
+        11135755 => MotherBrain_CorpseRottingCopyFunc(k, j, game),
+        11133554 => Torizo_CorpseRottingMoveFunc(k, j, game),
+        11134056 => Sidehopper_CorpseRottingMoveFunc_0(k, j, game),
+        11134308 => Sidehopper_CorpseRottingMoveFunc_2(k, j, game),
+        11134570 => Zoomer_CorpseRottingMoveFunc_0(k, j, game),
+        11134710 => Zoomer_CorpseRottingMoveFunc_2(k, j, game),
+        11134850 => Zoomer_CorpseRottingMoveFunc_4(k, j, game),
+        11134990 => Ripper_CorpseRottingMoveFunc_0(k, j, game),
+        11135130 => Ripper_CorpseRottingMoveFunc_2(k, j, game),
+        11135270 => Skree_CorpseRottingMoveFunc_0(k, j, game),
+        11135364 => Skree_CorpseRottingMoveFunc_2(k, j, game),
+        11135458 => Skree_CorpseRottingMoveFunc_4(k, j, game),
+        11135552 => MotherBrain_CorpseRottingMoveFunc(k, j, game),
         _ => {
             Unreachable(game);
         }
@@ -761,42 +713,18 @@ pub unsafe fn CallCorpseRottingMove(ea: uint32, k: uint16, j: uint16, game: &mut
 }
 pub unsafe fn CallCorpseRottingInit(ea: uint32, game: &mut Game) {
     match ea {
-        11132440 => {
-            Torizo_CorpseRottingInitFunc(game);
-        }
-        11132609 => {
-            Sidehopper_CorpseRottingInitFunc_0(game);
-        }
-        11132680 => {
-            Sidehopper_CorpseRottingInitFunc_2(game);
-        }
-        11132751 => {
-            Zoomer_CorpseRottingInitFunc_0(game);
-        }
-        11132780 => {
-            Zoomer_CorpseRottingInitFunc_2(game);
-        }
-        11132809 => {
-            Zoomer_CorpseRottingInitFunc_4(game);
-        }
-        11132838 => {
-            Ripper_CorpseRottingInitFunc_0(game);
-        }
-        11132867 => {
-            Ripper_CorpseRottingInitFunc_2(game);
-        }
-        11132896 => {
-            Skree_CorpseRottingInitFunc_0(game);
-        }
-        11132953 => {
-            Skree_CorpseRottingInitFunc_2(game);
-        }
-        11133010 => {
-            Skree_CorpseRottingInitFunc_4(game);
-        }
-        11133067 => {
-            MotherBrain_CorpseRottingInitFunc(game);
-        }
+        11132440 => Torizo_CorpseRottingInitFunc(game),
+        11132609 => Sidehopper_CorpseRottingInitFunc_0(game),
+        11132680 => Sidehopper_CorpseRottingInitFunc_2(game),
+        11132751 => Zoomer_CorpseRottingInitFunc_0(game),
+        11132780 => Zoomer_CorpseRottingInitFunc_2(game),
+        11132809 => Zoomer_CorpseRottingInitFunc_4(game),
+        11132838 => Ripper_CorpseRottingInitFunc_0(game),
+        11132867 => Ripper_CorpseRottingInitFunc_2(game),
+        11132896 => Skree_CorpseRottingInitFunc_0(game),
+        11132953 => Skree_CorpseRottingInitFunc_2(game),
+        11133010 => Skree_CorpseRottingInitFunc_4(game),
+        11133067 => MotherBrain_CorpseRottingInitFunc(game),
         _ => {
             Unreachable(game);
         }
@@ -804,15 +732,9 @@ pub unsafe fn CallCorpseRottingInit(ea: uint32, game: &mut Game) {
 }
 pub unsafe fn CallCorpseRottingFinish(ea: uint32, game: &mut Game) {
     match ea {
-        11121187 => {
-            MotherBrain_CorpseRottingFinished(game);
-        }
-        11130301 => {
-            DeadTorizo_CorpseRottingFinished(game);
-        }
-        11131912 => {
-            CorpseRottingRotEntryFinishedHook(game);
-        }
+        11121187 => MotherBrain_CorpseRottingFinished(game),
+        11130301 => DeadTorizo_CorpseRottingFinished(game),
+        11131912 => CorpseRottingRotEntryFinishedHook(game),
         _ => {
             Unreachable(game);
         }
@@ -820,388 +742,138 @@ pub unsafe fn CallCorpseRottingFinish(ea: uint32, game: &mut Game) {
 }
 pub unsafe fn CallMotherBrainFunc(ea: uint32, game: &mut Game) {
     match ea {
-        11110352 => {
-            MotherBrainsBrain_SetupBrainToDraw(game);
-        }
+        11110352 => MotherBrainsBrain_SetupBrainToDraw(game),
         11110369 => {
             Unreachable(game);
         }
-        11110729 => {
-            MotherBrainBody_0_Wait(game);
-        }
-        11110766 => {
-            MotherBrainBody_1_ClearBottomLeftTube(game);
-        }
-        11110787 => {
-            MotherBrainBody_2_SpawnTopRightTubeFalling(game);
-        }
-        11110816 => {
-            MotherBrainBody_3_ClearCeilingBlock9(game);
-        }
-        11110837 => {
-            MotherBrainBody_4_SpawnTopLeftTubeFalling(game);
-        }
-        11110866 => {
-            MotherBrainBody_4_ClearCeilingBlock6(game);
-        }
-        11110887 => {
-            MotherBrainBody_5_SpawnTubeFallingEnemy1(game);
-        }
-        11110906 => {
-            MotherBrainBody_6_ClearBottomRightTube(game);
-        }
-        11110927 => {
-            MotherBrainBody_7_SpawnTubeFallingEnemy2(game);
-        }
-        11110946 => {
-            MotherBrainBody_8_ClearBottomMiddleLeftTube(game);
-        }
-        11110967 => {
-            MotherBrainBody_9_SpawnTopMiddleLeftFalling(game);
-        }
-        11110996 => {
-            MotherBrainBody_10_ClearCeilingTubeColumn7(game);
-        }
-        11111017 => {
-            MotherBrainBody_11_SpawnTopMiddleRightFalling(game);
-        }
-        11111046 => {
-            MotherBrainBody_12_ClearCeilingTubeColumn8(game);
-        }
-        11111067 => {
-            MotherBrainBody_13_SpawnTubeFallingEnemy3(game);
-        }
-        11111086 => {
-            MotherBrainBody_14_ClearBottomMiddleRightTube(game);
-        }
-        11111107 => {
-            MotherBrainBody_15_SpawnTubeFallingEnemy4(game);
-        }
-        11111126 => {
-            MotherBrainBody_16_ClearBottomMiddleTubes(game);
-        }
-        11110429 => {
-            MotherBrainBody_FakeDeath_Descent_0_Pause(game);
-        }
-        11110441 => {
-            MotherBrainBody_FakeDeath_Descent_1(game);
-        }
-        11110477 => {
-            MotherBrainBody_FakeDeath_Descent_2(game);
-        }
-        11110508 => {
-            MotherBrainBody_FakeDeath_Descent_3(game);
-        }
-        11110532 => {
-            MotherBrainBody_FakeDeath_Descent_4(game);
-        }
-        11110578 => {
-            MotherBrainBody_FakeDeath_Descent_5(game);
-        }
-        11110611 => {
-            MotherBrainBody_FakeDeath_Descent_6(game);
-        }
-        11111559 => {
-            MotherBrainBody_FakeDeath_Ascent_0_DrawBG1Row23(game);
-        }
-        11111582 => {
-            MotherBrainBody_FakeDeath_Ascent_1_DrawBG1Row45(game);
-        }
-        11111605 => {
-            MotherBrainBody_FakeDeath_Ascent_2_DrawBG1Row67(game);
-        }
-        11111628 => {
-            MotherBrainBody_FakeDeath_Ascent_3_DrawBG1Row89(game);
-        }
-        11111651 => {
-            MotherBrainBody_FakeDeath_Ascent_4_DrawBG1RowAB(game);
-        }
-        11111674 => {
-            MotherBrainBody_FakeDeath_Ascent_5_DrawBG1RowCD(game);
-        }
-        11111697 => {
-            MotherBrainBody_FakeDeath_Ascent_6_SetupPhase2Gfx(game);
-        }
-        11111753 => {
-            MotherBrainBody_FakeDeath_Ascent_7_SetupPhase2Brain(game);
-        }
-        11111801 => {
-            MotherBrainBody_FakeDeath_Ascent_8_Pause(game);
-        }
-        11111819 => {
-            MotherBrainBody_FakeDeath_Ascent_9_PrepareRise(game);
-        }
-        11111860 => {
-            MotherBrainBody_FakeDeath_Ascent_10_LoadLegTiles(game);
-        }
-        11111875 => {
-            MotherBrainBody_FakeDeath_Ascent_11_ContinuePause(game);
-        }
-        11111916 => {
-            MotherBrainBody_FakeDeath_Ascent_12_StartMusic(game);
-        }
-        11112013 => {
-            MotherBrainBody_FakeDeath_Ascent_13_Raise(game);
-        }
-        11112085 => {
-            MotherBrainBody_FakeDeath_Ascent_14_WaitForUncouching(game);
-        }
-        11112106 => {
-            MotherBrainBody_FakeDeath_Ascent_15_TransitionFromGrey(game);
-        }
-        11112181 => {
-            MotherBrainBody_2ndphase_16_ShakeHeadMenacingly(game);
-        }
-        11112212 => {
-            MotherBrainBody_2ndphase_17_BringHeadBackUp(game);
-        }
-        11112243 => {
-            MotherBrainBody_2ndphase_18_FinishStretching(game);
-        }
-        11120353 => {
-            MotherBrain_Phase3_Death_0(game);
-        }
-        11120402 => {
-            MotherBrain_Phase3_Death_1(game);
-        }
-        11120417 => {
-            MotherBrain_Phase3_Death_2(game);
-        }
-        11120468 => {
-            MotherBrain_Phase3_Death_3(game);
-        }
-        11120541 => {
-            MotherBrain_Phase3_Death_4(game);
-        }
-        11120566 => {
-            MotherBrain_Phase3_Death_5(game);
-        }
-        11120659 => {
-            MotherBrain_Phase3_Death_6(game);
-        }
-        11120917 => {
-            MotherBrain_Phase3_Death_7(game);
-        }
-        11120941 => {
-            MotherBrain_Phase3_Death_8(game);
-        }
-        11120990 => {
-            MotherBrain_Phase3_Death_9(game);
-        }
-        11121011 => {
-            MotherBrain_Phase3_Death_10(game);
-        }
-        11121033 => {
-            MotherBrain_Phase3_Death_11(game);
-        }
-        11121080 => {
-            MotherBrain_Phase3_Death_12(game);
-        }
-        11121109 => {
-            MotherBrain_Phase3_Death_13(game);
-        }
-        11121169 => {
-            MotherBrain_Phase3_Death_14_20framedelay(game);
-        }
-        11121240 => {
-            MotherBrain_Phase3_Death_15_LoadEscapeTimerTiles(game);
-        }
-        11121261 => {
-            MotherBrain_Phase3_Death_16_StartEscape(game);
-        }
-        11121361 => {
-            MotherBrain_Phase3_Death_17_SpawnTimeBomb(game);
-        }
-        11121379 => {
-            MotherBrain_Phase3_Death_18_TypesZebesText(game);
-        }
-        11121401 => {
-            MotherBrain_Phase3_Death_19_EscapeDoorExploding(game);
-        }
-        11121450 => {
-            MotherBrain_Phase3_Death_20_BlowUpEscapeDoor(game);
-        }
-        11121468 => {
-            MotherBrain_Phase3_Death_21_KeepEarthquakeGoing(game);
-        }
-        11122181 => {
-            MotherBrain_Body_Phase2_Thinking(game);
-        }
-        11122251 => {
-            MotherBrain_Body_Phase2_TryAttack(game);
-        }
-        11122561 => {
-            MotherBrain_FiringBomb_DecideOnWalking(game);
-        }
-        11122604 => {
-            MotherBrain_FiringBomb_WalkingBackwards(game);
-        }
-        11122630 => {
-            MotherBrain_FiringBomb_Crouch(game);
-        }
-        11122664 => {
-            MotherBrain_FiringBomb_Fired(game);
-        }
-        11122680 => {
-            MotherBrain_FiringBomb_Standup(game);
-        }
-        11122702 => {
-            MotherBomb_FiringLaser_PositionHead(game);
-        }
-        11122745 => {
-            MotherBomb_FiringLaser_PositionHeadSlowlyFire(game);
-        }
-        11122787 => {
-            MotherBomb_FiringLaser_FinishAttack(game);
-        }
-        11122813 => {
-            MotherBomb_FiringDeathBeam(game);
-        }
-        11122923 => {
-            MotherBomb_FiringRainbowBeam_0(game);
-        }
-        11122970 => {
-            MotherBomb_FiringRainbowBeam_1_StartCharge(game);
-        }
-        11122987 => {
-            MotherBomb_FiringRainbowBeam_2_RetractNeck(game);
-        }
-        11123007 => {
-            MotherBomb_FiringRainbowBeam_3_Wait(game);
-        }
-        11123025 => {
-            MotherBomb_FiringRainbowBeam_4_ExtendNeckDown(game);
-        }
-        11123061 => {
-            MotherBomb_FiringRainbowBeam_5_StartFiring(game);
-        }
-        11123173 => {
-            MotherBomb_FiringRainbowBeam_6_MoveSamusToWall(game);
-        }
-        11123200 => {
-            MotherBomb_FiringRainbowBeam_7_DelayFrame(game);
-        }
-        11123239 => {
-            MotherBomb_FiringRainbowBeam_8_StartDrainSamus(game);
-        }
-        11123260 => {
-            MotherBomb_FiringRainbowBeam_9_DrainingSamus(game);
-        }
-        11123294 => {
-            MotherBomb_FiringRainbowBeam_10_FinishFiringRainbow(game);
-        }
-        11123396 => {
-            MotherBomb_FiringRainbowBeam_11_LetSamusFall(game);
-        }
-        11123409 => {
-            MotherBomb_FiringRainbowBeam_12_WaitForSamusHitGround(game);
-        }
-        11123421 => {
-            MotherBomb_FiringRainbowBeam_13_LowerHead(game);
-        }
-        11123462 => {
-            MotherBomb_FiringRainbowBeam_14_DecideNextAction(game);
-        }
-        11124037 => {
-            MotherBrain_Phase2Cut_0(game);
-        }
-        11124120 => {
-            MotherBrain_Phase2Cut_1(game);
-        }
-        11124137 => {
-            MotherBrain_Phase2Cut_2(game);
-        }
-        11124161 => {
-            MotherBrain_Phase2Cut_3(game);
-        }
-        11124178 => {
-            MotherBrain_Phase2Cut_4(game);
-        }
-        11124205 => {
-            MotherBrain_Phase2Cut_5(game);
-        }
+        11110729 => MotherBrainBody_0_Wait(game),
+        11110766 => MotherBrainBody_1_ClearBottomLeftTube(game),
+        11110787 => MotherBrainBody_2_SpawnTopRightTubeFalling(game),
+        11110816 => MotherBrainBody_3_ClearCeilingBlock9(game),
+        11110837 => MotherBrainBody_4_SpawnTopLeftTubeFalling(game),
+        11110866 => MotherBrainBody_4_ClearCeilingBlock6(game),
+        11110887 => MotherBrainBody_5_SpawnTubeFallingEnemy1(game),
+        11110906 => MotherBrainBody_6_ClearBottomRightTube(game),
+        11110927 => MotherBrainBody_7_SpawnTubeFallingEnemy2(game),
+        11110946 => MotherBrainBody_8_ClearBottomMiddleLeftTube(game),
+        11110967 => MotherBrainBody_9_SpawnTopMiddleLeftFalling(game),
+        11110996 => MotherBrainBody_10_ClearCeilingTubeColumn7(game),
+        11111017 => MotherBrainBody_11_SpawnTopMiddleRightFalling(game),
+        11111046 => MotherBrainBody_12_ClearCeilingTubeColumn8(game),
+        11111067 => MotherBrainBody_13_SpawnTubeFallingEnemy3(game),
+        11111086 => MotherBrainBody_14_ClearBottomMiddleRightTube(game),
+        11111107 => MotherBrainBody_15_SpawnTubeFallingEnemy4(game),
+        11111126 => MotherBrainBody_16_ClearBottomMiddleTubes(game),
+        11110429 => MotherBrainBody_FakeDeath_Descent_0_Pause(game),
+        11110441 => MotherBrainBody_FakeDeath_Descent_1(game),
+        11110477 => MotherBrainBody_FakeDeath_Descent_2(game),
+        11110508 => MotherBrainBody_FakeDeath_Descent_3(game),
+        11110532 => MotherBrainBody_FakeDeath_Descent_4(game),
+        11110578 => MotherBrainBody_FakeDeath_Descent_5(game),
+        11110611 => MotherBrainBody_FakeDeath_Descent_6(game),
+        11111559 => MotherBrainBody_FakeDeath_Ascent_0_DrawBG1Row23(game),
+        11111582 => MotherBrainBody_FakeDeath_Ascent_1_DrawBG1Row45(game),
+        11111605 => MotherBrainBody_FakeDeath_Ascent_2_DrawBG1Row67(game),
+        11111628 => MotherBrainBody_FakeDeath_Ascent_3_DrawBG1Row89(game),
+        11111651 => MotherBrainBody_FakeDeath_Ascent_4_DrawBG1RowAB(game),
+        11111674 => MotherBrainBody_FakeDeath_Ascent_5_DrawBG1RowCD(game),
+        11111697 => MotherBrainBody_FakeDeath_Ascent_6_SetupPhase2Gfx(game),
+        11111753 => MotherBrainBody_FakeDeath_Ascent_7_SetupPhase2Brain(game),
+        11111801 => MotherBrainBody_FakeDeath_Ascent_8_Pause(game),
+        11111819 => MotherBrainBody_FakeDeath_Ascent_9_PrepareRise(game),
+        11111860 => MotherBrainBody_FakeDeath_Ascent_10_LoadLegTiles(game),
+        11111875 => MotherBrainBody_FakeDeath_Ascent_11_ContinuePause(game),
+        11111916 => MotherBrainBody_FakeDeath_Ascent_12_StartMusic(game),
+        11112013 => MotherBrainBody_FakeDeath_Ascent_13_Raise(game),
+        11112085 => MotherBrainBody_FakeDeath_Ascent_14_WaitForUncouching(game),
+        11112106 => MotherBrainBody_FakeDeath_Ascent_15_TransitionFromGrey(game),
+        11112181 => MotherBrainBody_2ndphase_16_ShakeHeadMenacingly(game),
+        11112212 => MotherBrainBody_2ndphase_17_BringHeadBackUp(game),
+        11112243 => MotherBrainBody_2ndphase_18_FinishStretching(game),
+        11120353 => MotherBrain_Phase3_Death_0(game),
+        11120402 => MotherBrain_Phase3_Death_1(game),
+        11120417 => MotherBrain_Phase3_Death_2(game),
+        11120468 => MotherBrain_Phase3_Death_3(game),
+        11120541 => MotherBrain_Phase3_Death_4(game),
+        11120566 => MotherBrain_Phase3_Death_5(game),
+        11120659 => MotherBrain_Phase3_Death_6(game),
+        11120917 => MotherBrain_Phase3_Death_7(game),
+        11120941 => MotherBrain_Phase3_Death_8(game),
+        11120990 => MotherBrain_Phase3_Death_9(game),
+        11121011 => MotherBrain_Phase3_Death_10(game),
+        11121033 => MotherBrain_Phase3_Death_11(game),
+        11121080 => MotherBrain_Phase3_Death_12(game),
+        11121109 => MotherBrain_Phase3_Death_13(game),
+        11121169 => MotherBrain_Phase3_Death_14_20framedelay(game),
+        11121240 => MotherBrain_Phase3_Death_15_LoadEscapeTimerTiles(game),
+        11121261 => MotherBrain_Phase3_Death_16_StartEscape(game),
+        11121361 => MotherBrain_Phase3_Death_17_SpawnTimeBomb(game),
+        11121379 => MotherBrain_Phase3_Death_18_TypesZebesText(game),
+        11121401 => MotherBrain_Phase3_Death_19_EscapeDoorExploding(game),
+        11121450 => MotherBrain_Phase3_Death_20_BlowUpEscapeDoor(game),
+        11121468 => MotherBrain_Phase3_Death_21_KeepEarthquakeGoing(game),
+        11122181 => MotherBrain_Body_Phase2_Thinking(game),
+        11122251 => MotherBrain_Body_Phase2_TryAttack(game),
+        11122561 => MotherBrain_FiringBomb_DecideOnWalking(game),
+        11122604 => MotherBrain_FiringBomb_WalkingBackwards(game),
+        11122630 => MotherBrain_FiringBomb_Crouch(game),
+        11122664 => MotherBrain_FiringBomb_Fired(game),
+        11122680 => MotherBrain_FiringBomb_Standup(game),
+        11122702 => MotherBomb_FiringLaser_PositionHead(game),
+        11122745 => MotherBomb_FiringLaser_PositionHeadSlowlyFire(game),
+        11122787 => MotherBomb_FiringLaser_FinishAttack(game),
+        11122813 => MotherBomb_FiringDeathBeam(game),
+        11122923 => MotherBomb_FiringRainbowBeam_0(game),
+        11122970 => MotherBomb_FiringRainbowBeam_1_StartCharge(game),
+        11122987 => MotherBomb_FiringRainbowBeam_2_RetractNeck(game),
+        11123007 => MotherBomb_FiringRainbowBeam_3_Wait(game),
+        11123025 => MotherBomb_FiringRainbowBeam_4_ExtendNeckDown(game),
+        11123061 => MotherBomb_FiringRainbowBeam_5_StartFiring(game),
+        11123173 => MotherBomb_FiringRainbowBeam_6_MoveSamusToWall(game),
+        11123200 => MotherBomb_FiringRainbowBeam_7_DelayFrame(game),
+        11123239 => MotherBomb_FiringRainbowBeam_8_StartDrainSamus(game),
+        11123260 => MotherBomb_FiringRainbowBeam_9_DrainingSamus(game),
+        11123294 => MotherBomb_FiringRainbowBeam_10_FinishFiringRainbow(game),
+        11123396 => MotherBomb_FiringRainbowBeam_11_LetSamusFall(game),
+        11123409 => MotherBomb_FiringRainbowBeam_12_WaitForSamusHitGround(game),
+        11123421 => MotherBomb_FiringRainbowBeam_13_LowerHead(game),
+        11123462 => MotherBomb_FiringRainbowBeam_14_DecideNextAction(game),
+        11124037 => MotherBrain_Phase2Cut_0(game),
+        11124120 => MotherBrain_Phase2Cut_1(game),
+        11124137 => MotherBrain_Phase2Cut_2(game),
+        11124161 => MotherBrain_Phase2Cut_3(game),
+        11124178 => MotherBrain_Phase2Cut_4(game),
+        11124205 => MotherBrain_Phase2Cut_5(game),
         11124250 => (),
-        11124280 => {
-            MotherBrain_DrainedByShitroid_0(game);
-        }
-        11124317 => {
-            MotherBrain_DrainedByShitroid_1(game);
-        }
-        11124374 => {
-            MotherBrain_DrainedByShitroid_2(game);
-        }
-        11124494 => {
-            MotherBrain_DrainedByShitroid_3(game);
-        }
-        11124545 => {
-            MotherBrain_DrainedByShitroid_4(game);
-        }
-        11124566 => {
-            MotherBrain_DrainedByShitroid_5(game);
-        }
-        11124605 => {
-            MotherBrain_DrainedByShitroid_6(game);
-        }
-        11124629 => {
-            MotherBrain_DrainedByShitroid_7(game);
-        }
-        11124825 => {
-            MotherBrain_Phase2_Revive_0(game);
-        }
-        11124838 => {
-            MotherBrain_Phase2_Revive_1(game);
-        }
-        11124866 => {
-            MotherBrain_Phase2_Revive_2(game);
-        }
-        11124879 => {
-            MotherBrain_Phase2_Revive_3(game);
-        }
-        11124922 => {
-            MotherBrain_Phase2_Revive_4(game);
-        }
-        11124964 => {
-            MotherBrain_Phase2_Revive_5(game);
-        }
-        11124987 => {
-            MotherBrain_Phase2_Revive_6(game);
-        }
-        11125022 => {
-            MotherBrain_Phase2_Revive_7(game);
-        }
-        11125063 => {
-            MotherBrain_Phase2_Revive_8(game);
-        }
-        11125084 => {
-            MotherBrain_Phase2_MurderShitroid_1(game);
-        }
-        11125122 => {
-            MotherBrain_Phase2_MurderShitroid_2(game);
-        }
-        11125134 => {
-            MotherBrain_Phase2_PrepareForFinalShitroid(game);
-        }
-        11125146 => {
-            MotherBrain_Phase2_ExecuteFinalkShitroid(game);
-        }
+        11124280 => MotherBrain_DrainedByShitroid_0(game),
+        11124317 => MotherBrain_DrainedByShitroid_1(game),
+        11124374 => MotherBrain_DrainedByShitroid_2(game),
+        11124494 => MotherBrain_DrainedByShitroid_3(game),
+        11124545 => MotherBrain_DrainedByShitroid_4(game),
+        11124566 => MotherBrain_DrainedByShitroid_5(game),
+        11124605 => MotherBrain_DrainedByShitroid_6(game),
+        11124629 => MotherBrain_DrainedByShitroid_7(game),
+        11124825 => MotherBrain_Phase2_Revive_0(game),
+        11124838 => MotherBrain_Phase2_Revive_1(game),
+        11124866 => MotherBrain_Phase2_Revive_2(game),
+        11124879 => MotherBrain_Phase2_Revive_3(game),
+        11124922 => MotherBrain_Phase2_Revive_4(game),
+        11124964 => MotherBrain_Phase2_Revive_5(game),
+        11124987 => MotherBrain_Phase2_Revive_6(game),
+        11125022 => MotherBrain_Phase2_Revive_7(game),
+        11125063 => MotherBrain_Phase2_Revive_8(game),
+        11125084 => MotherBrain_Phase2_MurderShitroid_1(game),
+        11125122 => MotherBrain_Phase2_MurderShitroid_2(game),
+        11125134 => MotherBrain_Phase2_PrepareForFinalShitroid(game),
+        11125146 => MotherBrain_Phase2_ExecuteFinalkShitroid(game),
         11125158 => (),
-        11125199 => {
-            MotherBrain_Phase3_Recover_MakeDistance(game);
-        }
-        11125232 => {
-            MotherBrain_Phase3_Recover_SetupForFight(game);
-        }
-        11125257 => {
-            MotherBrain_Phase3_Fighting_Main(game);
-        }
-        11125326 => {
-            MotherBrain_Phase3_Fighting_Cooldown(game);
-        }
+        11125199 => MotherBrain_Phase3_Recover_MakeDistance(game),
+        11125232 => MotherBrain_Phase3_Recover_SetupForFight(game),
+        11125257 => MotherBrain_Phase3_Fighting_Main(game),
+        11125326 => MotherBrain_Phase3_Fighting_Cooldown(game),
         11111140 => (),
         11125133 => (),
-        11110306 => {
-            MotherBrainsBrain_SetupBrainAndNeckToDraw(game);
-        }
+        11110306 => MotherBrainsBrain_SetupBrainAndNeckToDraw(game),
         _ => {
             Unreachable(game);
         }
@@ -1721,15 +1393,9 @@ pub unsafe fn MotherBrainsTubesFalling_Init(game: &mut Game) {
 }
 pub unsafe fn CallMotherBrainsTubesFalling(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
-        11111304 => {
-            MotherBrainsTubesFalling_Main_NonMain(k, game);
-        }
-        11111371 => {
-            MotherBrainsTubesFalling_WaitToFall(k, game);
-        }
-        11111382 => {
-            MotherBrainsTubesFalling_Falling(k, game);
-        }
+        11111304 => MotherBrainsTubesFalling_Main_NonMain(k, game),
+        11111371 => MotherBrainsTubesFalling_WaitToFall(k, game),
+        11111382 => MotherBrainsTubesFalling_Falling(k, game),
         _ => {
             Unreachable(game);
         }
@@ -2158,18 +1824,10 @@ pub unsafe fn MotherBrain_HandleNeckLower(game: &mut Game) {
     let mbn_var_32: uint16 = (*Get_MotherBrain(0x40 as ::core::ffi::c_int, game)).mbn_var_32;
     if mbn_var_32 != 0 {
         match mbn_var_32 as ::core::ffi::c_int {
-            2 => {
-                MotherBrain_HandleNeckLower_2_BobDown(game);
-            }
-            4 => {
-                MotherBrain_HandleNeckLower_4_BobUp(game);
-            }
-            6 => {
-                MotherBrain_HandleNeckLower_6_Lower(game);
-            }
-            8 => {
-                MotherBrain_HandleNeckLower_8_Raise(game);
-            }
+            2 => MotherBrain_HandleNeckLower_2_BobDown(game),
+            4 => MotherBrain_HandleNeckLower_4_BobUp(game),
+            6 => MotherBrain_HandleNeckLower_6_Lower(game),
+            8 => MotherBrain_HandleNeckLower_8_Raise(game),
             _ => {
                 Unreachable(game);
                 loop {}
@@ -3709,9 +3367,7 @@ pub unsafe fn MotherBrain_Body_Phase2_Thinking(game: &mut Game) {
             return;
         }
         match current_block_9 {
-            3601231341105262975 => {
-                MotherBrain_HandleWalking(game);
-            }
+            3601231341105262975 => MotherBrain_HandleWalking(game),
             _ => {
                 (*E).mbn_var_A = ((0xa9b64bi32) as u16);
             }
@@ -4555,18 +4211,10 @@ pub unsafe fn MotherBrain_DrainedByShitroid_1(game: &mut Game) {
 }
 pub unsafe fn CallMotherBrainPainfulWalk(ea: uint32, game: &mut Game) {
     match ea {
-        11124688 => {
-            MotherBrain_PainfulWalkForwards(game);
-        }
-        11124712 => {
-            MotherBrain_PainfulWalkingForwards(game);
-        }
-        11124740 => {
-            MotherBrain_PainfulWalkBackwards(game);
-        }
-        11124764 => {
-            MotherBrain_PainfulWalkingBackwards(game);
-        }
+        11124688 => MotherBrain_PainfulWalkForwards(game),
+        11124712 => MotherBrain_PainfulWalkingForwards(game),
+        11124740 => MotherBrain_PainfulWalkBackwards(game),
+        11124764 => MotherBrain_PainfulWalkingBackwards(game),
         _ => {
             Unreachable(game);
         }
@@ -4893,15 +4541,9 @@ pub unsafe fn MotherBrain_Phase3_Fighting_Cooldown(game: &mut Game) {
 }
 pub unsafe fn CallMotherBrainWallkFunc1A(ea: uint32, game: &mut Game) {
     match ea {
-        11125354 => {
-            MotherBrain_Phase3_Walk_TryToInchForward(game);
-        }
-        11125427 => {
-            MotherBrain_Phase3_Walk_RetreatQuickly(game);
-        }
-        11125458 => {
-            MotherBrain_Phase3_Walk_RetreatSlowly(game);
-        }
+        11125354 => MotherBrain_Phase3_Walk_TryToInchForward(game),
+        11125427 => MotherBrain_Phase3_Walk_RetreatQuickly(game),
+        11125458 => MotherBrain_Phase3_Walk_RetreatSlowly(game),
         _ => {
             Unreachable(game);
         }
@@ -4976,21 +4618,11 @@ pub unsafe fn MotherBrain_SetToTryToInchForward(a: uint16, game: &mut Game) {
 pub unsafe fn CallMotherBrainNeckFunc(ea: uint32, game: &mut Game) {
     match ea {
         11125587 => (),
-        11125552 => {
-            MotherBrain_Phase3_Neck_Normal(game);
-        }
-        11125588 => {
-            MotherBrain_Phase3_Neck_SetupRecoilRecovery(game);
-        }
-        11125627 => {
-            MotherBrain_Phase3_Neck_RecoilRecovery(game);
-        }
-        11125653 => {
-            MotherBrain_Phase3_Neck_SetupHyperBeamRecoil(game);
-        }
-        11125709 => {
-            MotherBrain_Phase3_Neck_HyperBeamRecoil(game);
-        }
+        11125552 => MotherBrain_Phase3_Neck_Normal(game),
+        11125588 => MotherBrain_Phase3_Neck_SetupRecoilRecovery(game),
+        11125627 => MotherBrain_Phase3_Neck_RecoilRecovery(game),
+        11125653 => MotherBrain_Phase3_Neck_SetupHyperBeamRecoil(game),
+        11125709 => MotherBrain_Phase3_Neck_HyperBeamRecoil(game),
         _ => {
             Unreachable(game);
         }
@@ -5451,87 +5083,33 @@ pub unsafe fn ShitroidInCutscene_Init(game: &mut Game) {
 pub unsafe fn CallShitroidCutsceneFuncA(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
         11125133 => (),
-        11126732 => {
-            ShitroidInCutscene_DashOntoScreen(k, game);
-        }
-        11126764 => {
-            ShitroidInCutscene_CurveTowardsBrain(k, game);
-        }
-        11126801 => {
-            ShitroidInCutscene_GetIntoFace(k, game);
-        }
-        11126865 => {
-            ShitroidInCutscene_LatchOntoBrain(k, game);
-        }
-        11126905 => {
-            ShitroidInCutscene_SetMotherBrainToStumbleBack(k, game);
-        }
-        11126921 => {
-            ShitroidInCutscene_ActivateRainbowBeam(k, game);
-        }
-        11127010 => {
-            ShitroidInCutscene_BrainTurnsToCorpse(k, game);
-        }
-        11127061 => {
-            ShitroidInCutscene_StopDraining(k, game);
-        }
-        11127115 => {
-            ShitroidInCutscene_LetGoAndSpawnDust(k, game);
-        }
-        11127129 => {
-            ShitroidInCutscene_MoveUpToCeiling(k, game);
-        }
-        11127235 => {
-            ShitroidInCutscene_MoveToSamus(k, game);
-        }
-        11127398 => {
-            ShitroidInCutscene_LatchOntoSamus(k, game);
-        }
-        11127418 => {
-            ShitroidInCutscene_HealSamusToFullHealth(k, game);
-        }
-        11127485 => {
-            ShitroidInCutscene_IdleUntilToNoHealth(k, game);
-        }
-        11127571 => {
-            ShitroidInCutscene_ReleaseSamus(k, game);
-        }
-        11127597 => {
-            ShitroidInCutscene_StareDownMotherBrain(k, game);
-        }
-        11127638 => {
-            ShitroidInCutscene_FlyOffScreen(k, game);
-        }
-        11127675 => {
-            ShitroidInCutscene_MoveToFinalChargeStart(k, game);
-        }
-        11127731 => {
-            ShitroidInCutscene_InitiateFinalCharge(k, game);
-        }
-        11127768 => {
-            ShitroidInCutscene_FinalCharge(k, game);
-        }
-        11127870 => {
-            ShitroidInCutscene_ShitroidFinalBelow(k, game);
-        }
-        11127904 => {
-            ShitroidInCutscene_PlaySamusTheme(k, game);
-        }
-        11127935 => {
-            ShitroidInCutscene_PrepareSamusHyperbeam(k, game);
-        }
-        11127961 => {
-            ShitroidInCutscene_DeathSequence(k, game);
-        }
-        11128000 => {
-            ShitroidInCutscene_UnloadShitroid(k, game);
-        }
-        11128030 => {
-            ShitroidInCutscene_LetSamusRainbowMore(k, game);
-        }
-        11128048 => {
-            ShitroidInCutscene_FinishCutscene(k, game);
-        }
+        11126732 => ShitroidInCutscene_DashOntoScreen(k, game),
+        11126764 => ShitroidInCutscene_CurveTowardsBrain(k, game),
+        11126801 => ShitroidInCutscene_GetIntoFace(k, game),
+        11126865 => ShitroidInCutscene_LatchOntoBrain(k, game),
+        11126905 => ShitroidInCutscene_SetMotherBrainToStumbleBack(k, game),
+        11126921 => ShitroidInCutscene_ActivateRainbowBeam(k, game),
+        11127010 => ShitroidInCutscene_BrainTurnsToCorpse(k, game),
+        11127061 => ShitroidInCutscene_StopDraining(k, game),
+        11127115 => ShitroidInCutscene_LetGoAndSpawnDust(k, game),
+        11127129 => ShitroidInCutscene_MoveUpToCeiling(k, game),
+        11127235 => ShitroidInCutscene_MoveToSamus(k, game),
+        11127398 => ShitroidInCutscene_LatchOntoSamus(k, game),
+        11127418 => ShitroidInCutscene_HealSamusToFullHealth(k, game),
+        11127485 => ShitroidInCutscene_IdleUntilToNoHealth(k, game),
+        11127571 => ShitroidInCutscene_ReleaseSamus(k, game),
+        11127597 => ShitroidInCutscene_StareDownMotherBrain(k, game),
+        11127638 => ShitroidInCutscene_FlyOffScreen(k, game),
+        11127675 => ShitroidInCutscene_MoveToFinalChargeStart(k, game),
+        11127731 => ShitroidInCutscene_InitiateFinalCharge(k, game),
+        11127768 => ShitroidInCutscene_FinalCharge(k, game),
+        11127870 => ShitroidInCutscene_ShitroidFinalBelow(k, game),
+        11127904 => ShitroidInCutscene_PlaySamusTheme(k, game),
+        11127935 => ShitroidInCutscene_PrepareSamusHyperbeam(k, game),
+        11127961 => ShitroidInCutscene_DeathSequence(k, game),
+        11128000 => ShitroidInCutscene_UnloadShitroid(k, game),
+        11128030 => ShitroidInCutscene_LetSamusRainbowMore(k, game),
+        11128048 => ShitroidInCutscene_FinishCutscene(k, game),
         _ => {
             Unreachable(game);
         }
@@ -5541,12 +5119,8 @@ pub unsafe fn CallShitroidCutsceneFunc0F(ea: uint32, game: &mut Game) {
     match ea {
         11127484 => (),
         11127960 => (),
-        11138691 => {
-            Shitroid_HandleCutscenePalette(game);
-        }
-        11138703 => {
-            Shitroid_HandleCutscenePalette_LowHealth(game);
-        }
+        11138691 => Shitroid_HandleCutscenePalette(game),
+        11138703 => Shitroid_HandleCutscenePalette_LowHealth(game),
         _ => {
             Unreachable(game);
         }
@@ -5786,12 +5360,8 @@ pub unsafe fn CallShitroidMoveFunc(
     game: &mut Game,
 ) {
     match ea {
-        11138143 => {
-            Shitroid_GraduallyAccelerateTowards0x8(k, j, r18, r20, game);
-        }
-        11138150 => {
-            Shitroid_GraduallyAccelerateTowards0x10(k, j, r18, r20, game);
-        }
+        11138143 => Shitroid_GraduallyAccelerateTowards0x8(k, j, r18, r20, game),
+        11138150 => Shitroid_GraduallyAccelerateTowards0x10(k, j, r18, r20, game),
         _ => {
             Unreachable(game);
         }
@@ -6066,12 +5636,8 @@ pub unsafe fn ShitroidInCutscene_FinishCutscene(k: uint16, game: &mut Game) {
 }
 pub unsafe fn CallSamusRainbowPaletteFunc(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
-        11128112 => {
-            SamusRainbowPaletteFunc_ActivateWhenEnemyLow(k, game);
-        }
-        11128139 => {
-            SamusRainbowPaletteFunc_GraduallySlowDown(game);
-        }
+        11128112 => SamusRainbowPaletteFunc_ActivateWhenEnemyLow(k, game),
+        11128139 => SamusRainbowPaletteFunc_GraduallySlowDown(game),
         _ => {
             Unreachable(game);
         }
@@ -6615,12 +6181,8 @@ pub unsafe fn CallDeadTorizoFuncA(ea: uint32, game: &mut Game) {
         11129773 => {
             DeadTorizo_WaitForSamusColl(ram_word!(game, cur_enemy_index), game);
         }
-        11129830 => {
-            DeadTorizo_Rotting(game);
-        }
-        11129800 => {
-            DeadTorizo_PreRotDelay(game);
-        }
+        11129830 => DeadTorizo_Rotting(game),
+        11129800 => DeadTorizo_PreRotDelay(game),
         11129799 => (),
         _ => {
             Unreachable(game);
@@ -7074,57 +6636,23 @@ pub unsafe fn DeadSidehopper_Powerbomb(game: &mut Game) {
 }
 pub unsafe fn CallDeadSidehopperFunc(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
-        11131121 => {
-            DeadSidehopper_Activated(k, game);
-        }
-        11131106 => {
-            DeadSidehopper_Alive_WaitForActivate(k, game);
-        }
-        11131492 => {
-            DeadSidehopper_WaitForSamusColl(k, game);
-        }
-        11131497 => {
-            DeadZoomer_WaitForSamusColl(k, game);
-        }
-        11131502 => {
-            DeadSkree_WaitForSamusColl(k, game);
-        }
-        11131507 => {
-            DeadRipper_WaitForSamusColl(k, game);
-        }
-        11131535 => {
-            DeadSidehopper_PreRotDelay(k, game);
-        }
-        11131540 => {
-            DeadZoomer_PreRotDelay(k, game);
-        }
-        11131550 => {
-            DeadSkree_PreRotDelay(k, game);
-        }
-        11131545 => {
-            DeadRipper_PreRotDelay(k, game);
-        }
-        11131578 => {
-            DeadSidehopper_Rotting(k, game);
-        }
-        11131600 => {
-            DeadZoomer_Rotting(k, game);
-        }
-        11131644 => {
-            DeadSkree_Rotting(k, game);
-        }
-        11131622 => {
-            DeadRipper_Rotting(k, game);
-        }
-        11131152 => {
-            DeadMonsters_Func_1(k, game);
-        }
-        11131165 => {
-            DeadMonsters_Func_2(k, game);
-        }
-        11131400 => {
-            DeadMonsters_Func_5(k, game);
-        }
+        11131121 => DeadSidehopper_Activated(k, game),
+        11131106 => DeadSidehopper_Alive_WaitForActivate(k, game),
+        11131492 => DeadSidehopper_WaitForSamusColl(k, game),
+        11131497 => DeadZoomer_WaitForSamusColl(k, game),
+        11131502 => DeadSkree_WaitForSamusColl(k, game),
+        11131507 => DeadRipper_WaitForSamusColl(k, game),
+        11131535 => DeadSidehopper_PreRotDelay(k, game),
+        11131540 => DeadZoomer_PreRotDelay(k, game),
+        11131550 => DeadSkree_PreRotDelay(k, game),
+        11131545 => DeadRipper_PreRotDelay(k, game),
+        11131578 => DeadSidehopper_Rotting(k, game),
+        11131600 => DeadZoomer_Rotting(k, game),
+        11131644 => DeadSkree_Rotting(k, game),
+        11131622 => DeadRipper_Rotting(k, game),
+        11131152 => DeadMonsters_Func_1(k, game),
+        11131165 => DeadMonsters_Func_2(k, game),
+        11131400 => DeadMonsters_Func_5(k, game),
         11131151 => (),
         11131491 => (),
         _ => {
@@ -9794,75 +9322,29 @@ pub unsafe fn Shitroid_Powerbomb(game: &mut Game) {
 }
 pub unsafe fn CallShitroidFunc(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
-        11136991 => {
-            Shitroid_Func_3(k, game);
-        }
-        11136998 => {
-            Shitroid_Func_4(game);
-        }
-        11137067 => {
-            Shitroid_Func_5(k, game);
-        }
-        11137079 => {
-            Shitroid_Func_6(k, game);
-        }
-        11137097 => {
-            Shitroid_Func_7(k, game);
-        }
-        11137133 => {
-            Shitroid_Func_8(k, game);
-        }
-        11137172 => {
-            Shitroid_Func_9(k, game);
-        }
-        11137254 => {
-            Shitroid_Func_10(k, game);
-        }
-        11137317 => {
-            Shitroid_Func_11(k, game);
-        }
-        11137336 => {
-            Shitroid_Func_12(k, game);
-        }
-        11137408 => {
-            Shitroid_Func_13(k, game);
-        }
-        11137530 => {
-            Shitroid_Func_14(k, game);
-        }
-        11137550 => {
-            Shitroid_Func_15(k, game);
-        }
-        11137563 => {
-            Shitroid_Func_16(k, game);
-        }
-        11137698 => {
-            Shitroid_Func_17(k, game);
-        }
-        11137710 => {
-            Shitroid_Func_18(k, game);
-        }
-        11137728 => {
-            Shitroid_Func_19(k, game);
-        }
-        11137787 => {
-            Shitroid_Func_20(game);
-        }
-        11137828 => {
-            Shitroid_Func_21(game);
-        }
-        11137888 => {
-            Shitroid_Func_22(k, game);
-        }
-        11137901 => {
-            Shitroid_Func_23(game);
-        }
-        11137955 => {
-            Shitroid_Func_24(k, game);
-        }
-        11137982 => {
-            Shitroid_Func_25(k, game);
-        }
+        11136991 => Shitroid_Func_3(k, game),
+        11136998 => Shitroid_Func_4(game),
+        11137067 => Shitroid_Func_5(k, game),
+        11137079 => Shitroid_Func_6(k, game),
+        11137097 => Shitroid_Func_7(k, game),
+        11137133 => Shitroid_Func_8(k, game),
+        11137172 => Shitroid_Func_9(k, game),
+        11137254 => Shitroid_Func_10(k, game),
+        11137317 => Shitroid_Func_11(k, game),
+        11137336 => Shitroid_Func_12(k, game),
+        11137408 => Shitroid_Func_13(k, game),
+        11137530 => Shitroid_Func_14(k, game),
+        11137550 => Shitroid_Func_15(k, game),
+        11137563 => Shitroid_Func_16(k, game),
+        11137698 => Shitroid_Func_17(k, game),
+        11137710 => Shitroid_Func_18(k, game),
+        11137728 => Shitroid_Func_19(k, game),
+        11137787 => Shitroid_Func_20(game),
+        11137828 => Shitroid_Func_21(game),
+        11137888 => Shitroid_Func_22(k, game),
+        11137901 => Shitroid_Func_23(game),
+        11137955 => Shitroid_Func_24(k, game),
+        11137982 => Shitroid_Func_25(k, game),
         _ => {
             Unreachable(game);
         }

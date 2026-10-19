@@ -160,12 +160,8 @@ unsafe fn WriteSmallMessageBoxTilemap(game: &mut Game) {
 }
 unsafe fn CallMsgBoxDraw(ea: uint32, game: &mut Game) {
     match ea {
-        8749658 => {
-            WriteLargeMessageBoxTilemap(game);
-        }
-        8749705 => {
-            WriteSmallMessageBoxTilemap(game);
-        }
+        8749658 => WriteLargeMessageBoxTilemap(game),
+        8749705 => WriteSmallMessageBoxTilemap(game),
         _ => {
             Unreachable(game);
         }
@@ -255,18 +251,10 @@ unsafe fn SetupPpuForLargeMessageBox(game: &mut Game) {
 }
 unsafe fn CallMsgBoxModify(ea: uint32, game: &mut Game) {
     match ea {
-        8750021 => {
-            DrawShootButtonAndSetupPpuForLargeMessageBox(game);
-        }
-        8750028 => {
-            DrawRunButtonAndSetupPpuForLargeMessageBox(game);
-        }
-        8750134 => {
-            SetupPpuForSmallMessageBox(game);
-        }
-        8750145 => {
-            SetupPpuForLargeMessageBox(game);
-        }
+        8750021 => DrawShootButtonAndSetupPpuForLargeMessageBox(game),
+        8750028 => DrawRunButtonAndSetupPpuForLargeMessageBox(game),
+        8750134 => SetupPpuForSmallMessageBox(game),
+        8750145 => SetupPpuForLargeMessageBox(game),
         _ => {
             Unreachable(game);
         }

@@ -508,36 +508,16 @@ unsafe fn ProcessEnemyGrappleBeamColl(
 }
 pub unsafe fn CallGrappleNextFunc(ea: uint32, game: &mut Game) {
     match ea {
-        10205657 => {
-            GrappleNext_SwingClockwise(game);
-        }
-        10205666 => {
-            GrappleNext_SwingAntiClockwise(game);
-        }
-        10205674 => {
-            GrappleNext_StandAimRight(game);
-        }
-        10205683 => {
-            GrappleNext_StandAimDownRight(game);
-        }
-        10205692 => {
-            GrappleNext_StandAimDownLeft(game);
-        }
-        10205701 => {
-            GrappleNext_StandAimLeft(game);
-        }
-        10205710 => {
-            GrappleNext_CrouchAimRight(game);
-        }
-        10205719 => {
-            GrappleNext_CrouchAimDownRight(game);
-        }
-        10205728 => {
-            GrappleNext_CrouchAimDownLeft(game);
-        }
-        10205737 => {
-            GrappleNext_CrouchAimLeft(game);
-        }
+        10205657 => GrappleNext_SwingClockwise(game),
+        10205666 => GrappleNext_SwingAntiClockwise(game),
+        10205674 => GrappleNext_StandAimRight(game),
+        10205683 => GrappleNext_StandAimDownRight(game),
+        10205692 => GrappleNext_StandAimDownLeft(game),
+        10205701 => GrappleNext_StandAimLeft(game),
+        10205710 => GrappleNext_CrouchAimRight(game),
+        10205719 => GrappleNext_CrouchAimDownRight(game),
+        10205728 => GrappleNext_CrouchAimDownLeft(game),
+        10205737 => GrappleNext_CrouchAimLeft(game),
         _ => {
             Unreachable(game);
         }
@@ -2139,63 +2119,25 @@ pub unsafe fn GrappleBeamFunc_ReleaseFromSwing(game: &mut Game) {
 }
 pub unsafe fn CallGrappleBeamFunc(ea: uint32, game: &mut Game) {
     match ea {
-        10206052 => {
-            GrappleBeamFunc_BB64(game);
-        }
-        10206239 => {
-            GrappleBeamFunc_BC1F(game);
-        }
-        10206463 => {
-            GrappleBeamFunc_BCFF(game);
-        }
-        10206532 => {
-            GrappleBeamFunc_BD44(game);
-        }
-        10206613 => {
-            GrappleBeamFunc_BD95(game);
-        }
-        10206872 => {
-            GrappleBeamFunc_BE98(game);
-        }
-        10206955 => {
-            GrappleBeamFunc_BEEB(game);
-        }
-        10207003 => {
-            GrappleBeamFunc_BF1B(game);
-        }
-        10208496 => {
-            GrappleBeamFunc_Inactive(game);
-        }
-        10208542 => {
-            GrappleBeamFunc_FireGoToCancel(game);
-        }
-        10209027 => {
-            GrappleBeamFunc_Firing(game);
-        }
-        10209150 => {
-            GrappleBeamFunc_ConnectedLockedInPlace(game);
-        }
-        10209181 => {
-            GrappleBeamFunc_Connected_Swinging(game);
-        }
-        10209300 => {
-            GrappleBeamFunc_Wallgrab(game);
-        }
-        10209330 => {
-            GrappleBeamFunc_C832(game);
-        }
-        10209366 => {
-            GrappleBeamFunc_Cancel(game);
-        }
-        10209742 => {
-            GrappleBeamFunc_C9CE(game);
-        }
-        10210187 => {
-            GrappleBeamFunc_ReleaseFromSwing(game);
-        }
-        10209477 => {
-            GrappleBeam_Func2(game);
-        }
+        10206052 => GrappleBeamFunc_BB64(game),
+        10206239 => GrappleBeamFunc_BC1F(game),
+        10206463 => GrappleBeamFunc_BCFF(game),
+        10206532 => GrappleBeamFunc_BD44(game),
+        10206613 => GrappleBeamFunc_BD95(game),
+        10206872 => GrappleBeamFunc_BE98(game),
+        10206955 => GrappleBeamFunc_BEEB(game),
+        10207003 => GrappleBeamFunc_BF1B(game),
+        10208496 => GrappleBeamFunc_Inactive(game),
+        10208542 => GrappleBeamFunc_FireGoToCancel(game),
+        10209027 => GrappleBeamFunc_Firing(game),
+        10209150 => GrappleBeamFunc_ConnectedLockedInPlace(game),
+        10209181 => GrappleBeamFunc_Connected_Swinging(game),
+        10209300 => GrappleBeamFunc_Wallgrab(game),
+        10209330 => GrappleBeamFunc_C832(game),
+        10209366 => GrappleBeamFunc_Cancel(game),
+        10209742 => GrappleBeamFunc_C9CE(game),
+        10210187 => GrappleBeamFunc_ReleaseFromSwing(game),
+        10209477 => GrappleBeam_Func2(game),
         _ => {
             Unreachable(game);
         }

@@ -417,30 +417,14 @@ pub unsafe fn PalInit_F779_Brinstar8(k: uint16, j: uint16, game: &mut Game) {
 }
 pub unsafe fn CallPalFxPreInstr(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
-        9291046 => {
-            PalPreInstr_nullsub_129(k);
-        }
-        9298443 => {
-            PalPreInstr_E1BC(k, game);
-        }
-        9298656 => {
-            PalPreInstr_CheckEnemy0Health(k, game);
-        }
-        9298809 => {
-            PalPreInstr_SamusInHeat(k, game);
-        }
-        9301701 => {
-            PalPreInstr_DeletePalfxIfMinibossDead(k, game);
-        }
-        9301081 => {
-            PalPreInstr_SwitchIfYpos(k, game);
-        }
-        9301380 => {
-            PalPreInstr_SwitchIfYpos2(k, game);
-        }
-        9303585 => {
-            PalPreInstr_F621(k, game);
-        }
+        9291046 => PalPreInstr_nullsub_129(k),
+        9298443 => PalPreInstr_E1BC(k, game),
+        9298656 => PalPreInstr_CheckEnemy0Health(k, game),
+        9298809 => PalPreInstr_SamusInHeat(k, game),
+        9301701 => PalPreInstr_DeletePalfxIfMinibossDead(k, game),
+        9301081 => PalPreInstr_SwitchIfYpos(k, game),
+        9301380 => PalPreInstr_SwitchIfYpos2(k, game),
+        9303585 => PalPreInstr_F621(k, game),
         _ => {
             Unreachable(game);
         }
@@ -479,15 +463,9 @@ pub unsafe fn CallPalInstr(ea: uint32, k: uint16, j: uint16, game: &mut Game) ->
 pub unsafe fn CallPalfxFunc(ea: uint32, k: uint16, j: uint16, game: &mut Game) {
     match ea {
         9291397 => (),
-        9298436 => {
-            PalInit_E1BC(k, j, game);
-        }
-        9299008 => {
-            PalInit_F761_Norfair1(k, j, game);
-        }
-        9303856 => {
-            PalInit_F779_Brinstar8(k, j, game);
-        }
+        9298436 => PalInit_E1BC(k, j, game),
+        9299008 => PalInit_F761_Norfair1(k, j, game),
+        9303856 => PalInit_F779_Brinstar8(k, j, game),
         _ => {
             Unreachable(game);
         }

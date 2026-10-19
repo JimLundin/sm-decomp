@@ -2075,9 +2075,7 @@ unsafe fn HandleEffect(p: *mut SpcPlayer, c: *mut Channel, effect: uint8) {
         0 as ::core::ffi::c_int
     }) as uint8;
     match effect as ::core::ffi::c_int {
-        224 => {
-            Channel_SetInstrument(p, c, arg);
-        }
+        224 => Channel_SetInstrument(p, c, arg),
         225 => {
             (*c).pan_flag_with_phase_invert = arg;
             (*c).pan_value = ((arg as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int)
@@ -2337,9 +2335,7 @@ unsafe fn HandleEffect(p: *mut SpcPlayer, c: *mut Channel, effect: uint8) {
             (*p).key_OFF = ((*p).key_OFF as ::core::ffi::c_int
                 | !((*p).is_chan_on as ::core::ffi::c_int)) as uint8;
         }
-        _ => {
-            Not_Implemented();
-        }
+        _ => Not_Implemented(),
     };
 }
 unsafe fn WantWriteKof(p: *mut SpcPlayer, c: *mut Channel) -> bool {

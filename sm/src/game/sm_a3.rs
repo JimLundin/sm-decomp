@@ -654,18 +654,12 @@ pub unsafe fn Metalee_Init(game: &mut Game) {
 }
 pub unsafe fn CallMetaleeFunc(ea: uint32, game: &mut Game) {
     match ea {
-        10717575 => {
-            Metalee_Func_1(game);
-        }
+        10717575 => Metalee_Func_1(game),
         10717652 => {
             Metalee_Func_3(ram_word!(game, cur_enemy_index), game);
         }
-        10717683 => {
-            Metalee_Func_4(game);
-        }
-        10717788 => {
-            Metalee_Func_5(game);
-        }
+        10717683 => Metalee_Func_4(game),
+        10717788 => Metalee_Func_5(game),
         _ => {
             Unreachable(game);
         }
@@ -1097,18 +1091,10 @@ pub unsafe fn MaridiaFish_Func_4(game: &mut Game) {
 }
 pub unsafe fn CallMaridiaFishFunc(ea: uint32, game: &mut Game) {
     match ea {
-        10719538 => {
-            MaridiaFish_Func_1(game);
-        }
-        10719659 => {
-            MaridiaFish_Func_2(game);
-        }
-        10719780 => {
-            MaridiaFish_Func_3(game);
-        }
-        10719830 => {
-            MaridiaFish_Func_4(game);
-        }
+        10719538 => MaridiaFish_Func_1(game),
+        10719659 => MaridiaFish_Func_2(game),
+        10719780 => MaridiaFish_Func_3(game),
+        10719830 => MaridiaFish_Func_4(game),
         _ => {
             Unreachable(game);
         }
@@ -1803,57 +1789,23 @@ pub unsafe fn Roach_Func_8(k: uint16, game: &mut Game) {
 }
 pub unsafe fn CallRoachFunc(ea: uint32, game: &mut Game) {
     match ea {
-        10724055 => {
-            Roach_Func_9(game);
-        }
-        10724097 => {
-            Roach_Func_10(game);
-        }
-        10724107 => {
-            Roach_Func_11(game);
-        }
-        10724117 => {
-            Roach_Func_12(game);
-        }
-        10724133 => {
-            Roach_Func_13(game);
-        }
-        10724155 => {
-            Roach_Func_14(game);
-        }
-        10724171 => {
-            Roach_Func_15(game);
-        }
-        10724224 => {
-            Roach_Func_16(game);
-        }
-        10724359 => {
-            Roach_Func_19(game);
-        }
-        10724366 => {
-            Roach_Func_20(game);
-        }
-        10724416 => {
-            Roach_Func_21(game);
-        }
-        10724423 => {
-            Roach_Func_22(game);
-        }
-        10724430 => {
-            Roach_Func_23(game);
-        }
-        10724450 => {
-            Roach_Func_24(game);
-        }
-        10724470 => {
-            Roach_Func_25(game);
-        }
-        10724534 => {
-            Roach_Func_26(game);
-        }
-        10724592 => {
-            Roach_Func_27(game);
-        }
+        10724055 => Roach_Func_9(game),
+        10724097 => Roach_Func_10(game),
+        10724107 => Roach_Func_11(game),
+        10724117 => Roach_Func_12(game),
+        10724133 => Roach_Func_13(game),
+        10724155 => Roach_Func_14(game),
+        10724171 => Roach_Func_15(game),
+        10724224 => Roach_Func_16(game),
+        10724359 => Roach_Func_19(game),
+        10724366 => Roach_Func_20(game),
+        10724416 => Roach_Func_21(game),
+        10724423 => Roach_Func_22(game),
+        10724430 => Roach_Func_23(game),
+        10724450 => Roach_Func_24(game),
+        10724470 => Roach_Func_25(game),
+        10724534 => Roach_Func_26(game),
+        10724592 => Roach_Func_27(game),
         _ => {
             Unreachable(game);
         }
@@ -2637,48 +2589,20 @@ unsafe fn CallSidehopperFunc(ea: uint32, game: &mut Game) {
         10726358 => {
             Sidehopper_Func_4(ram_word!(game, cur_enemy_index), game);
         }
-        10726374 => {
-            Sidehopper_Func_5(game);
-        }
-        10726419 => {
-            Sidehopper_Func_6(game);
-        }
-        10726464 => {
-            Sidehopper_Func_7(game);
-        }
-        10726486 => {
-            Sidehopper_Func_8(game);
-        }
-        10726508 => {
-            Sidehopper_Func_9(game);
-        }
-        10726543 => {
-            Sidehopper_Func_10(game);
-        }
-        10726568 => {
-            Sidehopper_Func_11(game);
-        }
-        10726603 => {
-            Sidehopper_Func_12(game);
-        }
-        10726628 => {
-            Sidehopper_Func_13(game);
-        }
-        10726670 => {
-            Sidehopper_Func_14(game);
-        }
-        10726688 => {
-            Sidehopper_Func_15(game);
-        }
-        10726706 => {
-            Sidehopper_Func_16(game);
-        }
-        10726724 => {
-            Sidehopper_Func_17(game);
-        }
-        10726742 => {
-            Sidehopper_Func_18(game);
-        }
+        10726374 => Sidehopper_Func_5(game),
+        10726419 => Sidehopper_Func_6(game),
+        10726464 => Sidehopper_Func_7(game),
+        10726486 => Sidehopper_Func_8(game),
+        10726508 => Sidehopper_Func_9(game),
+        10726543 => Sidehopper_Func_10(game),
+        10726568 => Sidehopper_Func_11(game),
+        10726603 => Sidehopper_Func_12(game),
+        10726628 => Sidehopper_Func_13(game),
+        10726670 => Sidehopper_Func_14(game),
+        10726688 => Sidehopper_Func_15(game),
+        10726706 => Sidehopper_Func_16(game),
+        10726724 => Sidehopper_Func_17(game),
+        10726742 => Sidehopper_Func_18(game),
         _ => {
             Unreachable(game);
         }
@@ -2864,15 +2788,9 @@ pub unsafe fn MaridiaRefillCandy_Init(game: &mut Game) {
 }
 pub unsafe fn CallMaridiaRefillCandyFunc(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
-        10728578 => {
-            MaridiaRefillCandy_Func_1(game);
-        }
-        10728616 => {
-            MaridiaRefillCandy_Func_2(k, game);
-        }
-        10728662 => {
-            MaridiaRefillCandy_Func_3(k, game);
-        }
+        10728578 => MaridiaRefillCandy_Func_1(game),
+        10728616 => MaridiaRefillCandy_Func_2(k, game),
+        10728662 => MaridiaRefillCandy_Func_3(k, game),
         _ => {
             Unreachable(game);
         }
@@ -3311,18 +3229,12 @@ pub unsafe fn Skree_Init(game: &mut Game) {
 }
 pub unsafe fn CallSkreeFunc(ea: uint32, game: &mut Game) {
     match ea {
-        10733269 => {
-            Skree_Func_1(game);
-        }
+        10733269 => Skree_Func_1(game),
         10733303 => {
             Skree_Func_2(ram_word!(game, cur_enemy_index), game);
         }
-        10733334 => {
-            Skree_Func_3(game);
-        }
-        10733439 => {
-            Skree_Func_4(game);
-        }
+        10733334 => Skree_Func_3(game),
+        10733439 => Skree_Func_4(game),
         _ => {
             Unreachable(game);
         }

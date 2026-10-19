@@ -405,18 +405,10 @@ static g_word_A7F4D9: uint16 = 0 as uint16;
 static g_word_A7F4DB: uint16 = 0x1000 as uint16;
 pub unsafe fn CallEnemyInstrExtFunc(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
-        10997485 => {
-            Phantoon_Func_1(game);
-        }
-        10997598 => {
-            Phantoon_Func_4(k, game);
-        }
-        10997823 => {
-            Phantoon_StartTrackingSamusAndInitEyeTimer(game);
-        }
-        10997878 => {
-            Phantoon_PickPatternForRound2(game);
-        }
+        10997485 => Phantoon_Func_1(game),
+        10997598 => Phantoon_Func_4(k, game),
+        10997823 => Phantoon_StartTrackingSamusAndInitEyeTimer(game),
+        10997878 => Phantoon_PickPatternForRound2(game),
         _ => {
             Unreachable(game);
         }
@@ -1068,12 +1060,8 @@ pub unsafe fn KraidInstr_PlayDyingSfx(game: &mut Game) {
 }
 pub unsafe fn CallKraidInstr(ea: uint32, game: &mut Game) {
     match ea {
-        10989460 => {
-            KraidInstr_PlayRoarSfx(game);
-        }
-        10989471 => {
-            KraidInstr_PlayDyingSfx(game);
-        }
+        10989460 => KraidInstr_PlayRoarSfx(game),
+        10989471 => KraidInstr_PlayDyingSfx(game),
         _ => {
             Unreachable(game);
         }
@@ -3041,25 +3029,13 @@ pub unsafe fn Kraid_CrumbleRightPlatform_Right(game: &mut Game) {
 }
 pub unsafe fn CallKraidSinkTableFunc(ea: uint32, game: &mut Game) {
     match ea {
-        10995345 => {
-            Kraid_CrumbleLeftPlatform_Left(game);
-        }
+        10995345 => Kraid_CrumbleLeftPlatform_Left(game),
         10995366 => (),
-        10995367 => {
-            Kraid_CrumbleRightPlatform_Middle(game);
-        }
-        10995389 => {
-            Kraid_CrumbleRightPlatform_Left(game);
-        }
-        10995411 => {
-            Kraid_CrumbleLeftPlatform_Right(game);
-        }
-        10995433 => {
-            Kraid_CrumbleLeftPlatform_Middle(game);
-        }
-        10995455 => {
-            Kraid_CrumbleRightPlatform_Right(game);
-        }
+        10995367 => Kraid_CrumbleRightPlatform_Middle(game),
+        10995389 => Kraid_CrumbleRightPlatform_Left(game),
+        10995411 => Kraid_CrumbleLeftPlatform_Right(game),
+        10995433 => Kraid_CrumbleLeftPlatform_Middle(game),
+        10995455 => Kraid_CrumbleRightPlatform_Right(game),
         _ => {
             Unreachable(game);
         }
@@ -3332,163 +3308,59 @@ pub unsafe fn Kraid_RestrictSamusXtoFirstScreen_2(game: &mut Game) {
 pub unsafe fn CallKraidFunc(ea: uint32, game: &mut Game) {
     let k: uint16 = ram_word!(game, cur_enemy_index);
     match ea {
-        10988621 => {
-            Kraid_GetsBig_BreakCeilingPlatforms(game);
-        }
-        10988858 => {
-            Kraid_GetsBig_SetBG2TilemapPrioBits(game);
-        }
-        10988897 => {
-            Kraid_GetsBig_FinishUpdateBg2Tilemap(game);
-        }
-        10988942 => {
-            Kraid_GetsBig_DrawRoomBg(game);
-        }
-        10989091 => {
-            Kraid_GetsBig_FadeInRoomBg(game);
-        }
-        10989220 => {
-            Kraid_Mainloop_Thinking(game);
-        }
-        10989252 => {
-            Kraid_GetsBig_Thinking(game);
-        }
-        10989284 => {
-            Kraid_Shot_MouthIsOpen(game);
-        }
-        10991295 => {
-            Kraid_InitEyeGlowing(game);
-        }
-        10991319 => {
-            Kraid_Shot_GlowHisEye(game);
-        }
-        10991421 => {
-            Kraid_Shot_UnglowEye(game);
-        }
-        10991666 => {
-            KraidLint_ProduceLint(k, game);
-        }
-        10991771 => {
-            KraidLint_FireLint(k, game);
-        }
-        10991879 => {
-            KraidFingernail_WaitForLintXpos(k, game);
-        }
-        10991907 => {
-            Kraid_AlignEnemyToKraid(k, game);
-        }
-        10991917 => {
-            KraidEnemy_HandleFunctionTimer(k, game);
-        }
-        10991935 => {
-            KraidEnemy_DecrementEnemyFunctionTimer(game);
-        }
-        10991968 => {
-            KraidFoot_FirstPhase_Thinking(k, game);
-        }
-        10991973 => {
-            KraidEnemy_ProcessInstrEnemyTimer(k, game);
-        }
-        10992174 => {
-            KraidsFoot_SecondPhase_Thinking(game);
-        }
-        10992453 => {
-            KraidsFoot_SecondPhase_WalkingBackwards(game);
-        }
-        10992494 => {
-            KraidsFoot_SecondPhaseSetup_WalkToStartPt(game);
-        }
-        10992548 => {
-            KraidsFoot_SecondPhase_Init(game);
-        }
-        10992558 => {
-            KraidsFoot_SecondPhase_WalkForward(game);
-        }
-        10992618 => {
-            Kraid_Main_AttackWithMouthOpen(game);
-        }
-        10992992 => {
-            KraidsFingernail_Init(game);
-        }
-        10993294 => {
-            KraidsFingernail_Fire(k, game);
-        }
-        10993453 => {
-            KraidsFoot_PrepareToLungeForward(game);
-        }
-        10993579 => {
-            KraidsFoot_FirstPhase_RetreatFromLunge(game);
-        }
-        10993825 => {
-            Kraid_GetsBig_ReleaseCamera(game);
-        }
-        10994528 => {
-            Kraid_Death_Init(game);
-        }
-        10994681 => {
-            Kraid_Death_Fadeout(game);
-        }
-        10994852 => {
-            Kraid_Death_UpdateBG2TilemapTopHalf(game);
-        }
-        10994888 => {
-            Kraid_Death_UpdateBG2TilemapBottomHalf(game);
-        }
-        10994999 => {
-            Kraid_Death_SinkThroughFloor(game);
-        }
-        10995477 => {
-            Kraid_FadeInBg_ClearBg2TilemapTopHalf(game);
-        }
-        10995537 => {
-            Kraid_FadeInBg_ClearBg2TilemapBottomHalf(game);
-        }
-        10995575 => {
-            Kraid_FadeInBg_LoadBg3Tiles1of4(game);
-        }
-        10995619 => {
-            Kraid_FadeInBg_LoadBg3Tiles2of4(game);
-        }
-        10995657 => {
-            Kraid_FadeInBg_LoadBg3Tiles3of4(game);
-        }
-        10995695 => {
-            Kraid_FadeInBg_LoadBg3Tiles4of4(game);
-        }
-        10995733 => {
-            Kraid_FadeInBg_FadeInBp6(game);
-        }
-        10995779 => {
-            Kraid_FadeInBg_SetEnemyDead_KraidWasAlive(game);
-        }
-        10995793 => {
-            Kraid_FadeInBg_SetEnemyDead_KraidWasDead(game);
-        }
-        10995813 => {
-            Kraid_RestrictSamusXtoFirstScreen(k, game);
-        }
-        10995819 => {
-            Kraid_RaiseKraidThroughFloor(k, game);
-        }
-        10995866 => {
-            Kraid_Raise_LoadTilemapBottomAndShake(game);
-        }
-        10995936 => {
-            Kraid_Raise_SpawnRandomEarthquakeProjs16(game);
-        }
-        10995970 => {
-            Kraid_Raise_SpawnRandomEarthquakeProjs8(game);
-        }
-        10996004 => {
-            Kraid_Raise_Handler(game);
-        }
-        10991720 => {
-            KraidLint_ChargeLint(k, game);
-        }
+        10988621 => Kraid_GetsBig_BreakCeilingPlatforms(game),
+        10988858 => Kraid_GetsBig_SetBG2TilemapPrioBits(game),
+        10988897 => Kraid_GetsBig_FinishUpdateBg2Tilemap(game),
+        10988942 => Kraid_GetsBig_DrawRoomBg(game),
+        10989091 => Kraid_GetsBig_FadeInRoomBg(game),
+        10989220 => Kraid_Mainloop_Thinking(game),
+        10989252 => Kraid_GetsBig_Thinking(game),
+        10989284 => Kraid_Shot_MouthIsOpen(game),
+        10991295 => Kraid_InitEyeGlowing(game),
+        10991319 => Kraid_Shot_GlowHisEye(game),
+        10991421 => Kraid_Shot_UnglowEye(game),
+        10991666 => KraidLint_ProduceLint(k, game),
+        10991771 => KraidLint_FireLint(k, game),
+        10991879 => KraidFingernail_WaitForLintXpos(k, game),
+        10991907 => Kraid_AlignEnemyToKraid(k, game),
+        10991917 => KraidEnemy_HandleFunctionTimer(k, game),
+        10991935 => KraidEnemy_DecrementEnemyFunctionTimer(game),
+        10991968 => KraidFoot_FirstPhase_Thinking(k, game),
+        10991973 => KraidEnemy_ProcessInstrEnemyTimer(k, game),
+        10992174 => KraidsFoot_SecondPhase_Thinking(game),
+        10992453 => KraidsFoot_SecondPhase_WalkingBackwards(game),
+        10992494 => KraidsFoot_SecondPhaseSetup_WalkToStartPt(game),
+        10992548 => KraidsFoot_SecondPhase_Init(game),
+        10992558 => KraidsFoot_SecondPhase_WalkForward(game),
+        10992618 => Kraid_Main_AttackWithMouthOpen(game),
+        10992992 => KraidsFingernail_Init(game),
+        10993294 => KraidsFingernail_Fire(k, game),
+        10993453 => KraidsFoot_PrepareToLungeForward(game),
+        10993579 => KraidsFoot_FirstPhase_RetreatFromLunge(game),
+        10993825 => Kraid_GetsBig_ReleaseCamera(game),
+        10994528 => Kraid_Death_Init(game),
+        10994681 => Kraid_Death_Fadeout(game),
+        10994852 => Kraid_Death_UpdateBG2TilemapTopHalf(game),
+        10994888 => Kraid_Death_UpdateBG2TilemapBottomHalf(game),
+        10994999 => Kraid_Death_SinkThroughFloor(game),
+        10995477 => Kraid_FadeInBg_ClearBg2TilemapTopHalf(game),
+        10995537 => Kraid_FadeInBg_ClearBg2TilemapBottomHalf(game),
+        10995575 => Kraid_FadeInBg_LoadBg3Tiles1of4(game),
+        10995619 => Kraid_FadeInBg_LoadBg3Tiles2of4(game),
+        10995657 => Kraid_FadeInBg_LoadBg3Tiles3of4(game),
+        10995695 => Kraid_FadeInBg_LoadBg3Tiles4of4(game),
+        10995733 => Kraid_FadeInBg_FadeInBp6(game),
+        10995779 => Kraid_FadeInBg_SetEnemyDead_KraidWasAlive(game),
+        10995793 => Kraid_FadeInBg_SetEnemyDead_KraidWasDead(game),
+        10995813 => Kraid_RestrictSamusXtoFirstScreen(k, game),
+        10995819 => Kraid_RaiseKraidThroughFloor(k, game),
+        10995866 => Kraid_Raise_LoadTilemapBottomAndShake(game),
+        10995936 => Kraid_Raise_SpawnRandomEarthquakeProjs16(game),
+        10995970 => Kraid_Raise_SpawnRandomEarthquakeProjs8(game),
+        10996004 => Kraid_Raise_Handler(game),
+        10991720 => KraidLint_ChargeLint(k, game),
         10992173 => (),
-        10993501 => {
-            KraidsFoot_FirstPhase_LungeForward(game);
-        }
+        10993501 => KraidsFoot_FirstPhase_LungeForward(game),
         10991665 => (),
         _ => {
             Unreachable(game);

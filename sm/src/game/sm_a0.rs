@@ -1870,35 +1870,17 @@ pub unsafe fn SetAllEnemiesToShakeFor2Frames(game: &mut Game) {
 pub unsafe fn CallEnemyGfxDrawHook(ea: uint32, game: &mut Game) {
     match ea {
         10518604 => (),
-        10738444 => {
-            Reflec_Func_1(game);
-        }
-        10851138 => {
-            Draygon_Func_36(game);
-        }
-        10920690 => {
-            Ridley_A2F2(game);
-        }
+        10738444 => Reflec_Func_1(game),
+        10851138 => Draygon_Func_36(game),
+        10920690 => Ridley_A2F2(game),
         11042892 => (),
-        11055282 => {
-            NorfairLavaMan_Func_6(game);
-        }
-        11062375 => {
-            WreckedShipRobot_Func_1(game);
-        }
-        11069550 => {
-            BlueBrinstarFaceBlock_Func_1(game);
-        }
+        11055282 => NorfairLavaMan_Func_6(game),
+        11062375 => WreckedShipRobot_Func_1(game),
+        11069550 => BlueBrinstarFaceBlock_Func_1(game),
         11110278 => (),
-        11110345 => {
-            MotherBrain_DrawBrainNeck_EnemyGfxDrawHook(game);
-        }
-        11110365 => {
-            MotherBrainsBrain_GfxDrawHook(game);
-        }
-        11129754 => {
-            DeadTorizo_MainGfxHook(game);
-        }
+        11110345 => MotherBrain_DrawBrainNeck_EnemyGfxDrawHook(game),
+        11110365 => MotherBrainsBrain_GfxDrawHook(game),
+        11129754 => DeadTorizo_MainGfxHook(game),
         _ => {
             Unreachable(game);
         }
@@ -2404,1235 +2386,445 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
 }
 pub unsafe fn CallEnemyAi(ea: uint32, game: &mut Game) {
     match ea {
-        10649605 => {
-            Enemy_GrappleReact_SamusLatchesOn_A2(game);
-        }
-        10649610 => {
-            Enemy_GrappleReact_KillEnemy_A2(game);
-        }
-        10649615 => {
-            Enemy_GrappleReact_CancelBeam_A2(game);
-        }
-        10649635 => {
-            Enemy_NormalTouchAI_A2(game);
-        }
-        10649645 => {
-            Enemy_NormalShotAI_A2(game);
-        }
-        10649665 => {
-            Enemy_NormalFrozenAI_A2(game);
-        }
+        10649605 => Enemy_GrappleReact_SamusLatchesOn_A2(game),
+        10649610 => Enemy_GrappleReact_KillEnemy_A2(game),
+        10649615 => Enemy_GrappleReact_CancelBeam_A2(game),
+        10649635 => Enemy_NormalTouchAI_A2(game),
+        10649645 => Enemy_NormalShotAI_A2(game),
+        10649665 => Enemy_NormalFrozenAI_A2(game),
         10649676 => (),
-        10651420 => {
-            BouncingGoofball_Init(game);
-        }
-        10651548 => {
-            BouncingGoofball_Main(game);
-        }
-        10652077 => {
-            MiniCrocomire_Init(game);
-        }
-        10652144 => {
-            MiniCrocomire_Main(game);
-        }
-        10653036 => {
-            MaridiaBeybladeTurtle_Init(game);
-        }
-        10653085 => {
-            MiniMaridiaBeybladeTurtle_Init(game);
-        }
-        10653138 => {
-            MaridiaBeybladeTurtle_Main(game);
-        }
-        10653998 => {
-            MiniMaridiaBeybladeTurtle_Main(game);
-        }
-        10654337 => {
-            MaridiaBeybladeTurtle_Touch(game);
-        }
-        10654367 => {
-            MiniMaridiaBeybladeTurtle_Touch(game);
-        }
-        10654479 => {
-            MiniMaridiaBeybladeTurtle_Shot(game);
-        }
-        10656319 => {
-            ThinHoppingBlobs_Init(game);
-        }
-        10656381 => {
-            ThinHoppingBlobs_Main(game);
-        }
-        10657608 => {
-            SpikeShootingPlant_Init(game);
-        }
-        10657715 => {
-            SpikeShootingPlant_Main(game);
-        }
-        10658809 => {
-            MaridiaSpikeyShell_Init(game);
-        }
-        10658942 => {
-            MaridiaSpikeyShell_Main(game);
-        }
-        10659193 => {
-            MaridiaSpikeyShell_Shot(game);
-        }
-        10659396 => {
-            GunshipTop_Init(game);
-        }
-        10659538 => {
-            GunshipBottom_Init(game);
-        }
-        10659673 => {
-            GunshipTop_Main(game);
-        }
-        10661995 => {
-            Flies_Init(game);
-        }
-        10662175 => {
-            Flies_Main(game);
-        }
-        10662880 => {
-            NorfairErraticFireball_Init(game);
-        }
-        10662927 => {
-            NorfairErraticFireball_Main(game);
-        }
-        10663280 => {
-            LavaquakeRocks_Init(game);
-        }
-        10663311 => {
-            LavaquakeRocks_Main(game);
-        }
-        10663426 => {
-            Rinka_Init(game);
-        }
-        10663876 => {
-            Rinka_Main(game);
-        }
+        10651420 => BouncingGoofball_Init(game),
+        10651548 => BouncingGoofball_Main(game),
+        10652077 => MiniCrocomire_Init(game),
+        10652144 => MiniCrocomire_Main(game),
+        10653036 => MaridiaBeybladeTurtle_Init(game),
+        10653085 => MiniMaridiaBeybladeTurtle_Init(game),
+        10653138 => MaridiaBeybladeTurtle_Main(game),
+        10653998 => MiniMaridiaBeybladeTurtle_Main(game),
+        10654337 => MaridiaBeybladeTurtle_Touch(game),
+        10654367 => MiniMaridiaBeybladeTurtle_Touch(game),
+        10654479 => MiniMaridiaBeybladeTurtle_Shot(game),
+        10656319 => ThinHoppingBlobs_Init(game),
+        10656381 => ThinHoppingBlobs_Main(game),
+        10657608 => SpikeShootingPlant_Init(game),
+        10657715 => SpikeShootingPlant_Main(game),
+        10658809 => MaridiaSpikeyShell_Init(game),
+        10658942 => MaridiaSpikeyShell_Main(game),
+        10659193 => MaridiaSpikeyShell_Shot(game),
+        10659396 => GunshipTop_Init(game),
+        10659538 => GunshipBottom_Init(game),
+        10659673 => GunshipTop_Main(game),
+        10661995 => Flies_Init(game),
+        10662175 => Flies_Main(game),
+        10662880 => NorfairErraticFireball_Init(game),
+        10662927 => NorfairErraticFireball_Main(game),
+        10663280 => LavaquakeRocks_Init(game),
+        10663311 => LavaquakeRocks_Main(game),
+        10663426 => Rinka_Init(game),
+        10663876 => Rinka_Main(game),
         10664233 => {
             Rinka_Frozen(ram_word!(game, cur_enemy_index), game);
         }
-        10664263 => {
-            Rinka_Touch(game);
-        }
-        10664269 => {
-            Rinka_Shot(game);
-        }
+        10664263 => Rinka_Touch(game),
+        10664269 => Rinka_Shot(game),
         10664275 => {
             Rinka_Powerbomb(ram_word!(game, cur_enemy_index), game);
         }
-        10664909 => {
-            Rio_Init(game);
-        }
-        10664931 => {
-            Rio_Main(game);
-        }
-        10665625 => {
-            NorfairLavajumpingEnemy_Init(game);
-        }
-        10665682 => {
-            NorfairLavajumpingEnemy_Main(game);
-        }
-        10666562 => {
-            NorfairRio_Init(game);
-        }
-        10666615 => {
-            NorfairRio_Main(game);
-        }
-        10667763 => {
-            LowerNorfairRio_Init(game);
-        }
-        10667812 => {
-            LowerNorfairRio_Main(game);
-        }
-        10669268 => {
-            MaridiaLargeSnail_Init(game);
-        }
-        10669331 => {
-            MaridiaLargeSnail_Main(game);
-        }
-        10670988 => {
-            MaridiaLargeSnail_Touch(game);
-        }
-        10671028 => {
-            MaridiaLargeSnail_Shot(game);
-        }
-        10674038 => {
-            HirisingSlowfalling_Init(game);
-        }
-        10674222 => {
-            HirisingSlowfalling_Main(game);
-        }
-        10674643 => {
-            Gripper_Init(game);
-        }
-        10674721 => {
-            Gripper_Main(game);
-        }
-        10674968 => {
-            JetPowerRipper_Init(game);
-        }
-        10675027 => {
-            JetPowerRipper_Main(game);
-        }
-        10675113 => {
-            JetPowerRipper_Shot(game);
-        }
-        10675359 => {
-            Ripper_Init(game);
-        }
-        10675418 => {
-            Ripper_Main(game);
-        }
-        10675718 => {
-            LavaSeahorse_Init(game);
-        }
-        10675790 => {
-            LavaSeahorse_Main(game);
-        }
-        10676168 => {
-            LavaSeahorse_Touch(game);
-        }
-        10676174 => {
-            LavaSeahorse_Shot(game);
-        }
-        10676180 => {
-            LavaSeahorse_Powerbomb(game);
-        }
-        10676698 => {
-            TimedShutter_Init(game);
-        }
-        10676918 => {
-            TimedShutter_Main(game);
-        }
-        10677765 => {
-            RisingFallingPlatform_Init(game);
-        }
-        10677778 => {
-            ShootableShutter_Init(game);
-        }
-        10677969 => {
-            RisingFallingPlatform_Main(game);
-        }
-        10678429 => {
-            RisingFallingPlatform_Touch(game);
-        }
-        10678434 => {
-            RisingFallingPlatform_Shot(game);
-        }
-        10678442 => {
-            ShootableShutter_Shot(game);
-        }
-        10678454 => {
-            RisingFallingPlatform_Powerbomb(game);
-        }
-        10678545 => {
-            HorizontalShootableShutter_Init(game);
-        }
-        10678750 => {
-            HorizontalShootableShutter_Main(game);
-        }
-        10679256 => {
-            HorizontalShootableShutter_Touch(game);
-        }
-        10679310 => {
-            HorizontalShootableShutter_Shot(game);
-        }
-        10679322 => {
-            HorizontalShootableShutter_Powerbomb(game);
-        }
-        10715136 => {
-            Enemy_GrappleReact_NoInteract_A3(game);
-        }
-        10715146 => {
-            Enemy_GrappleReact_KillEnemy_A3(game);
-        }
-        10715151 => {
-            Enemy_GrappleReact_CancelBeam_A3(game);
-        }
-        10715171 => {
-            Enemy_NormalTouchAI_A3(game);
-        }
-        10715181 => {
-            Enemy_NormalShotAI_A3(game);
-        }
-        10715201 => {
-            Enemy_NormalFrozenAI_A3(game);
-        }
+        10664909 => Rio_Init(game),
+        10664931 => Rio_Main(game),
+        10665625 => NorfairLavajumpingEnemy_Init(game),
+        10665682 => NorfairLavajumpingEnemy_Main(game),
+        10666562 => NorfairRio_Init(game),
+        10666615 => NorfairRio_Main(game),
+        10667763 => LowerNorfairRio_Init(game),
+        10667812 => LowerNorfairRio_Main(game),
+        10669268 => MaridiaLargeSnail_Init(game),
+        10669331 => MaridiaLargeSnail_Main(game),
+        10670988 => MaridiaLargeSnail_Touch(game),
+        10671028 => MaridiaLargeSnail_Shot(game),
+        10674038 => HirisingSlowfalling_Init(game),
+        10674222 => HirisingSlowfalling_Main(game),
+        10674643 => Gripper_Init(game),
+        10674721 => Gripper_Main(game),
+        10674968 => JetPowerRipper_Init(game),
+        10675027 => JetPowerRipper_Main(game),
+        10675113 => JetPowerRipper_Shot(game),
+        10675359 => Ripper_Init(game),
+        10675418 => Ripper_Main(game),
+        10675718 => LavaSeahorse_Init(game),
+        10675790 => LavaSeahorse_Main(game),
+        10676168 => LavaSeahorse_Touch(game),
+        10676174 => LavaSeahorse_Shot(game),
+        10676180 => LavaSeahorse_Powerbomb(game),
+        10676698 => TimedShutter_Init(game),
+        10676918 => TimedShutter_Main(game),
+        10677765 => RisingFallingPlatform_Init(game),
+        10677778 => ShootableShutter_Init(game),
+        10677969 => RisingFallingPlatform_Main(game),
+        10678429 => RisingFallingPlatform_Touch(game),
+        10678434 => RisingFallingPlatform_Shot(game),
+        10678442 => ShootableShutter_Shot(game),
+        10678454 => RisingFallingPlatform_Powerbomb(game),
+        10678545 => HorizontalShootableShutter_Init(game),
+        10678750 => HorizontalShootableShutter_Main(game),
+        10679256 => HorizontalShootableShutter_Touch(game),
+        10679310 => HorizontalShootableShutter_Shot(game),
+        10679322 => HorizontalShootableShutter_Powerbomb(game),
+        10715136 => Enemy_GrappleReact_NoInteract_A3(game),
+        10715146 => Enemy_GrappleReact_KillEnemy_A3(game),
+        10715151 => Enemy_GrappleReact_CancelBeam_A3(game),
+        10715171 => Enemy_NormalTouchAI_A3(game),
+        10715181 => Enemy_NormalShotAI_A3(game),
+        10715201 => Enemy_NormalFrozenAI_A3(game),
         10715212 => (),
-        10716909 => {
-            Waver_Init(game);
-        }
-        10717004 => {
-            Waver_Main(game);
-        }
-        10717536 => {
-            Metalee_Init(game);
-        }
-        10717561 => {
-            Metalee_Main(game);
-        }
-        10717967 => {
-            Metalee_Shot(game);
-        }
-        10718509 => {
-            Fireflea_Init(game);
-        }
-        10718702 => {
-            Fireflea_Main(game);
-        }
+        10716909 => Waver_Init(game),
+        10717004 => Waver_Main(game),
+        10717536 => Metalee_Init(game),
+        10717561 => Metalee_Main(game),
+        10717967 => Metalee_Shot(game),
+        10718509 => Fireflea_Init(game),
+        10718702 => Fireflea_Main(game),
         10718827 => {
             Fireflea_Touch(ram_word!(game, cur_enemy_index), game);
         }
-        10718851 => {
-            Fireflea_Powerbomb(game);
-        }
-        10718857 => {
-            Fireflea_Shot(game);
-        }
-        10719413 => {
-            MaridiaFish_Init(game);
-        }
-        10719531 => {
-            MaridiaFish_Main(game);
-        }
-        10720486 => {
-            Elevator_Init(game);
-        }
-        10720554 => {
-            Elevator_Frozen(game);
-        }
-        10720995 => {
-            Crab_Init(game);
-        }
-        10721595 => {
-            Slug_Init(game);
-        }
-        10722463 => {
-            PlatformThatFallsWithSamus_Init(game);
-        }
-        10722490 => {
-            FastMovingSlowSinkingPlatform_Init(game);
-        }
-        10722582 => {
-            PlatformThatFallsWithSamus_Main(game);
-        }
+        10718851 => Fireflea_Powerbomb(game),
+        10718857 => Fireflea_Shot(game),
+        10719413 => MaridiaFish_Init(game),
+        10719531 => MaridiaFish_Main(game),
+        10720486 => Elevator_Init(game),
+        10720554 => Elevator_Frozen(game),
+        10720995 => Crab_Init(game),
+        10721595 => Slug_Init(game),
+        10722463 => PlatformThatFallsWithSamus_Init(game),
+        10722490 => FastMovingSlowSinkingPlatform_Init(game),
+        10722582 => PlatformThatFallsWithSamus_Main(game),
         10723079 => (),
-        10723080 => {
-            FastMovingSlowSinkingPlatform_Shot(game);
-        }
-        10723661 => {
-            Roach_Init(game);
-        }
-        10724048 => {
-            Roach_Main(game);
-        }
-        10725245 => {
-            Mochtroid_Init(game);
-        }
-        10725264 => {
-            Mochtroid_Main(game);
-        }
-        10725715 => {
-            Mochtroid_Touch(game);
-        }
-        10725800 => {
-            Mochtroid_Shot(game);
-        }
-        10726153 => {
-            Sidehopper_Init(game);
-        }
-        10726351 => {
-            Sidehopper_Main(game);
-        }
-        10728522 => {
-            MaridiaRefillCandy_Init(game);
-        }
-        10728572 => {
-            MaridiaRefillCandy_Main(game);
-        }
-        10729071 => {
-            NorfairSlowFireball_Init(game);
-        }
-        10730163 => {
-            Bang_Init(game);
-        }
-        10730277 => {
-            Bang_Main(game);
-        }
-        10731261 => {
-            Bang_Shot(game);
-        }
-        10733230 => {
-            Skree_Init(game);
-        }
-        10733255 => {
-            Skree_Main(game);
-        }
-        10733557 => {
-            Skree_Shot(game);
-        }
-        10735074 => {
-            MaridiaSnail_Init(game);
-        }
-        10735204 => {
-            MaridiaSnail_Main(game);
-        }
-        10736560 => {
-            MaridiaSnail_Touch(game);
-        }
-        10736745 => {
-            MaridiaSnail_Shot(game);
-        }
-        10738643 => {
-            Reflec_Init(game);
-        }
+        10723080 => FastMovingSlowSinkingPlatform_Shot(game),
+        10723661 => Roach_Init(game),
+        10724048 => Roach_Main(game),
+        10725245 => Mochtroid_Init(game),
+        10725264 => Mochtroid_Main(game),
+        10725715 => Mochtroid_Touch(game),
+        10725800 => Mochtroid_Shot(game),
+        10726153 => Sidehopper_Init(game),
+        10726351 => Sidehopper_Main(game),
+        10728522 => MaridiaRefillCandy_Init(game),
+        10728572 => MaridiaRefillCandy_Main(game),
+        10729071 => NorfairSlowFireball_Init(game),
+        10730163 => Bang_Init(game),
+        10730277 => Bang_Main(game),
+        10731261 => Bang_Shot(game),
+        10733230 => Skree_Init(game),
+        10733255 => Skree_Main(game),
+        10733557 => Skree_Shot(game),
+        10735074 => MaridiaSnail_Init(game),
+        10735204 => MaridiaSnail_Main(game),
+        10736560 => MaridiaSnail_Touch(game),
+        10736745 => MaridiaSnail_Shot(game),
+        10738643 => Reflec_Init(game),
         10738715 => (),
-        10738716 => {
-            Reflec_Shot(game);
-        }
-        10739779 => {
-            WreckedShipOrangeZoomer_Init(game);
-        }
-        10739851 => {
-            WreckedShipOrangeZoomer_Main(game);
-        }
-        10740436 => {
-            BigEyeBugs_Init(game);
-        }
-        10741148 => {
-            FireZoomer_Init(game);
-        }
-        10741353 => {
-            StoneZoomer_Init(game);
-        }
-        10741442 => {
-            StoneZoomer_Main(game);
-        }
-        10742351 => {
-            Metroid_Init(game);
-        }
-        10742502 => {
-            Metroid_Frozen(game);
-        }
-        10742579 => {
-            Metroid_Hurt(game);
-        }
-        10742680 => {
-            Metroid_Main(game);
-        }
-        10743275 => {
-            Metroid_Touch(game);
-        }
-        10743559 => {
-            Metroid_Shot(game);
-        }
+        10738716 => Reflec_Shot(game),
+        10739779 => WreckedShipOrangeZoomer_Init(game),
+        10739851 => WreckedShipOrangeZoomer_Main(game),
+        10740436 => BigEyeBugs_Init(game),
+        10741148 => FireZoomer_Init(game),
+        10741353 => StoneZoomer_Init(game),
+        10741442 => StoneZoomer_Main(game),
+        10742351 => Metroid_Init(game),
+        10742502 => Metroid_Frozen(game),
+        10742579 => Metroid_Hurt(game),
+        10742680 => Metroid_Main(game),
+        10743275 => Metroid_Touch(game),
+        10743559 => Metroid_Shot(game),
         10743874 => {
             Metroid_Powerbomb(ram_word!(game, cur_enemy_index), game);
         }
-        10780677 => {
-            Enemy_GrappleReact_SamusLatchesOn_A4(game);
-        }
-        10780707 => {
-            Enemy_NormalTouchAI_A4(game);
-        }
-        10780717 => {
-            Enemy_NormalShotAI_A4(game);
-        }
-        10780737 => {
-            Enemy_NormalFrozenAI_A4(game);
-        }
+        10780677 => Enemy_GrappleReact_SamusLatchesOn_A4(game),
+        10780707 => Enemy_NormalTouchAI_A4(game),
+        10780717 => Enemy_NormalShotAI_A4(game),
+        10780737 => Enemy_NormalFrozenAI_A4(game),
         10780748 => (),
-        10782343 => {
-            Crocomire_Hurt(game);
-        }
-        10783322 => {
-            Crocomire_Init(game);
-        }
-        10783748 => {
-            Crocomire_Main(game);
-        }
+        10782343 => Crocomire_Hurt(game),
+        10783322 => Crocomire_Init(game),
+        10783748 => Crocomire_Main(game),
         10795344 => (),
-        10795410 => {
-            Crocomire_Powerbomb(game);
-        }
-        10811002 => {
-            CrocomireTongue_Init(game);
-        }
-        10811067 => {
-            CrocomireTongue_Main();
-        }
-        10846208 => {
-            Enemy_GrappleReact_NoInteract_A5(game);
-        }
-        10846223 => {
-            Enemy_GrappleReact_CancelBeam_A5(game);
-        }
-        10846243 => {
-            Enemy_NormalTouchAI_A5(game);
-        }
-        10846253 => {
-            Enemy_NormalShotAI_A5(game);
-        }
-        10846273 => {
-            Enemy_NormalFrozenAI_A5(game);
-        }
+        10795410 => Crocomire_Powerbomb(game),
+        10811002 => CrocomireTongue_Init(game),
+        10811067 => CrocomireTongue_Main(),
+        10846208 => Enemy_GrappleReact_NoInteract_A5(game),
+        10846223 => Enemy_GrappleReact_CancelBeam_A5(game),
+        10846243 => Enemy_NormalTouchAI_A5(game),
+        10846253 => Enemy_NormalShotAI_A5(game),
+        10846273 => Enemy_NormalFrozenAI_A5(game),
         10846284 => (),
-        10847879 => {
-            Draygon_Init(game);
-        }
-        10847996 => {
-            Draygon_Main(game);
-        }
-        10851661 => {
-            Draygon_Hurt(game);
-        }
-        10851818 => {
-            Draygon_Touch(game);
-        }
-        10851824 => {
-            Draygon_Shot(game);
-        }
-        10851847 => {
-            Draygon_Powerbomb(game);
-        }
-        10863723 => {
-            DraygonsEye_Init(game);
-        }
-        10863750 => {
-            DraygonsEye_Main(game);
-        }
-        10864025 => {
-            DraygonsTail_Init(game);
-        }
+        10847879 => Draygon_Init(game),
+        10847996 => Draygon_Main(game),
+        10851661 => Draygon_Hurt(game),
+        10851818 => Draygon_Touch(game),
+        10851824 => Draygon_Shot(game),
+        10851847 => Draygon_Powerbomb(game),
+        10863723 => DraygonsEye_Init(game),
+        10863750 => DraygonsEye_Main(game),
+        10864025 => DraygonsTail_Init(game),
         10864042 => (),
-        10864045 => {
-            DraygonsArms_Init(game);
-        }
+        10864045 => DraygonsArms_Init(game),
         10864068 => (),
-        10873386 => {
-            SporeSpawn_Init(game);
-        }
-        10873619 => {
-            SporeSpawn_Main(game);
-        }
-        10874202 => {
-            SporeSpawn_Shot(game);
-        }
-        10874348 => {
-            SporeSpawn_Touch(game);
-        }
+        10873386 => SporeSpawn_Init(game),
+        10873619 => SporeSpawn_Main(game),
+        10874202 => SporeSpawn_Shot(game),
+        10874348 => SporeSpawn_Touch(game),
         10874354 => (),
-        10911744 => {
-            Enemy_GrappleReact_NoInteract_A6(game);
-        }
-        10911759 => {
-            Enemy_GrappleReact_CancelBeam_A6(game);
-        }
-        10911779 => {
-            Enemy_NormalTouchAI_A6(game);
-        }
-        10911789 => {
-            Enemy_NormalShotAI_A6(game);
-        }
-        10911809 => {
-            Enemy_NormalFrozenAI_A6(game);
-        }
+        10911744 => Enemy_GrappleReact_NoInteract_A6(game),
+        10911759 => Enemy_GrappleReact_CancelBeam_A6(game),
+        10911779 => Enemy_NormalTouchAI_A6(game),
+        10911789 => Enemy_NormalShotAI_A6(game),
+        10911809 => Enemy_NormalFrozenAI_A6(game),
         10911820 => (),
-        10913525 => {
-            Boulder_Init(game);
-        }
-        10913683 => {
-            Boulder_Main(game);
-        }
-        10914607 => {
-            SpikeyPlatform_Init(game);
-        }
-        10914693 => {
-            SpikeyPlatform2ndEnemy_Init(game);
-        }
-        10914713 => {
-            SpikeyPlatform2ndEnemy_Main(game);
-        }
-        10914733 => {
-            SpikeyPlatform_Main(game);
-        }
-        10915836 => {
-            FireGeyser_Init(game);
-        }
-        10915875 => {
-            FireGeyser_Main(game);
-        }
-        10917060 => {
-            NuclearWaffle_Init(game);
-        }
-        10917390 => {
-            NuclearWaffle_Main(game);
-        }
-        10918488 => {
-            FakeKraid_Init(game);
-        }
-        10918594 => {
-            FakeKraid_Main(game);
-        }
-        10918946 => {
-            FakeKraid_Touch(game);
-        }
-        10918969 => {
-            FakeKraid_Shot(game);
-        }
-        10920181 => {
-            CeresRidley_Init(game);
-        }
-        10920584 => {
-            CeresRidley_Main(game);
-        }
-        10920659 => {
-            CeresRidley_Hurt(game);
-        }
-        10924583 => {
-            Ridley_Main(game);
-        }
-        10924682 => {
-            Ridley_Func_2(game);
-        }
-        10924695 => {
-            Ridley_Hurt(game);
-        }
-        10929814 => {
-            RidleysExplosion_Init(game);
-        }
-        10930388 => {
-            RidleysExplosion_Main(game);
-        }
-        10936202 => {
-            Ridley_Shot(game);
-        }
-        10936242 => {
-            Ridley_Powerbomb(game);
-        }
-        10940337 => {
-            CeresSteam_Init(game);
-        }
-        10940429 => {
-            CeresSteam_Main(game);
-        }
-        10940479 => {
-            CeresSteam_Touch(game);
-        }
-        10942149 => {
-            CeresDoor_Init(game);
-        }
-        10942309 => {
-            CeresDoor_Main(game);
-        }
+        10913525 => Boulder_Init(game),
+        10913683 => Boulder_Main(game),
+        10914607 => SpikeyPlatform_Init(game),
+        10914693 => SpikeyPlatform2ndEnemy_Init(game),
+        10914713 => SpikeyPlatform2ndEnemy_Main(game),
+        10914733 => SpikeyPlatform_Main(game),
+        10915836 => FireGeyser_Init(game),
+        10915875 => FireGeyser_Main(game),
+        10917060 => NuclearWaffle_Init(game),
+        10917390 => NuclearWaffle_Main(game),
+        10918488 => FakeKraid_Init(game),
+        10918594 => FakeKraid_Main(game),
+        10918946 => FakeKraid_Touch(game),
+        10918969 => FakeKraid_Shot(game),
+        10920181 => CeresRidley_Init(game),
+        10920584 => CeresRidley_Main(game),
+        10920659 => CeresRidley_Hurt(game),
+        10924583 => Ridley_Main(game),
+        10924682 => Ridley_Func_2(game),
+        10924695 => Ridley_Hurt(game),
+        10929814 => RidleysExplosion_Init(game),
+        10930388 => RidleysExplosion_Main(game),
+        10936202 => Ridley_Shot(game),
+        10936242 => Ridley_Powerbomb(game),
+        10940337 => CeresSteam_Init(game),
+        10940429 => CeresSteam_Main(game),
+        10940479 => CeresSteam_Touch(game),
+        10942149 => CeresDoor_Init(game),
+        10942309 => CeresDoor_Main(game),
         10942752 => (),
-        10943346 => {
-            Zebetites_Init(game);
-        }
-        10943539 => {
-            Zebetites_Main(game);
-        }
-        10943911 => {
-            Zebetites_Touch(game);
-        }
-        10943916 => {
-            Zebetites_Shot(game);
-        }
-        10977280 => {
-            Enemy_GrappleReact_NoInteract_A7(game);
-        }
-        10977295 => {
-            Enemy_GrappleReact_CancelBeam_A7(game);
-        }
-        10977325 => {
-            Enemy_NormalShotAI_A7(game);
-        }
-        10977340 => {
-            Enemy_NormalPowerBombAI_SkipDeathAnim_A7(game);
-        }
-        10977345 => {
-            Enemy_NormalFrozenAI_A7(game);
-        }
+        10943346 => Zebetites_Init(game),
+        10943539 => Zebetites_Main(game),
+        10943911 => Zebetites_Touch(game),
+        10943916 => Zebetites_Shot(game),
+        10977280 => Enemy_GrappleReact_NoInteract_A7(game),
+        10977295 => Enemy_GrappleReact_CancelBeam_A7(game),
+        10977325 => Enemy_NormalShotAI_A7(game),
+        10977340 => Enemy_NormalPowerBombAI_SkipDeathAnim_A7(game),
+        10977345 => Enemy_NormalFrozenAI_A7(game),
         10977356 => (),
         10982543 => (),
-        10982544 => {
-            KraidsArm_Touch(game);
-        }
-        10982559 => {
-            Kraid_Touch(game);
-        }
+        10982544 => KraidsArm_Touch(game),
+        10982559 => Kraid_Touch(game),
         10982581 => (),
-        10987865 => {
-            Kraid_Init(game);
-        }
-        10988355 => {
-            KraidsArm_Init(game);
-        }
-        10988392 => {
-            KraidsTopLint_Init(game);
-        }
-        10988444 => {
-            KraidsMiddleLint_Init(game);
-        }
-        10988490 => {
-            KraidsBottomLint_Init(game);
-        }
-        10988536 => {
-            KraidsFoot_Init(game);
-        }
-        10988577 => {
-            Kraid_Main(game);
-        }
-        10991549 => {
-            KraidsArm_Main(game);
-        }
-        10991617 => {
-            KraidsTopLint_Main(game);
-        }
-        10991629 => {
-            KraidsMiddleLint_Main(game);
-        }
-        10991641 => {
-            KraidsBottomLint_Main(game);
-        }
-        10992118 => {
-            KraidsFoot_Main(game);
-        }
-        10992847 => {
-            KraidsGoodFingernail_Touch(game);
-        }
-        10992862 => {
-            KraidsBadFingernail_Touch(game);
-        }
-        10992879 => {
-            KraidsGoodFingernail_Init(game);
-        }
-        10992941 => {
-            KraidsBadFingernail_Init(game);
-        }
-        10992946 => {
-            KraidsGoodFingernail_Main(game);
-        }
-        10992969 => {
-            KraidsBadFingernail_Main(game);
-        }
-        10997235 => {
-            Phantoon_Init(game);
-        }
-        10997333 => {
-            Phantoon2_Init(game);
-        }
-        10997414 => {
-            Phantoon_Main(game);
-        }
-        11001151 => {
-            Phantoon_Hurt(game);
-        }
-        11001237 => {
-            Phantoon_Touch(game);
-        }
+        10987865 => Kraid_Init(game),
+        10988355 => KraidsArm_Init(game),
+        10988392 => KraidsTopLint_Init(game),
+        10988444 => KraidsMiddleLint_Init(game),
+        10988490 => KraidsBottomLint_Init(game),
+        10988536 => KraidsFoot_Init(game),
+        10988577 => Kraid_Main(game),
+        10991549 => KraidsArm_Main(game),
+        10991617 => KraidsTopLint_Main(game),
+        10991629 => KraidsMiddleLint_Main(game),
+        10991641 => KraidsBottomLint_Main(game),
+        10992118 => KraidsFoot_Main(game),
+        10992847 => KraidsGoodFingernail_Touch(game),
+        10992862 => KraidsBadFingernail_Touch(game),
+        10992879 => KraidsGoodFingernail_Init(game),
+        10992941 => KraidsBadFingernail_Init(game),
+        10992946 => KraidsGoodFingernail_Main(game),
+        10992969 => KraidsBadFingernail_Main(game),
+        10997235 => Phantoon_Init(game),
+        10997333 => Phantoon2_Init(game),
+        10997414 => Phantoon_Main(game),
+        11001151 => Phantoon_Hurt(game),
+        11001237 => Phantoon_Touch(game),
         11001242 => (),
-        11001243 => {
-            Phantoon_Shot(game);
-        }
+        11001243 => Phantoon_Shot(game),
         11001873 => (),
-        11004178 => {
-            Etecoon_Init(game);
-        }
-        11004224 => {
-            Etecoon_Main(game);
-        }
-        11007197 => {
-            Dachora_Init(game);
-        }
-        11007278 => {
-            Dachora_Main(game);
-        }
-        11042816 => {
-            Enemy_GrappleReact_NoInteract_A8(game);
-        }
-        11042826 => {
-            Enemy_GrappleReact_KillEnemy_A8(game);
-        }
-        11042831 => {
-            Enemy_GrappleReact_CancelBeam_A8(game);
-        }
-        11042836 => {
-            Enemy_GrappleReact_SamusLatchesNoInvinc_A8(game);
-        }
-        11042846 => {
-            Enemy_GrappleReact_HurtSamus_A8(game);
-        }
-        11042851 => {
-            Enemy_NormalTouchAI_A8(game);
-        }
-        11042861 => {
-            Enemy_NormalShotAI_A8(game);
-        }
-        11042881 => {
-            Enemy_NormalFrozenAI_A8(game);
-        }
+        11004178 => Etecoon_Init(game),
+        11004224 => Etecoon_Main(game),
+        11007197 => Dachora_Init(game),
+        11007278 => Dachora_Main(game),
+        11042816 => Enemy_GrappleReact_NoInteract_A8(game),
+        11042826 => Enemy_GrappleReact_KillEnemy_A8(game),
+        11042831 => Enemy_GrappleReact_CancelBeam_A8(game),
+        11042836 => Enemy_GrappleReact_SamusLatchesNoInvinc_A8(game),
+        11042846 => Enemy_GrappleReact_HurtSamus_A8(game),
+        11042851 => Enemy_NormalTouchAI_A8(game),
+        11042861 => Enemy_NormalShotAI_A8(game),
+        11042881 => Enemy_NormalFrozenAI_A8(game),
         11042892 => (),
-        11044832 => {
-            MiniDraygon_Init(game);
-        }
-        11045040 => {
-            EvirProjectile_Init(game);
-        }
-        11045147 => {
-            MiniDraygon_Main(game);
-        }
-        11045278 => {
-            EvirProjectile_Main(game);
-        }
-        11045638 => {
-            MiniDraygon_Touch(game);
-        }
-        11045644 => {
-            MiniDraygon_Powerbomb(game);
-        }
-        11045650 => {
-            MiniDraygon_Shot(game);
-        }
-        11047000 => {
-            MorphBallEye_Init(game);
-        }
-        11047138 => {
-            MorphBallEye_Main(game);
-        }
-        11048675 => {
-            Fune_Init(game);
-        }
-        11048752 => {
-            Fune_Main(game);
-        }
-        11049710 => {
-            WreckedShipGhost_Init(game);
-        }
-        11049788 => {
-            WreckedShipGhost_Main(game);
-        }
-        11051336 => {
-            YappingMaw_Init(game);
-        }
-        11051537 => {
-            YappingMaw_Main(game);
-        }
-        11052953 => {
-            YappingMaw_Touch(game);
-        }
-        11052989 => {
-            YappingMaw_Shot(game);
-        }
-        11053109 => {
-            YappingMaw_Frozen(game);
-        }
-        11053894 => {
-            Kago_Init(game);
-        }
-        11053941 => {
-            Kago_Main(game);
-        }
-        11053955 => {
-            Kago_Shot(game);
-        }
-        11054987 => {
-            NorfairLavaMan_Init(game);
-        }
-        11055370 => {
-            NorfairLavaMan_Main(game);
-        }
-        11056128 => {
-            NorfairLavaMan_Powerbomb(game);
-        }
-        11056134 => {
-            NorfairLavaMan_Touch(game);
-        }
-        11056140 => {
-            NorfairLavaMan_Shot(game);
-        }
-        11057014 => {
-            Beetom_Init(game);
-        }
-        11057165 => {
-            Beetom_Main(game);
-        }
-        11058734 => {
-            Beetom_Touch(game);
-        }
-        11058860 => {
-            Beetom_Shot(game);
-        }
-        11059657 => {
-            MaridiaFloater_Init(game);
-        }
-        11059740 => {
-            MaridiaFloater_Main(game);
-        }
-        11060670 => {
-            MaridiaFloater_Touch(game);
-        }
-        11060719 => {
-            MaridiaFloater_Shot(game);
-        }
-        11060799 => {
-            MaridiaFloater_Powerbomb(game);
-        }
-        11062135 => {
-            WreckedShipRobot_Init(game);
-        }
-        11062220 => {
-            WreckedShipRobotDeactivated_Init(game);
-        }
-        11062326 => {
-            WreckedShipRobot_Main(game);
-        }
+        11044832 => MiniDraygon_Init(game),
+        11045040 => EvirProjectile_Init(game),
+        11045147 => MiniDraygon_Main(game),
+        11045278 => EvirProjectile_Main(game),
+        11045638 => MiniDraygon_Touch(game),
+        11045644 => MiniDraygon_Powerbomb(game),
+        11045650 => MiniDraygon_Shot(game),
+        11047000 => MorphBallEye_Init(game),
+        11047138 => MorphBallEye_Main(game),
+        11048675 => Fune_Init(game),
+        11048752 => Fune_Main(game),
+        11049710 => WreckedShipGhost_Init(game),
+        11049788 => WreckedShipGhost_Main(game),
+        11051336 => YappingMaw_Init(game),
+        11051537 => YappingMaw_Main(game),
+        11052953 => YappingMaw_Touch(game),
+        11052989 => YappingMaw_Shot(game),
+        11053109 => YappingMaw_Frozen(game),
+        11053894 => Kago_Init(game),
+        11053941 => Kago_Main(game),
+        11053955 => Kago_Shot(game),
+        11054987 => NorfairLavaMan_Init(game),
+        11055370 => NorfairLavaMan_Main(game),
+        11056128 => NorfairLavaMan_Powerbomb(game),
+        11056134 => NorfairLavaMan_Touch(game),
+        11056140 => NorfairLavaMan_Shot(game),
+        11057014 => Beetom_Init(game),
+        11057165 => Beetom_Main(game),
+        11058734 => Beetom_Touch(game),
+        11058860 => Beetom_Shot(game),
+        11059657 => MaridiaFloater_Init(game),
+        11059740 => MaridiaFloater_Main(game),
+        11060670 => MaridiaFloater_Touch(game),
+        11060719 => MaridiaFloater_Shot(game),
+        11060799 => MaridiaFloater_Powerbomb(game),
+        11062135 => WreckedShipRobot_Init(game),
+        11062220 => WreckedShipRobotDeactivated_Init(game),
+        11062326 => WreckedShipRobot_Main(game),
         11062374 => (),
-        11063668 => {
-            WreckedShipRobotDeactivated_Touch(game);
-        }
-        11063693 => {
-            WreckedShipRobotDeactivated_Shot(game);
-        }
-        11063698 => {
-            WreckedShipRobot_Shot(game);
-        }
-        11065545 => {
-            MaridiaPuffer_Init(game);
-        }
-        11065611 => {
-            MaridiaPuffer_Main(game);
-        }
-        11066132 => {
-            MaridiaPuffer_Shot(game);
-        }
-        11066573 => {
-            WalkingLavaSeahorse_Init(game);
-        }
-        11066731 => {
-            WalkingLavaSeahorse_Main(game);
-        }
-        11068296 => {
-            WreckedShipOrbs_Init(game);
-        }
-        11068355 => {
-            WreckedShipOrbs_Main(game);
-        }
-        11068983 => {
-            WreckedShipSpark_Init(game);
-        }
-        11069070 => {
-            WreckedShipSpark_Main(game);
-        }
-        11069198 => {
-            WreckedShipSpark_Shot(game);
-        }
-        11069486 => {
-            BlueBrinstarFaceBlock_Init(game);
-        }
-        11069614 => {
-            BlueBrinstarFaceBlock_Main(game);
-        }
-        11069725 => {
-            BlueBrinstarFaceBlock_Shot(game);
-        }
-        11071880 => {
-            KiHunter_Init(game);
-        }
-        11072020 => {
-            KiHunterWings_Init(game);
-        }
-        11072092 => {
-            KiHunter_Main(game);
-        }
-        11072098 => {
-            KiHunterWings_Main(game);
-        }
-        11073281 => {
-            KiHunter_Shot(game);
-        }
-        11108367 => {
-            Enemy_GrappleReact_CancelBeam_A9(game);
-        }
-        11108417 => {
-            Enemy_NormalFrozenAI_A9(game);
-        }
+        11063668 => WreckedShipRobotDeactivated_Touch(game),
+        11063693 => WreckedShipRobotDeactivated_Shot(game),
+        11063698 => WreckedShipRobot_Shot(game),
+        11065545 => MaridiaPuffer_Init(game),
+        11065611 => MaridiaPuffer_Main(game),
+        11066132 => MaridiaPuffer_Shot(game),
+        11066573 => WalkingLavaSeahorse_Init(game),
+        11066731 => WalkingLavaSeahorse_Main(game),
+        11068296 => WreckedShipOrbs_Init(game),
+        11068355 => WreckedShipOrbs_Main(game),
+        11068983 => WreckedShipSpark_Init(game),
+        11069070 => WreckedShipSpark_Main(game),
+        11069198 => WreckedShipSpark_Shot(game),
+        11069486 => BlueBrinstarFaceBlock_Init(game),
+        11069614 => BlueBrinstarFaceBlock_Main(game),
+        11069725 => BlueBrinstarFaceBlock_Shot(game),
+        11071880 => KiHunter_Init(game),
+        11072020 => KiHunterWings_Init(game),
+        11072092 => KiHunter_Main(game),
+        11072098 => KiHunterWings_Main(game),
+        11073281 => KiHunter_Shot(game),
+        11108367 => Enemy_GrappleReact_CancelBeam_A9(game),
+        11108417 => Enemy_NormalFrozenAI_A9(game),
         11108428 => (),
-        11110023 => {
-            MotherBrainsBody_Init(game);
-        }
-        11110149 => {
-            MotherBrainsBrain_Init(game);
-        }
-        11110206 => {
-            MotherBrainsBody_Hurt(game);
-        }
-        11110279 => {
-            MotherBrainsBody_Powerbomb(game);
-        }
-        11110283 => {
-            MotherBrainsBrain_Hurt(game);
-        }
-        11111221 => {
-            MotherBrainsTubesFalling_Init(game);
-        }
+        11110023 => MotherBrainsBody_Init(game),
+        11110149 => MotherBrainsBrain_Init(game),
+        11110206 => MotherBrainsBody_Hurt(game),
+        11110279 => MotherBrainsBody_Powerbomb(game),
+        11110283 => MotherBrainsBrain_Hurt(game),
+        11111221 => MotherBrainsTubesFalling_Init(game),
         11111301 => {
             MotherBrainsTubesFalling_Main(ram_word!(game, cur_enemy_index), game);
         }
-        11121923 => {
-            MotherBrainsBody_Shot(game);
-        }
-        11121927 => {
-            MotherBrainsBrain_Shot(game);
-        }
+        11121923 => MotherBrainsBody_Shot(game),
+        11121927 => MotherBrainsBrain_Shot(game),
         11122117 => (),
-        11122118 => {
-            MotherBrainsBrain_Touch(game);
-        }
-        11126544 => {
-            ShitroidInCutscene_Init(game);
-        }
-        11126649 => {
-            ShitroidInCutscene_Main(game);
-        }
-        11128579 => {
-            ShitroidInCutscene_Touch(game);
-        }
-        11129608 => {
-            DeadTorizo_Init(game);
-        }
-        11129704 => {
-            DeadTorizo_Main(game);
-        }
-        11129898 => {
-            DeadTorizo_Powerbomb(game);
-        }
-        11129907 => {
-            DeadTorizo_Shot(game);
-        }
-        11130806 => {
-            DeadSidehopper_Init(game);
-        }
-        11130953 => {
-            DeadZoomer_Init(game);
-        }
-        11130998 => {
-            DeadRipper_Init(game);
-        }
-        11131039 => {
-            DeadSkree_Init(game);
-        }
-        11131084 => {
-            DeadSidehopper_Powerbomb(game);
-        }
-        11131099 => {
-            DeadSidehopper_Main(game);
-        }
-        11132141 => {
-            DeadZoomer_Powerbomb(game);
-        }
-        11132152 => {
-            DeadZoomer_Shot(game);
-        }
-        11132157 => {
-            DeadRipper_Powerbomb(game);
-        }
-        11132168 => {
-            DeadRipper_Shot(game);
-        }
-        11132173 => {
-            DeadSkree_Powerbomb(game);
-        }
-        11132184 => {
-            DeadSkree_Shot(game);
-        }
-        11132189 => {
-            DeadSidehopper_Shot(game);
-        }
-        11132228 => {
-            DeadSidehopper_Touch(game);
-        }
-        11136823 => {
-            Shitroid_Init(game);
-        }
-        11136954 => {
-            Shitroid_Powerbomb(game);
-        }
-        11136965 => {
-            Shitroid_Main(game);
-        }
-        11138953 => {
-            Shitroid_Touch(game);
-        }
-        11139138 => {
-            Shitroid_Shot(game);
-        }
-        11173903 => {
-            Enemy_GrappleReact_CancelBeam_AA(game);
-        }
-        11173953 => {
-            Enemy_NormalFrozenAI_AA(game);
-        }
+        11122118 => MotherBrainsBrain_Touch(game),
+        11126544 => ShitroidInCutscene_Init(game),
+        11126649 => ShitroidInCutscene_Main(game),
+        11128579 => ShitroidInCutscene_Touch(game),
+        11129608 => DeadTorizo_Init(game),
+        11129704 => DeadTorizo_Main(game),
+        11129898 => DeadTorizo_Powerbomb(game),
+        11129907 => DeadTorizo_Shot(game),
+        11130806 => DeadSidehopper_Init(game),
+        11130953 => DeadZoomer_Init(game),
+        11130998 => DeadRipper_Init(game),
+        11131039 => DeadSkree_Init(game),
+        11131084 => DeadSidehopper_Powerbomb(game),
+        11131099 => DeadSidehopper_Main(game),
+        11132141 => DeadZoomer_Powerbomb(game),
+        11132152 => DeadZoomer_Shot(game),
+        11132157 => DeadRipper_Powerbomb(game),
+        11132168 => DeadRipper_Shot(game),
+        11132173 => DeadSkree_Powerbomb(game),
+        11132184 => DeadSkree_Shot(game),
+        11132189 => DeadSidehopper_Shot(game),
+        11132228 => DeadSidehopper_Touch(game),
+        11136823 => Shitroid_Init(game),
+        11136954 => Shitroid_Powerbomb(game),
+        11136965 => Shitroid_Main(game),
+        11138953 => Shitroid_Touch(game),
+        11139138 => Shitroid_Shot(game),
+        11173903 => Enemy_GrappleReact_CancelBeam_AA(game),
+        11173953 => Enemy_NormalFrozenAI_AA(game),
         11173964 => (),
-        11191934 => {
-            Torizo_Hurt(game);
-        }
-        11191972 => {
-            Torizo_Main(game);
-        }
-        11192447 => {
-            Torizo_Init(game);
-        }
-        11192695 => {
-            GoldTorizo_Touch(game);
-        }
-        11192700 => {
-            Torizo_Shot(game);
-        }
-        11195241 => {
-            GoldTorizo_Main(game);
-        }
-        11195322 => {
-            GoldTorizo_Hurt(game);
-        }
-        11196007 => {
-            GoldTorizo_Shot(game);
-        }
+        11191934 => Torizo_Hurt(game),
+        11191972 => Torizo_Main(game),
+        11192447 => Torizo_Init(game),
+        11192695 => GoldTorizo_Touch(game),
+        11192700 => Torizo_Shot(game),
+        11195241 => GoldTorizo_Main(game),
+        11195322 => GoldTorizo_Hurt(game),
+        11196007 => GoldTorizo_Shot(game),
         11196359 => (),
-        11196360 => {
-            TourianEntranceStatue_Init(game);
-        }
-        11197603 => {
-            Shaktool_Hurt(game);
-        }
-        11198019 => {
-            Shaktool_Init(game);
-        }
-        11198255 => {
-            Shaktool_Touch(game);
-        }
-        11198260 => {
-            Shaktool_Shot(game);
-        }
-        11200278 => {
-            N00bTubeCracks_Init(game);
-        }
-        11200293 => {
-            ChozoStatue_Init(game);
-        }
-        11200423 => {
-            ChozoStatue_Main(game);
-        }
+        11196360 => TourianEntranceStatue_Init(game),
+        11197603 => Shaktool_Hurt(game),
+        11198019 => Shaktool_Init(game),
+        11198255 => Shaktool_Touch(game),
+        11198260 => Shaktool_Shot(game),
+        11200278 => N00bTubeCracks_Init(game),
+        11200293 => ChozoStatue_Init(game),
+        11200423 => ChozoStatue_Main(game),
         11200475 => (),
         11200476 => (),
-        11698191 => {
-            Enemy_GrappleReact_CancelBeam_B2(game);
-        }
-        11698241 => {
-            Enemy_NormalFrozenAI_B2(game);
-        }
+        11698191 => Enemy_GrappleReact_CancelBeam_B2(game),
+        11698241 => Enemy_NormalFrozenAI_B2(game),
         11698252 => (),
-        11700071 => {
-            WalkingSpacePirates_Powerbomb(game);
-        }
-        11700076 => {
-            WalkingSpacePirates_Touch(game);
-        }
-        11700089 => {
-            WalkingSpacePirates_Shot(game);
-        }
-        11726751 => {
-            WallSpacePirates_Init(game);
-        }
-        11726893 => {
-            WallSpacePirates_Main(game);
-        }
-        11728350 => {
-            NinjaSpacePirates_Init(game);
-        }
-        11728546 => {
-            NinjaSpacePirates_Main(game);
-        }
-        11730178 => {
-            WalkingSpacePirates_Init(game);
-        }
-        11730226 => {
-            WalkingSpacePirates_Main(game);
-        }
-        11763712 => {
-            Enemy_GrappleReact_NoInteract_B3(game);
-        }
-        11763722 => {
-            Enemy_GrappleReact_KillEnemy_B3(game);
-        }
-        11763727 => {
-            Enemy_GrappleReact_CancelBeam_B3(game);
-        }
-        11763747 => {
-            Enemy_NormalTouchAI_B3(game);
-        }
-        11763757 => {
-            Enemy_NormalShotAI_B3(game);
-        }
-        11763777 => {
-            Enemy_NormalFrozenAI_B3(game);
-        }
+        11700071 => WalkingSpacePirates_Powerbomb(game),
+        11700076 => WalkingSpacePirates_Touch(game),
+        11700089 => WalkingSpacePirates_Shot(game),
+        11726751 => WallSpacePirates_Init(game),
+        11726893 => WallSpacePirates_Main(game),
+        11728350 => NinjaSpacePirates_Init(game),
+        11728546 => NinjaSpacePirates_Main(game),
+        11730178 => WalkingSpacePirates_Init(game),
+        11730226 => WalkingSpacePirates_Main(game),
+        11763712 => Enemy_GrappleReact_NoInteract_B3(game),
+        11763722 => Enemy_GrappleReact_KillEnemy_B3(game),
+        11763727 => Enemy_GrappleReact_CancelBeam_B3(game),
+        11763747 => Enemy_NormalTouchAI_B3(game),
+        11763757 => Enemy_NormalShotAI_B3(game),
+        11763777 => Enemy_NormalFrozenAI_B3(game),
         11763788 => (),
-        11765499 => {
-            UnusedSpinningTurtleEye_Init(game);
-        }
-        11765518 => {
-            UnusedSpinningTurtleEye_Main();
-        }
-        11765819 => {
-            BrinstarPipeBug_Init(game);
-        }
-        11765882 => {
-            BrinstarPipeBug_Main(game);
-        }
-        11766625 => {
-            NorfairPipeBug_Init(game);
-        }
-        11766686 => {
-            NorfairPipeBug_Main(game);
-        }
-        11767628 => {
-            BrinstarYellowPipeBug_Init(game);
-        }
-        11767726 => {
-            BrinstarYellowPipeBug_Main(game);
-        }
-        11769219 => {
-            Botwoon_Init(game);
-        }
-        11769448 => {
-            Botwoon_Main(game);
-        }
-        11771903 => {
-            Botwoon_Touch(game);
-        }
-        11771926 => {
-            Botwoon_Shot(game);
-        }
-        11771969 => {
-            Botwoon_Powerbomb(game);
-        }
-        11789909 => {
-            EscapeEtecoon_Main(game);
-        }
-        11790027 => {
-            EscapeEtecoon_Init(game);
-        }
-        11791077 => {
-            EscapeDachora_Init(game);
-        }
+        11765499 => UnusedSpinningTurtleEye_Init(game),
+        11765518 => UnusedSpinningTurtleEye_Main(),
+        11765819 => BrinstarPipeBug_Init(game),
+        11765882 => BrinstarPipeBug_Main(game),
+        11766625 => NorfairPipeBug_Init(game),
+        11766686 => NorfairPipeBug_Main(game),
+        11767628 => BrinstarYellowPipeBug_Init(game),
+        11767726 => BrinstarYellowPipeBug_Main(game),
+        11769219 => Botwoon_Init(game),
+        11769448 => Botwoon_Main(game),
+        11771903 => Botwoon_Touch(game),
+        11771926 => Botwoon_Shot(game),
+        11771969 => Botwoon_Powerbomb(game),
+        11789909 => EscapeEtecoon_Main(game),
+        11790027 => EscapeEtecoon_Init(game),
+        11791077 => EscapeDachora_Init(game),
         11791130 => (),
         10518583 | 10649655 | 10715191 | 10780727 | 10846263 | 10911799 | 10977335 | 11042871
-        | 11108407 | 11173943 | 11698231 | 11763767 => {
-            NormalEnemyPowerBombAi(game);
-        }
+        | 11108407 | 11173943 | 11698231 | 11763767 => NormalEnemyPowerBombAi(game),
         _ => {
             Unreachable(game);
         }
@@ -3643,566 +2835,204 @@ pub unsafe fn CallEnemyPreInstr(ea: uint32, game: &mut Game) {
     match ea {
         10518651 => (),
         10649723 => (),
-        10652227 => {
-            MiniCrocomire_PreInstr5(k, game);
-        }
-        10652252 => {
-            MiniCrocomire_PreInstr6(k, game);
-        }
+        10652227 => MiniCrocomire_PreInstr5(k, game),
+        10652252 => MiniCrocomire_PreInstr6(k, game),
         10652277 => (),
-        10657722 => {
-            SpikeShootingPlant_2(k, game);
-        }
-        10657772 => {
-            SpikeShootingPlant_3(k, game);
-        }
+        10657722 => SpikeShootingPlant_2(k, game),
+        10657772 => SpikeShootingPlant_3(k, game),
         10657819 => (),
         10659799 => (),
-        10659852 => {
-            GunshipTop_3(k, game);
-        }
-        10660048 => {
-            GunshipTop_4(k, game);
-        }
-        10660162 => {
-            GunshipTop_5(k, game);
-        }
-        10660176 => {
-            GunshipTop_6(k, game);
-        }
-        10660231 => {
-            GunshipTop_7(k, game);
-        }
-        10660285 => {
-            GunshipTop_8(k, game);
-        }
-        10660431 => {
-            GunshipTop_9(k, game);
-        }
-        10660445 => {
-            GunshipTop_10(k, game);
-        }
-        10660500 => {
-            GunshipTop_11(k, game);
-        }
-        10660514 => {
-            GunshipTop_12(k, game);
-        }
-        10660639 => {
-            GunshipTop_13(k, game);
-        }
-        10660704 => {
-            GunshipTop_14(k, game);
-        }
-        10660718 => {
-            GunshipTop_15(k, game);
-        }
-        10660773 => {
-            GunshipTop_16(k, game);
-        }
-        10660807 => {
-            GunshipTop_17(k, game);
-        }
-        10660891 => {
-            GunshipTop_18(k, game);
-        }
-        10661079 => {
-            GunshipTop_19(k, game);
-        }
-        10661134 => {
-            GunshipTop_20(k, game);
-        }
-        10661165 => {
-            GunshipTop_21(k, game);
-        }
-        10662222 => {
-            Flies_4(k, game);
-        }
-        10662268 => {
-            Flies_5(k, game);
-        }
-        10662314 => {
-            Flies_6(k, game);
-        }
-        10662354 => {
-            Flies_7(k, game);
-        }
-        10665692 => {
-            NorfairLavajumpingEnemy_Func_1(k, game);
-        }
-        10665754 => {
-            NorfairLavajumpingEnemy_Func_2(k, game);
-        }
-        10665790 => {
-            NorfairLavajumpingEnemy_Func_3(k, game);
-        }
-        10665852 => {
-            NorfairLavajumpingEnemy_Func_4(k, game);
-        }
-        10665916 => {
-            NorfairLavajumpingEnemy_Func_5(k, game);
-        }
-        10666625 => {
-            NorfairRio_Func_1(k, game);
-        }
-        10666727 => {
-            NorfairRio_Func_2(k, game);
-        }
-        10666815 => {
-            NorfairRio_Func_3(k, game);
-        }
-        10666849 => {
-            NorfairRio_Func_4(k, game);
-        }
-        10666929 => {
-            NorfairRio_Func_5(k, game);
-        }
-        10667014 => {
-            NorfairRio_Func_6(k, game);
-        }
-        10667822 => {
-            LowerNorfairRio_Func_1(k, game);
-        }
-        10667889 => {
-            LowerNorfairRio_Func_2(k, game);
-        }
-        10667963 => {
-            LowerNorfairRio_Func_3(k, game);
-        }
-        10667990 => {
-            LowerNorfairRio_Func_4(k, game);
-        }
-        10668077 => {
-            LowerNorfairRio_Func_5(k, game);
-        }
-        10668168 => {
-            LowerNorfairRio_Func_6(k, game);
-        }
-        10669926 => {
-            MaridiaLargeSnail_Func_7(k, game);
-        }
-        10669993 => {
-            MaridiaLargeSnail_Func_8(k, game);
-        }
-        10675796 => {
-            LavaSeahorse_Func_1(k, game);
-        }
-        10675885 => {
-            LavaSeahorse_Func_2(k, game);
-        }
-        10675953 => {
-            LavaSeahorse_Func_3(k, game);
-        }
-        10676020 => {
-            LavaSeahorse_Func_4(k, game);
-        }
-        10676041 => {
-            LavaSeahorse_Func_5(k, game);
-        }
+        10659852 => GunshipTop_3(k, game),
+        10660048 => GunshipTop_4(k, game),
+        10660162 => GunshipTop_5(k, game),
+        10660176 => GunshipTop_6(k, game),
+        10660231 => GunshipTop_7(k, game),
+        10660285 => GunshipTop_8(k, game),
+        10660431 => GunshipTop_9(k, game),
+        10660445 => GunshipTop_10(k, game),
+        10660500 => GunshipTop_11(k, game),
+        10660514 => GunshipTop_12(k, game),
+        10660639 => GunshipTop_13(k, game),
+        10660704 => GunshipTop_14(k, game),
+        10660718 => GunshipTop_15(k, game),
+        10660773 => GunshipTop_16(k, game),
+        10660807 => GunshipTop_17(k, game),
+        10660891 => GunshipTop_18(k, game),
+        10661079 => GunshipTop_19(k, game),
+        10661134 => GunshipTop_20(k, game),
+        10661165 => GunshipTop_21(k, game),
+        10662222 => Flies_4(k, game),
+        10662268 => Flies_5(k, game),
+        10662314 => Flies_6(k, game),
+        10662354 => Flies_7(k, game),
+        10665692 => NorfairLavajumpingEnemy_Func_1(k, game),
+        10665754 => NorfairLavajumpingEnemy_Func_2(k, game),
+        10665790 => NorfairLavajumpingEnemy_Func_3(k, game),
+        10665852 => NorfairLavajumpingEnemy_Func_4(k, game),
+        10665916 => NorfairLavajumpingEnemy_Func_5(k, game),
+        10666625 => NorfairRio_Func_1(k, game),
+        10666727 => NorfairRio_Func_2(k, game),
+        10666815 => NorfairRio_Func_3(k, game),
+        10666849 => NorfairRio_Func_4(k, game),
+        10666929 => NorfairRio_Func_5(k, game),
+        10667014 => NorfairRio_Func_6(k, game),
+        10667822 => LowerNorfairRio_Func_1(k, game),
+        10667889 => LowerNorfairRio_Func_2(k, game),
+        10667963 => LowerNorfairRio_Func_3(k, game),
+        10667990 => LowerNorfairRio_Func_4(k, game),
+        10668077 => LowerNorfairRio_Func_5(k, game),
+        10668168 => LowerNorfairRio_Func_6(k, game),
+        10669926 => MaridiaLargeSnail_Func_7(k, game),
+        10669993 => MaridiaLargeSnail_Func_8(k, game),
+        10675796 => LavaSeahorse_Func_1(k, game),
+        10675885 => LavaSeahorse_Func_2(k, game),
+        10675953 => LavaSeahorse_Func_3(k, game),
+        10676020 => LavaSeahorse_Func_4(k, game),
+        10676041 => LavaSeahorse_Func_5(k, game),
         10676097 => (),
-        10730661 => {
-            Bang_Func_6(k, game);
-        }
-        10730689 => {
-            Bang_Func_7(k);
-        }
-        10730693 => {
-            Bang_Func_8(k, game);
-        }
-        10730780 => {
-            Bang_Func_10(k, game);
-        }
-        10730796 => {
-            Bang_Func_11(k, game);
-        }
+        10730661 => Bang_Func_6(k, game),
+        10730689 => Bang_Func_7(k),
+        10730693 => Bang_Func_8(k, game),
+        10730780 => Bang_Func_10(k, game),
+        10730796 => Bang_Func_11(k, game),
         10735455 => (),
-        10736051 => {
-            MaridiaSnail_Func_15(k, game);
-        }
+        10736051 => MaridiaSnail_Func_15(k, game),
         10739850 => (),
-        10739857 => {
-            WreckedShipOrangeZoomer_Func_2(k, game);
-        }
+        10739857 => WreckedShipOrangeZoomer_Func_2(k, game),
         10741441 => (),
-        10741448 => {
-            FireZoomer_Func_1(k, game);
-        }
-        10741637 => {
-            FireZoomer_Func_2(k, game);
-        }
-        10741746 => {
-            FireZoomer_Func_3(k, game);
-        }
+        10741448 => FireZoomer_Func_1(k, game),
+        10741637 => FireZoomer_Func_2(k, game),
+        10741746 => FireZoomer_Func_3(k, game),
         10998952 => (),
-        10998953 => {
-            Phantoon_Spawn8FireballsInCircleAtStart(k, game);
-        }
-        10999022 => {
-            Phantoon_WaitBetweenSpawningAndSpinningFireballs(k, game);
-        }
-        10999048 => {
-            Phantoon_SpawnFireballsBeforeFight(k, game);
-        }
-        10999114 => {
-            Phantoon_WavyFadeIn(k, game);
-        }
-        10999190 => {
-            Phantoon_PickPatternForRound1(k, game);
-        }
-        10999271 => {
-            Phantoon_MovePhantoonInFigure8ThenOpenEye(k, game);
-        }
-        10999309 => {
-            Phantoon_EyeFollowsSamusUntilTimerRunsOut(k, game);
-        }
-        10999388 => {
-            Phantoon_BecomesSolidAndBodyVuln(k, game);
-        }
-        10999416 => {
-            Phantoon_IsSwooping(k, game);
-        }
-        10999481 => {
-            Phantoon_FadeoutWithSwoop(k, game);
-        }
-        10999508 => {
-            Phantoon_WaitAfterFadeOut(k, game);
-        }
-        10999522 => {
-            Phantoon_MoveLeftOrRightAndPickEyeOpenPatt(k, game);
-        }
-        10999597 => {
-            Phantoon_FadeInBeforeFigure8(k, game);
-        }
-        10999615 => {
-            Phantoon_BecomeSolidAfterRainingFireballs(k, game);
-        }
-        10999655 => {
-            Phantoon_FadeInDuringFireballRain(k, game);
-        }
-        10999688 => {
-            Phantoon_FollowSamusWithEyeDuringFireballRain(k, game);
-        }
-        10999765 => {
-            Phantoon_FadeOutDuringFireballRain(k, game);
-        }
-        10999799 => {
-            Phantoon_SpawnRainingFireballs(k, game);
-        }
-        10999850 => {
-            Phantoon_FadeOutBeforeFirstFireballRain(k, game);
-        }
-        10999900 => {
-            Phantoon_FadeOutBeforeEnrage(k, game);
-        }
-        10999924 => {
-            Phantoon_MoveEnragedPhantoonToTopCenter(k, game);
-        }
-        10999953 => {
-            Phantoon_FadeInEnragedPhantoon(k, game);
-        }
-        10999980 => {
-            Phantoon_Enraged(k, game);
-        }
-        11000086 => {
-            Phantoon_FadeoutAfterEnrage(k, game);
-        }
-        11000110 => {
-            Phantoon_CompleteSwoopAfterFatalShot(k, game);
-        }
-        11000136 => {
-            Phantoon_DyingPhantoonFadeInOut(k, game);
-        }
-        11000203 => {
-            Phantoon_DyingPhantoonExplosions(k, game);
-        }
-        11000401 => {
-            Phantoon_WavyDyingPhantoonAndCry(k, game);
-        }
-        11000454 => {
-            Phantoon_DyingFadeOut(k, game);
-        }
-        11000535 => {
-            Phantoon_AlmostDead(k, game);
-        }
-        11000637 => {
-            Phantoon_Dead(k, game);
-        }
-        11004335 => {
-            Etecoon_Func_4(k, game);
-        }
-        11004416 => {
-            Etecoon_Func_5(k, game);
-        }
-        11004471 => {
-            Etecoon_Func_6(k, game);
-        }
-        11004597 => {
-            Etecoon_Func_7(k, game);
-        }
-        11004674 => {
-            Etecoon_Func_8(k, game);
-        }
-        11004716 => {
-            Etecoon_Func_9(k, game);
-        }
-        11004752 => {
-            Etecoon_Func_10(k, game);
-        }
-        11004877 => {
-            Etecoon_Func_11(k, game);
-        }
-        11004955 => {
-            Etecoon_Func_12(k, game);
-        }
-        11005079 => {
-            Etecoon_Func_16(k, game);
-        }
-        11005115 => {
-            Etecoon_Func_17(k, game);
-        }
-        11005151 => {
-            Etecoon_Func_18(k, game);
-        }
-        11005193 => {
-            Etecoon_Func_19(k, game);
-        }
-        11005226 => {
-            Etecoon_Func_20(k, game);
-        }
-        11005268 => {
-            Etecoon_Func_21(k, game);
-        }
-        11005301 => {
-            Etecoon_Func_22(k, game);
-        }
-        11005383 => {
-            Etecoon_Func_23(k, game);
-        }
-        11005502 => {
-            Etecoon_Func_24(k, game);
-        }
-        11005594 => {
-            Etecoon_Func_25(k, game);
-        }
-        11005624 => {
-            Etecoon_Func_26(k, game);
-        }
-        11007344 => {
-            Dachora_Func_2(k, game);
-        }
-        11007420 => {
-            Dachora_Func_3(k, game);
-        }
-        11007469 => {
-            Dachora_Func_4(k, game);
-        }
-        11007582 => {
-            Dachora_Func_5(k, game);
-        }
-        11007887 => {
-            Dachora_Func_7(k, game);
-        }
-        11008006 => {
-            Dachora_Func_8(k, game);
-        }
-        11008309 => {
-            Dachora_Func_11(k, game);
-        }
-        11008396 => {
-            Dachora_Func_12(k, game);
-        }
-        11047153 => {
-            MorphBallEye_Func_1(k, game);
-        }
-        11047214 => {
-            MorphBallEye_Func_2(k, game);
-        }
-        11047264 => {
-            MorphBallEye_Func_3(k, game);
-        }
-        11047374 => {
-            MorphBallEye_Func_4(k, game);
-        }
+        10998953 => Phantoon_Spawn8FireballsInCircleAtStart(k, game),
+        10999022 => Phantoon_WaitBetweenSpawningAndSpinningFireballs(k, game),
+        10999048 => Phantoon_SpawnFireballsBeforeFight(k, game),
+        10999114 => Phantoon_WavyFadeIn(k, game),
+        10999190 => Phantoon_PickPatternForRound1(k, game),
+        10999271 => Phantoon_MovePhantoonInFigure8ThenOpenEye(k, game),
+        10999309 => Phantoon_EyeFollowsSamusUntilTimerRunsOut(k, game),
+        10999388 => Phantoon_BecomesSolidAndBodyVuln(k, game),
+        10999416 => Phantoon_IsSwooping(k, game),
+        10999481 => Phantoon_FadeoutWithSwoop(k, game),
+        10999508 => Phantoon_WaitAfterFadeOut(k, game),
+        10999522 => Phantoon_MoveLeftOrRightAndPickEyeOpenPatt(k, game),
+        10999597 => Phantoon_FadeInBeforeFigure8(k, game),
+        10999615 => Phantoon_BecomeSolidAfterRainingFireballs(k, game),
+        10999655 => Phantoon_FadeInDuringFireballRain(k, game),
+        10999688 => Phantoon_FollowSamusWithEyeDuringFireballRain(k, game),
+        10999765 => Phantoon_FadeOutDuringFireballRain(k, game),
+        10999799 => Phantoon_SpawnRainingFireballs(k, game),
+        10999850 => Phantoon_FadeOutBeforeFirstFireballRain(k, game),
+        10999900 => Phantoon_FadeOutBeforeEnrage(k, game),
+        10999924 => Phantoon_MoveEnragedPhantoonToTopCenter(k, game),
+        10999953 => Phantoon_FadeInEnragedPhantoon(k, game),
+        10999980 => Phantoon_Enraged(k, game),
+        11000086 => Phantoon_FadeoutAfterEnrage(k, game),
+        11000110 => Phantoon_CompleteSwoopAfterFatalShot(k, game),
+        11000136 => Phantoon_DyingPhantoonFadeInOut(k, game),
+        11000203 => Phantoon_DyingPhantoonExplosions(k, game),
+        11000401 => Phantoon_WavyDyingPhantoonAndCry(k, game),
+        11000454 => Phantoon_DyingFadeOut(k, game),
+        11000535 => Phantoon_AlmostDead(k, game),
+        11000637 => Phantoon_Dead(k, game),
+        11004335 => Etecoon_Func_4(k, game),
+        11004416 => Etecoon_Func_5(k, game),
+        11004471 => Etecoon_Func_6(k, game),
+        11004597 => Etecoon_Func_7(k, game),
+        11004674 => Etecoon_Func_8(k, game),
+        11004716 => Etecoon_Func_9(k, game),
+        11004752 => Etecoon_Func_10(k, game),
+        11004877 => Etecoon_Func_11(k, game),
+        11004955 => Etecoon_Func_12(k, game),
+        11005079 => Etecoon_Func_16(k, game),
+        11005115 => Etecoon_Func_17(k, game),
+        11005151 => Etecoon_Func_18(k, game),
+        11005193 => Etecoon_Func_19(k, game),
+        11005226 => Etecoon_Func_20(k, game),
+        11005268 => Etecoon_Func_21(k, game),
+        11005301 => Etecoon_Func_22(k, game),
+        11005383 => Etecoon_Func_23(k, game),
+        11005502 => Etecoon_Func_24(k, game),
+        11005594 => Etecoon_Func_25(k, game),
+        11005624 => Etecoon_Func_26(k, game),
+        11007344 => Dachora_Func_2(k, game),
+        11007420 => Dachora_Func_3(k, game),
+        11007469 => Dachora_Func_4(k, game),
+        11007582 => Dachora_Func_5(k, game),
+        11007887 => Dachora_Func_7(k, game),
+        11008006 => Dachora_Func_8(k, game),
+        11008309 => Dachora_Func_11(k, game),
+        11008396 => Dachora_Func_12(k, game),
+        11047153 => MorphBallEye_Func_1(k, game),
+        11047214 => MorphBallEye_Func_2(k, game),
+        11047264 => MorphBallEye_Func_3(k, game),
+        11047374 => MorphBallEye_Func_4(k, game),
         11047388 => (),
-        11055386 => {
-            NorfairLavaMan_Func_7(k, game);
-        }
-        11055477 => {
-            NorfairLavaMan_Func_8(k, game);
-        }
-        11055507 => {
-            sub_A8B193(k, game);
-        }
-        11055544 => {
-            NorfairLavaMan_Func_9(k, game);
-        }
-        11055581 => {
-            NorfairLavaMan_Func_10(k, game);
-        }
-        11055620 => {
-            NorfairLavaMan_Func_11(k, game);
-        }
-        11055761 => {
-            sub_A8B291(k);
-        }
-        11055765 => {
-            NorfairLavaMan_Func_13(game);
-        }
-        11055885 => {
-            NorfairLavaMan_Func_15(k, game);
-        }
-        11055903 => {
-            NorfairLavaMan_Func_16(k, game);
-        }
-        11055958 => {
-            NorfairLavaMan_Func_17(k, game);
-        }
-        11056039 => {
-            NorfairLavaMan_Func_18(k, game);
-        }
-        11059843 => {
-            MaridiaFloater_Func_3(k, game);
-        }
-        11059878 => {
-            MaridiaFloater_Func_4(k, game);
-        }
-        11059919 => {
-            MaridiaFloater_Func_5(k, game);
-        }
-        11060075 => {
-            MaridiaFloater_Func_6(k, game);
-        }
-        11060193 => {
-            MaridiaFloater_Func_7(k, game);
-        }
-        11060329 => {
-            MaridiaFloater_Func_8(k, game);
-        }
-        11060444 => {
-            MaridiaFloater_Func_9(k, game);
-        }
-        11060480 => {
-            MaridiaFloater_Func_10(k, game);
-        }
-        11060509 => {
-            MaridiaFloater_Func_11(k, game);
-        }
+        11055386 => NorfairLavaMan_Func_7(k, game),
+        11055477 => NorfairLavaMan_Func_8(k, game),
+        11055507 => sub_A8B193(k, game),
+        11055544 => NorfairLavaMan_Func_9(k, game),
+        11055581 => NorfairLavaMan_Func_10(k, game),
+        11055620 => NorfairLavaMan_Func_11(k, game),
+        11055761 => sub_A8B291(k),
+        11055765 => NorfairLavaMan_Func_13(game),
+        11055885 => NorfairLavaMan_Func_15(k, game),
+        11055903 => NorfairLavaMan_Func_16(k, game),
+        11055958 => NorfairLavaMan_Func_17(k, game),
+        11056039 => NorfairLavaMan_Func_18(k, game),
+        11059843 => MaridiaFloater_Func_3(k, game),
+        11059878 => MaridiaFloater_Func_4(k, game),
+        11059919 => MaridiaFloater_Func_5(k, game),
+        11060075 => MaridiaFloater_Func_6(k, game),
+        11060193 => MaridiaFloater_Func_7(k, game),
+        11060329 => MaridiaFloater_Func_8(k, game),
+        11060444 => MaridiaFloater_Func_9(k, game),
+        11060480 => MaridiaFloater_Func_10(k, game),
+        11060509 => MaridiaFloater_Func_11(k, game),
         11060584 => (),
-        11060585 => {
-            MaridiaFloater_Func_12(k, game);
-        }
-        11060639 => {
-            MaridiaFloater_Func_13(k, game);
-        }
+        11060585 => MaridiaFloater_Func_12(k, game),
+        11060639 => MaridiaFloater_Func_13(k, game),
         11192670 => (),
         11197610 => (),
         11200422 => (),
         11174011 => (),
         11763835 => (),
-        11765888 => {
-            BrinstarPipeBug_PreInstr_1(k, game);
-        }
-        11765904 => {
-            BrinstarPipeBug_PreInstr_2(k, game);
-        }
-        11765987 => {
-            BrinstarPipeBug_PreInstr_3(k, game);
-        }
-        11766044 => {
-            BrinstarPipeBug_PreInstr_4(k, game);
-        }
-        11766142 => {
-            BrinstarPipeBug_PreInstr_5(k, game);
-        }
-        11767039 => {
-            NorfairPipeBug_Func_5(k, game);
-        }
-        11771328 => {
-            Botwoon_Func_26(k, game);
-        }
-        11771517 => {
-            Botwoon_Func_27(k, game);
-        }
-        11771616 => {
-            Botwoon_Func_28(k, game);
-        }
-        11771700 => {
-            Botwoon_Func_29(k, game);
-        }
-        11771770 => {
-            Botwoon_Func_30(k, game);
-        }
-        11192146 => {
-            Torizo_Func_5(k, game);
-        }
-        11192360 => {
-            Torizo_Func_6(k, game);
-        }
-        11192364 => {
-            Torizo_Func_7(k, game);
-        }
-        11195885 => {
-            Torizo_D5ED(k, game);
-        }
-        11195889 => {
-            Torizo_D5F1(k, game);
-        }
-        11199557 => {
-            sub_AAE445(k, game);
-        }
-        11200430 => {
-            Shaktool_PreInstr_0(k, game);
-        }
+        11765888 => BrinstarPipeBug_PreInstr_1(k, game),
+        11765904 => BrinstarPipeBug_PreInstr_2(k, game),
+        11765987 => BrinstarPipeBug_PreInstr_3(k, game),
+        11766044 => BrinstarPipeBug_PreInstr_4(k, game),
+        11766142 => BrinstarPipeBug_PreInstr_5(k, game),
+        11767039 => NorfairPipeBug_Func_5(k, game),
+        11771328 => Botwoon_Func_26(k, game),
+        11771517 => Botwoon_Func_27(k, game),
+        11771616 => Botwoon_Func_28(k, game),
+        11771700 => Botwoon_Func_29(k, game),
+        11771770 => Botwoon_Func_30(k, game),
+        11192146 => Torizo_Func_5(k, game),
+        11192360 => Torizo_Func_6(k, game),
+        11192364 => Torizo_Func_7(k, game),
+        11195885 => Torizo_D5ED(k, game),
+        11195889 => Torizo_D5F1(k, game),
+        11199557 => sub_AAE445(k, game),
+        11200430 => Shaktool_PreInstr_0(k, game),
         11200474 => (),
-        11789916 => {
-            EscapeEtecoon_E65C(k, game);
-        }
-        11789936 => {
-            EscapeEtecoon_E670(k, game);
-        }
-        11789952 => {
-            EscapeEtecoon_E680(k, game);
-        }
-        10740072 => {
-            sub_A3E168(k, game);
-        }
-        10735456 => {
-            MaridiaSnail_Func_7(k, game);
-        }
-        10735526 => {
-            MaridiaSnail_Func_9(k, game);
-        }
-        10735543 => {
-            MaridiaSnail_CFB7(k, game);
-        }
-        10735549 => {
-            MaridiaSnail_CFBD(k, game);
-        }
-        10735566 => {
-            MaridiaSnail_CFCE(k, game);
-        }
-        10735572 => {
-            MaridiaSnail_CFD4(k, game);
-        }
-        10735589 => {
-            MaridiaSnail_CFE5(k, game);
-        }
-        10735595 => {
-            MaridiaSnail_CFEB(k, game);
-        }
-        10735612 => {
-            MaridiaSnail_CFFC(k, game);
-        }
+        11789916 => EscapeEtecoon_E65C(k, game),
+        11789936 => EscapeEtecoon_E670(k, game),
+        11789952 => EscapeEtecoon_E680(k, game),
+        10740072 => sub_A3E168(k, game),
+        10735456 => MaridiaSnail_Func_7(k, game),
+        10735526 => MaridiaSnail_Func_9(k, game),
+        10735543 => MaridiaSnail_CFB7(k, game),
+        10735549 => MaridiaSnail_CFBD(k, game),
+        10735566 => MaridiaSnail_CFCE(k, game),
+        10735572 => MaridiaSnail_CFD4(k, game),
+        10735589 => MaridiaSnail_CFE5(k, game),
+        10735595 => MaridiaSnail_CFEB(k, game),
+        10735612 => MaridiaSnail_CFFC(k, game),
         11197611 => (),
-        11197612 => {
-            Shaktool_DCAC(k, game);
-        }
-        11197655 => {
-            Shaktool_DCD7(k, game);
-        }
-        11197733 => {
-            Shaktool_DD25(k, game);
-        }
+        11197612 => Shaktool_DCAC(k, game),
+        11197655 => Shaktool_DCD7(k, game),
+        11197733 => Shaktool_DD25(k, game),
         _ => {
             Unreachable(game);
         }
@@ -5520,55 +4350,25 @@ pub unsafe fn HandleEprojCollWithProj(k: uint16, j: uint16, game: &mut Game) {
 }
 pub unsafe fn CallHitboxTouch(ea: uint32, game: &mut Game) {
     match ea {
-        10518563 => {
-            Enemy_NormalTouchAI_A0(game);
-        }
-        10670984 => {
-            MaridiaLargeSnail_Func_12(game);
-        }
-        10670988 => {
-            MaridiaLargeSnail_Touch(game);
-        }
-        10780707 => {
-            Enemy_NormalTouchAI_A4(game);
-        }
-        10795325 => {
-            Crocomire_Func_92(game);
-        }
+        10518563 => Enemy_NormalTouchAI_A0(game),
+        10670984 => MaridiaLargeSnail_Func_12(game),
+        10670988 => MaridiaLargeSnail_Touch(game),
+        10780707 => Enemy_NormalTouchAI_A4(game),
+        10795325 => Crocomire_Func_92(game),
         10795344 => (),
         10846284 => (),
-        10851818 => {
-            Draygon_Touch(game);
-        }
-        10874348 => {
-            SporeSpawn_Touch(game);
-        }
-        10936153 => {
-            sub_A6DF59(game);
-        }
-        10940479 => {
-            CeresSteam_Touch(game);
-        }
+        10851818 => Draygon_Touch(game),
+        10874348 => SporeSpawn_Touch(game),
+        10936153 => sub_A6DF59(game),
+        10940479 => CeresSteam_Touch(game),
         10977356 => (),
-        10982539 => {
-            Kraid_Touch_ArmFoot(game);
-        }
-        10982544 => {
-            KraidsArm_Touch(game);
-        }
-        11001237 => {
-            Phantoon_Touch(game);
-        }
+        10982539 => Kraid_Touch_ArmFoot(game),
+        10982544 => KraidsArm_Touch(game),
+        11001237 => Phantoon_Touch(game),
         11122117 => (),
-        11122118 => {
-            MotherBrainsBrain_Touch(game);
-        }
-        11192695 => {
-            GoldTorizo_Touch(game);
-        }
-        11700076 => {
-            WalkingSpacePirates_Touch(game);
-        }
+        11122118 => MotherBrainsBrain_Touch(game),
+        11192695 => GoldTorizo_Touch(game),
+        11700076 => WalkingSpacePirates_Touch(game),
         _ => {
             Unreachable(game);
         }
@@ -5576,75 +4376,33 @@ pub unsafe fn CallHitboxTouch(ea: uint32, game: &mut Game) {
 }
 pub unsafe fn CallHitboxShot(ea: uint32, j: uint16, game: &mut Game) {
     match ea {
-        10518573 => {
-            Enemy_NormalShotAI_A0(game);
-        }
+        10518573 => Enemy_NormalShotAI_A0(game),
         10649676 => (),
-        10671028 => {
-            MaridiaLargeSnail_Shot(game);
-        }
-        10780717 => {
-            Enemy_NormalShotAI_A4(game);
-        }
-        10795345 => {
-            Crocomire_Func_93(game);
-        }
-        10795368 => {
-            Crocomire_Func_94(game);
-        }
-        10795525 => {
-            Crocomire_Func_95(game);
-        }
-        10795700 => {
-            Crocomire_Func_1(game);
-        }
-        10846253 => {
-            Enemy_NormalShotAI_A5(game);
-        }
-        10846278 => {
-            CreateADudShot(game);
-        }
+        10671028 => MaridiaLargeSnail_Shot(game),
+        10780717 => Enemy_NormalShotAI_A4(game),
+        10795345 => Crocomire_Func_93(game),
+        10795368 => Crocomire_Func_94(game),
+        10795525 => Crocomire_Func_95(game),
+        10795700 => Crocomire_Func_1(game),
+        10846253 => Enemy_NormalShotAI_A5(game),
+        10846278 => CreateADudShot(game),
         10846284 => (),
-        10851824 => {
-            Draygon_Shot(game);
-        }
-        10874202 => {
-            SporeSpawn_Shot(game);
-        }
+        10851824 => Draygon_Shot(game),
+        10874202 => SporeSpawn_Shot(game),
         10911820 => (),
-        10936202 => {
-            Ridley_Shot(game);
-        }
+        10936202 => Ridley_Shot(game),
         10977356 => (),
         10982581 => (),
-        10982582 => {
-            Kraid_Arm_Shot(j, game);
-        }
-        11001243 => {
-            Phantoon_Shot(game);
-        }
-        11121923 => {
-            MotherBrainsBody_Shot(game);
-        }
-        11121927 => {
-            MotherBrainsBrain_Shot(game);
-        }
-        11192700 => {
-            Torizo_Shot(game);
-        }
+        10982582 => Kraid_Arm_Shot(j, game),
+        11001243 => Phantoon_Shot(game),
+        11121923 => MotherBrainsBody_Shot(game),
+        11121927 => MotherBrainsBrain_Shot(game),
+        11192700 => Torizo_Shot(game),
         11192769 => (),
-        11192770 => {
-            Torizo_Func_8(game);
-        }
-        11700089 => {
-            WalkingSpacePirates_Shot(game);
-        }
-        11700168 => {
-            WalkingSpacePirates_87C8(game);
-        }
-        11700286 => {
-            WalkingSpacePirates_883E(game);
-        }
+        11192770 => Torizo_Func_8(game),
+        11700089 => WalkingSpacePirates_Shot(game),
+        11700168 => WalkingSpacePirates_87C8(game),
+        11700286 => WalkingSpacePirates_883E(game),
         _ => {
             Unreachable(game);
         }

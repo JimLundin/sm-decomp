@@ -654,24 +654,12 @@ pub unsafe fn Boulder_Init(game: &mut Game) {
 }
 pub unsafe fn CallBoulderFunc(ea: uint32, game: &mut Game) {
     match ea {
-        10913690 => {
-            Boulder_Func_1(game);
-        }
-        10913773 => {
-            Boulder_Func_2(game);
-        }
-        10913842 => {
-            Boulder_Func_3(game);
-        }
-        10913931 => {
-            Boulder_Func_4(game);
-        }
-        10914114 => {
-            Boulder_Func_5(game);
-        }
-        10914300 => {
-            Boulder_Func_6();
-        }
+        10913690 => Boulder_Func_1(game),
+        10913773 => Boulder_Func_2(game),
+        10913842 => Boulder_Func_3(game),
+        10913931 => Boulder_Func_4(game),
+        10914114 => Boulder_Func_5(game),
+        10914300 => Boulder_Func_6(),
         _ => {
             Unreachable(game);
         }
@@ -1002,18 +990,10 @@ pub unsafe fn SpikeyPlatform2ndEnemy_Main(game: &mut Game) {
 }
 pub unsafe fn CallSpikeyPlatformFunc(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
-        10914740 => {
-            SpikeyPlatform_Func_1(game);
-        }
-        10914780 => {
-            SpikeyPlatform_Func_2(game);
-        }
-        10914890 => {
-            SpikeyPlatform_Func_3(k, game);
-        }
-        10914909 => {
-            SpikeyPlatform_Func_4(game);
-        }
+        10914740 => SpikeyPlatform_Func_1(game),
+        10914780 => SpikeyPlatform_Func_2(game),
+        10914890 => SpikeyPlatform_Func_3(k, game),
+        10914909 => SpikeyPlatform_Func_4(game),
         _ => {
             Unreachable(game);
         }
@@ -1423,12 +1403,8 @@ pub unsafe fn FireGeyser_Init(game: &mut Game) {
 }
 pub unsafe fn CallFireGeyserFunc(ea: uint32, game: &mut Game) {
     match ea {
-        10915887 => {
-            FireGeyser_Func_1(game);
-        }
-        10915938 => {
-            FireGeyser_Func_2(game);
-        }
+        10915887 => FireGeyser_Func_1(game),
+        10915938 => FireGeyser_Func_2(game),
         _ => {
             Unreachable(game);
         }
@@ -1558,12 +1534,8 @@ pub unsafe fn NuclearWaffle_Init(game: &mut Game) {
 }
 pub unsafe fn CallNuclearWaffleFunc(ea: uint32, game: &mut Game) {
     match ea {
-        10917397 => {
-            NuclearWaffle_Func_1(game);
-        }
-        10917506 => {
-            NuclearWaffle_Func_2(game);
-        }
+        10917397 => NuclearWaffle_Func_1(game),
+        10917506 => NuclearWaffle_Func_2(game),
         _ => {
             Unreachable(game);
         }
@@ -2139,187 +2111,67 @@ pub unsafe fn CeresRidley_Init(game: &mut Game) {
 }
 pub unsafe fn CallRidleyFunc(ea: uint32, game: &mut Game) {
     match ea {
-        10920788 => {
-            CeresRidley_Func_2(game);
-        }
-        10920795 => {
-            CeresRidley_Func_3(game);
-        }
-        10920823 => {
-            CeresRidley_A377(game);
-        }
-        10920841 => {
-            CeresRidley_Func_4(game);
-        }
-        10920927 => {
-            CeresRidley_Func_5(game);
-        }
-        10921045 => {
-            CeresRidley_Func_6(game);
-        }
-        10921080 => {
-            CeresRidley_Func_7(game);
-        }
-        10921647 => {
-            CeresRidley_Func_9(game);
-        }
-        10921672 => {
-            CeresRidley_Func_10(game);
-        }
-        10921704 => {
-            CeresRidley_Func_11(game);
-        }
-        10921858 => {
-            CeresRidley_Func_13(game);
-        }
-        10921977 => {
-            CeresRidley_A7F9(game);
-        }
-        10922044 => {
-            CeresRidley_Func_14(game);
-        }
-        10922062 => {
-            CeresRidley_Func_15(game);
-        }
-        10922125 => {
-            CeresRidley_Func_16(game);
-        }
-        10922148 => {
-            CeresRidley_Func_17(game);
-        }
-        10922196 => {
-            CeresRidley_Func_18(game);
-        }
-        10922232 => {
-            CeresRidley_Func_19(game);
-        }
-        10922275 => {
-            CeresRidley_Func_20(game);
-        }
-        10922311 => {
-            CeresRidley_Func_21(game);
-        }
-        10922353 => {
-            CeresRidley_Func_22(game);
-        }
-        10922400 => {
-            CeresRidley_Func_23(game);
-        }
-        10922513 => {
-            CeresRidley_Func_24(game);
-        }
+        10920788 => CeresRidley_Func_2(game),
+        10920795 => CeresRidley_Func_3(game),
+        10920823 => CeresRidley_A377(game),
+        10920841 => CeresRidley_Func_4(game),
+        10920927 => CeresRidley_Func_5(game),
+        10921045 => CeresRidley_Func_6(game),
+        10921080 => CeresRidley_Func_7(game),
+        10921647 => CeresRidley_Func_9(game),
+        10921672 => CeresRidley_Func_10(game),
+        10921704 => CeresRidley_Func_11(game),
+        10921858 => CeresRidley_Func_13(game),
+        10921977 => CeresRidley_A7F9(game),
+        10922044 => CeresRidley_Func_14(game),
+        10922062 => CeresRidley_Func_15(game),
+        10922125 => CeresRidley_Func_16(game),
+        10922148 => CeresRidley_Func_17(game),
+        10922196 => CeresRidley_Func_18(game),
+        10922232 => CeresRidley_Func_19(game),
+        10922275 => CeresRidley_Func_20(game),
+        10922311 => CeresRidley_Func_21(game),
+        10922353 => CeresRidley_Func_22(game),
+        10922400 => CeresRidley_Func_23(game),
+        10922513 => CeresRidley_Func_24(game),
         10922575 => (),
-        10922576 => {
-            CeresRidley_Func_26(game);
-        }
-        10924787 => {
-            Ridley_Func_3(game);
-        }
-        10924833 => {
-            Ridley_Func_3b(game);
-        }
-        10925036 => {
-            Ridley_Func_5(game);
-        }
-        10925048 => {
-            Ridley_Func_6(game);
-        }
-        10925121 => {
-            Ridley_Func_8(game);
-        }
-        10925141 => {
-            Ridley_B455(game);
-        }
-        10925203 => {
-            Ridley_Func_9(game);
-        }
-        10925265 => {
-            Ridley_Func_10(game);
-        }
-        10925334 => {
-            Ridley_Func_11(game);
-        }
-        10925396 => {
-            Ridley_Func_12(game);
-        }
-        10925460 => {
-            Ridley_Func_13(game);
-        }
-        10925508 => {
-            Ridley_Func_14(game);
-        }
-        10925541 => {
-            Ridley_Func_15(game);
-        }
-        10925587 => {
-            Ridley_Func_16(game);
-        }
-        10925735 => {
-            Ridley_Func_19(game);
-        }
-        10925789 => {
-            Ridley_Func_20(game);
-        }
-        10925838 => {
-            Ridley_Func_21(game);
-        }
-        10926009 => {
-            Ridley_Func_22(game);
-        }
-        10926775 => {
-            Ridley_Func_33(game);
-        }
-        10926991 => {
-            Ridley_Func_33b(game);
-        }
-        10927044 => {
-            Ridley_Func_34(game);
-        }
-        10927089 => {
-            Ridley_Func_35(game);
-        }
-        10927150 => {
-            Ridley_Func_36(game);
-        }
-        10927438 => {
-            Ridley_Func_43(game);
-        }
-        10927514 => {
-            Ridley_Func_44(game);
-        }
-        10927548 => {
-            Ridley_Func_45(game);
-        }
-        10927602 => {
-            Ridley_Func_46(game);
-        }
-        10927619 => {
-            Ridley_Func_47(game);
-        }
-        10928206 => {
-            Ridley_Func_54(game);
-        }
-        10929464 => {
-            Ridley_Func_63(game);
-        }
-        10929470 => {
-            Ridley_C53E(game);
-        }
-        10929489 => {
-            Ridley_C551(game);
-        }
-        10929544 => {
-            Ridley_Func_64(game);
-        }
-        10929576 => {
-            Ridley_Func_65(game);
-        }
-        10929608 => {
-            Ridley_Func_66(game);
-        }
-        10929626 => {
-            Ridley_Func_67(game);
-        }
+        10922576 => CeresRidley_Func_26(game),
+        10924787 => Ridley_Func_3(game),
+        10924833 => Ridley_Func_3b(game),
+        10925036 => Ridley_Func_5(game),
+        10925048 => Ridley_Func_6(game),
+        10925121 => Ridley_Func_8(game),
+        10925141 => Ridley_B455(game),
+        10925203 => Ridley_Func_9(game),
+        10925265 => Ridley_Func_10(game),
+        10925334 => Ridley_Func_11(game),
+        10925396 => Ridley_Func_12(game),
+        10925460 => Ridley_Func_13(game),
+        10925508 => Ridley_Func_14(game),
+        10925541 => Ridley_Func_15(game),
+        10925587 => Ridley_Func_16(game),
+        10925735 => Ridley_Func_19(game),
+        10925789 => Ridley_Func_20(game),
+        10925838 => Ridley_Func_21(game),
+        10926009 => Ridley_Func_22(game),
+        10926775 => Ridley_Func_33(game),
+        10926991 => Ridley_Func_33b(game),
+        10927044 => Ridley_Func_34(game),
+        10927089 => Ridley_Func_35(game),
+        10927150 => Ridley_Func_36(game),
+        10927438 => Ridley_Func_43(game),
+        10927514 => Ridley_Func_44(game),
+        10927548 => Ridley_Func_45(game),
+        10927602 => Ridley_Func_46(game),
+        10927619 => Ridley_Func_47(game),
+        10928206 => Ridley_Func_54(game),
+        10929464 => Ridley_Func_63(game),
+        10929470 => Ridley_C53E(game),
+        10929489 => Ridley_C551(game),
+        10929544 => Ridley_Func_64(game),
+        10929576 => Ridley_Func_65(game),
+        10929608 => Ridley_Func_66(game),
+        10929626 => Ridley_Func_67(game),
         10929664 => (),
         _ => {
             Unreachable(game);
@@ -4152,18 +4004,10 @@ pub unsafe fn Ridley_Func_48(rect: Rect16U, game: &mut Game) -> uint8 {
 }
 pub unsafe fn CallRidleyFunc_var40(ea: uint32, game: &mut Game) {
     match ea {
-        10927772 => {
-            Ridley_Func_50(game);
-        }
-        10927795 => {
-            Ridley_Func_51(game);
-        }
-        10927818 => {
-            Ridley_Func_52(game);
-        }
-        10927836 => {
-            Ridley_Func_53(game);
-        }
+        10927772 => Ridley_Func_50(game),
+        10927795 => Ridley_Func_51(game),
+        10927818 => Ridley_Func_52(game),
+        10927836 => Ridley_Func_53(game),
         10927897 => (),
         _ => {
             Unreachable(game);
@@ -4267,24 +4111,12 @@ pub unsafe fn Ridley_Func_54(game: &mut Game) {
     let ridley_var_F: uint16 = (*Get_Ridley(0 as ::core::ffi::c_int, game)).ridley_var_F;
     if ridley_var_F != 0 {
         match ridley_var_F as ::core::ffi::c_int {
-            2 => {
-                Ridley_C08E(game);
-            }
-            4 => {
-                Ridley_C09F(game);
-            }
-            6 => {
-                Ridley_Func_56(game);
-            }
-            8 => {
-                Ridley_Func_57(game);
-            }
-            10 => {
-                Ridley_C104(game);
-            }
-            12 => {
-                Ridley_Func_58(game);
-            }
+            2 => Ridley_C08E(game),
+            4 => Ridley_C09F(game),
+            6 => Ridley_Func_56(game),
+            8 => Ridley_Func_57(game),
+            10 => Ridley_C104(game),
+            12 => Ridley_Func_58(game),
             _ => {
                 Unreachable(game);
                 loop {}
@@ -7435,9 +7267,7 @@ pub unsafe fn CeresSteam_Init(game: &mut Game) {
 pub unsafe fn CallCeresSteamFunc(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
         10940404 => (),
-        10940441 => {
-            CeresSteam_Func_1(k, game);
-        }
+        10940441 => CeresSteam_Func_1(k, game),
         _ => {
             Unreachable(game);
         }
@@ -7620,24 +7450,12 @@ pub unsafe fn CeresDoor_Func_1(k: uint16, game: &mut Game) {
 pub unsafe fn CallCeresDoor(ea: uint32, game: &mut Game) {
     let k: uint16 = ram_word!(game, cur_enemy_index);
     match ea {
-        10942315 => {
-            CeresDoor_Func_2(game);
-        }
-        10942320 => {
-            CeresDoor_Func_3(game);
-        }
-        10942373 => {
-            CeresDoor_Func_4(game);
-        }
-        10942397 => {
-            CeresDoor_Func_5(k, game);
-        }
-        10942428 => {
-            CeresDoor_Func_6(k, game);
-        }
-        10942544 => {
-            CeresDoor_Func_7(game);
-        }
+        10942315 => CeresDoor_Func_2(game),
+        10942320 => CeresDoor_Func_3(game),
+        10942373 => CeresDoor_Func_4(game),
+        10942397 => CeresDoor_Func_5(k, game),
+        10942428 => CeresDoor_Func_6(k, game),
+        10942544 => CeresDoor_Func_7(game),
         _ => {
             Unreachable(game);
         }
@@ -7820,15 +7638,9 @@ pub unsafe fn Zebetites_Init(game: &mut Game) {
 }
 pub unsafe fn CallZebetitesFunc(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
-        10943553 => {
-            Zebetites_Func_1(k, game);
-        }
-        10943579 => {
-            Zebetites_Func_2(k, game);
-        }
-        10943591 => {
-            Zebetites_Func_3(game);
-        }
+        10943553 => Zebetites_Func_1(k, game),
+        10943579 => Zebetites_Func_2(k, game),
+        10943591 => Zebetites_Func_3(game),
         _ => {
             Unreachable(game);
         }

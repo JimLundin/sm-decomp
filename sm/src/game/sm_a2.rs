@@ -2268,9 +2268,7 @@ pub unsafe fn CallThinHoppingBlobs(ea: uint32, game: &mut Game) {
         10656613 => {
             ThinHoppingBlobs_Func6(ram_word!(game, cur_enemy_index), game);
         }
-        10656641 => {
-            ThinHoppingBlobs_Func7(game);
-        }
+        10656641 => ThinHoppingBlobs_Func7(game),
         _ => {
             Unreachable(game);
         }
@@ -2396,24 +2394,12 @@ pub unsafe fn ThinHoppingBlobs_Func6(k: uint16, game: &mut Game) {
 }
 pub unsafe fn CallThinHoppingBlobsVarE(ea: uint32, game: &mut Game) {
     match ea {
-        10657035 => {
-            ThinHoppingBlobs_Func11(game);
-        }
-        10657067 => {
-            ThinHoppingBlobs_Func12(game);
-        }
-        10657099 => {
-            ThinHoppingBlobs_Func13(game);
-        }
-        10657131 => {
-            ThinHoppingBlobs_Func14(game);
-        }
-        10657176 => {
-            ThinHoppingBlobs_Func15(game);
-        }
-        10657229 => {
-            ThinHoppingBlobs_Func16(game);
-        }
+        10657035 => ThinHoppingBlobs_Func11(game),
+        10657067 => ThinHoppingBlobs_Func12(game),
+        10657099 => ThinHoppingBlobs_Func13(game),
+        10657131 => ThinHoppingBlobs_Func14(game),
+        10657176 => ThinHoppingBlobs_Func15(game),
+        10657229 => ThinHoppingBlobs_Func16(game),
         _ => {
             Unreachable(game);
         }
@@ -3854,15 +3840,9 @@ pub unsafe fn LavaquakeRocks_Init(game: &mut Game) {
 }
 pub unsafe fn CallLavaQuakeRocksFunc(ea: uint32, game: &mut Game) {
     match ea {
-        10663318 => {
-            LavaquakeRocks_1(game);
-        }
-        10663346 => {
-            LavaquakeRocks_2(game);
-        }
-        10663402 => {
-            LavaquakeRocks_3(game);
-        }
+        10663318 => LavaquakeRocks_1(game),
+        10663346 => LavaquakeRocks_2(game),
+        10663402 => LavaquakeRocks_3(game),
         _ => {
             Unreachable(game);
         }
@@ -4099,18 +4079,10 @@ pub unsafe fn Rinka_2(k: uint16, game: &mut Game) -> uint16 {
 }
 pub unsafe fn CallRinkaFunc(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
-        10663903 => {
-            Rinka_3(k, game);
-        }
-        10664004 => {
-            Rinka_4(k, game);
-        }
-        10664018 => {
-            Rinka_5(k, game);
-        }
-        10664027 => {
-            Rinka_B85B(k, game);
-        }
+        10663903 => Rinka_3(k, game),
+        10664004 => Rinka_4(k, game),
+        10664018 => Rinka_5(k, game),
+        10664027 => Rinka_B85B(k, game),
         _ => {
             Unreachable(game);
         }
@@ -4385,21 +4357,11 @@ pub unsafe fn Rio_Init(game: &mut Game) {
 pub unsafe fn CallRioFunc(ea: uint32, game: &mut Game) {
     let k: uint16 = ram_word!(game, cur_enemy_index);
     match ea {
-        10664941 => {
-            Rio_1(k, game);
-        }
-        10665010 => {
-            Rio_2(k, game);
-        }
-        10665032 => {
-            Rio_3(k, game);
-        }
-        10665143 => {
-            Rio_4(k, game);
-        }
-        10665215 => {
-            Rio_5(k, game);
-        }
+        10664941 => Rio_1(k, game),
+        10665010 => Rio_2(k, game),
+        10665032 => Rio_3(k, game),
+        10665143 => Rio_4(k, game),
+        10665215 => Rio_5(k, game),
         _ => {
             Unreachable(game);
         }
@@ -5171,15 +5133,9 @@ pub unsafe fn MaridiaLargeSnail_Init(game: &mut Game) {
 }
 pub unsafe fn CallMaridiaLargeSnailFunc(ea: uint32, game: &mut Game) {
     match ea {
-        10669542 => {
-            MaridiaLargeSnail_Func_4(game);
-        }
-        10669611 => {
-            MaridiaLargeSnail_Func_5(game);
-        }
-        10669888 => {
-            MaridiaLargeSnail_Func_6(game);
-        }
+        10669542 => MaridiaLargeSnail_Func_4(game),
+        10669611 => MaridiaLargeSnail_Func_5(game),
+        10669888 => MaridiaLargeSnail_Func_6(game),
         _ => {
             Unreachable(game);
         }
@@ -5546,18 +5502,10 @@ pub unsafe fn HirisingSlowfalling_Func_3(a: uint16, game: &mut Game) {
 }
 pub unsafe fn CallHirisingSlowfalling(ea: uint32, game: &mut Game) {
     match ea {
-        10674229 => {
-            HirisingSlowfalling_Func_4(game);
-        }
-        10674255 => {
-            HirisingSlowfalling_Func_5(game);
-        }
-        10674282 => {
-            HirisingSlowfalling_Func_6(game);
-        }
-        10674381 => {
-            HirisingSlowfalling_Func_7(game);
-        }
+        10674229 => HirisingSlowfalling_Func_4(game),
+        10674255 => HirisingSlowfalling_Func_5(game),
+        10674282 => HirisingSlowfalling_Func_6(game),
+        10674381 => HirisingSlowfalling_Func_7(game),
         _ => {
             Unreachable(game);
         }
@@ -6118,24 +6066,12 @@ pub unsafe fn TimedShutter_Init(game: &mut Game) {
 }
 pub unsafe fn CallTimedShutterFunc(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
-        10676925 => {
-            TimedShutter_Func_1(k, game);
-        }
-        10676945 => {
-            TimedShutter_Func_2(k, game);
-        }
-        10676967 => {
-            TimedShutter_Func_3(k, game);
-        }
-        10676989 => {
-            TimedShutter_Func_4(k, game);
-        }
-        10677009 => {
-            TimedShutter_Func_5(k, game);
-        }
-        10677267 => {
-            TimedShutter_Func_10(k, game);
-        }
+        10676925 => TimedShutter_Func_1(k, game),
+        10676945 => TimedShutter_Func_2(k, game),
+        10676967 => TimedShutter_Func_3(k, game),
+        10676989 => TimedShutter_Func_4(k, game),
+        10677009 => TimedShutter_Func_5(k, game),
+        10677267 => TimedShutter_Func_10(k, game),
         _ => {
             Unreachable(game);
         }
@@ -6442,48 +6378,20 @@ pub unsafe fn RisingFallingPlatform_Func_1(k: uint16, game: &mut Game) {
 }
 pub unsafe fn CallRisingFallingPlatformFunc(ea: uint32, game: &mut Game) {
     match ea {
-        10678025 => {
-            RisingFallingPlatform_Func_2(game);
-        }
-        10678056 => {
-            RisingFallingPlatform_Func_4(game);
-        }
-        10678120 => {
-            RisingFallingPlatform_Func_9(game);
-        }
-        10678228 => {
-            RisingFallingPlatform_Func_10(game);
-        }
-        10678336 => {
-            RisingFallingPlatform_Func_11(game);
-        }
-        10678386 => {
-            RisingFallingPlatform_Func_12(game);
-        }
-        10678425 => {
-            RisingFallingPlatform_Func_13();
-        }
-        10678820 => {
-            HorizontalShootableShutter_Func_2(game);
-        }
-        10678851 => {
-            HorizontalShootableShutter_Func_4(game);
-        }
-        10678898 => {
-            HorizontalShootableShutter_Func_8(game);
-        }
-        10679012 => {
-            HorizontalShootableShutter_Func_9(game);
-        }
-        10679180 => {
-            HorizontalShootableShutter_Func_12(game);
-        }
-        10679216 => {
-            HorizontalShootableShutter_Func_13(game);
-        }
-        10679252 => {
-            HorizontalShootableShutter_Func_14();
-        }
+        10678025 => RisingFallingPlatform_Func_2(game),
+        10678056 => RisingFallingPlatform_Func_4(game),
+        10678120 => RisingFallingPlatform_Func_9(game),
+        10678228 => RisingFallingPlatform_Func_10(game),
+        10678336 => RisingFallingPlatform_Func_11(game),
+        10678386 => RisingFallingPlatform_Func_12(game),
+        10678425 => RisingFallingPlatform_Func_13(),
+        10678820 => HorizontalShootableShutter_Func_2(game),
+        10678851 => HorizontalShootableShutter_Func_4(game),
+        10678898 => HorizontalShootableShutter_Func_8(game),
+        10679012 => HorizontalShootableShutter_Func_9(game),
+        10679180 => HorizontalShootableShutter_Func_12(game),
+        10679216 => HorizontalShootableShutter_Func_13(game),
+        10679252 => HorizontalShootableShutter_Func_14(),
         _ => {
             Unreachable(game);
         }

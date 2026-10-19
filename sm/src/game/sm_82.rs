@@ -313,19 +313,11 @@ pub const fnMotherBrainsBody_UnpauseHook: uint32 = 11110243;
 pub const fnlocret_828C81: ::core::ffi::c_int = 0x828c81;
 pub unsafe fn CallDemoRoomDataFunc(ea: uint32, game: &mut Game) {
     match ea {
-        8554778 => {
-            DemoRoom_ChargeBeamRoomScroll21(game);
-        }
+        8554778 => DemoRoom_ChargeBeamRoomScroll21(game),
         8554788 => (),
-        8554789 => {
-            DemoRoom_SetBG2TilemapBase(game);
-        }
-        8554795 => {
-            DemoRoom_SetKraidFunctionTimer(game);
-        }
-        8554802 => {
-            DemoRoom_SetBrinstarBossBits(game);
-        }
+        8554789 => DemoRoom_SetBG2TilemapBase(game),
+        8554795 => DemoRoom_SetKraidFunctionTimer(game),
+        8554802 => DemoRoom_SetBrinstarBossBits(game),
         _ => {
             Unreachable(game);
         }
@@ -1551,24 +1543,12 @@ pub unsafe fn DeleteAllOptionsMenuObjects_(game: &mut Game) {
 }
 pub unsafe fn CallOptionsEntryFunc(ea: uint32, j: uint16, game: &mut Game) {
     match ea {
-        8581782 => {
-            sub_82F296(j, game);
-        }
-        8581963 => {
-            sub_82F34B(j, game);
-        }
-        8581971 => {
-            sub_82F353(j, game);
-        }
-        8581979 => {
-            sub_82F35B(j, game);
-        }
-        8581987 => {
-            sub_82F363(j, game);
-        }
-        8582169 => {
-            sub_82F419(j, game);
-        }
+        8581782 => sub_82F296(j, game),
+        8581963 => sub_82F34B(j, game),
+        8581971 => sub_82F353(j, game),
+        8581979 => sub_82F35B(j, game),
+        8581987 => sub_82F363(j, game),
+        8582169 => sub_82F419(j, game),
         _ => {
             Unreachable(game);
         }
@@ -1622,24 +1602,12 @@ pub unsafe fn OptionsMenuFunc1(game: &mut Game) {
 }
 pub unsafe fn CallOptionsPreInstr(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
-        8555536 => {
-            OptionsPreInstr_nullsub_57(k);
-        }
-        8581801 => {
-            OptionsPreInstr_F2A9(k, game);
-        }
-        8582006 => {
-            OptionsPreInstr_F376(k, game);
-        }
-        8582048 => {
-            OptionsPreInstr_F3A0(k, game);
-        }
-        8582114 => {
-            OptionsPreInstr_F3E2(k, game);
-        }
-        8582188 => {
-            OptionsPreInstr_F42C(k, game);
-        }
+        8555536 => OptionsPreInstr_nullsub_57(k),
+        8581801 => OptionsPreInstr_F2A9(k, game),
+        8582006 => OptionsPreInstr_F376(k, game),
+        8582048 => OptionsPreInstr_F3A0(k, game),
+        8582114 => OptionsPreInstr_F3E2(k, game),
+        8582188 => OptionsPreInstr_F42C(k, game),
         _ => {
             Unreachable(game);
         }
@@ -1793,12 +1761,8 @@ pub unsafe fn GameState_12_Pausing_Darkening_Async(game: &mut Game) -> Coroutine
 pub unsafe fn CallPauseHook(ea: uint32, game: &mut Game) {
     match ea {
         8946657 => (),
-        9423094 => {
-            PauseHook_DraygonRoom(game);
-        }
-        10994469 => {
-            PauseHook_Kraid(game);
-        }
+        9423094 => PauseHook_DraygonRoom(game),
+        10994469 => PauseHook_Kraid(game),
         _ => {
             Unreachable(game);
         }
@@ -5246,15 +5210,9 @@ pub unsafe fn HandleGameOverBabyMetroid(game: &mut Game) {
 }
 pub unsafe fn CallBabyMetroidPlaySfx(ea: uint32, game: &mut Game) {
     match ea {
-        8567820 => {
-            BabyMetroidPlaySfx0x23(game);
-        }
-        8567829 => {
-            BabyMetroidPlaySfx0x26(game);
-        }
-        8567838 => {
-            BabyMetroidPlaySfx0x27(game);
-        }
+        8567820 => BabyMetroidPlaySfx0x23(game),
+        8567829 => BabyMetroidPlaySfx0x26(game),
+        8567838 => BabyMetroidPlaySfx0x27(game),
         _ => {
             Unreachable(game);
         }

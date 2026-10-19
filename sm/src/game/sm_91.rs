@@ -2147,21 +2147,11 @@ unsafe fn CallXrayFunc(
         9555643 => {
             Xray_CombinedMove(r22, r36, false_0 != 0, game);
         }
-        9555766 => {
-            Xray_Func7(r22, jp, game);
-        }
-        9555774 => {
-            Xray_Func8(r22, jp, game);
-        }
-        9555790 => {
-            Xray_Func9(r18, r22, jp, game);
-        }
-        9555810 => {
-            Xray_Func10(r22, jp, game);
-        }
-        9555823 => {
-            Xray_Func11(r18, r22, jp, game);
-        }
+        9555766 => Xray_Func7(r22, jp, game),
+        9555774 => Xray_Func8(r22, jp, game),
+        9555790 => Xray_Func9(r18, r22, jp, game),
+        9555810 => Xray_Func10(r22, jp, game),
+        9555823 => Xray_Func11(r18, r22, jp, game),
         _ => {
             Unreachable(game);
         }

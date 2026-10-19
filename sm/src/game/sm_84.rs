@@ -986,12 +986,8 @@ pub fn PlmInstr_ClearPreInstr(plmp: *const uint8, k: uint16, game: &mut Game) ->
 }
 pub unsafe fn CallPlmInstrFunc(ea: uint32, game: &mut Game) {
     match ea {
-        9557220 => {
-            VariaSuitPickup(game);
-        }
-        9557434 => {
-            GravitySuitPickup(game);
-        }
+        9557220 => VariaSuitPickup(game),
+        9557434 => GravitySuitPickup(game),
         _ => {
             Unreachable(game);
         }
@@ -5531,114 +5527,44 @@ pub unsafe fn CallPlmPreInstr(ea: uint32, k: uint16, game: &mut Game) {
         8696083 => {
             PlmSetup_BTS_Brinstar_0x81_Ceilingplant(k, game);
         }
-        8697821 => {
-            PlmPreInstr_B7EB_DecTimerEnableSoundsDeletePlm(k, game);
-        }
-        8697839 => {
-            PlmPreInstr_WakeAndLavaIfBoosterCollected(k, game);
-        }
-        8697898 => {
-            PlmPreInstr_WakePLMAndStartFxMotionSamusFarLeft(k, game);
-        }
-        8697926 => {
-            PlmPreInstr_AdvanceLavaSamusMovesLeft(k, game);
-        }
-        8698032 => {
-            PlmPreInstr_ShaktoolsRoom(k, game);
-        }
-        8698151 => {
-            PlmPreInstr_OldTourianEscapeShaftEscape(k, game);
-        }
-        8698184 => {
-            PlmPreInstr_EscapeRoomBeforeOldTourianEscapeShaft(k, game);
-        }
-        8698706 => {
-            PlmPreInstr_WakePlmIfTriggered(k, game);
-        }
-        8698731 => {
-            PlmPreInstr_WakePlmIfTriggeredOrSamusBelowPlm(k, game);
-        }
-        8698788 => {
-            PlmPreInstr_WakePlmIfTriggeredOrSamusAbovePlm(k, game);
-        }
-        8704348 => {
-            PlmPreInstr_DeletePlmAndSpawnTriggerIfBlockDestroyed(k, game);
-        }
-        8704486 => {
-            PlmPreInstr_IncrementRoomArgIfShotBySuperMissile(k, game);
-        }
-        8704827 => {
-            PlmPreInstr_WakePlmIfSamusHasBombs(k, game);
-        }
-        8705875 => {
-            PlmPreInstr_WakePlmIfRoomArgumentDoorIsSet(k, game);
-        }
-        8706916 => {
-            PlmPreInstr_GotoLinkIfShotWithSuperMissile(k, game);
-        }
-        8707977 => {
-            PlmPreInstr_GotoLinkIfTriggered(k, game);
-        }
-        8708070 => {
-            PlmPreInstr_WakeIfTriggered(k, game);
-        }
-        8699151 => {
-            PlmPreInstr_GoToLinkInstrIfShot(k, game);
-        }
-        8699174 => {
-            PlmPreInstr_GoToLinkInstrIfShotWithPowerBomb(k, game);
-        }
-        8699216 => {
-            PlmPreInstr_GoToLinkInstrIfShotWithAnyMissile(k, game);
-        }
-        8699272 => {
-            PlmPreInstr_GoToLinkInstrIfShotWithSuperMissile(k, game);
-        }
-        8699314 => {
-            PlmPreInstr_GoToLinkInstruction(k, game);
-        }
-        8699420 => {
-            PlmPreInstr_PlayDudSound(k, game);
-        }
-        8699348 => {
-            PlmPreInstr_GotoLinkIfBoss1Dead(k, game);
-        }
-        8699363 => {
-            PlmPreInstr_GotoLinkIfMiniBossDead(k, game);
-        }
-        8699378 => {
-            PlmPreInstr_GotoLinkIfTorizoDead(k, game);
-        }
-        8699393 => {
-            PlmPreInstr_GotoLinkIfEnemyDeathQuotaOk(k, game);
-        }
-        8699423 => {
-            PlmPreInstr_GotoLinkIfTourianStatueFinishedProcessing(k, game);
-        }
-        8699440 => {
-            PlmPreInstr_GotoLinkIfCrittersEscaped(k, game);
-        }
-        8694921 => {
-            PlmPreInstr_PositionSamusAndInvincible(k, game);
-        }
-        8705215 => {
-            PlmPreInstr_WakeOnKeyPress(k, game);
-        }
+        8697821 => PlmPreInstr_B7EB_DecTimerEnableSoundsDeletePlm(k, game),
+        8697839 => PlmPreInstr_WakeAndLavaIfBoosterCollected(k, game),
+        8697898 => PlmPreInstr_WakePLMAndStartFxMotionSamusFarLeft(k, game),
+        8697926 => PlmPreInstr_AdvanceLavaSamusMovesLeft(k, game),
+        8698032 => PlmPreInstr_ShaktoolsRoom(k, game),
+        8698151 => PlmPreInstr_OldTourianEscapeShaftEscape(k, game),
+        8698184 => PlmPreInstr_EscapeRoomBeforeOldTourianEscapeShaft(k, game),
+        8698706 => PlmPreInstr_WakePlmIfTriggered(k, game),
+        8698731 => PlmPreInstr_WakePlmIfTriggeredOrSamusBelowPlm(k, game),
+        8698788 => PlmPreInstr_WakePlmIfTriggeredOrSamusAbovePlm(k, game),
+        8704348 => PlmPreInstr_DeletePlmAndSpawnTriggerIfBlockDestroyed(k, game),
+        8704486 => PlmPreInstr_IncrementRoomArgIfShotBySuperMissile(k, game),
+        8704827 => PlmPreInstr_WakePlmIfSamusHasBombs(k, game),
+        8705875 => PlmPreInstr_WakePlmIfRoomArgumentDoorIsSet(k, game),
+        8706916 => PlmPreInstr_GotoLinkIfShotWithSuperMissile(k, game),
+        8707977 => PlmPreInstr_GotoLinkIfTriggered(k, game),
+        8708070 => PlmPreInstr_WakeIfTriggered(k, game),
+        8699151 => PlmPreInstr_GoToLinkInstrIfShot(k, game),
+        8699174 => PlmPreInstr_GoToLinkInstrIfShotWithPowerBomb(k, game),
+        8699216 => PlmPreInstr_GoToLinkInstrIfShotWithAnyMissile(k, game),
+        8699272 => PlmPreInstr_GoToLinkInstrIfShotWithSuperMissile(k, game),
+        8699314 => PlmPreInstr_GoToLinkInstruction(k, game),
+        8699420 => PlmPreInstr_PlayDudSound(k, game),
+        8699348 => PlmPreInstr_GotoLinkIfBoss1Dead(k, game),
+        8699363 => PlmPreInstr_GotoLinkIfMiniBossDead(k, game),
+        8699378 => PlmPreInstr_GotoLinkIfTorizoDead(k, game),
+        8699393 => PlmPreInstr_GotoLinkIfEnemyDeathQuotaOk(k, game),
+        8699423 => PlmPreInstr_GotoLinkIfTourianStatueFinishedProcessing(k, game),
+        8699440 => PlmPreInstr_GotoLinkIfCrittersEscaped(k, game),
+        8694921 => PlmPreInstr_PositionSamusAndInvincible(k, game),
+        8705215 => PlmPreInstr_WakeOnKeyPress(k, game),
         8698730 => (),
         8706773 | 8706774 | 8706775 | 8706776 | 8706777 | 8706778 | 8706779 | 8706780 | 8706781
         | 8686304 => (),
-        8706782 => {
-            PlmPreInstr_SetMetroidsClearState_Ev0x10(k, game);
-        }
-        8706798 => {
-            PlmPreInstr_SetMetroidsClearState_Ev0x11(k, game);
-        }
-        8706814 => {
-            PlmPreInstr_SetMetroidsClearState_Ev0x12(k, game);
-        }
-        8706830 => {
-            PlmPreInstr_SetMetroidsClearState_Ev0x13(k, game);
-        }
+        8706782 => PlmPreInstr_SetMetroidsClearState_Ev0x10(k, game),
+        8706798 => PlmPreInstr_SetMetroidsClearState_Ev0x11(k, game),
+        8706814 => PlmPreInstr_SetMetroidsClearState_Ev0x12(k, game),
+        8706830 => PlmPreInstr_SetMetroidsClearState_Ev0x13(k, game),
         _ => {
             Unreachable(game);
         }

@@ -917,18 +917,10 @@ pub unsafe fn MiniDraygon_Func_3(game: &mut Game) {
 }
 pub unsafe fn CallMiniDraygonFunc(ea: uint32, game: &mut Game) {
     match ea {
-        11045154 => {
-            MiniDraygon_Func_4(game);
-        }
-        11045428 => {
-            MiniDraygon_Func_8(game);
-        }
-        11045435 => {
-            MiniDraygon_Func_9(game);
-        }
-        11045496 => {
-            MiniDraygon_Func_10(game);
-        }
+        11045154 => MiniDraygon_Func_4(game),
+        11045428 => MiniDraygon_Func_8(game),
+        11045435 => MiniDraygon_Func_9(game),
+        11045496 => MiniDraygon_Func_10(game),
         _ => {
             Unreachable(game);
         }
@@ -1363,12 +1355,8 @@ pub unsafe fn Fune_Init(game: &mut Game) {
 }
 pub unsafe fn CallFuneFunc(ea: uint32, game: &mut Game) {
     match ea {
-        11048759 => {
-            Fune_Func_1(game);
-        }
-        11048796 => {
-            Fune_Func_2(game);
-        }
+        11048759 => Fune_Func_1(game),
+        11048796 => Fune_Func_2(game),
         11048846 => (),
         11048847 => (),
         _ => {
@@ -1442,24 +1430,12 @@ pub unsafe fn WreckedShipGhost_Init(game: &mut Game) {
 }
 pub unsafe fn CallWreckedShipGhost(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
-        11049794 => {
-            WreckedShipGhost_Func_1(k, game);
-        }
-        11049901 => {
-            WreckedShipGhost_Func_2(k, game);
-        }
-        11050089 => {
-            WreckedShipGhost_Func_4(k, game);
-        }
-        11050122 => {
-            WreckedShipGhost_Func_5(k, game);
-        }
-        11050259 => {
-            WreckedShipGhost_Func_6(k, game);
-        }
-        11050294 => {
-            WreckedShipGhost_Func_7(k, game);
-        }
+        11049794 => WreckedShipGhost_Func_1(k, game),
+        11049901 => WreckedShipGhost_Func_2(k, game),
+        11050089 => WreckedShipGhost_Func_4(k, game),
+        11050122 => WreckedShipGhost_Func_5(k, game),
+        11050259 => WreckedShipGhost_Func_6(k, game),
+        11050294 => WreckedShipGhost_Func_7(k, game),
         _ => {
             Unreachable(game);
         }
@@ -1959,18 +1935,10 @@ pub unsafe fn YappingMaw_Init(game: &mut Game) {
 }
 pub unsafe fn CallYappingMawFunc(ea: uint32, game: &mut Game) {
     match ea {
-        11051573 => {
-            YappingMaw_Func_1(game);
-        }
-        11051660 => {
-            YappingMaw_Func_2(game);
-        }
-        11052101 => {
-            YappingMaw_Func_8(game);
-        }
-        11052682 => {
-            YappingMaw_Func_11(game);
-        }
+        11051573 => YappingMaw_Func_1(game),
+        11051660 => YappingMaw_Func_2(game),
+        11052101 => YappingMaw_Func_8(game),
+        11052682 => YappingMaw_Func_11(game),
         _ => {
             Unreachable(game);
         }
@@ -2455,9 +2423,7 @@ pub unsafe fn Kago_Init(game: &mut Game) {
 }
 pub unsafe fn CallKagoFunc(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
-        11053947 => {
-            Kago_Func_1(k, game);
-        }
+        11053947 => Kago_Func_1(k, game),
         11053953 => (),
         _ => {
             Unreachable(game);
@@ -3807,87 +3773,33 @@ pub unsafe fn Beetom_Func_36(game: &mut Game) {
 }
 pub unsafe fn CallBeetomFunc(ea: uint32, game: &mut Game) {
     match ea {
-        11057172 => {
-            Beetom_Func_3(game);
-        }
-        11057199 => {
-            Beetom_Func_4(game);
-        }
-        11057231 => {
-            Beetom_Func_5(game);
-        }
-        11057247 => {
-            Beetom_Func_6(game);
-        }
-        11057267 => {
-            Beetom_Func_7(game);
-        }
-        11057287 => {
-            Beetom_Func_8(game);
-        }
-        11057321 => {
-            Beetom_Func_9(game);
-        }
-        11057355 => {
-            Beetom_Func_10(game);
-        }
-        11057389 => {
-            Beetom_Func_11(game);
-        }
-        11057423 => {
-            Beetom_Func_12(game);
-        }
-        11057490 => {
-            Beetom_Func_13(game);
-        }
-        11057510 => {
-            Beetom_Func_14(game);
-        }
-        11057530 => {
-            Beetom_Func_15(game);
-        }
-        11057570 => {
-            Beetom_Func_16(game);
-        }
-        11057586 => {
-            Beetom_Func_17(game);
-        }
-        11057601 => {
-            Beetom_Func_18(game);
-        }
-        11057700 => {
-            Beetom_Func_19(game);
-        }
-        11057796 => {
-            Beetom_Func_20(game);
-        }
-        11057847 => {
-            Beetom_Func_21(game);
-        }
-        11058005 => {
-            Beetom_Func_24(game);
-        }
-        11058056 => {
-            Beetom_Func_25(game);
-        }
-        11058214 => {
-            Beetom_Func_28(game);
-        }
-        11058266 => {
-            Beetom_Func_29(game);
-        }
-        11058424 => {
-            Beetom_Func_32(game);
-        }
-        11058498 => {
-            Beetom_Func_33(game);
-        }
-        11058589 => {
-            Beetom_Func_35(game);
-        }
-        11058629 => {
-            Beetom_Func_36(game);
-        }
+        11057172 => Beetom_Func_3(game),
+        11057199 => Beetom_Func_4(game),
+        11057231 => Beetom_Func_5(game),
+        11057247 => Beetom_Func_6(game),
+        11057267 => Beetom_Func_7(game),
+        11057287 => Beetom_Func_8(game),
+        11057321 => Beetom_Func_9(game),
+        11057355 => Beetom_Func_10(game),
+        11057389 => Beetom_Func_11(game),
+        11057423 => Beetom_Func_12(game),
+        11057490 => Beetom_Func_13(game),
+        11057510 => Beetom_Func_14(game),
+        11057530 => Beetom_Func_15(game),
+        11057570 => Beetom_Func_16(game),
+        11057586 => Beetom_Func_17(game),
+        11057601 => Beetom_Func_18(game),
+        11057700 => Beetom_Func_19(game),
+        11057796 => Beetom_Func_20(game),
+        11057847 => Beetom_Func_21(game),
+        11058005 => Beetom_Func_24(game),
+        11058056 => Beetom_Func_25(game),
+        11058214 => Beetom_Func_28(game),
+        11058266 => Beetom_Func_29(game),
+        11058424 => Beetom_Func_32(game),
+        11058498 => Beetom_Func_33(game),
+        11058589 => Beetom_Func_35(game),
+        11058629 => Beetom_Func_36(game),
         _ => {
             Unreachable(game);
         }
@@ -5116,18 +5028,10 @@ pub unsafe fn MaridiaPuffer_Init(game: &mut Game) {
 }
 pub unsafe fn CallMaridiaPuffer(ea: uint32, game: &mut Game) {
     match ea {
-        11065643 => {
-            MaridiaPuffer_Func_1(game);
-        }
-        11065664 => {
-            MaridiaPuffer_Func_2(game);
-        }
-        11065699 => {
-            MaridiaPuffer_Func_3(game);
-        }
-        11065724 => {
-            MaridiaPuffer_Func_4(game);
-        }
+        11065643 => MaridiaPuffer_Func_1(game),
+        11065664 => MaridiaPuffer_Func_2(game),
+        11065699 => MaridiaPuffer_Func_3(game),
+        11065724 => MaridiaPuffer_Func_4(game),
         _ => {
             Unreachable(game);
         }
@@ -5337,24 +5241,12 @@ pub unsafe fn WalkingLavaSeahorse_Func_2(k: uint16, game: &mut Game) -> uint16 {
 pub unsafe fn CallWalkingLavaSeahorseFunc(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
         11067084 => (),
-        11066737 => {
-            WalkingLavaSeahorse_Func_3(k, game);
-        }
-        11066822 => {
-            WalkingLavaSeahorse_Func_4(k, game);
-        }
-        11066885 => {
-            WalkingLavaSeahorse_Func_6(k, game);
-        }
-        11066955 => {
-            WalkingLavaSeahorse_Func_7(k, game);
-        }
-        11067085 => {
-            WalkingLavaSeahorse_Func_8(k, game);
-        }
-        11067116 => {
-            WalkingLavaSeahorse_Func_9(k, game);
-        }
+        11066737 => WalkingLavaSeahorse_Func_3(k, game),
+        11066822 => WalkingLavaSeahorse_Func_4(k, game),
+        11066885 => WalkingLavaSeahorse_Func_6(k, game),
+        11066955 => WalkingLavaSeahorse_Func_7(k, game),
+        11067085 => WalkingLavaSeahorse_Func_8(k, game),
+        11067116 => WalkingLavaSeahorse_Func_9(k, game),
         _ => {
             Unreachable(game);
         }
@@ -5636,12 +5528,8 @@ pub unsafe fn WreckedShipOrbs_Init(game: &mut Game) {
 }
 pub unsafe fn CallWreckedShipOrbsA(ea: uint32, game: &mut Game) {
     match ea {
-        11068421 => {
-            WreckedShipOrbs_Func_3(game);
-        }
-        11068452 => {
-            WreckedShipOrbs_Func_4(game);
-        }
+        11068421 => WreckedShipOrbs_Func_3(game),
+        11068452 => WreckedShipOrbs_Func_4(game),
         _ => {
             Unreachable(game);
         }
@@ -5649,12 +5537,8 @@ pub unsafe fn CallWreckedShipOrbsA(ea: uint32, game: &mut Game) {
 }
 pub unsafe fn CallWreckedShipOrbsB(ea: uint32, game: &mut Game) {
     match ea {
-        11068483 => {
-            WreckedShipOrbs_Func_5(game);
-        }
-        11068514 => {
-            WreckedShipOrbs_Func_6(game);
-        }
+        11068483 => WreckedShipOrbs_Func_5(game),
+        11068514 => WreckedShipOrbs_Func_6(game),
         _ => {
             Unreachable(game);
         }
@@ -5792,15 +5676,9 @@ pub unsafe fn WreckedShipSpark_Init(game: &mut Game) {
 }
 pub unsafe fn CallWreckedShipSpark(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
-        11069077 => {
-            WreckedShipSpark_Func_1(k, game);
-        }
-        11069111 => {
-            WreckedShipSpark_Func_2(k, game);
-        }
-        11069148 => {
-            WreckedShipSpark_Func_3(k, game);
-        }
+        11069077 => WreckedShipSpark_Func_1(k, game),
+        11069111 => WreckedShipSpark_Func_2(k, game),
+        11069148 => WreckedShipSpark_Func_3(k, game),
         11069076 => (),
         _ => {
             Unreachable(game);
@@ -6013,36 +5891,16 @@ pub unsafe fn KiHunterWings_Init(game: &mut Game) {
 }
 pub unsafe fn CallKiHunterFunc(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
-        11072104 => {
-            KiHunter_Func_1(k, game);
-        }
-        11072440 => {
-            KiHunter_Func_2(k, game);
-        }
-        11072749 => {
-            KiHunter_Func_3(k, game);
-        }
-        11072858 => {
-            KiHunter_Func_4(k, game);
-        }
-        11072907 => {
-            KiHunter_Func_5(k, game);
-        }
-        11073008 => {
-            KiHunter_Func_6(k, game);
-        }
-        11073163 => {
-            KiHunter_Func_7(k, game);
-        }
-        11073203 => {
-            KiHunter_Func_8(k, game);
-        }
-        11073267 => {
-            KiHunter_Func_9(k, game);
-        }
-        11073487 => {
-            KiHunter_Func_10(k, game);
-        }
+        11072104 => KiHunter_Func_1(k, game),
+        11072440 => KiHunter_Func_2(k, game),
+        11072749 => KiHunter_Func_3(k, game),
+        11072858 => KiHunter_Func_4(k, game),
+        11072907 => KiHunter_Func_5(k, game),
+        11073008 => KiHunter_Func_6(k, game),
+        11073163 => KiHunter_Func_7(k, game),
+        11073203 => KiHunter_Func_8(k, game),
+        11073267 => KiHunter_Func_9(k, game),
+        11073487 => KiHunter_Func_10(k, game),
         11072995 => (),
         _ => {
             Unreachable(game);
@@ -6493,12 +6351,8 @@ pub unsafe fn KiHunter_Shot(game: &mut Game) {
 }
 pub unsafe fn CallKiHunterBFunc(ea: uint32, game: &mut Game) {
     match ea {
-        11073499 => {
-            KiHunter_Func_11(game);
-        }
-        11073709 => {
-            KiHunter_Func_14(game);
-        }
+        11073499 => KiHunter_Func_11(game),
+        11073709 => KiHunter_Func_14(game),
         _ => {
             Unreachable(game);
         }

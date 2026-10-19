@@ -2148,12 +2148,8 @@ unsafe fn HandleCommand(j: uint32, pressed: bool, game: &mut Game) {
             115 => {
                 game.g_other_image = !game.g_other_image;
             }
-            116 => {
-                RtlClearKeyLog(game);
-            }
-            117 => {
-                RtlStopReplay(game);
-            }
+            116 => RtlClearKeyLog(game),
+            117 => RtlStopReplay(game),
             118 => {
                 g_win_flags ^= SDL_WINDOW_FULLSCREEN_DESKTOP as ::core::ffi::c_int as uint32;
                 SDL_SetWindowFullscreen(

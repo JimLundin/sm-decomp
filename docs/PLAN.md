@@ -43,17 +43,36 @@ not only whole functions. Normalize local names and parameter differences for
 discovery; classify differing widths, addresses, call order and writes before
 applying a shared implementation. Do not assume a near-match is accidental drift.
 Keep each commit one invariant, but apply it across the complete eligible family.
-Rank by net deletion including shared code, unsafe operations removed and
-edit/build/verification cost. Prefer this work over further isolated cleanup.
+Rank first by substantial net deletion including shared code and callers,
+then unsafe operations removed and edit/build/verification cost. The latest
+user direction puts large shared implementations above small accessor and
+lint batches. The prepared 1218-access byte candidate is parked: its net
+125-line reduction is too small to lead the remaining work.
 
-Deadline (user direction, 2026-10-19): this week. Prioritize whole-codebase
-compiler-assisted batches and the largest repeated RAM-access families over
-individual-function cleanup. Standard machine-applicable redundancy fixes
+Deadline (user direction, 2026-10-19): this week. Prioritize large repeated
+families and whole-codebase transformations with substantial net deletion
+over individual-function cleanup. Standard machine-applicable redundancy fixes
 use compiler checks, a normal release build and full any% verification;
 do not build another bespoke comparison harness for each such batch.
 Retain targeted comparisons for state/control-flow changes. Preserve read
 and write order; compound-assignment suggestions need alias/order review.
 Keep plan updates concise. The broader readability goal remains incomplete.
+
+Dispatch wrapper reduction (2026-10-19): ast-grep selects 2171 complete
+match arms across 26 files and replaces blocks containing one unit-returning
+call with direct call arms. Labels, calls and argument tokens remain exact.
+The selection requires direct known-unit targets and identifier/primitive
+arguments. Calls with temporaries, indirect targets and discarded nonunit
+results remain separate. Complete source reconstruction confirms the scope.
+
+Net Rust lines -4342 (174479 total); casts, raw accesses and unsafe-function
+counts are unchanged. This removes dispatch boilerplate; it does not merge
+the called implementations or prove broader alias safety. Frozen c0324c0a
+plus this batch passes any% 129712/0 (135.04s), native exit 0,
+with fixed source/DLL/fixtures. Formatting/check, normal release (23.53s),
+stable workspace release (26.12s) and progress pass. Frontend edits are
+compiler-checked; the movie exercises core gameplay. Continue substantial
+shared-body consolidation; the corpse-decay family has a separate owner.
 
 Compiler Boolean cleanup (2026-10-19): standard cargo clippy --fix replaces
 422 negated primitive comparisons across 33 files with direct comparisons.
@@ -87,8 +106,9 @@ mutation/temporary-drop controls. Independent source review has no findings.
 Frozen f73cc70c plus this batch passes any% 129712/0 (162.24s),
 native exit 0, with fixed sources/DLL/fixtures. Formatting/check, normal
 release (36.83s), stable workspace release (36.68s) and progress pass.
-Next: complete eligible named byte accesses and remaining compiler batches,
-then larger indexed/borrowed families. Broader readability remains open.
+Next: consolidate large repeated bodies, including variants obscured by prior
+edits. Named byte accesses and small compiler batches are parked. Broader
+readability remains open.
 
 Named scalar RAM reads (2026-10-19): ast-grep replaces all 7082 eligible
 literal u16 value loads across 535 named fields, including 185 reads inside

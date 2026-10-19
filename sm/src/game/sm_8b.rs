@@ -1103,24 +1103,12 @@ pub unsafe fn CallProcessCinematicBgObject(
     game: &mut Game,
 ) {
     match ea {
-        9144393 => {
-            ProcessCinematicBgObject_Nothing(k, j, r18);
-        }
-        9144397 => {
-            ProcessCinematicBgObject_DrawChar(k, j, r18, game);
-        }
-        9144503 => {
-            ProcessCinematicBgObject_DrawToTextTilemap(k, j, r18, game);
-        }
-        9144573 => {
-            ProcessCinematicBgObject_DrawToBgTilemap(k, j, r18, game);
-        }
-        9144683 => {
-            ProcessCinematicBgObject_Unk1(k, j, r18, game);
-        }
-        9144783 => {
-            ProcessCinematicBgObject_Unk2(k, j, r18, game);
-        }
+        9144393 => ProcessCinematicBgObject_Nothing(k, j, r18),
+        9144397 => ProcessCinematicBgObject_DrawChar(k, j, r18, game),
+        9144503 => ProcessCinematicBgObject_DrawToTextTilemap(k, j, r18, game),
+        9144573 => ProcessCinematicBgObject_DrawToBgTilemap(k, j, r18, game),
+        9144683 => ProcessCinematicBgObject_Unk1(k, j, r18, game),
+        9144783 => ProcessCinematicBgObject_Unk2(k, j, r18, game),
         _ => {
             Unreachable(game);
         }
@@ -5288,9 +5276,7 @@ pub unsafe fn CinematicBgPreInstr_SamusBlink(k: uint16, game: &mut Game) {
 pub unsafe fn CallCreditsObjectFunc(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
         9147353 => (),
-        9155772 => {
-            CinematicBgPreInstr_SamusBlink(k, game);
-        }
+        9155772 => CinematicBgPreInstr_SamusBlink(k, game),
         _ => {
             Unreachable(game);
         }
@@ -10151,282 +10137,102 @@ pub unsafe fn CinematicFunction_Intro_Func219(k: uint16, j: uint16, game: &mut G
 }
 pub unsafe fn CallCinematicFunction(ea: uint32, game: &mut Game) {
     match ea {
-        9148999 => {
-            CinematicFunctionNone();
-        }
-        9149288 => {
-            CinematicFunctionOpening(game);
-        }
-        9149719 => {
-            CinematicFunc_Func2(game);
-        }
-        9149840 => {
-            CinematicFunc_Func4(game);
-        }
-        9149970 => {
-            CinematicFunc_Func5(game);
-        }
-        9150091 => {
-            CinematicFunc_Func7(game);
-        }
+        9148999 => CinematicFunctionNone(),
+        9149288 => CinematicFunctionOpening(game),
+        9149719 => CinematicFunc_Func2(game),
+        9149840 => CinematicFunc_Func4(game),
+        9149970 => CinematicFunc_Func5(game),
+        9150091 => CinematicFunc_Func7(game),
         9150248 => (),
-        9150249 => {
-            CinematicFunc_Func1(game);
-        }
-        9150290 => {
-            CinematicFunc_Func10(game);
-        }
-        9150382 => {
-            CinematicFunc_Func9(game);
-        }
+        9150249 => CinematicFunc_Func1(game),
+        9150290 => CinematicFunc_Func10(game),
+        9150382 => CinematicFunc_Func9(game),
         9151375 => (),
         9151376 => (),
-        9151377 => {
-            CinematicFunc_Nothing();
-        }
-        9151381 => {
-            CinematicFunction_Intro_Initial(game);
-        }
-        9151911 => {
-            CinematicFunction_Intro_FadeIn(game);
-        }
-        9151933 => {
-            CinematicFunction_Intro_DrawInitJpn(game);
-        }
-        9151992 => {
-            CinematicFunction_Intro_LastMetroidCaptivity(game);
-        }
-        9152019 => {
-            CinematicFunc_Intro_QueueGalaxyIsAtPeace(game);
-        }
-        9152057 => {
-            CinematicFunc_Intro_WaitForQueueWait4secs(game);
-        }
-        9152076 => {
-            CinematicFunc_Intro_FadeOut(game);
-        }
-        9152099 => {
-            CinematicFunc_Intro_WaitForFadeOut(game);
-        }
-        9152111 => {
-            CinematicFunc_Intro_SetupTextPage2(game);
-        }
-        9152555 => {
-            CinematicFunc_Intro_WaitFadeinShowText(game);
-        }
-        9152586 => {
-            CinematicFunc_Intro_WaitForFadeinSleep(game);
-        }
-        9154232 => {
-            CinematicFunction_Intro_WaitInputSetupMotherBrainFight(game);
-        }
-        9154412 => {
-            CinematicFunction_Intro_WaitInputSetupBabyMetroid(game);
-        }
-        9154802 => {
-            CinematicFunction_Intro_Func11(game);
-        }
-        9154851 => {
-            CinematicFunction_Intro_Func12(game);
-        }
-        9155034 => {
-            CinematicFunction_Intro_Func15(game);
-        }
-        9155079 => {
-            CinematicFunction_Intro_Func15b(game);
-        }
-        9155152 => {
-            CinematicFunction_Intro_XfadeGameplayFade(game);
-        }
-        9155282 => {
-            CinematicFunction_Intro_XfadeScientistFade(game);
-        }
-        9155423 => {
-            CinematicFunction_Intro_Page2(game);
-        }
-        9155440 => {
-            CinematicFunction_Intro_Page3(game);
-        }
-        9155457 => {
-            CinematicFunction_Intro_Page4(game);
-        }
-        9155474 => {
-            CinematicFunction_Intro_Page5(game);
-        }
-        9155572 => {
-            CinematicFunction_Intro_Fadestuff(game);
-        }
-        9155672 => {
-            CinematicFunction_Intro_Fadestuff2(game);
-        }
-        9156399 => {
-            CinematicFunction_Intro_Func34(game);
-        }
-        9157792 => {
-            CinematicFunction_Intro_Func54(game);
-        }
-        9158116 => {
-            CinematicFunction_Intro_Func55(game);
-        }
-        9158137 => {
-            CinematicFunction_Intro_Func56(game);
-        }
-        9158618 => {
-            CinematicFunction_Intro_Func67(game);
-        }
-        9158853 => {
-            CinematicFunction_Intro_Func72(game);
-        }
-        9158912 => {
-            CinematicFunction_Intro_Func73(game);
-        }
-        9158939 => {
-            CinematicFunctionBlackoutFromCeres(game);
-        }
-        9159396 => {
-            CinematicFunction_Intro_Func74(game);
-        }
-        9159409 => {
-            CinematicFunction_Intro_Func75(game);
-        }
-        9159493 => {
-            CinematicFunction_Intro_Func76(game);
-        }
-        9160138 => {
-            CinematicFunction_Intro_Func77(game);
-        }
-        9160208 => {
-            CinematicFunction_Intro_Func84(game);
-        }
-        9160231 => {
-            CinematicFunction_Intro_Func85(game);
-        }
-        9160345 => {
-            CinematicFunction_Intro_Func86(game);
-        }
-        9160604 => {
-            CinematicFunction_Intro_Func87(game);
-        }
-        9160650 => {
-            CinematicFunction_Intro_Func88(game);
-        }
-        9161209 => {
-            CinematicFunction_Intro_Func105(game);
-        }
-        9161270 => {
-            CinematicFunction_Intro_Func106(game);
-        }
-        9161349 => {
-            CinematicFunction_Intro_Func107(game);
-        }
-        9161424 => {
-            CinematicFunction_Intro_Func108(game);
-        }
+        9151377 => CinematicFunc_Nothing(),
+        9151381 => CinematicFunction_Intro_Initial(game),
+        9151911 => CinematicFunction_Intro_FadeIn(game),
+        9151933 => CinematicFunction_Intro_DrawInitJpn(game),
+        9151992 => CinematicFunction_Intro_LastMetroidCaptivity(game),
+        9152019 => CinematicFunc_Intro_QueueGalaxyIsAtPeace(game),
+        9152057 => CinematicFunc_Intro_WaitForQueueWait4secs(game),
+        9152076 => CinematicFunc_Intro_FadeOut(game),
+        9152099 => CinematicFunc_Intro_WaitForFadeOut(game),
+        9152111 => CinematicFunc_Intro_SetupTextPage2(game),
+        9152555 => CinematicFunc_Intro_WaitFadeinShowText(game),
+        9152586 => CinematicFunc_Intro_WaitForFadeinSleep(game),
+        9154232 => CinematicFunction_Intro_WaitInputSetupMotherBrainFight(game),
+        9154412 => CinematicFunction_Intro_WaitInputSetupBabyMetroid(game),
+        9154802 => CinematicFunction_Intro_Func11(game),
+        9154851 => CinematicFunction_Intro_Func12(game),
+        9155034 => CinematicFunction_Intro_Func15(game),
+        9155079 => CinematicFunction_Intro_Func15b(game),
+        9155152 => CinematicFunction_Intro_XfadeGameplayFade(game),
+        9155282 => CinematicFunction_Intro_XfadeScientistFade(game),
+        9155423 => CinematicFunction_Intro_Page2(game),
+        9155440 => CinematicFunction_Intro_Page3(game),
+        9155457 => CinematicFunction_Intro_Page4(game),
+        9155474 => CinematicFunction_Intro_Page5(game),
+        9155572 => CinematicFunction_Intro_Fadestuff(game),
+        9155672 => CinematicFunction_Intro_Fadestuff2(game),
+        9156399 => CinematicFunction_Intro_Func34(game),
+        9157792 => CinematicFunction_Intro_Func54(game),
+        9158116 => CinematicFunction_Intro_Func55(game),
+        9158137 => CinematicFunction_Intro_Func56(game),
+        9158618 => CinematicFunction_Intro_Func67(game),
+        9158853 => CinematicFunction_Intro_Func72(game),
+        9158912 => CinematicFunction_Intro_Func73(game),
+        9158939 => CinematicFunctionBlackoutFromCeres(game),
+        9159396 => CinematicFunction_Intro_Func74(game),
+        9159409 => CinematicFunction_Intro_Func75(game),
+        9159493 => CinematicFunction_Intro_Func76(game),
+        9160138 => CinematicFunction_Intro_Func77(game),
+        9160208 => CinematicFunction_Intro_Func84(game),
+        9160231 => CinematicFunction_Intro_Func85(game),
+        9160345 => CinematicFunction_Intro_Func86(game),
+        9160604 => CinematicFunction_Intro_Func87(game),
+        9160650 => CinematicFunction_Intro_Func88(game),
+        9161209 => CinematicFunction_Intro_Func105(game),
+        9161270 => CinematicFunction_Intro_Func106(game),
+        9161349 => CinematicFunction_Intro_Func107(game),
+        9161424 => CinematicFunction_Intro_Func108(game),
         9161438 => (),
-        9161439 => {
-            CinematicFunction_Intro_Func95(game);
-        }
-        9163904 => {
-            CinematicFunctionEscapeFromCebes(game);
-        }
-        9164503 => {
-            CinematicFunction_Intro_Func109(game);
-        }
-        9164530 => {
-            CinematicFunction_Intro_Func110(game);
-        }
-        9164545 => {
-            CinematicFunction_Intro_Func111(game);
-        }
-        9164593 => {
-            CinematicFunction_Intro_Func112(game);
-        }
-        9164792 => {
-            CinematicFunction_Intro_Func113(game);
-        }
-        9164807 => {
-            CinematicFunction_Intro_Func114(game);
-        }
-        9164855 => {
-            CinematicFunction_Intro_Func115(game);
-        }
-        9165314 => {
-            CinematicFunction_Intro_Func116(game);
-        }
-        9165338 => {
-            CinematicFunction_Intro_Func117(game);
-        }
-        9165523 => {
-            CinematicFunction_Intro_Func118(game);
-        }
+        9161439 => CinematicFunction_Intro_Func95(game),
+        9163904 => CinematicFunctionEscapeFromCebes(game),
+        9164503 => CinematicFunction_Intro_Func109(game),
+        9164530 => CinematicFunction_Intro_Func110(game),
+        9164545 => CinematicFunction_Intro_Func111(game),
+        9164593 => CinematicFunction_Intro_Func112(game),
+        9164792 => CinematicFunction_Intro_Func113(game),
+        9164807 => CinematicFunction_Intro_Func114(game),
+        9164855 => CinematicFunction_Intro_Func115(game),
+        9165314 => CinematicFunction_Intro_Func116(game),
+        9165338 => CinematicFunction_Intro_Func117(game),
+        9165523 => CinematicFunction_Intro_Func118(game),
         9165725 => (),
-        9165726 => {
-            CinematicFunction_Intro_Func119(game);
-        }
-        9165764 => {
-            CinematicFunction_Intro_Func120(game);
-        }
-        9165989 => {
-            CinematicFunction_Intro_Func121(game);
-        }
-        9166146 => {
-            CinematicFunction_Intro_Func123(game);
-        }
-        9166285 => {
-            CinematicFunction_Intro_Func124(game);
-        }
+        9165726 => CinematicFunction_Intro_Func119(game),
+        9165764 => CinematicFunction_Intro_Func120(game),
+        9165989 => CinematicFunction_Intro_Func121(game),
+        9166146 => CinematicFunction_Intro_Func123(game),
+        9166285 => CinematicFunction_Intro_Func124(game),
         9166435 => (),
-        9166436 => {
-            CinematicFunction_Intro_Func125(game);
-        }
-        9166464 => {
-            CinematicFunction_Intro_Func126(game);
-        }
-        9167092 => {
-            CinematicFunction_Intro_Func129(game);
-        }
-        9167120 => {
-            CinematicFunction_Intro_Func130(game);
-        }
-        9167192 => {
-            CinematicFunction_Intro_Func131(game);
-        }
-        9167248 => {
-            CinematicFunction_Intro_Func132(game);
-        }
-        9167314 => {
-            CinematicFunction_Intro_Func134(game);
-        }
-        9167461 => {
-            CinematicFunction_Intro_Func136(game);
-        }
-        9167507 => {
-            CinematicFunction_Intro_Func135(game);
-        }
-        9167581 => {
-            CinematicFunction_Intro_Func137(game);
-        }
-        9167636 => {
-            CinematicFunction_Intro_Func138(game);
-        }
-        9167682 => {
-            CinematicFunction_Intro_Func145(game);
-        }
-        9167790 => {
-            CinematicFunction_Intro_Func139(game);
-        }
-        9168010 => {
-            CinematicFunction_Intro_Func141(game);
-        }
-        9168132 => {
-            CinematicFunction_Intro_Func143(game);
-        }
-        9168266 => {
-            CinematicFunction_Intro_Func144(game);
-        }
-        9168791 => {
-            CinematicFunction_Intro_Func148(game);
-        }
+        9166436 => CinematicFunction_Intro_Func125(game),
+        9166464 => CinematicFunction_Intro_Func126(game),
+        9167092 => CinematicFunction_Intro_Func129(game),
+        9167120 => CinematicFunction_Intro_Func130(game),
+        9167192 => CinematicFunction_Intro_Func131(game),
+        9167248 => CinematicFunction_Intro_Func132(game),
+        9167314 => CinematicFunction_Intro_Func134(game),
+        9167461 => CinematicFunction_Intro_Func136(game),
+        9167507 => CinematicFunction_Intro_Func135(game),
+        9167581 => CinematicFunction_Intro_Func137(game),
+        9167636 => CinematicFunction_Intro_Func138(game),
+        9167682 => CinematicFunction_Intro_Func145(game),
+        9167790 => CinematicFunction_Intro_Func139(game),
+        9168010 => CinematicFunction_Intro_Func141(game),
+        9168132 => CinematicFunction_Intro_Func143(game),
+        9168266 => CinematicFunction_Intro_Func144(game),
+        9168791 => CinematicFunction_Intro_Func148(game),
         9168826 => (),
         _ => {
             Unreachable(game);
@@ -10495,161 +10301,59 @@ pub unsafe fn CallCinematicSprPreInstr(ea: uint32, j: uint16, game: &mut Game) {
         9158617 => (),
         9147353 => (),
         9147487 => (),
-        9149647 => {
-            sub_8B9CCF(j, game);
-        }
+        9149647 => sub_8B9CCF(j, game),
         9152724 => (),
-        9152744 => {
-            SetSomeStuffForSpriteObject_4_MetroidEgg(j, game);
-        }
-        9152771 => {
-            CinematicSprPreInstr_A903(j, game);
-        }
-        9152916 => {
-            SetSomeStuffForSpriteObject_7(j, game);
-        }
-        9153203 => {
-            SetSomeStuffForSpriteObject_9(j, game);
-        }
-        9153896 => {
-            SetSomeStuffForSpriteObject_11(j, game);
-        }
-        9153958 => {
-            SetSomeStuffForSpriteObject_13(j, game);
-        }
-        9154074 => {
-            SetSomeStuffForSpriteObject_18(j, game);
-        }
-        9156486 => {
-            CinematicFunction_Intro_Func36(j, game);
-        }
-        9156623 => {
-            CinematicFunction_Intro_Func39(j, game);
-        }
-        9156654 => {
-            CinematicSprPreInstr_B82E(j, game);
-        }
-        9156824 => {
-            CinematicFunction_Intro_Func44(j, game);
-        }
-        9156923 => {
-            CinematicFunction_Intro_Func45(j, game);
-        }
-        9157135 => {
-            CinematicFunction_Intro_Func48(j, game);
-        }
-        9157214 => {
-            CinematicFunction_Intro_Func50(j, game);
-        }
-        9157235 => {
-            CinematicFunction_Intro_Func51(j, game);
-        }
-        9157389 => {
-            CinematicFunction_Intro_Func52(j, game);
-        }
-        9157412 => {
-            CinematicFunction_Intro_Func53(j, game);
-        }
-        9158325 => {
-            CinematicFunction_Intro_Func58(j, game);
-        }
-        9158453 => {
-            CinematicFunction_Intro_Func60(j, game);
-        }
-        9158495 => {
-            CinematicFunction_Intro_Func62(j, game);
-        }
-        9158537 => {
-            CinematicFunction_Intro_Func64(j, game);
-        }
-        9158598 => {
-            CinematicFunction_Intro_Func66(j, game);
-        }
-        9159817 => {
-            CinematicSprPreInstr_C489(j, game);
-        }
-        9160066 => {
-            CinematicFunction_Intro_Func82(j, game);
-        }
-        9160782 => {
-            CinematicFunction_Intro_Func90(j, game);
-        }
-        9160797 => {
-            CinematicFunction_Intro_Func91(j, game);
-        }
-        9160874 => {
-            CinematicFunction_Intro_Func93(j, game);
-        }
-        9160889 => {
-            CinematicFunction_Intro_Func94(j, game);
-        }
-        9160953 => {
-            CinematicFunction_Intro_Func96(j, game);
-        }
-        9160968 => {
-            CinematicFunction_Intro_Func97(j, game);
-        }
-        9170866 => {
-            CinematicFunction_Intro_Func151(j, game);
-        }
-        9171431 => {
-            CinematicFunction_Intro_Func179(j, game);
-        }
-        9171495 => {
-            CinematicFunction_Intro_Func180(j, game);
-        }
-        9171621 => {
-            CinematicFunction_Intro_Func184(j, game);
-        }
-        9171802 => {
-            CinematicSprPreInstr_F35A(j, game);
-        }
-        9171829 => {
-            CinematicFunction_Intro_Func189(j, game);
-        }
-        9171867 => {
-            CinematicFunction_Intro_Func189b(j, game);
-        }
-        9171897 => {
-            CinematicFunction_Intro_Func191(j, game);
-        }
-        9172053 => {
-            CinematicFunction_Intro_Func199(j, game);
-        }
-        9172068 => {
-            CinematicFunction_Intro_Func200(j, game);
-        }
-        9172088 => {
-            CinematicFunction_Intro_Func201(j, game);
-        }
-        9172103 => {
-            CinematicFunction_Intro_Func202(j, game);
-        }
-        9172123 => {
-            CinematicFunction_Intro_Func203(j, game);
-        }
-        9172138 => {
-            CinematicFunction_Intro_Func204(j, game);
-        }
-        9172177 => {
-            CinematicFunction_Intro_Func205(j, game);
-        }
-        9172192 => {
-            CinematicFunction_Intro_Func206(j, game);
-        }
-        9172231 => {
-            CinematicFunction_Intro_Func207(j, game);
-        }
+        9152744 => SetSomeStuffForSpriteObject_4_MetroidEgg(j, game),
+        9152771 => CinematicSprPreInstr_A903(j, game),
+        9152916 => SetSomeStuffForSpriteObject_7(j, game),
+        9153203 => SetSomeStuffForSpriteObject_9(j, game),
+        9153896 => SetSomeStuffForSpriteObject_11(j, game),
+        9153958 => SetSomeStuffForSpriteObject_13(j, game),
+        9154074 => SetSomeStuffForSpriteObject_18(j, game),
+        9156486 => CinematicFunction_Intro_Func36(j, game),
+        9156623 => CinematicFunction_Intro_Func39(j, game),
+        9156654 => CinematicSprPreInstr_B82E(j, game),
+        9156824 => CinematicFunction_Intro_Func44(j, game),
+        9156923 => CinematicFunction_Intro_Func45(j, game),
+        9157135 => CinematicFunction_Intro_Func48(j, game),
+        9157214 => CinematicFunction_Intro_Func50(j, game),
+        9157235 => CinematicFunction_Intro_Func51(j, game),
+        9157389 => CinematicFunction_Intro_Func52(j, game),
+        9157412 => CinematicFunction_Intro_Func53(j, game),
+        9158325 => CinematicFunction_Intro_Func58(j, game),
+        9158453 => CinematicFunction_Intro_Func60(j, game),
+        9158495 => CinematicFunction_Intro_Func62(j, game),
+        9158537 => CinematicFunction_Intro_Func64(j, game),
+        9158598 => CinematicFunction_Intro_Func66(j, game),
+        9159817 => CinematicSprPreInstr_C489(j, game),
+        9160066 => CinematicFunction_Intro_Func82(j, game),
+        9160782 => CinematicFunction_Intro_Func90(j, game),
+        9160797 => CinematicFunction_Intro_Func91(j, game),
+        9160874 => CinematicFunction_Intro_Func93(j, game),
+        9160889 => CinematicFunction_Intro_Func94(j, game),
+        9160953 => CinematicFunction_Intro_Func96(j, game),
+        9160968 => CinematicFunction_Intro_Func97(j, game),
+        9170866 => CinematicFunction_Intro_Func151(j, game),
+        9171431 => CinematicFunction_Intro_Func179(j, game),
+        9171495 => CinematicFunction_Intro_Func180(j, game),
+        9171621 => CinematicFunction_Intro_Func184(j, game),
+        9171802 => CinematicSprPreInstr_F35A(j, game),
+        9171829 => CinematicFunction_Intro_Func189(j, game),
+        9171867 => CinematicFunction_Intro_Func189b(j, game),
+        9171897 => CinematicFunction_Intro_Func191(j, game),
+        9172053 => CinematicFunction_Intro_Func199(j, game),
+        9172068 => CinematicFunction_Intro_Func200(j, game),
+        9172088 => CinematicFunction_Intro_Func201(j, game),
+        9172103 => CinematicFunction_Intro_Func202(j, game),
+        9172123 => CinematicFunction_Intro_Func203(j, game),
+        9172138 => CinematicFunction_Intro_Func204(j, game),
+        9172177 => CinematicFunction_Intro_Func205(j, game),
+        9172192 => CinematicFunction_Intro_Func206(j, game),
+        9172231 => CinematicFunction_Intro_Func207(j, game),
         9172252 => (),
-        9172264 => {
-            CinematicSprPreInstr_F528(j, game);
-        }
-        9172351 => {
-            CinematicSprPreInstr_F57F(j, game);
-        }
-        9172445 => {
-            CinematicFunction_Intro_Func215(j, game);
-        }
+        9172264 => CinematicSprPreInstr_F528(j, game),
+        9172351 => CinematicSprPreInstr_F57F(j, game),
+        9172445 => CinematicFunction_Intro_Func215(j, game),
         _ => {
             Unreachable(game);
         }
@@ -10658,9 +10362,7 @@ pub unsafe fn CallCinematicSprPreInstr(ea: uint32, j: uint16, game: &mut Game) {
 pub unsafe fn CallCinematicBgPreInstr(ea: uint32, j: uint16, game: &mut Game) {
     match ea {
         9147353 => (),
-        9155772 => {
-            CinematicBgPreInstr_SamusBlink(j, game);
-        }
+        9155772 => CinematicBgPreInstr_SamusBlink(j, game),
         _ => {
             Unreachable(game);
         }
@@ -10694,207 +10396,73 @@ pub unsafe fn CallCinematicBgInstr(ea: uint32, k: uint16, j: uint16, game: &mut 
 pub unsafe fn CallCinematicSpriteObjectSetup(ea: uint32, j: uint16, game: &mut Game) {
     match ea {
         9147353 => (),
-        9149210 => {
-            CinematicSpriteInit_7(j, game);
-        }
-        9149229 => {
-            CinematicSpriteInit_8(j, game);
-        }
-        9149248 => {
-            CinematicSpriteInit_9(j, game);
-        }
-        9149628 => {
-            CinematicSpriteInit_0(j, game);
-        }
-        9149770 => {
-            CinematicSpriteInit_1(j, game);
-        }
-        9149891 => {
-            CinematicSpriteInit_2(j, game);
-        }
-        9150021 => {
-            CinematicSpriteInit_3(j, game);
-        }
-        9150131 => {
-            CinematicSpriteInit_4(j, game);
-        }
-        9150166 => {
-            CinematicSpriteInit_5(j, game);
-        }
-        9150207 => {
-            CinematicSpriteInit_6(j, game);
-        }
-        9152705 => {
-            SetSomeStuffForSpriteObject_2(j, game);
-        }
-        9152725 => {
-            SetSomeStuffForSpriteObject_3(j, game);
-        }
-        9152856 => {
-            SetSomeStuffForSpriteObject_6(j, game);
-        }
-        9153178 => {
-            SetSomeStuffForSpriteObject_8(j, game);
-        }
-        9153877 => {
-            SetSomeStuffForSpriteObject_10(j, game);
-        }
-        9153939 => {
-            SetSomeStuffForSpriteObject_12(j, game);
-        }
-        9154055 => {
-            SetSomeStuffForSpriteObject_17(j, game);
-        }
-        9156467 => {
-            CinematicFunction_Intro_Func35(j, game);
-        }
-        9156758 => {
-            CinematicFunction_Intro_Func42(j, game);
-        }
-        9157005 => {
-            CinematicFunction_Intro_Func46(j, game);
-        }
-        9157076 => {
-            CinematicFunction_Intro_Func47(j, game);
-        }
-        9157195 => {
-            CinematicFunction_Intro_Func49(j, game);
-        }
-        9158270 => {
-            CinematicFunction_Intro_Func57(j, game);
-        }
-        9158434 => {
-            CinematicFunction_Intro_Func59(j, game);
-        }
-        9158476 => {
-            CinematicFunction_Intro_Func61(j, game);
-        }
-        9158518 => {
-            CinematicFunction_Intro_Func63(j, game);
-        }
-        9158560 => {
-            CinematicFunction_Intro_Func65(j, game);
-        }
-        9158787 => {
-            CinematicFunction_Intro_Func68(j, game);
-        }
-        9158834 => {
-            CinematicFunction_Intro_Func71(j, game);
-        }
-        9159732 => {
-            CinematicFunction_Intro_Func78(j, game);
-        }
-        9159865 => {
-            CinematicFunction_Intro_Func80(j, game);
-        }
-        9159987 => {
-            CinematicFunction_Intro_Func81(j, game);
-        }
-        9160105 => {
-            CinematicFunction_Intro_Func83(j, game);
-        }
-        9160763 => {
-            CinematicFunction_Intro_Func89(j, game);
-        }
-        9160855 => {
-            CinematicFunction_Intro_Func92(j, game);
-        }
-        9161026 => {
-            CinematicFunction_Intro_Func98(j, game);
-        }
-        9161046 => {
-            CinematicFunction_Intro_Func99(j, game);
-        }
-        9161066 => {
-            CinematicFunction_Intro_Func100(j, game);
-        }
-        9161086 => {
-            CinematicFunction_Intro_Func101(j, game);
-        }
-        9161106 => {
-            CinematicFunction_Intro_Func102(j, game);
-        }
-        9161190 => {
-            CinematicFunction_Intro_Func104(j, game);
-        }
-        9170841 => {
-            CinematicFunction_Intro_Func150(j, game);
-        }
-        9170922 => {
-            CinematicFunction_Intro_Func152(j, game);
-        }
-        9170941 => {
-            CinematicFunction_Intro_Func153(j, game);
-        }
-        9170949 => {
-            CinematicFunction_Intro_Func154(j, game);
-        }
-        9170968 => {
-            CinematicFunction_Intro_Func155(j, game);
-        }
-        9170987 => {
-            CinematicFunction_Intro_Func156(j, game);
-        }
-        9171006 => {
-            CinematicFunction_Intro_Func157(j, game);
-        }
-        9171038 => {
-            CinematicFunction_Intro_Func159(j, game);
-        }
-        9171053 => {
-            CinematicFunction_Intro_Func161(j, game);
-        }
-        9171068 => {
-            CinematicFunction_Intro_Func162(j, game);
-        }
-        9171077 => {
-            CinematicFunction_Intro_Func163(j, game);
-        }
-        9171092 => {
-            CinematicFunction_Intro_Func164(j, game);
-        }
-        9171122 => {
-            CinematicFunction_Intro_Func165(j, game);
-        }
-        9171169 => {
-            CinematicFunction_Intro_Func166(j, game);
-        }
-        9171177 => {
-            CinematicFunction_Intro_Func167(j, game);
-        }
-        9171185 => {
-            CinematicFunction_Intro_Func168(j, game);
-        }
-        9171193 => {
-            CinematicFunction_Intro_Func169(j, game);
-        }
-        9171230 => {
-            CinematicFunction_Intro_Func170(j, game);
-        }
-        9171267 => {
-            CinematicFunction_Intro_Func171(j, game);
-        }
-        9171286 => {
-            CinematicFunction_Intro_Func172(j, game);
-        }
-        9171305 => {
-            CinematicFunction_Intro_Func173(j, game);
-        }
-        9171324 => {
-            CinematicFunction_Intro_Func174(j, game);
-        }
-        9171343 => {
-            CinematicFunction_Intro_Func175(j, game);
-        }
-        9171368 => {
-            CinematicFunction_Intro_Func176(j, game);
-        }
-        9171393 => {
-            CinematicFunction_Intro_Func177(j, game);
-        }
-        9171412 => {
-            CinematicFunction_Intro_Func178(j, game);
-        }
+        9149210 => CinematicSpriteInit_7(j, game),
+        9149229 => CinematicSpriteInit_8(j, game),
+        9149248 => CinematicSpriteInit_9(j, game),
+        9149628 => CinematicSpriteInit_0(j, game),
+        9149770 => CinematicSpriteInit_1(j, game),
+        9149891 => CinematicSpriteInit_2(j, game),
+        9150021 => CinematicSpriteInit_3(j, game),
+        9150131 => CinematicSpriteInit_4(j, game),
+        9150166 => CinematicSpriteInit_5(j, game),
+        9150207 => CinematicSpriteInit_6(j, game),
+        9152705 => SetSomeStuffForSpriteObject_2(j, game),
+        9152725 => SetSomeStuffForSpriteObject_3(j, game),
+        9152856 => SetSomeStuffForSpriteObject_6(j, game),
+        9153178 => SetSomeStuffForSpriteObject_8(j, game),
+        9153877 => SetSomeStuffForSpriteObject_10(j, game),
+        9153939 => SetSomeStuffForSpriteObject_12(j, game),
+        9154055 => SetSomeStuffForSpriteObject_17(j, game),
+        9156467 => CinematicFunction_Intro_Func35(j, game),
+        9156758 => CinematicFunction_Intro_Func42(j, game),
+        9157005 => CinematicFunction_Intro_Func46(j, game),
+        9157076 => CinematicFunction_Intro_Func47(j, game),
+        9157195 => CinematicFunction_Intro_Func49(j, game),
+        9158270 => CinematicFunction_Intro_Func57(j, game),
+        9158434 => CinematicFunction_Intro_Func59(j, game),
+        9158476 => CinematicFunction_Intro_Func61(j, game),
+        9158518 => CinematicFunction_Intro_Func63(j, game),
+        9158560 => CinematicFunction_Intro_Func65(j, game),
+        9158787 => CinematicFunction_Intro_Func68(j, game),
+        9158834 => CinematicFunction_Intro_Func71(j, game),
+        9159732 => CinematicFunction_Intro_Func78(j, game),
+        9159865 => CinematicFunction_Intro_Func80(j, game),
+        9159987 => CinematicFunction_Intro_Func81(j, game),
+        9160105 => CinematicFunction_Intro_Func83(j, game),
+        9160763 => CinematicFunction_Intro_Func89(j, game),
+        9160855 => CinematicFunction_Intro_Func92(j, game),
+        9161026 => CinematicFunction_Intro_Func98(j, game),
+        9161046 => CinematicFunction_Intro_Func99(j, game),
+        9161066 => CinematicFunction_Intro_Func100(j, game),
+        9161086 => CinematicFunction_Intro_Func101(j, game),
+        9161106 => CinematicFunction_Intro_Func102(j, game),
+        9161190 => CinematicFunction_Intro_Func104(j, game),
+        9170841 => CinematicFunction_Intro_Func150(j, game),
+        9170922 => CinematicFunction_Intro_Func152(j, game),
+        9170941 => CinematicFunction_Intro_Func153(j, game),
+        9170949 => CinematicFunction_Intro_Func154(j, game),
+        9170968 => CinematicFunction_Intro_Func155(j, game),
+        9170987 => CinematicFunction_Intro_Func156(j, game),
+        9171006 => CinematicFunction_Intro_Func157(j, game),
+        9171038 => CinematicFunction_Intro_Func159(j, game),
+        9171053 => CinematicFunction_Intro_Func161(j, game),
+        9171068 => CinematicFunction_Intro_Func162(j, game),
+        9171077 => CinematicFunction_Intro_Func163(j, game),
+        9171092 => CinematicFunction_Intro_Func164(j, game),
+        9171122 => CinematicFunction_Intro_Func165(j, game),
+        9171169 => CinematicFunction_Intro_Func166(j, game),
+        9171177 => CinematicFunction_Intro_Func167(j, game),
+        9171185 => CinematicFunction_Intro_Func168(j, game),
+        9171193 => CinematicFunction_Intro_Func169(j, game),
+        9171230 => CinematicFunction_Intro_Func170(j, game),
+        9171267 => CinematicFunction_Intro_Func171(j, game),
+        9171286 => CinematicFunction_Intro_Func172(j, game),
+        9171305 => CinematicFunction_Intro_Func173(j, game),
+        9171324 => CinematicFunction_Intro_Func174(j, game),
+        9171343 => CinematicFunction_Intro_Func175(j, game),
+        9171368 => CinematicFunction_Intro_Func176(j, game),
+        9171393 => CinematicFunction_Intro_Func177(j, game),
+        9171412 => CinematicFunction_Intro_Func178(j, game),
         _ => {
             Unreachable(game);
         }
@@ -10912,36 +10480,16 @@ pub unsafe fn CallIntroObjectInstr(ea: uint32, k: uint16, j: uint16, game: &mut 
 }
 pub unsafe fn CallCinematicSpriteInit(ea: uint32, j: uint16, game: &mut Game) {
     match ea {
-        9149210 => {
-            CinematicSpriteInit_7(j, game);
-        }
-        9149229 => {
-            CinematicSpriteInit_8(j, game);
-        }
-        9149248 => {
-            CinematicSpriteInit_9(j, game);
-        }
-        9149628 => {
-            CinematicSpriteInit_0(j, game);
-        }
-        9149770 => {
-            CinematicSpriteInit_1(j, game);
-        }
-        9149891 => {
-            CinematicSpriteInit_2(j, game);
-        }
-        9150021 => {
-            CinematicSpriteInit_3(j, game);
-        }
-        9150131 => {
-            CinematicSpriteInit_4(j, game);
-        }
-        9150166 => {
-            CinematicSpriteInit_5(j, game);
-        }
-        9150207 => {
-            CinematicSpriteInit_6(j, game);
-        }
+        9149210 => CinematicSpriteInit_7(j, game),
+        9149229 => CinematicSpriteInit_8(j, game),
+        9149248 => CinematicSpriteInit_9(j, game),
+        9149628 => CinematicSpriteInit_0(j, game),
+        9149770 => CinematicSpriteInit_1(j, game),
+        9149891 => CinematicSpriteInit_2(j, game),
+        9150021 => CinematicSpriteInit_3(j, game),
+        9150131 => CinematicSpriteInit_4(j, game),
+        9150166 => CinematicSpriteInit_5(j, game),
+        9150207 => CinematicSpriteInit_6(j, game),
         9147353 => (),
         _ => {
             Unreachable(game);
@@ -10981,18 +10529,10 @@ pub unsafe fn CallMode7Instr(ea: uint32, k: uint16, j: uint16, game: &mut Game) 
 pub unsafe fn CallMode7PreInstr(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
         9147353 => (),
-        9155973 => {
-            CinematicFunction_Intro_Func22(k, game);
-        }
-        9156078 => {
-            CinematicFunction_Intro_Func24(k, game);
-        }
-        9156183 => {
-            CinematicFunction_Intro_Func27(k, game);
-        }
-        9156288 => {
-            CinematicFunction_Intro_Func30(k, game);
-        }
+        9155973 => CinematicFunction_Intro_Func22(k, game),
+        9156078 => CinematicFunction_Intro_Func24(k, game),
+        9156183 => CinematicFunction_Intro_Func27(k, game),
+        9156288 => CinematicFunction_Intro_Func30(k, game),
         _ => {
             Unreachable(game);
         }

@@ -853,63 +853,27 @@ pub unsafe fn HdmaobjInstr_ClearPreInstr(
 }
 pub unsafe fn CallHdmaobjInstrFunc(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
-        8948500 => {
-            Hdmaobj_PreExplodeWhite(game);
-        }
-        8948530 => {
-            Hdmaobj_PreExplodeYellow(game);
-        }
-        8948537 => {
-            Hdmaobj_ExplodeYellow(game);
-        }
-        8948551 => {
-            Hdmaobj_ExplodeWhite(game);
-        }
-        8948558 => {
-            Hdmaobj_CleanUpTryCrystalFlash(k, game);
-        }
-        8954596 => {
-            CrystalFlashSetupPart1(game);
-        }
-        8954633 => {
-            CrystalFlashSetupPart2(game);
-        }
-        8954647 => {
-            CrystalFlashCleanup(k, game);
-        }
+        8948500 => Hdmaobj_PreExplodeWhite(game),
+        8948530 => Hdmaobj_PreExplodeYellow(game),
+        8948537 => Hdmaobj_ExplodeYellow(game),
+        8948551 => Hdmaobj_ExplodeWhite(game),
+        8948558 => Hdmaobj_CleanUpTryCrystalFlash(k, game),
+        8954596 => CrystalFlashSetupPart1(game),
+        8954633 => CrystalFlashSetupPart2(game),
+        8954647 => CrystalFlashCleanup(k, game),
         8970129 => (),
         8970130 => (),
         8972070 => (),
-        8972135 => {
-            InitializeRainbowBeam(game);
-        }
-        9554681 => {
-            Xray_SetupStage1_FreezeTimeBackup(k, game);
-        }
-        9554716 => {
-            Xray_SetupStage2_ReadBg1_2ndScreen(game);
-        }
-        9554775 => {
-            Xray_SetupStage3_ReadBg1_1stScreen(game);
-        }
-        9554830 => {
-            Xray_SetupStage4(game);
-        }
-        9556179 => {
-            Xray_SetupStage5(game);
-        }
-        9556339 => {
-            Xray_SetupStage6(game);
-        }
-        9556384 => {
-            Xray_SetupStage7(game);
-        }
-        9556668 => {
-            Xray_SetupStage8_SetBackdropColor(game);
-        }
-        9557650 => {
-            InitializeSuitPickupHdma(game);
-        }
+        8972135 => InitializeRainbowBeam(game),
+        9554681 => Xray_SetupStage1_FreezeTimeBackup(k, game),
+        9554716 => Xray_SetupStage2_ReadBg1_2ndScreen(game),
+        9554775 => Xray_SetupStage3_ReadBg1_1stScreen(game),
+        9554830 => Xray_SetupStage4(game),
+        9556179 => Xray_SetupStage5(game),
+        9556339 => Xray_SetupStage6(game),
+        9556384 => Xray_SetupStage7(game),
+        9556668 => Xray_SetupStage8_SetBackdropColor(game),
+        9557650 => InitializeSuitPickupHdma(game),
         _ => {
             Unreachable(game);
         }
@@ -3778,24 +3742,12 @@ pub unsafe fn HdmaobjInstr_B3A9(k: uint16, hdp: *const uint8, game: &mut Game) -
 }
 pub unsafe fn CallFxRisingFunc(ea: uint32, game: &mut Game) {
     match ea {
-        8958787 => {
-            FxRisingFunction_LavaAcid(game);
-        }
-        8958823 => {
-            FxRisingFunction_LavaAcid_WaitToRise(game);
-        }
-        8958850 => {
-            FxRisingFunction_LavaAcid_Raising(game);
-        }
-        8963112 => {
-            FxRisingFunction_C428_WaterNormal(game);
-        }
-        8963148 => {
-            FxRisingFunction_WaterWaitToRise(game);
-        }
-        8963160 => {
-            FxRisingFunction_WaterRising(game);
-        }
+        8958787 => FxRisingFunction_LavaAcid(game),
+        8958823 => FxRisingFunction_LavaAcid_WaitToRise(game),
+        8958850 => FxRisingFunction_LavaAcid_Raising(game),
+        8963112 => FxRisingFunction_C428_WaterNormal(game),
+        8963148 => FxRisingFunction_WaterWaitToRise(game),
+        8963160 => FxRisingFunction_WaterRising(game),
         _ => {
             Unreachable(game);
         }
@@ -4134,24 +4086,12 @@ pub unsafe fn HdmaobjInstr_SetFlagB_Copy2(
 }
 pub unsafe fn CallFxRisingFunction(ea: uint32, game: &mut Game) {
     match ea {
-        8958787 => {
-            FxRisingFunction_LavaAcid(game);
-        }
-        8958823 => {
-            FxRisingFunction_LavaAcid_WaitToRise(game);
-        }
-        8958850 => {
-            FxRisingFunction_LavaAcid_Raising(game);
-        }
-        8963112 => {
-            FxRisingFunction_C428_WaterNormal(game);
-        }
-        8963148 => {
-            FxRisingFunction_WaterWaitToRise(game);
-        }
-        8963160 => {
-            FxRisingFunction_WaterRising(game);
-        }
+        8958787 => FxRisingFunction_LavaAcid(game),
+        8958823 => FxRisingFunction_LavaAcid_WaitToRise(game),
+        8958850 => FxRisingFunction_LavaAcid_Raising(game),
+        8963112 => FxRisingFunction_C428_WaterNormal(game),
+        8963148 => FxRisingFunction_WaterWaitToRise(game),
+        8963160 => FxRisingFunction_WaterRising(game),
         _ => {
             Unreachable(game);
         }
@@ -6422,150 +6362,54 @@ pub unsafe fn CallHdmaobjPreInstr(ea: uint32, k: uint16, game: &mut Game) {
         8491739 => (),
         8946872 => (),
         10785852 => (),
-        9556607 => {
-            HdmaobjPreInstr_XraySetup(k, game);
-        }
-        8947439 => {
-            HdmaobjPreInstr_Xray(k, game);
-        }
-        8947506 => {
-            HdmaobjPreInstr_XrayFunc0_NoBeam(k, game);
-        }
-        8947540 => {
-            HdmaobjPreInstr_XrayFunc1_BeamWidening(k, game);
-        }
-        8947627 => {
-            HdmaobjPreInstr_XrayFunc2_FullBeam(k, game);
-        }
-        8948020 => {
-            HdmaobjPreInstr_XrayFunc3_DeactivateBeam(k, game);
-        }
-        8948154 => {
-            HdmaobjPreInstr_XrayFunc4_DeactivateBeam(k, game);
-        }
-        8948232 => {
-            HdmaobjPreInstr_XrayFunc5_DeactivateBeam(k, game);
-        }
-        8948623 => {
-            HdmaobjPreInstr_PowerBombExplode_SetWindowConf(k, game);
-        }
-        8948632 => {
-            HdmaobjPreInstr_PowerBombExplode_Stage5_Afterglow(k, game);
-        }
-        8949225 => {
-            HdmaobjPreInstr_PowerBombExplode_ExplosionYellow(k, game);
-        }
-        8949426 => {
-            HdmaobjPreInstr_PowerBombExplode_ExplosionWhite(k, game);
-        }
-        8949983 => {
-            HdmaobjPreInstr_PowerBombExplode_PreExplosionWhite(k, game);
-        }
-        8950184 => {
-            HdmaobjPreInstr_PowerBombExplode_PreExplosionYellow(k, game);
-        }
-        8954681 => {
-            HdmaobjPreInstr_CrystalFlash_CustomLayerBlend(k, game);
-        }
-        8954717 => {
-            HdmaobjPreInstr_CrystalFlash_Stage2_AfterGlow(k, game);
-        }
-        8955218 => {
-            HdmaobjPreInstr_CrystalFlash_Stage1_Explosion(k, game);
-        }
-        8955459 => {
-            HdmaobjPreInstr_FxType22_BG3Yscroll(k, game);
-        }
-        8955507 => {
-            HdmaobjPreInstr_BG3Xscroll(k, game);
-        }
-        8957362 => {
-            HdmaobjPreInstr_SkyLandBG2Xscroll(k, game);
-        }
-        8957370 => {
-            HdmaobjPreInstr_SkyLandBG2Xscroll2(k, game);
-        }
-        8957378 => {
-            HdmaobjPreInstr_SkyLandBG2XscrollInner(k, game);
-        }
-        8958140 => {
-            HdmaobjPreInstr_FirefleaBG3XScroll(k, game);
-        }
-        8958896 => {
-            HdmaobjPreInstr_LavaAcidBG3YScroll(k, game);
-        }
-        8959189 => {
-            HdmaobjPreInstr_LavaAcidBG2YScroll(k, game);
-        }
-        8963214 => {
-            HdmaobjPreInstr_WaterBG3XScroll(k, game);
-        }
-        8963465 => {
-            HdmaobjPreInstr_WaterBG2XScroll(k, game);
-        }
-        8963556 => {
-            HdmaobjPreInstr_WaterBG2XScroll_Func2(k, game);
-        }
-        8963638 => {
-            HdmaobjPreInstr_WaterBG2XScroll_Func1(k, game);
-        }
-        8968609 => {
-            HdmaobjPreInstr_RainBg3Scroll(k, game);
-        }
-        8968775 => {
-            HdmaobjPreInstr_SporesBG3Xscroll(k, game);
-        }
-        8969014 => {
-            HdmaobjPreInstr_FogBG3Scroll(k, game);
-        }
-        8969175 => {
-            HdmaobjPreInstr_CheckLotsOfEventsHappened(k, game);
-        }
-        8969251 => {
-            HdmaobjPreInstr_DC23(k, game);
-        }
-        8969321 => {
-            HdmaobjPreInstr_DC69(k, game);
-        }
-        8969402 => {
-            HdmaobjPreInstr_DCBA(k, game);
-        }
-        8969539 => {
-            HdmaobjPreInstr_BombTorizoHazeColorMathBgColor(k, game);
-        }
-        8969744 => {
-            HdmaobjPreInstr_HazeColorMathSubscreen_CeresRidleyAlive(k, game);
-        }
-        8969749 => {
-            HdmaobjPreInstr_HazeColorMathSubscreen_CeresRidleyDead(k, game);
-        }
-        8969773 => {
-            HdmaobjPreInstr_HazeColorMathSubscreen_FadingIn(k, game);
-        }
-        8969844 => {
-            HdmaobjPreInstr_HazeColorMathSubscreen_FadedIn(k, game);
-        }
-        8969878 => {
-            HdmaobjPreInstr_HazeColorMathSubscreen_FadingOut(k, game);
-        }
-        8970132 => {
-            HdmaobjPreInstr_DF94(k, game);
-        }
-        8970278 => {
-            HdmaobjPreInstr_VariaSuitPickup(k, game);
-        }
-        8970332 => {
-            HdmaobjPreInstr_GravitySuitPickup(k, game);
-        }
-        8971337 => {
-            HdmaobjPreInstr_E449(k, game);
-        }
-        8971623 => {
-            HdmaobjPreInstr_E567(k, game);
-        }
-        8972220 => {
-            HdmaobjPreInstr_E7BC(k, game);
-        }
+        9556607 => HdmaobjPreInstr_XraySetup(k, game),
+        8947439 => HdmaobjPreInstr_Xray(k, game),
+        8947506 => HdmaobjPreInstr_XrayFunc0_NoBeam(k, game),
+        8947540 => HdmaobjPreInstr_XrayFunc1_BeamWidening(k, game),
+        8947627 => HdmaobjPreInstr_XrayFunc2_FullBeam(k, game),
+        8948020 => HdmaobjPreInstr_XrayFunc3_DeactivateBeam(k, game),
+        8948154 => HdmaobjPreInstr_XrayFunc4_DeactivateBeam(k, game),
+        8948232 => HdmaobjPreInstr_XrayFunc5_DeactivateBeam(k, game),
+        8948623 => HdmaobjPreInstr_PowerBombExplode_SetWindowConf(k, game),
+        8948632 => HdmaobjPreInstr_PowerBombExplode_Stage5_Afterglow(k, game),
+        8949225 => HdmaobjPreInstr_PowerBombExplode_ExplosionYellow(k, game),
+        8949426 => HdmaobjPreInstr_PowerBombExplode_ExplosionWhite(k, game),
+        8949983 => HdmaobjPreInstr_PowerBombExplode_PreExplosionWhite(k, game),
+        8950184 => HdmaobjPreInstr_PowerBombExplode_PreExplosionYellow(k, game),
+        8954681 => HdmaobjPreInstr_CrystalFlash_CustomLayerBlend(k, game),
+        8954717 => HdmaobjPreInstr_CrystalFlash_Stage2_AfterGlow(k, game),
+        8955218 => HdmaobjPreInstr_CrystalFlash_Stage1_Explosion(k, game),
+        8955459 => HdmaobjPreInstr_FxType22_BG3Yscroll(k, game),
+        8955507 => HdmaobjPreInstr_BG3Xscroll(k, game),
+        8957362 => HdmaobjPreInstr_SkyLandBG2Xscroll(k, game),
+        8957370 => HdmaobjPreInstr_SkyLandBG2Xscroll2(k, game),
+        8957378 => HdmaobjPreInstr_SkyLandBG2XscrollInner(k, game),
+        8958140 => HdmaobjPreInstr_FirefleaBG3XScroll(k, game),
+        8958896 => HdmaobjPreInstr_LavaAcidBG3YScroll(k, game),
+        8959189 => HdmaobjPreInstr_LavaAcidBG2YScroll(k, game),
+        8963214 => HdmaobjPreInstr_WaterBG3XScroll(k, game),
+        8963465 => HdmaobjPreInstr_WaterBG2XScroll(k, game),
+        8963556 => HdmaobjPreInstr_WaterBG2XScroll_Func2(k, game),
+        8963638 => HdmaobjPreInstr_WaterBG2XScroll_Func1(k, game),
+        8968609 => HdmaobjPreInstr_RainBg3Scroll(k, game),
+        8968775 => HdmaobjPreInstr_SporesBG3Xscroll(k, game),
+        8969014 => HdmaobjPreInstr_FogBG3Scroll(k, game),
+        8969175 => HdmaobjPreInstr_CheckLotsOfEventsHappened(k, game),
+        8969251 => HdmaobjPreInstr_DC23(k, game),
+        8969321 => HdmaobjPreInstr_DC69(k, game),
+        8969402 => HdmaobjPreInstr_DCBA(k, game),
+        8969539 => HdmaobjPreInstr_BombTorizoHazeColorMathBgColor(k, game),
+        8969744 => HdmaobjPreInstr_HazeColorMathSubscreen_CeresRidleyAlive(k, game),
+        8969749 => HdmaobjPreInstr_HazeColorMathSubscreen_CeresRidleyDead(k, game),
+        8969773 => HdmaobjPreInstr_HazeColorMathSubscreen_FadingIn(k, game),
+        8969844 => HdmaobjPreInstr_HazeColorMathSubscreen_FadedIn(k, game),
+        8969878 => HdmaobjPreInstr_HazeColorMathSubscreen_FadingOut(k, game),
+        8970132 => HdmaobjPreInstr_DF94(k, game),
+        8970278 => HdmaobjPreInstr_VariaSuitPickup(k, game),
+        8970332 => HdmaobjPreInstr_GravitySuitPickup(k, game),
+        8971337 => HdmaobjPreInstr_E449(k, game),
+        8971623 => HdmaobjPreInstr_E567(k, game),
+        8972220 => HdmaobjPreInstr_E7BC(k, game),
         fnHdmaobjPreInstr_MorphBallEyeBeamWidening => {
             HdmaobjPreInstr_MorphBallEyeBeamWidening(k, game);
         }
@@ -6575,19 +6419,11 @@ pub unsafe fn CallHdmaobjPreInstr(ea: uint32, k: uint16, game: &mut Game) {
         fnHdmaobjPreInstr_MorphBallEyeBeamFading => {
             HdmaobjPreInstr_MorphBallEyeBeamFading(k, game);
         }
-        8973232 => {
-            HdmaobjPreInstr_Backdrop_TitleSequenceGradient(k, game);
-        }
-        8973266 => {
-            HdmaobjPreInstr_ColorMathControlB_TitleGradient(k, game);
-        }
-        8973341 => {
-            HdmaobjPreInstr_IntroCutsceneCrossfade(k, game);
-        }
+        8973232 => HdmaobjPreInstr_Backdrop_TitleSequenceGradient(k, game),
+        8973266 => HdmaobjPreInstr_ColorMathControlB_TitleGradient(k, game),
+        8973341 => HdmaobjPreInstr_IntroCutsceneCrossfade(k, game),
         8972070 => (),
-        8973494 => {
-            HdmaobjPreInstr_ECB6(k, game);
-        }
+        8973494 => HdmaobjPreInstr_ECB6(k, game),
         _ => {
             Unreachable(game);
         }

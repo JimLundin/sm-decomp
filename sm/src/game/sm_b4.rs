@@ -56,15 +56,9 @@ pub unsafe fn CreateSpriteAtPos(
 }
 pub unsafe fn CallSpriteObjectInstr(ea: uint32, game: &mut Game) {
     match ea {
-        11844848 => {
-            SpriteObject_Instr_RepeatLast(game);
-        }
-        11844871 => {
-            SpriteObject_Instr_Terminate(game);
-        }
-        11844882 => {
-            SpriteObject_Instr_Goto(game);
-        }
+        11844848 => SpriteObject_Instr_RepeatLast(game),
+        11844871 => SpriteObject_Instr_Terminate(game),
+        11844882 => SpriteObject_Instr_Goto(game),
         _ => {
             Unreachable(game);
         }
