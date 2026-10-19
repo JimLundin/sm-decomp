@@ -73,6 +73,18 @@ unchanged. Prior zero-render passes cannot establish rendering equivalence.
 Sprite integration, 71 existing rendered failures, complete gameplay/credits,
 audio timing and masked RAM remain open.
 
+Independent sprite integration QC (2026-10-19): frozen 3974ccdf plus the live
+sprite-span change passes explicit-render any% 129,712/0 (184.70s), native
+exit0, with 105,504,520 actual span calls. Waver 58,109/71 (102.15s), native
+exit1, executes 39,372,064 spans; all71 full ordered failed-frame diagnostics
+are identical to a fresh explicit-render 3974ccdf baseline (any%129,712/0,
+229.28s; Waver58,109/71,101.33s). The formatted live PPU body matches the
+verified body after removing temporary counters. Diagnostic printing and
+counters do not enter maintained source. Later peer CPU/gameplay edits are
+excluded; this supports the pending sprite change, not the whole moving
+worktree. Existing rendered failures and complete hardware/gameplay/credits
+coverage remain open.
+
 The binary contains two complete implementations of each frame:
 
 - **theirs**: the original ROM code, run on the emulated 65816 in `sm/src/snes`.
