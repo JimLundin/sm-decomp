@@ -58,6 +58,28 @@ Retain targeted comparisons for state/control-flow changes. Preserve read
 and write order; compound-assignment suggestions need alias/order review.
 Keep plan updates concise. The broader readability goal remains incomplete.
 
+Power Bomb and Crystal Flash HDMA (2026-10-20): the complete 17-function
+explosion-window family shares nine renderer variants and three pointer
+builders across five retained stage handlers. The distinct clipping and
+empty-window values, live RAM/ROM reads, store order, byte/word counter wraps,
+conditional pointer stores and all five transition tails remain exact.
+
+Net Rust lines -375, unsafe functions -7, raw-offset lines -48 and i32 cast
+lines -75; total Rust is 145493. All 202 unselected functions retain the
+composed peer source. Independent source review and 778700 extracted-code
+comparisons pass, including exhaustive byte clipping, full-RAM traversal,
+pointer boundaries and all five stage handlers. These factored checks retain
+the original valid-memory domains and do not establish every joint state.
+
+Frozen fc340e34 includes the reviewed LoROM readers and core imports. Normal
+release (24.57s), formatting/check, progress and full any% 129712/0
+(114.97s replay, 115.13s wall) pass, native exit 0. All 73 source/config/host
+inputs and 79 verification pins remain fixed. The composed source passes
+independent review and matches this focused commit; concurrent ROM-bank
+wrapper edits remain separate. Any% supplies integration regression coverage;
+new in-game Power Bomb or Crystal Flash coverage is not claimed. Continue
+substantial repeated families; broader readability and boot-to-credits remain open.
+
 SPC memory-map descriptors (2026-10-19): all 330 repeated initializers use
 two private const constructors. The 47 channel mappings and 283 player mappings
 retain all 943 field values, row order, encoded width flags and struct layouts.

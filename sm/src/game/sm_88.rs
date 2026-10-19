@@ -1367,85 +1367,205 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_Stage5_Afterglow(k: u16, game: &m
         }
     }
 }
-pub unsafe fn CalculatePowerBombHdma_LeftOfScreen(mut k: u16, mut j: *const u8, game: &mut Game) {
+#[derive(Clone, Copy)]
+enum ExplosionWindowSide {
+    Left,
+    OnScreen,
+    Right,
+}
+
+#[derive(Clone, Copy)]
+enum ExplosionWindowScale {
+    PowerBomb(u8),
+    CrystalFlash,
+}
+
+unsafe fn explosion_window_side(byte_read: bool, game: &mut Game) -> ExplosionWindowSide {
+    let mut high_byte = || {
+        if byte_read {
+            *(&raw mut game.g_ram as *mut u8).offset(0xce7)
+        } else {
+            ((ram_word!(game, power_bomb_explosion_x_pos_plus_0x100) as i32 & 0xff00i32) >> 8i32)
+                as u8
+        }
+    };
+    if high_byte() != 0 {
+        if high_byte() == 1 {
+            ExplosionWindowSide::OnScreen
+        } else {
+            ExplosionWindowSide::Right
+        }
+    } else {
+        ExplosionWindowSide::Left
+    }
+}
+
+macro_rules! write_explosion_window_row {
+    ($k:expr, $left:expr, $right:expr, $game:ident) => {{
+        *(&raw mut $game.g_ram as *mut u8).offset(0xc406).offset($k) = $left;
+        *(&raw mut $game.g_ram as *mut u8).offset(0xc506).offset($k) = $right;
+    }};
+}
+
+unsafe fn calculate_power_bomb_hdma(
+    mut k: u16,
+    mut j: *const u8,
+    side: ExplosionWindowSide,
+    game: &mut Game,
+) {
     loop {
         let w: u8 = *j;
-        let c: u8 = ram_word!(game, power_bomb_explosion_x_pos_plus_0x100) as u8;
-        if u8::overflowing_add(w, c).1 {
-            *(&raw mut game.g_ram as *mut u8)
-                .offset(0xc506)
-                .offset(k as isize) = (w).wrapping_add(c);
-            *(&raw mut game.g_ram as *mut u8)
-                .offset(0xc406)
-                .offset(k as isize) = 0u8;
-        } else {
-            *(&raw mut game.g_ram as *mut u8)
-                .offset(0xc506)
-                .offset(k as isize) = 0u8;
-            *(&raw mut game.g_ram as *mut u8)
-                .offset(0xc406)
-                .offset(k as isize) = 1u8;
+        match side {
+            ExplosionWindowSide::Left => {
+                let c: u8 = ram_word!(game, power_bomb_explosion_x_pos_plus_0x100) as u8;
+                // This unscaled path writes right before left and uses 1, not 255, when empty.
+                if u8::overflowing_add(w, c).1 {
+                    *(&raw mut game.g_ram as *mut u8)
+                        .offset(0xc506)
+                        .offset(k as isize) = w.wrapping_add(c);
+                    *(&raw mut game.g_ram as *mut u8)
+                        .offset(0xc406)
+                        .offset(k as isize) = 0u8;
+                } else {
+                    *(&raw mut game.g_ram as *mut u8)
+                        .offset(0xc506)
+                        .offset(k as isize) = 0u8;
+                    *(&raw mut game.g_ram as *mut u8)
+                        .offset(0xc406)
+                        .offset(k as isize) = 1u8;
+                }
+            }
+            ExplosionWindowSide::OnScreen => {
+                if w == 0 {
+                    break;
+                }
+                let c: u8 = ram_word!(game, power_bomb_explosion_x_pos_plus_0x100) as u8;
+                let right = if u8::overflowing_add(c, w).1 {
+                    255
+                } else {
+                    c.wrapping_add(w)
+                };
+                let left = if c >= w { c.wrapping_sub(w) } else { 0 };
+                write_explosion_window_row!(k as isize, left, right, game);
+            }
+            ExplosionWindowSide::Right => {
+                if (ram_word!(game, power_bomb_explosion_x_pos_plus_0x100) as u8) < w {
+                    let left = (ram_word!(game, power_bomb_explosion_x_pos_plus_0x100) as u8)
+                        .wrapping_sub(w);
+                    write_explosion_window_row!(k as isize, left, -(1i32) as u8, game);
+                } else {
+                    write_explosion_window_row!(k as isize, -(1i32) as u8, -(2i32) as u8, game);
+                }
+            }
         }
         j = j.offset(1);
         k = k.wrapping_add(1);
-        if (k == 192u16) {
+        if k == 192u16 {
             break;
         }
     }
 }
-pub unsafe fn CalculatePowerBombHdma_OnScreen(mut k: u16, mut j: *const u8, game: &mut Game) {
+
+unsafe fn calculate_explosion_hdma_scaled(
+    mut k: u16,
+    mut j: u16,
+    scale: ExplosionWindowScale,
+    side: ExplosionWindowSide,
+    game: &mut Game,
+) -> u16 {
+    let mut left: u8;
+    let mut right: u8;
     loop {
-        let w: u8 = *j;
-        if w == 0 {
-            break;
+        let r20: u8 = (Mult8x8(
+            match scale {
+                ExplosionWindowScale::PowerBomb(value) => value,
+                ExplosionWindowScale::CrystalFlash => {
+                    ((ram_word!(game, power_bomb_explosion_radius) as i32 & 0xff00i32) >> 8i32)
+                        as u8
+                }
+            },
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)) as *const u8 as *mut u8)
+                .offset((j as u8 as i32 + 32i32) as isize),
+        ) as i32
+            >> 8i32) as u8;
+        // Power Bomb reads its center between the two shape bytes; Crystal Flash reads after both.
+        let center_before_width = match scale {
+            ExplosionWindowScale::PowerBomb(_) => {
+                Some(ram_word!(game, power_bomb_explosion_x_pos_plus_0x100) as u8)
+            }
+            ExplosionWindowScale::CrystalFlash => None,
+        };
+        let w: u8 = (Mult8x8(
+            match scale {
+                ExplosionWindowScale::PowerBomb(value) => value,
+                ExplosionWindowScale::CrystalFlash => {
+                    ((ram_word!(game, power_bomb_explosion_radius) as i32 & 0xff00i32) >> 8i32)
+                        as u8
+                }
+            },
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)) as *const u8 as *mut u8)
+                .offset(j as u8 as isize),
+        ) as i32
+            >> 8i32) as u8;
+        let c = match center_before_width {
+            Some(c) => c,
+            None => ram_word!(game, power_bomb_explosion_x_pos_plus_0x100) as u8,
+        };
+        match side {
+            ExplosionWindowSide::Left => {
+                let visible = u8::overflowing_add(w, c).1;
+                left = if visible { 0 } else { 255 };
+                right = if visible { w.wrapping_add(c) } else { 0 };
+            }
+            ExplosionWindowSide::OnScreen => {
+                right = if u8::overflowing_add(w, c).1 {
+                    255
+                } else {
+                    w.wrapping_add(c)
+                };
+                let c = match scale {
+                    ExplosionWindowScale::PowerBomb(_) => {
+                        ram_word!(game, power_bomb_explosion_x_pos_plus_0x100) as u8
+                    }
+                    ExplosionWindowScale::CrystalFlash => c,
+                };
+                left = if c < w { 0 } else { c.wrapping_sub(w) };
+            }
+            ExplosionWindowSide::Right => {
+                left = if c < w { c.wrapping_sub(w) } else { 255 };
+                right = if c < w { 255 } else { 0 };
+            }
         }
-        let c: u8 = ram_word!(game, power_bomb_explosion_x_pos_plus_0x100) as u8;
-        let right: u8 = (if u8::overflowing_add(c, w).1 as i32 != 0 {
-            255i32
-        } else {
-            c as i32 + w as i32
-        }) as u8;
-        let left: u8 = (if c >= w { c as i32 - w as i32 } else { 0i32 }) as u8;
-        *(&raw mut game.g_ram as *mut u8)
-            .offset(0xc406)
-            .offset(k as isize) = left;
-        *(&raw mut game.g_ram as *mut u8)
-            .offset(0xc506)
-            .offset(k as isize) = right;
-        j = j.offset(1);
-        k = k.wrapping_add(1);
-        if (k == 192u16) {
+        loop {
+            write_explosion_window_row!(k as u8 as isize, left, right, game);
+            if (k as u8) == r20 {
+                break;
+            }
+            match scale {
+                ExplosionWindowScale::PowerBomb(_) => {
+                    *(&raw mut k as *mut u8).offset(0) = ((k) as u8).wrapping_sub(1u8)
+                }
+                ExplosionWindowScale::CrystalFlash => k = k.wrapping_sub(1),
+            }
+        }
+        match scale {
+            ExplosionWindowScale::PowerBomb(_) => {
+                *(&raw mut j as *mut u8).offset(0) = ((j) as u8).wrapping_add(1u8)
+            }
+            ExplosionWindowScale::CrystalFlash => j = j.wrapping_add(1),
+        }
+        if (j as i32 & 0x80i32) != 0i32 {
             break;
         }
     }
+    game.k_out = *(&raw mut k as *mut u8).offset(0) as u16;
+    ((right as i32) << 8i32 | left as i32) as u16
 }
-pub unsafe fn CalculatePowerBombHdma_RightOfScreen(mut k: u16, mut j: *const u8, game: &mut Game) {
-    loop {
-        let w: u8 = *j;
-        if (ram_word!(game, power_bomb_explosion_x_pos_plus_0x100) as u8) < w {
-            *(&raw mut game.g_ram as *mut u8)
-                .offset(0xc406)
-                .offset(k as isize) =
-                ((ram_word!(game, power_bomb_explosion_x_pos_plus_0x100)) as u8).wrapping_sub(w);
-            *(&raw mut game.g_ram as *mut u8)
-                .offset(0xc506)
-                .offset(k as isize) = -(1i32) as u8;
-        } else {
-            *(&raw mut game.g_ram as *mut u8)
-                .offset(0xc406)
-                .offset(k as isize) = -(1i32) as u8;
-            *(&raw mut game.g_ram as *mut u8)
-                .offset(0xc506)
-                .offset(k as isize) = -(2i32) as u8;
-        }
-        j = j.offset(1);
-        k = k.wrapping_add(1);
-        if (k == 192u16) {
-            break;
-        }
+
+unsafe fn calculate_explosion_hdma_table_pointers(k: u16, pre_explosion: bool, game: &mut Game) {
+    if pre_explosion && (ram_word!(game, power_bomb_explosion_status) as i32 & 0x8000i32) == 0i32 {
+        return;
     }
-}
-pub unsafe fn CalculatePowerBombHdmaObjectTablePtrs(k: u16, game: &mut Game) {
     let mut v1: u16 = 0;
     if ((ram_word!(game, power_bomb_explosion_x_pos) as i32 - ram_word!(game, layer1_x_pos) as i32
         + 256i32) as u16)
@@ -1468,231 +1588,66 @@ pub unsafe fn CalculatePowerBombHdmaObjectTablePtrs(k: u16, game: &mut Game) {
     set_ram_word!(
         game.power_bomb_explosion_y_pos_rsub_0x1ff = ((v1 as i32 ^ 0x3ffi32) - 256i32) as u16
     );
-    if (ram_word!(game, power_bomb_explosion_radius) as i32 & 0xff00i32) == 0i32 {
+    let radius = if pre_explosion {
+        ram_word!(game, power_bomb_pre_explosion_flash_radius)
+    } else {
+        ram_word!(game, power_bomb_explosion_radius)
+    };
+    if (radius as i32 & 0xff00i32) == 0i32 {
         set_ram_word!(game.power_bomb_explosion_y_pos_rsub_0x1ff = 0u16);
     }
-    *((&raw mut game.g_ram as *mut u8).offset(0x18d8) as *mut u16)
-        .offset(((k as i32 >> 1i32) + 0i32) as isize) =
-        (3i32 * ram_word!(game, power_bomb_explosion_y_pos_rsub_0x1ff) as i32
-            + addr_kIndirectHdmaTable_PowerBombExplodeLeft as i32) as u16;
-    *((&raw mut game.g_ram as *mut u8).offset(0x18d8) as *mut u16)
-        .offset(((k as i32 >> 1i32) + 1i32) as isize) =
-        (3i32 * ram_word!(game, power_bomb_explosion_y_pos_rsub_0x1ff) as i32
-            + addr_kIndirectHdmaTable_PowerBombExplodeRight as i32) as u16;
+    set_ram_word!(
+        game.hdma_object_table_pointers[(k as i32 >> 1i32)] =
+            (3i32 * ram_word!(game, power_bomb_explosion_y_pos_rsub_0x1ff) as i32
+                + addr_kIndirectHdmaTable_PowerBombExplodeLeft as i32) as u16
+    );
+    set_ram_word!(
+        game.hdma_object_table_pointers[((k as i32 >> 1i32) + 1i32)] =
+            (3i32 * ram_word!(game, power_bomb_explosion_y_pos_rsub_0x1ff) as i32
+                + addr_kIndirectHdmaTable_PowerBombExplodeRight as i32) as u16
+    );
 }
 
-pub unsafe fn CalculatePowerBombHdmaScaled_LeftOfScreen(
-    mut k: u16,
-    mut j: u16,
-    multval: u8,
-    game: &mut Game,
-) -> u16 {
-    let mut v2: i8 = 0;
-    let mut v6: u8 = 0;
-    let mut v7: u8 = 0;
-    loop {
-        let r20: u8 = (Mult8x8(
-            multval,
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)) as *const u8 as *mut u8)
-                .offset((j as u8 as i32 + 32i32) as isize),
-        ) as i32
-            >> 8i32) as u8;
-        v2 = ram_word!(game, power_bomb_explosion_x_pos_plus_0x100) as i8;
-        let Reg: u8 = (Mult8x8(
-            multval,
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)) as *const u8 as *mut u8)
-                .offset(j as u8 as isize),
-        ) as i32
-            >> 8i32) as u8;
-        let v4: bool = u8::overflowing_add(Reg, v2 as u8).1;
-        let v5: u8 = (Reg).wrapping_add((v2) as u8);
-        if v4 {
-            v6 = v5;
-            v7 = 0u8;
-        } else {
-            v6 = 0u8;
-            v7 = -(1i32) as u8;
-        }
-        loop {
-            *(&raw mut game.g_ram as *mut u8)
-                .offset(0xc406)
-                .offset(k as u8 as isize) = v7;
-            *(&raw mut game.g_ram as *mut u8)
-                .offset(0xc506)
-                .offset(k as u8 as isize) = v6;
-            if (k as u8) == r20 {
-                break;
-            }
-            *(&raw mut k as *mut u8).offset(0) = ((k) as u8).wrapping_sub(1u8);
-        }
-        *(&raw mut j as *mut u8).offset(0) = ((j) as u8).wrapping_add(1u8);
-        if ((j as i32 & 0x80i32) != 0i32) {
-            break;
-        }
+unsafe fn set_explosion_fixed_color(table: u32, pos: i32, game: &mut Game) {
+    for (channel, mask) in [(0, 0x20u8), (1, 0x40u8), (2, 0x80u8)] {
+        *(&raw mut game.g_ram as *mut u8)
+            .offset(0x74)
+            .offset(channel as isize) = *(game.g_rom.offset(crate::rtl::lorom_offset(table))
+            as *const u8)
+            .offset((pos + channel) as isize)
+            | mask;
     }
-    game.k_out = *(&raw mut k as *mut u8).offset(0) as u16;
-    ((v6 as i32) << 8i32 | v7 as i32) as u16
 }
-pub unsafe fn CalculatePowerBombHdmaScaled_OnScreen(
-    mut k: u16,
-    mut j: u16,
-    multval: u8,
-    game: &mut Game,
-) -> u16 {
-    let mut v2: i8 = 0;
-    let mut v5: i8 = 0;
-    let mut v6: u8 = 0;
-    let mut v9: u8 = 0;
-    loop {
-        let r20: u8 = (Mult8x8(
-            multval,
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)) as *const u8 as *mut u8)
-                .offset((j as u8 as i32 + 32i32) as isize),
-        ) as i32
-            >> 8i32) as u8;
-        v2 = ram_word!(game, power_bomb_explosion_x_pos_plus_0x100) as i8;
-        let Reg: u8 = (Mult8x8(
-            multval,
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)) as *const u8 as *mut u8)
-                .offset(j as u8 as isize),
-        ) as i32
-            >> 8i32) as u8;
-        let mut v4: bool = u8::overflowing_add(Reg, v2 as u8).1;
-        v5 = ((Reg) as i8).wrapping_add(v2);
-        if v4 {
-            v5 = -(1i32) as i8;
-        }
-        v6 = v5 as u8;
-        let v7: u8 = ram_word!(game, power_bomb_explosion_x_pos_plus_0x100) as u8;
-        let v8: u8 = Reg;
-        v4 = v7 < v8;
-        v9 = (v7).wrapping_sub(v8);
-        if v4 {
-            v9 = 0u8;
-        }
-        loop {
-            *(&raw mut game.g_ram as *mut u8)
-                .offset(0xc406)
-                .offset(k as u8 as isize) = v9;
-            *(&raw mut game.g_ram as *mut u8)
-                .offset(0xc506)
-                .offset(k as u8 as isize) = v6;
-            if (k as u8) == r20 {
-                break;
-            }
-            *(&raw mut k as *mut u8).offset(0) = ((k) as u8).wrapping_sub(1u8);
-        }
-        *(&raw mut j as *mut u8).offset(0) = ((j) as u8).wrapping_add(1u8);
-        if ((j as i32 & 0x80i32) != 0i32) {
-            break;
-        }
-    }
-    game.k_out = *(&raw mut k as *mut u8).offset(0) as u16;
-    ((v6 as i32) << 8i32 | v9 as i32) as u16
-}
-pub unsafe fn CalculatePowerBombHdmaScaled_RightOfScreen(
-    mut k: u16,
-    mut j: u16,
-    multval: u8,
-    game: &mut Game,
-) -> u16 {
-    let mut v5: i8 = 0;
-    let mut v6: i8 = 0;
-    let mut v7: i8 = 0;
-    let mut v10: i8 = 0;
-    let mut v8: u8 = 0;
-    let mut v9: u8 = 0;
-    loop {
-        let r20: u8 = (Mult8x8(
-            multval,
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)) as *const u8 as *mut u8)
-                .offset((j as u8 as i32 + 32i32) as isize),
-        ) as i32
-            >> 8i32) as u8;
-        let v2: u8 = ram_word!(game, power_bomb_explosion_x_pos_plus_0x100) as u8;
-        let Reg: u8 = (Mult8x8(
-            multval,
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)) as *const u8 as *mut u8)
-                .offset(j as u8 as isize),
-        ) as i32
-            >> 8i32) as u8;
-        let v4: bool = v2 < Reg;
-        v5 = ((v2) as i8).wrapping_sub((Reg) as i8);
-        if v4 {
-            v6 = v5;
-            v7 = -(1i32) as i8;
-        } else {
-            v6 = -(1i32) as i8;
-            v7 = 0i8;
-        }
-        v10 = v7;
-        v8 = v6 as u8;
-        v9 = v10 as u8;
-        loop {
-            *(&raw mut game.g_ram as *mut u8)
-                .offset(0xc406)
-                .offset(k as u8 as isize) = v8;
-            *(&raw mut game.g_ram as *mut u8)
-                .offset(0xc506)
-                .offset(k as u8 as isize) = v9;
-            if (k as u8) == r20 {
-                break;
-            }
-            *(&raw mut k as *mut u8).offset(0) = ((k) as u8).wrapping_sub(1u8);
-        }
-        *(&raw mut j as *mut u8).offset(0) = ((j) as u8).wrapping_add(1u8);
-        if ((j as i32 & 0x80i32) != 0i32) {
-            break;
-        }
-    }
-    game.k_out = *(&raw mut k as *mut u8).offset(0) as u16;
-    ((v9 as i32) << 8i32 | v8 as i32) as u16
-}
+
 pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionYellow(k: u16, game: &mut Game) {
     let mut v2: u16 = 0;
     if (ram_word!(game, power_bomb_explosion_status) as i32 & 0x8000i32) == 0i32 {
         return;
     }
-    CalculatePowerBombHdmaObjectTablePtrs(k, game);
+    calculate_explosion_hdma_table_pointers(k, false, game);
     let kk: i32 = Mult8x8(
         ((ram_word!(game, power_bomb_explosion_radius) as i32 & 0xff00i32) >> 8i32) as u8,
         *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a286)) as *const u8 as *mut u8).offset(0),
     ) as i32
         >> 8i32;
-    if (ram_word!(game, power_bomb_explosion_x_pos_plus_0x100) as i32 & 0xff00i32) >> 8i32 != 0 {
-        if ((ram_word!(game, power_bomb_explosion_x_pos_plus_0x100) as i32 & 0xff00i32) >> 8i32)
-            == 1i32
-        {
-            v2 = CalculatePowerBombHdmaScaled_OnScreen(
-                kk as u16,
-                96u16,
-                ((ram_word!(game, power_bomb_explosion_radius) as i32 & 0xff00i32) >> 8i32) as u8,
-                game,
-            );
-        } else {
-            v2 = CalculatePowerBombHdmaScaled_RightOfScreen(
-                kk as u16,
-                96u16,
-                ((ram_word!(game, power_bomb_explosion_radius) as i32 & 0xff00i32) >> 8i32) as u8,
-                game,
-            );
-        }
-    } else {
-        v2 = CalculatePowerBombHdmaScaled_LeftOfScreen(
-            kk as u16,
-            96u16,
+    let side = explosion_window_side(false, game);
+    v2 = calculate_explosion_hdma_scaled(
+        kk as u16,
+        96u16,
+        ExplosionWindowScale::PowerBomb(
             ((ram_word!(game, power_bomb_explosion_radius) as i32 & 0xff00i32) >> 8i32) as u8,
-            game,
-        );
-    }
+        ),
+        side,
+        game,
+    );
     let mut i: i32 = game.k_out as i32;
     loop {
-        *(&raw mut game.g_ram as *mut u8)
-            .offset(0xc406)
-            .offset(i as isize) = v2 as u8;
-        *(&raw mut game.g_ram as *mut u8)
-            .offset(0xc506)
-            .offset(i as isize) = ((v2 as i32 & 0xff00i32) >> 8i32) as u8;
+        write_explosion_window_row!(
+            i as isize,
+            v2 as u8,
+            ((v2 as i32 & 0xff00i32) >> 8i32) as u8,
+            game
+        );
         i -= 1;
         if ((i & 0x80i32) != 0i32) {
             break;
@@ -1700,28 +1655,12 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionYellow(k: u16, game: &mu
     }
     let mut v3: i32 = kk + 1i32;
     while v3 != 0xc0i32 {
-        *(&raw mut game.g_ram as *mut u8)
-            .offset(0xc406)
-            .offset(v3 as isize) = 255u8;
-        *(&raw mut game.g_ram as *mut u8)
-            .offset(0xc506)
-            .offset(v3 as isize) = 0u8;
+        write_explosion_window_row!(v3 as isize, 255u8, 0u8, game);
         v3 += 1;
     }
     let t: i32 =
         3i32 * ((ram_word!(game, power_bomb_explosion_radius) as i32 & 0xff00i32) >> 8i32 >> 3i32);
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0) =
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x888d85)) as *const u8 as *mut u8)
-            .offset((t + 0i32) as isize))
-            | (0x20u8);
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1) =
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x888d85)) as *const u8 as *mut u8)
-            .offset((t + 1i32) as isize))
-            | (0x40u8);
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2) =
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x888d85)) as *const u8 as *mut u8)
-            .offset((t + 2i32) as isize))
-            | (0x80u8);
+    set_explosion_fixed_color(0x888d85, t, game);
     update_ram_word!(
         game.power_bomb_explosion_radius,
         wrapping_add(ram_word!(game, power_bomb_pre_explosion_radius_speed))
@@ -1745,36 +1684,16 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionWhite(k: u16, game: &mut
     if (ram_word!(game, power_bomb_explosion_status) as i32 & 0x8000i32) == 0i32 {
         return;
     }
-    CalculatePowerBombHdmaObjectTablePtrs(k, game);
+    calculate_explosion_hdma_table_pointers(k, false, game);
     let v1: *const u8 = RomPtr_88(
         ram_word!(game, pre_scaled_power_bomb_explosion_shape_def_ptr),
         game,
     );
-    if (ram_word!(game, power_bomb_explosion_x_pos_plus_0x100) as i32 & 0xff00i32) >> 8i32 != 0 {
-        if ((ram_word!(game, power_bomb_explosion_x_pos_plus_0x100) as i32 & 0xff00i32) >> 8i32)
-            == 1i32
-        {
-            CalculatePowerBombHdma_OnScreen(0u16, v1, game);
-        } else {
-            CalculatePowerBombHdma_RightOfScreen(0u16, v1, game);
-        }
-    } else {
-        CalculatePowerBombHdma_LeftOfScreen(0u16, v1, game);
-    }
+    let side = explosion_window_side(false, game);
+    calculate_power_bomb_hdma(0u16, v1, side, game);
     let t: i32 =
         3i32 * ((ram_word!(game, power_bomb_explosion_radius) as i32 & 0xff00i32) >> 8i32 >> 3i32);
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0) =
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x888d85)) as *const u8 as *mut u8)
-            .offset(t as isize))
-            | (0x20u8);
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1) =
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x888d85)) as *const u8 as *mut u8)
-            .offset((t + 1i32) as isize))
-            | (0x40u8);
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2) =
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x888d85)) as *const u8 as *mut u8)
-            .offset((t + 2i32) as isize))
-            | (0x80u8);
+    set_explosion_fixed_color(0x888d85, t, game);
     update_ram_word!(
         game.pre_scaled_power_bomb_explosion_shape_def_ptr,
         wrapping_add(192u16)
@@ -1805,52 +1724,12 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionWhite(k: u16, game: &mut
         );
     }
 }
-pub unsafe fn CalculatePowerBombHdmaTablePointers(v0: u16, game: &mut Game) {
-    let mut v1: u16 = 0;
-    if (ram_word!(game, power_bomb_explosion_status) as i32 & 0x8000i32) != 0i32 {
-        if ((ram_word!(game, power_bomb_explosion_x_pos) as i32
-            - ram_word!(game, layer1_x_pos) as i32
-            + 256i32) as u16)
-            >= 0x300u16
-            || {
-                set_ram_word!(
-                    game.power_bomb_explosion_x_pos_plus_0x100 =
-                        (ram_word!(game, power_bomb_explosion_x_pos) as i32
-                            - ram_word!(game, layer1_x_pos) as i32
-                            + 256i32) as u16
-                );
-                v1 = (ram_word!(game, power_bomb_explosion_y_pos) as i32
-                    - ram_word!(game, layer1_y_pos) as i32
-                    + 256i32) as u16;
-                v1 >= 0x300u16
-            }
-        {
-            v1 = 0u16;
-        }
-        set_ram_word!(
-            game.power_bomb_explosion_y_pos_rsub_0x1ff = ((v1 as i32 ^ 0x3ffi32) - 256i32) as u16
-        );
-        if (ram_word!(game, power_bomb_pre_explosion_flash_radius) as i32 & 0xff00i32) == 0i32 {
-            set_ram_word!(game.power_bomb_explosion_y_pos_rsub_0x1ff = 0u16);
-        }
-        let v2: i32 = v0 as i32 >> 1i32;
-        set_ram_word!(
-            game.hdma_object_table_pointers[v2] =
-                (3i32 * ram_word!(game, power_bomb_explosion_y_pos_rsub_0x1ff) as i32
-                    + addr_kIndirectHdmaTable_PowerBombExplodeLeft as i32) as u16
-        );
-        set_ram_word!(
-            game.hdma_object_table_pointers[(v2 + 1i32)] =
-                (3i32 * ram_word!(game, power_bomb_explosion_y_pos_rsub_0x1ff) as i32
-                    + addr_kIndirectHdmaTable_PowerBombExplodeRight as i32) as u16
-        );
-    }
-}
+
 pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionWhite(k: u16, game: &mut Game) {
     if (ram_word!(game, power_bomb_explosion_status) as i32 & 0x8000i32) == 0i32 {
         return;
     }
-    CalculatePowerBombHdmaTablePointers(k, game);
+    calculate_explosion_hdma_table_pointers(k, true, game);
     let v1: u16 = 96u16;
     let mut v2: u16 = 0;
     let kk: i32 = Mult8x8(
@@ -1858,43 +1737,24 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionWhite(k: u16, game: &
         *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a286)) as *const u8 as *mut u8).offset(0),
     ) as i32
         >> 8i32;
-    if *((&raw mut game.g_ram as *mut u8).offset(0xce6) as *mut u16 as *mut u8).offset(1isize) != 0
-    {
-        if *((&raw mut game.g_ram as *mut u8).offset(0xce6) as *mut u16 as *mut u8).offset(1isize)
-            == 1u8
-        {
-            v2 = CalculatePowerBombHdmaScaled_OnScreen(
-                kk as u16,
-                v1,
-                *((&raw mut game.g_ram as *mut u8).offset(0xcec) as *mut u16 as *mut u8)
-                    .offset(1isize),
-                game,
-            );
-        } else {
-            v2 = CalculatePowerBombHdmaScaled_RightOfScreen(
-                kk as u16,
-                v1,
-                *((&raw mut game.g_ram as *mut u8).offset(0xcec) as *mut u16 as *mut u8)
-                    .offset(1isize),
-                game,
-            );
-        }
-    } else {
-        v2 = CalculatePowerBombHdmaScaled_LeftOfScreen(
-            kk as u16,
-            v1,
+    let side = explosion_window_side(true, game);
+    v2 = calculate_explosion_hdma_scaled(
+        kk as u16,
+        v1,
+        ExplosionWindowScale::PowerBomb(
             *((&raw mut game.g_ram as *mut u8).offset(0xcec) as *mut u16 as *mut u8).offset(1isize),
-            game,
-        );
-    }
+        ),
+        side,
+        game,
+    );
     let mut i: u8 = game.k_out as u8;
     loop {
-        *(&raw mut game.g_ram as *mut u8)
-            .offset(0xc406)
-            .offset(i as isize) = v2 as u8;
-        *(&raw mut game.g_ram as *mut u8)
-            .offset(0xc506)
-            .offset(i as isize) = *(&raw mut v2 as *mut u8).offset(1isize);
+        write_explosion_window_row!(
+            i as isize,
+            v2 as u8,
+            *(&raw mut v2 as *mut u8).offset(1isize),
+            game
+        );
         i = i.wrapping_sub(1);
         if ((i as i32 & 0x80i32) != 0i32) {
             break;
@@ -1902,30 +1762,14 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionWhite(k: u16, game: &
     }
     let mut v3: u8 = (kk + 1i32) as u8;
     while v3 != 0xc0u8 {
-        *(&raw mut game.g_ram as *mut u8)
-            .offset(0xc406)
-            .offset(v3 as isize) = 255u8;
-        *(&raw mut game.g_ram as *mut u8)
-            .offset(0xc506)
-            .offset(v3 as isize) = 0u8;
+        write_explosion_window_row!(v3 as isize, 255u8, 0u8, game);
         v3 = v3.wrapping_add(1);
     }
     let t: i32 = *((&raw mut game.g_ram as *mut u8).offset(0xcec) as *mut u16 as *mut u8)
         .offset(1isize) as i32
         >> 3i32
         & 0xfi32;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0) =
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x889079)) as *const u8 as *mut u8)
-            .offset((t * 3i32 + 0i32) as isize))
-            | (0x20u8);
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1) =
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x889079)) as *const u8 as *mut u8)
-            .offset((t * 3i32 + 1i32) as isize))
-            | (0x40u8);
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2) =
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x889079)) as *const u8 as *mut u8)
-            .offset((t * 3i32 + 2i32) as isize))
-            | (0x80u8);
+    set_explosion_fixed_color(0x889079, t * 3i32, game);
     update_ram_word!(
         game.power_bomb_pre_explosion_flash_radius,
         wrapping_add(ram_word!(game, power_bomb_pre_explosion_radius_speed))
@@ -1948,37 +1792,17 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionYellow(k: u16, game: 
     if (ram_word!(game, power_bomb_explosion_status) as i32 & 0x8000i32) == 0i32 {
         return;
     }
-    CalculatePowerBombHdmaTablePointers(k, game);
+    calculate_explosion_hdma_table_pointers(k, true, game);
     let v1: *const u8 = RomPtr_88(
         ram_word!(game, pre_scaled_power_bomb_explosion_shape_def_ptr),
         game,
     );
-    if (ram_word!(game, power_bomb_explosion_x_pos_plus_0x100) as i32 & 0xff00i32) >> 8i32 != 0 {
-        if ((ram_word!(game, power_bomb_explosion_x_pos_plus_0x100) as i32 & 0xff00i32) >> 8i32)
-            == 1i32
-        {
-            CalculatePowerBombHdma_OnScreen(0u16, v1, game);
-        } else {
-            CalculatePowerBombHdma_RightOfScreen(0u16, v1, game);
-        }
-    } else {
-        CalculatePowerBombHdma_LeftOfScreen(0u16, v1, game);
-    }
+    let side = explosion_window_side(false, game);
+    calculate_power_bomb_hdma(0u16, v1, side, game);
     let t: i32 =
         (ram_word!(game, power_bomb_pre_explosion_flash_radius) as i32 & 0xff00i32) >> 8i32 >> 3i32
             & 0xfi32;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0) =
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x889079)) as *const u8 as *mut u8)
-            .offset((3i32 * t) as isize))
-            | (0x20u8);
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1) =
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x889079)) as *const u8 as *mut u8)
-            .offset((3i32 * t + 1i32) as isize))
-            | (0x40u8);
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2) =
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x889079)) as *const u8 as *mut u8)
-            .offset((3i32 * t + 2i32) as isize))
-            | (0x80u8);
+    set_explosion_fixed_color(0x889079, 3i32 * t, game);
     update_ram_word!(
         game.pre_scaled_power_bomb_explosion_shape_def_ptr,
         wrapping_add(192u16)
@@ -2096,217 +1920,34 @@ pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage2_AfterGlow(k: u16, game: &mut G
         }
     }
 }
-pub unsafe fn CalculateCrystalFlashHdmaObjectTablePtrs(k: u16, game: &mut Game) {
-    let mut v1: u16 = 0;
-    if ((ram_word!(game, power_bomb_explosion_x_pos) as i32 - ram_word!(game, layer1_x_pos) as i32
-        + 256i32) as u16)
-        >= 0x300u16
-        || {
-            set_ram_word!(
-                game.power_bomb_explosion_x_pos_plus_0x100 =
-                    (ram_word!(game, power_bomb_explosion_x_pos) as i32
-                        - ram_word!(game, layer1_x_pos) as i32
-                        + 256i32) as u16
-            );
-            v1 = (ram_word!(game, power_bomb_explosion_y_pos) as i32
-                - ram_word!(game, layer1_y_pos) as i32
-                + 256i32) as u16;
-            v1 >= 0x300u16
-        }
-    {
-        v1 = 0u16;
-    }
-    set_ram_word!(
-        game.power_bomb_explosion_y_pos_rsub_0x1ff = ((v1 as i32 ^ 0x3ffi32) - 256i32) as u16
-    );
-    if (ram_word!(game, power_bomb_explosion_radius) as i32 & 0xff00i32) == 0i32 {
-        set_ram_word!(game.power_bomb_explosion_y_pos_rsub_0x1ff = 0u16);
-    }
-    set_ram_word!(
-        game.hdma_object_table_pointers[(k as i32 >> 1i32)] =
-            (3i32 * ram_word!(game, power_bomb_explosion_y_pos_rsub_0x1ff) as i32
-                + addr_kIndirectHdmaTable_PowerBombExplodeLeft as i32) as u16
-    );
-    *((&raw mut game.g_ram as *mut u8).offset(0x18d8) as *mut u16)
-        .offset(((k as i32 >> 1i32) + 1i32) as isize) =
-        (3i32 * ram_word!(game, power_bomb_explosion_y_pos_rsub_0x1ff) as i32
-            + addr_kIndirectHdmaTable_PowerBombExplodeRight as i32) as u16;
-}
-pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_LeftOfScreen(
-    mut k: u16,
-    mut j: u16,
-    game: &mut Game,
-) -> u16 {
-    let mut right: u8 = 0;
-    let mut left: u8 = 0;
-    loop {
-        let r20: u8 = (Mult8x8(
-            ((ram_word!(game, power_bomb_explosion_radius) as i32 & 0xff00i32) >> 8i32) as u8,
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)) as *const u8 as *mut u8)
-                .offset((j as u8 as i32 + 32i32) as isize),
-        ) as i32
-            >> 8i32) as u8;
-        let w: u8 = (Mult8x8(
-            ((ram_word!(game, power_bomb_explosion_radius) as i32 & 0xff00i32) >> 8i32) as u8,
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)) as *const u8 as *mut u8)
-                .offset(j as u8 as isize),
-        ) as i32
-            >> 8i32) as u8;
-        let c: u8 = ram_word!(game, power_bomb_explosion_x_pos_plus_0x100) as u8;
-        left = (if (w as i32 + c as i32) >= 256i32 {
-            0i32
-        } else {
-            255i32
-        }) as u8;
-        right = (if (w as i32 + c as i32) >= 256i32 {
-            w as i32 + c as i32
-        } else {
-            0i32
-        }) as u8;
-        loop {
-            *(&raw mut game.g_ram as *mut u8)
-                .offset(0xc406)
-                .offset(k as u8 as isize) = left;
-            *(&raw mut game.g_ram as *mut u8)
-                .offset(0xc506)
-                .offset(k as u8 as isize) = right;
-            if (k as u8) == r20 {
-                break;
-            }
-            k = k.wrapping_sub(1);
-        }
-        j = j.wrapping_add(1);
-        if ((j as i32 & 0x80i32) != 0i32) {
-            break;
-        }
-    }
-    game.k_out = *(&raw mut k as *mut u8).offset(0) as u16;
-    ((right as i32) << 8i32 | left as i32) as u16
-}
-pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_OnScreen(
-    mut k: u16,
-    mut j: u16,
-    game: &mut Game,
-) -> u16 {
-    let mut right: u8 = 0;
-    let mut left: u8 = 0;
-    loop {
-        let r20: u8 = (Mult8x8(
-            ((ram_word!(game, power_bomb_explosion_radius) as i32 & 0xff00i32) >> 8i32) as u8,
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)) as *const u8 as *mut u8)
-                .offset((j as u8 as i32 + 32i32) as isize),
-        ) as i32
-            >> 8i32) as u8;
-        let w: u8 = (Mult8x8(
-            ((ram_word!(game, power_bomb_explosion_radius) as i32 & 0xff00i32) >> 8i32) as u8,
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)) as *const u8 as *mut u8)
-                .offset(j as u8 as isize),
-        ) as i32
-            >> 8i32) as u8;
-        let c: u8 = ram_word!(game, power_bomb_explosion_x_pos_plus_0x100) as u8;
-        right = (if (c as i32 + w as i32) < 256i32 {
-            c as i32 + w as i32
-        } else {
-            255i32
-        }) as u8;
-        left = (if (c as i32 - w as i32) >= 0i32 {
-            c as i32 - w as i32
-        } else {
-            0i32
-        }) as u8;
-        loop {
-            *(&raw mut game.g_ram as *mut u8)
-                .offset(0xc406)
-                .offset(k as u8 as isize) = left;
-            *(&raw mut game.g_ram as *mut u8)
-                .offset(0xc506)
-                .offset(k as u8 as isize) = right;
-            if (k as u8) == r20 {
-                break;
-            }
-            k = k.wrapping_sub(1);
-        }
-        j = j.wrapping_add(1);
-        if ((j as i32 & 0x80i32) != 0i32) {
-            break;
-        }
-    }
-    game.k_out = *(&raw mut k as *mut u8).offset(0) as u16;
-    ((right as i32) << 8i32 | left as i32) as u16
-}
-pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_RightOfScreen(
-    mut k: u16,
-    mut j: u16,
-    game: &mut Game,
-) -> u16 {
-    let mut left: u8 = 0;
-    let mut right: u8 = 0;
-    loop {
-        let r20: u8 = (Mult8x8(
-            ((ram_word!(game, power_bomb_explosion_radius) as i32 & 0xff00i32) >> 8i32) as u8,
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)) as *const u8 as *mut u8)
-                .offset((j as u8 as i32 + 32i32) as isize),
-        ) as i32
-            >> 8i32) as u8;
-        let w: u8 = (Mult8x8(
-            ((ram_word!(game, power_bomb_explosion_radius) as i32 & 0xff00i32) >> 8i32) as u8,
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)) as *const u8 as *mut u8)
-                .offset(j as u8 as isize),
-        ) as i32
-            >> 8i32) as u8;
-        let c: u8 = ram_word!(game, power_bomb_explosion_x_pos_plus_0x100) as u8;
-        right = (if c < w { 255i32 } else { 0i32 }) as u8;
-        left = (if c < w { c as i32 - w as i32 } else { 255i32 }) as u8;
-        loop {
-            *(&raw mut game.g_ram as *mut u8)
-                .offset(0xc406)
-                .offset(k as u8 as isize) = left;
-            *(&raw mut game.g_ram as *mut u8)
-                .offset(0xc506)
-                .offset(k as u8 as isize) = right;
-            if (k as u8) == r20 {
-                break;
-            }
-            k = k.wrapping_sub(1);
-        }
-        j = j.wrapping_add(1);
-        if ((j as i32 & 0x80i32) != 0i32) {
-            break;
-        }
-    }
-    game.k_out = *(&raw mut k as *mut u8).offset(0) as u16;
-    ((right as i32) << 8i32 | left as i32) as u16
-}
+
 pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage1_Explosion(k: u16, game: &mut Game) {
     if (ram_word!(game, power_bomb_explosion_status) as i32 & 0x8000i32) == 0i32 {
         return;
     }
-    CalculateCrystalFlashHdmaObjectTablePtrs(k, game);
+    calculate_explosion_hdma_table_pointers(k, false, game);
     let mut v2: u16 = 0;
     let kk: i32 = Mult8x8(
         ((ram_word!(game, power_bomb_explosion_radius) as i32 & 0xff00i32) >> 8i32) as u8,
         *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a286)) as *const u8 as *mut u8).offset(0),
     ) as i32
         >> 8i32;
-    if (ram_word!(game, power_bomb_explosion_x_pos_plus_0x100) as i32 & 0xff00i32) >> 8i32 != 0 {
-        if ((ram_word!(game, power_bomb_explosion_x_pos_plus_0x100) as i32 & 0xff00i32) >> 8i32)
-            == 1i32
-        {
-            v2 = CalculateCrystalFlashHdmaDataTablesScaled_OnScreen(kk as u16, 96u16, game);
-        } else {
-            v2 = CalculateCrystalFlashHdmaDataTablesScaled_RightOfScreen(kk as u16, 96u16, game);
-        }
-    } else {
-        v2 = CalculateCrystalFlashHdmaDataTablesScaled_LeftOfScreen(kk as u16, 96u16, game);
-    }
+    let side = explosion_window_side(false, game);
+    v2 = calculate_explosion_hdma_scaled(
+        kk as u16,
+        96u16,
+        ExplosionWindowScale::CrystalFlash,
+        side,
+        game,
+    );
     let mut i: i32 = game.k_out as i32;
     loop {
-        *(&raw mut game.g_ram as *mut u8)
-            .offset(0xc406)
-            .offset(i as u8 as isize) = v2 as u8;
-        *(&raw mut game.g_ram as *mut u8)
-            .offset(0xc506)
-            .offset(i as u8 as isize) = ((v2 as i32 & 0xff00i32) >> 8i32) as u8;
+        write_explosion_window_row!(
+            i as u8 as isize,
+            v2 as u8,
+            ((v2 as i32 & 0xff00i32) >> 8i32) as u8,
+            game
+        );
         i -= 1;
         if ((i & 0x80i32) != 0i32) {
             break;
@@ -2314,30 +1955,14 @@ pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage1_Explosion(k: u16, game: &mut G
     }
     let mut v3: u8 = (kk + 1i32) as u8;
     while v3 != 0xc0u8 {
-        *(&raw mut game.g_ram as *mut u8)
-            .offset(0xc406)
-            .offset(v3 as isize) = 255u8;
-        *(&raw mut game.g_ram as *mut u8)
-            .offset(0xc506)
-            .offset(v3 as isize) = 0u8;
+        write_explosion_window_row!(v3 as isize, 255u8, 0u8, game);
         v3 = v3.wrapping_add(1);
     }
     let pos: i32 = (*((&raw mut game.g_ram as *mut u8).offset(0xcea) as *mut u16 as *mut u8)
         .offset(1isize) as i32
         >> 3i32)
         * 3i32;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0) =
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x888d85)) as *const u8 as *mut u8)
-            .offset((pos + 0i32) as isize))
-            | (0x20u8);
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1) =
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x888d85)) as *const u8 as *mut u8)
-            .offset((pos + 1i32) as isize))
-            | (0x40u8);
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2) =
-        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x888d85)) as *const u8 as *mut u8)
-            .offset((pos + 2i32) as isize))
-            | (0x80u8);
+    set_explosion_fixed_color(0x888d85, pos, game);
     update_ram_word!(
         game.power_bomb_explosion_radius,
         wrapping_add(ram_word!(game, power_bomb_pre_explosion_radius_speed))
