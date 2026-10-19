@@ -9560,6 +9560,25 @@ Next: inspectaccessibleuncollecteditems/bossprogression usingretainedrefill
 prefixes; do notclaimTourian/credits fromA66A. Fullcredits,hardware/render/
 audiofidelity,maskedRAM andownership remainunfinished.
 
+CPU shared comparison operand handling (2026-10-19): CMP/CPX/CPY use a
+ComparisonRegister enum and one unsafe operand-reading routine. Selected MF/XF
+width controls fetch and subtraction; operand reads precede live register reads,
+and final Z/N rereads the live selected width. Safe enum accessors make no bus
+calls and no reference crosses a callback. Frozen `85bc3bb4` plus this change
+passes 53,084,160 actual old/current bus-reading helper comparisons: every byte
+operand/register word pair and fourteen sampled word boundary/equality/borrow
+entries including duplicates. Literal old helpers independently read operands;
+named CPU/bus fields, C/Z/N/V and cycles match. Prefix 3,600/0 (1.15s), native
+exit 0, executes word/byte CMP 72,809/117,035, CPX 10,098/49,139 and CPY
+11,452/10,038 times. Clean full any% 129,712/0 (73.93s), native exit 0. Cargo
+fmt/check, full release and release-library builds with external SDL2, normal
+metadata and optimized frozen core/DLL builds pass. Live CPU matches verified
+source; peer PPU edits are outside this replay. Unsafe functions -2; Rust lines
++1 introduce the enum/accessors and formatter reflow while removing repeated
+operand handling. Other own counters unchanged. Full word Cartesian, arbitrary
+MMIO and complete gameplay/render/audio remain open; TSX/ROR stay held.
+Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
