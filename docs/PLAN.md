@@ -12415,6 +12415,29 @@ not credits. Next:9BC8 missile tank at304/432, then its Bomb passage toward
 the Super Missile tank64/96; confirm access with current equipment. Complete
 gameplay/credits, hardware/audio timing, remaining masks and ownership stay open.
 
+9BC8 missile tank reached (2026-10-19): extend the verified upper-east
+door route with normal controller inputs. From68096: Select1, neutral20,
+right/run/shoot20, neutral1, right/run/jump/shoot65, right/run/shoot20,
+neutral10, down1, neutral10, down1, neutral10; then five right/shoot1
+presses, first four followed byright44 and last byright90; neutral80.
+Bombs while morphed clear the passage and reach the tank near304/432.
+
+Frozen revised-render/table-mask-removal library boot replay68606/0
+(76.42s), nativeexit0, includes all inputs from boot and endsX300/Y441,
+health59/199, missiles5/10. Separate resumed1306-frame probe also passes
+with zero failures. Read-only pickup observation distinguishes the item
+from drops: maximum missiles5->10 and item_bit_array[D871]01->81 between
+68395 and68400, confirming item bit15. Supers remain0/0. All comparisons
+and rendering stay enabled; no injected gameplay RAM/health/ammo writes.
+
+No maintained source or own residue changes; cargo fmt/check, release and
+progress passed for the preceding blue-door cleanup. That independently
+verified change is absent from this frozen pickup replay. Peer PLAN/tool
+edits remain untouched. Movie/save/probe outputs remain outside tracked
+files. Next: test the Bomb passage at64/288 toward the Super Missile tank
+64/96, using this newly verified missile capacity. Complete gameplay/credits,
+hardware/audio timing, remaining masked state and ownership stay open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
