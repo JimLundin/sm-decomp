@@ -5521,18 +5521,39 @@ unsafe fn EprojInit_BombTorizoLowHealthInitialDrool(mut j: uint16, game: &mut Ga
         .offset(v1 as isize) = 0 as uint16;
     NextRandom(game);
     let mut v2: *mut EnemyData = gEnemyData(game.cur_enemy_index() as ::core::ffi::c_int, game);
+    // Avoid a shared Game reference while the returned enemy pointer remains live.
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a93 as ::core::ffi::c_int as isize)
         as *mut uint16)
         .offset(v1 as isize) = ((*v2).y_pos as ::core::ffi::c_int
-        + (game.random_number() as ::core::ffi::c_int & 3 as ::core::ffi::c_int)
+        + (u16::from_le(
+            (&raw const game.g_ram)
+                .cast::<u8>()
+                .add(0x5e5)
+                .cast::<u16>()
+                .read_unaligned(),
+        ) as ::core::ffi::c_int
+            & 3 as ::core::ffi::c_int)
         - 5 as ::core::ffi::c_int) as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1adb as ::core::ffi::c_int as isize)
         as *mut uint16)
-        .offset(v1 as isize) = ((game.random_number() as ::core::ffi::c_int
+        .offset(v1 as isize) = ((u16::from_le(
+        (&raw const game.g_ram)
+            .cast::<u8>()
+            .add(0x5e5)
+            .cast::<u16>()
+            .read_unaligned(),
+    ) as ::core::ffi::c_int
         & 0x1f as ::core::ffi::c_int)
         + 48 as ::core::ffi::c_int) as uint16;
     NextRandom(game);
-    v3 = (game.random_number() as ::core::ffi::c_int & 3 as ::core::ffi::c_int) as int16;
+    v3 = (u16::from_le(
+        (&raw const game.g_ram)
+            .cast::<u8>()
+            .add(0x5e5)
+            .cast::<u16>()
+            .read_unaligned(),
+    ) as ::core::ffi::c_int
+        & 3 as ::core::ffi::c_int) as int16;
     parameter_1 = (*v2).parameter_1 as int16;
     if parameter_1 as ::core::ffi::c_int & 0x4000 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
@@ -12881,6 +12902,7 @@ unsafe fn EprojInit_F337(mut j: uint16, game: &mut Game) {
 }
 unsafe fn EprojInit_EnemyDeathExplosion(mut j: uint16, game: &mut Game) {
     let mut v1: *mut EnemyData = gEnemyData(game.cur_enemy_index() as ::core::ffi::c_int, game);
+    // Avoid a shared Game reference while the returned enemy pointer remains live.
     let mut v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b as ::core::ffi::c_int as isize)
         as *mut uint16)
@@ -12890,14 +12912,26 @@ unsafe fn EprojInit_EnemyDeathExplosion(mut j: uint16, game: &mut Game) {
         .offset(v2 as isize) = (*v1).y_pos;
     *((&raw mut game.g_ram as *mut uint8).offset(0xf410 as ::core::ffi::c_int as isize)
         as *mut uint16)
-        .offset(v2 as isize) = game.cur_enemy_index();
+        .offset(v2 as isize) = u16::from_le(
+        (&raw const game.g_ram)
+            .cast::<u8>()
+            .add(0xe54)
+            .cast::<u16>()
+            .read_unaligned(),
+    );
     if (*v1).properties as ::core::ffi::c_int & 0x4000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0xf410 as ::core::ffi::c_int as isize)
             as *mut uint16)
-            .offset(v2 as isize) =
-            (game.cur_enemy_index() as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
+            .offset(v2 as isize) = (u16::from_le(
+            (&raw const game.g_ram)
+                .cast::<u8>()
+                .add(0xe54)
+                .cast::<u16>()
+                .read_unaligned(),
+        ) as ::core::ffi::c_int
+            | 0x8000 as ::core::ffi::c_int) as uint16;
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0xf3c8 as ::core::ffi::c_int as isize)
         as *mut uint16)

@@ -45,7 +45,7 @@ Next implementation work:
    Start with scalar reads, then indexed slot fields and updates. Preserve
    each read's position relative to callbacks and writes. Check callee-derived
    raw pointers as well as explicit references before adding a shared borrow;
-   first restore the five unproved crossings recorded below. Record actual
+   keep caller-side raw loads where provenance remains unproved. Record actual
    routine/branch hits and leave unexercised gameplay rewrites pending.
 2. Once values have known widths, remove promotion chains in coherent
    arithmetic patterns. Specify signed comparisons, carry/borrow and the
@@ -14912,6 +14912,44 @@ Cargo fmt/check, normal release build and progress pass. Including setter:
 raw offsets-5, cast lines-8, unsafe functions-1, Rust lines-14. Other own
 counters unchanged. Further indexed-field/update cleanup and broader
 gameplay/credits, hardware/audio/masks and ownership remain open.
+
+Caller-side reads around raw enemy pointers (2026-10-19): complete the
+five-read follow-up from the spawn-parameter audit. Three RNG reads in
+BombTorizoLowHealthInitialDrool and two current-enemy-index reads in
+EnemyDeathExplosion use caller-side raw loads again. They create no new
+shared Game/RAM reference while a callee-derived EnemyData pointer remains
+in use. Each load uses read_unaligned and explicit little-endian conversion;
+the RNG word starts at odd $05E5. Getter calls before the enemy pointer is
+created, all other expressions and callback/write order remain unchanged.
+
+These were unproved provenance changes, not reproduced gameplay failures.
+The earlier NextRandom call across Drool's retained pointer remains a
+separate legacy aliasing question. This repair does not claim those whole
+routines are memory-safe. Exact source reconstruction verifies only the
+five substitutions and comments; both scalar loads pass all 65536 word
+values with distinct words and populated neighboring bytes; a wrong-address
+control is detected.
+
+Frozen 0dd24903 plus this change passes clean any% 129712/0 (217.65s)
+and Kraid phase two 119823/0 (235.38s), native exits 0. The observed
+Kraid build also passes 119823/0 (239.72s), and all five read-site probes
+execute: 30 calls per RNG site at 51056..51494, and 58 / 16 index reads at
+35462..119733 / 68401..119733. Probes borrow no Game state and strip exactly to the clean
+source. Clean and observed non-timing diagnostics match after removing
+probe reports. Both clean endpoint checkpoints are byte-identical to the
+preceding integration, and observed Kraid continuation equals clean state.
+Clean diagnostics also match the preceding integration. The known
+single Kraid `X undefined` diagnostic remains. Sources, DLLs, ROM and copied
+inputs stay unchanged throughout replay. No observer or local artifact is
+committed.
+
+Formatting/check, normal workspace Cargo release (21.32s) and progress
+pass. The repair adds five explicit unaligned word reads and 34 Rust lines.
+Actual c_int casts and unsafe-function counts do not change; three additional
+cast-containing lines come from formatting the restored loads. The old raw-
+offset pattern counter is unchanged because these loads use pointer methods.
+Continue with exercised subsystem cleanup; provenance of retained pointers,
+main Kraid/credits, persistence and broader hardware/audio remain unfinished.
 
 ## Definition of done for any change
 
