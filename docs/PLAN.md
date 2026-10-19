@@ -13336,14 +13336,14 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
-Animation callback coverage review (2026-10-19): the pending frame-command
-cleanup also rewrites command 7 (DrainedCrouching). The committed dispatch
-observations show zero command-7 calls in both any% and Waver. The current
-frame-command suite reuses those movies plus constructed direct calls;
-it does not yet demonstrate command 7 on movie frames against the oracle.
-Definition-of-done item 4 therefore remains unmet for that callback. Obtain
-contextual coverage or retain its existing implementation before committing.
-The covered commands 6/14/15 can proceed independently.
+Animation callback coverage review resolved (2026-10-19): command 7
+(DrainedCrouching) was removed from the pending cleanup after both movie
+observations showed zero calls. Independent comparison confirms its entire
+callback body and dispatch argument match committed 1b0d4c7f exactly.
+The remaining frame-command cleanup covers 6/14/15 and is undergoing fresh
+verification. Future command-7 cleanup still requires movie-frame oracle
+coverage; constructed direct calls alone do not satisfy definition-of-done
+item 4.
 
 Morph Ball eye-beam initialization (2026-10-19): E917 now uses safe
 byte-backed stores and its named dispatch constant. Ordered object/register
