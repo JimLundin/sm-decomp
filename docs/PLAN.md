@@ -1676,24 +1676,65 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `cf6cd56a` passes
-uninterrupted full boot any% 129712/0 (188.85s) and Speed Booster
-148406/0 (247.85s), native exits 0. All 74 source/configuration/host/
-progress inputs match that commit. This adds the complete pause-label palette
-family to the previously reviewed families below. Later projectile and PPU
-full/partial-tile drawing work is outside this snapshot.
+Latest reviewed integration (2026-10-19): frozen `6f1dfa08` passes
+uninterrupted full boot any% 129712/0 (182.49s) and Speed Booster
+148406/0 (229.38s), native exits 0. All 74 source/configuration/host/
+progress inputs match that commit. This adds the complete full/partial-tile
+PPU store families to the previously reviewed families below. Later projectile
+and planar-background consolidation work is outside this snapshot.
 
-Complete serialized checkpoints, including all header fields, are byte-identical
-to reviewed bc15bf6b. Each source, ROM, movie, frame, version and payload binding
-is independently recomputed. The runtime-source fingerprint stays unchanged:
-the bank and accessor edits are excluded by the existing compatibility rule;
-the included runtime inputs, Game declaration and checkpoint codec are exact.
-No compatibility hash is patched and neither replay loads an earlier checkpoint.
-Complete non-timing diagnostics and coverage agree, including the known fingernail
-diagnostic. Speed reaches 55 rooms and 53 enemy definitions, ending in state 8,
-room $AD1B, X171/Y123, pose $0089, health 46/399, missiles 6/15, Supers 0/5,
-items $3105 and beams $1004 equipped/collected. Kraid is defeated and all eight
-coroutine bytes are zero. Credits remain unexercised.
+Serialized checkpoint payloads are byte-identical to reviewed cf6cd56a.
+The only changed header field is the runtime-source fingerprint, independently
+recomputed from its actual inputs. Only snes/ppu.rs differs among those inputs;
+the Game declaration and checkpoint codec remain unchanged. All other bindings,
+including the payload checksum, agree. No compatibility hash is patched and
+neither replay loads an earlier checkpoint. Complete non-timing diagnostics and
+coverage agree, including the known fingernail diagnostic. Speed reaches 55 rooms
+and 53 enemy definitions, ending in state 8, room $AD1B, X171/Y123, pose $0089,
+health 46/399, missiles 6/15, Supers 0/5, items $3105 and beams $1004
+equipped/collected. Kraid is defeated and all eight coroutine bytes are zero.
+Credits remain unexercised. The same build also passes the full-boot pause route
+40836/0 (56.30s), native exit 0, returning to gameplay in room $96BA.
+Its payload and every non-runtime binding match the prior pause run, as do
+complete non-timing logs. Earlier mode observations retain their scope below.
+
+Independent tile-store reconstruction covers all 74 integration inputs and
+all 67 candidate source files for each family. The four full-tile flip/depth
+variants and eight partial loops are reconstructed token-for-token, including
+every visibility test, promoted priority comparison and conditional store.
+Expanding the new calls and removing only the two helpers restores the complete
+PPU. All gates, palette adjustments, initial bit alignment, tile selection and
+surrounding control flow remain exact. Two-plane pixel tests and four-plane
+bit masks stay distinct; visibility still precedes destination reads. Adding
+priority and pixel fits i32, then retains the original u16 truncation.
+
+Full tiles retain screen order 0..7, the final pixel result and caller-side
+pointer/width advancement. Partial tiles retain each store, bit shift and
+pointer advance, returning the final bits/pointer/pixel and leaving count zero.
+The unchanged window builder inserts distinct ordered endpoints; its byte
+margins bound all span widths to 1..766. Leading counts are min(8-(x&7),width)
+with x&7 nonzero; trailing counts are the nonzero remainder after full tiles.
+Thus valid partial calls have lengths 1..7. The helper keeps do-first semantics;
+this establishes valid counts, not arbitrary pointer validity. Both helpers
+keep raw pointers and introduce no wider mutable PPU or RAM borrow.
+
+Fresh comparisons of extracted originals, helpers and a model pass 6528
+full-tile and 91392 partial-tile cases. Guarded buffers, final pixels, shifted
+bits and advanced pointers agree. Read/write traces agree with the independent
+per-plane model and are cross-checked against both uninstrumented versions.
+Cases cover all seven partial lengths, both depths/flips, isolated input bits
+and complements, priority boundaries and varied destination words. Eight
+controls reject equal-priority overwrites, reversed full-store order, eager
+transparent reads, reversed partial shifts, a wrong final pointer and saturated
+stores. These are selected boundaries, not all combinations of input words.
+
+The owner's 786432 full and 4718592 partial extracted comparisons retain their
+separate scopes; the partial sweep uses lengths 1/3/7. Their exact source and
+results were reviewed, not rerun. Each family's 12288 initialized PPU/pixel
+comparisons and full-boot replays retain fixed source/library/input pins.
+The unchanged six-path probe uses arbitrary tile bases and disables mosaic;
+its passing counts establish neither every state's hardware alignment nor
+movie call-site coverage. The fresh bounded-buffer checks supplement it.
 
 Independent pause-label reconstruction covers all 74 integration inputs and
 all 67 source files of the owner's candidate and both observed builds. The
@@ -1945,16 +1986,17 @@ dedicated 5544-case API checks and 24/24 site observations are recorded by
 implementation; this review verifies the source transformation. The movie
 replays do not establish frontend decoder execution coverage.
 
-The normal Cargo integration is independently built from frozen cf6cd56a.
+The normal Cargo integration is independently built from frozen 6f1dfa08.
 All 74 inputs, the fresh game library/DLL and copied fixtures stay fixed.
 Only registry dependencies seed this checkout, including existing registry
 build-script executable links. Formatting, normal release
-(38.76s), host build (3.80s) and progress pass. The family removes
-330 Rust lines, 37 raw-offset lines, four unsafe functions and 126 c_int casts
-across 90 lines. Other progress counters stay unchanged. Frozen totals:
-201159 Rust lines, 21354 raw-offset lines, 43843 c_int casts across 35414 lines
-and 6498 unsafe functions. This audit changes no maintained Rust or assets;
-later peer work retains its own checks.
+(31.23s), host build (18.91s) and progress pass. The two families remove
+257 Rust lines and 158 c_int casts across 108 lines. Two private unsafe helpers
+centralize the repeated raw operations, increasing unsafe functions by two;
+other progress counters stay unchanged. Frozen totals: 200902 Rust lines,
+21354 raw-offset lines, 43685 c_int casts across 35306 lines and 6500 unsafe
+functions. This audit changes no maintained Rust or assets; later peer work
+retains its own checks.
 
 The prior PLM block-mask review remains valid: all six helper sites execute,
 with 2082 air-scroll updates, 105 shared retain updates and one each for four
