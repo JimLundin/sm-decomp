@@ -10036,17 +10036,12 @@ pub unsafe fn ClearFxTilemap(game: &mut Game) {
     CopyToVramNow(0x5880 as uint16, 0x7e4000 as uint32, 0xf00 as uint16, game);
 }
 pub unsafe fn ClearBg2Tilemap(game: &mut Game) {
-    let mut i: ::core::ffi::c_int = 1023 as ::core::ffi::c_int;
-    while i >= 0 as ::core::ffi::c_int {
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x4000 as ::core::ffi::c_int as isize)
-            as *mut Ram4000))
-            .xray_tilemaps[i as usize] = 824 as uint16;
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x4000 as ::core::ffi::c_int as isize)
-            as *mut Ram4000))
-            .xray_tilemaps[(i + 1024 as ::core::ffi::c_int) as usize] = 824 as uint16;
-        i -= 1;
+    for i in (0..1024).rev() {
+        let offset = i * 2;
+        game.g_ram[0x4000 + offset..0x4002 + offset].copy_from_slice(&824u16.to_le_bytes());
+        game.g_ram[0x4800 + offset..0x4802 + offset].copy_from_slice(&824u16.to_le_bytes());
     }
-    CopyToVramNow(0x4800 as uint16, 0x7e4000 as uint32, 0x1000 as uint16, game);
+    CopyToVramNow(0x4800, 0x7e4000, 0x1000, game);
 }
 pub unsafe fn ClearKraidBg2Tilemap(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 1023 as ::core::ffi::c_int;
@@ -10110,9 +10105,9 @@ pub unsafe fn UpdateBackgroundCommand_8_TransferToVramAndSetBg3(
     *(&raw mut game.g_ram as *mut uint8).offset(0x5e as ::core::ffi::c_int as isize) = 2 as uint8;
     return j;
 }
-pub unsafe fn UpdateBackgroundCommand_A_ClearBg2Tilemap(mut j: uint16, game: &mut Game) -> uint16 {
+pub unsafe fn UpdateBackgroundCommand_A_ClearBg2Tilemap(j: uint16, game: &mut Game) -> uint16 {
     ClearBg2Tilemap(game);
-    return j;
+    j
 }
 pub unsafe fn UpdateBackgroundCommand_C_ClearKraidBg2Tilemap(
     mut j: uint16,

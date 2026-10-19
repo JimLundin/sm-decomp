@@ -12373,6 +12373,20 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Background BG2 clear (2026-10-19): ClearBg2Tilemap writes the same 824
+words through byte-backed slices, retaining descending paired stores to
+4000/4800 and the subsequent VRAM transfer. Command A retains its callback
+and returned argument. All 1,024 ordered address pairs match the original.
+Cargo fmt/check and release build pass, native exit 0. Frozen 105efffc plus
+this source change passes any% 129,712/0 (218.16s), native exit 0, with
+seven calls to both routines. Waver 58,109/71 (123.08s), native exit 1,
+executes each once; all 71 ordered failure diagnostics match baseline.
+Observations strip exactly to maintained source. Own raw offsets -2,
+cast lines -5, Rust lines -5; other counters unchanged. No probes or
+ROM-derived assets committed. Next: remaining async room-background fields,
+retaining live reads after loading callbacks. Existing held coverage and
+complete gameplay/credits/audio/hardware gaps remain open.
+
 Background transfer/decompression arguments (2026-10-19): commands 2 and 4
 read argument words/bytes through the checked live-ROM accessor and return
 wrapping word advances. Transfer retains destination/source/size read order;
