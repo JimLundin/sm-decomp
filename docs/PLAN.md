@@ -248,6 +248,28 @@ change and no new replay result belong to this cleanup.
 
 ## The oracle
 
+Reviewed gameplay integration (2026-10-19): frozen 50be5476 passes any%
+129712/0 (274.57s), Waver 58109/0 (120.29s) and pickup route 68606/0
+(153.43s), all native exits 0. This combines animation reads, PLM links,
+async door fields, snapshot boundaries, eye-beam fading and X-ray references.
+All 68 archived source/config/build files match that commit; frozen source
+hashes remain unchanged. Replays use separate saves and copied inputs.
+Newer pending gameplay and verifier edits are excluded.
+
+Format check, committed verifier build, normal workspace Cargo release
+(51.07s) and progress pass. A fresh isolated Cargo release cannot execute
+libc/sdl2-sys build scripts: Defender event 1121 confirms those blocks.
+No maintained source or own residue-count change belongs to this audit.
+
+Independent animation control on frozen 68910174 plus the handler committed
+in 6158f4eb matches all 128 KiB RAM and g_fail in 20,480 actual old/current
+pairs, covering eight ordinary-delay entries, all 256 stage bytes, five
+buffers and equipped/unequipped cases. All 3,872 timer wraps match; native
+exit 0. Synthetic stages include invalid LoROM selections whose existing
+failure behavior also matches. This supplements the movies without
+establishing natural Speed Booster coverage. Gameplay/credits and wider
+hardware/audio requirements remain open.
+
 Window-boundary snapshot enforcement (2026-10-19): capture, compare and
 restore all four WH0..WH3 bytes. The prior hold depended on the X-ray producer
 repair, which is now complete. Full byte values, including reversed bounds,
