@@ -272,16 +272,21 @@ rule explicit in safe Rust. Other own residue counters and RAM layouts are
 unchanged. Temporary controls and ROM-derived fixtures remain untracked.
 
 Independent X-ray outer-boundary QC (2026-10-19): frozen 76ade707 plus
-the proposed fill_xray_onscreen_positive_table correction passes 4,200
+the committed fill_xray_onscreen_positive_table correction passes 4,200
 actual C822..C873 ROM comparisons, 37,648,960 opcodes, native exit 0 (1.60s).
 Both table bases cover 15 rows including zero, end-of-table and 16-bit
 wrap/sign boundaries, five origins, seven ordered/reversed gradient pairs
 and four absent/present empty-row placements. Complete RAM matches outside
 the six ROM scratch and six return-stack bytes; Rust preservation of those
 bytes is asserted separately. The captured candidate matches maintained
-source after newline normalization. These constructed contexts establish
-the tested boundary behavior, not natural gameplay coverage. Implementation
-owns the pending final movie runs; other angle branches remain unchanged.
+source after newline normalization. Full clean runs pass any% 129712/0
+(163.25s) and Waver 58109/0 (88.18s), both native exit 0. A separate full
+observed Waver replay passes 58109/0 (67.57s), native exit 0, and executes
+177 calls and 177 existing-empty-word stops. Removing its three observation
+lines restores the exact source committed in 935fbe1f. Both complete tables
+remain enforced. Constructed contexts cover the remaining wrap/sign cases;
+no negative-index termination occurs in this movie. Other angle branches
+retain their code and wider gameplay/audio coverage remains incomplete.
 
 Independent X-ray table-mask controls (2026-10-19): frozen a761a09e plus
 prototype sm_91 SHA-256 6f03c19fd0018148dff98f66029fee0374651074c79c26067008491a359c541a
