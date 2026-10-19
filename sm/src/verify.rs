@@ -104,9 +104,39 @@ pub fn run_args(args: &[String], game: &mut Game) -> i32 {
 }
 
 fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
-    if args.len() != 2 && (args.len() != 4 || args[2] != "--frames") {
-        return Err("usage: sm verify <rom> <inputs> [--frames N]".into());
+    if args.len() < 2 {
+        return Err("usage: sm verify <rom> <inputs> [--frames N] [--load-sram]".into());
     }
+    let mut frame_limit = None;
+    let mut load_sram = false;
+    let mut options = args[2..].iter();
+    while let Some(option) = options.next() {
+        match option.as_str() {
+            "--frames" if frame_limit.is_none() => {
+                frame_limit = Some(
+                    options
+                        .next()
+                        .ok_or("missing frame limit")?
+                        .parse::<usize>()
+                        .map_err(|_| "invalid frame limit")?,
+                );
+            }
+            "--load-sram" if !load_sram => load_sram = true,
+            _ => return Err(format!("unknown or repeated option: {option}")),
+        }
+    }
+    let saved_sram = if load_sram {
+        let sram = std::fs::read("saves/sm.srm").map_err(|e| format!("saves/sm.srm: {e}"))?;
+        if sram.len() != 8192 {
+            return Err(format!(
+                "saves/sm.srm: expected 8192 bytes, got {}",
+                sram.len()
+            ));
+        }
+        Some(sram)
+    } else {
+        None
+    };
     let text = std::fs::read_to_string(&args[1]).map_err(|e| format!("{}: {e}", args[1]))?;
     let mut inputs = Vec::new();
     for (line, word) in text.lines().enumerate() {
@@ -123,13 +153,7 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
         // bit 0, Y at bit 1, ... R at bit 11 (the input latch reverses it).
         inputs.push(pad.reverse_bits());
     }
-    let frames = if args.len() == 4 {
-        args[3]
-            .parse::<usize>()
-            .map_err(|_| "invalid frame limit")?
-    } else {
-        inputs.len()
-    };
+    let frames = frame_limit.unwrap_or(inputs.len());
     if frames == 0 || frames > inputs.len() {
         return Err(format!(
             "requested {frames} frames, inputs contain {}",
@@ -149,6 +173,12 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
         let snes = sm::cpu_infra::SnesInit(filename.as_ptr(), game);
         if snes.is_null() {
             return Err("unable to load ROM".into());
+        }
+        if let Some(saved_sram) = saved_sram {
+            sm::rtl::RtlReadSram(game);
+            if std::slice::from_raw_parts(game.g_sram, 8192) != saved_sram.as_slice() {
+                return Err("loaded SRAM differs from saves/sm.srm".into());
+            }
         }
         super::initialize_verify_audio(game)?;
         sm::snes::ppu::PpuBeginDrawing(

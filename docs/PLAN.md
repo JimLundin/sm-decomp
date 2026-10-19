@@ -9377,6 +9377,55 @@ until contextual execution exists. No maintained CPU or residue change.
 Concurrent verifier SRAM-loading work is excluded from this frozen replay.
 Continue covered CPU paths; TSX and ROR remain coverage gaps.
 
+Persistent Save Station reload and verifier SRAM option completed (2026-10-19):
+rerun save-platform-step.inputs in isolated target/route-gunship-top/save-reload
+working directory; allrelative saves/sm.srm writes stay there. Explicit frozen
+save-observe host70597/71 (160.51s), observednativeexit1; ordered71diagnostics
+exactly matchWaver. Final saved-file8192bytes SHA256
+C1F3FFB3797112FD470561DAFA67BE87409D22680BBE8BE1F05625C8E561D03A.
+Directory creation alone does not prove initial emptiness; terminal file,
+byte comparison and actual new-process load establish the saved result.
+
+A fresh process calls existing RtlReadSram, compares all8192loadedbytes tofile,
+then uses normalboot/menuinputs. Initial844/0 (2.84s) stops atarea map;
+1355/0 (4.06s) reachesloadingstate6/A201;2065/0 (3.93s) reaches673gameplay
+frames inA201, health69/199, equipment1004, missiles0/5, loadindex1/used1.
+Right/jump30,right20,neutral60 provesmovement toX155/Y171. Allnativeexit0.
+No full gameplay prefix or RAM/state injection is used for these fresh loads.
+This proves persistence/reload for this file and route, not arbitrary savefiles.
+
+Maintained sm/src/verify.rs adds opt-in --load-sram using existing
+saves/sm.srm reader/synchronization. It rejects missing/non8192files before
+initialization and compares actualloadedbytes with the validated buffer after
+RtlReadSram's secondread. Changed/failed rereads cannot silently pass.
+--frames and --load-sram accept eitherorder; default empty-SRAM movies retain
+existingbehavior. No game/RTL/storage/layout changes. This fixes verify itself
+so savedgame continuation uses the maintained oracle instead of temporaryhosts.
+
+Frozen43ce4b7b plus onlyverify.rs matchesall63archivedsourcefiles except the
+exactverifierchange; excludespeerCPUWIP. Exactmaintainedverify copy and that
+core linked into sameDLL passfullany%129712/0 (57.64s) and freshreload2065/0
+(0.70s), observednativeexit0. EarliercurrentworktreeDLLalso passesany%
+129712/0 (66.23s), reload2065/0 (0.58s), but peerchanges are not borrowed as
+focused evidence. Actualparsercalls rejectmissing/shortsave,missing/repeated
+frameoption,repeatedloadoption,unknownoption,zero/oversizeframes withnative2.
+Bothoptionorders pass2065/0 (0.61s/0.59s) on samefrozencore/exactverify.
+The first sram-negative-plan script only listedcases; executing sram-options.py
+and its separate nativechildcalls provide the actualresults. No script-only
+passclaim. Independent session audits source isolation, loadedfile/slotfields,
+A201gameplayandparser handling; logs alone do not attest historicalnativecodes.
+
+Cargo fmt/check and fullreleasebuild pass with documented externalSDL2path
+(11.82s); execution of rebuiltEXE is Windowsaccess-denied(error5), not a pass.
+ExplicitDLLbuild/run provides verification above. Progress22691raw,39extern,
+3CABI,5no_mangle,6723unsafe,85576casts,257491Rustlines atcheck. OwnRustlines
++30 implementoptions/filevalidation; otherowncountersunchanged. PeerCPUline
+changes are separate. Source/PLAN only committed; no ROM,input,SRAM orderived
+probeassets. Peer ownsremote sync. Next: actualonwardgameplaycoverage toward
+credits from retainedrefilledshaftprefix, with requirements inspected first.
+Held upper99BD,clifftuning,oldenemy-dropammoandHDMA remainheld. Credits,full
+hardware/render/audio,maskedRAM andownership remainunfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
