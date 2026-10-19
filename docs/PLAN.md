@@ -18234,6 +18234,35 @@ repeated PPU destination read/write syntax is reduced. No layout change,
 temporary probe or ROM-derived asset committed. Neither route reaches credits;
 broader readability, hardware/audio/masks and ownership remain unfinished.
 
+Planar background family completion (2026-10-19): jscpd normalized
+clone discovery and complete CST functions select the remaining 2bpp/4bpp
+draw bodies. After the preceding coherent row/pixel consolidations, the full
+bodies match exactly under only plane-count and palette-shift substitution.
+One const-generic implementation now owns the complete drawing flow; the two
+existing entry points retain their signatures and caller arguments. Plane
+count stays 2/4 and palette shift stays the original unsigned constants 8/6.
+Enabled-layer/window gates, scrolled tilemap selection, tile reads/advancement,
+zero-bits behavior, initial partial shifts, palette updates, full/partial
+stores and local final values remain exact. Mode7 is a separate algorithm.
+
+Independent generic expansion restores both original functions exactly;
+complete-source reconstruction permits only those functions and the shared
+body. Actual original/current routines agree in 12288 complete initialized
+PPU-state/pixel comparisons across six paths, 1024 seeds and masked/unmasked
+screens. Both shared specializations contribute 4096 comparisons, and whole-
+line drawing uses both. Constructed tile/window/scroll inputs exercise actual
+rendering but do not prove every branch or SNES accuracy.
+
+Frozen 7de01f43 plus only this change passes full any% 129712/0
+(172.62s) and Speed Booster 148406/0 (212.83s), native exits 0,
+with fixed source/library/DLL/ROM/movie hashes. Other frozen sources match.
+Cargo fmt/check, normal release (34.75s, native exit 0), diff check
+and progress pass. Own Rust lines -98, c_int cast lines -19; unsafe
+functions +1 because the two entry wrappers call one shared implementation.
+Repeated raw PPU access syntax is removed; execution and RAM/layout stay exact.
+No probe or ROM-derived asset committed. Neither movie reaches credits;
+broader readability, hardware/audio/masks and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

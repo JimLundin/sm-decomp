@@ -544,7 +544,7 @@ unsafe fn ppu_draw_partial_tile<const PLANES: u32>(
     }
     (bits, dst, pixel)
 }
-unsafe fn PpuDrawBackground_4bpp(
+unsafe fn ppu_draw_planar_background<const PLANES: u32, const PALETTE_SHIFT: u32>(
     mut ppu: *mut Ppu,
     mut y: uint,
     mut sub: bool,
@@ -597,22 +597,22 @@ unsafe fn PpuDrawBackground_4bpp(
                     tp_last = tp.offset(31);
                 }
                 let (mut z, mut bits) =
-                    ppu_load_tile_row::<4>(ppu, tile, tileadr0, tileadr1, zhi, zlo);
+                    ppu_load_tile_row::<PLANES>(ppu, tile, tileadr0, tileadr1, zhi, zlo);
                 if bits != 0 {
                     z = (z as uint32).wrapping_add(
-                        (tile & 0x1c00 as uint32) >> kPaletteShift_0 as ::core::ffi::c_int,
+                        (tile & 0x1c00 as uint32) >> PALETTE_SHIFT as ::core::ffi::c_int,
                     ) as PpuZbufType as PpuZbufType;
                     if tile & 0x4000 as uint32 != 0 {
                         bits >>= x & 7 as uint;
                         x = x.wrapping_add(curw as uint);
                         (bits, dstz, pixel) =
-                            ppu_draw_partial_tile::<4>(dstz, bits, z, curw as u32, true);
+                            ppu_draw_partial_tile::<PLANES>(dstz, bits, z, curw as u32, true);
                         curw = 0;
                     } else {
                         bits <<= x & 7 as uint;
                         x = x.wrapping_add(curw as uint);
                         (bits, dstz, pixel) =
-                            ppu_draw_partial_tile::<4>(dstz, bits, z, curw as u32, false);
+                            ppu_draw_partial_tile::<PLANES>(dstz, bits, z, curw as u32, false);
                         curw = 0;
                     }
                 } else {
@@ -629,12 +629,12 @@ unsafe fn PpuDrawBackground_4bpp(
                     tp_last = tp.offset(31);
                 }
                 let (mut z_0, mut bits_0) =
-                    ppu_load_tile_row::<4>(ppu, tile_0, tileadr0, tileadr1, zhi, zlo);
+                    ppu_load_tile_row::<PLANES>(ppu, tile_0, tileadr0, tileadr1, zhi, zlo);
                 if bits_0 != 0 {
                     z_0 = (z_0 as uint32).wrapping_add(
-                        (tile_0 & 0x1c00 as uint32) >> kPaletteShift_0 as ::core::ffi::c_int,
+                        (tile_0 & 0x1c00 as uint32) >> PALETTE_SHIFT as ::core::ffi::c_int,
                     ) as PpuZbufType as PpuZbufType;
-                    pixel = ppu_draw_full_tile::<4>(dstz, bits_0, z_0, tile_0 & 0x4000 != 0);
+                    pixel = ppu_draw_full_tile::<PLANES>(dstz, bits_0, z_0, tile_0 & 0x4000 != 0);
                 }
                 dstz = dstz.offset(8);
                 w = w.wrapping_sub(8 as uint);
@@ -642,18 +642,18 @@ unsafe fn PpuDrawBackground_4bpp(
             if w != 0 {
                 let mut tile_1: uint32 = *tp as uint32;
                 let (mut z_1, mut bits_1) =
-                    ppu_load_tile_row::<4>(ppu, tile_1, tileadr0, tileadr1, zhi, zlo);
+                    ppu_load_tile_row::<PLANES>(ppu, tile_1, tileadr0, tileadr1, zhi, zlo);
                 if bits_1 != 0 {
                     z_1 = (z_1 as uint32).wrapping_add(
-                        (tile_1 & 0x1c00 as uint32) >> kPaletteShift_0 as ::core::ffi::c_int,
+                        (tile_1 & 0x1c00 as uint32) >> PALETTE_SHIFT as ::core::ffi::c_int,
                     ) as PpuZbufType as PpuZbufType;
                     if tile_1 & 0x4000 as uint32 != 0 {
                         (bits_1, dstz, pixel) =
-                            ppu_draw_partial_tile::<4>(dstz, bits_1, z_1, w as u32, true);
+                            ppu_draw_partial_tile::<PLANES>(dstz, bits_1, z_1, w as u32, true);
                         w = 0;
                     } else {
                         (bits_1, dstz, pixel) =
-                            ppu_draw_partial_tile::<4>(dstz, bits_1, z_1, w as u32, false);
+                            ppu_draw_partial_tile::<PLANES>(dstz, bits_1, z_1, w as u32, false);
                         w = 0;
                     }
                 }
@@ -661,6 +661,16 @@ unsafe fn PpuDrawBackground_4bpp(
         }
         windex = windex.wrapping_add(1);
     }
+}
+unsafe fn PpuDrawBackground_4bpp(
+    mut ppu: *mut Ppu,
+    mut y: uint,
+    mut sub: bool,
+    mut layer: uint,
+    mut zhi: PpuZbufType,
+    mut zlo: PpuZbufType,
+) {
+    ppu_draw_planar_background::<4, kPaletteShift_0>(ppu, y, sub, layer, zhi, zlo);
 }
 unsafe fn PpuDrawBackground_2bpp(
     mut ppu: *mut Ppu,
@@ -670,115 +680,7 @@ unsafe fn PpuDrawBackground_2bpp(
     mut zhi: PpuZbufType,
     mut zlo: PpuZbufType,
 ) {
-    if (*ppu).screenEnabled[sub as usize] as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << layer
-        == 0
-    {
-        return;
-    }
-    let mut win = ppu_windows_for_layer(ppu, sub as usize, layer);
-    let mut bglayer: *mut BgLayer =
-        (&raw mut (*ppu).bgLayer as *mut BgLayer).offset(layer as isize) as *mut BgLayer;
-    let (mut tps, mut tileadr0, mut tileadr1) = ppu_background_row(ppu, bglayer, y, layer);
-    let mut pixel: ::core::ffi::c_int = 0;
-    let mut windex: size_t = 0 as size_t;
-    while windex < win.nr as size_t {
-        if !(win.bits as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << windex != 0) {
-            let mut x: uint = (win.edges[windex as usize] as ::core::ffi::c_int
-                + (*bglayer).hScroll as ::core::ffi::c_int) as uint;
-            let mut w: uint =
-                (win.edges[windex.wrapping_add(1 as size_t) as usize] as ::core::ffi::c_int
-                    - win.edges[windex as usize] as ::core::ffi::c_int) as uint;
-            let mut dstz: *mut PpuZbufType = (&raw mut (*(&raw mut (*ppu).bgBuffers
-                as *mut PpuPixelPrioBufs)
-                .offset(sub as isize))
-            .data as *mut PpuZbufType)
-                .offset(win.edges[windex as usize] as ::core::ffi::c_int as isize)
-                .offset(kPpuExtraLeftRight as ::core::ffi::c_int as isize);
-            let mut tp: *const uint16 = tps[(x >> 8 as ::core::ffi::c_int & 1 as uint) as usize]
-                .offset((x >> 3 as ::core::ffi::c_int & 0x1f as uint) as isize);
-            let mut tp_last: *const uint16 =
-                tps[(x >> 8 as ::core::ffi::c_int & 1 as uint) as usize].offset(31);
-            let mut tp_next: *const uint16 =
-                tps[(x >> 8 as ::core::ffi::c_int & 1 as uint ^ 1 as uint) as usize];
-            if x & 7 as uint != 0 {
-                let mut curw: ::core::ffi::c_int = IntMin(
-                    (8 as uint).wrapping_sub(x & 7 as uint) as ::core::ffi::c_int,
-                    w as ::core::ffi::c_int,
-                );
-                w = w.wrapping_sub(curw as uint);
-                let mut tile: uint32 = *tp as uint32;
-                if tp != tp_last {
-                    tp = tp.offset(1);
-                } else {
-                    tp = tp_next;
-                    tp_next = tp_last.offset(-(31 as ::core::ffi::c_int as isize));
-                    tp_last = tp.offset(31);
-                }
-                let (mut z, mut bits) =
-                    ppu_load_tile_row::<2>(ppu, tile, tileadr0, tileadr1, zhi, zlo);
-                if bits != 0 {
-                    z = (z as uint32).wrapping_add(
-                        (tile & 0x1c00 as uint32) >> kPaletteShift as ::core::ffi::c_int,
-                    ) as PpuZbufType as PpuZbufType;
-                    if tile & 0x4000 as uint32 != 0 {
-                        bits >>= x & 7 as uint;
-                        x = x.wrapping_add(curw as uint);
-                        (bits, dstz, pixel) =
-                            ppu_draw_partial_tile::<2>(dstz, bits, z, curw as u32, true);
-                        curw = 0;
-                    } else {
-                        bits <<= x & 7 as uint;
-                        x = x.wrapping_add(curw as uint);
-                        (bits, dstz, pixel) =
-                            ppu_draw_partial_tile::<2>(dstz, bits, z, curw as u32, false);
-                        curw = 0;
-                    }
-                } else {
-                    dstz = dstz.offset(curw as isize);
-                }
-            }
-            while w >= 8 as uint {
-                let mut tile_0: uint32 = *tp as uint32;
-                if tp != tp_last {
-                    tp = tp.offset(1);
-                } else {
-                    tp = tp_next;
-                    tp_next = tp_last.offset(-(31 as ::core::ffi::c_int as isize));
-                    tp_last = tp.offset(31);
-                }
-                let (mut z_0, mut bits_0) =
-                    ppu_load_tile_row::<2>(ppu, tile_0, tileadr0, tileadr1, zhi, zlo);
-                if bits_0 != 0 {
-                    z_0 = (z_0 as uint32).wrapping_add(
-                        (tile_0 & 0x1c00 as uint32) >> kPaletteShift as ::core::ffi::c_int,
-                    ) as PpuZbufType as PpuZbufType;
-                    pixel = ppu_draw_full_tile::<2>(dstz, bits_0, z_0, tile_0 & 0x4000 != 0);
-                }
-                dstz = dstz.offset(8);
-                w = w.wrapping_sub(8 as uint);
-            }
-            if w != 0 {
-                let mut tile_1: uint32 = *tp as uint32;
-                let (mut z_1, mut bits_1) =
-                    ppu_load_tile_row::<2>(ppu, tile_1, tileadr0, tileadr1, zhi, zlo);
-                if bits_1 != 0 {
-                    z_1 = (z_1 as uint32).wrapping_add(
-                        (tile_1 & 0x1c00 as uint32) >> kPaletteShift as ::core::ffi::c_int,
-                    ) as PpuZbufType as PpuZbufType;
-                    if tile_1 & 0x4000 as uint32 != 0 {
-                        (bits_1, dstz, pixel) =
-                            ppu_draw_partial_tile::<2>(dstz, bits_1, z_1, w as u32, true);
-                        w = 0;
-                    } else {
-                        (bits_1, dstz, pixel) =
-                            ppu_draw_partial_tile::<2>(dstz, bits_1, z_1, w as u32, false);
-                        w = 0;
-                    }
-                }
-            }
-        }
-        windex = windex.wrapping_add(1);
-    }
+    ppu_draw_planar_background::<2, kPaletteShift>(ppu, y, sub, layer, zhi, zlo);
 }
 // Mode7 scroll/center words are signed 13-bit values; displacements retain
 // the original bit-13 sign selection and ten low bits.
