@@ -8658,6 +8658,79 @@ builds pass; full frontend linking still lacks SDL2. Live CPU source matches
 frozen verified source. Progress counters unchanged. Complete gameplay and
 rendering/audio remain open.
 
+Alternate lower red door and Missile Station verified (2026-10-19):
+source-cap BTS mapping identifies9AD9 westY1376 asA201 save room,
+westY1632 as9C5E, eastY1632 as9CB3 and westY2656 as9FE5.
+West doors useC890 red-five-hit lists; eastY1632 isC88A green.
+The deeper shaft is blocked atY1696 by shootableC/BTS09 blocks:
+table949EA6+18 selectsD088/setupCF2E RespawningPowerBombBlock,
+requiring projectile0500. Table choice matters: bombable table94A012
+is inappropriate for these typeC blocks. No normal-bomb passage is claimed.
+
+Use retained67278-frame refilled-9ad9-control.inputs with5missiles,
+not the completed map return's0missiles. Right/shoot20, neutral60,
+left/shoot32, neutral80, right/shoot32, neutral80, left/shoot30,
+neutral120 descends toY1547. First alignment stopsY1579 and spends a
+missile above the door; four more shots leave it closed. Retain only
+through67901 before Select/fire, still5missiles. Right/shoot18,
+neutral70, left/shoot20, neutral70, Select1, neutral20,
+left/shoot60, neutral90 reachesX37/Y1675, health59, missiles4/5.
+Four fresh shoot1 presses separated byneutral90, left/shoot100,
+neutral120 opens lower red cap:9C5E loads68644, gameplay68745,
+finalX712/Y139 health59, missiles0.68834/71 (154.81s).
+
+9C5E has a damaging floor and enemies. Direct run/wait and ball crossing
+die. Retain station-cross.inputs only through68906 X520/Y139 health59.
+Neutral1, left/run/jump/shoot65, left/run/shoot40, neutral30,
+left/shoot45, neutral90 reaches lower platform but later wait takes damage.
+Retain station-pit-jump.inputs through69096 X279/Y315 health43.
+Neutral1, left/jump/shoot60, left/run/shoot70, neutral120 reaches
+X127/Y395 health47 alive:69347/71 (164.46s). Left/shoot90,
+neutral120 enters9C89:load69412, gameplay69499, finalX200/Y139,
+health47.69557/71 (154.89s). Two alternate-route rooms are added.
+
+Station naming correction: PLMB6EB/setupB545 is named EnergyStation
+in maintained code, with energy-named setup/access bodies. Initial source
+inspection wrongly inferred health refill. Oracle actual behavior decides:
+left90, neutral450, freshJump1, neutral120 activates message22 and
+missiles0->5, health remains47/199. It is a Missile Station.
+Right/jump/shoot60, right/shoot60, neutral120 proves released controls,
+endingX171/Y155:70458/71 (152.02s). Another neutral1,
+right/jump/shoot60, right/shoot60, neutral120 exits to9C5E,
+finalX55/Y395 health47 missiles5/5:70699/71 (152.59s).
+Retain missile-station-exit.inputs as alternate onward prefix.
+The probe filename energy-activation is historical; it proves missile
+refill, not energy refill. No maintained code change is justified yet.
+
+All thirteen ordered diagnostic streams exactly match frozen d217ea15
+Waver71; no new failing frames. Completed replays, all nativeexit1:
+alternate-lower-door: 67732/71 (150.25s)
+alternate-door-level: 68178/71 (136.19s)
+alternate-door-five: 68762/71 (162.90s)
+alternate-final-gap: 68250/71 (162.43s)
+alternate-lower-open: 68834/71 (154.81s)
+station-cross: 69240/71 (154.84s)
+station-ball-cross: 69197/71 (161.34s)
+station-pit-jump: 69177/71 (164.04s)
+station-low-left: 69428/71 (163.29s)
+station-early-low: 69347/71 (164.46s)
+station-door: 69557/71 (154.89s)
+energy-activation: 70458/71 (152.02s)
+missile-station-exit: 70699/71 (152.59s)
+
+Next: return through9C5E to9AD9 with refilled5missiles, then choose
+another red door for onward coverage; inspect requirements before spending
+them. Completed map/quota route remains separate retained coverage.
+Held9AD9 ammunition experiments, upper99BD ascent, cliff tuning and HDMA
+stay held; this route spent retained gunship missiles to reach a station,
+not repeated enemy-drop experiments. Frozen same-DLL explicit-render
+any%129712/0 (414.98s) remains input-only regression; peer hardware owns
+its replays. Cargo fmt/check/progress and release-library build pass;
+full frontend release link still lacksSDL2. Own source/residue delta zero.
+Peer edits/cleanup/remote sync remain separate. Inputs/ROM-derived probes
+stay ignored. Credits, full gameplay/hardware, render/audio fidelity,
+masked RAM and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
