@@ -1143,49 +1143,56 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `59d9066a` passes
-uninterrupted full boot any% 129712/0 (223.51s) and Bubble Mountain
-138749/0 (268.10s), native exits 0. This closes seven source commits
-since 1458fe46: live enemy fields, slot iteration, shared SNES registers,
-projectile child initialization, priority drawing, collision state and
-fireball child velocities. Bubble Mountain includes the exact Warehouse,
-Varia and Hi-Jump prefixes, visiting 52 rooms and 52 enemy definitions.
+Latest reviewed integration (2026-10-19): frozen `8ccedfcb` passes
+uninterrupted full boot any% 129712/0 (201.42s) and Bubble Mountain
+138749/0 (250.93s), native exits 0. This closes six source commits
+since 59d9066a: shared gameplay definitions, projectile removals, 57 empty
+callback qualifiers, and fireball-explosion, Ceres-debris and Ridley-fireball
+initializers. Bubble Mountain includes the exact Warehouse, Varia and
+Hi-Jump prefixes, visiting 52 rooms and 52 enemy definitions.
 
-Both complete serialized continuation payloads match the prior 1458fe46
-endpoints byte for byte. All bindings validate; the runtime fingerprint
-changes with the shared-register source binding. Neither replay loads an
-earlier checkpoint. Bubble Mountain still ends in state 8, room $ACB3,
-X55/Y651, pose $0001, health 3/399, missiles 12/15, Supers 1/5,
-items $1105 and beams $1004. The Warehouse Energy Tank is retained and
-Kraid's defeated bit stays set; all eight coroutine bytes are zero. Non-timing
-diagnostics match both prior runs, including the known fingernail warning.
+Both complete continuation checkpoints are byte-identical to the prior
+59d9066a endpoints, including every header binding and serialized payload.
+Neither replay loads an earlier checkpoint. Bubble Mountain still ends in
+state 8, room $ACB3, X55/Y651, pose $0001, health 3/399, missiles 12/15,
+Supers 1/5, items $1105 and beams $1004. The Warehouse Energy Tank is
+retained, Kraid's defeated bit is set and all eight coroutine bytes are zero.
+Complete non-timing diagnostics match, including the known fingernail warning.
 
-Independent slot-loop review reconstructs 44b8acc7 and its frozen source.
-The extracted old/new loops match complete RAM and callback traces in
-458762 cases: every gate word, every callback-returned index with both
-terminal values, callback-created slots and callback changes to the enable
-flag. Skipped-index-reread and signed-high-index variants fail. Every one
-of the recorded 1854468 slot transitions follows the original subtraction
-rule, including 107845 callback rereads. Natural disabled-gate coverage
-remains zero; the constructed cases cover that gate separately.
+Independent initializer review reconstructs all three complete source
+changes and their owning frozen sources. Retained observations execute the
+explosion/debris/Ridley initializers 6/19/24 times; raw clean/observed
+diagnostics agree, with source/library/fixture pins unchanged. Extracted
+routines and accessors using the actual Game pass 393216 independent
+complete-RAM cases, covering every u16 slot index under two backing patterns,
+coordinate wrapping, source aliases and Ridley's callback entry/arguments.
+Wrong-stride and prematurely cached Y-velocity variants fail. No retained
+RAM pointer crosses the new view borrows; Ridley's callback stays unsafe.
 
-Independent register review preserves all 2496 public names, SnesRegs types
-and values across 12 modules. Each original public path compiles against
-the integration library; a deliberately wrong expected value fails. Source
-comparison permits only shared declarations/reexports, formatting, module
-registration and the checkpoint source binding.
+Independent empty-callback review reconstructs exactly the 57 qualifier
+removals in 16 banks. Names, arguments, empty bodies and all remaining
+source are unchanged. Every actual public path compiles against this
+integration library as both a safe and its original unsafe function pointer.
+Earlier gameplay-definition and removal audits remain qualified separately.
 
-All 72 source/configuration/host/progress files, Cargo library, DLL and
+The preceding seven-change batch at 59d9066a retained 458762 complete-RAM/
+callback slot-loop controls, with skipped-reread and signed-index faults
+rejected. All 1854468 recorded transitions and 107845 callback rereads
+matched; natural disabled-gate coverage remained zero. Its register audit
+compiled all 2496 original public names/types/values and rejected a wrong
+value. Those detailed source audits retain their original coverage limits.
+
+All 73 source/configuration/host/progress files, Cargo library, DLL and
 copied fixtures stay fixed. Only registry dependencies seed this checkout.
-Formatting, normal release (42.41s), host build
-(2.14s) and progress pass. The batch removes 2305 Rust
-lines, 37 raw-offset lines and 51 promotion casts (43 cast lines); unsafe
-function count is unchanged. This audit changes no maintained Rust.
+Formatting, normal release (33.76s), host build
+(2.40s) and progress pass. The six changes remove 6142 Rust
+lines, 35 raw-offset lines, 18 promotion casts (11 cast lines) and 61 unsafe
+functions. This audit changes no maintained Rust or committed assets.
 
-Credits remain unvisited, and earlier observations retain their branch and
-caller coverage limits. Newer gameplay-definition and projectile changes
-need their own integration. Route continuation reaches Speed Booster at input 148406.
-Remaining bosses, credits, persistence and broader hardware/audio coverage
+Credits remain unvisited. Later constant/identity callbacks, projectile
+slope collision and message-box changes need their own integration. The
+new Speed Booster route at input 148406 retains separate validation;
+remaining bosses, credits, persistence and broader hardware/audio coverage
 remain unfinished.
 
 Earlier reviewed integration: frozen `64e8d165` passes full any% 129712/0
