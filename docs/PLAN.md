@@ -124,6 +124,16 @@ cleanup and independent-coverage directories because other route scripts
 still reference them. No maintained source or residue change belongs to this
 cleanup; active route inputs, current builds and baselines remain available.
 
+Retired probe residue cleanup (2026-10-19): moved coverage-progress-verify,
+the obsolete timing trial, orphaned health/missile build scripts and source
+snippets, two retired graphics probes and old temporary-path pointers outside
+the checkout to sm-workspace-retired-builds-20261019-f. All 65 files / 7.64 MiB
+are preserved. Live processes and retained scripts do not depend on these
+files; the orphaned scripts referenced prerequisite directories already gone.
+Current verifier builds, ROM/movie inputs and route dependencies remain.
+Formatting, release and progress checks pass. No maintained source, own
+residue-counter change or new replay result belongs to this cleanup.
+
 Independent door-header QC (2026-10-19): commit 980d5899 matches both
 verified source snapshots after line-ending normalization. The actual replay
 reports 129712/0, native exit 0, with 61 calls and 61 enabled-bit clears. Review
