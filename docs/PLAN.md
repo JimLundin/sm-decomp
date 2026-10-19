@@ -19856,6 +19856,30 @@ release (35.40s snapshot, 14.35s workspace), progress and diff check pass.
 Movies supply regression coverage; direct comparisons exercise initialization.
 Full credits/readability remain open. Continue complete large repeated families.
 
+Image channel-conversion family (2026-10-19): 8-bit and 16-bit format
+converters share one row/pixel implementation for all twelve conversions.
+Allocation sizes, checked versus wrapping allocation arithmetic, pointer reuse,
+failure/free paths and exact diagnostics remain in the width-specific wrappers.
+Channel assignment order, integer luminance, alpha values, row offsets and
+signed loop limits remain exact. Whole-file reconstruction limits edits to
+this complete family; the twelve original pixel bodies normalize by width.
+Net Rust lines -237, casts -118, c_int cast lines -82, unsafe functions -1;
+raw RAM accesses and ABI counts are unchanged.
+
+Actual normal-release frontend libraries match 5472 image API cases and 72
+existing zlib cases, including pixel/metadata/float bits and I/O traces.
+Exact-node original/candidate converters match 6144 width/channel/dimension/
+allocation-failure cases, including pointer reuse and zero-sized dimensions.
+These are finite synthetic-input comparisons, not every possible image.
+The isolated target was rebuilt with registry-only dependency caches after
+discarding an initial broad cache copy; final release passes (25.44s clean,
+13.18s final update), as do workspace release, formatting/check and progress.
+Frozen 54c7b221 plus this family passes full any% 129712/0 (125.27s), native
+exit 0, with all 70 Rust/Cargo inputs and 72 runtime pins bound. Gameplay
+replay supplies integration regression coverage; direct APIs cover frontend.
+Spritemap consolidation is parked at only 120 net lines. Continue larger
+complete repeated families; readability and full credits remain incomplete.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

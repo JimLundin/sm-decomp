@@ -1110,14 +1110,122 @@ unsafe fn stbi__get32be(s: *mut stbi__context) -> stbi__uint32 {
     let z: stbi__uint32 = stbi__get16be(s) as stbi__uint32;
     (z << 16 as ::core::ffi::c_int).wrapping_add(stbi__get16be(s) as stbi__uint32)
 }
-unsafe fn stbi__compute_y(
-    r: ::core::ffi::c_int,
-    g: ::core::ffi::c_int,
-    b: ::core::ffi::c_int,
-) -> stbi_uc {
-    (r * 77 as ::core::ffi::c_int + g * 150 as ::core::ffi::c_int + 29 as ::core::ffi::c_int * b
-        >> 8 as ::core::ffi::c_int) as stbi_uc
+// Channel values use the same integer luminance weights at both widths.
+trait ImageChannel: Copy {
+    const OPAQUE: Self;
+    fn luminance(r: Self, g: Self, b: Self) -> Self;
 }
+impl ImageChannel for u8 {
+    const OPAQUE: Self = u8::MAX;
+    fn luminance(r: Self, g: Self, b: Self) -> Self {
+        ((r as i32 * 77 + g as i32 * 150 + 29 * b as i32) >> 8) as Self
+    }
+}
+impl ImageChannel for u16 {
+    const OPAQUE: Self = u16::MAX;
+    fn luminance(r: Self, g: Self, b: Self) -> Self {
+        ((r as i32 * 77 + g as i32 * 150 + 29 * b as i32) >> 8) as Self
+    }
+}
+
+// Allocation and failure diagnostics remain specific to each public width.
+unsafe fn convert_image_channels<T: ImageChannel>(
+    data: *mut T,
+    good: *mut T,
+    img_n: i32,
+    req_comp: i32,
+    x: u32,
+    y: u32,
+) -> bool {
+    let mut j = 0;
+    while j < y as i32 {
+        let mut src = data.offset((j as u32).wrapping_mul(x).wrapping_mul(img_n as u32) as isize);
+        let mut dest =
+            good.offset((j as u32).wrapping_mul(x).wrapping_mul(req_comp as u32) as isize);
+        let conversion = img_n * 8 + req_comp;
+        // The original checks the conversion even when this row has no pixels.
+        if !matches!(
+            conversion,
+            10 | 11 | 12 | 17 | 19 | 20 | 25 | 26 | 28 | 33 | 34 | 35
+        ) {
+            return false;
+        }
+        let mut i = x.wrapping_sub(1) as i32;
+        while i >= 0 {
+            match conversion {
+                10 => {
+                    *dest.offset(0) = *src.offset(0);
+                    *dest.offset(1) = T::OPAQUE;
+                }
+                11 => {
+                    let ref mut fresh9 = *dest.offset(2);
+                    *fresh9 = *src.offset(0);
+                    let ref mut fresh10 = *dest.offset(1);
+                    *fresh10 = *fresh9;
+                    *dest.offset(0) = *fresh10;
+                }
+                12 => {
+                    let ref mut fresh11 = *dest.offset(2);
+                    *fresh11 = *src.offset(0);
+                    let ref mut fresh12 = *dest.offset(1);
+                    *fresh12 = *fresh11;
+                    *dest.offset(0) = *fresh12;
+                    *dest.offset(3) = T::OPAQUE;
+                }
+                17 => {
+                    *dest.offset(0) = *src.offset(0);
+                }
+                19 => {
+                    let ref mut fresh13 = *dest.offset(2);
+                    *fresh13 = *src.offset(0);
+                    let ref mut fresh14 = *dest.offset(1);
+                    *fresh14 = *fresh13;
+                    *dest.offset(0) = *fresh14;
+                }
+                20 => {
+                    let ref mut fresh15 = *dest.offset(2);
+                    *fresh15 = *src.offset(0);
+                    let ref mut fresh16 = *dest.offset(1);
+                    *fresh16 = *fresh15;
+                    *dest.offset(0) = *fresh16;
+                    *dest.offset(3) = *src.offset(1);
+                }
+                28 => {
+                    *dest.offset(0) = *src.offset(0);
+                    *dest.offset(1) = *src.offset(1);
+                    *dest.offset(2) = *src.offset(2);
+                    *dest.offset(3) = T::OPAQUE;
+                }
+                25 => {
+                    *dest.offset(0) = T::luminance(*src.offset(0), *src.offset(1), *src.offset(2));
+                }
+                26 => {
+                    *dest.offset(0) = T::luminance(*src.offset(0), *src.offset(1), *src.offset(2));
+                    *dest.offset(1) = T::OPAQUE;
+                }
+                33 => {
+                    *dest.offset(0) = T::luminance(*src.offset(0), *src.offset(1), *src.offset(2));
+                }
+                34 => {
+                    *dest.offset(0) = T::luminance(*src.offset(0), *src.offset(1), *src.offset(2));
+                    *dest.offset(1) = *src.offset(3);
+                }
+                35 => {
+                    *dest.offset(0) = *src.offset(0);
+                    *dest.offset(1) = *src.offset(1);
+                    *dest.offset(2) = *src.offset(2);
+                }
+                _ => unreachable!(),
+            }
+            i -= 1;
+            src = src.offset((conversion >> 3) as isize);
+            dest = dest.offset((conversion & 7) as isize);
+        }
+        j += 1;
+    }
+    true
+}
+
 unsafe fn stbi__convert_format(
     data: *mut ::core::ffi::c_uchar,
     img_n: ::core::ffi::c_int,
@@ -1125,8 +1233,6 @@ unsafe fn stbi__convert_format(
     x: ::core::ffi::c_uint,
     y: ::core::ffi::c_uint,
 ) -> *mut ::core::ffi::c_uchar {
-    let mut i: ::core::ffi::c_int = 0;
-    let mut j: ::core::ffi::c_int = 0;
     let mut good: *mut ::core::ffi::c_uchar = ::core::ptr::null_mut::<::core::ffi::c_uchar>();
     if req_comp == img_n {
         return data;
@@ -1159,201 +1265,27 @@ unsafe fn stbi__convert_format(
             NULL_0
         }) as size_t as *mut ::core::ffi::c_uchar;
     }
-    j = 0 as ::core::ffi::c_int;
-    while j < y as ::core::ffi::c_int {
-        let mut src: *mut ::core::ffi::c_uchar = data.offset(
-            (j as ::core::ffi::c_uint)
-                .wrapping_mul(x)
-                .wrapping_mul(img_n as ::core::ffi::c_uint) as isize,
+    if !convert_image_channels(data, good, img_n, req_comp, x, y) {
+        '_c2rust_label_0: {
+            __assert_fail(
+            b"0\0" as *const u8 as *const ::core::ffi::c_char,
+            b"./third_party/stb/stb_image.h\0" as *const u8
+                as *const ::core::ffi::c_char,
+            1770 as ::core::ffi::c_uint,
+            b"unsigned char *stbi__convert_format(unsigned char *, int, int, unsigned int, unsigned int)\0"
+                as *const u8 as *const ::core::ffi::c_char,
         );
-        let mut dest: *mut ::core::ffi::c_uchar = good.offset(
-            (j as ::core::ffi::c_uint)
-                .wrapping_mul(x)
-                .wrapping_mul(req_comp as ::core::ffi::c_uint) as isize,
-        );
-        match img_n * 8 as ::core::ffi::c_int + req_comp {
-            10 => {
-                i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
-                while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0) = *src.offset(0);
-                    *dest.offset(1) = 255 as ::core::ffi::c_uchar;
-                    i -= 1;
-                    src = src.offset(1);
-                    dest = dest.offset(2);
-                }
-            }
-            11 => {
-                i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
-                while i >= 0 as ::core::ffi::c_int {
-                    let ref mut fresh9 = *dest.offset(2);
-                    *fresh9 = *src.offset(0);
-                    let ref mut fresh10 = *dest.offset(1);
-                    *fresh10 = *fresh9;
-                    *dest.offset(0) = *fresh10;
-                    i -= 1;
-                    src = src.offset(1);
-                    dest = dest.offset(3);
-                }
-            }
-            12 => {
-                i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
-                while i >= 0 as ::core::ffi::c_int {
-                    let ref mut fresh11 = *dest.offset(2);
-                    *fresh11 = *src.offset(0);
-                    let ref mut fresh12 = *dest.offset(1);
-                    *fresh12 = *fresh11;
-                    *dest.offset(0) = *fresh12;
-                    *dest.offset(3) = 255 as ::core::ffi::c_uchar;
-                    i -= 1;
-                    src = src.offset(1);
-                    dest = dest.offset(4);
-                }
-            }
-            17 => {
-                i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
-                while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0) = *src.offset(0);
-                    i -= 1;
-                    src = src.offset(2);
-                    dest = dest.offset(1);
-                }
-            }
-            19 => {
-                i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
-                while i >= 0 as ::core::ffi::c_int {
-                    let ref mut fresh13 = *dest.offset(2);
-                    *fresh13 = *src.offset(0);
-                    let ref mut fresh14 = *dest.offset(1);
-                    *fresh14 = *fresh13;
-                    *dest.offset(0) = *fresh14;
-                    i -= 1;
-                    src = src.offset(2);
-                    dest = dest.offset(3);
-                }
-            }
-            20 => {
-                i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
-                while i >= 0 as ::core::ffi::c_int {
-                    let ref mut fresh15 = *dest.offset(2);
-                    *fresh15 = *src.offset(0);
-                    let ref mut fresh16 = *dest.offset(1);
-                    *fresh16 = *fresh15;
-                    *dest.offset(0) = *fresh16;
-                    *dest.offset(3) = *src.offset(1);
-                    i -= 1;
-                    src = src.offset(2);
-                    dest = dest.offset(4);
-                }
-            }
-            28 => {
-                i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
-                while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0) = *src.offset(0);
-                    *dest.offset(1) = *src.offset(1);
-                    *dest.offset(2) = *src.offset(2);
-                    *dest.offset(3) = 255 as ::core::ffi::c_uchar;
-                    i -= 1;
-                    src = src.offset(3);
-                    dest = dest.offset(4);
-                }
-            }
-            25 => {
-                i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
-                while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0) = stbi__compute_y(
-                        *src.offset(0) as ::core::ffi::c_int,
-                        *src.offset(1) as ::core::ffi::c_int,
-                        *src.offset(2) as ::core::ffi::c_int,
-                    ) as ::core::ffi::c_uchar;
-                    i -= 1;
-                    src = src.offset(3);
-                    dest = dest.offset(1);
-                }
-            }
-            26 => {
-                i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
-                while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0) = stbi__compute_y(
-                        *src.offset(0) as ::core::ffi::c_int,
-                        *src.offset(1) as ::core::ffi::c_int,
-                        *src.offset(2) as ::core::ffi::c_int,
-                    ) as ::core::ffi::c_uchar;
-                    *dest.offset(1) = 255 as ::core::ffi::c_uchar;
-                    i -= 1;
-                    src = src.offset(3);
-                    dest = dest.offset(2);
-                }
-            }
-            33 => {
-                i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
-                while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0) = stbi__compute_y(
-                        *src.offset(0) as ::core::ffi::c_int,
-                        *src.offset(1) as ::core::ffi::c_int,
-                        *src.offset(2) as ::core::ffi::c_int,
-                    ) as ::core::ffi::c_uchar;
-                    i -= 1;
-                    src = src.offset(4);
-                    dest = dest.offset(1);
-                }
-            }
-            34 => {
-                i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
-                while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0) = stbi__compute_y(
-                        *src.offset(0) as ::core::ffi::c_int,
-                        *src.offset(1) as ::core::ffi::c_int,
-                        *src.offset(2) as ::core::ffi::c_int,
-                    ) as ::core::ffi::c_uchar;
-                    *dest.offset(1) = *src.offset(3);
-                    i -= 1;
-                    src = src.offset(4);
-                    dest = dest.offset(2);
-                }
-            }
-            35 => {
-                i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
-                while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0) = *src.offset(0);
-                    *dest.offset(1) = *src.offset(1);
-                    *dest.offset(2) = *src.offset(2);
-                    i -= 1;
-                    src = src.offset(4);
-                    dest = dest.offset(3);
-                }
-            }
-            _ => {
-                '_c2rust_label_0: {
-                    __assert_fail(
-                        b"0\0" as *const u8 as *const ::core::ffi::c_char,
-                        b"./third_party/stb/stb_image.h\0" as *const u8
-                            as *const ::core::ffi::c_char,
-                        1770 as ::core::ffi::c_uint,
-                        b"unsigned char *stbi__convert_format(unsigned char *, int, int, unsigned int, unsigned int)\0"
-                            as *const u8 as *const ::core::ffi::c_char,
-                    );
-                };
-                free(data as *mut ::core::ffi::c_void);
-                free(good as *mut ::core::ffi::c_void);
-                return (if 0 as ::core::ffi::c_int != 0 {
-                    NULL_0
-                } else {
-                    NULL_0
-                }) as size_t as *mut ::core::ffi::c_uchar;
-            }
-        }
-        j += 1;
+        };
+        free(data as *mut ::core::ffi::c_void);
+        free(good as *mut ::core::ffi::c_void);
+        return (if 0 as ::core::ffi::c_int != 0 {
+            NULL_0
+        } else {
+            NULL_0
+        }) as size_t as *mut ::core::ffi::c_uchar;
     }
     free(data as *mut ::core::ffi::c_void);
     good
-}
-unsafe fn stbi__compute_y_16(
-    r: ::core::ffi::c_int,
-    g: ::core::ffi::c_int,
-    b: ::core::ffi::c_int,
-) -> stbi__uint16 {
-    (r * 77 as ::core::ffi::c_int + g * 150 as ::core::ffi::c_int + 29 as ::core::ffi::c_int * b
-        >> 8 as ::core::ffi::c_int) as stbi__uint16
 }
 unsafe fn stbi__convert_format16(
     data: *mut stbi__uint16,
@@ -1362,8 +1294,6 @@ unsafe fn stbi__convert_format16(
     x: ::core::ffi::c_uint,
     y: ::core::ffi::c_uint,
 ) -> *mut stbi__uint16 {
-    let mut i: ::core::ffi::c_int = 0;
-    let mut j: ::core::ffi::c_int = 0;
     let mut good: *mut stbi__uint16 = ::core::ptr::null_mut::<stbi__uint16>();
     if req_comp == img_n {
         return data;
@@ -1396,191 +1326,24 @@ unsafe fn stbi__convert_format16(
             NULL_0
         }) as size_t as *mut ::core::ffi::c_uchar as *mut stbi__uint16;
     }
-    j = 0 as ::core::ffi::c_int;
-    while j < y as ::core::ffi::c_int {
-        let mut src: *mut stbi__uint16 = data.offset(
-            (j as ::core::ffi::c_uint)
-                .wrapping_mul(x)
-                .wrapping_mul(img_n as ::core::ffi::c_uint) as isize,
+    if !convert_image_channels(data, good, img_n, req_comp, x, y) {
+        '_c2rust_label_0: {
+            __assert_fail(
+            b"0\0" as *const u8 as *const ::core::ffi::c_char,
+            b"./third_party/stb/stb_image.h\0" as *const u8
+                as *const ::core::ffi::c_char,
+            1827 as ::core::ffi::c_uint,
+            b"stbi__uint16 *stbi__convert_format16(stbi__uint16 *, int, int, unsigned int, unsigned int)\0"
+                as *const u8 as *const ::core::ffi::c_char,
         );
-        let mut dest: *mut stbi__uint16 = good.offset(
-            (j as ::core::ffi::c_uint)
-                .wrapping_mul(x)
-                .wrapping_mul(req_comp as ::core::ffi::c_uint) as isize,
-        );
-        match img_n * 8 as ::core::ffi::c_int + req_comp {
-            10 => {
-                i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
-                while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0) = *src.offset(0);
-                    *dest.offset(1) = 0xffff as stbi__uint16;
-                    i -= 1;
-                    src = src.offset(1);
-                    dest = dest.offset(2);
-                }
-            }
-            11 => {
-                i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
-                while i >= 0 as ::core::ffi::c_int {
-                    let ref mut fresh1 = *dest.offset(2);
-                    *fresh1 = *src.offset(0);
-                    let ref mut fresh2 = *dest.offset(1);
-                    *fresh2 = *fresh1;
-                    *dest.offset(0) = *fresh2;
-                    i -= 1;
-                    src = src.offset(1);
-                    dest = dest.offset(3);
-                }
-            }
-            12 => {
-                i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
-                while i >= 0 as ::core::ffi::c_int {
-                    let ref mut fresh3 = *dest.offset(2);
-                    *fresh3 = *src.offset(0);
-                    let ref mut fresh4 = *dest.offset(1);
-                    *fresh4 = *fresh3;
-                    *dest.offset(0) = *fresh4;
-                    *dest.offset(3) = 0xffff as stbi__uint16;
-                    i -= 1;
-                    src = src.offset(1);
-                    dest = dest.offset(4);
-                }
-            }
-            17 => {
-                i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
-                while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0) = *src.offset(0);
-                    i -= 1;
-                    src = src.offset(2);
-                    dest = dest.offset(1);
-                }
-            }
-            19 => {
-                i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
-                while i >= 0 as ::core::ffi::c_int {
-                    let ref mut fresh5 = *dest.offset(2);
-                    *fresh5 = *src.offset(0);
-                    let ref mut fresh6 = *dest.offset(1);
-                    *fresh6 = *fresh5;
-                    *dest.offset(0) = *fresh6;
-                    i -= 1;
-                    src = src.offset(2);
-                    dest = dest.offset(3);
-                }
-            }
-            20 => {
-                i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
-                while i >= 0 as ::core::ffi::c_int {
-                    let ref mut fresh7 = *dest.offset(2);
-                    *fresh7 = *src.offset(0);
-                    let ref mut fresh8 = *dest.offset(1);
-                    *fresh8 = *fresh7;
-                    *dest.offset(0) = *fresh8;
-                    *dest.offset(3) = *src.offset(1);
-                    i -= 1;
-                    src = src.offset(2);
-                    dest = dest.offset(4);
-                }
-            }
-            28 => {
-                i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
-                while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0) = *src.offset(0);
-                    *dest.offset(1) = *src.offset(1);
-                    *dest.offset(2) = *src.offset(2);
-                    *dest.offset(3) = 0xffff as stbi__uint16;
-                    i -= 1;
-                    src = src.offset(3);
-                    dest = dest.offset(4);
-                }
-            }
-            25 => {
-                i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
-                while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0) = stbi__compute_y_16(
-                        *src.offset(0) as ::core::ffi::c_int,
-                        *src.offset(1) as ::core::ffi::c_int,
-                        *src.offset(2) as ::core::ffi::c_int,
-                    );
-                    i -= 1;
-                    src = src.offset(3);
-                    dest = dest.offset(1);
-                }
-            }
-            26 => {
-                i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
-                while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0) = stbi__compute_y_16(
-                        *src.offset(0) as ::core::ffi::c_int,
-                        *src.offset(1) as ::core::ffi::c_int,
-                        *src.offset(2) as ::core::ffi::c_int,
-                    );
-                    *dest.offset(1) = 0xffff as stbi__uint16;
-                    i -= 1;
-                    src = src.offset(3);
-                    dest = dest.offset(2);
-                }
-            }
-            33 => {
-                i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
-                while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0) = stbi__compute_y_16(
-                        *src.offset(0) as ::core::ffi::c_int,
-                        *src.offset(1) as ::core::ffi::c_int,
-                        *src.offset(2) as ::core::ffi::c_int,
-                    );
-                    i -= 1;
-                    src = src.offset(4);
-                    dest = dest.offset(1);
-                }
-            }
-            34 => {
-                i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
-                while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0) = stbi__compute_y_16(
-                        *src.offset(0) as ::core::ffi::c_int,
-                        *src.offset(1) as ::core::ffi::c_int,
-                        *src.offset(2) as ::core::ffi::c_int,
-                    );
-                    *dest.offset(1) = *src.offset(3);
-                    i -= 1;
-                    src = src.offset(4);
-                    dest = dest.offset(2);
-                }
-            }
-            35 => {
-                i = x.wrapping_sub(1 as ::core::ffi::c_uint) as ::core::ffi::c_int;
-                while i >= 0 as ::core::ffi::c_int {
-                    *dest.offset(0) = *src.offset(0);
-                    *dest.offset(1) = *src.offset(1);
-                    *dest.offset(2) = *src.offset(2);
-                    i -= 1;
-                    src = src.offset(4);
-                    dest = dest.offset(3);
-                }
-            }
-            _ => {
-                '_c2rust_label_0: {
-                    __assert_fail(
-                        b"0\0" as *const u8 as *const ::core::ffi::c_char,
-                        b"./third_party/stb/stb_image.h\0" as *const u8
-                            as *const ::core::ffi::c_char,
-                        1827 as ::core::ffi::c_uint,
-                        b"stbi__uint16 *stbi__convert_format16(stbi__uint16 *, int, int, unsigned int, unsigned int)\0"
-                            as *const u8 as *const ::core::ffi::c_char,
-                    );
-                };
-                free(data as *mut ::core::ffi::c_void);
-                free(good as *mut ::core::ffi::c_void);
-                return (if 0 as ::core::ffi::c_int != 0 {
-                    NULL_0
-                } else {
-                    NULL_0
-                }) as size_t as *mut ::core::ffi::c_uchar
-                    as *mut stbi__uint16;
-            }
-        }
-        j += 1;
+        };
+        free(data as *mut ::core::ffi::c_void);
+        free(good as *mut ::core::ffi::c_void);
+        return (if 0 as ::core::ffi::c_int != 0 {
+            NULL_0
+        } else {
+            NULL_0
+        }) as size_t as *mut ::core::ffi::c_uchar as *mut stbi__uint16;
     }
     free(data as *mut ::core::ffi::c_void);
     good
