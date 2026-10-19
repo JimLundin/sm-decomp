@@ -1148,8 +1148,8 @@ verification. Remaining bosses, credits, persistence and broader hardware/audio
 coverage are still unfinished.
 
 Warehouse return waypoint (2026-10-19): ordinary inputs extend Varia's
-exact 122732-frame prefix to 128547. The same frozen c7856316 plus message-
-box table build that passes full Varia 122732/0 resumes its own verified
+exact 122732-frame prefix to 128547. The same frozen c7856316 plus the message-box
+table build that passes full Varia 122732/0 resumes its own verified
 checkpoint for 5815/0 (7.06s), native exit 0, with no new diagnostics.
 Final state 8 is room $A471, X70/Y395, pose $0002, health 52/299,
 missiles 12/15, Supers 4/5, items $1105 and beams $1004; all eight
