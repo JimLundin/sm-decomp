@@ -16,6 +16,7 @@ use crate::game::sm_94::Samus_MoveDown_NoSolidColl;
 use crate::game::sm_a6::HandleCeresRidleyGetawayCutscene;
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
+use crate::ram_map::ram_ptr;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{mov24, Mult8x8, RomPtr, Unreachable, WriteReg};
 pub use crate::snes::registers::*;
@@ -236,225 +237,225 @@ pub unsafe fn DoorCode_StartWreckedShipTreadmillWest(game: &mut Game) {
     );
 }
 pub unsafe fn DoorCode_Scroll6_Green(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(6) = 2u8;
+    *ram_ptr!(game; 0xcd20, 6) = 2u8;
 }
 pub unsafe fn DoorCode_Scroll0_Blue(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(0) = 1u8;
+    *ram_ptr!(game; 0xcd20, 0) = 1u8;
 }
 pub unsafe fn DoorCode_Scroll13_Blue(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(19) = 1u8;
+    *ram_ptr!(game; 0xcd20, 19) = 1u8;
 }
 pub unsafe fn DoorCode_Scroll_4Blue_8Green(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(4) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(8) = 2u8;
+    *ram_ptr!(game; 0xcd20, 4) = 0u8;
+    *ram_ptr!(game; 0xcd20, 8) = 2u8;
 }
 pub unsafe fn DoorCode_Scroll_8toB_Red(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(8) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(9) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(10) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(11) = 0u8;
+    *ram_ptr!(game; 0xcd20, 8) = 0u8;
+    *ram_ptr!(game; 0xcd20, 9) = 0u8;
+    *ram_ptr!(game; 0xcd20, 10) = 0u8;
+    *ram_ptr!(game; 0xcd20, 11) = 0u8;
 }
 pub unsafe fn DoorCode_Scroll_LotsRed(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(2) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(3) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(4) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(5) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(11) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(12) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(13) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(17) = 0u8;
+    *ram_ptr!(game; 0xcd20, 2) = 0u8;
+    *ram_ptr!(game; 0xcd20, 3) = 0u8;
+    *ram_ptr!(game; 0xcd20, 4) = 0u8;
+    *ram_ptr!(game; 0xcd20, 5) = 0u8;
+    *ram_ptr!(game; 0xcd20, 11) = 0u8;
+    *ram_ptr!(game; 0xcd20, 12) = 0u8;
+    *ram_ptr!(game; 0xcd20, 13) = 0u8;
+    *ram_ptr!(game; 0xcd20, 17) = 0u8;
 }
 pub unsafe fn DoorCode_Scroll_1_4_Green(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(1) = 2u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(4) = 2u8;
+    *ram_ptr!(game; 0xcd20, 1) = 2u8;
+    *ram_ptr!(game; 0xcd20, 4) = 2u8;
 }
 pub unsafe fn DoorCode_Scroll_2_Blue(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(2) = 1u8;
+    *ram_ptr!(game; 0xcd20, 2) = 1u8;
 }
 pub unsafe fn DoorCode_Scroll_17_Blue(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(23) = 1u8;
+    *ram_ptr!(game; 0xcd20, 23) = 1u8;
 }
 pub unsafe fn DoorCode_Scroll_4_Blue(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(4) = 1u8;
+    *ram_ptr!(game; 0xcd20, 4) = 1u8;
 }
 pub unsafe fn DoorCode_Scroll_6_Green(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(6) = 2u8;
+    *ram_ptr!(game; 0xcd20, 6) = 2u8;
 }
 pub unsafe fn DoorCode_Scroll_3_Green(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(3) = 2u8;
+    *ram_ptr!(game; 0xcd20, 3) = 2u8;
 }
 pub unsafe fn DoorCode_SetScroll_0(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(24) = 2u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(28) = 2u8;
+    *ram_ptr!(game; 0xcd20, 24) = 2u8;
+    *ram_ptr!(game; 0xcd20, 28) = 2u8;
 }
 pub unsafe fn DoorCode_SetScroll_1(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(5) = 1u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(6) = 1u8;
+    *ram_ptr!(game; 0xcd20, 5) = 1u8;
+    *ram_ptr!(game; 0xcd20, 6) = 1u8;
 }
 pub unsafe fn DoorCode_SetScroll_2(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(29) = 1u8;
+    *ram_ptr!(game; 0xcd20, 29) = 1u8;
 }
 pub unsafe fn DoorCode_SetScroll_3(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(2) = 2u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(3) = 2u8;
+    *ram_ptr!(game; 0xcd20, 2) = 2u8;
+    *ram_ptr!(game; 0xcd20, 3) = 2u8;
 }
 pub unsafe fn DoorCode_SetScroll_4(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(0) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(1) = 2u8;
+    *ram_ptr!(game; 0xcd20, 0) = 0u8;
+    *ram_ptr!(game; 0xcd20, 1) = 2u8;
 }
 pub unsafe fn DoorCode_SetScroll_5(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(11) = 2u8;
+    *ram_ptr!(game; 0xcd20, 11) = 2u8;
 }
 pub unsafe fn DoorCode_SetScroll_6(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(28) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(29) = 1u8;
+    *ram_ptr!(game; 0xcd20, 28) = 0u8;
+    *ram_ptr!(game; 0xcd20, 29) = 1u8;
 }
 pub unsafe fn DoorCode_SetScroll_7(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(4) = 0u8;
+    *ram_ptr!(game; 0xcd20, 4) = 0u8;
 }
 pub unsafe fn DoorCode_SetScroll_8(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(32) = 2u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(36) = 2u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(37) = 2u8;
+    *ram_ptr!(game; 0xcd20, 32) = 2u8;
+    *ram_ptr!(game; 0xcd20, 36) = 2u8;
+    *ram_ptr!(game; 0xcd20, 37) = 2u8;
 }
 pub unsafe fn DoorCode_SetScroll_9(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(2) = 1u8;
+    *ram_ptr!(game; 0xcd20, 2) = 1u8;
 }
 pub unsafe fn DoorCode_SetScroll_10(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(0) = 2u8;
+    *ram_ptr!(game; 0xcd20, 0) = 2u8;
 }
 pub unsafe fn DoorCode_SetScroll_11(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(6) = 2u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(7) = 2u8;
+    *ram_ptr!(game; 0xcd20, 6) = 2u8;
+    *ram_ptr!(game; 0xcd20, 7) = 2u8;
 }
 pub unsafe fn DoorCode_SetScroll_12(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(1) = 1u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(2) = 0u8;
+    *ram_ptr!(game; 0xcd20, 1) = 1u8;
+    *ram_ptr!(game; 0xcd20, 2) = 0u8;
 }
 pub unsafe fn DoorCode_SetScroll_13(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(1) = 1u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(3) = 0u8;
+    *ram_ptr!(game; 0xcd20, 1) = 1u8;
+    *ram_ptr!(game; 0xcd20, 3) = 0u8;
 }
 pub unsafe fn DoorCode_SetScroll_14(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(0) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(4) = 1u8;
+    *ram_ptr!(game; 0xcd20, 0) = 0u8;
+    *ram_ptr!(game; 0xcd20, 4) = 1u8;
 }
 pub unsafe fn DoorCode_SetScroll_15(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(2) = 1u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(3) = 1u8;
+    *ram_ptr!(game; 0xcd20, 2) = 1u8;
+    *ram_ptr!(game; 0xcd20, 3) = 1u8;
 }
 pub unsafe fn DoorCode_SetScroll_16(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(0) = 2u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(1) = 2u8;
+    *ram_ptr!(game; 0xcd20, 0) = 2u8;
+    *ram_ptr!(game; 0xcd20, 1) = 2u8;
 }
 pub unsafe fn DoorCode_SetScroll_17(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(1) = 2u8;
+    *ram_ptr!(game; 0xcd20, 1) = 2u8;
 }
 pub unsafe fn DoorCode_SetScroll_18(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(15) = 2u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(18) = 2u8;
+    *ram_ptr!(game; 0xcd20, 15) = 2u8;
+    *ram_ptr!(game; 0xcd20, 18) = 2u8;
 }
 pub unsafe fn DoorCode_SetScroll_19(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(6) = 2u8;
+    *ram_ptr!(game; 0xcd20, 6) = 2u8;
 }
 pub unsafe fn DoorCode_SetScroll_20(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(0) = 2u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(1) = 1u8;
+    *ram_ptr!(game; 0xcd20, 0) = 2u8;
+    *ram_ptr!(game; 0xcd20, 1) = 1u8;
 }
 pub unsafe fn DoorCode_SetScroll_21(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(2) = 2u8;
+    *ram_ptr!(game; 0xcd20, 2) = 2u8;
 }
 pub unsafe fn DoorCode_SetScroll_22(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(3) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(4) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(6) = 1u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(7) = 1u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(8) = 1u8;
+    *ram_ptr!(game; 0xcd20, 3) = 0u8;
+    *ram_ptr!(game; 0xcd20, 4) = 0u8;
+    *ram_ptr!(game; 0xcd20, 6) = 1u8;
+    *ram_ptr!(game; 0xcd20, 7) = 1u8;
+    *ram_ptr!(game; 0xcd20, 8) = 1u8;
 }
 pub unsafe fn DoorCode_SetScroll_23(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(1) = 1u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(2) = 1u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(3) = 1u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(4) = 2u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(6) = 0u8;
+    *ram_ptr!(game; 0xcd20, 1) = 1u8;
+    *ram_ptr!(game; 0xcd20, 2) = 1u8;
+    *ram_ptr!(game; 0xcd20, 3) = 1u8;
+    *ram_ptr!(game; 0xcd20, 4) = 2u8;
+    *ram_ptr!(game; 0xcd20, 6) = 0u8;
 }
 pub unsafe fn DoorCode_SetScroll_24(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(0) = 1u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(1) = 1u8;
+    *ram_ptr!(game; 0xcd20, 0) = 1u8;
+    *ram_ptr!(game; 0xcd20, 1) = 1u8;
 }
 pub unsafe fn DoorCode_SetScroll_25(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(1) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(0) = 1u8;
+    *ram_ptr!(game; 0xcd20, 1) = 0u8;
+    *ram_ptr!(game; 0xcd20, 0) = 1u8;
 }
 pub unsafe fn DoorCode_SetScroll_26(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(10) = 2u8;
+    *ram_ptr!(game; 0xcd20, 10) = 2u8;
 }
 pub unsafe fn DoorCode_SetScroll_27(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(0) = 1u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(2) = 0u8;
+    *ram_ptr!(game; 0xcd20, 0) = 1u8;
+    *ram_ptr!(game; 0xcd20, 2) = 0u8;
 }
 pub unsafe fn DoorCode_SetScroll_28(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(0) = 2u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(2) = 2u8;
+    *ram_ptr!(game; 0xcd20, 0) = 2u8;
+    *ram_ptr!(game; 0xcd20, 2) = 2u8;
 }
 pub unsafe fn DoorCode_SetScroll_29(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(6) = 1u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(7) = 1u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(8) = 0u8;
+    *ram_ptr!(game; 0xcd20, 6) = 1u8;
+    *ram_ptr!(game; 0xcd20, 7) = 1u8;
+    *ram_ptr!(game; 0xcd20, 8) = 0u8;
 }
 pub unsafe fn DoorCode_SetScroll_30(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(2) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(3) = 1u8;
+    *ram_ptr!(game; 0xcd20, 2) = 0u8;
+    *ram_ptr!(game; 0xcd20, 3) = 1u8;
 }
 pub unsafe fn DoorCode_SetScroll_31(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(7) = 2u8;
+    *ram_ptr!(game; 0xcd20, 7) = 2u8;
 }
 pub unsafe fn DoorCode_SetScroll_32(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(1) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(2) = 1u8;
+    *ram_ptr!(game; 0xcd20, 1) = 0u8;
+    *ram_ptr!(game; 0xcd20, 2) = 1u8;
 }
 pub unsafe fn DoorCode_SetScroll_33(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(3) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(0) = 1u8;
+    *ram_ptr!(game; 0xcd20, 3) = 0u8;
+    *ram_ptr!(game; 0xcd20, 0) = 1u8;
 }
 pub unsafe fn DoorCode_SetScroll_34(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(1) = 1u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(4) = 0u8;
+    *ram_ptr!(game; 0xcd20, 1) = 1u8;
+    *ram_ptr!(game; 0xcd20, 4) = 0u8;
 }
 pub unsafe fn DoorCode_SetScroll_35(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(0) = 1u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(1) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(2) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(3) = 0u8;
+    *ram_ptr!(game; 0xcd20, 0) = 1u8;
+    *ram_ptr!(game; 0xcd20, 1) = 0u8;
+    *ram_ptr!(game; 0xcd20, 2) = 0u8;
+    *ram_ptr!(game; 0xcd20, 3) = 0u8;
 }
 pub unsafe fn DoorCode_SetScroll_36(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(0) = 2u8;
+    *ram_ptr!(game; 0xcd20, 0) = 2u8;
 }
 pub unsafe fn DoorCode_SetScroll_37(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(0) = 1u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(1) = 1u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(4) = 0u8;
+    *ram_ptr!(game; 0xcd20, 0) = 1u8;
+    *ram_ptr!(game; 0xcd20, 1) = 1u8;
+    *ram_ptr!(game; 0xcd20, 4) = 0u8;
 }
 pub unsafe fn DoorCode_SetScroll_38(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(0) = 1u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(3) = 0u8;
+    *ram_ptr!(game; 0xcd20, 0) = 1u8;
+    *ram_ptr!(game; 0xcd20, 3) = 0u8;
 }
 pub unsafe fn DoorCode_SetScroll_39(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(0) = 1u8;
+    *ram_ptr!(game; 0xcd20, 0) = 1u8;
 }
 pub unsafe fn DoorCode_SetScroll_40(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(0) = 1u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(1) = 0u8;
+    *ram_ptr!(game; 0xcd20, 0) = 1u8;
+    *ram_ptr!(game; 0xcd20, 1) = 0u8;
 }
 pub unsafe fn DoorCode_SetScroll_41(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(24) = 1u8;
+    *ram_ptr!(game; 0xcd20, 24) = 1u8;
 }
 pub unsafe fn DoorCode_SetScroll_42(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(3) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(2) = 1u8;
+    *ram_ptr!(game; 0xcd20, 3) = 0u8;
+    *ram_ptr!(game; 0xcd20, 2) = 1u8;
 }
 pub unsafe fn DoorCode_SetScroll_43(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(14) = 0u8;
+    *ram_ptr!(game; 0xcd20, 14) = 0u8;
 }
 pub unsafe fn RoomCode_ScrollingSkyLand_(game: &mut Game) {
     RoomCode_ScrollingSkyLand(game);
@@ -474,8 +475,8 @@ pub unsafe fn RoomCode_GenRandomExplodes_Nonblank(game: &mut Game) {
             (y as i32 >> 4i32) as u8,
             ram_word!(game, room_width_in_blocks) as u8,
         );
-        if (*((&raw mut game.g_ram as *mut u8).offset(0x10002) as *mut u16)
-            .offset((prod as i32 + (x as i32 >> 4i32)) as isize) as i32
+        if (*(ram_ptr!(game, u16; 0x10002)).offset((prod as i32 + (x as i32 >> 4i32)) as isize)
+            as i32
             & 0x3ffi32)
             != 255i32
         {
@@ -524,7 +525,7 @@ pub unsafe fn RoomCode_GenRandomExplodes(x_r18: u16, y_r20: u16, game: &mut Game
     );
 }
 pub unsafe fn RoomCode_ScrollRightDachora(game: &mut Game) {
-    if *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(11) == 2u8
+    if *ram_ptr!(game; 0xcd20, 11) == 2u8
         && ram_word!(game, layer1_y_pos) < 0x500u16
         && ram_word!(game, layer1_x_pos) < 0x380u16
     {
@@ -541,11 +542,11 @@ pub unsafe fn RoomCode_SetupShaktoolRoomPlm(game: &mut Game) {
 }
 pub unsafe fn RoomCode_SetPauseCodeForDraygon(game: &mut Game) {
     mov24(
-        (&raw mut game.g_ram as *mut u8).offset(0x601) as *mut LongPtr,
+        ram_ptr!(game, LongPtr; 0x601),
         fnPauseHook_DraygonRoom as u32,
     );
     mov24(
-        (&raw mut game.g_ram as *mut u8).offset(0x604) as *mut LongPtr,
+        ram_ptr!(game, LongPtr; 0x604),
         fnUnpauseHook_DraygonRoom as u32,
     );
 }
@@ -559,13 +560,8 @@ pub unsafe fn UnpauseHook_DraygonRoom(game: &mut Game) -> CoroutineRet {
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn RoomCode_SetCollectedMap(game: &mut Game) {
-    let v0: u16 = (*((&raw mut game.g_ram as *mut u8)
-        .offset(0xd908)
-        .offset(ram_word!(game, area_index) as isize) as *mut u16))
-        | (1u16);
-    *((&raw mut game.g_ram as *mut u8)
-        .offset(0xd908)
-        .offset(ram_word!(game, area_index) as isize) as *mut u16) = v0;
+    let v0: u16 = (*(ram_ptr!(game, u16; 0xd908, ram_word!(game, area_index) as isize))) | (1u16);
+    *(ram_ptr!(game, u16; 0xd908, ram_word!(game, area_index) as isize)) = v0;
     set_ram_word!(game.has_area_map = v0);
 }
 pub unsafe fn RoomCode_SetZebesTimebombEvent(game: &mut Game) {
@@ -575,8 +571,8 @@ pub unsafe fn RoomCode_SetZebesTimebombEvent(game: &mut Game) {
 }
 pub unsafe fn RoomCode_SetLightHorizRoomShake(game: &mut Game) {
     set_ram_word!(game.earthquake_type = 18u16);
-    *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u16) = 18u16;
-    *((&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut u16) = 0u16;
+    *(ram_ptr!(game, u16; 0x7e1, 2)) = 18u16;
+    *(ram_ptr!(game, u16; 0x7e1)) = 0u16;
     set_ram_word!(game.earthquake_timer = -1i32 as u16);
 }
 pub unsafe fn RoomCode_SetMediumHorizRoomShake(game: &mut Game) {
@@ -589,8 +585,8 @@ pub unsafe fn RoomCode_Escape4_SetMediumHorizRoomShake(game: &mut Game) {
         game,
     );
     set_ram_word!(game.earthquake_type = 21u16);
-    *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u16) = 21u16;
-    *((&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut u16) = 0u16;
+    *(ram_ptr!(game, u16; 0x7e1, 2)) = 21u16;
+    *(ram_ptr!(game, u16; 0x7e1)) = 0u16;
     set_ram_word!(game.earthquake_timer = -1i32 as u16);
 }
 pub unsafe fn RoomCode_SetCeresDoorSolid(game: &mut Game) {
@@ -604,7 +600,7 @@ pub unsafe fn RoomCode_CeresColorMathHdma(game: &mut Game) {
     FxTypeFunc_2C_Haze(game);
 }
 pub unsafe fn RoomCode_CeresColorMathHdma_BgBase(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0x5d) = 102u8;
+    *ram_ptr!(game; 0x5d) = 102u8;
     FxTypeFunc_2C_Haze(game);
     set_ram_word!(game.hdma_data_table_in_ceres = 9u16);
 }
@@ -616,34 +612,34 @@ pub unsafe fn DoorCode_StartWreckedSkipTreadmill_East(game: &mut Game) {
     );
 }
 pub unsafe fn DoorCode_SetScroll_44(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(1) = 1u8;
+    *ram_ptr!(game; 0xcd20, 1) = 1u8;
 }
 pub unsafe fn DoorCode_SetScroll_45(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(0) = 2u8;
+    *ram_ptr!(game; 0xcd20, 0) = 2u8;
 }
 pub unsafe fn DoorCode_SetScroll_46(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(3) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(4) = 1u8;
+    *ram_ptr!(game; 0xcd20, 3) = 0u8;
+    *ram_ptr!(game; 0xcd20, 4) = 1u8;
 }
 pub unsafe fn DoorCode_SetScroll_47(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(41) = 1u8;
+    *ram_ptr!(game; 0xcd20, 41) = 1u8;
 }
 pub unsafe fn DoorCode_SetScroll_48(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(40) = 2u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(46) = 2u8;
+    *ram_ptr!(game; 0xcd20, 40) = 2u8;
+    *ram_ptr!(game; 0xcd20, 46) = 2u8;
 }
 pub unsafe fn DoorCode_SetScroll_49(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(6) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(7) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(8) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(9) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(10) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(11) = 0u8;
+    *ram_ptr!(game; 0xcd20, 6) = 0u8;
+    *ram_ptr!(game; 0xcd20, 7) = 0u8;
+    *ram_ptr!(game; 0xcd20, 8) = 0u8;
+    *ram_ptr!(game; 0xcd20, 9) = 0u8;
+    *ram_ptr!(game; 0xcd20, 10) = 0u8;
+    *ram_ptr!(game; 0xcd20, 11) = 0u8;
 }
 pub unsafe fn DoorCode_SetupElevatubeFromSouth(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(4) as *mut u16) = -256i32 as u16;
-    *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u16) = 2496u16;
-    *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(6) as *mut u16) = -32i32 as u16;
+    *(ram_ptr!(game, u16; 0x7e1, 4)) = -256i32 as u16;
+    *(ram_ptr!(game, u16; 0x7e1, 2)) = 2496u16;
+    *(ram_ptr!(game, u16; 0x7e1, 6)) = -32i32 as u16;
     CallSomeSamusCode(0u16, game);
     SpawnHardcodedPlm(
         SpawnHardcodedPlmArgs::new(0x1u8, 0u8, 0xb8f9 as VoidP),
@@ -651,13 +647,13 @@ pub unsafe fn DoorCode_SetupElevatubeFromSouth(game: &mut Game) {
     );
 }
 pub unsafe fn DoorCode_SetupElevatubeFromNorth(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(4) as *mut u16) = 256u16;
+    *(ram_ptr!(game, u16; 0x7e1, 4)) = 256u16;
     strcpy(
-        (&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut c_char,
+        ram_ptr!(game, c_char; 0x7e1, 2),
         b"@\0" as *const u8 as *const c_char,
     );
     strcpy(
-        (&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(6) as *mut c_char,
+        ram_ptr!(game, c_char; 0x7e1, 6),
         b" \0" as *const u8 as *const c_char,
     );
     CallSomeSamusCode(0u16, game);
@@ -670,92 +666,87 @@ pub unsafe fn RoomCode_Elevatube(game: &mut Game) {
     let mut v0: u16 = 0;
     set_ram_word!(game.samus_x_pos = 128u16);
     set_ram_word!(game.samus_x_subpos = 0u16);
-    let amt: i32 = (*((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(4) as *mut u16) as i16
-        as i32)
-        << 8i32;
-    v0 = ((amt as u32).wrapping_add(*((&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut u32))
-        >> 16i32) as u16;
-    let ref mut fresh13 = *((&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut u16);
+    let amt: i32 = (*(ram_ptr!(game, u16; 0x7e1, 4)) as i16 as i32) << 8i32;
+    v0 = ((amt as u32).wrapping_add(*(ram_ptr!(game, u32; 0x7e1))) >> 16i32) as u16;
+    let ref mut fresh13 = *(ram_ptr!(game, u16; 0x7e1));
     *fresh13 = (*fresh13 as i32 + amt) as u16;
-    *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u16) = v0;
+    *(ram_ptr!(game, u16; 0x7e1, 2)) = v0;
     Samus_MoveDown_NoSolidColl(amt, game);
-    if ((*((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(6) as *mut u16) as i32
-        + *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(4) as *mut u16) as i32
+    if ((*(ram_ptr!(game, u16; 0x7e1, 6)) as i32
+        + *(ram_ptr!(game, u16; 0x7e1, 4)) as i32
         + 3616i32) as u16)
         < 0x1c41u16
     {
-        let ref mut fresh14 =
-            *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(4) as *mut u16);
-        *fresh14 = (*fresh14)
-            .wrapping_add(*((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(6) as *mut u16));
+        let ref mut fresh14 = *(ram_ptr!(game, u16; 0x7e1, 4));
+        *fresh14 = (*fresh14).wrapping_add(*(ram_ptr!(game, u16; 0x7e1, 6)));
     }
 }
 pub unsafe fn DoorCode_ResetElevatubeNorthExit(game: &mut Game) {
     CallSomeSamusCode(1u16, game);
 }
 pub unsafe fn DoorCode_ResetElevatubeSouthExit(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut u8).offset(0xcd20) as *mut u16) = 514u16;
+    *(ram_ptr!(game, u16; 0xcd20)) = 514u16;
     CallSomeSamusCode(1u16, game);
 }
 pub unsafe fn DoorCode_SetScroll_50(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(10) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(11) = 1u8;
+    *ram_ptr!(game; 0xcd20, 10) = 0u8;
+    *ram_ptr!(game; 0xcd20, 11) = 1u8;
 }
 pub unsafe fn UNUSED_DoorCode_SetScroll_51(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(17) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(16) = 1u8;
+    *ram_ptr!(game; 0xcd20, 17) = 0u8;
+    *ram_ptr!(game; 0xcd20, 16) = 1u8;
 }
 pub unsafe fn UNUSED_DoorCode_SetScroll_52(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(4) = 2u8;
+    *ram_ptr!(game; 0xcd20, 4) = 2u8;
 }
 pub unsafe fn DoorCode_SetScroll_53(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(0) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(4) = 1u8;
+    *ram_ptr!(game; 0xcd20, 0) = 0u8;
+    *ram_ptr!(game; 0xcd20, 4) = 1u8;
 }
 pub unsafe fn DoorCode_SetScroll_54(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(0) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(1) = 1u8;
+    *ram_ptr!(game; 0xcd20, 0) = 0u8;
+    *ram_ptr!(game; 0xcd20, 1) = 1u8;
 }
 pub unsafe fn DoorCode_SetScroll_55(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(9) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(10) = 1u8;
+    *ram_ptr!(game; 0xcd20, 9) = 0u8;
+    *ram_ptr!(game; 0xcd20, 10) = 1u8;
 }
 pub unsafe fn DoorCode_SetScroll_56(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(0) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(2) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(1) = 1u8;
+    *ram_ptr!(game; 0xcd20, 0) = 0u8;
+    *ram_ptr!(game; 0xcd20, 2) = 0u8;
+    *ram_ptr!(game; 0xcd20, 1) = 1u8;
 }
 pub unsafe fn DoorCode_SetScroll_57(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(1) = 1u8;
+    *ram_ptr!(game; 0xcd20, 1) = 1u8;
 }
 pub unsafe fn DoorCode_SetScroll_58(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(6) = 1u8;
+    *ram_ptr!(game; 0xcd20, 6) = 1u8;
 }
 pub unsafe fn DoorCode_SetScroll_59(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(4) = 0u8;
+    *ram_ptr!(game; 0xcd20, 4) = 0u8;
 }
 pub unsafe fn DoorCode_SetScroll_60(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(1) = 0u8;
+    *ram_ptr!(game; 0xcd20, 1) = 0u8;
 }
 pub unsafe fn DoorCode_SetScroll_61(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(4) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(7) = 0u8;
+    *ram_ptr!(game; 0xcd20, 4) = 0u8;
+    *ram_ptr!(game; 0xcd20, 7) = 0u8;
 }
 pub unsafe fn DoorCode_SetScroll_62(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(2) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(1) = 1u8;
+    *ram_ptr!(game; 0xcd20, 2) = 0u8;
+    *ram_ptr!(game; 0xcd20, 1) = 1u8;
 }
 pub unsafe fn DoorCode_SetScroll_63(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(0) = 2u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(2) = 2u8;
+    *ram_ptr!(game; 0xcd20, 0) = 2u8;
+    *ram_ptr!(game; 0xcd20, 2) = 2u8;
 }
 pub unsafe fn DoorCode_SetScroll_64(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(0) = 2u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(1) = 2u8;
+    *ram_ptr!(game; 0xcd20, 0) = 2u8;
+    *ram_ptr!(game; 0xcd20, 1) = 2u8;
 }
 pub unsafe fn DoorCode_SetScroll_65(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(24) = 1u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(25) = 0u8;
+    *ram_ptr!(game; 0xcd20, 24) = 1u8;
+    *ram_ptr!(game; 0xcd20, 25) = 0u8;
 }
 pub unsafe fn DoorCode_CeresElevatorShaft(game: &mut Game) {
     crate::rtl::write_register_and_mirror(BGMODE as u16, 7, 0x56, true, game);
@@ -767,16 +758,16 @@ pub unsafe fn DoorCode_CeresElevatorShaft(game: &mut Game) {
     set_ram_word!(game.reg_M7Y = 1008u16);
     set_ram_word!(game.irq_enable_mode7 = 1u16);
     strcpy(
-        (&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut c_char,
+        ram_ptr!(game, c_char; 0x7e1),
         b"\"\0" as *const u8 as *const c_char,
     );
     strcpy(
-        (&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut c_char,
+        ram_ptr!(game, c_char; 0x7e1, 2),
         b"<\0" as *const u8 as *const c_char,
     );
 }
 pub unsafe fn DoorCode_CeresElevatorShaft_2(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0x56) = 9u8;
+    *ram_ptr!(game; 0x56) = 9u8;
     set_ram_word!(game.irq_enable_mode7 = 0u16);
 }
 pub unsafe fn RoomCode_CeresElevatorShaft_(game: &mut Game) {
@@ -788,12 +779,12 @@ static kRoomCode_SpawnCeresFallingDebris_Tab: [u16; 16] = [
 ];
 pub unsafe fn RoomCode_SpawnCeresFallingDebris(game: &mut Game) {
     if ram_word!(game, ceres_status) != 0u16 && {
-        let ref mut fresh12 = *((&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut u16);
+        let ref mut fresh12 = *(ram_ptr!(game, u16; 0x7e1));
         *fresh12 = (*fresh12).wrapping_sub(1);
-        *((&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut i16) < 0i16
+        *(ram_ptr!(game, i16; 0x7e1)) < 0i16
     } {
-        *(&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(0) = 8u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(1) = 0u8;
+        *ram_ptr!(game; 0x7e1, 0) = 8u8;
+        *ram_ptr!(game; 0x7e1, 1) = 0u8;
         let v0: u16 = (if ram_word!(game, random_number) as i32 & 0x8000i32 != 0 {
             addr_stru_869742 as i32
         } else {
@@ -815,8 +806,8 @@ pub unsafe fn RoomCode_HandleCeresRidleyGetaway(game: &mut Game) {
 pub unsafe fn RoomCode_ShakeScreenHorizDiag(game: &mut Game) {
     let mut v0: u16 = 0;
     let current_block_3: u64;
-    if *((&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut u16) != 0 {
-        let ref mut fresh11 = *((&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut u16);
+    if *(ram_ptr!(game, u16; 0x7e1)) != 0 {
+        let ref mut fresh11 = *(ram_ptr!(game, u16; 0x7e1));
         *fresh11 = (*fresh11).wrapping_sub(1);
         if *fresh11 == 0 {
             v0 = 18u16;
@@ -826,7 +817,7 @@ pub unsafe fn RoomCode_ShakeScreenHorizDiag(game: &mut Game) {
         }
     } else if NextRandom(game) < 0x200u16 {
         strcpy(
-            (&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut c_char,
+            ram_ptr!(game, c_char; 0x7e1),
             b"*\0" as *const u8 as *const c_char,
         );
         v0 = 23u16;
@@ -842,8 +833,8 @@ pub unsafe fn RoomCode_ShakeScreenHorizDiag(game: &mut Game) {
 pub unsafe fn RoomCode_ShakeScreenHorizDiagStrong(game: &mut Game) {
     let mut v0: i16 = 0;
     let current_block_3: u64;
-    if *((&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut u16) != 0 {
-        let ref mut fresh10 = *((&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut u16);
+    if *(ram_ptr!(game, u16; 0x7e1)) != 0 {
+        let ref mut fresh10 = *(ram_ptr!(game, u16; 0x7e1));
         *fresh10 = (*fresh10).wrapping_sub(1);
         if *fresh10 == 0 {
             v0 = 21i16;
@@ -853,7 +844,7 @@ pub unsafe fn RoomCode_ShakeScreenHorizDiagStrong(game: &mut Game) {
         }
     } else if NextRandom(game) < 0x180u16 {
         strcpy(
-            (&raw mut game.g_ram as *mut u8).offset(0x7e1) as *mut c_char,
+            ram_ptr!(game, c_char; 0x7e1),
             b"*\0" as *const u8 as *const c_char,
         );
         v0 = 26i16;
@@ -862,12 +853,9 @@ pub unsafe fn RoomCode_ShakeScreenHorizDiagStrong(game: &mut Game) {
         current_block_3 = 11006700562992250127;
     }
     if current_block_3 == 1544504899801662111 {
-        *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u16) = v0 as u16;
+        *(ram_ptr!(game, u16; 0x7e1, 2)) = v0 as u16;
     }
-    set_ram_word!(
-        game.earthquake_type =
-            *((&raw mut game.g_ram as *mut u8).offset(0x7e1).offset(2) as *mut u16)
-    );
+    set_ram_word!(game.earthquake_type = *(ram_ptr!(game, u16; 0x7e1, 2)));
     RoomCode_GenRandomExplodes_4th(game);
 }
 pub unsafe fn CallRoomDefStateSelect(ea: u32, k: u16, game: &mut Game) -> u16 {
@@ -1072,66 +1060,35 @@ pub unsafe fn RunDoorSetupCode(game: &mut Game) {
 }
 pub unsafe fn RoomCode_CrocomireShaking(game: &mut Game) {
     let mut ai_var_D: u16 = 0;
-    if ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).properties
-        as i32
-        & 0x200i32)
-        == 0i32
-    {
-        if (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).ai_var_A
-            == 64u16
-        {
+    if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).properties as i32 & 0x200i32) == 0i32 {
+        if (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).ai_var_A == 64u16 {
             set_ram_word!(
-                game.reg_BG1VOFS = ((*((&raw mut game.g_ram as *mut u8).offset(0xf78)
-                    as *mut EnemyData)
-                    .offset(1))
-                .ai_var_D as i32
+                game.reg_BG1VOFS = ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(1)).ai_var_D as i32
                     + ram_word!(game, bg1_y_offset) as i32
                     + ram_word!(game, layer1_y_pos) as i32)
                     as u16
             );
-        } else if ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
-            .ai_var_B as i32
-            & 0x400i32)
+        } else if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).ai_var_B as i32 & 0x400i32)
             != 0i32
         {
-            let fresh5 = &raw mut (*((&raw mut game.g_ram as *mut u8).offset(0xf78)
-                as *mut EnemyData)
-                .offset(1))
-            .ai_var_D;
+            let fresh5 = &raw mut (*(ram_ptr!(game, EnemyData; 0xf78)).offset(1)).ai_var_D;
             fresh5.write_unaligned(fresh5.read_unaligned().wrapping_sub(1));
             if fresh5.read_unaligned() as i32 + 7i32 & 0x8000i32 != 0 {
-                ai_var_D = ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData)
-                    .offset(1))
-                .ai_var_D as i32
+                ai_var_D = ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(1)).ai_var_D as i32
                     - 2i32
-                        * ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData)
-                            .offset(1))
-                        .ai_var_D as i32
-                            + 7i32)) as u16;
+                        * ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(1)).ai_var_D as i32 + 7i32))
+                    as u16;
             } else {
-                ai_var_D = (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData)
-                    .offset(1))
-                .ai_var_D;
+                ai_var_D = (*(ram_ptr!(game, EnemyData; 0xf78)).offset(1)).ai_var_D;
             }
             update_ram_word!(game.reg_BG1VOFS, wrapping_add(ai_var_D));
             set_ram_word!(game.reg_BG2VOFS = (ai_var_D).wrapping_sub(48u16));
-        } else if (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
-            .ai_var_C
-            == 34u16
-            && (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
-                .ai_var_D
-                != 0u16
+        } else if (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).ai_var_C == 34u16
+            && (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).ai_var_D != 0u16
         {
-            let fresh7 = &raw mut (*((&raw mut game.g_ram as *mut u8).offset(0xf78)
-                as *mut EnemyData)
-                .offset(0))
-            .ai_var_D;
+            let fresh7 = &raw mut (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).ai_var_D;
             fresh7.write_unaligned(fresh7.read_unaligned().wrapping_sub(1));
-            if ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
-                .ai_var_D as i32
-                & 1i32)
-                != 0i32
-            {
+            if ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).ai_var_D as i32 & 1i32) != 0i32 {
                 update_ram_word!(game.layer1_x_pos, wrapping_sub(4u16));
             } else {
                 update_ram_word!(game.layer1_x_pos, wrapping_add(4u16));
@@ -1142,13 +1099,9 @@ pub unsafe fn RoomCode_CrocomireShaking(game: &mut Game) {
 static kRoomCode_RidleyRoomShaking_X: [i16; 8] = [0, 2, 2, 2, 0, -2, -2, -2];
 static kRoomCode_RidleyRoomShaking_Y: [i16; 8] = [-2, -2, 0, 2, 2, 2, 0, -2];
 pub unsafe fn RoomCode_RidleyRoomShaking(game: &mut Game) {
-    let ai_var_A: u16 =
-        (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(4)).ai_var_A;
-    if (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(4)).ai_var_A != 0
-    {
-        let fresh0 = &raw mut (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData)
-            .offset(4))
-        .ai_var_A;
+    let ai_var_A: u16 = (*(ram_ptr!(game, EnemyData; 0xf78)).offset(4)).ai_var_A;
+    if (*(ram_ptr!(game, EnemyData; 0xf78)).offset(4)).ai_var_A != 0 {
+        let fresh0 = &raw mut (*(ram_ptr!(game, EnemyData; 0xf78)).offset(4)).ai_var_A;
         fresh0.write_unaligned(fresh0.read_unaligned().wrapping_sub(1));
         let v1: i32 = ai_var_A as i32 - 1i32;
         update_ram_word!(

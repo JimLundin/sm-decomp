@@ -60,6 +60,30 @@ inputs and 80 verification pins remain fixed. The final inline-pointer tree
 matches the frozen composition; broader readability and boot-to-credits
 remain open.
 
+Inline RAM pointer construction (2026-10-20): a caller-side macro shares
+3593 raw pointer expressions across 33 files, including 128 uses inside
+known RAM/ROM macros. The 2932 single offsets and 661 successive offset
+pairs retain their original tokens and order; 2067 target casts remain.
+No function call, whole-Game borrow, expression block or temporary scope is
+introduced. RAM metadata and every existing dereference/store stay exact.
+
+Net Rust lines -2449, to 140334 in the cinematic composition. Written raw
+offset lines fall 3593 because construction moves into the macro; actual
+runtime unsafe operations are unchanged. The existing raw counter omits the
+qualified-u8 helper body. Unsafe functions are unchanged; i32 cast lines
+fall 58 through formatting, with all actual i32 casts retained.
+
+Complete AST/context/non-overlap and primitive binding checks pass. Actual
+whole-crate compiler expansions are identical after only macro/import,
+inter-token whitespace and qualified primitive-u8 normalization; all
+parentheses, cast operations and evaluation order remain exact.
+Normal release (22.53s), formatting/check, progress and full
+any% 129712/0 (101.36s), native exit 0, pass on the frozen
+cinematic composition. Both focused commits share this verification; no
+pointer-only run is claimed. All 74 source/config/host inputs match and all
+80 replay pins remain stable. Broader pointer/alias safety and readability
+remain open; continue substantial shared implementations.
+
 Same-type casts (2026-10-20): release Clippy across all targets identifies
 1219 redundant primitive-integer/raw-pointer casts across 36 files. Removing
 only each cast suffix retains the exact operand, grouping, pointer constness,

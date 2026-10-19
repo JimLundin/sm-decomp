@@ -21,6 +21,7 @@ use crate::game::sm_a0::{
 };
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
+use crate::ram_map::ram_ptr;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{RomPtr, Unreachable};
@@ -252,10 +253,8 @@ pub unsafe fn Draygon_Init(game: &mut Game) {
     (*Get_Draygon(ram_word!(game, cur_enemy_index) as i32, game))
         .base
         .palette_index = 0xe00u16;
-    *(&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x178c) as *mut LongPtr)).bank
-        as *mut u16) = 165u16;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x178c) as *mut LongPtr)).addr =
-        ((0xa59342i32) as u16);
+    *(&raw mut (*(ram_ptr!(game, LongPtr; 0x178c))).bank as *mut u16) = 165u16;
+    (*(ram_ptr!(game, LongPtr; 0x178c))).addr = ((0xa59342i32) as u16);
     set_ram_word!(game.flag_process_all_enemies = -1i32 as u16);
     (*Get_Draygon(0i32, game)).base.current_instruction = addr_kDraygon_Ilist_9889 as u16;
     (*Get_Draygon(0x40i32, game)).base.current_instruction = addr_kDraygon_Ilist_9944 as u16;
@@ -411,8 +410,7 @@ pub unsafe fn Draygon_Func_5(game: &mut Game) {
         varE24 = (varE24).wrapping_sub((*(&raw mut varE22 as *mut u8).offset(1isize)) as u16);
         let fresh4 = varE26;
         varE26 = varE26.wrapping_add(1);
-        *(((&raw mut game.g_ram as *mut u8).offset(0x9002) as *mut u16 as *mut u8)
-            .offset(fresh4 as i32 as isize) as *mut u16) = v1;
+        *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(fresh4 as i32 as isize) as *mut u16) = v1;
         varE26 = (varE26).wrapping_add(2u16);
         varE26 = varE26.wrapping_add(1);
         if varE26 as i32 - 2048i32 & 0x8000i32 == 0 {
@@ -426,8 +424,8 @@ pub unsafe fn Draygon_Func_5(game: &mut Game) {
     );
     SetHiLo(&raw mut (*E).draygon_var_D, &raw mut (*E).draygon_var_E, t);
     let v6: u16 = varE26;
-    *(((&raw mut game.g_ram as *mut u8).offset(0x9002) as *mut u16 as *mut u8)
-        .offset(varE26 as i32 as isize) as *mut u16) = (*E).base.y_pos;
+    *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(varE26 as i32 as isize) as *mut u16) =
+        (*E).base.y_pos;
     (*E).draygon_var_B = v6;
     (*E).draygon_var_C = v6;
 }
@@ -443,8 +441,8 @@ pub unsafe fn Draygon_Func_6(game: &mut Game) {
     }
     (*Get_Draygon(ram_word!(game, cur_enemy_index) as i32, game))
         .base
-        .y_pos = *(((&raw mut game.g_ram as *mut u8).offset(0x9002) as *mut u16 as *mut u8)
-        .offset(draygon_var_B as i32 as isize) as *mut u16);
+        .y_pos = *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(draygon_var_B as i32 as isize)
+        as *mut u16);
     (*E).draygon_var_B = ((*E).draygon_var_B).wrapping_sub(4u16);
     if (*E).draygon_var_B != 0 {
         AddToHiLo(
@@ -487,8 +485,8 @@ pub unsafe fn Draygon_Func_9(game: &mut Game) {
     }
     (*Get_Draygon(ram_word!(game, cur_enemy_index) as i32, game))
         .base
-        .y_pos = *(((&raw mut game.g_ram as *mut u8).offset(0x9002) as *mut u16 as *mut u8)
-        .offset(draygon_var_B as i32 as isize) as *mut u16);
+        .y_pos = *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(draygon_var_B as i32 as isize)
+        as *mut u16);
     (*E).draygon_var_B = ((*E).draygon_var_B).wrapping_add(4u16);
     if (*E).draygon_var_B == (*E).draygon_var_C {
         (*E).draygon_var_B = 0u16;
@@ -534,8 +532,8 @@ pub unsafe fn Draygon_Func_11(game: &mut Game) {
     }
     (*Get_Draygon(ram_word!(game, cur_enemy_index) as i32, game))
         .base
-        .y_pos = *(((&raw mut game.g_ram as *mut u8).offset(0x9002) as *mut u16 as *mut u8)
-        .offset(draygon_var_B as i32 as isize) as *mut u16);
+        .y_pos = *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(draygon_var_B as i32 as isize)
+        as *mut u16);
     (*E).draygon_var_B = ((*E).draygon_var_B).wrapping_sub(4u16);
     if (*E).draygon_var_B != 0 {
         AddToHiLo(
@@ -570,8 +568,8 @@ pub unsafe fn Draygon_Func_13(game: &mut Game) {
     }
     (*Get_Draygon(ram_word!(game, cur_enemy_index) as i32, game))
         .base
-        .y_pos = *(((&raw mut game.g_ram as *mut u8).offset(0x9002) as *mut u16 as *mut u8)
-        .offset(draygon_var_B as i32 as isize) as *mut u16);
+        .y_pos = *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(draygon_var_B as i32 as isize)
+        as *mut u16);
     (*E).draygon_var_B = ((*E).draygon_var_B).wrapping_add(4u16);
     if (*E).draygon_var_B == (*E).draygon_var_C {
         if (ram_word!(game, random_number) as i32 & 1i32) != 0i32 {
@@ -1092,10 +1090,7 @@ pub unsafe fn Draygon_Func_33(game: &mut Game) {
         (*E).base.properties = v1;
         (*Get_Draygon(0x40i32, game)).base.properties = v1;
         let v2: u16 = ram_word!(game, area_index);
-        let ref mut fresh3 = *((&raw mut game.g_ram as *mut u8)
-            .offset(0xd828)
-            .offset(ram_word!(game, area_index) as isize)
-            as *mut u16);
+        let ref mut fresh3 = *(ram_ptr!(game, u16; 0xd828, ram_word!(game, area_index) as isize));
         *fresh3 = (*fresh3) | (1u16);
         Enemy_ItemDrop_Draygon(v2, game);
         Draygon_Func_44(game);
@@ -1285,9 +1280,7 @@ pub unsafe fn Draygon_Hurt(game: &mut Game) {
         v0 = addr_word_A5A297 as u16;
     }
     memcpy(
-        (&raw mut game.g_ram as *mut u8)
-            .offset(addr_kDraygon_BigSprmap_C08F as i32 as isize)
-            .offset(17) as *mut c_void,
+        ram_ptr!(game, c_void; addr_kDraygon_BigSprmap_C08F as i32 as isize, 17),
         RomPtr_A5(v0, game) as *const c_void,
         32 as size_t,
     );
@@ -1318,9 +1311,7 @@ pub unsafe fn Draygon_Hurt(game: &mut Game) {
         v5 = addr_word_A5A297 as u16;
     }
     memcpy(
-        (&raw mut game.g_ram as *mut u8)
-            .offset(addr_kDraygon_BigSprmap_C11B as i32 as isize)
-            .offset(197) as *mut c_void,
+        ram_ptr!(game, c_void; addr_kDraygon_BigSprmap_C11B as i32 as isize, 197),
         RomPtr_A5(v5, game) as *const c_void,
         32 as size_t,
     );
@@ -1413,8 +1404,7 @@ pub unsafe fn Draygon_Func_41(game: &mut Game) {
         let mut v2: u16 = (4u16).wrapping_mul((*E).draygon_var_0E);
         j = 0u16;
         while j != 8u16 {
-            *((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16)
-                .offset(((j as i32 >> 1i32) + 89i32) as isize) =
+            *(ram_ptr!(game, u16; 0xc000)).offset(((j as i32 >> 1i32) + 89i32) as isize) =
                 crate::rtl::rom_table_word!(game, 0xa596af, (v2 as i32 >> 1i32) as isize);
             v2 = (v2).wrapping_add(2u16);
             j = (j).wrapping_add(2u16);
@@ -1551,14 +1541,14 @@ pub unsafe fn Draygon_Func_42(varE24: u16, game: &mut Game) {
             != 0i32
         {
             AddToHiLo(
-                ((&raw mut game.g_ram as *mut u8).offset(0xf0f8) as *mut u16).offset(v3 as isize),
-                ((&raw mut game.g_ram as *mut u8).offset(0xf178) as *mut u16).offset(v3 as isize),
+                (ram_ptr!(game, u16; 0xf0f8)).offset(v3 as isize),
+                (ram_ptr!(game, u16; 0xf178)).offset(v3 as isize),
                 crate::rtl::rom_table_word!(game, 0xa5a1af, v2 as isize) as u32,
             );
         } else {
             AddToHiLo(
-                ((&raw mut game.g_ram as *mut u8).offset(0xf0f8) as *mut u16).offset(v3 as isize),
-                ((&raw mut game.g_ram as *mut u8).offset(0xf178) as *mut u16).offset(v3 as isize),
+                (ram_ptr!(game, u16; 0xf0f8)).offset(v3 as isize),
+                (ram_ptr!(game, u16; 0xf178)).offset(v3 as isize),
                 (-(crate::rtl::rom_table_word!(game, 0xa5a1af, v2 as isize) as i32)
                     - ((varE24 as i32) << 16i32)) as u32,
             );
@@ -1568,14 +1558,14 @@ pub unsafe fn Draygon_Func_42(varE24: u16, game: &mut Game) {
             != 0i32
         {
             AddToHiLo(
-                ((&raw mut game.g_ram as *mut u8).offset(0xf1f8) as *mut u16).offset(v3 as isize),
-                ((&raw mut game.g_ram as *mut u8).offset(0xf278) as *mut u16).offset(v3 as isize),
+                (ram_ptr!(game, u16; 0xf1f8)).offset(v3 as isize),
+                (ram_ptr!(game, u16; 0xf278)).offset(v3 as isize),
                 crate::rtl::rom_table_word!(game, 0xa5a1af, (v2 + 1i32) as isize) as u32,
             );
         } else {
             AddToHiLo(
-                ((&raw mut game.g_ram as *mut u8).offset(0xf1f8) as *mut u16).offset(v3 as isize),
-                ((&raw mut game.g_ram as *mut u8).offset(0xf278) as *mut u16).offset(v3 as isize),
+                (ram_ptr!(game, u16; 0xf1f8)).offset(v3 as isize),
+                (ram_ptr!(game, u16; 0xf278)).offset(v3 as isize),
                 -(crate::rtl::rom_table_word!(game, 0xa5a1af, (v2 + 1i32) as isize) as i32) as u32,
             );
         }
@@ -1968,12 +1958,7 @@ pub unsafe fn SporeSpawn_Init(game: &mut Game) {
     (*E).ssn_var_C = (*E).base.x_pos;
     (*E).ssn_var_D = (*E).base.y_pos;
     (*E).ssn_var_F = 0u16;
-    if (*(&raw mut game.g_ram as *mut u8)
-        .offset(0xd828)
-        .offset(ram_word!(game, area_index) as isize) as i32
-        & 2i32)
-        != 0i32
-    {
+    if (*ram_ptr!(game; 0xd828, ram_word!(game, area_index) as isize) as i32 & 2i32) != 0i32 {
         (*E0).base.current_instruction = addr_kDraygon_Ilist_E6B9 as u16;
         (*E0).ssn_var_A = ((0xa5eb1ai32) as u16);
         (*E0).base.properties = ((*E0).base.properties) | (0x8000u16);
@@ -2208,16 +2193,13 @@ pub unsafe fn SporeSpawn_Func_6(game: &mut Game) {
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
         let mut i: i32 = 26i32;
         while i >= 0i32 {
-            *(((&raw mut game.g_ram as *mut u8).offset(0x1997) as *mut u16 as *mut u8)
-                .offset(i as u16 as i32 as isize) as *mut u16) = 0u16;
+            *((ram_ptr!(game, u16; 0x1997) as *mut u8).offset(i as u16 as i32 as isize)
+                as *mut u16) = 0u16;
             i -= 2i32;
         }
         (*E0).base.current_instruction = addr_kDraygon_Ilist_E77D as u16;
         (*E0).base.instruction_timer = 1u16;
-        let ref mut fresh5 = *((&raw mut game.g_ram as *mut u8)
-            .offset(0xd828)
-            .offset(ram_word!(game, area_index) as isize)
-            as *mut u16);
+        let ref mut fresh5 = *(ram_ptr!(game, u16; 0xd828, ram_word!(game, area_index) as isize));
         *fresh5 = (*fresh5) | (2u16);
         set_ram_word!(game.scrolling_finished_hook = 0u16);
         SpawnHardcodedPlm(

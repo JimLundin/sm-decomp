@@ -7,6 +7,7 @@ use crate::game::sm_84::{SpawnPLM, SpawnPLMWithCollision};
 use crate::game::sm_90::KillProjectile;
 use crate::game::sm_a0::CalculateAngleFromXY;
 use crate::game_state::Game;
+use crate::ram_map::ram_ptr;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{AddToHiLo, SetHiLo};
 use crate::rtl::{Mult8x8, RomPtr, SnesDivide, SnesModulus, Unreachable};
@@ -1261,9 +1262,8 @@ unsafe fn BlockFunc_9C73(v0: u16, game: &mut Game) -> u16 {
     let v1: i32 = v0 as i32 >> 1i32;
     if (ram_word!(game, projectile_type[v1]) as i32 & 0xf00i32) != 0i32 {
         kBlockFunc_9C73_Tab1[(2i32
-            * (*(((&raw mut game.g_ram as *mut u8).offset(0xc18) as *mut u16).offset(v1 as isize)
-                as *mut u8)
-                .offset(1isize) as i32
+            * (*((ram_ptr!(game, u16; 0xc18)).offset(v1 as isize) as *mut u8).offset(1isize)
+                as i32
                 & 0xfi32)
             + 1i32) as usize] as u16
     } else {
@@ -1353,11 +1353,7 @@ unsafe fn BlockColl_BombExplosion(ci: *mut CollInfo, k: u16, game: &mut Game) {
     }
 }
 unsafe fn sub_949D5D(ci: *mut CollInfo, game: &mut Game) -> u8 {
-    if (*(&raw mut game.g_ram as *mut u8)
-        .offset(0x16402)
-        .offset(ram_word!(game, cur_block_index) as isize) as i32
-        & 0x1fi32)
-        < 5i32
+    if (*ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize) as i32 & 0x1fi32) < 5i32
     {
         1u8
     } else {
@@ -1365,9 +1361,7 @@ unsafe fn sub_949D5D(ci: *mut CollInfo, game: &mut Game) -> u8 {
     }
 }
 unsafe fn BlockBombedReact_Special(ci: *mut CollInfo, game: &mut Game) -> u8 {
-    let v0: u8 = *(&raw mut game.g_ram as *mut u8)
-        .offset(0x16402)
-        .offset(ram_word!(game, cur_block_index) as isize);
+    let v0: u8 = *ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize);
     if (v0 as i32 & 0x80i32) != 0i32 {
         let kBlockBombedReact_Region_Plm: *mut u16 = RomPtr_94(0x9e44u16, game) as *mut u16;
         let v2: *const u16 = RomPtr_94(
@@ -1382,9 +1376,7 @@ unsafe fn BlockBombedReact_Special(ci: *mut CollInfo, game: &mut Game) -> u8 {
     1u8
 }
 unsafe fn BlockReact_ShootableAir(ci: *mut CollInfo, game: &mut Game) -> u8 {
-    let v0: u8 = *(&raw mut game.g_ram as *mut u8)
-        .offset(0x16402)
-        .offset(ram_word!(game, cur_block_index) as isize);
+    let v0: u8 = *ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize);
     if (v0 as i32 & 0x80i32) == 0i32 {
         let t: u16 = *(RomPtr_94(0x9ea6u16, game) as *mut u16).offset(v0 as isize);
         if t == 0xb974u16 {
@@ -1396,9 +1388,7 @@ unsafe fn BlockReact_ShootableAir(ci: *mut CollInfo, game: &mut Game) -> u8 {
     0u8
 }
 unsafe fn BlockReact_Shootable(ci: *mut CollInfo, game: &mut Game) -> u8 {
-    let v0: u8 = *(&raw mut game.g_ram as *mut u8)
-        .offset(0x16402)
-        .offset(ram_word!(game, cur_block_index) as isize);
+    let v0: u8 = *ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize);
     if (v0 as i32 & 0x80i32) != 0i32 {
         let kBlockShotBombGrappleReaction_ShootableBlock_RegionPlm: *mut u16 =
             RomPtr_94(0x9fc6u16, game) as *mut u16;
@@ -1421,9 +1411,7 @@ unsafe fn BlockReact_Shootable(ci: *mut CollInfo, game: &mut Game) -> u8 {
 unsafe fn BlockReact_BombableAir(ci: *mut CollInfo, game: &mut Game) -> u8 {
     let kBlockShotBombGrappleReact_BombableBlockPlm: *mut u16 =
         RomPtr_94(0xa012u16, game) as *mut u16;
-    let v0: u8 = *(&raw mut game.g_ram as *mut u8)
-        .offset(0x16402)
-        .offset(ram_word!(game, cur_block_index) as isize);
+    let v0: u8 = *ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize);
     if (v0 as i32 & 0x80i32) == 0i32 {
         SpawnPLM(
             *kBlockShotBombGrappleReact_BombableBlockPlm.offset(v0 as isize),
@@ -1435,9 +1423,7 @@ unsafe fn BlockReact_BombableAir(ci: *mut CollInfo, game: &mut Game) -> u8 {
 unsafe fn BlockReact_BombableBlock(ci: *mut CollInfo, game: &mut Game) -> u8 {
     let kBlockShotBombGrappleReact_BombableBlockPlm: *mut u16 =
         RomPtr_94(0xa012u16, game) as *mut u16;
-    let v0: u8 = *(&raw mut game.g_ram as *mut u8)
-        .offset(0x16402)
-        .offset(ram_word!(game, cur_block_index) as isize);
+    let v0: u8 = *ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize);
     if (v0 as i32 & 0x80i32) == 0i32 {
         SpawnPLM(
             *kBlockShotBombGrappleReact_BombableBlockPlm.offset(v0 as isize),
@@ -1471,17 +1457,13 @@ unsafe fn BlockFunc_A06A(k: u16, game: &mut Game) {
             set_ram_word!(game.projectile_variables[v1] = 0u16);
         }
     } else {
-        let r18: u16 = *((&raw mut game.g_ram as *mut u8).offset(0xcea) as *mut u16 as *mut u8)
-            .offset(1isize) as u16;
-        let r20: u16 = (((3u16).wrapping_mul(
-            (*((&raw mut game.g_ram as *mut u8).offset(0xcea) as *mut u16 as *mut u8)
-                .offset(1isize)) as u16,
-        )) as i32
+        let r18: u16 = *(ram_ptr!(game, u16; 0xcea) as *mut u8).offset(1isize) as u16;
+        let r20: u16 = (((3u16)
+            .wrapping_mul((*(ram_ptr!(game, u16; 0xcea) as *mut u8).offset(1isize)) as u16))
+            as i32
             >> 2i32) as u16;
-        v3 = ((ram_word!(game, power_bomb_explosion_x_pos)) as i16).wrapping_sub(
-            (*((&raw mut game.g_ram as *mut u8).offset(0xcea) as *mut u16 as *mut u8)
-                .offset(1isize)) as i16,
-        );
+        v3 = ((ram_word!(game, power_bomb_explosion_x_pos)) as i16)
+            .wrapping_sub((*(ram_ptr!(game, u16; 0xcea) as *mut u8).offset(1isize)) as i16);
         if v3 < 0i16 {
             v3 = 0i16;
         }
@@ -1572,17 +1554,11 @@ unsafe fn BlockFunc_A11A(mut a: u16, r24: u16, r26: u16, r28: u16, game: &mut Ga
     }
 }
 unsafe fn BlockShotReactHoriz_Slope(ci: *mut CollInfo, game: &mut Game) -> u8 {
-    if (*(&raw mut game.g_ram as *mut u8)
-        .offset(0x16402)
-        .offset(ram_word!(game, cur_block_index) as isize) as i32
-        & 0x1fi32)
-        < 5i32
+    if (*ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize) as i32 & 0x1fi32) < 5i32
     {
         BlockShotReactVert_Slope_Square(
             ci,
-            ((*(&raw mut game.g_ram as *mut u8)
-                .offset(0x16402)
-                .offset(ram_word!(game, cur_block_index) as isize)) as u16)
+            ((*ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize)) as u16)
                 & (0x1fu16),
             ram_word!(game, cur_block_index),
             game,
@@ -1592,17 +1568,11 @@ unsafe fn BlockShotReactHoriz_Slope(ci: *mut CollInfo, game: &mut Game) -> u8 {
     }
 }
 unsafe fn BlockShotReactVert_Slope(ci: *mut CollInfo, game: &mut Game) -> u8 {
-    if (*(&raw mut game.g_ram as *mut u8)
-        .offset(0x16402)
-        .offset(ram_word!(game, cur_block_index) as isize) as i32
-        & 0x1fi32)
-        < 5i32
+    if (*ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize) as i32 & 0x1fi32) < 5i32
     {
         BlockShotReactHoriz_Slope_Square(
             ci,
-            ((*(&raw mut game.g_ram as *mut u8)
-                .offset(0x16402)
-                .offset(ram_word!(game, cur_block_index) as isize)) as u16)
+            ((*ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize)) as u16)
                 & (0x1fu16),
             ram_word!(game, cur_block_index),
             game,
@@ -1678,8 +1648,8 @@ pub unsafe fn BlockCollNoWaveBeamHoriz(k: u16, game: &mut Game) -> u8 {
         ram_word!(game, room_width_in_blocks) as u8,
     );
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0xb64) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0xb8c) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0xb64)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0xb8c)).offset(v1 as isize),
         amt as u32,
     );
     let r24: u16 = ram_word!(game, projectile_x_pos[v1]);
@@ -1730,8 +1700,8 @@ pub unsafe fn BlockCollNoWaveBeamVert(k: u16, game: &mut Game) -> u8 {
     let amt: i32 = (ram_word!(game, projectile_bomb_y_speed[v1]) as i16 as i32) << 8i32;
     let some_pos: u16 = BlockGetSomePos2(k, game);
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0xb78) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0xba0) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0xb78)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0xba0)).offset(v1 as isize),
         amt as u32,
     );
     let r24: u16 = ram_word!(game, projectile_y_pos[v1]);
@@ -1796,8 +1766,8 @@ pub unsafe fn BlockCollWaveBeamHoriz(k: u16, game: &mut Game) -> u8 {
         ram_word!(game, room_width_in_blocks) as u8,
     );
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0xb64) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0xb8c) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0xb64)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0xb8c)).offset(v1 as isize),
         amt as u32,
     );
     let r24: u16 = ram_word!(game, projectile_x_pos[v1]);
@@ -1824,9 +1794,7 @@ pub unsafe fn BlockCollWaveBeamHoriz(k: u16, game: &mut Game) -> u8 {
         ci_r38: some_pos,
         ci_r40: some_pos,
     };
-    let v9: u8 = *(((&raw mut game.g_ram as *mut u8).offset(0xb78) as *mut u16).offset(v1 as isize)
-        as *mut u8)
-        .offset(1isize);
+    let v9: u8 = *((ram_ptr!(game, u16; 0xb78)).offset(v1 as isize) as *mut u8).offset(1isize);
     if v9 as i32 & 0x80i32 == 0
         && ((v9) as i16).wrapping_sub((ram_word!(game, room_height_in_scrolls)) as i16) < 0i16
         && ((*(&raw mut R28 as *mut u8).offset(1isize)) as i16)
@@ -1850,8 +1818,8 @@ pub unsafe fn BlockCollWaveBeamVert(k: u16, game: &mut Game) -> u8 {
     let amt: i32 = (ram_word!(game, projectile_bomb_y_speed[v1]) as i16 as i32) << 8i32;
     let some_pos: u16 = BlockGetSomePos2(k, game);
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0xb78) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0xba0) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0xb78)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0xba0)).offset(v1 as isize),
         amt as u32,
     );
     let r24: u16 = ram_word!(game, projectile_y_pos[v1]);
@@ -1875,10 +1843,7 @@ pub unsafe fn BlockCollWaveBeamVert(k: u16, game: &mut Game) -> u8 {
     if some_pos as i32 - 16i32 & 0x8000i32 == 0 {
         return 0u8;
     }
-    let v10: u8 =
-        *(((&raw mut game.g_ram as *mut u8).offset(0xb64) as *mut u16).offset(v1 as isize)
-            as *mut u8)
-            .offset(1isize);
+    let v10: u8 = *((ram_ptr!(game, u16; 0xb64)).offset(v1 as isize) as *mut u8).offset(1isize);
     let mut ci: CollInfo = CollInfo {
         ci_r18_r20: amt,
         ci_r24: r24,
@@ -1914,8 +1879,8 @@ pub unsafe fn BlockCollMissileHoriz(k: u16, game: &mut Game) -> u8 {
         ram_word!(game, room_width_in_blocks) as u8,
     );
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0xb64) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0xb8c) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0xb64)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0xb8c)).offset(v1 as isize),
         amt as u32,
     );
     let v3: u16 = ram_word!(game, projectile_bomb_x_subpos[v1]);
@@ -1947,8 +1912,8 @@ pub unsafe fn BlockCollMissileVert(k: u16, game: &mut Game) -> u8 {
     let v1: i32 = k as i32 >> 1i32;
     let amt: i32 = (ram_word!(game, projectile_bomb_y_speed[v1]) as i16 as i32) << 8i32;
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0xb78) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0xba0) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0xb78)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0xba0)).offset(v1 as isize),
         amt as u32,
     );
     let mut r24: u16 = ram_word!(game, projectile_y_pos[v1]);
@@ -1981,32 +1946,19 @@ pub unsafe fn BlockCollMissileVert(k: u16, game: &mut Game) -> u8 {
 }
 unsafe fn BlockShotReact_Slope_NonSquare(ci: *mut CollInfo, j: u16, k: u16, game: &mut Game) -> u8 {
     let v2: u16 = (ram_word!(game, projectile_x_pos[(j as i32 >> 1i32)]) as i32 & 0xfi32
-        ^ (if (*(&raw mut game.g_ram as *mut u8)
-            .offset(0x16402)
-            .offset(k as isize) as i32
-            & 0x40i32)
-            != 0i32
-        {
+        ^ (if (*ram_ptr!(game; 0x16402, k as isize) as i32 & 0x40i32) != 0i32 {
             0xfi32
         } else {
             0i32
         })) as u16;
     let v4: u16 = (ram_word!(game, projectile_y_pos[(j as i32 >> 1i32)]) as i32 & 0xfi32
-        ^ (if (*(&raw mut game.g_ram as *mut u8)
-            .offset(0x16402)
-            .offset(k as isize) as i32
-            & 0x80i32)
-            != 0i32
-        {
+        ^ (if (*ram_ptr!(game; 0x16402, k as isize) as i32 & 0x80i32) != 0i32 {
             0xfi32
         } else {
             0i32
         })) as u16;
     let v5: u16 = ((kAlignYPos_Tab0[(16i32
-        * (*(&raw mut game.g_ram as *mut u8)
-            .offset(0x16402)
-            .offset(k as isize) as i32
-            & 0x1fi32)
+        * (*ram_ptr!(game; 0x16402, k as isize) as i32 & 0x1fi32)
         + (v2 as i32 & 0xfi32)) as usize]) as u16)
         & (0x1fu16);
     if ((v5) as i16).wrapping_sub((v4) as i16) <= 0i16 {
@@ -2082,10 +2034,7 @@ unsafe fn BlockShotReactVert_Slope_Square(
     game: &mut Game,
 ) -> u8 {
     let temp_collision_DD4: u16 = (4u16).wrapping_mul(a);
-    let temp_collision_DD6: u16 = (*(&raw mut game.g_ram as *mut u8)
-        .offset(0x16402)
-        .offset(k as isize) as i32
-        >> 6i32) as u16;
+    let temp_collision_DD6: u16 = (*ram_ptr!(game; 0x16402, k as isize) as i32 >> 6i32) as u16;
     let mut v2: u16 = (4i32 * a as i32
         + (temp_collision_DD6 as i32 ^ ((*ci).ci_r28 as i32 & 8i32) >> 3i32))
         as u16;
@@ -2099,12 +2048,9 @@ unsafe fn BlockShotReactVert_Slope_Square(
                 || kTab948E54[v2 as usize] == 0
             {
                 let v4: u16 = (v2) ^ (2u16);
-                if (*(((&raw mut game.g_ram as *mut u8).offset(0xbc8) as *mut u16)
-                    .offset(v3 as isize) as *mut u8)
-                    .offset(0) as i32
-                    + *(((&raw mut game.g_ram as *mut u8).offset(0xb78) as *mut u16)
-                        .offset(v3 as isize) as *mut u8)
-                        .offset(0) as i32
+                if (*((ram_ptr!(game, u16; 0xbc8)).offset(v3 as isize) as *mut u8).offset(0) as i32
+                    + *((ram_ptr!(game, u16; 0xb78)).offset(v3 as isize) as *mut u8).offset(0)
+                        as i32
                     - 1i32
                     & 8i32)
                     == 0i32
@@ -2124,12 +2070,8 @@ unsafe fn BlockShotReactVert_Slope_Square(
             {
                 return (kTab948E54[(v2 as i32 ^ 2i32) as usize] != 0u8) as u8;
             }
-        } else if (*(((&raw mut game.g_ram as *mut u8).offset(0xbc8) as *mut u16)
-            .offset(v3 as isize) as *mut u8)
-            .offset(0) as i32
-            + *(((&raw mut game.g_ram as *mut u8).offset(0xb78) as *mut u16).offset(v3 as isize)
-                as *mut u8)
-                .offset(0) as i32
+        } else if (*((ram_ptr!(game, u16; 0xbc8)).offset(v3 as isize) as *mut u8).offset(0) as i32
+            + *((ram_ptr!(game, u16; 0xb78)).offset(v3 as isize) as *mut u8).offset(0) as i32
             - 1i32
             & 8i32)
             == 0i32
@@ -2153,10 +2095,7 @@ unsafe fn BlockShotReactHoriz_Slope_Square(
     game: &mut Game,
 ) -> u8 {
     let temp_collision_DD4: u16 = (4u16).wrapping_mul(a);
-    let temp_collision_DD6: u16 = (*(&raw mut game.g_ram as *mut u8)
-        .offset(0x16402)
-        .offset(k as isize) as i32
-        >> 6i32) as u16;
+    let temp_collision_DD6: u16 = (*ram_ptr!(game; 0x16402, k as isize) as i32 >> 6i32) as u16;
     let mut v2: u16 = (4i32 * a as i32
         + (temp_collision_DD6 as i32 ^ ((*ci).ci_r28 as i32 & 8i32) >> 2i32))
         as u16;
@@ -2170,12 +2109,9 @@ unsafe fn BlockShotReactHoriz_Slope_Square(
                 || kTab948E54[v2 as usize] == 0u8
             {
                 let v4: u16 = (v2) ^ (1u16);
-                if (*(((&raw mut game.g_ram as *mut u8).offset(0xbb4) as *mut u16)
-                    .offset(v3 as isize) as *mut u8)
-                    .offset(0) as i32
-                    + *(((&raw mut game.g_ram as *mut u8).offset(0xb64) as *mut u16)
-                        .offset(v3 as isize) as *mut u8)
-                        .offset(0) as i32
+                if (*((ram_ptr!(game, u16; 0xbb4)).offset(v3 as isize) as *mut u8).offset(0) as i32
+                    + *((ram_ptr!(game, u16; 0xb64)).offset(v3 as isize) as *mut u8).offset(0)
+                        as i32
                     - 1i32
                     & 8i32)
                     == 0i32
@@ -2188,10 +2124,10 @@ unsafe fn BlockShotReactHoriz_Slope_Square(
         }
         if (*ci).ci_r38 != 0 {
             if (*ci).ci_r38 == (*ci).ci_r26
-                && (*((&raw mut game.g_ram as *mut u8).offset(0xb64) as *mut u16)
+                && (*(ram_ptr!(game, u16; 0xb64))
                     .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize)
                     as i32
-                    - *((&raw mut game.g_ram as *mut u8).offset(0xbb4) as *mut u16)
+                    - *(ram_ptr!(game, u16; 0xbb4))
                         .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize)
                         as i32
                     & 8i32)
@@ -2199,11 +2135,11 @@ unsafe fn BlockShotReactHoriz_Slope_Square(
             {
                 return (kTab948E54[(v2 as i32 ^ 1i32) as usize] != 0u8) as u8;
             }
-        } else if (*(((&raw mut game.g_ram as *mut u8).offset(0xbb4) as *mut u16)
+        } else if (*((ram_ptr!(game, u16; 0xbb4))
             .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize)
             as *mut u8)
             .offset(0) as i32
-            + *(((&raw mut game.g_ram as *mut u8).offset(0xb64) as *mut u16)
+            + *((ram_ptr!(game, u16; 0xb64))
                 .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize)
                 as *mut u8)
                 .offset(0) as i32
@@ -2218,7 +2154,7 @@ unsafe fn BlockShotReactHoriz_Slope_Square(
         }
         return (kTab948E54[(v2 as i32 ^ 1i32) as usize] != 0u8) as u8;
     }
-    if (*((&raw mut game.g_ram as *mut u8).offset(0xb64) as *mut u16)
+    if (*(ram_ptr!(game, u16; 0xb64))
         .offset((ram_word!(game, projectile_index) as i32 >> 1i32) as isize) as i32
         & 8i32)
         != 0i32
@@ -2233,19 +2169,12 @@ unsafe fn BlockReactGrapple_GrappleBlock(ci: *mut CollInfo, game: &mut Game) -> 
         game.grapple_beam_flags,
         |fresh0| (fresh0 as i32 & !(0x8000i32)) as u16
     );
-    if *(&raw mut game.g_ram as *mut u8)
-        .offset(0x16402)
-        .offset(ram_word!(game, cur_block_index) as isize) as i32
-        & 0x80i32
-        != 0
-    {
+    if *ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize) as i32 & 0x80i32 != 0 {
         0u8
     } else {
         SpawnPLM(
-            kBlockReactGrapple_GrappleBlockPlm[*(&raw mut game.g_ram as *mut u8)
-                .offset(0x16402)
-                .offset(ram_word!(game, cur_block_index) as isize)
-                as usize],
+            kBlockReactGrapple_GrappleBlockPlm
+                [*ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize) as usize],
             game,
         )
     }
@@ -2255,19 +2184,12 @@ unsafe fn BlockReactGrapple_SpikeBlock(ci: *mut CollInfo, game: &mut Game) -> u8
         0xd0e4, 0xd0e4, 0xd0e4, 0xd0e8, 0xd0e4, 0xd0e4, 0xd0e4, 0xd0e4, 0xd0e4, 0xd0e4, 0xd0e4,
         0xd0e4, 0xd0e4, 0xd0e4, 0xd0e4, 0xd0e4,
     ];
-    if *(&raw mut game.g_ram as *mut u8)
-        .offset(0x16402)
-        .offset(ram_word!(game, cur_block_index) as isize) as i32
-        & 0x80i32
-        != 0
-    {
+    if *ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize) as i32 & 0x80i32 != 0 {
         0u8
     } else {
         SpawnPLM(
-            kBlockReactGrapple_SpikeBlockPlm[*(&raw mut game.g_ram as *mut u8)
-                .offset(0x16402)
-                .offset(ram_word!(game, cur_block_index) as isize)
-                as usize],
+            kBlockReactGrapple_SpikeBlockPlm
+                [*ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize) as usize],
             game,
         )
     }
@@ -2281,18 +2203,18 @@ pub unsafe fn BlockCollGrappleBeam(game: &mut Game) -> u8 {
     let mut i: i32 = 0i32;
     while i < 4i32 {
         AddToHiLo(
-            (&raw mut game.g_ram as *mut u8).offset(0xd10) as *mut u16,
-            (&raw mut game.g_ram as *mut u8).offset(0xd0e) as *mut u16,
+            ram_ptr!(game, u16; 0xd10),
+            ram_ptr!(game, u16; 0xd0e),
             grapple_vel_x as u32,
         );
         AddToHiLo(
-            (&raw mut game.g_ram as *mut u8).offset(0xd14) as *mut u16,
-            (&raw mut game.g_ram as *mut u8).offset(0xd12) as *mut u16,
+            ram_ptr!(game, u16; 0xd14),
+            ram_ptr!(game, u16; 0xd12),
             grapple_vel_y as u32,
         );
         SetHiLo(
-            (&raw mut game.g_ram as *mut u8).offset(0xd08) as *mut u16,
-            (&raw mut game.g_ram as *mut u8).offset(0xd06) as *mut u16,
+            ram_ptr!(game, u16; 0xd08),
+            ram_ptr!(game, u16; 0xd06),
             ((ram_word!(game, grapple_beam_end_x_offset) as u32) << 16i32
                 | ram_word!(game, grapple_beam_end_x_suboffset) as u32)
                 .wrapping_add(
@@ -2304,8 +2226,8 @@ pub unsafe fn BlockCollGrappleBeam(game: &mut Game) -> u8 {
                 ),
         );
         SetHiLo(
-            (&raw mut game.g_ram as *mut u8).offset(0xd0c) as *mut u16,
-            (&raw mut game.g_ram as *mut u8).offset(0xd0a) as *mut u16,
+            ram_ptr!(game, u16; 0xd0c),
+            ram_ptr!(game, u16; 0xd0a),
             ((ram_word!(game, grapple_beam_end_y_offset) as u32) << 16i32
                 | ram_word!(game, grapple_beam_end_y_suboffset) as u32)
                 .wrapping_add(
@@ -2488,17 +2410,11 @@ unsafe fn BlockReact_AA64_SpikeAir(ci: *mut CollInfo, game: &mut Game) -> u8 {
     if ram_word!(game, samus_invincibility_timer) != 0 {
         return 0u8;
     }
-    let v0: i16 = *((&raw mut game.g_ram as *mut u8)
-        .offset(0x16402)
-        .offset(ram_word!(game, cur_block_index) as isize) as *mut u16) as i16;
+    let v0: i16 = *(ram_ptr!(game, u16; 0x16402, ram_word!(game, cur_block_index) as isize)) as i16;
     if v0 >= 0i16 {
         let v: u32 = ((g_word_94AAF7[v0 as usize] as i16 as i32) << 16i32) as u32;
         if v != 0 {
-            AddToHiLo(
-                (&raw mut game.g_ram as *mut u8).offset(0xa50) as *mut u16,
-                (&raw mut game.g_ram as *mut u8).offset(0xa4e) as *mut u16,
-                v,
-            );
+            AddToHiLo(ram_ptr!(game, u16; 0xa50), ram_ptr!(game, u16; 0xa4e), v);
             set_ram_word!(game.samus_invincibility_timer = 60u16);
             set_ram_word!(game.samus_knockback_timer = 10u16);
         }
@@ -2510,17 +2426,11 @@ unsafe fn BlockReact_AA64_SpikeBlock(ci: *mut CollInfo, game: &mut Game) -> u8 {
     if ram_word!(game, samus_invincibility_timer) != 0 {
         return 1u8;
     }
-    let v0: i16 = *((&raw mut game.g_ram as *mut u8)
-        .offset(0x16402)
-        .offset(ram_word!(game, cur_block_index) as isize) as *mut u16) as i16;
+    let v0: i16 = *(ram_ptr!(game, u16; 0x16402, ram_word!(game, cur_block_index) as isize)) as i16;
     if v0 >= 0i16 {
         let v: u32 = ((g_word_94AB70[v0 as usize] as i16 as i32) << 16i32) as u32;
         if v != 0 {
-            AddToHiLo(
-                (&raw mut game.g_ram as *mut u8).offset(0xa50) as *mut u16,
-                (&raw mut game.g_ram as *mut u8).offset(0xa4e) as *mut u16,
-                v,
-            );
+            AddToHiLo(ram_ptr!(game, u16; 0xa50), ram_ptr!(game, u16; 0xa4e), v);
             set_ram_word!(game.samus_invincibility_timer = 60u16);
             set_ram_word!(game.samus_knockback_timer = 10u16);
         }
@@ -2548,8 +2458,7 @@ unsafe fn BlockFunc_ABE6(tmpD82: u16, game: &mut Game) -> u8 {
     v0
 }
 pub unsafe fn BlockFunc_AC11(game: &mut Game) {
-    let grapple_beam_tmpD82: u16 =
-        (2u16).wrapping_mul((*(&raw mut game.g_ram as *mut u8).offset(0xcfb)) as u16);
+    let grapple_beam_tmpD82: u16 = (2u16).wrapping_mul((*ram_ptr!(game; 0xcfb)) as u16);
     let grapple_beam_tmpD84: u16 = ram_word!(game, grapple_beam_length);
     BlockFunc_A957(grapple_beam_tmpD82, grapple_beam_tmpD84, game);
     set_ram_word!(
@@ -2571,8 +2480,7 @@ pub unsafe fn BlockFunc_AC31(game: &mut Game) -> u8 {
             end = 8u16;
         }
         let increment: i32 = 8i32;
-        let grapple_beam_tmpD82: u16 =
-            (2u16).wrapping_mul((*(&raw mut game.g_ram as *mut u8).offset(0xcfb)) as u16);
+        let grapple_beam_tmpD82: u16 = (2u16).wrapping_mul((*ram_ptr!(game; 0xcfb)) as u16);
         let mut v1: u16 = ram_word!(game, grapple_beam_length);
         while v1 != end {
             let grapple_beam_tmpD84: u16 = (increment + v1 as i32 - 1i32) as u16;
@@ -2591,8 +2499,7 @@ pub unsafe fn BlockFunc_AC31(game: &mut Game) -> u8 {
             end = 63u16;
         }
         let increment_0: i32 = 56i32;
-        let grapple_beam_tmpD82_0: u16 =
-            (2u16).wrapping_mul((*(&raw mut game.g_ram as *mut u8).offset(0xcfb)) as u16);
+        let grapple_beam_tmpD82_0: u16 = (2u16).wrapping_mul((*ram_ptr!(game; 0xcfb)) as u16);
         let mut v1_0: u16 = ram_word!(game, grapple_beam_length);
         while v1_0 != end {
             let grapple_beam_tmpD84_0: u16 = (increment_0 + v1_0 as i32 + 1i32) as u16;
@@ -2638,7 +2545,7 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> u8 {
             * (((ram_word!(game, grapple_beam_end_angle16)).wrapping_add(prod16)) as i32 >> 8i32))
             as u16;
         v2 = 0;
-        v2 = (2u16).wrapping_mul((*(&raw mut game.g_ram as *mut u8).offset(0xcfb)) as u16);
+        v2 = (2u16).wrapping_mul((*ram_ptr!(game; 0xcfb)) as u16);
         if v2 != grapple_beam_tmpD88 {
             loop {
                 grapple_beam_tmpD86 = v2;
@@ -2721,7 +2628,7 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> u8 {
             * (((ram_word!(game, grapple_beam_end_angle16)).wrapping_sub(prod16)) as i32 >> 8i32))
             as u16;
         v5 = 0;
-        v5 = (2u16).wrapping_mul((*(&raw mut game.g_ram as *mut u8).offset(0xcfb)) as u16);
+        v5 = (2u16).wrapping_mul((*ram_ptr!(game; 0xcfb)) as u16);
         if v5 == grapple_beam_tmpD88 {
             current_block = 5091811861639934416;
         } else {
@@ -2856,12 +2763,9 @@ pub unsafe fn GrappleFunc_AF87(game: &mut Game) {
             game.grapple_segment_anim_instr_timers[(v1 + 13i32)] = addr_word_94B18B as u16
         );
         set_ram_word!(game.grapple_segment_anim_instr_timers[v1] = 1u16);
-        *(((&raw mut game.g_ram as *mut u8).offset(0xd40) as *mut u16 as *mut u8).offset(i as isize)
-            as *mut u16) = 1u16;
-        *(((&raw mut game.g_ram as *mut u8).offset(0xd3e) as *mut u16 as *mut u8).offset(i as isize)
-            as *mut u16) = 1u16;
-        *(((&raw mut game.g_ram as *mut u8).offset(0xd3c) as *mut u16 as *mut u8).offset(i as isize)
-            as *mut u16) = 1u16;
+        *((ram_ptr!(game, u16; 0xd40) as *mut u8).offset(i as isize) as *mut u16) = 1u16;
+        *((ram_ptr!(game, u16; 0xd3e) as *mut u8).offset(i as isize) as *mut u16) = 1u16;
+        *((ram_ptr!(game, u16; 0xd3c) as *mut u8).offset(i as isize) as *mut u16) = 1u16;
         i -= 8i32;
     }
 }
@@ -2884,12 +2788,9 @@ pub unsafe fn HandleGrappleBeamGfx(game: &mut Game) {
     ) as i32;
     let r28_r26: u32 = ((kSinCosTable8bit_Sext[(v1 + 64i32) as usize] as i32) << 11i32) as u32;
     let r32_r30: u32 = ((kSinCosTable8bit_Sext[v1 as usize] as i32) << 11i32) as u32;
-    let mut chr: u16 =
-        ((*(&raw mut game.g_ram as *mut u8).offset(0xcfb) as i32 & 0x80i32) >> 1i32) as u16;
-    chr = (chr as i32
-        | 2i32
-            * ((*(&raw mut game.g_ram as *mut u8).offset(0xcfb) as i32 ^ chr as i32) & 0x40i32
-                ^ 0x40i32)) as u16;
+    let mut chr: u16 = ((*ram_ptr!(game; 0xcfb) as i32 & 0x80i32) >> 1i32) as u16;
+    chr = (chr as i32 | 2i32 * ((*ram_ptr!(game; 0xcfb) as i32 ^ chr as i32) & 0x40i32 ^ 0x40i32))
+        as u16;
     chr = ((chr as i32) << 8i32) as u16;
     let mut r20_r18: u32 = ((ram_word!(game, x_pos_of_start_of_grapple_beam_prevframe) as i32
         - ram_word!(game, layer1_x_pos) as i32
@@ -2906,8 +2807,7 @@ pub unsafe fn HandleGrappleBeamGfx(game: &mut Game) {
     let mut q: i32 = 15i32;
     loop {
         let mut i: i32 = 0;
-        let ref mut fresh17 =
-            *((&raw mut game.g_ram as *mut u8).offset(0xd42) as *mut u16).offset(q as isize);
+        let ref mut fresh17 = *(ram_ptr!(game, u16; 0xd42)).offset(q as isize);
         let fresh18 = *fresh17;
         *fresh17 = (*fresh17).wrapping_sub(1);
         if fresh18 == 1u16 {

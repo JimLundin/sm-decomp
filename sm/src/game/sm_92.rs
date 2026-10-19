@@ -2,6 +2,7 @@ use crate::game::sm_80::QueueMusic_DelayedY;
 use crate::game::sm_81::DrawSamusSpritemap;
 use crate::game::sm_82::PlayRoomMusicTrackAfterAFrames;
 use crate::game_state::Game;
+use crate::ram_map::ram_ptr;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::RomPtr;
 
@@ -27,15 +28,14 @@ pub unsafe fn SetSamusTilesDefsForCurAnim(game: &mut Game) {
             + crate::rtl::rom_table_word!(game, 0x92d91e, (*AD).top_half_idx as isize) as i32)
             as u16
     );
-    *((&raw mut game.g_ram as *mut u8).offset(0x71d) as *mut u16 as *mut u8).offset(0) = 1u8;
+    *(ram_ptr!(game, u16; 0x71d) as *mut u8).offset(0) = 1u8;
     if (*AD).bottom_half_idx != 255u8 {
         set_ram_word!(
             game.nmi_copy_samus_bottom_half_src = (7i32 * (*AD).bottom_half_pos as i32
                 + crate::rtl::rom_table_word!(game, 0x92d938, (*AD).bottom_half_idx as isize)
                     as i32) as u16
         );
-        *((&raw mut game.g_ram as *mut u8).offset(0x71d) as *mut u16 as *mut u8).offset(1isize) =
-            1u8;
+        *(ram_ptr!(game, u16; 0x71d) as *mut u8).offset(1isize) = 1u8;
     }
 }
 pub unsafe fn PlaySamusFanfare(game: &mut Game) -> u8 {
@@ -51,11 +51,9 @@ pub unsafe fn PlaySamusFanfare(game: &mut Game) -> u8 {
         0u8
     } else {
         set_ram_word!(game.samus_last_different_pose = ram_word!(game, samus_prev_pose));
-        *((&raw mut game.g_ram as *mut u8).offset(0xa26) as *mut u16) =
-            *((&raw mut game.g_ram as *mut u8).offset(0xa22) as *mut u16);
+        *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
         set_ram_word!(game.samus_prev_pose = ram_word!(game, samus_pose));
-        *((&raw mut game.g_ram as *mut u8).offset(0xa22) as *mut u16) =
-            *((&raw mut game.g_ram as *mut u8).offset(0xa1e) as *mut u16);
+        *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
         set_ram_word!(game.substate = 0u16);
         1u8
     }
@@ -67,7 +65,7 @@ pub unsafe fn Unused_SamusTileViewer(game: &mut Game) {
     DrawSamusSpritemap(0x185u16, 0x80u16, 0x50u16, game);
 }
 pub unsafe fn DrawSamusSuitExploding(game: &mut Game) {
-    let r18: u16 = (if *(&raw mut game.g_ram as *mut u8).offset(0xa1e) == 4u8 {
+    let r18: u16 = (if *ram_ptr!(game; 0xa1e) == 4u8 {
         ram_word!(game, g_word_7E0DE4) as i32 + 2085i32
     } else {
         ram_word!(game, g_word_7E0DE4) as i32 + 2076i32

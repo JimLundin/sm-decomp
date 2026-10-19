@@ -33,6 +33,7 @@ use crate::game::sm_a9::{
 };
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
+use crate::ram_map::ram_ptr;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::AddToHiLo;
@@ -1525,12 +1526,7 @@ pub unsafe fn CeresRidley_Init(game: &mut Game) {
     let mut v4: i16 = 0;
     let mut v8: i16 = 0;
     let E: *mut Enemy_CeresRidley = Get_CeresRidley(0i32, game);
-    if (*(&raw mut game.g_ram as *mut u8)
-        .offset(0xd828)
-        .offset(ram_word!(game, area_index) as isize) as i32
-        & 1i32)
-        != 0i32
-    {
+    if (*ram_ptr!(game; 0xd828, ram_word!(game, area_index) as isize) as i32 & 1i32) != 0i32 {
         (*E).base.properties = ((*E).base.properties as i32
             | (kEnemyProps_Tangible as i32
                 | kEnemyProps_Deleted as i32
@@ -1727,10 +1723,7 @@ pub unsafe fn CeresRidley_Hurt(game: &mut Game) {
 pub unsafe fn Ridley_A2DC(game: &mut Game) {
     Ridley_Func_49(game);
     if (*Get_CeresRidley(0i32, game)).cry_var_02 != 0 {
-        mov24(
-            (&raw mut game.g_ram as *mut u8).offset(0x178c) as *mut LongPtr,
-            0xa6a2f2u32,
-        );
+        mov24(ram_ptr!(game, LongPtr; 0x178c), 0xa6a2f2u32);
     } else {
         Ridley_A2F2(game);
     };
@@ -2128,9 +2121,9 @@ pub unsafe fn CeresRidley_Func_26(game: &mut Game) {
     Ridley_Func_61(game);
 }
 pub unsafe fn CeresRidley_Func_27(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0x56) = 7u8;
+    *ram_ptr!(game; 0x56) = 7u8;
     set_ram_word!(game.irq_enable_mode7 = 1u16);
-    *(&raw mut game.g_ram as *mut u8).offset(0x5f) = 0x80u8;
+    *ram_ptr!(game; 0x5f) = 0x80u8;
     set_ram_word!(game.reg_M7A = 256u16);
     set_ram_word!(game.reg_M7B = 256u16);
     set_ram_word!(game.reg_M7C = 256u16);
@@ -2168,8 +2161,8 @@ pub unsafe fn CeresRidley_Func_28(game: &mut Game) {
     let v2: i32 = cry_var_33 as i32 >> 1i32;
     if crate::rtl::rom_table_word!(game, 0xa6ae4d, v2 as isize) == 0xffffu16 {
         (*E).cry_var_32 = (*E).cry_var_32.wrapping_add(1);
-        *(&raw mut game.g_ram as *mut u8).offset(0x56) = 9u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x5f) = 0u8;
+        *ram_ptr!(game; 0x56) = 9u8;
+        *ram_ptr!(game; 0x5f) = 0u8;
         set_ram_word!(game.reg_M7A = 0u16);
         set_ram_word!(game.reg_M7B = 0u16);
         set_ram_word!(game.reg_M7C = 0u16);
@@ -2374,7 +2367,7 @@ pub unsafe fn Ridley_Func_3b(game: &mut Game) {
 }
 pub unsafe fn Ridley_Func_4(game: &mut Game) -> u16 {
     let mut r18: u16 = 0;
-    if *(&raw mut game.g_ram as *mut u8).offset(0xa1f) == 3u8 {
+    if *ram_ptr!(game; 0xa1f) == 3u8 {
         r18 = addr_off_A6B3CC as u16;
     } else {
         let E: *mut Enemy_Ridley = Get_Ridley(0i32, game);
@@ -2601,7 +2594,7 @@ pub unsafe fn Ridley_Func_17(r18: u16, game: &mut Game) -> u8 {
     }
     Ridley_Func_104_0(0u16, Ridley_Func_7(game), r18, v0, game);
     set_ram_word!(game.tilemap_stuff[2] = 1u16);
-    if *(&raw mut game.g_ram as *mut u8).offset(0xa1f) != 3u8 {
+    if *ram_ptr!(game; 0xa1f) != 3u8 {
         return 1u8;
     }
     if (ram_word!(game, random_number) as u8) >= 0x80u8 {
@@ -3115,12 +3108,10 @@ static byte_A6BD04: [u8; 28] = [
     0xff, 0xff, 0xff, 0x80, 0x80, 0, 0x80, 0x80, 0, 0, 0x80,
 ];
 unsafe fn Ridley_Func_40_Carry(game: &mut Game) -> u8 {
-    ((byte_A6BD04[*(&raw mut game.g_ram as *mut u8).offset(0xa1f) as usize] as i32 & 0x80i32)
-        != 0i32) as u8
+    ((byte_A6BD04[*ram_ptr!(game; 0xa1f) as usize] as i32 & 0x80i32) != 0i32) as u8
 }
 unsafe fn Ridley_Func_40_Sign(game: &mut Game) -> u8 {
-    ((byte_A6BD04[*(&raw mut game.g_ram as *mut u8).offset(0xa1f) as usize] as i32 & 0x40i32)
-        != 0i32) as u8
+    ((byte_A6BD04[*ram_ptr!(game; 0xa1f) as usize] as i32 & 0x40i32) != 0i32) as u8
 }
 pub unsafe fn Ridley_Func_41(game: &mut Game) -> u8 {
     ((ram_word!(game, samus_y_pos) as i32 - 352i32 & 0x8000i32) == 0i32) as u8
@@ -3280,7 +3271,7 @@ pub unsafe fn Ridley_Func_53(game: &mut Game) {
 }
 pub unsafe fn DrawBabyMetroid_0(game: &mut Game) {
     let v0: i32 = BabyMetroid_DBCB_DoubleRetEx(
-        (((&raw mut game.g_ram as *mut u8).offset(0x7800) as *mut ExtraEnemyRam7800 as *mut u8)
+        ((ram_ptr!(game, ExtraEnemyRam7800; 0x7800) as *mut u8)
             .offset_from(&raw mut game.g_ram as *mut u8) as c_long
             + 6 as c_long) as u16,
         game,
@@ -3551,8 +3542,7 @@ pub unsafe fn HandleTypewriterText_Ext(a: u16, game: &mut Game) -> u8 {
             (*v12).size = 2u16;
             *((&raw mut (*v12).src.addr as *mut u8).offset(1) as *mut VoidP) = 32256 as VoidP;
             (*E).mbn_var_3A = (r18 as i32 + v4 as i32 - 65i32) as u16;
-            (*v12).src.addr = (((&raw mut game.g_ram as *mut u8).offset(0x8000)
-                as *mut ExtraEnemyRam8000 as *mut u8)
+            (*v12).src.addr = ((ram_ptr!(game, ExtraEnemyRam8000; 0x8000) as *mut u8)
                 .offset_from(&raw mut game.g_ram as *mut u8)
                 as c_long
                 + 52 as c_long) as VoidP;
@@ -3746,12 +3736,9 @@ pub unsafe fn RidleysExplosion_Init(game: &mut Game) {
                 (*E).base.y_pos = ram_word!(game, tilemap_stuff[83]);
                 (*E).base.current_instruction =
                     *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6c7ba)) as *mut u16).offset(
-                        ((*(((&raw mut game.g_ram as *mut u8).offset(0x2000) as *mut u16).offset(71)
-                            as *mut u8)
-                            .offset(0) as i32
-                            + *(((&raw mut game.g_ram as *mut u8).offset(0x2000) as *mut u16)
-                                .offset(81) as *mut u8)
-                                .offset(0) as i32
+                        ((*((ram_ptr!(game, u16; 0x2000)).offset(71) as *mut u8).offset(0) as i32
+                            + *((ram_ptr!(game, u16; 0x2000)).offset(81) as *mut u8).offset(0)
+                                as i32
                             + 8i32
                             & 0xf0i32) as u8 as i32
                             >> 4i32) as isize,
@@ -4142,8 +4129,7 @@ pub unsafe fn Ridley_Func_83(game: &mut Game) {
         let mut v1: u16 = ram_word!(game, tilemap_stuff[8]);
         if ram_word!(game, tilemap_stuff[8]) == 0 || {
             v1 = (ram_word!(game, tilemap_stuff[8])).wrapping_sub(1u16);
-            let ref mut fresh14 =
-                *((&raw mut game.g_ram as *mut u8).offset(0x2000) as *mut u16).offset(8);
+            let ref mut fresh14 = *(ram_ptr!(game, u16; 0x2000)).offset(8);
             *fresh14 = v1;
             *fresh14 != 0u16
         } {
@@ -4212,27 +4198,23 @@ pub unsafe fn Ridley_Func_84(game: &mut Game) {
 }
 pub unsafe fn Ridley_Func_85(game: &mut Game) {
     set_ram_word!(
-        game.tilemap_stuff[21] = ((*(((&raw mut game.g_ram as *mut u8).offset(0x2000) as *mut u16)
-            .offset(21) as *mut u8)
-            .offset(0)) as u16)
+        game.tilemap_stuff[21] = ((*((ram_ptr!(game, u16; 0x2000)).offset(21) as *mut u8).offset(0))
+            as u16)
             | (0x4000u16)
     );
     set_ram_word!(
-        game.tilemap_stuff[31] = ((*(((&raw mut game.g_ram as *mut u8).offset(0x2000) as *mut u16)
-            .offset(31) as *mut u8)
-            .offset(0)) as u16)
+        game.tilemap_stuff[31] = ((*((ram_ptr!(game, u16; 0x2000)).offset(31) as *mut u8).offset(0))
+            as u16)
             | (0x4000u16)
     );
     set_ram_word!(
-        game.tilemap_stuff[41] = ((*(((&raw mut game.g_ram as *mut u8).offset(0x2000) as *mut u16)
-            .offset(41) as *mut u8)
-            .offset(0)) as u16)
+        game.tilemap_stuff[41] = ((*((ram_ptr!(game, u16; 0x2000)).offset(41) as *mut u8).offset(0))
+            as u16)
             | (0x4000u16)
     );
     set_ram_word!(
-        game.tilemap_stuff[51] = ((*(((&raw mut game.g_ram as *mut u8).offset(0x2000) as *mut u16)
-            .offset(51) as *mut u8)
-            .offset(0)) as u16)
+        game.tilemap_stuff[51] = ((*((ram_ptr!(game, u16; 0x2000)).offset(51) as *mut u8).offset(0))
+            as u16)
             | (0x4000u16)
     );
     set_ram_word!(
@@ -4240,15 +4222,13 @@ pub unsafe fn Ridley_Func_85(game: &mut Game) {
             (ram_word!(game, tilemap_stuff[21]) as i32 & 0x4ffi32 | 0x4000i32) as u16
     );
     set_ram_word!(
-        game.tilemap_stuff[71] = ((*(((&raw mut game.g_ram as *mut u8).offset(0x2000) as *mut u16)
-            .offset(71) as *mut u8)
-            .offset(0)) as u16)
+        game.tilemap_stuff[71] = ((*((ram_ptr!(game, u16; 0x2000)).offset(71) as *mut u8).offset(0))
+            as u16)
             | (0x4000u16)
     );
     set_ram_word!(
-        game.tilemap_stuff[81] = ((*(((&raw mut game.g_ram as *mut u8).offset(0x2000) as *mut u16)
-            .offset(81) as *mut u8)
-            .offset(0)) as u16)
+        game.tilemap_stuff[81] = ((*((ram_ptr!(game, u16; 0x2000)).offset(81) as *mut u8).offset(0))
+            as u16)
             | (0x4000u16)
     );
 }
@@ -4568,16 +4548,15 @@ pub unsafe fn Ridley_Func_88(k: u16, game: &mut Game) {
     }
     let mut r18: u16 = v2 as u8 as u16;
     if k != 0 {
-        r18 = ((*(((&raw mut game.g_ram as *mut u8).offset(0x2000) as *mut u16)
-            .offset(((k as i32 >> 1i32) + 11i32) as isize) as *mut u8)
+        r18 = ((*((ram_ptr!(game, u16; 0x2000)).offset(((k as i32 >> 1i32) + 11i32) as isize)
+            as *mut u8)
             .offset(0))
         .wrapping_add((r18) as u8)) as u16;
     }
     let v7: i32 = k as i32 >> 1i32;
     set_ram_word!(
         game.tilemap_stuff[(v7 + 24i32)] = ComputeSinMult(
-            *(((&raw mut game.g_ram as *mut u8).offset(0x2000) as *mut u16)
-                .offset((v7 + 19i32) as isize) as *mut u8)
+            *((ram_ptr!(game, u16; 0x2000)).offset((v7 + 19i32) as isize) as *mut u8)
                 .offset(1isize,) as u16,
             r18,
             game,
@@ -4585,8 +4564,7 @@ pub unsafe fn Ridley_Func_88(k: u16, game: &mut Game) {
     );
     set_ram_word!(
         game.tilemap_stuff[(v7 + 25i32)] = ComputeCosMult(
-            *(((&raw mut game.g_ram as *mut u8).offset(0x2000) as *mut u16)
-                .offset((v7 + 19i32) as isize) as *mut u8)
+            *((ram_ptr!(game, u16; 0x2000)).offset((v7 + 19i32) as isize) as *mut u8)
                 .offset(1isize,) as u16,
             r18,
             game,
@@ -4650,14 +4628,11 @@ pub unsafe fn Ridley_Func_90(out: *mut Point16U, game: &mut Game) -> u8 {
     let mut v1: u16 = 0u16;
     loop {
         let v2: i32 = v1 as i32 >> 1i32;
-        if (*(((&raw mut game.g_ram as *mut u8).offset(0xc18) as *mut u16).offset(v2 as isize)
-            as *mut u8)
-            .offset(1isize) as i32
+        if (*((ram_ptr!(game, u16; 0xc18)).offset(v2 as isize) as *mut u8).offset(1isize) as i32
             & 0xfi32)
             == 1i32
-            || (*(((&raw mut game.g_ram as *mut u8).offset(0xc18) as *mut u16).offset(v2 as isize)
-                as *mut u8)
-                .offset(1isize) as i32
+            || (*((ram_ptr!(game, u16; 0xc18)).offset(v2 as isize) as *mut u8).offset(1isize)
+                as i32
                 & 0xfi32)
                 == 2i32
         {
@@ -4726,7 +4701,7 @@ pub unsafe fn Ridley_Func_92(game: &mut Game) {
     set_ram_word!(game.tilemap_stuff[76] = 0u16);
 }
 pub unsafe fn Ridley_Func_93(j: u16, k: u16, game: &mut Game) {
-    let mut dst: *mut u16 = (&raw mut game.g_ram as *mut u8).offset(j as i32 as isize) as *mut u16;
+    let mut dst: *mut u16 = ram_ptr!(game, u16; j as i32 as isize);
     let mut src: *const u16 = RomPtr_A6(k, game) as *const u16;
     let mut v3: i32 = 7i32;
     loop {
@@ -4856,8 +4831,7 @@ pub unsafe fn Ridley_Func_103(k: u16, j: u16, game: &mut Game) -> u8 {
         (j as i32 >> 4i32) as u8,
         ram_word!(game, room_width_in_blocks) as u8,
     );
-    ((*((&raw mut game.g_ram as *mut u8).offset(0x10002) as *mut u16)
-        .offset((prod as i32 + (k as i32 >> 4i32)) as isize) as i32
+    ((*(ram_ptr!(game, u16; 0x10002)).offset((prod as i32 + (k as i32 >> 4i32)) as isize) as i32
         & 0xf000i32)
         != 0i32) as u8
 }
@@ -5315,12 +5289,8 @@ pub unsafe fn sub_A6DB2A(game: &mut Game) {
             crate::rtl::rom_table_word!(
                 game,
                 0xa6dcba,
-                ((*(((&raw mut game.g_ram as *mut u8).offset(0x2000) as *mut u16).offset(71)
-                    as *mut u8)
-                    .offset(0) as i32
-                    + *(((&raw mut game.g_ram as *mut u8).offset(0x2000) as *mut u16).offset(81)
-                        as *mut u8)
-                        .offset(0) as i32
+                ((*((ram_ptr!(game, u16; 0x2000)).offset(71) as *mut u8).offset(0) as i32
+                    + *((ram_ptr!(game, u16; 0x2000)).offset(81) as *mut u8).offset(0) as i32
                     + 8i32
                     & 0xf0i32) as u8 as i32
                     >> 4i32) as isize,
@@ -5381,8 +5351,7 @@ pub unsafe fn CallBabyMetroidInstr(ea: u32, k: u16, game: &mut Game) -> u16 {
 }
 unsafe fn BabyMetroid_DBCB_DoubleRetEx(a: u16, game: &mut Game) -> i32 {
     let mut current_block: u64;
-    let st: *mut BabyMetroidExecState =
-        (&raw mut game.g_ram as *mut u8).offset(a as isize) as *mut BabyMetroidExecState;
+    let st: *mut BabyMetroidExecState = ram_ptr!(game, BabyMetroidExecState; a as isize);
     if ((*st).ip as i32 & 0x8000i32) == 0i32 {
         return -1i32;
     }
@@ -5649,9 +5618,7 @@ pub unsafe fn Ridley_Func_129(game: &mut Game) {
             y: ram_word!(game, projectile_y_pos[v1]),
         };
         let mut v2: u16 = 12u16;
-        if (*(((&raw mut game.g_ram as *mut u8).offset(0xc18) as *mut u16).offset(v1 as isize)
-            as *mut u8)
-            .offset(1isize) as i32
+        if (*((ram_ptr!(game, u16; 0xc18)).offset(v1 as isize) as *mut u8).offset(1isize) as i32
             & 0xfi32)
             == 1i32
         {
@@ -5899,12 +5866,7 @@ pub unsafe fn CeresDoor_Instr_6(k: u16, jp: *const u16, game: &mut Game) -> *con
     }
 }
 pub unsafe fn CeresDoor_Instr_4(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
-    if *((&raw mut game.g_ram as *mut u8)
-        .offset(0xd828)
-        .offset(ram_word!(game, area_index) as isize) as *mut u16) as i32
-        & 1i32
-        != 0
-    {
+    if *(ram_ptr!(game, u16; 0xd828, ram_word!(game, area_index) as isize)) as i32 & 1i32 != 0 {
         jp.offset(1)
     } else {
         *jp as usize as *const u16

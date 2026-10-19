@@ -17,6 +17,7 @@ use crate::game::sm_a0::{
 };
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
+use crate::ram_map::ram_ptr;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::AddToHiLo;
@@ -849,12 +850,12 @@ pub unsafe fn Botwoon_QueueExplosionSfx(game: &mut Game) {
 }
 pub unsafe fn Botwoon_Init(game: &mut Game) {
     let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
-    if (*(&raw mut game.g_ram as *mut u8).offset(0xd828).offset(4) as i32 & 2i32) != 0i32 {
+    if (*ram_ptr!(game; 0xd828, 4) as i32 & 2i32) != 0i32 {
         SpawnHardcodedPlm(
             SpawnHardcodedPlmArgs::new(0xfu8, 0x4u8, 0xb797 as VoidP),
             game,
         );
-        *((&raw mut game.g_ram as *mut u8).offset(0xcd20) as *mut u16) = 257u16;
+        *(ram_ptr!(game, u16; 0xcd20)) = 257u16;
         (*E).base.current_instruction = addr_kBotwoon_Ilist_9389 as u16;
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
     } else {
@@ -1278,10 +1279,10 @@ pub unsafe fn Botwoon_Func_21(game: &mut Game) {
 pub unsafe fn Botwoon_Func_22(game: &mut Game) {
     let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     let botwoon_var_B: u16 = (*E).botwoon_var_B;
-    *(((&raw mut game.g_ram as *mut u8).offset(0x9000) as *mut u16 as *mut u8)
-        .offset(botwoon_var_B as i32 as isize) as *mut u16) = (*E).base.x_pos;
-    *(((&raw mut game.g_ram as *mut u8).offset(0x9002) as *mut u16 as *mut u8)
-        .offset(botwoon_var_B as i32 as isize) as *mut u16) = (*E).base.y_pos;
+    *((ram_ptr!(game, u16; 0x9000) as *mut u8).offset(botwoon_var_B as i32 as isize) as *mut u16) =
+        (*E).base.x_pos;
+    *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(botwoon_var_B as i32 as isize) as *mut u16) =
+        (*E).base.y_pos;
 }
 pub unsafe fn Botwoon_Func_23(game: &mut Game) {
     let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
@@ -1299,15 +1300,15 @@ pub unsafe fn Botwoon_Func_23(game: &mut Game) {
                     game.eproj_properties[(botwoo_var_00 as i32 >> 1i32)],
                     |fresh0| (fresh0 as i32 & !(0x2000i32)) as u16
                 );
-                *((&raw mut game.g_ram as *mut u8).offset(0xf380) as *mut u16)
-                    .offset((botwoo_var_00 as i32 >> 1i32) as isize) = 1u16;
+                *(ram_ptr!(game, u16; 0xf380)).offset((botwoo_var_00 as i32 >> 1i32) as isize) =
+                    1u16;
             } else {
                 update_ram_word!(
                     game.eproj_properties[(botwoo_var_00 as i32 >> 1i32)],
                     |fresh1| (fresh1) | (0x2000u16)
                 );
-                *((&raw mut game.g_ram as *mut u8).offset(0xf380) as *mut u16)
-                    .offset((botwoo_var_00 as i32 >> 1i32) as isize) = 2u16;
+                *(ram_ptr!(game, u16; 0xf380)).offset((botwoo_var_00 as i32 >> 1i32) as isize) =
+                    2u16;
             }
             if v2 == 0 {
                 (*E).botwoon_var_35 = 0u16;
@@ -1320,14 +1321,12 @@ pub unsafe fn Botwoon_Func_23(game: &mut Game) {
         }
         let v7: i32 = botwoo_var_00 as i32 >> 1i32;
         set_ram_word!(
-            game.eproj_x_pos[v7] = *(((&raw mut game.g_ram as *mut u8).offset(0x9000) as *mut u16
-                as *mut u8)
-                .offset(r18 as i32 as isize) as *mut u16)
+            game.eproj_x_pos[v7] =
+                *((ram_ptr!(game, u16; 0x9000) as *mut u8).offset(r18 as i32 as isize) as *mut u16)
         );
         set_ram_word!(
-            game.eproj_y_pos[v7] = *(((&raw mut game.g_ram as *mut u8).offset(0x9002) as *mut u16
-                as *mut u8)
-                .offset(r18 as i32 as isize) as *mut u16)
+            game.eproj_y_pos[v7] =
+                *((ram_ptr!(game, u16; 0x9002) as *mut u8).offset(r18 as i32 as isize) as *mut u16)
         );
         r18 = (r18 as i32 - (*E).botwoon_var_C as i32 & 0x3ffi32) as u16;
         n -= 2i32;
@@ -1441,8 +1440,7 @@ pub unsafe fn Botwoon_Func_27(k: u16, game: &mut Game) {
 pub unsafe fn Botwoon_Func_28(k: u16, game: &mut Game) {
     let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
     if (*E).botwoon_var_5A != 0 {
-        *(&raw mut game.g_ram as *mut u8).offset(0x60b) =
-            (((*E).botwoon_var_3D) as u8).wrapping_sub(32u8);
+        *ram_ptr!(game; 0x60b) = (((*E).botwoon_var_3D) as u8).wrapping_sub(32u8);
         let mut n: i32 = 5i32;
         let varE32: u16 = g_word_B39E77[(*E).botwoon_var_3F as usize] as u16;
         loop {
@@ -1452,7 +1450,7 @@ pub unsafe fn Botwoon_Func_28(k: u16, game: &mut Game) {
                 addr_kEproj_BotwoonsSpit as u16,
                 game,
             );
-            let ref mut fresh2 = *(&raw mut game.g_ram as *mut u8).offset(0x60b);
+            let ref mut fresh2 = *ram_ptr!(game; 0x60b);
             *fresh2 = (*fresh2).wrapping_add(16u8);
             n -= 1;
             if (n == 0) {
@@ -1465,8 +1463,7 @@ pub unsafe fn Botwoon_Func_28(k: u16, game: &mut Game) {
 }
 pub unsafe fn Botwoon_Func_29(k: u16, game: &mut Game) {
     let E: *mut Enemy_Botwoon = Get_Botwoon(ram_word!(game, cur_enemy_index) as i32, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x60b) =
-        (((*E).botwoon_var_3D) as u8).wrapping_sub(16u8);
+    *ram_ptr!(game; 0x60b) = (((*E).botwoon_var_3D) as u8).wrapping_sub(16u8);
     let mut n: i32 = 3i32;
     let varE32: u16 = g_word_B39E77[(*E).botwoon_var_3F as usize] as u16;
     loop {
@@ -1476,7 +1473,7 @@ pub unsafe fn Botwoon_Func_29(k: u16, game: &mut Game) {
             addr_kEproj_BotwoonsSpit as u16,
             game,
         );
-        let ref mut fresh3 = *(&raw mut game.g_ram as *mut u8).offset(0x60b);
+        let ref mut fresh3 = *ram_ptr!(game; 0x60b);
         *fresh3 = (*fresh3).wrapping_add(16u8);
         n -= 1;
         if (n == 0) {

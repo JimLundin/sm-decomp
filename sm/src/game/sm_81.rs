@@ -16,6 +16,7 @@ use crate::game::sm_88::{
     DisableHdmaObjects, EnableHdmaObjects, SpawnHdmaObject, WaitUntilEndOfVblankAndClearHdma,
 };
 use crate::game_state::Game;
+use crate::ram_map::ram_ptr;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::AddToHiLo;
 use crate::rtl::{RomPtr, RtlWriteSram, Unreachable, WriteReg};
@@ -110,8 +111,7 @@ pub unsafe fn SaveToSram(a: u16, game: &mut Game) {
     while i >= 0i32 {
         set_ram_word!(
             game.player_data_saved[(i >> 1i32)] =
-                *(((&raw mut game.g_ram as *mut u8).offset(0x9a2) as *mut u16 as *mut u8)
-                    .offset(i as isize) as *mut u16)
+                *((ram_ptr!(game, u16; 0x9a2) as *mut u8).offset(i as isize) as *mut u16)
         );
         i -= 2i32;
     }
@@ -119,10 +119,8 @@ pub unsafe fn SaveToSram(a: u16, game: &mut Game) {
     let mut v4: u16 = 0u16;
     loop {
         set_ram_word!(
-            game.explored_map_tiles_saved[(v3 as i32 >> 1i32)] = *((&raw mut game.g_ram as *mut u8)
-                .offset(0x7f7)
-                .offset(v4 as isize)
-                as *mut u16)
+            game.explored_map_tiles_saved[(v3 as i32 >> 1i32)] =
+                *(ram_ptr!(game, u16; 0x7f7, v4 as isize))
         );
         v4 = (v4).wrapping_add(2u16);
         v3 = (v3).wrapping_add(2u16);
@@ -134,7 +132,7 @@ pub unsafe fn SaveToSram(a: u16, game: &mut Game) {
     set_ram_word!(game.sram_save_station_index = ram_word!(game, load_station_index));
     set_ram_word!(game.sram_area_index = ram_word!(game, area_index));
     let mut v5: u16 = crate::rtl::rom_table_word!(game, 0x81812b, (r18 as i32 >> 1i32) as isize);
-    let mut v6: *mut u16 = (&raw mut game.g_ram as *mut u8).offset(0xd7c0) as *mut u16;
+    let mut v6: *mut u16 = ram_ptr!(game, u16; 0xd7c0);
     loop {
         let fresh94 = v6;
         v6 = v6.offset(1);
@@ -142,7 +140,7 @@ pub unsafe fn SaveToSram(a: u16, game: &mut Game) {
         *(game.g_sram.offset((2i32 * (v5 as i32 >> 1i32)) as isize) as *mut u16) = v7;
         r20 = (r20).wrapping_add(v7);
         v5 = (v5).wrapping_add(2u16);
-        if (v6 == (&raw mut game.g_ram as *mut u8).offset(0xde1c) as *mut u16) {
+        if (v6 == ram_ptr!(game, u16; 0xde1c)) {
             break;
         }
     }
@@ -160,7 +158,7 @@ pub unsafe fn LoadFromSram(a: u16, game: &mut Game) -> u8 {
     let mut r20: u16 = 0u16;
     let r18: u16 = (2i32 * (a as i32 & 3i32)) as u16;
     let mut v1: u16 = crate::rtl::rom_table_word!(game, 0x81812b, (a as i32 & 3i32) as isize);
-    let mut v2: *mut u16 = (&raw mut game.g_ram as *mut u8).offset(0xd7c0) as *mut u16;
+    let mut v2: *mut u16 = ram_ptr!(game, u16; 0xd7c0);
     loop {
         let v3: u16 = *(game.g_sram.offset(0) as *mut u16).offset((v1 as i32 >> 1i32) as isize);
         let fresh1 = v2;
@@ -168,7 +166,7 @@ pub unsafe fn LoadFromSram(a: u16, game: &mut Game) -> u8 {
         *fresh1 = v3;
         r20 = (r20).wrapping_add(v3);
         v1 = (v1).wrapping_add(2u16);
-        if (v2 == (&raw mut game.g_ram as *mut u8).offset(0xde1c) as *mut u16) {
+        if (v2 == ram_ptr!(game, u16; 0xde1c)) {
             break;
         }
     }
@@ -182,8 +180,8 @@ pub unsafe fn LoadFromSram(a: u16, game: &mut Game) -> u8 {
     {
         let mut i: i32 = 94i32;
         while i >= 0i32 {
-            *(((&raw mut game.g_ram as *mut u8).offset(0x9a2) as *mut u16 as *mut u8)
-                .offset(i as isize) as *mut u16) = ram_word!(game, player_data_saved[(i >> 1i32)]);
+            *((ram_ptr!(game, u16; 0x9a2) as *mut u8).offset(i as isize) as *mut u16) =
+                ram_word!(game, player_data_saved[(i >> 1i32)]);
             i -= 2i32;
         }
         UnpackMapFromSave(game);
@@ -194,7 +192,7 @@ pub unsafe fn LoadFromSram(a: u16, game: &mut Game) -> u8 {
         r20 = 0u16;
         let mut v7: u16 =
             crate::rtl::rom_table_word!(game, 0x81812b, (r18 as i32 >> 1i32) as isize);
-        let mut v8: u16 = ((&raw mut game.g_ram as *mut u8).offset(0xd7c0) as *mut u16 as *mut u8)
+        let mut v8: u16 = (ram_ptr!(game, u16; 0xd7c0) as *mut u8)
             .offset_from(&raw mut game.g_ram as *mut u8) as c_long as u16;
         let mut v9: u16 = 0u16;
         loop {
@@ -204,7 +202,7 @@ pub unsafe fn LoadFromSram(a: u16, game: &mut Game) -> u8 {
             v7 = (v7).wrapping_add(2u16);
             v8 = (v8).wrapping_add(2u16);
             if (v8 as c_long
-                == ((&raw mut game.g_ram as *mut u8).offset(0xde1c) as *mut u16 as *mut u8)
+                == (ram_ptr!(game, u16; 0xde1c) as *mut u8)
                     .offset_from(&raw mut game.g_ram as *mut u8) as c_long)
             {
                 break;
@@ -230,17 +228,14 @@ pub unsafe fn UnpackMapFromSave(game: &mut Game) {
             game,
         );
         let mut v3: i32 = crate::rtl::rom_table_word!(game, 0x818138, i_0 as isize) as i32;
-        let unpacked: *mut u8 =
-            (&raw mut game.g_ram as *mut u8).offset(0xcd52) as *mut u16 as *mut u8;
+        let unpacked: *mut u8 = ram_ptr!(game, u16; 0xcd52) as *mut u8;
         loop {
             let fresh2 = r0;
             r0 = r0.offset(1);
             let v4: u16 = (i_0 * 256i32 + *fresh2 as i32) as u16;
             let fresh3 = v3;
             v3 = v3 + 1;
-            *unpacked.offset(v4 as isize) = *(&raw mut game.g_ram as *mut u8)
-                .offset(0xd91c)
-                .offset(fresh3 as isize);
+            *unpacked.offset(v4 as isize) = *ram_ptr!(game; 0xd91c, fresh3 as isize);
             n -= 1;
             if (n == 0) {
                 break;
@@ -259,17 +254,14 @@ pub unsafe fn PackMapToSave(game: &mut Game) {
             game,
         );
         let mut v1: i32 = crate::rtl::rom_table_word!(game, 0x818138, i as isize) as i32;
-        let unpacked: *mut u8 =
-            (&raw mut game.g_ram as *mut u8).offset(0xcd52) as *mut u16 as *mut u8;
+        let unpacked: *mut u8 = ram_ptr!(game, u16; 0xcd52) as *mut u8;
         loop {
             let fresh95 = r0;
             r0 = r0.offset(1);
             let v3: i32 = i * 256i32 + *fresh95 as i32;
             let fresh96 = v1;
             v1 = v1 + 1;
-            *(&raw mut game.g_ram as *mut u8)
-                .offset(0xd91c)
-                .offset(fresh96 as isize) = *unpacked.offset(v3 as isize);
+            *ram_ptr!(game; 0xd91c, fresh96 as isize) = *unpacked.offset(v3 as isize);
             n -= 1;
             if (n == 0) {
                 break;
@@ -630,16 +622,15 @@ pub unsafe fn DrawEprojSpritemapWithBaseTileOffscreen(
 }
 pub unsafe fn GameOverMenu_0_FadeOutConfigGfx(game: &mut Game) {
     HandleFadeOut(game);
-    if (*(&raw mut game.g_ram as *mut u8).offset(0x51) as i32 & 0xfi32) == 0i32 {
+    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) == 0i32 {
         ScreenOff(game);
         QueueSfx3_Max6(1u16, game);
         DisableHdmaObjects(game);
         WaitUntilEndOfVblankAndClearHdma(game);
         let mut v0: u16 = 0u16;
         loop {
-            (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap[(v0 as i32 + 384i32) as usize] =
-                ram_word!(game, palette_buffer[v0]);
+            (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap
+                [(v0 as i32 + 384i32) as usize] = ram_word!(game, palette_buffer[v0]);
             v0 = v0.wrapping_add(1);
             if (((v0 as i32 * 2i32 - 512i32) as i16) >= 0i16) {
                 break;
@@ -647,11 +638,9 @@ pub unsafe fn GameOverMenu_0_FadeOutConfigGfx(game: &mut Game) {
         }
         let mut v1: u16 = 0u16;
         loop {
-            (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap[(v1 as i32 + 640i32) as usize] =
-                *((&raw mut game.g_ram as *mut u8)
-                    .offset(0x51)
-                    .offset((v1 as i32 * 2i32) as isize) as *mut u16);
+            (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap
+                [(v1 as i32 + 640i32) as usize] =
+                *(ram_ptr!(game, u16; 0x51, (v1 as i32 * 2i32) as isize));
             v1 = v1.wrapping_add(1);
             if (((v1 as i32 * 2i32 - 54i32) as i16) >= 0i16) {
                 break;
@@ -671,19 +660,19 @@ pub unsafe fn GameOverMenu_0_FadeOutConfigGfx(game: &mut Game) {
 }
 pub unsafe fn GameOverMenu_24_FadeIn(game: &mut Game) {
     HandleFadeIn(game);
-    if (*(&raw mut game.g_ram as *mut u8).offset(0x51) as i32 & 0xfi32) == 15i32 {
+    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) == 15i32 {
         update_ram_word!(game.menu_index, wrapping_add(1));
     }
 }
 pub unsafe fn MapVramForMenu(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x52) = 3u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x58) = 81u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x59) = 88u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x5a) = 92u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x5d) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x5e) = 4u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x69) = 19u8;
+    *ram_ptr!(game; 0x6b) = 0u8;
+    *ram_ptr!(game; 0x52) = 3u8;
+    *ram_ptr!(game; 0x58) = 81u8;
+    *ram_ptr!(game; 0x59) = 88u8;
+    *ram_ptr!(game; 0x5a) = 92u8;
+    *ram_ptr!(game; 0x5d) = 0u8;
+    *ram_ptr!(game; 0x5e) = 4u8;
+    *ram_ptr!(game; 0x69) = 19u8;
 }
 pub unsafe fn LoadInitialMenuTiles(game: &mut Game) {
     WriteReg(VMADDL as u16, 0u8, game);
@@ -763,9 +752,8 @@ pub unsafe fn RestorePalettesAndIoAfterDebugGameover(game: &mut Game) {
     let mut v0: i32 = 0i32;
     loop {
         set_ram_word!(
-            game.palette_buffer[v0] = (*((&raw mut game.g_ram as *mut u8).offset(0x3000)
-                as *mut Ram3000))
-                .pause_menu_map_tilemap[(v0 + 384i32) as usize]
+            game.palette_buffer[v0] =
+                (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[(v0 + 384i32) as usize]
         );
         v0 += 1;
         if (((v0 * 2i32 - 512i32) as i16) >= 0i16) {
@@ -774,11 +762,8 @@ pub unsafe fn RestorePalettesAndIoAfterDebugGameover(game: &mut Game) {
     }
     let mut v1: i32 = 0i32;
     loop {
-        *((&raw mut game.g_ram as *mut u8)
-            .offset(0x51)
-            .offset((v1 * 2i32) as isize) as *mut u16) =
-            (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap[(v1 + 640i32) as usize];
+        *(ram_ptr!(game, u16; 0x51, (v1 * 2i32) as isize)) =
+            (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[(v1 + 640i32) as usize];
         v1 += 1;
         if (((v1 * 2i32 - 54i32) as i16) >= 0i16) {
             break;
@@ -817,7 +802,7 @@ pub unsafe fn GameOverMenu_3_FadeIn(game: &mut Game) {
     HandleGameOverBabyMetroid(game);
     DrawMenuSelectionMissile(game);
     HandleFadeIn(game);
-    if (*(&raw mut game.g_ram as *mut u8).offset(0x51) as i32 & 0xfi32) == 15i32 {
+    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) == 15i32 {
         update_ram_word!(game.menu_index, wrapping_add(1));
     }
 }
@@ -825,7 +810,7 @@ pub unsafe fn GameOverMenu_5_FadeOutToGameMap(game: &mut Game) {
     HandleGameOverBabyMetroid(game);
     DrawMenuSelectionMissile(game);
     HandleFadeOut(game);
-    if (*(&raw mut game.g_ram as *mut u8).offset(0x51) as i32 & 0xfi32) == 0i32 {
+    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) == 0i32 {
         update_ram_word!(game.menu_index, wrapping_add(1));
     }
 }
@@ -833,7 +818,7 @@ pub unsafe fn GameOverMenu_7_FadeOutToSoftReset(game: &mut Game) {
     DrawMenuSelectionMissile(game);
     HandleGameOverBabyMetroid(game);
     HandleFadeOut(game);
-    if (*(&raw mut game.g_ram as *mut u8).offset(0x51) as i32 & 0xfi32) == 0i32 {
+    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) == 0i32 {
         SoftReset(game);
     }
 }
@@ -854,8 +839,7 @@ pub unsafe fn GameOverMenu_4_Main(game: &mut Game) {
         update_ram_word!(game.file_select_map_area_index, |fresh84| (fresh84)
             ^ (1u16));
     } else if (ram_word!(game, joypad1_newkeys) as i32 & kButton_A as i32) != 0i32 {
-        (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
-            .instruction_timer = 180u16;
+        (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).instruction_timer = 180u16;
         if ram_word!(game, file_select_map_area_index) != 0 {
             set_ram_word!(game.menu_index = 7u16);
         } else {
@@ -876,19 +860,17 @@ pub unsafe fn GameOverMenu_4_Main(game: &mut Game) {
     set_ram_word!(game.eproj_id[10] = v0);
 }
 pub unsafe fn GameOverMenu_1_Init(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0x69) = 17u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0) = 32u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1) = 64u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2) = 0x80u8;
+    *ram_ptr!(game; 0x69) = 17u8;
+    *ram_ptr!(game; 0x74, 0) = 32u8;
+    *ram_ptr!(game; 0x74, 1) = 64u8;
+    *ram_ptr!(game; 0x74, 2) = 0x80u8;
     QueueMusic_Delayed8(0u16, game);
     QueueMusic_Delayed8(0xff03u16, game);
     set_ram_word!(game.cinematic_var5 = 1u16);
     set_ram_word!(game.eproj_id[0] = 0u16);
     let mut v0: i32 = 0i32;
     loop {
-        *(&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .menu
-            .menu_tilemap as *mut u8 as *mut u16)
+        *(&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).menu.menu_tilemap as *mut u8 as *mut u16)
             .offset(v0 as isize) = 15u16;
         v0 += 1;
         if (((v0 * 2i32 - 2048i32) as i16) >= 0i16) {
@@ -899,28 +881,21 @@ pub unsafe fn GameOverMenu_1_Init(game: &mut Game) {
     let v2: *mut VramWriteEntry =
         gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v2).size = 2048u16;
-    (*v2).src.addr = (&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-        .menu
-        .menu_tilemap as *mut u8)
+    (*v2).src.addr = (&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).menu.menu_tilemap as *mut u8)
         .offset_from(&raw mut game.g_ram as *mut u8) as c_long as VoidP;
     *(&raw mut (*v2).src.bank as *mut u16) = 126u16;
-    (*v2).vram_dst =
-        ((*(&raw mut game.g_ram as *mut u8).offset(0x58) as i32 & 0xfci32) << 8i32) as u16;
+    (*v2).vram_dst = ((*ram_ptr!(game; 0x58) as i32 & 0xfci32) << 8i32) as u16;
     set_ram_word!(game.vram_write_queue_tail = (v1 + 7i32) as u16);
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).palette_index =
-        0u16;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0u16;
     LoadMenuTilemap(0x156u16, addr_kMenuTilemap_GameOver as u16, game);
     LoadMenuTilemap(0x38au16, addr_kMenuTilemap_FindMetroidLarva as u16, game);
     LoadMenuTilemap(0x414u16, addr_kMenuTilemap_TryAgain as u16, game);
     LoadMenuTilemap(0x4ceu16, addr_kMenuTilemap_YesReturnToGame as u16, game);
     LoadMenuTilemap(0x5ceu16, addr_kMenuTilemap_NoGoToTitle as u16, game);
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
-        .current_instruction = 0u16;
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
-        .instruction_timer = 0u16;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).current_instruction = 0u16;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).instruction_timer = 0u16;
     HandleGameOverBabyMetroid(game);
-    *((&raw mut game.g_ram as *mut u8).offset(0x6f) as *mut u16) =
-        ((*(&raw mut game.g_ram as *mut u8).offset(0x70) as i32) << 8i32) as u16;
+    *(ram_ptr!(game, u16; 0x6f)) = ((*ram_ptr!(game; 0x70) as i32) << 8i32) as u16;
     DisableHdmaObjects(game);
     WaitUntilEndOfVblankAndClearHdma(game);
     EnableHdmaObjects(game);
@@ -989,7 +964,7 @@ pub unsafe fn FileSelectMenu(game: &mut Game) {
 }
 pub unsafe fn FileSelectMenu_0_FadeOutConfigGfx(game: &mut Game) {
     HandleFadeOut(game);
-    if (*(&raw mut game.g_ram as *mut u8).offset(0x51) as i32 & 0xfi32) != 0i32 {
+    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) != 0i32 {
         return;
     }
     ScreenOff(game);
@@ -1029,13 +1004,12 @@ pub unsafe fn FileSelectMenu_32_FadeOutToOptions(game: &mut Game) {
     DrawBorderAroundSamusData(game);
     DrawFileSelectSamusHelmets(game);
     HandleFadeOut(game);
-    if (*(&raw mut game.g_ram as *mut u8).offset(0x51) as i32 & 0xfi32) == 0i32 {
+    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) == 0i32 {
         set_ram_word!(game.game_state = kGameState_2_GameOptionsMenu as u16);
         set_ram_word!(game.menu_index = 0u16);
         let mut v0: i32 = 0i32;
         loop {
-            *(((&raw mut game.g_ram as *mut u8).offset(0x198d) as *mut u16 as *mut u8)
-                .offset(v0 as isize) as *mut u16) = 0u16;
+            *((ram_ptr!(game, u16; 0x198d) as *mut u8).offset(v0 as isize) as *mut u16) = 0u16;
             v0 += 2i32;
             if (((v0 - 48i32) as i16) >= 0i16) {
                 break;
@@ -1047,7 +1021,7 @@ pub unsafe fn FileSelectMenu_33_FadeOutToTitle(game: &mut Game) {
     DrawBorderAroundSamusData(game);
     DrawFileSelectSamusHelmets(game);
     HandleFadeOut(game);
-    if (*(&raw mut game.g_ram as *mut u8).offset(0x51) as i32 & 0xfi32) == 0i32 {
+    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) == 0i32 {
         SoftReset(game);
     }
 }
@@ -1057,11 +1031,10 @@ pub unsafe fn FileSelectMenu_5_FadeOutFromMain(game: &mut Game) {
 }
 pub unsafe fn FileSelectMenu_15_FadeOutToMain(game: &mut Game) {
     HandleFadeOut(game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x57) =
-        (*(&raw mut game.g_ram as *mut u8).offset(0x57) as i32 & 0xfi32
-            | 16i32 * (*(&raw mut game.g_ram as *mut u8).offset(0x51) as i32 & 0xfi32) ^ 0xf0i32)
-            as u8;
-    if (*(&raw mut game.g_ram as *mut u8).offset(0x51) as i32 & 0xfi32) == 0i32 {
+    *ram_ptr!(game; 0x57) = (*ram_ptr!(game; 0x57) as i32 & 0xfi32
+        | 16i32 * (*ram_ptr!(game; 0x51) as i32 & 0xfi32) ^ 0xf0i32)
+        as u8;
+    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) == 0i32 {
         ScreenOff(game);
         update_ram_word!(game.menu_index, wrapping_add(1));
     }
@@ -1078,11 +1051,10 @@ pub unsafe fn FileSelectMenu_17_FadeInToMain(game: &mut Game) {
 pub unsafe fn FileSelectMenu_7_FadeInFromMain(game: &mut Game) {
     DrawMenuSelectionMissile(game);
     HandleFadeIn(game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x57) =
-        (*(&raw mut game.g_ram as *mut u8).offset(0x57) as i32 & 0xfi32
-            | 16i32 * (*(&raw mut game.g_ram as *mut u8).offset(0x51) as i32 & 0xfi32) ^ 0xf0i32)
-            as u8;
-    if (*(&raw mut game.g_ram as *mut u8).offset(0x51) as i32 & 0xfi32) == 15i32 {
+    *ram_ptr!(game; 0x57) = (*ram_ptr!(game; 0x57) as i32 & 0xfi32
+        | 16i32 * (*ram_ptr!(game; 0x51) as i32 & 0xfi32) ^ 0xf0i32)
+        as u8;
+    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) == 15i32 {
         update_ram_word!(game.menu_index, wrapping_add(1));
     }
 }
@@ -1092,8 +1064,7 @@ pub unsafe fn FileSelectMenu_6_FileCopyInit(game: &mut Game) {
 }
 pub unsafe fn FileSelectMenu_Func1(game: &mut Game) {
     ClearMenuTilemap(game);
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).palette_index =
-        0u16;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0u16;
     LoadMenuTilemap(0x52u16, addr_kMenuTilemap_DataCopyMode as u16, game);
     LoadMenuTilemap(0x150u16, addr_kMenuTilemap_CopyWhichData as u16, game);
     LoadMenuExitTilemap(game);
@@ -1121,8 +1092,7 @@ pub unsafe fn SetInitialFileCopyMenuSelection(game: &mut Game) {
 pub unsafe fn ClearMenuTilemap(game: &mut Game) {
     let mut i: i32 = 2046i32;
     while i >= 0i32 {
-        *(((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap as *mut u16)
+        *(((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16)
             .offset(768) as *mut u8)
             .offset(i as u16 as i32 as isize) as *mut u16) = 15u16;
         i -= 2i32;
@@ -1133,27 +1103,21 @@ pub unsafe fn LoadMenuExitTilemap(game: &mut Game) {
 }
 pub unsafe fn DrawFileCopySaveFileInfo(game: &mut Game) {
     LoadFromSram_(0u16, game);
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).palette_index =
-        0u16;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0u16;
     if (ram_word!(game, nonempty_save_slots) as i32 & 1i32) == 0i32 {
-        (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
-            .palette_index = 1024u16;
+        (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 1024u16;
     }
     DrawFileCopySaveSlotAInfo(game);
     LoadFromSram_(1u16, game);
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).palette_index =
-        0u16;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0u16;
     if (ram_word!(game, nonempty_save_slots) as i32 & 2i32) == 0i32 {
-        (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
-            .palette_index = 1024u16;
+        (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 1024u16;
     }
     DrawFileCopySaveSlotBInfo(game);
     LoadFromSram_(2u16, game);
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).palette_index =
-        0u16;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0u16;
     if (ram_word!(game, nonempty_save_slots) as i32 & 4i32) == 0i32 {
-        (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
-            .palette_index = 1024u16;
+        (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 1024u16;
     }
     DrawFileCopySaveSlotCInfo(game);
     QueueTransferOfMenuTilemapToVramBG1(game);
@@ -1205,13 +1169,10 @@ pub unsafe fn QueueTransferOfMenuTilemapToVramBG1(game: &mut Game) {
     let v1: *mut VramWriteEntry =
         gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v1).size = 2048u16;
-    (*v1).src.addr = (&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-        .menu
-        .menu_tilemap as *mut u8)
+    (*v1).src.addr = (&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).menu.menu_tilemap as *mut u8)
         .offset_from(&raw mut game.g_ram as *mut u8) as c_long as VoidP;
     *(&raw mut (*v1).src.bank as *mut u16) = 126u16;
-    (*v1).vram_dst =
-        ((*(&raw mut game.g_ram as *mut u8).offset(0x58) as i32 & 0xfci32) << 8i32) as u16;
+    (*v1).vram_dst = ((*ram_ptr!(game; 0x58) as i32 & 0xfci32) << 8i32) as u16;
     set_ram_word!(game.vram_write_queue_tail = (v0).wrapping_add(7u16));
 }
 static kBitShl: [u8; 3] = [1, 2, 4];
@@ -1268,9 +1229,7 @@ pub unsafe fn FileSelectMenu_8(game: &mut Game) {
         }
         if current_block_18 == 1109700713171191020 {
         } else {
-            *(((&raw mut game.g_ram as *mut u8).offset(0x1997) as *mut u16).offset(15)
-                as *mut u8)
-                .offset(0) = v0;
+            *((ram_ptr!(game, u16; 0x1997)).offset(15) as *mut u8).offset(0) = v0;
             QueueSfx1_Max6(0x37u16, game);
             SetFileCopyMenuSelectionMissilePosition(game);
             return;
@@ -1299,38 +1258,33 @@ pub unsafe fn FileSelectMenu_9_InitializeSelectDest(game: &mut Game) {
 }
 pub unsafe fn DrawFileCopySelectDestinationSaveFileInfo(game: &mut Game) {
     ClearMenuTilemap(game);
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).palette_index =
-        0u16;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0u16;
     LoadMenuTilemap(0x52u16, addr_kMenuTilemap_DataCopyMode as u16, game);
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).palette_index =
-        0u16;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0u16;
     LoadMenuTilemap(0x148u16, addr_kMenuTilemap_CopySamusToWhere as u16, game);
-    (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000)).pause_menu_map_tilemap
-        [944i32 as usize] = (ram_word!(game, eproj_id[16])).wrapping_add(8298u16);
+    (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[944i32 as usize] =
+        (ram_word!(game, eproj_id[16])).wrapping_add(8298u16);
     LoadMenuExitTilemap(game);
     LoadFromSram_(0u16, game);
     let mut v0: u16 = 1024u16;
     if ram_word!(game, eproj_id[16]) != 0 {
         v0 = 0u16;
     }
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).palette_index =
-        v0;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = v0;
     DrawFileCopySaveSlotAInfo(game);
     LoadFromSram_(1u16, game);
     let mut v1: u16 = 1024u16;
     if ram_word!(game, eproj_id[16]) != 1u16 {
         v1 = 0u16;
     }
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).palette_index =
-        v1;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = v1;
     DrawFileCopySaveSlotBInfo(game);
     LoadFromSram_(2u16, game);
     let mut v2: u16 = 1024u16;
     if ram_word!(game, eproj_id[16]) != 2u16 {
         v2 = 0u16;
     }
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).palette_index =
-        v2;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = v2;
     DrawFileCopySaveSlotCInfo(game);
     QueueTransferOfMenuTilemapToVramBG1(game);
 }
@@ -1405,24 +1359,21 @@ pub unsafe fn FileSelectMenu_10_FileCopySelectDest(game: &mut Game) {
 }
 pub unsafe fn FileSelectMenu_11_InitializeConfirm(game: &mut Game) {
     DrawBorderAroundDataCopyMode(game);
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).palette_index =
-        0u16;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0u16;
     LoadMenuTilemap(0x144u16, addr_kMenuTilemap_CopySamusToSamus as u16, game);
-    (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000)).pause_menu_map_tilemap
-        [942i32 as usize] = (ram_word!(game, eproj_id[16])).wrapping_add(8298u16);
-    (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000)).pause_menu_map_tilemap
-        [955i32 as usize] = (ram_word!(game, eproj_id[17])).wrapping_add(8298u16);
+    (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[942i32 as usize] =
+        (ram_word!(game, eproj_id[16])).wrapping_add(8298u16);
+    (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[955i32 as usize] =
+        (ram_word!(game, eproj_id[17])).wrapping_add(8298u16);
     DrawFileCopyClearConfirmation(game);
     update_ram_word!(game.menu_index, wrapping_add(1));
     set_ram_word!(game.eproj_id[15] = 0u16);
     set_ram_word!(game.cinematic_var6 = 8u16);
 }
 pub unsafe fn DrawFileCopyClearConfirmation(game: &mut Game) {
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).palette_index =
-        0u16;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0u16;
     LoadMenuTilemap(0x514u16, addr_kMenuTilemap_IsThisOk as u16, game);
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).palette_index =
-        0u16;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0u16;
     LoadMenuTilemap(0x59cu16, addr_kMenuTilemap_Yes as u16, game);
     let mut v0: i32 = 832i32;
     loop {
@@ -1436,8 +1387,7 @@ pub unsafe fn DrawFileCopyClearConfirmation(game: &mut Game) {
             break;
         }
     }
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).palette_index =
-        0u16;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0u16;
     LoadMenuTilemap(0x65cu16, addr_kMenuTilemap_No as u16, game);
     DrawFileCopyConfirmationSaveFileInfo(game);
 }
@@ -1447,24 +1397,21 @@ pub unsafe fn DrawFileCopyConfirmationSaveFileInfo(game: &mut Game) {
     if ram_word!(game, eproj_id[16]) != 0u16 && ram_word!(game, eproj_id[17]) != 0u16 {
         v0 = 1024i32;
     }
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).palette_index =
-        v0 as u16;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = v0 as u16;
     DrawFileCopySaveSlotAInfo(game);
     LoadFromSram_(1u16, game);
     let mut v1: i32 = 0i32;
     if ram_word!(game, eproj_id[16]) != 1u16 && ram_word!(game, eproj_id[17]) != 1u16 {
         v1 = 1024i32;
     }
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).palette_index =
-        v1 as u16;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = v1 as u16;
     DrawFileCopySaveSlotBInfo(game);
     LoadFromSram_(2u16, game);
     let mut v2: i32 = 0i32;
     if ram_word!(game, eproj_id[16]) != 2u16 && ram_word!(game, eproj_id[17]) != 2u16 {
         v2 = 1024i32;
     }
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).palette_index =
-        v2 as u16;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = v2 as u16;
     DrawFileCopySaveSlotCInfo(game);
     QueueTransferOfMenuTilemapToVramBG1(game);
 }
@@ -1510,10 +1457,8 @@ pub unsafe fn HandleFileCopyArrowPalette(game: &mut Game) {
             let v0: u16 = ram_word!(game, palette_buffer[145]);
             let mut v1: u16 = 0u16;
             loop {
-                *((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16)
-                    .offset(((v1 as i32 >> 1i32) + 145i32) as isize) =
-                    *((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16)
-                        .offset(((v1 as i32 >> 1i32) + 146i32) as isize);
+                *(ram_ptr!(game, u16; 0xc000)).offset(((v1 as i32 >> 1i32) + 145i32) as isize) =
+                    *(ram_ptr!(game, u16; 0xc000)).offset(((v1 as i32 >> 1i32) + 146i32) as isize);
                 v1 = (v1).wrapping_add(2u16);
                 if (((v1) as i16).wrapping_sub(12i16) >= 0i16) {
                     break;
@@ -1566,12 +1511,10 @@ pub unsafe fn FileSelectMenu_13_FileCopyDoIt(game: &mut Game) {
     let mut v6: i32 = ((4i32 * ram_word!(game, eproj_id[17]) as i32 + 9i32) << 6i32) + 24i32;
     let mut v7: i32 = 0i32;
     loop {
-        *(((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap as *mut u16)
+        *(((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16)
             .offset(768) as *mut u8)
             .offset(v6 as isize) as *mut u16) = 15u16;
-        *(((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap as *mut u16)
+        *(((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16)
             .offset(736) as *mut u8)
             .offset(v6 as isize) as *mut u16) = 15u16;
         v6 += 2i32;
@@ -1580,8 +1523,7 @@ pub unsafe fn FileSelectMenu_13_FileCopyDoIt(game: &mut Game) {
             break;
         }
     }
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).palette_index =
-        0u16;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0u16;
     LoadMenuTilemap(0x510u16, addr_kMenuTilemap_CopyCompleted as u16, game);
     DrawFileCopyConfirmationSaveFileInfo(game);
     RtlWriteSram(game);
@@ -1611,8 +1553,7 @@ pub unsafe fn FileSelectMenu_20_FileClearInit(game: &mut Game) {
 }
 pub unsafe fn InitFileSelectMenuFileClear(game: &mut Game) {
     ClearMenuTilemap(game);
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).palette_index =
-        0u16;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0u16;
     LoadMenuTilemap(0x50u16, addr_kMenuTilemap_DataClearMode as u16, game);
     LoadMenuTilemap(0x140u16, addr_kMenuTilemap_ClearWhichData as u16, game);
     LoadMenuExitTilemap(game);
@@ -1628,7 +1569,7 @@ pub unsafe fn FileSelectMenu_22_FileClearSelectSlot(game: &mut Game) {
     DrawBorderAroundDataClearMode(game);
     DrawMenuSelectionMissile(game);
     *(&raw mut v0 as *mut u8).offset(1isize) =
-        *((&raw mut game.g_ram as *mut u8).offset(0x8f) as *mut u16 as *mut u8).offset(1isize);
+        *(ram_ptr!(game, u16; 0x8f) as *mut u8).offset(1isize);
     if ram_word!(game, joypad1_newkeys) as i32 & (kButton_Start as i32 | kButton_A as i32) != 0i32 {
         QueueSfx1_Max6(0x37u16, game);
         if ram_word!(game, eproj_id[15]) != 3u16 {
@@ -1674,9 +1615,7 @@ pub unsafe fn FileSelectMenu_22_FileClearSelectSlot(game: &mut Game) {
         }
         if current_block_18 == 11307063007268554308 {
         } else {
-            *(((&raw mut game.g_ram as *mut u8).offset(0x1997) as *mut u16).offset(15)
-                as *mut u8)
-                .offset(0) = v1;
+            *((ram_ptr!(game, u16; 0x1997)).offset(15) as *mut u8).offset(0) = v1;
             *(&raw mut v0 as *mut u8).offset(0) = 55u8;
             QueueSfx1_Max6(v0, game);
             SetFileClearMenuMissilePos(game);
@@ -1695,11 +1634,10 @@ pub unsafe fn SetFileClearMenuMissilePos(game: &mut Game) {
 }
 pub unsafe fn FileSelectMenu_23_FileClearInitConfirm(game: &mut Game) {
     DrawBorderAroundDataClearMode(game);
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).palette_index =
-        0u16;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0u16;
     LoadMenuTilemap(0x140u16, addr_kMenuTilemap_ClearSamusA as u16, game);
-    (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000)).pause_menu_map_tilemap
-        [949i32 as usize] = (ram_word!(game, eproj_id[16])).wrapping_add(8298u16);
+    (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[949i32 as usize] =
+        (ram_word!(game, eproj_id[16])).wrapping_add(8298u16);
     set_ram_word!(game.eproj_id[17] = 3u16);
     DrawFileCopyClearConfirmation(game);
     update_ram_word!(game.menu_index, wrapping_add(1));
@@ -1781,8 +1719,7 @@ pub unsafe fn FileSelectMenu_25_FileClearDoClear(game: &mut Game) {
     }
     update_ram_word!(game.nonempty_save_slots, |fresh51| (fresh51)
         & (kBitShl_Not[ram_word!(game, eproj_id[16]) as usize]));
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).palette_index =
-        0u16;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0u16;
     LoadMenuTilemap(0x500u16, addr_kMenuTilemap_DataCleared as u16, game);
     DrawFileCopyConfirmationSaveFileInfo(game);
     RtlWriteSram(game);
@@ -1844,20 +1781,18 @@ pub unsafe fn DrawFileSelectSamusHelmets(game: &mut Game) {
 pub unsafe fn DrawFileSelectSlotSamusHelmet(k: u16, game: &mut Game) {
     let v0: u16 = k;
     let mut v1: i16 = 0;
-    v1 = *(((&raw mut game.g_ram as *mut u8).offset(0x198d) as *mut u16 as *mut u8)
-        .offset(v0 as i32 as isize) as *mut u16) as i16;
+    v1 = *((ram_ptr!(game, u16; 0x198d) as *mut u8).offset(v0 as i32 as isize) as *mut u16) as i16;
     if v1 != 0 {
         let v2: u16 = ((v1) as u16).wrapping_sub(1u16);
-        *(((&raw mut game.g_ram as *mut u8).offset(0x198d) as *mut u16 as *mut u8)
-            .offset(v0 as i32 as isize) as *mut u16) = v2;
+        *((ram_ptr!(game, u16; 0x198d) as *mut u8).offset(v0 as i32 as isize) as *mut u16) = v2;
         if v2 == 0 {
-            *(((&raw mut game.g_ram as *mut u8).offset(0x198d) as *mut u16 as *mut u8)
-                .offset(v0 as i32 as isize) as *mut u16) = 8u16;
+            *((ram_ptr!(game, u16; 0x198d) as *mut u8).offset(v0 as i32 as isize) as *mut u16) =
+                8u16;
             let v3: i32 = v0 as i32 >> 1i32;
             let mut v4: u16 = (ram_word!(game, eproj_id[v3])).wrapping_add(1u16);
             if ram_word!(game, eproj_id[v3]) as i32 - 7i32 & 0x8000i32 == 0 {
-                *(((&raw mut game.g_ram as *mut u8).offset(0x198d) as *mut u16 as *mut u8)
-                    .offset(v0 as i32 as isize) as *mut u16) = 0u16;
+                *((ram_ptr!(game, u16; 0x198d) as *mut u8).offset(v0 as i32 as isize)
+                    as *mut u16) = 0u16;
                 v4 = 7u16;
             }
             set_ram_word!(game.eproj_id[v3] = v4);
@@ -1910,7 +1845,7 @@ pub unsafe fn FileSelectMap(game: &mut Game) {
 pub unsafe fn FileSelectMap_22(game: &mut Game) {
     DrawAreaSelectMapLabels(game);
     HandleFadeOut(game);
-    if (*(&raw mut game.g_ram as *mut u8).offset(0x51) as i32 & 0xfi32) == 0i32 {
+    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) == 0i32 {
         set_ram_word!(game.game_state = kGameState_2_GameOptionsMenu as u16);
         set_ram_word!(game.menu_index = 0u16);
     }
@@ -1927,13 +1862,10 @@ pub unsafe fn FileSelectMenu_1_LoadFileSelectMenuBG2(game: &mut Game) {
     let v1: u16 = ram_word!(game, vram_write_queue_tail);
     v2 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v2).size = 2048u16;
-    (*v2).src.addr = (&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-        .menu
-        .menu_tilemap as *mut u8)
+    (*v2).src.addr = (&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).menu.menu_tilemap as *mut u8)
         .offset_from(&raw mut game.g_ram as *mut u8) as c_long as VoidP;
     *(&raw mut (*v2).src.bank as *mut u16) = 126u16;
-    (*v2).vram_dst =
-        ((*(&raw mut game.g_ram as *mut u8).offset(0x59) as i32 & 0xfci32) << 8i32) as u16;
+    (*v2).vram_dst = ((*ram_ptr!(game; 0x59) as i32 & 0xfci32) << 8i32) as u16;
     set_ram_word!(game.vram_write_queue_tail = (v1).wrapping_add(7u16));
     update_ram_word!(game.menu_index, wrapping_add(1));
     set_ram_word!(game.cinematic_var5 = 1u16);
@@ -1958,15 +1890,13 @@ pub unsafe fn FileSelectMenu_2_InitMain(game: &mut Game) {
 pub unsafe fn FileSelectMenu_16(game: &mut Game) {
     let mut i: i32 = 2046i32;
     while i >= 0i32 {
-        *(((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap as *mut u16)
+        *(((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16)
             .offset(768) as *mut u8)
             .offset(i as u16 as i32 as isize) as *mut u16) = 15u16;
         i -= 2i32;
     }
     set_ram_word!(game.nonempty_save_slots = -1i32 as u16);
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).palette_index =
-        0u16;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0u16;
     LoadMenuTilemap(0x56u16, addr_kMenuTilemap_SamusData as u16, game);
     LoadMenuTilemap(0x146u16, addr_kMenuTilemap_SamusA as u16, game);
     let mut c: u8 = LoadFromSram_(0u16, game);
@@ -1985,8 +1915,7 @@ pub unsafe fn FileSelectMenu_16(game: &mut Game) {
         game,
     );
     LoadMenuTilemap(0x176u16, addr_kMenuTilemap_TIME as u16, game);
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).palette_index =
-        0u16;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0u16;
     LoadMenuTilemap(0x286u16, addr_kMenuTilemap_SamusB as u16, game);
     c = LoadFromSram_(1u16, game);
     set_ram_word!(
@@ -2004,8 +1933,7 @@ pub unsafe fn FileSelectMenu_16(game: &mut Game) {
         game,
     );
     LoadMenuTilemap(0x2b6u16, addr_kMenuTilemap_TIME as u16, game);
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).palette_index =
-        0u16;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0u16;
     LoadMenuTilemap(0x3c6u16, addr_kMenuTilemap_SamusC as u16, game);
     c = LoadFromSram_(2u16, game);
     set_ram_word!(
@@ -2029,15 +1957,12 @@ pub unsafe fn FileSelectMenu_16(game: &mut Game) {
                 as u16
     );
     if ram_word!(game, nonempty_save_slots) != 0 {
-        (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
-            .palette_index = 0u16;
+        (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0u16;
         LoadMenuTilemap(0x508u16, addr_kMenuTilemap_DataCopy as u16, game);
-        (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
-            .palette_index = 0u16;
+        (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0u16;
         LoadMenuTilemap(0x5c8u16, addr_kMenuTilemap_DataClear as u16, game);
     }
-    (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).palette_index =
-        0u16;
+    (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index = 0u16;
     LoadMenuTilemap(0x688u16, addr_kMenuTilemap_Exit as u16, game);
     QueueTransferOfMenuTilemapToVramBG1(game);
     set_ram_word!(game.cinematic_var5 = 1u16);
@@ -2079,7 +2004,7 @@ pub unsafe fn FileSelectMenu_3_FadeInToMain(game: &mut Game) {
     DrawMenuSelectionMissile(game);
     DrawBorderAroundSamusData(game);
     HandleFadeIn(game);
-    if (*(&raw mut game.g_ram as *mut u8).offset(0x51) as i32 & 0xfi32) == 15i32 {
+    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) == 15i32 {
         update_ram_word!(game.menu_index, wrapping_add(1));
     }
 }
@@ -2111,13 +2036,10 @@ pub unsafe fn DrawFileSelectionHealth(a: u16, k: u16, game: &mut Game) {
                 n -= 1;
                 v4 = 152i16;
             }
-            *(((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap as *mut u16)
+            *(((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16)
                 .offset(768) as *mut u8)
                 .offset(v3 as i32 as isize) as *mut u16) =
-                ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
-                    .palette_index)
-                    | ((v4) as u16);
+                ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index) | ((v4) as u16);
             v3 = (v3).wrapping_add(2u16);
             m -= 1;
             if m == 0 {
@@ -2127,20 +2049,16 @@ pub unsafe fn DrawFileSelectionHealth(a: u16, k: u16, game: &mut Game) {
         }
         n = q / 10i32;
         q = q % 10i32;
-        *(((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap as *mut u16)
+        *(((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16)
             .offset(802) as *mut u8)
             .offset(k as i32 as isize) as *mut u16) =
-            ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
-                .palette_index as i32
-                | q + 8288i32) as u16;
-        *(((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap as *mut u16)
+            ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index as i32 | q + 8288i32)
+                as u16;
+        *(((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16)
             .offset(801) as *mut u8)
             .offset(k as i32 as isize) as *mut u16) =
-            ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
-                .palette_index as i32
-                | n + 8288i32) as u16;
+            ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index as i32 | n + 8288i32)
+                as u16;
     };
 }
 pub unsafe fn DrawFileSelectionTime(a: u16, k: u16, game: &mut Game) {
@@ -2149,37 +2067,29 @@ pub unsafe fn DrawFileSelectionTime(a: u16, k: u16, game: &mut Game) {
         let div_val: i32 = ram_word!(game, game_time_hours) as i32 / 10i32;
         let mod_val: i32 = ram_word!(game, game_time_hours) as i32 % 10i32;
         let v2: u16 = r26;
-        *(((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap as *mut u16)
+        *(((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16)
             .offset(769) as *mut u8)
             .offset(v2 as i32 as isize) as *mut u16) =
-            ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
-                .palette_index as i32
+            ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index as i32
                 | mod_val + 8288i32) as u16;
-        *(((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap as *mut u16)
+        *(((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16)
             .offset(768) as *mut u8)
             .offset(v2 as i32 as isize) as *mut u16) =
-            ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
-                .palette_index as i32
+            ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index as i32
                 | div_val + 8288i32) as u16;
         LoadMenuTilemap((r26).wrapping_add(4u16), addr_word_81B4A8 as u16, game);
         let div_min: i32 = ram_word!(game, game_time_minutes) as i32 / 10i32;
         let mod_min: i32 = ram_word!(game, game_time_minutes) as i32 % 10i32;
         let v3: u16 = r26;
-        *(((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap as *mut u16)
+        *(((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16)
             .offset(772) as *mut u8)
             .offset(v3 as i32 as isize) as *mut u16) =
-            ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
-                .palette_index as i32
+            ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index as i32
                 | mod_min + 8288i32) as u16;
-        *(((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap as *mut u16)
+        *(((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16)
             .offset(771) as *mut u8)
             .offset(v3 as i32 as isize) as *mut u16) =
-            ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
-                .palette_index as i32
+            ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index as i32
                 | div_min + 8288i32) as u16;
     }
 }
@@ -2250,7 +2160,7 @@ pub unsafe fn FileSelectMenu_4_Main(game: &mut Game) {
         if ram_word!(game, selected_save_slot) as i32 - 3i32 & 0x8000i32 != 0 {
             QueueSfx1_Max6(0x2au16, game);
             update_ram_word!(game.menu_index, wrapping_add(27u16));
-            *(((&raw mut game.g_ram as *mut u8).offset(0x198d) as *mut u16 as *mut u8).offset(
+            *((ram_ptr!(game, u16; 0x198d) as *mut u8).offset(
                 (2i32 * (ram_word!(game, selected_save_slot) as i32 + 2i32)) as u16 as i32 as isize,
             ) as *mut u16) = 1u16;
             *(game.g_sram.offset(0x1fec) as *mut u16) = ram_word!(game, selected_save_slot);
@@ -2267,18 +2177,14 @@ pub unsafe fn FileSelectMenu_4_Main(game: &mut Game) {
             if ram_word!(game, selected_save_slot) == 3u16 {
                 QueueSfx1_Max6(0x37u16, game);
                 update_ram_word!(game.menu_index, wrapping_add(1));
-                *((&raw mut game.g_ram as *mut u8).offset(0x57) as *mut u16) =
-                    (*((&raw mut game.g_ram as *mut u8).offset(0x57) as *mut u16) as i32
-                        & 0xff0ci32
-                        | 3i32) as u16;
+                *(ram_ptr!(game, u16; 0x57)) =
+                    (*(ram_ptr!(game, u16; 0x57)) as i32 & 0xff0ci32 | 3i32) as u16;
             } else {
                 if ram_word!(game, selected_save_slot) == 4u16 {
                     QueueSfx1_Max6(0x37u16, game);
                     update_ram_word!(game.menu_index, wrapping_add(15u16));
-                    v0 = (*((&raw mut game.g_ram as *mut u8).offset(0x57) as *mut u16) as i32
-                        & 0xff0ci32
-                        | 3i32) as i16;
-                    *((&raw mut game.g_ram as *mut u8).offset(0x57) as *mut u16) = v0 as u16;
+                    v0 = (*(ram_ptr!(game, u16; 0x57)) as i32 & 0xff0ci32 | 3i32) as i16;
+                    *(ram_ptr!(game, u16; 0x57)) = v0 as u16;
                 }
                 if v0 == 5i16 {
                     set_ram_word!(game.menu_index = 33u16);
@@ -2297,13 +2203,10 @@ pub unsafe fn FileSelectMap_0(game: &mut Game) {
     let v0: u16 = ram_word!(game, vram_write_queue_tail);
     v1 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v1).size = 2048u16;
-    (*v1).src.addr = (&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-        .menu
-        .menu_tilemap as *mut u8)
+    (*v1).src.addr = (&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).menu.menu_tilemap as *mut u8)
         .offset_from(&raw mut game.g_ram as *mut u8) as c_long as VoidP;
     *(&raw mut (*v1).src.bank as *mut u16) = 126u16;
-    (*v1).vram_dst =
-        ((*(&raw mut game.g_ram as *mut u8).offset(0x59) as i32 & 0xfci32) << 8i32) as u16;
+    (*v1).vram_dst = ((*ram_ptr!(game; 0x59) as i32 & 0xfci32) << 8i32) as u16;
     set_ram_word!(game.vram_write_queue_tail = (v0).wrapping_add(7u16));
     set_ram_word!(game.palette_change_num = 0u16);
     LoadFileSelectPalettes(game);
@@ -2357,7 +2260,7 @@ pub unsafe fn FileSelectMap_1(game: &mut Game) {
         }
         update_ram_word!(game.menu_index, wrapping_add(1));
         set_ram_word!(game.g_word_7E0787 = 0u16);
-        *(&raw mut game.g_ram as *mut u8).offset(0x69) = 2u8;
+        *ram_ptr!(game; 0x69) = 2u8;
     }
 }
 pub unsafe fn sub_81A3D1(k: u16, game: &mut Game) {
@@ -2403,11 +2306,9 @@ pub unsafe fn FileSelectMap_2_LoadAreaSelectForegroundTilemap(game: &mut Game) {
     (*v1).size = 2048u16;
     (*v1).src.addr = addr_kAreaSelectForegroundTilemap as i32 as VoidP;
     *(&raw mut (*v1).src.bank as *mut u16) = 129u16;
-    (*v1).vram_dst =
-        ((*(&raw mut game.g_ram as *mut u8).offset(0x58) as i32 & 0xfci32) << 8i32) as u16;
+    (*v1).vram_dst = ((*ram_ptr!(game; 0x58) as i32 & 0xfci32) << 8i32) as u16;
     set_ram_word!(game.vram_write_queue_tail = (v0).wrapping_add(7u16));
-    *((&raw mut game.g_ram as *mut u8).offset(0x51) as *mut u16) =
-        ((*(&raw mut game.g_ram as *mut u8).offset(0x52) as i32) << 8i32 | 0xfi32) as u16;
+    *(ram_ptr!(game, u16; 0x51)) = ((*ram_ptr!(game; 0x52) as i32) << 8i32 | 0xfi32) as u16;
     update_ram_word!(game.menu_index, wrapping_add(1));
 }
 pub unsafe fn FileSelectMap_18(game: &mut Game) {
@@ -2426,28 +2327,27 @@ pub unsafe fn LoadAreaSelectBackgroundTilemap(j: u16, game: &mut Game) {
     (*v2).src.addr =
         (8i32 * 256i32 * j as i32 + addr_kAreaSelectBackgroundTilemaps as i32) as VoidP;
     (*v2).src.bank = 0x81u8;
-    (*v2).vram_dst =
-        ((*(&raw mut game.g_ram as *mut u8).offset(0x5a) as i32 & 0xfci32) << 8i32) as u16;
+    (*v2).vram_dst = ((*ram_ptr!(game; 0x5a) as i32 & 0xfci32) << 8i32) as u16;
     set_ram_word!(game.vram_write_queue_tail = (v1).wrapping_add(7u16));
 }
 pub unsafe fn FileSelectMap_4_SetupExpandingSquareTransition(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 4u8;
+    *ram_ptr!(game; 0x6b) = 4u8;
     crate::rtl::write_register_and_mirror(TS as u16, 4, 0x6d, false, game);
     WriteReg(TSW as u16, 4u8, game);
     crate::rtl::write_register_and_mirror(CGWSEL as u16, 2, 0x6f, true, game);
     crate::rtl::write_register_and_mirror(CGADSUB as u16, 0x25, 0x72, true, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2) = 0x80u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1) = 64u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0) = 32u8;
+    *ram_ptr!(game; 0x74, 2) = 0x80u8;
+    *ram_ptr!(game; 0x74, 1) = 64u8;
+    *ram_ptr!(game; 0x74, 0) = 32u8;
     SetupInitialExpandingSquareHDMA(game);
     crate::rtl::write_register_and_mirror(HDMAEN as u16, 0xc, 0x85, true, game);
     ConfigureWindow1ForExpandingSquare(game);
     set_ram_word!(game.hdma_objects_enable_flag = 0u16);
-    *((&raw mut game.g_ram as *mut u8).offset(0x727) as *mut u16 as *mut u8).offset(0) =
+    *(ram_ptr!(game, u16; 0x727) as *mut u8).offset(0) =
         ((ram_word!(game, menu_index)) as u8).wrapping_add(1u8);
 }
 pub unsafe fn ConfigureWindow1ForExpandingSquare(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0x69) = 19u8;
+    *ram_ptr!(game; 0x69) = 19u8;
     crate::rtl::write_register_and_mirror(TM as u16, 0x13, 0x6c, false, game);
     WriteReg(TMW as u16, 0x13u8, game);
     crate::rtl::write_register_and_mirror(W12SEL as u16, 0x23, 0x60, true, game);
@@ -2457,45 +2357,20 @@ pub unsafe fn ConfigureWindow1ForExpandingSquare(game: &mut Game) {
 pub unsafe fn SetupInitialExpandingSquareHDMA(game: &mut Game) {
     set_ram_word!(game.expand_sq_topbottom_margin_right_pos = 0u16);
     set_ram_word!(game.expand_sq_topbottom_margin_left_pos = -1i32 as u16);
-    *((&raw mut game.g_ram as *mut u8).offset(0x9e32) as *mut u16 as *mut u8).offset(0) = 127u8;
-    *((&raw mut game.g_ram as *mut u8).offset(0x9e36) as *mut u16 as *mut u8).offset(0) =
-        -127i32 as u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e00) as *mut ExpandingSquareTransitionHdma)
-        .offset(0))
-    .field_0 = 111u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e00) as *mut ExpandingSquareTransitionHdma)
-        .offset(0))
-    .field_1 = 34u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e00) as *mut ExpandingSquareTransitionHdma)
-        .offset(0))
-    .field_2 = -98i32 as u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e00) as *mut ExpandingSquareTransitionHdma)
-        .offset(1))
-    .field_0 = 1u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e00) as *mut ExpandingSquareTransitionHdma)
-        .offset(1))
-    .field_1 = 50u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e00) as *mut ExpandingSquareTransitionHdma)
-        .offset(1))
-    .field_2 = -98i32 as u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e00) as *mut ExpandingSquareTransitionHdma)
-        .offset(2))
-    .field_0 = 1u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e00) as *mut ExpandingSquareTransitionHdma)
-        .offset(2))
-    .field_1 = 50u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e00) as *mut ExpandingSquareTransitionHdma)
-        .offset(2))
-    .field_2 = -98i32 as u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e00) as *mut ExpandingSquareTransitionHdma)
-        .offset(3))
-    .field_0 = 111u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e00) as *mut ExpandingSquareTransitionHdma)
-        .offset(3))
-    .field_1 = 32u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e00) as *mut ExpandingSquareTransitionHdma)
-        .offset(3))
-    .field_2 = -98i32 as u8;
+    *(ram_ptr!(game, u16; 0x9e32) as *mut u8).offset(0) = 127u8;
+    *(ram_ptr!(game, u16; 0x9e36) as *mut u8).offset(0) = -127i32 as u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(0)).field_0 = 111u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(0)).field_1 = 34u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(0)).field_2 = -98i32 as u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(1)).field_0 = 1u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(1)).field_1 = 50u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(1)).field_2 = -98i32 as u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(2)).field_0 = 1u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(2)).field_1 = 50u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(2)).field_2 = -98i32 as u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(3)).field_0 = 111u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(3)).field_1 = 32u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(3)).field_2 = -98i32 as u8;
     WriteReg(DMAP2 as u16, 0x40u8, game);
     WriteReg(BBAD2 as u16, 0x26u8, game);
     WriteReg(A1T2L as u16, 0u8, game);
@@ -2507,42 +2382,18 @@ pub unsafe fn SetupInitialExpandingSquareHDMA(game: &mut Game) {
     WriteReg(A2A2L as u16, 0u8, game);
     WriteReg(A2A2H as u16, 0u8, game);
     WriteReg(NTRL2 as u16, 0u8, game);
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e10) as *mut ExpandingSquareTransitionHdma)
-        .offset(0))
-    .field_0 = 111u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e10) as *mut ExpandingSquareTransitionHdma)
-        .offset(0))
-    .field_1 = 32u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e10) as *mut ExpandingSquareTransitionHdma)
-        .offset(0))
-    .field_2 = -98i32 as u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e10) as *mut ExpandingSquareTransitionHdma)
-        .offset(1))
-    .field_0 = 1u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e10) as *mut ExpandingSquareTransitionHdma)
-        .offset(1))
-    .field_1 = 54u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e10) as *mut ExpandingSquareTransitionHdma)
-        .offset(1))
-    .field_2 = -98i32 as u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e10) as *mut ExpandingSquareTransitionHdma)
-        .offset(2))
-    .field_0 = 1u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e10) as *mut ExpandingSquareTransitionHdma)
-        .offset(2))
-    .field_1 = 54u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e10) as *mut ExpandingSquareTransitionHdma)
-        .offset(2))
-    .field_2 = -98i32 as u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e10) as *mut ExpandingSquareTransitionHdma)
-        .offset(3))
-    .field_0 = 111u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e10) as *mut ExpandingSquareTransitionHdma)
-        .offset(3))
-    .field_1 = 32u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e10) as *mut ExpandingSquareTransitionHdma)
-        .offset(3))
-    .field_2 = -98i32 as u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(0)).field_0 = 111u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(0)).field_1 = 32u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(0)).field_2 = -98i32 as u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(1)).field_0 = 1u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(1)).field_1 = 54u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(1)).field_2 = -98i32 as u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(2)).field_0 = 1u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(2)).field_1 = 54u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(2)).field_2 = -98i32 as u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(3)).field_0 = 111u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(3)).field_1 = 32u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(3)).field_2 = -98i32 as u8;
     WriteReg(DMAP3 as u16, 0x40u8, game);
     WriteReg(BBAD3 as u16, 0x27u8, game);
     WriteReg(A1T3L as u16, 0x10u8, game);
@@ -2559,29 +2410,24 @@ static kExpandingSquareTransitionSpeed: u8 = 4u8;
 pub unsafe fn FileSelectMap_5_ExpandingSquare(game: &mut Game) {
     let mut v5: *mut VramWriteEntry = null_mut::<VramWriteEntry>();
     DrawAreaSelectMapLabels(game);
-    let v0: u8 = ((*((&raw mut game.g_ram as *mut u8).offset(0x9e00)
-        as *mut ExpandingSquareTransitionHdma)
-        .offset(0))
-    .field_0)
+    let v0: u8 = ((*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(0)).field_0)
         .wrapping_sub(kExpandingSquareTransitionSpeed);
-    if (((*((&raw mut game.g_ram as *mut u8).offset(0x9e00) as *mut ExpandingSquareTransitionHdma)
-        .offset(0))
-    .field_0) as i8)
+    if (((*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(0)).field_0) as i8)
         .wrapping_sub((kExpandingSquareTransitionSpeed) as i8)
         < 0i8
     {
-        *((&raw mut game.g_ram as *mut u8).offset(0x727) as *mut u16 as *mut u8).offset(0) =
+        *(ram_ptr!(game, u16; 0x727) as *mut u8).offset(0) =
             ((ram_word!(game, menu_index)) as u8).wrapping_add(1u8);
-        let ref mut fresh36 = *(&raw mut game.g_ram as *mut u8).offset(0x69);
+        let ref mut fresh36 = *ram_ptr!(game; 0x69);
         *fresh36 = (*fresh36 as i32 & !(2i32)) as u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6c) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6d) = 0u8;
+        *ram_ptr!(game; 0x6c) = 0u8;
+        *ram_ptr!(game; 0x6d) = 0u8;
         set_ram_word!(game.reg_BG2VOFS = 24u16);
         set_ram_word!(game.pausemenu_palette_animation_timer = 1u16);
         let mut v1: u16 = 0u16;
         loop {
-            (*((&raw mut game.g_ram as *mut u8).offset(0x4000) as *mut Ram4000)).xray_tilemaps
-                [v1 as usize] = crate::rtl::rom_table_word!(game, 0xb6e000, v1 as isize);
+            (*(ram_ptr!(game, Ram4000; 0x4000))).xray_tilemaps[v1 as usize] =
+                crate::rtl::rom_table_word!(game, 0xb6e000, v1 as isize);
             v1 = v1.wrapping_add(1);
             if (((v1 as i32 * 2i32 - 1600i32) as i16) >= 0i16) {
                 break;
@@ -2590,15 +2436,13 @@ pub unsafe fn FileSelectMap_5_ExpandingSquare(game: &mut Game) {
         loop {
             let fresh37 = v1;
             v1 = v1.wrapping_add(1);
-            (*((&raw mut game.g_ram as *mut u8).offset(0x4000) as *mut Ram4000)).xray_tilemaps
-                [fresh37 as usize] = 10241u16;
+            (*(ram_ptr!(game, Ram4000; 0x4000))).xray_tilemaps[fresh37 as usize] = 10241u16;
             if (((v1 as i32 * 2i32 - 2048i32) as i16) >= 0i16) {
                 break;
             }
         }
         DrawRoomSelectMapAreaLabel(
-            (&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x4000) as *mut Ram4000))
-                .bg2_room_select_map_tilemap as *mut u16)
+            (&raw mut (*(ram_ptr!(game, Ram4000; 0x4000))).bg2_room_select_map_tilemap as *mut u16)
                 .offset(170),
             game,
         );
@@ -2607,8 +2451,7 @@ pub unsafe fn FileSelectMap_5_ExpandingSquare(game: &mut Game) {
         loop {
             let fresh38 = v3;
             v3 = v3.wrapping_sub(1);
-            (*((&raw mut game.g_ram as *mut u8).offset(0x4000) as *mut Ram4000)).xray_tilemaps
-                [fresh38 as usize] =
+            (*(ram_ptr!(game, Ram4000; 0x4000))).xray_tilemaps[fresh38 as usize] =
                 crate::rtl::rom_table_word!(game, 0x81b14b, (v2 as i32 >> 1i32) as isize);
             v2 = (v2).wrapping_sub(2u16);
             if (v2 == 0) {
@@ -2618,63 +2461,33 @@ pub unsafe fn FileSelectMap_5_ExpandingSquare(game: &mut Game) {
         let v4: u16 = ram_word!(game, vram_write_queue_tail);
         v5 = gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
         (*v5).size = 2048u16;
-        (*v5).src.addr =
-            ((&raw mut game.g_ram as *mut u8).offset(0x4000) as *mut Ram4000 as *mut u8)
-                .offset_from(&raw mut game.g_ram as *mut u8) as c_long as VoidP;
+        (*v5).src.addr = (ram_ptr!(game, Ram4000; 0x4000) as *mut u8)
+            .offset_from(&raw mut game.g_ram as *mut u8) as c_long
+            as VoidP;
         (*v5).src.bank = 126u8;
-        (*v5).vram_dst =
-            ((*(&raw mut game.g_ram as *mut u8).offset(0x59) as i32 & 0xfci32) << 8i32) as u16;
+        (*v5).vram_dst = ((*ram_ptr!(game; 0x59) as i32 & 0xfci32) << 8i32) as u16;
         set_ram_word!(game.vram_write_queue_tail = (v4).wrapping_add(7u16));
     } else {
-        let ref mut fresh39 = (*((&raw mut game.g_ram as *mut u8).offset(0x9e00)
-            as *mut ExpandingSquareTransitionHdma)
-            .offset(0))
-        .field_0;
+        let ref mut fresh39 =
+            (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(0)).field_0;
         *fresh39 = (*fresh39).wrapping_sub(kExpandingSquareTransitionSpeed);
-        (*((&raw mut game.g_ram as *mut u8).offset(0x9e00)
-            as *mut ExpandingSquareTransitionHdma)
-            .offset(3))
-        .field_0 = v0;
-        (*((&raw mut game.g_ram as *mut u8).offset(0x9e10)
-            as *mut ExpandingSquareTransitionHdma)
-            .offset(0))
-        .field_0 = v0;
-        (*((&raw mut game.g_ram as *mut u8).offset(0x9e10)
-            as *mut ExpandingSquareTransitionHdma)
-            .offset(3))
-        .field_0 = v0;
-        let ref mut fresh40 = (*((&raw mut game.g_ram as *mut u8).offset(0x9e00)
-            as *mut ExpandingSquareTransitionHdma)
-            .offset(1))
-        .field_0;
+        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(3)).field_0 = v0;
+        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(0)).field_0 = v0;
+        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(3)).field_0 = v0;
+        let ref mut fresh40 =
+            (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(1)).field_0;
         *fresh40 = (*fresh40).wrapping_add(kExpandingSquareTransitionSpeed);
-        (*((&raw mut game.g_ram as *mut u8).offset(0x9e00)
-            as *mut ExpandingSquareTransitionHdma)
-            .offset(2))
-        .field_0 = (*((&raw mut game.g_ram as *mut u8).offset(0x9e00)
-            as *mut ExpandingSquareTransitionHdma)
-            .offset(1))
-        .field_0;
-        (*((&raw mut game.g_ram as *mut u8).offset(0x9e10)
-            as *mut ExpandingSquareTransitionHdma)
-            .offset(1))
-        .field_0 = (*((&raw mut game.g_ram as *mut u8).offset(0x9e00)
-            as *mut ExpandingSquareTransitionHdma)
-            .offset(1))
-        .field_0;
-        (*((&raw mut game.g_ram as *mut u8).offset(0x9e10)
-            as *mut ExpandingSquareTransitionHdma)
-            .offset(2))
-        .field_0 = (*((&raw mut game.g_ram as *mut u8).offset(0x9e00)
-            as *mut ExpandingSquareTransitionHdma)
-            .offset(1))
-        .field_0;
-        *((&raw mut game.g_ram as *mut u8).offset(0x9e32) as *mut u16 as *mut u8).offset(0) =
+        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(2)).field_0 =
+            (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(1)).field_0;
+        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(1)).field_0 =
+            (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(1)).field_0;
+        (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(2)).field_0 =
+            (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(1)).field_0;
+        *(ram_ptr!(game, u16; 0x9e32) as *mut u8).offset(0) =
             ((ram_word!(game, expand_sq_left_pos)) as u8)
                 .wrapping_sub(kExpandingSquareTransitionSpeed);
-        *((&raw mut game.g_ram as *mut u8).offset(0x9e36) as *mut u16 as *mut u8).offset(0) =
-            (kExpandingSquareTransitionSpeed)
-                .wrapping_add((ram_word!(game, expand_sq_right_pos)) as u8);
+        *(ram_ptr!(game, u16; 0x9e36) as *mut u8).offset(0) = (kExpandingSquareTransitionSpeed)
+            .wrapping_add((ram_word!(game, expand_sq_right_pos)) as u8);
     };
 }
 pub unsafe fn FileSelectMap_6_AreaSelectMap(game: &mut Game) {
@@ -2780,10 +2593,8 @@ pub unsafe fn SelectFileSelectMapArea(game: &mut Game) {
         game.area_index =
             kFileSelectMap_AreaIndexes[ram_word!(game, file_select_map_area_index) as usize]
     );
-    let mut q: u16 = *((&raw mut game.g_ram as *mut u8)
-        .offset(0xd8f8)
-        .offset((2i32 * ram_word!(game, area_index) as i32) as isize)
-        as *mut u16);
+    let mut q: u16 =
+        *(ram_ptr!(game, u16; 0xd8f8, (2i32 * ram_word!(game, area_index) as i32) as isize));
     let mut v0: u16 = 0u16;
     let r0: *const u16 = RomPtr_82(
         *(RomPtr_82(
@@ -2831,11 +2642,7 @@ pub unsafe fn SelectFileSelectMapArea(game: &mut Game) {
 }
 pub unsafe fn CheckIfFileSelectMapAreaCanBeSelected(a: u16, game: &mut Game) -> u16 {
     let v1: i32 = 2i32 * kFileSelectMap_AreaIndexes[a as usize] as i32;
-    if *((&raw mut game.g_ram as *mut u8)
-        .offset(0xd8f8)
-        .offset(v1 as isize) as *mut u16)
-        != 0
-    {
+    if *(ram_ptr!(game, u16; 0xd8f8, v1 as isize)) != 0 {
         return true_0 as u16;
     }
     let t: u16 = (*((&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c7cb))
@@ -2878,9 +2685,7 @@ pub unsafe fn DrawAreaSelectMapLabels(game: &mut Game) {
             512i32
         }) as u16;
         let v1: u16 = (2u16).wrapping_mul(kFileSelectMap_AreaIndexes[i as usize]);
-        let mut r36: u16 = *((&raw mut game.g_ram as *mut u8)
-            .offset(0xd8f8)
-            .offset(v1 as isize) as *mut u16);
+        let mut r36: u16 = *(ram_ptr!(game, u16; 0xd8f8, v1 as isize));
         let mut v2: *const u16 = RomPtr_82(
             *((&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x82c7cb))
                 as *mut MapIconDataPointers)
@@ -2922,22 +2727,17 @@ static kRoomSelectMapExpandingSquareTimers: [u16; 6] = [0x33, 0x35, 0x2d, 0x33, 
 pub unsafe fn FileSelectMap_7_PrepExpandSquareTransToRoomMap(game: &mut Game) {
     DrawAreaSelectMapLabels(game);
     SetupInitialExpandingSquareHDMA(game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x69) = 19u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x6c) = 19u8;
+    *ram_ptr!(game; 0x69) = 19u8;
+    *ram_ptr!(game; 0x6c) = 19u8;
     crate::rtl::write_register_and_mirror(W12SEL as u16, 0x32, 0x60, true, game);
     crate::rtl::write_register_and_mirror(W34SEL as u16, 2, 0x61, true, game);
     crate::rtl::write_register_and_mirror(CGADSUB as u16, 5, 0x72, true, game);
     crate::rtl::write_register_and_mirror(WOBJSEL as u16, 0x22, 0x62, true, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x5d) = 48u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e00) as *mut ExpandingSquareTransitionHdma)
-        .offset(3))
-    .field_0 = 0u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e10) as *mut ExpandingSquareTransitionHdma)
-        .offset(3))
-    .field_0 = 0u8;
+    *ram_ptr!(game; 0x5d) = 48u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(3)).field_0 = 0u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(3)).field_0 = 0u8;
     DrawRoomSelectMapAreaLabel(
-        (&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x4000) as *mut Ram4000))
-            .bg2_room_select_map_tilemap as *mut u16)
+        (&raw mut (*(ram_ptr!(game, Ram4000; 0x4000))).bg2_room_select_map_tilemap as *mut u16)
             .offset(170),
         game,
     );
@@ -2945,11 +2745,10 @@ pub unsafe fn FileSelectMap_7_PrepExpandSquareTransToRoomMap(game: &mut Game) {
     let v1: *mut VramWriteEntry =
         gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v1).size = 512u16;
-    (*v1).src.addr = ((&raw mut game.g_ram as *mut u8).offset(0x4000) as *mut Ram4000 as *mut u8)
+    (*v1).src.addr = (ram_ptr!(game, Ram4000; 0x4000) as *mut u8)
         .offset_from(&raw mut game.g_ram as *mut u8) as c_long as VoidP;
     (*v1).src.bank = 126u8;
-    (*v1).vram_dst =
-        ((*(&raw mut game.g_ram as *mut u8).offset(0x59) as i32 & 0xfci32) << 8i32) as u16;
+    (*v1).vram_dst = ((*ram_ptr!(game; 0x59) as i32 & 0xfci32) << 8i32) as u16;
     set_ram_word!(game.vram_write_queue_tail = (v0).wrapping_add(7u16));
     set_ram_word!(
         game.expand_sq_timer =
@@ -2998,85 +2797,43 @@ pub unsafe fn SetupRoomSelectMapExpandingSquareTransHDMA(game: &mut Game) {
     }
     AddExpandingSqTransLeftIndirHDMA(v4, k, 0x9e22u16, game);
     k = AddExpandingSqTransRightIndirHDMA(v4, k, 0x9e20u16, game);
-    *(&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x9e00)
-        as *mut ExpandingSquareTransitionHdma)
-        .offset(0))
-    .field_0)
+    *(&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(0)).field_0)
         .offset(k as i32 as isize) = 0u8;
-    *(&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x9e10)
-        as *mut ExpandingSquareTransitionHdma)
-        .offset(0))
-    .field_0)
+    *(&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(0)).field_0)
         .offset(k as i32 as isize) = 0u8;
 }
 pub unsafe fn AddExpandingSqTransLeftIndirHDMA(a: u16, k: u16, j: u16, game: &mut Game) {
     if (a as i32 & 0x80i32) != 0i32 {
-        *(&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x9e00)
-            as *mut ExpandingSquareTransitionHdma)
-            .offset(0))
-        .field_0)
+        *(&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(0)).field_0)
             .offset(k as i32 as isize) = ((a) as u8).wrapping_sub(127u8);
-        *(&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x9e00)
-            as *mut ExpandingSquareTransitionHdma)
-            .offset(1))
-        .field_0)
+        *(&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(1)).field_0)
             .offset(k as i32 as isize) = 127u8;
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x9e00)
-            as *mut ExpandingSquareTransitionHdma)
-            .offset(0))
-        .field_1)
+        *((&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(0)).field_1)
             .offset(k as i32 as isize) as *mut u16) = j;
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x9e00)
-            as *mut ExpandingSquareTransitionHdma)
-            .offset(1))
-        .field_1)
+        *((&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(1)).field_1)
             .offset(k as i32 as isize) as *mut u16) = j;
     } else {
-        *(&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x9e00)
-            as *mut ExpandingSquareTransitionHdma)
-            .offset(0))
-        .field_0)
+        *(&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(0)).field_0)
             .offset(k as i32 as isize) = a as u8;
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x9e00)
-            as *mut ExpandingSquareTransitionHdma)
-            .offset(0))
-        .field_1)
+        *((&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(0)).field_1)
             .offset(k as i32 as isize) as *mut u16) = j;
     };
 }
 pub unsafe fn AddExpandingSqTransRightIndirHDMA(a: u16, k: u16, j: u16, game: &mut Game) -> u16 {
     if (a as i32 & 0x80i32) != 0i32 {
-        *(&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x9e10)
-            as *mut ExpandingSquareTransitionHdma)
-            .offset(0))
-        .field_0)
+        *(&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(0)).field_0)
             .offset(k as i32 as isize) = ((a) as u8).wrapping_sub(127u8);
-        *(&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x9e10)
-            as *mut ExpandingSquareTransitionHdma)
-            .offset(1))
-        .field_0)
+        *(&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(1)).field_0)
             .offset(k as i32 as isize) = 127u8;
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x9e10)
-            as *mut ExpandingSquareTransitionHdma)
-            .offset(0))
-        .field_1)
+        *((&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(0)).field_1)
             .offset(k as i32 as isize) as *mut u16) = j;
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x9e10)
-            as *mut ExpandingSquareTransitionHdma)
-            .offset(1))
-        .field_1)
+        *((&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(1)).field_1)
             .offset(k as i32 as isize) as *mut u16) = j;
         (k).wrapping_add(6u16)
     } else {
-        *(&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x9e10)
-            as *mut ExpandingSquareTransitionHdma)
-            .offset(0))
-        .field_0)
+        *(&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(0)).field_0)
             .offset(k as i32 as isize) = a as u8;
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x9e10)
-            as *mut ExpandingSquareTransitionHdma)
-            .offset(0))
-        .field_1)
+        *((&raw mut (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(0)).field_1)
             .offset(k as i32 as isize) as *mut u16) = j;
         (k).wrapping_add(3u16)
     }
@@ -3084,17 +2841,17 @@ pub unsafe fn AddExpandingSqTransRightIndirHDMA(a: u16, k: u16, j: u16, game: &m
 pub unsafe fn FileSelectMap_8_ExpandSquareTransToRoomSelectMap(game: &mut Game) {
     if (HandleRoomSelectMapExpandingSquareTrans(game) as i32 & 0x8000i32) != 0i32 {
         update_ram_word!(game.menu_index, wrapping_add(1));
-        *(&raw mut game.g_ram as *mut u8).offset(0x69) = 2u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6c) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6d) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 0u8;
+        *ram_ptr!(game; 0x69) = 2u8;
+        *ram_ptr!(game; 0x6c) = 0u8;
+        *ram_ptr!(game; 0x6d) = 0u8;
+        *ram_ptr!(game; 0x6b) = 0u8;
     }
     DrawAreaSelectMapLabels(game);
 }
 pub unsafe fn HandleRoomSelectMapExpandingSquareTrans(game: &mut Game) -> u16 {
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x9e32) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x9e30) as *mut u16,
+        ram_ptr!(game, u16; 0x9e32),
+        ram_ptr!(game, u16; 0x9e30),
         (ram_word!(game, expand_sq_left_vel) as u32) << 16i32
             | ram_word!(game, expand_sq_left_subvel) as u32,
     );
@@ -3102,8 +2859,8 @@ pub unsafe fn HandleRoomSelectMapExpandingSquareTrans(game: &mut Game) -> u16 {
         set_ram_word!(game.expand_sq_left_pos = 1u16);
     }
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x9e36) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x9e34) as *mut u16,
+        ram_ptr!(game, u16; 0x9e36),
+        ram_ptr!(game, u16; 0x9e34),
         (ram_word!(game, expand_sq_right_vel) as u32) << 16i32
             | ram_word!(game, expand_sq_right_subvel) as u32,
     );
@@ -3111,8 +2868,8 @@ pub unsafe fn HandleRoomSelectMapExpandingSquareTrans(game: &mut Game) -> u16 {
         set_ram_word!(game.expand_sq_right_pos = 255u16);
     }
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x9e3a) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x9e38) as *mut u16,
+        ram_ptr!(game, u16; 0x9e3a),
+        ram_ptr!(game, u16; 0x9e38),
         (ram_word!(game, expand_sq_top_vel) as u32) << 16i32
             | ram_word!(game, expand_sq_top_subvel) as u32,
     );
@@ -3120,8 +2877,8 @@ pub unsafe fn HandleRoomSelectMapExpandingSquareTrans(game: &mut Game) -> u16 {
         set_ram_word!(game.expand_sq_top_pos = 1u16);
     }
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x9e3e) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x9e3c) as *mut u16,
+        ram_ptr!(game, u16; 0x9e3e),
+        ram_ptr!(game, u16; 0x9e3c),
         (ram_word!(game, expand_sq_bottom_vel) as u32) << 16i32
             | ram_word!(game, expand_sq_bottom_subvel) as u32,
     );
@@ -3138,16 +2895,13 @@ pub unsafe fn FileSelectMap_9_InitRoomSelectMap(game: &mut Game) {
     DisableHdmaObjects(game);
     WaitUntilEndOfVblankAndClearHdma(game);
     let RoomDefHeader: *mut RoomDefHeader = get_RoomDefHeader(ram_word!(game, room_ptr), game);
-    *((&raw mut game.g_ram as *mut u8).offset(0x79f) as *mut u16 as *mut u8).offset(0) =
-        (*RoomDefHeader).area_index_;
-    *((&raw mut game.g_ram as *mut u8).offset(0x7a1) as *mut u16 as *mut u8).offset(0) =
-        (*RoomDefHeader).x_coordinate_on_map;
-    *((&raw mut game.g_ram as *mut u8).offset(0x7a3) as *mut u16 as *mut u8).offset(0) =
-        (*RoomDefHeader).y_coordinate_on_map;
+    *(ram_ptr!(game, u16; 0x79f) as *mut u8).offset(0) = (*RoomDefHeader).area_index_;
+    *(ram_ptr!(game, u16; 0x7a1) as *mut u8).offset(0) = (*RoomDefHeader).x_coordinate_on_map;
+    *(ram_ptr!(game, u16; 0x7a3) as *mut u8).offset(0) = (*RoomDefHeader).y_coordinate_on_map;
     SetupMapScrollingForFileSelectMap(game);
     update_ram_word!(game.map_min_y_scroll, wrapping_add(24u16));
     set_ram_word!(game.reg_BG2VOFS = 24u16);
-    let ref mut fresh31 = *((&raw mut game.g_ram as *mut u8).offset(0x69) as *mut u16);
+    let ref mut fresh31 = *(ram_ptr!(game, u16; 0x69));
     *fresh31 = (*fresh31 as i32 & !(4i32)) as u16;
     update_ram_word!(game.menu_index, wrapping_add(1));
     set_ram_word!(game.map_scrolling_direction = 0u16);
@@ -3171,10 +2925,8 @@ pub unsafe fn FileSelectMap_10_RoomSelectMap(game: &mut Game) {
     {
         let mut current_block_32: u64;
         QueueSfx1_Max6(0x38u16, game);
-        let mut r24: u16 = *((&raw mut game.g_ram as *mut u8)
-            .offset(0xd8f8)
-            .offset((2i32 * ram_word!(game, area_index) as i32) as isize)
-            as *mut u16);
+        let mut r24: u16 =
+            *(ram_ptr!(game, u16; 0xd8f8, (2i32 * ram_word!(game, area_index) as i32) as isize));
         v1 = ram_word!(game, load_station_index) as i16;
         loop {
             r24 = (r24 as i32 >> 1i32) as u16;
@@ -3219,10 +2971,7 @@ pub unsafe fn FileSelectMap_10_RoomSelectMap(game: &mut Game) {
                     *r0.offset((2i32 * ram_word!(game, load_station_index) as i32) as isize) as i16;
                 if v5 == -1i16 {
                     set_ram_word!(game.load_station_index = 0u16);
-                    r24 = *((&raw mut game.g_ram as *mut u8)
-                        .offset(0xd8f8)
-                        .offset((2i32 * ram_word!(game, area_index) as i32) as isize)
-                        as *mut u16);
+                    r24 = *(ram_ptr!(game, u16; 0xd8f8, (2i32 * ram_word!(game, area_index) as i32) as isize));
                 } else if v5 != -2i16 {
                     break;
                 } else {
@@ -3339,16 +3088,13 @@ pub unsafe fn FileSelectMap_13(game: &mut Game) {
     DrawFileSelectMapIcons(game);
     DisplayMapElevatorDestinations(game);
     HandleFadeOut(game);
-    if (*(&raw mut game.g_ram as *mut u8).offset(0x51) as i32 & 0xfi32) == 0i32 {
+    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) == 0i32 {
         update_ram_word!(game.menu_index, wrapping_add(1));
-        (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0)).x_pos =
-            32u16;
+        (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).x_pos = 32u16;
     }
 }
 pub unsafe fn FileSelectMap_14(game: &mut Game) {
-    let fresh22 = &raw mut (*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData)
-        .offset(0))
-    .x_pos;
+    let fresh22 = &raw mut (*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).x_pos;
     fresh22.write_unaligned(fresh22.read_unaligned().wrapping_sub(1));
     if fresh22.read_unaligned() == 0 {
         ScreenOff(game);
@@ -3357,11 +3103,11 @@ pub unsafe fn FileSelectMap_14(game: &mut Game) {
     }
 }
 pub unsafe fn FileSelectMap_15_ClearTileMap(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0x69) = 18u8;
+    *ram_ptr!(game; 0x69) = 18u8;
     let mut i: i32 = 2046i32;
     while i >= 0i32 {
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap as *mut u16 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16
+            as *mut u8)
             .offset(i as u16 as i32 as isize) as *mut u16) = 15u16;
         i -= 2i32;
     }
@@ -3369,12 +3115,11 @@ pub unsafe fn FileSelectMap_15_ClearTileMap(game: &mut Game) {
     let v2: *mut VramWriteEntry =
         gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game);
     (*v2).size = 2048u16;
-    (*v2).src.addr = (&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-        .pause_menu_map_tilemap as *mut u8)
+    (*v2).src.addr = (&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap
+        as *mut u8)
         .offset_from(&raw mut game.g_ram as *mut u8) as c_long as VoidP;
     *(&raw mut (*v2).src.bank as *mut u16) = 126u16;
-    (*v2).vram_dst =
-        ((*(&raw mut game.g_ram as *mut u8).offset(0x58) as i32 & 0xfci32) << 8i32) as u16;
+    (*v2).vram_dst = ((*ram_ptr!(game; 0x58) as i32 & 0xfci32) << 8i32) as u16;
     set_ram_word!(game.vram_write_queue_tail = (v1).wrapping_add(7u16));
     update_ram_word!(game.menu_index, wrapping_add(1));
 }
@@ -3397,7 +3142,7 @@ pub unsafe fn FileSelectMap_16_LoadPalettes(game: &mut Game) {
     update_ram_word!(game.menu_index, wrapping_add(1));
 }
 pub unsafe fn FileSelectMap_20_SetupExpandingSquare(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0x85) = 0u8;
+    *ram_ptr!(game; 0x85) = 0u8;
     QueueSfx1_Max6(0x3cu16, game);
     set_ram_word!(
         game.expand_sq_timer = (kRoomSelectMapExpandingSquareTimers
@@ -3489,39 +3234,35 @@ pub unsafe fn FileSelectMap_20_SetupExpandingSquare(game: &mut Game) {
     crate::rtl::write_register_and_mirror(HDMAEN as u16, 0xc, 0x85, true, game);
     crate::rtl::write_register_and_mirror(W12SEL as u16, 0x32, 0x60, true, game);
     crate::rtl::write_register_and_mirror(W34SEL as u16, 2, 0x61, true, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x5d) = 48u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x62) = 34u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e00) as *mut ExpandingSquareTransitionHdma)
-        .offset(3))
-    .field_0 = 0u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x9e10) as *mut ExpandingSquareTransitionHdma)
-        .offset(3))
-    .field_0 = 0u8;
+    *ram_ptr!(game; 0x5d) = 48u8;
+    *ram_ptr!(game; 0x62) = 34u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e00)).offset(3)).field_0 = 0u8;
+    (*(ram_ptr!(game, ExpandingSquareTransitionHdma; 0x9e10)).offset(3)).field_0 = 0u8;
     set_ram_word!(game.reg_BG1VOFS = 0u16);
     set_ram_word!(game.reg_BG1HOFS = 0u16);
 }
 pub unsafe fn FileSelectMap_21_MoveExpandingSquare(game: &mut Game) {
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x9e32) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x9e30) as *mut u16,
+        ram_ptr!(game, u16; 0x9e32),
+        ram_ptr!(game, u16; 0x9e30),
         -((ram_word!(game, expand_sq_left_vel) as i32) << 16i32
             | ram_word!(game, expand_sq_left_subvel) as i32) as u32,
     );
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x9e36) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x9e34) as *mut u16,
+        ram_ptr!(game, u16; 0x9e36),
+        ram_ptr!(game, u16; 0x9e34),
         -((ram_word!(game, expand_sq_right_vel) as i32) << 16i32
             | ram_word!(game, expand_sq_right_subvel) as i32) as u32,
     );
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x9e3a) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x9e38) as *mut u16,
+        ram_ptr!(game, u16; 0x9e3a),
+        ram_ptr!(game, u16; 0x9e38),
         -((ram_word!(game, expand_sq_top_vel) as i32) << 16i32
             | ram_word!(game, expand_sq_top_subvel) as i32) as u32,
     );
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x9e3e) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x9e3c) as *mut u16,
+        ram_ptr!(game, u16; 0x9e3e),
+        ram_ptr!(game, u16; 0x9e3c),
         -((ram_word!(game, expand_sq_bottom_vel) as i32) << 16i32
             | ram_word!(game, expand_sq_bottom_subvel) as i32) as u32,
     );
@@ -3530,9 +3271,9 @@ pub unsafe fn FileSelectMap_21_MoveExpandingSquare(game: &mut Game) {
     if (update_ram_word!(game.expand_sq_timer, wrapping_sub(1), reread) as i32 & 0x8000i32) != 0i32
     {
         update_ram_word!(game.menu_index, wrapping_sub(15u16));
-        *(&raw mut game.g_ram as *mut u8).offset(0x69) = 17u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6c) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6d) = 0u8;
+        *ram_ptr!(game; 0x69) = 17u8;
+        *ram_ptr!(game; 0x6c) = 0u8;
+        *ram_ptr!(game; 0x6d) = 0u8;
     }
 }
 pub unsafe fn NewSaveFile(game: &mut Game) {
@@ -3576,28 +3317,14 @@ pub unsafe fn NewSaveFile(game: &mut Game) {
     let mut v0: u16 = 0u16;
     loop {
         let v1: i32 = v0 as i32 >> 1i32;
-        *((&raw mut game.g_ram as *mut u8)
-            .offset(0xd830)
-            .offset(v0 as isize) as *mut u16) = 0u16;
-        *((&raw mut game.g_ram as *mut u8)
-            .offset(0xd870)
-            .offset(v0 as isize) as *mut u16) = 0u16;
-        *((&raw mut game.g_ram as *mut u8)
-            .offset(0xd870)
-            .offset(v0 as isize) as *mut u16) = 0u16;
-        *((&raw mut game.g_ram as *mut u8)
-            .offset(0xd8b0)
-            .offset(v0 as isize) as *mut u16) = 0u16;
+        *(ram_ptr!(game, u16; 0xd830, v0 as isize)) = 0u16;
+        *(ram_ptr!(game, u16; 0xd870, v0 as isize)) = 0u16;
+        *(ram_ptr!(game, u16; 0xd870, v0 as isize)) = 0u16;
+        *(ram_ptr!(game, u16; 0xd8b0, v0 as isize)) = 0u16;
         set_ram_word!(game.UNUSED_word_7ED8F0[v1] = 0u16);
-        *((&raw mut game.g_ram as *mut u8)
-            .offset(0xd908)
-            .offset(v0 as isize) as *mut u16) = 0u16;
-        *((&raw mut game.g_ram as *mut u8)
-            .offset(0xd8f8)
-            .offset(v0 as isize) as *mut u16) = 0u16;
-        *((&raw mut game.g_ram as *mut u8)
-            .offset(0xd8f8)
-            .offset((v0 as i32 + 8i32) as isize) as *mut u16) = 0u16;
+        *(ram_ptr!(game, u16; 0xd908, v0 as isize)) = 0u16;
+        *(ram_ptr!(game, u16; 0xd8f8, v0 as isize)) = 0u16;
+        *(ram_ptr!(game, u16; 0xd8f8, (v0 as i32 + 8i32) as isize)) = 0u16;
         v0 = (v0).wrapping_add(2u16);
         if (((v0) as i16).wrapping_sub(8i16) >= 0i16) {
             break;
@@ -3605,18 +3332,10 @@ pub unsafe fn NewSaveFile(game: &mut Game) {
     }
     loop {
         let v2: i32 = v0 as i32 >> 1i32;
-        *((&raw mut game.g_ram as *mut u8)
-            .offset(0xd830)
-            .offset(v0 as isize) as *mut u16) = 0u16;
-        *((&raw mut game.g_ram as *mut u8)
-            .offset(0xd870)
-            .offset(v0 as isize) as *mut u16) = 0u16;
-        *((&raw mut game.g_ram as *mut u8)
-            .offset(0xd870)
-            .offset(v0 as isize) as *mut u16) = 0u16;
-        *((&raw mut game.g_ram as *mut u8)
-            .offset(0xd8b0)
-            .offset(v0 as isize) as *mut u16) = 0u16;
+        *(ram_ptr!(game, u16; 0xd830, v0 as isize)) = 0u16;
+        *(ram_ptr!(game, u16; 0xd870, v0 as isize)) = 0u16;
+        *(ram_ptr!(game, u16; 0xd870, v0 as isize)) = 0u16;
+        *(ram_ptr!(game, u16; 0xd8b0, v0 as isize)) = 0u16;
         v0 = (v0).wrapping_add(2u16);
         if (((v0) as i16).wrapping_sub(64i16) >= 0i16) {
             break;
@@ -3634,8 +3353,7 @@ pub unsafe fn NewSaveFile(game: &mut Game) {
 pub unsafe fn FileSelectClearRestOfMenuTilemapRow(mut v0: u16, game: &mut Game) {
     let mut n: i32 = 32i32 - ((v0 as i32 & 0x3fi32) >> 1i32);
     loop {
-        *(((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap as *mut u16)
+        *(((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16)
             .offset(768) as *mut u8)
             .offset(v0 as i32 as isize) as *mut u16) = 15u16;
         v0 = (v0).wrapping_add(2u16);
@@ -3661,13 +3379,10 @@ pub unsafe fn LoadMenuTilemap(mut k: u16, mut j: u16, game: &mut Game) {
         if v2 == -1i16 {
             break;
         }
-        *(((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap as *mut u16)
+        *(((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16)
             .offset(768) as *mut u8)
             .offset(k as i32 as isize) as *mut u16) =
-            ((*((&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut EnemyData).offset(0))
-                .palette_index)
-                | ((v2) as u16);
+            ((*(ram_ptr!(game, EnemyData; 0xf78)).offset(0)).palette_index) | ((v2) as u16);
         k = (k).wrapping_add(2u16);
         j = (j).wrapping_add(2u16);
     }

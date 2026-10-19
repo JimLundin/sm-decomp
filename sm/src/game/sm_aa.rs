@@ -22,6 +22,7 @@ use crate::game::sm_a0::{
     NormalEnemyTouchAiSkipDeathAnim_CurEnemy,
 };
 use crate::game_state::Game;
+use crate::ram_map::ram_ptr;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
@@ -919,8 +920,7 @@ pub unsafe fn Torizo_Instr_57(k: u16, jp: *const u16, game: &mut Game) -> *const
 pub unsafe fn Torizo_Instr_58(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     let mut v2: i16 = 0;
     v2 = 34i16;
-    while *(((&raw mut game.g_ram as *mut u8).offset(0x1997) as *mut u16 as *mut u8)
-        .offset(v2 as u16 as i32 as isize) as *mut u16)
+    while *((ram_ptr!(game, u16; 0x1997) as *mut u8).offset(v2 as u16 as i32 as isize) as *mut u16)
         != 0xb1c0u16
     {
         v2 = (v2).wrapping_sub(2i16);
@@ -1758,7 +1758,7 @@ pub unsafe fn Shaktool_Instr_12(k: u16, jp: *const u16, game: &mut Game) -> *con
         ((*e).base.y_pos).wrapping_add(28u16),
         game,
     );
-    if (*((&raw mut game.g_ram as *mut u8).offset(0x10002) as *mut u16).offset(
+    if (*(ram_ptr!(game, u16; 0x10002)).offset(
         (ram_word!(game, room_width_in_blocks) as i32 + ram_word!(game, cur_block_index) as i32)
             as isize,
     ) as i32
@@ -1808,10 +1808,10 @@ pub unsafe fn Shaktool_Instr_7(k: u16, jp: *const u16, game: &mut Game) -> *cons
 }
 pub unsafe fn Shaktool_Instr_14(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
     CallSomeSamusCode(1u16, game);
-    *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(6) as *mut u16) = 0u16;
-    *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(8) as *mut u16) = 0u16;
-    *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(9) as *mut u16) = 0u16;
-    *((&raw mut game.g_ram as *mut u8).offset(0xcd20).offset(13) as *mut u16) = 1u16;
+    *(ram_ptr!(game, u16; 0xcd20, 6)) = 0u16;
+    *(ram_ptr!(game, u16; 0xcd20, 8)) = 0u16;
+    *(ram_ptr!(game, u16; 0xcd20, 9)) = 0u16;
+    *(ram_ptr!(game, u16; 0xcd20, 13)) = 1u16;
     SpawnHardcodedPlm(
         SpawnHardcodedPlmArgs::new(0x17u8, 0x1du8, 0xd6fc as VoidP),
         game,
@@ -1887,11 +1887,7 @@ pub unsafe fn ChozoStatue_Main(game: &mut Game) {
     CallEnemyPreInstr((((*v0).ai_preinstr) as u32) | (0xaa0000u32), game);
 }
 pub unsafe fn Shaktool_PreInstr_0(k: u16, game: &mut Game) {
-    if (*((&raw mut game.g_ram as *mut u8)
-        .offset(0xd828)
-        .offset(ram_word!(game, area_index) as isize) as *mut u16) as i32
-        & 1i32)
-        != 0i32
+    if (*(ram_ptr!(game, u16; 0xd828, ram_word!(game, area_index) as isize)) as i32 & 1i32) != 0i32
     {
         let E: *mut Enemy_Shaktool = Get_Shaktool(k as i32, game);
         if (*E).shakt_parameter_1 != 0 {

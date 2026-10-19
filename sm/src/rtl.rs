@@ -12,6 +12,7 @@ macro_rules! rom_table_word {
 }
 pub(crate) use rom_table_word;
 
+use crate::ram_map::ram_ptr;
 use ::core::ffi::{c_char, c_long, c_ulong, c_void};
 use ::core::mem::size_of;
 use ::core::ptr::null_mut;
@@ -134,9 +135,7 @@ unsafe fn RtlSynchronizeWholeState(game: &mut Game) {
 unsafe fn RtlSyncMemoryRegion(ptr: *mut c_void, n: size_t, game: &mut Game) {
     let data: *mut u8 = ptr as *mut u8;
     '_c2rust_label: {
-        if data >= &raw mut game.g_ram as *mut u8
-            && data < (&raw mut game.g_ram as *mut u8).offset(0x20000)
-        {
+        if data >= &raw mut game.g_ram as *mut u8 && data < ram_ptr!(game; 0x20000) {
         } else {
             __assert_fail(
                 b"data >= g_ram && data < g_ram + 0x20000\0" as *const u8 as *const c_char,
@@ -300,7 +299,7 @@ pub unsafe fn RtlReset(mode: i32, game: &mut Game) {
     if mode & 1i32 == 0 {
         memset(game.g_sram as *mut c_void, 0i32, 0x2000 as size_t);
     }
-    *(&raw mut game.g_ram as *mut u8).offset(0x611) = 1u8;
+    *ram_ptr!(game; 0x611) = 1u8;
     RtlApuLock();
     RtlRestoreMusicAfterLoad_Locked(true_0 != 0, game);
     RtlApuUnlock();
@@ -701,8 +700,7 @@ pub unsafe fn StateRecorder_ReadNextReplayState(sr: *mut StateRecorder, game: &m
                     game.g_ram[(addr & 0x1ffffu32) as usize] =
                         *(*sr).log.data.offset(fresh6 as isize);
                     RtlSyncMemoryRegion(
-                        (&raw mut game.g_ram as *mut u8).offset((addr & 0x1ffffu32) as isize)
-                            as *mut c_void,
+                        ram_ptr!(game, c_void; (addr & 0x1ffffu32) as isize),
                         1 as size_t,
                         game,
                     );
@@ -806,10 +804,10 @@ pub unsafe fn RtlRunFrame(mut inputs: i32, game: &mut Game) -> bool {
                 set_ram_word!(game.bug_fix_counter = kCurrentBugFixCounter as i32 as u16);
                 StateRecorder_RecordPatchByte(
                     &raw mut game.state_recorder,
-                    ((&raw mut game.g_ram as *mut u8).offset(0xc2) as *mut u16 as *mut u8)
+                    (ram_ptr!(game, u16; 0xc2) as *mut u8)
                         .offset_from(&raw mut game.g_ram as *mut u8) as c_long
                         as u32,
-                    (&raw mut game.g_ram as *mut u8).offset(0xc2) as *mut u16 as *mut u8,
+                    ram_ptr!(game, u16; 0xc2) as *mut u8,
                     2i32,
                 );
             }
@@ -900,25 +898,24 @@ pub unsafe fn RtlSaveLoad(cmd: i32, slot: i32, game: &mut Game) {
         RtlApuUnlock();
         RtlSynchronizeWholeState(game);
         fclose(f);
-        if *(&raw mut game.g_ram as *mut u8).offset(0x611) as i32
-            | *(&raw mut game.g_ram as *mut u8).offset(0x612) as i32
-            | *(&raw mut game.g_ram as *mut u8).offset(0x613) as i32
-            | *(&raw mut game.g_ram as *mut u8).offset(0x614) as i32
-            | *(&raw mut game.g_ram as *mut u8).offset(0x615) as i32
+        if *ram_ptr!(game; 0x611) as i32
+            | *ram_ptr!(game; 0x612) as i32
+            | *ram_ptr!(game; 0x613) as i32
+            | *ram_ptr!(game; 0x614) as i32
+            | *ram_ptr!(game; 0x615) as i32
             != 0
         {
             printf(
                 b"Coroutine state: %d, %d, %d, %d, %d\n\0" as *const u8 as *const c_char,
-                *(&raw mut game.g_ram as *mut u8).offset(0x611) as i32,
-                *(&raw mut game.g_ram as *mut u8).offset(0x612) as i32,
-                *(&raw mut game.g_ram as *mut u8).offset(0x613) as i32,
-                *(&raw mut game.g_ram as *mut u8).offset(0x614) as i32,
-                *(&raw mut game.g_ram as *mut u8).offset(0x615) as i32,
+                *ram_ptr!(game; 0x611) as i32,
+                *ram_ptr!(game; 0x612) as i32,
+                *ram_ptr!(game; 0x613) as i32,
+                *ram_ptr!(game; 0x614) as i32,
+                *ram_ptr!(game; 0x615) as i32,
             );
         }
-        if *(&raw mut game.g_ram as *mut u8).offset(0x611) as i32 == 4i32 {
-            *(&raw mut game.g_ram as *mut u8).offset(0x611) =
-                (10i32 + ram_word!(game, game_state) as i32) as u8;
+        if *ram_ptr!(game; 0x611) as i32 == 4i32 {
+            *ram_ptr!(game; 0x611) = (10i32 + ram_word!(game, game_state) as i32) as u8;
         }
         if ram_word!(game, bug_fix_counter) as i32 == 0i32 {
             set_ram_word!(game.bug_fix_counter = ram_word!(game, bug_fix_counter_BAD));
@@ -1279,7 +1276,7 @@ pub unsafe fn RtlCheat(c: c_char, game: &mut Game) {
         StateRecorder_RecordPatchByte(
             &raw mut game.state_recorder,
             0x9c2u32,
-            (&raw mut game.g_ram as *mut u8).offset(0x9c2) as *mut u16 as *mut u8,
+            ram_ptr!(game, u16; 0x9c2) as *mut u8,
             2i32,
         );
     } else if c as i32 == 'q' as i32 {
@@ -1288,13 +1285,13 @@ pub unsafe fn RtlCheat(c: c_char, game: &mut Game) {
         StateRecorder_RecordPatchByte(
             &raw mut game.state_recorder,
             0xafau32,
-            (&raw mut game.g_ram as *mut u8).offset(0xafa) as *mut u16 as *mut u8,
+            ram_ptr!(game, u16; 0xafa) as *mut u8,
             2i32,
         );
         StateRecorder_RecordPatchByte(
             &raw mut game.state_recorder,
             0xb2eu32,
-            (&raw mut game.g_ram as *mut u8).offset(0xb2e) as *mut u16 as *mut u8,
+            ram_ptr!(game, u16; 0xb2e) as *mut u8,
             2i32,
         );
         set_ram_word!(game.menu_index = 0u16);
@@ -1305,7 +1302,7 @@ pub unsafe fn RtlCheat(c: c_char, game: &mut Game) {
         StateRecorder_RecordPatchByte(
             &raw mut game.state_recorder,
             0x9e2u32,
-            (&raw mut game.g_ram as *mut u8).offset(0x9e2) as *mut u16 as *mut u8,
+            ram_ptr!(game, u16; 0x9e2) as *mut u8,
             2i32,
         );
     }

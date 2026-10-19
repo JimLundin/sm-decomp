@@ -310,6 +310,7 @@ use crate::game::sm_b4::{
     ClearSpriteObjects, CreateSpriteAtPos, DrawSpriteObjects, HandleSpriteObjects,
 };
 use crate::game_state::Game;
+use crate::ram_map::ram_ptr;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{Load24, Mult8x8, RomPtr, SnesDivide, Unreachable};
@@ -396,7 +397,7 @@ unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
             );
         }
     };
-    (&raw mut game.g_ram as *mut u8).offset(addr as i32 as isize)
+    ram_ptr!(game; addr as i32 as isize)
 }
 const RomPtr_86: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x86>;
 const RomPtr_A1: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0xa1>;
@@ -1825,10 +1826,7 @@ pub unsafe fn DrawSamusEnemiesAndProjectiles(game: &mut Game) {
         }
         phase_varE32 = phase_varE32.wrapping_add(1);
     }
-    CallEnemyGfxDrawHook(
-        Load24((&raw mut game.g_ram as *mut u8).offset(0x178c) as *mut LongPtr),
-        game,
-    );
+    CallEnemyGfxDrawHook(Load24(ram_ptr!(game, LongPtr; 0x178c)), game);
 }
 pub unsafe fn RecordEnemySpawnData(j: u16, game: &mut Game) {
     let mut v2: *mut EnemySpawnData = null_mut::<EnemySpawnData>();
@@ -1869,9 +1867,8 @@ pub unsafe fn RecordEnemySpawnData(j: u16, game: &mut Game) {
 }
 pub unsafe fn LoadEnemies(game: &mut Game) {
     set_ram_word!(game.debug_time_frozen_for_enemies = 0u16);
-    (*((&raw mut game.g_ram as *mut u8).offset(0x178c) as *mut LongPtr)).bank = 160u8;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x178c) as *mut LongPtr)).addr =
-        ((0xa0804ci32) as u16);
+    (*(ram_ptr!(game, LongPtr; 0x178c))).bank = 160u8;
+    (*(ram_ptr!(game, LongPtr; 0x178c))).addr = ((0xa0804ci32) as u16);
     set_ram_word!(game.enemy_bg2_tilemap_size = 2048u16);
     set_ram_word!(game.UNUSED_word_7E179E = 0u16);
     set_ram_word!(game.UNUSED_word_7E17A0 = 0u16);
@@ -1883,21 +1880,13 @@ pub unsafe fn LoadEnemies(game: &mut Game) {
     ClearSpriteObjects(game);
 }
 pub unsafe fn ClearEnemyDataAndProcessEnemySet(game: &mut Game) {
-    memset(
-        (&raw mut game.g_ram as *mut u8).offset(0xf78) as *mut c_void,
-        0i32,
-        2048 as size_t,
-    );
+    memset(ram_ptr!(game, c_void; 0xf78), 0i32, 2048 as size_t);
     if *(RomPtr_A1(ram_word!(game, room_enemy_population_ptr), game) as *mut u16) != 0xffffu16 {
         ProcessEnemyTilesets(game);
     }
 }
 pub unsafe fn InitializeEnemies(game: &mut Game) {
-    memset(
-        (&raw mut game.g_ram as *mut u8).offset(0x7000) as *mut c_void,
-        0i32,
-        0x2800 as size_t,
-    );
+    memset(ram_ptr!(game, c_void; 0x7000), 0i32, 0x2800 as size_t);
     set_ram_word!(game.num_enemies_in_room = 0u16);
     set_ram_word!(game.num_enemies_killed_in_room = 0u16);
     set_ram_word!(game.flag_process_all_enemies = 0u16);
@@ -2003,8 +1992,7 @@ pub unsafe fn LoadEnemyTileData(game: &mut Game) {
     }
     if ram_word!(game, enemy_tile_load_data_write_pos) != 0 {
         let mut v1: u16 = 0u16;
-        let mut load_data: *mut EnemyTileLoadData =
-            (&raw mut game.g_ram as *mut u8).offset(0xe5a) as *mut EnemyTileLoadData;
+        let mut load_data: *mut EnemyTileLoadData = ram_ptr!(game, EnemyTileLoadData; 0xe5a);
         loop {
             let mut v2: u16 = (*load_data).tile_data_ptr.addr;
             let r18: u16 = ((*load_data).tile_data_size).wrapping_add(v2);
@@ -2012,8 +2000,7 @@ pub unsafe fn LoadEnemyTileData(game: &mut Game) {
             let db: u8 = (*load_data).tile_data_ptr.bank;
             loop {
                 memcpy(
-                    (&raw mut game.g_ram as *mut u8).offset((0x7000i32 + v3 as i32) as isize)
-                        as *mut c_void,
+                    ram_ptr!(game, c_void; (0x7000i32 + v3 as i32) as isize),
                     RomPtrWithBank(db, v2, game) as *const c_void,
                     8 as size_t,
                 );
@@ -2083,12 +2070,11 @@ pub unsafe fn ProcessEnemyTilesets(game: &mut Game) {
     let mut next_enemy_tiles_index: u16 = 0u16;
     let mut ET: *mut EnemyTileset =
         get_EnemyTileset(ram_word!(game, room_enemy_tilesets_ptr), game);
-    let mut LD: *mut EnemyTileLoadData =
-        (&raw mut game.g_ram as *mut u8).offset(0xe5a) as *mut EnemyTileLoadData;
+    let mut LD: *mut EnemyTileLoadData = ram_ptr!(game, EnemyTileLoadData; 0xe5a);
     while (*ET).enemy_def != 0xffffu16 {
         let ED: *mut EnemyDef = get_EnemyDef_A2((*ET).enemy_def, game);
         memcpy(
-            ((&raw mut game.g_ram as *mut u8).offset(0xc200) as *mut u16).offset(
+            (ram_ptr!(game, u16; 0xc200)).offset(
                 ((*(&raw mut (*ET).vram_dst as *mut u8).offset(0) as i32 + 8i32) * 16i32) as isize,
             ) as *mut c_void,
             RomPtrWithBank((*ED).bank, (*ED).palette_ptr, game) as *const c_void,
@@ -2104,8 +2090,8 @@ pub unsafe fn ProcessEnemyTilesets(game: &mut Game) {
         update_ram_word!(game.enemy_tile_load_data_write_pos, wrapping_add(7u16));
         LD = LD.offset(1);
         let v11: u16 = enemy_gfx_data_write_ptr;
-        *((&raw mut game.g_ram as *mut u8).offset(0xef64) as *mut u16)
-            .offset((enemy_gfx_data_write_ptr as i32 >> 1i32) as isize) = next_enemy_tiles_index;
+        *(ram_ptr!(game, u16; 0xef64)).offset((enemy_gfx_data_write_ptr as i32 >> 1i32) as isize) =
+            next_enemy_tiles_index;
         set_ram_word!(game.enemy_def_ptr[(v11 as i32 >> 1i32)] = (*ET).enemy_def);
         set_ram_word!(game.enemy_gfxdata_vram_ptr[(v11 as i32 >> 1i32)] = (*ET).vram_dst);
         enemy_gfx_data_write_ptr = (enemy_gfx_data_write_ptr).wrapping_add(2u16);
@@ -2135,7 +2121,7 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
                     set_ram_word!(game.active_enemy_indexes_write_ptr = (v7).wrapping_add(2u16));
                     if ((*v6).properties as i32 & 0x400i32) == 0i32 {
                         let v9: u16 = ram_word!(game, interactive_enemy_indexes_write_ptr);
-                        *((&raw mut game.g_ram as *mut u8).offset(0x17ec) as *mut u16).offset(
+                        *(ram_ptr!(game, u16; 0x17ec)).offset(
                             (ram_word!(game, interactive_enemy_indexes_write_ptr) as i32 >> 1i32)
                                 as isize,
                         ) = v5;
@@ -2150,10 +2136,10 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
                 break;
             }
         }
-        *((&raw mut game.g_ram as *mut u8).offset(0x17ac) as *mut u16)
+        *(ram_ptr!(game, u16; 0x17ac))
             .offset((ram_word!(game, active_enemy_indexes_write_ptr) as i32 >> 1i32) as isize) =
             -1i32 as u16;
-        *((&raw mut game.g_ram as *mut u8).offset(0x17ec) as *mut u16).offset(
+        *(ram_ptr!(game, u16; 0x17ec)).offset(
             (ram_word!(game, interactive_enemy_indexes_write_ptr) as i32 >> 1i32) as isize,
         ) = -1i32 as u16;
     } else {
@@ -2180,13 +2166,13 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
                             >= 0i16
                 {
                     let v3: u16 = ram_word!(game, active_enemy_indexes_write_ptr);
-                    *((&raw mut game.g_ram as *mut u8).offset(0x17ac) as *mut u16).offset(
+                    *(ram_ptr!(game, u16; 0x17ac)).offset(
                         (ram_word!(game, active_enemy_indexes_write_ptr) as i32 >> 1i32) as isize,
                     ) = ram_word!(game, cur_enemy_index);
                     set_ram_word!(game.active_enemy_indexes_write_ptr = (v3).wrapping_add(2u16));
                     if ((*v1).properties as i32 & 0x400i32) == 0i32 {
                         let v4: u16 = ram_word!(game, interactive_enemy_indexes_write_ptr);
-                        *((&raw mut game.g_ram as *mut u8).offset(0x17ec) as *mut u16).offset(
+                        *(ram_ptr!(game, u16; 0x17ec)).offset(
                             (ram_word!(game, interactive_enemy_indexes_write_ptr) as i32 >> 1i32)
                                 as isize,
                         ) = v0;
@@ -2201,10 +2187,10 @@ pub unsafe fn DetermineWhichEnemiesToProcess(game: &mut Game) {
                 break;
             }
         }
-        *((&raw mut game.g_ram as *mut u8).offset(0x17ac) as *mut u16)
+        *(ram_ptr!(game, u16; 0x17ac))
             .offset((ram_word!(game, active_enemy_indexes_write_ptr) as i32 >> 1i32) as isize) =
             -1i32 as u16;
-        *((&raw mut game.g_ram as *mut u8).offset(0x17ec) as *mut u16).offset(
+        *(ram_ptr!(game, u16; 0x17ec)).offset(
             (ram_word!(game, interactive_enemy_indexes_write_ptr) as i32 >> 1i32) as isize,
         ) = -1i32 as u16;
     };
@@ -3735,7 +3721,7 @@ pub unsafe fn ProcessExtendedTilemap(db: u8, r22: u16, game: &mut Game) {
         let n: i32 = *(p as *mut u16).offset(1) as i32;
         p = p.offset(4);
         memcpy(
-            (&raw mut game.g_ram as *mut u8).offset(v2 as i32 as isize) as *mut c_void,
+            ram_ptr!(game, c_void; v2 as i32 as isize),
             p as *const c_void,
             (n * 2i32) as size_t,
         );
@@ -3832,8 +3818,8 @@ pub unsafe fn SamusProjectileInteractionHandler(game: &mut Game) {
                 let mut v0: u16 = 0u16;
                 set_ram_word!(
                     game.knockback_x_dir = (((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(
-                        (*((&raw mut game.g_ram as *mut u8).offset(0x1a4b) as *mut u16)
-                            .offset((v0 as i32 >> 1i32) as isize,)) as i16,
+                        (*(ram_ptr!(game, u16; 0x1a4b)).offset((v0 as i32 >> 1i32) as isize,))
+                            as i16,
                     ) >= 0i16) as u16
                 );
                 return;
@@ -3871,11 +3857,9 @@ pub unsafe fn EprojSamusCollDetect(game: &mut Game) {
             && (ram_word!(game, eproj_properties[i]) as i32 & 0x2000i32) == 0i32
             && ram_word!(game, eproj_radius[i]) != 0u16
         {
-            let varE20: u16 = *(((&raw mut game.g_ram as *mut u8).offset(0x1bb3) as *mut u16)
-                .offset(i as isize) as *mut u8)
-                .offset(0) as u16;
-            let varE22: u16 = *(((&raw mut game.g_ram as *mut u8).offset(0x1bb3) as *mut u16)
-                .offset(i as isize) as *mut u8)
+            let varE20: u16 =
+                *((ram_ptr!(game, u16; 0x1bb3)).offset(i as isize) as *mut u8).offset(0) as u16;
+            let varE22: u16 = *((ram_ptr!(game, u16; 0x1bb3)).offset(i as isize) as *mut u8)
                 .offset(1isize) as u16;
             if (abs16((ram_word!(game, samus_x_pos)).wrapping_sub(ram_word!(game, eproj_x_pos[i])))
                 as i32
@@ -3898,8 +3882,7 @@ pub unsafe fn HandleEprojCollWithSamus(k: u16, game: &mut Game) {
     set_ram_word!(game.samus_invincibility_timer = 96u16);
     set_ram_word!(game.samus_knockback_timer = 5u16);
     let v1: u16 = *(RomPtr_86(
-        *(((&raw mut game.g_ram as *mut u8).offset(0x1997) as *mut u16 as *mut u8)
-            .offset(k as i32 as isize) as *mut u16),
+        *((ram_ptr!(game, u16; 0x1997) as *mut u8).offset(k as i32 as isize) as *mut u16),
         game,
     ) as *mut u16)
         .offset(5);
@@ -3910,8 +3893,7 @@ pub unsafe fn HandleEprojCollWithSamus(k: u16, game: &mut Game) {
     }
     let v3: i32 = k as i32 >> 1i32;
     if (ram_word!(game, eproj_properties[v3]) as i32 & 0x4000i32) == 0i32 {
-        *(((&raw mut game.g_ram as *mut u8).offset(0x1997) as *mut u16 as *mut u8)
-            .offset(k as i32 as isize) as *mut u16) = 0u16;
+        *((ram_ptr!(game, u16; 0x1997) as *mut u8).offset(k as i32 as isize) as *mut u16) = 0u16;
     }
     Samus_DealDamage(
         SuitDamageDivision((ram_word!(game, eproj_properties[v3])) & (0xfffu16), game),
@@ -4521,8 +4503,7 @@ pub unsafe fn EnemyBombCollHandler(game: &mut Game) {
 }
 pub unsafe fn ProcessEnemyPowerBombInteraction(game: &mut Game) {
     set_ram_word!(game.enemy_processing_stage = 5u16);
-    let rx: u16 = *((&raw mut game.g_ram as *mut u8).offset(0xcea) as *mut u16 as *mut u8)
-        .offset(1isize) as u16;
+    let rx: u16 = *(ram_ptr!(game, u16; 0xcea) as *mut u8).offset(1isize) as u16;
     let ry: u16 = (rx as i32 + (rx as i32 >> 1i32) >> 1i32) as u16;
     let mut i: i32 = 0x7c0i32;
     while rx != 0u16 && i >= 0i32 {
@@ -4736,7 +4717,7 @@ pub unsafe fn NormalEnemyShotAi(game: &mut Game) {
         CreateSpriteAtPos((*E).x_pos, (*E).y_pos, 55u16, 0u16, game);
     }
     if (*E).health == 0 {
-        let j: u16 = ((*(((&raw mut game.g_ram as *mut u8).offset(0xc18) as *mut u16)
+        let j: u16 = ((*((ram_ptr!(game, u16; 0xc18))
             .offset(ram_word!(game, collision_detection_index) as isize)
             as *mut u8)
             .offset(1isize)) as u16)
@@ -6066,29 +6047,19 @@ pub unsafe fn EnemyFunc_C8AD(k: u16, game: &mut Game) -> u8 {
         game,
     );
     if (ram_word!(game, level_data[ram_word!(game, cur_block_index)]) as i32 & 0xf000i32) == 4096i32
-        && (*(&raw mut game.g_ram as *mut u8)
-            .offset(0x16402)
-            .offset(ram_word!(game, cur_block_index) as isize) as i32
-            & 0x1fi32)
+        && (*ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize) as i32 & 0x1fi32)
             >= 5i32
     {
         result = 1u8;
         let temp_collision_DD4: u16 =
             ((*E).y_height as i32 + (*E).y_pos as i32 - 1i32 & 0xfi32) as u16;
         let temp_collision_DD6: u16 = (16i32
-            * (*(&raw mut game.g_ram as *mut u8)
-                .offset(0x16402)
-                .offset(ram_word!(game, cur_block_index) as isize) as i32
+            * (*ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize) as i32
                 & 0x1fi32)) as u16;
-        if (*(&raw mut game.g_ram as *mut u8)
-            .offset(0x16402)
-            .offset(ram_word!(game, cur_block_index) as isize) as i32
-            & 0x80i32)
+        if (*ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize) as i32 & 0x80i32)
             == 0i32
         {
-            let j: u16 = (if (*(&raw mut game.g_ram as *mut u8)
-                .offset(0x16402)
-                .offset(ram_word!(game, cur_block_index) as isize)
+            let j: u16 = (if (*ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize)
                 as i32
                 & 0x40i32)
                 != 0i32
@@ -6110,29 +6081,18 @@ pub unsafe fn EnemyFunc_C8AD(k: u16, game: &mut Game) -> u8 {
     }
     CalculateBlockContainingPixelPos((*E).x_pos, ((*E).y_pos).wrapping_sub((*E).y_height), game);
     if (ram_word!(game, level_data[ram_word!(game, cur_block_index)]) as i32 & 0xf000i32) == 4096i32
-        && (*(&raw mut game.g_ram as *mut u8)
-            .offset(0x16402)
-            .offset(ram_word!(game, cur_block_index) as isize) as i32
-            & 0x1fi32)
+        && (*ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize) as i32 & 0x1fi32)
             >= 5i32
     {
         result = 1u8;
         let temp_collision_DD4_0: u16 =
             ((*E).y_pos as i32 - (*E).y_height as i32 & 0xfi32 ^ 0xfi32) as u16;
         let temp_collision_DD6_0: u16 = (16i32
-            * (*(&raw mut game.g_ram as *mut u8)
-                .offset(0x16402)
-                .offset(ram_word!(game, cur_block_index) as isize) as i32
+            * (*ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize) as i32
                 & 0x1fi32)) as u16;
-        if *(&raw mut game.g_ram as *mut u8)
-            .offset(0x16402)
-            .offset(ram_word!(game, cur_block_index) as isize) as i32
-            & 0x80i32
-            != 0
+        if *ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize) as i32 & 0x80i32 != 0
         {
-            let j_0: u16 = (if (*(&raw mut game.g_ram as *mut u8)
-                .offset(0x16402)
-                .offset(ram_word!(game, cur_block_index) as isize)
+            let j_0: u16 = (if (*ram_ptr!(game; 0x16402, ram_word!(game, cur_block_index) as isize)
                 as i32
                 & 0x40i32)
                 != 0i32

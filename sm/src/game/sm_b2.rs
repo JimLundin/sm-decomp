@@ -14,6 +14,7 @@ use crate::game::sm_a0::{
 };
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
+use crate::ram_map::ram_ptr;
 use crate::ram_map::{ram_word, set_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{RomPtr, Unreachable};
@@ -650,8 +651,7 @@ pub unsafe fn NinjaSpacePirates_Init(game: &mut Game) {
     let mut v7: u16 = 0u16;
     let mut n: i32 = 15i32;
     loop {
-        *((&raw mut game.g_ram as *mut u8).offset(0xc200) as *mut u16)
-            .offset(((v7 as i32 >> 1i32) + 240i32) as isize) =
+        *(ram_ptr!(game, u16; 0xc200)).offset(((v7 as i32 >> 1i32) + 240i32) as isize) =
             crate::rtl::rom_table_word!(game, 0xb28727, (v6 as i32 >> 1i32) as isize);
         v6 = (v6).wrapping_add(2u16);
         v7 = (v7).wrapping_add(2u16);

@@ -7,6 +7,7 @@ use crate::game::sm_86::SpawnEprojWithRoomGfx;
 use crate::game::sm_8d::SpawnPalfxObject;
 use crate::game::sm_90::CallSomeSamusCode;
 use crate::game_state::Game;
+use crate::ram_map::ram_ptr;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{RomPtr, Unreachable};
 
@@ -116,8 +117,7 @@ pub unsafe fn CallAnimtilesInstr(ea: u32, j: u16, k: u16, game: &mut Game) -> u1
 pub unsafe fn ProcessAnimtilesObject(game: &mut Game) {
     let v0: u16 = ram_word!(game, animtiles_object_index);
     let v1: i32 = ram_word!(game, animtiles_object_index) as i32 >> 1i32;
-    let ref mut fresh6 =
-        *((&raw mut game.g_ram as *mut u8).offset(0x1f19) as *mut u16).offset(v1 as isize);
+    let ref mut fresh6 = *(ram_ptr!(game, u16; 0x1f19)).offset(v1 as isize);
     let fresh7 = *fresh6;
     *fresh6 = (*fresh6).wrapping_sub(1);
     if fresh7 == 1u16 {
@@ -159,8 +159,7 @@ pub unsafe fn AnimtilesInstr_GotoRel(k: u16, j: u16, game: &mut Game) -> u16 {
 }
 pub unsafe fn AnimtilesInstr_DecrementTimerAndGoto(k: u16, j: u16, game: &mut Game) -> u16 {
     let v2: i32 = k as i32 >> 1i32;
-    let ref mut fresh0 =
-        *((&raw mut game.g_ram as *mut u8).offset(0x1f01) as *mut u16).offset(v2 as isize);
+    let ref mut fresh0 = *(ram_ptr!(game, u16; 0x1f01)).offset(v2 as isize);
     let fresh1 = *fresh0;
     *fresh0 = (*fresh0).wrapping_sub(1);
     if fresh1 == 1u16 {
@@ -171,8 +170,7 @@ pub unsafe fn AnimtilesInstr_DecrementTimerAndGoto(k: u16, j: u16, game: &mut Ga
 }
 pub unsafe fn AnimtilesInstr_DecrementTimerAndGotoRel(k: u16, j: u16, game: &mut Game) -> u16 {
     let v2: i32 = k as i32 >> 1i32;
-    let ref mut fresh2 =
-        *((&raw mut game.g_ram as *mut u8).offset(0x1f01) as *mut u16).offset(v2 as isize);
+    let ref mut fresh2 = *(ram_ptr!(game, u16; 0x1f01)).offset(v2 as isize);
     let fresh3 = *fresh2;
     *fresh2 = (*fresh2).wrapping_sub(1);
     if fresh3 == 1u16 {
@@ -182,8 +180,7 @@ pub unsafe fn AnimtilesInstr_DecrementTimerAndGotoRel(k: u16, j: u16, game: &mut
     }
 }
 pub unsafe fn AnimtilesInstr_SetTimer(k: u16, j: u16, game: &mut Game) -> u16 {
-    *((&raw mut game.g_ram as *mut u8).offset(0x1f01) as *mut u16 as *mut u8)
-        .offset(k as i32 as isize) = *RomPtr_87(j, game);
+    *(ram_ptr!(game, u16; 0x1f01) as *mut u8).offset(k as i32 as isize) = *RomPtr_87(j, game);
     (j).wrapping_add(1u16)
 }
 pub unsafe fn AnimtilesInstr_QueueMusic(k: u16, j: u16, game: &mut Game) -> u16 {
@@ -254,12 +251,7 @@ pub unsafe fn AnimtilesInstr_WaitUntilAreaBossDead_DoubleRet(
 pub unsafe fn AnimtilesInstr_GotoIfBossBitSetInArea(k: u16, j: u16, game: &mut Game) -> u16 {
     let v2: *const u8 = RomPtr_87(j, game);
     let v3: u16 = (j).wrapping_add(2u16);
-    if (*v2 as i32
-        & *(&raw mut game.g_ram as *mut u8)
-            .offset(0xd828)
-            .offset(*v2.offset(1) as isize) as i32)
-        != 0i32
-    {
+    if (*v2 as i32 & *ram_ptr!(game; 0xd828, *v2.offset(1) as isize) as i32) != 0i32 {
         AnimtilesInstr_Goto(k, v3, game)
     } else {
         (v3).wrapping_add(2u16)

@@ -6,6 +6,7 @@ use crate::game::sm_90::{
     ClearProjectile, HandleProjectileTrails, Samus_DrawShinesparkCrashEchoProjectiles,
 };
 use crate::game_state::Game;
+use crate::ram_map::ram_ptr;
 use crate::ram_map::{ram_word, set_ram_word};
 use crate::rtl::{RomPtr, Unreachable};
 use ::core::ptr::null_mut;
@@ -77,9 +78,7 @@ pub unsafe fn InitializeInstrForSuperMissile(v0: u16, game: &mut Game) {
         crate::rtl::rom_table_word!(
             game,
             0x93842b,
-            (*(((&raw mut game.g_ram as *mut u8).offset(0xc18) as *mut u16).offset(v1 as isize)
-                as *mut u8)
-                .offset(1isize) as i32
+            (*((ram_ptr!(game, u16; 0xc18)).offset(v1 as isize) as *mut u8).offset(1isize) as i32
                 & 0xfi32) as isize,
         ),
         game,
@@ -98,9 +97,7 @@ pub unsafe fn InitializeInstrForMissile(v0: u16, game: &mut Game) {
         crate::rtl::rom_table_word!(
             game,
             0x9383f1,
-            (*(((&raw mut game.g_ram as *mut u8).offset(0xc18) as *mut u16).offset(v1 as isize)
-                as *mut u8)
-                .offset(1isize) as i32
+            (*((ram_ptr!(game, u16; 0xc18)).offset(v1 as isize) as *mut u8).offset(1isize) as i32
                 & 0xfi32) as isize,
         ),
         game,
@@ -178,9 +175,7 @@ pub unsafe fn InitializeShinesparkEchoOrSpazerSba(k: u16, game: &mut Game) {
         crate::rtl::rom_table_word!(
             game,
             0x938403,
-            (*(((&raw mut game.g_ram as *mut u8).offset(0xc18) as *mut u16).offset(v1 as isize)
-                as *mut u8)
-                .offset(0) as i32
+            (*((ram_ptr!(game, u16; 0xc18)).offset(v1 as isize) as *mut u8).offset(0) as i32
                 - 34i32) as isize,
         ),
         game,
@@ -233,8 +228,7 @@ pub unsafe fn RunProjectileInstructions(game: &mut Game) {
     let mut PI: *mut ProjectileInstr = null_mut::<ProjectileInstr>();
     let v0: u16 = ram_word!(game, projectile_index);
     let v1: i32 = ram_word!(game, projectile_index) as i32 >> 1i32;
-    let ref mut fresh0 =
-        *((&raw mut game.g_ram as *mut u8).offset(0xc54) as *mut u16).offset(v1 as isize);
+    let ref mut fresh0 = *(ram_ptr!(game, u16; 0xc54)).offset(v1 as isize);
     let fresh1 = *fresh0;
     *fresh0 = (*fresh0).wrapping_sub(1);
     if fresh1 == 1u16 {

@@ -1345,3 +1345,14 @@ macro_rules! ram_pointer_functions {
     };
 }
 pub(crate) use ram_pointer_functions;
+
+// Keep raw RAM address construction at the caller, preserving offset order.
+macro_rules! ram_ptr {
+    ($game:ident; $($offset:expr),+ $(,)?) => {
+        (&raw mut $game.g_ram as *mut ::core::primitive::u8)$(.offset($offset))+
+    };
+    ($game:ident, $target:ty; $($offset:expr),+ $(,)?) => {
+        $crate::ram_map::ram_ptr!($game; $($offset),+) as *mut $target
+    };
+}
+pub(crate) use ram_ptr;

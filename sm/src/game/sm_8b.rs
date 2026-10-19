@@ -30,6 +30,7 @@ use crate::game::sm_91::{
 use crate::game::sm_93::DrawPlayerExplosions2;
 use crate::game::sm_94::kSinCosTable8bit_Sext;
 use crate::game_state::Game;
+use crate::ram_map::ram_ptr;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::AddToHiLo;
 use crate::rtl::{Mult8x8, RomPtr, SnesDivide, Unreachable, WriteReg, WriteRegWord};
@@ -222,7 +223,7 @@ unsafe fn RomPtr_RAM(addr: u16, game: &mut Game) -> *mut u8 {
             );
         }
     };
-    (&raw mut game.g_ram as *mut u8).offset(addr as i32 as isize)
+    ram_ptr!(game; addr as i32 as isize)
 }
 const RomPtr_8B: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8b>;
 const RomPtr_8C: unsafe fn(u16, &mut Game) -> *const u8 = crate::rtl::rom_bank_ptr::<0x8c>;
@@ -582,11 +583,7 @@ impl CinematicAsset {
     unsafe fn load(self, game: &mut Game) {
         let (transfer, destination, vmain) = match self {
             Self::Decompress(source, destination) => {
-                DecompressToMem(
-                    source,
-                    (&raw mut game.g_ram as *mut u8).offset(destination),
-                    game,
-                );
+                DecompressToMem(source, ram_ptr!(game; destination), game);
                 return;
             }
             Self::VramWords(source, destination, size) => {
@@ -616,7 +613,7 @@ pub unsafe fn SetupPpuForTitleSequence(game: &mut Game) {
     crate::rtl::write_register_and_mirror(OBSEL as u16, 3, 0x52, false, game);
     crate::rtl::write_register_and_mirror(BGMODE as u16, 7, 0x55, false, game);
     crate::rtl::write_register_and_mirror(M7SEL as u16, 0x80, 0x5f, false, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x58) = 0u8;
+    *ram_ptr!(game; 0x58) = 0u8;
     crate::rtl::write_register_and_mirror(BG1SC as u16, 0, 0x59, false, game);
     crate::rtl::write_register_and_mirror(BG2SC as u16, 0, 0x5a, false, game);
     crate::rtl::write_register_and_mirror(BG3SC as u16, 0, 0x5c, false, game);
@@ -631,11 +628,7 @@ pub unsafe fn SetupPpuForTitleSequence(game: &mut Game) {
     crate::rtl::write_register_and_mirror(CGADSUB as u16, 0, 0x71, false, game);
     WriteReg(COLDATA as u16, 0xe0u8, game);
     crate::rtl::write_register_and_mirror(SETINI as u16, 0, 0x77, false, game);
-    memset(
-        (&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut c_void,
-        0i32,
-        0x7fe as size_t,
-    );
+    memset(ram_ptr!(game, c_void; 0x3000), 0i32, 0x7fe as size_t);
     set_ram_word!(game.oam_next_ptr = 0u16);
     set_ram_word!(game.menu_option_index = 0u16);
     set_ram_word!(game.screen_fade_delay = 0u16);
@@ -676,7 +669,7 @@ pub unsafe fn SetupPpu_Intro(game: &mut Game) {
     crate::rtl::write_register_and_mirror(BG1SC as u16, 0x50, 0x58, true, game);
     crate::rtl::write_register_and_mirror(BG2SC as u16, 0x48, 0x59, true, game);
     crate::rtl::write_register_and_mirror(BG3SC as u16, 0x4c, 0x5a, true, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x5c) = 0u8;
+    *ram_ptr!(game; 0x5c) = 0u8;
     crate::rtl::write_register_and_mirror(BG4SC as u16, 0, 0x5d, false, game);
     WriteReg(BG12NBA as u16, 0u8, game);
     crate::rtl::write_register_and_mirror(BG34NBA as u16, 4, 0x5e, true, game);
@@ -688,17 +681,13 @@ pub unsafe fn SetupPpu_Intro(game: &mut Game) {
     crate::rtl::write_register_and_mirror(CGADSUB as u16, 0, 0x71, false, game);
     WriteReg(COLDATA as u16, 0xe0u8, game);
     crate::rtl::write_register_and_mirror(SETINI as u16, 0, 0x77, false, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x72) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0) = 32u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1) = 64u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2) = 0x80u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x57) = 0u8;
-    memset7E(
-        (&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut u16,
-        0x2fu16,
-        0x7feu16,
-    );
+    *ram_ptr!(game; 0x6f) = 0u8;
+    *ram_ptr!(game; 0x72) = 0u8;
+    *ram_ptr!(game; 0x74, 0) = 32u8;
+    *ram_ptr!(game; 0x74, 1) = 64u8;
+    *ram_ptr!(game; 0x74, 2) = 0x80u8;
+    *ram_ptr!(game; 0x57) = 0u8;
+    memset7E(ram_ptr!(game, u16; 0x3000), 0x2fu16, 0x7feu16);
     set_ram_word!(game.oam_next_ptr = 0u16);
     set_ram_word!(game.cinematic_var5 = 0u16);
     set_ram_word!(game.cinematic_var6 = 256u16);
@@ -721,7 +710,7 @@ pub unsafe fn SetupPpu_3_Mode7(game: &mut Game) {
     crate::rtl::write_register_and_mirror(OBSEL as u16, 3, 0x52, false, game);
     crate::rtl::write_register_and_mirror(BGMODE as u16, 7, 0x55, false, game);
     crate::rtl::write_register_and_mirror(M7SEL as u16, 0x80, 0x5f, false, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x58) = 0u8;
+    *ram_ptr!(game; 0x58) = 0u8;
     crate::rtl::write_register_and_mirror(BG1SC as u16, 0, 0x59, false, game);
     crate::rtl::write_register_and_mirror(BG2SC as u16, 0, 0x5a, false, game);
     crate::rtl::write_register_and_mirror(BG3SC as u16, 0, 0x5c, false, game);
@@ -735,12 +724,12 @@ pub unsafe fn SetupPpu_3_Mode7(game: &mut Game) {
     crate::rtl::write_register_and_mirror(CGWSEL as u16, 0, 0x6e, false, game);
     crate::rtl::write_register_and_mirror(CGADSUB as u16, 0, 0x71, false, game);
     WriteReg(COLDATA as u16, 0xe0u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x72) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0) = 32u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1) = 64u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2) = 0x80u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x57) = 0u8;
+    *ram_ptr!(game; 0x6f) = 0u8;
+    *ram_ptr!(game; 0x72) = 0u8;
+    *ram_ptr!(game; 0x74, 0) = 32u8;
+    *ram_ptr!(game; 0x74, 1) = 64u8;
+    *ram_ptr!(game; 0x74, 2) = 0x80u8;
+    *ram_ptr!(game; 0x57) = 0u8;
     set_ram_word!(game.cinematic_var7 = 0u16);
     set_ram_word!(game.cinematic_var8 = 0u16);
     set_ram_word!(game.cinematic_var9 = 0u16);
@@ -757,7 +746,7 @@ pub unsafe fn SetupPpu_4_Mode1(game: &mut Game) {
     crate::rtl::write_register_and_mirror(BGMODE as u16, 1, 0x55, false, game);
     crate::rtl::write_register_and_mirror(M7SEL as u16, 0, 0x5f, false, game);
     crate::rtl::write_register_and_mirror(BG1SC as u16, 0x5c, 0x58, true, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x59) = 0u8;
+    *ram_ptr!(game; 0x59) = 0u8;
     crate::rtl::write_register_and_mirror(BG2SC as u16, 0, 0x5a, false, game);
     crate::rtl::write_register_and_mirror(BG3SC as u16, 0, 0x5c, false, game);
     WriteReg(BG4SC as u16, 0u8, game);
@@ -765,23 +754,23 @@ pub unsafe fn SetupPpu_4_Mode1(game: &mut Game) {
     crate::rtl::write_register_and_mirror(BG34NBA as u16, 0, 0x5e, true, game);
     crate::rtl::write_register_and_mirror(TM as u16, 0x11, 0x69, false, game);
     crate::rtl::write_register_and_mirror(TS as u16, 0, 0x6b, false, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x60) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x61) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x62) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x6c) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x6d) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x72) = 0u8;
+    *ram_ptr!(game; 0x60) = 0u8;
+    *ram_ptr!(game; 0x61) = 0u8;
+    *ram_ptr!(game; 0x62) = 0u8;
+    *ram_ptr!(game; 0x6c) = 0u8;
+    *ram_ptr!(game; 0x6d) = 0u8;
+    *ram_ptr!(game; 0x6f) = 0u8;
+    *ram_ptr!(game; 0x72) = 0u8;
     set_ram_word!(game.reg_BG1HOFS = 0u16);
     set_ram_word!(game.reg_BG1VOFS = 0u16);
 }
 pub unsafe fn SetupPpu_5_Mode7(game: &mut Game) {
     crate::rtl::write_register_and_mirror(INIDISP as u16, 0x80, 0x51, false, game);
     WriteReg(OBSEL as u16, 0xa3u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x52) = -93i32 as u8;
+    *ram_ptr!(game; 0x52) = -93i32 as u8;
     crate::rtl::write_register_and_mirror(BGMODE as u16, 7, 0x55, false, game);
     crate::rtl::write_register_and_mirror(M7SEL as u16, 0, 0x5f, false, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x58) = 0u8;
+    *ram_ptr!(game; 0x58) = 0u8;
     crate::rtl::write_register_and_mirror(BG1SC as u16, 0, 0x59, false, game);
     crate::rtl::write_register_and_mirror(BG2SC as u16, 0, 0x5a, false, game);
     crate::rtl::write_register_and_mirror(BG3SC as u16, 0, 0x5c, false, game);
@@ -794,13 +783,13 @@ pub unsafe fn SetupPpu_5_Mode7(game: &mut Game) {
     WriteReg(VMAIN as u16, 0u8, game);
     crate::rtl::write_register_and_mirror(CGWSEL as u16, 0, 0x6e, false, game);
     crate::rtl::write_register_and_mirror(CGADSUB as u16, 0, 0x71, false, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x72) = 0u8;
+    *ram_ptr!(game; 0x6f) = 0u8;
+    *ram_ptr!(game; 0x72) = 0u8;
     WriteReg(COLDATA as u16, 0xe0u8, game);
     crate::rtl::write_register_and_mirror(SETINI as u16, 0, 0x77, false, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0) = 32u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1) = 64u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2) = 0x80u8;
+    *ram_ptr!(game; 0x74, 0) = 32u8;
+    *ram_ptr!(game; 0x74, 1) = 64u8;
+    *ram_ptr!(game; 0x74, 2) = 0x80u8;
     set_ram_word!(game.oam_next_ptr = 0u16);
     set_ram_word!(game.screen_fade_delay = 0u16);
     set_ram_word!(game.screen_fade_counter = 0u16);
@@ -822,7 +811,7 @@ pub unsafe fn SetupPpu_6_Mode1(game: &mut Game) {
     crate::rtl::write_register_and_mirror(M7SEL as u16, 0, 0x5f, false, game);
     crate::rtl::write_register_and_mirror(BG1SC as u16, 0x70, 0x58, true, game);
     crate::rtl::write_register_and_mirror(BG2SC as u16, 0x78, 0x59, true, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x5a) = 0u8;
+    *ram_ptr!(game; 0x5a) = 0u8;
     crate::rtl::write_register_and_mirror(BG3SC as u16, 0, 0x5c, false, game);
     WriteReg(BG4SC as u16, 0u8, game);
     crate::rtl::write_register_and_mirror(BG12NBA as u16, 0x44, 0x5d, true, game);
@@ -834,12 +823,12 @@ pub unsafe fn SetupPpu_6_Mode1(game: &mut Game) {
     crate::rtl::write_register_and_mirror(CGWSEL as u16, 0, 0x6e, false, game);
     crate::rtl::write_register_and_mirror(CGADSUB as u16, 0, 0x71, false, game);
     WriteReg(COLDATA as u16, 0xe0u8, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x72) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0) = 32u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1) = 64u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2) = 0x80u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x57) = 0u8;
+    *ram_ptr!(game; 0x6f) = 0u8;
+    *ram_ptr!(game; 0x72) = 0u8;
+    *ram_ptr!(game; 0x74, 0) = 32u8;
+    *ram_ptr!(game; 0x74, 1) = 64u8;
+    *ram_ptr!(game; 0x74, 2) = 0x80u8;
+    *ram_ptr!(game; 0x57) = 0u8;
     set_ram_word!(game.cinematic_var7 = 0u16);
     set_ram_word!(game.cinematic_var8 = 0u16);
     set_ram_word!(game.cinematic_var9 = 0u16);
@@ -865,16 +854,16 @@ pub unsafe fn SetupPpu_7_Mode1(game: &mut Game) {
     crate::rtl::write_register_and_mirror(BG34NBA as u16, 2, 0x5e, true, game);
     crate::rtl::write_register_and_mirror(TM as u16, 1, 0x69, false, game);
     crate::rtl::write_register_and_mirror(TS as u16, 0, 0x6b, false, game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x60) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x61) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x62) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x6c) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x6d) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x72) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0) = 32u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1) = 64u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2) = 0x80u8;
+    *ram_ptr!(game; 0x60) = 0u8;
+    *ram_ptr!(game; 0x61) = 0u8;
+    *ram_ptr!(game; 0x62) = 0u8;
+    *ram_ptr!(game; 0x6c) = 0u8;
+    *ram_ptr!(game; 0x6d) = 0u8;
+    *ram_ptr!(game; 0x6f) = 0u8;
+    *ram_ptr!(game; 0x72) = 0u8;
+    *ram_ptr!(game; 0x74, 0) = 32u8;
+    *ram_ptr!(game; 0x74, 1) = 64u8;
+    *ram_ptr!(game; 0x74, 2) = 0x80u8;
     set_ram_word!(game.oam_next_ptr = 0u16);
     WriteRegWord(M7A as u16, 0x100u16, game);
     set_ram_word!(game.reg_M7A = 256u16);
@@ -912,7 +901,7 @@ unsafe fn Smult16x16(r38: u16, r40: u16) -> u32 {
     t
 }
 pub unsafe fn HandleMode7TransformationMatrix(game: &mut Game) {
-    let ref mut fresh152 = *((&raw mut game.g_ram as *mut u8).offset(0x78) as *mut u16);
+    let ref mut fresh152 = *(ram_ptr!(game, u16; 0x78));
     *fresh152 = (Smult16x16(
         kSinCosTable8bit_Sext[((((ram_word!(game, cinematic_var5)) as u8).wrapping_add(64u8))
             as i32
@@ -931,21 +920,21 @@ pub unsafe fn HandleMode7TransformationMatrix(game: &mut Game) {
     set_ram_word!(game.reg_BG1VOFS = ram_word!(game, cinematic_var10));
 }
 pub unsafe fn SetPpuBackdropSomeColor(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x72) = -127i32 as u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0) = 56u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1) = 88u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2) = 0x80u8;
+    *ram_ptr!(game; 0x6f) = 0u8;
+    *ram_ptr!(game; 0x72) = -127i32 as u8;
+    *ram_ptr!(game; 0x74, 0) = 56u8;
+    *ram_ptr!(game; 0x74, 1) = 88u8;
+    *ram_ptr!(game; 0x74, 2) = 0x80u8;
 }
 pub unsafe fn SetPpuBackdropBlack(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x72) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0) = 32u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1) = 64u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2) = 0x80u8;
+    *ram_ptr!(game; 0x6f) = 0u8;
+    *ram_ptr!(game; 0x72) = 0u8;
+    *ram_ptr!(game; 0x74, 0) = 32u8;
+    *ram_ptr!(game; 0x74, 1) = 64u8;
+    *ram_ptr!(game; 0x74, 2) = 0x80u8;
 }
 pub unsafe fn UpdateCinematicBgTilemap(game: &mut Game) {
-    if *(&raw mut game.g_ram as *mut u8).offset(0x55) != 7u8 {
+    if *ram_ptr!(game; 0x55) != 7u8 {
         let mut v0: u16 = ram_word!(game, vram_write_queue_tail);
         (*gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game)).size = 1920u16;
         v0 = (v0).wrapping_add(2u16);
@@ -964,14 +953,14 @@ pub unsafe fn UpdateCinematicBgTilemap(game: &mut Game) {
     }
 }
 pub unsafe fn UpdateSamusEyesTilemap(game: &mut Game) {
-    if *(&raw mut game.g_ram as *mut u8).offset(0x55) != 7u8 {
+    if *ram_ptr!(game; 0x55) != 7u8 {
         let mut v0: u16 = ram_word!(game, vram_write_queue_tail);
         (*gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game)).size = 128u16;
         v0 = (v0).wrapping_add(2u16);
-        (*gVramWriteEntry(v0 as i32, game)).size =
-            (((&raw mut game.g_ram as *mut u8).offset(0x3800) as *mut Ram3800 as *mut u8)
-                .offset_from(&raw mut game.g_ram as *mut u8) as c_long
-                + 832 as c_long) as u16;
+        (*gVramWriteEntry(v0 as i32, game)).size = ((ram_ptr!(game, Ram3800; 0x3800) as *mut u8)
+            .offset_from(&raw mut game.g_ram as *mut u8)
+            as c_long
+            + 832 as c_long) as u16;
         v0 = (v0).wrapping_add(2u16);
         let fresh156 = v0;
         v0 = v0.wrapping_add(1);
@@ -986,13 +975,13 @@ pub unsafe fn UpdateSamusEyesTilemap(game: &mut Game) {
     }
 }
 pub unsafe fn CinematicUpdateSomeBg(game: &mut Game) {
-    if *(&raw mut game.g_ram as *mut u8).offset(0x55) != 7u8 {
+    if *ram_ptr!(game; 0x55) != 7u8 {
         let mut v0: u16 = ram_word!(game, vram_write_queue_tail);
         (*gVramWriteEntry(ram_word!(game, vram_write_queue_tail) as i32, game)).size = 2048u16;
         v0 = (v0).wrapping_add(2u16);
-        (*gVramWriteEntry(v0 as i32, game)).size =
-            ((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000 as *mut u8)
-                .offset_from(&raw mut game.g_ram as *mut u8) as c_long as u16;
+        (*gVramWriteEntry(v0 as i32, game)).size = (ram_ptr!(game, Ram3000; 0x3000) as *mut u8)
+            .offset_from(&raw mut game.g_ram as *mut u8)
+            as c_long as u16;
         v0 = (v0).wrapping_add(2u16);
         let fresh4 = v0;
         v0 = v0.wrapping_add(1);
@@ -1065,8 +1054,8 @@ pub unsafe fn ProcessCinematicBgObject_DrawToTextTilemap(
     let mut n: u16 = *v3.offset(3) as u16;
     loop {
         loop {
-            *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap as *mut u16 as *mut u8)
+            *((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16
+                as *mut u8)
                 .offset(offs as i32 as isize) as *mut u16) =
                 *(RomPtr_8C(j, game) as *mut u16).offset(2);
             j = (j).wrapping_add(2u16);
@@ -1101,8 +1090,8 @@ pub unsafe fn ProcessCinematicBgObject_DrawToBgTilemap(
     let mut n: i32 = *v3.offset(3) as i32;
     loop {
         loop {
-            *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3800) as *mut Ram3800))
-                .cinematic_bg_tilemap as *mut u16 as *mut u8)
+            *((&raw mut (*(ram_ptr!(game, Ram3800; 0x3800))).cinematic_bg_tilemap as *mut u16
+                as *mut u8)
                 .offset(offs as i32 as isize) as *mut u16) =
                 *(RomPtr_8C(j, game) as *mut u16).offset(2);
             j = (j).wrapping_add(2u16);
@@ -1132,29 +1121,17 @@ pub unsafe fn ProcessCinematicBgObject_Unk1(k: u16, j: u16, r18: u16, game: &mut
     let mut v3: u16 = (j).wrapping_add(4u16);
     let mut v4: u16 = ram_word!(game, mode7_vram_write_queue_tail);
     loop {
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x2d0) as *mut Mode7VramWriteQueue)
-            .offset(0))
-        .field_0)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).field_0)
             .offset(v4 as i32 as isize) as *mut u16) = 128u16;
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x2d0) as *mut Mode7VramWriteQueue)
-            .offset(0))
-        .field_1 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).field_1 as *mut u8)
             .offset(v4 as i32 as isize) as *mut u16) = v3;
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x2d0) as *mut Mode7VramWriteQueue)
-            .offset(0))
-        .gap3 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).gap3 as *mut u8)
             .offset(v4 as isize) as *mut u16) = 139u16;
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x2d0) as *mut Mode7VramWriteQueue)
-            .offset(0))
-        .gap3 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).gap3 as *mut u8)
             .offset((v4 as i32 + 1i32) as isize) as *mut u16) = r18x;
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x2d0) as *mut Mode7VramWriteQueue)
-            .offset(0))
-        .gap3 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).gap3 as *mut u8)
             .offset((v4 as i32 + 3i32) as isize) as *mut u16) = r22;
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x2d0) as *mut Mode7VramWriteQueue)
-            .offset(1))
-        .field_1 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(1)).field_1 as *mut u8)
             .offset(v4 as i32 as isize) as *mut u16) = 0u16;
         v4 = (v4).wrapping_add(9u16);
         v3 = (v3).wrapping_add(r18x);
@@ -1174,29 +1151,17 @@ pub unsafe fn ProcessCinematicBgObject_Unk2(k: u16, j: u16, r18: u16, game: &mut
     let mut v3: u16 = (j).wrapping_add(4u16);
     let mut v4: u16 = ram_word!(game, mode7_vram_write_queue_tail);
     loop {
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x2d0) as *mut Mode7VramWriteQueue)
-            .offset(0))
-        .field_0)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).field_0)
             .offset(v4 as i32 as isize) as *mut u16) = 128u16;
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x2d0) as *mut Mode7VramWriteQueue)
-            .offset(0))
-        .field_1 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).field_1 as *mut u8)
             .offset(v4 as i32 as isize) as *mut u16) = v3;
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x2d0) as *mut Mode7VramWriteQueue)
-            .offset(0))
-        .gap3 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).gap3 as *mut u8)
             .offset(v4 as isize) as *mut u16) = 139u16;
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x2d0) as *mut Mode7VramWriteQueue)
-            .offset(0))
-        .gap3 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).gap3 as *mut u8)
             .offset((v4 as i32 + 1i32) as isize) as *mut u16) = r20;
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x2d0) as *mut Mode7VramWriteQueue)
-            .offset(0))
-        .gap3 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).gap3 as *mut u8)
             .offset((v4 as i32 + 3i32) as isize) as *mut u16) = r22;
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x2d0) as *mut Mode7VramWriteQueue)
-            .offset(1))
-        .field_1 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(1)).field_1 as *mut u8)
             .offset(v4 as i32 as isize) as *mut u16) = 2u16;
         v4 = (v4).wrapping_add(9u16);
         v3 = (v3).wrapping_add(r20);
@@ -1257,8 +1222,7 @@ pub unsafe fn CopyPalettesToFadingPalettes(game: &mut Game) {
     let mut v0: i32 = 256i32;
     let mut v1: u16 = 0u16;
     loop {
-        *((&raw mut game.g_ram as *mut u8).offset(0x2000) as *mut u16)
-            .offset(((v1 as i32 >> 1i32) + 256i32) as isize) =
+        *(ram_ptr!(game, u16; 0x2000)).offset(((v1 as i32 >> 1i32) + 256i32) as isize) =
             ram_word!(game, palette_buffer[(v1 as i32 >> 1i32)]);
         v1 = (v1).wrapping_add(2u16);
         v0 -= 1;
@@ -1358,8 +1322,8 @@ pub unsafe fn ComposeFadingPalettes(game: &mut Game) {
     let mut v1: i32 = 256i32;
     loop {
         let v2: i32 = v0 as i32 >> 1i32;
-        let mut r18: i32 = *(((&raw mut game.g_ram as *mut u8).offset(0x2000) as *mut u16)
-            .offset((v2 + 512i32) as isize) as *mut u8)
+        let mut r18: i32 = *((ram_ptr!(game, u16; 0x2000)).offset((v2 + 512i32) as isize)
+            as *mut u8)
             .offset(1isize) as i32
             & 0x1fi32;
         r18 |= ram_word!(game, tilemap_stuff[(v2 + 768i32)]) as i32 >> 3i32 & 0x3e0i32;
@@ -1379,20 +1343,17 @@ pub unsafe fn CinematicFunction_Intro_Func20(j: u16, game: &mut Game) {
     let mut tt: *mut u16 = RomPtr_8B(j, game) as *mut u16;
     let mut v2: u16 = *tt.offset(0);
     let mut r18: i32 = *tt.offset(1) as i32;
-    let dst: *mut u16 = &raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x4000)
-        as *mut Ram4000))
-        .intro_japanese_text_tiles as *mut u16;
+    let dst: *mut u16 =
+        &raw mut (*(ram_ptr!(game, Ram4000; 0x4000))).intro_japanese_text_tiles as *mut u16;
     loop {
         memcpy(
             dst.offset((v2 as i32 >> 1i32) as isize) as *mut c_void,
-            (&raw mut game.g_ram as *mut u8).offset((*tt.offset(2) as i32 + 0x1a000i32) as isize)
-                as *mut u16 as *const c_void,
+            ram_ptr!(game, u16; (*tt.offset(2) as i32 + 0x1a000i32) as isize) as *const c_void,
             16 as size_t,
         );
         memcpy(
             dst.offset((v2 as i32 + 768i32 >> 1i32) as isize) as *mut c_void,
-            (&raw mut game.g_ram as *mut u8).offset((*tt.offset(3) as i32 + 0x1a000i32) as isize)
-                as *mut u16 as *const c_void,
+            ram_ptr!(game, u16; (*tt.offset(3) as i32 + 0x1a000i32) as isize) as *const c_void,
             16 as size_t,
         );
         v2 = (v2).wrapping_add(16u16);
@@ -1479,89 +1440,81 @@ pub unsafe fn MoveUnusedSpritesOffScreen(game: &mut Game) {
     }
     let mut i_0: i32 = ram_word!(game, oam_next_ptr) as i32 >> 2i32;
     while i_0 < 0x80i32 {
-        *(&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x370) as *mut OamEnt)
-            .offset(i_0 as isize))
-        .xcoord as *mut u16) = 0x80u16;
+        *(&raw mut (*(ram_ptr!(game, OamEnt; 0x370)).offset(i_0 as isize)).xcoord as *mut u16) =
+            0x80u16;
         i_0 += 1;
     }
 }
 pub unsafe fn AdvanceFastScreenFadeOut(game: &mut Game) -> u8 {
-    if (*(&raw mut game.g_ram as *mut u8).offset(0x51) as i32 & 0xfi32) != 0i32 {
-        if (((*(&raw mut game.g_ram as *mut u8).offset(0x51) as i32 & 0xfi32)
-            - ram_word!(game, screen_fade_counter) as i32) as i8)
+    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) != 0i32 {
+        if (((*ram_ptr!(game; 0x51) as i32 & 0xfi32) - ram_word!(game, screen_fade_counter) as i32)
+            as i8)
             > 0i8
         {
-            *(&raw mut game.g_ram as *mut u8).offset(0x51) =
-                ((*(&raw mut game.g_ram as *mut u8).offset(0x51) as i32 & 0xfi32)
-                    - ram_word!(game, screen_fade_counter) as i32) as u8;
+            *ram_ptr!(game; 0x51) = ((*ram_ptr!(game; 0x51) as i32 & 0xfi32)
+                - ram_word!(game, screen_fade_counter) as i32)
+                as u8;
             return 0u8;
         }
-        *(&raw mut game.g_ram as *mut u8).offset(0x51) = 0x80u8;
+        *ram_ptr!(game; 0x51) = 0x80u8;
     }
     1u8
 }
 pub unsafe fn AdvanceSlowScreenFadeOut(game: &mut Game) -> u8 {
     let v0: bool = ((ram_word!(game, screen_fade_delay)) as i8).wrapping_sub(1i8) < 0i8;
-    *((&raw mut game.g_ram as *mut u8).offset(0x723) as *mut u16 as *mut u8).offset(0) =
+    *(ram_ptr!(game, u16; 0x723) as *mut u8).offset(0) =
         ((ram_word!(game, screen_fade_delay)) as u8).wrapping_sub(1u8);
     if (ram_word!(game, screen_fade_delay) as u8) != 0u8 && !v0 {
         return 0u8;
     }
-    if (*(&raw mut game.g_ram as *mut u8).offset(0x51) as i32 & 0xfi32) != 0i32 {
-        if (*(&raw mut game.g_ram as *mut u8).offset(0x51) as i32 & 0xfi32) != 1i32 {
-            *(&raw mut game.g_ram as *mut u8).offset(0x51) =
-                ((*(&raw mut game.g_ram as *mut u8).offset(0x51) as i32 & 0xfi32) - 1i32) as u8;
-            *((&raw mut game.g_ram as *mut u8).offset(0x723) as *mut u16 as *mut u8).offset(0) =
+    if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) != 0i32 {
+        if (*ram_ptr!(game; 0x51) as i32 & 0xfi32) != 1i32 {
+            *ram_ptr!(game; 0x51) = ((*ram_ptr!(game; 0x51) as i32 & 0xfi32) - 1i32) as u8;
+            *(ram_ptr!(game, u16; 0x723) as *mut u8).offset(0) =
                 ram_word!(game, screen_fade_counter) as u8;
             return 0u8;
         }
-        *(&raw mut game.g_ram as *mut u8).offset(0x51) = 0x80u8;
-        *((&raw mut game.g_ram as *mut u8).offset(0x723) as *mut u16 as *mut u8).offset(0) = 0u8;
-        *((&raw mut game.g_ram as *mut u8).offset(0x725) as *mut u16 as *mut u8).offset(0) = 0u8;
+        *ram_ptr!(game; 0x51) = 0x80u8;
+        *(ram_ptr!(game, u16; 0x723) as *mut u8).offset(0) = 0u8;
+        *(ram_ptr!(game, u16; 0x725) as *mut u8).offset(0) = 0u8;
     }
     1u8
 }
 pub unsafe fn AdvanceFastScreenFadeIn(game: &mut Game) -> u8 {
-    if (ram_word!(game, screen_fade_counter) as i32
-        + *(&raw mut game.g_ram as *mut u8).offset(0x51) as i32
-        & 0x1fi32)
+    if (ram_word!(game, screen_fade_counter) as i32 + *ram_ptr!(game; 0x51) as i32 & 0x1fi32)
         - 15i32
         & 0x80i32
         != 0
     {
-        *(&raw mut game.g_ram as *mut u8).offset(0x51) = (ram_word!(game, screen_fade_counter)
-            as i32
-            + *(&raw mut game.g_ram as *mut u8).offset(0x51) as i32
+        *ram_ptr!(game; 0x51) = (ram_word!(game, screen_fade_counter) as i32
+            + *ram_ptr!(game; 0x51) as i32
             & 0x1fi32) as u8;
         0u8
     } else {
-        *(&raw mut game.g_ram as *mut u8).offset(0x51) = 15u8;
+        *ram_ptr!(game; 0x51) = 15u8;
         1u8
     }
 }
 pub unsafe fn AdvanceSlowScreenFadeIn(game: &mut Game) -> u8 {
     let v0: bool = ((ram_word!(game, screen_fade_delay)) as i8).wrapping_sub(1i8) < 0i8;
-    *((&raw mut game.g_ram as *mut u8).offset(0x723) as *mut u16 as *mut u8).offset(0) =
+    *(ram_ptr!(game, u16; 0x723) as *mut u8).offset(0) =
         ((ram_word!(game, screen_fade_delay)) as u8).wrapping_sub(1u8);
     if (ram_word!(game, screen_fade_delay) as u8) != 0u8 && !v0 {
         return 0u8;
     }
-    if (*(&raw mut game.g_ram as *mut u8).offset(0x51) as i32 + 1i32 & 0x1fi32) - 15i32 & 0x80i32
-        != 0
-    {
-        *(&raw mut game.g_ram as *mut u8).offset(0x51) =
-            (*(&raw mut game.g_ram as *mut u8).offset(0x51) as i32 + 1i32 & 0x1fi32) as u8;
-        *((&raw mut game.g_ram as *mut u8).offset(0x723) as *mut u16 as *mut u8).offset(0) =
+    if (*ram_ptr!(game; 0x51) as i32 + 1i32 & 0x1fi32) - 15i32 & 0x80i32 != 0 {
+        *ram_ptr!(game; 0x51) = (*ram_ptr!(game; 0x51) as i32 + 1i32 & 0x1fi32) as u8;
+        *(ram_ptr!(game, u16; 0x723) as *mut u8).offset(0) =
             ram_word!(game, screen_fade_counter) as u8;
         return 0u8;
     }
-    *(&raw mut game.g_ram as *mut u8).offset(0x51) = 15u8;
-    *((&raw mut game.g_ram as *mut u8).offset(0x723) as *mut u16 as *mut u8).offset(0) = 0u8;
-    *((&raw mut game.g_ram as *mut u8).offset(0x725) as *mut u16 as *mut u8).offset(0) = 0u8;
+    *ram_ptr!(game; 0x51) = 15u8;
+    *(ram_ptr!(game, u16; 0x723) as *mut u8).offset(0) = 0u8;
+    *(ram_ptr!(game, u16; 0x725) as *mut u8).offset(0) = 0u8;
     1u8
 }
 pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
-    let mut _state_variable_: *mut u8 = (&raw mut game.g_ram as *mut u8).offset(0x612);
+    let mut _state_variable_: *mut u8 = ram_ptr!(game; 0x612);
     's_645: {
         let mut current_block_182: u64;
         match *_state_variable_ as i32 {
@@ -1589,11 +1542,9 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
                 crate::rtl::write_register_and_mirror(MEMSEL as u16, 1, 0x86, false, game);
                 crate::rtl::write_register_and_mirror(OBSEL as u16, 3, 0x52, false, game);
                 WriteReg(OAMADDL as u16, 0u8, game);
-                *((&raw mut game.g_ram as *mut u8).offset(0x53) as *mut u16 as *mut u8).offset(0) =
-                    0u8;
+                *(ram_ptr!(game, u16; 0x53) as *mut u8).offset(0) = 0u8;
                 WriteReg(OAMADDH as u16, 0x80u8, game);
-                *((&raw mut game.g_ram as *mut u8).offset(0x53) as *mut u16 as *mut u8)
-                    .offset(1isize) = 0x80u8;
+                *(ram_ptr!(game, u16; 0x53) as *mut u8).offset(1isize) = 0x80u8;
                 WriteReg(OAMDATA as u16, 0u8, game);
                 WriteReg(OAMDATA as u16, 0u8, game);
                 crate::rtl::write_register_and_mirror(BGMODE as u16, 1, 0x55, false, game);
@@ -1644,13 +1595,13 @@ pub unsafe fn InitializeIoDisplayLogo_Async(game: &mut Game) -> CoroutineRet {
                 crate::rtl::write_register_and_mirror(CGWSEL as u16, 0, 0x6e, false, game);
                 crate::rtl::write_register_and_mirror(CGADSUB as u16, 0, 0x71, false, game);
                 WriteReg(COLDATA as u16, 0xe0u8, game);
-                *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0) = 32u8;
-                *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1) = 64u8;
-                *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2) = 0x80u8;
+                *ram_ptr!(game; 0x74, 0) = 32u8;
+                *ram_ptr!(game; 0x74, 1) = 64u8;
+                *ram_ptr!(game; 0x74, 2) = 0x80u8;
                 crate::rtl::write_register_and_mirror(SETINI as u16, 0, 0x77, false, game);
                 CinematicAsset::Decompress(0x9580d8, 0x15000).load(game);
                 CinematicAsset::VramWords(0x7f5000, 0x6000, 0x4000).load(game);
-                *(&raw mut game.g_ram as *mut u8).offset(0x51) = 0x80u8;
+                *ram_ptr!(game; 0x51) = 0x80u8;
                 let mut v0: u16 = 0u16;
                 loop {
                     set_ram_word!(
@@ -1869,8 +1820,7 @@ pub unsafe fn ProcessCinematicSpriteInstructionList(k: u16, game: &mut Game) {
     );
     let v1: u16 = ram_word!(game, cinematic_obj_index);
     let v2: i32 = ram_word!(game, cinematic_obj_index) as i32 >> 1i32;
-    let ref mut fresh22 =
-        *((&raw mut game.g_ram as *mut u8).offset(0x1b5d) as *mut u16).offset(v2 as isize);
+    let ref mut fresh22 = *(ram_ptr!(game, u16; 0x1b5d)).offset(v2 as isize);
     let fresh23 = *fresh22;
     *fresh22 = (*fresh22).wrapping_sub(1);
     if fresh23 == 1u16 {
@@ -1928,8 +1878,7 @@ pub unsafe fn CinematicSprInstr_Goto(k: u16, j: u16, game: &mut Game) -> u16 {
 }
 pub unsafe fn CinematicSprInstr_DecTimerGoto(k: u16, j: u16, game: &mut Game) -> u16 {
     let v2: i32 = k as i32 >> 1i32;
-    let ref mut fresh26 =
-        *((&raw mut game.g_ram as *mut u8).offset(0x1b7d) as *mut u16).offset(v2 as isize);
+    let ref mut fresh26 = *(ram_ptr!(game, u16; 0x1b7d)).offset(v2 as isize);
     let fresh27 = *fresh26;
     *fresh26 = (*fresh26).wrapping_sub(1);
     if fresh27 == 1u16 {
@@ -1940,8 +1889,7 @@ pub unsafe fn CinematicSprInstr_DecTimerGoto(k: u16, j: u16, game: &mut Game) ->
 }
 pub unsafe fn CinematicSprInstr_DecTimerGotoRel(k: u16, j: u16, game: &mut Game) -> u16 {
     let v2: i32 = k as i32 >> 1i32;
-    let ref mut fresh24 =
-        *((&raw mut game.g_ram as *mut u8).offset(0x1b7d) as *mut u16).offset(v2 as isize);
+    let ref mut fresh24 = *(ram_ptr!(game, u16; 0x1b7d)).offset(v2 as isize);
     let fresh25 = *fresh24;
     *fresh24 = (*fresh24).wrapping_sub(1);
     if fresh25 == 1u16 {
@@ -1999,8 +1947,7 @@ pub unsafe fn ProcessMode7ObjectInstructions(k: u16, game: &mut Game) {
     );
     let v1: u16 = ram_word!(game, mode7_cur_index);
     let v2: i32 = ram_word!(game, mode7_cur_index) as i32 >> 1i32;
-    let ref mut fresh19 =
-        *((&raw mut game.g_ram as *mut u8).offset(0x19a9) as *mut u16).offset(v2 as isize);
+    let ref mut fresh19 = *(ram_ptr!(game, u16; 0x19a9)).offset(v2 as isize);
     let fresh20 = *fresh19;
     *fresh19 = (*fresh19).wrapping_sub(1);
     if fresh20 == 1u16 {
@@ -2047,8 +1994,7 @@ pub unsafe fn Mode7Instr_Goto(k: u16, j: u16, game: &mut Game) -> u16 {
 }
 pub unsafe fn Mode7Instr_DecTimerAndGoto(k: u16, j: u16, game: &mut Game) -> u16 {
     let v2: i32 = k as i32 >> 1i32;
-    let ref mut fresh0 =
-        *((&raw mut game.g_ram as *mut u8).offset(0x19ad) as *mut u16).offset(v2 as isize);
+    let ref mut fresh0 = *(ram_ptr!(game, u16; 0x19ad)).offset(v2 as isize);
     let fresh1 = *fresh0;
     *fresh0 = (*fresh0).wrapping_sub(1);
     if fresh1 == 1u16 {
@@ -2087,8 +2033,8 @@ pub unsafe fn ClearCinematicBgObjects(a: u16, game: &mut Game) {
     let mut j: u16 = 0;
     let mut i: i32 = 2046i32;
     while i >= 0i32 {
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap as *mut u16 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16
+            as *mut u8)
             .offset(i as u16 as i32 as isize) as *mut u16) = a;
         i -= 2i32;
     }
@@ -2153,8 +2099,7 @@ pub unsafe fn ProcessCinematicBgObjectsInstrs(k: u16, game: &mut Game) {
     );
     let v1: u16 = ram_word!(game, cinematicbg_var2);
     let v2: i32 = ram_word!(game, cinematicbg_var2) as i32 >> 1i32;
-    let ref mut fresh158 =
-        *((&raw mut game.g_ram as *mut u8).offset(0x19dd) as *mut u16).offset(v2 as isize);
+    let ref mut fresh158 = *(ram_ptr!(game, u16; 0x19dd)).offset(v2 as isize);
     let fresh159 = *fresh158;
     *fresh158 = (*fresh158).wrapping_sub(1);
     if fresh159 == 1u16 {
@@ -2243,31 +2188,25 @@ pub unsafe fn DrawCinematicSpriteObjects_Ending(game: &mut Game) {
 }
 pub unsafe fn SpawnTextGlowObject(j: u16, mut r18: u16, game: &mut Game) {
     let mut v1: u16 = 14u16;
-    while *(((&raw mut game.g_ram as *mut u8).offset(0x19f7) as *mut u16 as *mut u8)
-        .offset(v1 as i32 as isize) as *mut u16)
-        != 0
-    {
+    while *((ram_ptr!(game, u16; 0x19f7) as *mut u8).offset(v1 as i32 as isize) as *mut u16) != 0 {
         v1 = (v1).wrapping_sub(2u16);
         if (v1 as i32 & 0x8000i32) != 0i32 {
             return;
         }
     }
-    *(((&raw mut game.g_ram as *mut u8).offset(0x19f7) as *mut u16 as *mut u8)
-        .offset(v1 as i32 as isize) as *mut u16) = j;
+    *((ram_ptr!(game, u16; 0x19f7) as *mut u8).offset(v1 as i32 as isize) as *mut u16) = j;
     let v2: i32 = v1 as i32 >> 1i32;
     set_ram_word!(game.eproj_pre_instr[(v2 + 2i32)] = 1u16);
     set_ram_word!(game.eproj_pre_instr[(v2 + 10i32)] = r18 as u8 as u16);
-    *(((&raw mut game.g_ram as *mut u8).offset(0x1a27) as *mut u16 as *mut u8)
-        .offset(v1 as i32 as isize) as *mut u16) = *(&raw mut r18 as *mut u8).offset(1isize) as u16;
-    *(((&raw mut game.g_ram as *mut u8).offset(0x1a37) as *mut u16 as *mut u8)
-        .offset(v1 as i32 as isize) as *mut u16) = 0u16;
+    *((ram_ptr!(game, u16; 0x1a27) as *mut u8).offset(v1 as i32 as isize) as *mut u16) =
+        *(&raw mut r18 as *mut u8).offset(1isize) as u16;
+    *((ram_ptr!(game, u16; 0x1a37) as *mut u8).offset(v1 as i32 as isize) as *mut u16) = 0u16;
 }
 pub unsafe fn HandleTextGlowObjects(game: &mut Game) {
     let mut i: i32 = 14i32;
     while i >= 0i32 {
         set_ram_word!(game.cinematic_var19 = i as u16);
-        if *(((&raw mut game.g_ram as *mut u8).offset(0x19f7) as *mut u16 as *mut u8)
-            .offset(i as u16 as i32 as isize) as *mut u16)
+        if *((ram_ptr!(game, u16; 0x19f7) as *mut u8).offset(i as u16 as i32 as isize) as *mut u16)
             != 0
         {
             ProcessTextGlowObject(game);
@@ -2279,22 +2218,19 @@ pub unsafe fn HandleTextGlowObjects(game: &mut Game) {
 pub unsafe fn ProcessTextGlowObject(game: &mut Game) {
     let v0: u16 = ram_word!(game, cinematic_var19);
     let v1: i32 = ram_word!(game, cinematic_var19) as i32 >> 1i32;
-    let ref mut fresh153 =
-        *((&raw mut game.g_ram as *mut u8).offset(0x1a03) as *mut u16).offset((v1 + 2i32) as isize);
+    let ref mut fresh153 = *(ram_ptr!(game, u16; 0x1a03)).offset((v1 + 2i32) as isize);
     let fresh154 = *fresh153;
     *fresh153 = (*fresh153).wrapping_sub(1);
     if fresh154 == 1u16 {
-        let R28: u16 = *(((&raw mut game.g_ram as *mut u8).offset(0x1a37) as *mut u16 as *mut u8)
-            .offset(v0 as i32 as isize) as *mut u16);
-        let mut v3: u16 = *(((&raw mut game.g_ram as *mut u8).offset(0x19f7) as *mut u16 as *mut u8)
-            .offset(v0 as i32 as isize) as *mut u16);
+        let R28: u16 =
+            *((ram_ptr!(game, u16; 0x1a37) as *mut u8).offset(v0 as i32 as isize) as *mut u16);
+        let mut v3: u16 =
+            *((ram_ptr!(game, u16; 0x19f7) as *mut u8).offset(v0 as i32 as isize) as *mut u16);
         let mut r22: u16 = (2i32
-            * *(((&raw mut game.g_ram as *mut u8).offset(0x1a03) as *mut u16)
-                .offset((v1 + 10i32) as isize) as *mut u8)
-                .offset(0) as i32
+            * *((ram_ptr!(game, u16; 0x1a03)).offset((v1 + 10i32) as isize) as *mut u8).offset(0)
+                as i32
             + Mult8x8(
-                *((&raw mut game.g_ram as *mut u8).offset(0x1a27) as *mut u16 as *mut u8)
-                    .offset(v0 as i32 as isize),
+                *(ram_ptr!(game, u16; 0x1a27) as *mut u8).offset(v0 as i32 as isize),
                 0x40u8,
             ) as i32) as u16;
         let mut v4: u16 = r22;
@@ -2304,12 +2240,11 @@ pub unsafe fn ProcessTextGlowObject(game: &mut Game) {
         let mut m: i32 = *v5.offset(3) as i32;
         loop {
             loop {
-                *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-                    .pause_menu_map_tilemap as *mut u16 as *mut u8)
+                *((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16
+                    as *mut u8)
                     .offset(v4 as i32 as isize) as *mut u16) = (R28 as i32
-                    | *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000)
-                        as *mut Ram3000))
-                        .pause_menu_map_tilemap as *mut u16 as *mut u8)
+                    | *((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap
+                        as *mut u16 as *mut u8)
                         .offset(v4 as i32 as isize) as *mut u16) as i32
                         & 0xe3ffi32)
                     as u16;
@@ -2329,21 +2264,20 @@ pub unsafe fn ProcessTextGlowObject(game: &mut Game) {
             v4 = r22;
         }
         let v6: u16 = ram_word!(game, cinematic_var19);
-        if *(((&raw mut game.g_ram as *mut u8).offset(0x1a37) as *mut u16 as *mut u8)
+        if *((ram_ptr!(game, u16; 0x1a37) as *mut u8)
             .offset(ram_word!(game, cinematic_var19) as i32 as isize) as *mut u16)
             == 3072u16
         {
-            *(((&raw mut game.g_ram as *mut u8).offset(0x19f7) as *mut u16 as *mut u8)
+            *((ram_ptr!(game, u16; 0x19f7) as *mut u8)
                 .offset(ram_word!(game, cinematic_var19) as i32 as isize)
                 as *mut u16) = 0u16;
         } else {
-            let ref mut fresh155 = *(((&raw mut game.g_ram as *mut u8).offset(0x1a37) as *mut u16
-                as *mut u8)
-                .offset(ram_word!(game, cinematic_var19) as i32 as isize)
-                as *mut u16);
+            let ref mut fresh155 =
+                *((ram_ptr!(game, u16; 0x1a37) as *mut u8)
+                    .offset(ram_word!(game, cinematic_var19) as i32 as isize)
+                    as *mut u16);
             *fresh155 = (*fresh155).wrapping_add(1024u16);
-            *((&raw mut game.g_ram as *mut u8).offset(0x1a03) as *mut u16)
-                .offset(((v6 as i32 >> 1i32) + 2i32) as isize) = 5u16;
+            *(ram_ptr!(game, u16; 0x1a03)).offset(((v6 as i32 >> 1i32) + 2i32) as isize) = 5u16;
         }
     }
 }
@@ -2359,8 +2293,8 @@ pub unsafe fn DisableTextGlowObjects_(game: &mut Game) {
 pub unsafe fn CinematicFunction_Intro_Func128(a: u16, game: &mut Game) {
     let mut i: i32 = 2046i32;
     while i >= 0i32 {
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap as *mut u16 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16
+            as *mut u8)
             .offset(i as u16 as i32 as isize) as *mut u16) = a;
         i -= 2i32;
     }
@@ -2400,8 +2334,8 @@ pub unsafe fn CreditsObject_ProcessOne(game: &mut Game) {
         game,
     );
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x1997) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x1995) as *mut u16,
+        ram_ptr!(game, u16; 0x1997),
+        ram_ptr!(game, u16; 0x1995),
         0x8000u32,
     );
     if ram_word!(game, cinematic_var10) as i32 - ram_word!(game, eproj_pre_instr[0]) as i32 - 8i32
@@ -2433,15 +2367,13 @@ pub unsafe fn CreditsObject_ProcessOne(game: &mut Game) {
 pub unsafe fn CreditsObject_Func1(j: u16, game: &mut Game) {
     let mut RegWord: u16 = Mult8x8(ram_word!(game, cinematic_var26) as u8, 0x40u8);
     let mut n: i32 = 31i32;
-    let mut src: *const u16 = (&raw mut game.g_ram as *mut u8)
-        .offset(0x10000)
-        .offset(*(RomPtr_8C(j, game) as *mut u16).offset(1) as i32 as isize)
+    let mut src: *const u16 = ram_ptr!(game; 0x10000, *(RomPtr_8C(j, game) as *mut u16).offset(1) as i32 as isize)
         as *const u16;
     loop {
         let fresh6 = src;
         src = src.offset(1);
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap as *mut u16 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16
+            as *mut u8)
             .offset(RegWord as i32 as isize) as *mut u16) = *fresh6;
         RegWord = (RegWord).wrapping_add(2u16);
         n -= 1;
@@ -2539,7 +2471,7 @@ pub unsafe fn HandleCinematicsTransitions_2(game: &mut Game) {
     SpawnPalfxObject(addr_kPalfx_E1A0 as u16, game);
     SpawnPalfxObject(addr_kPalfx_E1A4 as u16, game);
     SetPpuBackdropBlack(game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x69) = 17u8;
+    *ram_ptr!(game; 0x69) = 17u8;
     SpawnTitleScreenGradientObjs(game);
 }
 pub unsafe fn CinematicSpriteInit_7(j: u16, game: &mut Game) {
@@ -2660,12 +2592,12 @@ pub unsafe fn CinematicSpriteInit_0(j: u16, game: &mut Game) {
     set_ram_word!(game.cinematicbg_arr9[v1] = 512u16);
 }
 pub unsafe fn sub_8B9CCF(k: u16, game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0x51) = 15u8;
+    *ram_ptr!(game; 0x51) = 15u8;
     set_ram_word!(game.cinematicspr_preinstr_func[(k as i32 >> 1i32)] = ((0x8b93d9i32) as u16));
 }
 pub fn sub_8B9CDE() {}
 pub unsafe fn CinematicSprInstr_9CE1(k: u16, j: u16, game: &mut Game) -> u16 {
-    *(&raw mut game.g_ram as *mut u8).offset(0x69) = 17u8;
+    *ram_ptr!(game; 0x69) = 17u8;
     set_ram_word!(game.cinematic_function = ((0x8b9d17i32) as u16));
     set_ram_word!(game.cinematic_var6 = 72u16);
     set_ram_word!(game.cinematic_var8 = 315u16);
@@ -2679,12 +2611,12 @@ pub unsafe fn CinematicSprInstr_9CE1(k: u16, j: u16, game: &mut Game) -> u16 {
 }
 pub unsafe fn CinematicFunc_Func2(game: &mut Game) {
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x1993) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x1991) as *mut u16,
+        ram_ptr!(game, u16; 0x1993),
+        ram_ptr!(game, u16; 0x1991),
         (ram_word!(game, g_word_7E199B) as u32) << 16i32 | ram_word!(game, g_word_7E1999) as u32,
     );
     if ram_word!(game, cinematic_var8) as i32 + 7i32 & 0x8000i32 != 0 {
-        *(&raw mut game.g_ram as *mut u8).offset(0x69) = 16u8;
+        *ram_ptr!(game; 0x69) = 16u8;
         set_ram_word!(game.cinematic_function = ((0x8b9a47i32) as u16));
         SpawnCinematicSpriteObject(
             addr_kCinematicSpriteObjectDef_8BA0F5 as u16,
@@ -2702,7 +2634,7 @@ pub unsafe fn CinematicSpriteInit_1(j: u16, game: &mut Game) {
     set_ram_word!(game.cinematicbg_arr9[v1] = 512u16);
 }
 pub unsafe fn CinematicSprInstr_9D5D(k: u16, j: u16, game: &mut Game) -> u16 {
-    *(&raw mut game.g_ram as *mut u8).offset(0x69) = 17u8;
+    *ram_ptr!(game; 0x69) = 17u8;
     set_ram_word!(game.cinematic_function = ((0x8b9d90i32) as u16));
     set_ram_word!(game.cinematic_var6 = 96u16);
     set_ram_word!(game.cinematic_var8 = 44u16);
@@ -2715,12 +2647,12 @@ pub unsafe fn CinematicSprInstr_9D5D(k: u16, j: u16, game: &mut Game) -> u16 {
 }
 pub unsafe fn CinematicFunc_Func4(game: &mut Game) {
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x1993) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x1991) as *mut u16,
+        ram_ptr!(game, u16; 0x1993),
+        ram_ptr!(game, u16; 0x1991),
         (ram_word!(game, g_word_7E199B) as u32) << 16i32 | ram_word!(game, g_word_7E1999) as u32,
     );
     if ram_word!(game, cinematic_var8) as i32 + 176i32 & 0x8000i32 != 0 {
-        *(&raw mut game.g_ram as *mut u8).offset(0x69) = 16u8;
+        *ram_ptr!(game; 0x69) = 16u8;
         set_ram_word!(game.cinematic_function = ((0x8b9a47i32) as u16));
         SpawnCinematicSpriteObject(
             addr_kCinematicSpriteObjectDef_8BA0FB as u16,
@@ -2738,7 +2670,7 @@ pub unsafe fn CinematicSpriteInit_2(j: u16, game: &mut Game) {
     set_ram_word!(game.cinematicbg_arr9[v1] = 512u16);
 }
 pub unsafe fn CinematicSprInstr_9DD6(k: u16, j: u16, game: &mut Game) -> u16 {
-    *(&raw mut game.g_ram as *mut u8).offset(0x69) = 17u8;
+    *ram_ptr!(game; 0x69) = 17u8;
     set_ram_word!(game.cinematic_function = ((0x8b9e12i32) as u16));
     set_ram_word!(game.cinematic_var6 = 96u16);
     set_ram_word!(game.cinematic_var8 = -177i32 as u16);
@@ -2754,12 +2686,12 @@ pub unsafe fn CinematicSprInstr_9DD6(k: u16, j: u16, game: &mut Game) -> u16 {
 }
 pub unsafe fn CinematicFunc_Func5(game: &mut Game) {
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x1997) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x1995) as *mut u16,
+        ram_ptr!(game, u16; 0x1997),
+        ram_ptr!(game, u16; 0x1995),
         (ram_word!(game, g_word_7E199F) as u32) << 16i32 | ram_word!(game, g_word_7E199D) as u32,
     );
     if ram_word!(game, cinematic_var10) as i32 - 163i32 & 0x8000i32 == 0 {
-        *(&raw mut game.g_ram as *mut u8).offset(0x69) = 16u8;
+        *ram_ptr!(game; 0x69) = 16u8;
         set_ram_word!(game.cinematic_function = ((0x8b9a47i32) as u16));
         SpawnCinematicSpriteObject(
             addr_kCinematicSpriteObjectDef_8BA101 as u16,
@@ -2777,7 +2709,7 @@ pub unsafe fn CinematicSpriteInit_3(j: u16, game: &mut Game) {
     set_ram_word!(game.cinematicbg_arr9[v1] = 512u16);
 }
 pub unsafe fn CinematicSprInstr_Func8(k: u16, j: u16, game: &mut Game) -> u16 {
-    *(&raw mut game.g_ram as *mut u8).offset(0x69) = 17u8;
+    *ram_ptr!(game; 0x69) = 17u8;
     set_ram_word!(game.cinematic_function = ((0x8b9e8bi32) as u16));
     set_ram_word!(game.cinematic_var6 = 67u16);
     set_ram_word!(game.cinematic_var8 = 0u16);
@@ -2867,7 +2799,7 @@ pub unsafe fn CinematicFunc_Func10(game: &mut Game) {
     let mut j: u16 = 0;
     if AdvanceSlowScreenFadeOut(game) as i32 & 1i32 != 0 {
         EnableNMI(game);
-        *(&raw mut game.g_ram as *mut u8).offset(0x55) = 1u8;
+        *ram_ptr!(game; 0x55) = 1u8;
         set_ram_word!(game.screen_fade_delay = 0u16);
         set_ram_word!(game.screen_fade_counter = 0u16);
         set_ram_word!(game.reg_BG2HOFS = 0u16);
@@ -2880,8 +2812,8 @@ pub unsafe fn CinematicFunc_Func10(game: &mut Game) {
         ClearPaletteFXObjects(game);
         let mut i: i32 = 656i32;
         while i >= 0i32 {
-            *(((&raw mut game.g_ram as *mut u8).offset(0x198d) as *mut u16 as *mut u8)
-                .offset(i as u16 as i32 as isize) as *mut u16) = 0u16;
+            *((ram_ptr!(game, u16; 0x198d) as *mut u8).offset(i as u16 as i32 as isize)
+                as *mut u16) = 0u16;
             i -= 2i32;
         }
         j = 510u16;
@@ -2897,7 +2829,7 @@ pub unsafe fn CinematicFunc_Func9(game: &mut Game) {
     let mut j: u16 = 0;
     if AdvanceSlowScreenFadeOut(game) as i32 & 1i32 != 0 {
         EnableNMI(game);
-        *(&raw mut game.g_ram as *mut u8).offset(0x55) = 1u8;
+        *ram_ptr!(game; 0x55) = 1u8;
         set_ram_word!(game.screen_fade_delay = 0u16);
         set_ram_word!(game.screen_fade_counter = 0u16);
         set_ram_word!(game.reg_BG2HOFS = 0u16);
@@ -2910,8 +2842,8 @@ pub unsafe fn CinematicFunc_Func9(game: &mut Game) {
         ClearPaletteFXObjects(game);
         let mut i: i32 = 656i32;
         while i >= 0i32 {
-            *(((&raw mut game.g_ram as *mut u8).offset(0x198d) as *mut u16 as *mut u8)
-                .offset(i as u16 as i32 as isize) as *mut u16) = 0u16;
+            *((ram_ptr!(game, u16; 0x198d) as *mut u8).offset(i as u16 as i32 as isize)
+                as *mut u16) = 0u16;
             i -= 2i32;
         }
         j = 510u16;
@@ -3048,8 +2980,8 @@ pub unsafe fn CinematicFunction_Intro_Initial(game: &mut Game) {
     set_ram_word!(game.samus_knockback_timer = 0u16);
     let mut i: i32 = 656i32;
     while i >= 0i32 {
-        *(((&raw mut game.g_ram as *mut u8).offset(0x198d) as *mut u16 as *mut u8)
-            .offset(i as u16 as i32 as isize) as *mut u16) = 0u16;
+        *((ram_ptr!(game, u16; 0x198d) as *mut u8).offset(i as u16 as i32 as isize) as *mut u16) =
+            0u16;
         i -= 2i32;
     }
     let mut v1: u16 = 0u16;
@@ -3089,17 +3021,13 @@ pub unsafe fn CinematicFunction_Intro_Initial(game: &mut Game) {
     set_ram_word!(game.cinematic_var16 = 0u16);
     j = 1023u16;
     while (j as i32 & 0x8000i32) == 0i32 {
-        (*((&raw mut game.g_ram as *mut u8).offset(0x3800) as *mut Ram3800)).cinematic_bg_tilemap
-            [j as usize] = *((&raw mut game.g_ram as *mut u8)
-            .offset(0x16402)
-            .offset((j as i32 * 2i32 + 11262i32) as isize)
-            as *mut u16);
+        (*(ram_ptr!(game, Ram3800; 0x3800))).cinematic_bg_tilemap[j as usize] =
+            *(ram_ptr!(game, u16; 0x16402, (j as i32 * 2i32 + 11262i32) as isize));
         j = j.wrapping_sub(1);
     }
     k = 127u16;
     while (k as i32 & 0x8000i32) == 0i32 {
-        (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap[k as usize] =
+        (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[k as usize] =
             *((game.g_rom.offset(crate::rtl::lorom_offset(0x8cd81b)) as *mut u16 as *mut u8)
                 .offset((k as i32 * 2i32) as isize) as *mut u16);
         k = k.wrapping_sub(1);
@@ -3188,17 +3116,15 @@ pub unsafe fn CinematicFunc_Intro_SetupTextPage2(game: &mut Game) {
     set_ram_word!(game.cinematicbg_var3 = addr_unk_604C00 as u16);
     let mut i: i32 = 127i32;
     while i >= 0i32 {
-        (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap[i as usize] = 15401u16;
-        (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap[(i + 896i32) as usize] = 15401u16;
+        (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[i as usize] = 15401u16;
+        (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[(i + 896i32) as usize] =
+            15401u16;
         i -= 1;
     }
     let mut v1: u16 = 768u16;
     let mut v2: u16 = 0u16;
     loop {
-        (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap[v1 as usize] =
+        (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[v1 as usize] =
             crate::rtl::rom_table_word!(game, 0x8ba72b, (v2 as i32 >> 1i32) as isize);
         v2 = (v2).wrapping_add(2u16);
         v1 = v1.wrapping_add(1);
@@ -3206,10 +3132,8 @@ pub unsafe fn CinematicFunc_Intro_SetupTextPage2(game: &mut Game) {
             break;
         }
     }
-    *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-        .menu
-        .menu_tilemap as *mut u8)
-        .offset(286) as *mut u32) = 472456233u32;
+    *((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).menu.menu_tilemap as *mut u8).offset(286)
+        as *mut u32) = 472456233u32;
     SpawnCinematicSpriteObject(
         addr_kCinematicSpriteObjectDef_8BCE6D as u16,
         0x1c29u16,
@@ -3245,8 +3169,7 @@ pub unsafe fn ClearEnglishTextTilemap(game: &mut Game) {
     loop {
         let fresh5 = v0;
         v0 = v0.wrapping_add(1);
-        (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap[fresh5 as usize] = 47u16;
+        (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[fresh5 as usize] = 47u16;
         if (((v0 as i32 * 2i32 - 1536i32) as i16) >= 0i16) {
             break;
         }
@@ -3255,38 +3178,22 @@ pub unsafe fn ClearEnglishTextTilemap(game: &mut Game) {
 pub unsafe fn ClearJapaneseTextTiles(game: &mut Game) {
     let mut v0: u16 = 0u16;
     loop {
-        (*((&raw mut game.g_ram as *mut u8).offset(0x4000) as *mut Ram4000)).xray_tilemaps
-            [v0 as usize] = *((&raw mut game.g_ram as *mut u8)
-            .offset(0x16402)
-            .offset(7822) as *mut u16);
-        (*((&raw mut game.g_ram as *mut u8).offset(0x4000) as *mut Ram4000)).xray_tilemaps
-            [(v0 as i32 + 1i32) as usize] = *((&raw mut game.g_ram as *mut u8)
-            .offset(0x16402)
-            .offset(7824) as *mut u16);
-        (*((&raw mut game.g_ram as *mut u8).offset(0x4000) as *mut Ram4000)).xray_tilemaps
-            [(v0 as i32 + 2i32) as usize] = *((&raw mut game.g_ram as *mut u8)
-            .offset(0x16402)
-            .offset(7826) as *mut u16);
-        (*((&raw mut game.g_ram as *mut u8).offset(0x4000) as *mut Ram4000)).xray_tilemaps
-            [(v0 as i32 + 3i32) as usize] = *((&raw mut game.g_ram as *mut u8)
-            .offset(0x16402)
-            .offset(7828) as *mut u16);
-        (*((&raw mut game.g_ram as *mut u8).offset(0x4000) as *mut Ram4000)).xray_tilemaps
-            [(v0 as i32 + 4i32) as usize] = *((&raw mut game.g_ram as *mut u8)
-            .offset(0x16402)
-            .offset(7830) as *mut u16);
-        (*((&raw mut game.g_ram as *mut u8).offset(0x4000) as *mut Ram4000)).xray_tilemaps
-            [(v0 as i32 + 5i32) as usize] = *((&raw mut game.g_ram as *mut u8)
-            .offset(0x16402)
-            .offset(7832) as *mut u16);
-        (*((&raw mut game.g_ram as *mut u8).offset(0x4000) as *mut Ram4000)).xray_tilemaps
-            [(v0 as i32 + 6i32) as usize] = *((&raw mut game.g_ram as *mut u8)
-            .offset(0x16402)
-            .offset(7834) as *mut u16);
-        (*((&raw mut game.g_ram as *mut u8).offset(0x4000) as *mut Ram4000)).xray_tilemaps
-            [(v0 as i32 + 7i32) as usize] = *((&raw mut game.g_ram as *mut u8)
-            .offset(0x16402)
-            .offset(7836) as *mut u16);
+        (*(ram_ptr!(game, Ram4000; 0x4000))).xray_tilemaps[v0 as usize] =
+            *(ram_ptr!(game, u16; 0x16402, 7822));
+        (*(ram_ptr!(game, Ram4000; 0x4000))).xray_tilemaps[(v0 as i32 + 1i32) as usize] =
+            *(ram_ptr!(game, u16; 0x16402, 7824));
+        (*(ram_ptr!(game, Ram4000; 0x4000))).xray_tilemaps[(v0 as i32 + 2i32) as usize] =
+            *(ram_ptr!(game, u16; 0x16402, 7826));
+        (*(ram_ptr!(game, Ram4000; 0x4000))).xray_tilemaps[(v0 as i32 + 3i32) as usize] =
+            *(ram_ptr!(game, u16; 0x16402, 7828));
+        (*(ram_ptr!(game, Ram4000; 0x4000))).xray_tilemaps[(v0 as i32 + 4i32) as usize] =
+            *(ram_ptr!(game, u16; 0x16402, 7830));
+        (*(ram_ptr!(game, Ram4000; 0x4000))).xray_tilemaps[(v0 as i32 + 5i32) as usize] =
+            *(ram_ptr!(game, u16; 0x16402, 7832));
+        (*(ram_ptr!(game, Ram4000; 0x4000))).xray_tilemaps[(v0 as i32 + 6i32) as usize] =
+            *(ram_ptr!(game, u16; 0x16402, 7834));
+        (*(ram_ptr!(game, Ram4000; 0x4000))).xray_tilemaps[(v0 as i32 + 7i32) as usize] =
+            *(ram_ptr!(game, u16; 0x16402, 7836));
         v0 = (v0).wrapping_add(8u16);
         if (((v0 as i32 * 2i32 - 1536i32) as i16) >= 0i16) {
             break;
@@ -3362,10 +3269,8 @@ static kSetSomeStuffForSpriteObject_7_Tab1: [u16; 82] = [
 ];
 pub unsafe fn SetSomeStuffForSpriteObject_7(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
-    let v3: i32 = 2i32
-        * *(((&raw mut game.g_ram as *mut u8).offset(0x1b7d) as *mut u16).offset(v1 as isize)
-            as *mut u8)
-            .offset(0) as i32;
+    let v3: i32 =
+        2i32 * *((ram_ptr!(game, u16; 0x1b7d)).offset(v1 as isize) as *mut u8).offset(0) as i32;
     '_c2rust_label: {
         if (v3 + 1i32) < 12i32 {
         } else {
@@ -3378,15 +3283,13 @@ pub unsafe fn SetSomeStuffForSpriteObject_7(k: u16, game: &mut Game) {
         }
     };
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0x1a7d) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0x1add) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
         (kSetSomeStuffForSpriteObject_7_Tab0[v3 as usize] as u32) << 16i32
             | kSetSomeStuffForSpriteObject_7_Tab0[(v3 + 1i32) as usize] as u16 as u32,
     );
     let v6: i32 = 2i32
-        * *(((&raw mut game.g_ram as *mut u8).offset(0x1b7d) as *mut u16).offset(v1 as isize)
-            as *mut u8)
-            .offset(1isize) as i32;
+        * *((ram_ptr!(game, u16; 0x1b7d)).offset(v1 as isize) as *mut u8).offset(1isize) as i32;
     '_c2rust_label_0: {
         if (v6 + 1i32) < 82i32 {
         } else {
@@ -3399,8 +3302,8 @@ pub unsafe fn SetSomeStuffForSpriteObject_7(k: u16, game: &mut Game) {
         }
     };
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0x1a9d) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0x1afd) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
         (kSetSomeStuffForSpriteObject_7_Tab1[v6 as usize] as u32) << 16i32
             | kSetSomeStuffForSpriteObject_7_Tab1[(v6 + 1i32) as usize] as u32,
     );
@@ -3443,10 +3346,8 @@ static kSetSomeStuffForSpriteObject_9_Tab1: [i16; 138] = [
 ];
 pub unsafe fn SetSomeStuffForSpriteObject_9(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
-    let v3: i32 = 2i32
-        * *(((&raw mut game.g_ram as *mut u8).offset(0x1b7d) as *mut u16).offset(v1 as isize)
-            as *mut u8)
-            .offset(0) as i32;
+    let v3: i32 =
+        2i32 * *((ram_ptr!(game, u16; 0x1b7d)).offset(v1 as isize) as *mut u8).offset(0) as i32;
     '_c2rust_label: {
         if (v3 + 1i32) < 10i32 {
         } else {
@@ -3459,16 +3360,14 @@ pub unsafe fn SetSomeStuffForSpriteObject_9(k: u16, game: &mut Game) {
         }
     };
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0x1a7d) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0x1add) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
         (kSetSomeStuffForSpriteObject_9_Tab0[v3 as usize] as u32) << 16i32
             | kSetSomeStuffForSpriteObject_9_Tab0[(v3 + 1i32) as usize] as u16 as u32,
     );
     if (ram_word!(game, cinematicspr_goto_timer[v1]) as i32 & 1i32) != 0i32 {
         let v12: i32 = 2i32
-            * *(((&raw mut game.g_ram as *mut u8).offset(0x1b7d) as *mut u16).offset(v1 as isize)
-                as *mut u8)
-                .offset(1isize) as i32;
+            * *((ram_ptr!(game, u16; 0x1b7d)).offset(v1 as isize) as *mut u8).offset(1isize) as i32;
         '_c2rust_label_0: {
             if (v12 + 1i32) < 124i32 {
             } else {
@@ -3481,16 +3380,14 @@ pub unsafe fn SetSomeStuffForSpriteObject_9(k: u16, game: &mut Game) {
             }
         };
         AddToHiLo(
-            ((&raw mut game.g_ram as *mut u8).offset(0x1a9d) as *mut u16).offset(v1 as isize),
-            ((&raw mut game.g_ram as *mut u8).offset(0x1afd) as *mut u16).offset(v1 as isize),
+            (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
+            (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
             (kSetSomeStuffForSpriteObject_9_Tab2[v12 as usize] as u32) << 16i32
                 | kSetSomeStuffForSpriteObject_9_Tab2[(v12 + 1i32) as usize] as u16 as u32,
         );
     } else {
         let v6: i32 = 2i32
-            * *(((&raw mut game.g_ram as *mut u8).offset(0x1b7d) as *mut u16).offset(v1 as isize)
-                as *mut u8)
-                .offset(1isize) as i32;
+            * *((ram_ptr!(game, u16; 0x1b7d)).offset(v1 as isize) as *mut u8).offset(1isize) as i32;
         '_c2rust_label_1: {
             if (v6 + 1i32) < 138i32 {
             } else {
@@ -3503,8 +3400,8 @@ pub unsafe fn SetSomeStuffForSpriteObject_9(k: u16, game: &mut Game) {
             }
         };
         AddToHiLo(
-            ((&raw mut game.g_ram as *mut u8).offset(0x1a9d) as *mut u16).offset(v1 as isize),
-            ((&raw mut game.g_ram as *mut u8).offset(0x1afd) as *mut u16).offset(v1 as isize),
+            (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
+            (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
             (kSetSomeStuffForSpriteObject_9_Tab1[v6 as usize] as u32) << 16i32
                 | kSetSomeStuffForSpriteObject_9_Tab1[(v6 + 1i32) as usize] as u16 as u32,
         );
@@ -3654,16 +3551,14 @@ pub unsafe fn CinematicFunction_Intro_WaitInputSetupMotherBrainFight(game: &mut 
     if ram_word!(game, cinematic_var16) != 0 {
         update_ram_word!(game.cinematic_var16, wrapping_sub(1));
     } else if ram_word!(game, joypad1_newkeys) != 0 {
-        *(&raw mut game.g_ram as *mut u8).offset(0x58) = 80u8;
+        *ram_ptr!(game; 0x58) = 80u8;
         set_ram_word!(game.samus_pose = kPose_02_FaceL_Normal as u16);
         SamusFunc_F433(game);
         Samus_SetAnimationFrameIfPoseChanged(game);
         set_ram_word!(game.samus_last_different_pose = ram_word!(game, samus_prev_pose));
-        *((&raw mut game.g_ram as *mut u8).offset(0xa26) as *mut u16) =
-            *((&raw mut game.g_ram as *mut u8).offset(0xa22) as *mut u16);
+        *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
         set_ram_word!(game.samus_prev_pose = ram_word!(game, samus_pose));
-        *((&raw mut game.g_ram as *mut u8).offset(0xa22) as *mut u16) =
-            *((&raw mut game.g_ram as *mut u8).offset(0xa1e) as *mut u16);
+        *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
         set_ram_word!(game.samus_x_pos = 155u16);
         set_ram_word!(game.samus_prev_x_pos = 155u16);
         set_ram_word!(game.samus_y_pos = 115u16);
@@ -3694,9 +3589,7 @@ pub unsafe fn CinematicFunction_Intro_WaitInputSetupMotherBrainFight(game: &mut 
         }
         let mut v2: u16 = 0u16;
         loop {
-            *((&raw mut game.g_ram as *mut u8)
-                .offset(0x16402)
-                .offset(v2 as isize) as *mut u16) = 0u16;
+            *(ram_ptr!(game, u16; 0x16402, v2 as isize)) = 0u16;
             v2 = (v2).wrapping_add(2u16);
             if (((v2) as i16).wrapping_sub(512i16) >= 0i16) {
                 break;
@@ -3717,18 +3610,16 @@ pub unsafe fn CinematicFunction_Intro_WaitInputSetupBabyMetroid(game: &mut Game)
     if ram_word!(game, cinematic_var16) != 0 {
         update_ram_word!(game.cinematic_var16, wrapping_sub(1));
     } else if ram_word!(game, joypad1_newkeys) != 0 {
-        *(&raw mut game.g_ram as *mut u8).offset(0x58) = 84u8;
+        *ram_ptr!(game; 0x58) = 84u8;
         set_ram_word!(game.room_width_in_blocks = 32u16);
         set_ram_word!(game.room_height_in_blocks = 16u16);
         set_ram_word!(game.samus_pose = kPose_02_FaceL_Normal as u16);
         SamusFunc_F433(game);
         Samus_SetAnimationFrameIfPoseChanged(game);
         set_ram_word!(game.samus_last_different_pose = ram_word!(game, samus_prev_pose));
-        *((&raw mut game.g_ram as *mut u8).offset(0xa26) as *mut u16) =
-            *((&raw mut game.g_ram as *mut u8).offset(0xa22) as *mut u16);
+        *(ram_ptr!(game, u16; 0xa26)) = *(ram_ptr!(game, u16; 0xa22));
         set_ram_word!(game.samus_prev_pose = ram_word!(game, samus_pose));
-        *((&raw mut game.g_ram as *mut u8).offset(0xa22) as *mut u16) =
-            *((&raw mut game.g_ram as *mut u8).offset(0xa1e) as *mut u16);
+        *(ram_ptr!(game, u16; 0xa22)) = *(ram_ptr!(game, u16; 0xa1e));
         set_ram_word!(game.samus_x_pos = 376u16);
         set_ram_word!(game.samus_prev_x_pos = 376u16);
         set_ram_word!(game.samus_y_pos = 147u16);
@@ -3765,17 +3656,16 @@ pub unsafe fn CinematicFunction_Intro_WaitInputSetupBabyMetroid(game: &mut Game)
     }
 }
 pub unsafe fn CinematicFunction_Intro_SetupTransitionToGameplay(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0x69) = 6u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 17u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 2u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x72) = 0u8;
+    *ram_ptr!(game; 0x69) = 6u8;
+    *ram_ptr!(game; 0x6b) = 17u8;
+    *ram_ptr!(game; 0x6f) = 2u8;
+    *ram_ptr!(game; 0x72) = 0u8;
     SpawnIntroCutsceneCrossfadeHdma(game);
     SetSomeStuffForSpriteObject_15(game);
     set_ram_word!(game.cinematic_function = ((0x8bb250i32) as u16));
     let mut v0: u16 = 0u16;
     loop {
-        *((&raw mut game.g_ram as *mut u8).offset(0x2000) as *mut u16)
-            .offset(((v0 as i32 >> 1i32) + 256i32) as isize) =
+        *(ram_ptr!(game, u16; 0x2000)).offset(((v0 as i32 >> 1i32) + 256i32) as isize) =
             crate::rtl::rom_table_word!(game, 0x8ce3e9, (v0 as i32 >> 1i32) as isize);
         v0 = (v0).wrapping_add(2u16);
         if (((v0) as i16).wrapping_sub(512i16) >= 0i16) {
@@ -3851,7 +3741,7 @@ pub unsafe fn CinematicFunction_Intro_Func11(game: &mut Game) {
     if ram_word!(game, cinematic_var16) != 0 {
         update_ram_word!(game.cinematic_var16, wrapping_sub(1));
     } else if ram_word!(game, joypad1_newkeys) != 0 {
-        *(&raw mut game.g_ram as *mut u8).offset(0x58) = 88u8;
+        *ram_ptr!(game; 0x58) = 88u8;
         set_ram_word!(game.cinematic_var8 = 32u16);
         set_ram_word!(game.cinematic_var10 = 8u16);
         set_ram_word!(game.cinematic_var13 = 127u16);
@@ -3863,7 +3753,7 @@ pub unsafe fn CinematicFunction_Intro_Func12(game: &mut Game) {
     if ram_word!(game, cinematic_var16) != 0 {
         update_ram_word!(game.cinematic_var16, wrapping_sub(1));
     } else if ram_word!(game, joypad1_newkeys) != 0 {
-        *(&raw mut game.g_ram as *mut u8).offset(0x58) = 92u8;
+        *ram_ptr!(game; 0x58) = 92u8;
         set_ram_word!(game.cinematic_var8 = 0u16);
         set_ram_word!(game.cinematic_var10 = -24i32 as u16);
         set_ram_word!(game.cinematic_var13 = 127u16);
@@ -3872,17 +3762,16 @@ pub unsafe fn CinematicFunction_Intro_Func12(game: &mut Game) {
     }
 }
 pub unsafe fn CinematicFunction_Intro_Func13(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0x69) = 6u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 17u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 2u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x72) = 0u8;
+    *ram_ptr!(game; 0x69) = 6u8;
+    *ram_ptr!(game; 0x6b) = 17u8;
+    *ram_ptr!(game; 0x6f) = 2u8;
+    *ram_ptr!(game; 0x72) = 0u8;
     SpawnIntroCutsceneCrossfadeHdma(game);
     SetSomeStuffForSpriteObject_15(game);
     set_ram_word!(game.cinematic_function = ((0x8bb2d2i32) as u16));
     let mut v0: u16 = 0u16;
     loop {
-        *((&raw mut game.g_ram as *mut u8).offset(0x2000) as *mut u16)
-            .offset(((v0 as i32 >> 1i32) + 256i32) as isize) =
+        *(ram_ptr!(game, u16; 0x2000)).offset(((v0 as i32 >> 1i32) + 256i32) as isize) =
             crate::rtl::rom_table_word!(game, 0x8ce3e9, (v0 as i32 >> 1i32) as isize);
         v0 = (v0).wrapping_add(2u16);
         if (((v0) as i16).wrapping_sub(512i16) >= 0i16) {
@@ -3975,15 +3864,14 @@ pub unsafe fn CinematicFunction_Intro_XfadeGameplayFade(game: &mut Game) {
         ComposeFadingPalettes(game);
     }
     if (update_ram_word!(game.cinematic_var4, wrapping_sub(1), reread) as i32 & 0x8000i32) != 0i32 {
-        *(&raw mut game.g_ram as *mut u8).offset(0x69) = 21u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 0u8;
+        *ram_ptr!(game; 0x69) = 21u8;
+        *ram_ptr!(game; 0x6b) = 0u8;
+        *ram_ptr!(game; 0x6f) = 0u8;
         let mut v0: u16 = 128u16;
         loop {
             let fresh134 = v0;
             v0 = v0.wrapping_add(1);
-            (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap[fresh134 as usize] = 47u16;
+            (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[fresh134 as usize] = 47u16;
             if (((v0 as i32 * 2i32 - 1536i32) as i16) >= 0i16) {
                 break;
             }
@@ -4005,15 +3893,14 @@ pub unsafe fn CinematicFunction_Intro_XfadeScientistFade(game: &mut Game) {
         ComposeFadingPalettes(game);
     }
     if (update_ram_word!(game.cinematic_var4, wrapping_sub(1), reread) as i32 & 0x8000i32) != 0i32 {
-        *(&raw mut game.g_ram as *mut u8).offset(0x69) = 21u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 0u8;
+        *ram_ptr!(game; 0x69) = 21u8;
+        *ram_ptr!(game; 0x6b) = 0u8;
+        *ram_ptr!(game; 0x6f) = 0u8;
         let mut v0: u16 = 128u16;
         loop {
             let fresh132 = v0;
             v0 = v0.wrapping_add(1);
-            (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap[fresh132 as usize] = 47u16;
+            (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[fresh132 as usize] = 47u16;
             if (((v0 as i32 * 2i32 - 1536i32) as i16) >= 0i16) {
                 break;
             }
@@ -4048,14 +3935,13 @@ pub unsafe fn Instr_StartIntroPage_Common(game: &mut Game) {
     TransferJapaneseTextTilesToVram(game);
 }
 pub unsafe fn CinematicFunction_Intro_SetupStuff(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0x69) = 6u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 17u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 2u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x72) = 0u8;
+    *ram_ptr!(game; 0x69) = 6u8;
+    *ram_ptr!(game; 0x6b) = 17u8;
+    *ram_ptr!(game; 0x6f) = 2u8;
+    *ram_ptr!(game; 0x72) = 0u8;
     let mut v0: u16 = 0u16;
     loop {
-        *((&raw mut game.g_ram as *mut u8).offset(0x2000) as *mut u16)
-            .offset(((v0 as i32 >> 1i32) + 256i32) as isize) =
+        *(ram_ptr!(game, u16; 0x2000)).offset(((v0 as i32 >> 1i32) + 256i32) as isize) =
             crate::rtl::rom_table_word!(game, 0x8ce3e9, (v0 as i32 >> 1i32) as isize);
         v0 = (v0).wrapping_add(2u16);
         if (((v0) as i16).wrapping_sub(512i16) >= 0i16) {
@@ -4104,10 +3990,10 @@ pub unsafe fn CinematicFunction_Intro_Fadestuff(game: &mut Game) {
     }
     if (update_ram_word!(game.cinematic_var13, wrapping_sub(1), reread) as i32 & 0x8000i32) != 0i32
     {
-        *(&raw mut game.g_ram as *mut u8).offset(0x69) = 22u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x72) = 0u8;
+        *ram_ptr!(game; 0x69) = 22u8;
+        *ram_ptr!(game; 0x6b) = 0u8;
+        *ram_ptr!(game; 0x6f) = 0u8;
+        *ram_ptr!(game; 0x72) = 0u8;
         set_ram_word!(game.cinematic_function = ((0x8ba391i32) as u16));
     }
 }
@@ -4122,14 +4008,13 @@ pub unsafe fn CinematicFunction_Intro_Fadestuff2(game: &mut Game) {
     }
     if (update_ram_word!(game.cinematic_var13, wrapping_sub(1), reread) as i32 & 0x8000i32) != 0i32
     {
-        *(&raw mut game.g_ram as *mut u8).offset(0x69) = 22u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x72) = 0u8;
+        *ram_ptr!(game; 0x69) = 22u8;
+        *ram_ptr!(game; 0x6b) = 0u8;
+        *ram_ptr!(game; 0x6f) = 0u8;
+        *ram_ptr!(game; 0x72) = 0u8;
         let mut v0: u16 = 0u16;
         loop {
-            *((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16)
-                .offset(((v0 as i32 >> 1i32) + 224i32) as isize) = crate::rtl::rom_table_word!(
+            *(ram_ptr!(game, u16; 0xc000)).offset(((v0 as i32 >> 1i32) + 224i32) as isize) = crate::rtl::rom_table_word!(
                 game,
                 0x8ce3e9,
                 ((v0 as i32 >> 1i32) + 224i32) as isize
@@ -4323,16 +4208,16 @@ pub unsafe fn EnableCinematicBgTilemapUpdates__(k: u16, j: u16, game: &mut Game)
 }
 pub unsafe fn CinematicFunction_Intro_Func33(game: &mut Game) {
     if (ram_word!(game, nmi_frame_counter_word) as i32 & 1i32) != 0i32 {
-        let ref mut fresh169 = *(&raw mut game.g_ram as *mut u8).offset(0x69);
+        let ref mut fresh169 = *ram_ptr!(game; 0x69);
         *fresh169 = (*fresh169 as i32 & !(2i32)) as u8;
     } else {
-        let ref mut fresh170 = *(&raw mut game.g_ram as *mut u8).offset(0x69);
+        let ref mut fresh170 = *ram_ptr!(game; 0x69);
         *fresh170 = (*fresh170) | (2u8);
     };
 }
 pub unsafe fn CinematicFunction_Intro_Func34(game: &mut Game) {
     HandleFadeOut(game);
-    if *(&raw mut game.g_ram as *mut u8).offset(0x51) == 0x80u8 {
+    if *ram_ptr!(game; 0x51) == 0x80u8 {
         EnableNMI(game);
         set_ram_word!(game.screen_fade_delay = 0u16);
         set_ram_word!(game.screen_fade_counter = 0u16);
@@ -4343,8 +4228,8 @@ pub unsafe fn CinematicFunction_Intro_Func34(game: &mut Game) {
         set_ram_word!(game.cinematic_var5 = 0u16);
         let mut i: i32 = 656i32;
         while i >= 0i32 {
-            *(((&raw mut game.g_ram as *mut u8).offset(0x198d) as *mut u16 as *mut u8)
-                .offset(i as u16 as i32 as isize) as *mut u16) = 0u16;
+            *((ram_ptr!(game, u16; 0x198d) as *mut u8).offset(i as u16 as i32 as isize)
+                as *mut u16) = 0u16;
             i -= 2i32;
         }
         set_ram_word!(game.cinematic_function = ((0x8bbca0i32) as u16));
@@ -4416,8 +4301,7 @@ pub unsafe fn CinematicFunction_Intro_Func37(k: u16, game: &mut Game) {
         if (v1 as i32 & 1i32) != 0i32 {
             let mut i: i32 = 30i32;
             while i >= 0i32 {
-                *((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16)
-                    .offset(((i >> 1i32) + 240i32) as isize) =
+                *(ram_ptr!(game, u16; 0xc000)).offset(((i >> 1i32) + 240i32) as isize) =
                     crate::rtl::rom_table_word!(game, 0x8ce3e9, ((i >> 1i32) + 240i32) as isize);
                 i -= 2i32;
             }
@@ -4425,8 +4309,8 @@ pub unsafe fn CinematicFunction_Intro_Func37(k: u16, game: &mut Game) {
         } else {
             j = 30u16;
             while (j as i32 & 0x8000i32) == 0i32 {
-                *((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16)
-                    .offset(((j as i32 >> 1i32) + 240i32) as isize) = 0x7fffu16;
+                *(ram_ptr!(game, u16; 0xc000)).offset(((j as i32 >> 1i32) + 240i32) as isize) =
+                    0x7fffu16;
                 j = (j).wrapping_sub(2u16);
             }
             v3 = k;
@@ -4467,13 +4351,13 @@ pub unsafe fn CinematicSprInstr_Func43(k: u16, j: u16, game: &mut Game) -> u16 {
 pub unsafe fn CinematicFunction_Intro_Func44(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0x1a7d) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0x1add) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
         0x8000u32,
     );
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0x1a9d) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0x1afd) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
         0x8000u32,
     );
     if ram_word!(game, cinematicbg_arr7[v1]) as i32 + 8i32
@@ -4497,13 +4381,13 @@ pub unsafe fn CinematicFunction_Intro_Func45(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
     let v2: i32 = ram_word!(game, cinematicspr_goto_timer[v1]) as i32;
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0x1a7d) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0x1add) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
         (kCinematicFunction_Intro_Func45_Tab0[v2 as usize] as u32) << 16i32 | 0x8000u16 as u32,
     );
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0x1a9d) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0x1afd) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
         0x8000u32,
     );
     if ram_word!(game, cinematicbg_arr8[v1]) as i32 - 16i32 & 0x8000i32 != 0
@@ -4607,8 +4491,8 @@ pub unsafe fn CinematicFunction_Intro_Func51(k: u16, game: &mut Game) {
         update_ram_word!(game.cinematic_var17, wrapping_add(32u16));
     }
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0x1a9d) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0x1afd) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
         ((ram_word!(game, cinematic_var17) as i16 as i32) << 8i32) as u32,
     );
     if (ram_word!(game, cinematic_var17) as i32 & 0x8000i32) == 0i32 {
@@ -4656,8 +4540,8 @@ pub unsafe fn CinematicFunction_Intro_Func53(k: u16, game: &mut Game) {
             }) as u16
         );
         AddToHiLo(
-            ((&raw mut game.g_ram as *mut u8).offset(0x1a7d) as *mut u16).offset(kh as isize),
-            ((&raw mut game.g_ram as *mut u8).offset(0x1add) as *mut u16).offset(kh as isize),
+            (ram_ptr!(game, u16; 0x1a7d)).offset(kh as isize),
+            (ram_ptr!(game, u16; 0x1add)).offset(kh as isize),
             ((ram_word!(game, cinematic_var14) as i16 as i32) << 8i32) as u32,
         );
         if ((ram_word!(game, samus_y_pos) as i32
@@ -4672,8 +4556,8 @@ pub unsafe fn CinematicFunction_Intro_Func53(k: u16, game: &mut Game) {
             update_ram_word!(game.cinematic_var17, wrapping_add(32u16));
         }
         AddToHiLo(
-            ((&raw mut game.g_ram as *mut u8).offset(0x1a9d) as *mut u16).offset(kh as isize),
-            ((&raw mut game.g_ram as *mut u8).offset(0x1afd) as *mut u16).offset(kh as isize),
+            (ram_ptr!(game, u16; 0x1a9d)).offset(kh as isize),
+            (ram_ptr!(game, u16; 0x1afd)).offset(kh as isize),
             ((ram_word!(game, cinematic_var17) as i16 as i32) << 8i32) as u32,
         );
     } else {
@@ -4776,17 +4660,17 @@ pub unsafe fn CinematicFunction_Intro_Func54(game: &mut Game) {
 }
 pub unsafe fn CinematicFunction_Intro_Func55(game: &mut Game) {
     if HasQueuedMusic(game) as i32 & 1i32 == 0 {
-        *(&raw mut game.g_ram as *mut u8).offset(0x51) = 15u8;
+        *ram_ptr!(game; 0x51) = 15u8;
         set_ram_word!(game.cinematic_function = ((0x8bbdf9i32) as u16));
     }
 }
 pub unsafe fn CinematicFunction_Intro_Func56(game: &mut Game) {
     if ram_word!(game, cinematic_var6) as i32 - 32i32 & 0x8000i32 != 0 {
-        *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x72) = 49u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0) = 63u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1) = 95u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2) = -97i32 as u8;
+        *ram_ptr!(game; 0x6f) = 0u8;
+        *ram_ptr!(game; 0x72) = 49u8;
+        *ram_ptr!(game; 0x74, 0) = 63u8;
+        *ram_ptr!(game; 0x74, 1) = 95u8;
+        *ram_ptr!(game; 0x74, 2) = -97i32 as u8;
         ClearCinematicSprites(game);
         QueueMode7Transfers(0x8bu8, addr_kCinematicFunction_Intro_Func56_M7 as u16, game);
         set_ram_word!(game.cinematic_var8 = -32i32 as u16);
@@ -4834,23 +4718,23 @@ pub unsafe fn CinematicFunction_Intro_Func58(k: u16, game: &mut Game) {
         update_ram_word!(game.cinematicspr_goto_timer[v1], wrapping_add(128u16));
         let d: i32 = (ram_word!(game, cinematicspr_goto_timer[v1]) as i16 as i32) << 8i32;
         AddToHiLo(
-            ((&raw mut game.g_ram as *mut u8).offset(0x1a9d) as *mut u16).offset(v1 as isize),
-            ((&raw mut game.g_ram as *mut u8).offset(0x1afd) as *mut u16).offset(v1 as isize),
+            (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
+            (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
             d as u32,
         );
         AddToHiLo(
-            ((&raw mut game.g_ram as *mut u8).offset(0x1a7d) as *mut u16).offset(v1 as isize),
-            ((&raw mut game.g_ram as *mut u8).offset(0x1add) as *mut u16).offset(v1 as isize),
+            (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
+            (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
             d as u32,
         );
         AddToHiLo(
-            (&raw mut game.g_ram as *mut u8).offset(0x1993) as *mut u16,
-            (&raw mut game.g_ram as *mut u8).offset(0x1991) as *mut u16,
+            ram_ptr!(game, u16; 0x1993),
+            ram_ptr!(game, u16; 0x1991),
             d as u32,
         );
         AddToHiLo(
-            (&raw mut game.g_ram as *mut u8).offset(0x1997) as *mut u16,
-            (&raw mut game.g_ram as *mut u8).offset(0x1995) as *mut u16,
+            ram_ptr!(game, u16; 0x1997),
+            ram_ptr!(game, u16; 0x1995),
             d as u32,
         );
     }
@@ -4864,8 +4748,8 @@ pub unsafe fn CinematicFunction_Intro_Func59(j: u16, game: &mut Game) {
 pub unsafe fn CinematicFunction_Intro_Func60(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0x1a7d) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0x1add) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
         0x4000u32,
     );
     update_ram_word!(game.cinematicbg_arr7[v1], |fresh48| (fresh48) & (0x1ffu16));
@@ -4879,8 +4763,8 @@ pub unsafe fn CinematicFunction_Intro_Func61(j: u16, game: &mut Game) {
 pub unsafe fn CinematicFunction_Intro_Func62(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0x1a7d) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0x1add) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
         4096u32,
     );
     update_ram_word!(game.cinematicbg_arr7[v1], |fresh47| (fresh47) & (0x1ffu16));
@@ -4894,8 +4778,8 @@ pub unsafe fn CinematicFunction_Intro_Func63(j: u16, game: &mut Game) {
 pub unsafe fn CinematicFunction_Intro_Func64(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0x1a7d) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0x1add) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
         2048u32,
     );
     update_ram_word!(game.cinematicbg_arr7[v1], |fresh46| (fresh46) & (0x1ffu16));
@@ -4915,30 +4799,30 @@ pub unsafe fn CinematicFunction_Intro_Func65(j: u16, game: &mut Game) {
 pub unsafe fn CinematicFunction_Intro_Func66(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0x1a7d) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0x1add) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
         -0x2000i32 as u32,
     );
 }
 pub unsafe fn CinematicFunction_Intro_Func67(game: &mut Game) {
-    let ref mut fresh123 = *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0);
+    let ref mut fresh123 = *ram_ptr!(game; 0x74, 0);
     *fresh123 = (*fresh123).wrapping_sub(1);
     if *fresh123 as i32 - 32i32 & 0x80i32 != 0 {
-        *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0) = 32u8;
+        *ram_ptr!(game; 0x74, 0) = 32u8;
     }
-    let ref mut fresh124 = *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1);
+    let ref mut fresh124 = *ram_ptr!(game; 0x74, 1);
     *fresh124 = (*fresh124).wrapping_sub(1);
     if *fresh124 as i32 - 64i32 & 0x80i32 != 0 {
-        *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1) = 64u8;
+        *ram_ptr!(game; 0x74, 1) = 64u8;
     }
-    let ref mut fresh125 = *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2);
+    let ref mut fresh125 = *ram_ptr!(game; 0x74, 2);
     *fresh125 = (*fresh125).wrapping_sub(1);
     if *fresh125 as i32 + 0x80i32 & 0x80i32 != 0 {
-        *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2) = 0x80u8;
+        *ram_ptr!(game; 0x74, 2) = 0x80u8;
     }
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x1993) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x1991) as *mut u16,
+        ram_ptr!(game, u16; 0x1993),
+        ram_ptr!(game, u16; 0x1991),
         -0x2000i32 as u32,
     );
     if ram_word!(game, cinematic_var6) as i32 - 3072i32 & 0x8000i32 != 0 {
@@ -4946,11 +4830,11 @@ pub unsafe fn CinematicFunction_Intro_Func67(game: &mut Game) {
     } else if ram_word!(game, cinematic_var6) as i32 - 0x2000i32 & 0x8000i32 != 0 {
         update_ram_word!(game.cinematic_var6, wrapping_add(32u16));
     } else {
-        *(&raw mut game.g_ram as *mut u8).offset(0x69) = 17u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x55) = 1u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x5f) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x58) = 92u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x5d) = 6u8;
+        *ram_ptr!(game; 0x69) = 17u8;
+        *ram_ptr!(game; 0x55) = 1u8;
+        *ram_ptr!(game; 0x5f) = 0u8;
+        *ram_ptr!(game; 0x58) = 92u8;
+        *ram_ptr!(game; 0x5d) = 6u8;
         set_ram_word!(game.cinematic_var6 = 256u16);
         set_ram_word!(game.cinematic_var5 = 0u16);
         set_ram_word!(game.cinematic_var7 = 0u16);
@@ -4989,7 +4873,7 @@ pub unsafe fn CinematicFunction_Intro_Func71(j: u16, game: &mut Game) {
 }
 pub unsafe fn CinematicFunction_Intro_Func72(game: &mut Game) {
     HandleFadeOut(game);
-    if *(&raw mut game.g_ram as *mut u8).offset(0x51) == 0x80u8 {
+    if *ram_ptr!(game; 0x51) == 0x80u8 {
         EnableNMI(game);
         set_ram_word!(game.screen_fade_delay = 0u16);
         set_ram_word!(game.screen_fade_counter = 0u16);
@@ -5000,8 +4884,8 @@ pub unsafe fn CinematicFunction_Intro_Func72(game: &mut Game) {
         set_ram_word!(game.cinematic_var5 = 0u16);
         let mut i: i32 = 656i32;
         while i >= 0i32 {
-            *(((&raw mut game.g_ram as *mut u8).offset(0x198d) as *mut u16 as *mut u8)
-                .offset(i as u16 as i32 as isize) as *mut u16) = 0u16;
+            *((ram_ptr!(game, u16; 0x198d) as *mut u8).offset(i as u16 as i32 as isize)
+                as *mut u16) = 0u16;
             i -= 2i32;
         }
         set_ram_word!(game.cinematic_function = ((0x8bc100i32) as u16));
@@ -5020,8 +4904,8 @@ pub unsafe fn CinematicFunctionBlackoutFromCeres(game: &mut Game) {
     SetupPpu_3_Mode7(game);
     j = 656i16;
     while j >= 0i16 {
-        *(((&raw mut game.g_ram as *mut u8).offset(0x198d) as *mut u16 as *mut u8)
-            .offset(j as u16 as i32 as isize) as *mut u16) = 0u16;
+        *((ram_ptr!(game, u16; 0x198d) as *mut u8).offset(j as u16 as i32 as isize) as *mut u16) =
+            0u16;
         j = (j).wrapping_sub(2i16);
     }
     set_ram_word!(game.door_def_ptr = 0u16);
@@ -5116,18 +5000,18 @@ pub unsafe fn CinematicFunction_Intro_Func74(game: &mut Game) {
 }
 pub unsafe fn CinematicFunction_Intro_Func75(game: &mut Game) {
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x1997) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x1995) as *mut u16,
+        ram_ptr!(game, u16; 0x1997),
+        ram_ptr!(game, u16; 0x1995),
         4096u32,
     );
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x1993) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x1991) as *mut u16,
+        ram_ptr!(game, u16; 0x1993),
+        ram_ptr!(game, u16; 0x1991),
         -0x4000i32 as u32,
     );
     update_ram_word!(game.cinematic_var6, wrapping_add(1));
     HandleFadeIn(game);
-    if *(&raw mut game.g_ram as *mut u8).offset(0x51) == 15u8 {
+    if *ram_ptr!(game; 0x51) == 15u8 {
         set_ram_word!(game.screen_fade_delay = 0u16);
         set_ram_word!(game.screen_fade_counter = 0u16);
         set_ram_word!(game.cinematic_function = ((0x8bc345i32) as u16));
@@ -5137,13 +5021,13 @@ pub unsafe fn CinematicFunction_Intro_Func75(game: &mut Game) {
 }
 pub unsafe fn CinematicFunction_Intro_Func76(game: &mut Game) {
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x1997) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x1995) as *mut u16,
+        ram_ptr!(game, u16; 0x1997),
+        ram_ptr!(game, u16; 0x1995),
         4096u32,
     );
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x1993) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x1991) as *mut u16,
+        ram_ptr!(game, u16; 0x1993),
+        ram_ptr!(game, u16; 0x1991),
         -0x4000i32 as u32,
     );
     if ram_word!(game, cinematic_var6) as i32 - 640i32 & 0x8000i32 != 0 {
@@ -5159,8 +5043,8 @@ pub unsafe fn CinematicFunction_Intro_Func76(game: &mut Game) {
         );
         EnableHdmaObjects(game);
         SpawnPowerBombExplosion(game);
-        *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 16u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x72) = 55u8;
+        *ram_ptr!(game; 0x6f) = 16u8;
+        *ram_ptr!(game; 0x72) = 55u8;
         set_ram_word!(game.cinematic_var6 = 768u16);
         SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BCF2D as u16, 0u16, game);
         if ram_word!(game, game_state) == 37u16 {
@@ -5289,13 +5173,13 @@ pub unsafe fn CinematicFunction_Intro_Func81(j: u16, game: &mut Game) {
 pub unsafe fn CinematicFunction_Intro_Func82(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0x1a9d) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0x1afd) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
         -4096i32 as u32,
     );
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0x1a7d) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0x1add) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
         0x4000u32,
     );
 }
@@ -5312,8 +5196,8 @@ pub unsafe fn CinematicFunction_Intro_Func83(j: u16, game: &mut Game) {
     set_ram_word!(game.cinematicbg_arr9[v1] = 2560u16);
 }
 pub unsafe fn CinematicFunction_Intro_Func77(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 16u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x72) = 55u8;
+    *ram_ptr!(game; 0x6f) = 16u8;
+    *ram_ptr!(game; 0x72) = 55u8;
     update_ram_word!(game.cinematic_var8, wrapping_add(2u16));
     set_ram_word!(
         game.cinematic_var5 = (((ram_word!(game, cinematic_var5)) as u8).wrapping_sub(1u8)) as u16
@@ -5336,7 +5220,7 @@ pub unsafe fn CinematicFunction_Intro_Func84(game: &mut Game) {
 }
 pub unsafe fn CinematicFunction_Intro_Func85(game: &mut Game) {
     HandleFadeOut(game);
-    if *(&raw mut game.g_ram as *mut u8).offset(0x51) == 0x80u8 {
+    if *ram_ptr!(game; 0x51) == 0x80u8 {
         EnableNMI(game);
         set_ram_word!(game.screen_fade_delay = 0u16);
         set_ram_word!(game.screen_fade_counter = 0u16);
@@ -5349,13 +5233,13 @@ pub unsafe fn CinematicFunction_Intro_Func85(game: &mut Game) {
             WaitUntilEndOfVblankAndClearHdma(game);
             DisableIrqInterrupts(game);
             set_ram_word!(game.fx_layer_blending_config_a = 0u16);
-            *(&raw mut game.g_ram as *mut u8).offset(0x6e) = 0u8;
-            *(&raw mut game.g_ram as *mut u8).offset(0x71) = 0u8;
-            *(&raw mut game.g_ram as *mut u8).offset(0x69) = 16u8;
-            *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 0u8;
-            *(&raw mut game.g_ram as *mut u8).offset(0x6c) = 0u8;
-            *(&raw mut game.g_ram as *mut u8).offset(0x6d) = 0u8;
-            *(&raw mut game.g_ram as *mut u8).offset(0x55) = 9u8;
+            *ram_ptr!(game; 0x6e) = 0u8;
+            *ram_ptr!(game; 0x71) = 0u8;
+            *ram_ptr!(game; 0x69) = 16u8;
+            *ram_ptr!(game; 0x6b) = 0u8;
+            *ram_ptr!(game; 0x6c) = 0u8;
+            *ram_ptr!(game; 0x6d) = 0u8;
+            *ram_ptr!(game; 0x55) = 9u8;
             set_ram_word!(game.game_options_screen_index = 0u16);
             set_ram_word!(game.menu_index = 0u16);
             let mut i: i32 = 254i32;
@@ -5373,8 +5257,8 @@ pub unsafe fn CinematicFunction_Intro_Func86(game: &mut Game) {
     SetupPpu_4_Mode1(game);
     let mut i: i32 = 656i32;
     while i >= 0i32 {
-        *(((&raw mut game.g_ram as *mut u8).offset(0x198d) as *mut u16 as *mut u8)
-            .offset(i as u16 as i32 as isize) as *mut u16) = 0u16;
+        *((ram_ptr!(game, u16; 0x198d) as *mut u8).offset(i as u16 as i32 as isize) as *mut u16) =
+            0u16;
         i -= 2i32;
     }
     CinematicAsset::Decompress(0x978adb, 0x19000).load(game);
@@ -5402,7 +5286,7 @@ pub unsafe fn CinematicFunction_Intro_Func86(game: &mut Game) {
     WaitUntilEndOfVblankAndClearHdma(game);
     ClearPaletteFXObjects(game);
     EnablePaletteFx(game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x57) = -127i32 as u8;
+    *ram_ptr!(game; 0x57) = -127i32 as u8;
     SpawnPalfxObject(addr_kPalfx_E1A8 as u16, game);
     set_ram_word!(game.cinematic_function = ((0x8bc79ci32) as u16));
     EnableNMI(game);
@@ -5411,11 +5295,11 @@ pub unsafe fn CinematicFunction_Intro_Func86(game: &mut Game) {
 }
 pub unsafe fn CinematicFunction_Intro_Func87(game: &mut Game) {
     if (ram_word!(game, cinematic_var12) as i32 & 3i32) == 0i32 {
-        let ref mut fresh116 = *(&raw mut game.g_ram as *mut u8).offset(0x57);
+        let ref mut fresh116 = *ram_ptr!(game; 0x57);
         *fresh116 = (*fresh116).wrapping_sub(16u8);
     }
     HandleFadeIn(game);
-    if *(&raw mut game.g_ram as *mut u8).offset(0x51) == 15u8 {
+    if *ram_ptr!(game; 0x51) == 15u8 {
         set_ram_word!(game.screen_fade_delay = 0u16);
         set_ram_word!(game.screen_fade_counter = 0u16);
         set_ram_word!(game.cinematic_function = ((0x8bc7cai32) as u16));
@@ -5423,14 +5307,14 @@ pub unsafe fn CinematicFunction_Intro_Func87(game: &mut Game) {
 }
 pub unsafe fn CinematicFunction_Intro_Func88(game: &mut Game) {
     if (ram_word!(game, cinematic_var12) as i32 & 3i32) == 0i32 {
-        let ref mut fresh115 = *(&raw mut game.g_ram as *mut u8).offset(0x57);
+        let ref mut fresh115 = *ram_ptr!(game; 0x57);
         *fresh115 = (*fresh115).wrapping_sub(16u8);
-        if (*(&raw mut game.g_ram as *mut u8).offset(0x57) as i32 & 0xf0i32) == 0i32 {
-            *(&raw mut game.g_ram as *mut u8).offset(0x55) = 7u8;
-            *(&raw mut game.g_ram as *mut u8).offset(0x5f) = 0x80u8;
-            *(&raw mut game.g_ram as *mut u8).offset(0x58) = 0u8;
-            *(&raw mut game.g_ram as *mut u8).offset(0x5d) = 0u8;
-            *(&raw mut game.g_ram as *mut u8).offset(0x69) = 17u8;
+        if (*ram_ptr!(game; 0x57) as i32 & 0xf0i32) == 0i32 {
+            *ram_ptr!(game; 0x55) = 7u8;
+            *ram_ptr!(game; 0x5f) = 0x80u8;
+            *ram_ptr!(game; 0x58) = 0u8;
+            *ram_ptr!(game; 0x5d) = 0u8;
+            *ram_ptr!(game; 0x69) = 17u8;
             set_ram_word!(game.cinematic_var8 = 128u16);
             set_ram_word!(game.cinematic_var10 = -104i32 as u16);
             set_ram_word!(game.cinematic_var5 = 32u16);
@@ -5484,8 +5368,8 @@ pub unsafe fn CinematicFunction_Intro_Func91(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
     update_ram_word!(game.cinematicspr_goto_timer[v1], wrapping_add(64u16));
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0x1a9d) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0x1afd) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
         -((ram_word!(game, cinematicspr_goto_timer[v1]) as i16 as i32) << 8i32) as u32,
     );
     if ram_word!(game, cinematicbg_arr8[v1]) as i32 + 128i32 & 0x8000i32 != 0 {
@@ -5508,8 +5392,8 @@ pub unsafe fn CinematicFunction_Intro_Func94(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
     update_ram_word!(game.cinematicspr_goto_timer[v1], wrapping_add(32u16));
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0x1a9d) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0x1afd) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
         -((ram_word!(game, cinematicspr_goto_timer[v1]) as i16 as i32) << 8i32) as u32,
     );
     if ram_word!(game, cinematicbg_arr8[v1]) as i32 + 128i32 & 0x8000i32 != 0 {
@@ -5527,8 +5411,8 @@ pub unsafe fn CinematicFunction_Intro_Func97(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
     update_ram_word!(game.cinematicspr_goto_timer[v1], wrapping_add(32u16));
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0x1a9d) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0x1afd) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
         -((ram_word!(game, cinematicspr_goto_timer[v1]) as i16 as i32) << 8i32) as u32,
     );
     if ram_word!(game, cinematicbg_arr8[v1]) as i32 + 128i32 & 0x8000i32 != 0 {
@@ -5600,13 +5484,13 @@ pub unsafe fn CinematicFunction_Intro_Func104(j: u16, game: &mut Game) {
 }
 pub unsafe fn CinematicFunction_Intro_Func105(game: &mut Game) {
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x1997) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x1995) as *mut u16,
+        ram_ptr!(game, u16; 0x1997),
+        ram_ptr!(game, u16; 0x1995),
         0x2000u32,
     );
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x1993) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x1991) as *mut u16,
+        ram_ptr!(game, u16; 0x1993),
+        ram_ptr!(game, u16; 0x1991),
         -0x8000i32 as u32,
     );
     if ram_word!(game, cinematic_var6) as i32 - 1152i32 & 0x8000i32 != 0 {
@@ -5617,13 +5501,13 @@ pub unsafe fn CinematicFunction_Intro_Func105(game: &mut Game) {
 }
 pub unsafe fn CinematicFunction_Intro_Func106(game: &mut Game) {
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x1997) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x1995) as *mut u16,
+        ram_ptr!(game, u16; 0x1997),
+        ram_ptr!(game, u16; 0x1995),
         0x2000u32,
     );
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x1993) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x1991) as *mut u16,
+        ram_ptr!(game, u16; 0x1993),
+        ram_ptr!(game, u16; 0x1991),
         -0x8000i32 as u32,
     );
     if ram_word!(game, cinematic_var8) as i32 + 128i32 & 0x8000i32 != 0 {
@@ -5640,19 +5524,19 @@ pub unsafe fn CinematicFunction_Intro_Func106(game: &mut Game) {
 }
 pub unsafe fn CinematicFunction_Intro_Func107(game: &mut Game) {
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x1997) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x1995) as *mut u16,
+        ram_ptr!(game, u16; 0x1997),
+        ram_ptr!(game, u16; 0x1995),
         0x2000u32,
     );
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x1993) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x1991) as *mut u16,
+        ram_ptr!(game, u16; 0x1993),
+        ram_ptr!(game, u16; 0x1991),
         0x2000u32,
     );
     if ram_word!(game, cinematic_var6) as i32 - 0x2000i32 & 0x8000i32 != 0 {
         update_ram_word!(game.cinematic_var6, wrapping_add(32u16));
     } else {
-        *(&raw mut game.g_ram as *mut u8).offset(0x69) = 16u8;
+        *ram_ptr!(game; 0x69) = 16u8;
         set_ram_word!(game.cinematic_function = ((0x8bcad0i32) as u16));
         set_ram_word!(game.cinematic_var4 = 64u16);
     };
@@ -5665,11 +5549,11 @@ pub unsafe fn CinematicFunction_Intro_Func108(game: &mut Game) {
     }
 }
 pub unsafe fn CinematicFunction_Intro_Func95(game: &mut Game) {
-    *(&raw mut game.g_ram as *mut u8).offset(0x51) = 0x80u8;
+    *ram_ptr!(game; 0x51) = 0x80u8;
     let mut i: i32 = 656i32;
     while i >= 0i32 {
-        *(((&raw mut game.g_ram as *mut u8).offset(0x198d) as *mut u16 as *mut u8)
-            .offset(i as u16 as i32 as isize) as *mut u16) = 0u16;
+        *((ram_ptr!(game, u16; 0x198d) as *mut u8).offset(i as u16 as i32 as isize) as *mut u16) =
+            0u16;
         i -= 2i32;
     }
     set_ram_word!(game.game_state = kGameState_6_LoadingGameData as u16);
@@ -5705,8 +5589,8 @@ pub unsafe fn CinematicFunctionEscapeFromCebes(game: &mut Game) {
     SetupPpu_5_Mode7(game);
     j = 656i16;
     while j >= 0i16 {
-        *(((&raw mut game.g_ram as *mut u8).offset(0x198d) as *mut u16 as *mut u8)
-            .offset(j as u16 as i32 as isize) as *mut u16) = 0u16;
+        *((ram_ptr!(game, u16; 0x198d) as *mut u8).offset(j as u16 as i32 as isize) as *mut u16) =
+            0u16;
         j = (j).wrapping_sub(2i16);
     }
     let mut v2: u16 = 0u16;
@@ -5732,8 +5616,7 @@ pub unsafe fn CinematicFunctionEscapeFromCebes(game: &mut Game) {
     CinematicAsset::Decompress(0x96fe69, 0x14000).load(game);
     let mut v3: u16 = 768u16;
     loop {
-        *(((&raw mut game.g_ram as *mut u8).offset(0x14000)).offset(v3 as i32 as isize)
-            as *mut u16) = 0x8c8cu16;
+        *((ram_ptr!(game; 0x14000)).offset(v3 as i32 as isize) as *mut u16) = 0x8c8cu16;
         v3 = (v3).wrapping_add(2u16);
         if (((v3) as i16).wrapping_sub(0x4000i16) >= 0i16) {
             break;
@@ -5769,10 +5652,10 @@ pub unsafe fn CinematicFunctionEscapeFromCebes(game: &mut Game) {
     EnablePaletteFx(game);
     EnableNMI(game);
     set_ram_word!(game.eproj_pre_instr[1] = 0u16);
-    *(&raw mut game.g_ram as *mut u8).offset(0x69) = 17u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 1u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 2u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x72) = 17u8;
+    *ram_ptr!(game; 0x69) = 17u8;
+    *ram_ptr!(game; 0x6b) = 1u8;
+    *ram_ptr!(game; 0x6f) = 2u8;
+    *ram_ptr!(game; 0x72) = 17u8;
     SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEEEB as u16, 0u16, game);
     SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEEF1 as u16, 0u16, game);
     SpawnCinematicSpriteObject(addr_kCinematicSpriteObjectDef_8BEEEB as u16, 1u16, game);
@@ -5887,10 +5770,10 @@ pub unsafe fn CinematicFunction_Intro_Func115(game: &mut Game) {
     set_ram_word!(game.reg_M7Y = 128u16);
     set_ram_word!(game.cinematic_var8 = 0u16);
     set_ram_word!(game.cinematic_var10 = 0u16);
-    *(&raw mut game.g_ram as *mut u8).offset(0x69) = 1u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 16u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 2u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x72) = 33u8;
+    *ram_ptr!(game; 0x69) = 1u8;
+    *ram_ptr!(game; 0x6b) = 16u8;
+    *ram_ptr!(game; 0x6f) = 2u8;
+    *ram_ptr!(game; 0x72) = 33u8;
     CopyPalettesToFadingPalettes(game);
     DecomposePaletteDataForFading(game);
     ClearYColorsFromIndexX(0x1a0u16, 0x10u16, game);
@@ -5927,26 +5810,26 @@ pub unsafe fn CinematicFunction_Intro_Func117(game: &mut Game) {
                 break;
             }
         }
-        *(&raw mut game.g_ram as *mut u8).offset(0x5f) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x58) = 112u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x59) = 120u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x5a) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x5c) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x5d) = 68u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x5e) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x69) = 16u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6c) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6d) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6e) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x71) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x72) = 0u8;
+        *ram_ptr!(game; 0x5f) = 0u8;
+        *ram_ptr!(game; 0x58) = 112u8;
+        *ram_ptr!(game; 0x59) = 120u8;
+        *ram_ptr!(game; 0x5a) = 0u8;
+        *ram_ptr!(game; 0x5c) = 0u8;
+        *ram_ptr!(game; 0x5d) = 68u8;
+        *ram_ptr!(game; 0x5e) = 0u8;
+        *ram_ptr!(game; 0x69) = 16u8;
+        *ram_ptr!(game; 0x6b) = 0u8;
+        *ram_ptr!(game; 0x6c) = 0u8;
+        *ram_ptr!(game; 0x6d) = 0u8;
+        *ram_ptr!(game; 0x6e) = 0u8;
+        *ram_ptr!(game; 0x71) = 0u8;
+        *ram_ptr!(game; 0x6f) = 0u8;
+        *ram_ptr!(game; 0x72) = 0u8;
         WriteReg(COLDATA as u16, 0xe0u8, game);
-        *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0) = 32u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1) = 64u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2) = 0x80u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x57) = 0u8;
+        *ram_ptr!(game; 0x74, 0) = 32u8;
+        *ram_ptr!(game; 0x74, 1) = 64u8;
+        *ram_ptr!(game; 0x74, 2) = 0x80u8;
+        *ram_ptr!(game; 0x57) = 0u8;
         set_ram_word!(game.cinematic_var7 = 0u16);
         set_ram_word!(game.cinematic_var8 = 0u16);
         set_ram_word!(game.cinematic_var9 = 0u16);
@@ -5978,67 +5861,43 @@ pub unsafe fn CinematicFunction_Intro_Func118(game: &mut Game) {
     let v1: u16 = ram_word!(game, mode7_vram_write_queue_tail);
     v2 = ram_word!(game, mode7_vram_write_queue_tail) as u32;
     if ram_word!(game, cinematic_var4) as i32 - 8i32 & 0x8000i32 != 0 {
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x2d0) as *mut Mode7VramWriteQueue)
-            .offset(0))
-        .field_0)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).field_0)
             .offset(ram_word!(game, mode7_vram_write_queue_tail) as i32 as isize)
             as *mut u16) = 192u16;
         let v3: i32 = v0 as i32;
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x2d0) as *mut Mode7VramWriteQueue)
-            .offset(0))
-        .field_1 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).field_1 as *mut u8)
             .offset(v2 as isize) as *mut u16) = kCinematicFunction_Intro_Func118_Tab0[v3 as usize];
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x2d0) as *mut Mode7VramWriteQueue)
-            .offset(0))
-        .gap3 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).gap3 as *mut u8)
             .offset(v1 as isize) as *mut u16) = 127u16;
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x2d0) as *mut Mode7VramWriteQueue)
-            .offset(0))
-        .gap3 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).gap3 as *mut u8)
             .offset((v1 as i32 + 1i32) as isize) as *mut u16) = 2048u16;
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x2d0) as *mut Mode7VramWriteQueue)
-            .offset(0))
-        .gap3 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).gap3 as *mut u8)
             .offset((v1 as i32 + 3i32) as isize) as *mut u16) =
             kCinematicFunction_Intro_Func118_Tab1[v3 as usize];
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x2d0) as *mut Mode7VramWriteQueue)
-            .offset(1))
-        .field_1 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(1)).field_1 as *mut u8)
             .offset(v1 as i32 as isize) as *mut u16) = 128u16;
     } else {
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x2d0) as *mut Mode7VramWriteQueue)
-            .offset(0))
-        .field_0)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).field_0)
             .offset(ram_word!(game, mode7_vram_write_queue_tail) as i32 as isize)
             as *mut u16) = 128u16;
         let v4: i32 = v0 as i32;
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x2d0) as *mut Mode7VramWriteQueue)
-            .offset(0))
-        .field_1 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).field_1 as *mut u8)
             .offset(v2 as isize) as *mut u16) = kCinematicFunction_Intro_Func118_Tab0[v4 as usize];
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x2d0) as *mut Mode7VramWriteQueue)
-            .offset(0))
-        .gap3 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).gap3 as *mut u8)
             .offset(v1 as isize) as *mut u16) = 127u16;
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x2d0) as *mut Mode7VramWriteQueue)
-            .offset(0))
-        .gap3 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).gap3 as *mut u8)
             .offset((v1 as i32 + 1i32) as isize) as *mut u16) = 2048u16;
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x2d0) as *mut Mode7VramWriteQueue)
-            .offset(0))
-        .gap3 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(0)).gap3 as *mut u8)
             .offset((v1 as i32 + 3i32) as isize) as *mut u16) =
             kCinematicFunction_Intro_Func118_Tab1[v4 as usize];
-        *((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x2d0) as *mut Mode7VramWriteQueue)
-            .offset(1))
-        .field_1 as *mut u8)
+        *((&raw mut (*(ram_ptr!(game, Mode7VramWriteQueue; 0x2d0)).offset(1)).field_1 as *mut u8)
             .offset(v1 as i32 as isize) as *mut u16) = 0u16;
     }
     set_ram_word!(game.mode7_vram_write_queue_tail = (v1).wrapping_add(9u16));
     if update_ram_word!(game.cinematic_var4, wrapping_add(1), reread) as i32 - 16i32 & 0x8000i32
         == 0
     {
-        *(&raw mut game.g_ram as *mut u8).offset(0x55) = 1u8;
+        *ram_ptr!(game; 0x55) = 1u8;
         set_ram_word!(game.cinematic_var4 = 0u16);
         set_ram_word!(game.cinematic_function = ((0x8bdb9di32) as u16));
     }
@@ -6055,17 +5914,17 @@ pub unsafe fn CinematicFunction_Intro_Func119(game: &mut Game) {
 }
 pub unsafe fn CinematicFunction_Intro_Func120(game: &mut Game) {
     if HasQueuedMusic(game) as i32 & 1i32 == 0 {
-        *(&raw mut game.g_ram as *mut u8).offset(0x55) = 7u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x5f) = 0x80u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x69) = 17u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x72) = 48u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0) = 63u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1) = 95u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2) = -97i32 as u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x58) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x5d) = 0u8;
+        *ram_ptr!(game; 0x55) = 7u8;
+        *ram_ptr!(game; 0x5f) = 0x80u8;
+        *ram_ptr!(game; 0x69) = 17u8;
+        *ram_ptr!(game; 0x6b) = 0u8;
+        *ram_ptr!(game; 0x6f) = 0u8;
+        *ram_ptr!(game; 0x72) = 48u8;
+        *ram_ptr!(game; 0x74, 0) = 63u8;
+        *ram_ptr!(game; 0x74, 1) = 95u8;
+        *ram_ptr!(game; 0x74, 2) = -97i32 as u8;
+        *ram_ptr!(game; 0x58) = 0u8;
+        *ram_ptr!(game; 0x5d) = 0u8;
         set_ram_word!(game.palette_buffer[0] = 0u16);
         set_ram_word!(game.palette_buffer[16] = 0u16);
         set_ram_word!(game.palette_buffer[128] = 0u16);
@@ -6087,27 +5946,27 @@ pub unsafe fn CinematicFunction_Intro_Func122(game: &mut Game) {
     let v0: bool =
         (update_ram_word!(game.cinematic_var4, wrapping_sub(1), reread) as i32 & 0x8000i32) != 0i32;
     if ram_word!(game, cinematic_var4) == 0 || v0 {
-        let ref mut fresh97 = *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0);
+        let ref mut fresh97 = *ram_ptr!(game; 0x74, 0);
         *fresh97 = (*fresh97).wrapping_sub(1);
         if *fresh97 as i32 - 32i32 & 0x80i32 != 0 {
-            *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0) = 32u8;
+            *ram_ptr!(game; 0x74, 0) = 32u8;
         }
-        let ref mut fresh98 = *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1);
+        let ref mut fresh98 = *ram_ptr!(game; 0x74, 1);
         *fresh98 = (*fresh98).wrapping_sub(1);
         if *fresh98 as i32 - 64i32 & 0x80i32 != 0 {
-            *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1) = 64u8;
+            *ram_ptr!(game; 0x74, 1) = 64u8;
         }
-        let ref mut fresh99 = *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2);
+        let ref mut fresh99 = *ram_ptr!(game; 0x74, 2);
         *fresh99 = (*fresh99).wrapping_sub(1);
         if *fresh99 as i32 + 0x80i32 & 0x80i32 != 0 {
-            *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2) = 0x80u8;
+            *ram_ptr!(game; 0x74, 2) = 0x80u8;
         }
-        if *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0) == 32u8
-            && *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1) == 64u8
-            && *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2) == 0x80u8
+        if *ram_ptr!(game; 0x74, 0) == 32u8
+            && *ram_ptr!(game; 0x74, 1) == 64u8
+            && *ram_ptr!(game; 0x74, 2) == 0x80u8
         {
-            *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 0u8;
-            *(&raw mut game.g_ram as *mut u8).offset(0x72) = 0u8;
+            *ram_ptr!(game; 0x6f) = 0u8;
+            *ram_ptr!(game; 0x72) = 0u8;
         }
         set_ram_word!(game.cinematic_var4 = 8u16);
     }
@@ -6128,8 +5987,8 @@ pub unsafe fn CinematicFunction_Intro_Func121(game: &mut Game) {
     );
     let v0: i32 = 2i32 * ram_word!(game, cinematic_var14) as i32;
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x1993) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x1991) as *mut u16,
+        ram_ptr!(game, u16; 0x1993),
+        ram_ptr!(game, u16; 0x1991),
         (kCinematicFunction_Intro_Func121_Tab0[v0 as usize] as u32) << 16i32
             | kCinematicFunction_Intro_Func121_Tab0[(v0 + 1i32) as usize] as u32,
     );
@@ -6156,8 +6015,8 @@ pub unsafe fn CinematicFunction_Intro_Func123(game: &mut Game) {
     }
     let v0: i32 = 2i32 * ram_word!(game, cinematic_var14) as i32;
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x1993) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x1991) as *mut u16,
+        ram_ptr!(game, u16; 0x1993),
+        ram_ptr!(game, u16; 0x1991),
         (kCinematicFunction_Intro_Func123_Tab0[v0 as usize] as u32) << 16i32
             | kCinematicFunction_Intro_Func123_Tab0[(v0 + 1i32) as usize] as u32,
     );
@@ -6181,13 +6040,13 @@ static g_word_8BDE43: [u16; 16] = [
 pub unsafe fn CinematicFunction_Intro_Func124(game: &mut Game) {
     CinematicFunction_Intro_Func122(game);
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x1a4b) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x1a4d) as *mut u16,
+        ram_ptr!(game, u16; 0x1a4b),
+        ram_ptr!(game, u16; 0x1a4d),
         -256i32 as u32,
     );
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0x1993) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0x1991) as *mut u16,
+        ram_ptr!(game, u16; 0x1993),
+        ram_ptr!(game, u16; 0x1991),
         (ram_word!(game, cinematic_var13) as u32) << 16i32
             | ram_word!(game, cinematic_var14) as u32,
     );
@@ -6280,7 +6139,7 @@ pub unsafe fn CinematicFunction_Intro_Func126(game: &mut Game) {
     set_ram_word!(game.cinematic_var5 = 0u16);
     set_ram_word!(game.cinematic_var6 = 2304u16);
     EnableNMI(game);
-    *(&raw mut game.g_ram as *mut u8).offset(0x51) = 15u8;
+    *ram_ptr!(game; 0x51) = 15u8;
     set_ram_word!(game.layer1_x_pos = 0u16);
     set_ram_word!(game.layer1_y_pos = 0u16);
     EnableHdmaObjects(game);
@@ -6305,16 +6164,16 @@ pub unsafe fn CinematicFunction_Intro_Func129(game: &mut Game) {
     if ram_word!(game, cinematic_var4) == 0 || v0 {
         set_ram_word!(game.cinematic_function = ((0x8be110i32) as u16));
         set_ram_word!(game.cinematic_var4 = 120u16);
-        *(&raw mut game.g_ram as *mut u8).offset(0x69) = 16u8;
+        *ram_ptr!(game; 0x69) = 16u8;
     }
 }
 pub unsafe fn CinematicFunction_Intro_Func130(game: &mut Game) {
     HandleFadeIn(game);
-    if *(&raw mut game.g_ram as *mut u8).offset(0x51) == 15u8 {
-        *(&raw mut game.g_ram as *mut u8).offset(0x69) = 2u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 16u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 2u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x72) = 34u8;
+    if *ram_ptr!(game; 0x51) == 15u8 {
+        *ram_ptr!(game; 0x69) = 2u8;
+        *ram_ptr!(game; 0x6b) = 16u8;
+        *ram_ptr!(game; 0x6f) = 2u8;
+        *ram_ptr!(game; 0x72) = 34u8;
         set_ram_word!(game.screen_fade_delay = 0u16);
         set_ram_word!(game.screen_fade_counter = 0u16);
         CopyPalettesToFadingPalettes(game);
@@ -6331,10 +6190,10 @@ pub unsafe fn CinematicFunction_Intro_Func131(game: &mut Game) {
     let v0: bool =
         (update_ram_word!(game.cinematic_var4, wrapping_sub(1), reread) as i32 & 0x8000i32) != 0i32;
     if ram_word!(game, cinematic_var4) == 0 || v0 {
-        *(&raw mut game.g_ram as *mut u8).offset(0x69) = 18u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 4u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 2u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x72) = 2u8;
+        *ram_ptr!(game; 0x69) = 18u8;
+        *ram_ptr!(game; 0x6b) = 4u8;
+        *ram_ptr!(game; 0x6f) = 2u8;
+        *ram_ptr!(game; 0x72) = 2u8;
         set_ram_word!(game.cinematic_var4 = 180u16);
         set_ram_word!(game.cinematic_function = ((0x8be190i32) as u16));
         CinematicFunction_Intro_Func133(game);
@@ -6347,8 +6206,8 @@ pub unsafe fn CinematicFunction_Intro_Func132(game: &mut Game) {
     if ram_word!(game, cinematic_var4) == 0 || v0 {
         let mut v1: u16 = 0u16;
         loop {
-            (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap[(v1 as i32 + 288i32) as usize] =
+            (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap
+                [(v1 as i32 + 288i32) as usize] =
                 crate::rtl::rom_table_word!(game, 0x8cdc9b, v1 as isize);
             v1 = v1.wrapping_add(1);
             if (((v1 as i32 * 2i32 - 576i32) as i16) >= 0i16) {
@@ -6356,10 +6215,10 @@ pub unsafe fn CinematicFunction_Intro_Func132(game: &mut Game) {
             }
         }
         CinematicUpdateSomeBg(game);
-        *(&raw mut game.g_ram as *mut u8).offset(0x69) = 1u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x72) = 0u8;
+        *ram_ptr!(game; 0x69) = 1u8;
+        *ram_ptr!(game; 0x6b) = 0u8;
+        *ram_ptr!(game; 0x6f) = 0u8;
+        *ram_ptr!(game; 0x72) = 0u8;
         set_ram_word!(game.cinematic_var4 = 180u16);
         set_ram_word!(game.cinematic_function = ((0x8be1d2i32) as u16));
         set_ram_word!(game.g_word_7E0D9C = 0u16);
@@ -6386,10 +6245,10 @@ pub unsafe fn CinematicFunction_Intro_Func134(game: &mut Game) {
                     game,
                 );
                 set_ram_word!(game.cinematic_function = ((0x8be293i32) as u16));
-                *(&raw mut game.g_ram as *mut u8).offset(0x69) = 16u8;
-                *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 0u8;
-                *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 0u8;
-                *(&raw mut game.g_ram as *mut u8).offset(0x72) = 0u8;
+                *ram_ptr!(game; 0x69) = 16u8;
+                *ram_ptr!(game; 0x6b) = 0u8;
+                *ram_ptr!(game; 0x6f) = 0u8;
+                *ram_ptr!(game; 0x72) = 0u8;
                 return;
             }
             CopyPalettesToFadingPalettes(game);
@@ -6400,10 +6259,10 @@ pub unsafe fn CinematicFunction_Intro_Func134(game: &mut Game) {
         }
         ClearYColorsFromIndexX(0x1a0u16, 0x10u16, game);
         ComposeFadingPalettes(game);
-        *(&raw mut game.g_ram as *mut u8).offset(0x69) = 2u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 16u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 2u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x72) = 34u8;
+        *ram_ptr!(game; 0x69) = 2u8;
+        *ram_ptr!(game; 0x6b) = 16u8;
+        *ram_ptr!(game; 0x6f) = 2u8;
+        *ram_ptr!(game; 0x72) = 34u8;
         set_ram_word!(game.cinematic_function = ((0x8be265i32) as u16));
     }
 }
@@ -6426,16 +6285,15 @@ pub unsafe fn CinematicFunction_Intro_Func135(game: &mut Game) {
     {
         let mut i: i32 = 574i32;
         while i >= 0i32 {
-            *(((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap as *mut u16)
+            *(((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16)
                 .offset(288) as *mut u8)
                 .offset(i as u16 as i32 as isize) as *mut u16) = 127u16;
             i -= 2i32;
         }
         let mut v1: u16 = 0u16;
         loop {
-            (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap[(v1 as i32 + 384i32) as usize] =
+            (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap
+                [(v1 as i32 + 384i32) as usize] =
                 crate::rtl::rom_table_word!(game, 0x8cdedb, v1 as isize);
             v1 = v1.wrapping_add(1);
             if (((v1 as i32 * 2i32 - 128i32) as i16) >= 0i16) {
@@ -6443,10 +6301,10 @@ pub unsafe fn CinematicFunction_Intro_Func135(game: &mut Game) {
             }
         }
         CinematicUpdateSomeBg(game);
-        *(&raw mut game.g_ram as *mut u8).offset(0x69) = 1u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x72) = 0u8;
+        *ram_ptr!(game; 0x69) = 1u8;
+        *ram_ptr!(game; 0x6b) = 0u8;
+        *ram_ptr!(game; 0x6f) = 0u8;
+        *ram_ptr!(game; 0x72) = 0u8;
         set_ram_word!(game.cinematic_var13 = 180u16);
         set_ram_word!(game.cinematic_function = ((0x8be2ddi32) as u16));
     }
@@ -6459,10 +6317,10 @@ pub unsafe fn CinematicFunction_Intro_Func137(game: &mut Game) {
         if ram_word!(game, game_time_hours) as i32 - 3i32 & 0x8000i32 != 0
             || ram_word!(game, game_time_hours) as i32 - 10i32 & 0x8000i32 != 0
         {
-            *(&raw mut game.g_ram as *mut u8).offset(0x69) = 2u8;
-            *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 16u8;
-            *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 2u8;
-            *(&raw mut game.g_ram as *mut u8).offset(0x72) = 34u8;
+            *ram_ptr!(game; 0x69) = 2u8;
+            *ram_ptr!(game; 0x6b) = 16u8;
+            *ram_ptr!(game; 0x6f) = 2u8;
+            *ram_ptr!(game; 0x72) = 34u8;
             set_ram_word!(game.cinematic_function = ((0x8be314i32) as u16));
         } else {
             set_ram_word!(game.cinematic_function = ((0x8be342i32) as u16));
@@ -6484,14 +6342,14 @@ pub unsafe fn CinematicFunction_Intro_Func138(game: &mut Game) {
 }
 pub unsafe fn CinematicFunction_Intro_Func145(game: &mut Game) {
     if (update_ram_word!(game.cinematic_var4, wrapping_sub(1), reread) as i32 & 0x8000i32) != 0i32 {
-        *(&raw mut game.g_ram as *mut u8).offset(0x69) = 16u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x72) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x55) = 7u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x5f) = 0x80u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x58) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x5d) = 0u8;
+        *ram_ptr!(game; 0x69) = 16u8;
+        *ram_ptr!(game; 0x6b) = 0u8;
+        *ram_ptr!(game; 0x6f) = 0u8;
+        *ram_ptr!(game; 0x72) = 0u8;
+        *ram_ptr!(game; 0x55) = 7u8;
+        *ram_ptr!(game; 0x5f) = 0x80u8;
+        *ram_ptr!(game; 0x58) = 0u8;
+        *ram_ptr!(game; 0x5d) = 0u8;
         set_ram_word!(game.cinematic_function = ((0x8bdb9di32) as u16));
         set_ram_word!(game.cinematic_var14 = 0u16);
         if ram_word!(game, game_time_hours) as i32 - 3i32 & 0x8000i32 != 0 {
@@ -6579,17 +6437,17 @@ pub unsafe fn CinematicFunction_Intro_Func141(game: &mut Game) {
     CinematicFunction_Intro_Func140(game);
     CinematicFunction_Intro_Func142(game);
     if update_ram_word!(game.cinematic_var4, wrapping_sub(1), reread) == 0 {
-        *(&raw mut game.g_ram as *mut u8).offset(0x55) = 1u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x69) = 17u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x72) = 49u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0) = 63u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1) = 95u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2) = -97i32 as u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x5f) = 0u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x58) = 78u8;
-        *(&raw mut game.g_ram as *mut u8).offset(0x5d) = 84u8;
+        *ram_ptr!(game; 0x55) = 1u8;
+        *ram_ptr!(game; 0x69) = 17u8;
+        *ram_ptr!(game; 0x6b) = 0u8;
+        *ram_ptr!(game; 0x6f) = 0u8;
+        *ram_ptr!(game; 0x72) = 49u8;
+        *ram_ptr!(game; 0x74, 0) = 63u8;
+        *ram_ptr!(game; 0x74, 1) = 95u8;
+        *ram_ptr!(game; 0x74, 2) = -97i32 as u8;
+        *ram_ptr!(game; 0x5f) = 0u8;
+        *ram_ptr!(game; 0x58) = 78u8;
+        *ram_ptr!(game; 0x5d) = 84u8;
         let mut v0: u16 = 384u16;
         loop {
             set_ram_word!(
@@ -6610,8 +6468,7 @@ pub unsafe fn CinematicFunction_Intro_Func141(game: &mut Game) {
         set_ram_word!(game.cinematicbg_var3 = 19456u16);
         let mut i: i32 = 126i32;
         while i >= 0i32 {
-            *(((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap as *mut u16)
+            *(((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16)
                 .offset(384) as *mut u8)
                 .offset(i as u16 as i32 as isize) as *mut u16) = 127u16;
             i -= 2i32;
@@ -6621,20 +6478,20 @@ pub unsafe fn CinematicFunction_Intro_Func141(game: &mut Game) {
 }
 pub unsafe fn CinematicFunction_Intro_Func143(game: &mut Game) {
     let mut j: u16 = 0;
-    let ref mut fresh69 = *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0);
+    let ref mut fresh69 = *ram_ptr!(game; 0x74, 0);
     *fresh69 = (*fresh69).wrapping_sub(1);
     if *fresh69 as i32 - 32i32 & 0x80i32 != 0 {
-        *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(0) = 32u8;
+        *ram_ptr!(game; 0x74, 0) = 32u8;
     }
-    let ref mut fresh70 = *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1);
+    let ref mut fresh70 = *ram_ptr!(game; 0x74, 1);
     *fresh70 = (*fresh70).wrapping_sub(1);
     if *fresh70 as i32 - 64i32 & 0x80i32 != 0 {
-        *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(1) = 64u8;
+        *ram_ptr!(game; 0x74, 1) = 64u8;
     }
-    let ref mut fresh71 = *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2);
+    let ref mut fresh71 = *ram_ptr!(game; 0x74, 2);
     *fresh71 = (*fresh71).wrapping_sub(1);
     if *fresh71 as i32 + 0x80i32 & 0x80i32 != 0 {
-        *(&raw mut game.g_ram as *mut u8).offset(0x74).offset(2) = 0x80u8;
+        *ram_ptr!(game; 0x74, 2) = 0x80u8;
     }
     let v0: bool =
         (update_ram_word!(game.cinematic_var4, wrapping_sub(1), reread) as i32 & 0x8000i32) != 0i32;
@@ -6655,8 +6512,7 @@ pub unsafe fn CinematicFunction_Intro_Func143(game: &mut Game) {
         }
         j = 30u16;
         while (j as i32 & 0x8000i32) == 0i32 {
-            *((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16)
-                .offset(((j as i32 >> 1i32) + 240i32) as isize) =
+            *(ram_ptr!(game, u16; 0xc000)).offset(((j as i32 >> 1i32) + 240i32) as isize) =
                 crate::rtl::rom_table_word!(game, 0x8cefe9, (j as i32 >> 1i32) as isize);
             j = (j).wrapping_sub(2u16);
         }
@@ -6678,8 +6534,8 @@ pub unsafe fn CinematicFunction_Intro_Func144(game: &mut Game) {
     let mut v3: u16 = v5;
     j = 30u16;
     while (j as i32 & 0x8000i32) == 0i32 {
-        *((&raw mut game.g_ram as *mut u8).offset(0xc000) as *mut u16)
-            .offset(((j as i32 >> 1i32) + 240i32) as isize) = *(RomPtr_8C(v3, game) as *mut u16);
+        *(ram_ptr!(game, u16; 0xc000)).offset(((j as i32 >> 1i32) + 240i32) as isize) =
+            *(RomPtr_8C(v3, game) as *mut u16);
         v3 = (v3).wrapping_sub(2u16);
         j = (j).wrapping_sub(2u16);
     }
@@ -6736,11 +6592,9 @@ pub unsafe fn CalcItemPercentageCount(k: u16, instrp: u16, game: &mut Game) -> u
     let r20: u16 = (RegWord as i32 % 10i32) as u16;
     if r18 != 0 {
         let v5: i32 = ((4u16).wrapping_mul(r18)) as i32 >> 1i32;
-        (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap[462i32 as usize] =
+        (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[462i32 as usize] =
             crate::rtl::rom_table_word!(game, 0x8be741, v5 as isize);
-        (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap[494i32 as usize] =
+        (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[494i32 as usize] =
             crate::rtl::rom_table_word!(game, 0x8be741, (v5 + 1i32) as isize);
     }
     let mut v6: u16 = r20;
@@ -6754,30 +6608,25 @@ pub unsafe fn CalcItemPercentageCount(k: u16, instrp: u16, game: &mut Game) -> u
     }
     if current_block == 18317007320854588510 {
         let v7: i32 = ((4u16).wrapping_mul(v6)) as i32 >> 1i32;
-        (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap[463i32 as usize] =
+        (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[463i32 as usize] =
             crate::rtl::rom_table_word!(game, 0x8be741, v7 as isize);
-        (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap[495i32 as usize] =
+        (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[495i32 as usize] =
             crate::rtl::rom_table_word!(game, 0x8be741, (v7 + 1i32) as isize);
     }
     let v8: i32 = ((4u16).wrapping_mul(r22)) as i32 >> 1i32;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000)).pause_menu_map_tilemap
-        [464i32 as usize] = crate::rtl::rom_table_word!(game, 0x8be741, v8 as isize);
-    (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000)).pause_menu_map_tilemap
-        [496i32 as usize] = crate::rtl::rom_table_word!(game, 0x8be741, (v8 + 1i32) as isize);
-    (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000)).pause_menu_map_tilemap
-        [465i32 as usize] = 14442u16;
-    (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000)).pause_menu_map_tilemap
-        [497i32 as usize] = 14458u16;
+    (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[464i32 as usize] =
+        crate::rtl::rom_table_word!(game, 0x8be741, v8 as isize);
+    (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[496i32 as usize] =
+        crate::rtl::rom_table_word!(game, 0x8be741, (v8 + 1i32) as isize);
+    (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[465i32 as usize] = 14442u16;
+    (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[497i32 as usize] = 14458u16;
     instrp
 }
 pub unsafe fn CinematicFunction_Intro_Func146(k: u16, j: u16, game: &mut Game) -> u16 {
     if ram_word!(game, japanese_text_flag) != 0 {
         let mut i: i32 = 63i32;
         while i >= 0i32 {
-            (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap[(i + 736i32) as usize] =
+            (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap[(i + 736i32) as usize] =
                 crate::rtl::rom_table_word!(game, 0x8cdf5b, i as isize);
             i -= 1;
         }
@@ -6787,8 +6636,7 @@ pub unsafe fn CinematicFunction_Intro_Func146(k: u16, j: u16, game: &mut Game) -
 pub unsafe fn CinematicFunction_Intro_Func147(k: u16, j: u16, game: &mut Game) -> u16 {
     let mut i: i32 = 126i32;
     while i >= 0i32 {
-        *(((&raw mut (*((&raw mut game.g_ram as *mut u8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap as *mut u16)
+        *(((&raw mut (*(ram_ptr!(game, Ram3000; 0x3000))).pause_menu_map_tilemap as *mut u16)
             .offset(736) as *mut u8)
             .offset(i as u16 as i32 as isize) as *mut u16) = 127u16;
         i -= 2i32;
@@ -6807,9 +6655,8 @@ pub unsafe fn CinematicFunction_Intro_Func148(game: &mut Game) {
 pub unsafe fn CinematicFunction_Intro_Func127(game: &mut Game) {
     let mut v1: i16 = 0;
     let mut v4: i16 = 0;
-    let mut v0: u16 = (&raw mut game.g_ram as *mut u8)
-        .offset(0xe0c)
-        .offset_from(&raw mut game.g_ram as *mut u8) as c_long as u16;
+    let mut v0: u16 =
+        ram_ptr!(game; 0xe0c).offset_from(&raw mut game.g_ram as *mut u8) as c_long as u16;
     v1 = 0i16;
     loop {
         v4 = v1;
@@ -6982,8 +6829,8 @@ pub unsafe fn CinematicFunction_Intro_Func150(j: u16, game: &mut Game) {
 pub unsafe fn CinematicFunction_Intro_Func151(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0x1a9d) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0x1afd) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
         128u32,
     );
     set_ram_word!(game.cinematicspr_arr6[v1] = ram_word!(game, cinematicspr_arr6[v1]));
@@ -7051,20 +6898,12 @@ pub unsafe fn CinematicFunction_Intro_Func162(j: u16, game: &mut Game) {
     CinematicFunction_Intro_Func158(j, game);
 }
 pub unsafe fn CinematicFunction_Intro_Func163(j: u16, game: &mut Game) {
-    CinematicFunction_Intro_Func160(
-        j,
-        *((&raw mut game.g_ram as *mut u8).offset(0xdf0) as *mut u16),
-        game,
-    );
+    CinematicFunction_Intro_Func160(j, *(ram_ptr!(game, u16; 0xdf0)), game);
     set_ram_word!(game.cinematicbg_arr7[(j as i32 >> 1i32)] = 180u16);
     CinematicFunction_Intro_Func158(j, game);
 }
 pub unsafe fn CinematicFunction_Intro_Func164(j: u16, game: &mut Game) {
-    CinematicFunction_Intro_Func160(
-        j,
-        *((&raw mut game.g_ram as *mut u8).offset(0xdf2) as *mut u16),
-        game,
-    );
+    CinematicFunction_Intro_Func160(j, *(ram_ptr!(game, u16; 0xdf2)), game);
     set_ram_word!(game.cinematicbg_arr7[(j as i32 >> 1i32)] = 188u16);
     CinematicFunction_Intro_Func158(j, game);
 }
@@ -7207,12 +7046,12 @@ pub unsafe fn CinematicFunction_Intro_Func180(k: u16, game: &mut Game) {
     };
 }
 pub unsafe fn CinematicSprInstr_Func181(k: u16, j: u16, game: &mut Game) -> u16 {
-    *(&raw mut game.g_ram as *mut u8).offset(0x69) = 3u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 16u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 2u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x72) = 34u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x5d) = 100u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x59) = 84u8;
+    *ram_ptr!(game; 0x69) = 3u8;
+    *ram_ptr!(game; 0x6b) = 16u8;
+    *ram_ptr!(game; 0x6f) = 2u8;
+    *ram_ptr!(game; 0x72) = 34u8;
+    *ram_ptr!(game; 0x5d) = 100u8;
+    *ram_ptr!(game; 0x59) = 84u8;
     set_ram_word!(game.cinematic_var4 = 0u16);
     set_ram_word!(game.cinematic_function = ((0x8be58ai32) as u16));
     j
@@ -7237,12 +7076,12 @@ pub unsafe fn CinematicFunction_Intro_Func184(j: u16, game: &mut Game) {
 }
 pub unsafe fn CinematicSprInstr_Func185(k: u16, j: u16, game: &mut Game) -> u16 {
     let mut v0: u16 = 0;
-    *(&raw mut game.g_ram as *mut u8).offset(0x69) = 17u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 2u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 2u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x72) = 17u8;
+    *ram_ptr!(game; 0x69) = 17u8;
+    *ram_ptr!(game; 0x6b) = 2u8;
+    *ram_ptr!(game; 0x6f) = 2u8;
+    *ram_ptr!(game; 0x72) = 17u8;
     *(&raw mut v0 as *mut u8).offset(0) = 124u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x59) = 124u8;
+    *ram_ptr!(game; 0x59) = 124u8;
     SpawnCinematicSpriteObjectToR18(addr_kCinematicSpriteObjectDef_8BEEBB as u16, 0u16, game);
     SpawnCinematicSpriteObjectToR18(addr_kCinematicSpriteObjectDef_8BEEF7 as u16, 2u16, game);
     SpawnPalfxObject(addr_kPalfx_E1C8 as u16, game);
@@ -7251,19 +7090,19 @@ pub unsafe fn CinematicSprInstr_Func185(k: u16, j: u16, game: &mut Game) -> u16 
     j
 }
 pub unsafe fn CinematicSprInstr_Func186(k: u16, j: u16, game: &mut Game) -> u16 {
-    *(&raw mut game.g_ram as *mut u8).offset(0x69) = 3u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 18u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 2u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x72) = 51u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x58) = 116u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x59) = 120u8;
+    *ram_ptr!(game; 0x69) = 3u8;
+    *ram_ptr!(game; 0x6b) = 18u8;
+    *ram_ptr!(game; 0x6f) = 2u8;
+    *ram_ptr!(game; 0x72) = 51u8;
+    *ram_ptr!(game; 0x58) = 116u8;
+    *ram_ptr!(game; 0x59) = 120u8;
     SpawnPalfxObject(addr_kPalfx_E1CC as u16, game);
     SpawnCinematicSpriteObjectToR18(addr_kCinematicSpriteObjectDef_8BEEC1 as u16, 6u16, game);
     j
 }
 pub unsafe fn CinematicSprInstr_Func187(k: u16, j: u16, game: &mut Game) -> u16 {
-    *(&raw mut game.g_ram as *mut u8).offset(0x69) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 0u8;
+    *ram_ptr!(game; 0x69) = 0u8;
+    *ram_ptr!(game; 0x6b) = 0u8;
     set_ram_word!(game.palette_buffer[0] = 0x7fffu16);
     set_ram_word!(game.palette_buffer[128] = 0x7fffu16);
     let mut i: i32 = 30i32;
@@ -7286,13 +7125,13 @@ pub unsafe fn CinematicSprPreInstr_F35A(k: u16, game: &mut Game) {
 pub unsafe fn CinematicFunction_Intro_Func189(k: u16, game: &mut Game) {
     let v1: i32 = k as i32 >> 1i32;
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0x1b7d) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0x1afd) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1b7d)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
         -32i32 as u32,
     );
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0x1a7d) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0x1add) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1a7d)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1add)).offset(v1 as isize),
         (ram_word!(game, cinematicspr_goto_timer[v1]) as u32) << 16i32
             | ram_word!(game, cinematicspr_arr7[v1]) as u32,
     );
@@ -7325,8 +7164,8 @@ pub unsafe fn CinematicSprInstr_Func192(k: u16, j: u16, game: &mut Game) -> u16 
     set_ram_word!(game.suit_pickup_light_beam_pos = hours2 as u16);
     let min1: i32 = ram_word!(game, game_time_minutes) as i32 / 10i32;
     let min2: i32 = ram_word!(game, game_time_minutes) as i32 % 10i32;
-    *((&raw mut game.g_ram as *mut u8).offset(0xdf0) as *mut u16) = min1 as u16;
-    *((&raw mut game.g_ram as *mut u8).offset(0xdf2) as *mut u16) = min2 as u16;
+    *(ram_ptr!(game, u16; 0xdf0)) = min1 as u16;
+    *(ram_ptr!(game, u16; 0xdf2)) = min2 as u16;
     j
 }
 pub unsafe fn CinematicSprInstr_Func193(k: u16, j: u16, game: &mut Game) -> u16 {
@@ -7414,7 +7253,7 @@ pub unsafe fn CinematicSprPreInstr_F528(k: u16, game: &mut Game) {
     CinematicFunction_Intro_Func210_EndingSamusFall(k, game);
     let v1: i32 = k as i32 >> 1i32;
     if ram_word!(game, cinematicbg_arr8[v1]) as i32 + 80i32 & 0x8000i32 != 0 {
-        *(&raw mut game.g_ram as *mut u8).offset(0x52) = 3u8;
+        *ram_ptr!(game; 0x52) = 3u8;
         set_ram_word!(game.cinematicspr_instr_timer[v1] = 1u16);
         set_ram_word!(game.cinematicspr_instr_ptr[v1] = addr_word_8BED95 as u16);
         set_ram_word!(game.cinematicspr_preinstr_func[v1] = ((0x8bf5ddi32) as u16));
@@ -7473,10 +7312,10 @@ pub unsafe fn CinematicFunction_Intro_Func215(k: u16, game: &mut Game) {
 pub unsafe fn CinematicSprInstr_Func217(k: u16, j: u16, game: &mut Game) -> u16 {
     set_ram_word!(game.cinematicbg_arr9[(k as i32 >> 1i32)] = 3584u16);
     set_ram_word!(game.cinematic_function = ((0x8be3aei32) as u16));
-    *(&raw mut game.g_ram as *mut u8).offset(0x69) = 17u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x6b) = 16u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x6f) = 2u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x72) = -127i32 as u8;
+    *ram_ptr!(game; 0x69) = 17u8;
+    *ram_ptr!(game; 0x6b) = 16u8;
+    *ram_ptr!(game; 0x6f) = 2u8;
+    *ram_ptr!(game; 0x72) = -127i32 as u8;
     set_ram_word!(game.cinematic_var8 = -4i32 as u16);
     set_ram_word!(game.cinematic_var10 = -8i32 as u16);
     set_ram_word!(game.cinematic_var4 = 16u16);
@@ -7494,14 +7333,14 @@ pub unsafe fn CinematicSprInstr_Func218(k: u16, j: u16, game: &mut Game) -> u16 
 }
 pub unsafe fn CinematicFunction_Intro_Func210_EndingSamusFall(k: u16, game: &mut Game) {
     AddToHiLo(
-        (&raw mut game.g_ram as *mut u8).offset(0xb2e) as *mut u16,
-        (&raw mut game.g_ram as *mut u8).offset(0xb2c) as *mut u16,
+        ram_ptr!(game, u16; 0xb2e),
+        ram_ptr!(game, u16; 0xb2c),
         0x3800u32,
     );
     let v1: i32 = k as i32 >> 1i32;
     AddToHiLo(
-        ((&raw mut game.g_ram as *mut u8).offset(0x1a9d) as *mut u16).offset(v1 as isize),
-        ((&raw mut game.g_ram as *mut u8).offset(0x1afd) as *mut u16).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1a9d)).offset(v1 as isize),
+        (ram_ptr!(game, u16; 0x1afd)).offset(v1 as isize),
         (ram_word!(game, samus_y_speed) as u32) << 16i32 | ram_word!(game, samus_y_subspeed) as u32,
     );
 }
@@ -7542,8 +7381,8 @@ pub unsafe fn CinematicFunction_Intro_Func219(k: u16, j: u16, game: &mut Game) -
             break;
         }
     }
-    *(&raw mut game.g_ram as *mut u8).offset(0x69) = 0u8;
-    *(&raw mut game.g_ram as *mut u8).offset(0x51) = 0x80u8;
+    *ram_ptr!(game; 0x69) = 0u8;
+    *ram_ptr!(game; 0x51) = 0x80u8;
     set_ram_word!(game.screen_fade_delay = 0u16);
     set_ram_word!(game.screen_fade_counter = 0u16);
     set_ram_word!(game.cinematic_var9 = 0u16);

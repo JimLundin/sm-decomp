@@ -31,6 +31,7 @@ use crate::game::sm_a0::{
 };
 use crate::game::sm_a9::MoveEnemyWithVelocity;
 use crate::game_state::Game;
+use crate::ram_map::ram_ptr;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::{AddToHiLo, SetHiLo};
@@ -1396,7 +1397,7 @@ pub fn MaridiaBeybladeTurtle_Func2(k: u16, game: &mut Game) {
 }
 pub unsafe fn MaridiaBeybladeTurtle_Func3(k: u16, game: &mut Game) {
     MaridiaBeybladeTurtle_Func4(game);
-    if (*(&raw mut game.g_ram as *mut u8).offset(0x5b5) as i32 & 1i32) == 0i32 {
+    if (*ram_ptr!(game; 0x5b5) as i32 & 1i32) == 0i32 {
         if CheckIfEnemyTouchesSamus(k, game) != 0 {
             update_ram_word!(game.extra_samus_x_displacement, wrapping_sub(1));
         }
@@ -1430,8 +1431,8 @@ pub unsafe fn MaridiaBeybladeTurtle_Func6(k: u16, game: &mut Game) {
         let E: *mut Enemy_MaridiaTurtle = Get_MaridiaTurtle(k as i32, game);
         (*E).mte_var_A = ((0xa29083i32) as u16);
         AddToHiLo(
-            (&raw mut game.g_ram as *mut u8).offset(0xb58) as *mut u16,
-            (&raw mut game.g_ram as *mut u8).offset(0xb56) as *mut u16,
+            ram_ptr!(game, u16; 0xb58),
+            ram_ptr!(game, u16; 0xb56),
             -(((*E).mte_var_E as i32) << 16i32 | (*E).mte_var_03 as i32) as u32,
         );
         if ram_word!(game, extra_samus_x_displacement) as i32 + 16i32 & 0x8000i32 != 0 {
@@ -1605,7 +1606,7 @@ pub unsafe fn MiniMaridiaBeybladeTurtle_Func3(k: u16, game: &mut Game) {
         (*E).base.instruction_timer = 1u16;
         (*E).mmte_var_04 = 1u16;
         let mut v2: u16 = g_word_A28D68;
-        if (*(&raw mut game.g_ram as *mut u8).offset(0xa1e) as i32 & 0xfi32) == 8i32 {
+        if (*ram_ptr!(game; 0xa1e) as i32 & 0xfi32) == 8i32 {
             v2 = g_word_A28D6A;
         }
         (*E).mmte_var_E = v2;
@@ -2504,10 +2505,8 @@ pub unsafe fn MaridiaSpikeyShell_7(game: &mut Game) {
     let fresh29 = (*E).mssl_var_F;
     (*E).mssl_var_F = (*E).mssl_var_F.wrapping_sub(1);
     if fresh29 == 1u16 {
-        (*E).mssl_var_E = ((*((&raw mut game.g_ram as *mut u8).offset(0x5e5) as *mut u16
-            as *mut u8)
-            .offset(1isize)) as u16)
-            & (1u16);
+        (*E).mssl_var_E =
+            ((*(ram_ptr!(game, u16; 0x5e5) as *mut u8).offset(1isize)) as u16) & (1u16);
     }
 }
 pub unsafe fn MaridiaSpikeyShell_8(k: u16, game: &mut Game) {
@@ -2654,8 +2653,8 @@ pub unsafe fn GunshipTop_3(k: u16, game: &mut Game) {
     let E: *mut Enemy_GunshipTop = Get_GunshipTop(k as i32, game);
     if (*E).base.y_pos as i32 - 768i32 & 0x8000i32 != 0 {
         AddToHiLo(
-            (&raw mut game.g_ram as *mut u8).offset(0xafa) as *mut u16,
-            (&raw mut game.g_ram as *mut u8).offset(0xafc) as *mut u16,
+            ram_ptr!(game, u16; 0xafa),
+            ram_ptr!(game, u16; 0xafc),
             0x48000u32,
         );
         let v3: *mut Enemy_GunshipTop = Get_GunshipTop(k as i32 + 128i32, game);
@@ -2677,8 +2676,8 @@ pub unsafe fn GunshipTop_3(k: u16, game: &mut Game) {
         );
     } else {
         AddToHiLo(
-            (&raw mut game.g_ram as *mut u8).offset(0xafa) as *mut u16,
-            (&raw mut game.g_ram as *mut u8).offset(0xafc) as *mut u16,
+            ram_ptr!(game, u16; 0xafa),
+            ram_ptr!(game, u16; 0xafc),
             0x28000u32,
         );
         let v8: *mut Enemy_GunshipTop = Get_GunshipTop(k as i32 + 128i32, game);
@@ -2774,7 +2773,7 @@ pub unsafe fn GunshipTop_7(k: u16, game: &mut Game) {
         set_ram_word!(game.frame_handler_alfa = ((0x90e695i32) as u16));
         set_ram_word!(game.frame_handler_beta = ((0x90e725i32) as u16));
         set_ram_word!(game.loading_game_state = kLoadingGameState_5_Main as u16);
-        let ref mut fresh11 = *((&raw mut game.g_ram as *mut u8).offset(0xd8f8) as *mut u16);
+        let ref mut fresh11 = *(ram_ptr!(game, u16; 0xd8f8));
         *fresh11 = (*fresh11) | (1u16);
         set_ram_word!(game.load_station_index = 0u16);
         SaveToSram(ram_word!(game, selected_save_slot), game);
@@ -2792,7 +2791,7 @@ pub unsafe fn GunshipTop_8(k: u16, game: &mut Game) {
                 < 0i16
             && (((*E).base.y_pos) as i16).wrapping_sub((ram_word!(game, samus_y_pos)) as i16)
                 >= 0i16
-            && *(&raw mut game.g_ram as *mut u8).offset(0xa1f) == 0
+            && *ram_ptr!(game; 0xa1f) == 0
             && (ram_word!(game, joypad1_newkeys) as i32 & kButton_Down as i32) != 0i32
         {
             (*E).gtp_var_F = ((0xa2aa4fi32) as u16);
@@ -2852,8 +2851,8 @@ pub unsafe fn GunshipTop_12(k: u16, game: &mut Game) {
         (*E).gtp_var_E = 0u16;
         set_ram_word!(game.substate = 0u16);
         set_ram_word!(game.suit_pickup_light_beam_pos = 0u16);
-        *((&raw mut game.g_ram as *mut u8).offset(0xdf0) as *mut u16) = 0u16;
-        *((&raw mut game.g_ram as *mut u8).offset(0xdf2) as *mut u16) = 0u16;
+        *(ram_ptr!(game, u16; 0xdf0)) = 0u16;
+        *(ram_ptr!(game, u16; 0xdf2)) = 0u16;
         CallSomeSamusCode(0xau16, game);
     } else {
         Samus_RestoreHealth(2u16, game);
@@ -2886,7 +2885,7 @@ pub unsafe fn GunshipTop_13(k: u16, game: &mut Game) {
         return;
     }
     if rv != 2i32 {
-        let ref mut fresh3 = *((&raw mut game.g_ram as *mut u8).offset(0xd8f8) as *mut u16);
+        let ref mut fresh3 = *(ram_ptr!(game, u16; 0xd8f8));
         *fresh3 = (*fresh3) | (1u16);
         set_ram_word!(game.load_station_index = 0u16);
         SaveToSram(ram_word!(game, selected_save_slot), game);
@@ -3836,9 +3835,7 @@ pub unsafe fn NorfairLavajumpingEnemy_Func_2(k: u16, game: &mut Game) {
     (*E).nley_var_C = crate::rtl::rom_table_word!(
         game,
         0xa2be86,
-        ((((*((&raw mut game.g_ram as *mut u8).offset(0x5e5) as *mut u16 as *mut u8).offset(1isize))
-            as u16)
-            & (6u16)) as i32
+        ((((*(ram_ptr!(game, u16; 0x5e5) as *mut u8).offset(1isize)) as u16) & (6u16)) as i32
             >> 1i32) as isize,
     );
     (*E).nley_var_F = ((0xa2bf3ei32) as u16);

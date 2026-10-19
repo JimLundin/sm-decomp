@@ -1,6 +1,7 @@
 use crate::game::sm_80::Vector_IRQ;
 use crate::game::sm_82::RunOneFrameOfGame;
 use crate::game_state::Game;
+use crate::ram_map::ram_ptr;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 pub use crate::snes::registers::*;
 use crate::types::SpcPlayer;
@@ -348,26 +349,20 @@ pub unsafe fn PatchBugs(mode: u32, addr: u32, game: &mut Game) -> u32 {
         } else if FixBugHook(0xa29bc1u32, game) {
             (*game.g_cpu).a = 1u16;
         } else if FixBugHook(0x82e910u32, game) {
-            *((&raw mut game.g_ram as *mut u8).offset(22) as *mut u16) = 0u16;
+            *(ram_ptr!(game, u16; 22)) = 0u16;
         } else if FixBugHook(0x90a4c8u32, game) {
-            *((&raw mut game.g_ram as *mut u8).offset(18) as *mut u16) = 0u16;
+            *(ram_ptr!(game, u16; 18)) = 0u16;
         } else if FixBugHook(0xa99f60u32, game) {
-            *((&raw mut game.g_ram as *mut u8).offset(22) as *mut u16) = 1u16;
+            *(ram_ptr!(game, u16; 22)) = 1u16;
         } else if FixBugHook(0x94a85bu32, game) {
-            memset(
-                (&raw mut game.g_ram as *mut u8).offset(0xd82) as *mut c_void,
-                0i32,
-                8 as size_t,
-            );
+            memset(ram_ptr!(game, c_void; 0xd82), 0i32, 8 as size_t);
         } else if FixBugHook(0xa0a35cu32, game) {
             set_ram_word!(
-                game.REMOVED_R18 = *((&raw mut game.g_ram as *mut u8).offset(0xcea) as *mut u16
-                    as *mut u8)
-                    .offset(
-                        (size_of::<u16>() as usize)
-                            .wrapping_div(size_of::<u8>() as usize)
-                            .wrapping_sub(1_usize) as isize,
-                    ) as u16
+                game.REMOVED_R18 = *(ram_ptr!(game, u16; 0xcea) as *mut u8).offset(
+                    (size_of::<u16>() as usize)
+                        .wrapping_div(size_of::<u8>() as usize)
+                        .wrapping_sub(1_usize) as isize,
+                ) as u16
             );
             set_ram_word!(
                 game.REMOVED_R20 = (ram_word!(game, REMOVED_R18) as i32
@@ -1524,7 +1519,7 @@ pub unsafe fn SnesInit(filename: *const c_char, game: &mut Game) -> *mut Snes {
         None,
         game,
     );
-    *(&raw mut game.g_ram as *mut u8).offset(0x611) = 1u8;
+    *ram_ptr!(game; 0x611) = 1u8;
     PatchBytes(0x82896bu32, &[0x20, 0xf, 0xf7], game);
     PatchBytes(0x82f70fu32, &[0x7c, 0x81, 0x89], game);
     PatchBytes(0x8ba362u32, &[0x5f, 0xf7], game);
@@ -2002,7 +1997,7 @@ pub unsafe fn RunOneFrameOfGame_Both(game: &mut Game) {
     if ram_word!(game, game_state) as i32 == 0xffffi32 {
         (*(*game.g_snes).cpu).k = 0x80u8;
         (*(*game.g_snes).cpu).pc = 0x8459u16;
-        *(&raw mut game.g_ram as *mut u8).offset(0x611) = 3u8;
+        *ram_ptr!(game; 0x611) = 3u8;
     }
     if ram_word!(game, menu_index) as i32 & 0xff00i32 != 0 {
         printf(b"MENU INDEX TOO BIG!\n\0" as *const u8 as *const c_char);

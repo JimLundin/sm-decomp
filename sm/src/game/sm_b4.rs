@@ -1,5 +1,6 @@
 use crate::game::sm_81::DrawSpritemapWithBaseTile;
 use crate::game_state::Game;
+use crate::ram_map::ram_ptr;
 use crate::ram_map::{ram_word, set_ram_word, update_ram_word};
 use crate::rtl::{RomPtr, Unreachable};
 
@@ -72,7 +73,7 @@ pub unsafe fn HandleSpriteObjects(game: &mut Game) {
                     if v1 as i32 & 0x8000i32 != 0 {
                         current_block_9 = 8895462745870634114;
                     } else {
-                        *((&raw mut game.g_ram as *mut u8).offset(0xeff8) as *mut u16).offset(
+                        *(ram_ptr!(game, u16; 0xeff8)).offset(
                             (ram_word!(game, sprite_object_index) as i32 >> 1i32) as isize,
                         ) = v1;
                         current_block_9 = 14916268686031723178;
@@ -102,19 +103,19 @@ pub unsafe fn SpriteObject_Instr_RepeatLast(game: &mut Game) {
     set_ram_word!(game.sprite_instr_timer[v2] = 0x7fffu16);
 }
 pub unsafe fn SpriteObject_Instr_Terminate(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut u8).offset(0xef78) as *mut u16)
+    *(ram_ptr!(game, u16; 0xef78))
         .offset((ram_word!(game, sprite_object_index) as i32 >> 1i32) as isize) = 0u16;
 }
 pub unsafe fn SpriteObject_Instr_Goto(game: &mut Game) {
     let v2: u16 = *(RomPtr_B4(
-        *((&raw mut game.g_ram as *mut u8).offset(0xef78) as *mut u16)
+        *(ram_ptr!(game, u16; 0xef78))
             .offset((ram_word!(game, sprite_object_index) as i32 >> 1i32) as isize),
         game,
     )
     .offset(2) as *mut u16);
-    *((&raw mut game.g_ram as *mut u8).offset(0xef78) as *mut u16)
+    *(ram_ptr!(game, u16; 0xef78))
         .offset((ram_word!(game, sprite_object_index) as i32 >> 1i32) as isize) = v2;
-    *((&raw mut game.g_ram as *mut u8).offset(0xeff8) as *mut u16)
+    *(ram_ptr!(game, u16; 0xeff8))
         .offset((ram_word!(game, sprite_object_index) as i32 >> 1i32) as isize) =
         *(RomPtr_B4(v2, game) as *mut u16);
 }
