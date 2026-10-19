@@ -12450,6 +12450,21 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Async room-background pointer (2026-10-19): the state-0 loading path reads
+roomdefroomstate_ptr through its named little-endian RAM accessor, then
+reads bg_data_ptr from live ROM at the packed room-state field offset.
+The read remains after all preceding loading callbacks. No RAM/ROM layout
+or command-dispatch ordering changes. Cargo fmt/check and release build
+pass, native exit 0. Frozen 4b3ca022 plus only this change passes any%
+129,712/0 (161.52s), native exit 0, executing the field read 61 times.
+Waver 58,109/71 (91.82s), native exit 1, executes it 28 times; all 71
+ordered failure diagnostics match the explicit-render baseline exactly.
+Temporary observations strip exactly to frozen clean and maintained source.
+Progress passes: own raw offsets -1, cast lines -1, Rust lines +2 add the
+named accessor; other counters unchanged. No probes or ROM-derived assets
+committed. Next: resume the prioritized Waver rendering diagnosis above;
+remaining async FX fields and held gameplay/audio/credits coverage stay open.
+
 Background BG2 clear (2026-10-19): ClearBg2Tilemap writes the same 824
 words through byte-backed slices, retaining descending paired stores to
 4000/4800 and the subsequent VRAM transfer. Command A retains its callback

@@ -295,6 +295,11 @@ impl Game {
         u16::from_le_bytes([self.g_ram[0x78d], self.g_ram[0x78e]])
     }
 
+    /// roomdefroomstate_ptr ($7E:07BB in ram_map).
+    pub fn roomdefroomstate_ptr(&self) -> u16 {
+        u16::from_le_bytes([self.g_ram[0x7bb], self.g_ram[0x7bc]])
+    }
+
     /// reg_BG1VOFS ($7E:00B3 in ram_map).
     pub fn reg_bg1vofs(&self) -> u16 {
         u16::from_le_bytes([self.g_ram[0xb3], self.g_ram[0xb4]])

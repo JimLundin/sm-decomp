@@ -9912,13 +9912,10 @@ pub unsafe fn DoorTransitionFunction_LoadMoreThings_Async(game: &mut Game) -> Co
                         game,
                     );
                 }
-                bg_data_ptr = (*get_RoomDefRoomstate(
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x7bb as ::core::ffi::c_int as isize)
-                        as *mut uint16),
-                    game,
-                ))
-                .bg_data_ptr as uint16;
+                bg_data_ptr = game.read_rom_word(
+                    0x8f0000 | u32::from(game.roomdefroomstate_ptr()),
+                    core::mem::offset_of!(RoomDefRoomstate, bg_data_ptr),
+                );
                 if bg_data_ptr & 0x8000 != 0 {
                     loop {
                         let command = game.read_rom_word(0x8f0000 | u32::from(bg_data_ptr), 0);
