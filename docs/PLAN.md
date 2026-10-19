@@ -31,19 +31,18 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest focused check: frozen `50be5476` plus framebuffer clears through
-raw pointers passes any% 129712/0 (290.86s) and Waver 58109/0 (140.93s),
-both native exits 0. The verifier clears both 245,760-byte arrays between
-synchronous frames without creating references to mutable statics; buffer
-storage, pitch and clear-before-render order remain unchanged. A 1,200-frame
-poisoned-buffer control confirms both full arrays are zero after each clear;
-PPU pointers and pitches match before clearing, after clearing and after
-rendering. A shortened 224-row clear fails the ordinary comparison at pixel
-(0, 224), with no RAM
-differences. The maintained verifier equals the tested source, and temporary
-observations strip exactly. Source review, formatting, release build and
-progress pass; both static_mut_refs warnings are gone. Rust lines +2 document
-the pointer-lifetime guarantee; other residue counters are unchanged.
+Latest focused check: frozen `69b844d9` plus non-null IRQ callbacks passes
+any% 129712/0 (229.46s) and Waver 58109/0 (117.06s), both native exits 0.
+The fourteen callbacks retain their order, handler bodies and selector
+expression; direct dispatch removes the impossible null case. A shared
+9,000-frame prefix passes with 2,814 actual IRQ calls: 2 for selector 0 and
+1,406 each for selectors 4 and 6. Constructed old/current checks cover
+1,360 pairs across all fourteen handlers, 680 even/odd pairs and 240 door
+callbacks across all four directions; all 128 KiB RAM, PPU/DMA/Snes fields
+and ordered register writes match. Eight invalid selectors panic before any
+callback or write and preserve compared state. Frozen source hashes and
+exact observation stripping pass. Source review, formatting, release build
+and progress pass. Own Rust lines -3; other residue counters are unchanged.
 
 Everything that existed before is in the branch `archive/pre-transpile-2026-10-17`.
 

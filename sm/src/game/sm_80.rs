@@ -3561,29 +3561,26 @@ pub unsafe fn DisableIrqInterrupts(game: &mut Game) {
         .offset(0x84 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh41 = (*fresh41 as ::core::ffi::c_int & !(0x30 as ::core::ffi::c_int)) as uint16;
 }
-static kIrqHandlers: [Option<Func_V>; 14] = unsafe {
-    [
-        Some(IrqHandler_0_Nothing as unsafe fn(&mut Game) -> ()),
-        Some(IrqHandler_2_DisableIRQ as unsafe fn(&mut Game) -> ()),
-        Some(IrqHandler_4_Main_BeginHudDraw as unsafe fn(&mut Game) -> ()),
-        Some(IrqHandler_6_Main_EndHudDraw as unsafe fn(&mut Game) -> ()),
-        Some(IrqHandler_8_StartOfDoor_BeginHud as unsafe fn(&mut Game) -> ()),
-        Some(IrqHandler_10_StartOfDoor_EndHud as unsafe fn(&mut Game) -> ()),
-        Some(IrqHandler_12_Draygon_BeginHud as unsafe fn(&mut Game) -> ()),
-        Some(IrqHandler_14_Draygon_EndHud as unsafe fn(&mut Game) -> ()),
-        Some(IrqHandler_16_VerticalDoor_BeginHud as unsafe fn(&mut Game) -> ()),
-        Some(IrqHandler_18_VerticalDoor_EndHud as unsafe fn(&mut Game) -> ()),
-        Some(IrqHandler_20_VerticalDoor_EndDraw as unsafe fn(&mut Game) -> ()),
-        Some(IrqHandler_22_HorizDoor_BeginHud as unsafe fn(&mut Game) -> ()),
-        Some(IrqHandler_24_HorizDoor_EndHud as unsafe fn(&mut Game) -> ()),
-        Some(IrqHandler_26_HorizDoor_EndDraw as unsafe fn(&mut Game) -> ()),
-    ]
-};
+static kIrqHandlers: [Func_V; 14] = [
+    IrqHandler_0_Nothing,
+    IrqHandler_2_DisableIRQ,
+    IrqHandler_4_Main_BeginHudDraw,
+    IrqHandler_6_Main_EndHudDraw,
+    IrqHandler_8_StartOfDoor_BeginHud,
+    IrqHandler_10_StartOfDoor_EndHud,
+    IrqHandler_12_Draygon_BeginHud,
+    IrqHandler_14_Draygon_EndHud,
+    IrqHandler_16_VerticalDoor_BeginHud,
+    IrqHandler_18_VerticalDoor_EndHud,
+    IrqHandler_20_VerticalDoor_EndDraw,
+    IrqHandler_22_HorizDoor_BeginHud,
+    IrqHandler_24_HorizDoor_EndHud,
+    IrqHandler_26_HorizDoor_EndDraw,
+];
 pub unsafe fn Vector_IRQ(game: &mut Game) {
     kIrqHandlers[(*((&raw mut game.g_ram as *mut uint8).offset(0xab as ::core::ffi::c_int as isize)
         as *mut uint16) as ::core::ffi::c_int
-        >> 1 as ::core::ffi::c_int) as usize]
-        .expect("non-null function pointer")(game);
+        >> 1 as ::core::ffi::c_int) as usize](game);
 }
 static kHudTilemaps_Row1to3: [uint16; 96] = [
     0x2c0f as ::core::ffi::c_int as uint16,
