@@ -315,7 +315,38 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration: frozen `81b2e60e` passes any% 129712/0
+Latest reviewed integration: frozen `64e8d165` passes full any% 129712/0
+(184.20s) and Kraid phase two 119823/0 (195.59s), native exits 0. This
+combines the projectile read/update interface and spawn-parameter correction,
+unmasked $1993/$1994 comparison, Cargo host reuse and RAM metadata
+consolidation. The longer route includes the exact refill/Hi-Jump/Spazer
+prefixes and exercises 46 rooms and 48 enemy definitions.
+
+Final checkpoint RAM confirms room $A59F, X139/Y267, pose $00A4, health
+205/299, missiles 9/15 and Supers 1/5; Kraid remains alive at 400 health.
+Items/beams remain 1104/1004 and $0611..$0618 are zero. Ordinary non-timing
+diagnostics match the baselines after excluding their optional trace and
+final-state logging. The single `X undefined` diagnostic persists; its
+callback/register-flow investigation remains open.
+Zero failing frames does not resolve that diagnostic or prove credits.
+
+All 70 source/config/host files match the committed snapshot after newline
+normalization. Source, DLL, ROM and copied inputs remain unchanged. Cargo
+builds the local package afresh with only registry dependency artifacts
+reused; saves are isolated and SM_/QC_ overrides cleared.
+
+Independent review of the host and metadata changes confirms all 1169
+compiled metadata rows, including type/shape and alias order, and diagnostic
+lookup at every RAM byte. Native checks confirm game/included-host edits
+reach the DLL, compile errors preserve the cached DLL and reject the build,
+and unchanged builds preserve a loaded DLL. A changed loaded DLL is rejected
+until its process exits. Reviewed files match eaf300f1 and 64e8d165.
+Formatting/check, normal workspace release (0.45s), whitespace and progress
+pass with source stable during those checks. This audit adds no Rust or
+residue; later gameplay edits retain separate validation. Main Kraid, credits,
+persistence and broader hardware/audio coverage remain unfinished.
+
+Earlier reviewed integration: frozen `81b2e60e` passes any% 129712/0
 (180.70s) and Hi-Jump 99191/0 (158.87s), both native exits 0. Hi-Jump
 visits 39 rooms and 37 enemy definitions; its first 90706 controller frames
 exactly equal Spazer. The same DLL resumes the previously verified Spazer
