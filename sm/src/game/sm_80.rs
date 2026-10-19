@@ -2392,115 +2392,40 @@ pub unsafe fn NmiUpdatePalettesAndOam(game: &mut Game) {
     WriteReg(CGADD as ::core::ffi::c_int as uint16, 0 as uint8, game);
     WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 3 as uint8, game);
 }
-pub unsafe fn NmiTransferSamusToVram(game: &mut Game) {
-    WriteReg(VMAIN as ::core::ffi::c_int as uint16, 0x80 as uint8, game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x71d as ::core::ffi::c_int as isize)
-        as *mut uint16) as uint8
-        != 0
-    {
-        let mut td: *mut SamusTileAnimationTileDefs = RomPtr_92(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x71f as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            game,
-        ) as *mut SamusTileAnimationTileDefs;
-        WriteRegWord(
-            VMADDL as ::core::ffi::c_int as uint16,
-            0x6000 as uint16,
-            game,
-        );
-        WriteRegWord(
-            DMAP1 as ::core::ffi::c_int as uint16,
-            0x1801 as uint16,
-            game,
-        );
-        WriteRegWord(
-            A1T1L as ::core::ffi::c_int as uint16,
-            (*td).src.addr as uint16,
-            game,
-        );
-        WriteReg(A1B1 as ::core::ffi::c_int as uint16, (*td).src.bank, game);
-        WriteRegWord(
-            DAS1L as ::core::ffi::c_int as uint16,
-            (*td).part1_size,
-            game,
-        );
-        WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-        WriteRegWord(
-            VMADDL as ::core::ffi::c_int as uint16,
-            0x6100 as uint16,
-            game,
-        );
-        WriteRegWord(
-            A1T1L as ::core::ffi::c_int as uint16,
-            ((*td).src.addr as ::core::ffi::c_int + (*td).part1_size as ::core::ffi::c_int)
-                as uint16,
-            game,
-        );
-        if (*td).part2_size != 0 {
-            WriteRegWord(
-                DAS1L as ::core::ffi::c_int as uint16,
-                (*td).part2_size,
-                game,
-            );
-            WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-        }
+unsafe fn transfer_samus_tile_half(descriptor_addr: u16, vram_addr: u16, game: &mut Game) {
+    // Keep the diagnostic and failure flag for low-address ROM mirrors.
+    let _ = RomPtr_92(descriptor_addr, game);
+    let descriptor = 0x928000 | u32::from(descriptor_addr & 0x7fff);
+    // Packed fields: source address at 0, bank at 2, and byte counts at 3 and 5.
+    WriteRegWord(VMADDL as u16, vram_addr, game);
+    WriteRegWord(DMAP1 as u16, 0x1801, game);
+    WriteRegWord(A1T1L as u16, game.read_rom_word(descriptor, 0), game);
+    WriteReg(A1B1 as u16, game.read_rom_byte(descriptor, 2), game);
+    // A zero first count still runs a 65,536-byte DMA.
+    WriteRegWord(DAS1L as u16, game.read_rom_word(descriptor, 3), game);
+    WriteReg(MDMAEN as u16, 2, game);
+
+    // Prepare the second destination/source even when its count is zero.
+    WriteRegWord(VMADDL as u16, vram_addr.wrapping_add(0x100), game);
+    let second_source = game
+        .read_rom_word(descriptor, 0)
+        .wrapping_add(game.read_rom_word(descriptor, 3));
+    WriteRegWord(A1T1L as u16, second_source, game);
+    if game.read_rom_word(descriptor, 5) != 0 {
+        WriteRegWord(DAS1L as u16, game.read_rom_word(descriptor, 5), game);
+        WriteReg(MDMAEN as u16, 2, game);
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x71d as ::core::ffi::c_int as isize)
-        as *mut uint16 as *mut uint8)
-        .offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                .wrapping_sub(1 as usize) as isize,
-        )
-        != 0
-    {
-        let mut td_0: *mut SamusTileAnimationTileDefs = RomPtr_92(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x721 as ::core::ffi::c_int as isize)
-                as *mut uint16),
-            game,
-        )
-            as *mut SamusTileAnimationTileDefs;
-        WriteRegWord(
-            VMADDL as ::core::ffi::c_int as uint16,
-            0x6080 as uint16,
-            game,
-        );
-        WriteRegWord(
-            DMAP1 as ::core::ffi::c_int as uint16,
-            0x1801 as uint16,
-            game,
-        );
-        WriteRegWord(
-            A1T1L as ::core::ffi::c_int as uint16,
-            (*td_0).src.addr as uint16,
-            game,
-        );
-        WriteReg(A1B1 as ::core::ffi::c_int as uint16, (*td_0).src.bank, game);
-        WriteRegWord(
-            DAS1L as ::core::ffi::c_int as uint16,
-            (*td_0).part1_size,
-            game,
-        );
-        WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-        WriteRegWord(
-            VMADDL as ::core::ffi::c_int as uint16,
-            0x6180 as uint16,
-            game,
-        );
-        WriteRegWord(
-            A1T1L as ::core::ffi::c_int as uint16,
-            ((*td_0).src.addr as ::core::ffi::c_int + (*td_0).part1_size as ::core::ffi::c_int)
-                as uint16,
-            game,
-        );
-        if (*td_0).part2_size != 0 {
-            WriteRegWord(
-                DAS1L as ::core::ffi::c_int as uint16,
-                (*td_0).part2_size,
-                game,
-            );
-            WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 2 as uint8, game);
-        }
+}
+
+pub unsafe fn NmiTransferSamusToVram(game: &mut Game) {
+    WriteReg(VMAIN as u16, 0x80, game);
+    if game.g_ram[0x71d] != 0 {
+        let top_half_src = u16::from_le_bytes([game.g_ram[0x71f], game.g_ram[0x720]]);
+        transfer_samus_tile_half(top_half_src, 0x6000, game);
+    }
+    if game.g_ram[0x71e] != 0 {
+        let bottom_half_src = u16::from_le_bytes([game.g_ram[0x721], game.g_ram[0x722]]);
+        transfer_samus_tile_half(bottom_half_src, 0x6080, game);
     }
 }
 pub unsafe fn NmiProcessAnimtilesVramTransfers(game: &mut Game) {

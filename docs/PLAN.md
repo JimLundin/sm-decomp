@@ -66,18 +66,23 @@ No maintained source or own residue counters change in this quality check.
 Later Cargo-profile and gameplay changes retain separate verification;
 full gameplay/credits, hardware/audio coverage and remaining masks stay open.
 
-Latest focused check: frozen `e1a9a3d3` plus direct NMI register reads passes
-any% 129712/0 (305.76s) and Waver 58109/0 (149.57s), both native exits 0.
-NmiUpdateIoRegisters retains all 47/59 ordered hardware writes, four mirror
-stores and live byte-read order. The shared 9,000-frame prefix passes with
-9,000 actual old/current comparisons: 7,841 neither-mode, 455 primary Mode 7
-and 704 fake-only Mode 7 calls. All three mode cases execute naturally.
-Another 4,608 hardware controls cover IRQ/timer flags, latch history, both
-PPUs and high mode bits. Full RAM, both PPUs, CPU/Snes/Cart fields and SRAM
-match; restoration is checked before each candidate call. Ordered register
-values and mirror states match at every write. Frozen hashes, exact stripping
-and independent review pass. Formatting, release build and progress pass.
-Own raw offsets -69, cast lines -137 and Rust lines -355; other counters unchanged.
+Latest focused check: frozen `90f257d8` plus the shared Samus tile DMA
+helper passes any% 129712/0 (250.19s) and Waver 58109/0 (144.30s), both
+native exits 0. Live descriptor reads, top-before-bottom order, bank-preserving
+source wrapping and both zero-size quirks remain unchanged. A 9000/0 prefix
+passes 9000 actual old/current comparisons, with 4500 helper entries:
+2250 requests per half, 4500 second DMAs and 1,527,296 transferred bytes per
+side. Full captured RAM, both PPUs, CPU/Snes/Cart, SRAM, inputs, DMA state
+and g_fail match after checked restoration. Ordered register writes, ROM
+lookups, source reads and transferred bytes match. All 23 constructed
+controls pass, including zero first size, skipped second DMA, source wrapping,
+descriptor spill and low-address diagnostics (131,697 transferred bytes per
+side). Natural calls cover inactive/both halves and nonzero second sizes;
+independent-half and edge cases are constructed, and all observed sources
+are ROM. Frozen hashes, exact observation stripping and independent review
+pass. Formatting, release build and progress pass. Own raw offsets -4,
+cast lines -27 and Rust lines -75; unsafe functions +1 because the private
+helper consolidates the two hardware-transfer sequences.
 
 Everything that existed before is in the branch `archive/pre-transpile-2026-10-17`.
 
