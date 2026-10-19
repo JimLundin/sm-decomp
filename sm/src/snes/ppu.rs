@@ -643,6 +643,17 @@ pub unsafe fn ppu_handleVblank(mut ppu: *mut Ppu) {
 fn ClearBackdrop(buf: &mut PpuPixelPrioBufs) {
     buf.data.fill(0x0500);
 }
+fn update_brightness_tables(brightness: u8, normal: &mut [u8; 63], half: &mut [u8; 64]) {
+    for (i, multiplier) in normal[..32].iter_mut().enumerate() {
+        let color = i as u16;
+        let value = (((color << 3 | color >> 2) * u16::from(brightness)) / 15) as u8;
+        *multiplier = value;
+        half[i * 2 + 1] = value;
+        half[i * 2] = value;
+    }
+    let maximum = normal[31];
+    normal[32..].fill(maximum);
+}
 pub unsafe fn ppu_runLine(mut ppu: *mut Ppu, mut line: ::core::ffi::c_int, game: &mut Game) {
     if line == 0 as ::core::ffi::c_int {
         (*ppu).mosaicStartLine = 1 as uint8_t;
@@ -650,31 +661,13 @@ pub unsafe fn ppu_runLine(mut ppu: *mut Ppu, mut line: ::core::ffi::c_int, game:
         (*ppu).timeOver = false_0 != 0;
         (*ppu).evenFrame = !(*ppu).evenFrame;
     } else {
-        if (*ppu).brightness as ::core::ffi::c_int
-            != (*ppu).lastBrightnessMult as ::core::ffi::c_int
-        {
-            let mut ppu_brightness: uint8_t = (*ppu).brightness;
-            (*ppu).lastBrightnessMult = ppu_brightness;
-            let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-            while i < 32 as ::core::ffi::c_int {
-                (*ppu).brightnessMult[i as usize] =
-                    ((i << 3 as ::core::ffi::c_int | i >> 2 as ::core::ffi::c_int)
-                        * ppu_brightness as ::core::ffi::c_int
-                        / 15 as ::core::ffi::c_int) as uint8_t;
-                (*ppu).brightnessMultHalf
-                    [(i * 2 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as usize] =
-                    (*ppu).brightnessMult[i as usize];
-                (*ppu).brightnessMultHalf[(i * 2 as ::core::ffi::c_int) as usize] = (*ppu)
-                    .brightnessMultHalf
-                    [(i * 2 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as usize];
-                i += 1;
-            }
-            memset(
-                (&raw mut (*ppu).brightnessMult as *mut uint8_t)
-                    .offset(32 as ::core::ffi::c_int as isize) as *mut uint8_t
-                    as *mut ::core::ffi::c_void,
-                (*ppu).brightnessMult[31 as ::core::ffi::c_int as usize] as ::core::ffi::c_int,
-                31 as size_t,
+        if (*ppu).brightness != (*ppu).lastBrightnessMult {
+            let brightness = (*ppu).brightness;
+            (*ppu).lastBrightnessMult = brightness;
+            update_brightness_tables(
+                brightness,
+                &mut (*ppu).brightnessMult,
+                &mut (*ppu).brightnessMultHalf,
             );
         }
         ClearBackdrop(&mut (*ppu).objBuffer);

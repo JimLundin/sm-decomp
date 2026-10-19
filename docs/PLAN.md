@@ -161,6 +161,21 @@ change and no new replay result belong to this cleanup.
 
 ## The oracle
 
+PPU brightness-table cleanup (2026-10-19): cache generation now uses a safe
+array helper, preserving marker/store order, equal-marker reuse, half-color
+rounding and the normal table's saturated tail. Actual old/current scanline
+controls pass 18,432 pairs across all brightness bytes, marker choices,
+line-zero/nonzero, blanking, both renderers and half/full color; all 127 table
+bytes, named state and guarded pixel buffers match. A 3,600/0 boot prefix
+executes 167 updates per PPU across all 16 brightness levels, including 160
+visible and seven blank updates. Frozen 46477fcd plus only this change passes
+any% 129712/0 (265.16s), native exit 0, and Waver 58109/71 (144.63s), native
+exit 1; all 71 ordered diagnostics equal baseline. Cargo fmt/check, release
+build and progress pass. Cast lines -12, Rust lines -7; other own counters
+and layouts unchanged. Temporary controls remain outside maintained source.
+Next: separately verify the coordinated PPU reset cleanup. Existing rendering,
+audio timing, masked RAM and complete gameplay/credits gaps remain open.
+
 Independent Power Bomb block QC (2026-10-19): frozen 76ef4899 plus only
 the sm_84 candidate and temporary call counters passes any% 129712/0
 (254.29s), native exit 0, and map9ad9-ball136 83073/71 (199.50s), native
