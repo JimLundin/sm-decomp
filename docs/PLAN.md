@@ -13167,6 +13167,24 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Async door-loading RAM fields (2026-10-19):
+DoorTransitionFunction_LoadMoreThings_Async now uses byte-backed FX/flag
+reads, the palette-buffer word at C188 and existing named HDMA/direction/
+Samus-X/transition accessors. Callback, read/store and coroutine order remain
+unchanged. Frozen 3d81e4d2 plus only this source passes clean any% 129712/0
+(286.15s) and Waver 58109/0 (155.91s), both native exit 0.
+
+Separate observed full replays pass 129712/0 and 58109/0. State-0 entries
+are 61/28, FX zero/nonzero 51/10 and 24/4, and completion direction counts
+are [36,25,0,0] and [11,13,2,2]. Every rewritten branch executes; the unchanged
+state-2 resume remains unexercised. Supporting extracted comparisons match
+263,164 full-RAM/callback-trace/return cases with substituted callbacks.
+Independent source review has no findings. Cargo fmt/check, release build
+and progress pass. Own raw offsets -10, cast lines -28, Rust lines -39;
+other counters unchanged. No probes or ROM-derived assets committed.
+Next: remaining covered room-loading cleanup; full gameplay/credits,
+audio timing, masked RAM and ownership remain unfinished.
+
 Morph Ball eye-beam full intensity (2026-10-19): rename EA3C to
 HdmaobjPreInstr_MorphBallEyeBeamFull and name its dispatch constant.
 Byte-backed reads/stores preserve the activation word and updater-first

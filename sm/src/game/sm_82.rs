@@ -9896,19 +9896,12 @@ pub unsafe fn DoorTransitionFunction_LoadMoreThings_Async(game: &mut Game) -> Co
                 ResetProjectileData(game);
                 Samus_LoadSuitTargetPalette(game);
                 ClearFxTilemap(game);
-                if *((&raw mut game.g_ram as *mut uint8)
-                    .offset(0x1964 as ::core::ffi::c_int as isize)
-                    as *mut uint16)
-                    != 0
-                {
+                let fx_tilemap_ptr = u16::from_le_bytes([game.g_ram[0x1964], game.g_ram[0x1965]]);
+                if fx_tilemap_ptr != 0 {
                     CopyToVramNow(
-                        addr_unk_605BE0 as ::core::ffi::c_int as uint16,
-                        (0x8a0000 as ::core::ffi::c_int
-                            | *((&raw mut game.g_ram as *mut uint8)
-                                .offset(0x1964 as ::core::ffi::c_int as isize)
-                                as *mut uint16) as ::core::ffi::c_int)
-                            as uint32,
-                        2112 as uint16,
+                        addr_unk_605BE0 as u16,
+                        0x8a0000 | u32::from(fx_tilemap_ptr),
+                        2112,
                         game,
                     );
                 }
@@ -9946,25 +9939,15 @@ pub unsafe fn DoorTransitionFunction_LoadMoreThings_Async(game: &mut Game) -> Co
                     break 's_188;
                 }
                 2370887241019905314 => {
-                    if *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x931 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int
-                        & 0x8000 as ::core::ffi::c_int
-                        == 0 as ::core::ffi::c_int
-                    {
+                    let door_transition_flag =
+                        u16::from_le_bytes([game.g_ram[0x931], game.g_ram[0x932]]);
+                    if door_transition_flag & 0x8000 == 0 {
                         current_block_45 = 16864618877125483552;
                         continue;
                     }
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xc000 as ::core::ffi::c_int as isize)
-                        as *mut uint16)
-                        .offset(196 as ::core::ffi::c_int as isize) = 15328 as uint16;
+                    game.g_ram[0xc188..0xc18a].copy_from_slice(&15328u16.to_le_bytes());
                     SpawnBG3ScrollHdmaObject(game);
-                    let ref mut fresh28 = *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x18b0 as ::core::ffi::c_int as isize)
-                        as *mut uint16);
-                    *fresh28 =
-                        (*fresh28 as ::core::ffi::c_int | 0x8000 as ::core::ffi::c_int) as uint16;
+                    game.set_hdma_objects_enable_flag(game.hdma_objects_enable_flag() | 0x8000);
                     current_block_45 = 17993885260445251066;
                 }
                 16864618877125483552 => {
@@ -9981,36 +9964,14 @@ pub unsafe fn DoorTransitionFunction_LoadMoreThings_Async(game: &mut Game) -> Co
                         game.set_coroutine_state_1(2);
                         return _coret__0 as CoroutineRet;
                     }
-                    if *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x791 as ::core::ffi::c_int as isize)
-                        as *mut uint16) as ::core::ffi::c_int
-                        & 2 as ::core::ffi::c_int
-                        == 0 as ::core::ffi::c_int
-                    {
-                        if *((&raw mut game.g_ram as *mut uint8)
-                            .offset(0x791 as ::core::ffi::c_int as isize)
-                            as *mut uint16) as ::core::ffi::c_int
-                            & 3 as ::core::ffi::c_int
-                            != 0 as ::core::ffi::c_int
-                        {
-                            let ref mut fresh29 = *((&raw mut game.g_ram as *mut uint8)
-                                .offset(0xaf6 as ::core::ffi::c_int as isize)
-                                as *mut uint16);
-                            *fresh29 = (*fresh29 as ::core::ffi::c_int
-                                & 0xfff8 as ::core::ffi::c_int)
-                                as uint16;
+                    if game.door_direction() & 2 == 0 {
+                        if game.door_direction() & 3 != 0 {
+                            game.set_samus_x_pos(game.samus_x_pos() & 0xfff8);
                         } else {
-                            let ref mut fresh30 = *((&raw mut game.g_ram as *mut uint8)
-                                .offset(0xaf6 as ::core::ffi::c_int as isize)
-                                as *mut uint16);
-                            *fresh30 = (*fresh30 as ::core::ffi::c_int | 7 as ::core::ffi::c_int)
-                                as uint16;
+                            game.set_samus_x_pos(game.samus_x_pos() | 7);
                         }
                     }
-                    *((&raw mut game.g_ram as *mut uint8)
-                        .offset(0x99c as ::core::ffi::c_int as isize)
-                        as *mut uint16) =
-                        (0x82e659 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+                    game.set_door_transition_function(0xe659);
                     current_block_45 = 6417057564578538666;
                 }
             }
