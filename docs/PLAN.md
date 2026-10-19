@@ -719,6 +719,39 @@ change and no new replay result belong to this cleanup.
 
 ## The oracle
 
+Kraid second-phase milestone (2026-10-19): preserve the ordinary-input
+extension through frame 119823 when the combat timebox ends. Main Kraid is
+not defeated. Full boot on the previously reviewed immutable baseline
+passes 119823/0 (266.67s), native exit 0, with 101626 gameplay frames,
+46 rooms, 48 enemy definitions and zero credits frames. Final state 8 is
+room $A59F, X139/Y267, pose $00A4, health 205/299, missiles 9/15 and
+Supers 1/5. Items are 1104 and beams 1004 equipped/collected; all eight
+$0611..$0618 bytes are zero. The original continuation checkpoint records
+Kraid at 400/1000 health; the reused full-boot host does not log boss health.
+
+Ignored movies/kraid-phase2.inputs has SHA-256
+9a96dde032411c41ff8d899a7fbfbd41baa602d7ec0a2a4055bae1675840f838.
+It preserves the exact 115663-frame refill, 99191-frame Hi-Jump and
+90706-frame Spazer prefixes. The unchanged library is frozen 7d0d2050 plus
+the final operand patch from a0912a84, with read-only final-state logging.
+All 62 source files, 67 reference artifacts, copied run files, ROM, inputs
+and metadata retain their hashes. SM_VERIFY_TRACE=1 only enables existing
+read-only coverage logging. The original 438e7755 plus menu-fix route
+library independently passes the 4160-frame continuation with zero failures.
+Its final save -30 is an isolated supported slot; it replaces no prior save.
+No cross-source checkpoint compatibility is claimed.
+
+Exactly one `X undefined` diagnostic remains. Buffered output does not
+identify its exact frame or emitter. The original combat branch places it
+near 119736; an earlier 119733 checkpoint excludes it. Legacy Kraid
+fingernail-touch and foot-retreat handlers emit this text and substitute
+assumed register values. Identify the executed callback and compare its ROM
+register flow before changing those defaults. This milestone therefore
+retains an explicit diagnostic limitation. It does not validate the new
+projectile-parameter mask removal through main Kraid. No maintained Rust or
+committed assets change; the preceding formatting/release/progress checks
+remain applicable. Main Kraid, credits and broader integration remain open.
+
 Enemy-projectile spawn parameter fidelity (2026-10-19): preserve the ROM
 accumulator returned by both allocation wrappers and thread it through
 chained Ceres, Skree, Metalee and Torizo spawns. Successful allocation
