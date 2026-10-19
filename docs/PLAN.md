@@ -262,6 +262,79 @@ borrowed raw places -4 and unsafe functions -1; no helper layer is added.
 Concurrent gameplay changes retain separate verification. No temporary
 controls, probes, checkpoints or ROM-derived assets are committed.
 
+Projectile comparison cleanup (2026-10-19): removed promotions from
+30 exercised comparisons across 17 routines. Both operands have the same
+known u16/i16/i8 type, or one is a literal in that type's range. Widening
+these values to i32 preserves their values and ordering, so comparison
+operators can use the existing types directly. Signedness, operand order,
+short-circuiting and narrowing before the comparison are unchanged.
+The survey adds explicit typed bindings at every candidate to make the
+compiler confirm the actual types, including any local shadowing. Selected
+getters are pure byte-backed reads; no shared borrow or raw access is added.
+
+All 51 surveyed sites compile; 30 execute across any% 129712/0
+(196.62s) and full-boot Varia 122732/0
+(217.04s), with matching old/new booleans.
+Survey exits 2 report only the deliberately required unexecuted probes.
+The 21 unexercised substitutions remain pending. Eighteen comparison
+templates pass 5243392 native boundary checks, sweeping
+every first operand and the fixed threshold or boundary values of the
+second operand. This does not enumerate every pair or prove both outcomes
+occur during gameplay. Survey build: 45.85s.
+
+Final frozen source is 75e0d8ed plus only these substitutions, recovered
+exactly by stripping the survey probes, assertions and boundary helper.
+Clean build 33.66s; final any% 129712/0
+(309.28s) and Varia 122732/0 (320.93s),
+native exits 0, with unchanged source/configuration, DLL/library and fixture
+hashes. Varia includes the Kraid phase-two prefix and its previously attributed
+fingernail diagnostic. After both native exits and the hash check passed,
+the maintained-source guard detected concurrent radius-read edits. An exact
+follow-up audit permits only those six reads in three routines; the 30
+comparison substitutions still match. The staged patch excludes those
+uncommitted reads. Other state/helper changes keep separate integration checks.
+
+Formatting/check and the workspace release build pass (51.31s reported).
+The focused patch removes 60 casts, 35 cast-containing lines
+and 13 Rust lines, with no raw-access or unsafe-function change and
+no added helper. Maintained edit through final result and overlap audit:
+563.52s.
+Observed comparison calls and first/last absolute movie frames follow;
+a dash means unexercised on that route.
+
+| Routine / comparison | Any% calls @ frames | Varia calls @ frames |
+| --- | --- | --- |
+| EprojInstr_MoveRandomlyWithinRadius / `v4 < 0` | - | 108 @ 51016..51827 |
+| EprojColl_858E / `v0 < 5` | - | 8 @ 65377..65681 |
+| EprojColl_85AD / `v0 >= 5` | - | 35 @ 18186..65646 |
+| EprojColl_874E / `v5 >= 0` | - | 17 @ 18213..65646 |
+| EprojColl_874E / `v8 < 0` | - | 17 @ 18213..65646 |
+| EprojBlockCollisition_Horiz / `v10 <= enemy_projectile_x_pos(k)` | 8 @ 70715..70841 | 10 @ 110898..117571 |
+| EprojBlockCollisition_Horiz / `v9 >= enemy_projectile_x_pos(k)` | 2 @ 70731..70837 | 5 @ 50749..117232 |
+| EprojBlockCollisition_Vertical / `v11 <= enemy_projectile_y_pos(k)` | - | 1 @ 65527..65527 |
+| EprojBlockCollisition_Vertical / `v10 >= enemy_projectile_y_pos(k)` | 20 @ 36784..89539 | 217 @ 18189..120279 |
+| SetAreaDependentEprojPropertiesEx / `area_index() == 2` | 62 @ 36745..89543 | - |
+| SetAreaDependentEprojPropertiesEx / `area_index() == 5` | 62 @ 36745..89543 | - |
+| EprojPreInit_MiniKraidSpit / `v2 >= 0` | - | 208 @ 110317..110608 |
+| EprojPreInstr_CeresElevatorPlatform / `samus_y_pos() == 72` | 524 @ 8324..97961 | 131 @ 8324..8454 |
+| EprojInit_BombTorizoLowHealthDrool / `parameter_1 < 0` | - | 6 @ 51056..51056 |
+| EprojInit_BombTorizoLowHealthInitialDrool / `parameter_1 < 0` | - | 30 @ 51056..51494 |
+| sub_86A887 / `v2 >= 0` | - | 1494 @ 51057..51532 |
+| sub_86A887 / `v4 < 0` | - | 1494 @ 51057..51532 |
+| EprojPreInstr_E605 / `v2 >= 0x1000` | - | 64 @ 84016..84079 |
+| EprojInstr_EEAF / `k != 0` | - | 63 @ 35502..120102 |
+| EprojInit_F337 / `v3 != 0` | - | 36 @ 51872..120405 |
+| EprojPreInstr_Pickup / `v6 < samus_x_radius()` | - | 24746 @ 37943..120803 |
+| EprojPreInstr_Pickup / `v8 < varE20` | - | 24206 @ 37943..120803 |
+| EprojPreInstr_Pickup / `v9 < samus_y_radius()` | - | 2461 @ 40434..120803 |
+| EprojPreInstr_Pickup / `v10 < varE22` | - | 2439 @ 40434..120803 |
+| RandomDropRoutine / `varE28 == 0` | - | 99 @ 35502..120405 |
+| RandomDropRoutine / `samus_health() != samus_max_health()` | - | 69 @ 35502..120405 |
+| RandomDropRoutine / `samus_reserve_health() != samus_max_reserve_health()` | - | 9 @ 35502..100796 |
+| RandomDropRoutine / `samus_missiles() != samus_max_missiles()` | - | 69 @ 35502..120405 |
+| RandomDropRoutine / `samus_super_missiles() != samus_max_super_missiles()` | - | 69 @ 35502..120405 |
+| RandomDropRoutine / `samus_power_bombs() != samus_max_power_bombs()` | - | 69 @ 35502..120405 |
+
 ## Validation strategy (2026-10-19)
 
 User priority: shorten the complete edit/build/result cycle. Replaying the
