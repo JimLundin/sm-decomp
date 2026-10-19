@@ -46,7 +46,35 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration: frozen `a85ff831` plus the two cinematic
+Latest verified integration: frozen `d42210df` passes any% 129712/0
+(224.63s), Waver 58109/0 (99.29s), Super Missile 69700/0 (109.15s),
+Green Brinstar Save 71800/0 (113.91s) and Charge Beam 78380/0 (165.48s),
+all native exits 0. This combines the pose/radius/alignment cleanup,
+room-state header stores, PLM coordinates/clears, DMA source addresses and
+cinematic correction. The Charge route visits 25 rooms and 31 enemy
+definitions; full gameplay and credits remain unverified.
+
+A separate observed Charge replay passes 78380/0 (167.43s). Animation
+commands 7/10/11/12 execute 0/0/5/0 times, establishing movie
+coverage for command 11. Only entry hits were counted; its branch
+coverage still needs measurement during cleanup. Commands 7/10/12 remain
+held. All 131 alignment calls have zero adjustment; complete RAM/g_fail
+match the original routine. Nonzero alignment still has only constructed
+coverage.
+
+Clean and observed Charge non-timing stdout/stderr match. All 68 source,
+configuration, build and host files in the clean build match Git after
+newline normalization. Observation changes strip back to that source.
+Source and DLL hashes for both builds, along with all input and ROM file
+hashes, remain stable through replay. Documented route hashes and Charge's save-route prefix match.
+Each replay has separate copied input and save paths, with SM_* overrides
+cleared. Formatting/check, normal Cargo release --locked (1.29s) and
+progress pass. No maintained Rust or own residue counters change.
+Temporary checks/builds are removed. Later concurrent edits retain separate
+verification; disk-save persistence, hardware/audio coverage and masks
+remain unfinished.
+
+Earlier reviewed integration: frozen `a85ff831` plus the two cinematic
 source files from `d610b820` passes any% 129712/0 (320.11s), Waver
 58109/0 (157.06s), Super Missile 69700/0 (201.64s), Green Brinstar
 Save Room 71800/0 (235.55s) and Charge Beam 78380/0 (178.76s), all native
