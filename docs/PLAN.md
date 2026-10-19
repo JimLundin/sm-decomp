@@ -55,6 +55,20 @@ Retain targeted comparisons for state/control-flow changes. Preserve read
 and write order; compound-assignment suggestions need alias/order review.
 Keep plan updates concise. The broader readability goal remains incomplete.
 
+Compiler binding cleanup (2026-10-19): standard cargo clippy --fix removes
+11538 unused mut bindings across all 50 affected files and all Cargo
+targets, including the frontend. Formatting removes 1913 Rust lines.
+Cast tokens, raw operations and unsafe-function counts are unchanged;
+line-based residue counters can change through formatting. No bespoke
+comparison harness was added. The final compiler pass has no unused_mut
+diagnostics. Formatting/check, normal release, stable workspace build and
+progress pass. Frozen 3ea98cae plus this batch passes any% 129712/0
+(163.71s), native exit 0, with fixed source/DLL/fixtures.
+The already-verified unnecessary-cast batch is included in this snapshot.
+Pending initializer/accessor work remains separate. Next: complete the
+bulk scalar-RAM context/type audit, then replace eligible reads by named
+accessors; continue the remaining compiler simplifications in focused batches.
+
 Block-reaction dispatch family (2026-10-19): fourteen retry paths across
 Samus, enemies and enemy projectiles now share the live-block retry loop.
 Nine pointer tables become explicit dispatch; matching shot-axis and probe

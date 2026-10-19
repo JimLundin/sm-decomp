@@ -33,15 +33,15 @@ pub struct FxDef {
 }
 pub use crate::types::GameState;
 #[inline]
-unsafe fn RomPtr_83(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
+unsafe fn RomPtr_83(addr: uint16_t, game: &mut Game) -> *const uint8 {
     RomPtr((0x830000u32) | ((addr) as u32), game)
 }
 #[inline]
-unsafe fn get_FxDef(mut a: uint16, game: &mut Game) -> *mut FxDef {
+unsafe fn get_FxDef(a: uint16, game: &mut Game) -> *mut FxDef {
     RomPtr((0x830000u32) | ((a) as u32), game) as *mut FxDef
 }
-pub unsafe fn LoadFxEntry(mut v0: uint16, game: &mut Game) {
-    let mut FD: *mut FxDef = get_FxDef(
+pub unsafe fn LoadFxEntry(v0: uint16, game: &mut Game) {
+    let FD: *mut FxDef = get_FxDef(
         (*((&raw mut game.g_ram as *mut uint8).offset(0x7cd) as *mut uint16) as ::core::ffi::c_int
             + 16 as ::core::ffi::c_int * (v0 as ::core::ffi::c_int & 7 as ::core::ffi::c_int))
             as uint16,
@@ -58,7 +58,7 @@ pub unsafe fn LoadFxEntry(mut v0: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16) =
         (*FD).fx_liquid_options_ as uint16;
     if (*FD).palette_blend != 0 {
-        let mut v2: ::core::ffi::c_int =
+        let v2: ::core::ffi::c_int =
             (*FD).palette_blend as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(25) =
             *(game.g_rom.offset(crate::rtl::lorom_offset(0x89aa02)) as *const uint8 as *mut uint16)
@@ -108,7 +108,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
         return;
     }
     loop {
-        let mut door_ptr: uint16 = (*get_FxDef(entry_ptr, game)).door_ptr;
+        let door_ptr: uint16 = (*get_FxDef(entry_ptr, game)).door_ptr;
         if door_ptr == 0 {
             break;
         }
@@ -120,7 +120,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
         }
         entry_ptr = (entry_ptr).wrapping_add(16u16);
     }
-    let mut FD: *mut FxDef = get_FxDef(entry_ptr, game);
+    let FD: *mut FxDef = get_FxDef(entry_ptr, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16) = (*FD).base_y_pos;
     *((&raw mut game.g_ram as *mut uint8).offset(0x197a) as *mut uint16) = (*FD).target_y_pos;
     *((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16) = (*FD).y_vel;
@@ -132,7 +132,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x197e) as *mut uint16) =
         (*FD).fx_liquid_options_ as uint16;
     if (*FD).palette_blend != 0 {
-        let mut v4: ::core::ffi::c_int =
+        let v4: ::core::ffi::c_int =
             (*FD).palette_blend as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(25) =
             *(game.g_rom.offset(crate::rtl::lorom_offset(0x89aa02)) as *const uint8 as *mut uint16)
@@ -157,7 +157,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
     }
     if (*FD).palette_fx_bitset != 0 {
         let mut bits: ::core::ffi::c_int = (*FD).palette_fx_bitset as ::core::ffi::c_int;
-        let mut v11: *const uint8 = RomPtr_83(
+        let v11: *const uint8 = RomPtr_83(
             *(game.g_rom.offset(crate::rtl::lorom_offset(0x83ac46)) as *const uint8 as *mut uint16)
                 .offset(
                     *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize,
@@ -178,7 +178,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
     }
     if (*FD).animtiles_bitset != 0 {
         let mut bits_0: ::core::ffi::c_int = (*FD).animtiles_bitset as ::core::ffi::c_int;
-        let mut v14: *const uint8 = RomPtr_83(
+        let v14: *const uint8 = RomPtr_83(
             *(game.g_rom.offset(crate::rtl::lorom_offset(0x83ac56)) as *const uint8 as *mut uint16)
                 .offset(
                     *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize,
@@ -238,7 +238,7 @@ pub unsafe fn RoomCode_CeresElevatorShaft(game: &mut Game) {
             as *mut int16)
             < 0i16
         {
-            let mut v0: ::core::ffi::c_int = ((6u16)
+            let v0: ::core::ffi::c_int = ((6u16)
                 .wrapping_mul(*((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16)))
                 as ::core::ffi::c_int
                 >> 1 as ::core::ffi::c_int;

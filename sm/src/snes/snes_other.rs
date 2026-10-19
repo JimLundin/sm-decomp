@@ -53,7 +53,7 @@ pub struct CartHeader {
 pub const true_0: ::core::ffi::c_int = 1;
 pub const false_0: ::core::ffi::c_int = 0;
 pub unsafe fn snes_loadRom(
-    mut snes: *mut Snes,
+    snes: *mut Snes,
     mut data: *const uint8_t,
     mut length: ::core::ffi::c_int,
     game: &mut Game,
@@ -158,7 +158,7 @@ pub unsafe fn snes_loadRom(
     while !(length <= newLength) {
         newLength *= 2 as ::core::ffi::c_int;
     }
-    let mut newData: *mut uint8_t = malloc(newLength as size_t) as *mut uint8_t;
+    let newData: *mut uint8_t = malloc(newLength as size_t) as *mut uint8_t;
     memcpy(
         newData as *mut ::core::ffi::c_void,
         data as *const ::core::ffi::c_void,
@@ -193,21 +193,21 @@ pub unsafe fn snes_loadRom(
     true_0 != 0
 }
 pub unsafe fn snes_setSamples(
-    mut snes: *mut Snes,
-    mut sampleData: *mut int16_t,
-    mut samplesPerFrame: ::core::ffi::c_int,
+    snes: *mut Snes,
+    sampleData: *mut int16_t,
+    samplesPerFrame: ::core::ffi::c_int,
 ) {
     dsp_getSamples((*(*snes).apu).dsp, sampleData, samplesPerFrame);
 }
 unsafe fn readHeader(
-    mut data: *const uint8_t,
-    mut length: ::core::ffi::c_int,
-    mut location: ::core::ffi::c_int,
-    mut header: *mut CartHeader,
+    data: *const uint8_t,
+    length: ::core::ffi::c_int,
+    location: ::core::ffi::c_int,
+    header: *mut CartHeader,
 ) {
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i < 21 as ::core::ffi::c_int {
-        let mut ch: uint8_t = *data.offset((location + i) as isize);
+        let ch: uint8_t = *data.offset((location + i) as isize);
         if ch as ::core::ffi::c_int >= 0x20 as ::core::ffi::c_int
             && (ch as ::core::ffi::c_int) < 0x7f as ::core::ffi::c_int
         {
@@ -254,7 +254,7 @@ unsafe fn readHeader(
         (*header).headerVersion = 3 as uint8_t;
         let mut i_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
         while i_0 < 2 as ::core::ffi::c_int {
-            let mut ch_0: uint8_t =
+            let ch_0: uint8_t =
                 *data.offset((location - 0x10 as ::core::ffi::c_int + i_0) as isize);
             if ch_0 as ::core::ffi::c_int >= 0x20 as ::core::ffi::c_int
                 && (ch_0 as ::core::ffi::c_int) < 0x7f as ::core::ffi::c_int
@@ -268,8 +268,7 @@ unsafe fn readHeader(
         (*header).makerCode[2 as ::core::ffi::c_int as usize] = 0 as ::core::ffi::c_char;
         let mut i_1: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
         while i_1 < 4 as ::core::ffi::c_int {
-            let mut ch_1: uint8_t =
-                *data.offset((location - 0xe as ::core::ffi::c_int + i_1) as isize);
+            let ch_1: uint8_t = *data.offset((location - 0xe as ::core::ffi::c_int + i_1) as isize);
             if ch_1 as ::core::ffi::c_int >= 0x20 as ::core::ffi::c_int
                 && (ch_1 as ::core::ffi::c_int) < 0x7f as ::core::ffi::c_int
             {
@@ -345,7 +344,7 @@ unsafe fn readHeader(
     } else {
         -(6 as ::core::ffi::c_int)
     };
-    let mut resetVector: uint16_t = (*data.offset((location + 0x3c as ::core::ffi::c_int) as isize)
+    let resetVector: uint16_t = (*data.offset((location + 0x3c as ::core::ffi::c_int) as isize)
         as ::core::ffi::c_int
         | (*data.offset((location + 0x3d as ::core::ffi::c_int) as isize) as ::core::ffi::c_int)
             << 8 as ::core::ffi::c_int) as uint16_t;
@@ -354,7 +353,7 @@ unsafe fn readHeader(
     } else {
         -(20 as ::core::ffi::c_int)
     };
-    let mut opcodeLoc: ::core::ffi::c_int = location + 0x40 as ::core::ffi::c_int
+    let opcodeLoc: ::core::ffi::c_int = location + 0x40 as ::core::ffi::c_int
         - 0x8000 as ::core::ffi::c_int
         + (resetVector as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int);
     let mut opcode: uint8_t = 0xff as uint8_t;

@@ -98,7 +98,7 @@ enemy_layout! {
 }
 
 #[inline]
-unsafe fn RomPtr_B3(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
+unsafe fn RomPtr_B3(addr: uint16_t, game: &mut Game) -> *const uint8 {
     RomPtr((0xb30000u32) | ((addr) as u32), game)
 }
 pub const fnnullsub_171_B3: ::core::ffi::c_int = 0xb3807b;
@@ -141,37 +141,31 @@ pub const fnBotwoon_Func_30: ::core::ffi::c_int = 0xb39f7a;
 pub const fnBotwoon_Func_32: ::core::ffi::c_int = 0xb3e250;
 pub const fnBotwoon_Func_33: uint32 = 11788940;
 #[inline]
-unsafe fn gEnemyData(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut EnemyData {
+unsafe fn gEnemyData(o: ::core::ffi::c_int, game: &mut Game) -> *mut EnemyData {
     (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
         .offset(o as isize) as *mut EnemyData
 }
 #[inline]
-unsafe fn Get_Botwoon(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_Botwoon {
+unsafe fn Get_Botwoon(o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_Botwoon {
     (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
         .offset(o as isize) as *mut Enemy_Botwoon
 }
 #[inline]
-unsafe fn Get_EscapeDachora(
-    mut o: ::core::ffi::c_int,
-    game: &mut Game,
-) -> *mut Enemy_EscapeDachora {
+unsafe fn Get_EscapeDachora(o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_EscapeDachora {
     (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
         .offset(o as isize) as *mut Enemy_EscapeDachora
 }
 #[inline]
-unsafe fn Get_EscapeEtecoon(
-    mut o: ::core::ffi::c_int,
-    game: &mut Game,
-) -> *mut Enemy_EscapeEtecoon {
+unsafe fn Get_EscapeEtecoon(o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_EscapeEtecoon {
     (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
         .offset(o as isize) as *mut Enemy_EscapeEtecoon
 }
 #[inline]
-unsafe fn Get_PipeBug(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_PipeBug {
+unsafe fn Get_PipeBug(o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_PipeBug {
     (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
         .offset(o as isize) as *mut Enemy_PipeBug
@@ -205,23 +199,23 @@ pub unsafe fn Enemy_NormalFrozenAI_B3(game: &mut Game) {
     NormalEnemyFrozenAI(game);
 }
 pub unsafe fn Enemy_SetAiPreInstr_B3(
-    mut k: uint16,
-    mut jp: *const uint16,
+    k: uint16,
+    jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
     (*gEnemyData(k as ::core::ffi::c_int, game)).ai_preinstr = *jp.offset(0);
     jp.offset(1)
 }
 pub unsafe fn Enemy_ClearAiPreInstr_B3(
-    mut k: uint16,
-    mut jp: *const uint16,
+    k: uint16,
+    jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
     (*gEnemyData(k as ::core::ffi::c_int, game)).ai_preinstr = ((0xb3807bi32) as u16) & (0xffffu16);
     jp
 }
 pub unsafe fn UnusedSpinningTurtleEye_Init(game: &mut Game) {
-    let mut v0: *mut EnemyData = gEnemyData(
+    let v0: *mut EnemyData = gEnemyData(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -230,12 +224,12 @@ pub unsafe fn UnusedSpinningTurtleEye_Init(game: &mut Game) {
 }
 pub fn UnusedSpinningTurtleEye_Main() {}
 pub unsafe fn BrinstarPipeBug_Init(game: &mut Game) {
-    let mut PipeBug: *mut Enemy_PipeBug = Get_PipeBug(
+    let PipeBug: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     (*PipeBug).pbg_var_B = (*PipeBug).base.x_pos;
-    let mut y_pos: uint16 = (*PipeBug).base.y_pos;
+    let y_pos: uint16 = (*PipeBug).base.y_pos;
     (*PipeBug).pbg_var_C = y_pos;
     (*PipeBug).pbg_var_00 = (y_pos).wrapping_sub(16u16);
     (*PipeBug).pbg_var_F = ((0xb38880i32) as u16) & (0xffffu16);
@@ -248,13 +242,13 @@ pub unsafe fn BrinstarPipeBug_Init(game: &mut Game) {
     }
 }
 pub unsafe fn BrinstarPipeBug_Main(game: &mut Game) {
-    let mut PipeBug: *mut Enemy_PipeBug = Get_PipeBug(
+    let PipeBug: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     CallEnemyPreInstr((((*PipeBug).pbg_var_F) as u32) | (0xb30000u32), game);
 }
-pub unsafe fn BrinstarPipeBug_PreInstr_1(mut k: uint16, game: &mut Game) {
+pub unsafe fn BrinstarPipeBug_PreInstr_1(k: uint16, game: &mut Game) {
     if CheckIfEnemyIsOnScreen(game) == 0 {
         (*Get_PipeBug(
             *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
@@ -264,7 +258,7 @@ pub unsafe fn BrinstarPipeBug_PreInstr_1(mut k: uint16, game: &mut Game) {
         .pbg_var_F = ((0xb38890i32) as u16) & (0xffffu16);
     }
 }
-pub unsafe fn BrinstarPipeBug_PreInstr_2(mut k: uint16, game: &mut Game) {
+pub unsafe fn BrinstarPipeBug_PreInstr_2(k: uint16, game: &mut Game) {
     let mut SamusEnemyDelta_Y: int16 = 0;
     SamusEnemyDelta_Y = GetSamusEnemyDelta_Y(k, game) as int16;
     if SamusEnemyDelta_Y < 0i16
@@ -272,8 +266,8 @@ pub unsafe fn BrinstarPipeBug_PreInstr_2(mut k: uint16, game: &mut Game) {
             & 0x8000 as ::core::ffi::c_int
             == 0
     {
-        let mut PipeBug: *mut Enemy_PipeBug = Get_PipeBug(k as ::core::ffi::c_int, game);
-        let mut a: uint16 = GetSamusEnemyDelta_X(k, game);
+        let PipeBug: *mut Enemy_PipeBug = Get_PipeBug(k as ::core::ffi::c_int, game);
+        let a: uint16 = GetSamusEnemyDelta_X(k, game);
         (*PipeBug).pbg_var_A =
             ((*PipeBug).pbg_var_A as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int
                 | a as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) as uint16;
@@ -298,11 +292,11 @@ pub unsafe fn BrinstarPipeBug_PreInstr_2(mut k: uint16, game: &mut Game) {
         }
     }
 }
-pub unsafe fn BrinstarPipeBug_PreInstr_3(mut k: uint16, game: &mut Game) {
-    let mut PipeBug: *mut Enemy_PipeBug = Get_PipeBug(k as ::core::ffi::c_int, game);
+pub unsafe fn BrinstarPipeBug_PreInstr_3(k: uint16, game: &mut Game) {
+    let PipeBug: *mut Enemy_PipeBug = Get_PipeBug(k as ::core::ffi::c_int, game);
     let fresh7 = (*PipeBug).base.y_subpos;
     (*PipeBug).base.y_subpos = (*PipeBug).base.y_subpos.wrapping_sub(1);
-    let mut v2: bool = fresh7 != 0u16;
+    let v2: bool = fresh7 != 0u16;
     (*PipeBug).base.y_pos = ((*PipeBug).base.y_pos as ::core::ffi::c_int
         + (v2 as ::core::ffi::c_int - 2 as ::core::ffi::c_int))
         as uint16;
@@ -315,8 +309,8 @@ pub unsafe fn BrinstarPipeBug_PreInstr_3(mut k: uint16, game: &mut Game) {
         (*PipeBug).pbg_var_F = ((0xb3891ci32) as u16) & (0xffffu16);
     }
 }
-pub unsafe fn BrinstarPipeBug_PreInstr_4(mut k: uint16, game: &mut Game) {
-    let mut PipeBug: *mut Enemy_PipeBug = Get_PipeBug(k as ::core::ffi::c_int, game);
+pub unsafe fn BrinstarPipeBug_PreInstr_4(k: uint16, game: &mut Game) {
+    let PipeBug: *mut Enemy_PipeBug = Get_PipeBug(k as ::core::ffi::c_int, game);
     if ((*PipeBug).pbg_var_A as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32 {
         (*PipeBug).base.x_subpos = (*PipeBug).base.x_subpos;
         (*PipeBug).base.x_pos = ((*PipeBug).base.x_pos).wrapping_add(2u16);
@@ -327,7 +321,7 @@ pub unsafe fn BrinstarPipeBug_PreInstr_4(mut k: uint16, game: &mut Game) {
     if IsEnemyLeavingScreen(k, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         (*PipeBug).base.x_pos = (*PipeBug).pbg_var_B;
         (*PipeBug).base.x_subpos = 0 as uint16;
-        let mut pbg_var_C: uint16 = (*PipeBug).pbg_var_C;
+        let pbg_var_C: uint16 = (*PipeBug).pbg_var_C;
         (*PipeBug).base.y_pos = pbg_var_C;
         (*PipeBug).base.y_subpos = pbg_var_C;
         (*PipeBug).pbg_var_E = 0 as uint16;
@@ -338,8 +332,8 @@ pub unsafe fn BrinstarPipeBug_PreInstr_4(mut k: uint16, game: &mut Game) {
         (*PipeBug).pbg_var_F = ((0xb3897ei32) as u16) & (0xffffu16);
     }
 }
-pub unsafe fn BrinstarPipeBug_PreInstr_5(mut k: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_PipeBug = Get_PipeBug(k as ::core::ffi::c_int, game);
+pub unsafe fn BrinstarPipeBug_PreInstr_5(k: uint16, game: &mut Game) {
+    let E: *mut Enemy_PipeBug = Get_PipeBug(k as ::core::ffi::c_int, game);
     let fresh8 = (*E).pbg_var_D;
     (*E).pbg_var_D = (*E).pbg_var_D.wrapping_sub(1);
     if fresh8 == 1u16 {
@@ -347,11 +341,11 @@ pub unsafe fn BrinstarPipeBug_PreInstr_5(mut k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn BrinstarPipeBug_Func_1(game: &mut Game) {
-    let mut PipeBug: *mut Enemy_PipeBug = Get_PipeBug(
+    let PipeBug: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    let mut pbg_var_E: uint16 = (*PipeBug).pbg_var_E;
+    let pbg_var_E: uint16 = (*PipeBug).pbg_var_E;
     if pbg_var_E != (*PipeBug).pbg_var_01 {
         (*PipeBug).pbg_var_01 = pbg_var_E;
         (*PipeBug).base.current_instruction = (if (*PipeBug).pbg_parameter_1 != 0u16 {
@@ -366,7 +360,7 @@ pub unsafe fn BrinstarPipeBug_Func_1(game: &mut Game) {
     }
 }
 pub unsafe fn NorfairPipeBug_Init(game: &mut Game) {
-    let mut PipeBug: *mut Enemy_PipeBug = Get_PipeBug(
+    let PipeBug: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -386,7 +380,7 @@ pub unsafe fn NorfairPipeBug_Init(game: &mut Game) {
     (*PipeBug).base.current_instruction = addr_kNorfairPipeBug_Ilist_8AE1 as uint16;
     (*PipeBug).pbg_var_A = ((0xb38bcdi32) as u16) & (0xffffu16);
 }
-pub unsafe fn CallBugInstr(mut ea: uint32, mut k: uint16, game: &mut Game) {
+pub unsafe fn CallBugInstr(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
         11766733 => {
             NorfairPipeBug_Func_1(game);
@@ -448,7 +442,7 @@ pub unsafe fn CallBugInstr(mut ea: uint32, mut k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn NorfairPipeBug_Main(game: &mut Game) {
-    let mut PipeBug: *mut Enemy_PipeBug = Get_PipeBug(
+    let PipeBug: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -461,7 +455,7 @@ pub unsafe fn NorfairPipeBug_Main(game: &mut Game) {
 }
 pub unsafe fn NorfairPipeBug_8BA8(game: &mut Game) {
     if CheckIfEnemyIsOnScreen(game) != 0 {
-        let mut PipeBug: *mut Enemy_PipeBug = Get_PipeBug(
+        let PipeBug: *mut Enemy_PipeBug = Get_PipeBug(
             *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
                 as ::core::ffi::c_int,
             game,
@@ -523,9 +517,9 @@ pub unsafe fn NorfairPipeBug_Func_1(game: &mut Game) {
     }
 }
 pub unsafe fn NorfairPipeBug_Func_2(game: &mut Game) {
-    let mut k: ::core::ffi::c_int =
+    let k: ::core::ffi::c_int =
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int;
-    let mut PipeBug: *mut Enemy_PipeBug = Get_PipeBug(
+    let PipeBug: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -577,7 +571,7 @@ pub unsafe fn NorfairPipeBug_Func_2(game: &mut Game) {
         NorfairPipeBug_Func_3(k as uint16, game);
     }
 }
-pub unsafe fn NorfairPipeBug_Func_3(mut k: uint16, game: &mut Game) {
+pub unsafe fn NorfairPipeBug_Func_3(k: uint16, game: &mut Game) {
     (*Get_PipeBug(k as ::core::ffi::c_int, game)).pbg_var_A = ((0xb38ca6i32) as u16) & (0xffffu16);
     (*Get_PipeBug(k as ::core::ffi::c_int + 64 as ::core::ffi::c_int, game)).pbg_var_A =
         ((0xb38ca6i32) as u16) & (0xffffu16);
@@ -607,7 +601,7 @@ pub unsafe fn NorfairPipeBug_Func_3(mut k: uint16, game: &mut Game) {
         ((0xb38dd2i32) as u16) & (0xffffu16);
 }
 pub unsafe fn NorfairPipeBug_Func_4(game: &mut Game) {
-    let mut E: *mut Enemy_PipeBug = Get_PipeBug(
+    let E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -644,8 +638,8 @@ pub unsafe fn NorfairPipeBug_Func_4(game: &mut Game) {
         }
     }
 }
-pub unsafe fn NorfairPipeBug_Func_5(mut k: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_PipeBug = Get_PipeBug(
+pub unsafe fn NorfairPipeBug_Func_5(k: uint16, game: &mut Game) {
+    let E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -653,7 +647,7 @@ pub unsafe fn NorfairPipeBug_Func_5(mut k: uint16, game: &mut Game) {
     (*E).pbg_var_A = ((0xb38e5ai32) as u16) & (0xffffu16);
 }
 pub unsafe fn NorfairPipeBug_Func_6(game: &mut Game) {
-    let mut E: *mut Enemy_PipeBug = Get_PipeBug(
+    let E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -678,7 +672,7 @@ pub unsafe fn NorfairPipeBug_Func_6(game: &mut Game) {
     }
 }
 pub unsafe fn NorfairPipeBug_Func_7(game: &mut Game) {
-    let mut E: *mut Enemy_PipeBug = Get_PipeBug(
+    let E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -703,7 +697,7 @@ pub unsafe fn NorfairPipeBug_Func_7(game: &mut Game) {
     }
 }
 pub unsafe fn NorfairPipeBug_Func_8(game: &mut Game) {
-    let mut E: *mut Enemy_PipeBug = Get_PipeBug(
+    let E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -729,7 +723,7 @@ pub unsafe fn NorfairPipeBug_Func_8(game: &mut Game) {
     }
 }
 pub unsafe fn NorfairPipeBug_Func_9(game: &mut Game) {
-    let mut E: *mut Enemy_PipeBug = Get_PipeBug(
+    let E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -755,12 +749,11 @@ pub unsafe fn NorfairPipeBug_Func_9(game: &mut Game) {
     }
 }
 pub unsafe fn NorfairPipeBug_Func_10(game: &mut Game) {
-    let mut E: *mut Enemy_PipeBug = Get_PipeBug(
+    let E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    let mut v2: ::core::ffi::c_int =
-        (*E).pbg_var_B as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let v2: ::core::ffi::c_int = (*E).pbg_var_B as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         &raw mut (*E).base.x_pos,
         &raw mut (*E).base.x_subpos,
@@ -773,12 +766,11 @@ pub unsafe fn NorfairPipeBug_Func_10(game: &mut Game) {
     );
 }
 pub unsafe fn NorfairPipeBug_Func_11(game: &mut Game) {
-    let mut E: *mut Enemy_PipeBug = Get_PipeBug(
+    let E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    let mut v2: ::core::ffi::c_int =
-        (*E).pbg_var_B as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let v2: ::core::ffi::c_int = (*E).pbg_var_B as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         &raw mut (*E).base.x_pos,
         &raw mut (*E).base.x_subpos,
@@ -792,7 +784,7 @@ pub unsafe fn NorfairPipeBug_Func_11(game: &mut Game) {
 }
 pub fn sub_B38E56() {}
 pub unsafe fn NorfairPipeBug_Func_12(game: &mut Game) {
-    let mut E: *mut Enemy_PipeBug = Get_PipeBug(
+    let E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -816,7 +808,7 @@ pub unsafe fn NorfairPipeBug_Func_12(game: &mut Game) {
     }
 }
 pub unsafe fn BrinstarYellowPipeBug_Init(game: &mut Game) {
-    let mut E: *mut Enemy_PipeBug = Get_PipeBug(
+    let E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -830,7 +822,7 @@ pub unsafe fn BrinstarYellowPipeBug_Init(game: &mut Game) {
     if (*E).pbg_parameter_1 == 0 {
         (*E).base.current_instruction = addr_kBrinstarYellowPipeBug_Ilist_8F24 as uint16;
     }
-    let mut v1: ::core::ffi::c_int = 8 as ::core::ffi::c_int
+    let v1: ::core::ffi::c_int = 8 as ::core::ffi::c_int
         * (*E).pbg_parameter_2 as ::core::ffi::c_int
         >> 1 as ::core::ffi::c_int;
     (*E).pbg_var_01 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa28187)) as *const uint8
@@ -849,7 +841,7 @@ pub unsafe fn BrinstarYellowPipeBug_Init(game: &mut Game) {
     (*E).pbg_var_06 = 0 as uint16;
 }
 pub unsafe fn BrinstarYellowPipeBug_Main(game: &mut Game) {
-    let mut E: *mut Enemy_PipeBug = Get_PipeBug(
+    let E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -862,11 +854,11 @@ pub unsafe fn BrinstarYellowPipeBug_Main(game: &mut Game) {
 pub unsafe fn BrinstarYellowPipeBug_Func_1(game: &mut Game) {
     let mut v2: int16 = 0;
     let mut SamusEnemyDelta_X: int16 = 0;
-    let mut E: *mut Enemy_PipeBug = Get_PipeBug(
+    let E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    let mut current_block_6: u64;
+    let current_block_6: u64;
     if (*E).pbg_parameter_1 != 0 {
         SamusEnemyDelta_X = GetSamusEnemyDelta_X(
             *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
@@ -913,9 +905,9 @@ pub unsafe fn BrinstarYellowPipeBug_Func_1(game: &mut Game) {
         _ => {}
     };
 }
-pub unsafe fn BrinstarYellowPipeBug_Func_2(mut k: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_PipeBug = Get_PipeBug(k as ::core::ffi::c_int, game);
-    let mut v2: uint16 = ((*E).pbg_var_20).wrapping_sub(1u16);
+pub unsafe fn BrinstarYellowPipeBug_Func_2(k: uint16, game: &mut Game) {
+    let E: *mut Enemy_PipeBug = Get_PipeBug(k as ::core::ffi::c_int, game);
+    let v2: uint16 = ((*E).pbg_var_20).wrapping_sub(1u16);
     (*E).pbg_var_20 = v2;
     if v2 == 0 {
         (*E).base.instruction_timer = 1 as uint16;
@@ -929,7 +921,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_2(mut k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn BrinstarYellowPipeBug_Func_3(game: &mut Game) {
-    let mut E: *mut Enemy_PipeBug = Get_PipeBug(
+    let E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -965,8 +957,8 @@ pub unsafe fn BrinstarYellowPipeBug_Func_3(game: &mut Game) {
         }
     }
 }
-pub unsafe fn BrinstarYellowPipeBug_Func_4(mut k: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_PipeBug = Get_PipeBug(k as ::core::ffi::c_int, game);
+pub unsafe fn BrinstarYellowPipeBug_Func_4(k: uint16, game: &mut Game) {
+    let E: *mut Enemy_PipeBug = Get_PipeBug(k as ::core::ffi::c_int, game);
     AddToHiLo(
         &raw mut (*E).base.x_pos,
         &raw mut (*E).base.x_subpos,
@@ -974,7 +966,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_4(mut k: uint16, game: &mut Game) {
     );
 }
 pub unsafe fn BrinstarYellowPipeBug_Func_5(game: &mut Game) {
-    let mut E: *mut Enemy_PipeBug = Get_PipeBug(
+    let E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1009,8 +1001,8 @@ pub unsafe fn BrinstarYellowPipeBug_Func_5(game: &mut Game) {
         }
     }
 }
-pub unsafe fn BrinstarYellowPipeBug_Func_6(mut k: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_PipeBug = Get_PipeBug(k as ::core::ffi::c_int, game);
+pub unsafe fn BrinstarYellowPipeBug_Func_6(k: uint16, game: &mut Game) {
+    let E: *mut Enemy_PipeBug = Get_PipeBug(k as ::core::ffi::c_int, game);
     AddToHiLo(
         &raw mut (*E).base.x_pos,
         &raw mut (*E).base.x_subpos,
@@ -1018,7 +1010,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_6(mut k: uint16, game: &mut Game) {
     );
 }
 pub unsafe fn BrinstarYellowPipeBug_Func_7(game: &mut Game) {
-    let mut E: *mut Enemy_PipeBug = Get_PipeBug(
+    let E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1060,7 +1052,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_7(game: &mut Game) {
     };
 }
 pub unsafe fn BrinstarYellowPipeBug_Func_8(game: &mut Game) {
-    let mut E: *mut Enemy_PipeBug = Get_PipeBug(
+    let E: *mut Enemy_PipeBug = Get_PipeBug(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1101,10 +1093,10 @@ pub unsafe fn BrinstarYellowPipeBug_Func_8(game: &mut Game) {
         }
     };
 }
-pub unsafe fn BrinstarYellowPipeBug_Func_9(mut k: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_PipeBug = Get_PipeBug(k as ::core::ffi::c_int, game);
+pub unsafe fn BrinstarYellowPipeBug_Func_9(k: uint16, game: &mut Game) {
+    let E: *mut Enemy_PipeBug = Get_PipeBug(k as ::core::ffi::c_int, game);
     (*E).pbg_var_E = (*E).pbg_var_E.wrapping_add(1);
-    let mut v3: ::core::ffi::c_int =
+    let v3: ::core::ffi::c_int =
         8 as ::core::ffi::c_int * (*E).pbg_var_E as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         &raw mut (*E).base.y_pos,
@@ -1117,15 +1109,14 @@ pub unsafe fn BrinstarYellowPipeBug_Func_9(mut k: uint16, game: &mut Game) {
                 .offset((v3 + 2 as ::core::ffi::c_int) as isize) as uint32,
     );
 }
-pub unsafe fn BrinstarYellowPipeBug_Func_10(mut k: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_PipeBug = Get_PipeBug(k as ::core::ffi::c_int, game);
+pub unsafe fn BrinstarYellowPipeBug_Func_10(k: uint16, game: &mut Game) {
+    let E: *mut Enemy_PipeBug = Get_PipeBug(k as ::core::ffi::c_int, game);
     (*E).pbg_var_E = (*E).pbg_var_E.wrapping_sub(1);
     if ((*E).pbg_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
         (*E).pbg_var_E = 0 as uint16;
         (*E).pbg_var_F = 0 as uint16;
     } else {
-        let mut v4: ::core::ffi::c_int = 8 as ::core::ffi::c_int
-            * (*E).pbg_var_E as ::core::ffi::c_int
+        let v4: ::core::ffi::c_int = 8 as ::core::ffi::c_int * (*E).pbg_var_E as ::core::ffi::c_int
             >> 1 as ::core::ffi::c_int;
         AddToHiLo(
             &raw mut (*E).base.y_pos,
@@ -1139,12 +1130,8 @@ pub unsafe fn BrinstarYellowPipeBug_Func_10(mut k: uint16, game: &mut Game) {
         );
     };
 }
-pub unsafe fn Botwoon_Instr_1(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+pub unsafe fn Botwoon_Instr_1(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1152,12 +1139,8 @@ pub unsafe fn Botwoon_Instr_1(
     (*E).base.y_height = 16 as uint16;
     jp
 }
-pub unsafe fn Botwoon_Instr_2(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+pub unsafe fn Botwoon_Instr_2(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1165,12 +1148,8 @@ pub unsafe fn Botwoon_Instr_2(
     (*E).base.y_height = 12 as uint16;
     jp
 }
-pub unsafe fn Botwoon_Instr_3(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+pub unsafe fn Botwoon_Instr_3(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1178,12 +1157,8 @@ pub unsafe fn Botwoon_Instr_3(
     (*E).base.y_height = 8 as uint16;
     jp
 }
-pub unsafe fn Botwoon_Instr_4(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+pub unsafe fn Botwoon_Instr_4(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1191,12 +1166,8 @@ pub unsafe fn Botwoon_Instr_4(
     (*E).base.y_height = 12 as uint16;
     jp
 }
-pub unsafe fn Botwoon_Instr_5(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+pub unsafe fn Botwoon_Instr_5(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1204,12 +1175,8 @@ pub unsafe fn Botwoon_Instr_5(
     (*E).base.y_height = 16 as uint16;
     jp
 }
-pub unsafe fn Botwoon_Instr_6(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+pub unsafe fn Botwoon_Instr_6(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1217,12 +1184,8 @@ pub unsafe fn Botwoon_Instr_6(
     (*E).base.y_height = 16 as uint16;
     jp
 }
-pub unsafe fn Botwoon_Instr_7(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+pub unsafe fn Botwoon_Instr_7(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1230,12 +1193,8 @@ pub unsafe fn Botwoon_Instr_7(
     (*E).base.y_height = 12 as uint16;
     jp
 }
-pub unsafe fn Botwoon_Instr_8(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+pub unsafe fn Botwoon_Instr_8(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1243,12 +1202,8 @@ pub unsafe fn Botwoon_Instr_8(
     (*E).base.y_height = 8 as uint16;
     jp
 }
-pub unsafe fn Botwoon_Instr_9(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+pub unsafe fn Botwoon_Instr_9(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1256,12 +1211,8 @@ pub unsafe fn Botwoon_Instr_9(
     (*E).base.y_height = 12 as uint16;
     jp
 }
-pub unsafe fn Botwoon_Instr_10(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+pub unsafe fn Botwoon_Instr_10(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1270,8 +1221,8 @@ pub unsafe fn Botwoon_Instr_10(
     jp
 }
 pub unsafe fn Botwoon_Instr_SetSpitting(
-    mut k: uint16,
-    mut jp: *const uint16,
+    k: uint16,
+    jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
     (*Get_Botwoon(
@@ -1282,8 +1233,8 @@ pub unsafe fn Botwoon_Instr_SetSpitting(
     jp
 }
 pub unsafe fn Botwoon_Instr_QueueSpitSfx(
-    mut k: uint16,
-    mut jp: *const uint16,
+    k: uint16,
+    jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
     QueueSfx2_Max6(0x7c as uint16, game);
@@ -1293,7 +1244,7 @@ pub unsafe fn Botwoon_QueueExplosionSfx(game: &mut Game) {
     QueueSfx2_Max6(0x24 as uint16, game);
 }
 pub unsafe fn Botwoon_Init(game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1313,7 +1264,7 @@ pub unsafe fn Botwoon_Init(game: &mut Game) {
         (*E).base.current_instruction = addr_kBotwoon_Ilist_9389 as uint16;
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
     } else {
-        let mut v3: uint16 = 24 as uint16;
+        let v3: uint16 = 24 as uint16;
         (*E).botwoon_var_A = 24 as uint16;
         let mut v5: bool = false;
         loop {
@@ -1353,12 +1304,12 @@ pub unsafe fn Botwoon_Init(game: &mut Game) {
         health = (health as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
         (*E).botwoon_var_5C = health;
         (*E).botwoon_var_5D = (health as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
-        let mut x_pos: uint16 = (*E).base.x_pos;
+        let x_pos: uint16 = (*E).base.x_pos;
         (*E).botwoon_var_50 = x_pos;
         (*E).botwoon_var_52 = x_pos;
         (*E).botwoon_var_54 = x_pos;
         (*E).botwoon_var_56 = x_pos;
-        let mut y_pos: uint16 = (*E).base.y_pos;
+        let y_pos: uint16 = (*E).base.y_pos;
         (*E).botwoon_var_51 = y_pos;
         (*E).botwoon_var_53 = y_pos;
         (*E).botwoon_var_55 = y_pos;
@@ -1368,7 +1319,7 @@ pub unsafe fn Botwoon_Init(game: &mut Game) {
             + 256 as ::core::ffi::c_int) as uint16;
     };
 }
-pub unsafe fn CallBotwoonFuncVarD(mut ea: uint32, mut k: uint16, game: &mut Game) {
+pub unsafe fn CallBotwoonFuncVarD(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
         11769976 => {
             Botwoon_Func_6(game);
@@ -1399,7 +1350,7 @@ pub unsafe fn CallBotwoonFuncVarD(mut ea: uint32, mut k: uint16, game: &mut Game
         }
     }
 }
-pub unsafe fn CallBotwoonFuncVarE(mut ea: uint32, game: &mut Game) {
+pub unsafe fn CallBotwoonFuncVarE(ea: uint32, game: &mut Game) {
     match ea {
         11770807 => {
             Botwoon_Func_19(game);
@@ -1417,7 +1368,7 @@ pub unsafe fn CallBotwoonFuncVarE(mut ea: uint32, game: &mut Game) {
 }
 pub unsafe fn Botwoon_Main(game: &mut Game) {
     Botwoon_Func_3(game);
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1428,8 +1379,8 @@ pub unsafe fn Botwoon_Main(game: &mut Game) {
     );
     Botwoon_HealthBasedPalHandling(game);
 }
-pub unsafe fn Botwoon_Func_1(mut k: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(k as ::core::ffi::c_int, game);
+pub unsafe fn Botwoon_Func_1(k: uint16, game: &mut Game) {
+    let E: *mut Enemy_Botwoon = Get_Botwoon(k as ::core::ffi::c_int, game);
     if (*(game.g_rom.offset(crate::rtl::lorom_offset(0xb39675)) as *const uint8 as *mut uint16)
         .offset((*E).botwoon_var_3F as isize) as ::core::ffi::c_int
         & NextRandom(game) as ::core::ffi::c_int)
@@ -1439,7 +1390,7 @@ pub unsafe fn Botwoon_Func_1(mut k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn Botwoon_Func_2(game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1454,7 +1405,7 @@ pub unsafe fn Botwoon_Func_2(game: &mut Game) {
     (*E).botwoon_var_2E = 0 as uint16;
 }
 pub unsafe fn Botwoon_Func_3(game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1469,7 +1420,7 @@ pub unsafe fn Botwoon_Func_3(game: &mut Game) {
     }
 }
 pub unsafe fn Botwoon_Func_4(game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Botwoon = Get_Botwoon(0 as ::core::ffi::c_int, game);
     (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
 }
 pub unsafe fn Botwoon_Func_5(game: &mut Game) {
@@ -1487,7 +1438,7 @@ pub unsafe fn Botwoon_Func_5(game: &mut Game) {
     }
 }
 pub unsafe fn Botwoon_HealthBasedPalHandling(game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1520,18 +1471,18 @@ pub unsafe fn Botwoon_HealthBasedPalHandling(game: &mut Game) {
     }
 }
 pub unsafe fn Botwoon_Func_6(game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    let mut v1: uint16 = ((*E).botwoon_var_20).wrapping_sub(1u16);
+    let v1: uint16 = ((*E).botwoon_var_20).wrapping_sub(1u16);
     (*E).botwoon_var_20 = v1;
     if v1 == 0 {
         (*E).botwoon_var_D = ((0xb3989di32) as u16) & (0xffffu16);
     }
 }
 pub unsafe fn Botwoon_Func_7(game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1564,7 +1515,7 @@ pub unsafe fn Botwoon_Func_7(game: &mut Game) {
     };
 }
 pub unsafe fn Botwoon_Func_8(game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1579,7 +1530,7 @@ pub unsafe fn Botwoon_Func_8(game: &mut Game) {
     );
 }
 pub unsafe fn Botwoon_Func_9(game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1589,10 +1540,10 @@ pub unsafe fn Botwoon_Func_9(game: &mut Game) {
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         & !(kEnemyProps_Tangible as ::core::ffi::c_int)) as uint16;
 }
-pub unsafe fn Botwoon_Func_10(mut k: uint16, game: &mut Game) {
+pub unsafe fn Botwoon_Func_10(k: uint16, game: &mut Game) {
     Botwoon_Func_11(k, game);
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(k as ::core::ffi::c_int, game);
-    let mut r18: uint16 = (if (*E).botwoon_var_33 != 0u16 {
+    let E: *mut Enemy_Botwoon = Get_Botwoon(k as ::core::ffi::c_int, game);
+    let r18: uint16 = (if (*E).botwoon_var_33 != 0u16 {
         128 as ::core::ffi::c_int
     } else {
         0 as ::core::ffi::c_int
@@ -1602,9 +1553,9 @@ pub unsafe fn Botwoon_Func_10(mut k: uint16, game: &mut Game) {
         + 4 as ::core::ffi::c_int * (*E).botwoon_var_37 as ::core::ffi::c_int)
         as uint16;
 }
-pub unsafe fn Botwoon_Func_11(mut k: uint16, game: &mut Game) {
+pub unsafe fn Botwoon_Func_11(k: uint16, game: &mut Game) {
     let mut health: int16 = 0;
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(k as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Botwoon = Get_Botwoon(k as ::core::ffi::c_int, game);
     if (*E).botwoon_var_33 == 0 {
         (*E).botwoon_var_3F = 0 as uint16;
         health = (*E).base.health as int16;
@@ -1614,7 +1565,7 @@ pub unsafe fn Botwoon_Func_11(mut k: uint16, game: &mut Game) {
             } else {
                 (*E).botwoon_var_3F = 1 as uint16;
             }
-            let mut v3: ::core::ffi::c_int = ((4u16).wrapping_mul((*E).botwoon_var_3F))
+            let v3: ::core::ffi::c_int = ((4u16).wrapping_mul((*E).botwoon_var_3F))
                 as ::core::ffi::c_int
                 >> 1 as ::core::ffi::c_int;
             (*E).botwoon_var_38 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xb394bb))
@@ -1627,7 +1578,7 @@ pub unsafe fn Botwoon_Func_11(mut k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn Botwoon_Func_12(game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1649,7 +1600,7 @@ pub unsafe fn Botwoon_Func_12(game: &mut Game) {
 }
 pub unsafe fn Botwoon_Func_13(game: &mut Game) {
     let mut v3: uint16 = 0;
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1679,22 +1630,22 @@ pub unsafe fn Botwoon_Func_13(game: &mut Game) {
     };
 }
 pub unsafe fn Botwoon_Func_14(game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    let mut v1: uint16 = ((*E).botwoon_var_22).wrapping_add(1u16);
+    let v1: uint16 = ((*E).botwoon_var_22).wrapping_add(1u16);
     (*E).botwoon_var_22 = v1;
     if v1 as ::core::ffi::c_int - 256 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
         (*E).botwoon_var_D = ((0xb39a5ei32) as u16) & (0xffffu16);
     }
 }
 pub unsafe fn Botwoon_Func_15(game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    let mut v2: ::core::ffi::c_int = 8 as ::core::ffi::c_int
+    let v2: ::core::ffi::c_int = 8 as ::core::ffi::c_int
         * *(&raw mut (*E).botwoon_var_28 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
@@ -1733,7 +1684,7 @@ pub unsafe fn Botwoon_Func_15(game: &mut Game) {
     };
 }
 pub unsafe fn Botwoon_Func_16(game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1745,7 +1696,7 @@ pub unsafe fn Botwoon_Func_16(game: &mut Game) {
         );
     }
 }
-pub unsafe fn Botwoon_Func_17(mut k: uint16, game: &mut Game) {
+pub unsafe fn Botwoon_Func_17(k: uint16, game: &mut Game) {
     SpawnHardcodedPlm(
         SpawnHardcodedPlmArgs {
             field_0: 0xf as uint8,
@@ -1755,13 +1706,13 @@ pub unsafe fn Botwoon_Func_17(mut k: uint16, game: &mut Game) {
         game,
     );
     Enemy_ItemDrop_Botwoon(k, game);
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(k as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Botwoon = Get_Botwoon(k as ::core::ffi::c_int, game);
     (*E).botwoon_var_23 = 0 as uint16;
     (*E).botwoon_var_24 = 0 as uint16;
     (*E).botwoon_var_25 = 0 as uint16;
 }
-pub unsafe fn Botwoon_Func_18(mut k: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(k as ::core::ffi::c_int, game);
+pub unsafe fn Botwoon_Func_18(k: uint16, game: &mut Game) {
+    let E: *mut Enemy_Botwoon = Get_Botwoon(k as ::core::ffi::c_int, game);
     if (*E).botwoon_var_23 as ::core::ffi::c_int - 192 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0
@@ -1770,30 +1721,29 @@ pub unsafe fn Botwoon_Func_18(mut k: uint16, game: &mut Game) {
             & 0x8000 as ::core::ffi::c_int
             == 0
         {
-            let mut v2: int16 = (((*E).botwoon_var_24) as i16).wrapping_sub(1i16);
+            let v2: int16 = (((*E).botwoon_var_24) as i16).wrapping_sub(1i16);
             (*E).botwoon_var_24 = v2 as uint16;
             if v2 < 0i16 {
                 (*E).botwoon_var_24 = 12 as uint16;
-                let mut x: uint16 = ((NextRandom(game) as ::core::ffi::c_int
+                let x: uint16 = ((NextRandom(game) as ::core::ffi::c_int
                     & 0x1f as ::core::ffi::c_int)
                     + 232 as ::core::ffi::c_int) as uint16;
-                let mut y: uint16 = ((*E).botwoon_var_23 as ::core::ffi::c_int
+                let y: uint16 = ((*E).botwoon_var_23 as ::core::ffi::c_int
                     + (NextRandom(game) as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int)
                     - 8 as ::core::ffi::c_int) as uint16;
                 CreateSpriteAtPos(x, y, 29 as uint16, 2560 as uint16, game);
                 Botwoon_QueueExplosionSfx(game);
             }
-            let mut v3: int16 = (((*E).botwoon_var_25) as i16).wrapping_sub(1i16);
+            let v3: int16 = (((*E).botwoon_var_25) as i16).wrapping_sub(1i16);
             (*E).botwoon_var_25 = v3 as uint16;
             if v3 < 0i16 {
                 (*E).botwoon_var_25 = 4 as uint16;
                 let mut n: ::core::ffi::c_int = 2 as ::core::ffi::c_int;
                 loop {
-                    let mut x_0: uint16 =
+                    let x_0: uint16 =
                         ((NextRandom(game) as ::core::ffi::c_int & 0x3f as ::core::ffi::c_int)
                             + 224 as ::core::ffi::c_int) as uint16;
-                    let mut y_0: uint16 = ((*Get_Botwoon(k as ::core::ffi::c_int, game))
-                        .botwoon_var_23
+                    let y_0: uint16 = ((*Get_Botwoon(k as ::core::ffi::c_int, game)).botwoon_var_23
                         as ::core::ffi::c_int
                         + ((NextRandom(game) as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int)
                             - 8 as ::core::ffi::c_int))
@@ -1814,12 +1764,12 @@ pub unsafe fn Botwoon_Func_18(mut k: uint16, game: &mut Game) {
     };
 }
 pub unsafe fn Botwoon_Func_19(game: &mut Game) {
-    let mut pt: Point16U = Botwoon_Func_20(
+    let pt: Point16U = Botwoon_Func_20(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
         game,
     );
-    let mut v1: uint16 = CalculateAngleFromXY(pt.x, pt.y, game);
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+    let v1: uint16 = CalculateAngleFromXY(pt.x, pt.y, game);
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1832,11 +1782,11 @@ pub unsafe fn Botwoon_Func_19(game: &mut Game) {
         (*E).botwoon_var_3C = 1 as uint16;
     };
 }
-pub unsafe fn Botwoon_Func_20(mut k: uint16, game: &mut Game) -> Point16U {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(k as ::core::ffi::c_int, game);
-    let mut v2: ::core::ffi::c_int =
+pub unsafe fn Botwoon_Func_20(k: uint16, game: &mut Game) -> Point16U {
+    let E: *mut Enemy_Botwoon = Get_Botwoon(k as ::core::ffi::c_int, game);
+    let v2: ::core::ffi::c_int =
         (*E).botwoon_var_37 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut v3: uint16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0xb3949b)) as *const uint8
+    let v3: uint16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0xb3949b)) as *const uint8
         as *mut uint16)
         .offset(v2 as isize) as ::core::ffi::c_int
         + 4 as ::core::ffi::c_int
@@ -1850,7 +1800,7 @@ pub unsafe fn Botwoon_Func_20(mut k: uint16, game: &mut Game) -> Point16U {
     } else {
         r18 = 255 as uint16;
     }
-    let mut v4: uint16 =
+    let v4: uint16 =
         (*(game.g_rom.offset(crate::rtl::lorom_offset(0xb3949b)) as *const uint8 as *mut uint16)
             .offset((v2 + 2 as ::core::ffi::c_int) as isize) as ::core::ffi::c_int
             + 4 as ::core::ffi::c_int
@@ -1867,26 +1817,26 @@ pub unsafe fn Botwoon_Func_20(mut k: uint16, game: &mut Game) -> Point16U {
     Point16U { x: r18, y: r20 }
 }
 pub unsafe fn Botwoon_Func_21(game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    let mut pt: Point32 = ConvertAngleToXy((*E).botwoon_var_3A, (*E).botwoon_var_38, game);
+    let pt: Point32 = ConvertAngleToXy((*E).botwoon_var_3A, (*E).botwoon_var_38, game);
     EnemyFunc_B691((*E).botwoon_var_3A, pt, game);
 }
 pub unsafe fn Botwoon_Func_22(game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    let mut botwoon_var_B: uint16 = (*E).botwoon_var_B;
+    let botwoon_var_B: uint16 = (*E).botwoon_var_B;
     *(((&raw mut game.g_ram as *mut uint8).offset(0x9000) as *mut uint16 as *mut uint8)
         .offset(botwoon_var_B as ::core::ffi::c_int as isize) as *mut uint16) = (*E).base.x_pos;
     *(((&raw mut game.g_ram as *mut uint8).offset(0x9002) as *mut uint16 as *mut uint8)
         .offset(botwoon_var_B as ::core::ffi::c_int as isize) as *mut uint16) = (*E).base.y_pos;
 }
 pub unsafe fn Botwoon_Func_23(game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1895,11 +1845,11 @@ pub unsafe fn Botwoon_Func_23(game: &mut Game) {
         & 0x3ff as ::core::ffi::c_int) as uint16;
     let mut n: ::core::ffi::c_int = 24 as ::core::ffi::c_int;
     loop {
-        let mut ET: *mut Enemy_Botwoon = Get_Botwoon(n, game);
-        let mut botwoo_var_00: uint16 = (*ET).botwoon_var_00;
+        let ET: *mut Enemy_Botwoon = Get_Botwoon(n, game);
+        let botwoo_var_00: uint16 = (*ET).botwoon_var_00;
         if (*E).botwoon_var_36 == r18 {
-            let mut v2: uint16 = n as uint16;
-            let mut v4: bool = (*ET).botwoon_var_10 == 1u16;
+            let v2: uint16 = n as uint16;
+            let v4: bool = (*ET).botwoon_var_10 == 1u16;
             (*ET).botwoon_var_10 = ((*ET).botwoon_var_10) ^ (1u16);
             if v4 {
                 let ref mut fresh0 =
@@ -1930,8 +1880,7 @@ pub unsafe fn Botwoon_Func_23(game: &mut Game) {
                 }
             }
         }
-        let mut v7: ::core::ffi::c_int =
-            botwoo_var_00 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        let v7: ::core::ffi::c_int = botwoo_var_00 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v7 as isize) =
             *(((&raw mut game.g_ram as *mut uint8).offset(0x9000) as *mut uint16 as *mut uint8)
                 .offset(r18 as ::core::ffi::c_int as isize) as *mut uint16);
@@ -1947,7 +1896,7 @@ pub unsafe fn Botwoon_Func_23(game: &mut Game) {
     }
 }
 pub unsafe fn Botwoon_Func_24(game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1955,22 +1904,22 @@ pub unsafe fn Botwoon_Func_24(game: &mut Game) {
         & 0x3ff as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn Botwoon_Func_25(game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     let mut n: ::core::ffi::c_int = 24 as ::core::ffi::c_int;
     loop {
         let mut r24: uint16 = 0 as uint16;
-        let mut ERR: *mut Enemy_Botwoon = Get_Botwoon(n, game);
-        let mut botwoo_var_00: uint16 = (*ERR).botwoon_var_00;
+        let ERR: *mut Enemy_Botwoon = Get_Botwoon(n, game);
+        let botwoo_var_00: uint16 = (*ERR).botwoon_var_00;
         if (*ERR).botwoon_var_10 != 0 {
             r24 = 256 as uint16;
         }
         let mut x: uint16 = 0;
         let mut y: uint16 = 0;
         if n == 24i32 {
-            let mut v4: ::core::ffi::c_int =
+            let v4: ::core::ffi::c_int =
                 botwoo_var_00 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
             x = ((*E).base.x_pos).wrapping_sub(
                 *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
@@ -1984,7 +1933,7 @@ pub unsafe fn Botwoon_Func_25(game: &mut Game) {
             if n == 0 {
                 r24 = (r24).wrapping_add(512u16);
             }
-            let mut v2: ::core::ffi::c_int =
+            let v2: ::core::ffi::c_int =
                 botwoo_var_00 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
             x = (*((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
                 .offset((v2 + 1 as ::core::ffi::c_int) as isize))
@@ -2010,14 +1959,14 @@ pub unsafe fn Botwoon_Func_25(game: &mut Game) {
         }
     }
 }
-pub unsafe fn Botwoon_Func_26(mut k: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+pub unsafe fn Botwoon_Func_26(k: uint16, game: &mut Game) {
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    let mut x: uint16 = ((*E).base.x_pos).wrapping_sub((*E).botwoon_var_56);
-    let mut y: uint16 = ((*E).base.y_pos).wrapping_sub((*E).botwoon_var_57);
-    let mut r22: uint16 = CalculateAngleFromXY(x, y, game);
+    let x: uint16 = ((*E).base.x_pos).wrapping_sub((*E).botwoon_var_56);
+    let y: uint16 = ((*E).base.y_pos).wrapping_sub((*E).botwoon_var_57);
+    let r22: uint16 = CalculateAngleFromXY(x, y, game);
     if x != 0u16 || y != 0u16 {
         let mut v1: uint16 = 0;
         if (*E).botwoon_var_33 != 0 {
@@ -2055,18 +2004,18 @@ pub unsafe fn Botwoon_Func_26(mut k: uint16, game: &mut Game) {
     (*E).botwoon_var_50 = (*E).base.x_pos;
     (*E).botwoon_var_51 = (*E).base.y_pos;
 }
-pub unsafe fn Botwoon_Func_27(mut k: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+pub unsafe fn Botwoon_Func_27(k: uint16, game: &mut Game) {
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     (*E).base.layer = 2 as uint16;
-    let mut v2: uint16 = CalculateAngleOfSamusFromEnemy(
+    let v2: uint16 = CalculateAngleOfSamusFromEnemy(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
         game,
     );
     (*E).botwoon_var_3D = v2;
-    let mut v3: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xb3948b)) as *const uint8
+    let v3: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xb3948b)) as *const uint8
         as *mut uint16)
         .offset(
             ((((v2) as u8).wrapping_add(16u8)) as ::core::ffi::c_int >> 5 as ::core::ffi::c_int)
@@ -2083,8 +2032,8 @@ pub unsafe fn Botwoon_Func_27(mut k: uint16, game: &mut Game) {
     }
     CallEnemyPreInstr((((*E).botwoon_var_F) as u32) | (0xb30000u32), game);
 }
-pub unsafe fn Botwoon_Func_28(mut k: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+pub unsafe fn Botwoon_Func_28(k: uint16, game: &mut Game) {
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -2092,7 +2041,7 @@ pub unsafe fn Botwoon_Func_28(mut k: uint16, game: &mut Game) {
         *(&raw mut game.g_ram as *mut uint8).offset(0x60b) =
             (((*E).botwoon_var_3D) as u8).wrapping_sub(32u8);
         let mut n: ::core::ffi::c_int = 5 as ::core::ffi::c_int;
-        let mut varE32: uint16 = g_word_B39E77[(*E).botwoon_var_3F as usize] as uint16;
+        let varE32: uint16 = g_word_B39E77[(*E).botwoon_var_3F as usize] as uint16;
         loop {
             SpawnEprojWithGfx(
                 varE32,
@@ -2111,15 +2060,15 @@ pub unsafe fn Botwoon_Func_28(mut k: uint16, game: &mut Game) {
         (*E).botwoon_var_F = ((0xb39f7ai32) as u16) & (0xffffu16);
     }
 }
-pub unsafe fn Botwoon_Func_29(mut k: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+pub unsafe fn Botwoon_Func_29(k: uint16, game: &mut Game) {
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     *(&raw mut game.g_ram as *mut uint8).offset(0x60b) =
         (((*E).botwoon_var_3D) as u8).wrapping_sub(16u8);
     let mut n: ::core::ffi::c_int = 3 as ::core::ffi::c_int;
-    let mut varE32: uint16 = g_word_B39E77[(*E).botwoon_var_3F as usize] as uint16;
+    let varE32: uint16 = g_word_B39E77[(*E).botwoon_var_3F as usize] as uint16;
     loop {
         SpawnEprojWithGfx(
             varE32,
@@ -2140,24 +2089,24 @@ pub unsafe fn Botwoon_Func_29(mut k: uint16, game: &mut Game) {
     ))
     .botwoon_var_F = ((0xb39f7ai32) as u16) & (0xffffu16);
 }
-pub unsafe fn Botwoon_Func_30(mut k: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(k as ::core::ffi::c_int, game);
-    let mut v2: int16 = (((*E).botwoon_var_21) as i16).wrapping_sub(1i16);
+pub unsafe fn Botwoon_Func_30(k: uint16, game: &mut Game) {
+    let E: *mut Enemy_Botwoon = Get_Botwoon(k as ::core::ffi::c_int, game);
+    let v2: int16 = (((*E).botwoon_var_21) as i16).wrapping_sub(1i16);
     (*E).botwoon_var_21 = v2 as uint16;
     if v2 < 0i16 {
         (*E).botwoon_var_21 = 0 as uint16;
         (*E).botwoon_var_F = ((0xb39dc0i32) as u16) & (0xffffu16);
     }
 }
-pub unsafe fn Botwoon_Func_31(mut k: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+pub unsafe fn Botwoon_Func_31(k: uint16, game: &mut Game) {
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     if (*Get_Botwoon(k as ::core::ffi::c_int, game)).botwoon_var_35 == 0 {
         let mut n: ::core::ffi::c_int = 24 as ::core::ffi::c_int;
         loop {
-            let mut v2: ::core::ffi::c_int = n >> 1 as ::core::ffi::c_int;
+            let v2: ::core::ffi::c_int = n >> 1 as ::core::ffi::c_int;
             if (((*E).base.x_pos) as i16).wrapping_sub(
                 (*(game.g_rom.offset(crate::rtl::lorom_offset(0xb3949b)) as *const uint8
                     as *mut uint16)
@@ -2199,7 +2148,7 @@ pub unsafe fn Botwoon_Func_31(mut k: uint16, game: &mut Game) {
 }
 pub unsafe fn Botwoon_Touch(game: &mut Game) {
     Enemy_NormalTouchAI_SkipDeathAnim_B3(game);
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -2209,7 +2158,7 @@ pub unsafe fn Botwoon_Touch(game: &mut Game) {
     }
 }
 pub unsafe fn Botwoon_Shot(game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -2222,7 +2171,7 @@ pub unsafe fn Botwoon_Shot(game: &mut Game) {
 }
 pub unsafe fn Botwoon_Powerbomb(game: &mut Game) {
     Enemy_NormalPowerBombAI_SkipDeathAnim_B3(game);
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -2232,20 +2181,20 @@ pub unsafe fn Botwoon_Powerbomb(game: &mut Game) {
     }
 }
 pub unsafe fn Botwoon_Func_32(game: &mut Game) {
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     (*E).botwoon_var_E = addr_loc_B3E28C as uint16;
     (*E).botwoon_var_3C = 0 as uint16;
-    let mut v1: *const uint8 = RomPtr_B3(
+    let v1: *const uint8 = RomPtr_B3(
         ((*E).botwoon_var_40 as ::core::ffi::c_int + addr_stru_B3E150 as ::core::ffi::c_int)
             as uint16_t,
         game,
     );
     (*E).botwoon_var_42 = *(v1 as *mut uint16);
     (*E).botwoon_var_37 = *(v1.offset(4) as *mut uint16);
-    let mut v2: int16 = *(v1.offset(2) as *mut uint16) as int16;
+    let v2: int16 = *(v1.offset(2) as *mut uint16) as int16;
     (*E).botwoon_var_44 = v2 as uint16;
     if v2 < 0i16 {
         (*E).botwoon_var_42 = ((*E).botwoon_var_42).wrapping_sub(4u16);
@@ -2255,20 +2204,20 @@ pub unsafe fn Botwoon_Func_32(game: &mut Game) {
 pub unsafe fn Botwoon_Func_33(game: &mut Game) {
     let mut x: uint16 = 0 as uint16;
     let mut y: uint16 = 0 as uint16;
-    let mut E: *mut Enemy_Botwoon = Get_Botwoon(
+    let E: *mut Enemy_Botwoon = Get_Botwoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     let mut n: ::core::ffi::c_int = (*E).botwoon_var_38 as ::core::ffi::c_int;
-    let mut step: ::core::ffi::c_int =
+    let step: ::core::ffi::c_int =
         if ((*E).botwoon_var_44 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32 {
             2 as ::core::ffi::c_int
         } else {
             -(2 as ::core::ffi::c_int)
         };
     loop {
-        let mut v6: *const uint8 = RomPtr_B3((*E).botwoon_var_42, game);
-        let mut v7: uint16 = SignExtend8(*v6 as uint16);
+        let v6: *const uint8 = RomPtr_B3((*E).botwoon_var_42, game);
+        let v7: uint16 = SignExtend8(*v6 as uint16);
         let mut v8: uint16 = 0;
         if v7 == 0xff80u16 || {
             x = (x).wrapping_add(v7);
@@ -2294,8 +2243,8 @@ pub unsafe fn Botwoon_Func_33(game: &mut Game) {
     (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(y);
 }
 pub unsafe fn EscapeEtecoon_Instr_1(
-    mut k: uint16,
-    mut jp: *const uint16,
+    k: uint16,
+    jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16) >= 0xceu16 {
@@ -2305,38 +2254,38 @@ pub unsafe fn EscapeEtecoon_Instr_1(
     }
 }
 pub unsafe fn EscapeEtecoon_Instr_2(
-    mut k: uint16,
-    mut jp: *const uint16,
+    k: uint16,
+    jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    let mut E: *mut Enemy_EscapeEtecoon = Get_EscapeEtecoon(k as ::core::ffi::c_int, game);
+    let E: *mut Enemy_EscapeEtecoon = Get_EscapeEtecoon(k as ::core::ffi::c_int, game);
     (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(*jp.offset(0));
     jp.offset(1)
 }
 pub unsafe fn EscapeEtecoon_Main(game: &mut Game) {
-    let mut E: *mut Enemy_EscapeEtecoon = Get_EscapeEtecoon(
+    let E: *mut Enemy_EscapeEtecoon = Get_EscapeEtecoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     CallEnemyPreInstr((((*E).een_var_F) as u32) | (0xb30000u32), game);
 }
-pub unsafe fn EscapeEtecoon_E65C(mut k: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_EscapeEtecoon = Get_EscapeEtecoon(k as ::core::ffi::c_int, game);
+pub unsafe fn EscapeEtecoon_E65C(k: uint16, game: &mut Game) {
+    let E: *mut Enemy_EscapeEtecoon = Get_EscapeEtecoon(k as ::core::ffi::c_int, game);
     AddToHiLo(
         &raw mut (*E).base.x_pos,
         &raw mut (*E).base.x_subpos,
         0x38000 as uint32,
     );
 }
-pub unsafe fn EscapeEtecoon_E670(mut k: uint16, game: &mut Game) {
+pub unsafe fn EscapeEtecoon_E670(k: uint16, game: &mut Game) {
     if CheckEventHappened(0xf as uint16, game) != 0 {
         (*Get_EscapeEtecoon(k as ::core::ffi::c_int, game))
             .base
             .current_instruction = addr_kEscapeEtecoon_Ilist_E5DA as uint16;
     }
 }
-pub unsafe fn EscapeEtecoon_E680(mut k: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_EscapeEtecoon = Get_EscapeEtecoon(k as ::core::ffi::c_int, game);
+pub unsafe fn EscapeEtecoon_E680(k: uint16, game: &mut Game) {
+    let E: *mut Enemy_EscapeEtecoon = Get_EscapeEtecoon(k as ::core::ffi::c_int, game);
     if Enemy_MoveRight_IgnoreSlopes(
         k,
         ((*E).een_var_A as int16 as int32) << 8 as ::core::ffi::c_int,
@@ -2344,7 +2293,7 @@ pub unsafe fn EscapeEtecoon_E680(mut k: uint16, game: &mut Game) {
     ) != 0
     {
         (*E).base.instruction_timer = 1 as uint16;
-        let mut v3: bool =
+        let v3: bool =
             (-((*E).een_var_A as ::core::ffi::c_int) & 0x8000 as ::core::ffi::c_int) != 0i32;
         (*E).een_var_A = -((*E).een_var_A as ::core::ffi::c_int) as uint16;
         (*E).base.current_instruction = (if v3 {
@@ -2359,7 +2308,7 @@ pub unsafe fn EscapeEtecoon_E680(mut k: uint16, game: &mut Game) {
     Enemy_MoveDown(k, (1 as int16 as int32) << 16 as ::core::ffi::c_int, game);
 }
 pub unsafe fn EscapeEtecoon_Init(game: &mut Game) {
-    let mut E: *mut Enemy_EscapeEtecoon = Get_EscapeEtecoon(
+    let E: *mut Enemy_EscapeEtecoon = Get_EscapeEtecoon(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -2373,7 +2322,7 @@ pub unsafe fn EscapeEtecoon_Init(game: &mut Game) {
         (*E).base.instruction_timer = 1 as uint16;
         (*E).base.timer = 0 as uint16;
         (*E).base.palette_index = 0 as uint16;
-        let mut v3: ::core::ffi::c_int =
+        let v3: ::core::ffi::c_int =
             (*E).een_parameter_1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         (*E).base.x_pos = *(game.g_rom.offset(crate::rtl::lorom_offset(0xb3e718)) as *const uint8
             as *mut uint16)
@@ -2393,8 +2342,8 @@ pub unsafe fn EscapeEtecoon_Init(game: &mut Game) {
     };
 }
 pub unsafe fn EscapeDachora_Instr_2(
-    mut k: uint16,
-    mut jp: *const uint16,
+    k: uint16,
+    jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16) >= 0xceu16 {
@@ -2404,8 +2353,8 @@ pub unsafe fn EscapeDachora_Instr_2(
     }
 }
 pub unsafe fn EscapeDachora_Instr_3(
-    mut k: uint16,
-    mut jp: *const uint16,
+    k: uint16,
+    jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
     if CheckEventHappened(0xf as uint16, game) != 0 {
@@ -2415,11 +2364,11 @@ pub unsafe fn EscapeDachora_Instr_3(
     }
 }
 pub unsafe fn EscapeDachora_Instr_1(
-    mut k: uint16,
-    mut jp: *const uint16,
+    k: uint16,
+    jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    let mut E: *mut Enemy_EscapeDachora = Get_EscapeDachora(
+    let E: *mut Enemy_EscapeDachora = Get_EscapeDachora(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -2427,11 +2376,11 @@ pub unsafe fn EscapeDachora_Instr_1(
     jp
 }
 pub unsafe fn EscapeDachora_Instr_4(
-    mut k: uint16,
-    mut jp: *const uint16,
+    k: uint16,
+    jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    let mut E: *mut Enemy_EscapeDachora = Get_EscapeDachora(
+    let E: *mut Enemy_EscapeDachora = Get_EscapeDachora(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -2439,7 +2388,7 @@ pub unsafe fn EscapeDachora_Instr_4(
     jp
 }
 pub unsafe fn EscapeDachora_Init(game: &mut Game) {
-    let mut E: *mut Enemy_EscapeDachora = Get_EscapeDachora(
+    let E: *mut Enemy_EscapeDachora = Get_EscapeDachora(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );

@@ -40,20 +40,20 @@ pub use crate::types::SpawnHardcodedPlmArgs;
 pub use crate::types::{Consts_86, DoorDef, RoomDefRoomstate};
 pub const kCoroutineNone: ::core::ffi::c_int = 0;
 #[inline]
-unsafe fn RomPtr_8F(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
+unsafe fn RomPtr_8F(addr: uint16_t, game: &mut Game) -> *const uint8 {
     RomPtr((0x8f0000u32) | ((addr) as u32), game)
 }
 #[inline]
-unsafe fn get_DoorDef(mut a: uint16, game: &mut Game) -> *mut DoorDef {
+unsafe fn get_DoorDef(a: uint16, game: &mut Game) -> *mut DoorDef {
     RomPtr((0x830000u32) | ((a) as u32), game) as *mut DoorDef
 }
 #[inline]
-unsafe fn get_RoomDefRoomstate(mut a: uint16, game: &mut Game) -> *mut RoomDefRoomstate {
+unsafe fn get_RoomDefRoomstate(a: uint16, game: &mut Game) -> *mut RoomDefRoomstate {
     RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefRoomstate
 }
 #[inline]
 unsafe fn get_RoomDefStateSelect_E6E5_Finish(
-    mut a: uint16,
+    a: uint16,
     game: &mut Game,
 ) -> *mut RoomDefStateSelect_E6E5_Finish {
     RomPtr((0x8f0000u32) | ((a) as u32), game) as *mut RoomDefStateSelect_E6E5_Finish
@@ -538,9 +538,9 @@ pub unsafe fn RoomCode_GenRandomExplodes_Nonblank(game: &mut Game) {
             == 0i32
     {
         let mut Random: uint16 = NextRandom(game);
-        let mut x: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16))
+        let x: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16))
             .wrapping_add((Random as uint8) as u16);
-        let mut y: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16))
+        let y: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16))
             .wrapping_add(
                 (*(&raw mut Random as *mut uint8).offset(
                     (::core::mem::size_of::<uint16>())
@@ -548,7 +548,7 @@ pub unsafe fn RoomCode_GenRandomExplodes_Nonblank(game: &mut Game) {
                         .wrapping_sub(1_usize) as isize,
                 )) as u16,
             );
-        let mut prod: uint16 = Mult8x8(
+        let prod: uint16 = Mult8x8(
             (y as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint8,
             *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
         );
@@ -596,12 +596,12 @@ pub unsafe fn RoomCode_GenRandomExplodes_4th(game: &mut Game) {
         );
     }
 }
-pub unsafe fn RoomCode_GenRandomExplodes(mut x_r18: uint16, mut y_r20: uint16, game: &mut Game) {
+pub unsafe fn RoomCode_GenRandomExplodes(x_r18: uint16, y_r20: uint16, game: &mut Game) {
     static kRoomCode_GenRandomExplodes_Sprite: [uint8; 8] = [3, 3, 9, 12, 12, 18, 18, 21];
     static kRoomCode_GenRandomExplodes_Sfx: [uint8; 8] = [0x24, 0, 0, 0x25, 0, 0, 0, 0];
-    let mut v1: uint16 = (NextRandom(game)) & (0xfu16);
+    let v1: uint16 = (NextRandom(game)) & (0xfu16);
     if v1 < 8u16 {
-        let mut v2: uint16 = kRoomCode_GenRandomExplodes_Sfx[v1 as usize] as uint16;
+        let v2: uint16 = kRoomCode_GenRandomExplodes_Sfx[v1 as usize] as uint16;
         if v2 != 0 {
             QueueSfx2_Max6(v2, game);
         }
@@ -663,7 +663,7 @@ pub unsafe fn UnpauseHook_DraygonRoom(game: &mut Game) -> CoroutineRet {
     kCoroutineNone as CoroutineRet
 }
 pub unsafe fn RoomCode_SetCollectedMap(game: &mut Game) {
-    let mut v0: uint16 = (*((&raw mut game.g_ram as *mut uint8)
+    let v0: uint16 = (*((&raw mut game.g_ram as *mut uint8)
         .offset(0xd908)
         .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize)
         as *mut uint8 as *mut uint16))
@@ -818,8 +818,8 @@ pub unsafe fn RoomCode_Elevatube(game: &mut Game) {
     let mut v0: uint16 = 0;
     *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) = 128 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xaf8) as *mut uint16) = 0 as uint16;
-    let mut amt: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(4)
-        as *mut uint8 as *mut uint16) as int16 as int32)
+    let amt: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(4) as *mut uint8
+        as *mut uint16) as int16 as int32)
         << 8 as ::core::ffi::c_int;
     v0 = ((amt as uint32)
         .wrapping_add(*((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint32))
@@ -964,7 +964,7 @@ pub unsafe fn RoomCode_SpawnCeresFallingDebris(game: &mut Game) {
     } {
         *(&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(0) = 8 as uint8;
         *(&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(1) = 0 as uint8;
-        let mut v0: uint16 = (if *((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
+        let v0: uint16 = (if *((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
             as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             != 0
@@ -994,7 +994,7 @@ pub unsafe fn RoomCode_HandleCeresRidleyGetaway(game: &mut Game) {
 }
 pub unsafe fn RoomCode_ShakeScreenHorizDiag(game: &mut Game) {
     let mut v0: uint16 = 0;
-    let mut current_block_3: u64;
+    let current_block_3: u64;
     if *((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16) != 0 {
         let ref mut fresh11 = *((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16);
         *fresh11 = (*fresh11).wrapping_sub(1);
@@ -1024,7 +1024,7 @@ pub unsafe fn RoomCode_ShakeScreenHorizDiag(game: &mut Game) {
 }
 pub unsafe fn RoomCode_ShakeScreenHorizDiagStrong(game: &mut Game) {
     let mut v0: int16 = 0;
-    let mut current_block_3: u64;
+    let current_block_3: u64;
     if *((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16) != 0 {
         let ref mut fresh10 = *((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16);
         *fresh10 = (*fresh10).wrapping_sub(1);
@@ -1055,7 +1055,7 @@ pub unsafe fn RoomCode_ShakeScreenHorizDiagStrong(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(2) as *mut uint8 as *mut uint16);
     RoomCode_GenRandomExplodes_4th(game);
 }
-pub unsafe fn CallRoomDefStateSelect(mut ea: uint32, mut k: uint16, game: &mut Game) -> uint16 {
+pub unsafe fn CallRoomDefStateSelect(ea: uint32, k: uint16, game: &mut Game) -> uint16 {
     match ea {
         9430502 => RoomDefStateSelect_Finish(k, game),
         9430527 => RoomDefStateSelect_TourianBoss01(k, game),
@@ -1066,10 +1066,10 @@ pub unsafe fn CallRoomDefStateSelect(mut ea: uint32, mut k: uint16, game: &mut G
         _ => Unreachable(game) as uint16,
     }
 }
-pub unsafe fn HandleRoomDefStateSelect(mut k: uint16, game: &mut Game) {
+pub unsafe fn HandleRoomDefStateSelect(k: uint16, game: &mut Game) {
     let mut v1: uint16 = (k).wrapping_add(11u16);
     loop {
-        let mut event_pointer: uint16 = (*get_RoomDefStateSelect_E6E5_Finish(v1, game)).code_ptr;
+        let event_pointer: uint16 = (*get_RoomDefStateSelect_E6E5_Finish(v1, game)).code_ptr;
         v1 = CallRoomDefStateSelect(
             ((event_pointer) as u32) | (0x8f0000u32),
             (v1).wrapping_add(2u16),
@@ -1080,29 +1080,29 @@ pub unsafe fn HandleRoomDefStateSelect(mut k: uint16, game: &mut Game) {
         }
     }
 }
-pub unsafe fn RoomDefStateSelect_Finish(mut k: uint16, game: &mut Game) -> uint16 {
+pub unsafe fn RoomDefStateSelect_Finish(k: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x7bb) as *mut uint16) = k;
     0 as uint16
 }
-pub unsafe fn RoomDefStateSelect_TourianBoss01(mut k: uint16, game: &mut Game) -> uint16 {
+pub unsafe fn RoomDefStateSelect_TourianBoss01(k: uint16, game: &mut Game) -> uint16 {
     if CheckBossBitForCurArea(1 as uint16, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
         == 0
     {
         return (k).wrapping_add(2u16);
     }
-    let mut v1: *const uint16 = RomPtr_8F(k, game) as *const uint16;
+    let v1: *const uint16 = RomPtr_8F(k, game) as *const uint16;
     RoomDefStateSelect_Finish(*v1, game)
 }
-pub unsafe fn RoomDefStateSelect_IsEventSet(mut k: uint16, game: &mut Game) -> uint16 {
-    let mut v1: *const uint8 = RomPtr_8F(k, game);
+pub unsafe fn RoomDefStateSelect_IsEventSet(k: uint16, game: &mut Game) -> uint16 {
+    let v1: *const uint8 = RomPtr_8F(k, game);
     if CheckEventHappened(*v1 as uint16, game) != 0 {
         RoomDefStateSelect_Finish(*(v1.offset(1) as *mut uint16), game)
     } else {
         (k).wrapping_add(3u16)
     }
 }
-pub unsafe fn RoomDefStateSelect_IsBossDead(mut k: uint16, game: &mut Game) -> uint16 {
-    let mut v1: *const uint8 = RomPtr_8F(k, game);
+pub unsafe fn RoomDefStateSelect_IsBossDead(k: uint16, game: &mut Game) -> uint16 {
+    let v1: *const uint8 = RomPtr_8F(k, game);
     if CheckBossBitForCurArea(*v1 as uint16, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
         != 0
     {
@@ -1111,7 +1111,7 @@ pub unsafe fn RoomDefStateSelect_IsBossDead(mut k: uint16, game: &mut Game) -> u
         (k).wrapping_add(3u16)
     }
 }
-pub unsafe fn RoomDefStateSelect_MorphBallMissiles(mut k: uint16, game: &mut Game) -> uint16 {
+pub unsafe fn RoomDefStateSelect_MorphBallMissiles(k: uint16, game: &mut Game) -> uint16 {
     if (*((&raw mut game.g_ram as *mut uint8).offset(0x9a4) as *mut uint16) as ::core::ffi::c_int
         & 4 as ::core::ffi::c_int)
         == 0i32
@@ -1119,17 +1119,17 @@ pub unsafe fn RoomDefStateSelect_MorphBallMissiles(mut k: uint16, game: &mut Gam
     {
         return (k).wrapping_add(2u16);
     }
-    let mut v1: *const uint16 = RomPtr_8F(k, game) as *const uint16;
+    let v1: *const uint16 = RomPtr_8F(k, game) as *const uint16;
     RoomDefStateSelect_Finish(*v1, game)
 }
-pub unsafe fn RoomDefStateSelect_PowerBombs(mut k: uint16, game: &mut Game) -> uint16 {
+pub unsafe fn RoomDefStateSelect_PowerBombs(k: uint16, game: &mut Game) -> uint16 {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x9d0) as *mut uint16) == 0 {
         return (k).wrapping_add(2u16);
     }
-    let mut v1: *const uint16 = RomPtr_8F(k, game) as *const uint16;
+    let v1: *const uint16 = RomPtr_8F(k, game) as *const uint16;
     RoomDefStateSelect_Finish(*v1, game)
 }
-pub unsafe fn CallRoomSetupCode(mut ea: uint32, game: &mut Game) {
+pub unsafe fn CallRoomSetupCode(ea: uint32, game: &mut Game) {
     match ea {
         9408916 => {
             RoomSetup_AfterSavingAnimals(game);
@@ -1205,7 +1205,7 @@ pub unsafe fn RunRoomSetupCode(game: &mut Game) {
         );
     }
 }
-pub unsafe fn CallDoorDefSetupCode(mut ea: uint32, game: &mut Game) {
+pub unsafe fn CallDoorDefSetupCode(ea: uint32, game: &mut Game) {
     match ea {
         9419121 => {
             DoorCode_StartWreckedShipTreadmillWest(game);
@@ -1459,7 +1459,7 @@ pub unsafe fn CallDoorDefSetupCode(mut ea: uint32, game: &mut Game) {
     }
 }
 pub unsafe fn RunDoorSetupCode(game: &mut Game) {
-    let mut DD: *mut DoorDef = get_DoorDef(
+    let DD: *mut DoorDef = get_DoorDef(
         *((&raw mut game.g_ram as *mut uint8).offset(0x78d) as *mut uint16),
         game,
     );
@@ -1548,7 +1548,7 @@ pub unsafe fn RoomCode_CrocomireShaking(game: &mut Game) {
 static kRoomCode_RidleyRoomShaking_X: [int16; 8] = [0, 2, 2, 2, 0, -(2), -(2), -(2)];
 static kRoomCode_RidleyRoomShaking_Y: [int16; 8] = [-(2), -(2), 0, 2, 2, 2, 0, -(2)];
 pub unsafe fn RoomCode_RidleyRoomShaking(game: &mut Game) {
-    let mut ai_var_A: uint16 =
+    let ai_var_A: uint16 =
         (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(4)).ai_var_A;
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(4)).ai_var_A
         != 0
@@ -1558,7 +1558,7 @@ pub unsafe fn RoomCode_RidleyRoomShaking(game: &mut Game) {
             .offset(4))
         .ai_var_A;
         fresh0.write_unaligned(fresh0.read_unaligned().wrapping_sub(1));
-        let mut v1: ::core::ffi::c_int = ai_var_A as ::core::ffi::c_int - 1 as ::core::ffi::c_int;
+        let v1: ::core::ffi::c_int = ai_var_A as ::core::ffi::c_int - 1 as ::core::ffi::c_int;
         let ref mut fresh1 = *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16);
         *fresh1 = (*fresh1).wrapping_add((kRoomCode_RidleyRoomShaking_X[v1 as usize]) as u16);
         let ref mut fresh2 = *((&raw mut game.g_ram as *mut uint8).offset(0xb5) as *mut uint16);
@@ -1569,7 +1569,7 @@ pub unsafe fn RoomCode_RidleyRoomShaking(game: &mut Game) {
         *fresh4 = (*fresh4).wrapping_add((kRoomCode_RidleyRoomShaking_Y[v1 as usize]) as u16);
     }
 }
-pub unsafe fn CallRoomCode(mut ea: uint32, game: &mut Game) {
+pub unsafe fn CallRoomCode(ea: uint32, game: &mut Game) {
     match ea {
         9421078 => {
             RoomCode_ScrollingSkyLand_(game);

@@ -127,7 +127,7 @@ pub const __ASSERT_FUNCTION: [::core::ffi::c_char; 28] = unsafe {
     ::core::mem::transmute::<[u8; 28], [::core::ffi::c_char; 28]>(*b"uint8 *RomPtr_RAM(uint16_t)\0")
 };
 #[inline]
-unsafe fn RomPtr_RAM(mut addr: uint16_t, game: &mut Game) -> *mut uint8 {
+unsafe fn RomPtr_RAM(addr: uint16_t, game: &mut Game) -> *mut uint8 {
     '_c2rust_label: {
         if addr < 0x2000u16 {
         } else {
@@ -142,20 +142,20 @@ unsafe fn RomPtr_RAM(mut addr: uint16_t, game: &mut Game) -> *mut uint8 {
     (&raw mut game.g_ram as *mut uint8).offset(addr as ::core::ffi::c_int as isize)
 }
 #[inline]
-unsafe fn RomPtr_91(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
+unsafe fn RomPtr_91(addr: uint16_t, game: &mut Game) -> *const uint8 {
     RomPtr((0x910000u32) | ((addr) as u32), game)
 }
 #[inline]
-unsafe fn RomPtr_9B(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
+unsafe fn RomPtr_9B(addr: uint16_t, game: &mut Game) -> *const uint8 {
     RomPtr((0x9b0000u32) | ((addr) as u32), game)
 }
 #[inline]
-unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int, game: &mut Game) -> *mut VramWriteEntry {
+unsafe fn gVramWriteEntry(a: ::core::ffi::c_int, game: &mut Game) -> *mut VramWriteEntry {
     (&raw mut game.g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
         as *mut uint8 as *mut VramWriteEntry
 }
 #[inline]
-unsafe fn get_PoseEntry(mut a: uint16, game: &mut Game) -> *mut PoseEntry {
+unsafe fn get_PoseEntry(a: uint16, game: &mut Game) -> *mut PoseEntry {
     RomPtr((0x910000u32) | ((a) as u32), game) as *mut PoseEntry
 }
 pub const fnSamus_MovementHandler_Normal: ::core::ffi::c_int = 0x90a337;
@@ -348,7 +348,7 @@ pub unsafe fn Samus_Input_1B_ShinesparkEtc(game: &mut Game) {
 }
 pub unsafe fn Samus_LookupTransitionTable(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16) != 0 {
-        let mut pair: Pair_R18_R20 = TranslateCustomControllerBindingsToDefault(game);
+        let pair: Pair_R18_R20 = TranslateCustomControllerBindingsToDefault(game);
         let mut pe: *mut PoseEntry = get_PoseEntry(
             *(game.g_rom.offset(crate::rtl::lorom_offset(0x919ee2)) as *const uint8 as *mut uint16)
                 .offset(
@@ -395,7 +395,7 @@ pub unsafe fn TranslateCustomControllerBindingsToDefault(game: &mut Game) -> Pai
             | kButton_Down as ::core::ffi::c_int
             | kButton_Left as ::core::ffi::c_int
             | kButton_Right as ::core::ffi::c_int)) as uint16;
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16);
+    let v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16);
     if (*((&raw mut game.g_ram as *mut uint8).offset(0x9b2) as *mut uint16) as ::core::ffi::c_int
         & *((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int)
         != 0i32
@@ -440,7 +440,7 @@ pub unsafe fn TranslateCustomControllerBindingsToDefault(game: &mut Game) -> Pai
     {
         r18 = (r18) | ((kButton_L) as u16);
     }
-    let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16);
+    let v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16);
     if (*((&raw mut game.g_ram as *mut uint8).offset(0x9b2) as *mut uint16) as ::core::ffi::c_int
         & *((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16) as ::core::ffi::c_int)
         != 0i32
@@ -646,19 +646,19 @@ pub fn DemoInstr_Finish(_k: u16, _j: u16, game: &mut Game) -> u16 {
     game.set_demo_input_new(0);
     0
 }
-pub unsafe fn DemoInstr_SetPreInstr(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
+pub unsafe fn DemoInstr_SetPreInstr(k: uint16, j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xa7a) as *mut uint16) =
         *(RomPtr_91(j, game) as *mut uint16);
     (j).wrapping_add(2u16)
 }
-pub unsafe fn DemoInstr_ClearPreInstr(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
+pub unsafe fn DemoInstr_ClearPreInstr(k: uint16, j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xa7a) as *mut uint16) = 0x8447 as uint16;
     j
 }
-pub unsafe fn DemoInstr_Goto(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
+pub unsafe fn DemoInstr_Goto(k: uint16, j: uint16, game: &mut Game) -> uint16 {
     *(RomPtr_91(j, game) as *mut uint16)
 }
-pub unsafe fn DemoInstr_DecTimerAndGoto(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
+pub unsafe fn DemoInstr_DecTimerAndGoto(k: uint16, j: uint16, game: &mut Game) -> uint16 {
     let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0xa80) as *mut uint16);
     *fresh0 = (*fresh0).wrapping_sub(1);
     if *fresh0 != 0 {
@@ -667,12 +667,12 @@ pub unsafe fn DemoInstr_DecTimerAndGoto(mut k: uint16, mut j: uint16, game: &mut
         (j).wrapping_add(2u16)
     }
 }
-pub unsafe fn DemoInstr_SetTimer(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
+pub unsafe fn DemoInstr_SetTimer(k: uint16, j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xa80) as *mut uint16) =
         *(RomPtr_91(j, game) as *mut uint16);
     (j).wrapping_add(2u16)
 }
-pub unsafe fn DemoInstr_Func2(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
+pub unsafe fn DemoInstr_Func2(k: uint16, j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xa42) as *mut uint16) =
         ((0x90e695i32) as u16) & (0xffffu16);
     *((&raw mut game.g_ram as *mut uint8).offset(0xa44) as *mut uint16) =
@@ -701,7 +701,7 @@ pub unsafe fn DemoPreInstr_866A(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xa7c) as *mut uint16) = 1 as uint16;
     }
 }
-pub unsafe fn DemoInstr_Disable(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
+pub unsafe fn DemoInstr_Disable(k: uint16, j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xa42) as *mut uint16) =
         ((0x90e8cdi32) as u16) & (0xffffu16);
     *((&raw mut game.g_ram as *mut uint8).offset(0xa44) as *mut uint16) =
@@ -728,7 +728,7 @@ pub unsafe fn UNUSED_DemoInstr_Func4(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xa60) as *mut uint16) =
         ((0x90e90ei32) as u16) & (0xffffu16);
 }
-pub unsafe fn DemoInstr_Func3(mut k: uint16, mut j: uint16, game: &mut Game) -> uint16 {
+pub unsafe fn DemoInstr_Func3(k: uint16, j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xa42) as *mut uint16) =
         ((0x90e713i32) as u16) & (0xffffu16);
     *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
@@ -932,7 +932,7 @@ pub fn DemoPreInstr_8AB0(game: &mut Game) {
         game.set_demo_input_instr_timer(1);
     }
 }
-unsafe fn XrayFillUp(mut dest: *mut uint16, mut fill_with: uint16, mut v1: uint16) {
+unsafe fn XrayFillUp(dest: *mut uint16, fill_with: uint16, mut v1: uint16) {
     loop {
         *dest.offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = fill_with;
         v1 = (v1).wrapping_sub(2u16);
@@ -941,7 +941,7 @@ unsafe fn XrayFillUp(mut dest: *mut uint16, mut fill_with: uint16, mut v1: uint1
         }
     }
 }
-unsafe fn XrayFillDown(mut dest: *mut uint16, mut fill_with: uint16, mut v1: uint16) {
+unsafe fn XrayFillDown(dest: *mut uint16, fill_with: uint16, mut v1: uint16) {
     loop {
         *dest.offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = fill_with;
         v1 = (v1).wrapping_add(2u16);
@@ -951,18 +951,18 @@ unsafe fn XrayFillDown(mut dest: *mut uint16, mut fill_with: uint16, mut v1: uin
     }
 }
 unsafe fn XrayFillUpRamped(
-    mut dest: *mut uint16,
+    dest: *mut uint16,
     mut pos: ::core::ffi::c_int,
     mut left: uint32,
-    mut left_step: uint32,
+    left_step: uint32,
     mut right: uint32,
-    mut right_step: uint32,
-    mut adjust: ::core::ffi::c_int,
+    right_step: uint32,
+    adjust: ::core::ffi::c_int,
 ) {
     loop {
         left = left.wrapping_add(left_step);
         right = right.wrapping_add(right_step);
-        let mut left_val: uint32 = if left & !(0xffff as ::core::ffi::c_int) as uint32 != 0 {
+        let left_val: uint32 = if left & !(0xffff as ::core::ffi::c_int) as uint32 != 0 {
             (if (left as int32) < 0 as int32 {
                 0 as ::core::ffi::c_int
             } else {
@@ -971,7 +971,7 @@ unsafe fn XrayFillUpRamped(
         } else {
             left
         };
-        let mut right_val: uint32 = if right & !(0xffff as ::core::ffi::c_int) as uint32 != 0 {
+        let right_val: uint32 = if right & !(0xffff as ::core::ffi::c_int) as uint32 != 0 {
             (if (right as int32) < 0 as int32 {
                 0 as ::core::ffi::c_int
             } else {
@@ -980,7 +980,7 @@ unsafe fn XrayFillUpRamped(
         } else {
             right
         };
-        let mut finished: bool = left & !(0xffff as ::core::ffi::c_int) as uint32 != 0
+        let finished: bool = left & !(0xffff as ::core::ffi::c_int) as uint32 != 0
             && right & !(0xffff as ::core::ffi::c_int) as uint32 != 0
             && ((left_step ^ left | right_step ^ right) >> 31 as ::core::ffi::c_int) == 0u32;
         *dest.offset((pos >> 1 as ::core::ffi::c_int) as isize) =
@@ -1008,18 +1008,18 @@ unsafe fn XrayFillUpRamped(
     }
 }
 unsafe fn XrayFillDownRamped(
-    mut dest: *mut uint16,
+    dest: *mut uint16,
     mut pos: ::core::ffi::c_int,
     mut left: uint32,
-    mut left_step: uint32,
+    left_step: uint32,
     mut right: uint32,
-    mut right_step: uint32,
-    mut adjust: ::core::ffi::c_int,
+    right_step: uint32,
+    adjust: ::core::ffi::c_int,
 ) {
     loop {
         left = left.wrapping_add(left_step);
         right = right.wrapping_add(right_step);
-        let mut left_val: uint32 = if left & !(0xffff as ::core::ffi::c_int) as uint32 != 0 {
+        let left_val: uint32 = if left & !(0xffff as ::core::ffi::c_int) as uint32 != 0 {
             (if (left as int32) < 0 as int32 {
                 0 as ::core::ffi::c_int
             } else {
@@ -1028,7 +1028,7 @@ unsafe fn XrayFillDownRamped(
         } else {
             left
         };
-        let mut right_val: uint32 = if right & !(0xffff as ::core::ffi::c_int) as uint32 != 0 {
+        let right_val: uint32 = if right & !(0xffff as ::core::ffi::c_int) as uint32 != 0 {
             (if (right as int32) < 0 as int32 {
                 0 as ::core::ffi::c_int
             } else {
@@ -1037,7 +1037,7 @@ unsafe fn XrayFillDownRamped(
         } else {
             right
         };
-        let mut finished: bool = left & !(0xffff as ::core::ffi::c_int) as uint32 != 0
+        let finished: bool = left & !(0xffff as ::core::ffi::c_int) as uint32 != 0
             && right & !(0xffff as ::core::ffi::c_int) as uint32 != 0
             && ((left_step ^ left | right_step ^ right) >> 31 as ::core::ffi::c_int) == 0u32;
         *dest.offset((pos >> 1 as ::core::ffi::c_int) as isize) =
@@ -1064,8 +1064,8 @@ unsafe fn XrayFillDownRamped(
         }
     }
 }
-unsafe fn XrayHdmaFunc_BeamAimedR(mut ctx: *mut XrayHdmaCtx, game: &mut Game) {
-    let mut p: ::core::ffi::c_int = 2 as ::core::ffi::c_int * (*ctx).r24 as ::core::ffi::c_int;
+unsafe fn XrayHdmaFunc_BeamAimedR(ctx: *mut XrayHdmaCtx, game: &mut Game) {
+    let p: ::core::ffi::c_int = 2 as ::core::ffi::c_int * (*ctx).r24 as ::core::ffi::c_int;
     XrayFillUpRamped(
         (*ctx).dest,
         p - 2 as ::core::ffi::c_int,
@@ -1085,8 +1085,8 @@ unsafe fn XrayHdmaFunc_BeamAimedR(mut ctx: *mut XrayHdmaCtx, game: &mut Game) {
         -(2 as ::core::ffi::c_int),
     );
 }
-unsafe fn XrayHdmaFunc_BeamAimedL(mut ctx: *mut XrayHdmaCtx, game: &mut Game) {
-    let mut t: ::core::ffi::c_int = 2 as ::core::ffi::c_int * (*ctx).r24 as ::core::ffi::c_int;
+unsafe fn XrayHdmaFunc_BeamAimedL(ctx: *mut XrayHdmaCtx, game: &mut Game) {
+    let t: ::core::ffi::c_int = 2 as ::core::ffi::c_int * (*ctx).r24 as ::core::ffi::c_int;
     XrayFillUpRamped(
         (*ctx).dest,
         t - 2 as ::core::ffi::c_int,
@@ -1106,8 +1106,8 @@ unsafe fn XrayHdmaFunc_BeamAimedL(mut ctx: *mut XrayHdmaCtx, game: &mut Game) {
         -(2 as ::core::ffi::c_int),
     );
 }
-unsafe fn XrayHdmaFunc_BeamAimedU(mut ctx: *mut XrayHdmaCtx, game: &mut Game) {
-    let mut p: ::core::ffi::c_int = 2 as ::core::ffi::c_int * (*ctx).r24 as ::core::ffi::c_int;
+unsafe fn XrayHdmaFunc_BeamAimedU(ctx: *mut XrayHdmaCtx, game: &mut Game) {
+    let p: ::core::ffi::c_int = 2 as ::core::ffi::c_int * (*ctx).r24 as ::core::ffi::c_int;
     if (*ctx).r26 as ::core::ffi::c_int - 192 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0
     {
@@ -1328,7 +1328,7 @@ fn xray_offscreen_positive_stores(
 }
 
 unsafe fn XrayHdmaFunc_BeamAimedD(ctx: &XrayHdmaCtx, game: &mut Game) {
-    let mut p: ::core::ffi::c_int = 2 as ::core::ffi::c_int * ctx.r24 as ::core::ffi::c_int;
+    let p: ::core::ffi::c_int = 2 as ::core::ffi::c_int * ctx.r24 as ::core::ffi::c_int;
     if ctx.r28 as ::core::ffi::c_int - 128 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0
     {
         // Current callers pass the $9100 or $9800 table inside this g_ram.
@@ -1372,8 +1372,8 @@ unsafe fn XrayHdmaFunc_BeamAimedD(ctx: &XrayHdmaCtx, game: &mut Game) {
         (p - 2 as ::core::ffi::c_int) as uint16,
     );
 }
-unsafe fn XrayHdmaFunc_BeamHoriz(mut ctx: *mut XrayHdmaCtx, game: &mut Game) {
-    let mut v0: uint16 = (2 as ::core::ffi::c_int
+unsafe fn XrayHdmaFunc_BeamHoriz(ctx: *mut XrayHdmaCtx, game: &mut Game) {
+    let v0: uint16 = (2 as ::core::ffi::c_int
         * ((*ctx).r24 as ::core::ffi::c_int - 1 as ::core::ffi::c_int))
         as uint16;
     *(*ctx)
@@ -1382,8 +1382,8 @@ unsafe fn XrayHdmaFunc_BeamHoriz(mut ctx: *mut XrayHdmaCtx, game: &mut Game) {
     XrayFillUp((*ctx).dest, 0xff as uint16, (v0).wrapping_sub(2u16));
     XrayFillDown((*ctx).dest, 0xff as uint16, (v0).wrapping_add(2u16));
 }
-unsafe fn XrayHdmaOnScreen_BeamAimedR(mut ctx: *mut XrayHdmaCtx, game: &mut Game) {
-    let mut p: ::core::ffi::c_int = 2 as ::core::ffi::c_int * (*ctx).r24 as ::core::ffi::c_int;
+unsafe fn XrayHdmaOnScreen_BeamAimedR(ctx: *mut XrayHdmaCtx, game: &mut Game) {
+    let p: ::core::ffi::c_int = 2 as ::core::ffi::c_int * (*ctx).r24 as ::core::ffi::c_int;
     *(*ctx)
         .dest
         .offset((p - 2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = ((*ctx).r22
@@ -1410,8 +1410,8 @@ unsafe fn XrayHdmaOnScreen_BeamAimedR(mut ctx: *mut XrayHdmaCtx, game: &mut Game
         -(2 as ::core::ffi::c_int),
     );
 }
-unsafe fn XrayHdmaOnScreen_BeamAimedL(mut ctx: *mut XrayHdmaCtx, game: &mut Game) {
-    let mut v0: ::core::ffi::c_int = 2 as ::core::ffi::c_int * (*ctx).r24 as ::core::ffi::c_int;
+unsafe fn XrayHdmaOnScreen_BeamAimedL(ctx: *mut XrayHdmaCtx, game: &mut Game) {
+    let v0: ::core::ffi::c_int = 2 as ::core::ffi::c_int * (*ctx).r24 as ::core::ffi::c_int;
     *(*ctx)
         .dest
         .offset((v0 - 2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
@@ -1436,8 +1436,8 @@ unsafe fn XrayHdmaOnScreen_BeamAimedL(mut ctx: *mut XrayHdmaCtx, game: &mut Game
         -(2 as ::core::ffi::c_int),
     );
 }
-unsafe fn XrayHdmaOnScreen_BeamAimedU(mut ctx: *mut XrayHdmaCtx, game: &mut Game) {
-    let mut v0: ::core::ffi::c_int = 2 as ::core::ffi::c_int * (*ctx).r24 as ::core::ffi::c_int;
+unsafe fn XrayHdmaOnScreen_BeamAimedU(ctx: *mut XrayHdmaCtx, game: &mut Game) {
+    let v0: ::core::ffi::c_int = 2 as ::core::ffi::c_int * (*ctx).r24 as ::core::ffi::c_int;
     *(*ctx)
         .dest
         .offset((v0 - 2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
@@ -1535,7 +1535,7 @@ unsafe fn XrayHdmaOnScreen_BeamAimedD(ctx: &XrayHdmaCtx, game: &mut Game) {
         );
         return;
     }
-    let mut v0: ::core::ffi::c_int = 2 as ::core::ffi::c_int * ctx.r24 as ::core::ffi::c_int;
+    let v0: ::core::ffi::c_int = 2 as ::core::ffi::c_int * ctx.r24 as ::core::ffi::c_int;
     *ctx.dest
         .offset((v0 - 2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         ((ctx.r22 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) * 0x101 as ::core::ffi::c_int)
@@ -1568,11 +1568,11 @@ unsafe fn XrayHdmaOnScreen_BeamAimedD(ctx: &XrayHdmaCtx, game: &mut Game) {
         (v0 - 4 as ::core::ffi::c_int) as uint16,
     );
 }
-unsafe fn XrayHdmaOnScreen_BeamHoriz(mut ctx: *mut XrayHdmaCtx, game: &mut Game) {
-    let mut v0: uint16 = (2 as ::core::ffi::c_int
+unsafe fn XrayHdmaOnScreen_BeamHoriz(ctx: *mut XrayHdmaCtx, game: &mut Game) {
+    let v0: uint16 = (2 as ::core::ffi::c_int
         * ((*ctx).r24 as ::core::ffi::c_int - 1 as ::core::ffi::c_int))
         as uint16;
-    let mut t: uint32 = ((*ctx).r22 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint32;
+    let t: uint32 = ((*ctx).r22 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint32;
     *(*ctx)
         .dest
         .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
@@ -1671,7 +1671,7 @@ pub unsafe fn XrayRunHandler(game: &mut Game) {
         }
     }
 }
-pub unsafe fn Xray_SetupStage1_FreezeTimeBackup(mut k: uint16, game: &mut Game) {
+pub unsafe fn Xray_SetupStage1_FreezeTimeBackup(k: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xa78) as *mut uint16 as *mut uint8).offset(0) =
         1 as uint8;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1914) as *mut uint16 as *mut uint8)
@@ -1701,7 +1701,7 @@ pub unsafe fn Xray_SetupStage1_FreezeTimeBackup(mut k: uint16, game: &mut Game) 
         *(&raw mut game.g_ram as *mut uint8).offset(0x59);
 }
 pub unsafe fn Xray_SetupStage2_ReadBg1_2ndScreen(game: &mut Game) {
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x360) as *mut uint16);
+    let v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x360) as *mut uint16);
     *((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x340) as *mut VramReadQueueEnt)
         .offset(0))
     .vram_target as *mut uint8)
@@ -1739,7 +1739,7 @@ pub unsafe fn Xray_SetupStage2_ReadBg1_2ndScreen(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x360) as *mut uint16) = (v0).wrapping_add(9u16);
 }
 pub unsafe fn Xray_SetupStage3_ReadBg1_1stScreen(game: &mut Game) {
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x360) as *mut uint16);
+    let v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x360) as *mut uint16);
     *((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x340) as *mut VramReadQueueEnt)
         .offset(0))
     .vram_target as *mut uint8)
@@ -1813,19 +1813,19 @@ pub unsafe fn Xray_SetupStage4(game: &mut Game) {
                 r28 = 0 as uint16;
                 r30 = 0 as uint16;
             }
-            let mut v0: uint16 = (r30 as ::core::ffi::c_int
+            let v0: uint16 = (r30 as ::core::ffi::c_int
                 + r28 as ::core::ffi::c_int
                 + r26 as ::core::ffi::c_int) as uint16;
-            let mut v11: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x4000)
+            let v11: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x4000)
                 as *mut Ram4000))
                 .xray_tilemaps[(v0 as ::core::ffi::c_int + 4096 as ::core::ffi::c_int) as usize];
-            let mut v10: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x4000)
+            let v10: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x4000)
                 as *mut Ram4000))
                 .xray_tilemaps[(v0 as ::core::ffi::c_int + 4097 as ::core::ffi::c_int) as usize];
-            let mut v9: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x4000)
+            let v9: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x4000)
                 as *mut Ram4000))
                 .xray_tilemaps[(v0 as ::core::ffi::c_int + 4128 as ::core::ffi::c_int) as usize];
-            let mut v1: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x4000)
+            let v1: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x4000)
                 as *mut Ram4000))
                 .xray_tilemaps[(v0 as ::core::ffi::c_int + 4129 as ::core::ffi::c_int) as usize];
             *(((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x4000) as *mut Ram4000))
@@ -1898,7 +1898,7 @@ pub unsafe fn Xray_SetupStage4(game: &mut Game) {
                 break;
             }
         }
-        let mut v12: uint16 = r22;
+        let v12: uint16 = r22;
         r22 = (r22).wrapping_add(1984u16);
         Xray_SetupStage4_Func3(0 as uint16, r22, r36, game);
         r22 = (v12).wrapping_add(64u16);
@@ -1910,7 +1910,7 @@ pub unsafe fn Xray_SetupStage4(game: &mut Game) {
         }
     }
     LoadXrayBlocks(game);
-    let mut v7: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x360) as *mut uint16);
+    let v7: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x360) as *mut uint16);
     *((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x340) as *mut VramReadQueueEnt)
         .offset(0))
     .vram_target as *mut uint8)
@@ -1944,10 +1944,10 @@ pub unsafe fn Xray_SetupStage4(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x360) as *mut uint16) = (v7).wrapping_add(9u16);
 }
 pub unsafe fn Xray_SetupStage4_Func1(
-    mut dst_r22: uint16,
-    mut r26: uint16,
-    mut r28: uint16,
-    mut r30: uint16,
+    dst_r22: uint16,
+    r26: uint16,
+    r28: uint16,
+    r30: uint16,
     game: &mut Game,
 ) {
     let mut v0: int16 = 0;
@@ -1961,16 +1961,16 @@ pub unsafe fn Xray_SetupStage4_Func1(
             as uint16;
         v0 = 0 as int16;
     }
-    let mut v1: uint16 = (R32).wrapping_add((v0) as u16);
-    let mut v6: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x4000) as *mut Ram4000))
+    let v1: uint16 = (R32).wrapping_add((v0) as u16);
+    let v6: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x4000) as *mut Ram4000))
         .xray_tilemaps[(v1 as ::core::ffi::c_int + 4096 as ::core::ffi::c_int) as usize];
-    let mut v5: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x4000) as *mut Ram4000))
+    let v5: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x4000) as *mut Ram4000))
         .xray_tilemaps[(v1 as ::core::ffi::c_int + 4097 as ::core::ffi::c_int) as usize];
-    let mut v4: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x4000) as *mut Ram4000))
+    let v4: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x4000) as *mut Ram4000))
         .xray_tilemaps[(v1 as ::core::ffi::c_int + 4128 as ::core::ffi::c_int) as usize];
-    let mut v3: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x4000) as *mut Ram4000))
+    let v3: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x4000) as *mut Ram4000))
         .xray_tilemaps[(v1 as ::core::ffi::c_int + 4129 as ::core::ffi::c_int) as usize];
-    let mut v2: uint16 = (dst_r22).wrapping_add(1984u16);
+    let v2: uint16 = (dst_r22).wrapping_add(1984u16);
     *(((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x4000) as *mut Ram4000))
         .xray_tilemaps as *mut uint16)
         .offset(33) as *mut uint16 as *mut uint8)
@@ -1987,12 +1987,12 @@ pub unsafe fn Xray_SetupStage4_Func1(
         .xray_tilemaps as *mut uint16 as *mut uint8)
         .offset(v2 as ::core::ffi::c_int as isize) as *mut uint16) = v6;
 }
-unsafe fn Xray_GetXrayedBlock(mut k: uint16, game: &mut Game) -> *const uint8 {
+unsafe fn Xray_GetXrayedBlock(k: uint16, game: &mut Game) -> *const uint8 {
     let mut value: uint16 = 0;
-    let mut bts: uint16 = *(&raw mut game.g_ram as *mut uint8)
+    let bts: uint16 = *(&raw mut game.g_ram as *mut uint8)
         .offset(0x16402)
         .offset(k as isize) as uint16;
-    let mut r40: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16)
+    let r40: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16)
         .offset(k as isize))
         & (0xf000u16);
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -2028,15 +2028,15 @@ unsafe fn Xray_GetXrayedBlock(mut k: uint16, game: &mut Game) -> *const uint8 {
     }
     ::core::ptr::null::<uint8>()
 }
-pub unsafe fn Xray_SetupStage4_Func2(mut dst_r22: uint16, mut r34: uint16, game: &mut Game) {
+pub unsafe fn Xray_SetupStage4_Func2(dst_r22: uint16, r34: uint16, game: &mut Game) {
     if r34 == 0u16 {
         return;
     }
-    let mut jp: *const uint8 = Xray_GetXrayedBlock((r34).wrapping_sub(1u16), game);
-    let mut dst: *mut uint16 =
-        (&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x4000) as *mut Ram4000))
-            .xray_tilemaps as *mut uint16 as *mut uint8)
-            .offset(dst_r22 as ::core::ffi::c_int as isize) as *mut uint16;
+    let jp: *const uint8 = Xray_GetXrayedBlock((r34).wrapping_sub(1u16), game);
+    let dst: *mut uint16 = (&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x4000)
+        as *mut Ram4000))
+        .xray_tilemaps as *mut uint16 as *mut uint8)
+        .offset(dst_r22 as ::core::ffi::c_int as isize) as *mut uint16;
     if jp.is_null() {
         return;
     }
@@ -2048,8 +2048,8 @@ pub unsafe fn Xray_SetupStage4_Func2(mut dst_r22: uint16, mut r34: uint16, game:
         {
             return;
         }
-        let mut src: *mut TileTable = (&raw mut (*((&raw mut game.g_ram as *mut uint8)
-            .offset(0xa000) as *mut TileTables))
+        let src: *mut TileTable = (&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+            as *mut TileTables))
             .tables as *mut TileTable)
             .offset(*(jp.offset(8) as *mut uint16) as ::core::ffi::c_int as isize);
         *dst.offset(64) = (*src).top_left;
@@ -2057,7 +2057,7 @@ pub unsafe fn Xray_SetupStage4_Func2(mut dst_r22: uint16, mut r34: uint16, game:
         *dst.offset(96) = (*src).bottom_left;
         *dst.offset(97) = (*src).bottom_right;
     }
-    let mut src_0: *mut TileTable = (&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+    let src_0: *mut TileTable = (&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
         as *mut TileTables))
         .tables as *mut TileTable)
         .offset(*(jp.offset(4) as *mut uint16) as ::core::ffi::c_int as isize);
@@ -2066,12 +2066,7 @@ pub unsafe fn Xray_SetupStage4_Func2(mut dst_r22: uint16, mut r34: uint16, game:
     *dst.offset(32) = (*src_0).bottom_left;
     *dst.offset(33) = (*src_0).bottom_right;
 }
-unsafe fn Xray_CombinedMove(
-    mut dst_r22: uint16,
-    mut r36: uint16,
-    mut which_dir: bool,
-    game: &mut Game,
-) {
+unsafe fn Xray_CombinedMove(dst_r22: uint16, r36: uint16, which_dir: bool, game: &mut Game) {
     let mut y: uint16 = (r36 as ::core::ffi::c_int
         / *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as ::core::ffi::c_int)
         as uint16;
@@ -2092,7 +2087,7 @@ unsafe fn Xray_CombinedMove(
                 return;
             }
             *variable = (*variable as ::core::ffi::c_int + step) as uint16;
-            let mut pos: ::core::ffi::c_int = y as ::core::ffi::c_int
+            let pos: ::core::ffi::c_int = y as ::core::ffi::c_int
                 * *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16)
                     as ::core::ffi::c_int
                 + x as ::core::ffi::c_int;
@@ -2142,45 +2137,45 @@ unsafe fn Xray_CombinedMove(
         }
     }
 }
-unsafe fn Xray_Func7(mut dst_r22: uint16, mut jp: *const uint8, game: &mut Game) {
+unsafe fn Xray_Func7(dst_r22: uint16, jp: *const uint8, game: &mut Game) {
     Xray_Func12(dst_r22, jp.offset(2), game);
 }
-unsafe fn Xray_Func8(mut dst_r22: uint16, mut jp: *const uint8, game: &mut Game) {
+unsafe fn Xray_Func8(dst_r22: uint16, jp: *const uint8, game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) == 1u16 {
         Xray_Func12(dst_r22, jp.offset(2), game);
     }
 }
-unsafe fn Xray_Func9(mut r18: uint16, mut dst_r22: uint16, mut jp: *const uint8, game: &mut Game) {
+unsafe fn Xray_Func9(r18: uint16, dst_r22: uint16, jp: *const uint8, game: &mut Game) {
     Xray_Func12(dst_r22, jp.offset(2), game);
     if r18 != 1u16 {
         Xray_Func14(dst_r22, jp.offset(4), game);
     }
 }
-unsafe fn Xray_Func10(mut dst_r22: uint16, mut jp: *const uint8, game: &mut Game) {
+unsafe fn Xray_Func10(dst_r22: uint16, jp: *const uint8, game: &mut Game) {
     Xray_Func12(dst_r22, jp.offset(2), game);
     Xray_Func15(dst_r22, jp.offset(2), game);
 }
-unsafe fn Xray_Func11(mut r18: uint16, mut dst_r22: uint16, mut jp: *const uint8, game: &mut Game) {
+unsafe fn Xray_Func11(r18: uint16, dst_r22: uint16, jp: *const uint8, game: &mut Game) {
     Xray_Func12(dst_r22, jp.offset(2), game);
     if r18 != 1u16 {
         Xray_Func14(dst_r22, jp.offset(4), game);
     }
     Xray_Func15(dst_r22, jp.offset(6), game);
     if r18 != 1u16 {
-        let mut v5: uint16 = *(jp.offset(8) as *mut uint16);
-        let mut top_left: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+        let v5: uint16 = *(jp.offset(8) as *mut uint16);
+        let top_left: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
             as *mut TileTables))
             .tables[v5 as usize]
             .top_left;
-        let mut top_right: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+        let top_right: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
             as *mut TileTables))
             .tables[v5 as usize]
             .top_right;
-        let mut bottom_left: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+        let bottom_left: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
             as *mut TileTables))
             .tables[v5 as usize]
             .bottom_left;
-        let mut bottom_right: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+        let bottom_right: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
             as *mut TileTables))
             .tables[v5 as usize]
             .bottom_right;
@@ -2203,11 +2198,11 @@ unsafe fn Xray_Func11(mut r18: uint16, mut dst_r22: uint16, mut jp: *const uint8
     }
 }
 unsafe fn CallXrayFunc(
-    mut ea: uint32,
-    mut jp: *const uint8,
-    mut r18: uint16,
-    mut r22: uint16,
-    mut r36: uint16,
+    ea: uint32,
+    jp: *const uint8,
+    r18: uint16,
+    r22: uint16,
+    r36: uint16,
     game: &mut Game,
 ) {
     match ea {
@@ -2237,13 +2232,8 @@ unsafe fn CallXrayFunc(
         }
     }
 }
-pub unsafe fn Xray_SetupStage4_Func3(
-    mut r18: uint16,
-    mut r22: uint16,
-    mut r36: uint16,
-    game: &mut Game,
-) {
-    let mut jp: *const uint8 = Xray_GetXrayedBlock(r36, game);
+pub unsafe fn Xray_SetupStage4_Func3(r18: uint16, r22: uint16, r36: uint16, game: &mut Game) {
+    let jp: *const uint8 = Xray_GetXrayedBlock(r36, game);
     if !jp.is_null() {
         CallXrayFunc(
             ((*(jp as *mut uint16)) as u32) | (0x910000u32),
@@ -2255,23 +2245,23 @@ pub unsafe fn Xray_SetupStage4_Func3(
         );
     }
 }
-unsafe fn Xray_Func12(mut dst_r22: uint16, mut jp: *const uint8, game: &mut Game) {
+unsafe fn Xray_Func12(dst_r22: uint16, jp: *const uint8, game: &mut Game) {
     Xray_Func13(dst_r22, *(jp as *mut uint16), game);
 }
-unsafe fn Xray_Func13(mut dst_r22: uint16, mut a: uint16, game: &mut Game) {
-    let mut top_left: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+unsafe fn Xray_Func13(dst_r22: uint16, a: uint16, game: &mut Game) {
+    let top_left: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
         as *mut TileTables))
         .tables[a as usize]
         .top_left;
-    let mut top_right: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+    let top_right: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
         as *mut TileTables))
         .tables[a as usize]
         .top_right;
-    let mut bottom_left: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+    let bottom_left: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
         as *mut TileTables))
         .tables[a as usize]
         .bottom_left;
-    let mut bottom_right: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+    let bottom_right: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
         as *mut TileTables))
         .tables[a as usize]
         .bottom_right;
@@ -2292,21 +2282,21 @@ unsafe fn Xray_Func13(mut dst_r22: uint16, mut a: uint16, game: &mut Game) {
         .offset(0) as *mut uint16 as *mut uint8)
         .offset(dst_r22 as ::core::ffi::c_int as isize) as *mut uint16) = top_left;
 }
-unsafe fn Xray_Func14(mut dst_r22: uint16, mut jp: *const uint8, game: &mut Game) {
-    let mut a: uint16 = *(jp as *mut uint16);
-    let mut top_left: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+unsafe fn Xray_Func14(dst_r22: uint16, jp: *const uint8, game: &mut Game) {
+    let a: uint16 = *(jp as *mut uint16);
+    let top_left: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
         as *mut TileTables))
         .tables[a as usize]
         .top_left;
-    let mut top_right: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+    let top_right: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
         as *mut TileTables))
         .tables[a as usize]
         .top_right;
-    let mut bottom_left: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+    let bottom_left: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
         as *mut TileTables))
         .tables[a as usize]
         .bottom_left;
-    let mut bottom_right: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+    let bottom_right: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
         as *mut TileTables))
         .tables[a as usize]
         .bottom_right;
@@ -2327,21 +2317,21 @@ unsafe fn Xray_Func14(mut dst_r22: uint16, mut jp: *const uint8, game: &mut Game
         .offset(2) as *mut uint16 as *mut uint8)
         .offset(dst_r22 as ::core::ffi::c_int as isize) as *mut uint16) = top_left;
 }
-unsafe fn Xray_Func15(mut dst_r22: uint16, mut jp: *const uint8, game: &mut Game) {
-    let mut a: uint16 = *(jp as *mut uint16);
-    let mut top_left: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+unsafe fn Xray_Func15(dst_r22: uint16, jp: *const uint8, game: &mut Game) {
+    let a: uint16 = *(jp as *mut uint16);
+    let top_left: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
         as *mut TileTables))
         .tables[a as usize]
         .top_left;
-    let mut top_right: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+    let top_right: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
         as *mut TileTables))
         .tables[a as usize]
         .top_right;
-    let mut bottom_left: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+    let bottom_left: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
         as *mut TileTables))
         .tables[a as usize]
         .bottom_left;
-    let mut bottom_right: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+    let bottom_right: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
         as *mut TileTables))
         .tables[a as usize]
         .bottom_right;
@@ -2362,20 +2352,20 @@ unsafe fn Xray_Func15(mut dst_r22: uint16, mut jp: *const uint8, game: &mut Game
         .offset(64) as *mut uint16 as *mut uint8)
         .offset(dst_r22 as ::core::ffi::c_int as isize) as *mut uint16) = top_left;
 }
-unsafe fn Xray_Func16(mut dst_r22: uint16, mut a: uint16, game: &mut Game) {
-    let mut top_left: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+unsafe fn Xray_Func16(dst_r22: uint16, a: uint16, game: &mut Game) {
+    let top_left: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
         as *mut TileTables))
         .tables[a as usize]
         .top_left;
-    let mut top_right: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+    let top_right: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
         as *mut TileTables))
         .tables[a as usize]
         .top_right;
-    let mut bottom_left: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+    let bottom_left: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
         as *mut TileTables))
         .tables[a as usize]
         .bottom_left;
-    let mut bottom_right: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+    let bottom_right: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
         as *mut TileTables))
         .tables[a as usize]
         .bottom_right;
@@ -2396,12 +2386,12 @@ unsafe fn Xray_Func16(mut dst_r22: uint16, mut a: uint16, game: &mut Game) {
         .offset(32) as *mut uint16 as *mut uint8)
         .offset(dst_r22 as ::core::ffi::c_int as isize) as *mut uint16) = top_left;
 }
-pub unsafe fn LoadBlockToXrayTilemap(mut a: uint16, mut k: uint16, mut j: uint16, game: &mut Game) {
-    let mut R24: uint16 = (k as ::core::ffi::c_int
+pub unsafe fn LoadBlockToXrayTilemap(a: uint16, k: uint16, j: uint16, game: &mut Game) {
+    let R24: uint16 = (k as ::core::ffi::c_int
         - (*((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16)
             as ::core::ffi::c_int
             >> 4 as ::core::ffi::c_int)) as uint16;
-    let mut R26: uint16 = (j as ::core::ffi::c_int
+    let R26: uint16 = (j as ::core::ffi::c_int
         - (*((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16)
             as ::core::ffi::c_int
             >> 4 as ::core::ffi::c_int)) as uint16;
@@ -2410,7 +2400,7 @@ pub unsafe fn LoadBlockToXrayTilemap(mut a: uint16, mut k: uint16, mut j: uint16
         && R26 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0
         && R26 as ::core::ffi::c_int - 16 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0
     {
-        let mut R22: uint16 = (4 as ::core::ffi::c_int
+        let R22: uint16 = (4 as ::core::ffi::c_int
             * (R24 as ::core::ffi::c_int + 32 as ::core::ffi::c_int * R26 as ::core::ffi::c_int))
             as uint16;
         if (a as ::core::ffi::c_int & 0x800 as ::core::ffi::c_int) != 0i32 {
@@ -2439,7 +2429,7 @@ pub unsafe fn Xray_SetupStage5(game: &mut Game) {
             (*((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16)) & (0xfu16);
         *(&raw mut game.g_ram as *mut uint8).offset(0x59) = 73 as uint8;
     }
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x360) as *mut uint16);
+    let v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x360) as *mut uint16);
     v1 = *((&raw mut game.g_ram as *mut uint8).offset(0x360) as *mut uint16) as ::core::ffi::c_uint;
     *((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x340) as *mut VramReadQueueEnt)
         .offset(0))
@@ -2497,7 +2487,7 @@ pub unsafe fn CanXrayShowBlocks(game: &mut Game) -> bool {
 pub unsafe fn Xray_SetupStage6(game: &mut Game) {
     let mut v1: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     if CanXrayShowBlocks(game) {
-        let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
+        let v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
         v1 = gVramWriteEntry(
             *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16)
                 as ::core::ffi::c_int,
@@ -2519,7 +2509,7 @@ pub unsafe fn Xray_SetupStage6(game: &mut Game) {
 pub unsafe fn Xray_SetupStage7(game: &mut Game) {
     let mut v1: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     if CanXrayShowBlocks(game) {
-        let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
+        let v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
         v1 = gVramWriteEntry(
             *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16)
                 as ::core::ffi::c_int,
@@ -2560,8 +2550,8 @@ pub unsafe fn Xray_SetupStage7(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xa82) as *mut uint16) = 64 as uint16;
     };
 }
-pub unsafe fn HdmaobjPreInstr_XraySetup(mut k: uint16, game: &mut Game) {
-    let mut current_block: u64;
+pub unsafe fn HdmaobjPreInstr_XraySetup(k: uint16, game: &mut Game) {
+    let current_block: u64;
     let mut v1: uint16 = 0;
     v1 = 4096 as uint16;
     if *((&raw mut game.g_ram as *mut uint8).offset(0x196e) as *mut uint16) == 36u16 {
@@ -2932,7 +2922,7 @@ pub unsafe fn HandleVisorPalette(game: &mut Game) -> uint8 {
                     ) as ::core::ffi::c_int
                         >> 1 as ::core::ffi::c_int) as isize,
                 );
-        let mut v2: ::core::ffi::c_int = *(&raw mut v1 as *mut uint8).offset(
+        let v2: ::core::ffi::c_int = *(&raw mut v1 as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1_usize) as isize,
@@ -3005,7 +2995,7 @@ pub unsafe fn HandleMiscSamusPalette(game: &mut Game) {
             }
             _ => {}
         }
-        let mut v1: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa48) as *mut uint16))
+        let v1: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xa48) as *mut uint16))
             .wrapping_add(1u16);
         *((&raw mut game.g_ram as *mut uint8).offset(0xa48) as *mut uint16) = v1;
         if v1 == 40u16 {
@@ -3064,8 +3054,7 @@ pub unsafe fn HandleMiscSamusPalette(game: &mut Game) {
             let ref mut fresh34 =
                 *((&raw mut game.g_ram as *mut uint8).offset(0xad0) as *mut uint16);
             *fresh34 = (*fresh34).wrapping_sub(1);
-            let mut v2: bool =
-                (*fresh34 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32;
+            let v2: bool = (*fresh34 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32;
             if *((&raw mut game.g_ram as *mut uint8).offset(0xad0) as *mut uint16) == 0 || v2 {
                 *((&raw mut game.g_ram as *mut uint8).offset(0xad0) as *mut uint16) =
                     *((&raw mut game.g_ram as *mut uint8).offset(0xace) as *mut uint16);
@@ -3106,12 +3095,12 @@ pub unsafe fn HandleMiscSamusPalette(game: &mut Game) {
     }
 }
 pub unsafe fn Samus_HandleScrewAttackSpeedBoostingPals(game: &mut Game) -> uint8 {
-    let mut current_block: u64;
+    let current_block: u64;
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xa74) as *mut uint16) as ::core::ffi::c_int
         & 4 as ::core::ffi::c_int)
         == 0i32
     {
-        let mut r20: uint16 = Samus_GetTop_R20(game);
+        let r20: uint16 = Samus_GetTop_R20(game);
         if liquid_at_height(game, r20) != LiquidAtHeight::None {
             return 1 as uint8;
         }
@@ -3162,14 +3151,14 @@ pub unsafe fn Samus_HandleScrewAttackSpeedBoostingPals(game: &mut Game) -> uint8
     }
     match current_block {
         8831408221741692167 => {
-            let mut R36: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91da4a))
+            let R36: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91da4a))
                 as *const uint8 as *mut uint16)
                 .offset(
                     (*((&raw mut game.g_ram as *mut uint8).offset(0xa74) as *mut uint16)
                         as ::core::ffi::c_int
                         >> 1 as ::core::ffi::c_int) as isize,
                 );
-            let mut v1: uint16 = *(RomPtr_91(
+            let v1: uint16 = *(RomPtr_91(
                 (R36).wrapping_add(
                     *((&raw mut game.g_ram as *mut uint8).offset(0xace) as *mut uint16),
                 ),
@@ -3200,11 +3189,10 @@ pub unsafe fn Samus_HandleScrewAttackSpeedBoostingPals(game: &mut Game) -> uint8
             let ref mut fresh17 =
                 *((&raw mut game.g_ram as *mut uint8).offset(0xad0) as *mut uint16);
             *fresh17 = (*fresh17).wrapping_sub(1);
-            let mut v3: bool =
-                (*fresh17 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32;
+            let v3: bool = (*fresh17 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32;
             if *((&raw mut game.g_ram as *mut uint8).offset(0xad0) as *mut uint16) == 0 || v3 {
                 *((&raw mut game.g_ram as *mut uint8).offset(0xad0) as *mut uint16) = 4 as uint16;
-                let mut R36_0: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91daa9))
+                let R36_0: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91daa9))
                     as *const uint8 as *mut uint16)
                     .offset(
                         (*((&raw mut game.g_ram as *mut uint8).offset(0xa74) as *mut uint16)
@@ -3215,7 +3203,7 @@ pub unsafe fn Samus_HandleScrewAttackSpeedBoostingPals(game: &mut Game) -> uint8
                     *((&raw mut game.g_ram as *mut uint8).offset(0xace) as *mut uint16) =
                         6 as uint16;
                 }
-                let mut v4: uint16 = *(RomPtr_91(
+                let v4: uint16 = *(RomPtr_91(
                     (R36_0).wrapping_add(
                         *((&raw mut game.g_ram as *mut uint8).offset(0xace) as *mut uint16),
                     ),
@@ -3237,7 +3225,7 @@ pub unsafe fn Samus_HandleScrewAttackSpeedBoostingPals(game: &mut Game) -> uint8
 pub unsafe fn Samus_SpeedBoosterShinePals(game: &mut Game) -> uint8 {
     let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xa68) as *mut uint16);
     if *((&raw mut game.g_ram as *mut uint8).offset(0xa68) as *mut uint16) == 170u16 {
-        let mut v4: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xa68) as *mut uint16);
+        let v4: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xa68) as *mut uint16);
         QueueSfx3_Max9(0xc as uint16, game);
         v0 = v4;
     }
@@ -3247,14 +3235,14 @@ pub unsafe fn Samus_SpeedBoosterShinePals(game: &mut Game) -> uint8 {
         *((&raw mut game.g_ram as *mut uint8).offset(0xacc) as *mut uint16) = 0 as uint16;
         0 as uint8
     } else {
-        let mut R36: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91db10))
-            as *const uint8 as *mut uint16)
+        let R36: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91db10)) as *const uint8
+            as *mut uint16)
             .offset(
                 (*((&raw mut game.g_ram as *mut uint8).offset(0xa74) as *mut uint16)
                     as ::core::ffi::c_int
                     >> 1 as ::core::ffi::c_int) as isize,
             );
-        let mut v1: uint16 = *(RomPtr_91(
+        let v1: uint16 = *(RomPtr_91(
             (R36).wrapping_add(*((&raw mut game.g_ram as *mut uint8).offset(0xace) as *mut uint16)),
             game,
         ) as *mut uint16);
@@ -3275,20 +3263,20 @@ pub unsafe fn Samus_SpeedBoosterShinePals(game: &mut Game) -> uint8 {
 pub unsafe fn Samus_HandleShinesparkingPals(game: &mut Game) -> uint8 {
     let ref mut fresh19 = *((&raw mut game.g_ram as *mut uint8).offset(0xa68) as *mut uint16);
     *fresh19 = (*fresh19).wrapping_sub(1);
-    let mut v0: bool = (*fresh19 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32;
+    let v0: bool = (*fresh19 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32;
     if *((&raw mut game.g_ram as *mut uint8).offset(0xa68) as *mut uint16) == 0 || v0 {
         *((&raw mut game.g_ram as *mut uint8).offset(0xacc) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0xace) as *mut uint16) = 0 as uint16;
         0 as uint8
     } else {
-        let mut R36: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91db75))
-            as *const uint8 as *mut uint16)
+        let R36: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91db75)) as *const uint8
+            as *mut uint16)
             .offset(
                 (*((&raw mut game.g_ram as *mut uint8).offset(0xa74) as *mut uint16)
                     as ::core::ffi::c_int
                     >> 1 as ::core::ffi::c_int) as isize,
             );
-        let mut v1: uint16 = *(RomPtr_91(
+        let v1: uint16 = *(RomPtr_91(
             (R36).wrapping_add(*((&raw mut game.g_ram as *mut uint8).offset(0xace) as *mut uint16)),
             game,
         ) as *mut uint16);
@@ -3350,7 +3338,7 @@ pub unsafe fn Samus_HandleCrystalFlashPals(game: &mut Game) -> uint8 {
         }
         let ref mut fresh15 = *((&raw mut game.g_ram as *mut uint8).offset(0xdf2) as *mut uint16);
         *fresh15 = (*fresh15).wrapping_sub(1);
-        let mut v1: bool = (*fresh15 as int16) < 0i16;
+        let v1: bool = (*fresh15 as int16) < 0i16;
         if *((&raw mut game.g_ram as *mut uint8).offset(0xdf2) as *mut uint16) == 0 || v1 {
             *((&raw mut game.g_ram as *mut uint8).offset(0xdf2) as *mut uint16) =
                 *((&raw mut (*(game.g_rom.offset(
@@ -3390,7 +3378,7 @@ pub unsafe fn Samus_HandleCrystalFlashPals(game: &mut Game) -> uint8 {
         1 as uint8
     }
 }
-pub unsafe fn Samus_Copy10PalColors(mut v0: uint16, game: &mut Game) {
+pub unsafe fn Samus_Copy10PalColors(v0: uint16, game: &mut Game) {
     memcpy(
         ((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(224)
             as *mut uint16 as *mut ::core::ffi::c_void,
@@ -3398,7 +3386,7 @@ pub unsafe fn Samus_Copy10PalColors(mut v0: uint16, game: &mut Game) {
         20 as size_t,
     );
 }
-pub unsafe fn Samus_Copy6PalColors(mut j: uint16, game: &mut Game) {
+pub unsafe fn Samus_Copy6PalColors(j: uint16, game: &mut Game) {
     memcpy(
         ((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(234)
             as *mut uint16 as *mut ::core::ffi::c_void,
@@ -3427,7 +3415,7 @@ pub unsafe fn Samus_HandleXrayPals(game: &mut Game) -> uint8 {
                 let ref mut fresh21 =
                     *((&raw mut game.g_ram as *mut uint8).offset(0xad0) as *mut uint16);
                 *fresh21 = (*fresh21).wrapping_sub(1);
-                let mut v0: bool =
+                let v0: bool =
                     (*fresh21 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32;
                 if *((&raw mut game.g_ram as *mut uint8).offset(0xad0) as *mut uint16) == 0 || v0 {
                     *((&raw mut game.g_ram as *mut uint8).offset(0xad0) as *mut uint16) =
@@ -3459,7 +3447,7 @@ pub unsafe fn Samus_HandleXrayPals(game: &mut Game) -> uint8 {
         }
         let ref mut fresh24 = *((&raw mut game.g_ram as *mut uint8).offset(0xad0) as *mut uint16);
         *fresh24 = (*fresh24).wrapping_sub(1);
-        let mut v2: bool = (*fresh24 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32;
+        let v2: bool = (*fresh24 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32;
         if *((&raw mut game.g_ram as *mut uint8).offset(0xad0) as *mut uint16) != 0u16 && !v2 {
             return 1 as uint8;
         }
@@ -3487,7 +3475,7 @@ pub unsafe fn Samus_HandleXrayPals(game: &mut Game) -> uint8 {
 pub fn nullsub_164(game: &mut Game) -> uint8 {
     0 as uint8
 }
-pub unsafe fn CopyToSamusSuitPalette(mut k: uint16, game: &mut Game) {
+pub unsafe fn CopyToSamusSuitPalette(k: uint16, game: &mut Game) {
     memcpy(
         ((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(192)
             as *mut uint16 as *mut ::core::ffi::c_void,
@@ -3495,7 +3483,7 @@ pub unsafe fn CopyToSamusSuitPalette(mut k: uint16, game: &mut Game) {
         32 as size_t,
     );
 }
-pub unsafe fn CopyToSamusSuitTargetPalette(mut k: uint16, game: &mut Game) {
+pub unsafe fn CopyToSamusSuitTargetPalette(k: uint16, game: &mut Game) {
     memcpy(
         ((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(192)
             as *mut uint16 as *mut ::core::ffi::c_void,
@@ -3857,12 +3845,11 @@ pub unsafe fn ResponsibleForXrayStandupGlitch(game: &mut Game) {
         ((0x90e913i32) as u16) & (0xffffu16);
     *((&raw mut game.g_ram as *mut uint8).offset(0xa80) as *mut uint16) =
         -(1 as ::core::ffi::c_int) as uint16;
-    let mut r18: uint16 =
-        (((*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const uint8
-            as *mut SamusPoseParams)
-            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as isize))
-        .y_radius) as u16)
-            .wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16));
+    let r18: uint16 = (((*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const uint8
+        as *mut SamusPoseParams)
+        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as isize))
+    .y_radius) as u16)
+        .wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16));
     if (r18 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32 {
         let ref mut fresh38 = *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16);
         *fresh38 = (*fresh38).wrapping_sub(r18);
@@ -3949,7 +3936,7 @@ static kSomeMotherBrainScripts: [Option<Func_U8>; 5] = unsafe {
         Some(SomeMotherBrainScripts_4 as unsafe fn(&mut Game) -> uint8),
     ]
 };
-pub unsafe fn SomeMotherBrainScripts(mut a: uint16, game: &mut Game) {
+pub unsafe fn SomeMotherBrainScripts(a: uint16, game: &mut Game) {
     if kSomeMotherBrainScripts[a as usize].expect("non-null function pointer")(game)
         as ::core::ffi::c_int
         & 1 as ::core::ffi::c_int
@@ -4189,7 +4176,7 @@ pub unsafe fn Samus_UpdatePreviousPose_0(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xa1e) as *mut uint16);
 }
 pub unsafe fn SamusFunc_E633_0(game: &mut Game) {
-    let mut current_block_4: u64;
+    let current_block_4: u64;
     if *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) != 0 {
         if *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as ::core::ffi::c_int
             == kPose_9B_FaceF_VariaGravitySuit as ::core::ffi::c_int
@@ -4233,7 +4220,7 @@ pub unsafe fn SamusFunc_E633_0(game: &mut Game) {
     };
 }
 pub unsafe fn SamusFunc_E633_3(game: &mut Game) {
-    let mut current_block: u64;
+    let current_block: u64;
     if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8 {
         *((&raw mut game.g_ram as *mut uint8).offset(0xa22) as *mut uint16) = 260 as uint16;
     } else {
@@ -4389,7 +4376,7 @@ pub unsafe fn Samus_HandleTransFromBlockColl_2(game: &mut Game) {
             .wrapping_sub(1_usize) as isize,
     ) != 4u8
     {
-        let mut v0: uint16 = (4u16).wrapping_mul(
+        let v0: uint16 = (4u16).wrapping_mul(
             (*((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16 as *mut uint8)
                 .offset(
                     (::core::mem::size_of::<uint16>())
@@ -4608,7 +4595,7 @@ pub unsafe fn Samus_CheckWalkedIntoSomething(game: &mut Game) {
         collision: 0,
         amt: 0,
     };
-    let mut current_block: u64;
+    let current_block: u64;
     let mut amt: int32 = 0;
     if *((&raw mut game.g_ram as *mut uint8).offset(0xdce) as *mut uint16) != 0u16
         && *(&raw mut game.g_ram as *mut uint8).offset(0xa1f) == 1u8
@@ -5080,7 +5067,7 @@ pub unsafe fn Samus_HandleTransitionsB_4(game: &mut Game) {
     Samus_InitJump(game);
 }
 pub unsafe fn Samus_HandleTransitionsB_5(game: &mut Game) {
-    let mut current_block_21: u64;
+    let current_block_21: u64;
     match *(&raw mut game.g_ram as *mut uint8).offset(0xa1f) as ::core::ffi::c_int {
         5 => {
             if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8 {
@@ -5372,7 +5359,7 @@ pub unsafe fn HandleLandingGraphics_Ceres(game: &mut Game) {
 }
 static g_byte_91F0F3: [uint8; 17] = [1, 0, 0, 0, 0, 2, 0, 4, 0, 4, 4, 4, 4, 0, 4, 0, 0];
 pub unsafe fn HandleLandingGraphics_Crateria(game: &mut Game) {
-    let mut current_block: u64;
+    let current_block: u64;
     if !(*((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) != 0) {
         if *((&raw mut game.g_ram as *mut uint8).offset(0x79d) as *mut uint16) == 28u16 {
             HandleLandingGraphics_Norfair(game);
@@ -5432,7 +5419,7 @@ pub unsafe fn HandleLandingGraphics_Crateria(game: &mut Game) {
     HandleLandingGraphics_Ceres(game);
 }
 pub unsafe fn HandleLandingGraphics_Maridia(game: &mut Game) {
-    let mut bottom: uint16 = Samus_GetBottom_R18(game);
+    let bottom: uint16 = Samus_GetBottom_R18(game);
     if liquid_at_height(game, bottom) != LiquidAtHeight::None {
         return;
     }
@@ -5450,7 +5437,7 @@ pub unsafe fn HandleLandingGraphics_Maridia(game: &mut Game) {
         (bottom).wrapping_sub(4u16);
 }
 pub unsafe fn HandleLandingGraphics_Norfair(game: &mut Game) {
-    let mut bottom: uint16 = Samus_GetBottom_R18(game);
+    let bottom: uint16 = Samus_GetBottom_R18(game);
     if liquid_at_height(game, bottom) != LiquidAtHeight::None {
         return;
     }
@@ -6079,7 +6066,7 @@ pub unsafe fn SamusFunc_F468_SpinJump(game: &mut Game) -> uint8 {
             & 0x20 as ::core::ffi::c_int)
             == 0i32
         {
-            let mut r20: uint16 = Samus_GetTop_R20(game);
+            let r20: uint16 = Samus_GetTop_R20(game);
             if liquid_at_height(game, r20) != LiquidAtHeight::None {
                 return 0 as uint8;
             }
@@ -6117,7 +6104,7 @@ pub unsafe fn SamusFunc_F468_SpinJump(game: &mut Game) -> uint8 {
             & 0x20 as ::core::ffi::c_int)
             == 0i32
         {
-            let mut r20_0: uint16 = Samus_GetTop_R20(game);
+            let r20_0: uint16 = Samus_GetTop_R20(game);
             if liquid_at_height(game, r20_0) != LiquidAtHeight::None {
                 return 0 as uint8;
             }
@@ -6358,8 +6345,8 @@ pub unsafe fn SamusFunc_F468_TurningAroundOnGround(game: &mut Game) -> uint8 {
         && *((&raw mut game.g_ram as *mut uint8).offset(0xa20) as *mut uint16) as ::core::ffi::c_int
             != kPose_9B_FaceF_VariaGravitySuit as ::core::ffi::c_int
     {
-        let mut v0: uint16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
-            as *const uint8 as *mut SamusPoseParams)
+        let v0: uint16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const uint8
+            as *mut SamusPoseParams)
             .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xa20) as *mut uint16) as isize))
         .direction_shots_fired as uint16;
         if *(&raw mut game.g_ram as *mut uint8).offset(0xa23) as ::core::ffi::c_int
@@ -6476,7 +6463,7 @@ pub unsafe fn SamusFunc_F468_MorphBall(game: &mut Game) -> uint8 {
     0 as uint8
 }
 pub unsafe fn SamusFunc_FA0A(game: &mut Game) {
-    let mut current_block: u64;
+    let current_block: u64;
     if *(&raw mut game.g_ram as *mut uint8).offset(0xa22) == 8u8 {
         if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) != 4u8 {
             return;
@@ -6522,7 +6509,7 @@ pub unsafe fn SamusFunc_F468_Springball(game: &mut Game) -> uint8 {
     0 as uint8
 }
 pub unsafe fn SamusFunc_F468_WallJumping(game: &mut Game) -> uint8 {
-    let mut bottom: uint16 = Samus_GetBottom_R18(game);
+    let bottom: uint16 = Samus_GetBottom_R18(game);
     if liquid_at_height(game, bottom) != LiquidAtHeight::None {
         return 0 as uint8;
     }
@@ -6578,7 +6565,7 @@ pub unsafe fn Samus_SetAnimationFrameIfPoseChanged(game: &mut Game) {
     {
         t = *((&raw mut game.g_ram as *mut uint8).offset(0xa66) as *mut uint16);
     } else {
-        let mut r: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)
+        let r: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)
             as ::core::ffi::c_int
             + (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const uint8
                 as *mut SamusPoseParams)
@@ -6966,14 +6953,14 @@ pub fn HandleCollDueToChangedPose_Solid_CollBoth(game: &mut Game) -> uint8 {
     0 as uint8
 }
 pub unsafe fn HandleCollDueToChangedPose_Solid_CollAbove(game: &mut Game) -> uint8 {
-    let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16);
+    let v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16);
     *((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16) =
         (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const uint8
             as *mut SamusPoseParams)
             .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as isize))
         .y_radius as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xb02) as *mut uint16) = 3 as uint16;
-    let mut cres: CheckEnemyColl_Result = Samus_CheckSolidEnemyColl(
+    let cres: CheckEnemyColl_Result = Samus_CheckSolidEnemyColl(
         ((((*((&raw mut game.g_ram as *mut uint8).offset(0xa3a) as *mut uint16)) as i16)
             .wrapping_sub(
                 (*((&raw mut game.g_ram as *mut uint8).offset(0xa3e) as *mut uint16)) as i16,
@@ -6991,14 +6978,14 @@ pub unsafe fn HandleCollDueToChangedPose_Solid_CollAbove(game: &mut Game) -> uin
     0 as uint8
 }
 pub unsafe fn HandleCollDueToChangedPose_Solid_CollBelow(game: &mut Game) -> uint8 {
-    let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16);
+    let v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16);
     *((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16) =
         (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const uint8
             as *mut SamusPoseParams)
             .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as isize))
         .y_radius as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xb02) as *mut uint16) = 2 as uint16;
-    let mut cres: CheckEnemyColl_Result = Samus_CheckSolidEnemyColl(
+    let cres: CheckEnemyColl_Result = Samus_CheckSolidEnemyColl(
         ((((*((&raw mut game.g_ram as *mut uint8).offset(0xa3a) as *mut uint16)) as i16)
             .wrapping_sub(
                 (*((&raw mut game.g_ram as *mut uint8).offset(0xa40) as *mut uint16)) as i16,
@@ -7016,7 +7003,7 @@ pub unsafe fn HandleCollDueToChangedPose_Solid_CollBelow(game: &mut Game) -> uin
     0 as uint8
 }
 pub unsafe fn HandleCollDueToChangedPose_Block_CollAbove(game: &mut Game) -> uint8 {
-    let mut amt: int32 = Samus_CollDetectChangedPose(
+    let amt: int32 = Samus_CollDetectChangedPose(
         ((((*((&raw mut game.g_ram as *mut uint8).offset(0xa3a) as *mut uint16)) as i16)
             .wrapping_sub(
                 (*((&raw mut game.g_ram as *mut uint8).offset(0xa38) as *mut uint16)) as i16,
@@ -7041,7 +7028,7 @@ pub unsafe fn HandleCollDueToChangedPose_Block_CollAbove(game: &mut Game) -> uin
     0 as uint8
 }
 pub unsafe fn HandleCollDueToChangedPose_Block_CollBelow(game: &mut Game) -> uint8 {
-    let mut amt: int32 = Samus_CollDetectChangedPose(
+    let amt: int32 = Samus_CollDetectChangedPose(
         ((((*((&raw mut game.g_ram as *mut uint8).offset(0xa3c) as *mut uint16)) as i16)
             .wrapping_sub(
                 (*((&raw mut game.g_ram as *mut uint8).offset(0xa3a) as *mut uint16)) as i16,
@@ -7108,7 +7095,7 @@ pub unsafe fn HandleCollDueToChangedPose_Block_CollBoth(game: &mut Game) -> uint
         } else {
             kPose_27_FaceR_Crouch as ::core::ffi::c_int
         }) as uint16;
-    let mut r18: uint16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const uint8
+    let r18: uint16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const uint8
         as *mut SamusPoseParams)
         .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as isize))
     .y_radius as uint16;

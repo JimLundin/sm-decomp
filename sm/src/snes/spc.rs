@@ -23,21 +23,21 @@ static cyclesPerOpcode: [::core::ffi::c_int; 256] = [
     3, 2, 8, 4, 5, 3, 4, 3, 6, 2, 4, 5, 3, 4, 3, 4, 3, 2, 8, 4, 5, 4, 5, 5, 6, 3, 4, 5, 4, 2, 2, 4,
     3,
 ];
-unsafe fn spc_read(mut spc: *mut Spc, mut adr: uint16_t) -> uint8_t {
+unsafe fn spc_read(spc: *mut Spc, adr: uint16_t) -> uint8_t {
     apu_cpuRead((*spc).apu, adr)
 }
-unsafe fn spc_write(mut spc: *mut Spc, mut adr: uint16_t, mut val: uint8_t) {
+unsafe fn spc_write(spc: *mut Spc, adr: uint16_t, val: uint8_t) {
     apu_cpuWrite((*spc).apu, adr, val);
 }
-pub unsafe fn spc_init(mut apu: *mut Apu) -> *mut Spc {
-    let mut spc: *mut Spc = malloc(::core::mem::size_of::<Spc>() as size_t) as *mut Spc;
+pub unsafe fn spc_init(apu: *mut Apu) -> *mut Spc {
+    let spc: *mut Spc = malloc(::core::mem::size_of::<Spc>() as size_t) as *mut Spc;
     (*spc).apu = apu;
     spc
 }
-pub unsafe fn spc_free(mut spc: *mut Spc) {
+pub unsafe fn spc_free(spc: *mut Spc) {
     free(spc as *mut ::core::ffi::c_void);
 }
-pub unsafe fn spc_reset(mut spc: *mut Spc) {
+pub unsafe fn spc_reset(spc: *mut Spc) {
     (*spc).a = 0 as uint8_t;
     (*spc).x = 0 as uint8_t;
     (*spc).y = 0 as uint8_t;
@@ -57,9 +57,9 @@ pub unsafe fn spc_reset(mut spc: *mut Spc) {
     (*spc).cyclesUsed = 0 as uint8_t;
 }
 pub unsafe fn spc_saveload(
-    mut spc: *mut Spc,
-    mut func: Option<SaveLoadFunc>,
-    mut ctx: *mut ::core::ffi::c_void,
+    spc: *mut Spc,
+    func: Option<SaveLoadFunc>,
+    ctx: *mut ::core::ffi::c_void,
     game: &mut Game,
 ) {
     func.expect("non-null function pointer")(
@@ -69,23 +69,23 @@ pub unsafe fn spc_saveload(
         game,
     );
 }
-pub unsafe fn spc_runOpcode(mut spc: *mut Spc) -> ::core::ffi::c_int {
+pub unsafe fn spc_runOpcode(spc: *mut Spc) -> ::core::ffi::c_int {
     (*spc).cyclesUsed = 0 as uint8_t;
     if (*spc).stopped {
         return 1 as ::core::ffi::c_int;
     }
-    let mut opcode: uint8_t = spc_readOpcode(spc);
+    let opcode: uint8_t = spc_readOpcode(spc);
     (*spc).cyclesUsed = cyclesPerOpcode[opcode as usize] as uint8_t;
     spc_doOpcode(spc, opcode);
     (*spc).cyclesUsed as ::core::ffi::c_int
 }
-unsafe fn spc_readOpcode(mut spc: *mut Spc) -> uint8_t {
+unsafe fn spc_readOpcode(spc: *mut Spc) -> uint8_t {
     let fresh0 = (*spc).pc;
     (*spc).pc = (*spc).pc.wrapping_add(1);
     spc_read(spc, fresh0)
 }
-unsafe fn spc_readOpcodeWord(mut spc: *mut Spc) -> uint16_t {
-    let mut low: uint8_t = spc_readOpcode(spc);
+unsafe fn spc_readOpcodeWord(spc: *mut Spc) -> uint16_t {
+    let low: uint8_t = spc_readOpcode(spc);
     (low as ::core::ffi::c_int
         | (spc_readOpcode(spc) as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t
 }
@@ -113,7 +113,7 @@ unsafe fn spc_setZN(spc: *mut Spc, value: u8) {
     (*spc).z = value == 0;
     (*spc).n = value & 0x80 != 0;
 }
-unsafe fn spc_doBranch(mut spc: *mut Spc, mut value: uint8_t, mut check: bool) {
+unsafe fn spc_doBranch(spc: *mut Spc, value: uint8_t, check: bool) {
     if check {
         (*spc).cyclesUsed =
             ((*spc).cyclesUsed as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint8_t;
@@ -149,19 +149,19 @@ unsafe fn spc_writeWord(spc: *mut Spc, adrl: u16, adrh: u16, value: u16) {
     spc_write(spc, adrl, low);
     spc_write(spc, adrh, high);
 }
-unsafe fn spc_adrDp(mut spc: *mut Spc) -> uint16_t {
+unsafe fn spc_adrDp(spc: *mut Spc) -> uint16_t {
     (spc_readOpcode(spc) as ::core::ffi::c_int
         | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t
 }
-unsafe fn spc_adrAbs(mut spc: *mut Spc) -> uint16_t {
+unsafe fn spc_adrAbs(spc: *mut Spc) -> uint16_t {
     spc_readOpcodeWord(spc)
 }
-unsafe fn spc_adrInd(mut spc: *mut Spc) -> uint16_t {
+unsafe fn spc_adrInd(spc: *mut Spc) -> uint16_t {
     ((*spc).x as ::core::ffi::c_int | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
         as uint16_t
 }
-unsafe fn spc_adrIdx(mut spc: *mut Spc) -> uint16_t {
-    let mut pointer: uint8_t = spc_readOpcode(spc);
+unsafe fn spc_adrIdx(spc: *mut Spc) -> uint16_t {
+    let pointer: uint8_t = spc_readOpcode(spc);
     spc_readWord(
         spc,
         (pointer as ::core::ffi::c_int + (*spc).x as ::core::ffi::c_int
@@ -172,32 +172,32 @@ unsafe fn spc_adrIdx(mut spc: *mut Spc) -> uint16_t {
             | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t,
     )
 }
-unsafe fn spc_adrImm(mut spc: *mut Spc) -> uint16_t {
+unsafe fn spc_adrImm(spc: *mut Spc) -> uint16_t {
     let fresh1 = (*spc).pc;
     (*spc).pc = (*spc).pc.wrapping_add(1);
     fresh1
 }
-unsafe fn spc_adrDpx(mut spc: *mut Spc) -> uint16_t {
+unsafe fn spc_adrDpx(spc: *mut Spc) -> uint16_t {
     (spc_readOpcode(spc) as ::core::ffi::c_int + (*spc).x as ::core::ffi::c_int
         & 0xff as ::core::ffi::c_int
         | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t
 }
-unsafe fn spc_adrDpy(mut spc: *mut Spc) -> uint16_t {
+unsafe fn spc_adrDpy(spc: *mut Spc) -> uint16_t {
     (spc_readOpcode(spc) as ::core::ffi::c_int + (*spc).y as ::core::ffi::c_int
         & 0xff as ::core::ffi::c_int
         | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t
 }
-unsafe fn spc_adrAbx(mut spc: *mut Spc) -> uint16_t {
+unsafe fn spc_adrAbx(spc: *mut Spc) -> uint16_t {
     (spc_readOpcodeWord(spc) as ::core::ffi::c_int + (*spc).x as ::core::ffi::c_int
         & 0xffff as ::core::ffi::c_int) as uint16_t
 }
-unsafe fn spc_adrAby(mut spc: *mut Spc) -> uint16_t {
+unsafe fn spc_adrAby(spc: *mut Spc) -> uint16_t {
     (spc_readOpcodeWord(spc) as ::core::ffi::c_int + (*spc).y as ::core::ffi::c_int
         & 0xffff as ::core::ffi::c_int) as uint16_t
 }
-unsafe fn spc_adrIdy(mut spc: *mut Spc) -> uint16_t {
-    let mut pointer: uint8_t = spc_readOpcode(spc);
-    let mut adr: uint16_t = spc_readWord(
+unsafe fn spc_adrIdy(spc: *mut Spc) -> uint16_t {
+    let pointer: uint8_t = spc_readOpcode(spc);
+    let adr: uint16_t = spc_readWord(
         spc,
         (pointer as ::core::ffi::c_int
             | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t,
@@ -207,38 +207,38 @@ unsafe fn spc_adrIdy(mut spc: *mut Spc) -> uint16_t {
     (adr as ::core::ffi::c_int + (*spc).y as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int)
         as uint16_t
 }
-unsafe fn spc_adrDpDp(mut spc: *mut Spc, mut src: *mut uint16_t) -> uint16_t {
+unsafe fn spc_adrDpDp(spc: *mut Spc, src: *mut uint16_t) -> uint16_t {
     *src = (spc_readOpcode(spc) as ::core::ffi::c_int
         | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t;
     (spc_readOpcode(spc) as ::core::ffi::c_int
         | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t
 }
-unsafe fn spc_adrDpImm(mut spc: *mut Spc, mut src: *mut uint16_t) -> uint16_t {
+unsafe fn spc_adrDpImm(spc: *mut Spc, src: *mut uint16_t) -> uint16_t {
     let fresh3 = (*spc).pc;
     (*spc).pc = (*spc).pc.wrapping_add(1);
     *src = fresh3;
     (spc_readOpcode(spc) as ::core::ffi::c_int
         | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t
 }
-unsafe fn spc_adrIndInd(mut spc: *mut Spc, mut src: *mut uint16_t) -> uint16_t {
+unsafe fn spc_adrIndInd(spc: *mut Spc, src: *mut uint16_t) -> uint16_t {
     *src = ((*spc).y as ::core::ffi::c_int
         | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t;
     ((*spc).x as ::core::ffi::c_int | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
         as uint16_t
 }
-unsafe fn spc_adrAbsBit(mut spc: *mut Spc, mut adr: *mut uint16_t) -> uint8_t {
-    let mut adrBit: uint16_t = spc_readOpcodeWord(spc);
+unsafe fn spc_adrAbsBit(spc: *mut Spc, adr: *mut uint16_t) -> uint8_t {
+    let adrBit: uint16_t = spc_readOpcodeWord(spc);
     *adr = (adrBit as ::core::ffi::c_int & 0x1fff as ::core::ffi::c_int) as uint16_t;
     (adrBit as ::core::ffi::c_int >> 13 as ::core::ffi::c_int) as uint8_t
 }
-unsafe fn spc_adrDpWord(mut spc: *mut Spc, mut low: *mut uint16_t) -> uint16_t {
-    let mut adr: uint8_t = spc_readOpcode(spc);
+unsafe fn spc_adrDpWord(spc: *mut Spc, low: *mut uint16_t) -> uint16_t {
+    let adr: uint8_t = spc_readOpcode(spc);
     *low = (adr as ::core::ffi::c_int | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
         as uint16_t;
     (adr as ::core::ffi::c_int + 1 as ::core::ffi::c_int & 0xff as ::core::ffi::c_int
         | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t
 }
-unsafe fn spc_adrIndP(mut spc: *mut Spc) -> uint16_t {
+unsafe fn spc_adrIndP(spc: *mut Spc) -> uint16_t {
     let fresh2 = (*spc).x;
     (*spc).x = (*spc).x.wrapping_add(1);
     (fresh2 as ::core::ffi::c_int | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
@@ -352,11 +352,11 @@ unsafe fn spc_step_memory(spc: *mut Spc, address: u16, increment: bool) {
     spc_write(spc, address, result);
     spc_setZN(spc, result);
 }
-unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
+unsafe fn spc_doOpcode(spc: *mut Spc, opcode: uint8_t) {
     match opcode as ::core::ffi::c_int {
         1 | 17 | 33 | 49 | 65 | 81 | 97 | 113 | 129 | 145 | 161 | 177 | 193 | 209 | 225 | 241 => {
             spc_pushWord(spc, (*spc).pc);
-            let mut adr: uint16_t = (0xffde as ::core::ffi::c_int
+            let adr: uint16_t = (0xffde as ::core::ffi::c_int
                 - 2 as ::core::ffi::c_int
                     * (opcode as ::core::ffi::c_int >> 4 as ::core::ffi::c_int))
                 as uint16_t;
@@ -401,7 +401,7 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         }
         9 | 41 | 73 => {
             let mut src: uint16_t = 0 as uint16_t;
-            let mut dst: uint16_t = spc_adrDpDp(spc, &raw mut src);
+            let dst: uint16_t = spc_adrDpDp(spc, &raw mut src);
             spc_logic_memory(spc, dst, src, opcode);
         }
         10 | 42 | 74 | 106 | 138 | 170 | 202 | 234 => {
@@ -435,9 +435,9 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
             spc_pushByte(spc, spc_getFlags(spc));
         }
         14 => {
-            let mut adr_3: uint16_t = spc_adrAbs(spc);
-            let mut val_1: uint8_t = spc_read(spc, adr_3);
-            let mut result: uint8_t = ((*spc).a as ::core::ffi::c_int
+            let adr_3: uint16_t = spc_adrAbs(spc);
+            let val_1: uint8_t = spc_read(spc, adr_3);
+            let result: uint8_t = ((*spc).a as ::core::ffi::c_int
                 + (val_1 as ::core::ffi::c_int ^ 0xff as ::core::ffi::c_int)
                 + 1 as ::core::ffi::c_int) as uint8_t;
             spc_setZN(spc, result);
@@ -471,12 +471,12 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         }
         24 | 56 | 88 => {
             let mut src_0: uint16_t = 0 as uint16_t;
-            let mut dst_0: uint16_t = spc_adrDpImm(spc, &raw mut src_0);
+            let dst_0: uint16_t = spc_adrDpImm(spc, &raw mut src_0);
             spc_logic_memory(spc, dst_0, src_0, opcode);
         }
         25 | 57 | 89 => {
             let mut src_1: uint16_t = 0 as uint16_t;
-            let mut dst_1: uint16_t = spc_adrIndInd(spc, &raw mut src_1);
+            let dst_1: uint16_t = spc_adrIndInd(spc, &raw mut src_1);
             spc_logic_memory(spc, dst_1, src_1, opcode);
         }
         26 | 58 => {
@@ -508,7 +508,7 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
             spc_compare_register::<1>(spc, spc_adrAbs(spc));
         }
         31 => {
-            let mut pointer: uint16_t = spc_readOpcodeWord(spc);
+            let pointer: uint16_t = spc_readOpcodeWord(spc);
             (*spc).pc = spc_readWord(
                 spc,
                 (pointer as ::core::ffi::c_int + (*spc).x as ::core::ffi::c_int
@@ -532,9 +532,9 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
             spc_pushByte(spc, (*spc).a);
         }
         46 => {
-            let mut val_2: uint8_t = (spc_read(spc, spc_adrDp(spc)) as ::core::ffi::c_int
+            let val_2: uint8_t = (spc_read(spc, spc_adrDp(spc)) as ::core::ffi::c_int
                 ^ 0xff as ::core::ffi::c_int) as uint8_t;
-            let mut result_0: uint8_t = ((*spc).a as ::core::ffi::c_int
+            let result_0: uint8_t = ((*spc).a as ::core::ffi::c_int
                 + val_2 as ::core::ffi::c_int
                 + 1 as ::core::ffi::c_int) as uint8_t;
             spc_doBranch(
@@ -564,7 +564,7 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
             spc_compare_register::<1>(spc, spc_adrDp(spc));
         }
         63 => {
-            let mut dst_5: uint16_t = spc_readOpcodeWord(spc);
+            let dst_5: uint16_t = spc_readOpcodeWord(spc);
             spc_pushWord(spc, (*spc).pc);
             (*spc).pc = dst_5;
         }
@@ -581,9 +581,9 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
             spc_pushByte(spc, (*spc).x);
         }
         78 => {
-            let mut adr_6: uint16_t = spc_adrAbs(spc);
-            let mut val_3: uint8_t = spc_read(spc, adr_6);
-            let mut result_1: uint8_t = ((*spc).a as ::core::ffi::c_int
+            let adr_6: uint16_t = spc_adrAbs(spc);
+            let val_3: uint8_t = spc_read(spc, adr_6);
+            let result_1: uint8_t = ((*spc).a as ::core::ffi::c_int
                 + (val_3 as ::core::ffi::c_int ^ 0xff as ::core::ffi::c_int)
                 + 1 as ::core::ffi::c_int) as uint8_t;
             spc_setZN(spc, result_1);
@@ -594,7 +594,7 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
             );
         }
         79 => {
-            let mut dst_7: uint8_t = spc_readOpcode(spc);
+            let dst_7: uint8_t = spc_readOpcode(spc);
             spc_pushWord(spc, (*spc).pc);
             (*spc).pc = (0xff00 as ::core::ffi::c_int | dst_7 as ::core::ffi::c_int) as uint16_t;
         }
@@ -603,13 +603,13 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         }
         90 => {
             let mut low_1: uint16_t = 0 as uint16_t;
-            let mut high_1: uint16_t = spc_adrDpWord(spc, &raw mut low_1);
-            let mut value_1: uint16_t = (spc_readWord(spc, low_1, high_1) as ::core::ffi::c_int
+            let high_1: uint16_t = spc_adrDpWord(spc, &raw mut low_1);
+            let value_1: uint16_t = (spc_readWord(spc, low_1, high_1) as ::core::ffi::c_int
                 ^ 0xffff as ::core::ffi::c_int) as uint16_t;
-            let mut ya: uint16_t = ((*spc).a as ::core::ffi::c_int
+            let ya: uint16_t = ((*spc).a as ::core::ffi::c_int
                 | ((*spc).y as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
                 as uint16_t;
-            let mut result_2: ::core::ffi::c_int =
+            let result_2: ::core::ffi::c_int =
                 ya as ::core::ffi::c_int + value_1 as ::core::ffi::c_int + 1 as ::core::ffi::c_int;
             (*spc).c = result_2 > 0xffff as ::core::ffi::c_int;
             (*spc).z = result_2 & 0xffff as ::core::ffi::c_int == 0 as ::core::ffi::c_int;
@@ -654,7 +654,7 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         }
         105 => {
             let mut src_8: uint16_t = 0 as uint16_t;
-            let mut dst_10: uint16_t = spc_adrDpDp(spc, &raw mut src_8);
+            let dst_10: uint16_t = spc_adrDpDp(spc, &raw mut src_8);
             spc_compare_memory(spc, dst_10, src_8);
         }
         107 => {
@@ -667,8 +667,8 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
             spc_pushByte(spc, (*spc).y);
         }
         110 => {
-            let mut adr_8: uint16_t = spc_adrDp(spc);
-            let mut result_3: uint8_t =
+            let adr_8: uint16_t = spc_adrDp(spc);
+            let result_3: uint8_t =
                 (spc_read(spc, adr_8) as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint8_t;
             spc_write(spc, adr_8, result_3);
             spc_doBranch(
@@ -697,22 +697,22 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         }
         120 => {
             let mut src_9: uint16_t = 0 as uint16_t;
-            let mut dst_11: uint16_t = spc_adrDpImm(spc, &raw mut src_9);
+            let dst_11: uint16_t = spc_adrDpImm(spc, &raw mut src_9);
             spc_compare_memory(spc, dst_11, src_9);
         }
         121 => {
             let mut src_10: uint16_t = 0 as uint16_t;
-            let mut dst_12: uint16_t = spc_adrIndInd(spc, &raw mut src_10);
+            let dst_12: uint16_t = spc_adrIndInd(spc, &raw mut src_10);
             spc_compare_memory(spc, dst_12, src_10);
         }
         122 => {
             let mut low_2: uint16_t = 0 as uint16_t;
-            let mut high_2: uint16_t = spc_adrDpWord(spc, &raw mut low_2);
-            let mut value_2: uint16_t = spc_readWord(spc, low_2, high_2);
-            let mut ya_0: uint16_t = ((*spc).a as ::core::ffi::c_int
+            let high_2: uint16_t = spc_adrDpWord(spc, &raw mut low_2);
+            let value_2: uint16_t = spc_readWord(spc, low_2, high_2);
+            let ya_0: uint16_t = ((*spc).a as ::core::ffi::c_int
                 | ((*spc).y as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
                 as uint16_t;
-            let mut result_4: ::core::ffi::c_int =
+            let result_4: ::core::ffi::c_int =
                 ya_0 as ::core::ffi::c_int + value_2 as ::core::ffi::c_int;
             (*spc).v = ya_0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                 == value_2 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -768,7 +768,7 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         }
         137 | 169 => {
             let mut src_11: uint16_t = 0 as uint16_t;
-            let mut dst_13: uint16_t = spc_adrDpDp(spc, &raw mut src_11);
+            let dst_13: uint16_t = spc_adrDpDp(spc, &raw mut src_11);
             spc_arithmetic_memory(spc, dst_13, src_11, opcode & 0x20 != 0);
         }
         139 | 171 => {
@@ -785,8 +785,8 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         }
         143 => {
             let mut src_12: uint16_t = 0 as uint16_t;
-            let mut dst_14: uint16_t = spc_adrDpImm(spc, &raw mut src_12);
-            let mut val_4: uint8_t = spc_read(spc, src_12);
+            let dst_14: uint16_t = spc_adrDpImm(spc, &raw mut src_12);
+            let val_4: uint8_t = spc_read(spc, src_12);
             spc_read(spc, dst_14);
             spc_write(spc, dst_14, val_4);
         }
@@ -807,23 +807,23 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         }
         152 | 184 => {
             let mut src_13: uint16_t = 0 as uint16_t;
-            let mut dst_15: uint16_t = spc_adrDpImm(spc, &raw mut src_13);
+            let dst_15: uint16_t = spc_adrDpImm(spc, &raw mut src_13);
             spc_arithmetic_memory(spc, dst_15, src_13, opcode & 0x20 != 0);
         }
         153 | 185 => {
             let mut src_14: uint16_t = 0 as uint16_t;
-            let mut dst_16: uint16_t = spc_adrIndInd(spc, &raw mut src_14);
+            let dst_16: uint16_t = spc_adrIndInd(spc, &raw mut src_14);
             spc_arithmetic_memory(spc, dst_16, src_14, opcode & 0x20 != 0);
         }
         154 => {
             let mut low_3: uint16_t = 0 as uint16_t;
-            let mut high_3: uint16_t = spc_adrDpWord(spc, &raw mut low_3);
-            let mut value_3: uint16_t = (spc_readWord(spc, low_3, high_3) as ::core::ffi::c_int
+            let high_3: uint16_t = spc_adrDpWord(spc, &raw mut low_3);
+            let value_3: uint16_t = (spc_readWord(spc, low_3, high_3) as ::core::ffi::c_int
                 ^ 0xffff as ::core::ffi::c_int) as uint16_t;
-            let mut ya_1: uint16_t = ((*spc).a as ::core::ffi::c_int
+            let ya_1: uint16_t = ((*spc).a as ::core::ffi::c_int
                 | ((*spc).y as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
                 as uint16_t;
-            let mut result_5: ::core::ffi::c_int = ya_1 as ::core::ffi::c_int
+            let result_5: ::core::ffi::c_int = ya_1 as ::core::ffi::c_int
                 + value_3 as ::core::ffi::c_int
                 + 1 as ::core::ffi::c_int;
             (*spc).v = ya_1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -854,7 +854,7 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
             spc_setZN(spc, (*spc).x);
         }
         158 => {
-            let mut value_4: uint16_t = ((*spc).a as ::core::ffi::c_int
+            let value_4: uint16_t = ((*spc).a as ::core::ffi::c_int
                 | ((*spc).y as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
                 as uint16_t;
             let mut result_6: ::core::ffi::c_int = 0xffff as ::core::ffi::c_int;
@@ -886,7 +886,7 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
             (*spc).a = spc_pullByte(spc);
         }
         175 => {
-            let mut adr_11: uint16_t = spc_adrIndP(spc);
+            let adr_11: uint16_t = spc_adrIndP(spc);
             spc_write(spc, adr_11, (*spc).a);
         }
         176 => {
@@ -894,8 +894,8 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         }
         186 => {
             let mut low_4: uint16_t = 0 as uint16_t;
-            let mut high_4: uint16_t = spc_adrDpWord(spc, &raw mut low_4);
-            let mut val_5: uint16_t = spc_readWord(spc, low_4, high_4);
+            let high_4: uint16_t = spc_adrDpWord(spc, &raw mut low_4);
+            let val_5: uint16_t = spc_readWord(spc, low_4, high_4);
             (*spc).a = (val_5 as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint8_t;
             (*spc).y = (val_5 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint8_t;
             (*spc).z = val_5 as ::core::ffi::c_int == 0 as ::core::ffi::c_int;
@@ -917,7 +917,7 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
             spc_setZN(spc, (*spc).a);
         }
         191 => {
-            let mut adr_12: uint16_t = spc_adrIndP(spc);
+            let adr_12: uint16_t = spc_adrIndP(spc);
             spc_move_memory::<0>(spc, adr_12, false);
         }
         192 => {
@@ -954,7 +954,7 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
             (*spc).x = spc_pullByte(spc);
         }
         207 => {
-            let mut result_8: uint16_t =
+            let result_8: uint16_t =
                 ((*spc).a as ::core::ffi::c_int * (*spc).y as ::core::ffi::c_int) as uint16_t;
             (*spc).a = (result_8 as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint8_t;
             (*spc).y = (result_8 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint8_t;
@@ -983,7 +983,7 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         }
         218 => {
             let mut low_5: uint16_t = 0 as uint16_t;
-            let mut high_5: uint16_t = spc_adrDpWord(spc, &raw mut low_5);
+            let high_5: uint16_t = spc_adrDpWord(spc, &raw mut low_5);
             spc_read(spc, low_5);
             spc_write(spc, low_5, (*spc).a);
             spc_write(spc, high_5, (*spc).y);
@@ -1002,9 +1002,9 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
             spc_setZN(spc, (*spc).a);
         }
         222 => {
-            let mut val_6: uint8_t = (spc_read(spc, spc_adrDpx(spc)) as ::core::ffi::c_int
+            let val_6: uint8_t = (spc_read(spc, spc_adrDpx(spc)) as ::core::ffi::c_int
                 ^ 0xff as ::core::ffi::c_int) as uint8_t;
-            let mut result_9: uint8_t = ((*spc).a as ::core::ffi::c_int
+            let result_9: uint8_t = ((*spc).a as ::core::ffi::c_int
                 + val_6 as ::core::ffi::c_int
                 + 1 as ::core::ffi::c_int) as uint8_t;
             spc_doBranch(
@@ -1048,8 +1048,8 @@ unsafe fn spc_doOpcode(mut spc: *mut Spc, mut opcode: uint8_t) {
         }
         250 => {
             let mut src_18: uint16_t = 0 as uint16_t;
-            let mut dst_20: uint16_t = spc_adrDpDp(spc, &raw mut src_18);
-            let mut val_7: uint8_t = spc_read(spc, src_18);
+            let dst_20: uint16_t = spc_adrDpDp(spc, &raw mut src_18);
+            let val_7: uint8_t = spc_read(spc, src_18);
             spc_write(spc, dst_20, val_7);
         }
         253 => {

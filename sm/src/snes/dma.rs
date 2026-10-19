@@ -37,12 +37,12 @@ static bAdrOffsets: [[::core::ffi::c_int; 4]; 8] = [
     [0, 0, 1, 1],
 ];
 static transferLength: [::core::ffi::c_int; 8] = [1, 2, 2, 4, 4, 4, 2, 4];
-pub unsafe fn dma_init(mut snes: *mut Snes) -> *mut Dma {
-    let mut dma: *mut Dma = malloc(::core::mem::size_of::<Dma>() as size_t) as *mut Dma;
+pub unsafe fn dma_init(snes: *mut Snes) -> *mut Dma {
+    let dma: *mut Dma = malloc(::core::mem::size_of::<Dma>() as size_t) as *mut Dma;
     (*dma).snes = snes;
     dma
 }
-pub unsafe fn dma_free(mut dma: *mut Dma) {
+pub unsafe fn dma_free(dma: *mut Dma) {
     free(dma as *mut ::core::ffi::c_void);
 }
 pub unsafe fn dma_reset(dma: *mut Dma) {
@@ -72,9 +72,9 @@ pub unsafe fn dma_reset(dma: *mut Dma) {
     (*dma).dmaBusy = false;
 }
 pub unsafe fn dma_saveload(
-    mut dma: *mut Dma,
-    mut func: Option<SaveLoadFunc>,
-    mut ctx: *mut ::core::ffi::c_void,
+    dma: *mut Dma,
+    func: Option<SaveLoadFunc>,
+    ctx: *mut ::core::ffi::c_void,
     game: &mut Game,
 ) {
     func.expect("non-null function pointer")(
@@ -143,7 +143,7 @@ pub unsafe fn dma_write(dma: *mut Dma, address: u16, value: u8) {
         _ => {}
     }
 }
-pub unsafe fn dma_doDma(mut dma: *mut Dma, game: &mut Game) {
+pub unsafe fn dma_doDma(dma: *mut Dma, game: &mut Game) {
     if (*dma).dmaTimer > 0 {
         (*dma).dmaTimer = (*dma).dmaTimer.wrapping_sub(2);
         return;
@@ -215,7 +215,7 @@ unsafe fn hdma_load_indirect_address(dma: *mut Dma, channel: usize, game: &mut G
         (*dma).channel[channel].size | (u16::from(hdma_read_table_byte(dma, channel, game)) << 8);
     (*dma).hdmaTimer = (*dma).hdmaTimer.wrapping_add(16);
 }
-pub unsafe fn dma_initHdma(mut dma: *mut Dma, game: &mut Game) {
+pub unsafe fn dma_initHdma(dma: *mut Dma, game: &mut Game) {
     (*dma).hdmaTimer = 0 as uint16_t;
     let mut hdmaHappened: bool = false_0 != 0;
     let mut current_block_16: u64;
@@ -257,7 +257,7 @@ pub unsafe fn dma_initHdma(mut dma: *mut Dma, game: &mut Game) {
             ((*dma).hdmaTimer as ::core::ffi::c_int + 16 as ::core::ffi::c_int) as uint16_t;
     }
 }
-pub unsafe fn dma_doHdma(mut dma: *mut Dma, game: &mut Game) {
+pub unsafe fn dma_doHdma(dma: *mut Dma, game: &mut Game) {
     (*dma).hdmaTimer = 0 as uint16_t;
     let mut hdmaHappened: bool = false_0 != 0;
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;

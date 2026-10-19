@@ -29,13 +29,13 @@ static bootRom: [uint8_t; 64] = [
     0xf6, 0xda, 0, 0xba, 0xf4, 0xc4, 0xf4, 0xdd, 0x5d, 0xd0, 0xdb, 0x1f, 0, 0, 0xc0, 0xff,
 ];
 pub unsafe fn apu_init() -> *mut Apu {
-    let mut apu: *mut Apu = malloc(::core::mem::size_of::<Apu>() as size_t) as *mut Apu;
+    let apu: *mut Apu = malloc(::core::mem::size_of::<Apu>() as size_t) as *mut Apu;
     core::ptr::write_bytes(apu, 0, 1);
     (*apu).spc = spc_init(apu as *mut Apu);
     (*apu).dsp = dsp_init(&raw mut (*apu).ram as *mut uint8_t);
     apu
 }
-pub unsafe fn apu_free(mut apu: *mut Apu) {
+pub unsafe fn apu_free(apu: *mut Apu) {
     spc_free((*apu).spc);
     dsp_free((*apu).dsp);
     free(apu as *mut ::core::ffi::c_void);
@@ -60,9 +60,9 @@ pub unsafe fn apu_reset(apu: *mut Apu) {
     (*apu).c2rust_unnamed.hist.count = 0;
 }
 pub unsafe fn apu_saveload(
-    mut apu: *mut Apu,
-    mut func: Option<SaveLoadFunc>,
-    mut ctx: *mut ::core::ffi::c_void,
+    apu: *mut Apu,
+    func: Option<SaveLoadFunc>,
+    ctx: *mut ::core::ffi::c_void,
     game: &mut Game,
 ) {
     func.expect("non-null function pointer")(

@@ -27,7 +27,7 @@ pub use crate::types::{
     Ram4000_Backups,
 };
 #[inline]
-unsafe fn RomPtr_85(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
+unsafe fn RomPtr_85(addr: uint16_t, game: &mut Game) -> *const uint8 {
     RomPtr((0x850000u32) | ((addr) as u32), game)
 }
 pub const fnWriteLargeMessageBoxTilemap: uint32 = 8749658;
@@ -158,7 +158,7 @@ unsafe fn WriteSmallMessageBoxTilemap(game: &mut Game) {
     let end = WriteMessageTilemap(game);
     WriteMessageBoxTilemapRow(end, &kSmallMsgBoxTopBottomBorderTilemap, game);
 }
-unsafe fn CallMsgBoxDraw(mut ea: uint32, game: &mut Game) {
+unsafe fn CallMsgBoxDraw(ea: uint32, game: &mut Game) {
     match ea {
         8749658 => {
             WriteLargeMessageBoxTilemap(game);
@@ -253,7 +253,7 @@ unsafe fn SetupPpuForSmallMessageBox(game: &mut Game) {
 unsafe fn SetupPpuForLargeMessageBox(game: &mut Game) {
     SetupPpuForActiveMessageBox(416 as uint16, game);
 }
-unsafe fn CallMsgBoxModify(mut ea: uint32, game: &mut Game) {
+unsafe fn CallMsgBoxModify(ea: uint32, game: &mut Game) {
     match ea {
         8750021 => {
             DrawShootButtonAndSetupPpuForLargeMessageBox(game);

@@ -48,20 +48,20 @@ pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::
 pub const true_0: ::core::ffi::c_int = 1;
 pub const false_0: ::core::ffi::c_int = 0;
 #[inline]
-unsafe fn RomPtr_8F(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
+unsafe fn RomPtr_8F(addr: uint16_t, game: &mut Game) -> *const uint8 {
     RomPtr((0x8f0000u32) | ((addr) as u32), game)
 }
 #[inline]
-unsafe fn RomPtr_94(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
+unsafe fn RomPtr_94(addr: uint16_t, game: &mut Game) -> *const uint8 {
     RomPtr((0x940000u32) | ((addr) as u32), game)
 }
 #[inline]
-unsafe fn gOamEnt(mut v: ::core::ffi::c_int, game: &mut Game) -> *mut OamEnt {
+unsafe fn gOamEnt(v: ::core::ffi::c_int, game: &mut Game) -> *mut OamEnt {
     (&raw mut game.g_ram as *mut uint8).offset((0x370 as ::core::ffi::c_int + v) as isize)
         as *mut uint8 as *mut OamEnt
 }
 #[inline]
-unsafe fn get_DoorDef(mut a: uint16, game: &mut Game) -> *mut DoorDef {
+unsafe fn get_DoorDef(a: uint16, game: &mut Game) -> *mut DoorDef {
     RomPtr((0x830000u32) | ((a) as u32), game) as *mut DoorDef
 }
 pub const fnDoorTransitionFunction_HandleElevator: ::core::ffi::c_int = 0x82e17d;
@@ -1288,8 +1288,8 @@ static kBlockFunc_9C73_Tab1: [int8; 18] = [
     0,
     -(1),
 ];
-unsafe fn BlockFunc_9C73(mut v0: uint16, game: &mut Game) -> uint16 {
-    let mut v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+unsafe fn BlockFunc_9C73(v0: uint16, game: &mut Game) -> uint16 {
+    let v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(v1 as isize)
         as ::core::ffi::c_int
         & 0xf00 as ::core::ffi::c_int)
@@ -1306,7 +1306,7 @@ unsafe fn BlockFunc_9C73(mut v0: uint16, game: &mut Game) -> uint16 {
                 & 0xf as ::core::ffi::c_int)
             + 1 as ::core::ffi::c_int) as usize] as uint16
     } else {
-        let mut r18: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0xc18)
+        let r18: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0xc18)
             as *mut uint16)
             .offset(v1 as isize) as ::core::ffi::c_int
             & 0xf as ::core::ffi::c_int;
@@ -1314,15 +1314,15 @@ unsafe fn BlockFunc_9C73(mut v0: uint16, game: &mut Game) -> uint16 {
             as uint16
     }
 }
-pub unsafe fn BombOrPowerBomb_Func1(mut v0: uint16, game: &mut Game) {
+pub unsafe fn BombOrPowerBomb_Func1(v0: uint16, game: &mut Game) {
     let mut v2: int16 = 0;
     let mut v3: int16 = 0;
-    let mut temp_collision_DD2: uint16 = BlockFunc_9C73(v0, game);
-    let mut v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let temp_collision_DD2: uint16 = BlockFunc_9C73(v0, game);
+    let v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     v2 = *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v1 as isize)
         as int16;
     if v2 >= 0i16 {
-        let mut r26: uint16 =
+        let r26: uint16 =
             *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v1 as isize);
         if ((*(&raw mut v2 as *mut uint8).offset(
             (::core::mem::size_of::<int16>())
@@ -1337,7 +1337,7 @@ pub unsafe fn BombOrPowerBomb_Func1(mut v0: uint16, game: &mut Game) {
             v3 = *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
                 .offset(v1 as isize) as int16;
             if v3 >= 0i16 {
-                let mut R28: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xb78)
+                let R28: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xb78)
                     as *mut uint16)
                     .offset(v1 as isize);
                 if ((*(&raw mut v3 as *mut uint8).offset(
@@ -1374,32 +1374,32 @@ pub unsafe fn BombOrPowerBomb_Func1(mut v0: uint16, game: &mut Game) {
         }
     }
 }
-unsafe fn BlockColl_GetBlockIndexAbove(mut k: uint16, game: &mut Game) -> uint16 {
+unsafe fn BlockColl_GetBlockIndexAbove(k: uint16, game: &mut Game) -> uint16 {
     (k as ::core::ffi::c_int
         - *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as ::core::ffi::c_int
         - *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as ::core::ffi::c_int)
         as uint16
 }
-unsafe fn BlockColl_GetBlockIndexRight(mut k: uint16, game: &mut Game) -> uint16 {
+unsafe fn BlockColl_GetBlockIndexRight(k: uint16, game: &mut Game) -> uint16 {
     (*((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as ::core::ffi::c_int
         * 2 as ::core::ffi::c_int
         + k as ::core::ffi::c_int
         + 1 as ::core::ffi::c_int
         + 1 as ::core::ffi::c_int) as uint16
 }
-unsafe fn BlockColl_GetBlockIndexLeft(mut k: uint16) -> uint16 {
+unsafe fn BlockColl_GetBlockIndexLeft(k: uint16) -> uint16 {
     (k).wrapping_sub(4u16)
 }
-unsafe fn BlockColl_GetBlockIndexBelow(mut k: uint16, game: &mut Game) -> uint16 {
+unsafe fn BlockColl_GetBlockIndexBelow(k: uint16, game: &mut Game) -> uint16 {
     (*((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as ::core::ffi::c_int
         * 2 as ::core::ffi::c_int
         + k as ::core::ffi::c_int
         + 1 as ::core::ffi::c_int
         + 1 as ::core::ffi::c_int) as uint16
 }
-unsafe fn BlockColl_BombExplosion(mut ci: *mut CollInfo, mut k: uint16, game: &mut Game) {
+unsafe fn BlockColl_BombExplosion(ci: *mut CollInfo, k: uint16, game: &mut Game) {
     let mut v2: int16 = 0;
-    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut game.g_ram as *mut uint8).offset(0xc7c) as *mut uint16).offset(v1 as isize) == 0
     {
         v2 = *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(v1 as isize)
@@ -1408,7 +1408,7 @@ unsafe fn BlockColl_BombExplosion(mut ci: *mut CollInfo, mut k: uint16, game: &m
             *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
                 .offset(v1 as isize) = ((v2) as u16) | (1u16);
             if *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) != 0xffffu16 {
-                let mut v3: uint16 = (2u16).wrapping_mul(
+                let v3: uint16 = (2u16).wrapping_mul(
                     *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16),
                 );
                 BlockBombedReact(
@@ -1420,7 +1420,7 @@ unsafe fn BlockColl_BombExplosion(mut ci: *mut CollInfo, mut k: uint16, game: &m
                 );
                 let mut idx: uint16 = BlockColl_GetBlockIndexAbove(v3, game);
                 BlockBombedReact(ci, idx, game);
-                let mut idx2: uint16 = BlockColl_GetBlockIndexRight(idx, game);
+                let idx2: uint16 = BlockColl_GetBlockIndexRight(idx, game);
                 BlockBombedReact(ci, idx2, game);
                 idx = BlockColl_GetBlockIndexLeft(idx2);
                 BlockBombedReact(ci, idx, game);
@@ -1430,7 +1430,7 @@ unsafe fn BlockColl_BombExplosion(mut ci: *mut CollInfo, mut k: uint16, game: &m
         }
     }
 }
-unsafe fn sub_949D5D(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
+unsafe fn sub_949D5D(ci: *mut CollInfo, game: &mut Game) -> uint8 {
     if (*(&raw mut game.g_ram as *mut uint8)
         .offset(0x16402)
         .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
@@ -1443,14 +1443,14 @@ unsafe fn sub_949D5D(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
         BlockShotReactVert_Slope_NonSquare(ci, game)
     }
 }
-unsafe fn BlockBombedReact_Special(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    let mut v0: uint8 = *(&raw mut game.g_ram as *mut uint8)
+unsafe fn BlockBombedReact_Special(ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    let v0: uint8 = *(&raw mut game.g_ram as *mut uint8)
         .offset(0x16402)
         .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize);
     if (v0 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) != 0i32 {
-        let mut kBlockBombedReact_Region_Plm: *mut uint16 =
+        let kBlockBombedReact_Region_Plm: *mut uint16 =
             RomPtr_94(0x9e44 as uint16_t, game) as *mut uint16;
-        let mut v2: *const uint16 = RomPtr_94(
+        let v2: *const uint16 = RomPtr_94(
             *kBlockBombedReact_Region_Plm.offset(
                 *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize,
             ),
@@ -1461,19 +1461,18 @@ unsafe fn BlockBombedReact_Special(mut ci: *mut CollInfo, game: &mut Game) -> ui
             game,
         );
     } else {
-        let mut kBlockBombedReact_Special_Plm: *mut uint16 =
+        let kBlockBombedReact_Special_Plm: *mut uint16 =
             RomPtr_94(0x9da4 as uint16_t, game) as *mut uint16;
         SpawnPLM(*kBlockBombedReact_Special_Plm.offset(v0 as isize), game);
     }
     1 as uint8
 }
-unsafe fn BlockReact_ShootableAir(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    let mut v0: uint8 = *(&raw mut game.g_ram as *mut uint8)
+unsafe fn BlockReact_ShootableAir(ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    let v0: uint8 = *(&raw mut game.g_ram as *mut uint8)
         .offset(0x16402)
         .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize);
     if (v0 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) == 0i32 {
-        let mut t: uint16 =
-            *(RomPtr_94(0x9ea6 as uint16_t, game) as *mut uint16).offset(v0 as isize);
+        let t: uint16 = *(RomPtr_94(0x9ea6 as uint16_t, game) as *mut uint16).offset(v0 as isize);
         if t == 0xb974u16 {
             (*ci).ci_r38 = 0 as uint16;
             (*ci).ci_r40 = 0xffff as uint16;
@@ -1482,14 +1481,14 @@ unsafe fn BlockReact_ShootableAir(mut ci: *mut CollInfo, game: &mut Game) -> uin
     }
     0 as uint8
 }
-unsafe fn BlockReact_Shootable(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    let mut v0: uint8 = *(&raw mut game.g_ram as *mut uint8)
+unsafe fn BlockReact_Shootable(ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    let v0: uint8 = *(&raw mut game.g_ram as *mut uint8)
         .offset(0x16402)
         .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize);
     if (v0 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) != 0i32 {
-        let mut kBlockShotBombGrappleReaction_ShootableBlock_RegionPlm: *mut uint16 =
+        let kBlockShotBombGrappleReaction_ShootableBlock_RegionPlm: *mut uint16 =
             RomPtr_94(0x9fc6 as uint16_t, game) as *mut uint16;
-        let mut v2: *mut uint16 = RomPtr_94(
+        let v2: *mut uint16 = RomPtr_94(
             *kBlockShotBombGrappleReaction_ShootableBlock_RegionPlm.offset(
                 *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize,
             ),
@@ -1500,8 +1499,7 @@ unsafe fn BlockReact_Shootable(mut ci: *mut CollInfo, game: &mut Game) -> uint8 
             game,
         );
     } else {
-        let mut t: uint16 =
-            *(RomPtr_94(0x9ea6 as uint16_t, game) as *mut uint16).offset(v0 as isize);
+        let t: uint16 = *(RomPtr_94(0x9ea6 as uint16_t, game) as *mut uint16).offset(v0 as isize);
         if t == 0xb974u16 {
             (*ci).ci_r38 = 0 as uint16;
             (*ci).ci_r40 = 0xffff as uint16;
@@ -1510,10 +1508,10 @@ unsafe fn BlockReact_Shootable(mut ci: *mut CollInfo, game: &mut Game) -> uint8 
     }
     1 as uint8
 }
-unsafe fn BlockReact_BombableAir(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    let mut kBlockShotBombGrappleReact_BombableBlockPlm: *mut uint16 =
+unsafe fn BlockReact_BombableAir(ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    let kBlockShotBombGrappleReact_BombableBlockPlm: *mut uint16 =
         RomPtr_94(0xa012 as uint16_t, game) as *mut uint16;
-    let mut v0: uint8 = *(&raw mut game.g_ram as *mut uint8)
+    let v0: uint8 = *(&raw mut game.g_ram as *mut uint8)
         .offset(0x16402)
         .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize);
     if (v0 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) == 0i32 {
@@ -1524,10 +1522,10 @@ unsafe fn BlockReact_BombableAir(mut ci: *mut CollInfo, game: &mut Game) -> uint
     }
     0 as uint8
 }
-unsafe fn BlockReact_BombableBlock(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    let mut kBlockShotBombGrappleReact_BombableBlockPlm: *mut uint16 =
+unsafe fn BlockReact_BombableBlock(ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    let kBlockShotBombGrappleReact_BombableBlockPlm: *mut uint16 =
         RomPtr_94(0xa012 as uint16_t, game) as *mut uint16;
-    let mut v0: uint8 = *(&raw mut game.g_ram as *mut uint8)
+    let v0: uint8 = *(&raw mut game.g_ram as *mut uint8)
         .offset(0x16402)
         .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize);
     if (v0 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int) == 0i32 {
@@ -1538,7 +1536,7 @@ unsafe fn BlockReact_BombableBlock(mut ci: *mut CollInfo, game: &mut Game) -> ui
     }
     1 as uint8
 }
-unsafe fn BlockBombedReact(mut ci: *mut CollInfo, mut v0: uint16, game: &mut Game) {
+unsafe fn BlockBombedReact(ci: *mut CollInfo, v0: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) =
         (v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
     game.react_to_block(|block_type, game| match block_type {
@@ -1554,10 +1552,10 @@ unsafe fn BlockBombedReact(mut ci: *mut CollInfo, mut v0: uint16, game: &mut Gam
         _ => unreachable!(),
     });
 }
-unsafe fn BlockFunc_A06A(mut k: uint16, game: &mut Game) {
+unsafe fn BlockFunc_A06A(k: uint16, game: &mut Game) {
     let mut v2: int16 = 0;
     let mut v3: int16 = 0;
-    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     v2 = *((&raw mut game.g_ram as *mut uint8).offset(0xc7c) as *mut uint16).offset(v1 as isize)
         as int16;
     if v2 != 0 {
@@ -1566,14 +1564,14 @@ unsafe fn BlockFunc_A06A(mut k: uint16, game: &mut Game) {
                 .offset(v1 as isize) = 0 as uint16;
         }
     } else {
-        let mut r18: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16
+        let r18: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16
             as *mut uint8)
             .offset(
                 (::core::mem::size_of::<uint16>())
                     .wrapping_div(::core::mem::size_of::<uint8>())
                     .wrapping_sub(1_usize) as isize,
             ) as uint16;
-        let mut r20: uint16 = (((3u16).wrapping_mul(
+        let r20: uint16 = (((3u16).wrapping_mul(
             (*((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16 as *mut uint8)
                 .offset(
                     (::core::mem::size_of::<uint16>())
@@ -1594,8 +1592,7 @@ unsafe fn BlockFunc_A06A(mut k: uint16, game: &mut Game) {
         if v3 < 0i16 {
             v3 = 0 as int16;
         }
-        let mut r22: uint16 =
-            (v3 as uint16 as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint16;
+        let r22: uint16 = (v3 as uint16 as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint16;
         let mut v4: uint16 = (((r18)
             .wrapping_add(*((&raw mut game.g_ram as *mut uint8).offset(0xce2) as *mut uint16)))
             as ::core::ffi::c_int
@@ -1604,13 +1601,13 @@ unsafe fn BlockFunc_A06A(mut k: uint16, game: &mut Game) {
             v4 = (*((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16))
                 .wrapping_sub(1u16);
         }
-        let mut r24: uint16 = v4;
+        let r24: uint16 = v4;
         let mut v5: uint16 =
             (*((&raw mut game.g_ram as *mut uint8).offset(0xce4) as *mut uint16)).wrapping_sub(r20);
         if (v5 as int16) < 0i16 {
             v5 = 0 as uint16;
         }
-        let mut r26: uint16 = (v5 as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint16;
+        let r26: uint16 = (v5 as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint16;
         let mut v6: uint16 = (((r20)
             .wrapping_add(*((&raw mut game.g_ram as *mut uint8).offset(0xce4) as *mut uint16)))
             as ::core::ffi::c_int
@@ -1619,8 +1616,8 @@ unsafe fn BlockFunc_A06A(mut k: uint16, game: &mut Game) {
             v6 = (*((&raw mut game.g_ram as *mut uint8).offset(0x7a7) as *mut uint16))
                 .wrapping_sub(1u16);
         }
-        let mut R28: uint16 = v6;
-        let mut a: uint16 = (r26 as ::core::ffi::c_int
+        let R28: uint16 = v6;
+        let a: uint16 = (r26 as ::core::ffi::c_int
             | (r22 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
             as uint16;
         BlockFunc_A0F4(a, r22, r24, r26, R28, game);
@@ -1646,13 +1643,13 @@ unsafe fn BlockFunc_A06A(mut k: uint16, game: &mut Game) {
 }
 unsafe fn BlockFunc_A0F4(
     mut a: uint16,
-    mut r22: uint16,
-    mut r24: uint16,
-    mut r26: uint16,
-    mut r28: uint16,
+    r22: uint16,
+    r24: uint16,
+    r26: uint16,
+    r28: uint16,
     game: &mut Game,
 ) {
-    let mut RegWord: uint16 = Mult8x8(
+    let RegWord: uint16 = Mult8x8(
         a as uint8,
         *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
     );
@@ -1683,14 +1680,8 @@ unsafe fn BlockFunc_A0F4(
         }
     }
 }
-unsafe fn BlockFunc_A11A(
-    mut a: uint16,
-    mut r24: uint16,
-    mut r26: uint16,
-    mut r28: uint16,
-    game: &mut Game,
-) {
-    let mut RegWord: uint16 = Mult8x8(
+unsafe fn BlockFunc_A11A(mut a: uint16, r24: uint16, r26: uint16, r28: uint16, game: &mut Game) {
+    let RegWord: uint16 = Mult8x8(
         a as uint8,
         *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
     );
@@ -1724,7 +1715,7 @@ unsafe fn BlockFunc_A11A(
         }
     }
 }
-unsafe fn BlockShotReactHoriz_Slope(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
+unsafe fn BlockShotReactHoriz_Slope(ci: *mut CollInfo, game: &mut Game) -> uint8 {
     if (*(&raw mut game.g_ram as *mut uint8)
         .offset(0x16402)
         .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
@@ -1745,7 +1736,7 @@ unsafe fn BlockShotReactHoriz_Slope(mut ci: *mut CollInfo, game: &mut Game) -> u
         BlockShotReactVert_Slope_NonSquare(ci, game)
     }
 }
-unsafe fn BlockShotReactVert_Slope(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
+unsafe fn BlockShotReactVert_Slope(ci: *mut CollInfo, game: &mut Game) -> uint8 {
     if (*(&raw mut game.g_ram as *mut uint8)
         .offset(0x16402)
         .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
@@ -1767,8 +1758,8 @@ unsafe fn BlockShotReactVert_Slope(mut ci: *mut CollInfo, game: &mut Game) -> ui
     }
 }
 unsafe fn react_to_shot_block(
-    mut ci: *mut CollInfo,
-    mut k: uint16,
+    ci: *mut CollInfo,
+    k: uint16,
     slope: Func_CollInfo_U8,
     game: &mut Game,
 ) -> uint8 {
@@ -1794,15 +1785,15 @@ unsafe fn react_to_shot_block(
     }
     v1
 }
-unsafe fn BlockShotReactHoriz(mut ci: *mut CollInfo, mut k: uint16, game: &mut Game) -> uint8 {
+unsafe fn BlockShotReactHoriz(ci: *mut CollInfo, k: uint16, game: &mut Game) -> uint8 {
     react_to_shot_block(ci, k, BlockShotReactHoriz_Slope, game)
 }
-unsafe fn BlockShotReactVert(mut ci: *mut CollInfo, mut k: uint16, game: &mut Game) -> uint8 {
+unsafe fn BlockShotReactVert(ci: *mut CollInfo, k: uint16, game: &mut Game) -> uint8 {
     react_to_shot_block(ci, k, BlockShotReactVert_Slope, game)
 }
-unsafe fn BlockGetSomePos1(mut k: uint16, game: &mut Game) -> uint16 {
-    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut r38: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
+unsafe fn BlockGetSomePos1(k: uint16, game: &mut Game) -> uint16 {
+    let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let r38: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
         .offset(v1 as isize) as ::core::ffi::c_int
         - *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16).offset(v1 as isize)
             as ::core::ffi::c_int
@@ -1815,9 +1806,9 @@ unsafe fn BlockGetSomePos1(mut k: uint16, game: &mut Game) -> uint16 {
         - r38 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
         >> 4 as ::core::ffi::c_int) as uint16
 }
-unsafe fn BlockGetSomePos2(mut k: uint16, game: &mut Game) -> uint16 {
-    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut r38: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
+unsafe fn BlockGetSomePos2(k: uint16, game: &mut Game) -> uint16 {
+    let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let r38: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
         .offset(v1 as isize) as ::core::ffi::c_int
         - *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16).offset(v1 as isize)
             as ::core::ffi::c_int
@@ -1830,14 +1821,14 @@ unsafe fn BlockGetSomePos2(mut k: uint16, game: &mut Game) -> uint16 {
         - r38 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
         >> 4 as ::core::ffi::c_int) as uint16
 }
-pub unsafe fn BlockCollNoWaveBeamHoriz(mut k: uint16, game: &mut Game) -> uint8 {
+pub unsafe fn BlockCollNoWaveBeamHoriz(k: uint16, game: &mut Game) -> uint8 {
     let mut v7: uint16 = 0;
-    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut amt: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0xbdc) as *mut uint16)
+    let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let amt: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0xbdc) as *mut uint16)
         .offset(v1 as isize) as int16 as int32)
         << 8 as ::core::ffi::c_int;
-    let mut some_pos: uint16 = BlockGetSomePos1(k, game);
-    let mut prod: uint16 = Mult8x8(
+    let some_pos: uint16 = BlockGetSomePos1(k, game);
+    let prod: uint16 = Mult8x8(
         (((*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize))
             .wrapping_sub(
                 *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
@@ -1853,7 +1844,7 @@ pub unsafe fn BlockCollNoWaveBeamHoriz(mut k: uint16, game: &mut Game) -> uint8 
             as *mut uint16,
         amt as uint32,
     );
-    let mut r24: uint16 =
+    let r24: uint16 =
         *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v1 as isize);
     if amt < 0i32 {
         v7 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
@@ -1912,13 +1903,13 @@ pub unsafe fn BlockCollNoWaveBeamHoriz(mut k: uint16, game: &mut Game) -> uint8 
     KillProjectile(k, game);
     1 as uint8
 }
-pub unsafe fn BlockCollNoWaveBeamVert(mut k: uint16, game: &mut Game) -> uint8 {
+pub unsafe fn BlockCollNoWaveBeamVert(k: uint16, game: &mut Game) -> uint8 {
     let mut v7: uint16 = 0;
-    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut amt: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0xbf0) as *mut uint16)
+    let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let amt: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0xbf0) as *mut uint16)
         .offset(v1 as isize) as int16 as int32)
         << 8 as ::core::ffi::c_int;
-    let mut some_pos: uint16 = BlockGetSomePos2(k, game);
+    let some_pos: uint16 = BlockGetSomePos2(k, game);
     AddToHiLo(
         ((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize)
             as *mut uint16,
@@ -1926,7 +1917,7 @@ pub unsafe fn BlockCollNoWaveBeamVert(mut k: uint16, game: &mut Game) -> uint8 {
             as *mut uint16,
         amt as uint32,
     );
-    let mut r24: uint16 =
+    let r24: uint16 =
         *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize);
     if amt < 0i32 {
         v7 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
@@ -1942,7 +1933,7 @@ pub unsafe fn BlockCollNoWaveBeamVert(mut k: uint16, game: &mut Game) -> uint8 {
             - 1 as ::core::ffi::c_int) as uint16;
     }
     let mut R28: uint16 = v7;
-    let mut v8: uint16 = (((*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
+    let v8: uint16 = (((*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
         .offset(v1 as isize))
     .wrapping_sub(
         *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16).offset(v1 as isize),
@@ -1991,14 +1982,14 @@ pub unsafe fn BlockCollNoWaveBeamVert(mut k: uint16, game: &mut Game) -> uint8 {
     KillProjectile(k, game);
     1 as uint8
 }
-pub unsafe fn BlockCollWaveBeamHoriz(mut k: uint16, game: &mut Game) -> uint8 {
+pub unsafe fn BlockCollWaveBeamHoriz(k: uint16, game: &mut Game) -> uint8 {
     let mut v7: uint16 = 0;
-    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut amt: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0xbdc) as *mut uint16)
+    let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let amt: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0xbdc) as *mut uint16)
         .offset(v1 as isize) as int16 as int32)
         << 8 as ::core::ffi::c_int;
-    let mut some_pos: uint16 = BlockGetSomePos1(k, game);
-    let mut prod: uint16 = Mult8x8(
+    let some_pos: uint16 = BlockGetSomePos1(k, game);
+    let prod: uint16 = Mult8x8(
         (((*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize))
             .wrapping_sub(
                 *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
@@ -2014,7 +2005,7 @@ pub unsafe fn BlockCollWaveBeamHoriz(mut k: uint16, game: &mut Game) -> uint8 {
             as *mut uint16,
         amt as uint32,
     );
-    let mut r24: uint16 =
+    let r24: uint16 =
         *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v1 as isize);
     if amt < 0i32 {
         v7 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
@@ -2047,7 +2038,7 @@ pub unsafe fn BlockCollWaveBeamHoriz(mut k: uint16, game: &mut Game) -> uint8 {
         ci_r38: some_pos,
         ci_r40: some_pos,
     };
-    let mut v9: uint8 = *(((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
+    let v9: uint8 = *(((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
         .offset(v1 as isize) as *mut uint16 as *mut uint8)
         .offset(
             (::core::mem::size_of::<uint16>())
@@ -2082,13 +2073,13 @@ pub unsafe fn BlockCollWaveBeamHoriz(mut k: uint16, game: &mut Game) -> uint8 {
     }
     0 as uint8
 }
-pub unsafe fn BlockCollWaveBeamVert(mut k: uint16, game: &mut Game) -> uint8 {
+pub unsafe fn BlockCollWaveBeamVert(k: uint16, game: &mut Game) -> uint8 {
     let mut v7: uint16 = 0;
-    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut amt: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0xbf0) as *mut uint16)
+    let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let amt: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0xbf0) as *mut uint16)
         .offset(v1 as isize) as int16 as int32)
         << 8 as ::core::ffi::c_int;
-    let mut some_pos: uint16 = BlockGetSomePos2(k, game);
+    let some_pos: uint16 = BlockGetSomePos2(k, game);
     AddToHiLo(
         ((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize)
             as *mut uint16,
@@ -2096,7 +2087,7 @@ pub unsafe fn BlockCollWaveBeamVert(mut k: uint16, game: &mut Game) -> uint8 {
             as *mut uint16,
         amt as uint32,
     );
-    let mut r24: uint16 =
+    let r24: uint16 =
         *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize);
     if amt < 0i32 {
         v7 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
@@ -2112,11 +2103,11 @@ pub unsafe fn BlockCollWaveBeamVert(mut k: uint16, game: &mut Game) -> uint8 {
             - 1 as ::core::ffi::c_int) as uint16;
     }
     let mut R28: uint16 = v7;
-    let mut prod: uint16 = Mult8x8(
+    let prod: uint16 = Mult8x8(
         (v7 as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint8,
         *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
     );
-    let mut v8: uint16 = (((*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
+    let v8: uint16 = (((*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
         .offset(v1 as isize))
     .wrapping_sub(
         *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16).offset(v1 as isize),
@@ -2129,7 +2120,7 @@ pub unsafe fn BlockCollWaveBeamVert(mut k: uint16, game: &mut Game) -> uint8 {
     {
         return 0 as uint8;
     }
-    let mut v10: uint8 = *(((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
+    let v10: uint8 = *(((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
         .offset(v1 as isize) as *mut uint16 as *mut uint8)
         .offset(
             (::core::mem::size_of::<uint16>())
@@ -2171,12 +2162,12 @@ pub unsafe fn BlockCollWaveBeamVert(mut k: uint16, game: &mut Game) -> uint8 {
     }
     0 as uint8
 }
-pub unsafe fn BlockCollMissileHoriz(mut k: uint16, game: &mut Game) -> uint8 {
-    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut amt: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0xbdc) as *mut uint16)
+pub unsafe fn BlockCollMissileHoriz(k: uint16, game: &mut Game) -> uint8 {
+    let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let amt: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0xbdc) as *mut uint16)
         .offset(v1 as isize) as int16 as int32)
         << 8 as ::core::ffi::c_int;
-    let mut prod: uint16 = Mult8x8(
+    let prod: uint16 = Mult8x8(
         (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize)
             as ::core::ffi::c_int
             >> 4 as ::core::ffi::c_int) as uint8,
@@ -2189,12 +2180,12 @@ pub unsafe fn BlockCollMissileHoriz(mut k: uint16, game: &mut Game) -> uint8 {
             as *mut uint16,
         amt as uint32,
     );
-    let mut v3: uint16 =
+    let v3: uint16 =
         *((&raw mut game.g_ram as *mut uint8).offset(0xb8c) as *mut uint16).offset(v1 as isize);
     let mut r24: uint16 =
         *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v1 as isize);
-    let mut r28: uint16 = r24;
-    let mut v7: uint16 = (2 as ::core::ffi::c_int
+    let r28: uint16 = r24;
+    let v7: uint16 = (2 as ::core::ffi::c_int
         * (prod as ::core::ffi::c_int
             + (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int
@@ -2223,9 +2214,9 @@ pub unsafe fn BlockCollMissileHoriz(mut k: uint16, game: &mut Game) -> uint8 {
     KillProjectile(k, game);
     1 as uint8
 }
-pub unsafe fn BlockCollMissileVert(mut k: uint16, game: &mut Game) -> uint8 {
-    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut amt: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0xbf0) as *mut uint16)
+pub unsafe fn BlockCollMissileVert(k: uint16, game: &mut Game) -> uint8 {
+    let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let amt: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0xbf0) as *mut uint16)
         .offset(v1 as isize) as int16 as int32)
         << 8 as ::core::ffi::c_int;
     AddToHiLo(
@@ -2237,19 +2228,18 @@ pub unsafe fn BlockCollMissileVert(mut k: uint16, game: &mut Game) -> uint8 {
     );
     let mut r24: uint16 =
         *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize);
-    let mut r28: uint16 = r24;
-    let mut prod: uint16 = Mult8x8(
+    let r28: uint16 = r24;
+    let prod: uint16 = Mult8x8(
         (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize)
             as ::core::ffi::c_int
             >> 4 as ::core::ffi::c_int) as uint8,
         *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
     );
-    let mut v7: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
+    let v7: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
         .offset(v1 as isize) as ::core::ffi::c_int
         >> 4 as ::core::ffi::c_int) as uint16;
-    let mut v8: uint16 = (2 as ::core::ffi::c_int
-        * (prod as ::core::ffi::c_int + v7 as ::core::ffi::c_int))
-        as uint16;
+    let v8: uint16 = (2 as ::core::ffi::c_int
+        * (prod as ::core::ffi::c_int + v7 as ::core::ffi::c_int)) as uint16;
     let mut ci: CollInfo = CollInfo {
         ci_r18_r20: amt,
         ci_r24: r24,
@@ -2275,12 +2265,12 @@ pub unsafe fn BlockCollMissileVert(mut k: uint16, game: &mut Game) -> uint8 {
     1 as uint8
 }
 unsafe fn BlockShotReact_Slope_NonSquare(
-    mut ci: *mut CollInfo,
-    mut j: uint16,
-    mut k: uint16,
+    ci: *mut CollInfo,
+    j: uint16,
+    k: uint16,
     game: &mut Game,
 ) -> uint8 {
-    let mut v2: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
+    let v2: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
         as ::core::ffi::c_int
         & 0xf as ::core::ffi::c_int
@@ -2294,7 +2284,7 @@ unsafe fn BlockShotReact_Slope_NonSquare(
         } else {
             0 as ::core::ffi::c_int
         })) as uint16;
-    let mut v4: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
+    let v4: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
         as ::core::ffi::c_int
         & 0xf as ::core::ffi::c_int
@@ -2308,7 +2298,7 @@ unsafe fn BlockShotReact_Slope_NonSquare(
         } else {
             0 as ::core::ffi::c_int
         })) as uint16;
-    let mut v5: uint16 = ((kAlignYPos_Tab0[(16 as ::core::ffi::c_int
+    let v5: uint16 = ((kAlignYPos_Tab0[(16 as ::core::ffi::c_int
         * (*(&raw mut game.g_ram as *mut uint8)
             .offset(0x16402)
             .offset(k as isize) as ::core::ffi::c_int
@@ -2324,10 +2314,10 @@ unsafe fn BlockShotReact_Slope_NonSquare(
         0 as uint8
     }
 }
-unsafe fn BlockShotReactVert_Slope_NonSquare(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16);
-    let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16);
-    let mut div: uint16 = SnesDivide(
+unsafe fn BlockShotReactVert_Slope_NonSquare(ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    let v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16);
+    let v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16);
+    let div: uint16 = SnesDivide(
         *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16),
         *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
     );
@@ -2342,10 +2332,10 @@ unsafe fn BlockShotReactVert_Slope_NonSquare(mut ci: *mut CollInfo, game: &mut G
         0 as uint8
     }
 }
-unsafe fn BlockShotReactHoriz_Slope_NonSquare(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16);
-    let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16);
-    let mut mod_0: uint16 = SnesModulus(
+unsafe fn BlockShotReactHoriz_Slope_NonSquare(ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    let v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16);
+    let v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16);
+    let mod_0: uint16 = SnesModulus(
         *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16),
         *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
     );
@@ -2360,11 +2350,11 @@ unsafe fn BlockShotReactHoriz_Slope_NonSquare(mut ci: *mut CollInfo, game: &mut 
         0 as uint8
     }
 }
-pub unsafe fn BlockCollSpreadBomb(mut k: uint16, game: &mut Game) -> uint8 {
-    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut r26: uint16 =
+pub unsafe fn BlockCollSpreadBomb(k: uint16, game: &mut Game) -> uint8 {
+    let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let r26: uint16 =
         *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v1 as isize);
-    let mut r28: uint16 =
+    let r28: uint16 =
         *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v1 as isize);
     *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) = 0 as uint16;
     CalculateBlockAt(r26, r28, 0 as uint16, 0 as uint16, game);
@@ -2396,13 +2386,13 @@ pub unsafe fn BlockCollSpreadBomb(mut k: uint16, game: &mut Game) -> uint8 {
     })
 }
 unsafe fn BlockShotReactVert_Slope_Square(
-    mut ci: *mut CollInfo,
-    mut a: uint16,
-    mut k: uint16,
+    ci: *mut CollInfo,
+    a: uint16,
+    k: uint16,
     game: &mut Game,
 ) -> uint8 {
-    let mut temp_collision_DD4: uint16 = (4u16).wrapping_mul(a);
-    let mut temp_collision_DD6: uint16 = (*(&raw mut game.g_ram as *mut uint8)
+    let temp_collision_DD4: uint16 = (4u16).wrapping_mul(a);
+    let temp_collision_DD6: uint16 = (*(&raw mut game.g_ram as *mut uint8)
         .offset(0x16402)
         .offset(k as isize) as ::core::ffi::c_int
         >> 6 as ::core::ffi::c_int) as uint16;
@@ -2410,8 +2400,8 @@ unsafe fn BlockShotReactVert_Slope_Square(
         + (temp_collision_DD6 as ::core::ffi::c_int
             ^ ((*ci).ci_r28 as ::core::ffi::c_int & 8 as ::core::ffi::c_int)
                 >> 3 as ::core::ffi::c_int)) as uint16;
-    let mut v3: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0xdde)
-        as *mut uint16) as ::core::ffi::c_int
+    let v3: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16)
+        as ::core::ffi::c_int
         >> 1 as ::core::ffi::c_int;
     if (*ci).ci_r30 == 0 {
         if (*ci).ci_r26 == 0 {
@@ -2423,7 +2413,7 @@ unsafe fn BlockShotReactVert_Slope_Square(
                 != 0i32
                 || kTab948E54[v2 as usize] == 0
             {
-                let mut v4: uint16 = (v2) ^ (2u16);
+                let v4: uint16 = (v2) ^ (2u16);
                 if (*(((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
                     .offset(v3 as isize) as *mut uint16 as *mut uint8)
                     .offset(0) as ::core::ffi::c_int
@@ -2480,13 +2470,13 @@ unsafe fn BlockShotReactVert_Slope_Square(
     (kTab948E54[v2 as usize] != 0u8) as uint8
 }
 unsafe fn BlockShotReactHoriz_Slope_Square(
-    mut ci: *mut CollInfo,
-    mut a: uint16,
-    mut k: uint16,
+    ci: *mut CollInfo,
+    a: uint16,
+    k: uint16,
     game: &mut Game,
 ) -> uint8 {
-    let mut temp_collision_DD4: uint16 = (4u16).wrapping_mul(a);
-    let mut temp_collision_DD6: uint16 = (*(&raw mut game.g_ram as *mut uint8)
+    let temp_collision_DD4: uint16 = (4u16).wrapping_mul(a);
+    let temp_collision_DD6: uint16 = (*(&raw mut game.g_ram as *mut uint8)
         .offset(0x16402)
         .offset(k as isize) as ::core::ffi::c_int
         >> 6 as ::core::ffi::c_int) as uint16;
@@ -2496,7 +2486,7 @@ unsafe fn BlockShotReactHoriz_Slope_Square(
                 >> 2 as ::core::ffi::c_int)) as uint16;
     if (*ci).ci_r30 == 0 {
         if (*ci).ci_r26 == 0 {
-            let mut v3: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0xdde)
+            let v3: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0xdde)
                 as *mut uint16) as ::core::ffi::c_int
                 >> 1 as ::core::ffi::c_int;
             if (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
@@ -2507,7 +2497,7 @@ unsafe fn BlockShotReactHoriz_Slope_Square(
                 != 0i32
                 || kTab948E54[v2 as usize] == 0u8
             {
-                let mut v4: uint16 = (v2) ^ (1u16);
+                let v4: uint16 = (v2) ^ (1u16);
                 if (*(((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16)
                     .offset(v3 as isize) as *mut uint16 as *mut uint8)
                     .offset(0) as ::core::ffi::c_int
@@ -2577,7 +2567,7 @@ unsafe fn BlockShotReactHoriz_Slope_Square(
     }
     (kTab948E54[v2 as usize] != 0u8) as uint8
 }
-unsafe fn BlockReactGrapple_GrappleBlock(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
+unsafe fn BlockReactGrapple_GrappleBlock(ci: *mut CollInfo, game: &mut Game) -> uint8 {
     static kBlockReactGrapple_GrappleBlockPlm: [uint16; 4] = [0xd0d8, 0xd0dc, 0xd0e0, 0xd0d8];
     let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0xcf4) as *mut uint16);
     *fresh0 = (*fresh0 as ::core::ffi::c_int & !(0x8000 as ::core::ffi::c_int)) as uint16;
@@ -2600,7 +2590,7 @@ unsafe fn BlockReactGrapple_GrappleBlock(mut ci: *mut CollInfo, game: &mut Game)
         )
     }
 }
-unsafe fn BlockReactGrapple_SpikeBlock(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
+unsafe fn BlockReactGrapple_SpikeBlock(ci: *mut CollInfo, game: &mut Game) -> uint8 {
     static kBlockReactGrapple_SpikeBlockPlm: [uint16; 16] = [
         0xd0e4, 0xd0e4, 0xd0e4, 0xd0e8, 0xd0e4, 0xd0e4, 0xd0e4, 0xd0e4, 0xd0e4, 0xd0e4, 0xd0e4,
         0xd0e4, 0xd0e4, 0xd0e4, 0xd0e4, 0xd0e4,
@@ -2625,11 +2615,11 @@ unsafe fn BlockReactGrapple_SpikeBlock(mut ci: *mut CollInfo, game: &mut Game) -
     }
 }
 pub unsafe fn BlockCollGrappleBeam(game: &mut Game) -> uint8 {
-    let mut grapple_vel_x: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd22)
-        as *mut uint16) as int16 as int32)
+    let grapple_vel_x: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd22) as *mut uint16)
+        as int16 as int32)
         << 6 as ::core::ffi::c_int;
-    let mut grapple_vel_y: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd24)
-        as *mut uint16) as int16 as int32)
+    let grapple_vel_y: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd24) as *mut uint16)
+        as int16 as int32)
         << 6 as ::core::ffi::c_int;
     let mut result: uint8 = 0 as uint8;
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -2703,7 +2693,7 @@ pub unsafe fn BlockCollGrappleBeam(game: &mut Game) -> uint8 {
 pub unsafe fn BlockReactGrapple(game: &mut Game) -> uint8 {
     let mut v0: int16 = 0;
 
-    let mut prod: uint16 = Mult8x8(
+    let prod: uint16 = Mult8x8(
         (*((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16) as ::core::ffi::c_int
             >> 4 as ::core::ffi::c_int) as uint8,
         *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
@@ -3058,17 +3048,17 @@ pub static kSinCosTable8bit_Sext: [int16; 320] = [
     -(12 as ::core::ffi::c_int) as int16,
     -(6 as ::core::ffi::c_int) as int16,
 ];
-unsafe fn BlockFunc_A957(mut tmpD82: uint16, mut tmpD84: uint16, game: &mut Game) {
+unsafe fn BlockFunc_A957(tmpD82: uint16, tmpD84: uint16, game: &mut Game) {
     let mut v5: int16 = 0;
     let mut v7: int16 = 0;
-    let mut v0: uint16 = tmpD82;
+    let v0: uint16 = tmpD82;
     let mut v2: uint16 = 0;
     let mut v3: uint16 = 0;
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xcf4) as *mut uint16) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int)
         == 0i32
     {
-        let mut v1: ::core::ffi::c_int = tmpD82 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        let v1: ::core::ffi::c_int = tmpD82 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         if (kSinCosTable8bit_Sext[(v1 + 64 as ::core::ffi::c_int) as usize] as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int)
             != 0i32
@@ -3099,7 +3089,7 @@ unsafe fn BlockFunc_A957(mut tmpD82: uint16, mut tmpD84: uint16, game: &mut Game
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16) = v3;
     }
-    let mut v4: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let v4: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     v5 = kSinCosTable8bit_Sext[(v4 + 64 as ::core::ffi::c_int) as usize];
     let mut v6: uint16 = 0;
     let mut v8: uint16 = 0;
@@ -3108,7 +3098,7 @@ unsafe fn BlockFunc_A957(mut tmpD82: uint16, mut tmpD84: uint16, game: &mut Game
             v6 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16))
                 .wrapping_sub(tmpD84);
         } else {
-            let mut prod: uint16 = Mult8x8(
+            let prod: uint16 = Mult8x8(
                 tmpD84 as uint8,
                 -(v5 as int8 as ::core::ffi::c_int) as uint8,
             );
@@ -3121,7 +3111,7 @@ unsafe fn BlockFunc_A957(mut tmpD82: uint16, mut tmpD84: uint16, game: &mut Game
         v6 = (tmpD84)
             .wrapping_add(*((&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16));
     } else {
-        let mut prod_0: uint16 = Mult8x8(
+        let prod_0: uint16 = Mult8x8(
             tmpD84 as uint8,
             kSinCosTable8bit_Sext[(v4 + 64 as ::core::ffi::c_int) as usize] as uint8,
         );
@@ -3138,7 +3128,7 @@ unsafe fn BlockFunc_A957(mut tmpD82: uint16, mut tmpD84: uint16, game: &mut Game
             v8 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16))
                 .wrapping_sub(tmpD84);
         } else {
-            let mut prod_1: uint16 = Mult8x8(tmpD84 as uint8, -(v7 as ::core::ffi::c_int) as uint8);
+            let prod_1: uint16 = Mult8x8(tmpD84 as uint8, -(v7 as ::core::ffi::c_int) as uint8);
             v8 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16)
                 as ::core::ffi::c_int
                 - (prod_1 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int))
@@ -3148,8 +3138,7 @@ unsafe fn BlockFunc_A957(mut tmpD82: uint16, mut tmpD84: uint16, game: &mut Game
         v8 = (tmpD84)
             .wrapping_add(*((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16));
     } else {
-        let mut prod_2: uint16 =
-            Mult8x8(tmpD84 as uint8, kSinCosTable8bit_Sext[v4 as usize] as uint8);
+        let prod_2: uint16 = Mult8x8(tmpD84 as uint8, kSinCosTable8bit_Sext[v4 as usize] as uint8);
         v8 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16)
             as ::core::ffi::c_int
             + (prod_2 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int)) as uint16;
@@ -3159,8 +3148,8 @@ unsafe fn BlockFunc_A957(mut tmpD82: uint16, mut tmpD84: uint16, game: &mut Game
         (v8 as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint8 as uint16;
 }
 unsafe fn BlockReact_AA64(game: &mut Game) -> uint8 {
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xd94) as *mut uint16);
-    let mut RegWord: uint16 = Mult8x8(
+    let v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xd94) as *mut uint16);
+    let RegWord: uint16 = Mult8x8(
         *((&raw mut game.g_ram as *mut uint8).offset(0xd96) as *mut uint16) as uint8,
         *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
     );
@@ -3187,16 +3176,16 @@ unsafe fn BlockReact_AA64(game: &mut Game) -> uint8 {
     })
 }
 static g_word_94AAF7: [uint16; 16] = [0, 0, 0x10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-unsafe fn BlockReact_AA64_SpikeAir(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
+unsafe fn BlockReact_AA64_SpikeAir(ci: *mut CollInfo, game: &mut Game) -> uint8 {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) != 0 {
         return 0 as uint8;
     }
-    let mut v0: int16 = *((&raw mut game.g_ram as *mut uint8)
+    let v0: int16 = *((&raw mut game.g_ram as *mut uint8)
         .offset(0x16402)
         .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
         as *mut uint8 as *mut uint16) as int16;
     if v0 >= 0i16 {
-        let mut v: uint32 = ((g_word_94AAF7[v0 as usize] as int16 as ::core::ffi::c_int)
+        let v: uint32 = ((g_word_94AAF7[v0 as usize] as int16 as ::core::ffi::c_int)
             << 16 as ::core::ffi::c_int) as uint32;
         if v != 0 {
             AddToHiLo(
@@ -3211,16 +3200,16 @@ unsafe fn BlockReact_AA64_SpikeAir(mut ci: *mut CollInfo, game: &mut Game) -> ui
     0 as uint8
 }
 static g_word_94AB70: [uint16; 16] = [60, 16, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-unsafe fn BlockReact_AA64_SpikeBlock(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
+unsafe fn BlockReact_AA64_SpikeBlock(ci: *mut CollInfo, game: &mut Game) -> uint8 {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) != 0 {
         return 1 as uint8;
     }
-    let mut v0: int16 = *((&raw mut game.g_ram as *mut uint8)
+    let v0: int16 = *((&raw mut game.g_ram as *mut uint8)
         .offset(0x16402)
         .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
         as *mut uint8 as *mut uint16) as int16;
     if v0 >= 0i16 {
-        let mut v: uint32 = ((g_word_94AB70[v0 as usize] as int16 as ::core::ffi::c_int)
+        let v: uint32 = ((g_word_94AB70[v0 as usize] as int16 as ::core::ffi::c_int)
             << 16 as ::core::ffi::c_int) as uint32;
         if v != 0 {
             AddToHiLo(
@@ -3237,7 +3226,7 @@ unsafe fn BlockReact_AA64_SpikeBlock(mut ci: *mut CollInfo, game: &mut Game) -> 
 unsafe fn BlockFunc_ABB0(game: &mut Game) -> uint8 {
     BlockReact_AA64(game)
 }
-unsafe fn BlockFunc_ABE6(mut tmpD82: uint16, game: &mut Game) -> uint8 {
+unsafe fn BlockFunc_ABE6(tmpD82: uint16, game: &mut Game) -> uint8 {
     let mut v0: uint8 = 0;
     *((&raw mut game.g_ram as *mut uint8).offset(0xd98) as *mut uint16) = 6 as uint16;
     let mut grapple_beam_tmpD84: uint16 =
@@ -3258,9 +3247,9 @@ unsafe fn BlockFunc_ABE6(mut tmpD82: uint16, game: &mut Game) -> uint8 {
     v0
 }
 pub unsafe fn BlockFunc_AC11(game: &mut Game) {
-    let mut grapple_beam_tmpD82: uint16 =
+    let grapple_beam_tmpD82: uint16 =
         (2u16).wrapping_mul((*(&raw mut game.g_ram as *mut uint8).offset(0xcfb)) as u16);
-    let mut grapple_beam_tmpD84: uint16 =
+    let grapple_beam_tmpD84: uint16 =
         *((&raw mut game.g_ram as *mut uint8).offset(0xcfe) as *mut uint16);
     BlockFunc_A957(grapple_beam_tmpD82, grapple_beam_tmpD84, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0xd16) as *mut uint16) =
@@ -3282,12 +3271,12 @@ pub unsafe fn BlockFunc_AC31(game: &mut Game) -> uint8 {
             *((&raw mut game.g_ram as *mut uint8).offset(0xd00) as *mut uint16) = 0 as uint16;
             end = 8 as uint16;
         }
-        let mut increment: ::core::ffi::c_int = 8 as ::core::ffi::c_int;
-        let mut grapple_beam_tmpD82: uint16 =
+        let increment: ::core::ffi::c_int = 8 as ::core::ffi::c_int;
+        let grapple_beam_tmpD82: uint16 =
             (2u16).wrapping_mul((*(&raw mut game.g_ram as *mut uint8).offset(0xcfb)) as u16);
         let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xcfe) as *mut uint16);
         while v1 != end {
-            let mut grapple_beam_tmpD84: uint16 =
+            let grapple_beam_tmpD84: uint16 =
                 (increment + v1 as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16;
             BlockFunc_A957(grapple_beam_tmpD82, grapple_beam_tmpD84, game);
             if BlockReact_AA64(game) != 0 {
@@ -3303,12 +3292,12 @@ pub unsafe fn BlockFunc_AC31(game: &mut Game) -> uint8 {
             *((&raw mut game.g_ram as *mut uint8).offset(0xd00) as *mut uint16) = 0 as uint16;
             end = 63 as uint16;
         }
-        let mut increment_0: ::core::ffi::c_int = 56 as ::core::ffi::c_int;
-        let mut grapple_beam_tmpD82_0: uint16 =
+        let increment_0: ::core::ffi::c_int = 56 as ::core::ffi::c_int;
+        let grapple_beam_tmpD82_0: uint16 =
             (2u16).wrapping_mul((*(&raw mut game.g_ram as *mut uint8).offset(0xcfb)) as u16);
         let mut v1_0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xcfe) as *mut uint16);
         while v1_0 != end {
-            let mut grapple_beam_tmpD84_0: uint16 =
+            let grapple_beam_tmpD84_0: uint16 =
                 (increment_0 + v1_0 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16;
             BlockFunc_A957(grapple_beam_tmpD82_0, grapple_beam_tmpD84_0, game);
             if BlockReact_AA64(game) != 0 {
@@ -3340,7 +3329,7 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> uint8 {
     {
         v0 = 160 as uint16;
     }
-    let mut v1: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd2e) as *mut uint16))
+    let v1: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd2e) as *mut uint16))
         .wrapping_add(*((&raw mut game.g_ram as *mut uint8).offset(0xd26) as *mut uint16));
     if ((*((&raw mut game.g_ram as *mut uint8).offset(0xd2e) as *mut uint16)) as i16)
         .wrapping_add((*((&raw mut game.g_ram as *mut uint8).offset(0xd26) as *mut uint16)) as i16)
@@ -3360,7 +3349,7 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> uint8 {
         if v2 != grapple_beam_tmpD88 {
             loop {
                 grapple_beam_tmpD86 = v2;
-                let mut grapple_beam_tmpD82: uint16 =
+                let grapple_beam_tmpD82: uint16 =
                     (v2 as ::core::ffi::c_int + 2 as ::core::ffi::c_int
                         & 0x1ff as ::core::ffi::c_int) as uint16;
                 if BlockFunc_ABE6(grapple_beam_tmpD82, game) as ::core::ffi::c_int
@@ -3487,7 +3476,7 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> uint8 {
             match current_block {
                 11777552016271000781 => {
                     grapple_beam_tmpD86 = v5;
-                    let mut grapple_beam_tmpD82_0: uint16 =
+                    let grapple_beam_tmpD82_0: uint16 =
                         (v5 as ::core::ffi::c_int - 2 as ::core::ffi::c_int
                             & 0x1ff as ::core::ffi::c_int) as uint16;
                     if BlockFunc_ABE6(grapple_beam_tmpD82_0, game) as ::core::ffi::c_int
@@ -3649,7 +3638,7 @@ pub unsafe fn BlockFunc_AEE3(game: &mut Game) -> uint8 {
 pub unsafe fn GrappleFunc_AF87(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0i32 {
-        let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
+        let v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0xd62) as *mut uint16).offset(v1 as isize) =
             addr_word_94B197 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0xd42) as *mut uint16)
@@ -3669,27 +3658,27 @@ pub unsafe fn GrappleFunc_AF87(game: &mut Game) {
         i -= 8 as ::core::ffi::c_int;
     }
 }
-unsafe fn GrappleInstr_Goto(mut j: uint16, game: &mut Game) -> uint16 {
+unsafe fn GrappleInstr_Goto(j: uint16, game: &mut Game) -> uint16 {
     *(RomPtr_94(j, game) as *mut uint16)
 }
-pub unsafe fn CallGrappleInstr(mut ea: uint32, mut j: uint16, game: &mut Game) -> uint16 {
+pub unsafe fn CallGrappleInstr(ea: uint32, j: uint16, game: &mut Game) -> uint16 {
     match ea {
         9744628 => GrappleInstr_Goto(j, game),
         _ => Unreachable(game) as uint16,
     }
 }
 pub unsafe fn HandleGrappleBeamGfx(game: &mut Game) {
-    let mut v1: ::core::ffi::c_int = CalculateAngleFromXY(
+    let v1: ::core::ffi::c_int = CalculateAngleFromXY(
         (*((&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16))
             .wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0xd1a) as *mut uint16)),
         (*((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16))
             .wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0xd1c) as *mut uint16)),
         game,
     ) as ::core::ffi::c_int;
-    let mut r28_r26: uint32 = ((kSinCosTable8bit_Sext[(v1 + 64 as ::core::ffi::c_int) as usize]
+    let r28_r26: uint32 = ((kSinCosTable8bit_Sext[(v1 + 64 as ::core::ffi::c_int) as usize]
         as ::core::ffi::c_int)
         << 11 as ::core::ffi::c_int) as uint32;
-    let mut r32_r30: uint32 = ((kSinCosTable8bit_Sext[v1 as usize] as ::core::ffi::c_int)
+    let r32_r30: uint32 = ((kSinCosTable8bit_Sext[v1 as usize] as ::core::ffi::c_int)
         << 11 as ::core::ffi::c_int) as uint32;
     let mut chr: uint16 = ((*(&raw mut game.g_ram as *mut uint8).offset(0xcfb)
         as ::core::ffi::c_int
@@ -3755,7 +3744,7 @@ pub unsafe fn HandleGrappleBeamGfx(game: &mut Game) {
         if ((r24_r22 | r20_r18) & 0xff000000 as uint32) != 0u32 {
             break;
         }
-        let mut v12: uint16 = *(RomPtr_94(
+        let v12: uint16 = *(RomPtr_94(
             (*((&raw mut game.g_ram as *mut uint8).offset(0xd62) as *mut uint16)
                 .offset(q as isize))
             .wrapping_sub(2u16),
@@ -3790,14 +3779,9 @@ pub unsafe fn HandleGrappleBeamGfx(game: &mut Game) {
         DrawGrappleOams3(game);
     }
 }
-unsafe fn DrawGrappleOams(
-    mut x_r20: uint16,
-    mut y_r24: uint16,
-    mut chr_r38: uint16,
-    game: &mut Game,
-) {
-    let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16);
-    let mut v2: *mut OamEnt = gOamEnt(
+unsafe fn DrawGrappleOams(x_r20: uint16, y_r24: uint16, chr_r38: uint16, game: &mut Game) {
+    let v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16);
+    let v2: *mut OamEnt = gOamEnt(
         *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -3807,9 +3791,9 @@ unsafe fn DrawGrappleOams(
     *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) = (v1).wrapping_add(4u16);
 }
 unsafe fn DrawGrappleOams3(game: &mut Game) {
-    let mut idx: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16);
-    let mut v2: *mut OamEnt = gOamEnt(idx as ::core::ffi::c_int, game);
-    let mut x: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16)
+    let idx: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16);
+    let v2: *mut OamEnt = gOamEnt(idx as ::core::ffi::c_int, game);
+    let x: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16)
         as ::core::ffi::c_int
         - *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16) as ::core::ffi::c_int
         - 4 as ::core::ffi::c_int) as uint16;

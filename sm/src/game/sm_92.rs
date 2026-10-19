@@ -16,19 +16,16 @@ pub struct SamusTileAnimationDefs {
     pub bottom_half_pos: uint8,
 }
 #[inline]
-unsafe fn get_SamusTileAnimationDefs(
-    mut a: uint16,
-    game: &mut Game,
-) -> *mut SamusTileAnimationDefs {
+unsafe fn get_SamusTileAnimationDefs(a: uint16, game: &mut Game) -> *mut SamusTileAnimationDefs {
     RomPtr((0x920000u32) | ((a) as u32), game) as *mut SamusTileAnimationDefs
 }
 pub unsafe fn SetSamusTilesDefsForCurAnim(game: &mut Game) {
-    let mut v0: uint16 = (4 as ::core::ffi::c_int
+    let v0: uint16 = (4 as ::core::ffi::c_int
         * *((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16) as ::core::ffi::c_int
         + *(game.g_rom.offset(crate::rtl::lorom_offset(0x92d94e)) as *const uint8 as *mut uint16)
             .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as isize)
             as ::core::ffi::c_int) as uint16;
-    let mut AD: *mut SamusTileAnimationDefs = get_SamusTileAnimationDefs(v0, game);
+    let AD: *mut SamusTileAnimationDefs = get_SamusTileAnimationDefs(v0, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x71f) as *mut uint16) = (7 as ::core::ffi::c_int
         * (*AD).top_half_pos as ::core::ffi::c_int
         + *(game.g_rom.offset(crate::rtl::lorom_offset(0x92d91e)) as *const uint8 as *mut uint16)
@@ -86,7 +83,7 @@ pub unsafe fn Unused_SamusTileViewer(game: &mut Game) {
     DrawSamusSpritemap(0x185 as uint16, 0x80 as uint16, 0x50 as uint16, game);
 }
 pub unsafe fn DrawSamusSuitExploding(game: &mut Game) {
-    let mut r18: uint16 = (if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8 {
+    let r18: uint16 = (if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8 {
         *((&raw mut game.g_ram as *mut uint8).offset(0xde4) as *mut uint16) as ::core::ffi::c_int
             + 2085 as ::core::ffi::c_int
     } else {

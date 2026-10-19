@@ -299,20 +299,20 @@ enemy_layout! {
 pub const true_0: ::core::ffi::c_int = 1;
 pub const false_0: ::core::ffi::c_int = 0;
 #[inline]
-unsafe fn RomPtr_A0(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
+unsafe fn RomPtr_A0(addr: uint16_t, game: &mut Game) -> *const uint8 {
     RomPtr((0xa00000u32) | ((addr) as u32), game)
 }
 #[inline]
-unsafe fn RomPtr_A6(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
+unsafe fn RomPtr_A6(addr: uint16_t, game: &mut Game) -> *const uint8 {
     RomPtr((0xa60000u32) | ((addr) as u32), game)
 }
 #[inline]
-unsafe fn gOamEnt(mut v: ::core::ffi::c_int, game: &mut Game) -> *mut OamEnt {
+unsafe fn gOamEnt(v: ::core::ffi::c_int, game: &mut Game) -> *mut OamEnt {
     (&raw mut game.g_ram as *mut uint8).offset((0x370 as ::core::ffi::c_int + v) as isize)
         as *mut uint8 as *mut OamEnt
 }
 #[inline]
-unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int, game: &mut Game) -> *mut VramWriteEntry {
+unsafe fn gVramWriteEntry(a: ::core::ffi::c_int, game: &mut Game) -> *mut VramWriteEntry {
     (&raw mut game.g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
         as *mut uint8 as *mut VramWriteEntry
 }
@@ -413,83 +413,80 @@ pub const fnZebetites_Func_1: ::core::ffi::c_int = 0xa6fc41;
 pub const fnZebetites_Func_2: ::core::ffi::c_int = 0xa6fc5b;
 pub const fnZebetites_Func_3: ::core::ffi::c_int = 0xa6fc67;
 #[inline]
-unsafe fn gEnemyData(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut EnemyData {
+unsafe fn gEnemyData(o: ::core::ffi::c_int, game: &mut Game) -> *mut EnemyData {
     (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
         .offset(o as isize) as *mut EnemyData
 }
 #[inline]
-unsafe fn gEnemySpawnData(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut EnemySpawnData {
+unsafe fn gEnemySpawnData(o: ::core::ffi::c_int, game: &mut Game) -> *mut EnemySpawnData {
     (&raw mut game.g_ram as *mut uint8)
         .offset(0x7000)
         .offset(o as isize) as *mut EnemySpawnData
 }
 #[inline]
-unsafe fn gRam8800_Default(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Ram8800_Default {
+unsafe fn gRam8800_Default(o: ::core::ffi::c_int, game: &mut Game) -> *mut Ram8800_Default {
     (&raw mut game.g_ram as *mut uint8)
         .offset(0x8800)
         .offset(o as isize) as *mut Ram8800_Default
 }
 #[inline]
-unsafe fn Get_Boulder(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_Boulder {
+unsafe fn Get_Boulder(o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_Boulder {
     (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
         .offset(o as isize) as *mut Enemy_Boulder
 }
 #[inline]
-unsafe fn Get_CeresDoor(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_CeresDoor {
+unsafe fn Get_CeresDoor(o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_CeresDoor {
     (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
         .offset(o as isize) as *mut Enemy_CeresDoor
 }
 #[inline]
-unsafe fn Get_CeresRidley(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_CeresRidley {
+unsafe fn Get_CeresRidley(o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_CeresRidley {
     (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
         .offset(o as isize) as *mut Enemy_CeresRidley
 }
 #[inline]
-unsafe fn Get_CeresSteam(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_CeresSteam {
+unsafe fn Get_CeresSteam(o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_CeresSteam {
     (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
         .offset(o as isize) as *mut Enemy_CeresSteam
 }
 #[inline]
-unsafe fn Get_FakeKraid(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_FakeKraid {
+unsafe fn Get_FakeKraid(o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_FakeKraid {
     (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
         .offset(o as isize) as *mut Enemy_FakeKraid
 }
 #[inline]
-unsafe fn Get_FireGeyser(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_FireGeyser {
+unsafe fn Get_FireGeyser(o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_FireGeyser {
     (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
         .offset(o as isize) as *mut Enemy_FireGeyser
 }
 #[inline]
-unsafe fn Get_MotherBrain(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_MotherBrain {
+unsafe fn Get_MotherBrain(o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_MotherBrain {
     (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
         .offset(o as isize) as *mut Enemy_MotherBrain
 }
 #[inline]
-unsafe fn Get_NuclearWaffle(
-    mut o: ::core::ffi::c_int,
-    game: &mut Game,
-) -> *mut Enemy_NuclearWaffle {
+unsafe fn Get_NuclearWaffle(o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_NuclearWaffle {
     (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
         .offset(o as isize) as *mut Enemy_NuclearWaffle
 }
 #[inline]
-unsafe fn Get_Ridley(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_Ridley {
+unsafe fn Get_Ridley(o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_Ridley {
     (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
         .offset(o as isize) as *mut Enemy_Ridley
 }
 #[inline]
 unsafe fn Get_RidleysExplosion(
-    mut o: ::core::ffi::c_int,
+    o: ::core::ffi::c_int,
     game: &mut Game,
 ) -> *mut Enemy_RidleysExplosion {
     (&raw mut game.g_ram as *mut uint8)
@@ -497,16 +494,13 @@ unsafe fn Get_RidleysExplosion(
         .offset(o as isize) as *mut Enemy_RidleysExplosion
 }
 #[inline]
-unsafe fn Get_SpikeyPlatform(
-    mut o: ::core::ffi::c_int,
-    game: &mut Game,
-) -> *mut Enemy_SpikeyPlatform {
+unsafe fn Get_SpikeyPlatform(o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_SpikeyPlatform {
     (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
         .offset(o as isize) as *mut Enemy_SpikeyPlatform
 }
 #[inline]
-unsafe fn Get_Zebetites(mut o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_Zebetites {
+unsafe fn Get_Zebetites(o: ::core::ffi::c_int, game: &mut Game) -> *mut Enemy_Zebetites {
     (&raw mut game.g_ram as *mut uint8)
         .offset(0xf78)
         .offset(o as isize) as *mut Enemy_Zebetites
@@ -610,7 +604,7 @@ pub unsafe fn Enemy_NormalFrozenAI_A6(game: &mut Game) {
 }
 pub unsafe fn Boulder_Init(game: &mut Game) {
     let mut boulder_parameter_2_high: int16 = 0;
-    let mut E: *mut Enemy_Boulder = Get_Boulder(
+    let E: *mut Enemy_Boulder = Get_Boulder(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -619,7 +613,7 @@ pub unsafe fn Boulder_Init(game: &mut Game) {
     (*E).boulder_var_D = 2 as uint16;
     (*E).boulder_var_A = ((0xa6879ai32) as u16) & (0xffffu16);
     (*E).boulder_var_04 = (*E).base.x_pos;
-    let mut y_pos: uint16 = (*E).base.y_pos;
+    let y_pos: uint16 = (*E).base.y_pos;
     (*E).boulder_var_05 = y_pos;
     (*E).boulder_var_03 = y_pos;
     (*E).boulder_var_02 = (*E).base.y_subpos;
@@ -643,7 +637,7 @@ pub unsafe fn Boulder_Init(game: &mut Game) {
     (*E).boulder_var_06 =
         *(&raw mut (*E).base.current_instruction as *mut uint8).offset(0) as uint16;
     (*E).base.current_instruction = addr_kBoulder_Ilist_86A7 as uint16;
-    let mut boulder_parameter_1_high: uint16 = *(&raw mut (*E).boulder_parameter_1 as *mut uint8)
+    let boulder_parameter_1_high: uint16 = *(&raw mut (*E).boulder_parameter_1 as *mut uint8)
         .offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
@@ -659,7 +653,7 @@ pub unsafe fn Boulder_Init(game: &mut Game) {
         (*E).boulder_var_01 = 5 as uint16;
     }
 }
-pub unsafe fn CallBoulderFunc(mut ea: uint32, game: &mut Game) {
+pub unsafe fn CallBoulderFunc(ea: uint32, game: &mut Game) {
     match ea {
         10913690 => {
             Boulder_Func_1(game);
@@ -685,7 +679,7 @@ pub unsafe fn CallBoulderFunc(mut ea: uint32, game: &mut Game) {
     }
 }
 pub unsafe fn Boulder_Main(game: &mut Game) {
-    let mut E: *mut Enemy_Boulder = Get_Boulder(
+    let E: *mut Enemy_Boulder = Get_Boulder(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -700,7 +694,7 @@ pub unsafe fn Boulder_Func_1(game: &mut Game) {
         game,
     ) as int16;
     if SamusEnemyDelta_Y >= 0i16 {
-        let mut E: *mut Enemy_Boulder = Get_Boulder(
+        let E: *mut Enemy_Boulder = Get_Boulder(
             *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
                 as ::core::ffi::c_int,
             game,
@@ -735,7 +729,7 @@ pub unsafe fn Boulder_Func_1(game: &mut Game) {
     }
 }
 pub unsafe fn Boulder_Func_2(game: &mut Game) {
-    let mut E: *mut Enemy_Boulder = Get_Boulder(
+    let E: *mut Enemy_Boulder = Get_Boulder(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -750,7 +744,7 @@ pub unsafe fn Boulder_Func_2(game: &mut Game) {
         game,
     );
     if (((*E).base.y_pos) as i16).wrapping_sub(((*E).boulder_var_05) as i16) < 0i16 {
-        let mut v1: uint16 = ((*E).boulder_var_C).wrapping_add(256u16);
+        let v1: uint16 = ((*E).boulder_var_C).wrapping_add(256u16);
         (*E).boulder_var_C = v1;
         if v1 as ::core::ffi::c_int - 20480 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             == 0
@@ -765,7 +759,7 @@ pub unsafe fn Boulder_Func_2(game: &mut Game) {
 }
 pub unsafe fn Boulder_Func_3(game: &mut Game) {
     let mut v1: int16 = 0;
-    let mut E: *mut Enemy_Boulder = Get_Boulder(
+    let E: *mut Enemy_Boulder = Get_Boulder(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -793,7 +787,7 @@ pub unsafe fn Boulder_Func_3(game: &mut Game) {
             v2 = (v2).wrapping_add(4u16);
         }
         Boulder_Func_7(v2, game);
-        let mut v3: uint16 = ((*E).boulder_var_B).wrapping_add(32u16);
+        let v3: uint16 = ((*E).boulder_var_B).wrapping_add(32u16);
         (*E).boulder_var_B = v3;
         if v3 as ::core::ffi::c_int - 20480 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             == 0
@@ -806,11 +800,11 @@ pub unsafe fn Boulder_Func_3(game: &mut Game) {
     };
 }
 pub unsafe fn Boulder_Func_4(game: &mut Game) {
-    let mut E: *mut Enemy_Boulder = Get_Boulder(
+    let E: *mut Enemy_Boulder = Get_Boulder(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    let mut v1: ::core::ffi::c_int = 8 as ::core::ffi::c_int
+    let v1: ::core::ffi::c_int = 8 as ::core::ffi::c_int
         * *(&raw mut (*E).boulder_var_C as *mut uint8).offset(
             (::core::mem::size_of::<uint16>())
                 .wrapping_div(::core::mem::size_of::<uint8>())
@@ -861,7 +855,7 @@ pub unsafe fn Boulder_Func_4(game: &mut Game) {
             v3 = (v3).wrapping_add(4u16);
         }
         Boulder_Func_7(v3, game);
-        let mut v4: uint16 = ((*E).boulder_var_B).wrapping_add(32u16);
+        let v4: uint16 = ((*E).boulder_var_B).wrapping_add(32u16);
         (*E).boulder_var_B = v4;
         if v4 as ::core::ffi::c_int - 20480 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             == 0
@@ -871,7 +865,7 @@ pub unsafe fn Boulder_Func_4(game: &mut Game) {
     };
 }
 pub unsafe fn Boulder_Func_5(game: &mut Game) {
-    let mut E: *mut Enemy_Boulder = Get_Boulder(
+    let E: *mut Enemy_Boulder = Get_Boulder(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -882,7 +876,7 @@ pub unsafe fn Boulder_Func_5(game: &mut Game) {
                 .wrapping_sub(1_usize) as isize,
         )) as u16,
     );
-    let mut v3: ::core::ffi::c_int = v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let v3: ::core::ffi::c_int = v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     Enemy_MoveDown(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
         (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *const uint8 as *mut uint32)
@@ -896,7 +890,7 @@ pub unsafe fn Boulder_Func_5(game: &mut Game) {
     if (*E).boulder_var_E != 0 {
         v2 = (v2).wrapping_add(4u16);
     }
-    let mut v4: ::core::ffi::c_int = v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let v4: ::core::ffi::c_int = v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if Enemy_MoveRight_IgnoreSlopes(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
         *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0cbc7)) as *const uint8 as *mut uint32)
@@ -918,7 +912,7 @@ pub unsafe fn Boulder_Func_5(game: &mut Game) {
         );
         QueueSfx2_Max6(0x43 as uint16, game);
     } else {
-        let mut v5: uint16 = ((*E).boulder_var_B).wrapping_add(64u16);
+        let v5: uint16 = ((*E).boulder_var_B).wrapping_add(64u16);
         (*E).boulder_var_B = v5;
         if v5 as ::core::ffi::c_int - 0x4000 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             == 0
@@ -933,12 +927,12 @@ pub unsafe fn Boulder_Func_5(game: &mut Game) {
     (*E).boulder_var_02 = (*E).base.y_subpos;
 }
 pub fn Boulder_Func_6() {}
-pub unsafe fn Boulder_Func_7(mut j: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_Boulder = Get_Boulder(
+pub unsafe fn Boulder_Func_7(j: uint16, game: &mut Game) {
+    let E: *mut Enemy_Boulder = Get_Boulder(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    let mut v3: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let v3: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         &raw mut (*E).base.x_pos,
         &raw mut (*E).base.x_subpos,
@@ -950,12 +944,12 @@ pub unsafe fn Boulder_Func_7(mut j: uint16, game: &mut Game) {
                 .offset(v3 as isize) as uint32,
     );
 }
-pub unsafe fn Boulder_Func_8(mut j: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_Boulder = Get_Boulder(
+pub unsafe fn Boulder_Func_8(j: uint16, game: &mut Game) {
+    let E: *mut Enemy_Boulder = Get_Boulder(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    let mut v3: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let v3: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         &raw mut (*E).base.x_pos,
         &raw mut (*E).base.x_subpos,
@@ -967,12 +961,12 @@ pub unsafe fn Boulder_Func_8(mut j: uint16, game: &mut Game) {
                 .offset(v3 as isize) as uint32,
     );
 }
-pub unsafe fn Boulder_Func_9(mut j: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_Boulder = Get_Boulder(
+pub unsafe fn Boulder_Func_9(j: uint16, game: &mut Game) {
+    let E: *mut Enemy_Boulder = Get_Boulder(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    let mut v3: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let v3: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         &raw mut (*E).base.y_pos,
         &raw mut (*E).base.y_subpos,
@@ -985,16 +979,16 @@ pub unsafe fn Boulder_Func_9(mut j: uint16, game: &mut Game) {
     );
 }
 pub unsafe fn SpikeyPlatform_Init(game: &mut Game) {
-    let mut E: *mut Enemy_SpikeyPlatform = Get_SpikeyPlatform(
+    let E: *mut Enemy_SpikeyPlatform = Get_SpikeyPlatform(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     (*E).base.current_instruction = addr_kSpikeyPlatform_Ilist_8B29 as uint16;
     (*E).spm_var_A = ((0xa68bb4i32) as u16) & (0xffffu16);
-    let mut v1: uint16 =
+    let v1: uint16 =
         (8u16).wrapping_mul((*(&raw mut (*E).spm_parameter_1 as *mut uint8).offset(0)) as u16);
     (*E).spm_var_02 = v1;
-    let mut v2: ::core::ffi::c_int = v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let v2: ::core::ffi::c_int = v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     (*E).spm_var_E = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa28187)) as *const uint8
         as *mut uint16)
         .offset((v2 + 1 as ::core::ffi::c_int) as isize);
@@ -1009,16 +1003,16 @@ pub unsafe fn SpikeyPlatform_Init(game: &mut Game) {
         )) as u16,
     );
     (*E).spm_var_C = (*E).base.y_pos;
-    let mut spm_parameter_2_low: uint16 =
+    let spm_parameter_2_low: uint16 =
         *(&raw mut (*E).spm_parameter_2 as *mut uint8).offset(0) as uint16;
     (*E).spm_var_00 = spm_parameter_2_low;
     (*E).spm_var_B = spm_parameter_2_low;
 }
 pub unsafe fn SpikeyPlatform2ndEnemy_Init(game: &mut Game) {
-    let mut v0: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0xe54)
-        as *mut uint16) as ::core::ffi::c_int
+    let v0: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
+        as ::core::ffi::c_int
         >> 1 as ::core::ffi::c_int;
-    let mut v1: *mut EnemyData = gEnemyData(
+    let v1: *mut EnemyData = gEnemyData(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1029,10 +1023,10 @@ pub unsafe fn SpikeyPlatform2ndEnemy_Init(game: &mut Game) {
     .wrapping_add(12u16);
 }
 pub unsafe fn SpikeyPlatform2ndEnemy_Main(game: &mut Game) {
-    let mut v0: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0xe54)
-        as *mut uint16) as ::core::ffi::c_int
+    let v0: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
+        as ::core::ffi::c_int
         >> 1 as ::core::ffi::c_int;
-    let mut v1: *mut EnemyData = gEnemyData(
+    let v1: *mut EnemyData = gEnemyData(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1042,7 +1036,7 @@ pub unsafe fn SpikeyPlatform2ndEnemy_Main(game: &mut Game) {
         .offset((v0 + 93 as ::core::ffi::c_int) as isize))
     .wrapping_add(12u16);
 }
-pub unsafe fn CallSpikeyPlatformFunc(mut ea: uint32, mut k: uint16, game: &mut Game) {
+pub unsafe fn CallSpikeyPlatformFunc(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
         10914740 => {
             SpikeyPlatform_Func_1(game);
@@ -1062,7 +1056,7 @@ pub unsafe fn CallSpikeyPlatformFunc(mut ea: uint32, mut k: uint16, game: &mut G
     }
 }
 pub unsafe fn SpikeyPlatform_Main(game: &mut Game) {
-    let mut E: *mut Enemy_SpikeyPlatform = Get_SpikeyPlatform(
+    let E: *mut Enemy_SpikeyPlatform = Get_SpikeyPlatform(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1073,7 +1067,7 @@ pub unsafe fn SpikeyPlatform_Main(game: &mut Game) {
     );
 }
 pub unsafe fn SpikeyPlatform_Func_1(game: &mut Game) {
-    let mut E: *mut Enemy_SpikeyPlatform = Get_SpikeyPlatform(
+    let E: *mut Enemy_SpikeyPlatform = Get_SpikeyPlatform(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1086,13 +1080,12 @@ pub unsafe fn SpikeyPlatform_Func_1(game: &mut Game) {
     }
 }
 pub unsafe fn SpikeyPlatform_Func_2(game: &mut Game) {
-    let mut E: *mut Enemy_SpikeyPlatform = Get_SpikeyPlatform(
+    let E: *mut Enemy_SpikeyPlatform = Get_SpikeyPlatform(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     (*E).spm_var_01 = (*E).base.y_pos;
-    let mut v1: ::core::ffi::c_int =
-        (*E).spm_var_02 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let v1: ::core::ffi::c_int = (*E).spm_var_02 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     AddToHiLo(
         &raw mut (*E).base.y_pos,
         &raw mut (*E).base.y_subpos,
@@ -1128,16 +1121,16 @@ pub unsafe fn SpikeyPlatform_Func_2(game: &mut Game) {
     }
     (*E).spm_var_02 = v4 as uint16;
 }
-pub unsafe fn SpikeyPlatform_Func_3(mut k: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_SpikeyPlatform = Get_SpikeyPlatform(k as ::core::ffi::c_int, game);
-    let mut v2: uint16 = ((*E).spm_var_03).wrapping_sub(1u16);
+pub unsafe fn SpikeyPlatform_Func_3(k: uint16, game: &mut Game) {
+    let E: *mut Enemy_SpikeyPlatform = Get_SpikeyPlatform(k as ::core::ffi::c_int, game);
+    let v2: uint16 = ((*E).spm_var_03).wrapping_sub(1u16);
     (*E).spm_var_03 = v2;
     if v2 == 0 {
         (*E).spm_var_A = ((0xa68c5di32) as u16) & (0xffffu16);
     }
 }
 pub unsafe fn SpikeyPlatform_Func_4(game: &mut Game) {
-    let mut E: *mut Enemy_SpikeyPlatform = Get_SpikeyPlatform(
+    let E: *mut Enemy_SpikeyPlatform = Get_SpikeyPlatform(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1162,14 +1155,14 @@ pub unsafe fn SpikeyPlatform_Func_4(game: &mut Game) {
             as uint16;
     }
 }
-pub unsafe fn SpikeyPlatform_Func_5(mut k: uint16, game: &mut Game) -> uint16 {
-    let mut E: *mut Enemy_SpikeyPlatform = Get_SpikeyPlatform(k as ::core::ffi::c_int, game);
-    let mut v2: uint16 = abs16(
+pub unsafe fn SpikeyPlatform_Func_5(k: uint16, game: &mut Game) -> uint16 {
+    let E: *mut Enemy_SpikeyPlatform = Get_SpikeyPlatform(k as ::core::ffi::c_int, game);
+    let v2: uint16 = abs16(
         (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16))
             .wrapping_sub((*E).base.x_pos),
     );
     let mut v3: bool = v2 < *((&raw mut game.g_ram as *mut uint8).offset(0xafe) as *mut uint16);
-    let mut v4: uint16 =
+    let v4: uint16 =
         (v2).wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0xafe) as *mut uint16));
     if !v3 && v4 >= (*E).base.x_width {
         return 0 as uint16;
@@ -1179,12 +1172,12 @@ pub unsafe fn SpikeyPlatform_Func_5(mut k: uint16, game: &mut Game) -> uint16 {
         - (*E).base.y_pos as ::core::ffi::c_int) as int16)
         < 0i16
     {
-        let mut v6: uint16 = ((*E).base.y_pos as ::core::ffi::c_int
+        let v6: uint16 = ((*E).base.y_pos as ::core::ffi::c_int
             - (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)
                 as ::core::ffi::c_int
                 + 5 as ::core::ffi::c_int)) as uint16;
         v3 = v6 < *((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16);
-        let mut v7: uint16 =
+        let v7: uint16 =
             (v6).wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16));
         if v3 || v7 == (*E).base.y_height || v7 < (*E).base.y_height {
             return -(1 as ::core::ffi::c_int) as uint16;
@@ -1192,26 +1185,18 @@ pub unsafe fn SpikeyPlatform_Func_5(mut k: uint16, game: &mut Game) -> uint16 {
     }
     0 as uint16
 }
-pub unsafe fn FireGeyser_Instr_1(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn FireGeyser_Instr_1(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
     QueueSfx2_Max6(0x61 as uint16, game);
     jp
 }
-pub unsafe fn FireGeyser_Instr_2(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut v2: uint16 = ((*Get_FireGeyser(
+pub unsafe fn FireGeyser_Instr_2(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .fgr_var_D)
         .wrapping_sub(g_word_A68DBB);
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int,
         game,
@@ -1221,18 +1206,14 @@ pub unsafe fn FireGeyser_Instr_2(
     (*E).base.x_width = 8 as uint16;
     jp
 }
-pub unsafe fn FireGeyser_Instr_3(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut v2: uint16 = ((*Get_FireGeyser(
+pub unsafe fn FireGeyser_Instr_3(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .fgr_var_D)
         .wrapping_sub(g_word_A68DBD);
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int,
         game,
@@ -1241,18 +1222,14 @@ pub unsafe fn FireGeyser_Instr_3(
     (*E).base.y_height = g_word_A68DE9;
     jp
 }
-pub unsafe fn FireGeyser_Instr_4(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut v2: uint16 = ((*Get_FireGeyser(
+pub unsafe fn FireGeyser_Instr_4(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .fgr_var_D)
         .wrapping_sub(g_word_A68DBF);
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int,
         game,
@@ -1261,18 +1238,14 @@ pub unsafe fn FireGeyser_Instr_4(
     (*E).base.y_height = g_word_A68DEB;
     jp
 }
-pub unsafe fn FireGeyser_Instr_5(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut v2: uint16 = ((*Get_FireGeyser(
+pub unsafe fn FireGeyser_Instr_5(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .fgr_var_D)
         .wrapping_sub(g_word_A68DC1);
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int,
         game,
@@ -1281,18 +1254,14 @@ pub unsafe fn FireGeyser_Instr_5(
     (*E).base.y_height = g_word_A68DED;
     jp
 }
-pub unsafe fn FireGeyser_Instr_6(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut v2: uint16 = ((*Get_FireGeyser(
+pub unsafe fn FireGeyser_Instr_6(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .fgr_var_D)
         .wrapping_sub(g_word_A68DC3);
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int,
         game,
@@ -1301,18 +1270,14 @@ pub unsafe fn FireGeyser_Instr_6(
     (*E).base.y_height = g_word_A68DEF;
     jp
 }
-pub unsafe fn FireGeyser_Instr_7(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut v2: uint16 = ((*Get_FireGeyser(
+pub unsafe fn FireGeyser_Instr_7(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .fgr_var_D)
         .wrapping_sub(g_word_A68DC5);
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int,
         game,
@@ -1321,18 +1286,14 @@ pub unsafe fn FireGeyser_Instr_7(
     (*E).base.y_height = g_word_A68DF1;
     jp
 }
-pub unsafe fn FireGeyser_Instr_8(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut v2: uint16 = ((*Get_FireGeyser(
+pub unsafe fn FireGeyser_Instr_8(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .fgr_var_D)
         .wrapping_sub(g_word_A68DC7);
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int,
         game,
@@ -1341,18 +1302,14 @@ pub unsafe fn FireGeyser_Instr_8(
     (*E).base.y_height = g_word_A68DF3;
     jp
 }
-pub unsafe fn FireGeyser_Instr_9(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut v2: uint16 = ((*Get_FireGeyser(
+pub unsafe fn FireGeyser_Instr_9(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .fgr_var_D)
         .wrapping_sub(g_word_A68DC9);
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int,
         game,
@@ -1361,18 +1318,14 @@ pub unsafe fn FireGeyser_Instr_9(
     (*E).base.y_height = g_word_A68DF5;
     jp
 }
-pub unsafe fn FireGeyser_Instr_10(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut v2: uint16 = ((*Get_FireGeyser(
+pub unsafe fn FireGeyser_Instr_10(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .fgr_var_D)
         .wrapping_sub(g_word_A68DCB);
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int,
         game,
@@ -1381,18 +1334,14 @@ pub unsafe fn FireGeyser_Instr_10(
     (*E).base.y_height = g_word_A68DF7;
     jp
 }
-pub unsafe fn FireGeyser_Instr_11(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut v2: uint16 = ((*Get_FireGeyser(
+pub unsafe fn FireGeyser_Instr_11(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .fgr_var_D)
         .wrapping_sub(g_word_A68DCD);
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int,
         game,
@@ -1401,18 +1350,14 @@ pub unsafe fn FireGeyser_Instr_11(
     (*E).base.y_height = g_word_A68DF9;
     jp
 }
-pub unsafe fn FireGeyser_Instr_12(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut v2: uint16 = ((*Get_FireGeyser(
+pub unsafe fn FireGeyser_Instr_12(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .fgr_var_D)
         .wrapping_sub(g_word_A68DCF);
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int,
         game,
@@ -1421,18 +1366,14 @@ pub unsafe fn FireGeyser_Instr_12(
     (*E).base.y_height = g_word_A68DFB;
     jp
 }
-pub unsafe fn FireGeyser_Instr_13(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut v2: uint16 = ((*Get_FireGeyser(
+pub unsafe fn FireGeyser_Instr_13(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .fgr_var_D)
         .wrapping_sub(g_word_A68DD1);
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int,
         game,
@@ -1441,18 +1382,14 @@ pub unsafe fn FireGeyser_Instr_13(
     (*E).base.y_height = g_word_A68DFD;
     jp
 }
-pub unsafe fn FireGeyser_Instr_14(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut v2: uint16 = ((*Get_FireGeyser(
+pub unsafe fn FireGeyser_Instr_14(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .fgr_var_D)
         .wrapping_sub(g_word_A68DD3);
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int,
         game,
@@ -1461,18 +1398,14 @@ pub unsafe fn FireGeyser_Instr_14(
     (*E).base.y_height = g_word_A68DFF;
     jp
 }
-pub unsafe fn FireGeyser_Instr_15(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut v2: uint16 = ((*Get_FireGeyser(
+pub unsafe fn FireGeyser_Instr_15(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .fgr_var_D)
         .wrapping_sub(g_word_A68DD5);
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int,
         game,
@@ -1481,18 +1414,14 @@ pub unsafe fn FireGeyser_Instr_15(
     (*E).base.y_height = g_word_A68E01;
     jp
 }
-pub unsafe fn FireGeyser_Instr_16(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut v2: uint16 = ((*Get_FireGeyser(
+pub unsafe fn FireGeyser_Instr_16(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .fgr_var_D)
         .wrapping_sub(g_word_A68DD7);
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int,
         game,
@@ -1501,18 +1430,14 @@ pub unsafe fn FireGeyser_Instr_16(
     (*E).base.y_height = g_word_A68E03;
     jp
 }
-pub unsafe fn FireGeyser_Instr_17(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut v2: uint16 = ((*Get_FireGeyser(
+pub unsafe fn FireGeyser_Instr_17(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .fgr_var_D)
         .wrapping_sub(g_word_A68DD9);
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int,
         game,
@@ -1521,18 +1446,14 @@ pub unsafe fn FireGeyser_Instr_17(
     (*E).base.y_height = g_word_A68E05;
     jp
 }
-pub unsafe fn FireGeyser_Instr_18(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut v2: uint16 = ((*Get_FireGeyser(
+pub unsafe fn FireGeyser_Instr_18(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .fgr_var_D)
         .wrapping_sub(g_word_A68DDB);
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int,
         game,
@@ -1541,18 +1462,14 @@ pub unsafe fn FireGeyser_Instr_18(
     (*E).base.y_height = g_word_A68E07;
     jp
 }
-pub unsafe fn FireGeyser_Instr_19(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut v2: uint16 = ((*Get_FireGeyser(
+pub unsafe fn FireGeyser_Instr_19(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .fgr_var_D)
         .wrapping_sub(g_word_A68DDD);
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int,
         game,
@@ -1561,18 +1478,14 @@ pub unsafe fn FireGeyser_Instr_19(
     (*E).base.y_height = g_word_A68E09;
     jp
 }
-pub unsafe fn FireGeyser_Instr_20(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut v2: uint16 = ((*Get_FireGeyser(
+pub unsafe fn FireGeyser_Instr_20(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .fgr_var_D)
         .wrapping_sub(g_word_A68DDF);
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int,
         game,
@@ -1581,18 +1494,14 @@ pub unsafe fn FireGeyser_Instr_20(
     (*E).base.y_height = g_word_A68E0B;
     jp
 }
-pub unsafe fn FireGeyser_Instr_21(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut v2: uint16 = ((*Get_FireGeyser(
+pub unsafe fn FireGeyser_Instr_21(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .fgr_var_D)
         .wrapping_sub(g_word_A68DE1);
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int,
         game,
@@ -1601,18 +1510,14 @@ pub unsafe fn FireGeyser_Instr_21(
     (*E).base.y_height = g_word_A68E0D;
     jp
 }
-pub unsafe fn FireGeyser_Instr_22(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut v2: uint16 = ((*Get_FireGeyser(
+pub unsafe fn FireGeyser_Instr_22(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .fgr_var_D)
         .wrapping_sub(g_word_A68DE3);
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int,
         game,
@@ -1621,18 +1526,14 @@ pub unsafe fn FireGeyser_Instr_22(
     (*E).base.y_height = g_word_A68E0F;
     jp
 }
-pub unsafe fn FireGeyser_Instr_23(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut v2: uint16 = ((*Get_FireGeyser(
+pub unsafe fn FireGeyser_Instr_23(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let v2: uint16 = ((*Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .fgr_var_D)
         .wrapping_sub(g_word_A68DE5);
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int,
         game,
@@ -1641,17 +1542,13 @@ pub unsafe fn FireGeyser_Instr_23(
     (*E).base.y_height = g_word_A68E11;
     jp
 }
-pub unsafe fn FireGeyser_Instr_24(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+pub unsafe fn FireGeyser_Instr_24(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     (*E).fgr_var_C = 1 as uint16;
-    let mut E1: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E1: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int,
         game,
@@ -1664,7 +1561,7 @@ pub unsafe fn FireGeyser_Instr_24(
     jp
 }
 pub unsafe fn FireGeyser_Init(game: &mut Game) {
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1676,7 +1573,7 @@ pub unsafe fn FireGeyser_Init(game: &mut Game) {
         (*E).base.x_width = 0 as uint16;
     }
 }
-pub unsafe fn CallFireGeyserFunc(mut ea: uint32, game: &mut Game) {
+pub unsafe fn CallFireGeyserFunc(ea: uint32, game: &mut Game) {
     match ea {
         10915887 => {
             FireGeyser_Func_1(game);
@@ -1690,7 +1587,7 @@ pub unsafe fn CallFireGeyserFunc(mut ea: uint32, game: &mut Game) {
     }
 }
 pub unsafe fn FireGeyser_Main(game: &mut Game) {
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1699,7 +1596,7 @@ pub unsafe fn FireGeyser_Main(game: &mut Game) {
     }
 }
 pub unsafe fn FireGeyser_Func_1(game: &mut Game) {
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1713,7 +1610,7 @@ pub unsafe fn FireGeyser_Func_1(game: &mut Game) {
         (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
             & !(kEnemyProps_Invisible as ::core::ffi::c_int))
             as uint16;
-        let mut E1: *mut Enemy_FireGeyser = Get_FireGeyser(
+        let E1: *mut Enemy_FireGeyser = Get_FireGeyser(
             *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
                 as ::core::ffi::c_int
                 + 64 as ::core::ffi::c_int,
@@ -1724,7 +1621,7 @@ pub unsafe fn FireGeyser_Func_1(game: &mut Game) {
     }
 }
 pub unsafe fn FireGeyser_Func_2(game: &mut Game) {
-    let mut E: *mut Enemy_FireGeyser = Get_FireGeyser(
+    let E: *mut Enemy_FireGeyser = Get_FireGeyser(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1735,7 +1632,7 @@ pub unsafe fn FireGeyser_Func_2(game: &mut Game) {
     }
 }
 pub unsafe fn NuclearWaffle_Init(game: &mut Game) {
-    let mut E: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
+    let E: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1747,7 +1644,7 @@ pub unsafe fn NuclearWaffle_Init(game: &mut Game) {
             .wrapping_sub(1_usize) as isize,
     ) as uint16;
     (*E).nwe_var_E = *(&raw mut (*E).nwe_parameter_2 as *mut uint8).offset(0) as uint16;
-    let mut nwe_parameter_2_high: uint16 = *(&raw mut (*E).nwe_parameter_2 as *mut uint8).offset(
+    let nwe_parameter_2_high: uint16 = *(&raw mut (*E).nwe_parameter_2 as *mut uint8).offset(
         (::core::mem::size_of::<uint16>())
             .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1_usize) as isize,
@@ -1755,9 +1652,9 @@ pub unsafe fn NuclearWaffle_Init(game: &mut Game) {
     (*E).nwe_var_F = nwe_parameter_2_high;
     (*E).nwe_var_B = nwe_parameter_2_high;
     (*E).nwe_var_A = ((0xa69615i32) as u16) & (0xffffu16);
-    let mut v2: ::core::ffi::c_int =
+    let v2: ::core::ffi::c_int =
         ((4u16).wrapping_mul((*E).nwe_var_E)) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut v3: uint16 = g_word_A695F6[v2 as usize];
+    let v3: uint16 = g_word_A695F6[v2 as usize];
     (*E).nwe_var_23 = v3;
     (*E).nwe_var_21 = v3;
     (*E).nwe_var_2E = g_word_A695F6[(v2 + 1 as ::core::ffi::c_int) as usize];
@@ -1769,7 +1666,7 @@ pub unsafe fn NuclearWaffle_Init(game: &mut Game) {
     if (*E).nwe_var_E == 0 {
         v4 = (v4).wrapping_add(4u16);
     }
-    let mut v5: ::core::ffi::c_int = v4 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let v5: ::core::ffi::c_int = v4 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     (*E).nwe_var_25 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa28187)) as *const uint8
         as *mut uint16)
         .offset(v5 as isize);
@@ -1778,11 +1675,11 @@ pub unsafe fn NuclearWaffle_Init(game: &mut Game) {
         .offset((v5 + 1 as ::core::ffi::c_int) as isize);
     (*E).nwe_var_26 = (*E).base.x_pos;
     (*E).nwe_var_27 = (*E).base.y_pos;
-    let mut v6: uint16 =
+    let v6: uint16 =
         ((*E).nwe_var_26).wrapping_add(CosineMult8bit((*E).nwe_var_23, (*E).nwe_var_D, game));
     (*E).nwe_var_28 = v6;
     (*E).base.x_pos = v6;
-    let mut v7: uint16 =
+    let v7: uint16 =
         ((*E).nwe_var_27).wrapping_add(SineMult8bit((*E).nwe_var_23, (*E).nwe_var_D, game));
     (*E).nwe_var_29 = v7;
     (*E).base.y_pos = v7;
@@ -1804,9 +1701,9 @@ pub unsafe fn NuclearWaffle_Init(game: &mut Game) {
     (*E).nwe_var_2A = 6 as uint16;
     let mut v15: uint16 = 0;
     loop {
-        let mut v13: uint16 = ((*E).base.vram_tiles_index) | ((*E).base.palette_index);
+        let v13: uint16 = ((*E).base.vram_tiles_index) | ((*E).base.palette_index);
         (*E).nwe_var_34 = v13;
-        let mut r18: uint16 =
+        let r18: uint16 =
             CreateSpriteAtPos((*E).base.x_pos, (*E).base.y_pos, 43 as uint16, v13, game);
         (*Get_NuclearWaffle(
             *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
@@ -1822,7 +1719,7 @@ pub unsafe fn NuclearWaffle_Init(game: &mut Game) {
         }
     }
 }
-pub unsafe fn CallNuclearWaffleFunc(mut ea: uint32, game: &mut Game) {
+pub unsafe fn CallNuclearWaffleFunc(ea: uint32, game: &mut Game) {
     match ea {
         10917397 => {
             NuclearWaffle_Func_1(game);
@@ -1836,14 +1733,14 @@ pub unsafe fn CallNuclearWaffleFunc(mut ea: uint32, game: &mut Game) {
     }
 }
 pub unsafe fn NuclearWaffle_Main(game: &mut Game) {
-    let mut E: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
+    let E: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     CallNuclearWaffleFunc((((*E).nwe_var_A) as u32) | (0xa60000u32), game);
 }
 pub unsafe fn NuclearWaffle_Func_1(game: &mut Game) {
-    let mut E: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
+    let E: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1873,13 +1770,13 @@ pub unsafe fn NuclearWaffle_Func_1(game: &mut Game) {
     }
 }
 pub unsafe fn NuclearWaffle_Func_2(game: &mut Game) {
-    let mut E: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
+    let E: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    let mut varE32: uint16 = (*E).nwe_var_D;
-    let mut pair: PairU16 = NuclearWaffle_Func_6((*E).nwe_var_21, game);
-    let mut v8: uint16 = pair.j;
+    let varE32: uint16 = (*E).nwe_var_D;
+    let pair: PairU16 = NuclearWaffle_Func_6((*E).nwe_var_21, game);
+    let v8: uint16 = pair.j;
     if pair.j != (*E).nwe_var_33 {
         CreateSpriteAtPos(
             (*E).base.x_pos,
@@ -1899,9 +1796,9 @@ pub unsafe fn NuclearWaffle_Func_2(game: &mut Game) {
     }
     (*E).nwe_var_33 = v8;
     let mut tmp: uint16 = 0;
-    let mut v4: uint16 = NuclearWaffle_Func_5((*E).nwe_var_21, &raw mut tmp, game);
+    let v4: uint16 = NuclearWaffle_Func_5((*E).nwe_var_21, &raw mut tmp, game);
     (*E).base.x_pos = ((*E).nwe_var_26).wrapping_add(CosineMult8bit(v4, (*E).nwe_var_D, game));
-    let mut v5: uint16 = NuclearWaffle_Func_5((*E).nwe_var_21, &raw mut tmp, game);
+    let v5: uint16 = NuclearWaffle_Func_5((*E).nwe_var_21, &raw mut tmp, game);
     (*E).base.y_pos = ((*E).nwe_var_27).wrapping_add(SineMult8bit(v5, (*E).nwe_var_D, game));
     NuclearWaffle_Func_3(varE32, game);
     NuclearWaffle_Func_4(varE32, game);
@@ -1911,8 +1808,8 @@ pub unsafe fn NuclearWaffle_Func_2(game: &mut Game) {
         ((*E).nwe_var_25 as uint32) << 16 as ::core::ffi::c_int | (*E).nwe_var_24 as uint32,
     );
 }
-pub unsafe fn NuclearWaffle_Func_3(mut varE32: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
+pub unsafe fn NuclearWaffle_Func_3(varE32: uint16, game: &mut Game) {
+    let E: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1922,17 +1819,17 @@ pub unsafe fn NuclearWaffle_Func_3(mut varE32: uint16, game: &mut Game) {
     let mut r28: uint16 = 0;
     loop {
         R36 = (R36).wrapping_sub((*E).nwe_var_2B);
-        let mut ET: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
+        let ET: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
             *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
                 as ::core::ffi::c_int
                 + (*E).nwe_var_2A as ::core::ffi::c_int,
             game,
         );
-        let mut nwe_var_00: uint16 = (*ET).nwe_var_00;
-        let mut pair: PairU16 = NuclearWaffle_Func_6(R36, game);
-        let mut v13: uint16 = pair.j;
+        let nwe_var_00: uint16 = (*ET).nwe_var_00;
+        let pair: PairU16 = NuclearWaffle_Func_6(R36, game);
+        let v13: uint16 = pair.j;
         if pair.j != (*ET).nwe_var_08 {
-            let mut v5: ::core::ffi::c_int =
+            let v5: ::core::ffi::c_int =
                 nwe_var_00 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
             CreateSpriteAtPos(
                 *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
@@ -1955,12 +1852,11 @@ pub unsafe fn NuclearWaffle_Func_3(mut varE32: uint16, game: &mut Game) {
             NuclearWaffle_Func_7(pair.j, game);
         }
         (*ET).nwe_var_08 = v13;
-        let mut v7: uint16 = NuclearWaffle_Func_5(R36, &raw mut r28, game);
-        let mut v10: ::core::ffi::c_int =
-            nwe_var_00 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        let v7: uint16 = NuclearWaffle_Func_5(R36, &raw mut r28, game);
+        let v10: ::core::ffi::c_int = nwe_var_00 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v10 as isize) =
             ((*E).nwe_var_26).wrapping_add(CosineMult8bit(v7, varE32, game));
-        let mut v11: uint16 = NuclearWaffle_Func_5(R36, &raw mut r28, game);
+        let v11: uint16 = NuclearWaffle_Func_5(R36, &raw mut r28, game);
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v10 as isize) =
             ((*E).nwe_var_27).wrapping_add(SineMult8bit(v11, varE32, game));
         v12 = ((*E).nwe_var_2A).wrapping_sub(2u16);
@@ -1976,8 +1872,8 @@ pub unsafe fn NuclearWaffle_Func_3(mut varE32: uint16, game: &mut Game) {
             as uint16;
     }
 }
-pub unsafe fn NuclearWaffle_Func_4(mut varE32: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
+pub unsafe fn NuclearWaffle_Func_4(varE32: uint16, game: &mut Game) {
+    let E: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -1987,18 +1883,18 @@ pub unsafe fn NuclearWaffle_Func_4(mut varE32: uint16, game: &mut Game) {
     let mut r28: uint16 = 0 as uint16;
     loop {
         R36 = (R36).wrapping_sub((*E).nwe_var_2B);
-        let mut ET: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
+        let ET: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
             *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16)
                 as ::core::ffi::c_int
                 + (*E).nwe_var_2A as ::core::ffi::c_int,
             game,
         );
-        let mut nwe_var_10: uint16 = (*ET).nwe_var_10;
-        let mut pair: PairU16 = NuclearWaffle_Func_6(R36, game);
-        let mut v13: uint16 = pair.j;
+        let nwe_var_10: uint16 = (*ET).nwe_var_10;
+        let pair: PairU16 = NuclearWaffle_Func_6(R36, game);
+        let v13: uint16 = pair.j;
         if pair.j != (*ET).nwe_var_18 {
-            let mut r38: uint16 = (*E).nwe_var_34;
-            let mut v5: ::core::ffi::c_int =
+            let r38: uint16 = (*E).nwe_var_34;
+            let v5: ::core::ffi::c_int =
                 nwe_var_10 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
             CreateSpriteAtPos(
                 *((&raw mut game.g_ram as *mut uint8).offset(0xf0f8) as *mut uint16)
@@ -2021,11 +1917,11 @@ pub unsafe fn NuclearWaffle_Func_4(mut varE32: uint16, game: &mut Game) {
             NuclearWaffle_Func_7(pair.j, game);
         }
         (*ET).nwe_var_18 = v13;
-        let mut v6: uint16 = NuclearWaffle_Func_5(R36, &raw mut r28, game);
-        let mut v7: uint16 = CosineMult8bit(v6, varE32, game);
-        let mut R32: uint16 = ((*E).nwe_var_26).wrapping_add(v7);
-        let mut v9: uint16 = NuclearWaffle_Func_5(R36, &raw mut r28, game);
-        let mut R34: uint16 = ((*E).nwe_var_27).wrapping_add(SineMult8bit(v9, varE32, game));
+        let v6: uint16 = NuclearWaffle_Func_5(R36, &raw mut r28, game);
+        let v7: uint16 = CosineMult8bit(v6, varE32, game);
+        let R32: uint16 = ((*E).nwe_var_26).wrapping_add(v7);
+        let v9: uint16 = NuclearWaffle_Func_5(R36, &raw mut r28, game);
+        let R34: uint16 = ((*E).nwe_var_27).wrapping_add(SineMult8bit(v9, varE32, game));
         *((&raw mut game.g_ram as *mut uint8).offset(0xf0f8) as *mut uint16)
             .offset((nwe_var_10 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = R32;
         *((&raw mut game.g_ram as *mut uint8).offset(0xf1f8) as *mut uint16)
@@ -2037,13 +1933,9 @@ pub unsafe fn NuclearWaffle_Func_4(mut varE32: uint16, game: &mut Game) {
         }
     }
 }
-pub unsafe fn NuclearWaffle_Func_5(
-    mut a: uint16,
-    mut r28_out: *mut uint16,
-    game: &mut Game,
-) -> uint16 {
+pub unsafe fn NuclearWaffle_Func_5(a: uint16, r28_out: *mut uint16, game: &mut Game) -> uint16 {
     *r28_out = 0 as uint16;
-    let mut E: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
+    let E: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -2063,8 +1955,8 @@ pub unsafe fn NuclearWaffle_Func_5(
     *r28_out = (*r28_out).wrapping_add(1);
     (*E).nwe_var_2E
 }
-unsafe fn NuclearWaffle_Func_6(mut a: uint16, game: &mut Game) -> PairU16 {
-    let mut E: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
+unsafe fn NuclearWaffle_Func_6(a: uint16, game: &mut Game) -> PairU16 {
+    let E: *mut Enemy_NuclearWaffle = Get_NuclearWaffle(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -2102,7 +1994,7 @@ unsafe fn NuclearWaffle_Func_6(mut a: uint16, game: &mut Game) -> PairU16 {
         }
     }
 }
-pub unsafe fn NuclearWaffle_Func_7(mut r30: uint16, game: &mut Game) {
+pub unsafe fn NuclearWaffle_Func_7(r30: uint16, game: &mut Game) {
     if r30 != 2u16 {
         QueueSfx2_Max6(0x5e as uint16, game);
     }
@@ -2112,7 +2004,7 @@ pub unsafe fn FakeKraid_Init(game: &mut Game) {
         as ::core::ffi::c_int
         & 3 as ::core::ffi::c_int)
         + 2 as ::core::ffi::c_int) as uint16;
-    let mut E: *mut Enemy_FakeKraid = Get_FakeKraid(
+    let E: *mut Enemy_FakeKraid = Get_FakeKraid(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -2141,11 +2033,11 @@ pub unsafe fn FakeKraid_Init(game: &mut Game) {
     (*E).base.current_instruction = v2;
 }
 pub unsafe fn FakeKraid_Main(game: &mut Game) {
-    let mut E: *mut Enemy_FakeKraid = Get_FakeKraid(
+    let E: *mut Enemy_FakeKraid = Get_FakeKraid(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    let mut fkd_var_07: uint16 = (*E).fkd_var_07;
+    let fkd_var_07: uint16 = (*E).fkd_var_07;
     let mut v3: uint16 = (fkd_var_07).wrapping_add(2u16);
     if fkd_var_07 as ::core::ffi::c_int - 4 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         == 0
@@ -2159,10 +2051,10 @@ pub unsafe fn FakeKraid_Main(game: &mut Game) {
         game,
     );
 }
-pub unsafe fn FakeKraid_Func_1(mut k: uint16, mut j: uint16, game: &mut Game) {
-    let mut ET: *mut Enemy_FakeKraid =
+pub unsafe fn FakeKraid_Func_1(k: uint16, j: uint16, game: &mut Game) {
+    let ET: *mut Enemy_FakeKraid =
         Get_FakeKraid(k as ::core::ffi::c_int + j as ::core::ffi::c_int, game);
-    let mut fkd_var_03: uint16 = (*ET).fkd_var_03;
+    let fkd_var_03: uint16 = (*ET).fkd_var_03;
     if fkd_var_03 != 0 {
         (*ET).fkd_var_03 = (fkd_var_03).wrapping_sub(1u16);
     } else {
@@ -2170,10 +2062,10 @@ pub unsafe fn FakeKraid_Func_1(mut k: uint16, mut j: uint16, game: &mut Game) {
             as ::core::ffi::c_int
             & 0x3f as ::core::ffi::c_int)
             + 16 as ::core::ffi::c_int) as uint16;
-        let mut E: *mut Enemy_FakeKraid = Get_FakeKraid(k as ::core::ffi::c_int, game);
+        let E: *mut Enemy_FakeKraid = Get_FakeKraid(k as ::core::ffi::c_int, game);
         (*E).fkd_var_06 = j;
         let mut v6: uint16 = addr_kEproj_MiniKraidSpikesLeft as uint16;
-        let mut fkd_var_C: int16 = (*E).fkd_var_C as int16;
+        let fkd_var_C: int16 = (*E).fkd_var_C as int16;
         if fkd_var_C >= 0i16 {
             v6 = addr_kEproj_MiniKraidSpikesRight as uint16;
         }
@@ -2183,13 +2075,9 @@ pub unsafe fn FakeKraid_Func_1(mut k: uint16, mut j: uint16, game: &mut Game) {
         }
     };
 }
-pub unsafe fn FakeKraid_Instr_2(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut current_block: u64;
-    let mut E: *mut Enemy_FakeKraid = Get_FakeKraid(
+pub unsafe fn FakeKraid_Instr_2(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let current_block: u64;
+    let E: *mut Enemy_FakeKraid = Get_FakeKraid(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -2229,12 +2117,8 @@ pub unsafe fn FakeKraid_Instr_2(
     }
     jp
 }
-pub unsafe fn FakeKraid_Instr_1(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut E: *mut Enemy_FakeKraid = Get_FakeKraid(
+pub unsafe fn FakeKraid_Instr_1(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let E: *mut Enemy_FakeKraid = Get_FakeKraid(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -2269,39 +2153,26 @@ pub unsafe fn FakeKraid_Instr_1(
         addr_kFakeKraid_Ilist_9A2A as ::core::ffi::c_int as uintptr_t as *const uint16
     }
 }
-pub unsafe fn FakeKraid_Instr_3(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn FakeKraid_Instr_3(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
     if CheckIfEnemyIsOnScreen(game) == 0u16 {
         QueueSfx2_Max6(0x16 as uint16, game);
     }
     jp
 }
-pub unsafe fn FakeKraid_Instr_4(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn FakeKraid_Instr_4(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
     FakeKraid_InstrHelper_45(k, 0 as uint16, 0xfffc as uint16, game);
     jp
 }
-pub unsafe fn FakeKraid_InstrHelper_45(
-    mut k: uint16,
-    mut j: uint16,
-    mut a: uint16,
-    game: &mut Game,
-) {
-    let mut ka: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
-    let mut E: *mut Enemy_FakeKraid = Get_FakeKraid(
+pub unsafe fn FakeKraid_InstrHelper_45(k: uint16, j: uint16, a: uint16, game: &mut Game) {
+    let ka: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
+    let E: *mut Enemy_FakeKraid = Get_FakeKraid(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     (*E).fkd_var_02 = a;
-    let mut v5: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let v5: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     (*E).fkd_var_00 = g_word_A69A48[v5 as usize];
-    let mut v6: uint16 = g_word_A69A48[(v5 + 1 as ::core::ffi::c_int) as usize];
+    let v6: uint16 = g_word_A69A48[(v5 + 1 as ::core::ffi::c_int) as usize];
     (*E).fkd_var_01 = v6;
     SpawnEprojWithGfx(
         v6,
@@ -2310,20 +2181,16 @@ pub unsafe fn FakeKraid_InstrHelper_45(
         game,
     );
     (*E).fkd_var_00 = g_word_A69A48[(v5 + 2 as ::core::ffi::c_int) as usize];
-    let mut v8: uint16 = g_word_A69A48[(v5 + 3 as ::core::ffi::c_int) as usize];
+    let v8: uint16 = g_word_A69A48[(v5 + 3 as ::core::ffi::c_int) as usize];
     (*E).fkd_var_01 = v8;
     SpawnEprojWithGfx(v8, ka, addr_kEproj_MiniKraidSpit as uint16, game);
 }
-pub unsafe fn FakeKraid_Instr_5(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn FakeKraid_Instr_5(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
     FakeKraid_InstrHelper_45(k, 8 as uint16, 4 as uint16, game);
     jp
 }
 pub unsafe fn sub_A69C0B(game: &mut Game) {
-    let mut v0: *mut EnemyData = gEnemyData(
+    let v0: *mut EnemyData = gEnemyData(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -2333,7 +2200,7 @@ pub unsafe fn sub_A69C0B(game: &mut Game) {
     FakeKraid_9C50(game);
 }
 pub unsafe fn FakeKraid_Touch(game: &mut Game) {
-    let mut E: *mut Enemy_FakeKraid = Get_FakeKraid(
+    let E: *mut Enemy_FakeKraid = Get_FakeKraid(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -2343,7 +2210,7 @@ pub unsafe fn FakeKraid_Touch(game: &mut Game) {
     FakeKraid_9C50(game);
 }
 pub unsafe fn FakeKraid_Shot(game: &mut Game) {
-    let mut E: *mut Enemy_FakeKraid = Get_FakeKraid(
+    let E: *mut Enemy_FakeKraid = Get_FakeKraid(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -2378,7 +2245,7 @@ pub unsafe fn FakeKraid_9C50(game: &mut Game) {
 pub unsafe fn CeresRidley_Init(game: &mut Game) {
     let mut v4: int16 = 0;
     let mut v8: int16 = 0;
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
     if (*(&raw mut game.g_ram as *mut uint8)
         .offset(0xd828)
         .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize)
@@ -2440,8 +2307,7 @@ pub unsafe fn CeresRidley_Init(game: &mut Game) {
             let mut v3: uint16 = 0 as uint16;
             v4 = 15 as int16;
             loop {
-                let mut v5: ::core::ffi::c_int =
-                    v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+                let v5: ::core::ffi::c_int = v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
                 *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
                     .offset((v5 + 113 as ::core::ffi::c_int) as isize) = 0 as uint16;
                 *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
@@ -2500,7 +2366,7 @@ pub unsafe fn CeresRidley_Init(game: &mut Game) {
         }
     };
 }
-pub unsafe fn CallRidleyFunc(mut ea: uint32, game: &mut Game) {
+pub unsafe fn CallRidleyFunc(ea: uint32, game: &mut Game) {
     match ea {
         10920788 => {
             CeresRidley_Func_2(game);
@@ -2690,7 +2556,7 @@ pub unsafe fn CallRidleyFunc(mut ea: uint32, game: &mut Game) {
     }
 }
 pub unsafe fn CeresRidley_Main(game: &mut Game) {
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
     (*E).base.health = 0x7fff as uint16;
     CallRidleyFunc((((*E).cry_var_A) as u32) | (0xa60000u32), game);
     if *((&raw mut game.g_ram as *mut uint8).offset(0x93f) as *mut uint16) == 0 {
@@ -2738,7 +2604,7 @@ pub unsafe fn Ridley_A2F2(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x93f) as *mut uint16) == 0 {
         DrawBabyMetroid_0(game);
     }
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0x40 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0x40 as ::core::ffi::c_int, game);
     if (*E).cry_var_B != 0 {
         static g_word_A6A321: [int16; 4] = [0, -(1024), -(4), -(1)];
         DrawSpritemap(
@@ -2756,14 +2622,14 @@ pub unsafe fn Ridley_A2F2(game: &mut Game) {
     }
 }
 pub unsafe fn CeresRidley_Func_2(game: &mut Game) {
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
     (*E).cry_var_B = 0 as uint16;
     (*E).cry_var_C = 0 as uint16;
 }
 pub unsafe fn CeresRidley_Func_3(game: &mut Game) {
     let mut v1: int16 = 0;
     if !(*((&raw mut game.g_ram as *mut uint8).offset(0x797) as *mut uint16) != 0) {
-        let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+        let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
         (*E).cry_var_A = ((0xa6a377i32) as u16) & (0xffffu16);
         v1 = 512 as int16;
         if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) == 2u16 {
@@ -2774,7 +2640,7 @@ pub unsafe fn CeresRidley_Func_3(game: &mut Game) {
     }
 }
 pub unsafe fn CeresRidley_A377(game: &mut Game) {
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
     (*E).cry_var_F = (*E).cry_var_F.wrapping_sub(1);
     if ((*E).cry_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
         (*E).cry_var_A = ((0xa6a389i32) as u16) & (0xffffu16);
@@ -2784,9 +2650,9 @@ pub unsafe fn CeresRidley_A377(game: &mut Game) {
 }
 pub unsafe fn CeresRidley_Func_4(game: &mut Game) {
     let mut v2: int16 = 0;
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
     if ((*E).cry_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32 {
-        let mut cry_var_E: uint16 = (*E).cry_var_E;
+        let cry_var_E: uint16 = (*E).cry_var_E;
         (*E).cry_var_F = (*E).cry_var_F.wrapping_add(1);
         if (*E).cry_var_F != 0 {
             (*E).cry_var_F = 0 as uint16;
@@ -2799,7 +2665,7 @@ pub unsafe fn CeresRidley_Func_4(game: &mut Game) {
                 (*E).cry_var_02 = 1 as uint16;
             } else {
                 (*E).cry_var_E = (cry_var_E).wrapping_add(1u16);
-                let mut v3: ::core::ffi::c_int = ((6u16).wrapping_mul((v2) as u16))
+                let v3: ::core::ffi::c_int = ((6u16).wrapping_mul((v2) as u16))
                     as ::core::ffi::c_int
                     >> 1 as ::core::ffi::c_int;
                 *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(252) =
@@ -2821,7 +2687,7 @@ pub unsafe fn CeresRidley_Func_4(game: &mut Game) {
 pub unsafe fn CeresRidley_Func_5(game: &mut Game) {
     let mut v2: int16 = 0;
     let mut v5: int16 = 0;
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
     (*E).cry_var_F = (*E).cry_var_F.wrapping_add(1);
     if (*E).cry_var_F >= 2u16 {
         (*E).cry_var_F = 0 as uint16;
@@ -2831,9 +2697,10 @@ pub unsafe fn CeresRidley_Func_5(game: &mut Game) {
         v2 = 11 as int16;
         loop {
             v5 = v2;
-            let mut v3: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6e30a))
-                as *const uint8 as *mut uint16)
-                .offset((cry_var_E as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+            let v3: uint16 =
+                *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6e30a)) as *const uint8
+                    as *mut uint16)
+                    .offset((cry_var_E as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
             *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
                 .offset((r18 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = v3;
             *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
@@ -2863,7 +2730,7 @@ pub unsafe fn CeresRidley_Func_5(game: &mut Game) {
     }
 }
 pub unsafe fn CeresRidley_Func_6(game: &mut Game) {
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
     (*E).cry_var_F = (*E).cry_var_F.wrapping_sub(1);
     if ((*E).cry_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
         Ridley_Func_99(addr_kRidley_Ilist_E690 as uint16, game);
@@ -2875,16 +2742,16 @@ pub unsafe fn CeresRidley_Func_6(game: &mut Game) {
     }
 }
 pub unsafe fn CeresRidley_Func_7(game: &mut Game) {
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
     if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) == 2u16 {
         (*E).cry_var_F = (*E).cry_var_F.wrapping_sub(1);
-        let mut v1: bool =
+        let v1: bool =
             ((*E).cry_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32;
         if !v1 {
             return;
         }
         (*E).cry_var_F = 2 as uint16;
-        let mut v2: uint16 = ((*E).cry_var_E).wrapping_add(1u16);
+        let v2: uint16 = ((*E).cry_var_E).wrapping_add(1u16);
         (*E).cry_var_E = v2;
         if CeresRidley_Func_8((v2).wrapping_sub(1u16), game) as ::core::ffi::c_int
             & 1 as ::core::ffi::c_int
@@ -2898,7 +2765,7 @@ pub unsafe fn CeresRidley_Func_7(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1980) as *mut uint16) = 32 as uint16;
     } else {
         (*E).cry_var_F = (*E).cry_var_F.wrapping_sub(1);
-        let mut v1_0: bool =
+        let v1_0: bool =
             ((*E).cry_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32;
         if !v1_0 {
             return;
@@ -2912,8 +2779,8 @@ pub unsafe fn CeresRidley_Func_7(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(0) = 1 as uint16;
     (*E).cry_var_A = ((0xa6a354i32) as u16) & (0xffffu16);
 }
-pub unsafe fn CeresRidley_Func_8(mut a: uint16, game: &mut Game) -> uint8 {
-    let mut v1: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6a4eb)) as *const uint8
+pub unsafe fn CeresRidley_Func_8(a: uint16, game: &mut Game) -> uint8 {
+    let v1: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6a4eb)) as *const uint8
         as *mut uint16)
         .offset(a as isize);
     if v1 == 0 {
@@ -2923,7 +2790,7 @@ pub unsafe fn CeresRidley_Func_8(mut a: uint16, game: &mut Game) -> uint8 {
     0 as uint8
 }
 pub unsafe fn CeresRidley_Func_9(game: &mut Game) {
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
     (*E).cry_var_C = ((*E).cry_var_C).wrapping_sub(16u16);
     if (*E).base.y_pos as ::core::ffi::c_int - 112 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -2934,7 +2801,7 @@ pub unsafe fn CeresRidley_Func_9(game: &mut Game) {
     }
 }
 pub unsafe fn CeresRidley_Func_10(game: &mut Game) {
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
     (*E).cry_var_C = ((*E).cry_var_C).wrapping_add(20u16);
     if (*E).base.y_pos as ::core::ffi::c_int - 80 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -2946,7 +2813,7 @@ pub unsafe fn CeresRidley_Func_10(game: &mut Game) {
 }
 pub unsafe fn CeresRidley_Func_11(game: &mut Game) {
     let mut v1: uint16 = 0;
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
     if (*E).cry_var_0D >= 0x64u16 {
         (*E).cry_var_01 = 0 as uint16;
         (*E).cry_var_A = ((0xa6bd9ai32) as u16) & (0xffffu16);
@@ -2976,7 +2843,7 @@ pub unsafe fn CeresRidley_Func_11(game: &mut Game) {
     }
 }
 pub unsafe fn CeresRidley_Func_12(game: &mut Game) -> uint8 {
-    let mut rect: Rect16U = Rect16U {
+    let rect: Rect16U = Rect16U {
         x: 192 as uint16,
         y: 100 as uint16,
         w: 8 as uint16,
@@ -2986,7 +2853,7 @@ pub unsafe fn CeresRidley_Func_12(game: &mut Game) -> uint8 {
     Shitroid_Func_2(0 as uint16, rect, game)
 }
 pub unsafe fn CeresRidley_Func_13(game: &mut Game) {
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
     let mut v1: uint16 = abs16((*E).cry_var_C);
     if v1 < 0x80u16 {
         v1 = 128 as uint16;
@@ -3007,7 +2874,7 @@ pub unsafe fn CeresRidley_Func_13(game: &mut Game) {
         & 0x8000 as ::core::ffi::c_int
         != 0
     {
-        let mut v3: uint16 = ((*E).cry_var_00).wrapping_add(1u16);
+        let v3: uint16 = ((*E).cry_var_00).wrapping_add(1u16);
         (*E).cry_var_00 = v3;
         if v3 >= 0x30u16 {
             (*E).cry_var_A = ((0xa6a88di32) as u16) & (0xffffu16);
@@ -3025,7 +2892,7 @@ pub unsafe fn CeresRidley_Func_13(game: &mut Game) {
     }
 }
 pub unsafe fn CeresRidley_A7F9(game: &mut Game) {
-    let mut r22: uint16 = (if *((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
+    let r22: uint16 = (if *((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
         as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0
@@ -3036,11 +2903,11 @@ pub unsafe fn CeresRidley_A7F9(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16) as ::core::ffi::c_int
             & 7 as ::core::ffi::c_int
     }) as uint16;
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
-    let mut r18: uint16 = ((*E).cry_var_17).wrapping_add(r22);
-    let mut r20: uint16 = ((*E).cry_var_18).wrapping_add(r22);
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let r18: uint16 = ((*E).cry_var_17).wrapping_add(r22);
+    let r20: uint16 = ((*E).cry_var_18).wrapping_add(r22);
     Ridley_Func_106(0 as uint16, 0 as uint16, r18, r20, game);
-    let mut v4: int16 = (((*E).cry_var_00) as i16).wrapping_sub(1i16);
+    let v4: int16 = (((*E).cry_var_00) as i16).wrapping_sub(1i16);
     (*E).cry_var_00 = v4 as uint16;
     if v4 < 0i16 {
         (*E).cry_var_00 = 0 as uint16;
@@ -3049,15 +2916,15 @@ pub unsafe fn CeresRidley_A7F9(game: &mut Game) {
 }
 pub unsafe fn CeresRidley_Func_14(game: &mut Game) {
     Ridley_Func_99(addr_kRidley_Ilist_E548 as uint16, game);
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
     (*E).cry_var_A = ((0xa6a84ei32) as u16) & (0xffffu16);
     (*E).cry_var_F = 64 as uint16;
     CeresRidley_Func_15(game);
 }
 pub unsafe fn CeresRidley_Func_15(game: &mut Game) {
     let mut v2: bool = false;
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
-    let mut r18: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16);
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let r18: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16);
     let mut v0: uint16 =
         (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)).wrapping_sub(68u16);
     if *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) as ::core::ffi::c_int
@@ -3067,9 +2934,9 @@ pub unsafe fn CeresRidley_Func_15(game: &mut Game) {
     {
         v0 = 64 as uint16;
     }
-    let mut r20: uint16 = v0;
+    let r20: uint16 = v0;
     Ridley_Func_106(0 as uint16, 0xd as uint16, r18, r20, game);
-    let mut rect: Rect16U = Rect16U {
+    let rect: Rect16U = Rect16U {
         x: r18,
         y: r20,
         w: 2 as uint16,
@@ -3085,7 +2952,7 @@ pub unsafe fn CeresRidley_Func_15(game: &mut Game) {
     }
 }
 pub unsafe fn CeresRidley_Func_16(game: &mut Game) {
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
     (*E).cry_var_A = ((0xa6a8a4i32) as u16) & (0xffffu16);
     (*E).cry_var_F = 10 as uint16;
     (*E).cry_var_0A = 0 as uint16;
@@ -3094,7 +2961,7 @@ pub unsafe fn CeresRidley_Func_16(game: &mut Game) {
 }
 pub unsafe fn CeresRidley_Func_17(game: &mut Game) {
     Ridley_Func_106(0 as uint16, 1 as uint16, 192 as uint16, 80 as uint16, game);
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
     if (*E).base.y_pos as ::core::ffi::c_int - 96 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0
@@ -3111,7 +2978,7 @@ pub unsafe fn CeresRidley_Func_18(game: &mut Game) {
         768 as uint16,
         game,
     );
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
     (*E).cry_var_F = (*E).cry_var_F.wrapping_sub(1);
     if ((*E).cry_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
         (*E).cry_var_A = ((0xa6a8f8i32) as u16) & (0xffffu16);
@@ -3125,7 +2992,7 @@ pub unsafe fn CeresRidley_Func_19(game: &mut Game) {
         768 as uint16,
         game,
     );
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
     (*E).cry_var_F = (*E).cry_var_F.wrapping_sub(1);
     if ((*E).cry_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
         (*E).cry_var_A = ((0xa6a923i32) as u16) & (0xffffu16);
@@ -3141,7 +3008,7 @@ pub unsafe fn CeresRidley_Func_20(game: &mut Game) {
         768 as uint16,
         game,
     );
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
     (*E).cry_var_F = (*E).cry_var_F.wrapping_sub(1);
     if ((*E).cry_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
         (*E).cry_var_A = ((0xa6a947i32) as u16) & (0xffffu16);
@@ -3155,7 +3022,7 @@ pub unsafe fn CeresRidley_Func_21(game: &mut Game) {
         768 as uint16,
         game,
     );
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
     (*E).cry_var_F = (*E).cry_var_F.wrapping_sub(1);
     if ((*E).cry_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
         (*E).cry_var_A = ((0xa6a6e8i32) as u16) & (0xffffu16);
@@ -3165,7 +3032,7 @@ pub unsafe fn CeresRidley_Func_21(game: &mut Game) {
     }
 }
 pub unsafe fn CeresRidley_Func_22(game: &mut Game) {
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
     (*E).cry_var_20 = -(192 as ::core::ffi::c_int) as uint16;
     Ridley_Func_106(
         0 as uint16,
@@ -3182,13 +3049,13 @@ pub unsafe fn CeresRidley_Func_22(game: &mut Game) {
     }
 }
 pub unsafe fn CeresRidley_A994(game: &mut Game) {
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
     (*E).cry_var_A = ((0xa6a9a0i32) as u16) & (0xffffu16);
     (*E).cry_var_F = 64 as uint16;
     CeresRidley_Func_23(game);
 }
 pub unsafe fn CeresRidley_Func_23(game: &mut Game) {
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
     (*E).cry_var_F = (*E).cry_var_F.wrapping_sub(1);
     if ((*E).cry_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
         CeresRidley_Func_25(game);
@@ -3243,7 +3110,7 @@ pub unsafe fn CeresRidley_Func_27(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x7e) as *mut uint16) = 256 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x80) as *mut uint16) = 64 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x82) as *mut uint16) = 64 as uint16;
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
     (*E).cry_var_32 = 0 as uint16;
     (*E).cry_var_33 = 0 as uint16;
     (*E).cry_var_0A = 1 as uint16;
@@ -3261,8 +3128,8 @@ pub unsafe fn HandleCeresRidleyGetawayCutscene(game: &mut Game) {
     }
 }
 pub unsafe fn CeresRidley_Func_28(game: &mut Game) {
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
-    let mut cry_var_33: uint16 = (*E).cry_var_33;
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let cry_var_33: uint16 = (*E).cry_var_33;
     (*E).cry_var_33 = (cry_var_33).wrapping_add(2u16);
     if cry_var_33 == 0 {
         QueueSfx2_Max6(0x4e as uint16, game);
@@ -3272,7 +3139,7 @@ pub unsafe fn CeresRidley_Func_28(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = 35 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 64 as uint16;
     }
-    let mut v2: ::core::ffi::c_int = cry_var_33 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let v2: ::core::ffi::c_int = cry_var_33 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6ae4d)) as *const uint8 as *mut uint16)
         .offset(v2 as isize)
         == 0xffffu16
@@ -3294,13 +3161,13 @@ pub unsafe fn CeresRidley_Func_28(game: &mut Game) {
         (*E).cry_var_30 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6ae4d)) as *const uint8
             as *mut uint16)
             .offset(v2 as isize);
-        let mut v3: uint16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa6af2f))
-            as *const uint8 as *mut uint16)
+        let v3: uint16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa6af2f)) as *const uint8
+            as *mut uint16)
             .offset(v2 as isize))
         .wrapping_add((*E).cry_var_35);
         (*E).cry_var_35 = v3;
         *((&raw mut game.g_ram as *mut uint8).offset(0xb3) as *mut uint16) = v3;
-        let mut v4: uint16 = ((*E).cry_var_34).wrapping_sub(
+        let v4: uint16 = ((*E).cry_var_34).wrapping_sub(
             *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6b00f)) as *const uint8 as *mut uint16)
                 .offset(v2 as isize),
         );
@@ -3313,8 +3180,8 @@ pub unsafe fn CeresRidley_Func_28(game: &mut Game) {
         CeresRidley_Func_34(game);
     };
 }
-unsafe fn CeresMult(mut a: uint16, mut b: uint16) -> uint16 {
-    let mut r: uint16 = (abs16(a) as ::core::ffi::c_int * b as ::core::ffi::c_int
+unsafe fn CeresMult(a: uint16, b: uint16) -> uint16 {
+    let r: uint16 = (abs16(a) as ::core::ffi::c_int * b as ::core::ffi::c_int
         >> 8 as ::core::ffi::c_int) as uint16;
     ((if a as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         -(r as ::core::ffi::c_int)
@@ -3323,8 +3190,8 @@ unsafe fn CeresMult(mut a: uint16, mut b: uint16) -> uint16 {
     }) as uint16)
 }
 pub unsafe fn CeresRidley_Func_29(game: &mut Game) {
-    let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
-    let mut r18: uint16 = *(&raw mut (*E).cry_var_0A as *mut uint8).offset(
+    let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+    let r18: uint16 = *(&raw mut (*E).cry_var_0A as *mut uint8).offset(
         (::core::mem::size_of::<uint16>())
             .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1_usize) as isize,
@@ -3346,7 +3213,7 @@ pub unsafe fn CeresRidley_Func_29(game: &mut Game) {
         (*E).cry_var_30,
     );
 }
-pub unsafe fn CeresRidley_AC30(mut a: uint16, mut r20: int16) -> int16 {
+pub unsafe fn CeresRidley_AC30(a: uint16, r20: int16) -> int16 {
     (kSinCosTable8bit_Sext[((a as ::core::ffi::c_int & 0xff as ::core::ffi::c_int)
         + 64 as ::core::ffi::c_int) as usize] as ::core::ffi::c_int
         * r20 as ::core::ffi::c_int
@@ -3357,8 +3224,8 @@ pub unsafe fn CeresRidley_Func_33(game: &mut Game) {
         & 3 as ::core::ffi::c_int)
         == 0i32
     {
-        let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
-        let mut v1: uint16 = ((*E).cry_var_36 as ::core::ffi::c_int + 1 as ::core::ffi::c_int
+        let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+        let v1: uint16 = ((*E).cry_var_36 as ::core::ffi::c_int + 1 as ::core::ffi::c_int
             & 3 as ::core::ffi::c_int) as uint16;
         (*E).cry_var_36 = v1;
         QueueMode7Transfers(
@@ -3374,8 +3241,8 @@ pub unsafe fn CeresRidley_Func_34(game: &mut Game) {
         & 7 as ::core::ffi::c_int)
         == 0i32
     {
-        let mut E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
-        let mut v1: uint16 = ((*E).cry_var_37 as ::core::ffi::c_int + 1 as ::core::ffi::c_int
+        let E: *mut Enemy_CeresRidley = Get_CeresRidley(0 as ::core::ffi::c_int, game);
+        let v1: uint16 = ((*E).cry_var_37 as ::core::ffi::c_int + 1 as ::core::ffi::c_int
             & 1 as ::core::ffi::c_int) as uint16;
         (*E).cry_var_37 = v1;
         QueueMode7Transfers(
@@ -3403,7 +3270,7 @@ pub unsafe fn CeresRidley_Func_35(mut a: uint16, game: &mut Game) {
 }
 pub unsafe fn Ridley_Main(game: &mut Game) {
     let mut v1: int16 = 0;
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     v1 = (((*E).ridley_var_24) as i16).wrapping_sub(4i16);
     if v1 < 0i16 {
         v1 = 0 as int16;
@@ -3428,7 +3295,7 @@ pub unsafe fn Ridley_Main(game: &mut Game) {
     Ridley_Func_100(game);
 }
 pub unsafe fn Ridley_Func_1(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     if (*E).ridley_var_1B as ::core::ffi::c_int | (*E).ridley_var_1E as ::core::ffi::c_int == 0 {
         if Ridley_Func_26(4 as uint16, 4 as uint16, game) as ::core::ffi::c_int
             & 1 as ::core::ffi::c_int
@@ -3439,14 +3306,14 @@ pub unsafe fn Ridley_Func_1(game: &mut Game) {
     }
 }
 pub unsafe fn Ridley_Func_2(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_24 = 0 as uint16;
     (*E).base.frame_counter = 1 as uint16;
     Ridley_Hurt(game);
 }
 pub unsafe fn Ridley_Hurt(game: &mut Game) {
-    let mut current_block: u64;
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let current_block: u64;
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     if ((*E).base.frame_counter as ::core::ffi::c_int & 1 as ::core::ffi::c_int) == 0i32 {
         Ridley_Func_39(game);
         Ridley_Func_42(game);
@@ -3486,7 +3353,7 @@ pub unsafe fn Ridley_Hurt(game: &mut Game) {
     }
 }
 pub unsafe fn Ridley_Func_3(game: &mut Game) {
-    let mut rect: Rect16U = Rect16U {
+    let rect: Rect16U = Rect16U {
         x: 64 as uint16,
         y: 256 as uint16,
         w: 8 as uint16,
@@ -3494,19 +3361,19 @@ pub unsafe fn Ridley_Func_3(game: &mut Game) {
     };
     Ridley_Func_104_0(0 as uint16, 14 as uint16, rect.x, rect.y, game);
     if Shitroid_Func_2(0 as uint16, rect, game) == 0 {
-        let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+        let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
         (*E).ridley_var_01 = 1 as uint16;
         (*E).ridley_var_A = ((0xa6b321i32) as u16) & (0xffffu16);
         Ridley_Func_3b(game);
     }
 }
 pub unsafe fn Ridley_Func_3b(game: &mut Game) {
-    let mut r18: uint16 = Ridley_Func_4(game);
-    let mut v0: ::core::ffi::c_int = 2 as ::core::ffi::c_int
+    let r18: uint16 = Ridley_Func_4(game);
+    let v0: ::core::ffi::c_int = 2 as ::core::ffi::c_int
         * (NextRandom(game) as ::core::ffi::c_int & 7 as ::core::ffi::c_int);
-    let mut v1: uint16 = *((RomPtr_A6 as unsafe fn(uint16_t, &mut Game) -> *const uint8)(r18, game)
+    let v1: uint16 = *((RomPtr_A6 as unsafe fn(uint16_t, &mut Game) -> *const uint8)(r18, game)
         .offset(v0 as isize) as *const uint8 as *mut uint16);
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_A = v1;
     CallRidleyFunc((((*E).ridley_var_A) as u32) | (0xa60000u32), game);
 }
@@ -3515,8 +3382,8 @@ pub unsafe fn Ridley_Func_4(game: &mut Game) -> uint16 {
     if *(&raw mut game.g_ram as *mut uint8).offset(0xa1f) == 3u8 {
         r18 = addr_off_A6B3CC as uint16;
     } else {
-        let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
-        let mut health: uint16 = (*E).base.health;
+        let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+        let health: uint16 = (*E).base.health;
         if health != 0 {
             if health as ::core::ffi::c_int - 14400 as ::core::ffi::c_int
                 & 0x8000 as ::core::ffi::c_int
@@ -3547,7 +3414,7 @@ pub unsafe fn Ridley_Func_4(game: &mut Game) -> uint16 {
     r18
 }
 pub unsafe fn Ridley_Func_5(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_A = ((0xa6b3f8i32) as u16) & (0xffffu16);
     (*E).ridley_var_F = 128 as uint16;
     Ridley_Func_6(game);
@@ -3560,8 +3427,8 @@ pub unsafe fn Ridley_Func_6(game: &mut Game) {
         w: 0,
         h: 0,
     };
-    let mut current_block: u64;
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let current_block: u64;
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_F = (*E).ridley_var_F.wrapping_sub(1);
     if ((*E).ridley_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
         current_block = 10433200308384073363;
@@ -3596,19 +3463,19 @@ pub unsafe fn Ridley_Func_7(game: &mut Game) -> uint16 {
     g_word_A6B439[(*Get_Ridley(0 as ::core::ffi::c_int, game)).ridley_var_12 as usize]
 }
 pub unsafe fn Ridley_Func_8(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_A = addr_loc_A6B455 as uint16;
     (*E).ridley_var_00 = 10 as uint16;
     (*E).ridley_var_0A = 0 as uint16;
     Ridley_B455(game);
 }
 pub unsafe fn Ridley_B455(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     let mut v1: uint16 = 192 as uint16;
     if (*E).ridley_var_10 != 0 {
         v1 = 64 as uint16;
     }
-    let mut rect: Rect16U = Rect16U {
+    let rect: Rect16U = Rect16U {
         x: v1,
         y: 128 as uint16,
         w: 8 as uint16,
@@ -3622,7 +3489,7 @@ pub unsafe fn Ridley_B455(game: &mut Game) {
     }
 }
 pub unsafe fn Ridley_Func_9(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     if (*E).ridley_var_10 != 0 {
         Ridley_Func_111(32 as uint16, 512 as uint16, 1152 as uint16, game);
     } else {
@@ -3633,7 +3500,7 @@ pub unsafe fn Ridley_Func_9(game: &mut Game) {
             game,
         );
     }
-    let mut ridley_var_00: uint16 = (*E).ridley_var_00;
+    let ridley_var_00: uint16 = (*E).ridley_var_00;
     if ridley_var_00 != 0 {
         (*E).ridley_var_00 = (ridley_var_00).wrapping_sub(1u16);
     } else {
@@ -3642,7 +3509,7 @@ pub unsafe fn Ridley_Func_9(game: &mut Game) {
     };
 }
 pub unsafe fn Ridley_Func_10(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     if (*E).ridley_var_10 != 0 {
         Ridley_Func_111(320 as uint16, 0x4000 as uint16, 1280 as uint16, game);
     } else {
@@ -3653,7 +3520,7 @@ pub unsafe fn Ridley_Func_10(game: &mut Game) {
             game,
         );
     }
-    let mut ridley_var_00: uint16 = (*E).ridley_var_00;
+    let ridley_var_00: uint16 = (*E).ridley_var_00;
     if ridley_var_00 != 0 {
         (*E).ridley_var_00 = (ridley_var_00).wrapping_sub(1u16);
     } else {
@@ -3664,7 +3531,7 @@ pub unsafe fn Ridley_Func_10(game: &mut Game) {
     };
 }
 pub unsafe fn Ridley_Func_11(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     if (*E).ridley_var_10 != 0 {
         Ridley_Func_111(512 as uint16, 30720 as uint16, 768 as uint16, game);
     } else {
@@ -3675,7 +3542,7 @@ pub unsafe fn Ridley_Func_11(game: &mut Game) {
             game,
         );
     }
-    let mut ridley_var_00: uint16 = (*E).ridley_var_00;
+    let ridley_var_00: uint16 = (*E).ridley_var_00;
     if ridley_var_00 != 0 {
         (*E).ridley_var_00 = (ridley_var_00).wrapping_sub(1u16);
     } else {
@@ -3684,7 +3551,7 @@ pub unsafe fn Ridley_Func_11(game: &mut Game) {
     };
 }
 pub unsafe fn Ridley_Func_12(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     if (*E).ridley_var_10 != 0 {
         Ridley_Func_111(1024 as uint16, 30720 as uint16, 768 as uint16, game);
     } else {
@@ -3695,7 +3562,7 @@ pub unsafe fn Ridley_Func_12(game: &mut Game) {
             game,
         );
     }
-    let mut ridley_var_00: uint16 = (*E).ridley_var_00;
+    let ridley_var_00: uint16 = (*E).ridley_var_00;
     if ridley_var_00 != 0 {
         (*E).ridley_var_00 = (ridley_var_00).wrapping_sub(1u16);
     } else {
@@ -3706,8 +3573,8 @@ pub unsafe fn Ridley_Func_12(game: &mut Game) {
 }
 pub unsafe fn Ridley_Func_13(game: &mut Game) {
     Ridley_Func_111(0 as uint16, 0x8000 as uint16, 448 as uint16, game);
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
-    let mut ridley_var_00: uint16 = (*E).ridley_var_00;
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let ridley_var_00: uint16 = (*E).ridley_var_00;
     if ridley_var_00 != 0 {
         (*E).ridley_var_00 = (ridley_var_00).wrapping_sub(1u16);
     } else {
@@ -3721,7 +3588,7 @@ pub unsafe fn Ridley_Func_13(game: &mut Game) {
 pub unsafe fn Ridley_Func_14(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(15) = 11 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(9) = 384 as uint16;
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_A = ((0xa6b5e5i32) as u16) & (0xffffu16);
     (*E).ridley_var_F = ((*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
         as ::core::ffi::c_int
@@ -3730,7 +3597,7 @@ pub unsafe fn Ridley_Func_14(game: &mut Game) {
     Ridley_Func_15(game);
 }
 pub unsafe fn Ridley_Func_15(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     if Ridley_Func_17(
         *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6b60d)) as *const uint8 as *mut uint16)
             .offset((*E).ridley_var_10 as isize),
@@ -3750,7 +3617,7 @@ pub unsafe fn Ridley_Func_15(game: &mut Game) {
     };
 }
 pub unsafe fn Ridley_Func_16(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     if Ridley_Func_17(
         *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6b63b)) as *const uint8 as *mut uint16)
             .offset((*E).ridley_var_10 as isize),
@@ -3769,7 +3636,7 @@ pub unsafe fn Ridley_Func_16(game: &mut Game) {
         }
     };
 }
-pub unsafe fn Ridley_Func_17(mut r18: uint16, game: &mut Game) -> uint8 {
+pub unsafe fn Ridley_Func_17(r18: uint16, game: &mut Game) -> uint8 {
     let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16);
     if *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) as ::core::ffi::c_int
         - 352 as ::core::ffi::c_int
@@ -3784,7 +3651,7 @@ pub unsafe fn Ridley_Func_17(mut r18: uint16, game: &mut Game) -> uint8 {
         return 1 as uint8;
     }
     if (*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16) as uint8) >= 0x80u8 {
-        let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+        let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
         if (*E).ridley_var_0F == 0 && (*E).ridley_var_10 != 1u16 {
             Ridley_Func_99(addr_kRidley_Ilist_E73A as uint16, game);
         }
@@ -3799,7 +3666,7 @@ pub unsafe fn Ridley_Func_18(game: &mut Game) {
         ((0xa6b6a7i32) as u16) & (0xffffu16);
 }
 pub unsafe fn Ridley_Func_19(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     if (*E).base.y_pos as ::core::ffi::c_int - 288 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0
@@ -3820,7 +3687,7 @@ pub unsafe fn Ridley_Func_19(game: &mut Game) {
     };
 }
 pub unsafe fn Ridley_Func_20(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     Ridley_Func_104_0(
         0 as uint16,
         0 as uint16,
@@ -3845,7 +3712,7 @@ pub unsafe fn Ridley_Func_21(game: &mut Game) {
         Ridley_Func_24(game);
         Ridley_Func_27(game);
     } else {
-        let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+        let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
         v1 = ((*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(6))
             as i16)
             .wrapping_add(((*E).ridley_var_C) as i16);
@@ -3900,7 +3767,7 @@ pub unsafe fn Ridley_Func_21(game: &mut Game) {
     };
 }
 pub unsafe fn Ridley_Func_22(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     let mut v1: bool = false;
     if Ridley_Func_41(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 || {
         v1 = (((*E).ridley_var_F) as i16).wrapping_sub(1i16) < 0i16;
@@ -3910,7 +3777,7 @@ pub unsafe fn Ridley_Func_22(game: &mut Game) {
         Ridley_Func_24(game);
         (*E).ridley_var_A = ((0xa6b321i32) as u16) & (0xffffu16);
     } else {
-        let mut ridley_var_C: uint16 = (*E).ridley_var_C;
+        let ridley_var_C: uint16 = (*E).ridley_var_C;
         v1 = ((*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(7))
             as i16)
             .wrapping_add((ridley_var_C) as i16)
@@ -3979,9 +3846,9 @@ pub unsafe fn Ridley_Func_25(game: &mut Game) -> uint8 {
         0 as uint8
     }
 }
-pub unsafe fn Ridley_Func_26(mut k: uint16, mut j: uint16, game: &mut Game) -> uint8 {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
-    let mut rect: Rect16U = Rect16U {
+pub unsafe fn Ridley_Func_26(k: uint16, j: uint16, game: &mut Game) -> uint8 {
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let rect: Rect16U = Rect16U {
         x: (((*E).base.x_pos).wrapping_add(
             *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6b9d5)) as *const uint8 as *mut uint16)
                 .offset((*E).ridley_var_10 as isize),
@@ -3999,7 +3866,7 @@ pub unsafe fn Ridley_Func_26(mut k: uint16, mut j: uint16, game: &mut Game) -> u
 }
 pub unsafe fn Ridley_Func_27(game: &mut Game) {
     let mut ridley_var_C: int16 = 0;
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     ridley_var_C = (*E).ridley_var_C as int16;
     if ridley_var_C >= 0i16 {
         ridley_var_C = -(ridley_var_C as ::core::ffi::c_int) as int16;
@@ -4017,8 +3884,8 @@ pub unsafe fn Ridley_Func_27(game: &mut Game) {
 pub unsafe fn Ridley_Func_28(game: &mut Game) {
     let mut x_pos: uint16 = 0;
     let mut v4: uint16 = 0;
-    let mut current_block: u64;
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let current_block: u64;
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     if (*E).ridley_var_B == 0 {
         (*E).ridley_var_B =
             (if (*E).base.x_pos as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0 {
@@ -4077,20 +3944,20 @@ pub unsafe fn Ridley_Func_28(game: &mut Game) {
     (*E).ridley_var_B = -((*E).ridley_var_B as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn Ridley_Func_29(game: &mut Game) {
-    let mut v0: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x5e5)
-        as *mut uint16) as ::core::ffi::c_int
+    let v0: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
+        as ::core::ffi::c_int
         & 3 as ::core::ffi::c_int;
-    let mut r18: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6b965)) as *const uint8
+    let r18: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6b965)) as *const uint8
         as *mut uint16)
         .offset(v0 as isize);
-    let mut r20: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6b96d)) as *const uint8
+    let r20: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6b96d)) as *const uint8
         as *mut uint16)
         .offset(v0 as isize);
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
-    let mut v2: uint16 = (2 as ::core::ffi::c_int
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let v2: uint16 = (2 as ::core::ffi::c_int
         * ((*E).ridley_var_12 as ::core::ffi::c_int + 2 as ::core::ffi::c_int))
         as uint16;
-    let mut v3: ::core::ffi::c_int = v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let v3: ::core::ffi::c_int = v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(7) =
         *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6b94d)) as *const uint8 as *mut uint16)
             .offset(v3 as isize);
@@ -4099,8 +3966,8 @@ pub unsafe fn Ridley_Func_29(game: &mut Game) {
             .offset(v3 as isize);
     (*E).ridley_var_C = *((RomPtr_A6 as unsafe fn(uint16_t, &mut Game) -> *const uint8)(r20, game)
         .offset(v2 as isize) as *const uint8 as *mut uint16);
-    let mut v4: *const uint8 = RomPtr_A6(r18, game);
-    let mut t: uint16 = *(v4.offset(v2 as isize) as *const uint8 as *mut uint16);
+    let v4: *const uint8 = RomPtr_A6(r18, game);
+    let t: uint16 = *(v4.offset(v2 as isize) as *const uint8 as *mut uint16);
     (*E).ridley_var_B =
         (if (*E).ridley_var_B as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
             -(t as ::core::ffi::c_int)
@@ -4109,12 +3976,12 @@ pub unsafe fn Ridley_Func_29(game: &mut Game) {
         }) as uint16;
 }
 pub unsafe fn Ridley_Func_30(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
-    let mut ridley_var_14: uint16 = (*E).ridley_var_14;
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let ridley_var_14: uint16 = (*E).ridley_var_14;
     let mut v3: uint16 = 0;
     let mut v6: uint16 = 0;
     if ridley_var_14 != 0 {
-        let mut v2: int16 = ((abs16(ridley_var_14)) as i16).wrapping_sub(4i16);
+        let v2: int16 = ((abs16(ridley_var_14)) as i16).wrapping_sub(4i16);
         if v2 >= 0i16 {
             v3 = (if ridley_var_14 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
                 -(v2 as ::core::ffi::c_int)
@@ -4126,9 +3993,9 @@ pub unsafe fn Ridley_Func_30(game: &mut Game) {
         }
         (*E).ridley_var_14 = v3;
     }
-    let mut ridley_var_15: uint16 = (*E).ridley_var_15;
+    let ridley_var_15: uint16 = (*E).ridley_var_15;
     if ridley_var_15 != 0 {
-        let mut v5: int16 = ((abs16(ridley_var_15)) as i16).wrapping_sub(4i16);
+        let v5: int16 = ((abs16(ridley_var_15)) as i16).wrapping_sub(4i16);
         if v5 >= 0i16 {
             v6 = (if ridley_var_15 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
                 -(v5 as ::core::ffi::c_int)
@@ -4155,7 +4022,7 @@ pub unsafe fn Ridley_Func_30(game: &mut Game) {
         as uint16;
 }
 pub unsafe fn Ridley_Func_31(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_14 =
         (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) as ::core::ffi::c_int
             - ((*E).base.x_pos as ::core::ffi::c_int
@@ -4172,7 +4039,7 @@ pub unsafe fn Ridley_Func_31(game: &mut Game) {
                 ) as ::core::ffi::c_int)) as uint16;
 }
 pub unsafe fn Ridley_Func_32(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     if (*E).ridley_var_25 as ::core::ffi::c_int - 10 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         != 0
@@ -4192,7 +4059,7 @@ pub unsafe fn Ridley_Func_32(game: &mut Game) {
     };
 }
 pub unsafe fn Ridley_Func_33(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     let mut v1: uint16 = 0;
     let mut v2: int16 = 0;
     let mut r18: uint16 = 0;
@@ -4233,7 +4100,7 @@ pub unsafe fn Ridley_Func_33(game: &mut Game) {
                 .wrapping_sub(4u16),
             game,
         );
-        let mut rect: Rect16U = Rect16U {
+        let rect: Rect16U = Rect16U {
             x: (((*E).base.x_pos).wrapping_add(
                 *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6b9d5)) as *const uint8
                     as *mut uint16)
@@ -4268,7 +4135,7 @@ pub unsafe fn Ridley_Func_33(game: &mut Game) {
 }
 pub unsafe fn Ridley_Func_33b(game: &mut Game) {
     let mut v1: int16 = 0;
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_17 = g_word_A6BBEB[(*E).ridley_var_10 as usize];
     v1 = (((*E).base.y_pos) as i16).wrapping_sub(64i16);
     if (*E).base.y_pos as ::core::ffi::c_int - 320 as ::core::ffi::c_int
@@ -4286,7 +4153,7 @@ pub unsafe fn Ridley_Func_33b(game: &mut Game) {
     Ridley_Func_34(game);
 }
 pub unsafe fn Ridley_Func_34(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     Ridley_Func_104_0(
         0 as uint16,
         0 as uint16,
@@ -4301,7 +4168,7 @@ pub unsafe fn Ridley_Func_34(game: &mut Game) {
     }
 }
 pub unsafe fn Ridley_Func_35(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_F = (*E).ridley_var_F.wrapping_sub(1);
     if ((*E).ridley_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(15) =
@@ -4322,7 +4189,7 @@ pub unsafe fn Ridley_Func_35(game: &mut Game) {
     };
 }
 pub unsafe fn Ridley_Func_36(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_F = (*E).ridley_var_F.wrapping_sub(1);
     if ((*E).ridley_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(15) =
@@ -4342,7 +4209,7 @@ pub unsafe fn Ridley_Func_36(game: &mut Game) {
 }
 pub unsafe fn Ridley_Func_37(game: &mut Game) {
     Ridley_Func_31(game);
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
     (*E).ridley_var_1B = 1 as uint16;
     CallSomeSamusCode(0 as uint16, game);
@@ -4351,7 +4218,7 @@ pub unsafe fn Ridley_Func_37(game: &mut Game) {
 pub unsafe fn Ridley_Func_38(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(2) = 1 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(0) = 1 as uint16;
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     if ((*E).ridley_var_01 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32 {
         (*E).ridley_var_1E = (if Ridley_Func_40_Sign(game) != 0u8 {
             6 as ::core::ffi::c_int
@@ -4365,7 +4232,7 @@ pub unsafe fn Ridley_Func_38(game: &mut Game) {
 }
 pub unsafe fn Ridley_Func_39(game: &mut Game) {
     let mut ridley_var_01: int16 = 0;
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     ridley_var_01 = (*E).ridley_var_01 as int16;
     if ridley_var_01 >= 0i16 {
         if ridley_var_01 != 0 {
@@ -4377,9 +4244,9 @@ pub unsafe fn Ridley_Func_39(game: &mut Game) {
                 & !(kEnemyProps_Tangible as ::core::ffi::c_int))
                 as uint16;
         }
-        let mut ridley_var_1E: uint16 = (*E).ridley_var_1E;
+        let ridley_var_1E: uint16 = (*E).ridley_var_1E;
         if ridley_var_1E != 0 {
-            let mut v3: uint16 = (ridley_var_1E).wrapping_sub(1u16);
+            let v3: uint16 = (ridley_var_1E).wrapping_sub(1u16);
             (*E).ridley_var_1E = v3;
             if v3 == 0
                 && ((*E).ridley_var_01 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32
@@ -4415,7 +4282,7 @@ pub unsafe fn Ridley_Func_41(game: &mut Game) -> uint8 {
 }
 pub unsafe fn Ridley_Func_42(game: &mut Game) {
     let mut ridley_var_01: int16 = 0;
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     ridley_var_01 = (*E).ridley_var_01 as int16;
     if ridley_var_01 > 0i16
         && ridley_var_01 != 2i16
@@ -4429,8 +4296,8 @@ pub unsafe fn Ridley_Func_42(game: &mut Game) {
 pub unsafe fn Ridley_Func_43(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xcee) as *mut uint16) != 0 {
         (*Get_Ridley(0 as ::core::ffi::c_int, game)).ridley_var_01 = 2 as uint16;
-        let mut r18: uint16 = (if *((&raw mut game.g_ram as *mut uint8).offset(0xce2)
-            as *mut uint16) as ::core::ffi::c_int
+        let r18: uint16 = (if *((&raw mut game.g_ram as *mut uint8).offset(0xce2) as *mut uint16)
+            as ::core::ffi::c_int
             - 128 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             != 0
@@ -4439,8 +4306,8 @@ pub unsafe fn Ridley_Func_43(game: &mut Game) {
         } else {
             80 as ::core::ffi::c_int
         }) as uint16;
-        let mut r20: uint16 = (if *((&raw mut game.g_ram as *mut uint8).offset(0xce4)
-            as *mut uint16) as ::core::ffi::c_int
+        let r20: uint16 = (if *((&raw mut game.g_ram as *mut uint8).offset(0xce4) as *mut uint16)
+            as ::core::ffi::c_int
             - 256 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             != 0
@@ -4451,7 +4318,7 @@ pub unsafe fn Ridley_Func_43(game: &mut Game) {
         }) as uint16;
         Ridley_Func_104_0(0 as uint16, Ridley_Func_7(game), r18, r20, game);
     } else {
-        let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+        let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
         (*E).ridley_var_01 = 1 as uint16;
         (*E).ridley_var_A = (if (*E).ridley_var_1B != 0u16 {
             0xa6bb8f as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
@@ -4462,7 +4329,7 @@ pub unsafe fn Ridley_Func_43(game: &mut Game) {
 }
 pub unsafe fn Ridley_Func_44(game: &mut Game) {
     Ridley_Func_106(0 as uint16, 1 as uint16, 192 as uint16, 128 as uint16, game);
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     if (*E).base.x_pos as ::core::ffi::c_int - 192 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         == 0
@@ -4471,7 +4338,7 @@ pub unsafe fn Ridley_Func_44(game: &mut Game) {
     }
 }
 pub unsafe fn Ridley_Func_45(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_20 = -(192 as ::core::ffi::c_int) as uint16;
     Ridley_Func_106(
         0 as uint16,
@@ -4490,7 +4357,7 @@ pub unsafe fn Ridley_Func_45(game: &mut Game) {
     }
 }
 pub unsafe fn Ridley_Func_46(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_F = (*E).ridley_var_F.wrapping_sub(1);
     if ((*E).ridley_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
         Ridley_Func_99(addr_kRidley_Ilist_E658 as uint16, game);
@@ -4499,7 +4366,7 @@ pub unsafe fn Ridley_Func_46(game: &mut Game) {
     }
 }
 pub unsafe fn Ridley_Func_47(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     Ridley_Func_104_0(
         0 as uint16,
         12 as uint16,
@@ -4507,7 +4374,7 @@ pub unsafe fn Ridley_Func_47(game: &mut Game) {
         ((*E).ridley_var_44).wrapping_sub(56u16),
         game,
     );
-    let mut rect: Rect16U = Rect16U {
+    let rect: Rect16U = Rect16U {
         x: (((*E).base.x_pos).wrapping_add(14u16)),
         y: (((*E).base.y_pos).wrapping_add(66u16)),
         w: 4 as uint16,
@@ -4521,23 +4388,23 @@ pub unsafe fn Ridley_Func_47(game: &mut Game) {
         (*E).ridley_var_A = ((0xa6a971i32) as u16) & (0xffffu16);
     }
 }
-pub unsafe fn Ridley_Func_48(mut rect: Rect16U, game: &mut Game) -> uint8 {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
-    let mut v1: uint16 = abs16(((*E).ridley_var_42).wrapping_sub(rect.x));
+pub unsafe fn Ridley_Func_48(rect: Rect16U, game: &mut Game) -> uint8 {
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let v1: uint16 = abs16(((*E).ridley_var_42).wrapping_sub(rect.x));
     let mut v2: bool = v1 < 4u16;
-    let mut v3: uint16 = (v1).wrapping_sub(4u16);
-    let mut result: uint8 = 0 as uint8;
+    let v3: uint16 = (v1).wrapping_sub(4u16);
+    let result: uint8 = 0 as uint8;
     if v2 || v3 < rect.w {
-        let mut v4: uint16 = abs16(((*E).ridley_var_44).wrapping_sub(rect.y));
+        let v4: uint16 = abs16(((*E).ridley_var_44).wrapping_sub(rect.y));
         v2 = v4 < 4u16;
-        let mut v5: uint16 = (v4).wrapping_sub(4u16);
+        let v5: uint16 = (v4).wrapping_sub(4u16);
         if v2 || v5 < rect.h {
             return 1 as uint8;
         }
     }
     result
 }
-pub unsafe fn CallRidleyFunc_var40(mut ea: uint32, game: &mut Game) {
+pub unsafe fn CallRidleyFunc_var40(ea: uint32, game: &mut Game) {
     match ea {
         10927772 => {
             Ridley_Func_50(game);
@@ -4564,27 +4431,27 @@ pub unsafe fn Ridley_Func_49(game: &mut Game) {
     );
 }
 pub unsafe fn Ridley_Func_50(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_42 = ((*E).base.x_pos).wrapping_sub(16u16);
     (*E).ridley_var_44 = ((*E).base.y_pos).wrapping_add(22u16);
 }
 pub unsafe fn Ridley_Func_51(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_42 = ((*E).base.x_pos).wrapping_add(14u16);
     (*E).ridley_var_44 = ((*E).base.y_pos).wrapping_add(66u16);
 }
 pub unsafe fn Ridley_Func_52(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_45 = 0 as uint16;
     (*E).ridley_var_46 = 0 as uint16;
     (*E).ridley_var_40 = ((0xa6bedci32) as u16) & (0xffffu16);
     Ridley_Func_53(game);
 }
 pub unsafe fn Ridley_Func_53(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
-    let mut v1: uint16 = ((*E).ridley_var_46).wrapping_add(8u16);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let v1: uint16 = ((*E).ridley_var_46).wrapping_add(8u16);
     (*E).ridley_var_46 = v1;
-    let mut t: ::core::ffi::c_int = *(&raw mut (*E).ridley_var_43 as *mut uint8).offset(
+    let t: ::core::ffi::c_int = *(&raw mut (*E).ridley_var_43 as *mut uint8).offset(
         (::core::mem::size_of::<uint16>())
             .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1_usize) as isize,
@@ -4607,7 +4474,7 @@ pub unsafe fn Ridley_Func_53(game: &mut Game) {
     }
 }
 pub unsafe fn DrawBabyMetroid_0(game: &mut Game) {
-    let mut v0: ::core::ffi::c_int = BabyMetroid_DBCB_DoubleRetEx(
+    let v0: ::core::ffi::c_int = BabyMetroid_DBCB_DoubleRetEx(
         (((&raw mut game.g_ram as *mut uint8).offset(0x7800) as *mut ExtraEnemyRam7800
             as *mut uint8)
             .offset_from(&raw mut game.g_ram as *mut uint8) as ::core::ffi::c_long
@@ -4617,7 +4484,7 @@ pub unsafe fn DrawBabyMetroid_0(game: &mut Game) {
     if v0 < 0i32 {
         return;
     }
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     sub_A6DC13(
         v0 as uint16,
         (*E).ridley_var_42,
@@ -4626,7 +4493,7 @@ pub unsafe fn DrawBabyMetroid_0(game: &mut Game) {
         game,
     );
 }
-pub unsafe fn BabyMetroid_Instr_2(mut k: uint16, game: &mut Game) -> uint16 {
+pub unsafe fn BabyMetroid_Instr_2(k: uint16, game: &mut Game) -> uint16 {
     if (*Get_Ridley(0 as ::core::ffi::c_int, game)).ridley_var_46 == 0
         && (*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
             as ::core::ffi::c_int
@@ -4638,23 +4505,23 @@ pub unsafe fn BabyMetroid_Instr_2(mut k: uint16, game: &mut Game) -> uint16 {
     QueueSfx3_Max6(0x24 as uint16, game);
     (k).wrapping_add(2u16)
 }
-pub unsafe fn BabyMetroid_Instr_3(mut k: uint16, game: &mut Game) -> uint16 {
-    let mut v1: uint16 = *(RomPtr_A6(k, game) as *mut uint16);
+pub unsafe fn BabyMetroid_Instr_3(k: uint16, game: &mut Game) -> uint16 {
+    let v1: uint16 = *(RomPtr_A6(k, game) as *mut uint16);
     WriteColorsToPalette(0x162 as uint16, 0xa6 as uint8, v1, 0xf as uint16, game);
     (k).wrapping_add(2u16)
 }
-pub unsafe fn BabyMetroid_Instr_1(mut k: uint16, game: &mut Game) -> uint16 {
+pub unsafe fn BabyMetroid_Instr_1(k: uint16, game: &mut Game) -> uint16 {
     if (*Get_Ridley(0 as ::core::ffi::c_int, game)).ridley_var_46 != 0 {
         BabyMetroid_Goto(k, game)
     } else {
         (k).wrapping_add(2u16)
     }
 }
-pub unsafe fn BabyMetroid_Goto(mut k: uint16, game: &mut Game) -> uint16 {
+pub unsafe fn BabyMetroid_Goto(k: uint16, game: &mut Game) -> uint16 {
     *(RomPtr_A6(k, game) as *mut uint16)
 }
 pub unsafe fn Ridley_Func_54(game: &mut Game) {
-    let mut ridley_var_F: uint16 = (*Get_Ridley(0 as ::core::ffi::c_int, game)).ridley_var_F;
+    let ridley_var_F: uint16 = (*Get_Ridley(0 as ::core::ffi::c_int, game)).ridley_var_F;
     if ridley_var_F != 0 {
         match ridley_var_F as ::core::ffi::c_int {
             2 => {
@@ -4693,7 +4560,7 @@ pub unsafe fn Ridley_Func_55(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(17);
     *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(83) =
         *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(19);
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_E = -(15157 as ::core::ffi::c_int) as uint16;
     (*E).ridley_var_F = (*E).ridley_var_F.wrapping_add(1);
     (*E).ridley_var_F = (*E).ridley_var_F.wrapping_add(1);
@@ -4701,7 +4568,7 @@ pub unsafe fn Ridley_Func_55(game: &mut Game) {
 }
 pub unsafe fn Ridley_C08E(game: &mut Game) {
     if ProcessEscapeTimerTileTransfers(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
-        let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+        let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
         (*E).ridley_var_E = -(15106 as ::core::ffi::c_int) as uint16;
         (*E).ridley_var_F = (*E).ridley_var_F.wrapping_add(1);
         (*E).ridley_var_F = (*E).ridley_var_F.wrapping_add(1);
@@ -4710,7 +4577,7 @@ pub unsafe fn Ridley_C08E(game: &mut Game) {
 }
 pub unsafe fn Ridley_C09F(game: &mut Game) {
     if ProcessEscapeTimerTileTransfers(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
-        let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+        let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
         (*E).ridley_var_F = (*E).ridley_var_F.wrapping_add(1);
         (*E).ridley_var_F = (*E).ridley_var_F.wrapping_add(1);
         Ridley_Func_59(game);
@@ -4720,7 +4587,7 @@ pub unsafe fn Ridley_C09F(game: &mut Game) {
 }
 pub unsafe fn Ridley_Func_56(game: &mut Game) {
     Ridley_Func_61(game);
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     let fresh16 = (*E).ridley_var_E;
     (*E).ridley_var_E = (*E).ridley_var_E.wrapping_sub(1);
     if fresh16 == 1u16 {
@@ -4739,7 +4606,7 @@ pub unsafe fn Ridley_Func_56(game: &mut Game) {
     }
 }
 pub unsafe fn Ridley_Func_57(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     let fresh15 = (*E).ridley_var_E;
     (*E).ridley_var_E = (*E).ridley_var_E.wrapping_sub(1);
     if fresh15 == 1u16 {
@@ -4755,7 +4622,7 @@ pub unsafe fn Ridley_C104(game: &mut Game) {
         & 1 as ::core::ffi::c_int
         != 0
     {
-        let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+        let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
         (*E).ridley_var_F = (*E).ridley_var_F.wrapping_add(1);
         (*E).ridley_var_F = (*E).ridley_var_F.wrapping_add(1);
     }
@@ -4763,7 +4630,7 @@ pub unsafe fn Ridley_C104(game: &mut Game) {
 pub unsafe fn Ridley_Func_58(game: &mut Game) {
     Ridley_Func_61(game);
     CeresRidley_Func_2(game);
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_F = 0 as uint16;
     (*E).ridley_var_A = ((0xa6aa50i32) as u16) & (0xffffu16);
     *((&raw mut game.g_ram as *mut uint8).offset(0x943) as *mut uint16) = 1 as uint16;
@@ -4772,8 +4639,8 @@ pub unsafe fn Ridley_Func_58(game: &mut Game) {
 }
 pub unsafe fn Ridley_Func_59(game: &mut Game) {
     let mut v2: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
-    let mut v1: *const uint8 = RomPtr_A6(addr_byte_A6C15D as uint16_t, game);
+    let v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
+    let v1: *const uint8 = RomPtr_A6(addr_byte_A6C15D as uint16_t, game);
     v2 = gVramWriteEntry(
         *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) as ::core::ffi::c_int,
         game,
@@ -4787,7 +4654,7 @@ pub unsafe fn Ridley_Func_59(game: &mut Game) {
 }
 pub unsafe fn Ridley_Func_60(game: &mut Game) {
     let mut v1: int16 = 0;
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     v1 = (((*E).ridley_var_39) as i16).wrapping_add(1i16);
     if (*E).ridley_var_39 as ::core::ffi::c_int - 31 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
@@ -4808,13 +4675,13 @@ pub unsafe fn Ridley_Func_61(game: &mut Game) {
             & 3 as ::core::ffi::c_int)
             == 0i32
     {
-        let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+        let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
         let mut v1: uint16 = ((*E).ridley_var_38).wrapping_add(1u16);
         if v1 >= 0x10u16 {
             v1 = 0 as uint16;
         }
         (*E).ridley_var_38 = v1;
-        let mut v2: ::core::ffi::c_int = (*E).ridley_var_38 as ::core::ffi::c_int
+        let v2: ::core::ffi::c_int = (*E).ridley_var_38 as ::core::ffi::c_int
             + 2 as ::core::ffi::c_int * v1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(97) =
             *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6c1df)) as *const uint8 as *mut uint16)
@@ -4832,7 +4699,7 @@ pub unsafe fn SetupZebesEscapeTypewriter(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(125);
     *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(158) =
         *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(126);
-    let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
     (*E).mbn_var_3B = addr_loc_A9C49C as uint16;
     (*E).mbn_var_3C = 0 as uint16;
     (*E).mbn_var_3D = 0 as uint16;
@@ -4843,11 +4710,11 @@ pub unsafe fn SetupZebesEscapeTypewriter(game: &mut Game) {
 }
 pub unsafe fn ProcessEscapeTimerTileTransfers(game: &mut Game) -> uint8 {
     let mut v4: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
-    let mut v0: *mut EnemyData = gEnemyData(0 as ::core::ffi::c_int, game);
-    let mut ai_var_E: uint16 = (*v0).ai_var_E;
-    let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
-    let mut v3: *const uint8 = RomPtr_A6(ai_var_E, game);
-    let mut result: uint8 = 1 as uint8;
+    let v0: *mut EnemyData = gEnemyData(0 as ::core::ffi::c_int, game);
+    let ai_var_E: uint16 = (*v0).ai_var_E;
+    let v2: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
+    let v3: *const uint8 = RomPtr_A6(ai_var_E, game);
+    let result: uint8 = 1 as uint8;
     if *(v3 as *mut uint16) != 0 {
         v4 = gVramWriteEntry(
             *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16)
@@ -4868,12 +4735,12 @@ pub unsafe fn ProcessEscapeTimerTileTransfers(game: &mut Game) -> uint8 {
     }
     result
 }
-pub unsafe fn HandleTypewriterText_Ext(mut a: uint16, game: &mut Game) -> uint8 {
-    let mut r18: uint16 = a;
+pub unsafe fn HandleTypewriterText_Ext(a: uint16, game: &mut Game) -> uint8 {
+    let r18: uint16 = a;
     let mut v4: int16 = 0;
     let mut v12: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
-    let mut E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
-    let mut mbn_var_3D: uint16 = (*E).mbn_var_3D;
+    let E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
+    let mbn_var_3D: uint16 = (*E).mbn_var_3D;
     if mbn_var_3D != 0 {
         (*E).mbn_var_3D = (mbn_var_3D).wrapping_sub(1u16);
         0 as uint8
@@ -4891,8 +4758,8 @@ pub unsafe fn HandleTypewriterText_Ext(mut a: uint16, game: &mut Game) -> uint8 
                 if v4 != 1i16 {
                     break;
                 }
-                let mut v5: uint16 = (i + 2 as ::core::ffi::c_int) as uint16;
-                let mut v6: uint16 = *(RomPtr_A6(v5, game) as *mut uint16);
+                let v5: uint16 = (i + 2 as ::core::ffi::c_int) as uint16;
+                let v6: uint16 = *(RomPtr_A6(v5, game) as *mut uint16);
                 (*E).mbn_var_3E = v6;
                 i = v5 as ::core::ffi::c_int + 2 as ::core::ffi::c_int;
             }
@@ -4900,7 +4767,7 @@ pub unsafe fn HandleTypewriterText_Ext(mut a: uint16, game: &mut Game) -> uint8 
                 break;
             }
             v7 = i + 2 as ::core::ffi::c_int;
-            let mut v8: uint16 = *(RomPtr_A6(v7 as uint16_t, game) as *mut uint16);
+            let v8: uint16 = *(RomPtr_A6(v7 as uint16_t, game) as *mut uint16);
             (*E).mbn_var_3C = v8;
             i = v7 + 2 as ::core::ffi::c_int;
         }
@@ -4914,8 +4781,7 @@ pub unsafe fn HandleTypewriterText_Ext(mut a: uint16, game: &mut Game) -> uint8 
                 v4 = 91 as int16;
             }
             (*E).mbn_var_3B = (i + 1 as ::core::ffi::c_int) as uint16;
-            let mut v11: uint16 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
+            let v11: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
             v12 = gVramWriteEntry(
                 *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16)
                     as ::core::ffi::c_int,
@@ -4930,12 +4796,12 @@ pub unsafe fn HandleTypewriterText_Ext(mut a: uint16, game: &mut Game) -> uint8 
                 .offset_from(&raw mut game.g_ram as *mut uint8)
                 as ::core::ffi::c_long
                 + 52 as ::core::ffi::c_long) as VoidP;
-            let mut mbn_var_3C: uint16 = (*E).mbn_var_3C;
+            let mbn_var_3C: uint16 = (*E).mbn_var_3C;
             (*v12).vram_dst = mbn_var_3C;
             (*E).mbn_var_3C = (mbn_var_3C).wrapping_add(1u16);
             *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) =
                 (v11).wrapping_add(7u16);
-            let mut v14: uint16 = ((*E).mbn_var_3F).wrapping_add(1u16);
+            let v14: uint16 = ((*E).mbn_var_3F).wrapping_add(1u16);
             (*E).mbn_var_3F = v14;
             if v14 as ::core::ffi::c_int - 2 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                 == 0
@@ -4957,7 +4823,7 @@ pub unsafe fn Ridley_Func_62(game: &mut Game) {
     let mut v0: uint16 = addr_stru_A6C3B8 as uint16;
     i = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) as ::core::ffi::c_int;
     loop {
-        let mut v2: *const uint8 = RomPtr_A6(v0, game);
+        let v2: *const uint8 = RomPtr_A6(v0, game);
         if *(v2 as *mut uint16) == 0 {
             break;
         }
@@ -4979,13 +4845,13 @@ pub unsafe fn Ridley_Func_63(game: &mut Game) {
 }
 pub unsafe fn Ridley_C53E(game: &mut Game) {
     Ridley_Func_99(addr_kRidley_Ilist_E6C8 as uint16, game);
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_A = ((0xa6c551i32) as u16) & (0xffffu16);
     (*E).ridley_var_F = 32 as uint16;
 }
 pub unsafe fn Ridley_C551(game: &mut Game) {
     Ridley_Func_68(game);
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_F = (*E).ridley_var_F.wrapping_sub(1);
     if ((*E).ridley_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
         (*E).ridley_var_B = 0 as uint16;
@@ -5002,7 +4868,7 @@ pub unsafe fn Ridley_C551(game: &mut Game) {
 }
 pub unsafe fn Ridley_Func_64(game: &mut Game) {
     Ridley_Func_69(game);
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_F = (*E).ridley_var_F.wrapping_sub(1);
     if ((*E).ridley_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
         if (*E).ridley_var_1B != 0 {
@@ -5016,14 +4882,14 @@ pub unsafe fn Ridley_Func_64(game: &mut Game) {
 }
 pub unsafe fn Ridley_Func_65(game: &mut Game) {
     Ridley_Func_69(game);
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_02 = 0 as uint16;
     (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
     (*E).ridley_var_A = ((0xa6c5c8i32) as u16) & (0xffffu16);
     (*E).ridley_var_F = 32 as uint16;
 }
 pub unsafe fn Ridley_Func_66(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_F = (*E).ridley_var_F.wrapping_sub(1);
     if ((*E).ridley_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
         (*E).ridley_var_A = ((0xa6c5dai32) as u16) & (0xffffu16);
@@ -5031,10 +4897,10 @@ pub unsafe fn Ridley_Func_66(game: &mut Game) {
     }
 }
 pub unsafe fn Ridley_Func_67(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_F = (*E).ridley_var_F.wrapping_sub(1);
     if ((*E).ridley_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
-        let mut k: uint16 = 0 as uint16;
+        let k: uint16 = 0 as uint16;
         printf(b"Warning: X undefined\n\0" as *const u8 as *const ::core::ffi::c_char);
         SetBossBitForCurArea(1 as uint16, game);
         Enemy_ItemDrop_Ridley(k, game);
@@ -5044,7 +4910,7 @@ pub unsafe fn Ridley_Func_67(game: &mut Game) {
     }
 }
 pub unsafe fn Ridley_Func_68(game: &mut Game) -> uint8 {
-    let mut rect: Rect16U = Rect16U {
+    let rect: Rect16U = Rect16U {
         x: 128 as uint16,
         y: 328 as uint16,
         w: 4 as uint16,
@@ -5062,7 +4928,7 @@ pub unsafe fn Ridley_Func_68(game: &mut Game) -> uint8 {
 }
 pub unsafe fn Ridley_Func_69(game: &mut Game) {
     let mut v1: int16 = 0;
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     v1 = (((*E).ridley_var_27) as i16).wrapping_sub(1i16);
     if v1 < 0i16 {
         (*E).ridley_var_27 = 4 as uint16;
@@ -5074,7 +4940,7 @@ pub unsafe fn Ridley_Func_69(game: &mut Game) {
             v2 = 0 as uint16;
         }
         (*E).ridley_var_28 = v2;
-        let mut v3: ::core::ffi::c_int =
+        let v3: ::core::ffi::c_int =
             ((4u16).wrapping_mul(v2)) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         game.eproj_spawn_pt = Point16U {
             x: (((*E).base.x_pos).wrapping_add((g_word_A6C66E[v3 as usize]) as u16)),
@@ -5088,7 +4954,7 @@ pub unsafe fn Ridley_Func_69(game: &mut Game) {
     };
 }
 pub unsafe fn RidleysExplosion_Init(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(
+    let E: *mut Enemy_Ridley = Get_Ridley(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -5096,11 +4962,11 @@ pub unsafe fn RidleysExplosion_Init(game: &mut Game) {
     (*E).base.timer = 0 as uint16;
     (*E).base.vram_tiles_index = 0 as uint16;
     (*E).base.palette_index = 3584 as uint16;
-    let mut ridley_parameter_1: uint16 = (*E).ridley_parameter_1;
+    let ridley_parameter_1: uint16 = (*E).ridley_parameter_1;
     (*E).ridley_var_F = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6c6ce)) as *const uint8
         as *mut uint16)
         .offset((ridley_parameter_1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
-    let mut Random: uint16 = NextRandom(game);
+    let Random: uint16 = NextRandom(game);
     (*E).ridley_var_B = (if Random as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         -(Random as ::core::ffi::c_int & 0x130 as ::core::ffi::c_int)
     } else {
@@ -5170,13 +5036,12 @@ pub unsafe fn RidleysExplosion_Init(game: &mut Game) {
             }
             14 => {
                 let mut v10: uint16 = 0 as uint16;
-                let mut E0: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+                let E0: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
                 if (*E0).ridley_var_10 != 0 {
                     v10 = 2 as uint16;
                 }
-                let mut v13: ::core::ffi::c_int =
-                    v10 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-                let mut v14: uint16 = ((*E0).base.x_pos).wrapping_add(
+                let v13: ::core::ffi::c_int = v10 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+                let v14: uint16 = ((*E0).base.x_pos).wrapping_add(
                     *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6c804)) as *const uint8
                         as *mut uint16)
                         .offset(v13 as isize),
@@ -5190,13 +5055,12 @@ pub unsafe fn RidleysExplosion_Init(game: &mut Game) {
             }
             16 => {
                 let mut v16: uint16 = 0 as uint16;
-                let mut E0_0: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+                let E0_0: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
                 if (*E0_0).ridley_var_10 != 0 {
                     v16 = 2 as uint16;
                 }
-                let mut v19: ::core::ffi::c_int =
-                    v16 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-                let mut v20: uint16 = ((*E0_0).base.x_pos).wrapping_add(
+                let v19: ::core::ffi::c_int = v16 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+                let v20: uint16 = ((*E0_0).base.x_pos).wrapping_add(
                     *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6c836)) as *const uint8
                         as *mut uint16)
                         .offset(v19 as isize),
@@ -5210,13 +5074,12 @@ pub unsafe fn RidleysExplosion_Init(game: &mut Game) {
             }
             18 => {
                 let mut v22: uint16 = 0 as uint16;
-                let mut E0_1: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+                let E0_1: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
                 if (*E0_1).ridley_var_10 != 0 {
                     v22 = 2 as uint16;
                 }
-                let mut v25: ::core::ffi::c_int =
-                    v22 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-                let mut v26: uint16 = ((*E0_1).base.x_pos).wrapping_add(
+                let v25: ::core::ffi::c_int = v22 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+                let v26: uint16 = ((*E0_1).base.x_pos).wrapping_add(
                     *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6c868)) as *const uint8
                         as *mut uint16)
                         .offset(v25 as isize),
@@ -5230,13 +5093,12 @@ pub unsafe fn RidleysExplosion_Init(game: &mut Game) {
             }
             20 => {
                 let mut v28: uint16 = 0 as uint16;
-                let mut E0_2: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+                let E0_2: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
                 if (*E0_2).ridley_var_10 != 0 {
                     v28 = 2 as uint16;
                 }
-                let mut v31: ::core::ffi::c_int =
-                    v28 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-                let mut v32: uint16 = ((*E0_2).base.x_pos).wrapping_add(
+                let v31: ::core::ffi::c_int = v28 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+                let v32: uint16 = ((*E0_2).base.x_pos).wrapping_add(
                     *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6c89a)) as *const uint8
                         as *mut uint16)
                         .offset(v31 as isize),
@@ -5250,13 +5112,12 @@ pub unsafe fn RidleysExplosion_Init(game: &mut Game) {
             }
             22 => {
                 let mut v34: uint16 = 0 as uint16;
-                let mut E0_3: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+                let E0_3: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
                 if (*E0_3).ridley_var_10 != 0 {
                     v34 = 2 as uint16;
                 }
-                let mut v37: ::core::ffi::c_int =
-                    v34 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-                let mut v38: uint16 = ((*E0_3).base.x_pos).wrapping_add(
+                let v37: ::core::ffi::c_int = v34 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+                let v38: uint16 = ((*E0_3).base.x_pos).wrapping_add(
                     *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6c8cc)) as *const uint8
                         as *mut uint16)
                         .offset(v37 as isize),
@@ -5287,7 +5148,7 @@ pub unsafe fn RidleysExplosion_Main(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
         game,
     );
-    let mut E: *mut Enemy_RidleysExplosion = Get_RidleysExplosion(
+    let E: *mut Enemy_RidleysExplosion = Get_RidleysExplosion(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -5311,9 +5172,9 @@ pub unsafe fn RidleysExplosion_Main(game: &mut Game) {
         );
     }
 }
-pub unsafe fn RidleysExplosion_Func_1(mut k: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_RidleysExplosion = Get_RidleysExplosion(k as ::core::ffi::c_int, game);
-    let mut v2: uint16 = ((*E).base.frame_counter) & (1u16);
+pub unsafe fn RidleysExplosion_Func_1(k: uint16, game: &mut Game) {
+    let E: *mut Enemy_RidleysExplosion = Get_RidleysExplosion(k as ::core::ffi::c_int, game);
+    let v2: uint16 = ((*E).base.frame_counter) & (1u16);
     let mut v3: uint16 = 0;
     (*E).base.frame_counter = v2;
     if v2 != 0 {
@@ -5359,7 +5220,7 @@ pub unsafe fn Ridley_Func_70(game: &mut Game) {
         .expect("non-null function pointer")(game);
     Ridley_Func_86(game);
     Ridley_Func_87(game);
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     if (*E).ridley_var_1B as ::core::ffi::c_int
         | (*((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16)
             as ::core::ffi::c_int
@@ -5453,7 +5314,7 @@ pub unsafe fn Ridley_CBDC(game: &mut Game) {
     }
 }
 pub unsafe fn Ridley_Func_77(game: &mut Game) {
-    let mut v0: ::core::ffi::c_int =
+    let v0: ::core::ffi::c_int =
         (*Get_Ridley(0 as ::core::ffi::c_int, game)).ridley_var_10 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(11) =
         *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6cc12)) as *const uint8 as *mut uint16)
@@ -5517,7 +5378,7 @@ pub unsafe fn Ridley_Func_79(game: &mut Game) {
 }
 pub unsafe fn Ridley_Func_80_DoubleRet(game: &mut Game) -> uint8 {
     let mut current_block: u64;
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     let mut retval: bool = false_0 != 0;
     let mut v1: uint16 = 0;
     if *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(2) != 0u16
@@ -5617,7 +5478,7 @@ pub unsafe fn Ridley_Func_82_DoubleRet(game: &mut Game) -> bool {
     false_0 != 0
 }
 pub unsafe fn Ridley_Func_83(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     Ridley_Func_77(game);
     if Ridley_Func_78(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
         && ((*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16) as uint8)
@@ -5685,7 +5546,7 @@ pub unsafe fn Ridley_Func_83(game: &mut Game) {
     }
 }
 pub unsafe fn Ridley_Func_84(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     Ridley_Func_77(game);
     if Ridley_Func_78(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
         && ((*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16) as uint8)
@@ -5814,7 +5675,7 @@ pub unsafe fn Ridley_Func_85(game: &mut Game) {
 }
 pub unsafe fn Ridley_Func_86(game: &mut Game) {
     let mut v1: int16 = 0;
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(23) =
         (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(25)
             as ::core::ffi::c_int
@@ -6134,18 +5995,18 @@ pub unsafe fn Ridley_Func_87(game: &mut Game) {
         *fresh10 = (*fresh10).wrapping_sub(128u16);
     }
 }
-pub unsafe fn Ridley_Func_88(mut k: uint16, game: &mut Game) {
+pub unsafe fn Ridley_Func_88(k: uint16, game: &mut Game) {
     let mut current_block: u64;
     let mut v6: int16 = 0;
     let mut v2: uint16 = 0;
-    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
         .offset((v1 + 16 as ::core::ffi::c_int) as isize) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int)
         != 0i32
     {
-        let mut v4: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        let mut v5: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
+        let v4: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        let v5: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
             .offset((v4 + 17 as ::core::ffi::c_int) as isize);
         if v5 < *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(15) {
             let ref mut fresh12 =
@@ -6309,7 +6170,7 @@ pub unsafe fn Ridley_Func_88(mut k: uint16, game: &mut Game) {
         }
         match current_block {
             5689001924483802034 => {
-                let mut v3: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+                let v3: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
                 *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
                     .offset((v3 + 16 as ::core::ffi::c_int) as isize) = 0 as uint16;
                 *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
@@ -6338,7 +6199,7 @@ pub unsafe fn Ridley_Func_88(mut k: uint16, game: &mut Game) {
             .offset(0))
         .wrapping_add((r18) as u8)) as uint16;
     }
-    let mut v7: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let v7: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
         .offset((v7 + 24 as ::core::ffi::c_int) as isize) = ComputeSinMult(
         *(((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
@@ -6366,7 +6227,7 @@ pub unsafe fn Ridley_Func_88(mut k: uint16, game: &mut Game) {
         game,
     );
 }
-pub unsafe fn Ridley_Func_89(mut a: uint16, game: &mut Game) {
+pub unsafe fn Ridley_Func_89(a: uint16, game: &mut Game) {
     let mut v1: uint16 = 0;
     let mut r18: uint16 = 0;
     let mut r20: uint16 = 0;
@@ -6379,7 +6240,7 @@ pub unsafe fn Ridley_Func_89(mut a: uint16, game: &mut Game) {
             .wrapping_sub(1_usize) as isize,
     ) = v2 as uint8;
     *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(5) = v1;
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     if (*E).ridley_var_10 != 1u16 && (*E).ridley_var_01 != 0u16 {
         let mut pt: Point16U = Point16U { x: 0, y: 0 };
         if Ridley_Func_90(&raw mut pt, game) != 0 {
@@ -6407,8 +6268,7 @@ pub unsafe fn Ridley_Func_89(mut a: uint16, game: &mut Game) {
             if r18 >= 0x18u16 && r18 < 0xe8u16 {
                 v7 = 24 as uint16;
             }
-            let mut v8: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x2000)
-                as *mut uint16)
+            let v8: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
                 .offset(5) as ::core::ffi::c_int
                 + v7 as ::core::ffi::c_int
                 + 0x4000 as ::core::ffi::c_int) as uint16;
@@ -6424,7 +6284,7 @@ pub unsafe fn Ridley_Func_89(mut a: uint16, game: &mut Game) {
             if r18 >= 0x18u16 && r18 < 0xe8u16 {
                 v5 = 232 as uint16;
             }
-            let mut v6: uint16 = (v5 as ::core::ffi::c_int + 16128 as ::core::ffi::c_int
+            let v6: uint16 = (v5 as ::core::ffi::c_int + 16128 as ::core::ffi::c_int
                 - *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(5)
                     as ::core::ffi::c_int) as uint16;
             if v6 < *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(21)
@@ -6437,8 +6297,8 @@ pub unsafe fn Ridley_Func_89(mut a: uint16, game: &mut Game) {
         }
     }
 }
-pub unsafe fn Ridley_Func_90(mut out: *mut Point16U, game: &mut Game) -> uint8 {
-    let mut rect: Rect16U = Rect16U {
+pub unsafe fn Ridley_Func_90(out: *mut Point16U, game: &mut Game) -> uint8 {
+    let rect: Rect16U = Rect16U {
         x: *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(82),
         y: *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(83),
         w: 64 as uint16,
@@ -6449,7 +6309,7 @@ pub unsafe fn Ridley_Func_90(mut out: *mut Point16U, game: &mut Game) -> uint8 {
     }
     let mut v1: uint16 = 0 as uint16;
     loop {
-        let mut v2: ::core::ffi::c_int = v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        let v2: ::core::ffi::c_int = v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         if (*(((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(v2 as isize)
             as *mut uint16 as *mut uint8)
             .offset(
@@ -6469,7 +6329,7 @@ pub unsafe fn Ridley_Func_90(mut out: *mut Point16U, game: &mut Game) -> uint8 {
                 & 0xf as ::core::ffi::c_int)
                 == 2i32
         {
-            let mut v3: uint16 = abs16(
+            let v3: uint16 = abs16(
                 (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
                     .offset(v2 as isize))
                 .wrapping_sub(rect.x),
@@ -6477,12 +6337,12 @@ pub unsafe fn Ridley_Func_90(mut out: *mut Point16U, game: &mut Game) -> uint8 {
             let mut v4: bool = v3
                 < *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16)
                     .offset(v2 as isize);
-            let mut v5: uint16 = (v3).wrapping_sub(
+            let v5: uint16 = (v3).wrapping_sub(
                 *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16)
                     .offset(v2 as isize),
             );
             if v4 || v5 < rect.w {
-                let mut v6: uint16 = abs16(
+                let v6: uint16 = abs16(
                     (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
                         .offset(v2 as isize))
                     .wrapping_sub(rect.y),
@@ -6490,7 +6350,7 @@ pub unsafe fn Ridley_Func_90(mut out: *mut Point16U, game: &mut Game) -> uint8 {
                 v4 = v6
                     < *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
                         .offset(v2 as isize);
-                let mut v7: uint16 = (v6).wrapping_sub(
+                let v7: uint16 = (v6).wrapping_sub(
                     *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
                         .offset(v2 as isize),
                 );
@@ -6504,7 +6364,7 @@ pub unsafe fn Ridley_Func_90(mut out: *mut Point16U, game: &mut Game) -> uint8 {
             return 0 as uint8;
         }
     }
-    let mut v8: ::core::ffi::c_int = v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let v8: ::core::ffi::c_int = v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     (*out).x =
         *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v8 as isize);
     (*out).y =
@@ -6512,14 +6372,14 @@ pub unsafe fn Ridley_Func_90(mut out: *mut Point16U, game: &mut Game) -> uint8 {
     1 as uint8
 }
 pub unsafe fn Ridley_Func_91(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     if *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(10)
         as ::core::ffi::c_int
         - 8 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         == 0
     {
-        let mut v1: uint16 = ((*E).ridley_var_0E).wrapping_add(1u16);
+        let v1: uint16 = ((*E).ridley_var_0E).wrapping_add(1u16);
         (*E).ridley_var_0E = v1;
         if v1 as ::core::ffi::c_int - 16 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
             return;
@@ -6562,7 +6422,7 @@ pub unsafe fn Ridley_Func_92(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(66) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(76) = 0 as uint16;
 }
-pub unsafe fn Ridley_Func_93(mut j: uint16, mut k: uint16, game: &mut Game) {
+pub unsafe fn Ridley_Func_93(j: uint16, k: uint16, game: &mut Game) {
     let mut dst: *mut uint16 =
         (&raw mut game.g_ram as *mut uint8).offset(j as ::core::ffi::c_int as isize) as *mut uint16;
     let mut src: *const uint16 = RomPtr_A6(k, game) as *const uint16;
@@ -6583,7 +6443,7 @@ pub unsafe fn Ridley_Func_94(game: &mut Game) {
 pub unsafe fn Ridley_Func_95(game: &mut Game) {
     Ridley_Func_D3DC(0x8000 as uint16, game);
 }
-pub unsafe fn Ridley_Func_D3DC(mut a: uint16, game: &mut Game) {
+pub unsafe fn Ridley_Func_D3DC(a: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(16) = a;
     *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(26) = a;
     *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(36) = a;
@@ -6598,7 +6458,7 @@ pub unsafe fn Ridley_Func_96(game: &mut Game) {
     v0 = 7 as int16;
     let mut v1: uint16 = 0 as uint16;
     loop {
-        let mut v2: ::core::ffi::c_int = v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        let v2: ::core::ffi::c_int = v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
             .offset((v2 + 21 as ::core::ffi::c_int) as isize) = (0x8000u16).wrapping_sub(
             *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
@@ -6632,20 +6492,20 @@ pub unsafe fn Ridley_Func_97(game: &mut Game) -> uint8 {
         != 0i32) as uint8
 }
 pub unsafe fn Ridley_Func_98(game: &mut Game) {
-    let mut enemy_ptr: uint16 = (*Get_Ridley(
+    let enemy_ptr: uint16 = (*Get_Ridley(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
     .base
     .enemy_ptr;
-    let mut v1: *const uint8 = RomPtr_A0(enemy_ptr, game);
+    let v1: *const uint8 = RomPtr_A0(enemy_ptr, game);
     Samus_DealDamage(
         SuitDamageDivision(*(v1.offset(6) as *mut uint16), game),
         game,
     );
 }
-pub unsafe fn Ridley_Func_99(mut a: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+pub unsafe fn Ridley_Func_99(a: uint16, game: &mut Game) {
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).base.current_instruction = a;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
@@ -6653,8 +6513,8 @@ pub unsafe fn Ridley_Func_99(mut a: uint16, game: &mut Game) {
 pub unsafe fn Ridley_Func_100(game: &mut Game) {
     let mut v0: int16 = 0;
     v0 = 0 as int16;
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
-    let mut health: uint16 = (*E).base.health;
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let health: uint16 = (*E).base.health;
     if health < 0x2328u16 {
         v0 = 1 as int16;
         if health < 0x1518u16 {
@@ -6669,7 +6529,7 @@ pub unsafe fn Ridley_Func_100(game: &mut Game) {
         Ridley_D495(((v0) as u16).wrapping_sub(1u16), game);
     }
 }
-pub unsafe fn Ridley_D495(mut r18: uint16, game: &mut Game) {
+pub unsafe fn Ridley_D495(r18: uint16, game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xc400) as *mut uint16) == 0 {
         WriteColorsToPalette(
             0x1e2 as uint16,
@@ -6682,7 +6542,7 @@ pub unsafe fn Ridley_D495(mut r18: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn Ridley_Func_101(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     if (*E).ridley_var_01 != 0u16 && (*E).ridley_var_0D >= 0x32u16 {
         Ridley_D495(
             (if (*E).ridley_var_0D >= 0x46u16 {
@@ -6697,7 +6557,7 @@ pub unsafe fn Ridley_Func_101(game: &mut Game) {
 pub unsafe fn Ridley_Func_102(game: &mut Game) {
     let mut v0: int16 = 0;
     v0 = 3584 as int16;
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     if (*E).base.flash_timer >= 2u16
         && (*((&raw mut game.g_ram as *mut uint8).offset(0xe44) as *mut uint16)
             as ::core::ffi::c_int
@@ -6709,8 +6569,8 @@ pub unsafe fn Ridley_Func_102(game: &mut Game) {
     }
     (*E).ridley_var_0C = v0 as uint16;
 }
-pub unsafe fn Ridley_Func_103(mut k: uint16, mut j: uint16, game: &mut Game) -> uint8 {
-    let mut prod: uint16 = Mult8x8(
+pub unsafe fn Ridley_Func_103(k: uint16, j: uint16, game: &mut Game) -> uint8 {
+    let prod: uint16 = Mult8x8(
         (j as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint8,
         *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
     );
@@ -6721,21 +6581,15 @@ pub unsafe fn Ridley_Func_103(mut k: uint16, mut j: uint16, game: &mut Game) -> 
         & 0xf000 as ::core::ffi::c_int)
         != 0i32) as uint8
 }
-pub unsafe fn Ridley_Func_104_0(
-    mut k: uint16,
-    mut j: uint16,
-    mut r18: uint16,
-    mut r20: uint16,
-    game: &mut Game,
-) {
+pub unsafe fn Ridley_Func_104_0(k: uint16, j: uint16, r18: uint16, r20: uint16, game: &mut Game) {
     Ridley_Func_104(k, j, 0 as uint16, r18, r20, game);
 }
 pub unsafe fn Ridley_Func_104(
-    mut k: uint16,
-    mut j: uint16,
-    mut a: uint16,
-    mut r18: uint16,
-    mut r20: uint16,
+    k: uint16,
+    j: uint16,
+    a: uint16,
+    r18: uint16,
+    r20: uint16,
     game: &mut Game,
 ) {
     let mut v4: int16 = 0;
@@ -6745,10 +6599,10 @@ pub unsafe fn Ridley_Func_104(
     let mut v11: int16 = 0;
     let mut ridley_var_C: int16 = 0;
     let mut v17: int16 = 0;
-    let mut R26: uint16 = a;
-    let mut r24: uint16 = g_byte_A6D61F[j as usize] as uint16;
+    let R26: uint16 = a;
+    let r24: uint16 = g_byte_A6D61F[j as usize] as uint16;
     Ridley_Func_105(k, r18, r24, a, game);
-    let mut E: *mut Enemy_Ridley = Get_Ridley(k as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(k as ::core::ffi::c_int, game);
     v4 = (((*E).base.y_pos) as i16).wrapping_sub((r20) as i16);
     if v4 != 0 {
         if v4 >= 0i16 {
@@ -6756,13 +6610,13 @@ pub unsafe fn Ridley_Func_104(
             if RegWord == 0 {
                 RegWord = 1 as uint16;
             }
-            let mut r22: uint16 = RegWord;
+            let r22: uint16 = RegWord;
             ridley_var_C = (*E).ridley_var_C as int16;
-            let mut v14: bool = 0u8 != 0u8;
+            let v14: bool = 0u8 != 0u8;
             if ridley_var_C >= 0i16 {
                 let mut v15: uint16 = ((ridley_var_C) as u16).wrapping_sub(R26);
                 v15 = (v15).wrapping_sub(8u16);
-                let mut v16: uint16 = r22;
+                let v16: uint16 = r22;
                 ridley_var_C = ((v15) as i16).wrapping_sub((v16) as i16);
             }
             v17 = (ridley_var_C).wrapping_sub((r22) as i16);
@@ -6777,9 +6631,9 @@ pub unsafe fn Ridley_Func_104(
             if v5 == 0 {
                 v5 = 1 as uint16;
             }
-            let mut r22_0: uint16 = v5;
+            let r22_0: uint16 = v5;
             v6 = (*E).ridley_var_C as int16;
-            let mut v7: bool = 0u8 != 0u8;
+            let v7: bool = 0u8 != 0u8;
             if v6 < 0i16 {
                 v8 = ((R26) as i16).wrapping_add(v6);
                 v8 = (v8).wrapping_add(8i16);
@@ -6796,13 +6650,7 @@ pub unsafe fn Ridley_Func_104(
         }
     }
 }
-pub unsafe fn Ridley_Func_105(
-    mut k: uint16,
-    mut r18: uint16,
-    mut r24: uint16,
-    mut r26: uint16,
-    game: &mut Game,
-) {
+pub unsafe fn Ridley_Func_105(k: uint16, r18: uint16, r24: uint16, r26: uint16, game: &mut Game) {
     let mut v2: int16 = 0;
     let mut v4: int16 = 0;
     let mut v6: int16 = 0;
@@ -6810,7 +6658,7 @@ pub unsafe fn Ridley_Func_105(
     let mut v9: int16 = 0;
     let mut ridley_var_B: int16 = 0;
     let mut v15: int16 = 0;
-    let mut E: *mut Enemy_Ridley = Get_Ridley(k as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(k as ::core::ffi::c_int, game);
     v2 = (((*E).base.x_pos) as i16).wrapping_sub((r18) as i16);
     if v2 != 0 {
         if v2 >= 0i16 {
@@ -6818,13 +6666,13 @@ pub unsafe fn Ridley_Func_105(
             if RegWord == 0 {
                 RegWord = 1 as uint16;
             }
-            let mut r22: uint16 = RegWord;
+            let r22: uint16 = RegWord;
             ridley_var_B = (*E).ridley_var_B as int16;
-            let mut v12: bool = 0u8 != 0u8;
+            let v12: bool = 0u8 != 0u8;
             if ridley_var_B >= 0i16 {
                 let mut v13: uint16 = ((ridley_var_B) as u16).wrapping_sub(r26);
                 v13 = (v13).wrapping_sub(8u16);
-                let mut v14: uint16 = r22;
+                let v14: uint16 = r22;
                 ridley_var_B = ((v13) as i16).wrapping_sub((v14) as i16);
             }
             v15 = (ridley_var_B).wrapping_sub((r22) as i16);
@@ -6839,7 +6687,7 @@ pub unsafe fn Ridley_Func_105(
             if v3 == 0 {
                 v3 = 1 as uint16;
             }
-            let mut r22_0: uint16 = v3;
+            let r22_0: uint16 = v3;
             v4 = (*E).ridley_var_B as int16;
             if v4 < 0i16 {
                 v6 = ((r26) as i16).wrapping_add(v4);
@@ -6857,21 +6705,15 @@ pub unsafe fn Ridley_Func_105(
         }
     }
 }
-pub unsafe fn Ridley_Func_106(
-    mut k: uint16,
-    mut j: uint16,
-    mut r18: uint16,
-    mut r20: uint16,
-    game: &mut Game,
-) {
+pub unsafe fn Ridley_Func_106(k: uint16, j: uint16, r18: uint16, r20: uint16, game: &mut Game) {
     let mut v3: int16 = 0;
     let mut v5: int16 = 0;
     let mut v6: int16 = 0;
     let mut ridley_var_C: int16 = 0;
     let mut v9: int16 = 0;
-    let mut r24: uint16 = g_byte_A6D712[j as usize] as uint16;
+    let r24: uint16 = g_byte_A6D712[j as usize] as uint16;
     Ridley_Func_107(k, r18, r24, game);
-    let mut E: *mut Enemy_Ridley = Get_Ridley(k as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(k as ::core::ffi::c_int, game);
     v3 = (((*E).base.y_pos) as i16).wrapping_sub((r20) as i16);
     if v3 != 0 {
         if v3 >= 0i16 {
@@ -6879,7 +6721,7 @@ pub unsafe fn Ridley_Func_106(
             if RegWord == 0 {
                 RegWord = 1 as uint16;
             }
-            let mut r22: uint16 = RegWord;
+            let r22: uint16 = RegWord;
             ridley_var_C = (*E).ridley_var_C as int16;
             if ridley_var_C >= 0i16 {
                 ridley_var_C = (ridley_var_C as ::core::ffi::c_int
@@ -6898,7 +6740,7 @@ pub unsafe fn Ridley_Func_106(
             if v4 == 0 {
                 v4 = 1 as uint16;
             }
-            let mut r22_0: uint16 = v4;
+            let r22_0: uint16 = v4;
             v5 = (*E).ridley_var_C as int16;
             if v5 < 0i16 {
                 v5 = (v5 as ::core::ffi::c_int
@@ -6915,9 +6757,9 @@ pub unsafe fn Ridley_Func_106(
         }
     }
 }
-pub unsafe fn Ridley_Func_107(mut k: uint16, mut r18: uint16, mut r24: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(k as ::core::ffi::c_int, game);
-    let mut v2: int16 = (((*E).base.x_pos) as i16).wrapping_sub((r18) as i16);
+pub unsafe fn Ridley_Func_107(k: uint16, r18: uint16, r24: uint16, game: &mut Game) {
+    let E: *mut Enemy_Ridley = Get_Ridley(k as ::core::ffi::c_int, game);
+    let v2: int16 = (((*E).base.x_pos) as i16).wrapping_sub((r18) as i16);
     if v2 == 0 {
         return;
     }
@@ -6928,7 +6770,7 @@ pub unsafe fn Ridley_Func_107(mut k: uint16, mut r18: uint16, mut r24: uint16, g
         } else {
             1 as ::core::ffi::c_int
         }) as uint16;
-        let mut r22: uint16 = RegWord;
+        let r22: uint16 = RegWord;
         let mut s: int16 = (*E).ridley_var_B as int16;
         if s >= 0i16 {
             s = (s as ::core::ffi::c_int - 2 as ::core::ffi::c_int * RegWord as ::core::ffi::c_int)
@@ -6944,8 +6786,8 @@ pub unsafe fn Ridley_Func_107(mut k: uint16, mut r18: uint16, mut r24: uint16, g
             s as ::core::ffi::c_int
         }) as uint16;
     } else {
-        let mut v3: uint16 = SnesDivide((r18).wrapping_sub((*E).base.x_pos), r24 as uint8);
-        let mut r22_0: uint16 = (if v3 != 0u16 {
+        let v3: uint16 = SnesDivide((r18).wrapping_sub((*E).base.x_pos), r24 as uint8);
+        let r22_0: uint16 = (if v3 != 0u16 {
             v3 as ::core::ffi::c_int
         } else {
             1 as ::core::ffi::c_int
@@ -6966,8 +6808,8 @@ pub unsafe fn Ridley_Func_107(mut k: uint16, mut r18: uint16, mut r24: uint16, g
         }) as uint16;
     };
 }
-pub unsafe fn Ridley_Func_111(mut r18: uint16, mut r20: uint16, mut r22: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+pub unsafe fn Ridley_Func_111(mut r18: uint16, r20: uint16, r22: uint16, game: &mut Game) {
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     if r22 != (*E).ridley_var_0B {
         if ((r22) as i16).wrapping_sub(((*E).ridley_var_0B) as i16) >= 0i16 {
             let mut v2: uint16 = ((*E).ridley_var_0B).wrapping_add(32u16);
@@ -6988,7 +6830,7 @@ pub unsafe fn Ridley_Func_111(mut r18: uint16, mut r20: uint16, mut r22: uint16,
         }
     }
     let mut v3: uint16 = 0;
-    let mut current_block_13: u64;
+    let current_block_13: u64;
     if (r18 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
         v3 = ((*E).ridley_var_0A).wrapping_add(r18);
         if v3 as ::core::ffi::c_int - r20 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0
@@ -7090,10 +6932,10 @@ pub unsafe fn Ridley_Func_112(game: &mut Game) {
         (*Ridley).ridley_var_1F = 4 as uint16;
     };
 }
-pub unsafe fn Ridley_Func_113(mut k: uint16, game: &mut Game) {
+pub unsafe fn Ridley_Func_113(k: uint16, game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) != 2u16 {
-        let mut E: *mut Enemy_Ridley = Get_Ridley(k as ::core::ffi::c_int, game);
-        let mut r18: uint16 = abs16((*E).ridley_var_B);
+        let E: *mut Enemy_Ridley = Get_Ridley(k as ::core::ffi::c_int, game);
+        let r18: uint16 = abs16((*E).ridley_var_B);
         let mut v2: uint16 = abs16((*E).ridley_var_C);
         if v2 < r18 {
             v2 = r18;
@@ -7111,9 +6953,9 @@ pub unsafe fn Ridley_Func_113(mut k: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn Ridley_Func_114(game: &mut Game) {
-    let mut current_block: u64;
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
-    let mut ridley_var_10: uint16 = (*E).ridley_var_10;
+    let current_block: u64;
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let ridley_var_10: uint16 = (*E).ridley_var_10;
     let mut v2: uint16 = 0;
     if ridley_var_10 == 0 {
         if *((&raw mut (*E).base.enemy_ptr as *mut uint8).offset(1) as *mut int16) < 0i16 {
@@ -7141,7 +6983,7 @@ pub unsafe fn Ridley_Func_114(game: &mut Game) {
 pub unsafe fn Ridley_Func_115(game: &mut Game) {
     let mut v1: int16 = 0;
     Ridley_Func_116(game);
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     v1 = (((*E).ridley_var_09) as i16).wrapping_sub(((*E).ridley_var_08) as i16);
     (*E).ridley_var_09 = v1 as uint16;
     if v1 < 0i16 {
@@ -7154,9 +6996,9 @@ pub unsafe fn Ridley_Func_115(game: &mut Game) {
     }
 }
 pub unsafe fn Ridley_Func_116(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
-    let mut r18: uint16 = abs16((*E).ridley_var_B);
-    let mut v1: uint16 = (r18).wrapping_add(abs16((*E).ridley_var_C));
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let r18: uint16 = abs16((*E).ridley_var_B);
+    let v1: uint16 = (r18).wrapping_add(abs16((*E).ridley_var_C));
     if v1 != 0 {
         let mut v2: uint16 = (v1).wrapping_sub(r18);
         if v2 as ::core::ffi::c_int - r18 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0
@@ -7179,14 +7021,14 @@ pub unsafe fn Ridley_Func_116(game: &mut Game) {
     };
 }
 pub unsafe fn Ridley_Func_117(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_05 = addr_word_A6DA71 as uint16;
     (*E).ridley_var_06 = 1 as uint16;
 }
 pub unsafe fn Ridley_Func_118(game: &mut Game) {
     let mut v7: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
-    let mut v1: uint16 = ((*E).ridley_var_06).wrapping_sub(1u16);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let v1: uint16 = ((*E).ridley_var_06).wrapping_sub(1u16);
     (*E).ridley_var_06 = v1;
     if v1 == 0 {
         let mut i: ::core::ffi::c_int = 0;
@@ -7203,7 +7045,7 @@ pub unsafe fn Ridley_Func_118(game: &mut Game) {
             (*E).ridley_var_05 = i as uint16;
         }
         (*E).ridley_var_06 = i as uint16;
-        let mut v6: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
+        let v6: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
         v7 = gVramWriteEntry(
             *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16)
                 as ::core::ffi::c_int,
@@ -7226,13 +7068,13 @@ pub unsafe fn Ridley_Func_118(game: &mut Game) {
         (*E).ridley_var_05 = (v3).wrapping_add(6u16);
     }
 }
-pub unsafe fn Ridley_Func_119(mut carry: uint8, game: &mut Game) {
+pub unsafe fn Ridley_Func_119(carry: uint8, game: &mut Game) {
     let mut v3: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     let mut v1: uint16 = addr_off_A6DAD0 as uint16;
     if carry != 0 {
         v1 = addr_off_A6DAD4 as uint16;
     }
-    let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
+    let v2: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
     v3 = gVramWriteEntry(
         *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) as ::core::ffi::c_int,
         game,
@@ -7241,7 +7083,7 @@ pub unsafe fn Ridley_Func_119(mut carry: uint8, game: &mut Game) {
         -(20480 as ::core::ffi::c_int) as VoidP;
     *((&raw mut (*v3.offset(1)).src.addr as *mut uint8).offset(1) as *mut VoidP) =
         -(20480 as ::core::ffi::c_int) as VoidP;
-    let mut v4: *const uint8 = RomPtr_A6(v1, game);
+    let v4: *const uint8 = RomPtr_A6(v1, game);
     (*v3).src.addr = *(v4 as *mut uint16);
     (*v3.offset(1)).src.addr = *(v4.offset(2) as *mut uint16);
     (*v3).vram_dst = 31424 as uint16;
@@ -7254,7 +7096,7 @@ pub unsafe fn Ridley_Func_119(mut carry: uint8, game: &mut Game) {
 }
 pub unsafe fn Ridley_Func_120(game: &mut Game) {
     let mut ridley_var_10: int16 = 0;
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     ridley_var_10 = (*E).ridley_var_10 as int16;
     if ridley_var_10 != 0 {
         if ridley_var_10 == 1i16 {
@@ -7262,7 +7104,7 @@ pub unsafe fn Ridley_Func_120(game: &mut Game) {
         }
         ridley_var_10 = 10 as int16;
     }
-    let mut v2: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6db02)) as *const uint8
+    let v2: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6db02)) as *const uint8
         as *mut uint16)
         .offset(
             ((*E).ridley_var_07 as ::core::ffi::c_int + ridley_var_10 as ::core::ffi::c_int)
@@ -7337,7 +7179,7 @@ pub unsafe fn sub_A6DB2A(game: &mut Game) {
         );
     }
 }
-pub unsafe fn sub_A6DBC2(mut j: uint16, mut x: uint16, mut y: uint16, game: &mut Game) {
+pub unsafe fn sub_A6DBC2(j: uint16, x: uint16, y: uint16, game: &mut Game) {
     sub_A6DC13(
         j,
         x,
@@ -7346,7 +7188,7 @@ pub unsafe fn sub_A6DBC2(mut j: uint16, mut x: uint16, mut y: uint16, game: &mut
         game,
     );
 }
-pub unsafe fn CallBabyMetroidInstr(mut ea: uint32, mut k: uint16, game: &mut Game) -> uint16 {
+pub unsafe fn CallBabyMetroidInstr(ea: uint32, k: uint16, game: &mut Game) -> uint16 {
     match ea {
         10928073 => BabyMetroid_Instr_2(k, game),
         10928097 => BabyMetroid_Instr_3(k, game),
@@ -7355,9 +7197,9 @@ pub unsafe fn CallBabyMetroidInstr(mut ea: uint32, mut k: uint16, game: &mut Gam
         _ => Unreachable(game) as uint16,
     }
 }
-unsafe fn BabyMetroid_DBCB_DoubleRetEx(mut a: uint16, game: &mut Game) -> ::core::ffi::c_int {
+unsafe fn BabyMetroid_DBCB_DoubleRetEx(a: uint16, game: &mut Game) -> ::core::ffi::c_int {
     let mut current_block: u64;
-    let mut st: *mut BabyMetroidExecState = (&raw mut game.g_ram as *mut uint8).offset(a as isize)
+    let st: *mut BabyMetroidExecState = (&raw mut game.g_ram as *mut uint8).offset(a as isize)
         as *mut uint8 as *mut BabyMetroidExecState;
     if ((*st).ip as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32 {
         return -(1 as ::core::ffi::c_int);
@@ -7398,31 +7240,24 @@ unsafe fn BabyMetroid_DBCB_DoubleRetEx(mut a: uint16, game: &mut Game) -> ::core
     (*st).ip = v2;
     *v3.offset(1) as ::core::ffi::c_int
 }
-pub unsafe fn sub_A6DC13(
-    mut j: uint16,
-    mut r18: uint16,
-    mut r20: uint16,
-    mut r22: uint16,
-    game: &mut Game,
-) {
+pub unsafe fn sub_A6DC13(j: uint16, r18: uint16, r20: uint16, r22: uint16, game: &mut Game) {
     let mut p: *const uint8 = RomPtr_A6(j, game);
     let mut n: ::core::ffi::c_int = *(p as *mut uint16) as ::core::ffi::c_int;
     p = p.offset(2);
     let mut idx: ::core::ffi::c_int =
         *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) as ::core::ffi::c_int;
     loop {
-        let mut v9: int16 = (r20 as ::core::ffi::c_int + *p.offset(2) as int8 as ::core::ffi::c_int
+        let v9: int16 = (r20 as ::core::ffi::c_int + *p.offset(2) as int8 as ::core::ffi::c_int
             - *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16)
                 as ::core::ffi::c_int) as int16;
         if v9 >= 0i16
             && v9 as ::core::ffi::c_int - 224 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
                 != 0
         {
-            let mut x: uint16 = (r18 as ::core::ffi::c_int
-                + *(p as *mut uint16) as ::core::ffi::c_int
+            let x: uint16 = (r18 as ::core::ffi::c_int + *(p as *mut uint16) as ::core::ffi::c_int
                 - *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16)
                     as ::core::ffi::c_int) as uint16;
-            let mut v11: *mut OamEnt = gOamEnt(idx, game);
+            let v11: *mut OamEnt = gOamEnt(idx, game);
             (*v11).xcoord = x as uint8;
             (*v11).ycoord = v9 as uint8;
             *(&raw mut (*v11).charnum as *mut uint16) = (r22) | (*(p.offset(3) as *mut uint16));
@@ -7451,9 +7286,9 @@ pub unsafe fn Ridley_Func_121(game: &mut Game) -> uint8 {
     let mut v2: int16 = 0;
     let mut x_pos: int16 = 0;
     let mut v4: int16 = 0;
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     y_pos = (*E).base.y_pos as int16;
-    let mut result: uint8 = 1 as uint8;
+    let result: uint8 = 1 as uint8;
     if y_pos >= 0i16 {
         v2 = (y_pos as ::core::ffi::c_int + 32 as ::core::ffi::c_int
             - *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16)
@@ -7481,14 +7316,14 @@ pub unsafe fn Ridley_Func_121(game: &mut Game) -> uint8 {
     }
     result
 }
-pub unsafe fn Ridley_Func_122(mut rect: Rect16U, game: &mut Game) -> uint16 {
+pub unsafe fn Ridley_Func_122(rect: Rect16U, game: &mut Game) -> uint16 {
     let mut v2: int16 = 0;
     if *((&raw mut game.g_ram as *mut uint8).offset(0xcce) as *mut uint16) == 0 {
         return 0xffff as uint16;
     }
     let mut result: uint16 = 0 as uint16;
     loop {
-        let mut v1: ::core::ffi::c_int = result as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        let v1: ::core::ffi::c_int = result as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         v2 = *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(v1 as isize)
             as int16;
         if v2 < 0i16 {
@@ -7502,7 +7337,7 @@ pub unsafe fn Ridley_Func_122(mut rect: Rect16U, game: &mut Game) -> uint16 {
                 & 0x8000 as ::core::ffi::c_int
                 != 0
             {
-                let mut v3: uint16 = abs16(
+                let v3: uint16 = abs16(
                     (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
                         .offset(v1 as isize))
                     .wrapping_sub(rect.x),
@@ -7510,12 +7345,12 @@ pub unsafe fn Ridley_Func_122(mut rect: Rect16U, game: &mut Game) -> uint16 {
                 let mut v4: bool = v3
                     < *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16)
                         .offset(v1 as isize);
-                let mut v5: uint16 = (v3).wrapping_sub(
+                let v5: uint16 = (v3).wrapping_sub(
                     *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16)
                         .offset(v1 as isize),
                 );
                 if v4 || v5 < rect.w {
-                    let mut v6: uint16 = abs16(
+                    let v6: uint16 = abs16(
                         (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
                             .offset(v1 as isize))
                         .wrapping_sub(rect.y),
@@ -7523,7 +7358,7 @@ pub unsafe fn Ridley_Func_122(mut rect: Rect16U, game: &mut Game) -> uint16 {
                     v4 = v6
                         < *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
                             .offset(v1 as isize);
-                    let mut v7: uint16 = (v6).wrapping_sub(
+                    let v7: uint16 = (v6).wrapping_sub(
                         *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
                             .offset(v1 as isize),
                     );
@@ -7538,7 +7373,7 @@ pub unsafe fn Ridley_Func_122(mut rect: Rect16U, game: &mut Game) -> uint16 {
             return 0xffff as uint16;
         }
     }
-    let mut v8: ::core::ffi::c_int = result as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let v8: ::core::ffi::c_int = result as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v8 as isize) =
         rect.x;
     *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v8 as isize) =
@@ -7548,8 +7383,8 @@ pub unsafe fn Ridley_Func_122(mut rect: Rect16U, game: &mut Game) -> uint16 {
     *fresh2 = (*fresh2) | (0x10u16);
     result
 }
-pub unsafe fn Ridley_Func_123(mut j: uint16, game: &mut Game) {
-    let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+pub unsafe fn Ridley_Func_123(j: uint16, game: &mut Game) {
+    let v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: uint16 = 0;
     if (*((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16).offset(v1 as isize)
         as ::core::ffi::c_int
@@ -7568,20 +7403,20 @@ pub unsafe fn Ridley_Func_123(mut j: uint16, game: &mut Game) {
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16).offset(v1 as isize) = v2;
 }
-pub unsafe fn Ridley_Func_124(mut rect: Rect16U, game: &mut Game) -> uint8 {
-    let mut v0: uint16 = abs16(
+pub unsafe fn Ridley_Func_124(rect: Rect16U, game: &mut Game) -> uint8 {
+    let v0: uint16 = abs16(
         (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)).wrapping_sub(rect.x),
     );
     let mut v1: bool = v0 < *((&raw mut game.g_ram as *mut uint8).offset(0xafe) as *mut uint16);
-    let mut v2: uint16 =
+    let v2: uint16 =
         (v0).wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0xafe) as *mut uint16));
     if v1 || v2 < rect.w {
-        let mut v3: uint16 = abs16(
+        let v3: uint16 = abs16(
             (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16))
                 .wrapping_sub(rect.y),
         );
         v1 = v3 < *((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16);
-        let mut v4: uint16 =
+        let v4: uint16 =
             (v3).wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16));
         if v1 || v4 < rect.h {
             return 1 as uint8;
@@ -7618,8 +7453,8 @@ pub unsafe fn Ridley_Shot(game: &mut Game) {
         NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
     } else {
         v0 = 13 as int16;
-        let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
-        let mut flash_timer: uint16 = (*E).base.flash_timer;
+        let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+        let flash_timer: uint16 = (*E).base.flash_timer;
         if flash_timer != 0 {
             if flash_timer as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
                 v0 = 14 as int16;
@@ -7633,7 +7468,7 @@ pub unsafe fn Ridley_Powerbomb(game: &mut Game) {
     NormalEnemyPowerBombAiSkipDeathAnim_CurEnemy(game);
 }
 pub unsafe fn Ridley_Func_126(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     if (*E).base.health == 0
         && ((*E).ridley_var_01 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32
     {
@@ -7643,14 +7478,14 @@ pub unsafe fn Ridley_Func_126(game: &mut Game) {
     }
 }
 pub unsafe fn Ridley_Func_127(game: &mut Game) {
-    let mut rect: Rect16U = Rect16U {
+    let rect: Rect16U = Rect16U {
         x: *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(82),
         y: *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(83),
         w: 14 as uint16,
         h: 14 as uint16,
     };
     if Ridley_Func_124(rect, game) != 0 {
-        let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+        let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
         Samus_DealDamage(SuitDamageDivision((*E).ridley_var_1C, game), game);
         *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) = 96 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x18aa) as *mut uint16) = 5 as uint16;
@@ -7664,7 +7499,7 @@ pub unsafe fn Ridley_Func_127(game: &mut Game) {
     }
 }
 pub unsafe fn Ridley_Func_128(game: &mut Game) {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(
+    let E: *mut Enemy_Ridley = Get_Ridley(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -7682,7 +7517,7 @@ pub unsafe fn Ridley_Func_128(game: &mut Game) {
     if v1 >= 0x300u16 {
         v1 = 768 as uint16;
     }
-    let mut a: uint16 = v1;
+    let a: uint16 = v1;
     r18 = Math_MultBySin(v1, r18);
     if (((*E).ridley_var_B as ::core::ffi::c_int ^ r18 as ::core::ffi::c_int)
         & 0x8000 as ::core::ffi::c_int)
@@ -7728,7 +7563,7 @@ pub unsafe fn Ridley_Func_129(game: &mut Game) {
                 return;
             }
         }
-        let mut v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        let v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         game.eproj_spawn_pt = Point16U {
             x: *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
                 .offset(v1 as isize),
@@ -7752,28 +7587,16 @@ pub unsafe fn Ridley_Func_129(game: &mut Game) {
         SpawnEprojWithRoomGfx(0xe509 as uint16, v2, game);
     }
 }
-pub unsafe fn Ridley_Instr_5(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn Ridley_Instr_5(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
     (*Get_Ridley(0 as ::core::ffi::c_int, game)).ridley_var_0F = 89 as uint16;
     QueueSfx2_Max6(0x59 as uint16, game);
     jp
 }
-pub unsafe fn Ridley_Instr_6(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn Ridley_Instr_6(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
     (*Get_Ridley(0 as ::core::ffi::c_int, game)).ridley_var_0F = 0 as uint16;
     jp
 }
-pub unsafe fn Ridley_Instr_10(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn Ridley_Instr_10(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) == 2u16
         || *((&raw mut game.g_ram as *mut uint8).offset(0x9c2) as *mut uint16) as ::core::ffi::c_int
             - 30 as ::core::ffi::c_int
@@ -7785,33 +7608,21 @@ pub unsafe fn Ridley_Instr_10(
     (*Get_Ridley(0 as ::core::ffi::c_int, game)).ridley_var_00 = 8 as uint16;
     *jp.offset(0) as uintptr_t as *const uint16
 }
-pub unsafe fn Ridley_Instr_4(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn Ridley_Instr_4(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
     if (*Get_Ridley(0 as ::core::ffi::c_int, game)).ridley_var_1B != 0 {
         *jp.offset(0) as uintptr_t as *const uint16
     } else {
         *jp.offset(1) as uintptr_t as *const uint16
     }
 }
-pub unsafe fn Ridley_Instr_3(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn Ridley_Instr_3(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
     if (*Get_Ridley(0 as ::core::ffi::c_int, game)).ridley_var_1B != 0 {
         jp.offset(1)
     } else {
         *jp.offset(0) as uintptr_t as *const uint16
     }
 }
-pub unsafe fn Ridley_Instr_2(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn Ridley_Instr_2(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xb10) as *mut uint16) =
         *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16);
     *((&raw mut game.g_ram as *mut uint8).offset(0xb14) as *mut uint16) =
@@ -7819,72 +7630,48 @@ pub unsafe fn Ridley_Instr_2(
     (*Get_Ridley(0 as ::core::ffi::c_int, game)).ridley_var_1D = *jp.offset(0);
     jp.offset(1)
 }
-pub unsafe fn Ridley_Instr_1(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn Ridley_Instr_1(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
     if (*Get_Ridley(0 as ::core::ffi::c_int, game)).ridley_var_10 != 0 {
         *jp.offset(0) as uintptr_t as *const uint16
     } else {
         jp.offset(1)
     }
 }
-pub unsafe fn Ridley_Instr_14(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+pub unsafe fn Ridley_Instr_14(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).base.x_pos = ((*E).base.x_pos).wrapping_add(*jp.offset(0));
     (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(*jp.offset(1));
     jp.offset(2)
 }
-pub unsafe fn Ridley_Instr_9(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn Ridley_Instr_9(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
     (*Get_Ridley(0 as ::core::ffi::c_int, game)).ridley_var_10 = 0 as uint16;
     Ridley_Func_96(game);
     jp
 }
-pub unsafe fn Ridley_Instr_7(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn Ridley_Instr_7(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
     (*Get_Ridley(0 as ::core::ffi::c_int, game)).ridley_var_10 = 1 as uint16;
     jp
 }
-pub unsafe fn Ridley_Instr_8(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn Ridley_Instr_8(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
     (*Get_Ridley(0 as ::core::ffi::c_int, game)).ridley_var_10 = 2 as uint16;
     Ridley_Func_96(game);
     jp
 }
-pub unsafe fn Ridley_Func_131(mut k: uint16, game: &mut Game) {
+pub unsafe fn Ridley_Func_131(k: uint16, game: &mut Game) {
     Ridley_Func_132(k, 0 as uint16, game);
     Ridley_Func_132(k, 1 as uint16, game);
     Ridley_Func_132(k, 2 as uint16, game);
     Ridley_Func_132(k, 3 as uint16, game);
 }
-pub unsafe fn Ridley_Func_132(mut k: uint16, mut a: uint16, game: &mut Game) {
+pub unsafe fn Ridley_Func_132(k: uint16, a: uint16, game: &mut Game) {
     (*Get_Ridley(0 as ::core::ffi::c_int, game)).ridley_parameter_1 = a;
     SpawnEprojWithGfx(a, k, addr_stru_869634 as uint16, game);
 }
-pub unsafe fn Ridley_Instr_11(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn Ridley_Instr_11(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
     let mut v3: uint16 = 0;
-    let mut current_block: u64;
+    let current_block: u64;
     let mut r18: uint16 = 0;
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     if (*E).ridley_var_10 != 0 {
         let mut v4: uint16 = -(CalculateAngleFromXY(
             (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)
@@ -7955,53 +7742,37 @@ pub unsafe fn Ridley_Instr_11(
     (*E).ridley_var_1A = Math_MultByCos(0x500 as uint16, r18);
     jp
 }
-pub unsafe fn Ridley_Instr_12(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn Ridley_Instr_12(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
     Ridley_E90C(k, jp, 0 as uint16, game)
 }
-pub unsafe fn Ridley_Instr_13(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn Ridley_Instr_13(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
     Ridley_E90C(k, jp, 0xe as uint16, game)
 }
 pub unsafe fn Ridley_E90C(
-    mut k: uint16,
-    mut jp: *const uint16,
-    mut a: uint16,
+    k: uint16,
+    jp: *const uint16,
+    a: uint16,
     game: &mut Game,
 ) -> *const uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1995) as *mut uint16) = a;
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     SpawnEprojWithRoomGfx(0x9642 as uint16, (*E).ridley_var_10, game);
     jp
 }
-pub unsafe fn Ridley_Instr_15(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+pub unsafe fn Ridley_Instr_15(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_A = ((0xa6a6afi32) as u16) & (0xffffu16);
     (*E).ridley_var_C = -(352 as ::core::ffi::c_int) as uint16;
     jp
 }
-pub unsafe fn Ridley_Instr_16(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
+pub unsafe fn Ridley_Instr_16(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_A = ((0xa6b2f3i32) as u16) & (0xffffu16);
     (*E).ridley_var_C = -(352 as ::core::ffi::c_int) as uint16;
     jp
 }
 pub unsafe fn CeresSteam_Init(game: &mut Game) {
-    let mut E: *mut Enemy_CeresSteam = Get_CeresSteam(
+    let E: *mut Enemy_CeresSteam = Get_CeresSteam(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -8013,7 +7784,7 @@ pub unsafe fn CeresSteam_Init(game: &mut Game) {
     (*E).base.palette_index = 2560 as uint16;
     (*E).csm_var_D = ((NextRandom(game) as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int)
         + 1 as ::core::ffi::c_int) as uint16;
-    let mut v1: ::core::ffi::c_int = (*E).csm_parameter_1 as ::core::ffi::c_int;
+    let v1: ::core::ffi::c_int = (*E).csm_parameter_1 as ::core::ffi::c_int;
     (*E).base.current_instruction = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6eff5))
         as *const uint8 as *mut uint16)
         .offset(v1 as isize);
@@ -8021,7 +7792,7 @@ pub unsafe fn CeresSteam_Init(game: &mut Game) {
         as *mut uint16)
         .offset(v1 as isize);
 }
-pub unsafe fn CallCeresSteamFunc(mut ea: uint32, mut k: uint16, game: &mut Game) {
+pub unsafe fn CallCeresSteamFunc(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
         10940404 => (),
         10940441 => {
@@ -8033,7 +7804,7 @@ pub unsafe fn CallCeresSteamFunc(mut ea: uint32, mut k: uint16, game: &mut Game)
     }
 }
 pub unsafe fn CeresSteam_Main(game: &mut Game) {
-    let mut E: *mut Enemy_CeresSteam = Get_CeresSteam(
+    let E: *mut Enemy_CeresSteam = Get_CeresSteam(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -8044,16 +7815,16 @@ pub unsafe fn CeresSteam_Main(game: &mut Game) {
         game,
     );
 }
-pub unsafe fn CeresSteam_Func_1(mut k: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_CeresSteam = Get_CeresSteam(k as ::core::ffi::c_int, game);
-    let mut pt: Point16U = CalcCeresSteamPos_Mode7(
+pub unsafe fn CeresSteam_Func_1(k: uint16, game: &mut Game) {
+    let E: *mut Enemy_CeresSteam = Get_CeresSteam(k as ::core::ffi::c_int, game);
+    let pt: Point16U = CalcCeresSteamPos_Mode7(
         Point16U {
             x: (*E).base.x_pos,
             y: (*E).base.y_pos,
         },
         game,
     );
-    let mut v3: *mut EnemySpawnData = gEnemySpawnData(
+    let v3: *mut EnemySpawnData = gEnemySpawnData(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -8069,23 +7840,15 @@ pub unsafe fn CeresSteam_Touch(game: &mut Game) {
     .health = 0x7fff as uint16;
     NormalEnemyTouchAi(game);
 }
-pub unsafe fn CeresSteam_Instr_1(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut E: *mut Enemy_CeresSteam = Get_CeresSteam(k as ::core::ffi::c_int, game);
+pub unsafe fn CeresSteam_Instr_1(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let E: *mut Enemy_CeresSteam = Get_CeresSteam(k as ::core::ffi::c_int, game);
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         | (kEnemyProps_Tangible as ::core::ffi::c_int
             | kEnemyProps_Invisible as ::core::ffi::c_int)) as uint16;
     jp
 }
-pub unsafe fn CeresSteam_Instr_2(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut E: *mut Enemy_CeresSteam = Get_CeresSteam(k as ::core::ffi::c_int, game);
+pub unsafe fn CeresSteam_Instr_2(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let E: *mut Enemy_CeresSteam = Get_CeresSteam(k as ::core::ffi::c_int, game);
     let fresh0 = (*E).csm_var_D;
     (*E).csm_var_D = (*E).csm_var_D.wrapping_sub(1);
     if fresh0 != 1u16 {
@@ -8093,21 +7856,13 @@ pub unsafe fn CeresSteam_Instr_2(
     }
     CeresSteam_Instr_3(k, RomPtr_A6(*jp.offset(1), game) as *mut uint16, game)
 }
-pub unsafe fn CeresSteam_Instr_3(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut E: *mut Enemy_CeresSteam = Get_CeresSteam(k as ::core::ffi::c_int, game);
+pub unsafe fn CeresSteam_Instr_3(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let E: *mut Enemy_CeresSteam = Get_CeresSteam(k as ::core::ffi::c_int, game);
     (*E).base.properties = ((*E).base.properties) & (0xfaffu16);
     jp
 }
-pub unsafe fn CeresDoor_Instr_6(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut E: *mut Enemy_CeresDoor = Get_CeresDoor(k as ::core::ffi::c_int, game);
+pub unsafe fn CeresDoor_Instr_6(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let E: *mut Enemy_CeresDoor = Get_CeresDoor(k as ::core::ffi::c_int, game);
     if abs16(
         ((*E).base.x_pos)
             .wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)),
@@ -8122,11 +7877,7 @@ pub unsafe fn CeresDoor_Instr_6(
         jp.offset(1)
     }
 }
-pub unsafe fn CeresDoor_Instr_4(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn CeresDoor_Instr_4(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
     if *((&raw mut game.g_ram as *mut uint8)
         .offset(0xd828)
         .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize)
@@ -8139,11 +7890,7 @@ pub unsafe fn CeresDoor_Instr_4(
         *jp as uintptr_t as *const uint16
     }
 }
-pub unsafe fn CeresDoor_Instr_8(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn CeresDoor_Instr_8(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x93f) as *mut uint16) != 0 {
         jp.offset(1)
     } else {
@@ -8155,70 +7902,42 @@ pub unsafe fn CeresDoor_Func_6b(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x93f) as *mut uint16) = 0x8000 as uint16;
     }
 }
-pub unsafe fn CeresSteam_Instr_4(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut E: *mut Enemy_CeresSteam = Get_CeresSteam(k as ::core::ffi::c_int, game);
+pub unsafe fn CeresSteam_Instr_4(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let E: *mut Enemy_CeresSteam = Get_CeresSteam(k as ::core::ffi::c_int, game);
     (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
     jp
 }
-pub unsafe fn CeresDoor_Instr_1(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut E: *mut Enemy_CeresDoor = Get_CeresDoor(k as ::core::ffi::c_int, game);
+pub unsafe fn CeresDoor_Instr_1(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let E: *mut Enemy_CeresDoor = Get_CeresDoor(k as ::core::ffi::c_int, game);
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         & !(kEnemyProps_Tangible as ::core::ffi::c_int)) as uint16;
     jp
 }
-pub unsafe fn CeresDoor_Instr_3(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn CeresDoor_Instr_3(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
     (*Get_CeresDoor(k as ::core::ffi::c_int, game)).cdr_var_B = 1 as uint16;
     jp
 }
-pub unsafe fn CeresSteam_Instr_5(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut E: *mut Enemy_CeresSteam = Get_CeresSteam(k as ::core::ffi::c_int, game);
+pub unsafe fn CeresSteam_Instr_5(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let E: *mut Enemy_CeresSteam = Get_CeresSteam(k as ::core::ffi::c_int, game);
     (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
     jp
 }
-pub unsafe fn CeresDoor_Instr_5(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn CeresDoor_Instr_5(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
     (*Get_CeresDoor(k as ::core::ffi::c_int, game)).cdr_var_B = 0 as uint16;
     CeresDoor_Instr_2(k, jp, game)
 }
-pub unsafe fn CeresDoor_Instr_2(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    let mut E: *mut Enemy_CeresDoor = Get_CeresDoor(k as ::core::ffi::c_int, game);
+pub unsafe fn CeresDoor_Instr_2(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
+    let E: *mut Enemy_CeresDoor = Get_CeresDoor(k as ::core::ffi::c_int, game);
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         & !(kEnemyProps_Invisible as ::core::ffi::c_int)) as uint16;
     jp
 }
-pub unsafe fn CeresDoor_Instr_7(
-    mut k: uint16,
-    mut jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
+pub unsafe fn CeresDoor_Instr_7(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
     QueueSfx3_Max6(0x2c as uint16, game);
     jp
 }
 pub unsafe fn CeresDoor_Init(game: &mut Game) {
-    let mut E: *mut Enemy_CeresDoor = Get_CeresDoor(
+    let E: *mut Enemy_CeresDoor = Get_CeresDoor(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -8227,7 +7946,7 @@ pub unsafe fn CeresDoor_Init(game: &mut Game) {
     (*E).base.timer = 0 as uint16;
     (*E).base.vram_tiles_index = 0 as uint16;
     (*E).base.palette_index = 1024 as uint16;
-    let mut v2: ::core::ffi::c_int = (*E).cdr_parameter_1 as ::core::ffi::c_int;
+    let v2: ::core::ffi::c_int = (*E).cdr_parameter_1 as ::core::ffi::c_int;
     (*E).cdr_var_A = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6f72b)) as *const uint8
         as *mut uint16)
         .offset(v2 as isize);
@@ -8263,10 +7982,10 @@ pub unsafe fn CeresDoor_Init(game: &mut Game) {
     .palette_index = 3584 as uint16;
     WriteColorsToTargetPalette(0xa6 as uint8, 0x1e2 as uint16, v3, 0xf as uint16, game);
 }
-pub unsafe fn CeresDoor_Func_1(mut k: uint16, game: &mut Game) {
+pub unsafe fn CeresDoor_Func_1(k: uint16, game: &mut Game) {
     let mut v2: *mut VramWriteEntry = ::core::ptr::null_mut::<VramWriteEntry>();
     if (*Get_CeresDoor(k as ::core::ffi::c_int, game)).cdr_parameter_1 == 2u16 {
-        let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
+        let v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
         v2 = gVramWriteEntry(
             *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16)
                 as ::core::ffi::c_int,
@@ -8281,8 +8000,8 @@ pub unsafe fn CeresDoor_Func_1(mut k: uint16, game: &mut Game) {
             (v1).wrapping_add(7u16);
     }
 }
-pub unsafe fn CallCeresDoor(mut ea: uint32, game: &mut Game) {
-    let mut k: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
+pub unsafe fn CallCeresDoor(ea: uint32, game: &mut Game) {
+    let k: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
     match ea {
         10942315 => {
             CeresDoor_Func_2(game);
@@ -8308,7 +8027,7 @@ pub unsafe fn CallCeresDoor(mut ea: uint32, game: &mut Game) {
     }
 }
 pub unsafe fn CeresDoor_Main(game: &mut Game) {
-    let mut E: *mut Enemy_CeresDoor = Get_CeresDoor(
+    let E: *mut Enemy_CeresDoor = Get_CeresDoor(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -8320,7 +8039,7 @@ pub unsafe fn CeresDoor_Func_2(game: &mut Game) {
 pub unsafe fn CeresDoor_Func_3(game: &mut Game) {
     CeresDoor_F773(0x1d as uint16, game);
 }
-pub unsafe fn CeresDoor_F773(mut j: uint16, game: &mut Game) {
+pub unsafe fn CeresDoor_F773(j: uint16, game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x93f) as *mut uint16) >= 2u16
         && *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) == 0
     {
@@ -8362,19 +8081,19 @@ pub unsafe fn CeresDoor_Func_4(game: &mut Game) {
         );
     }
 }
-pub unsafe fn CeresDoor_Func_5(mut k: uint16, game: &mut Game) {
+pub unsafe fn CeresDoor_Func_5(k: uint16, game: &mut Game) {
     CeresDoor_Func_7(game);
     if *((&raw mut game.g_ram as *mut uint8).offset(0x93f) as *mut uint16) >= 2u16 {
-        let mut E: *mut Enemy_CeresDoor = Get_CeresDoor(k as ::core::ffi::c_int, game);
+        let E: *mut Enemy_CeresDoor = Get_CeresDoor(k as ::core::ffi::c_int, game);
         (*E).cdr_var_A = ((0xa6f7dci32) as u16) & (0xffffu16);
         (*E).cdr_var_D = 48 as uint16;
-        let mut E0: *mut Enemy_CeresDoor = Get_CeresDoor(0 as ::core::ffi::c_int, game);
+        let E0: *mut Enemy_CeresDoor = Get_CeresDoor(0 as ::core::ffi::c_int, game);
         (*E0).cdr_var_E = 0 as uint16;
         (*E0).cdr_var_F = 0 as uint16;
     }
 }
-pub unsafe fn CeresDoor_Func_6(mut k: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_CeresDoor = Get_CeresDoor(k as ::core::ffi::c_int, game);
+pub unsafe fn CeresDoor_Func_6(k: uint16, game: &mut Game) {
+    let E: *mut Enemy_CeresDoor = Get_CeresDoor(k as ::core::ffi::c_int, game);
     (*E).cdr_var_D = (*E).cdr_var_D.wrapping_sub(1);
     let mut v3: bool =
         ((*E).cdr_var_D as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32;
@@ -8383,7 +8102,7 @@ pub unsafe fn CeresDoor_Func_6(mut k: uint16, game: &mut Game) {
         (*E).cdr_var_A = ((0xa6f850i32) as u16) & (0xffffu16);
         CeresDoor_Func_6b(game);
     } else {
-        let mut E0: *mut Enemy_CeresDoor = Get_CeresDoor(0 as ::core::ffi::c_int, game);
+        let E0: *mut Enemy_CeresDoor = Get_CeresDoor(0 as ::core::ffi::c_int, game);
         (*E0).cdr_var_E = (*E0).cdr_var_E.wrapping_sub(1);
         v3 = ((*E0).cdr_var_E as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32;
         if v3 {
@@ -8393,7 +8112,7 @@ pub unsafe fn CeresDoor_Func_6(mut k: uint16, game: &mut Game) {
             if v3 {
                 (*E0).cdr_var_F = 3 as uint16;
             }
-            let mut v5: ::core::ffi::c_int = ((4u16).wrapping_mul((*E0).cdr_var_F))
+            let v5: ::core::ffi::c_int = ((4u16).wrapping_mul((*E0).cdr_var_F))
                 as ::core::ffi::c_int
                 >> 1 as ::core::ffi::c_int;
             game.eproj_spawn_pt = Point16U {
@@ -8447,7 +8166,7 @@ pub unsafe fn CeresDoor_Func_8(game: &mut Game) {
     );
 }
 pub unsafe fn Zebetites_Init(game: &mut Game) {
-    let mut E: *mut Enemy_Zebetites = Get_Zebetites(
+    let E: *mut Enemy_Zebetites = Get_Zebetites(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -8469,10 +8188,10 @@ pub unsafe fn Zebetites_Init(game: &mut Game) {
         | CheckEventHappened(4 as uint16, game) as ::core::ffi::c_int) as uint16;
     r18 = ((r18 as ::core::ffi::c_int) << 1 as ::core::ffi::c_int
         | CheckEventHappened(3 as uint16, game) as ::core::ffi::c_int) as uint16;
-    let mut v2: uint16 = r18;
+    let v2: uint16 = r18;
     (*E).zebet_var_D = r18;
     if v2 as ::core::ffi::c_int - 4 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
-        let mut v3: ::core::ffi::c_int = v2 as ::core::ffi::c_int;
+        let v3: ::core::ffi::c_int = v2 as ::core::ffi::c_int;
         (*E).zebet_var_F = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6fc03)) as *const uint8
             as *mut uint16)
             .offset(v3 as isize);
@@ -8500,7 +8219,7 @@ pub unsafe fn Zebetites_Init(game: &mut Game) {
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
     };
 }
-pub unsafe fn CallZebetitesFunc(mut ea: uint32, mut k: uint16, game: &mut Game) {
+pub unsafe fn CallZebetitesFunc(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
         10943553 => {
             Zebetites_Func_1(k, game);
@@ -8526,7 +8245,7 @@ pub unsafe fn Zebetites_Main(game: &mut Game) {
         .base
         .shake_timer = 0 as uint16;
     }
-    let mut E: *mut Enemy_Zebetites = Get_Zebetites(
+    let E: *mut Enemy_Zebetites = Get_Zebetites(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
@@ -8536,10 +8255,10 @@ pub unsafe fn Zebetites_Main(game: &mut Game) {
         game,
     );
 }
-pub unsafe fn Zebetites_Func_1(mut k: uint16, game: &mut Game) {
-    let mut E: *mut Enemy_Zebetites = Get_Zebetites(k as ::core::ffi::c_int, game);
+pub unsafe fn Zebetites_Func_1(k: uint16, game: &mut Game) {
+    let E: *mut Enemy_Zebetites = Get_Zebetites(k as ::core::ffi::c_int, game);
     if ((*E).zebet_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
-        let mut new_k: uint16 = Zebetites_Func_9(game);
+        let new_k: uint16 = Zebetites_Func_9(game);
         (*Get_Zebetites(new_k as ::core::ffi::c_int, game)).zebet_parameter_2 = k;
         (*Get_Zebetites(k as ::core::ffi::c_int, game)).zebet_parameter_2 = new_k;
     }
@@ -8547,7 +8266,7 @@ pub unsafe fn Zebetites_Func_1(mut k: uint16, game: &mut Game) {
         ((0xa6fc5bi32) as u16) & (0xffffu16);
     Zebetites_Func_2(k, game);
 }
-pub unsafe fn Zebetites_Func_2(mut k: uint16, game: &mut Game) {
+pub unsafe fn Zebetites_Func_2(k: uint16, game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x795) as *mut uint16) == 0 {
         (*Get_Zebetites(k as ::core::ffi::c_int, game)).zebet_var_A =
             ((0xa6fc67i32) as u16) & (0xffffu16);
@@ -8558,11 +8277,11 @@ pub unsafe fn Zebetites_Func_3(game: &mut Game) {
     let mut v3: int16 = 0;
     Zebetites_Func_4(game);
     Zebetites_Func_5(game);
-    let mut E: *mut Enemy_Zebetites = Get_Zebetites(
+    let E: *mut Enemy_Zebetites = Get_Zebetites(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    let mut health: uint16 = (*E).base.health;
+    let health: uint16 = (*E).base.health;
     if health != 0 {
         v3 = ((health) as i16).wrapping_add(1i16);
         if v3 as ::core::ffi::c_int - 1000 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0
@@ -8592,13 +8311,13 @@ pub unsafe fn Zebetites_Func_3(game: &mut Game) {
 }
 pub unsafe fn Zebetites_Func_6(game: &mut Game) {
     let mut v1: int16 = 0;
-    let mut E: *mut Enemy_Zebetites = Get_Zebetites(
+    let E: *mut Enemy_Zebetites = Get_Zebetites(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
     v1 = (((*E).zebet_var_D) as i16).wrapping_add(1i16);
     (*E).zebet_var_D = v1 as uint16;
-    let mut r18: uint16 = v1 as uint16;
+    let r18: uint16 = v1 as uint16;
     Zebetites_Func_7(
         3 as uint16,
         (r18 as ::core::ffi::c_int >> 0 as ::core::ffi::c_int & 1 as ::core::ffi::c_int) as uint8,
@@ -8615,7 +8334,7 @@ pub unsafe fn Zebetites_Func_6(game: &mut Game) {
         game,
     );
 }
-pub unsafe fn Zebetites_Func_7(mut j: uint16, mut a: uint8, game: &mut Game) {
+pub unsafe fn Zebetites_Func_7(j: uint16, a: uint8, game: &mut Game) {
     if a != 0 {
         SetEventHappened(j, game);
     } else {
@@ -8630,11 +8349,11 @@ pub unsafe fn Zebetites_Func_9(game: &mut Game) -> uint16 {
 }
 pub unsafe fn Zebetites_Func_5(game: &mut Game) {
     let mut v0: uint16 = 0 as uint16;
-    let mut E: *mut Enemy_Zebetites = Get_Zebetites(
+    let E: *mut Enemy_Zebetites = Get_Zebetites(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    let mut health: uint16 = (*E).base.health;
+    let health: uint16 = (*E).base.health;
     if health as ::core::ffi::c_int - 800 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0
     {
         v0 = 2 as uint16;
@@ -8656,7 +8375,7 @@ pub unsafe fn Zebetites_Func_5(game: &mut Game) {
             }
         }
     }
-    let mut v3: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let v3: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v4: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6fd4a)) as *const uint8
         as *mut uint16)
         .offset(v3 as isize);
@@ -8679,8 +8398,8 @@ pub unsafe fn Zebetites_Func_4(game: &mut Game) {
         .zebet_parameter_1
             == 0
     {
-        let mut E: *mut Enemy_Zebetites = Get_Zebetites(0 as ::core::ffi::c_int, game);
-        let mut v1: uint16 = ((*E).zebet_var_C as ::core::ffi::c_int + 1 as ::core::ffi::c_int
+        let E: *mut Enemy_Zebetites = Get_Zebetites(0 as ::core::ffi::c_int, game);
+        let v1: uint16 = ((*E).zebet_var_C as ::core::ffi::c_int + 1 as ::core::ffi::c_int
             & 7 as ::core::ffi::c_int) as uint16;
         (*E).zebet_var_C = v1;
         WriteColorsToPalette(
@@ -8699,12 +8418,11 @@ pub unsafe fn Zebetites_Touch(game: &mut Game) {
 pub unsafe fn Zebetites_Shot(game: &mut Game) {
     QueueSfx3_Max6(9 as uint16, game);
     NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
-    let mut E: *mut Enemy_Zebetites = Get_Zebetites(
+    let E: *mut Enemy_Zebetites = Get_Zebetites(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    let mut G: *mut Enemy_Zebetites =
-        Get_Zebetites((*E).zebet_parameter_2 as ::core::ffi::c_int, game);
+    let G: *mut Enemy_Zebetites = Get_Zebetites((*E).zebet_parameter_2 as ::core::ffi::c_int, game);
     (*G).base.health = (*E).base.health;
     (*G).base.flash_timer = (*E).base.flash_timer;
 }

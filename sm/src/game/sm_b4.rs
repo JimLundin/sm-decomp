@@ -7,17 +7,17 @@ pub use crate::types::{
     uint32_t, uint8, uint8_t,
 };
 #[inline]
-unsafe fn RomPtr_B4(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
+unsafe fn RomPtr_B4(addr: uint16_t, game: &mut Game) -> *const uint8 {
     RomPtr((0xb40000u32) | ((addr) as u32), game)
 }
 pub const fnSpriteObject_Instr_RepeatLast: uint32 = 11844848;
 pub const fnSpriteObject_Instr_Terminate: uint32 = 11844871;
 pub const fnSpriteObject_Instr_Goto: uint32 = 11844882;
 pub unsafe fn CreateSpriteAtPos(
-    mut x_r18: uint16,
-    mut y_r20: uint16,
-    mut ilist_r22: uint16,
-    mut pal_r24: uint16,
+    x_r18: uint16,
+    y_r20: uint16,
+    ilist_r22: uint16,
+    pal_r24: uint16,
     game: &mut Game,
 ) -> uint16 {
     let mut v0: ::core::ffi::c_int = 62 as ::core::ffi::c_int;
@@ -30,7 +30,7 @@ pub unsafe fn CreateSpriteAtPos(
             return 0xffff as uint16;
         }
     }
-    let mut v1: ::core::ffi::c_int = v0 >> 1 as ::core::ffi::c_int;
+    let v1: ::core::ffi::c_int = v0 >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0xf078) as *mut uint16).offset(v1 as isize) =
         0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xf178) as *mut uint16).offset(v1 as isize) =
@@ -45,7 +45,7 @@ pub unsafe fn CreateSpriteAtPos(
         y_r20;
     *((&raw mut game.g_ram as *mut uint8).offset(0xf078) as *mut uint16).offset(v1 as isize) =
         pal_r24;
-    let mut v2: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xb4bda8)) as *const uint8
+    let v2: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xb4bda8)) as *const uint8
         as *mut uint16)
         .offset(ilist_r22 as isize);
     *((&raw mut game.g_ram as *mut uint8).offset(0xef78) as *mut uint16).offset(v1 as isize) = v2;
@@ -53,7 +53,7 @@ pub unsafe fn CreateSpriteAtPos(
         *(RomPtr_B4(v2, game) as *mut uint16);
     v0 as uint16
 }
-pub unsafe fn CallSpriteObjectInstr(mut ea: uint32, game: &mut Game) {
+pub unsafe fn CallSpriteObjectInstr(ea: uint32, game: &mut Game) {
     match ea {
         11844848 => {
             SpriteObject_Instr_RepeatLast(game);
@@ -100,7 +100,7 @@ pub unsafe fn HandleSpriteObjects(game: &mut Game) {
                 *((&raw mut game.g_ram as *mut uint8).offset(0xeff8) as *mut uint16)
                     .offset(v0 as isize) = (v1).wrapping_sub(1u16);
                 if v1 == 1u16 {
-                    let mut v3: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xef78)
+                    let v3: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xef78)
                         as *mut uint16)
                         .offset(v0 as isize))
                     .wrapping_add(4u16);
@@ -139,7 +139,7 @@ pub unsafe fn HandleSpriteObjects(game: &mut Game) {
     }
 }
 pub unsafe fn SpriteObject_Instr_RepeatLast(game: &mut Game) {
-    let mut v2: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x1844)
+    let v2: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0x1844)
         as *mut uint16) as ::core::ffi::c_int
         >> 1 as ::core::ffi::c_int;
     let ref mut fresh1 =
@@ -155,7 +155,7 @@ pub unsafe fn SpriteObject_Instr_Terminate(game: &mut Game) {
     ) = 0 as uint16;
 }
 pub unsafe fn SpriteObject_Instr_Goto(game: &mut Game) {
-    let mut v2: uint16 = *(RomPtr_B4(
+    let v2: uint16 = *(RomPtr_B4(
         *((&raw mut game.g_ram as *mut uint8).offset(0xef78) as *mut uint16).offset(
             (*((&raw mut game.g_ram as *mut uint8).offset(0x1844) as *mut uint16)
                 as ::core::ffi::c_int
@@ -176,12 +176,11 @@ pub unsafe fn SpriteObject_Instr_Goto(game: &mut Game) {
 pub unsafe fn DrawSpriteObjects(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 62 as ::core::ffi::c_int;
     while i >= 0i32 {
-        let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
+        let v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
         if *((&raw mut game.g_ram as *mut uint8).offset(0xef78) as *mut uint16).offset(v1 as isize)
             != 0
         {
-            let mut x: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xf0f8)
-                as *mut uint16)
+            let x: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xf0f8) as *mut uint16)
                 .offset(v1 as isize))
             .wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16));
             if ((x) as i16).wrapping_add(16i16) >= 0i16 {
@@ -189,7 +188,7 @@ pub unsafe fn DrawSpriteObjects(game: &mut Game) {
                     & 0x8000 as ::core::ffi::c_int
                     != 0
                 {
-                    let mut y: int16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xf1f8)
+                    let y: int16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xf1f8)
                         as *mut uint16)
                         .offset(v1 as isize)) as i16)
                         .wrapping_sub(
@@ -201,17 +200,15 @@ pub unsafe fn DrawSpriteObjects(game: &mut Game) {
                             & 0x8000 as ::core::ffi::c_int
                             != 0
                         {
-                            let mut r3: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-                                .offset(0xf078)
+                            let r3: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xf078)
                                 as *mut uint16)
                                 .offset(v1 as isize))
                                 & (0xe00u16);
-                            let mut r0: uint16 = (*((&raw mut game.g_ram as *mut uint8)
-                                .offset(0xf078)
+                            let r0: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xf078)
                                 as *mut uint16)
                                 .offset(v1 as isize))
                                 & (0x1ffu16);
-                            let mut v3: *const uint8 = RomPtr_B4(
+                            let v3: *const uint8 = RomPtr_B4(
                                 *((&raw mut game.g_ram as *mut uint8).offset(0xef78)
                                     as *mut uint16)
                                     .offset(v1 as isize),

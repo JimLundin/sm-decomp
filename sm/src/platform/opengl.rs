@@ -112,13 +112,13 @@ static mut g_texture: GlTextureWithSize = GlTextureWithSize {
 };
 static mut g_glsl_shader: *mut GlslShader = ::core::ptr::null::<GlslShader>() as *mut GlslShader;
 unsafe extern "C" fn MessageCallback(
-    mut source: GLenum,
-    mut type_0: GLenum,
-    mut id: GLuint,
-    mut severity: GLenum,
-    mut length: GLsizei,
-    mut message: *const GLchar,
-    mut userParam: *const ::core::ffi::c_void,
+    source: GLenum,
+    type_0: GLenum,
+    id: GLuint,
+    severity: GLenum,
+    length: GLsizei,
+    message: *const GLchar,
+    userParam: *const ::core::ffi::c_void,
 ) {
     if type_0 == GL_DEBUG_TYPE_OTHER as GLenum {
         return;
@@ -140,9 +140,9 @@ unsafe extern "C" fn MessageCallback(
         Die(b"OpenGL error!\n\0" as *const u8 as *const ::core::ffi::c_char);
     }
 }
-unsafe fn OpenGLRenderer_Init(mut window: *mut SDL_Window, game: &mut Game) -> bool {
+unsafe fn OpenGLRenderer_Init(window: *mut SDL_Window, game: &mut Game) -> bool {
     g_window = window;
-    let mut context: SDL_GLContext = SDL_GL_CreateContext(window as *mut SDL_Window);
+    let context: SDL_GLContext = SDL_GL_CreateContext(window as *mut SDL_Window);
     SDL_GL_SetSwapInterval(1 as ::core::ffi::c_int);
     gl::load_with(|name| {
         sdl2_sys::SDL_GL_GetProcAddress(std::ffi::CString::new(name).expect("GL symbol").as_ptr())
@@ -192,7 +192,7 @@ unsafe fn OpenGLRenderer_Init(mut window: *mut SDL_Window, game: &mut Game) -> b
     gl::EnableVertexAttribArray(1 as GLuint);
     let mut vs_code: *const GLchar = b"#version 330 core\nlayout(location = 0) in vec3 aPos; layout(location = 1) in vec2 aTexCoord; out vec2 TexCoord; void main(void) { gl_Position = vec4(aPos, 1.0); TexCoord = vec2(aTexCoord.x, aTexCoord.y); }\0"
         as *const u8 as *const GLchar;
-    let mut vs: ::core::ffi::c_uint =
+    let vs: ::core::ffi::c_uint =
         gl::CreateShader(GL_VERTEX_SHADER as GLenum) as ::core::ffi::c_uint;
     gl::ShaderSource(
         vs as GLuint,
@@ -218,7 +218,7 @@ unsafe fn OpenGLRenderer_Init(mut window: *mut SDL_Window, game: &mut Game) -> b
     }
     let mut fs_code: *const GLchar = b"#version 330 core\nout vec4 FragColor; in vec2 TexCoord; uniform sampler2D texture1; void main(void) { FragColor = texture(texture1, TexCoord); }\0"
         as *const u8 as *const GLchar;
-    let mut fs: ::core::ffi::c_uint =
+    let fs: ::core::ffi::c_uint =
         gl::CreateShader(GL_FRAGMENT_SHADER as GLenum) as ::core::ffi::c_uint;
     gl::ShaderSource(
         fs as GLuint,
@@ -241,7 +241,7 @@ unsafe fn OpenGLRenderer_Init(mut window: *mut SDL_Window, game: &mut Game) -> b
         );
     }
     g_program = gl::CreateProgram() as ::core::ffi::c_uint;
-    let mut program: ::core::ffi::c_int = g_program as ::core::ffi::c_int;
+    let program: ::core::ffi::c_int = g_program as ::core::ffi::c_int;
     gl::AttachShader(program as GLuint, vs as GLuint);
     gl::AttachShader(program as GLuint, fs as GLuint);
     gl::LinkProgram(program as GLuint);
@@ -269,13 +269,13 @@ unsafe fn OpenGLRenderer_Init(mut window: *mut SDL_Window, game: &mut Game) -> b
 }
 unsafe fn OpenGLRenderer_Destroy(game: &mut Game) {}
 unsafe fn OpenGLRenderer_BeginDraw(
-    mut width: ::core::ffi::c_int,
-    mut height: ::core::ffi::c_int,
-    mut pixels: *mut *mut uint8,
-    mut pitch: *mut ::core::ffi::c_int,
+    width: ::core::ffi::c_int,
+    height: ::core::ffi::c_int,
+    pixels: *mut *mut uint8,
+    pitch: *mut ::core::ffi::c_int,
     game: &mut Game,
 ) {
-    let mut size: ::core::ffi::c_int = width * height;
+    let size: ::core::ffi::c_int = width * height;
     if size as size_t > g_screen_buffer_size {
         g_screen_buffer_size = size as size_t;
         free(g_screen_buffer as *mut ::core::ffi::c_void);
@@ -303,9 +303,8 @@ unsafe fn OpenGLRenderer_EndDraw(game: &mut Game) {
             viewport_width = viewport_height * g_draw_width / g_draw_height;
         }
     }
-    let mut viewport_x: ::core::ffi::c_int =
-        drawable_width - viewport_width >> 1 as ::core::ffi::c_int;
-    let mut viewport_y: ::core::ffi::c_int =
+    let viewport_x: ::core::ffi::c_int = drawable_width - viewport_width >> 1 as ::core::ffi::c_int;
+    let viewport_y: ::core::ffi::c_int =
         viewport_height - viewport_height >> 1 as ::core::ffi::c_int;
     gl::BindTexture(GL_TEXTURE_2D as GLenum, g_texture.gl_texture as GLuint);
     if g_draw_width == g_texture.width as ::core::ffi::c_int
@@ -347,8 +346,7 @@ unsafe fn OpenGLRenderer_EndDraw(game: &mut Game) {
             viewport_height as GLsizei,
         );
         gl::UseProgram(g_program as GLuint);
-        let mut filter: ::core::ffi::c_int = if g_config.linear_filtering as ::core::ffi::c_int != 0
-        {
+        let filter: ::core::ffi::c_int = if g_config.linear_filtering as ::core::ffi::c_int != 0 {
             GL_LINEAR
         } else {
             GL_NEAREST
@@ -392,7 +390,7 @@ static mut kOpenGLRendererFuncs: RendererFuncs = RendererFuncs {
     ),
     EndDraw: Some(OpenGLRenderer_EndDraw as unsafe fn(&mut Game) -> ()),
 };
-pub unsafe fn OpenGLRenderer_Create(mut funcs: *mut RendererFuncs) {
+pub unsafe fn OpenGLRenderer_Create(funcs: *mut RendererFuncs) {
     SDL_GL_SetAttribute(
         SDL_GL_CONTEXT_PROFILE_MASK,
         SDL_GL_CONTEXT_PROFILE_CORE as ::core::ffi::c_int,

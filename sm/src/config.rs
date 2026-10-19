@@ -592,7 +592,7 @@ static mut keymap_hash: *mut KeyMapHashEnt =
     ::core::ptr::null::<KeyMapHashEnt>() as *mut KeyMapHashEnt;
 static mut keymap_hash_size: ::core::ffi::c_int = 0;
 static mut has_keynameid: [bool; 24] = [false; 24];
-unsafe fn KeyMapHash_Add(mut key: uint16, mut cmd: uint16) -> bool {
+unsafe fn KeyMapHash_Add(key: uint16, cmd: uint16) -> bool {
     if keymap_hash_size & 0xff as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
         if keymap_hash_size > 10000 as ::core::ffi::c_int {
             Die(b"Too many keys\0" as *const u8 as *const ::core::ffi::c_char);
@@ -605,17 +605,16 @@ unsafe fn KeyMapHash_Add(mut key: uint16, mut cmd: uint16) -> bool {
     }
     let fresh1 = keymap_hash_size;
     keymap_hash_size = keymap_hash_size + 1;
-    let mut i: ::core::ffi::c_int = fresh1;
-    let mut ent: *mut KeyMapHashEnt = keymap_hash.offset(i as isize) as *mut KeyMapHashEnt;
+    let i: ::core::ffi::c_int = fresh1;
+    let ent: *mut KeyMapHashEnt = keymap_hash.offset(i as isize) as *mut KeyMapHashEnt;
     (*ent).key = key;
     (*ent).cmd = cmd;
     (*ent).next = 0 as uint16;
-    let mut j: ::core::ffi::c_int =
-        (key as uint32).wrapping_rem(255 as uint32) as ::core::ffi::c_int;
+    let j: ::core::ffi::c_int = (key as uint32).wrapping_rem(255 as uint32) as ::core::ffi::c_int;
     let mut cur: *mut uint16 =
         (&raw mut keymap_hash_first as *mut uint16).offset(j as isize) as *mut uint16;
     while *cur != 0 {
-        let mut ent_0: *mut KeyMapHashEnt = keymap_hash
+        let ent_0: *mut KeyMapHashEnt = keymap_hash
             .offset((*cur as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as isize)
             as *mut KeyMapHashEnt;
         if (*ent_0).key as ::core::ffi::c_int == key as ::core::ffi::c_int {
@@ -626,12 +625,12 @@ unsafe fn KeyMapHash_Add(mut key: uint16, mut cmd: uint16) -> bool {
     *cur = (i + 1 as ::core::ffi::c_int) as uint16;
     true_0 != 0
 }
-unsafe fn KeyMapHash_Find(mut key: uint16) -> ::core::ffi::c_int {
+unsafe fn KeyMapHash_Find(key: uint16) -> ::core::ffi::c_int {
     let mut i: ::core::ffi::c_int = keymap_hash_first
         [(key as ::core::ffi::c_int % 255 as ::core::ffi::c_int) as usize]
         as ::core::ffi::c_int;
     while i != 0 {
-        let mut ent: *mut KeyMapHashEnt =
+        let ent: *mut KeyMapHashEnt =
             keymap_hash.offset((i - 1 as ::core::ffi::c_int) as isize) as *mut KeyMapHashEnt;
         if (*ent).key as ::core::ffi::c_int == key as ::core::ffi::c_int {
             return (*ent).cmd as ::core::ffi::c_int;
@@ -640,7 +639,7 @@ unsafe fn KeyMapHash_Find(mut key: uint16) -> ::core::ffi::c_int {
     }
     0 as ::core::ffi::c_int
 }
-pub unsafe fn FindCmdForSdlKey(mut code: SDL_Keycode, mut mod_0: SDL_Keymod) -> ::core::ffi::c_int {
+pub unsafe fn FindCmdForSdlKey(code: SDL_Keycode, mod_0: SDL_Keymod) -> ::core::ffi::c_int {
     if code & !(SDLK_SCANCODE_MASK as SDL_Keycode | 0x1ff as SDL_Keycode) != 0 {
         return 0 as ::core::ffi::c_int;
     }
@@ -692,7 +691,7 @@ pub unsafe fn FindCmdForSdlKey(mut code: SDL_Keycode, mut mod_0: SDL_Keymod) -> 
 unsafe fn ParseKeyArray(
     mut value: *mut ::core::ffi::c_char,
     mut cmd: ::core::ffi::c_int,
-    mut size: ::core::ffi::c_int,
+    size: ::core::ffi::c_int,
 ) {
     let mut s: *mut ::core::ffi::c_char = ::core::ptr::null_mut::<::core::ffi::c_char>();
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -732,7 +731,7 @@ unsafe fn ParseKeyArray(
                     s = s.offset(4);
                 }
             }
-            let mut key: SDL_Keycode = SDL_GetKeyFromName(s);
+            let key: SDL_Keycode = SDL_GetKeyFromName(s);
             if key == SDLK_UNKNOWN as ::core::ffi::c_int as SDL_Keycode {
                 fprintf(
                     stderr,
@@ -775,7 +774,7 @@ unsafe fn CountBits32(mut n: uint32) -> ::core::ffi::c_int {
     }
     count
 }
-unsafe fn GamepadMap_Add(mut button: ::core::ffi::c_int, mut modifiers: uint32, mut cmd: uint16) {
+unsafe fn GamepadMap_Add(button: ::core::ffi::c_int, modifiers: uint32, cmd: uint16) {
     if joymap_size & 0xff as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
         if joymap_size > 1000 as ::core::ffi::c_int {
             Die(b"Too many joypad keys\0" as *const u8 as *const ::core::ffi::c_char);
@@ -791,7 +790,7 @@ unsafe fn GamepadMap_Add(mut button: ::core::ffi::c_int, mut modifiers: uint32, 
     }
     let mut p: *mut uint16 =
         (&raw mut joymap_first as *mut uint16).offset(button as isize) as *mut uint16;
-    let mut cb: ::core::ffi::c_int = CountBits32(modifiers);
+    let cb: ::core::ffi::c_int = CountBits32(modifiers);
     while *p as ::core::ffi::c_int != 0
         && cb
             < CountBits32(
@@ -806,16 +805,16 @@ unsafe fn GamepadMap_Add(mut button: ::core::ffi::c_int, mut modifiers: uint32, 
     }
     let fresh0 = joymap_size;
     joymap_size = joymap_size + 1;
-    let mut i: ::core::ffi::c_int = fresh0;
-    let mut ent: *mut GamepadMapEnt = joymap_ents.offset(i as isize) as *mut GamepadMapEnt;
+    let i: ::core::ffi::c_int = fresh0;
+    let ent: *mut GamepadMapEnt = joymap_ents.offset(i as isize) as *mut GamepadMapEnt;
     (*ent).modifiers = modifiers;
     (*ent).cmd = cmd;
     (*ent).next = *p;
     *p = (i + 1 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn FindCmdForGamepadButton(
-    mut button: ::core::ffi::c_int,
-    mut modifiers: uint32,
+    button: ::core::ffi::c_int,
+    modifiers: uint32,
 ) -> ::core::ffi::c_int {
     let mut ent: *mut GamepadMapEnt = ::core::ptr::null_mut::<GamepadMapEnt>();
     let mut e: ::core::ffi::c_int = joymap_first[button as usize] as ::core::ffi::c_int;
@@ -828,8 +827,8 @@ pub unsafe fn FindCmdForGamepadButton(
     }
     0 as ::core::ffi::c_int
 }
-unsafe fn ParseGamepadButtonName(mut value: *mut *const ::core::ffi::c_char) -> ::core::ffi::c_int {
-    let mut s: *const ::core::ffi::c_char = *value;
+unsafe fn ParseGamepadButtonName(value: *mut *const ::core::ffi::c_char) -> ::core::ffi::c_int {
+    let s: *const ::core::ffi::c_char = *value;
     static mut kGamepadKeyNames: [*const ::core::ffi::c_char; 19] = [
         b"Back\0" as *const u8 as *const ::core::ffi::c_char,
         b"Guide\0" as *const u8 as *const ::core::ffi::c_char,
@@ -877,8 +876,7 @@ unsafe fn ParseGamepadButtonName(mut value: *mut *const ::core::ffi::c_char) -> 
         != (::core::mem::size_of::<[*const ::core::ffi::c_char; 19]>() as usize)
             .wrapping_div(::core::mem::size_of::<*const ::core::ffi::c_char>() as usize)
     {
-        let mut r: *const ::core::ffi::c_char =
-            StringStartsWithNoCase(s, kGamepadKeyNames[i as usize]);
+        let r: *const ::core::ffi::c_char = StringStartsWithNoCase(s, kGamepadKeyNames[i as usize]);
         if !r.is_null() {
             *value = r;
             return kGamepadKeyIds[i as usize] as ::core::ffi::c_int;
@@ -904,7 +902,7 @@ static mut kDefaultGamepadCmds: [uint8; 12] = [
 unsafe fn ParseGamepadArray(
     mut value: *mut ::core::ffi::c_char,
     mut cmd: ::core::ffi::c_int,
-    mut size: ::core::ffi::c_int,
+    size: ::core::ffi::c_int,
 ) {
     let mut s: *mut ::core::ffi::c_char = ::core::ptr::null_mut::<::core::ffi::c_char>();
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -916,7 +914,7 @@ unsafe fn ParseGamepadArray(
             let mut modifiers: uint32 = 0 as uint32;
             let mut ss: *const ::core::ffi::c_char = s;
             loop {
-                let mut button: ::core::ffi::c_int = ParseGamepadButtonName(&raw mut ss);
+                let button: ::core::ffi::c_int = ParseGamepadButtonName(&raw mut ss);
                 if !(button == kGamepadBtn_Invalid as ::core::ffi::c_int) {
                     while *ss as ::core::ffi::c_int == ' ' as i32
                         || *ss as ::core::ffi::c_int == '\t' as i32
@@ -951,7 +949,7 @@ unsafe fn RegisterDefaultKeys() {
             .wrapping_div(::core::mem::size_of::<KeyNameId>() as usize)
     {
         if !has_keynameid[i as usize] {
-            let mut size: ::core::ffi::c_int = kKeyNameId[i as usize].size as ::core::ffi::c_int;
+            let size: ::core::ffi::c_int = kKeyNameId[i as usize].size as ::core::ffi::c_int;
             let mut k: ::core::ffi::c_int = kKeyNameId[i as usize].id as ::core::ffi::c_int;
             let mut j: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
             while j < size {
@@ -977,7 +975,7 @@ unsafe fn RegisterDefaultKeys() {
         }
     }
 }
-unsafe fn GetIniSection(mut s: *const ::core::ffi::c_char) -> ::core::ffi::c_int {
+unsafe fn GetIniSection(s: *const ::core::ffi::c_char) -> ::core::ffi::c_int {
     if StringEqualsNoCase(s, b"[KeyMap]\0" as *const u8 as *const ::core::ffi::c_char) {
         return 0 as ::core::ffi::c_int;
     }
@@ -1007,7 +1005,7 @@ unsafe fn GetIniSection(mut s: *const ::core::ffi::c_char) -> ::core::ffi::c_int
     }
     -(1 as ::core::ffi::c_int)
 }
-pub unsafe fn ParseBool(mut value: *const ::core::ffi::c_char, mut result: *mut bool) -> bool {
+pub unsafe fn ParseBool(mut value: *const ::core::ffi::c_char, result: *mut bool) -> bool {
     let mut rv: bool = false_0 != 0;
     let fresh2 = value;
     value = value.offset(1);
@@ -1067,8 +1065,8 @@ pub unsafe fn ParseBool(mut value: *const ::core::ffi::c_char, mut result: *mut 
     rv
 }
 unsafe fn HandleIniConfig(
-    mut section: ::core::ffi::c_int,
-    mut key: *const ::core::ffi::c_char,
+    section: ::core::ffi::c_int,
+    key: *const ::core::ffi::c_char,
     mut value: *mut ::core::ffi::c_char,
 ) -> bool {
     if section == 0 as ::core::ffi::c_int {
@@ -1312,8 +1310,8 @@ unsafe fn HandleIniConfig(
     false_0 != 0
 }
 unsafe fn ParseOneConfigFile(
-    mut filename: *const ::core::ffi::c_char,
-    mut depth: ::core::ffi::c_int,
+    filename: *const ::core::ffi::c_char,
+    depth: ::core::ffi::c_int,
 ) -> bool {
     let mut filedata: *mut ::core::ffi::c_char =
         ReadWholeFile(filename, ::core::ptr::null_mut::<size_t>()) as *mut ::core::ffi::c_char;
@@ -1350,7 +1348,7 @@ unsafe fn ParseOneConfigFile(
                 .is_null()
             {
                 let mut tt: *mut ::core::ffi::c_char = p.offset(8);
-                let mut new_filename: *mut ::core::ffi::c_char =
+                let new_filename: *mut ::core::ffi::c_char =
                     ReplaceFilenameWithNewPath(filename, NextPossiblyQuotedString(&raw mut tt));
                 if depth > 10 as ::core::ffi::c_int
                     || !ParseOneConfigFile(new_filename, depth + 1 as ::core::ffi::c_int)
@@ -1371,7 +1369,7 @@ unsafe fn ParseOneConfigFile(
                     lineno,
                 );
             } else {
-                let mut v: *mut ::core::ffi::c_char = SplitKeyValue(p);
+                let v: *mut ::core::ffi::c_char = SplitKeyValue(p);
                 if v.is_null() {
                     fprintf(
                         stderr,

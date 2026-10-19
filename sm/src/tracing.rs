@@ -817,8 +817,8 @@ static opcodeTypeSpc: [::core::ffi::c_int; 256] = [
     0, 0, 1, 5, 1, 2, 0, 1, 1, 2, 6, 1, 2, 0, 0, 0, 3, 0, 1, 5, 1, 2, 2, 1, 1, 1, 4, 1, 0, 0, 3, 0,
 ];
 pub unsafe fn getProcessorStateCpu(
-    mut snes: *mut Snes,
-    mut line: *mut ::core::ffi::c_char,
+    snes: *mut Snes,
+    line: *mut ::core::ffi::c_char,
     game: &mut Game,
 ) {
     let mut disLine: [::core::ffi::c_char; 14] =
@@ -884,7 +884,7 @@ pub unsafe fn getProcessorStateCpu(
         },
     );
 }
-pub unsafe fn getProcessorStateSpc(mut apu: *mut Apu, mut line: *mut ::core::ffi::c_char) {
+pub unsafe fn getProcessorStateSpc(apu: *mut Apu, line: *mut ::core::ffi::c_char) {
     let mut disLine: [::core::ffi::c_char; 18] =
         ::core::mem::transmute::<[u8; 18], [::core::ffi::c_char; 18]>(*b"                 \0");
     getDisassemblySpc(apu, &raw mut disLine as *mut ::core::ffi::c_char);
@@ -940,38 +940,34 @@ pub unsafe fn getProcessorStateSpc(mut apu: *mut Apu, mut line: *mut ::core::ffi
         },
     );
 }
-unsafe fn getDisassemblyCpu(
-    mut snes: *mut Snes,
-    mut line: *mut ::core::ffi::c_char,
-    game: &mut Game,
-) {
-    let mut adr: uint32_t = ((*(*snes).cpu).pc as ::core::ffi::c_int
+unsafe fn getDisassemblyCpu(snes: *mut Snes, line: *mut ::core::ffi::c_char, game: &mut Game) {
+    let adr: uint32_t = ((*(*snes).cpu).pc as ::core::ffi::c_int
         | ((*(*snes).cpu).k as ::core::ffi::c_int) << 16 as ::core::ffi::c_int)
         as uint32_t;
-    let mut opcode: uint8_t = snes_read(snes, adr, game);
-    let mut byte: uint8_t = snes_read(
+    let opcode: uint8_t = snes_read(snes, adr, game);
+    let byte: uint8_t = snes_read(
         snes,
         adr.wrapping_add(1 as uint32_t) & 0xffffff as uint32_t,
         game,
     );
-    let mut byte2: uint8_t = snes_read(
+    let byte2: uint8_t = snes_read(
         snes,
         adr.wrapping_add(2 as uint32_t) & 0xffffff as uint32_t,
         game,
     );
-    let mut word: uint16_t = ((byte2 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
+    let word: uint16_t = ((byte2 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
         | byte as ::core::ffi::c_int) as uint16_t;
-    let mut longv: uint32_t = ((snes_read(
+    let longv: uint32_t = ((snes_read(
         snes,
         adr.wrapping_add(3 as uint32_t) & 0xffffff as uint32_t,
         game,
     ) as ::core::ffi::c_int)
         << 16 as ::core::ffi::c_int
         | word as ::core::ffi::c_int) as uint32_t;
-    let mut rel: uint16_t = ((*(*snes).cpu).pc as ::core::ffi::c_int
+    let rel: uint16_t = ((*(*snes).cpu).pc as ::core::ffi::c_int
         + 2 as ::core::ffi::c_int
         + byte as int8_t as ::core::ffi::c_int) as uint16_t;
-    let mut rell: uint16_t = ((*(*snes).cpu).pc as ::core::ffi::c_int
+    let rell: uint16_t = ((*(*snes).cpu).pc as ::core::ffi::c_int
         + 3 as ::core::ffi::c_int
         + word as int16_t as ::core::ffi::c_int) as uint16_t;
     match opcodeType[opcode as usize] {
@@ -1054,30 +1050,29 @@ unsafe fn getDisassemblyCpu(
         _ => {}
     };
 }
-unsafe fn getDisassemblySpc(mut apu: *mut Apu, mut line: *mut ::core::ffi::c_char) {
-    let mut adr: uint16_t = (*(*apu).spc).pc;
-    let mut opcode: uint8_t = apu_cpuRead(apu, adr);
-    let mut byte: uint8_t = apu_cpuRead(
+unsafe fn getDisassemblySpc(apu: *mut Apu, line: *mut ::core::ffi::c_char) {
+    let adr: uint16_t = (*(*apu).spc).pc;
+    let opcode: uint8_t = apu_cpuRead(apu, adr);
+    let byte: uint8_t = apu_cpuRead(
         apu,
         (adr as ::core::ffi::c_int + 1 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int)
             as uint16_t,
     );
-    let mut byte2: uint8_t = apu_cpuRead(
+    let byte2: uint8_t = apu_cpuRead(
         apu,
         (adr as ::core::ffi::c_int + 2 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int)
             as uint16_t,
     );
-    let mut word: uint16_t = ((byte2 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
+    let word: uint16_t = ((byte2 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
         | byte as ::core::ffi::c_int) as uint16_t;
-    let mut rel: uint16_t = ((*(*apu).spc).pc as ::core::ffi::c_int
+    let rel: uint16_t = ((*(*apu).spc).pc as ::core::ffi::c_int
         + 2 as ::core::ffi::c_int
         + byte as int8_t as ::core::ffi::c_int) as uint16_t;
-    let mut rel2: uint16_t = ((*(*apu).spc).pc as ::core::ffi::c_int
+    let rel2: uint16_t = ((*(*apu).spc).pc as ::core::ffi::c_int
         + 2 as ::core::ffi::c_int
         + byte2 as int8_t as ::core::ffi::c_int) as uint16_t;
-    let mut wordb: uint16_t =
-        (word as ::core::ffi::c_int & 0x1fff as ::core::ffi::c_int) as uint16_t;
-    let mut bit: uint8_t = (word as ::core::ffi::c_int >> 13 as ::core::ffi::c_int) as uint8_t;
+    let wordb: uint16_t = (word as ::core::ffi::c_int & 0x1fff as ::core::ffi::c_int) as uint16_t;
+    let bit: uint8_t = (word as ::core::ffi::c_int >> 13 as ::core::ffi::c_int) as uint8_t;
     match opcodeTypeSpc[opcode as usize] {
         0 => {
             sprintf(

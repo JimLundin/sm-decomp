@@ -30,8 +30,8 @@ pub use crate::types::{
     PpuZbufType, SaveLoadFunc, Snes, Spc, Timer, WindowLayer,
 };
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
-pub unsafe fn cart_init(mut snes: *mut Snes) -> *mut Cart {
-    let mut cart: *mut Cart = malloc(::core::mem::size_of::<Cart>() as size_t) as *mut Cart;
+pub unsafe fn cart_init(snes: *mut Snes) -> *mut Cart {
+    let cart: *mut Cart = malloc(::core::mem::size_of::<Cart>() as size_t) as *mut Cart;
     (*cart).snes = snes;
     (*cart).type_0 = 0 as uint8_t;
     (*cart).rom = ::core::ptr::null_mut::<uint8_t>();
@@ -40,14 +40,14 @@ pub unsafe fn cart_init(mut snes: *mut Snes) -> *mut Cart {
     (*cart).ramSize = 0 as uint32_t;
     cart
 }
-pub unsafe fn cart_free(mut cart: *mut Cart) {
+pub unsafe fn cart_free(cart: *mut Cart) {
     free(cart as *mut ::core::ffi::c_void);
 }
-pub unsafe fn cart_reset(mut cart: *mut Cart) {}
+pub unsafe fn cart_reset(cart: *mut Cart) {}
 pub unsafe fn cart_saveload(
-    mut cart: *mut Cart,
-    mut func: Option<SaveLoadFunc>,
-    mut ctx: *mut ::core::ffi::c_void,
+    cart: *mut Cart,
+    func: Option<SaveLoadFunc>,
+    ctx: *mut ::core::ffi::c_void,
     game: &mut Game,
 ) {
     func.expect("non-null function pointer")(
@@ -58,11 +58,11 @@ pub unsafe fn cart_saveload(
     );
 }
 pub unsafe fn cart_load(
-    mut cart: *mut Cart,
-    mut type_0: ::core::ffi::c_int,
-    mut rom: *mut uint8_t,
-    mut romSize: ::core::ffi::c_int,
-    mut ramSize: ::core::ffi::c_int,
+    cart: *mut Cart,
+    type_0: ::core::ffi::c_int,
+    rom: *mut uint8_t,
+    romSize: ::core::ffi::c_int,
+    ramSize: ::core::ffi::c_int,
 ) {
     (*cart).type_0 = type_0 as uint8_t;
     if !(*cart).rom.is_null() {
@@ -171,7 +171,7 @@ unsafe fn cart_writeLorom(cart: *mut Cart, bank: u8, address: u16, value: u8) {
         *(*cart).ram.offset(index as isize) = value;
     }
 }
-unsafe fn cart_readHirom(mut cart: *mut Cart, mut bank: uint8_t, mut adr: uint16_t) -> uint8_t {
+unsafe fn cart_readHirom(cart: *mut Cart, mut bank: uint8_t, adr: uint16_t) -> uint8_t {
     bank = (bank as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int) as uint8_t;
     if (bank as ::core::ffi::c_int) < 0x40 as ::core::ffi::c_int
         && adr as ::core::ffi::c_int >= 0x6000 as ::core::ffi::c_int
@@ -205,12 +205,7 @@ unsafe fn cart_readHirom(mut cart: *mut Cart, mut bank: uint8_t, mut adr: uint16
     };
     (*(*cart).snes).openBus
 }
-unsafe fn cart_writeHirom(
-    mut cart: *mut Cart,
-    mut bank: uint8_t,
-    mut adr: uint16_t,
-    mut val: uint8_t,
-) {
+unsafe fn cart_writeHirom(cart: *mut Cart, mut bank: uint8_t, adr: uint16_t, val: uint8_t) {
     bank = (bank as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int) as uint8_t;
     if (bank as ::core::ffi::c_int) < 0x40 as ::core::ffi::c_int
         && adr as ::core::ffi::c_int >= 0x6000 as ::core::ffi::c_int

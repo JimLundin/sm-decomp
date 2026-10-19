@@ -8,14 +8,14 @@ pub use crate::types::{
     DmaChannel, Dsp, DspChannel, DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs,
     PpuZbufType, Snes, Spc, Timer, WindowLayer,
 };
-pub unsafe fn input_init(mut snes: *mut Snes) -> *mut Input {
-    let mut input: *mut Input = malloc(::core::mem::size_of::<Input>() as size_t) as *mut Input;
+pub unsafe fn input_init(snes: *mut Snes) -> *mut Input {
+    let input: *mut Input = malloc(::core::mem::size_of::<Input>() as size_t) as *mut Input;
     (*input).snes = snes;
     (*input).type_0 = 1 as uint8_t;
     (*input).currentState = 0 as uint16_t;
     input
 }
-pub unsafe fn input_free(mut input: *mut Input) {
+pub unsafe fn input_free(input: *mut Input) {
     free(input as *mut ::core::ffi::c_void);
 }
-pub unsafe fn input_reset(mut input: *mut Input) {}
+pub unsafe fn input_reset(input: *mut Input) {}

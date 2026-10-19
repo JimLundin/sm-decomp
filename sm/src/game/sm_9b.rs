@@ -50,15 +50,15 @@ pub struct GrappleBeamSpecialAngles {
 pub use crate::types::Buttons;
 pub use crate::types::Consts_9B;
 #[inline]
-unsafe fn RomPtr_9B(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
+unsafe fn RomPtr_9B(addr: uint16_t, game: &mut Game) -> *const uint8 {
     RomPtr((0x9b0000u32) | ((addr) as u32), game)
 }
 #[inline]
-unsafe fn RomPtr_A0(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
+unsafe fn RomPtr_A0(addr: uint16_t, game: &mut Game) -> *const uint8 {
     RomPtr((0xa00000u32) | ((addr) as u32), game)
 }
 #[inline]
-unsafe fn gVramWriteEntry(mut a: ::core::ffi::c_int, game: &mut Game) -> *mut VramWriteEntry {
+unsafe fn gVramWriteEntry(a: ::core::ffi::c_int, game: &mut Game) -> *mut VramWriteEntry {
     (&raw mut game.g_ram as *mut uint8).offset((0xd0 as ::core::ffi::c_int + a) as isize)
         as *mut uint8 as *mut VramWriteEntry
 }
@@ -112,28 +112,28 @@ static kShadesOfWhite: [uint16; 22] = [
 static kIsGrappleBannedForMovementType: [uint8; 28] = [
     0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1,
 ];
-pub unsafe fn ProjectileTrail_Func5(mut k: uint16, mut j: uint16, game: &mut Game) {
-    let mut R22: uint16 = ProjectileInsts_GetValue(k, game);
+pub unsafe fn ProjectileTrail_Func5(k: uint16, j: uint16, game: &mut Game) {
+    let R22: uint16 = ProjectileInsts_GetValue(k, game);
     let mut r18: uint16 = 0;
     let mut r20: uint16 = 0;
     if (*((&raw mut game.g_ram as *mut uint8).offset(0x93f) as *mut uint16) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int)
         == 0i32
     {
-        let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        let v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         r18 =
             *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v2 as isize);
         r20 =
             *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v2 as isize);
     } else {
-        let mut pt: Point16U = CalcExplosion_Mode7(k, game);
+        let pt: Point16U = CalcExplosion_Mode7(k, game);
         r18 = (*((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16))
             .wrapping_add(pt.x);
         r20 = (*((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16))
             .wrapping_add(pt.y);
     }
-    let mut v3: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut v4: uint16 =
+    let v3: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let v4: uint16 =
         *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(v3 as isize);
     let mut v5: uint16 = 0;
     if (v4 as ::core::ffi::c_int & 0x20 as ::core::ffi::c_int) != 0i32 {
@@ -173,10 +173,10 @@ pub unsafe fn ProjectileTrail_Func5(mut k: uint16, mut j: uint16, game: &mut Gam
                     .offset(v3 as isize) as ::core::ffi::c_int
                     & 0xf as ::core::ffi::c_int)) as uint16;
     }
-    let mut v6: uint16 = (*(RomPtr_9B(v5, game) as *mut uint16) as ::core::ffi::c_int
+    let v6: uint16 = (*(RomPtr_9B(v5, game) as *mut uint16) as ::core::ffi::c_int
         + 4 as ::core::ffi::c_int * R22 as ::core::ffi::c_int) as uint16;
-    let mut p: *const uint8 = RomPtr_9B(v6, game);
-    let mut v7: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let p: *const uint8 = RomPtr_9B(v6, game);
+    let v7: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0xd778) as *mut uint16).offset(v7 as isize) =
         (r20 as ::core::ffi::c_int + *p.offset(1) as int8 as ::core::ffi::c_int
             - 4 as ::core::ffi::c_int) as uint16;
@@ -191,11 +191,11 @@ pub unsafe fn ProjectileTrail_Func5(mut k: uint16, mut j: uint16, game: &mut Gam
             - 4 as ::core::ffi::c_int) as uint16;
 }
 pub unsafe fn StartSamusDeathAnimation(game: &mut Game) {
-    let mut v0: uint16 = *(&raw mut game.g_ram as *mut uint8).offset(0xa1f) as uint16;
+    let v0: uint16 = *(&raw mut game.g_ram as *mut uint8).offset(0xa1f) as uint16;
     if *(&raw mut game.g_ram as *mut uint8).offset(0xa1f) == 3u8 {
         QueueSfx1_Max6(0x32 as uint16, game);
     }
-    let mut v1: uint16 = kDeathAnimationFrames[v0 as usize] as uint16;
+    let v1: uint16 = kDeathAnimationFrames[v0 as usize] as uint16;
     if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8 {
         *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
             kPose_D8_FaceL_CrystalFlashEnd as uint16;
@@ -243,7 +243,7 @@ pub unsafe fn HandleSamusDeathSequence(game: &mut Game) -> uint16 {
     {
         let ref mut fresh6 = *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16);
         *fresh6 = (*fresh6).wrapping_sub(1);
-        let mut v0: bool = (*fresh6 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32;
+        let v0: bool = (*fresh6 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32;
         if *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) == 0 || v0 {
             if *((&raw mut game.g_ram as *mut uint8).offset(0xde4) as *mut uint16) != 0 {
                 *((&raw mut game.g_ram as *mut uint8).offset(0xde4) as *mut uint16) = 0 as uint16;
@@ -272,7 +272,7 @@ pub unsafe fn HandleSamusDeathSequence(game: &mut Game) -> uint16 {
     }
 }
 pub unsafe fn HandleSamusDeathSequence_Helper2(game: &mut Game) {
-    let mut v0: *const uint16 = RomPtr_9B(
+    let v0: *const uint16 = RomPtr_9B(
         *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bb5c8)) as *const uint8 as *mut uint16)
             .offset(
                 (*((&raw mut game.g_ram as *mut uint8).offset(0xa74) as *mut uint16)
@@ -301,15 +301,15 @@ pub unsafe fn HandleSamusDeathSequence_Helper2(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xde6) as *mut uint16) = 0 as uint16;
     GameState_24_SamusNoHealth_Explosion_2(game);
 }
-pub unsafe fn CopyPalettesForSamusDeath(mut v0: uint16, game: &mut Game) {
-    let mut r20: ::core::ffi::c_int = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bb6d2))
+pub unsafe fn CopyPalettesForSamusDeath(v0: uint16, game: &mut Game) {
+    let r20: ::core::ffi::c_int = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bb6d2))
         as *const uint8 as *mut uint16)
         .offset(
             (*((&raw mut game.g_ram as *mut uint8).offset(0xa74) as *mut uint16)
                 as ::core::ffi::c_int
                 >> 1 as ::core::ffi::c_int) as isize,
         ) as ::core::ffi::c_int;
-    let mut v1: *const uint16 =
+    let v1: *const uint16 =
         RomPtr_9B((r20 + v0 as ::core::ffi::c_int) as uint16_t, game) as *const uint16;
     memcpy(
         ((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(192)
@@ -328,7 +328,7 @@ pub unsafe fn CopyPalettesForSamusDeath(mut v0: uint16, game: &mut Game) {
         32 as size_t,
     );
 }
-pub unsafe fn QueueTransferOfSamusDeathSequence(mut v0: uint16, game: &mut Game) {
+pub unsafe fn QueueTransferOfSamusDeathSequence(v0: uint16, game: &mut Game) {
     let mut v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16);
     (*gVramWriteEntry(
         *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) as ::core::ffi::c_int,
@@ -336,7 +336,7 @@ pub unsafe fn QueueTransferOfSamusDeathSequence(mut v0: uint16, game: &mut Game)
     ))
     .size = 1024 as uint16;
     v1 = (v1).wrapping_add(2u16);
-    let mut v2: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    let v2: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     (*gVramWriteEntry(v1 as ::core::ffi::c_int, game)).size = g_word_9BB7BF[v2 as usize];
     v1 = (v1).wrapping_add(2u16);
     let fresh7 = v1;
@@ -359,10 +359,9 @@ pub unsafe fn GameState_24_SamusNoHealth_Explosion_1(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xdec) as *mut uint16) == 0
         && *((&raw mut game.g_ram as *mut uint8).offset(0xde4) as *mut uint16) != 0u16
     {
-        let mut v0: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0xde6)
+        let v0: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0xde6)
             as *mut uint16) as ::core::ffi::c_int;
-        let mut dst: *mut uint16 =
-            (&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16;
+        let dst: *mut uint16 = (&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16;
         let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
         while i < 384 as ::core::ffi::c_int / 2 as ::core::ffi::c_int {
             *dst.offset(i as isize) = kShadesOfWhite[v0 as usize];
@@ -387,7 +386,7 @@ pub unsafe fn GameState_24_SamusNoHealth_Explosion_1(game: &mut Game) {
 pub unsafe fn GameState_24_SamusNoHealth_Explosion_2(game: &mut Game) -> uint16 {
     let ref mut fresh1 = *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16);
     *fresh1 = (*fresh1).wrapping_sub(1);
-    let mut v0: bool = (*fresh1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32;
+    let v0: bool = (*fresh1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32;
     if *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) == 0 || v0 {
         let ref mut fresh2 = *((&raw mut game.g_ram as *mut uint8).offset(0xde4) as *mut uint16);
         *fresh2 = (*fresh2).wrapping_add(1);
@@ -497,7 +496,7 @@ pub unsafe fn CheckIfGrappleIsConnectedToBlock(game: &mut Game) -> uint8 {
     1 as uint8
 }
 unsafe fn ProcessEnemyGrappleBeamColl(
-    mut a: uint16,
+    a: uint16,
     mut r18: uint16,
     game: &mut Game,
 ) -> ::core::ffi::c_int {
@@ -533,7 +532,7 @@ unsafe fn ProcessEnemyGrappleBeamColl(
         }
     }
 }
-pub unsafe fn CallGrappleNextFunc(mut ea: uint32, game: &mut Game) {
+pub unsafe fn CallGrappleNextFunc(ea: uint32, game: &mut Game) {
     match ea {
         10205657 => {
             GrappleNext_SwingClockwise(game);
@@ -578,7 +577,7 @@ pub unsafe fn HandleConnectingGrapple(game: &mut Game) {
             ((0x9bc77ei32) as u16) & (0xffffu16);
         *((&raw mut game.g_ram as *mut uint8).offset(0xd00) as *mut uint16) = 0 as uint16;
     } else {
-        let mut v1: ::core::ffi::c_int = 2 as ::core::ffi::c_int
+        let v1: ::core::ffi::c_int = 2 as ::core::ffi::c_int
             * *((&raw mut game.g_ram as *mut uint8).offset(0xd34) as *mut uint16)
                 as ::core::ffi::c_int;
         if *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) != 0u16
@@ -674,7 +673,7 @@ pub unsafe fn GrappleNext_CrouchAimLeft(game: &mut Game) {
 }
 pub unsafe fn HandleConnectingGrapple_Swinging(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xa30) as *mut uint16) = 9 as uint16;
-    let mut v0: uint16 = u16::swap_bytes(CalculateAngleFromXY(
+    let v0: uint16 = u16::swap_bytes(CalculateAngleFromXY(
         (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16))
             .wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16)),
         (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16))
@@ -696,7 +695,7 @@ pub unsafe fn HandleConnectingGrapple_Swinging(game: &mut Game) {
 }
 pub unsafe fn HandleConnectingGrapple_StuckInPlace(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xa30) as *mut uint16) = 10 as uint16;
-    let mut v0: uint16 = u16::swap_bytes(CalculateAngleFromXY(
+    let v0: uint16 = u16::swap_bytes(CalculateAngleFromXY(
         (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16))
             .wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0xd08) as *mut uint16)),
         (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16))
@@ -755,8 +754,7 @@ pub unsafe fn HandleSpecialGrappleBeamAngles(game: &mut Game) -> uint8 {
         .field_8;
     *((&raw mut game.g_ram as *mut uint8).offset(0xa30) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xcf8) as *mut uint16) = 0 as uint16;
-    let mut v2: int16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16))
-        as i16)
+    let v2: int16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)) as i16)
         .wrapping_sub((*((&raw mut game.g_ram as *mut uint8).offset(0xb10) as *mut uint16)) as i16);
     if ((*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)) as i16)
         .wrapping_sub((*((&raw mut game.g_ram as *mut uint8).offset(0xb10) as *mut uint16)) as i16)
@@ -774,8 +772,7 @@ pub unsafe fn HandleSpecialGrappleBeamAngles(game: &mut Game) -> uint8 {
             (*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16))
                 .wrapping_sub(12u16);
     }
-    let mut v3: int16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16))
-        as i16)
+    let v3: int16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)) as i16)
         .wrapping_sub((*((&raw mut game.g_ram as *mut uint8).offset(0xb14) as *mut uint16)) as i16);
     if ((*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16)) as i16)
         .wrapping_sub((*((&raw mut game.g_ram as *mut uint8).offset(0xb14) as *mut uint16)) as i16)
@@ -796,7 +793,7 @@ pub unsafe fn HandleSpecialGrappleBeamAngles(game: &mut Game) -> uint8 {
     1 as uint8
 }
 pub unsafe fn GrappleBeamFunc_BB64(game: &mut Game) {
-    let mut current_block: u64;
+    let current_block: u64;
     if (*((&raw mut game.g_ram as *mut uint8).offset(0x8f) as *mut uint16) as ::core::ffi::c_int
         & kButton_Up as ::core::ffi::c_int)
         != 0i32
@@ -1070,8 +1067,8 @@ pub unsafe fn GrappleBeamFunc_BD44(game: &mut Game) {
     }
 }
 pub unsafe fn GrappleBeamFunc_BD95(game: &mut Game) {
-    let mut current_block: u64;
-    let mut v0: uint16 = abs16(*((&raw mut game.g_ram as *mut uint8).offset(0xd26) as *mut uint16));
+    let current_block: u64;
+    let v0: uint16 = abs16(*((&raw mut game.g_ram as *mut uint8).offset(0xd26) as *mut uint16));
     let mut v1: uint16 = 0;
     if v0 as ::core::ffi::c_int - 64 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
         *((&raw mut game.g_ram as *mut uint8).offset(0xcf8) as *mut uint16) = 1 as uint16;
@@ -1125,7 +1122,7 @@ pub unsafe fn GrappleBeamFunc_BD95(game: &mut Game) {
         }
         _ => {}
     }
-    let mut v2: uint16 = (2u16).wrapping_mul(v1);
+    let v2: uint16 = (2u16).wrapping_mul(v1);
     if (abs16(*((&raw mut game.g_ram as *mut uint8).offset(0xd2e) as *mut uint16))
         as ::core::ffi::c_int
         & 0xff00 as ::core::ffi::c_int)
@@ -1218,7 +1215,7 @@ pub unsafe fn GrappleBeamFunc_BE98(game: &mut Game) {
     }
 }
 pub unsafe fn GrappleBeamFunc_BEEB(game: &mut Game) {
-    let mut v0: ::core::ffi::c_int =
+    let v0: ::core::ffi::c_int =
         *((&raw mut game.g_ram as *mut uint8).offset(0xd34) as *mut uint16) as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) =
         (*((&raw mut game.g_ram as *mut uint8).offset(0xd16) as *mut uint16)).wrapping_sub(
@@ -1240,11 +1237,11 @@ pub unsafe fn GrappleBeamFunc_BEEB(game: &mut Game) {
         .wrapping_add(*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16));
 }
 pub unsafe fn GrappleBeamFunc_BF1B(game: &mut Game) {
-    let mut r22: uint16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const uint8
+    let r22: uint16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const uint8
         as *mut SamusPoseParams)
         .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as isize))
     .y_offset_to_gfx as uint16;
-    let mut v0: uint16 =
+    let v0: uint16 =
         (2u16).wrapping_mul(*((&raw mut game.g_ram as *mut uint8).offset(0xd34) as *mut uint16));
     if *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as ::core::ffi::c_int
         == kPose_49_FaceL_Moonwalk as ::core::ffi::c_int
@@ -1252,7 +1249,7 @@ pub unsafe fn GrappleBeamFunc_BF1B(game: &mut Game) {
             == kPose_4A_FaceR_Moonwalk as ::core::ffi::c_int
         || *(&raw mut game.g_ram as *mut uint8).offset(0xa1f) != 1u8
     {
-        let mut v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        let v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0xd16) as *mut uint16) =
             (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc122)) as *const uint8
                 as *mut uint16)
@@ -1286,7 +1283,7 @@ pub unsafe fn GrappleBeamFunc_BF1B(game: &mut Game) {
             - r22 as ::core::ffi::c_int)
             as uint16;
     } else {
-        let mut v2: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        let v2: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0xd16) as *mut uint16) =
             (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc172)) as *const uint8
                 as *mut uint16)
@@ -1372,7 +1369,7 @@ pub unsafe fn UpdateGrappleBeamTiles(game: &mut Game) {
         .offset(0) = -(102 as ::core::ffi::c_int) as uint8;
     (*gVramWriteEntry(v0 as ::core::ffi::c_int, game)).size = 25088 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x330) as *mut uint16) = (v0).wrapping_add(2u16);
-    let mut v1: uint16 = (*(&raw mut game.g_ram as *mut uint8).offset(0xcfb) as ::core::ffi::c_int
+    let v1: uint16 = (*(&raw mut game.g_ram as *mut uint8).offset(0xcfb) as ::core::ffi::c_int
         >> 1 as ::core::ffi::c_int
         & 0xfe as ::core::ffi::c_int) as uint16;
     v0 = (v0).wrapping_add(2u16);
@@ -1447,9 +1444,9 @@ pub unsafe fn HandleGrappleBeamFlare(game: &mut Game) {
                         .offset(0),
                 );
         }
-        let mut r20: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd1a) as *mut uint16))
+        let r20: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd1a) as *mut uint16))
             .wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16));
-        let mut r18: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd1c) as *mut uint16))
+        let r18: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xd1c) as *mut uint16))
             .wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16));
         if !((*((&raw mut game.g_ram as *mut uint8).offset(0xd1c) as *mut uint16)
             as ::core::ffi::c_int
@@ -1558,7 +1555,7 @@ pub unsafe fn GrappleBeamFunc_FireGoToCancel(game: &mut Game) {
         }
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0xd34) as *mut uint16) = v0 as uint16;
-    let mut v1: ::core::ffi::c_int = v0;
+    let v1: ::core::ffi::c_int = v0;
     *((&raw mut game.g_ram as *mut uint8).offset(0xd22) as *mut uint16) =
         *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc0db)) as *const uint8 as *mut uint16)
             .offset(v1 as isize);
@@ -1712,7 +1709,7 @@ pub unsafe fn GrappleBeamFunc_FireGoToCancel(game: &mut Game) {
             ((0x90a337i32) as u16) & (0xffffu16);
     }
 }
-pub unsafe fn CheckBannedDraygonGrappleDirs(mut a: uint16, game: &mut Game) -> uint16 {
+pub unsafe fn CheckBannedDraygonGrappleDirs(a: uint16, game: &mut Game) -> uint16 {
     if a as ::core::ffi::c_int == kPose_BE_FaceL_Draygon_Move as ::core::ffi::c_int {
         if (*((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16)
             as ::core::ffi::c_int
@@ -1780,8 +1777,8 @@ pub unsafe fn GrappleBeamFunc_Firing(game: &mut Game) {
             ((0x9bc856i32) as u16) & (0xffffu16);
         return;
     }
-    let mut pair: PairU16 = GrappleBeam_CollDetect_Enemy(game);
-    let mut v1: ::core::ffi::c_int = ProcessEnemyGrappleBeamColl(pair.k, pair.j, game);
+    let pair: PairU16 = GrappleBeam_CollDetect_Enemy(game);
+    let v1: ::core::ffi::c_int = ProcessEnemyGrappleBeamColl(pair.k, pair.j, game);
     if v1 >= 0i32 {
         if v1 != 0 {
             *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
@@ -1789,7 +1786,7 @@ pub unsafe fn GrappleBeamFunc_Firing(game: &mut Game) {
             return;
         }
     } else {
-        let mut v2: uint8 = BlockCollGrappleBeam(game);
+        let v2: uint8 = BlockCollGrappleBeam(game);
         if (v2 as ::core::ffi::c_int & 1 as ::core::ffi::c_int) == 0i32 {
             return;
         }
@@ -1819,7 +1816,7 @@ pub unsafe fn GrappleBeamFunc_ConnectedLockedInPlace(game: &mut Game) {
     }
 }
 pub unsafe fn GrappleBeamFunc_Connected_Swinging(game: &mut Game) {
-    let mut current_block: u64;
+    let current_block: u64;
     if (*((&raw mut game.g_ram as *mut uint8).offset(0x9b2) as *mut uint16) as ::core::ffi::c_int
         & *((&raw mut game.g_ram as *mut uint8).offset(0x8b) as *mut uint16) as ::core::ffi::c_int)
         != 0i32
@@ -2194,7 +2191,7 @@ pub unsafe fn PropelSamusFromGrappleSwing(game: &mut Game) {
     let mut r18: uint16 =
         (3 as ::core::ffi::c_int * (v0 as ::core::ffi::c_int >> 9 as ::core::ffi::c_int)) as uint16;
     r18 = (64u16).wrapping_sub(r18);
-    let mut v3: uint16 = abs16(
+    let v3: uint16 = abs16(
         kSinCosTable8bit_Sext[(((*(&raw mut game.g_ram as *mut uint8).offset(0xcfb))
             .wrapping_sub((r18) as u8)) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int) as usize] as uint16,
@@ -2247,7 +2244,7 @@ pub unsafe fn GrappleBeamFunc_ReleaseFromSwing(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xa04) as *mut uint16) = 0 as uint16;
     }
 }
-pub unsafe fn CallGrappleBeamFunc(mut ea: uint32, game: &mut Game) {
+pub unsafe fn CallGrappleBeamFunc(ea: uint32, game: &mut Game) {
     match ea {
         10206052 => {
             GrappleBeamFunc_BB64(game);

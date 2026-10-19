@@ -1039,7 +1039,7 @@ pub const SDL_INIT_GAMECONTROLLER: ::core::ffi::c_uint =
     sdl2_sys::SDL_INIT_GAMECONTROLLER as ::core::ffi::c_uint;
 pub const kDebugFlag: ::core::ffi::c_int = 0;
 #[inline]
-unsafe fn IntMin(mut a: ::core::ffi::c_int, mut b: ::core::ffi::c_int) -> ::core::ffi::c_int {
+unsafe fn IntMin(a: ::core::ffi::c_int, b: ::core::ffi::c_int) -> ::core::ffi::c_int {
     if a < b {
         a
     } else {
@@ -1047,7 +1047,7 @@ unsafe fn IntMin(mut a: ::core::ffi::c_int, mut b: ::core::ffi::c_int) -> ::core
     }
 }
 #[inline]
-unsafe fn IntMax(mut a: ::core::ffi::c_int, mut b: ::core::ffi::c_int) -> ::core::ffi::c_int {
+unsafe fn IntMax(a: ::core::ffi::c_int, b: ::core::ffi::c_int) -> ::core::ffi::c_int {
     if a > b {
         a
     } else {
@@ -1083,7 +1083,7 @@ static mut g_renderer_funcs: RendererFuncs = RendererFuncs {
 };
 static mut g_gamepad_modifiers: uint32 = 0;
 static mut g_gamepad_last_cmd: [uint16; 17] = [0; 17];
-unsafe fn host_die(mut error: *const ::core::ffi::c_char) {
+unsafe fn host_die(error: *const ::core::ffi::c_char) {
     SDL_ShowSimpleMessageBox(
         SDL_MESSAGEBOX_ERROR as ::core::ffi::c_int as Uint32,
         &raw const kWindowTitle as *const ::core::ffi::c_char,
@@ -1097,7 +1097,7 @@ unsafe fn host_die(mut error: *const ::core::ffi::c_char) {
     );
     exit(1 as ::core::ffi::c_int);
 }
-unsafe fn host_warning(mut error: *const ::core::ffi::c_char) {
+unsafe fn host_warning(error: *const ::core::ffi::c_char) {
     SDL_ShowSimpleMessageBox(
         SDL_MESSAGEBOX_WARNING as ::core::ffi::c_int as Uint32,
         &raw const kWindowTitle as *const ::core::ffi::c_char,
@@ -1110,7 +1110,7 @@ unsafe fn host_warning(mut error: *const ::core::ffi::c_char) {
         error,
     );
 }
-pub unsafe fn ChangeWindowScale(mut scale_step: ::core::ffi::c_int) {
+pub unsafe fn ChangeWindowScale(scale_step: ::core::ffi::c_int) {
     if SDL_GetWindowFlags(g_window as *mut SDL_Window)
         & (SDL_WINDOW_FULLSCREEN_DESKTOP as ::core::ffi::c_int
             | SDL_WINDOW_FULLSCREEN as ::core::ffi::c_int
@@ -1149,13 +1149,13 @@ pub unsafe fn ChangeWindowScale(mut scale_step: ::core::ffi::c_int) {
             bl = br;
             bt = 31 as ::core::ffi::c_int;
         }
-        let mut mw: ::core::ffi::c_int =
+        let mw: ::core::ffi::c_int =
             (bounds.w - bl - br + g_snes_width / 4 as ::core::ffi::c_int) / g_snes_width;
-        let mut mh: ::core::ffi::c_int =
+        let mh: ::core::ffi::c_int =
             (bounds.h - bt - bb + g_snes_height / 4 as ::core::ffi::c_int) / g_snes_height;
         max_scale = IntMin(mw, mh);
     }
-    let mut new_scale: ::core::ffi::c_int = IntMax(
+    let new_scale: ::core::ffi::c_int = IntMax(
         IntMin(
             g_current_window_scale as ::core::ffi::c_int + scale_step,
             max_scale,
@@ -1163,21 +1163,21 @@ pub unsafe fn ChangeWindowScale(mut scale_step: ::core::ffi::c_int) {
         1 as ::core::ffi::c_int,
     );
     g_current_window_scale = new_scale as uint8;
-    let mut w: ::core::ffi::c_int = new_scale * g_snes_width;
-    let mut h: ::core::ffi::c_int = new_scale * g_snes_height;
+    let w: ::core::ffi::c_int = new_scale * g_snes_width;
+    let h: ::core::ffi::c_int = new_scale * g_snes_height;
     SDL_SetWindowSize(g_window as *mut SDL_Window, w, h);
     if bt >= 0 as ::core::ffi::c_int {
         let mut mx: ::core::ffi::c_int = 0;
         let mut my: ::core::ffi::c_int = 0;
         SDL_GetGlobalMouseState(&raw mut mx, &raw mut my);
-        let mut wx: ::core::ffi::c_int = IntMax(
+        let wx: ::core::ffi::c_int = IntMax(
             IntMin(
                 mx - w / 2 as ::core::ffi::c_int,
                 bounds.x + bounds.w - bl - br - w,
             ),
             bounds.x + bl,
         );
-        let mut wy: ::core::ffi::c_int = IntMax(
+        let wy: ::core::ffi::c_int = IntMax(
             IntMin(
                 my - h / 2 as ::core::ffi::c_int,
                 bounds.y + bounds.h - bt - bb - h,
@@ -1195,11 +1195,11 @@ pub unsafe fn ChangeWindowScale(mut scale_step: ::core::ffi::c_int) {
 }
 pub const RESIZE_BORDER: ::core::ffi::c_int = 20;
 unsafe extern "C" fn HitTestCallback(
-    mut win: *mut SDL_Window,
-    mut pt: *const SDL_Point,
-    mut data: *mut ::core::ffi::c_void,
+    win: *mut SDL_Window,
+    pt: *const SDL_Point,
+    data: *mut ::core::ffi::c_void,
 ) -> SDL_HitTestResult {
-    let mut flags: uint32 = SDL_GetWindowFlags(win as *mut SDL_Window) as uint32;
+    let flags: uint32 = SDL_GetWindowFlags(win as *mut SDL_Window) as uint32;
     if flags & SDL_WINDOW_FULLSCREEN_DESKTOP as ::core::ffi::c_int as uint32 != 0 as uint32
         || flags & SDL_WINDOW_FULLSCREEN as ::core::ffi::c_int as uint32 != 0 as uint32
     {
@@ -1238,12 +1238,12 @@ unsafe extern "C" fn HitTestCallback(
     SDL_HITTEST_NORMAL
 }
 pub unsafe fn RtlDrawPpuFrame(
-    mut pixel_buffer: *mut uint8,
-    mut pitch: size_t,
-    mut render_flags: uint32,
+    pixel_buffer: *mut uint8,
+    pitch: size_t,
+    render_flags: uint32,
     game: &mut Game,
 ) {
-    let mut ppu_pixels: *mut uint8 = if game.g_other_image as ::core::ffi::c_int != 0 {
+    let ppu_pixels: *mut uint8 = if game.g_other_image as ::core::ffi::c_int != 0 {
         &raw mut g_my_pixels as *mut uint8
     } else {
         &raw mut g_pixels as *mut uint8
@@ -1261,7 +1261,7 @@ pub unsafe fn RtlDrawPpuFrame(
     }
 }
 unsafe fn DrawPpuFrameWithPerf(game: &mut Game) {
-    let mut render_scale: ::core::ffi::c_int =
+    let render_scale: ::core::ffi::c_int =
         PpuGetCurrentRenderScale((*game.g_snes).ppu, g_ppu_render_flags as uint32_t);
     let mut pixel_buffer: *mut uint8 = ::core::ptr::null_mut::<uint8>();
     let mut pitch: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -1280,15 +1280,15 @@ unsafe fn DrawPpuFrameWithPerf(game: &mut Game) {
         static mut history: [::core::ffi::c_float; 64] = [0.; 64];
         static mut average: ::core::ffi::c_float = 0.;
         static mut history_pos: ::core::ffi::c_int = 0;
-        let mut before: uint64 = SDL_GetPerformanceCounter() as uint64;
+        let before: uint64 = SDL_GetPerformanceCounter() as uint64;
         RtlDrawPpuFrame(
             pixel_buffer,
             pitch as size_t,
             g_ppu_render_flags as uint32,
             game,
         );
-        let mut after: uint64 = SDL_GetPerformanceCounter() as uint64;
-        let mut v: ::core::ffi::c_float = (SDL_GetPerformanceFrequency() as ::core::ffi::c_double
+        let after: uint64 = SDL_GetPerformanceCounter() as uint64;
+        let v: ::core::ffi::c_float = (SDL_GetPerformanceFrequency() as ::core::ffi::c_double
             / after.wrapping_sub(before) as ::core::ffi::c_double)
             as ::core::ffi::c_float;
         average += v - history[history_pos as usize];
@@ -1354,7 +1354,7 @@ unsafe fn host_apu_unlock() {
     SDL_UnlockMutex(g_audio_mutex);
 }
 unsafe extern "C" fn AudioCallback(
-    mut userdata: *mut ::core::ffi::c_void,
+    userdata: *mut ::core::ffi::c_void,
     mut stream: *mut Uint8,
     mut len: ::core::ffi::c_int,
 ) {
@@ -1380,7 +1380,7 @@ unsafe extern "C" fn AudioCallback(
                         as isize,
                 );
             }
-            let mut n: ::core::ffi::c_int = IntMin(
+            let n: ::core::ffi::c_int = IntMin(
                 len,
                 g_audiobuffer_end.offset_from(g_audiobuffer_cur) as ::core::ffi::c_long
                     as ::core::ffi::c_int,
@@ -1420,7 +1420,7 @@ static mut g_sdl_renderer_rect: SDL_Rect = SDL_Rect {
     w: 0,
     h: 0,
 };
-unsafe fn SdlRenderer_Init(mut window: *mut SDL_Window, game: &mut Game) -> bool {
+unsafe fn SdlRenderer_Init(window: *mut SDL_Window, game: &mut Game) -> bool {
     if !g_config.shader.is_null() {
         fprintf(
             stderr,
@@ -1428,7 +1428,7 @@ unsafe fn SdlRenderer_Init(mut window: *mut SDL_Window, game: &mut Game) -> bool
                 as *const ::core::ffi::c_char,
         );
     }
-    let mut renderer: *mut SDL_Renderer = SDL_CreateRenderer(
+    let renderer: *mut SDL_Renderer = SDL_CreateRenderer(
         g_window as *mut SDL_Window,
         -(1 as ::core::ffi::c_int),
         (if g_config.output_method as ::core::ffi::c_int
@@ -1466,7 +1466,7 @@ unsafe fn SdlRenderer_Init(mut window: *mut SDL_Window, game: &mut Game) -> bool
             b"best\0" as *const u8 as *const ::core::ffi::c_char,
         );
     }
-    let mut tex_mult: ::core::ffi::c_int =
+    let tex_mult: ::core::ffi::c_int =
         if g_ppu_render_flags & kPpuRenderFlags_4x4Mode7 as ::core::ffi::c_int != 0 {
             4 as ::core::ffi::c_int
         } else {
@@ -1493,10 +1493,10 @@ unsafe fn SdlRenderer_Destroy(game: &mut Game) {
     SDL_DestroyRenderer(g_renderer);
 }
 unsafe fn SdlRenderer_BeginDraw(
-    mut width: ::core::ffi::c_int,
-    mut height: ::core::ffi::c_int,
-    mut pixels: *mut *mut uint8,
-    mut pitch: *mut ::core::ffi::c_int,
+    width: ::core::ffi::c_int,
+    height: ::core::ffi::c_int,
+    pixels: *mut *mut uint8,
+    pitch: *mut ::core::ffi::c_int,
     game: &mut Game,
 ) {
     g_sdl_renderer_rect.w = width;
@@ -1622,14 +1622,14 @@ unsafe fn main_0(
         );
         return 1 as ::core::ffi::c_int;
     }
-    let mut custom_size: bool = g_config.window_width != 0 as ::core::ffi::c_int
+    let custom_size: bool = g_config.window_width != 0 as ::core::ffi::c_int
         && g_config.window_height != 0 as ::core::ffi::c_int;
-    let mut window_width: ::core::ffi::c_int = if custom_size as ::core::ffi::c_int != 0 {
+    let window_width: ::core::ffi::c_int = if custom_size as ::core::ffi::c_int != 0 {
         g_config.window_width
     } else {
         g_current_window_scale as ::core::ffi::c_int * g_snes_width
     };
-    let mut window_height: ::core::ffi::c_int = if custom_size as ::core::ffi::c_int != 0 {
+    let window_height: ::core::ffi::c_int = if custom_size as ::core::ffi::c_int != 0 {
         g_config.window_height
     } else {
         g_current_window_scale as ::core::ffi::c_int * g_snes_height
@@ -1640,12 +1640,12 @@ unsafe fn main_0(
     } else {
         g_renderer_funcs = kSdlRendererFuncs;
     }
-    let mut filename: *const ::core::ffi::c_char = if !(*argv.offset(0)).is_null() {
+    let filename: *const ::core::ffi::c_char = if !(*argv.offset(0)).is_null() {
         *argv.offset(0) as *const ::core::ffi::c_char
     } else {
         b"sm.smc\0" as *const u8 as *const ::core::ffi::c_char
     };
-    let mut snes: *mut Snes = owner.with(|game| SnesInit(filename, game));
+    let snes: *mut Snes = owner.with(|game| SnesInit(filename, game));
     if snes.is_null() {
         let mut buf: [::core::ffi::c_char; 256] = [0; 256];
         snprintf(
@@ -1657,7 +1657,7 @@ unsafe fn main_0(
         Die(&raw mut buf as *mut ::core::ffi::c_char);
         return 1 as ::core::ffi::c_int;
     }
-    let mut window: *mut SDL_Window = SDL_CreateWindow(
+    let window: *mut SDL_Window = SDL_CreateWindow(
         &raw const kWindowTitle as *const ::core::ffi::c_char,
         SDL_WINDOWPOS_UNDEFINED as ::core::ffi::c_int,
         SDL_WINDOWPOS_UNDEFINED as ::core::ffi::c_int,
@@ -1698,7 +1698,7 @@ unsafe fn main_0(
     }
     owner.with(|game| game.g_spc_player = SpcPlayer_Create() as *mut SpcPlayer);
     owner.with(|game| SpcPlayer_Initialize(game.g_spc_player as *mut SpcPlayer));
-    let mut enable_audio: bool = true_0 != 0;
+    let enable_audio: bool = true_0 != 0;
     if enable_audio {
         let mut want: SDL_AudioSpec = SDL_AudioSpec {
             freq: 0 as ::core::ffi::c_int,
@@ -1810,7 +1810,7 @@ unsafe fn main_0(
                     });
                 }
                 1617 | 1618 => {
-                    let mut b: ::core::ffi::c_int =
+                    let b: ::core::ffi::c_int =
                         RemapSdlButton(event.cbutton.button as ::core::ffi::c_int);
                     if b >= 0 as ::core::ffi::c_int {
                         owner.with(|game| {
@@ -1902,7 +1902,7 @@ unsafe fn main_0(
                 g_gamepad_buttons = 0 as uint8;
             }
             inputs |= g_gamepad_buttons as ::core::ffi::c_int;
-            let mut is_replay: uint8 = owner.with(|game| RtlRunFrame(inputs, game)) as uint8;
+            let is_replay: uint8 = owner.with(|game| RtlRunFrame(inputs, game)) as uint8;
             frameCtr = frameCtr.wrapping_add(1);
             let (want_bug_in_title, disable_render) = owner.with(|game| {
                 (*game.g_snes).disableRender = g_turbo as ::core::ffi::c_int
@@ -1982,10 +1982,10 @@ unsafe fn main_0(
 }
 unsafe fn RenderDigit(
     mut dst: *mut uint8,
-    mut pitch: size_t,
-    mut digit: ::core::ffi::c_int,
-    mut color: uint32,
-    mut big: bool,
+    pitch: size_t,
+    digit: ::core::ffi::c_int,
+    color: uint32,
+    big: bool,
 ) {
     static mut kFont: [uint8; 100] = [
         0x1c, 0x36, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x36, 0x1c, 0x18, 0x1c, 0x1e, 0x18, 0x18,
@@ -2045,12 +2045,7 @@ unsafe fn RenderDigit(
         }
     };
 }
-unsafe fn RenderNumber(
-    mut dst: *mut uint8,
-    mut pitch: size_t,
-    mut n: ::core::ffi::c_int,
-    mut big: uint8,
-) {
+unsafe fn RenderNumber(dst: *mut uint8, pitch: size_t, n: ::core::ffi::c_int, big: uint8) {
     let mut buf: [::core::ffi::c_char; 32] = [0; 32];
     let mut s: *mut ::core::ffi::c_char = ::core::ptr::null_mut::<::core::ffi::c_char>();
     let mut i: ::core::ffi::c_int = 0;
@@ -2089,7 +2084,7 @@ unsafe fn RenderNumber(
         i += 8 as ::core::ffi::c_int * 4 as ::core::ffi::c_int;
     }
 }
-unsafe fn HandleCommand(mut j: uint32, mut pressed: bool, game: &mut Game) {
+unsafe fn HandleCommand(j: uint32, pressed: bool, game: &mut Game) {
     if j <= kKeys_Controls_Last as ::core::ffi::c_int as uint32 {
         static mut kKbdRemap: [uint8; 13] = [0, 4, 5, 6, 7, 2, 3, 8, 0, 9, 1, 10, 11];
         if pressed {
@@ -2221,19 +2216,19 @@ unsafe fn HandleCommand(mut j: uint32, mut pressed: bool, game: &mut Game) {
     };
 }
 unsafe fn HandleInput(
-    mut keyCode: ::core::ffi::c_int,
-    mut keyMod: ::core::ffi::c_int,
-    mut pressed: bool,
+    keyCode: ::core::ffi::c_int,
+    keyMod: ::core::ffi::c_int,
+    pressed: bool,
     game: &mut Game,
 ) {
-    let mut j: ::core::ffi::c_int = FindCmdForSdlKey(keyCode as SDL_Keycode, keyMod as SDL_Keymod);
+    let j: ::core::ffi::c_int = FindCmdForSdlKey(keyCode as SDL_Keycode, keyMod as SDL_Keymod);
     if j != 0 as ::core::ffi::c_int {
         HandleCommand(j as uint32, pressed, game);
     }
 }
-unsafe fn OpenOneGamepad(mut i: ::core::ffi::c_int) {
+unsafe fn OpenOneGamepad(i: ::core::ffi::c_int) {
     if SDL_IsGameController(i) as u64 != 0 {
-        let mut controller: *mut SDL_GameController = SDL_GameControllerOpen(i);
+        let controller: *mut SDL_GameController = SDL_GameControllerOpen(i);
         if controller.is_null() {
             fprintf(
                 stderr,
@@ -2244,7 +2239,7 @@ unsafe fn OpenOneGamepad(mut i: ::core::ffi::c_int) {
         }
     }
 }
-unsafe fn RemapSdlButton(mut button: ::core::ffi::c_int) -> ::core::ffi::c_int {
+unsafe fn RemapSdlButton(button: ::core::ffi::c_int) -> ::core::ffi::c_int {
     match button {
         0 => kGamepadBtn_A as ::core::ffi::c_int,
         1 => kGamepadBtn_B as ::core::ffi::c_int,
@@ -2264,7 +2259,7 @@ unsafe fn RemapSdlButton(mut button: ::core::ffi::c_int) -> ::core::ffi::c_int {
         _ => -(1 as ::core::ffi::c_int),
     }
 }
-unsafe fn HandleGamepadInput(mut button: ::core::ffi::c_int, mut pressed: bool, game: &mut Game) {
+unsafe fn HandleGamepadInput(button: ::core::ffi::c_int, pressed: bool, game: &mut Game) {
     if (g_gamepad_modifiers & ((1 as ::core::ffi::c_int) << button) as uint32 != 0)
         as ::core::ffi::c_int
         == pressed as ::core::ffi::c_int
@@ -2280,7 +2275,7 @@ unsafe fn HandleGamepadInput(mut button: ::core::ffi::c_int, mut pressed: bool, 
         HandleCommand(g_gamepad_last_cmd[button as usize] as uint32, pressed, game);
     }
 }
-unsafe fn HandleVolumeAdjustment(mut volume_adjustment: ::core::ffi::c_int) {
+unsafe fn HandleVolumeAdjustment(volume_adjustment: ::core::ffi::c_int) {
     g_sdl_audio_mixer_volume = IntMin(
         IntMax(
             0 as ::core::ffi::c_int,
@@ -2298,27 +2293,27 @@ unsafe fn ApproximateAtan2(
     mut y: ::core::ffi::c_float,
     mut x: ::core::ffi::c_float,
 ) -> ::core::ffi::c_float {
-    let mut sign_mask: uint32 = 0x80000000 as uint32;
-    let mut b: ::core::ffi::c_float = 0.596227f32;
-    let mut ux_s: uint32 = sign_mask & *(&raw mut x as *mut uint32);
-    let mut uy_s: uint32 = sign_mask & *(&raw mut y as *mut uint32);
-    let mut q: ::core::ffi::c_float = ((!ux_s & uy_s) >> 29 as ::core::ffi::c_int
+    let sign_mask: uint32 = 0x80000000 as uint32;
+    let b: ::core::ffi::c_float = 0.596227f32;
+    let ux_s: uint32 = sign_mask & *(&raw mut x as *mut uint32);
+    let uy_s: uint32 = sign_mask & *(&raw mut y as *mut uint32);
+    let q: ::core::ffi::c_float = ((!ux_s & uy_s) >> 29 as ::core::ffi::c_int
         | ux_s >> 30 as ::core::ffi::c_int)
         as ::core::ffi::c_float;
     let mut bxy_a: ::core::ffi::c_float = b * x * y;
     if bxy_a < 0.0f32 {
         bxy_a = -bxy_a;
     }
-    let mut num: ::core::ffi::c_float = bxy_a + y * y;
+    let num: ::core::ffi::c_float = bxy_a + y * y;
     let mut atan_1q: ::core::ffi::c_float = num / (x * x + bxy_a + num + 0.000001f32);
     let mut uatan_2q: uint32_t =
         ux_s as uint32_t ^ uy_s as uint32_t | *(&raw mut atan_1q as *mut uint32);
     q + *(&raw mut uatan_2q as *mut ::core::ffi::c_float)
 }
 unsafe fn HandleGamepadAxisInput(
-    mut gamepad_id: ::core::ffi::c_int,
-    mut axis: ::core::ffi::c_int,
-    mut value: ::core::ffi::c_int,
+    gamepad_id: ::core::ffi::c_int,
+    axis: ::core::ffi::c_int,
+    value: ::core::ffi::c_int,
     game: &mut Game,
 ) {
     static mut last_gamepad_id: ::core::ffi::c_int = 0;
@@ -2362,7 +2357,7 @@ unsafe fn HandleGamepadAxisInput(
                     | (1 as ::core::ffi::c_int) << 4 as ::core::ffi::c_int)
                     as uint8,
             ];
-            let mut angle: uint8 = (ApproximateAtan2(
+            let angle: uint8 = (ApproximateAtan2(
                 last_y as ::core::ffi::c_float,
                 last_x as ::core::ffi::c_float,
             ) * 64.0f32
@@ -2410,7 +2405,7 @@ unsafe fn SwitchDirectory() {
             b"/sm.ini\0" as *const u8 as *const ::core::ffi::c_char as *const ::core::ffi::c_void,
             8 as size_t,
         );
-        let mut f: *mut FILE = fopen(
+        let f: *mut FILE = fopen(
             &raw mut buf as *mut ::core::ffi::c_char,
             b"rb\0" as *const u8 as *const ::core::ffi::c_char,
         ) as *mut FILE;
@@ -2422,7 +2417,7 @@ unsafe fn SwitchDirectory() {
                     b"Found sm.ini in %s\n\0" as *const u8 as *const ::core::ffi::c_char,
                     &raw mut buf as *mut ::core::ffi::c_char,
                 );
-                let mut err: ::core::ffi::c_int = chdir(&raw mut buf as *mut ::core::ffi::c_char);
+                let err: ::core::ffi::c_int = chdir(&raw mut buf as *mut ::core::ffi::c_char);
             }
             return;
         }

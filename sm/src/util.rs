@@ -57,8 +57,8 @@ pub const true_0: ::core::ffi::c_int = 1;
 pub const false_0: ::core::ffi::c_int = 0;
 pub const SEEK_END: ::core::ffi::c_int = 2;
 pub unsafe fn NextDelim(
-    mut s: *mut *mut ::core::ffi::c_char,
-    mut sep: ::core::ffi::c_int,
+    s: *mut *mut ::core::ffi::c_char,
+    sep: ::core::ffi::c_int,
 ) -> *mut ::core::ffi::c_char {
     let mut r: *mut ::core::ffi::c_char = *s;
     if !r.is_null() {
@@ -80,7 +80,7 @@ pub unsafe fn NextDelim(
     r
 }
 #[inline]
-unsafe fn ToLower(mut a: ::core::ffi::c_int) -> ::core::ffi::c_int {
+unsafe fn ToLower(a: ::core::ffi::c_int) -> ::core::ffi::c_int {
     a + (a >= 'A' as i32 && a <= 'Z' as i32) as ::core::ffi::c_int * 32 as ::core::ffi::c_int
 }
 pub unsafe fn StringEqualsNoCase(
@@ -90,10 +90,10 @@ pub unsafe fn StringEqualsNoCase(
     loop {
         let fresh2 = a;
         a = a.offset(1);
-        let mut aa: ::core::ffi::c_int = ToLower(*fresh2 as ::core::ffi::c_int);
+        let aa: ::core::ffi::c_int = ToLower(*fresh2 as ::core::ffi::c_int);
         let fresh3 = b;
         b = b.offset(1);
-        let mut bb: ::core::ffi::c_int = ToLower(*fresh3 as ::core::ffi::c_int);
+        let bb: ::core::ffi::c_int = ToLower(*fresh3 as ::core::ffi::c_int);
         if aa != bb {
             return false_0 != 0;
         }
@@ -107,8 +107,8 @@ pub unsafe fn StringStartsWithNoCase(
     mut b: *const ::core::ffi::c_char,
 ) -> *const ::core::ffi::c_char {
     loop {
-        let mut aa: ::core::ffi::c_int = ToLower(*a as ::core::ffi::c_int);
-        let mut bb: ::core::ffi::c_int = ToLower(*b as ::core::ffi::c_int);
+        let aa: ::core::ffi::c_int = ToLower(*a as ::core::ffi::c_int);
+        let bb: ::core::ffi::c_int = ToLower(*b as ::core::ffi::c_int);
         if bb == 0 as ::core::ffi::c_int {
             return a;
         }
@@ -119,19 +119,15 @@ pub unsafe fn StringStartsWithNoCase(
         b = b.offset(1);
     }
 }
-pub unsafe fn ReadWholeFile(
-    mut name: *const ::core::ffi::c_char,
-    mut length: *mut size_t,
-) -> *mut uint8 {
-    let mut f: *mut FILE =
-        fopen(name, b"rb\0" as *const u8 as *const ::core::ffi::c_char) as *mut FILE;
+pub unsafe fn ReadWholeFile(name: *const ::core::ffi::c_char, length: *mut size_t) -> *mut uint8 {
+    let f: *mut FILE = fopen(name, b"rb\0" as *const u8 as *const ::core::ffi::c_char) as *mut FILE;
     if f.is_null() {
         return ::core::ptr::null_mut::<uint8>();
     }
     fseek(f, 0 as ::core::ffi::c_long, SEEK_END);
-    let mut size: size_t = ftell(f) as size_t;
+    let size: size_t = ftell(f) as size_t;
     rewind(f);
-    let mut buffer: *mut uint8 = malloc(size.wrapping_add(1 as size_t)) as *mut uint8;
+    let buffer: *mut uint8 = malloc(size.wrapping_add(1 as size_t)) as *mut uint8;
     if buffer.is_null() {
         Die(b"malloc failed\0" as *const u8 as *const ::core::ffi::c_char);
     }
@@ -145,9 +141,7 @@ pub unsafe fn ReadWholeFile(
     }
     buffer
 }
-pub unsafe fn NextLineStripComments(
-    mut s: *mut *mut ::core::ffi::c_char,
-) -> *mut ::core::ffi::c_char {
+pub unsafe fn NextLineStripComments(s: *mut *mut ::core::ffi::c_char) -> *mut ::core::ffi::c_char {
     let mut p: *mut ::core::ffi::c_char = *s;
     if p.is_null() {
         return ::core::ptr::null_mut::<::core::ffi::c_char>();
@@ -163,7 +157,7 @@ pub unsafe fn NextLineStripComments(
     } else {
         p.offset(strlen(p) as isize)
     };
-    let mut comment: *mut ::core::ffi::c_char = memchr(
+    let comment: *mut ::core::ffi::c_char = memchr(
         p as *const ::core::ffi::c_void,
         '#' as i32,
         eol.offset_from(p) as ::core::ffi::c_long as size_t,
@@ -186,7 +180,7 @@ pub unsafe fn NextLineStripComments(
     p
 }
 pub unsafe fn NextPossiblyQuotedString(
-    mut s: *mut *mut ::core::ffi::c_char,
+    s: *mut *mut ::core::ffi::c_char,
 ) -> *mut ::core::ffi::c_char {
     let mut r: *mut ::core::ffi::c_char = *s;
     let mut t: *mut ::core::ffi::c_char = ::core::ptr::null_mut::<::core::ffi::c_char>();
@@ -220,11 +214,11 @@ pub unsafe fn NextPossiblyQuotedString(
     r
 }
 pub unsafe fn ReplaceFilenameWithNewPath(
-    mut old_path: *const ::core::ffi::c_char,
-    mut new_path: *const ::core::ffi::c_char,
+    old_path: *const ::core::ffi::c_char,
+    new_path: *const ::core::ffi::c_char,
 ) -> *mut ::core::ffi::c_char {
     let mut olen: size_t = strlen(old_path);
-    let mut nlen: size_t = strlen(new_path).wrapping_add(1 as size_t);
+    let nlen: size_t = strlen(new_path).wrapping_add(1 as size_t);
     while olen != 0
         && *old_path.offset(olen.wrapping_sub(1 as size_t) as isize) as ::core::ffi::c_int
             != '/' as i32
@@ -233,7 +227,7 @@ pub unsafe fn ReplaceFilenameWithNewPath(
     {
         olen = olen.wrapping_sub(1);
     }
-    let mut result: *mut ::core::ffi::c_char =
+    let result: *mut ::core::ffi::c_char =
         malloc(olen.wrapping_add(nlen)) as *mut ::core::ffi::c_char;
     memcpy(
         result as *mut ::core::ffi::c_void,
@@ -247,8 +241,8 @@ pub unsafe fn ReplaceFilenameWithNewPath(
     );
     result
 }
-pub unsafe fn SplitKeyValue(mut p: *mut ::core::ffi::c_char) -> *mut ::core::ffi::c_char {
-    let mut equals: *mut ::core::ffi::c_char = strchr(p, '=' as i32);
+pub unsafe fn SplitKeyValue(p: *mut ::core::ffi::c_char) -> *mut ::core::ffi::c_char {
+    let equals: *mut ::core::ffi::c_char = strchr(p, '=' as i32);
     if equals.is_null() {
         return ::core::ptr::null_mut::<::core::ffi::c_char>();
     }
@@ -281,16 +275,16 @@ pub unsafe fn SkipPrefix(
     }
     big
 }
-pub unsafe fn StrSet(mut rv: *mut *mut ::core::ffi::c_char, mut s: *const ::core::ffi::c_char) {
-    let mut news: *mut ::core::ffi::c_char = strdup(s);
-    let mut old: *mut ::core::ffi::c_char = *rv;
+pub unsafe fn StrSet(rv: *mut *mut ::core::ffi::c_char, s: *const ::core::ffi::c_char) {
+    let news: *mut ::core::ffi::c_char = strdup(s);
+    let old: *mut ::core::ffi::c_char = *rv;
     *rv = news;
     free(old as *mut ::core::ffi::c_void);
 }
-pub unsafe fn ByteArray_Resize(mut arr: *mut ByteArray, mut new_size: size_t) {
+pub unsafe fn ByteArray_Resize(arr: *mut ByteArray, new_size: size_t) {
     (*arr).size = new_size;
     if new_size > (*arr).capacity {
-        let mut minsize: size_t = (*arr)
+        let minsize: size_t = (*arr)
             .capacity
             .wrapping_add((*arr).capacity >> 1 as ::core::ffi::c_int)
             .wrapping_add(8 as size_t);
@@ -299,7 +293,7 @@ pub unsafe fn ByteArray_Resize(mut arr: *mut ByteArray, mut new_size: size_t) {
         } else {
             new_size
         };
-        let mut data: *mut uint8 =
+        let data: *mut uint8 =
             realloc((*arr).data as *mut ::core::ffi::c_void, (*arr).capacity) as *mut uint8;
         if data.is_null() {
             Die(b"memory allocation failed\0" as *const u8 as *const ::core::ffi::c_char);
@@ -307,16 +301,12 @@ pub unsafe fn ByteArray_Resize(mut arr: *mut ByteArray, mut new_size: size_t) {
         (*arr).data = data;
     }
 }
-pub unsafe fn ByteArray_Destroy(mut arr: *mut ByteArray) {
-    let mut data: *mut ::core::ffi::c_void = (*arr).data as *mut ::core::ffi::c_void;
+pub unsafe fn ByteArray_Destroy(arr: *mut ByteArray) {
+    let data: *mut ::core::ffi::c_void = (*arr).data as *mut ::core::ffi::c_void;
     (*arr).data = ::core::ptr::null_mut::<uint8>();
     free(data);
 }
-pub unsafe fn ByteArray_AppendData(
-    mut arr: *mut ByteArray,
-    mut data: *const uint8,
-    mut data_size: size_t,
-) {
+pub unsafe fn ByteArray_AppendData(arr: *mut ByteArray, data: *const uint8, data_size: size_t) {
     ByteArray_Resize(arr, (*arr).size.wrapping_add(data_size));
     memcpy(
         (*arr)
@@ -327,7 +317,7 @@ pub unsafe fn ByteArray_AppendData(
         data_size,
     );
 }
-pub unsafe fn ByteArray_AppendByte(mut arr: *mut ByteArray, mut v: uint8) {
+pub unsafe fn ByteArray_AppendByte(arr: *mut ByteArray, v: uint8) {
     ByteArray_Resize(arr, (*arr).size.wrapping_add(1 as size_t));
     *(*arr)
         .data

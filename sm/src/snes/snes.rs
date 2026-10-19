@@ -38,8 +38,8 @@ pub use crate::types::{
 pub const true_0: ::core::ffi::c_int = 1;
 pub const false_0: ::core::ffi::c_int = 0;
 
-pub unsafe fn snes_init(mut ram: *mut uint8_t) -> *mut Snes {
-    let mut snes: *mut Snes = malloc(::core::mem::size_of::<Snes>() as size_t) as *mut Snes;
+pub unsafe fn snes_init(ram: *mut uint8_t) -> *mut Snes {
+    let snes: *mut Snes = malloc(::core::mem::size_of::<Snes>() as size_t) as *mut Snes;
     core::ptr::write_bytes(snes, 0, 1);
     (*snes).ram = ram;
     (*snes).debug_cycles = false_0 != 0;
@@ -59,7 +59,7 @@ pub unsafe fn snes_init(mut ram: *mut uint8_t) -> *mut Snes {
     (*snes).input2 = input_init(snes);
     snes
 }
-pub unsafe fn snes_free(mut snes: *mut Snes) {
+pub unsafe fn snes_free(snes: *mut Snes) {
     cpu_free((*snes).cpu);
     apu_free((*snes).apu);
     dma_free((*snes).dma);
@@ -321,12 +321,12 @@ unsafe fn snes_writeReg(snes: *mut Snes, adr: u16, val: u8, game: &mut Game) {
         }
         0x420b => {
             if val as ::core::ffi::c_int == 2 as ::core::ffi::c_int {
-                let mut t: uint32_t = (((*(*snes).dma).channel[1 as ::core::ffi::c_int as usize]
-                    .aBank as ::core::ffi::c_int)
+                let t: uint32_t = (((*(*snes).dma).channel[1 as ::core::ffi::c_int as usize].aBank
+                    as ::core::ffi::c_int)
                     << 16 as ::core::ffi::c_int
                     | (*(*snes).dma).channel[1 as ::core::ffi::c_int as usize].aAdr
                         as ::core::ffi::c_int) as uint32_t;
-                let mut data: ::core::ffi::c_int = snes_read(snes, t, game) as ::core::ffi::c_int
+                let data: ::core::ffi::c_int = snes_read(snes, t, game) as ::core::ffi::c_int
                     | (snes_read(snes, t.wrapping_add(1 as uint32_t), game) as ::core::ffi::c_int)
                         << 8 as ::core::ffi::c_int;
             }
@@ -369,7 +369,7 @@ pub unsafe fn snes_read(snes: *mut Snes, address: u32, game: &mut Game) -> u8 {
     }
     cart_read((*snes).cart, bank, offset, game)
 }
-pub unsafe fn LogWrite(mut snes: *mut Snes, mut adr: uint32_t, mut val: uint8_t, game: &mut Game) {
+pub unsafe fn LogWrite(snes: *mut Snes, adr: uint32_t, val: uint8_t, game: &mut Game) {
     printf(
         b"@%d: Write to 0x%x = 0x%.2x: 0x%x: r18=0x%x: r20=0x%x: a = 0x%x, x = 0x%x, y = 0x%x, c = %d\n\0"
             as *const u8 as *const ::core::ffi::c_char,

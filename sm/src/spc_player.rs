@@ -1751,8 +1751,8 @@ static kSpcPlayer_Maps: [MemMapSized; 283] = [
         size: 1 as uint16,
     },
 ];
-unsafe fn Dsp_Write(mut p: *mut SpcPlayer, mut reg: uint8_t, mut value: uint8) {
-    let mut hist: *mut DspRegWriteHistory = (*p).reg_write_history;
+unsafe fn Dsp_Write(p: *mut SpcPlayer, mut reg: uint8_t, value: uint8) {
+    let hist: *mut DspRegWriteHistory = (*p).reg_write_history;
     if !hist.is_null() {
         if (*hist).count < 256 as uint32_t {
             if (*hist).count == 9 as uint32_t
@@ -1780,22 +1780,22 @@ unsafe fn Not_Implemented() {
     };
     printf(b"Not Implemented\n\0" as *const u8 as *const ::core::ffi::c_char);
 }
-unsafe fn SpcDivHelper(mut a: ::core::ffi::c_int, mut b: uint8) -> uint16 {
-    let mut org_a: ::core::ffi::c_int = a;
+unsafe fn SpcDivHelper(mut a: ::core::ffi::c_int, b: uint8) -> uint16 {
+    let org_a: ::core::ffi::c_int = a;
     if a & 0x100 as ::core::ffi::c_int != 0 {
         a = -a;
     }
-    let mut q: ::core::ffi::c_int = if b as ::core::ffi::c_int != 0 {
+    let q: ::core::ffi::c_int = if b as ::core::ffi::c_int != 0 {
         (a & 0xff as ::core::ffi::c_int) / b as ::core::ffi::c_int
     } else {
         0xff as ::core::ffi::c_int
     };
-    let mut r: ::core::ffi::c_int = if b as ::core::ffi::c_int != 0 {
+    let r: ::core::ffi::c_int = if b as ::core::ffi::c_int != 0 {
         (a & 0xff as ::core::ffi::c_int) % b as ::core::ffi::c_int
     } else {
         a & 0xff as ::core::ffi::c_int
     };
-    let mut t: ::core::ffi::c_int = (q << 8 as ::core::ffi::c_int)
+    let t: ::core::ffi::c_int = (q << 8 as ::core::ffi::c_int)
         + (if b as ::core::ffi::c_int != 0 {
             (r << 8 as ::core::ffi::c_int) / b as ::core::ffi::c_int & 0xff as ::core::ffi::c_int
         } else {
@@ -1807,7 +1807,7 @@ unsafe fn SpcDivHelper(mut a: ::core::ffi::c_int, mut b: uint8) -> uint16 {
         t
     }) as uint16)
 }
-unsafe fn SetupEchoParameter_EDL(mut p: *mut SpcPlayer, mut a: uint8) {
+unsafe fn SetupEchoParameter_EDL(p: *mut SpcPlayer, mut a: uint8) {
     (*p).echo_parameter_EDL = a;
     if a as ::core::ffi::c_int != (*p).last_written_edl as ::core::ffi::c_int {
         a = ((*p).last_written_edl as ::core::ffi::c_int & 0xf as ::core::ffi::c_int
@@ -1840,7 +1840,7 @@ unsafe fn SetupEchoParameter_EDL(mut p: *mut SpcPlayer, mut a: uint8) {
             + 0x16 as ::core::ffi::c_int) as uint8,
     );
 }
-unsafe fn WriteVolumeToDsp(mut p: *mut SpcPlayer, mut c: *mut Channel, mut volume: uint16) {
+unsafe fn WriteVolumeToDsp(p: *mut SpcPlayer, c: *mut Channel, mut volume: uint16) {
     static kVolumeTable: [uint8; 22] = [
         0, 1, 3, 7, 13, 21, 30, 41, 52, 66, 81, 94, 103, 110, 115, 119, 122, 124, 125, 126, 127,
         127,
@@ -1850,7 +1850,7 @@ unsafe fn WriteVolumeToDsp(mut p: *mut SpcPlayer, mut c: *mut Channel, mut volum
     }
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i < 2 as ::core::ffi::c_int {
-        let mut j: ::core::ffi::c_int = volume as ::core::ffi::c_int >> 8 as ::core::ffi::c_int;
+        let j: ::core::ffi::c_int = volume as ::core::ffi::c_int >> 8 as ::core::ffi::c_int;
         let mut t: uint8 = 0;
         if j >= 21 as ::core::ffi::c_int {
             t = ((*p).ram[(j + 0x1e1d as ::core::ffi::c_int) as usize] as ::core::ffi::c_int
@@ -1885,14 +1885,14 @@ unsafe fn WriteVolumeToDsp(mut p: *mut SpcPlayer, mut c: *mut Channel, mut volum
         i += 1;
     }
 }
-unsafe fn WritePitchInner(mut p: *mut SpcPlayer, mut c: *mut Channel, mut pitch: uint16) {
+unsafe fn WritePitchInner(p: *mut SpcPlayer, c: *mut Channel, pitch: uint16) {
     static kBaseNoteFreqs: [uint16; 13] = [
         2143, 2270, 2405, 2548, 2700, 2860, 3030, 3211, 3402, 3604, 3818, 4045, 4286,
     ];
-    let mut pp: uint8 = (pitch as ::core::ffi::c_int >> 8 as ::core::ffi::c_int
+    let pp: uint8 = (pitch as ::core::ffi::c_int >> 8 as ::core::ffi::c_int
         & 0x7f as ::core::ffi::c_int) as uint8;
     let mut q: uint8 = (pp as ::core::ffi::c_int / 12 as ::core::ffi::c_int) as uint8;
-    let mut r: uint8 = (pp as ::core::ffi::c_int % 12 as ::core::ffi::c_int) as uint8;
+    let r: uint8 = (pp as ::core::ffi::c_int % 12 as ::core::ffi::c_int) as uint8;
     let mut t: uint16 = (kBaseNoteFreqs[r as usize] as ::core::ffi::c_int
         + ((kBaseNoteFreqs[(r as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as usize]
             as ::core::ffi::c_int
@@ -1908,7 +1908,7 @@ unsafe fn WritePitchInner(mut p: *mut SpcPlayer, mut c: *mut Channel, mut pitch:
     t = ((*c).instrument_pitch_base as ::core::ffi::c_int * t as ::core::ffi::c_int
         >> 8 as ::core::ffi::c_int) as uint16;
     if (*p).cur_chan_bit as ::core::ffi::c_int & (*p).is_chan_on as ::core::ffi::c_int == 0 {
-        let mut reg: uint8 = ((*c).index as ::core::ffi::c_int * 16 as ::core::ffi::c_int) as uint8;
+        let reg: uint8 = ((*c).index as ::core::ffi::c_int * 16 as ::core::ffi::c_int) as uint8;
         Dsp_Write(
             p,
             (reg as ::core::ffi::c_int + V0PITCHL as ::core::ffi::c_int) as uint8_t,
@@ -1921,7 +1921,7 @@ unsafe fn WritePitchInner(mut p: *mut SpcPlayer, mut c: *mut Channel, mut pitch:
         );
     }
 }
-unsafe fn WritePitch(mut p: *mut SpcPlayer, mut c: *mut Channel, mut pitch: uint16) {
+unsafe fn WritePitch(p: *mut SpcPlayer, c: *mut Channel, mut pitch: uint16) {
     if pitch as ::core::ffi::c_int >> 8 as ::core::ffi::c_int >= 0x34 as ::core::ffi::c_int {
         pitch = (pitch as ::core::ffi::c_int
             + ((pitch as ::core::ffi::c_int >> 8 as ::core::ffi::c_int)
@@ -1936,7 +1936,7 @@ unsafe fn WritePitch(mut p: *mut SpcPlayer, mut c: *mut Channel, mut pitch: uint
     }
     WritePitchInner(p, c, pitch);
 }
-unsafe fn Music_ResetChan(mut p: *mut SpcPlayer) {
+unsafe fn Music_ResetChan(p: *mut SpcPlayer) {
     let mut c: *mut Channel = (&raw mut (*p).channel as *mut Channel).offset(7) as *mut Channel;
     (*p).cur_chan_bit = 0x80 as uint8;
     loop {
@@ -1978,23 +1978,19 @@ unsafe fn Music_ResetChan(mut p: *mut SpcPlayer) {
             .wrapping_sub(1_usize) as isize,
     ) = 0x20 as uint8;
 }
-unsafe fn Channel_SetInstrument_NoSetId(
-    mut p: *mut SpcPlayer,
-    mut c: *mut Channel,
-    mut instrument: uint8,
-) {
+unsafe fn Channel_SetInstrument_NoSetId(p: *mut SpcPlayer, c: *mut Channel, mut instrument: uint8) {
     if instrument as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0 {
         instrument = (instrument as ::core::ffi::c_int
             + 54 as ::core::ffi::c_int
             + (*p).percussion_base_id as ::core::ffi::c_int) as uint8;
     }
-    let mut ip: *const uint8 = (&raw mut (*p).ram as *mut uint8)
+    let ip: *const uint8 = (&raw mut (*p).ram as *mut uint8)
         .offset((instrument as ::core::ffi::c_int * 6 as ::core::ffi::c_int) as isize)
         .offset(0x6c00);
     if (*p).is_chan_on as ::core::ffi::c_int & (*p).cur_chan_bit as ::core::ffi::c_int != 0 {
         return;
     }
-    let mut reg: uint8 = ((*c).index as ::core::ffi::c_int * 16 as ::core::ffi::c_int) as uint8;
+    let reg: uint8 = ((*c).index as ::core::ffi::c_int * 16 as ::core::ffi::c_int) as uint8;
     if *ip.offset(0) as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0 {
         (*p).reg_FLG = ((*p).reg_FLG as ::core::ffi::c_int & 0x20 as ::core::ffi::c_int
             | *ip.offset(0) as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int)
@@ -2031,11 +2027,11 @@ unsafe fn Channel_SetInstrument_NoSetId(
     (*c).instrument_pitch_base = ((*ip.offset(4) as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
         | *ip.offset(5) as ::core::ffi::c_int) as uint16;
 }
-unsafe fn Channel_SetInstrument(mut p: *mut SpcPlayer, mut c: *mut Channel, mut instrument: uint8) {
+unsafe fn Channel_SetInstrument(p: *mut SpcPlayer, c: *mut Channel, instrument: uint8) {
     (*c).instrument_id = instrument;
     Channel_SetInstrument_NoSetId(p, c, instrument);
 }
-unsafe fn ComputePitchAdd(mut c: *mut Channel, mut pitch: uint8) {
+unsafe fn ComputePitchAdd(c: *mut Channel, pitch: uint8) {
     (*c).pitch_target = (pitch as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int) as uint8;
     (*c).pitch_add_per_tick = SpcDivHelper(
         (*c).pitch_target as ::core::ffi::c_int
@@ -2043,7 +2039,7 @@ unsafe fn ComputePitchAdd(mut c: *mut Channel, mut pitch: uint8) {
         (*c).pitch_slide_length,
     );
 }
-unsafe fn PitchSlideToNote_Check(mut p: *mut SpcPlayer, mut c: *mut Channel) {
+unsafe fn PitchSlideToNote_Check(p: *mut SpcPlayer, c: *mut Channel) {
     if (*c).pitch_slide_length as ::core::ffi::c_int != 0
         || (*p).ram[(*c).pattern_order_ptr_for_chan as usize] as ::core::ffi::c_int
             != 0xf9 as ::core::ffi::c_int
@@ -2069,8 +2065,8 @@ unsafe fn PitchSlideToNote_Check(mut p: *mut SpcPlayer, mut c: *mut Channel) {
 static kEffectByteLength: [uint8; 31] = [
     1, 1, 2, 3, 0, 1, 2, 1, 2, 1, 1, 3, 0, 1, 2, 3, 1, 3, 3, 0, 1, 3, 0, 3, 3, 3, 1, 2, 0, 0, 0,
 ];
-unsafe fn HandleEffect(mut p: *mut SpcPlayer, mut c: *mut Channel, mut effect: uint8) {
-    let mut arg: uint8 = (if kEffectByteLength
+unsafe fn HandleEffect(p: *mut SpcPlayer, c: *mut Channel, effect: uint8) {
+    let arg: uint8 = (if kEffectByteLength
         [(effect as ::core::ffi::c_int - 0xe0 as ::core::ffi::c_int) as usize]
         as ::core::ffi::c_int
         != 0
@@ -2349,7 +2345,7 @@ unsafe fn HandleEffect(mut p: *mut SpcPlayer, mut c: *mut Channel, mut effect: u
         }
     };
 }
-unsafe fn WantWriteKof(mut p: *mut SpcPlayer, mut c: *mut Channel) -> bool {
+unsafe fn WantWriteKof(p: *mut SpcPlayer, c: *mut Channel) -> bool {
     let mut loops: ::core::ffi::c_int = (*c).subroutine_num_loops as ::core::ffi::c_int;
     let mut ptr: ::core::ffi::c_int = (*c).pattern_order_ptr_for_chan as ::core::ffi::c_int;
     loop {
@@ -2389,7 +2385,7 @@ unsafe fn WantWriteKof(mut p: *mut SpcPlayer, mut c: *mut Channel) -> bool {
         }
     }
 }
-pub unsafe fn CalcFinalVolume(mut p: *mut SpcPlayer, mut c: *mut Channel, mut vol: uint8) {
+pub unsafe fn CalcFinalVolume(p: *mut SpcPlayer, c: *mut Channel, vol: uint8) {
     let mut t: ::core::ffi::c_int = ((*p).master_volume as ::core::ffi::c_int
         >> 8 as ::core::ffi::c_int)
         * vol as ::core::ffi::c_int
@@ -2399,7 +2395,7 @@ pub unsafe fn CalcFinalVolume(mut p: *mut SpcPlayer, mut c: *mut Channel, mut vo
         >> 8 as ::core::ffi::c_int;
     (*c).final_volume = (t * t >> 8 as ::core::ffi::c_int) as uint8;
 }
-unsafe fn CalcTremolo(mut p: *mut SpcPlayer, mut c: *mut Channel, mut a: uint8) {
+unsafe fn CalcTremolo(p: *mut SpcPlayer, c: *mut Channel, mut a: uint8) {
     if a as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0 {
         a = (a as ::core::ffi::c_int * 2 as ::core::ffi::c_int ^ 0xff as ::core::ffi::c_int)
             as uint8;
@@ -2414,7 +2410,7 @@ unsafe fn CalcTremolo(mut p: *mut SpcPlayer, mut c: *mut Channel, mut a: uint8) 
         (a as ::core::ffi::c_int ^ 0xff as ::core::ffi::c_int) as uint8,
     );
 }
-unsafe fn HandleTremolo(mut p: *mut SpcPlayer, mut c: *mut Channel) {
+unsafe fn HandleTremolo(p: *mut SpcPlayer, c: *mut Channel) {
     (*p).did_affect_volumepitch_flag = ((*p).did_affect_volumepitch_flag as ::core::ffi::c_int
         | 0x80 as ::core::ffi::c_int) as uint8;
     CalcTremolo(
@@ -2424,19 +2420,14 @@ unsafe fn HandleTremolo(mut p: *mut SpcPlayer, mut c: *mut Channel) {
             >> 8 as ::core::ffi::c_int) as uint8,
     );
 }
-unsafe fn CalcVibratoAddPitch(
-    mut p: *mut SpcPlayer,
-    mut c: *mut Channel,
-    mut pitch: uint16,
-    mut value: uint8,
-) {
+unsafe fn CalcVibratoAddPitch(p: *mut SpcPlayer, c: *mut Channel, pitch: uint16, value: uint8) {
     let mut t: ::core::ffi::c_int = (value as ::core::ffi::c_int) << 2 as ::core::ffi::c_int;
     t ^= if t & 0x100 as ::core::ffi::c_int != 0 {
         0xff as ::core::ffi::c_int
     } else {
         0 as ::core::ffi::c_int
     };
-    let mut r: ::core::ffi::c_int =
+    let r: ::core::ffi::c_int =
         if (*c).vib_depth as ::core::ffi::c_int >= 0xf1 as ::core::ffi::c_int {
             t as uint8 as ::core::ffi::c_int
                 * ((*c).vib_depth as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
@@ -2455,7 +2446,7 @@ unsafe fn CalcVibratoAddPitch(
             })) as uint16,
     );
 }
-unsafe fn HandlePanAndSweep(mut p: *mut SpcPlayer, mut c: *mut Channel) {
+unsafe fn HandlePanAndSweep(p: *mut SpcPlayer, c: *mut Channel) {
     (*p).did_affect_volumepitch_flag = 0 as uint8;
     if (*c).tremolo_depth as ::core::ffi::c_int != 0
         && (*c).tremolo_hold_count as ::core::ffi::c_int
@@ -2503,7 +2494,7 @@ unsafe fn HandlePanAndSweep(mut p: *mut SpcPlayer, mut c: *mut Channel) {
         WritePitch(p, c, pitch);
     }
 }
-unsafe fn HandleNoteTick(mut p: *mut SpcPlayer, mut c: *mut Channel) {
+unsafe fn HandleNoteTick(p: *mut SpcPlayer, c: *mut Channel) {
     if (*c).note_keyoff_ticks_left as ::core::ffi::c_int != 0 as ::core::ffi::c_int && {
         (*c).note_keyoff_ticks_left = (*c).note_keyoff_ticks_left.wrapping_sub(1);
         (*c).note_keyoff_ticks_left as ::core::ffi::c_int == 0 as ::core::ffi::c_int
@@ -2532,7 +2523,7 @@ unsafe fn HandleNoteTick(mut p: *mut SpcPlayer, mut c: *mut Channel) {
             }
         }
     }
-    let mut pitch: uint16 = (*c).pitch;
+    let pitch: uint16 = (*c).pitch;
     if (*c).vib_depth != 0 {
         if (*c).vibrato_delay_ticks as ::core::ffi::c_int
             == (*c).vibrato_hold_count as ::core::ffi::c_int
@@ -2563,7 +2554,7 @@ unsafe fn HandleNoteTick(mut p: *mut SpcPlayer, mut c: *mut Channel) {
         WritePitch(p, c, pitch);
     }
 }
-unsafe fn Chan_HandleTick(mut p: *mut SpcPlayer, mut c: *mut Channel) {
+unsafe fn Chan_HandleTick(p: *mut SpcPlayer, c: *mut Channel) {
     if (*c).volume_fade_ticks != 0 {
         (*c).volume_fade_ticks = (*c).volume_fade_ticks.wrapping_sub(1);
         if (*c).volume_fade_ticks as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
@@ -2617,7 +2608,7 @@ unsafe fn Chan_HandleTick(mut p: *mut SpcPlayer, mut c: *mut Channel) {
         WriteVolumeToDsp(p, c, (*c).pan_value);
     }
 }
-unsafe fn Music_HandleCmdFromSnes(mut p: *mut SpcPlayer) {
+unsafe fn Music_HandleCmdFromSnes(p: *mut SpcPlayer) {
     let mut c: *mut Channel = ::core::ptr::null_mut::<Channel>();
     let mut t: ::core::ffi::c_int = 0;
     let mut a: uint8 = (*p).input_ports[0 as ::core::ffi::c_int as usize];
@@ -2923,7 +2914,7 @@ unsafe fn Music_HandleCmdFromSnes(mut p: *mut SpcPlayer) {
             | !((*p).is_chan_on as ::core::ffi::c_int)) as uint8;
     }
 }
-unsafe fn PlayNote(mut p: *mut SpcPlayer, mut c: *mut Channel, mut note: uint8) {
+unsafe fn PlayNote(p: *mut SpcPlayer, c: *mut Channel, mut note: uint8) {
     if note as ::core::ffi::c_int >= 0xca as ::core::ffi::c_int {
         Channel_SetInstrument(p, c, note);
         note = 0xa4 as uint8;
@@ -2964,7 +2955,7 @@ unsafe fn PlayNote(mut p: *mut SpcPlayer, mut c: *mut Channel, mut note: uint8) 
     }
     WritePitch(p, c, (*c).pitch);
 }
-unsafe fn Spc_Loop_Part1(mut p: *mut SpcPlayer) {
+unsafe fn Spc_Loop_Part1(p: *mut SpcPlayer) {
     Dsp_Write(p, KOF as ::core::ffi::c_int as uint8_t, (*p).key_OFF);
     Dsp_Write(p, PMON as ::core::ffi::c_int as uint8_t, 0 as uint8);
     Dsp_Write(p, NON as ::core::ffi::c_int as uint8_t, (*p).reg_NON);
@@ -2992,7 +2983,7 @@ unsafe fn Spc_Loop_Part1(mut p: *mut SpcPlayer) {
     (*p).key_ON = 0 as uint8;
     (*p).key_OFF = (*p).key_ON;
 }
-unsafe fn Spc_Loop_Part2(mut p: *mut SpcPlayer, mut ticks: uint8) {
+unsafe fn Spc_Loop_Part2(p: *mut SpcPlayer, ticks: uint8) {
     let mut t: ::core::ffi::c_int = (*p).sfx_timer_accum as ::core::ffi::c_int
         + (ticks as ::core::ffi::c_int * 0x20 as ::core::ffi::c_int) as uint8 as ::core::ffi::c_int;
     (*p).sfx_timer_accum = t as uint8;
@@ -3039,7 +3030,7 @@ unsafe fn Spc_Loop_Part2(mut p: *mut SpcPlayer, mut ticks: uint8) {
         }
     }
 }
-unsafe fn Vector_Reset_Spc(mut p: *mut SpcPlayer) {
+unsafe fn Vector_Reset_Spc(p: *mut SpcPlayer) {
     dsp_reset((*p).dsp);
     memset(
         (&raw mut (*p).ram as *mut uint8).offset(0x500) as *mut uint8 as *mut ::core::ffi::c_void,
@@ -3084,7 +3075,7 @@ unsafe fn Vector_Reset_Spc(mut p: *mut SpcPlayer) {
     ) = 16 as uint8;
     (*p).timer_cycles = 0 as uint8;
 }
-pub unsafe fn Sfx_Chan_Reset(mut p: *mut SpcPlayer, mut sr: *mut SfxRegs, mut s: *mut SfxChan) {
+pub unsafe fn Sfx_Chan_Reset(p: *mut SpcPlayer, sr: *mut SfxRegs, s: *mut SfxChan) {
     (*s).disable = 0xff as uint8;
     (*s).update_adsr = 0 as uint8;
     (*sr).enabled_voices = ((*sr).enabled_voices as ::core::ffi::c_int
@@ -3095,7 +3086,7 @@ pub unsafe fn Sfx_Chan_Reset(mut p: *mut SpcPlayer, mut sr: *mut SfxRegs, mut s:
         | (*s).voice_bitset as ::core::ffi::c_int) as uint8;
     (*p).key_OFF =
         ((*p).key_OFF as ::core::ffi::c_int | (*s).voice_bitset as ::core::ffi::c_int) as uint8;
-    let mut c: *mut Channel = (&raw mut (*p).channel as *mut Channel)
+    let c: *mut Channel = (&raw mut (*p).channel as *mut Channel)
         .offset(((*s).voice_index as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
         as *mut Channel;
     Channel_SetInstrument_NoSetId(p, c, (*c).instrument_id);
@@ -3120,8 +3111,8 @@ static kSfx1Conf: [uint8; 66] = [
     0, 0, 0, 2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 2, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3,
     2, 2,
 ];
-pub unsafe fn Sfx1_HandleCmdFromSnes(mut p: *mut SpcPlayer) {
-    let mut a: uint8 = (*p).input_ports[1 as ::core::ffi::c_int as usize];
+pub unsafe fn Sfx1_HandleCmdFromSnes(p: *mut SpcPlayer) {
+    let a: uint8 = (*p).input_ports[1 as ::core::ffi::c_int as usize];
     (*p).input_ports[1 as ::core::ffi::c_int as usize] = 255 as uint8;
     if a as ::core::ffi::c_int == 255 as ::core::ffi::c_int
         || a as ::core::ffi::c_int == 0 as ::core::ffi::c_int
@@ -3216,8 +3207,8 @@ static kSfx2Conf: [uint8; 127] = [
     0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 3, 0, 3, 3, 0, 0, 1, 0, 2, 0, 2, 3, 2, 0, 0, 0, 0, 0, 0,
     0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 0, 0, 3, 3, 3, 3, 0, 3, 2, 2, 2, 2, 1, 1, 1, 2,
 ];
-pub unsafe fn Sfx2_HandleCmdFromSnes(mut p: *mut SpcPlayer) {
-    let mut a: uint8 = (*p).input_ports[2 as ::core::ffi::c_int as usize];
+pub unsafe fn Sfx2_HandleCmdFromSnes(p: *mut SpcPlayer) {
+    let a: uint8 = (*p).input_ports[2 as ::core::ffi::c_int as usize];
     (*p).input_ports[2 as ::core::ffi::c_int as usize] = 255 as uint8;
     if a as ::core::ffi::c_int == 255 as ::core::ffi::c_int
         || a as ::core::ffi::c_int == 0 as ::core::ffi::c_int
@@ -3285,8 +3276,8 @@ static kSfx3Conf: [uint8; 47] = [
     0, 1, 2, 3, 3, 2, 4, 4, 2, 5, 3, 2, 2, 4, 3, 2, 2, 5, 2, 4, 4, 2, 2, 2, 4, 2, 4, 2, 2, 2, 2, 5,
     5, 2, 2, 5, 2, 2, 2, 2, 2, 2, 2, 4, 2, 4, 2,
 ];
-pub unsafe fn Sfx3_HandleCmdFromSnes(mut p: *mut SpcPlayer) {
-    let mut a: uint8 = (*p).input_ports[3 as ::core::ffi::c_int as usize];
+pub unsafe fn Sfx3_HandleCmdFromSnes(p: *mut SpcPlayer) {
+    let a: uint8 = (*p).input_ports[3 as ::core::ffi::c_int as usize];
     (*p).input_ports[3 as ::core::ffi::c_int as usize] = 255 as uint8;
     if a as ::core::ffi::c_int == 255 as ::core::ffi::c_int
         || a as ::core::ffi::c_int == 0 as ::core::ffi::c_int
@@ -3358,12 +3349,12 @@ pub unsafe fn Sfx3_HandleCmdFromSnes(mut p: *mut SpcPlayer) {
         _ => {}
     };
 }
-pub unsafe fn SfxChan_GetByte(mut p: *mut SpcPlayer, mut s: *mut SfxChan) -> uint8 {
+pub unsafe fn SfxChan_GetByte(p: *mut SpcPlayer, s: *mut SfxChan) -> uint8 {
     let fresh31 = (*s).ptr_idx;
     (*s).ptr_idx = (*s).ptr_idx.wrapping_add(1);
     (*p).ram[((*s).ptr as ::core::ffi::c_int + fresh31 as ::core::ffi::c_int) as usize]
 }
-pub unsafe fn Sfx_RunChan(mut p: *mut SpcPlayer, mut sr: *mut SfxRegs, mut s: *mut SfxChan) {
+pub unsafe fn Sfx_RunChan(p: *mut SpcPlayer, sr: *mut SfxRegs, s: *mut SfxChan) {
     if (*s).disable as ::core::ffi::c_int == 0xff as ::core::ffi::c_int {
         return;
     }
@@ -3446,7 +3437,7 @@ pub unsafe fn Sfx_RunChan(mut p: *mut SpcPlayer, mut sr: *mut SfxRegs, mut s: *m
                     as uint8;
             }
         }
-        let mut c: *mut Channel = (&raw mut (*p).channel as *mut Channel)
+        let c: *mut Channel = (&raw mut (*p).channel as *mut Channel)
             .offset(((*s).voice_index as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
             as *mut Channel;
         Channel_SetInstrument_NoSetId(p, c, a);
@@ -3495,7 +3486,7 @@ pub unsafe fn Sfx_RunChan(mut p: *mut SpcPlayer, mut sr: *mut SfxRegs, mut s: *m
         (*s).legato = 0xff as uint8;
     }
     if (*s).note as ::core::ffi::c_int >= (*s).target_note as ::core::ffi::c_int {
-        let mut t: ::core::ffi::c_int =
+        let t: ::core::ffi::c_int =
             (*s).subnote as ::core::ffi::c_int - (*s).subnote_delta as ::core::ffi::c_int;
         (*s).subnote = t as uint8;
         if t & 256 as ::core::ffi::c_int != 0 && {
@@ -3506,7 +3497,7 @@ pub unsafe fn Sfx_RunChan(mut p: *mut SpcPlayer, mut sr: *mut SfxRegs, mut s: *m
             (*s).enable_pitch_slide = (*s).legato;
         }
     } else {
-        let mut t_0: ::core::ffi::c_int =
+        let t_0: ::core::ffi::c_int =
             (*s).subnote as ::core::ffi::c_int + (*s).subnote_delta as ::core::ffi::c_int;
         (*s).subnote = t_0 as uint8;
         if t_0 & 256 as ::core::ffi::c_int != 0 && {
@@ -3526,12 +3517,12 @@ pub unsafe fn Sfx_RunChan(mut p: *mut SpcPlayer, mut sr: *mut SfxRegs, mut s: *m
             | (*s).subnote as ::core::ffi::c_int) as uint16,
     );
 }
-pub unsafe fn Sfx1_Process(mut p: *mut SpcPlayer) {
+pub unsafe fn Sfx1_Process(p: *mut SpcPlayer) {
     if (*p).sfx1.init_flag as ::core::ffi::c_int != 0xff as ::core::ffi::c_int {
         Sfx1_Init(p);
         let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
         while i < 4 as ::core::ffi::c_int {
-            let mut s: *mut SfxChan =
+            let s: *mut SfxChan =
                 (&raw mut (*p).sfx_chans_1 as *mut SfxChan).offset(i as isize) as *mut SfxChan;
             (*s).ptr = *((&raw mut (*p).ram as *mut uint8).offset(
                 ((*p).sfx1.cur_ptr as ::core::ffi::c_int + i * 2 as ::core::ffi::c_int) as isize,
@@ -3553,12 +3544,12 @@ pub unsafe fn Sfx1_Process(mut p: *mut SpcPlayer) {
         i_0 += 1;
     }
 }
-pub unsafe fn Sfx2_Process(mut p: *mut SpcPlayer) {
+pub unsafe fn Sfx2_Process(p: *mut SpcPlayer) {
     if (*p).sfx2.init_flag as ::core::ffi::c_int != 0xff as ::core::ffi::c_int {
         Sfx2_Init(p);
         let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
         while i < 2 as ::core::ffi::c_int {
-            let mut s: *mut SfxChan =
+            let s: *mut SfxChan =
                 (&raw mut (*p).sfx_chans_2 as *mut SfxChan).offset(i as isize) as *mut SfxChan;
             (*s).ptr = *((&raw mut (*p).ram as *mut uint8).offset(
                 ((*p).sfx2.cur_ptr as ::core::ffi::c_int + i * 2 as ::core::ffi::c_int) as isize,
@@ -3580,12 +3571,12 @@ pub unsafe fn Sfx2_Process(mut p: *mut SpcPlayer) {
         i_0 += 1;
     }
 }
-pub unsafe fn Sfx3_Process(mut p: *mut SpcPlayer) {
+pub unsafe fn Sfx3_Process(p: *mut SpcPlayer) {
     if (*p).sfx3.init_flag as ::core::ffi::c_int != 0xff as ::core::ffi::c_int {
         Sfx3_Init(p);
         let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
         while i < 2 as ::core::ffi::c_int {
-            let mut s: *mut SfxChan =
+            let s: *mut SfxChan =
                 (&raw mut (*p).sfx_chans_3 as *mut SfxChan).offset(i as isize) as *mut SfxChan;
             (*s).ptr = *((&raw mut (*p).ram as *mut uint8).offset(
                 ((*p).sfx3.cur_ptr as ::core::ffi::c_int + i * 2 as ::core::ffi::c_int) as isize,
@@ -3608,12 +3599,12 @@ pub unsafe fn Sfx3_Process(mut p: *mut SpcPlayer) {
     }
 }
 pub unsafe fn Sfx_Init(
-    mut p: *mut SpcPlayer,
-    mut sr: *mut SfxRegs,
-    mut channels: *mut SfxChan,
-    mut which_sfx: ::core::ffi::c_int,
+    p: *mut SpcPlayer,
+    sr: *mut SfxRegs,
+    channels: *mut SfxChan,
+    which_sfx: ::core::ffi::c_int,
 ) {
-    let mut num: ::core::ffi::c_int = if which_sfx == 0 as ::core::ffi::c_int {
+    let num: ::core::ffi::c_int = if which_sfx == 0 as ::core::ffi::c_int {
         4 as ::core::ffi::c_int
     } else {
         2 as ::core::ffi::c_int
@@ -3641,7 +3632,7 @@ pub unsafe fn Sfx_Init(
         if !((*sr).voice_id != 0) {
             break;
         }
-        let mut t: ::core::ffi::c_int = (*sr).voices_remaining as ::core::ffi::c_int;
+        let t: ::core::ffi::c_int = (*sr).voices_remaining as ::core::ffi::c_int;
         (*sr).voices_remaining =
             (((*sr).voices_remaining as ::core::ffi::c_int) << 1 as ::core::ffi::c_int) as uint8;
         if t & 0x80 as ::core::ffi::c_int == 0 {
@@ -3649,7 +3640,7 @@ pub unsafe fn Sfx_Init(
                 return;
             }
             (*sr).voices_to_setup = (*sr).voices_to_setup.wrapping_sub(1);
-            let mut c: *mut SfxChan = channels.offset((*sr).chan_idx as isize) as *mut SfxChan;
+            let c: *mut SfxChan = channels.offset((*sr).chan_idx as isize) as *mut SfxChan;
             (*c).disable = 0 as uint8;
             (*sr).chan_voice_bitset_ptr =
                 (kSomeAddrs[which_sfx as usize][0 as ::core::ffi::c_int as usize]
@@ -3670,12 +3661,12 @@ pub unsafe fn Sfx_Init(
             (*sr).voice_index = (((*sr).voice_id as ::core::ffi::c_int - 1 as ::core::ffi::c_int)
                 * 2 as ::core::ffi::c_int) as uint8;
             (*c).voice_index = (*sr).voice_index;
-            let mut t_0: ::core::ffi::c_int =
+            let t_0: ::core::ffi::c_int =
                 (*sr).voice_id as ::core::ffi::c_int - 1 as ::core::ffi::c_int;
             (*c).volume = ((*p).channel[t_0 as usize].final_volume as ::core::ffi::c_int
                 | ((*p).channel[t_0 as usize].pan_flag_with_phase_invert as ::core::ffi::c_int)
                     << 8 as ::core::ffi::c_int) as uint8;
-            let mut m: ::core::ffi::c_int = (1 as ::core::ffi::c_int) << t_0;
+            let m: ::core::ffi::c_int = (1 as ::core::ffi::c_int) << t_0;
             (*p).is_chan_on = ((*p).is_chan_on as ::core::ffi::c_int | m) as uint8;
             (*p).cur_chan_bit = ((*p).cur_chan_bit as ::core::ffi::c_int & !m) as uint8;
             (*p).reg_EON = ((*p).reg_EON as ::core::ffi::c_int & !m) as uint8;
@@ -3685,7 +3676,7 @@ pub unsafe fn Sfx_Init(
         }
     }
 }
-pub unsafe fn Sfx1_Init(mut p: *mut SpcPlayer) {
+pub unsafe fn Sfx1_Init(p: *mut SpcPlayer) {
     Sfx_Init(
         p,
         &raw mut (*p).sfx1,
@@ -3693,7 +3684,7 @@ pub unsafe fn Sfx1_Init(mut p: *mut SpcPlayer) {
         0 as ::core::ffi::c_int,
     );
 }
-pub unsafe fn Sfx2_Init(mut p: *mut SpcPlayer) {
+pub unsafe fn Sfx2_Init(p: *mut SpcPlayer) {
     Sfx_Init(
         p,
         &raw mut (*p).sfx2,
@@ -3701,7 +3692,7 @@ pub unsafe fn Sfx2_Init(mut p: *mut SpcPlayer) {
         1 as ::core::ffi::c_int,
     );
 }
-pub unsafe fn Sfx3_Init(mut p: *mut SpcPlayer) {
+pub unsafe fn Sfx3_Init(p: *mut SpcPlayer) {
     Sfx_Init(
         p,
         &raw mut (*p).sfx3,
@@ -3710,8 +3701,7 @@ pub unsafe fn Sfx3_Init(mut p: *mut SpcPlayer) {
     );
 }
 pub unsafe fn SpcPlayer_Create() -> *mut SpcPlayer {
-    let mut p: *mut SpcPlayer =
-        malloc(::core::mem::size_of::<SpcPlayer>() as size_t) as *mut SpcPlayer;
+    let p: *mut SpcPlayer = malloc(::core::mem::size_of::<SpcPlayer>() as size_t) as *mut SpcPlayer;
     memset(
         p as *mut ::core::ffi::c_void,
         0 as ::core::ffi::c_int,
@@ -3721,11 +3711,11 @@ pub unsafe fn SpcPlayer_Create() -> *mut SpcPlayer {
     (*p).reg_write_history = ::core::ptr::null_mut::<DspRegWriteHistory>();
     p
 }
-pub unsafe fn SpcPlayer_Initialize(mut p: *mut SpcPlayer) {
+pub unsafe fn SpcPlayer_Initialize(p: *mut SpcPlayer) {
     Vector_Reset_Spc(p);
     Spc_Loop_Part1(p);
 }
-pub unsafe fn SpcPlayer_CopyVariablesToRam(mut p: *mut SpcPlayer) {
+pub unsafe fn SpcPlayer_CopyVariablesToRam(p: *mut SpcPlayer) {
     let mut c: *mut Channel = &raw mut (*p).channel as *mut Channel;
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i < 8 as ::core::ffi::c_int {
@@ -3774,7 +3764,7 @@ pub unsafe fn SpcPlayer_CopyVariablesToRam(mut p: *mut SpcPlayer) {
         m_0 = m_0.offset(1);
     }
 }
-pub unsafe fn SpcPlayer_CopyVariablesFromRam(mut p: *mut SpcPlayer) {
+pub unsafe fn SpcPlayer_CopyVariablesFromRam(p: *mut SpcPlayer) {
     let mut c: *mut Channel = &raw mut (*p).channel as *mut Channel;
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i < 8 as ::core::ffi::c_int {
@@ -3828,7 +3818,7 @@ pub unsafe fn SpcPlayer_CopyVariablesFromRam(mut p: *mut SpcPlayer) {
         i_0 += 1;
     }
 }
-pub unsafe fn SpcPlayer_GenerateSamples(mut p: *mut SpcPlayer) {
+pub unsafe fn SpcPlayer_GenerateSamples(p: *mut SpcPlayer) {
     '_c2rust_label: {
         if (*p).timer_cycles as ::core::ffi::c_int <= 64 as ::core::ffi::c_int {
         } else {
@@ -3879,7 +3869,7 @@ pub unsafe fn SpcPlayer_GenerateSamples(mut p: *mut SpcPlayer) {
         }
     }
 }
-pub unsafe fn SpcPlayer_Upload(mut p: *mut SpcPlayer, mut data: *const uint8_t) {
+pub unsafe fn SpcPlayer_Upload(p: *mut SpcPlayer, mut data: *const uint8_t) {
     Dsp_Write(p, EVOLL as ::core::ffi::c_int as uint8_t, 0 as uint8);
     Dsp_Write(p, EVOLR as ::core::ffi::c_int as uint8_t, 0 as uint8);
     Dsp_Write(p, KOF as ::core::ffi::c_int as uint8_t, 0xff as uint8);
