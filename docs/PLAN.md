@@ -1884,17 +1884,16 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `465cd486` passes
-uninterrupted full boot any% 129712/0 (157.52s) and Speed Booster
-148406/0 (224.14s), native exits 0. All 74 source/configuration/host/
-progress inputs match that commit. This adds the shared SPC byte-comparison
-family to the reviewed families below. Later SFX and hardware work
-retain their own checks outside this snapshot.
+Latest reviewed integration (2026-10-19): frozen `f6788036` passes
+uninterrupted full boot any% 129712/0 (170.52s) and Speed Booster
+148406/0 (206.14s), native exits 0. All 74 source/configuration/host/
+progress inputs match that commit. This adds the shared sound-effect queues
+to the reviewed families below. Later gameplay and hardware work retain
+their own checks outside this snapshot.
 
-Serialized checkpoint payloads are byte-identical to reviewed 18d544ee.
-The only changed header field is the runtime-source fingerprint, independently
-recomputed from its actual inputs; only snes/spc.rs changes among those inputs.
-The Game declaration and checkpoint codec are unchanged. All other bindings,
+Complete serialized checkpoints are byte-identical to reviewed 465cd486.
+The runtime-source fingerprint and Game declaration are unchanged; every
+header binding is independently recomputed from its actual inputs. All bindings,
 including the payload checksum, agree. No compatibility hash is patched and
 neither replay loads an earlier checkpoint. Complete non-timing diagnostics
 and coverage agree, including the known fingernail diagnostic. Speed reaches
@@ -1902,10 +1901,26 @@ and coverage agree, including the known fingernail diagnostic. Speed reaches
 pose $0089, health 46/399, missiles 6/15, Supers 0/5, items $3105 and
 beams $1004 equipped/collected. Kraid is defeated and all eight coroutine
 bytes are zero. Credits remain unexercised. The same build passes the full-boot
-pause route 40836/0 (47.74s), native exit 0, returning to gameplay in
+pause route 40836/0 (58.29s), native exit 0, returning to gameplay in
 room $96BA. Its payload and every non-runtime binding match the prior pause
 run, as do complete non-timing logs. Earlier mode observations retain their
 scope below.
+
+Independent SFX queue review reconstructs exactly the eighteen entries, shared
+helper and two word accessors; all 74 integration inputs match f6788036.
+The original and current three-channel families normalize by channel/address.
+The fresh release library, exact original routines and an independent byte
+model agree in 4521984 full-RAM cases. These cover every byte-position pair
+at boundary limits, every priority pair, all packed arguments at selected
+positions, every value of each gate word and every argument to all fifteen
+wrappers. Broken clamp, priority and limit-write controls are rejected.
+
+Both owner observation trees strip exactly to the committed before/after
+source, including checked probe placement. Source/library/fixture/log bindings
+and equal counts hold: all three channels and eight of fifteen wrappers run
+in any%. Exits 2 identify the seven unvisited wrappers; their argument mappings
+are covered by direct checks. These factored cases do not cover every joint
+RAM state. The Game layout is unchanged; global alias limits remain below.
 
 Independent SPC byte-comparison review binds all 74 integration inputs.
 Replacing only four routines and their eighteen call sites reconstructs the
@@ -2630,14 +2645,15 @@ dedicated 5544-case API checks and 24/24 site observations are recorded by
 implementation; this review verifies the source transformation. The movie
 replays do not establish frontend decoder execution coverage.
 
-The normal Cargo integration is independently built from frozen 465cd486.
+The normal Cargo integration is independently built from frozen f6788036.
 All 74 inputs, the fresh game library/DLL and copied fixtures stay fixed.
 Only registry dependencies seed this checkout, including existing registry
 build-script executable links. Formatting, normal release
-(24.41s), host build (12.47s) and progress pass. This family removes
-14 Rust lines, 24 c_int casts across fourteen lines and one unsafe function;
-other progress counters remain unchanged. Frozen totals: 189952 Rust lines,
-21355 raw-offset lines, 34089 c_int casts across 27218 lines and 6495 unsafe
+(41.87s), host build (23.83s) and progress pass. This family removes
+137 Rust lines, 45 raw-offset lines, 72 c_int casts across 39 lines and
+18 unsafe functions. Other progress counters remain unchanged. Frozen totals:
+189815 Rust lines, 21310 raw-offset lines, 34017 c_int casts across 27179
+lines and 6477 unsafe
 functions. This audit changes no maintained Rust or assets; later peer work
 retains its own checks.
 
