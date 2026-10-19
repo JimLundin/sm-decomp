@@ -1967,7 +1967,7 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): `8e9846b3` adds 4197 named scalar
+Latest reviewed integration (2026-10-19): `1b9b8ccd` adds 4197 named scalar
 stores to the reviewed compiler/RAM composition. All 74 committed source,
 configuration, host and progress inputs match the tested snapshot; all 77
 replay pins remain stable. Normal release (36.83s), workspace release (36.68s),
