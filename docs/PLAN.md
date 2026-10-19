@@ -9143,6 +9143,26 @@ builds pass. Live CPU matches verified source; Rust lines -3, other own counters
 unchanged. Arbitrary device mutations and full gameplay/render/audio coverage
 remain open. Continue covered CPU cleanup.
 
+CPU safe accumulator LSR (2026-10-19): opcode 4A calls a safe
+shift_accumulator_right helper containing the original carry-before-A and
+live-width Z/N operations. Byte mode preserves high A. ROR remains unchanged:
+an exploratory shared helper passed arithmetic checks, but prefix coverage had
+zero ROR calls and its assertion aborted; full instrumented any% 129,712/0
+(53.71s) also counted zero ROR versus 14,617,872 LSR calls. Defer ROR cleanup
+until contextual execution is demonstrated. That exploratory replay is not the
+final-source verification.
+Final frozen HEAD `02c6cd7b` plus only LSR extraction passes 524,288 actual
+old/current dispatcher cases (262,144 LSR; unchanged ROR sanity checks comprise
+the other half), all A words, both widths/carry values, CPU flags/cycles/history
+and three named bus fields. Probe avoids whole-Snes copies. Prefix 3,600/0
+(1.12s), native exit 0, executes LSR 121,928 times. Clean full any% 129,712/0
+(61.71s), native exit 0. Independent source/probe review finds no differences.
+Cargo fmt/check, full release and release-library builds with external SDL2,
+normal metadata and optimized frozen core/DLL builds pass. Live CPU matches
+verified source. Rust lines +3 introduce the safe helper; other counters
+unchanged. Full gameplay/render/audio, arbitrary device mutations and ROR movie
+coverage remain open. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
