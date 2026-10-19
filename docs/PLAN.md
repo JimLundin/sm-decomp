@@ -17200,6 +17200,41 @@ No probes or ROM-derived artifacts committed. Further property-family cleanup
 requires normal-input hits for the pending handlers. Broader gameplay/credits,
 hardware/audio/masks and ownership remain unfinished.
 
+Projectile wrapping word-update family (2026-10-19): survey scalar
+and indexed raw wrapping increments/decrements, including separate old-value
+capture and formatting variants. The full survey on frozen 3e4bdfc2 passes
+any% 129712/0 (167.66s) and Speed Booster 148406/0 (216.63s), native exits 0.
+Five selected sequences execute: Ceres scalar counter, Kago countdown,
+pickup countdown and two sequential gate instruction increments. Other
+surveyed sequences remain pending; routine entry is not a substitute for
+actual update hits. Discovery scripts stay temporary.
+
+Those five updates share a byte-backed wrapping-add operation in the
+existing projectile writer. Decrement uses u16::MAX; return value is the
+new word. Preserve update position and following reads, comparisons and
+callbacks. Scalar indexing remains zero; indexed arithmetic stays wide.
+Pickup compares the new value before its callback; gate retains two writes,
+and Ceres compares before the original clamp. No raw-place reference survives.
+
+Frozen 8582a6ed plus only this change passes
+any% 129712/0 (156.65s) and Speed Booster 148406/0
+(214.57s), native exits 0. Observed Speed Booster 148406/0
+(236.49s) reaches all updates: Ceres 73,
+Kago 86, gate first/second 4/4,
+pickup 27487. Byte-backed stores match original unaligned writes
+over complete RAM. Clean/observed non-timing diagnostics match; source/DLL/
+ROM/input hashes stay fixed and maintained regions match verified source.
+393216 complete-RAM/returned-value controls cover four base/delta combinations,
+every rounded slot and every word value. Source reconstruction permits only
+five exact sequences, former-reference uses changed to copied values, helper
+and formatting; other frozen sources match HEAD after newline normalization.
+
+Cargo fmt/check, normal release build (36.92s) and progress pass. Including
+helper, raw offsets -5, Rust lines -2; casts, unsafe functions and other own
+counters unchanged. No probes or ROM-derived artifacts committed. Continue
+coherent state/update families; broader gameplay/credits, hardware/audio/masks
+and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

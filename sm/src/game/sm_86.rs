@@ -595,6 +595,13 @@ impl EprojStateMut<'_> {
         let address = base + word_index * 2;
         self.0[address..address + 2].copy_from_slice(&value.to_le_bytes());
     }
+    fn add_word(&mut self, base: usize, word_index: usize, delta: u16) -> u16 {
+        let value = EprojState(self.0)
+            .slot_word(base, word_index)
+            .wrapping_add(delta);
+        self.write(base, word_index, value);
+        value
+    }
     fn decrement(&mut self, base: usize, word_index: usize) -> u16 {
         let timer = EprojState(self.0).slot_word(base, word_index);
         self.write(base, word_index, timer.wrapping_sub(1));
@@ -4218,9 +4225,8 @@ pub unsafe fn EprojPreInstr_CeresElevatorPad(mut k: uint16, game: &mut Game) {
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v1 as isize) =
             game.samus_y_pos().wrapping_add(28);
-        let ref mut fresh113 = *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16);
-        *fresh113 = (*fresh113).wrapping_add(1);
-        if *fresh113 as ::core::ffi::c_int - 73 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
+        let fresh113 = EprojStateMut(&mut game.g_ram).add_word(0xafa, 0, 1);
+        if fresh113 as ::core::ffi::c_int - 73 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
             == 0
         {
             *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) = 72 as uint16;
@@ -7995,9 +8001,7 @@ pub unsafe fn EprojPreInstr_KagosBugs(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1bfb) as *mut uint16).offset(v1 as isize) != 0
     {
-        let ref mut fresh71 = *((&raw mut game.g_ram as *mut uint8).offset(0x1bfb) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh71 = (*fresh71).wrapping_sub(1);
+        let fresh71 = EprojStateMut(&mut game.g_ram).add_word(0x1bfb, v1 as usize, u16::MAX);
     } else {
         EprojStateMut(&mut game.g_ram).start_instruction(v1 as usize, addr_word_86D052 as uint16);
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16).offset(v1 as isize) =
@@ -9499,12 +9503,8 @@ pub unsafe fn EprojPreInstr_E605(mut k: uint16, game: &mut Game) {
     if v2 >= 0x1000 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
-        let ref mut fresh60 = *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh60 = (*fresh60).wrapping_add(1);
-        let ref mut fresh61 = *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16)
-            .offset(v1 as isize);
-        *fresh61 = (*fresh61).wrapping_add(1);
+        let fresh60 = EprojStateMut(&mut game.g_ram).add_word(0x1b47, v1 as usize, 1);
+        let fresh61 = EprojStateMut(&mut game.g_ram).add_word(0x1b47, v1 as usize, 1);
         v2 = 0 as uint16;
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x19df) as *mut uint16).offset(v1 as isize) = v2;
@@ -10228,10 +10228,8 @@ pub unsafe fn EprojPreInstr_Pickup(mut k: uint16, game: &mut Game) {
     let mut v3: uint16 = 0;
     let mut current_block: u64;
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let ref mut fresh53 =
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16).offset(v1 as isize);
-    *fresh53 = (*fresh53).wrapping_sub(1);
-    if !(*fresh53 == 0) {
+    let fresh53 = EprojStateMut(&mut game.g_ram).add_word(0x1b23, v1 as usize, u16::MAX);
+    if !(fresh53 == 0) {
         if CallSomeSamusCode(0xd as uint16, game) != 0 {
             if *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int
