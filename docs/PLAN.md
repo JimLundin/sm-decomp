@@ -13938,6 +13938,40 @@ every step makes the next one easier.
 
 ## Phase 3: readable gameplay, one subsystem at a time
 
+Samus pose radius/alignment (2026-10-19): make Samus_SetRadius and
+Samus_AlignBottomWithPrevPose safe functions. Live ROM byte reads retain
+eight-byte pose records and byte-6 radii, with full linear pose offsets.
+The radius setter writes a zero-extended vertical word before horizontal 5.
+Alignment reads current radius before previous radius, wraps their
+previous-minus-current difference, and updates current Y before previous Y
+through the existing byte-backed accessors. Other gameplay stays unchanged.
+
+Frozen f846b9f0 plus this source passes clean any% 129712/0 (296.60s).
+Contextual old/current comparisons match complete 128 KiB RAM and g_fail:
+radius/alignment calls 96719/48 in any% (298.27s), 42136/57 in Waver
+58109/0 (158.81s), native exits 0. Alignment zero/positive/negative
+adjustments occur 48/0/0 times in any% and 57/0/0 in Waver.
+Nonzero alignment and coordinate wrapping have only constructed coverage.
+Clean/observed any% non-timing diagnostics match; exact copied-body identity
+and maintained source identity pass. The routines and their accessor
+closure mutate RAM only; input RAM/g_fail are restored between comparisons.
+
+393216 full-RAM constructed comparisons pass: every current and previous
+pose word, every Y word via an odd-multiplier permutation, and all 256
+radius values paired at three pairs of current/previous Y boundaries.
+Nonzero radius high bytes expose incomplete word stores. The original
+packed record size/field offset assertions pass. The restored movie
+continues for 10000 frames with zero failures (48.67s).
+Byte-only radius writes, reversed radius subtraction, use of current Y for
+the previous-position update and truncated previous-pose offsets all fail
+their controls. These cases supplement actual movie execution.
+
+Cargo format/check, release --locked and progress pass. Own raw offsets -7,
+unsafe functions -2, cast lines -20 and Rust lines -30; other counters are
+unchanged. Temporary scripts/builds are removed; no probes or ROM-derived
+fixtures are committed. Broader pose/animation cleanup and gameplay/credits
+verification remain unfinished.
+
 Samus top/bottom coordinates (2026-10-19): make Samus_GetBottom_R18 and
 Samus_GetTop_R20 safe read-only functions. Named Y/pose accessors and the
 existing bounds-checked ROM byte reader replace typed raw pointers. Y is

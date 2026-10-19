@@ -16388,20 +16388,11 @@ pub unsafe fn SamusDisplayHandler_UsingElevator(game: &mut Game) {
 pub unsafe fn SamusDisplayHandler_SamusReceivedFatal(game: &mut Game) {
     Samus_DrawWhenNotAnimatingOrDying(game);
 }
-pub unsafe fn Samus_SetRadius(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb00 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (*(game.g_rom.offset(
-        (((0x91b629 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x91b629 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut SamusPoseParams)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ))
-    .y_radius as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xafe as ::core::ffi::c_int as isize)
-        as *mut uint16) = 5 as uint16;
+pub fn Samus_SetRadius(game: &mut Game) {
+    let pose_offset = usize::from(game.samus_pose()) * 8;
+    let radius = u16::from(game.read_rom_byte(0x91b629, pose_offset + 6));
+    game.g_ram[0xb00..0xb02].copy_from_slice(&radius.to_le_bytes());
+    game.g_ram[0xafe..0xb00].copy_from_slice(&5u16.to_le_bytes());
 }
 pub fn Samus_GetBottom_R18(game: &Game) -> u16 {
     let y = game.samus_y_pos();
@@ -16416,34 +16407,13 @@ pub fn Samus_GetTop_R20(game: &Game) -> u16 {
     let radius = game.read_rom_byte(0x91b629, pose_offset + 6);
     y.wrapping_sub(u16::from(radius))
 }
-pub unsafe fn Samus_AlignBottomWithPrevPose(game: &mut Game) {
-    let mut r18: uint16 = (*(game.g_rom.offset(
-        (((0x91b629 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x91b629 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut SamusPoseParams)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa1c as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ))
-    .y_radius as uint16;
-    r18 = ((*(game.g_rom.offset(
-        (((0x91b629 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x91b629 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut SamusPoseParams)
-        .offset(
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa20 as ::core::ffi::c_int as isize)
-                as *mut uint16) as isize,
-        ))
-    .y_radius as ::core::ffi::c_int
-        - r18 as ::core::ffi::c_int) as uint16;
-    let ref mut fresh101 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xafa as ::core::ffi::c_int as isize) as *mut uint16);
-    *fresh101 = (*fresh101 as ::core::ffi::c_int + r18 as ::core::ffi::c_int) as uint16;
-    let ref mut fresh102 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0xb14 as ::core::ffi::c_int as isize) as *mut uint16);
-    *fresh102 = (*fresh102 as ::core::ffi::c_int + r18 as ::core::ffi::c_int) as uint16;
+pub fn Samus_AlignBottomWithPrevPose(game: &mut Game) {
+    let current_radius = game.read_rom_byte(0x91b629, usize::from(game.samus_pose()) * 8 + 6);
+    let previous_pose = u16::from_le_bytes([game.g_ram[0xa20], game.g_ram[0xa21]]);
+    let previous_radius = game.read_rom_byte(0x91b629, usize::from(previous_pose) * 8 + 6);
+    let adjustment = u16::from(previous_radius).wrapping_sub(u16::from(current_radius));
+    game.set_samus_y_pos(game.samus_y_pos().wrapping_add(adjustment));
+    game.set_samus_prev_y_pos(game.samus_prev_y_pos().wrapping_add(adjustment));
 }
 pub unsafe fn Samus_UpdateSuitPaletteIndex(game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x9a2 as ::core::ffi::c_int as isize)
