@@ -10426,6 +10426,31 @@ verified source; peer PPU work is outside this replay. Rust lines -7; other
 own counters unchanged. Indexed-indirect/TSX/accumulator ROR remain held.
 Complete gameplay/render/audio remain open. Continue covered CPU cleanup.
 
+Crateria map round trip completed back to Parlor (2026-10-19).
+From crateria-map-unpause: left/run/shoot60,left/run/jump40,
+left/run/shoot80,left/run/jump40,left/run/shoot80,left/run/jump40,
+left/run/shoot80,left/run/jump40,left/run/shoot100,neutral90 traverses the
+passage westward. crateria-map-return-west74062/71 (95.24s), native exit1;
+final98E2X101/Y187,health39/99,map1,station255,missiles1/10. Health increased
+from34 to39 during normal gameplay; no health/RAM injection. Stops at the
+final rise rather than at a new room. Then left1,left/jump40,left/shoot110,
+neutral160 clears it and returns to92FD. crateria-map-parlor74373/71
+(67.98s), native exit1; Parlor load74168, gameplay74255. FinalX471/Y916,
+health39/99,missiles1/10,equipment1004,map1/station255. Retain this complete
+normal-input map round trip for further boss/item coverage.
+
+Read-only failure-counter replay74373/71 (79.72s), observed native exit1,
+matches all71 ordered baseline failing frames exactly; no new failures.
+Same pinned7fcc20d6 core plus committed Missile Tank accessors, explicit
+rendering. Committed map-activation cleanup has its separate actual callback
+coverage and any%129712/0 (164.06s),exit0. Controller probes change no maintained
+source/residue counts; preceding Cargo fmt/check,release and progress pass.
+Inputs,SRAM,probes and ROM-derived geometry stay ignored. Peer CPU/PPU work
+and remote sync remain separately owned. Next: extend retained Parlor74373
+checkpoint toward accessible item/boss progression; major bosses and credits
+remain unproved. Held upper99BD ascent,cliff tuning,old9AD9dropammoandHDMA
+stay held. Gameplay/hardware,render/audio,maskedRAM andownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
