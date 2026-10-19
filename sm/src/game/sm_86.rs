@@ -1534,8 +1534,7 @@ unsafe fn EprojColl_8676(
                 >> 2 as ::core::ffi::c_int)) as uint16;
     if (*eci).eci_r32 == 0 {
         let mut v4: ::core::ffi::c_int = v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v4 as isize)
-            as ::core::ffi::c_int
+        if game.enemy_projectile_x_pos(v2) as ::core::ffi::c_int
             - (*eci).eci_r28 as ::core::ffi::c_int
             & 8 as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
@@ -1547,8 +1546,7 @@ unsafe fn EprojColl_8676(
         {
             let mut v5: uint16 = (v3 as ::core::ffi::c_int ^ 1 as ::core::ffi::c_int) as uint16;
             if (*eci).eci_r28 as ::core::ffi::c_int
-                + *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
-                    .offset(v4 as isize) as ::core::ffi::c_int
+                + game.enemy_projectile_x_pos(v2) as ::core::ffi::c_int
                 - 1 as ::core::ffi::c_int
                 & 8 as ::core::ffi::c_int
                 == 0 as ::core::ffi::c_int
@@ -1648,8 +1646,7 @@ unsafe fn EprojColl_8676(
     let mut v7: ::core::ffi::c_int =
         EprojState(&game.g_ram).index() as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v8: uint16 = 0;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a6f) as *mut uint16).offset(v7 as isize) =
-        0 as uint16;
+    EprojStateMut(&mut game.g_ram).write(0x1a6f, v7 as usize, 0 as uint16);
     if (*eci).eci_r20 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0 as ::core::ffi::c_int
     {
@@ -1660,7 +1657,7 @@ unsafe fn EprojColl_8676(
         v8 = (((*eci).eci_r34 as ::core::ffi::c_int & 0xfff8 as ::core::ffi::c_int)
             - (*eci).eci_r30 as ::core::ffi::c_int) as uint16;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v7 as isize) = v8;
+    EprojStateMut(&mut game.g_ram).write(0x1a93, v7 as usize, v8);
     return 1 as uint8;
 }
 pub fn EprojColl_873D() -> uint8 {
@@ -1758,9 +1755,8 @@ unsafe fn EprojColl_874E(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 
         let mut mod_1: uint16 =
             SnesModulus(game.cur_block_index(), game.room_width_in_blocks() as uint8);
         let mut v2: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        v3 = (*((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
-            .offset(v2 as isize) as ::core::ffi::c_int
-            >> 4 as ::core::ffi::c_int) as int16;
+        v3 = (game.enemy_projectile_x_pos(v0) as ::core::ffi::c_int >> 4 as ::core::ffi::c_int)
+            as int16;
         if v3 as ::core::ffi::c_int == mod_1 as ::core::ffi::c_int {
             let mut temp_collision_DD4_0: uint16 =
                 ((*eci).eci_r30 as ::core::ffi::c_int + (*eci).eci_r24 as ::core::ffi::c_int
@@ -1780,12 +1776,10 @@ unsafe fn EprojColl_874E(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 
                 if v5 as ::core::ffi::c_int & 0x4000 as ::core::ffi::c_int
                     != 0 as ::core::ffi::c_int
                 {
-                    v6 = (*((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
-                        .offset(v2 as isize) as ::core::ffi::c_int
+                    v6 = (game.enemy_projectile_x_pos(v0) as ::core::ffi::c_int
                         ^ 0xf as ::core::ffi::c_int) as uint16;
                 } else {
-                    v6 = *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
-                        .offset(v2 as isize);
+                    v6 = game.enemy_projectile_x_pos(v0);
                 };
                 v7 = (temp_collision_DD6_0 as ::core::ffi::c_int
                     + (v6 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int))
@@ -1812,11 +1806,16 @@ unsafe fn EprojColl_874E(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 
                     == 1 as ::core::ffi::c_int
                     || v8 < 0
             } {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
-                    .offset(v2 as isize) =
-                    ((*eci).eci_r24 as ::core::ffi::c_int + v8 as ::core::ffi::c_int) as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1a6f) as *mut uint16)
-                    .offset(v2 as isize) = -(1 as ::core::ffi::c_int) as uint16;
+                {
+                    let eproj_position: uint16 =
+                        ((*eci).eci_r24 as ::core::ffi::c_int + v8 as ::core::ffi::c_int) as uint16;
+                    EprojStateMut(&mut game.g_ram).write(0x1a93, v2 as usize, eproj_position);
+                }
+                EprojStateMut(&mut game.g_ram).write(
+                    0x1a6f,
+                    v2 as usize,
+                    -(1 as ::core::ffi::c_int) as uint16,
+                );
                 return 1 as uint8;
             } else {
                 return 0 as uint8;

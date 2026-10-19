@@ -16468,6 +16468,55 @@ own counters unchanged. No probes or ROM-derived artifacts committed.
 Continue indexed projectile state/handler families; broader gameplay/credits,
 hardware/audio/masks and ownership remain unfinished.
 
+Projectile slope collision state (2026-10-19): five X-position reads and
+four Y-position/subposition stores in EprojColl_8676/874E use the existing
+byte-backed interface. Original captured indices, arithmetic, live reads and
+short-circuit evaluation remain. 8676 clears the fraction before its position
+store; 874E captures the collision-record value before borrowing RAM, then
+writes position before the FFFF fraction. The collision record traces to a
+separate stack allocation. No helper or unsafe boundary is added.
+
+Observed Bubble Mountain passes 138749/0 (189.15s), with 53 live read
+comparisons and 16 complete-RAM store comparisons. Each grouped access below
+has the stated call count; these are actual access hits, not entry estimates.
+
+| Access | Calls / input frames |
+| --- | --- |
+| 8676: two X reads and two Y stores | 1 each / 65527..65527 |
+| 874E: positive-direction X column read | 34 / 18186..65646 |
+| 874E: mirrored X read | 6 / 18213..18278 |
+| 874E: plain X read | 11 / 18231..65646 |
+| 874E: Y position and fraction stores | 7 each / 18215..65646 |
+
+The discovery's native exit 2 reports exactly 13 unhit sites. All of 85C2,
+the two reads with live inline indices in 8676, and the negative branch of 874E
+retain their original code. No second uncovered movie is replayed.
+
+Exact unchanged helper/getter bodies pass 65616 X-read comparisons and
+131232 complete-RAM stores: every u16 index paired with a bijective word,
+plus ten boundary words at eight indices. Odd/wide indices and RAM aliases
+are included; this is not a Cartesian sweep or full-handler coverage.
+Wrong odd-index rounding and a wrong store destination fail as intended.
+
+Frozen 020a52d4 plus only the nine retained accesses passes clean full-boot
+any% 129712/0 (267.92s) and Bubble Mountain 138749/0 (324.40s), native
+exits 0. Complete non-timing Bubble diagnostics match after exact probe,
+missing-probe-status and checkpoint-message counts are checked; the existing
+X undefined diagnostic remains. Discovery creates no checkpoint, so no
+clean/observed checkpoint equality is claimed. Source, library, DLL, host,
+configuration, ROM and inputs remain fixed; independent reconstruction,
+pointer provenance and raw-result reviews pass.
+
+Formatting/check, normal release and progress pass. Frozen release takes
+67.23s; workspace release takes 64.35s. After concurrent cleanup, refreshed
+workspace checks pass with stable source and a 0.71s cached release build.
+These are shared-load timings, not a compilation-speedup measurement.
+Net Rust lines -1, raw accesses -9 and pointer-offset calls -18; actual
+c_int casts and unsafe-function counts are unchanged. The cast-line counter
+falls by one from formatting. Peer changes retain separate checks. No probe,
+input, checkpoint or temporary script is committed. Continue the shared
+state and movement-family cleanup; gameplay through credits remains unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
