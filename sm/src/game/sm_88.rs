@@ -638,9 +638,9 @@ pub unsafe fn InitializeSpecialEffectsForNewRoom(game: &mut Game) {
         as *mut uint8)
         .offset(1) as *mut VoidP) = -(30720 as ::core::ffi::c_int) as VoidP;
     (*((&raw mut game.g_ram as *mut uint8).offset(0x601) as *mut LongPtr)).addr =
-        ((0x8883e1i32) as u16) & (0xffffu16);
+        ((0x8883e1i32) as u16);
     (*((&raw mut game.g_ram as *mut uint8).offset(0x604) as *mut LongPtr)).addr =
-        ((0x8883e1i32) as u16) & (0xffffu16);
+        ((0x8883e1i32) as u16);
     WriteReg(WMADDL as uint16, 0xf0 as uint8, game);
     WriteReg(WMADDM as uint16, 0xff as uint8, game);
     WriteReg(WMADDH as uint16, 1 as uint8, game);
@@ -668,7 +668,7 @@ unsafe fn SpawnHdmaObjectInner(
 ) -> uint16 {
     let v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0x18f0) as *mut uint16).offset(v2 as isize) =
-        ((0x8884b8i32) as u16) & (0xffffu16);
+        ((0x8884b8i32) as u16);
     *((&raw mut game.g_ram as *mut uint8).offset(0x18fc) as *mut uint16).offset(v2 as isize) =
         136 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x18cc) as *mut uint16).offset(v2 as isize) =
@@ -2504,8 +2504,7 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionYellow(k: uint16, gam
     }
 }
 pub unsafe fn SpawnCrystalFlashHdmaObjs(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16) =
-        ((0x888000i32) as u16) & (0xffffu16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0x592) as *mut uint16) = ((0x888000i32) as u16);
     static unk_88A2B0: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
         field_0: 0x40 as uint8,
         field_1: 0x28 as uint8,
@@ -3801,8 +3800,7 @@ static unk_88B2B9: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
     addr: 0xc3f0 as VoidP,
 };
 pub unsafe fn FxTypeFunc_2_Lava(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x196c) as *mut uint16) =
-        ((0x88b343i32) as u16) & (0xffffu16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0x196c) as *mut uint16) = ((0x88b343i32) as u16);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16) =
         *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16);
     SpawnHdmaObject(
@@ -3819,8 +3817,7 @@ pub unsafe fn FxTypeFunc_2_Lava(game: &mut Game) {
     SpawnAnimtiles(addr_kAnimtiles_Lava as uint16, game);
 }
 pub unsafe fn FxTypeFunc_4_Acid(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x196c) as *mut uint16) =
-        ((0x88b343i32) as u16) & (0xffffu16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0x196c) as *mut uint16) = ((0x88b343i32) as u16);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1962) as *mut uint16) =
         *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16);
     SpawnHdmaObject(
@@ -3930,7 +3927,7 @@ pub unsafe fn FxRisingFunction_LavaAcid(game: &mut Game) {
             return;
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0x196c) as *mut uint16) =
-            ((0x88b367i32) as u16) & (0xffffu16);
+            ((0x88b367i32) as u16);
     }
 }
 pub unsafe fn FxRisingFunction_LavaAcid_WaitToRise(game: &mut Game) {
@@ -3942,7 +3939,7 @@ pub unsafe fn FxRisingFunction_LavaAcid_WaitToRise(game: &mut Game) {
     *fresh45 = (*fresh45).wrapping_sub(1);
     if *fresh45 == 0 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x196c) as *mut uint16) =
-            ((0x88b382i32) as u16) & (0xffffu16);
+            ((0x88b382i32) as u16);
     }
 }
 pub unsafe fn FxRisingFunction_LavaAcid_Raising(game: &mut Game) {
@@ -3953,7 +3950,7 @@ pub unsafe fn FxRisingFunction_LavaAcid_Raising(game: &mut Game) {
     if RaiseOrLowerFx(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x196c) as *mut uint16) =
-            ((0x88b343i32) as u16) & (0xffffu16);
+            ((0x88b343i32) as u16);
     }
 }
 pub unsafe fn HdmaobjInstr_B3A9(k: uint16, hdp: *const uint8, game: &mut Game) -> *const uint8 {
@@ -4304,8 +4301,7 @@ static unk_88C41F: SpawnHdmaObject_Args = SpawnHdmaObject_Args {
     addr: 0xd847 as VoidP,
 };
 pub unsafe fn FxTypeFunc_6_Water(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x196c) as *mut uint16) =
-        ((0x88c428i32) as u16) & (0xffffu16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0x196c) as *mut uint16) = ((0x88c428i32) as u16);
     *((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16) =
         *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16);
     SpawnHdmaObject(
@@ -4347,7 +4343,7 @@ pub unsafe fn FxRisingFunction_C428_WaterNormal(game: &mut Game) {
             return;
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0x196c) as *mut uint16) =
-            ((0x88c44ci32) as u16) & (0xffffu16);
+            ((0x88c44ci32) as u16);
     }
 }
 pub unsafe fn FxRisingFunction_WaterWaitToRise(game: &mut Game) {
@@ -4355,13 +4351,13 @@ pub unsafe fn FxRisingFunction_WaterWaitToRise(game: &mut Game) {
     *fresh46 = (*fresh46).wrapping_sub(1);
     if *fresh46 == 0 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x196c) as *mut uint16) =
-            ((0x88c458i32) as u16) & (0xffffu16);
+            ((0x88c458i32) as u16);
     }
 }
 pub unsafe fn FxRisingFunction_WaterRising(game: &mut Game) {
     if RaiseOrLowerFx(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x196c) as *mut uint16) =
-            ((0x88c428i32) as u16) & (0xffffu16);
+            ((0x88c428i32) as u16);
         *((&raw mut game.g_ram as *mut uint8).offset(0x197c) as *mut uint16) = 0 as uint16;
     }
 }
@@ -4872,8 +4868,7 @@ pub unsafe fn FxTypeFunc_26_TourianEntranceStatue(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xcd20) as *mut uint16) = 514 as uint16;
     }
     *(&raw mut game.g_ram as *mut uint8).offset(0x59) = 74 as uint8;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x196c) as *mut uint16) =
-        ((0x88c428i32) as u16) & (0xffffu16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0x196c) as *mut uint16) = ((0x88c428i32) as u16);
     *((&raw mut game.g_ram as *mut uint8).offset(0x195e) as *mut uint16) =
         *((&raw mut game.g_ram as *mut uint8).offset(0x1978) as *mut uint16);
     SpawnHdmaObject(
@@ -5116,7 +5111,7 @@ pub unsafe fn sub_88DE18(k: uint16, a: uint16, game: &mut Game) {
         == 0x82e737 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x18f0) as *mut uint16).offset(v2 as isize) =
-            ((0x88de2di32) as u16) & (0xffffu16);
+            ((0x88de2di32) as u16);
         HdmaobjPreInstr_HazeColorMathSubscreen_FadingIn(k, game);
     }
 }
@@ -5132,7 +5127,7 @@ pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_FadingIn(k: uint16, game: &
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x18f0) as *mut uint16)
             .offset((k as uint8 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-            ((0x88de74i32) as u16) & (0xffffu16);
+            ((0x88de74i32) as u16);
     } else {
         let v3: uint8 = k as uint8;
         let r20: uint8 = *((&raw mut game.g_ram as *mut uint8).offset(0x1920) as *mut uint16
@@ -5166,7 +5161,7 @@ pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_FadedIn(k: uint16, game: &m
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x18f0) as *mut uint16)
             .offset((k as uint8 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-            ((0x88de96i32) as u16) & (0xffffu16);
+            ((0x88de96i32) as u16);
     }
 }
 pub unsafe fn HdmaobjPreInstr_HazeColorMathSubscreen_FadingOut(k: uint16, game: &mut Game) {

@@ -2637,7 +2637,7 @@ pub unsafe fn StartGameplay_Async(game: &mut Game) -> CoroutineRet {
                 game,
             );
             *((&raw mut game.g_ram as *mut uint8).offset(0x99c) as *mut uint16) =
-                ((0x82e737i32) as u16) & (0xffffu16);
+                ((0x82e737i32) as u16);
         }
         _ => {}
     }

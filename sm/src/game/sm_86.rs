@@ -7524,7 +7524,7 @@ unsafe fn EprojInit_KagosBugs(j: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16).offset(v2 as isize) =
         v4.wrapping_add(4);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16).offset(v2 as isize) =
-        ((0x86d0cai32) as u16) & (0xffffu16);
+        ((0x86d0cai32) as u16);
 }
 pub unsafe fn EprojPreInstr_KagosBugs_Func1(k: uint16, game: &mut Game) {
     let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -7557,7 +7557,7 @@ pub unsafe fn EprojPreInstr_KagosBugs(k: uint16, game: &mut Game) {
     } else {
         EprojStateMut(&mut game.g_ram).start_instruction(v1 as usize, addr_word_86D052 as uint16);
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16).offset(v1 as isize) =
-            ((0x86d0ebi32) as u16) & (0xffffu16);
+            ((0x86d0ebi32) as u16);
     };
 }
 static word_86D082: uint16 = 0xe0 as uint16;
@@ -7594,7 +7594,7 @@ pub unsafe fn EprojPreInstr_D0EC(k: uint16, game: &mut Game) {
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-        ((0x86d128i32) as u16) & (0xffffu16);
+        ((0x86d128i32) as u16);
     EprojStateMut(&mut game.g_ram)
         .start_instruction(usize::from(k >> 1), addr_word_86D04A as uint16);
 }
@@ -7610,7 +7610,7 @@ pub unsafe fn EprojPreInstr_D128(v0: uint16, game: &mut Game) {
     {
         let v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16).offset(v1 as isize) =
-            ((0x86d0ebi32) as u16) & (0xffffu16);
+            ((0x86d0ebi32) as u16);
         EprojStateMut(&mut game.g_ram).start_instruction(v1 as usize, addr_word_86D03C as uint16);
     } else {
         let ref mut fresh70 = *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16)
@@ -7645,7 +7645,7 @@ pub unsafe fn EprojInstr_D15C(k: uint16, epjp: *const uint8, game: &mut Game) ->
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(v2 as isize) = v4;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16).offset(v2 as isize) =
-        ((0x86d0eci32) as u16) & (0xffffu16);
+        ((0x86d0eci32) as u16);
     epjp
 }
 pub unsafe fn EprojInstr_D1B6(k: uint16, epjp: *const uint8, game: &mut Game) -> *const uint8 {
@@ -7654,7 +7654,7 @@ pub unsafe fn EprojInstr_D1B6(k: uint16, epjp: *const uint8, game: &mut Game) ->
         ((game.random_number() as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int) as u16)
             .wrapping_add(1u16);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16).offset(v1 as isize) =
-        ((0x86d0cai32) as u16) & (0xffffu16);
+        ((0x86d0cai32) as u16);
     epjp
 }
 pub unsafe fn EprojInstr_D1C7(k: uint16, epjp: *const uint8, game: &mut Game) -> *const uint8 {
@@ -9486,7 +9486,7 @@ pub unsafe fn EprojInstr_EEAF(k: uint16, epjp: *const uint8, game: &mut Game) ->
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16).offset(v4 as isize) =
             400 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16).offset(v4 as isize) =
-            ((0x86efe0i32) as u16) & (0xffffu16);
+            ((0x86efe0i32) as u16);
         let ref mut fresh25 = *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16)
             .offset(v4 as isize);
         *fresh25 = (*fresh25) & ((!(0x4000 as ::core::ffi::c_int)) as u16);
@@ -9499,7 +9499,7 @@ pub unsafe fn EprojInstr_EEAF(k: uint16, epjp: *const uint8, game: &mut Game) ->
         *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16).offset(v6 as isize) =
             12288 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16).offset(v6 as isize) =
-            ((0x86efdfi32) as u16) & (0xffffu16);
+            ((0x86efdfi32) as u16);
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v6 as isize) =
             0xeca3 as uint16;
         0xeca3 as ::core::ffi::c_int as uintptr_t as *const uint8

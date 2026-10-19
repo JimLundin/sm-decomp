@@ -2789,7 +2789,7 @@ pub unsafe fn PlmSetup_PlmB6DF_EnergyStation(j: uint16, game: &mut Game) -> uint
     WriteLevelDataBlockTypeAndBts(
         (*((&raw mut game.g_ram as *mut uint8).offset(0x1c87) as *mut uint16).offset(v1 as isize))
             .wrapping_sub(2u16),
-        ((0x84b04ai32) as u16) & (0xffffu16),
+        ((0x84b04ai32) as u16),
         game,
     );
     0 as uint8
@@ -3287,7 +3287,7 @@ pub unsafe fn PlmSetup_B7EB_EnableSoundsIn32Frames(j: uint16, game: &mut Game) -
     let v2: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1d77) as *mut uint16).offset(v2 as isize) = v1;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1cd7) as *mut uint16).offset(v2 as isize) =
-        ((0x84b7ddi32) as u16) & (0xffffu16);
+        ((0x84b7ddi32) as u16);
     0 as uint8
 }
 pub unsafe fn PlmPreInstr_B7EB_DecTimerEnableSoundsDeletePlm(k: uint16, game: &mut Game) {
@@ -3583,7 +3583,7 @@ pub unsafe fn PlmPreInstr_WakePlmIfTriggeredOrSamusBelowPlm(k: uint16, game: &mu
         *((&raw mut game.g_ram as *mut uint8).offset(0xde1c) as *mut uint16).offset(v1 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1cd7) as *mut uint16).offset(v1 as isize) =
-            ((0x84bba3i32) as u16) & (0xffffu16);
+            ((0x84bba3i32) as u16);
     }
 }
 pub unsafe fn PlmPreInstr_WakePlmIfTriggeredOrSamusAbovePlm(k: uint16, game: &mut Game) {
@@ -4684,7 +4684,7 @@ pub unsafe fn PlmPreInstr_WakePlmIfSamusHasBombs(k: uint16, game: &mut Game) {
             1 as uint16;
         advance_plm_instruction(v1 as usize, 2, game);
         *((&raw mut game.g_ram as *mut uint8).offset(0x1cd7) as *mut uint16).offset(v1 as isize) =
-            ((0x84d356i32) as u16) & (0xffffu16);
+            ((0x84d356i32) as u16);
     }
 }
 pub unsafe fn PlmInstr_SpawnTorizoStatueBreaking(
@@ -5406,7 +5406,7 @@ pub unsafe fn PlmPreInstr_GotoLinkIfTriggered(k: uint16, game: &mut Game) {
         == 255u8
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1cd7) as *mut uint16).offset(v1 as isize) =
-            ((0x84dfa8i32) as u16) & (0xffffu16);
+            ((0x84dfa8i32) as u16);
         *((&raw mut game.g_ram as *mut uint8).offset(0x1d27) as *mut uint16).offset(v1 as isize) =
             *((&raw mut game.g_ram as *mut uint8).offset(0xdebc) as *mut uint16)
                 .offset(v1 as isize);

@@ -306,7 +306,7 @@ pub unsafe fn Enemy_ClearAiPreInstr_AA(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*gEnemyData(k as ::core::ffi::c_int, game)).ai_preinstr = ((0xaa807bi32) as u16) & (0xffffu16);
+    (*gEnemyData(k as ::core::ffi::c_int, game)).ai_preinstr = ((0xaa807bi32) as u16);
     jp
 }
 pub unsafe fn Enemy_SetAiPreInstr_AA(
@@ -897,8 +897,7 @@ pub unsafe fn Torizo_Main(game: &mut Game) {
 pub unsafe fn Torizo_Func_2(k: uint16, game: &mut Game) {
     Torizo_C643(k, game);
     if sub_82DAF7(0x600 as uint16, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
-        (*Get_Torizo(k as ::core::ffi::c_int, game)).toriz_var_E =
-            ((0xaac6abi32) as u16) & (0xffffu16);
+        (*Get_Torizo(k as ::core::ffi::c_int, game)).toriz_var_E = ((0xaac6abi32) as u16);
     }
 }
 pub unsafe fn Torizo_Func_3(k: uint16, game: &mut Game) {
@@ -1077,7 +1076,7 @@ pub unsafe fn Torizo_Init(game: &mut Game) {
         (*E).base.extra_properties = ((*E).base.extra_properties) | (4u16);
         (*E).base.x_width = g_word_AAC96F[v2 as usize] as uint16;
         (*E).base.y_height = g_word_AAC973[v2 as usize] as uint16;
-        (*E).toriz_var_E = ((0xaac6bfi32) as u16) & (0xffffu16);
+        (*E).toriz_var_E = ((0xaac6bfi32) as u16);
         (*E).base.instruction_timer = 1 as uint16;
         (*E).base.timer = 0 as uint16;
         (*E).base.palette_index = 0 as uint16;
@@ -1145,7 +1144,7 @@ pub unsafe fn Torizo_Shot(game: &mut Game) {
         {
             NormalEnemyShotAiSkipDeathAnim_CurEnemy(game);
             if (*E).base.health == 0 {
-                (*E).toriz_var_E = ((0xaac6abi32) as u16) & (0xffffu16);
+                (*E).toriz_var_E = ((0xaac6abi32) as u16);
                 (*E).base.current_instruction = addr_kTorizo_Ilist_B1C8 as uint16;
                 (*E).base.instruction_timer = 1 as uint16;
                 (*E).toriz_parameter_2 = ((*E).toriz_parameter_2) | (0xc000u16);
@@ -1634,7 +1633,7 @@ pub unsafe fn Torizo_D6D1(k: uint16, j: uint16, game: &mut Game) {
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     *fresh1 = (*fresh1 as ::core::ffi::c_int & !(0x10 as ::core::ffi::c_int)) as uint16;
     let E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
-    (*E).toriz_var_E = ((0xaac6abi32) as u16) & (0xffffu16);
+    (*E).toriz_var_E = ((0xaac6abi32) as u16);
     (*E).base.instruction_timer = 1 as uint16;
     let mut v3: uint16 = 0;
     if ((*E).toriz_parameter_1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
@@ -1651,7 +1650,7 @@ pub unsafe fn Torizo_D6F7(k: uint16, j: uint16, game: &mut Game) {
     );
     if (Torizo_Func_12(k, game) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32 {
         (*E).toriz_parameter_2 = ((*E).toriz_parameter_2) | (0x1000u16);
-        (*E).toriz_var_E = ((0xaac6abi32) as u16) & (0xffffu16);
+        (*E).toriz_var_E = ((0xaac6abi32) as u16);
         let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16)
             .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
         *fresh0 = (*fresh0) | (0x10u16);
@@ -1848,7 +1847,7 @@ pub unsafe fn Shaktool_DAE5(mut k: uint16, game: &mut Game) {
         let mut i: ::core::ffi::c_int = 12 as ::core::ffi::c_int;
         while i >= 0i32 {
             let E: *mut Enemy_Shaktool = Get_Shaktool(k as ::core::ffi::c_int, game);
-            (*E).shakt_var_F = ((0xaadcaai32) as u16) & (0xffffu16);
+            (*E).shakt_var_F = ((0xaadcaai32) as u16);
             (*E).base.current_instruction = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadf21))
                 as *const uint8 as *mut uint16)
                 .offset((i >> 1 as ::core::ffi::c_int) as isize);
@@ -2301,7 +2300,7 @@ pub unsafe fn Shaktool_DD25(mut k: uint16, game: &mut Game) {
         while i >= 0i32 {
             Shaktool_DC07(k, game);
             let EK: *mut Enemy_Shaktool = Get_Shaktool(k as ::core::ffi::c_int, game);
-            (*EK).shakt_var_F = ((0xaadcaai32) as u16) & (0xffffu16);
+            (*EK).shakt_var_F = ((0xaadcaai32) as u16);
             (*EK).base.current_instruction =
                 *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadf13)) as *const uint8
                     as *mut uint16)
@@ -2567,7 +2566,7 @@ pub unsafe fn ChozoStatue_Init(game: &mut Game) {
     (*v0).spritemap_pointer = addr_kSpritemap_Nothing_AA as uint16;
     (*v0).instruction_timer = 1 as uint16;
     (*v0).timer = 0 as uint16;
-    (*v0).ai_preinstr = ((0xaae7a6i32) as u16) & (0xffffu16);
+    (*v0).ai_preinstr = ((0xaae7a6i32) as u16);
     (*v0).parameter_1 = 0 as uint16;
     (*v0).palette_index = 0 as uint16;
     (*gEnemyData(0 as ::core::ffi::c_int, game)).layer = 0 as uint16;

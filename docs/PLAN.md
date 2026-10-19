@@ -19446,6 +19446,20 @@ frontend casts are compiler-checked. No probe or ROM-derived asset committed.
 Continue large compiler-assisted and RAM-access families toward this week's
 deadline; full gameplay/credits and readability remain incomplete.
 
+Compiler identity cleanup (2026-10-19): standard all-target/all-feature
+Clippy identity_op fixes remove 1411 redundant operations across 23 files.
+Narrowing casts and operand evaluation remain unchanged. Net Rust lines -199;
+raw RAM accesses, unsafe functions and cast counts are unchanged. No bespoke
+comparison harness was added; final Clippy pass has zero identity diagnostics.
+
+Frozen a1632a7d plus this batch includes committed unused-mut and initializer
+work. Full any% 129712/0 (153.10s) and Speed Booster 148406/0
+(213.07s) pass, native exits 0, with fixed sources/DLL/fixtures.
+Formatting/check, normal release (33.82s frozen, 26.77s workspace), progress
+and diff check pass. Current-parent reconciliation preserves independent work.
+The movies supply core regression coverage; full credits/readability remain
+incomplete. Next: named scalar-RAM reads and remaining compiler simplifications.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

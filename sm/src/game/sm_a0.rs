@@ -1998,7 +1998,7 @@ pub unsafe fn LoadEnemies(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x185e) as *mut uint16) = 0 as uint16;
     (*((&raw mut game.g_ram as *mut uint8).offset(0x178c) as *mut LongPtr)).bank = 160 as uint8;
     (*((&raw mut game.g_ram as *mut uint8).offset(0x178c) as *mut LongPtr)).addr =
-        ((0xa0804ci32) as u16) & (0xffffu16);
+        ((0xa0804ci32) as u16);
     *((&raw mut game.g_ram as *mut uint8).offset(0x179a) as *mut uint16) = 2048 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x179e) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x17a0) as *mut uint16) = 0 as uint16;
@@ -5656,7 +5656,7 @@ pub unsafe fn HandleEprojCollWithProj(k: uint16, j: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(j_0 as isize) =
             1 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16).offset(j_0 as isize) =
-            ((0x8684fbi32) as u16) & (0xffffu16);
+            ((0x8684fbi32) as u16);
         let ref mut fresh31 = *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16)
             .offset(j_0 as isize);
         *fresh31 = (*fresh31) & (0xfffu16);
@@ -6586,7 +6586,7 @@ pub unsafe fn EnemyDeathAnimation(k: uint16, mut a: uint16, game: &mut Game) {
     );
     if (*E).ai_handler_bits == 1u16 {
         *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-            ((0x9bc8c5i32) as u16) & (0xffffu16);
+            ((0x9bc8c5i32) as u16);
     }
     if a as ::core::ffi::c_int - 5 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
         a = 0 as uint16;

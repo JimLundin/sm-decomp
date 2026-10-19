@@ -88,7 +88,7 @@ pub unsafe fn SpawnPalfxObject(j: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1e8d) as *mut uint16).offset(v2 as isize) =
         0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1ead) as *mut uint16).offset(v2 as isize) =
-        ((0x8dc526i32) as u16) & (0xffffu16);
+        ((0x8dc526i32) as u16);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1ebd) as *mut uint16).offset(v2 as isize) =
         (*get_PalFxDef(j, game)).instrs;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1ecd) as *mut uint16).offset(v2 as isize) =
@@ -282,7 +282,7 @@ pub unsafe fn PalInstr_QueueSfx3(k: uint16, j: uint16, game: &mut Game) -> PairU
 pub unsafe fn PalInit_E1BC(k: uint16, j: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1ead) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-        ((0x8de20bi32) as u16) & (0xffffu16);
+        ((0x8de20bi32) as u16);
 }
 pub unsafe fn PalPreInstr_E1BC(k: uint16, game: &mut Game) {
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) as ::core::ffi::c_int

@@ -816,7 +816,7 @@ pub unsafe fn GameState_33_BlackoutFromCeres(game: &mut Game) -> CoroutineRet {
             game,
         );
         *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
-            ((0x8bc11bi32) as u16) & (0xffffu16);
+            ((0x8bc11bi32) as u16);
         *((&raw mut game.g_ram as *mut uint8).offset(0x93f) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x943) as *mut uint16) = 0 as uint16;
         QueueMusic_Delayed8(0 as uint16, game);
@@ -878,7 +878,7 @@ pub unsafe fn GameState_36_WhitingOutFromTimeUp(game: &mut Game) -> CoroutineRet
             *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
                 kGameState_37_CeresGoesBoomWithSamus as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
-                ((0x8bc11bi32) as u16) & (0xffffu16);
+                ((0x8bc11bi32) as u16);
         }
     }
     kCoroutineNone as CoroutineRet
@@ -906,7 +906,7 @@ pub unsafe fn GameState_38_SamusEscapesFromZebes(game: &mut Game) -> CoroutineRe
         *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
             kGameState_39_EndingAndCredits as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
-            ((0x8bd480i32) as u16) & (0xffffu16);
+            ((0x8bd480i32) as u16);
         *((&raw mut game.g_ram as *mut uint8).offset(0x943) as *mut uint16) = 0 as uint16;
         QueueMusic_Delayed8(0 as uint16, game);
         QueueSfx1_Max15(2 as uint16, game);
@@ -1057,12 +1057,12 @@ pub unsafe fn GameState_44_TransitionFromDemo(game: &mut Game) -> CoroutineRet {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(4) =
             2 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
-            ((0x8b9a47i32) as u16) & (0xffffu16);
+            ((0x8b9a47i32) as u16);
     } else {
         QueueMusic_Delayed8(0 as uint16, game);
         *((&raw mut game.g_ram as *mut uint8).offset(0x5f5) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
-            ((0x8b9b68i32) as u16) & (0xffffu16);
+            ((0x8b9b68i32) as u16);
     }
     kCoroutineNone as CoroutineRet
 }
@@ -1497,8 +1497,7 @@ pub unsafe fn GameState_0_Reset_Async(game: &mut Game) -> CoroutineRet {
     *((&raw mut game.g_ram as *mut uint8).offset(0xdf8) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xdfa) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xdfc) as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
-        ((0x8b9b68i32) as u16) & (0xffffu16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) = ((0x8b9b68i32) as u16);
     *((&raw mut game.g_ram as *mut uint8).offset(0x1f55) as *mut uint16) = 0 as uint16;
     if *((&raw mut game.g_ram as *mut uint8).offset(0x1f59) as *mut uint16) == 4u16 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1f55) as *mut uint16) = 3 as uint16;
@@ -1808,7 +1807,7 @@ pub unsafe fn OptionsInstr_SetPreInstr(k: uint16, j: uint16, game: &mut Game) ->
 pub unsafe fn OptionsInstr_8C79(k: uint16, j: uint16, game: &mut Game) -> uint16 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1b0d) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-        ((0x828c81i32) as u16) & (0xffffu16);
+        ((0x828c81i32) as u16);
     j
 }
 pub unsafe fn OptionsInstr_Goto(k: uint16, j: uint16, game: &mut Game) -> uint16 {
@@ -6383,8 +6382,7 @@ pub unsafe fn DoorTransitionFunction_HandleElevator(game: &mut Game) -> Coroutin
         return GameState_10_LoadingNextRoom_Async(game);
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x92f) as *mut uint16) = 48 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x99c) as *mut uint16) =
-        ((0x82e19fi32) as u16) & (0xffffu16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0x99c) as *mut uint16) = ((0x82e19fi32) as u16);
     DoorTransitionFunction_Wait48frames(game)
 }
 pub unsafe fn DoorTransitionFunction_Wait48frames(game: &mut Game) -> CoroutineRet {
@@ -6469,8 +6467,7 @@ pub unsafe fn GameState_10_LoadingNextRoom_Async(game: &mut Game) -> CoroutineRe
     QueueSfx2_Max15(0x71 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0x5f5) as *mut uint16) =
         -(1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x99c) as *mut uint16) =
-        ((0x82e29ei32) as u16) & (0xffffu16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0x99c) as *mut uint16) = ((0x82e29ei32) as u16);
     let ref mut fresh10 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
     *fresh10 = (*fresh10).wrapping_add(1);
     kCoroutineNone as CoroutineRet
@@ -7677,7 +7674,7 @@ pub unsafe fn GameOptionsMenu_4_StartGame(game: &mut Game) {
             == kGameState_34_CeresGoesBoom as ::core::ffi::c_int
         {
             *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
-                ((0x8bc11bi32) as u16) & (0xffffu16);
+                ((0x8bc11bi32) as u16);
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0xde2) as *mut uint16) = 0 as uint16;
@@ -7685,7 +7682,7 @@ pub unsafe fn GameOptionsMenu_4_StartGame(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16) =
             kGameState_30_IntroCinematic as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x1f51) as *mut uint16) =
-            ((0x8ba395i32) as u16) & (0xffffu16);
+            ((0x8ba395i32) as u16);
         *((&raw mut game.g_ram as *mut uint8).offset(0x99e) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 0 as uint16;

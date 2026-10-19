@@ -211,7 +211,7 @@ pub unsafe fn Enemy_ClearAiPreInstr_B3(
     jp: *const uint16,
     game: &mut Game,
 ) -> *const uint16 {
-    (*gEnemyData(k as ::core::ffi::c_int, game)).ai_preinstr = ((0xb3807bi32) as u16) & (0xffffu16);
+    (*gEnemyData(k as ::core::ffi::c_int, game)).ai_preinstr = ((0xb3807bi32) as u16);
     jp
 }
 pub unsafe fn UnusedSpinningTurtleEye_Init(game: &mut Game) {
@@ -232,7 +232,7 @@ pub unsafe fn BrinstarPipeBug_Init(game: &mut Game) {
     let y_pos: uint16 = (*PipeBug).base.y_pos;
     (*PipeBug).pbg_var_C = y_pos;
     (*PipeBug).pbg_var_00 = (y_pos).wrapping_sub(16u16);
-    (*PipeBug).pbg_var_F = ((0xb38880i32) as u16) & (0xffffu16);
+    (*PipeBug).pbg_var_F = ((0xb38880i32) as u16);
     (*PipeBug).pbg_var_D = 48 as uint16;
     (*PipeBug).pbg_var_E = 0 as uint16;
     (*PipeBug).pbg_var_01 = 0 as uint16;
@@ -255,7 +255,7 @@ pub unsafe fn BrinstarPipeBug_PreInstr_1(k: uint16, game: &mut Game) {
                 as ::core::ffi::c_int,
             game,
         ))
-        .pbg_var_F = ((0xb38890i32) as u16) & (0xffffu16);
+        .pbg_var_F = ((0xb38890i32) as u16);
     }
 }
 pub unsafe fn BrinstarPipeBug_PreInstr_2(k: uint16, game: &mut Game) {
@@ -276,7 +276,7 @@ pub unsafe fn BrinstarPipeBug_PreInstr_2(k: uint16, game: &mut Game) {
                 .wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)),
         ) < 0x40u16
         {
-            (*PipeBug).pbg_var_F = ((0xb388e3i32) as u16) & (0xffffu16);
+            (*PipeBug).pbg_var_F = ((0xb388e3i32) as u16);
             (*PipeBug).base.properties = ((*PipeBug).base.properties as ::core::ffi::c_int
                 & !(kEnemyProps_Invisible as ::core::ffi::c_int))
                 as uint16;
@@ -306,7 +306,7 @@ pub unsafe fn BrinstarPipeBug_PreInstr_3(k: uint16, game: &mut Game) {
     {
         (*PipeBug).pbg_var_E = ((*PipeBug).pbg_var_E) | (1u16);
         BrinstarPipeBug_Func_1(game);
-        (*PipeBug).pbg_var_F = ((0xb3891ci32) as u16) & (0xffffu16);
+        (*PipeBug).pbg_var_F = ((0xb3891ci32) as u16);
     }
 }
 pub unsafe fn BrinstarPipeBug_PreInstr_4(k: uint16, game: &mut Game) {
@@ -329,7 +329,7 @@ pub unsafe fn BrinstarPipeBug_PreInstr_4(k: uint16, game: &mut Game) {
         (*PipeBug).base.properties =
             ((*PipeBug).base.properties) | ((kEnemyProps_Invisible) as u16);
         (*PipeBug).pbg_var_D = 48 as uint16;
-        (*PipeBug).pbg_var_F = ((0xb3897ei32) as u16) & (0xffffu16);
+        (*PipeBug).pbg_var_F = ((0xb3897ei32) as u16);
     }
 }
 pub unsafe fn BrinstarPipeBug_PreInstr_5(k: uint16, game: &mut Game) {
@@ -337,7 +337,7 @@ pub unsafe fn BrinstarPipeBug_PreInstr_5(k: uint16, game: &mut Game) {
     let fresh8 = (*E).pbg_var_D;
     (*E).pbg_var_D = (*E).pbg_var_D.wrapping_sub(1);
     if fresh8 == 1u16 {
-        (*E).pbg_var_F = ((0xb38890i32) as u16) & (0xffffu16);
+        (*E).pbg_var_F = ((0xb38890i32) as u16);
     }
 }
 pub unsafe fn BrinstarPipeBug_Func_1(game: &mut Game) {
@@ -378,7 +378,7 @@ pub unsafe fn NorfairPipeBug_Init(game: &mut Game) {
     (*PipeBug).base.instruction_timer = 1 as uint16;
     (*PipeBug).base.timer = 0 as uint16;
     (*PipeBug).base.current_instruction = addr_kNorfairPipeBug_Ilist_8AE1 as uint16;
-    (*PipeBug).pbg_var_A = ((0xb38bcdi32) as u16) & (0xffffu16);
+    (*PipeBug).pbg_var_A = ((0xb38bcdi32) as u16);
 }
 pub unsafe fn CallBugInstr(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
@@ -462,7 +462,7 @@ pub unsafe fn NorfairPipeBug_8BA8(game: &mut Game) {
         );
         (*PipeBug).base.properties =
             ((*PipeBug).base.properties) | ((kEnemyProps_Invisible) as u16);
-        (*PipeBug).pbg_var_A = ((0xb38bcdi32) as u16) & (0xffffu16);
+        (*PipeBug).pbg_var_A = ((0xb38bcdi32) as u16);
         (*PipeBug).base.x_pos = (*PipeBug).pbg_var_D;
         (*PipeBug).base.y_pos = (*PipeBug).pbg_var_E;
     }
@@ -513,7 +513,7 @@ pub unsafe fn NorfairPipeBug_Func_1(game: &mut Game) {
                 as ::core::ffi::c_int,
             game,
         ))
-        .pbg_var_A = ((0xb38bffi32) as u16) & (0xffffu16);
+        .pbg_var_A = ((0xb38bffi32) as u16);
     }
 }
 pub unsafe fn NorfairPipeBug_Func_2(game: &mut Game) {
@@ -572,15 +572,15 @@ pub unsafe fn NorfairPipeBug_Func_2(game: &mut Game) {
     }
 }
 pub unsafe fn NorfairPipeBug_Func_3(k: uint16, game: &mut Game) {
-    (*Get_PipeBug(k as ::core::ffi::c_int, game)).pbg_var_A = ((0xb38ca6i32) as u16) & (0xffffu16);
+    (*Get_PipeBug(k as ::core::ffi::c_int, game)).pbg_var_A = ((0xb38ca6i32) as u16);
     (*Get_PipeBug(k as ::core::ffi::c_int + 64 as ::core::ffi::c_int, game)).pbg_var_A =
-        ((0xb38ca6i32) as u16) & (0xffffu16);
+        ((0xb38ca6i32) as u16);
     (*Get_PipeBug(k as ::core::ffi::c_int + 128 as ::core::ffi::c_int, game)).pbg_var_A =
-        ((0xb38ca6i32) as u16) & (0xffffu16);
+        ((0xb38ca6i32) as u16);
     (*Get_PipeBug(k as ::core::ffi::c_int + 192 as ::core::ffi::c_int, game)).pbg_var_A =
-        ((0xb38ca6i32) as u16) & (0xffffu16);
+        ((0xb38ca6i32) as u16);
     (*Get_PipeBug(k as ::core::ffi::c_int + 256 as ::core::ffi::c_int, game)).pbg_var_A =
-        ((0xb38ca6i32) as u16) & (0xffffu16);
+        ((0xb38ca6i32) as u16);
     (*Get_PipeBug(k as ::core::ffi::c_int, game)).pbg_var_02 = 104 as uint16;
     (*Get_PipeBug(k as ::core::ffi::c_int + 64 as ::core::ffi::c_int, game)).pbg_var_02 =
         96 as uint16;
@@ -590,15 +590,15 @@ pub unsafe fn NorfairPipeBug_Func_3(k: uint16, game: &mut Game) {
         112 as uint16;
     (*Get_PipeBug(k as ::core::ffi::c_int + 256 as ::core::ffi::c_int, game)).pbg_var_02 =
         120 as uint16;
-    (*Get_PipeBug(k as ::core::ffi::c_int, game)).pbg_var_F = ((0xb38cffi32) as u16) & (0xffffu16);
+    (*Get_PipeBug(k as ::core::ffi::c_int, game)).pbg_var_F = ((0xb38cffi32) as u16);
     (*Get_PipeBug(k as ::core::ffi::c_int + 64 as ::core::ffi::c_int, game)).pbg_var_F =
-        ((0xb38d0ci32) as u16) & (0xffffu16);
+        ((0xb38d0ci32) as u16);
     (*Get_PipeBug(k as ::core::ffi::c_int + 128 as ::core::ffi::c_int, game)).pbg_var_F =
-        ((0xb38d4ei32) as u16) & (0xffffu16);
+        ((0xb38d4ei32) as u16);
     (*Get_PipeBug(k as ::core::ffi::c_int + 192 as ::core::ffi::c_int, game)).pbg_var_F =
-        ((0xb38d90i32) as u16) & (0xffffu16);
+        ((0xb38d90i32) as u16);
     (*Get_PipeBug(k as ::core::ffi::c_int + 256 as ::core::ffi::c_int, game)).pbg_var_F =
-        ((0xb38dd2i32) as u16) & (0xffffu16);
+        ((0xb38dd2i32) as u16);
 }
 pub unsafe fn NorfairPipeBug_Func_4(game: &mut Game) {
     let E: *mut Enemy_PipeBug = Get_PipeBug(
@@ -644,7 +644,7 @@ pub unsafe fn NorfairPipeBug_Func_5(k: uint16, game: &mut Game) {
         game,
     );
     (*E).pbg_var_C = (*E).pbg_var_C.wrapping_add(1);
-    (*E).pbg_var_A = ((0xb38e5ai32) as u16) & (0xffffu16);
+    (*E).pbg_var_A = ((0xb38e5ai32) as u16);
 }
 pub unsafe fn NorfairPipeBug_Func_6(game: &mut Game) {
     let E: *mut Enemy_PipeBug = Get_PipeBug(
@@ -668,7 +668,7 @@ pub unsafe fn NorfairPipeBug_Func_6(game: &mut Game) {
     {
         (*E).base.y_pos = ((*E).pbg_var_01).wrapping_sub(16u16);
         (*E).base.y_subpos = 0 as uint16;
-        (*E).pbg_var_A = ((0xb38e5ai32) as u16) & (0xffffu16);
+        (*E).pbg_var_A = ((0xb38e5ai32) as u16);
     }
 }
 pub unsafe fn NorfairPipeBug_Func_7(game: &mut Game) {
@@ -693,7 +693,7 @@ pub unsafe fn NorfairPipeBug_Func_7(game: &mut Game) {
     {
         (*E).base.y_pos = ((*E).pbg_var_01).wrapping_sub(32u16);
         (*E).base.y_subpos = 0 as uint16;
-        (*E).pbg_var_A = ((0xb38e5ai32) as u16) & (0xffffu16);
+        (*E).pbg_var_A = ((0xb38e5ai32) as u16);
     }
 }
 pub unsafe fn NorfairPipeBug_Func_8(game: &mut Game) {
@@ -719,7 +719,7 @@ pub unsafe fn NorfairPipeBug_Func_8(game: &mut Game) {
     {
         (*E).base.y_pos = ((*E).pbg_var_01).wrapping_add(16u16);
         (*E).base.y_subpos = 0 as uint16;
-        (*E).pbg_var_A = ((0xb38e5ai32) as u16) & (0xffffu16);
+        (*E).pbg_var_A = ((0xb38e5ai32) as u16);
     }
 }
 pub unsafe fn NorfairPipeBug_Func_9(game: &mut Game) {
@@ -745,7 +745,7 @@ pub unsafe fn NorfairPipeBug_Func_9(game: &mut Game) {
     {
         (*E).base.y_pos = ((*E).pbg_var_01).wrapping_add(32u16);
         (*E).base.y_subpos = 0 as uint16;
-        (*E).pbg_var_A = ((0xb38e5ai32) as u16) & (0xffffu16);
+        (*E).pbg_var_A = ((0xb38e5ai32) as u16);
     }
 }
 pub unsafe fn NorfairPipeBug_Func_10(game: &mut Game) {
@@ -793,7 +793,7 @@ pub unsafe fn NorfairPipeBug_Func_12(game: &mut Game) {
         (*E).pbg_var_C = 0 as uint16;
         (*E).base.instruction_timer = 1 as uint16;
         (*E).base.timer = 0 as uint16;
-        (*E).pbg_var_A = ((0xb38e14i32) as u16) & (0xffffu16);
+        (*E).pbg_var_A = ((0xb38e14i32) as u16);
         (*E).base.current_instruction = addr_kNorfairPipeBug_Ilist_8B05 as uint16;
         if (GetSamusEnemyDelta_X(
             *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
@@ -802,7 +802,7 @@ pub unsafe fn NorfairPipeBug_Func_12(game: &mut Game) {
             & 0x8000 as ::core::ffi::c_int)
             == 0i32
         {
-            (*E).pbg_var_A = ((0xb38e35i32) as u16) & (0xffffu16);
+            (*E).pbg_var_A = ((0xb38e35i32) as u16);
             (*E).base.current_instruction = addr_kNorfairPipeBug_Ilist_8B45 as uint16;
         }
     }
@@ -837,7 +837,7 @@ pub unsafe fn BrinstarYellowPipeBug_Init(game: &mut Game) {
     (*E).pbg_var_02 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa28187)) as *const uint8
         as *mut uint16)
         .offset((v1 + 3 as ::core::ffi::c_int) as isize);
-    (*E).pbg_var_A = ((0xb38fb5i32) as u16) & (0xffffu16);
+    (*E).pbg_var_A = ((0xb38fb5i32) as u16);
     (*E).pbg_var_06 = 0 as uint16;
 }
 pub unsafe fn BrinstarYellowPipeBug_Main(game: &mut Game) {
@@ -899,7 +899,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_1(game: &mut Game) {
                     & !(kEnemyProps_Invisible as ::core::ffi::c_int))
                     as uint16;
                 (*E).pbg_var_20 = 24 as uint16;
-                (*E).pbg_var_A = ((0xb38ff5i32) as u16) & (0xffffu16);
+                (*E).pbg_var_A = ((0xb38ff5i32) as u16);
             }
         }
         _ => {}
@@ -913,10 +913,10 @@ pub unsafe fn BrinstarYellowPipeBug_Func_2(k: uint16, game: &mut Game) {
         (*E).base.instruction_timer = 1 as uint16;
         (*E).base.timer = 0 as uint16;
         (*E).base.current_instruction = addr_kBrinstarYellowPipeBug_Ilist_8EFC as uint16;
-        (*E).pbg_var_A = ((0xb39028i32) as u16) & (0xffffu16);
+        (*E).pbg_var_A = ((0xb39028i32) as u16);
         if (*E).pbg_parameter_1 == 0 {
             (*E).base.current_instruction = addr_kBrinstarYellowPipeBug_Ilist_8F24 as uint16;
-            (*E).pbg_var_A = ((0xb390bdi32) as u16) & (0xffffu16);
+            (*E).pbg_var_A = ((0xb390bdi32) as u16);
         }
     }
 }
@@ -934,7 +934,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_3(game: &mut Game) {
         (*E).base.y_pos = (*E).pbg_var_08;
         (*E).base.x_subpos = 0 as uint16;
         (*E).base.y_subpos = 0 as uint16;
-        (*E).pbg_var_A = ((0xb38fb5i32) as u16) & (0xffffu16);
+        (*E).pbg_var_A = ((0xb38fb5i32) as u16);
         (*E).pbg_var_06 = 0 as uint16;
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
     } else if (*E).pbg_var_06 == 0 {
@@ -945,7 +945,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_3(game: &mut Game) {
             & 0x8000 as ::core::ffi::c_int
             != 0
         {
-            (*E).pbg_var_A = ((0xb3915ai32) as u16) & (0xffffu16);
+            (*E).pbg_var_A = ((0xb3915ai32) as u16);
             (*E).pbg_var_C = 0 as uint16;
             (*E).pbg_var_D = 0 as uint16;
             (*E).pbg_var_E = 40 as uint16;
@@ -979,7 +979,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_5(game: &mut Game) {
         (*E).base.y_pos = (*E).pbg_var_08;
         (*E).base.x_subpos = 0 as uint16;
         (*E).base.y_subpos = 0 as uint16;
-        (*E).pbg_var_A = ((0xb38fb5i32) as u16) & (0xffffu16);
+        (*E).pbg_var_A = ((0xb38fb5i32) as u16);
         (*E).pbg_var_06 = 0 as uint16;
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
     } else if (*E).pbg_var_06 == 0 {
@@ -989,7 +989,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_5(game: &mut Game) {
             & 0x8000 as ::core::ffi::c_int
             != 0
         {
-            (*E).pbg_var_A = ((0xb391d8i32) as u16) & (0xffffu16);
+            (*E).pbg_var_A = ((0xb391d8i32) as u16);
             (*E).pbg_var_C = 0 as uint16;
             (*E).pbg_var_D = 0 as uint16;
             (*E).pbg_var_E = 40 as uint16;
@@ -1019,7 +1019,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_7(game: &mut Game) {
         (*E).base.y_pos = (*E).pbg_var_08;
         (*E).base.x_subpos = 0 as uint16;
         (*E).base.y_subpos = 0 as uint16;
-        (*E).pbg_var_A = ((0xb38fb5i32) as u16) & (0xffffu16);
+        (*E).pbg_var_A = ((0xb38fb5i32) as u16);
         (*E).pbg_var_06 = 0 as uint16;
         (*E).base.instruction_timer = 1 as uint16;
         (*E).base.timer = 0 as uint16;
@@ -1043,7 +1043,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_7(game: &mut Game) {
             if (((*E).base.y_pos) as i16).wrapping_sub(((*E).pbg_var_08) as i16) < 0i16 {
                 (*E).pbg_var_06 = 1 as uint16;
                 (*E).pbg_var_F = 1 as uint16;
-                (*E).pbg_var_A = ((0xb39028i32) as u16) & (0xffffu16);
+                (*E).pbg_var_A = ((0xb39028i32) as u16);
                 (*E).base.instruction_timer = 1 as uint16;
                 (*E).base.timer = 0 as uint16;
                 (*E).base.current_instruction = addr_kBrinstarYellowPipeBug_Ilist_8EFC as uint16;
@@ -1061,7 +1061,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_8(game: &mut Game) {
         (*E).base.y_pos = (*E).pbg_var_08;
         (*E).base.x_subpos = 0 as uint16;
         (*E).base.y_subpos = 0 as uint16;
-        (*E).pbg_var_A = ((0xb38fb5i32) as u16) & (0xffffu16);
+        (*E).pbg_var_A = ((0xb38fb5i32) as u16);
         (*E).pbg_var_06 = 0 as uint16;
         (*E).base.instruction_timer = 1 as uint16;
         (*E).base.timer = 0 as uint16;
@@ -1088,7 +1088,7 @@ pub unsafe fn BrinstarYellowPipeBug_Func_8(game: &mut Game) {
                 (*E).base.instruction_timer = 1 as uint16;
                 (*E).base.timer = 0 as uint16;
                 (*E).base.current_instruction = addr_kBrinstarYellowPipeBug_Ilist_8F24 as uint16;
-                (*E).pbg_var_A = ((0xb390bdi32) as u16) & (0xffffu16);
+                (*E).pbg_var_A = ((0xb390bdi32) as u16);
             }
         }
     };
@@ -1283,9 +1283,9 @@ pub unsafe fn Botwoon_Init(game: &mut Game) {
         }
         (*E).base.current_instruction = addr_kBotwoon_Ilist_9389 as uint16;
         (*E).botwoon_var_3B = addr_kBotwoon_Ilist_9389 as uint16;
-        (*E).botwoon_var_D = ((0xb39878i32) as u16) & (0xffffu16);
-        (*E).botwoon_var_E = ((0xb39bb7i32) as u16) & (0xffffu16);
-        (*E).botwoon_var_F = ((0xb39dc0i32) as u16) & (0xffffu16);
+        (*E).botwoon_var_D = ((0xb39878i32) as u16);
+        (*E).botwoon_var_E = ((0xb39bb7i32) as u16);
+        (*E).botwoon_var_F = ((0xb39dc0i32) as u16);
         (*E).botwoon_var_20 = 256 as uint16;
         (*E).botwoon_var_38 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xb394bb))
             as *const uint8 as *mut uint16)
@@ -1399,7 +1399,7 @@ pub unsafe fn Botwoon_Func_2(game: &mut Game) {
         && (*E).botwoon_var_33 == 0
         && (*E).botwoon_var_21 == 0
     {
-        (*E).botwoon_var_F = ((0xb39e7di32) as u16) & (0xffffu16);
+        (*E).botwoon_var_F = ((0xb39e7di32) as u16);
         (*E).botwoon_var_21 = 24 as uint16;
     }
     (*E).botwoon_var_2E = 0 as uint16;
@@ -1412,7 +1412,7 @@ pub unsafe fn Botwoon_Func_3(game: &mut Game) {
     if (*E).botwoon_var_2F != 0 {
         if (*E).botwoon_var_3E != 0 {
             (*E).botwoon_var_30 = 1 as uint16;
-            (*E).botwoon_var_D = ((0xb39a46i32) as u16) & (0xffffu16);
+            (*E).botwoon_var_D = ((0xb39a46i32) as u16);
             (*E).botwoon_var_22 = 240 as uint16;
             (*E).botwoon_var_2F = 0 as uint16;
             (*E).botwoon_var_3E = 0 as uint16;
@@ -1478,7 +1478,7 @@ pub unsafe fn Botwoon_Func_6(game: &mut Game) {
     let v1: uint16 = ((*E).botwoon_var_20).wrapping_sub(1u16);
     (*E).botwoon_var_20 = v1;
     if v1 == 0 {
-        (*E).botwoon_var_D = ((0xb3989di32) as u16) & (0xffffu16);
+        (*E).botwoon_var_D = ((0xb3989di32) as u16);
     }
 }
 pub unsafe fn Botwoon_Func_7(game: &mut Game) {
@@ -1519,10 +1519,10 @@ pub unsafe fn Botwoon_Func_8(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    (*E).botwoon_var_D = ((0xb399a4i32) as u16) & (0xffffu16);
-    (*E).botwoon_var_E = ((0xb3e250i32) as u16) & (0xffffu16);
+    (*E).botwoon_var_D = ((0xb399a4i32) as u16);
+    (*E).botwoon_var_E = ((0xb3e250i32) as u16);
     (*E).botwoon_var_21 = 0 as uint16;
-    (*E).botwoon_var_F = ((0xb39dc0i32) as u16) & (0xffffu16);
+    (*E).botwoon_var_F = ((0xb39dc0i32) as u16);
     (*E).botwoon_var_4B = 0 as uint16;
     Botwoon_Func_10(
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
@@ -1534,8 +1534,8 @@ pub unsafe fn Botwoon_Func_9(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    (*E).botwoon_var_D = ((0xb399e4i32) as u16) & (0xffffu16);
-    (*E).botwoon_var_F = ((0xb39e7di32) as u16) & (0xffffu16);
+    (*E).botwoon_var_D = ((0xb399e4i32) as u16);
+    (*E).botwoon_var_F = ((0xb39e7di32) as u16);
     (*E).botwoon_var_21 = 48 as uint16;
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         & !(kEnemyProps_Tangible as ::core::ffi::c_int)) as uint16;
@@ -1584,8 +1584,8 @@ pub unsafe fn Botwoon_Func_12(game: &mut Game) {
     );
     if (*E).botwoon_var_3C != 0 {
         (*E).botwoon_var_3C = 0 as uint16;
-        (*E).botwoon_var_D = ((0xb3989di32) as u16) & (0xffffu16);
-        (*E).botwoon_var_E = ((0xb39bb7i32) as u16) & (0xffffu16);
+        (*E).botwoon_var_D = ((0xb3989di32) as u16);
+        (*E).botwoon_var_E = ((0xb39bb7i32) as u16);
         if (*E).botwoon_var_33 != 0 {
             (*E).botwoon_var_35 = 0 as uint16;
         }
@@ -1609,9 +1609,9 @@ pub unsafe fn Botwoon_Func_13(game: &mut Game) {
         CallEnemyPreInstr((((*E).botwoon_var_F) as u32) | (0xb30000u32), game);
     } else {
         (*E).botwoon_var_3C = 0 as uint16;
-        (*E).botwoon_var_D = ((0xb399a4i32) as u16) & (0xffffu16);
-        (*E).botwoon_var_E = ((0xb3e250i32) as u16) & (0xffffu16);
-        (*E).botwoon_var_F = ((0xb39dc0i32) as u16) & (0xffffu16);
+        (*E).botwoon_var_D = ((0xb399a4i32) as u16);
+        (*E).botwoon_var_E = ((0xb3e250i32) as u16);
+        (*E).botwoon_var_F = ((0xb39dc0i32) as u16);
         if (*E).botwoon_var_2F != 0u16 || {
             v3 = (NextRandom(game)) & (1u16);
             (*E).botwoon_var_33 = v3;
@@ -1637,7 +1637,7 @@ pub unsafe fn Botwoon_Func_14(game: &mut Game) {
     let v1: uint16 = ((*E).botwoon_var_22).wrapping_add(1u16);
     (*E).botwoon_var_22 = v1;
     if v1 as ::core::ffi::c_int - 256 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 {
-        (*E).botwoon_var_D = ((0xb39a5ei32) as u16) & (0xffffu16);
+        (*E).botwoon_var_D = ((0xb39a5ei32) as u16);
     }
 }
 pub unsafe fn Botwoon_Func_15(game: &mut Game) {
@@ -1669,7 +1669,7 @@ pub unsafe fn Botwoon_Func_15(game: &mut Game) {
         (*E).botwoon_var_28 = ((*E).botwoon_var_28).wrapping_add(192u16);
     } else {
         (*E).base.y_pos = 200 as uint16;
-        (*E).botwoon_var_D = ((0xb39acai32) as u16) & (0xffffu16);
+        (*E).botwoon_var_D = ((0xb39acai32) as u16);
         game.eproj_spawn_pt = Point16U {
             x: (*E).base.x_pos,
             y: (*E).base.y_pos,
@@ -1689,7 +1689,7 @@ pub unsafe fn Botwoon_Func_16(game: &mut Game) {
         game,
     );
     if (*E).botwoon_var_5F != 0 {
-        (*E).botwoon_var_D = ((0xb39af9i32) as u16) & (0xffffu16);
+        (*E).botwoon_var_D = ((0xb39af9i32) as u16);
         Botwoon_Func_17(
             *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16),
             game,
@@ -2026,9 +2026,9 @@ pub unsafe fn Botwoon_Func_27(k: uint16, game: &mut Game) {
     (*E).base.instruction_timer = 1 as uint16;
     (*E).base.timer = 0 as uint16;
     (*E).botwoon_var_3D = ((64u8).wrapping_sub(((*E).botwoon_var_3D) as u8)) as uint16;
-    (*E).botwoon_var_F = ((0xb39ee0i32) as u16) & (0xffffu16);
+    (*E).botwoon_var_F = ((0xb39ee0i32) as u16);
     if (*E).botwoon_var_D != 0x99e4u16 {
-        (*E).botwoon_var_F = ((0xb39f34i32) as u16) & (0xffffu16);
+        (*E).botwoon_var_F = ((0xb39f34i32) as u16);
     }
     CallEnemyPreInstr((((*E).botwoon_var_F) as u32) | (0xb30000u32), game);
 }
@@ -2057,7 +2057,7 @@ pub unsafe fn Botwoon_Func_28(k: uint16, game: &mut Game) {
             }
         }
         (*E).botwoon_var_5A = 0 as uint16;
-        (*E).botwoon_var_F = ((0xb39f7ai32) as u16) & (0xffffu16);
+        (*E).botwoon_var_F = ((0xb39f7ai32) as u16);
     }
 }
 pub unsafe fn Botwoon_Func_29(k: uint16, game: &mut Game) {
@@ -2087,7 +2087,7 @@ pub unsafe fn Botwoon_Func_29(k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
-    .botwoon_var_F = ((0xb39f7ai32) as u16) & (0xffffu16);
+    .botwoon_var_F = ((0xb39f7ai32) as u16);
 }
 pub unsafe fn Botwoon_Func_30(k: uint16, game: &mut Game) {
     let E: *mut Enemy_Botwoon = Get_Botwoon(k as ::core::ffi::c_int, game);
@@ -2095,7 +2095,7 @@ pub unsafe fn Botwoon_Func_30(k: uint16, game: &mut Game) {
     (*E).botwoon_var_21 = v2 as uint16;
     if v2 < 0i16 {
         (*E).botwoon_var_21 = 0 as uint16;
-        (*E).botwoon_var_F = ((0xb39dc0i32) as u16) & (0xffffu16);
+        (*E).botwoon_var_F = ((0xb39dc0i32) as u16);
     }
 }
 pub unsafe fn Botwoon_Func_31(k: uint16, game: &mut Game) {

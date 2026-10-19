@@ -471,7 +471,7 @@ pub unsafe fn CancelGrappleBeamIfIncompatiblePose(game: &mut Game) {
                 if *((&raw mut game.g_ram as *mut uint8).offset(0xcf6) as *mut uint16) != 0 {
                     QueueSfx1_Max6(7 as uint16, game);
                     *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-                        ((0x9bc51ei32) as u16) & (0xffffu16);
+                        ((0x9bc51ei32) as u16);
                     return;
                 }
             }
@@ -483,7 +483,7 @@ pub unsafe fn CancelGrappleBeamIfIncompatiblePose(game: &mut Game) {
         != 0x9bc4f0 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-            ((0x9bc856i32) as u16) & (0xffffu16);
+            ((0x9bc856i32) as u16);
     }
 }
 pub unsafe fn CheckIfGrappleIsConnectedToBlock(game: &mut Game) -> uint8 {
@@ -574,7 +574,7 @@ pub unsafe fn HandleConnectingGrapple(game: &mut Game) {
         == kMovementType_1A_GrabbedByDraygon as ::core::ffi::c_int
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-            ((0x9bc77ei32) as u16) & (0xffffu16);
+            ((0x9bc77ei32) as u16);
         *((&raw mut game.g_ram as *mut uint8).offset(0xd00) as *mut uint16) = 0 as uint16;
     } else {
         let v1: ::core::ffi::c_int = 2 as ::core::ffi::c_int
@@ -1550,7 +1550,7 @@ pub unsafe fn GrappleBeamFunc_FireGoToCancel(game: &mut Game) {
         .direction_shots_fired as ::core::ffi::c_int;
         if (v0 & 0xf0 as ::core::ffi::c_int) != 0i32 {
             *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-                ((0x9bc856i32) as u16) & (0xffffu16);
+                ((0x9bc856i32) as u16);
             return;
         }
     }
@@ -1691,14 +1691,12 @@ pub unsafe fn GrappleBeamFunc_FireGoToCancel(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xd36) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xcf8) as *mut uint16) = 0 as uint16;
     GrappleFunc_AF87(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa5c) as *mut uint16) =
-        ((0x90eb86i32) as u16) & (0xffffu16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xa5c) as *mut uint16) = ((0x90eb86i32) as u16);
     *((&raw mut game.g_ram as *mut uint8).offset(0xa9e) as *mut uint16) = 0 as uint16;
     LoadProjectilePalette(2 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(223) =
         32657 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-        ((0x9bc703i32) as u16) & (0xffffu16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) = ((0x9bc703i32) as u16);
     QueueSfx1_Max1(5 as uint16, game);
     *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 1 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xdc0) as *mut uint16) = 0 as uint16;
@@ -1706,7 +1704,7 @@ pub unsafe fn GrappleBeamFunc_FireGoToCancel(game: &mut Game) {
         == 0x90946e as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) =
-            ((0x90a337i32) as u16) & (0xffffu16);
+            ((0x90a337i32) as u16);
     }
 }
 pub unsafe fn CheckBannedDraygonGrappleDirs(a: uint16, game: &mut Game) -> uint16 {
@@ -1762,7 +1760,7 @@ pub unsafe fn GrappleBeamFunc_Firing(game: &mut Game) {
         == 0i32
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-            ((0x9bc856i32) as u16) & (0xffffu16);
+            ((0x9bc856i32) as u16);
         return;
     }
     let ref mut fresh16 = *((&raw mut game.g_ram as *mut uint8).offset(0xcfe) as *mut uint16);
@@ -1774,7 +1772,7 @@ pub unsafe fn GrappleBeamFunc_Firing(game: &mut Game) {
         == 0
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-            ((0x9bc856i32) as u16) & (0xffffu16);
+            ((0x9bc856i32) as u16);
         return;
     }
     let pair: PairU16 = GrappleBeam_CollDetect_Enemy(game);
@@ -1782,7 +1780,7 @@ pub unsafe fn GrappleBeamFunc_Firing(game: &mut Game) {
     if v1 >= 0i32 {
         if v1 != 0 {
             *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-                ((0x9bc856i32) as u16) & (0xffffu16);
+                ((0x9bc856i32) as u16);
             return;
         }
     } else {
@@ -1792,7 +1790,7 @@ pub unsafe fn GrappleBeamFunc_Firing(game: &mut Game) {
         }
         if (v2 as ::core::ffi::c_int & 0x40 as ::core::ffi::c_int) == 0i32 {
             *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-                ((0x9bc856i32) as u16) & (0xffffu16);
+                ((0x9bc856i32) as u16);
             return;
         }
     }
@@ -1812,7 +1810,7 @@ pub unsafe fn GrappleBeamFunc_ConnectedLockedInPlace(game: &mut Game) {
             || CheckIfGrappleIsConnectedToBlock(game) != 0u8))
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-            ((0x9bc856i32) as u16) & (0xffffu16);
+            ((0x9bc856i32) as u16);
     }
 }
 pub unsafe fn GrappleBeamFunc_Connected_Swinging(game: &mut Game) {
@@ -1865,12 +1863,12 @@ pub unsafe fn GrappleBeamFunc_Connected_Swinging(game: &mut Game) {
     {
         PropelSamusFromGrappleSwing(game);
         *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-            ((0x9bcb8bi32) as u16) & (0xffffu16);
+            ((0x9bcb8bi32) as u16);
         *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) =
-            ((0x90946ei32) as u16) & (0xffffu16);
+            ((0x90946ei32) as u16);
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-            ((0x9bc8c5i32) as u16) & (0xffffu16);
+            ((0x9bc8c5i32) as u16);
     };
 }
 pub unsafe fn GrappleBeamFunc_Wallgrab(game: &mut Game) {
@@ -1883,7 +1881,7 @@ pub unsafe fn GrappleBeamFunc_Wallgrab(game: &mut Game) {
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0xa9e) as *mut uint16) = 30 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-            ((0x9bc832i32) as u16) & (0xffffu16);
+            ((0x9bc832i32) as u16);
     }
 }
 pub unsafe fn GrappleBeamFunc_C832(game: &mut Game) {
@@ -1893,11 +1891,11 @@ pub unsafe fn GrappleBeamFunc_C832(game: &mut Game) {
         if Samus_GrappleWallJumpCheck((16 as int16 as int32) << 16 as ::core::ffi::c_int, game) != 0
         {
             *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-                ((0x9bc9cei32) as u16) & (0xffffu16);
+                ((0x9bc9cei32) as u16);
         }
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-            ((0x9bc8c5i32) as u16) & (0xffffu16);
+            ((0x9bc8c5i32) as u16);
     };
 }
 pub unsafe fn GrappleBeamFunc_Cancel(game: &mut Game) {
@@ -1928,10 +1926,8 @@ pub unsafe fn GrappleBeamFunc_Cancel(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x9a6) as *mut uint16),
         game,
     );
-    *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-        ((0x9bc4f0i32) as u16) & (0xffffu16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa5c) as *mut uint16) =
-        ((0x90eb52i32) as u16) & (0xffffu16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) = ((0x9bc4f0i32) as u16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xa5c) as *mut uint16) = ((0x90eb52i32) as u16);
     Samus_PostGrappleCollisionDetect(game);
     if *((&raw mut game.g_ram as *mut uint8).offset(0xa04) as *mut uint16) != 0 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x9d2) as *mut uint16) = 0 as uint16;
@@ -2066,10 +2062,8 @@ pub unsafe fn GrappleBeam_Func2(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x9a6) as *mut uint16),
         game,
     );
-    *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-        ((0x9bc4f0i32) as u16) & (0xffffu16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa5c) as *mut uint16) =
-        ((0x90eb52i32) as u16) & (0xffffu16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) = ((0x9bc4f0i32) as u16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xa5c) as *mut uint16) = ((0x90eb52i32) as u16);
     Samus_PostGrappleCollisionDetect(game);
     if *((&raw mut game.g_ram as *mut uint8).offset(0xa04) as *mut uint16) != 0 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x9d2) as *mut uint16) = 0 as uint16;
@@ -2116,10 +2110,8 @@ pub unsafe fn GrappleBeamFunc_C9CE(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x9a6) as *mut uint16),
         game,
     );
-    *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-        ((0x9bc4f0i32) as u16) & (0xffffu16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa5c) as *mut uint16) =
-        ((0x90eb52i32) as u16) & (0xffffu16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) = ((0x9bc4f0i32) as u16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xa5c) as *mut uint16) = ((0x90eb52i32) as u16);
     Samus_PostGrappleCollisionDetect(game);
     if *((&raw mut game.g_ram as *mut uint8).offset(0xa04) as *mut uint16) != 0 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x9d2) as *mut uint16) = 0 as uint16;
@@ -2234,10 +2226,8 @@ pub unsafe fn GrappleBeamFunc_ReleaseFromSwing(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x9a6) as *mut uint16),
         game,
     );
-    *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-        ((0x9bc4f0i32) as u16) & (0xffffu16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xa5c) as *mut uint16) =
-        ((0x90eb52i32) as u16) & (0xffffu16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) = ((0x9bc4f0i32) as u16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xa5c) as *mut uint16) = ((0x90eb52i32) as u16);
     Samus_PostGrappleCollisionDetect(game);
     if *((&raw mut game.g_ram as *mut uint8).offset(0xa04) as *mut uint16) != 0 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x9d2) as *mut uint16) = 0 as uint16;

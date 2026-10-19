@@ -283,7 +283,7 @@ pub unsafe fn Draygon_Init(game: &mut Game) {
     *(&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x178c) as *mut LongPtr)).bank
         as *mut uint16) = 165 as uint16;
     (*((&raw mut game.g_ram as *mut uint8).offset(0x178c) as *mut LongPtr)).addr =
-        ((0xa59342i32) as u16) & (0xffffu16);
+        ((0xa59342i32) as u16);
     *((&raw mut game.g_ram as *mut uint8).offset(0x183c) as *mut uint16) =
         -(1 as ::core::ffi::c_int) as uint16;
     (*Get_Draygon(0 as ::core::ffi::c_int, game))
@@ -303,7 +303,7 @@ pub unsafe fn Draygon_Init(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     ))
-    .draygon_var_A = ((0xa5871bi32) as u16) & (0xffffu16);
+    .draygon_var_A = ((0xa5871bi32) as u16);
     sub_88DF34(game);
     *((&raw mut game.g_ram as *mut uint8).offset(0xa9) as *mut uint16) = 12 as uint16;
     SpawnBG3ScrollHdmaObject(game);
@@ -475,7 +475,7 @@ pub unsafe fn Draygon_Func_1(game: &mut Game) {
         }
         (*E).draygon_var_B = (*E).draygon_var_B.wrapping_add(1);
     } else {
-        (*E).draygon_var_A = ((0xa5878bi32) as u16) & (0xffffu16);
+        (*E).draygon_var_A = ((0xa5878bi32) as u16);
         (*E).draygon_var_B = 0 as uint16;
         let x_pos: uint16 = (*E).base.x_pos;
         (*E).draygon_var_00 = x_pos;
@@ -496,7 +496,7 @@ pub unsafe fn Draygon_Func_2(game: &mut Game) {
         Draygon_Func_46(game);
         (*E).draygon_var_B = (*E).draygon_var_B.wrapping_add(1);
     } else {
-        (*E).draygon_var_A = ((0xa587f4i32) as u16) & (0xffffu16);
+        (*E).draygon_var_A = ((0xa587f4i32) as u16);
         (*E).draygon_var_B = 0 as uint16;
     };
 }
@@ -532,7 +532,7 @@ pub unsafe fn Draygon_Func_4(game: &mut Game) {
     Draygon_Func_3(game);
     Draygon_Func_5(game);
     let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
-    (*E).draygon_var_A = ((0xa588b1i32) as u16) & (0xffffu16);
+    (*E).draygon_var_A = ((0xa588b1i32) as u16);
     (*E).base.current_instruction = addr_kDraygon_Ilist_97D1 as uint16;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).draygon_var_20 = 1 as uint16;
@@ -614,7 +614,7 @@ pub unsafe fn Draygon_Func_6(game: &mut Game) {
                 | (*E).draygon_var_E as uint32,
         );
     } else {
-        (*E).draygon_var_A = ((0xa58922i32) as u16) & (0xffffu16);
+        (*E).draygon_var_A = ((0xa58922i32) as u16);
     };
 }
 pub unsafe fn Draygon_Func_7(game: &mut Game) {
@@ -639,7 +639,7 @@ pub unsafe fn Draygon_Func_8(game: &mut Game) {
             << 16 as ::core::ffi::c_int) as uint32,
     );
     SetHiLo(&raw mut (*E).draygon_var_D, &raw mut (*E).draygon_var_E, t);
-    (*E).draygon_var_A = ((0xa58951i32) as u16) & (0xffffu16);
+    (*E).draygon_var_A = ((0xa58951i32) as u16);
 }
 pub unsafe fn Draygon_Func_9(game: &mut Game) {
     Draygon_Func_3(game);
@@ -665,9 +665,9 @@ pub unsafe fn Draygon_Func_9(game: &mut Game) {
             & 1 as ::core::ffi::c_int)
             != 0i32
         {
-            (*E).draygon_var_A = ((0xa589b3i32) as u16) & (0xffffu16);
+            (*E).draygon_var_A = ((0xa589b3i32) as u16);
         } else {
-            (*E).draygon_var_A = ((0xa58c8ei32) as u16) & (0xffffu16);
+            (*E).draygon_var_A = ((0xa58c8ei32) as u16);
         }
     } else {
         AddToHiLo(
@@ -692,7 +692,7 @@ pub unsafe fn Draygon_Func_10(game: &mut Game) {
             << 16 as ::core::ffi::c_int) as uint32,
     );
     SetHiLo(&raw mut (*E).draygon_var_D, &raw mut (*E).draygon_var_E, t);
-    (*E).draygon_var_A = ((0xa58a00i32) as u16) & (0xffffu16);
+    (*E).draygon_var_A = ((0xa58a00i32) as u16);
     (*E).base.current_instruction = addr_kDraygon_Ilist_97BB as uint16;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).draygon_var_20 = 0 as uint16;
@@ -724,7 +724,7 @@ pub unsafe fn Draygon_Func_11(game: &mut Game) {
                 | (*E).draygon_var_E as ::core::ffi::c_int) as uint32,
         );
     } else {
-        (*E).draygon_var_A = ((0xa58a50i32) as u16) & (0xffffu16);
+        (*E).draygon_var_A = ((0xa58a50i32) as u16);
     };
 }
 pub unsafe fn Draygon_Func_12(game: &mut Game) {
@@ -737,7 +737,7 @@ pub unsafe fn Draygon_Func_12(game: &mut Game) {
     );
     (*E).draygon_var_D = (t >> 16 as ::core::ffi::c_int) as uint16;
     (*E).draygon_var_E = t as uint16;
-    (*E).draygon_var_A = ((0xa58a90i32) as u16) & (0xffffu16);
+    (*E).draygon_var_A = ((0xa58a90i32) as u16);
 }
 pub unsafe fn Draygon_Func_13(game: &mut Game) {
     Draygon_Func_3(game);
@@ -763,12 +763,12 @@ pub unsafe fn Draygon_Func_13(game: &mut Game) {
             & 1 as ::core::ffi::c_int)
             != 0i32
         {
-            (*E).draygon_var_A = ((0xa587f4i32) as u16) & (0xffffu16);
+            (*E).draygon_var_A = ((0xa587f4i32) as u16);
             (*E).draygon_var_B = 0 as uint16;
             (*E).base.x_pos = (*E).draygon_var_00;
             (*E).base.y_pos = (*E).draygon_var_01;
         } else {
-            (*E).draygon_var_A = ((0xa58b0ai32) as u16) & (0xffffu16);
+            (*E).draygon_var_A = ((0xa58b0ai32) as u16);
             (*E).base.x_pos = (*E).draygon_var_00;
         }
     } else {
@@ -791,7 +791,7 @@ pub unsafe fn Draygon_Func_14(game: &mut Game) {
     let E3: *mut Enemy_Draygon = Get_Draygon(0xc0 as ::core::ffi::c_int, game);
     (*E3).base.current_instruction = addr_kDraygon_Ilist_9C06 as uint16;
     (*E3).base.instruction_timer = 1 as uint16;
-    (*E).draygon_var_A = ((0xa58b52i32) as u16) & (0xffffu16);
+    (*E).draygon_var_A = ((0xa58b52i32) as u16);
     (*E).base.current_instruction = addr_kDraygon_Ilist_97D1 as uint16;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).draygon_var_20 = 1 as uint16;
@@ -805,7 +805,7 @@ pub unsafe fn Draygon_Func_15(game: &mut Game) {
             .wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)),
     );
     if v2 as ::core::ffi::c_int - 208 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
-        (*E).draygon_var_A = ((0xa58baei32) as u16) & (0xffffu16);
+        (*E).draygon_var_A = ((0xa58baei32) as u16);
         (*E).draygon_var_03 = 16 as uint16;
     } else {
         (*E).base.y_pos =
@@ -873,7 +873,7 @@ pub unsafe fn Draygon_Func_16(game: &mut Game) {
                     let E3: *mut Enemy_Draygon = Get_Draygon(0xc0 as ::core::ffi::c_int, game);
                     (*E3).base.current_instruction = addr_kDraygon_Ilist_9BDA as uint16;
                     (*E3).base.instruction_timer = 1 as uint16;
-                    (*E).draygon_var_A = ((0xa58c33i32) as u16) & (0xffffu16);
+                    (*E).draygon_var_A = ((0xa58c33i32) as u16);
                     return;
                 }
                 current_block = 1399980599923904196;
@@ -882,7 +882,7 @@ pub unsafe fn Draygon_Func_16(game: &mut Game) {
     }
     match current_block {
         1399980599923904196 => {
-            (*E).draygon_var_A = ((0xa58e19i32) as u16) & (0xffffu16);
+            (*E).draygon_var_A = ((0xa58e19i32) as u16);
         }
         _ => {}
     };
@@ -903,7 +903,7 @@ pub unsafe fn Draygon_Func_17(k: uint16, game: &mut Game) {
             & 0x8000 as ::core::ffi::c_int
             == 0
     {
-        (*E).draygon_var_A = ((0xa589b3i32) as u16) & (0xffffu16);
+        (*E).draygon_var_A = ((0xa589b3i32) as u16);
         (*E).base.x_pos = 592 as uint16;
         (*E).base.y_pos = -(80 as ::core::ffi::c_int) as uint16;
         (*E).draygon_var_B = (*E).draygon_var_C;
@@ -919,7 +919,7 @@ pub unsafe fn Draygon_Func_18(game: &mut Game) {
     let E3: *mut Enemy_Draygon = Get_Draygon(0xc0 as ::core::ffi::c_int, game);
     (*E3).base.current_instruction = addr_kDraygon_Ilist_9C06 as uint16;
     (*E3).base.instruction_timer = 1 as uint16;
-    (*E).draygon_var_A = ((0xa58cd4i32) as u16) & (0xffffu16);
+    (*E).draygon_var_A = ((0xa58cd4i32) as u16);
     (*E).base.current_instruction = addr_kDraygon_Ilist_97BB as uint16;
     (*E).base.instruction_timer = 1 as uint16;
     (*E).draygon_var_20 = 0 as uint16;
@@ -933,7 +933,7 @@ pub unsafe fn Draygon_Func_19(game: &mut Game) {
             .wrapping_sub(*((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16)),
     );
     if v2 as ::core::ffi::c_int - 208 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
-        (*E).draygon_var_A = ((0xa58d30i32) as u16) & (0xffffu16);
+        (*E).draygon_var_A = ((0xa58d30i32) as u16);
         (*E).draygon_var_03 = 16 as uint16;
     } else {
         (*E).base.y_pos =
@@ -1001,7 +1001,7 @@ pub unsafe fn Draygon_Func_20(game: &mut Game) {
                     (*E3).base.current_instruction = addr_kDraygon_Ilist_97E7 as uint16;
                     (*E3).base.instruction_timer = 1 as uint16;
                     (*Get_Draygon(0 as ::core::ffi::c_int, game)).draygon_var_A =
-                        ((0xa58db2i32) as u16) & (0xffffu16);
+                        ((0xa58db2i32) as u16);
                     return;
                 }
                 current_block = 11384386367536015713;
@@ -1010,8 +1010,7 @@ pub unsafe fn Draygon_Func_20(game: &mut Game) {
     }
     match current_block {
         11384386367536015713 => {
-            (*Get_Draygon(0 as ::core::ffi::c_int, game)).draygon_var_A =
-                ((0xa58e19i32) as u16) & (0xffffu16);
+            (*Get_Draygon(0 as ::core::ffi::c_int, game)).draygon_var_A = ((0xa58e19i32) as u16);
         }
         _ => {}
     };
@@ -1020,7 +1019,7 @@ pub unsafe fn Draygon_Func_21(k: uint16, game: &mut Game) {
     let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
     Draygon_Func_35(game);
     if *((&raw mut game.g_ram as *mut uint8).offset(0xa66) as *mut uint16) != 0 {
-        (*E).draygon_var_A = ((0xa58e19i32) as u16) & (0xffffu16);
+        (*E).draygon_var_A = ((0xa58e19i32) as u16);
     } else {
         (*E).base.y_pos =
             (CosineMult8bit((*E).draygon_var_0D, 32 as uint16, game)).wrapping_add(384u16);
@@ -1036,7 +1035,7 @@ pub unsafe fn Draygon_Func_21(k: uint16, game: &mut Game) {
                 & 0x8000 as ::core::ffi::c_int
                 != 0
         {
-            (*E).draygon_var_A = ((0xa587f4i32) as u16) & (0xffffu16);
+            (*E).draygon_var_A = ((0xa587f4i32) as u16);
             (*E).base.x_pos = -(80 as ::core::ffi::c_int) as uint16;
             (*E).base.y_pos = -(80 as ::core::ffi::c_int) as uint16;
             (*E).draygon_var_B = (*E).draygon_var_C;
@@ -1076,7 +1075,7 @@ pub unsafe fn Draygon_Func_22(game: &mut Game) {
             (*E3).base.current_instruction = v5;
             (*E3).base.instruction_timer = 1 as uint16;
             if CallSomeSamusCode(0xd as uint16, game) != 0 {
-                (*E).draygon_var_A = ((0xa58f10i32) as u16) & (0xffffu16);
+                (*E).draygon_var_A = ((0xa58f10i32) as u16);
             } else {
                 Samus_SetGrabbedByDraygonPose(((*E).draygon_var_20 != 0u16) as uint16, game);
                 (*E).draygon_var_06 = 256 as uint16;
@@ -1085,7 +1084,7 @@ pub unsafe fn Draygon_Func_22(game: &mut Game) {
                 (*E).draygon_var_09 = 0 as uint16;
                 (*E).draygon_var_08 = 192 as uint16;
                 (*E).draygon_var_0B = 2048 as uint16;
-                (*E).draygon_var_A = ((0xa58f1ei32) as u16) & (0xffffu16);
+                (*E).draygon_var_A = ((0xa58f1ei32) as u16);
             }
         } else {
             let varE20: uint16 = ((64u8).wrapping_sub(
@@ -1101,14 +1100,12 @@ pub unsafe fn Draygon_Func_22(game: &mut Game) {
             EnemyFunc_B691(varE20, pt, game);
         }
     } else {
-        (*E).draygon_var_A = ((0xa59154i32) as u16) & (0xffffu16);
+        (*E).draygon_var_A = ((0xa59154i32) as u16);
     };
 }
 pub unsafe fn Draygon_Func_23(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-        ((0x9bc8c5i32) as u16) & (0xffffu16);
-    (*Get_Draygon(0 as ::core::ffi::c_int, game)).draygon_var_A =
-        ((0xa59128i32) as u16) & (0xffffu16);
+    *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) = ((0x9bc8c5i32) as u16);
+    (*Get_Draygon(0 as ::core::ffi::c_int, game)).draygon_var_A = ((0xa59128i32) as u16);
 }
 pub unsafe fn Draygon_Func_24(k: uint16, game: &mut Game) {
     let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
@@ -1130,7 +1127,7 @@ pub unsafe fn Draygon_Func_24(k: uint16, game: &mut Game) {
                     != 0
             }
         {
-            (*E).draygon_var_A = ((0xa58fd6i32) as u16) & (0xffffu16);
+            (*E).draygon_var_A = ((0xa58fd6i32) as u16);
             let mut v6: uint16 = addr_kDraygon_Ilist_9922 as uint16;
             if (*E).draygon_var_20 != 0 {
                 v6 = addr_kDraygon_Ilist_9CB4 as uint16;
@@ -1221,13 +1218,13 @@ pub unsafe fn Draygon_Func_25(k: uint16, game: &mut Game) {
                     != 0
             }
         {
-            (*E).draygon_var_A = ((0xa59105i32) as u16) & (0xffffu16);
+            (*E).draygon_var_A = ((0xa59105i32) as u16);
         } else {
             Draygon_Func_40(k, game);
         }
     } else {
         (*E).draygon_var_0C = 64 as uint16;
-        (*E).draygon_var_A = ((0xa590d4i32) as u16) & (0xffffu16);
+        (*E).draygon_var_A = ((0xa590d4i32) as u16);
     };
 }
 pub unsafe fn Draygon_Func_26(k: uint16, game: &mut Game) {
@@ -1248,7 +1245,7 @@ pub unsafe fn Draygon_Func_26(k: uint16, game: &mut Game) {
             (*E2).base.instruction_timer = 1 as uint16;
         }
     } else {
-        (*E).draygon_var_A = ((0xa58fd6i32) as u16) & (0xffffu16);
+        (*E).draygon_var_A = ((0xa58fd6i32) as u16);
     };
 }
 pub unsafe fn Draygon_Func_27(k: uint16, game: &mut Game) {
@@ -1260,8 +1257,7 @@ pub unsafe fn Draygon_Func_27(k: uint16, game: &mut Game) {
     let E: *mut Enemy_Draygon = Get_Draygon(0x80 as ::core::ffi::c_int, game);
     (*E).base.current_instruction = v1;
     (*E).base.instruction_timer = 1 as uint16;
-    (*Get_Draygon(0 as ::core::ffi::c_int, game)).draygon_var_A =
-        ((0xa59124i32) as u16) & (0xffffu16);
+    (*Get_Draygon(0 as ::core::ffi::c_int, game)).draygon_var_A = ((0xa59124i32) as u16);
 }
 pub unsafe fn Draygon_Func_28(k: uint16, game: &mut Game) {
     Draygon_Func_40(k, game);
@@ -1270,7 +1266,7 @@ pub unsafe fn Draygon_Func_29(game: &mut Game) {
     Samus_ReleaseFromDraygon_(game);
     *((&raw mut game.g_ram as *mut uint8).offset(0xa64) as *mut uint16) = 0 as uint16;
     let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
-    (*E).draygon_var_A = ((0xa59154i32) as u16) & (0xffffu16);
+    (*E).draygon_var_A = ((0xa59154i32) as u16);
     (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
         & !(kEnemyProps_Tangible as ::core::ffi::c_int)) as uint16;
     let mut v1: uint16 = addr_kDraygon_Ilist_9B5A as uint16;
@@ -1291,7 +1287,7 @@ pub unsafe fn Draygon_Func_30(game: &mut Game) {
         (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
             & !(kEnemyProps_Tangible as ::core::ffi::c_int))
             as uint16;
-        (*E).draygon_var_A = ((0xa587f4i32) as u16) & (0xffffu16);
+        (*E).draygon_var_A = ((0xa587f4i32) as u16);
         (*E).draygon_var_B = 0 as uint16;
         (*E).base.x_pos = (*E).draygon_var_00;
         (*E).base.y_pos = (*E).draygon_var_01;
@@ -1342,7 +1338,7 @@ pub unsafe fn Draygon_Func_31(game: &mut Game) {
         let v4: uint16 = Abs16(((*E).base.y_pos).wrapping_sub(480u16));
         if v4 as ::core::ffi::c_int - 4 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
             Draygon_Func_43(game);
-            (*E).draygon_var_A = ((0xa59294i32) as u16) & (0xffffu16);
+            (*E).draygon_var_A = ((0xa59294i32) as u16);
             QueueMusic_Delayed8(3 as uint16, game);
             (*E).draygon_var_B = 416 as uint16;
             (*E).base.current_instruction = addr_kDraygon_Ilist_97B9 as uint16;
@@ -1361,7 +1357,7 @@ pub unsafe fn Draygon_Func_31(game: &mut Game) {
             let E1: *mut Enemy_Draygon = Get_Draygon(0x40 as ::core::ffi::c_int, game);
             (*E1).base.current_instruction = v6;
             (*E1).base.instruction_timer = 1 as uint16;
-            (*E1).draygon_var_A = ((0xa5804bi32) as u16) & (0xffffu16);
+            (*E1).draygon_var_A = ((0xa5804bi32) as u16);
         }
     }
 }
@@ -1372,7 +1368,7 @@ pub unsafe fn Draygon_Func_32(game: &mut Game) {
     if (*E).draygon_var_B != 0 {
         Draygon_Func_42(0 as uint16, game);
     } else {
-        (*E).draygon_var_A = ((0xa592abi32) as u16) & (0xffffu16);
+        (*E).draygon_var_A = ((0xa592abi32) as u16);
     };
 }
 pub unsafe fn Draygon_Func_33(game: &mut Game) {
@@ -1622,7 +1618,7 @@ pub unsafe fn Draygon_Func_40(k: uint16, game: &mut Game) {
         != 0i32
     {
         *((&raw mut game.g_ram as *mut uint8).offset(0xa64) as *mut uint16) = 0 as uint16;
-        (*E).draygon_var_A = ((0xa59154i32) as u16) & (0xffffu16);
+        (*E).draygon_var_A = ((0xa59154i32) as u16);
     }
 }
 pub unsafe fn Draygon_Instr_1(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
@@ -1759,7 +1755,7 @@ pub unsafe fn sub_A5960D(game: &mut Game) {
         Draygon_Func_41(game);
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-            ((0x9bc8c5i32) as u16) & (0xffffu16);
+            ((0x9bc8c5i32) as u16);
         let mut v0: uint16 = addr_kDraygon_Ilist_9867 as uint16;
         let E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
         if (*E).draygon_var_20 != 0 {
@@ -1774,8 +1770,8 @@ pub unsafe fn sub_A5960D(game: &mut Game) {
         let E1: *mut Enemy_Draygon = Get_Draygon(0x40 as ::core::ffi::c_int, game);
         (*E1).base.current_instruction = v3;
         (*E1).base.instruction_timer = 1 as uint16;
-        (*E1).draygon_var_A = ((0xa5804bi32) as u16) & (0xffffu16);
-        (*E).draygon_var_A = ((0xa59185i32) as u16) & (0xffffu16);
+        (*E1).draygon_var_A = ((0xa5804bi32) as u16);
+        (*E).draygon_var_A = ((0xa59185i32) as u16);
         Samus_ReleaseFromDraygon_(game);
         *((&raw mut game.g_ram as *mut uint8).offset(0xa64) as *mut uint16) = 0 as uint16;
         (*E).draygon_var_43 = ((64u8).wrapping_sub(
@@ -2164,7 +2160,7 @@ pub unsafe fn DraygonsEye_Init(game: &mut Game) {
         game,
     );
     (*E).base.current_instruction = addr_kDraygon_Ilist_9944 as uint16;
-    (*E).draygon_var_A = ((0xa5804bi32) as u16) & (0xffffu16);
+    (*E).draygon_var_A = ((0xa5804bi32) as u16);
 }
 pub unsafe fn Draygon_Instr_3(k: uint16, jp: *const uint16, game: &mut Game) -> *const uint16 {
     (*Get_Draygon(0x40 as ::core::ffi::c_int, game)).draygon_var_A = *jp.offset(0);
@@ -2547,7 +2543,7 @@ pub unsafe fn SporeSpawn_Init(game: &mut Game) {
         != 0i32
     {
         (*E0).base.current_instruction = addr_kDraygon_Ilist_E6B9 as uint16;
-        (*E0).ssn_var_A = ((0xa5eb1ai32) as u16) & (0xffffu16);
+        (*E0).ssn_var_A = ((0xa5eb1ai32) as u16);
         (*E0).base.properties = ((*E0).base.properties) | (0x8000u16);
         SporeSpawn_Func_5(game);
         SpawnHardcodedPlm(
@@ -2564,9 +2560,9 @@ pub unsafe fn SporeSpawn_Init(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0x183c) as *mut uint16) =
             -(1 as ::core::ffi::c_int) as uint16;
         let v5: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16);
-        (*E).ssn_var_A = ((0xa5eb1ai32) as u16) & (0xffffu16);
+        (*E).ssn_var_A = ((0xa5eb1ai32) as u16);
         *((&raw mut game.g_ram as *mut uint8).offset(0x7e9) as *mut uint16) =
-            ((0x909589i32) as u16) & (0xffffu16);
+            ((0x909589i32) as u16);
         (*E).base.y_pos = ((*E).base.y_pos).wrapping_sub(128u16);
         SpawnEprojWithGfx(0 as uint16, v5, addr_kEproj_SporeSpawners as uint16, game);
         SpawnEprojWithGfx(1 as uint16, v5, addr_kEproj_SporeSpawners as uint16, game);
@@ -2680,7 +2676,7 @@ pub unsafe fn SporeSpawn_Func_4(game: &mut Game) {
     if v2 as ::core::ffi::c_int - 8 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         let v3: uint16 = Abs16(((*E0).base.y_pos).wrapping_sub(624u16));
         if v3 as ::core::ffi::c_int - 8 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
-            (*E0).ssn_var_A = ((0xa5eb1ai32) as u16) & (0xffffu16);
+            (*E0).ssn_var_A = ((0xa5eb1ai32) as u16);
         }
     }
     SporeSpawn_Func_5(game);
@@ -2788,7 +2784,7 @@ pub unsafe fn SporeSpawn_Shot(game: &mut Game) {
         let EK: *mut Enemy_SporeSpawn = Get_SporeSpawn(v0 as ::core::ffi::c_int, game);
         if (*EK).base.flash_timer != 0 {
             let E: *mut Enemy_SporeSpawn = Get_SporeSpawn(0 as ::core::ffi::c_int, game);
-            (*EK).ssn_var_A = ((0xa5eb52i32) as u16) & (0xffffu16);
+            (*EK).ssn_var_A = ((0xa5eb52i32) as u16);
             v4 = 2 as int16;
             if (*EK).base.health as ::core::ffi::c_int - 400 as ::core::ffi::c_int
                 & 0x8000 as ::core::ffi::c_int

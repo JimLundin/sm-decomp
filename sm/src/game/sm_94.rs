@@ -3628,7 +3628,7 @@ pub unsafe fn BlockFunc_AEE3(game: &mut Game) -> uint8 {
         *fresh22 = (*fresh22).wrapping_add(1);
         if *fresh22 == 32u16 {
             *((&raw mut game.g_ram as *mut uint8).offset(0xd32) as *mut uint16) =
-                ((0x9bc8c5i32) as u16) & (0xffffu16);
+                ((0x9bc8c5i32) as u16);
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0xd26) as *mut uint16) = 0 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0xd2e) as *mut uint16) = 0 as uint16;

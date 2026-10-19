@@ -627,8 +627,7 @@ pub unsafe fn MotherBrain_SealWall(game: &mut Game) {
         },
         game,
     );
-    (*Get_MotherBrain(0 as ::core::ffi::c_int, game)).mbn_var_A =
-        ((0xa9881di32) as u16) & (0xffffu16);
+    (*Get_MotherBrain(0 as ::core::ffi::c_int, game)).mbn_var_A = ((0xa9881di32) as u16);
 }
 pub unsafe fn MotherBrain_HealthBasedPaletteHandling(game: &mut Game) {
     if (*Get_MotherBrain(0 as ::core::ffi::c_int, game)).mbn_var_1F >= 2u16 {
