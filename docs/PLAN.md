@@ -30,8 +30,9 @@ The inspected workspace has about 256,000 Rust lines, 83,800 lines containing
 only about 8%, 7% and 3% have disappeared. There is no verified original-C
 line count here, so these are residue measurements, not a language size ratio.
 The 14,944-line enemy-projectile bank (`sm_86.rs`) alone contains 2,130 raw
-RAM-offset lines. One exact word-access pattern appears 1,892 times: 1,502
-indexed accesses, 348 scalar reads, 27 scalar writes and 15 borrowed places.
+RAM-offset lines. The fixed ff702456 survey finds 1,892 occurrences of one
+word-access pattern: 1,502 indexed accesses, 352 scalar reads, 27 scalar writes
+and 11 borrowed places.
 Those forms need different treatment; a blanket cast deletion is unsuitable.
 
 Next implementation work:
@@ -42,7 +43,9 @@ Next implementation work:
    and little-endian storage explicit; do not expose overlapping `&mut u16`
    references or grow Game by hand-writing thousands of independent getters.
    Start with scalar reads, then indexed slot fields and updates. Preserve
-   each read's position relative to callbacks and writes. Record actual
+   each read's position relative to callbacks and writes. Check callee-derived
+   raw pointers as well as explicit references before adding a shared borrow;
+   first restore the five unproved crossings recorded below. Record actual
    routine/branch hits and leave unexercised gameplay rewrites pending.
 2. Once values have known widths, remove promotion chains in coherent
    arithmetic patterns. Specify signed comparisons, carry/borrow and the
@@ -14770,6 +14773,65 @@ calls -78, actual c_int casts -47 and cast-containing lines -50. Unsafe
 functions fall by two; ABI/no_mangle counts are unchanged. Other sessions'
 changes stay separate. Remaining positions, scalar reads, updates, arithmetic,
 broader gameplay/credits, hardware/audio/masks and ownership remain open.
+
+Enemy-projectile spawn parameter reads (2026-10-19): extend the private
+EprojState interface with the little-endian word at $1993/$1994, named
+init_param_1. Its cinematic_var8 alias remains the same RAM bytes. Replace
+15 exercised scalar reads in 12 routines, retaining each expression's casts,
+repeated reads and placement relative to writes and callbacks.
+
+A fixed ff702456 scalar survey records 68 selected reads at six sites in
+any% and 162 reads at nine sites in Hi-Jump. These are actual expression hits,
+not routine-entry estimates. That discovery passes all 129712 / 99191
+frames; native exits 2 intentionally report unhit required probes among all
+352 surveyed reads. Independent source expansion maps the selected reads
+exactly to the final substitutions. Per-routine counts and input ranges:
+
+| Routine (read sites) | Any% reads / inputs | Hi-Jump reads / inputs |
+| --- | --- | --- |
+| `EprojInit_9642_RidleysFireball` (1) | 24 / 36745..89500 | 0 |
+| `EprojInit_9660_FireballExplosion` (1) | 6 / 36784..89522 | 0 |
+| `EprojInit_9688` (1) | 6 / 70720..70836 | 0 |
+| `EprojInit_9696` (1) | 7 / 70720..70847 | 0 |
+| `EprojInit_966C` (1) | 16 / 36789..89543 | 0 |
+| `EprojInit_967A` (1) | 9 / 36789..89537 | 0 |
+| `EprojInit_9734_CeresFallingDebris` (1) | 0 | 19 / 18119..18281 |
+| `EprojInit_BombTorizoStatueBreaking` (2) | 0 | 16 / 49897..50020 |
+| `EprojInit_BombTorizoLowHealthExplode` (1) | 0 | 12 / 51016..51375 |
+| `sub_86D992` (3) | 0 | 45 / 84850..91686 |
+| `EprojInit_DustCloudOrExplosion` (1) | 0 | 21 / 18189..18423 |
+| `EprojInit_EnemyDeathExplosion` (1) | 0 | 49 / 35462..91739 |
+
+Of 67 original init_param_1 scalar loads, 52 remain unchanged: 51 lack
+execution in these two routes, and the exercised ExplosiveSwipe read remains
+raw because a returned EnemyData pointer is used across the proposed whole-
+RAM shared borrow. Two independent reviews could not establish that pointer's
+provenance survives; this is not a reproduced gameplay failure. Excluding
+that one site leaves the other 15 without an identified pointer crossing.
+The temporary 16-site replay was terminated and has no accepted result.
+
+Frozen b57b966e plus only this source passes clean full-boot any%
+129712/0 (225.03s including startup) and Hi-Jump 99191/0 (194.00s), both
+native exits 0, from one unchanged DLL. Complete non-timing stdout/stderr
+match the reviewed discovery routes after removing explicit probe reports.
+All 70 frozen source/config/host files, library, DLL, ROM and copied inputs
+retain their hashes. Independent source and final raw-result audits pass.
+The final revised source-to-result interval is 375.04s under shared load.
+
+Formatting/check, normal Cargo release (56.33s), verifier link (3.78s) and
+progress pass. The link reuses the identical Cargo library. Including the
+shared getter, own Rust lines fall by 25, raw offsets and unsafe word reads
+by 15, actual c_int casts by 15 and cast-containing lines by 18. Unsafe
+functions, ABI and no_mangle counts are unchanged. No probes or diagnostics
+enter maintained source. Peer work retains separate checks.
+
+Next: restore five new broad-getter crossings of callee-derived raw RAM
+pointers from the previous named-read pass: three in BombTorizoLowHealthInitialDrool
+and two in EnemyDeathExplosion. These are unproved provenance changes, not
+reproduced UB. Drool's earlier NextRandom crossing also needs a later alias
+review. Then continue exercised indexed updates and explicit-width arithmetic.
+Full gameplay/credits,
+hardware/audio/masks and ownership remain unfinished.
 
 ## Definition of done for any change
 
