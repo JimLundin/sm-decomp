@@ -2119,24 +2119,34 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `2e7706c5` shares all 96 hardcoded
-PLM argument initializers on the previously reviewed `31c295a6` source.
-Independent complete-source reconstruction accounts for all twelve files:
-288 in-range literal operands retain their values, casts and order; the new
-const constructor assigns them directly. Fields now name block_x, block_y
-and header. All three renamed reads retain their original access order;
-field types, order and repr(C) layout remain unchanged.
+Latest reviewed integration (2026-10-20): `8da1b9c9` replaces 51007 resolved
+type uses across 54 files, removing 25 aliases and 732 imports. Independent
+complete-source reconstruction, alias-chain and macro-context review pass;
+all RAM metadata and diagnostic/comment text remain exact. Normal formatting
+accounts for the remaining source changes; runtime casts are unchanged.
 
-All 70 committed Rust/Cargo inputs match the final candidate; its 67 Rust
-files match the replay copy and all 72 source/DLL/fixture pins remain stable
-after completion. Normal registry-only release (35.41s), formatting/check,
-source review and progress pass. Full any% 129712/0 (105.04s), native exit 0,
-covers the final composition with the integer-name and robot work included.
-Completed checks were reused; this literal-construction change needs no new
-runtime comparison harness. Net Rust lines -374, total 154694; casts and
-unsafe-function counts are unchanged. Independent review has no findings.
-Prior scoped checks retain their limits. Broader readability, frontend
-execution, full credits and global alias safety remain incomplete.
+Its parent `5c1947d4` shares 882 named RAM word updates. Independent review
+reconstructs every replacement, including 117 fresh post-store rereads.
+The macro captures the destination and old word before evaluating the RHS,
+preserves signed offsets and drops RHS temporaries before rereading.
+The actual macro matches the passing 175 boundary cases and order/drop,
+hygiene, chained-store and caller-exit checks; both wrong-order controls fail.
+
+Included `2481f16f` shares 48 HDMA descriptors on the reviewed PLM source.
+Independent reconstruction of all six files retains all 144 literal operands,
+field types/order and the packed four-byte layout. The final composition
+reconstructs from the reviewed update candidate and these HDMA changes.
+
+All 73 committed source/configuration inputs match the final candidate;
+all 78 source/DLL/fixture pins remain stable after completion. Normal
+registry-only release (23.99s), formatting/check and progress pass. The two
+focused update/alias commits share one full any% run: 129712/0 (112.70s wall,
+112.54s replay), native exit 0. Completed checks were reused. Net Rust lines
+-483 for updates and -3415 for aliases, total 150662. Alias raw-offset lines
+rise 4095 to 4096 only through formatting; actual expressions stay 4096.
+Independent review has no findings. Prior scoped checks retain their limits.
+Broader readability, frontend execution, full credits and global alias safety
+remain incomplete.
 
 The prior `2ddf3af0` shares all twelve corpse
 tile initializers. Independent reconstruction accounts for all 50 ordered
