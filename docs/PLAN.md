@@ -2158,32 +2158,33 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `371465e2` shares 225 adjacent
-register/mirror write pairs. Independent complete-source reconstruction
-accounts for all six changed files and all 67 composed Rust files. Every
-register, byte value and explicit mirror offset remains exact, including
-offsets that differ from the usual register mirror. All literal values and
-indices fit their types and the actual 131072-byte RAM allocation.
+Latest reviewed integration (2026-10-20): `a15b86f9` replaces 29178 integer
+literal casts with typed literals across 51 files. Independent complete-source
+reconstruction verifies every value, radix, target type and AST span. All
+selected values are unsuffixed, nonnegative and in range; negative expressions,
+pre-suffixed literals and platform-width targets remain outside this batch.
+The 4900 macro occurrences are confined to reviewed RAM expression macros;
+metadata, diagnostic strings and comments remain exact.
 
-The helper preserves 52 mirror-first and 173 bus-first sequences. Its source
-and all 225 parameter rows match the existing mutating-mock-bus comparison:
-115200 full-RAM/trace cases cover all prior byte values and both mutation
-modes. No extra comparison run was needed. This does not establish global
-alias safety or replace the final gameplay replay.
+Its parent `c91b404c` simplifies 352 high-half index expressions in 27 files:
+325 u16/u8, 18 i16/u8 and 9 u32/u16 size ratios each yield exactly 1isize.
+All original expressions and composed source files reconstruct independently;
+the three compiled constant comparisons pass. The 23 macro occurrences retain
+their expression context. The final literal selection preserves the same
+ordered edits after this composition; source review has no findings.
 
-All 70 committed Rust/Cargo inputs match the final candidate; its 67 Rust
-files match the replay copy and all 72 source/library/DLL/fixture pins remain
-stable after completion. Normal registry-only release (24.54s), formatting,
-source/order review and progress pass. Final any% passes 129712/0 (112.31s),
-native exit 0, on the composition with reviewed `8da1b9c9` aliases,
-`5c1947d4` RAM updates and `2481f16f` HDMA descriptors. Their earlier checks
-retain their scope; the preliminary register-pair replay was not substituted.
+All 73 input files in each focused commit match the corresponding reviewed
+snapshot, and all 78 final source/DLL/fixture pins remain stable. The commits
+share one normal registry-only release (28.47s) and full any% run: 129712/0
+(112.65s wall, 112.49s replay), native exit 0. Formatting and progress pass;
+completed checks were reused without another runtime comparison harness.
+The composition includes the previously reviewed register/mirror, RAM-update,
+native-alias and HDMA work, whose scoped checks retain their limits.
 
-Net Rust lines -208, casts -675 and raw-offset lines -225; total Rust 150454.
-Unsafe functions increase by one for the shared helper; existing bus writes
-remain unsafe. The i32/c_int cast-line count stays 19759. Independent review
-has no findings. Broader readability, frontend execution, full credits and
-global alias safety remain incomplete.
+Net Rust lines -1436 for indices and -1497 for literals, total 147521.
+The literal batch removes exactly 29178 cast tokens; raw-access expressions
+stay 3871 and unsafe functions stay 6451. Broader readability, frontend
+execution, full credits and global alias safety remain incomplete.
 
 The prior `2ddf3af0` shares all twelve corpse
 tile initializers. Independent reconstruction accounts for all 50 ordered
