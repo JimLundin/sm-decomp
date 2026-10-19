@@ -13094,6 +13094,27 @@ The peer Super Missile route/cleanup has separate verification; previous
 unresolved coverage holds and complete credits,
 gameplay, hardware/audio, masks and ownership remain open.
 
+PLM item-graphics queue (2026-10-19): PlmInstr_LoadItemPlmGfx now
+writes its packed VRAM entry through byte-backed RAM. Captured tail and
+second live tail read precede size256; source operand read follows the size
+store, then source word, bank89 and destination word retain their order.
+The captured tail advances by7 with16-bit wrapping after the entry writes.
+Entry offsets0/2/4/5 retain the SNES seven-byte layout, including odd/high
+tails and potential queue/tail/operand overlaps.
+
+Frozen 8b40c5ac plus only this change passes any%129712/0
+(284.02s), native exit0, and pickup route68606/0
+(187.37s), native exit0. Observed pickup route68606/0
+(192.70s) executes 3 actual queue writes. Maintained
+source has no observers. All65536 queue offsets and tail steps pass
+separately; this adds no movie coverage or arbitrary-alias proof. Cargo
+fmt/check and release build pass. Own raw offsets-5, cast lines-11, Rust
+lines-9; other own counters unchanged. Frozen replays exclude peer source,
+which remains preserved. Next: loader tile-word writes, retaining captured
+ROM results and sequential operand-byte reads. PLM decrement and Chozo
+coverage holds and complete credits/gameplay/hardware/audio/masks/ownership
+remain open; the peer Super Missile route/cleanup retains separate evidence.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

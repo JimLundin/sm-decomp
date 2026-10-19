@@ -1689,20 +1689,15 @@ pub unsafe fn PlmInstr_LoadItemPlmGfx(
     let instruction = plmp.offset_from(RomBankBase(0x84, game)) as u16;
     let pointer_offset = 0x1c2f + usize::from(gfx_index >> 1) * 2; // plm_item_gfx_ptrs
     game.g_ram[pointer_offset..pointer_offset + 2].copy_from_slice(&instruction.to_le_bytes());
-    let mut v4: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x330 as ::core::ffi::c_int as isize)
-        as *mut uint16) as ::core::ffi::c_int;
-    let mut v5: *mut VramWriteEntry = gVramWriteEntry(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-            as *mut uint16) as ::core::ffi::c_int,
-        game,
-    );
-    (*v5).size = 256 as uint16;
-    (*v5).src.addr = *(plmp as *mut uint16) as VoidP;
-    (*v5).src.bank = 0x89 as uint8;
-    (*v5).vram_dst = vram_destination;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
-        as *mut uint16) = (v4 + 7 as ::core::ffi::c_int) as uint16;
+    let queue_tail = u16::from_le_bytes([game.g_ram[0x330], game.g_ram[0x331]]);
+    let entry_tail = u16::from_le_bytes([game.g_ram[0x330], game.g_ram[0x331]]);
+    let entry = 0xd0 + usize::from(entry_tail); // vram_write_queue
+    game.g_ram[entry..entry + 2].copy_from_slice(&256u16.to_le_bytes());
+    let source = (plmp as *const u16).read_unaligned();
+    game.g_ram[entry + 2..entry + 4].copy_from_slice(&source.to_le_bytes());
+    game.g_ram[entry + 4] = 0x89;
+    game.g_ram[entry + 5..entry + 7].copy_from_slice(&vram_destination.to_le_bytes());
+    game.g_ram[0x330..0x332].copy_from_slice(&queue_tail.wrapping_add(7).to_le_bytes());
     plmp = plmp.offset(2 as ::core::ffi::c_int as isize);
     let mut v7: ::core::ffi::c_int = tile_offset;
     let mut R24: ::core::ffi::c_int = tile_offset + 16 as ::core::ffi::c_int;
