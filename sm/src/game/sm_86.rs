@@ -759,6 +759,15 @@ impl EprojState<'_> {
     fn instruction(&self, word_index: usize) -> u16 {
         self.slot_word(0x1b47, word_index)
     }
+    fn properties(&self, word_index: usize) -> u16 {
+        self.slot_word(0x1bd7, word_index)
+    }
+    fn spritemap(&self, word_index: usize) -> u16 {
+        self.slot_word(0x1b6b, word_index)
+    }
+    fn gfx_low(&self, word_index: usize) -> u8 {
+        self.0[0x19bb + word_index * 2]
+    }
     fn x_radius(&self, word_index: usize) -> u8 {
         self.0[0x1bb3 + word_index * 2]
     }
@@ -1346,54 +1355,27 @@ pub unsafe fn EprojInstr_QueueSfx3_Max1(
     QueueSfx3_Max1(*epjp as uint16, game);
     return epjp.offset(1);
 }
-pub unsafe fn DrawLowPriorityEprojs(game: &mut Game) {
-    let mut pt: Point16U = GetValuesForScreenShaking(game);
-    let mut i: ::core::ffi::c_int = 34 as ::core::ffi::c_int;
-    while i >= 0 as ::core::ffi::c_int {
-        let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(v1 as isize)
-            != 0
-        {
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16)
-                .offset(v1 as isize) as ::core::ffi::c_int
-                & 0x1000 as ::core::ffi::c_int
-                != 0 as ::core::ffi::c_int
-            {
-                DrawEprojs(i as uint16, pt, game);
-            }
-        }
-        i -= 2 as ::core::ffi::c_int;
-    }
+pub enum EprojPriority {
+    Low,
+    High,
 }
-pub unsafe fn DrawHighPriorityEprojs(game: &mut Game) {
-    let mut pt: Point16U = GetValuesForScreenShaking(game);
-    let mut i: ::core::ffi::c_int = 34 as ::core::ffi::c_int;
-    while i >= 0 as ::core::ffi::c_int {
-        let mut v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x1997) as *mut uint16).offset(v1 as isize)
-            != 0
+
+pub unsafe fn DrawEprojsWithPriority(priority: EprojPriority, game: &mut Game) {
+    let pt = GetValuesForScreenShaking(game);
+    let low_priority = matches!(priority, EprojPriority::Low);
+    for slot in (0..18).rev() {
+        if EprojState(&game.g_ram).id(slot) != 0
+            && (EprojState(&game.g_ram).properties(slot) & 0x1000 != 0) == low_priority
         {
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16)
-                .offset(v1 as isize) as ::core::ffi::c_int
-                & 0x1000 as ::core::ffi::c_int
-                == 0 as ::core::ffi::c_int
-            {
-                DrawEprojs(i as uint16, pt, game);
-            }
+            DrawEprojs((slot * 2) as u16, pt, game);
         }
-        i -= 2 as ::core::ffi::c_int;
     }
 }
 pub unsafe fn DrawEprojs(mut k: uint16, mut pt: Point16U, game: &mut Game) {
-    let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut v2: uint16 =
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1b6b) as *mut uint16).offset(v1 as isize);
-    let mut r26: uint16 = *(((&raw mut game.g_ram as *mut uint8).offset(0x19bb) as *mut uint16)
-        .offset(v1 as isize) as *mut uint16 as *mut uint8)
-        .offset(0) as uint16;
-    let mut R28: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x19bb) as *mut uint16)
-        .offset(v1 as isize) as ::core::ffi::c_int
-        & 0xff00 as ::core::ffi::c_int) as uint16;
+    let v1 = usize::from(k >> 1);
+    let mut v2: uint16 = EprojState(&game.g_ram).spritemap(v1);
+    let mut r26: uint16 = EprojState(&game.g_ram).gfx_low(v1) as uint16;
+    let mut R28: uint16 = EprojState(&game.g_ram).slot_word(0x19bb, v1) & 0xff00;
     let mut r20: uint16 = (pt.x as ::core::ffi::c_int
         + game.enemy_projectile_x_pos(k) as ::core::ffi::c_int
         - game.layer1_x_pos() as ::core::ffi::c_int) as uint16;

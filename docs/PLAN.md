@@ -636,6 +636,66 @@ functions and raw RAM expressions are unchanged (raw-offset line delta
 | sm_a8::MorphBallEye_Func_4 / v2 (site 125) | - | 32 @ 28504..28535 |
 | sm_a8::MorphBallEye_Func_4 / v3 (site 126) | - | 31 @ 28504..28534 |
 
+Projectile drawing state and priority scan (2026-10-19): the two drawing
+passes share one descending 18-slot scan with an explicit Low/High enum.
+Both caller positions in DrawSamusEnemiesAndProjectiles remain unchanged.
+Each pass samples screen shake once, checks a live ID before its live
+priority word, then draws immediately. No RAM borrow crosses a draw call.
+The shared state view now supplies properties, spritemap and the graphics
+low byte. Drawing retains the separate low-byte then full-word graphics
+reads, masks the latter with $FF00, and preserves coordinate/clipping code.
+Odd byte indices still round down; larger u16 indices still address the
+same backing RAM. No retained raw pointer crosses a new shared read.
+
+Extracted original/candidate bodies pass 197588 complete-RAM,
+selected-slot, draw-event and screen-shake comparisons. These cover every
+property word in both priorities, callbacks mutating later slots and shake,
+every u16 byte index with varying spritemap/graphics/position values, and
+980 index/coordinate-boundary cases. They do not enumerate the Cartesian
+product. Actual-source wrong-order, wrong-priority and wrong-graphics-byte
+controls are all detected. Native build 1.00s, execution
+2.90s. Original unaligned loads are characterized under native
+x86-64 release behavior; this does not establish their Rust alignment validity.
+New field reads use the original little-endian RAM bytes.
+
+Observed full-boot Bubble Mountain passes 138749/0 (321.96s),
+native exit 0, and requires both priority passes, both selected-priority
+paths and all five field reads. Each new read matches the original value
+at its use; actual counts and frame ranges follow. Observer build
+33.85s. Removing only probes/checks recovers the exact clean candidate.
+A separate 10000/0 prefix (17.76s) of the same immutable observer
+requires the downstream onscreen drawing call: 261 calls at
+8324..8454. This adds the rendering-effect assertion omitted from
+the full survey's requested probes; offscreen runtime hits are not claimed.
+
+Frozen 44b8acc7 plus only this change passes full any% 129712/0
+(210.41s) and Bubble Mountain 138749/0
+(268.40s), native exits 0. Clean build
+31.67s. The longer fixture contains the exact Warehouse prefix;
+a separate full Warehouse replay is omitted. Source/configuration stays fixed through
+build/replay, as do DLL/library, ROM and input hashes. The known fingernail
+diagnostic remains. Concurrent changes retain separate integration checks.
+
+Formatting/check, normal release (42.11s) and progress pass. Including the
+enum and three accessors: Rust lines -18, raw RAM expressions/lines -7,
+c_int casts -18, cast-containing lines -17 and unsafe functions -1.
+Candidate preparation to final result 564.56s; maintained edit to final
+result 132.70s (the frozen builds were prepared before the maintained edit).
+No probe, control, ROM or input enters maintained source. Full gameplay
+through credits and broader hardware/audio coverage remain unfinished.
+
+| Observed operation | Calls | Input frames |
+| --- | --- | --- |
+| gfx-high | 110253 | 8324..138595 |
+| gfx-low | 110253 | 8324..138595 |
+| high | 113497 | 8324..138748 |
+| id | 4085892 | 8324..138748 |
+| low | 113497 | 8324..138748 |
+| properties | 220506 | 8324..138595 |
+| selected-high | 62577 | 18120..138595 |
+| selected-low | 47676 | 8324..136939 |
+| spritemap | 110253 | 8324..138595 |
+
 ## Validation strategy (2026-10-19)
 
 User priority: shorten the complete edit/build/result cycle. Replaying the

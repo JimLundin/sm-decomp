@@ -5,7 +5,7 @@ use crate::game::sm_81::{
     DrawSpritemapWithBaseTile, DrawSpritemapWithBaseTile2, DrawSpritemapWithBaseTileOffscreen,
 };
 use crate::game::sm_84::SpawnPLM;
-use crate::game::sm_86::{DrawHighPriorityEprojs, DrawLowPriorityEprojs, SpawnEprojWithGfx};
+use crate::game::sm_86::{DrawEprojsWithPriority, EprojPriority, SpawnEprojWithGfx};
 use crate::game::sm_90::{CallSomeSamusCode, DrawSamusAndProjectiles};
 use crate::game::sm_91::Samus_DealDamage;
 use crate::game::sm_93::DrawBombAndProjectileExplosions;
@@ -2348,13 +2348,13 @@ pub unsafe fn CallEnemyGfxDrawHook(mut ea: uint32, game: &mut Game) {
 pub unsafe fn DrawSamusEnemiesAndProjectiles(game: &mut Game) {
     DrawSpriteObjects(game);
     DrawBombAndProjectileExplosions(game);
-    DrawLowPriorityEprojs(game);
+    DrawEprojsWithPriority(EprojPriority::Low, game);
     let mut phase_varE32: uint16 = 0 as uint16;
     while phase_varE32 as ::core::ffi::c_int != 8 as ::core::ffi::c_int {
         if phase_varE32 as ::core::ffi::c_int == 3 as ::core::ffi::c_int {
             DrawSamusAndProjectiles(game);
         } else if phase_varE32 as ::core::ffi::c_int == 6 as ::core::ffi::c_int {
-            DrawHighPriorityEprojs(game);
+            DrawEprojsWithPriority(EprojPriority::High, game);
         }
         if *((&raw mut game.g_ram as *mut uint8).offset(0xf68) as *mut uint16)
             .offset(phase_varE32 as isize)
