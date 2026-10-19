@@ -1873,9 +1873,8 @@ pub unsafe fn PlmInstr_GotoIfItemBitSet(
     mut k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
-    let mut v2: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1dc7 as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+    let index = usize::from(k >> 1) * 2;
+    let v2 = u16::from_le_bytes([game.g_ram[0x1dc7 + index], game.g_ram[0x1dc8 + index]]);
     let mut idx: ::core::ffi::c_int = PrepareBitAccess(v2, game) as ::core::ffi::c_int;
     if v2 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0
         && *((&raw mut game.g_ram as *mut uint8).offset(0x5e7 as ::core::ffi::c_int as isize)

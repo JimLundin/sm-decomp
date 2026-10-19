@@ -12450,6 +12450,25 @@ files. Next: test the Bomb passage at64/288 toward the Super Missile tank
 64/96, using this newly verified missile capacity. Complete gameplay/credits,
 hardware/audio timing, remaining masked state and ownership stay open.
 
+Item-check PLM argument read (2026-10-19): PlmInstr_GotoIfItemBitSet
+reads plm_room_arguments through its byte-backed little-endian word. Keep
+k>>1 slot indexing, PrepareBitAccess ordering, high-bit gate and branch
+pointer behavior unchanged. Frozen 76ade707 plus only this change passes
+any%129712/0 (178.99s), nativeexit0, and the verified9BC8 missile
+pickup route68606/0 (113.01s), nativeexit0. Separate observed
+route68606/0 (111.40s) executes the changed read11 times.
+Maintained source contains no observation. Cargo fmt/check and release pass;
+progress own raw offsets-1, cast lines-1, Rust lines-1; peer changes excluded.
+
+Current Super Missile approach probes cross back toX66/Y441 with Bombs;
+normal jumping reaches roughlyY323, below the64/288 Bomb passage. Attempted
+wall jumps have not entered a wall-jump pose or reached the tank. No new
+room/item/credits milestone is claimed. All resumed probes retain zero
+comparison failures; they are supporting coverage, not full boot evidence.
+Next: use the actual wall-jump contact/animation gate to reach this passage,
+then verify a successful route from boot. Complete gameplay/credits,
+hardware/audio timing, remaining masked state and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
