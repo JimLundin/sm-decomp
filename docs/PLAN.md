@@ -11533,6 +11533,23 @@ and ROM-derived assets remain ignored. Next: continue normal descent through
 lower passages without reopening old9AD9 ammo or prior held items. Complete
 credits/gameplay/hardware, render/audio, masked RAM and ownership remain open.
 
+Post-map9AD9 descent reaches shootable floor (2026-10-19).
+From map9ad9-down907X104/Y1371, right/shoot40, neutral90,
+left/shoot55, neutral80 descend toX70/Y1675, standing, health24/199,
+map0/station0, missiles1/10, equipment1004. map9ad9-down137181916/71
+(144.07s), native exit1. One further contact costs10health. This reaches
+the broad shootable block row atY1696 beneath the missile-door level;
+no ammo farming or additional item/boss progress claimed.
+Read-only failure-counter replay81916/71 (161.24s), observed native exit1,
+matches all71 ordered baseline failed frames exactly, rendering enabled.
+No gameplay/RAM/inventory writes or new failures; source/residue delta0.
+Committed Energy Tank callback cleanup owns fmt/check, release, progress,
+contextual77139/71 and clean any%129712/0 (195.69s). Inputs, probes, SRAM
+and ROM-derived assets remain ignored. Next: normal-input downward beam
+shot through the floor, then onward lower passages. Old9AD9 enemy-drop
+ammo, upper99BD ascent and earlier holds stay held. Complete credits,
+gameplay/hardware, render/audio, masked RAM and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
