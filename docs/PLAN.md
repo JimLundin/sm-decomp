@@ -9193,6 +9193,21 @@ source; Rust lines -1, other own counters unchanged. Arbitrary MMIO and full
 gameplay/render/audio coverage remain open; ROR stays held for movie coverage.
 Continue covered CPU cleanup.
 
+CPU safe index updates (2026-10-19): INX/DEX and INY/DEY call safe update_x
+and update_y with deltas 1/MAX. Word addition by MAX preserves decrement;
+byte mode clears high index bytes, word mode wraps, and register-before-Z/N
+order is unchanged. Carry, overflow, other registers and cycles stay exact.
+Independent source/probe review finds no differences. Frozen HEAD `44b9cc28`
+plus this change passes 1,048,576 actual old/current dispatcher cases across
+every index word, both widths and incoming carry values, checking named CPU/
+bus fields, flags, cycles and PC history. Prefix 3,600/0 (1.16s), native exit 0,
+executes DEY/INY/DEX/INX 107,452/204,419/561,929/331,161 times. Clean full any%
+129,712/0 (63.43s), native exit 0. Cargo fmt/check, full release and release-
+library builds with external SDL2, normal metadata and optimized frozen core/DLL
+builds pass. Live CPU matches verified source. Rust lines -10; other counters
+unchanged. Arbitrary device mutations and full gameplay/render/audio remain
+open; ROR stays held for contextual coverage. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

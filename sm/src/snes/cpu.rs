@@ -854,6 +854,16 @@ fn update_accumulator(delta: u16, cpu: &mut Cpu) {
     };
     set_zero_negative(cpu.a, cpu.mf, cpu);
 }
+fn update_x(delta: u16, cpu: &mut Cpu) {
+    let result = cpu.x.wrapping_add(delta);
+    cpu.x = if cpu.xf { result & 0xff } else { result };
+    set_zero_negative(cpu.x, cpu.xf, cpu);
+}
+fn update_y(delta: u16, cpu: &mut Cpu) {
+    let result = cpu.y.wrapping_add(delta);
+    cpu.y = if cpu.xf { result & 0xff } else { result };
+    set_zero_negative(cpu.y, cpu.xf, cpu);
+}
 unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
     // Preserve the inherited history value of 0xffffffff when PC is zero.
     let cur_pc = (i32::from((*cpu).k) << 16 | (i32::from((*cpu).pc) - 1)) as u32;
@@ -1660,12 +1670,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0x88 => {
-                if (*cpu).xf {
-                    (*cpu).y = (*cpu).y.wrapping_sub(1) & 0xff;
-                } else {
-                    (*cpu).y = (*cpu).y.wrapping_sub(1);
-                }
-                set_zero_negative((*cpu).y, (*cpu).xf, &mut *cpu);
+                update_y(u16::MAX, &mut *cpu);
                 break;
             }
             0x89 => {
@@ -2012,12 +2017,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0xc8 => {
-                if (*cpu).xf {
-                    (*cpu).y = (*cpu).y.wrapping_add(1) & 0xff;
-                } else {
-                    (*cpu).y = (*cpu).y.wrapping_add(1);
-                }
-                set_zero_negative((*cpu).y, (*cpu).xf, &mut *cpu);
+                update_y(1, &mut *cpu);
                 break;
             }
             0xc9 => {
@@ -2026,12 +2026,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0xca => {
-                if (*cpu).xf {
-                    (*cpu).x = (*cpu).x.wrapping_sub(1) & 0xff;
-                } else {
-                    (*cpu).x = (*cpu).x.wrapping_sub(1);
-                }
-                set_zero_negative((*cpu).x, (*cpu).xf, &mut *cpu);
+                update_x(u16::MAX, &mut *cpu);
                 break;
             }
             0xcb => {
@@ -2180,12 +2175,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                 break;
             }
             0xe8 => {
-                if (*cpu).xf {
-                    (*cpu).x = (*cpu).x.wrapping_add(1) & 0xff;
-                } else {
-                    (*cpu).x = (*cpu).x.wrapping_add(1);
-                }
-                set_zero_negative((*cpu).x, (*cpu).xf, &mut *cpu);
+                update_x(1, &mut *cpu);
                 break;
             }
             0xe9 => {
