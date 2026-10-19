@@ -18507,6 +18507,41 @@ because helpers own the repeated raw bus operations. No RAM layout change or
 probe/ROM-derived artifact committed. Concurrent gameplay edits retain their
 own checks. Full project readability, hardware/audio and credits remain open.
 
+Mode7 sampling family (2026-10-19): normalized jscpd discovery and
+complete CST boundary-block selection identify repeated tile and pixel lookup
+in the modern renderer's mosaic and single-pixel loops. One private helper
+now owns the fixed-point coordinate lookup, outside-map rejection and tile-zero
+fill. It reads the same tilemap low byte and character high byte in the same
+order, skips all VRAM reads for rejected coordinates, and retains the original
+captured outside-field/fill values. Both loops retain their distinct stepping,
+width clipping and ordered stores. Removed tile/branch-label locals have no
+remaining use; two generated dispatches disappear. The legacy renderer keeps
+its separate coordinate and flag-read sequencing, EXTBG priority and masking.
+
+Complete source reconstruction permits only these two sampling sequences,
+removed dead locals and the shared helper. All other frozen sources match.
+Actual original/current rendering routines agree in 16384 complete initialized
+PPU-state/pixel-buffer cases over eight paths, 1024 seeds and masked/unmasked
+screens. The 4096 added cases directly execute modern Mode7 with/without
+mosaic, all sizes 1..16, varied signed matrix coefficients and screen flips,
+field/fill flags, scroll/centers, window flags and VRAM contents. These are
+constructed hardware contexts, not universal hardware accuracy or coverage.
+
+Compiled original lookup expression and actual candidate helper agree in
+67108864 samples; an independent coordinate model agrees too. The sweep covers
+every 1024x1024 integer coordinate with fractional offsets, positive/negative
+outside-field high bits, both field limits and fill flags, and varied VRAM.
+This extracted lookup comparison supports the actual rendering comparisons.
+
+Frozen e2d7a150 plus only this family passes any% 129712/0
+(171.24s) and Speed Booster 148406/0 (217.68s), native exits 0,
+with fixed source/library/DLL/ROM/movie hashes. Cargo fmt/check, normal release
+(38.12s), progress and diff check pass. Own Rust lines -46, c_int cast lines
+-21; unsafe functions +1 because the helper owns repeated raw VRAM reads.
+No layout change, probe or ROM-derived artifact committed. Concurrent gameplay
+and standard-tool cleanup retain their own checks. Neither movie reaches
+credits; broader readability, hardware/audio and full progression remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

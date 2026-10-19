@@ -695,6 +695,24 @@ fn ppu_mode7_coordinates(
         clip(v_scroll - y_center),
     )
 }
+// Sample the modern renderer's fixed-point Mode7 coordinates.
+unsafe fn ppu_mode7_sample(
+    ppu: *mut Ppu,
+    x: uint32,
+    y: uint32,
+    outside_value: uint32,
+    char_fill: bool,
+) -> uint8 {
+    let tile = if x | y > outside_value {
+        if !char_fill {
+            return 0;
+        }
+        0
+    } else {
+        (*ppu).vram[((y >> 11 & 0x7f) * 128 + (x >> 11 & 0x7f)) as usize] & 0xff
+    };
+    ((*ppu).vram[(u32::from(tile) * 64 + (y >> 8 & 7) * 8 + (x >> 8 & 7)) as usize] >> 8) as uint8
+}
 unsafe fn PpuDrawBackground_mode7(
     mut ppu: *mut Ppu,
     mut y: uint,
@@ -755,7 +773,6 @@ unsafe fn PpuDrawBackground_mode7(
             let mut x: ::core::ffi::c_int = win.edges[windex as usize] as ::core::ffi::c_int;
             let mut x2: ::core::ffi::c_int =
                 win.edges[windex.wrapping_add(1 as size_t) as usize] as ::core::ffi::c_int;
-            let mut tile: ::core::ffi::c_int = 0;
             let mut dstz: *mut PpuZbufType = (&raw mut (*(&raw mut (*ppu).bgBuffers
                 as *mut PpuPixelPrioBufs)
                 .offset(sub as isize))
@@ -798,54 +815,23 @@ unsafe fn PpuDrawBackground_mode7(
             if mosaic_enabled {
                 let mut w: ::core::ffi::c_int = (*ppu).mosaicSize as ::core::ffi::c_int
                     - (x - (*ppu).mosaicModulo[x as usize] as ::core::ffi::c_int);
-                let mut current_block_14: u64;
                 loop {
                     w = IntMin(
                         w,
                         dstz_end.offset_from(dstz) as ::core::ffi::c_long as ::core::ffi::c_int,
                     );
-                    if xpos | ypos > outside_value {
-                        if !char_fill {
-                            current_block_14 = 17833034027772472439;
-                        } else {
-                            tile = 0 as ::core::ffi::c_int;
-                            current_block_14 = 5634871135123216486;
-                        }
-                    } else {
-                        tile = (*ppu).vram[(ypos >> 11 as ::core::ffi::c_int & 0x7f as uint32)
-                            .wrapping_mul(128 as uint32)
-                            .wrapping_add(xpos >> 11 as ::core::ffi::c_int & 0x7f as uint32)
-                            as usize] as ::core::ffi::c_int
-                            & 0xff as ::core::ffi::c_int;
-                        current_block_14 = 5634871135123216486;
-                    }
-                    match current_block_14 {
-                        5634871135123216486 => {
-                            let mut pixel: uint8 = ((*ppu).vram[((tile * 64 as ::core::ffi::c_int)
-                                as uint32)
-                                .wrapping_add(
-                                    (ypos >> 8 as ::core::ffi::c_int & 7 as uint32)
-                                        .wrapping_mul(8 as uint32),
-                                )
-                                .wrapping_add(xpos >> 8 as ::core::ffi::c_int & 7 as uint32)
-                                as usize]
-                                as ::core::ffi::c_int
-                                >> 8 as ::core::ffi::c_int)
-                                as uint8;
-                            if pixel != 0 {
-                                let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-                                loop {
-                                    *dstz.offset(i as isize) = (pixel as ::core::ffi::c_int
-                                        + z as ::core::ffi::c_int)
-                                        as PpuZbufType;
-                                    i += 1;
-                                    if !(i != w) {
-                                        break;
-                                    }
-                                }
+                    let pixel = ppu_mode7_sample(ppu, xpos, ypos, outside_value, char_fill);
+                    if pixel != 0 {
+                        let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+                        loop {
+                            *dstz.offset(i as isize) = (pixel as ::core::ffi::c_int
+                                + z as ::core::ffi::c_int)
+                                as PpuZbufType;
+                            i += 1;
+                            if !(i != w) {
+                                break;
                             }
                         }
-                        _ => {}
                     }
                     xpos = xpos.wrapping_add(dx.wrapping_mul(w as uint32));
                     ypos = ypos.wrapping_add(dy.wrapping_mul(w as uint32));
@@ -858,43 +844,11 @@ unsafe fn PpuDrawBackground_mode7(
                     }
                 }
             } else {
-                let mut current_block_21: u64;
                 loop {
-                    if xpos | ypos > outside_value {
-                        if !char_fill {
-                            current_block_21 = 5689316957504528238;
-                        } else {
-                            tile = 0 as ::core::ffi::c_int;
-                            current_block_21 = 9520865839495247062;
-                        }
-                    } else {
-                        tile = (*ppu).vram[(ypos >> 11 as ::core::ffi::c_int & 0x7f as uint32)
-                            .wrapping_mul(128 as uint32)
-                            .wrapping_add(xpos >> 11 as ::core::ffi::c_int & 0x7f as uint32)
-                            as usize] as ::core::ffi::c_int
-                            & 0xff as ::core::ffi::c_int;
-                        current_block_21 = 9520865839495247062;
-                    }
-                    match current_block_21 {
-                        9520865839495247062 => {
-                            let mut pixel_0: uint8 = ((*ppu).vram[((tile * 64 as ::core::ffi::c_int)
-                                as uint32)
-                                .wrapping_add(
-                                    (ypos >> 8 as ::core::ffi::c_int & 7 as uint32)
-                                        .wrapping_mul(8 as uint32),
-                                )
-                                .wrapping_add(xpos >> 8 as ::core::ffi::c_int & 7 as uint32)
-                                as usize]
-                                as ::core::ffi::c_int
-                                >> 8 as ::core::ffi::c_int)
-                                as uint8;
-                            if pixel_0 != 0 {
-                                *dstz.offset(0) = (pixel_0 as ::core::ffi::c_int
-                                    + z as ::core::ffi::c_int)
-                                    as PpuZbufType;
-                            }
-                        }
-                        _ => {}
+                    let pixel_0 = ppu_mode7_sample(ppu, xpos, ypos, outside_value, char_fill);
+                    if pixel_0 != 0 {
+                        *dstz.offset(0) = (pixel_0 as ::core::ffi::c_int + z as ::core::ffi::c_int)
+                            as PpuZbufType;
                     }
                     xpos = xpos.wrapping_add(dx);
                     ypos = ypos.wrapping_add(dy);
