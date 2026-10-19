@@ -1701,27 +1701,83 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `ee7e7510` passes
-uninterrupted full boot any% 129712/0 (190.80s) and Speed Booster
-148406/0 (253.24s), native exits 0. All 74 source/configuration/host/
-progress inputs match that commit. This adds the shared planar-background
-routine to the previously reviewed families below. Pending projectile and
-comparison cleanup retain their own checks outside this snapshot.
+Latest reviewed integration (2026-10-19): frozen `3c93b8bc` passes
+uninterrupted full boot any% 129712/0 (212.17s) and Speed Booster
+148406/0 (268.87s), native exits 0. All 74 source/configuration/host/
+progress inputs match that commit. This adds the literal arrays, integer
+comparisons and PPU window interval helper to the reviewed families below.
+Later projectile, parenthesis and hardware work retains its own checks.
 
-Serialized checkpoint payloads are byte-identical to reviewed 6f1dfa08.
-The only changed header field is the runtime-source fingerprint, independently
-recomputed from its actual inputs. Only snes/ppu.rs differs among those inputs;
-the Game declaration and checkpoint codec remain unchanged. All other bindings,
-including the payload checksum, agree. No compatibility hash is patched and
-neither replay loads an earlier checkpoint. Complete non-timing diagnostics and
-coverage agree, including the known fingernail diagnostic. Speed reaches 55 rooms
-and 53 enemy definitions, ending in state 8, room $AD1B, X171/Y123, pose $0089,
-health 46/399, missiles 6/15, Supers 0/5, items $3105 and beams $1004
-equipped/collected. Kraid is defeated and all eight coroutine bytes are zero.
-Credits remain unexercised. The same build also passes the full-boot pause route
-40836/0 (72.58s), native exit 0, returning to gameplay in room $96BA.
+Serialized checkpoint payloads are byte-identical to independently reviewed
+cc17d506 and ee7e7510. Against cc17d506, the only changed header field is the
+runtime-source fingerprint, independently recomputed from its actual inputs;
+only snes/ppu.rs changes among those inputs. The Game declaration and checkpoint
+codec are unchanged. All other bindings, including the payload checksum,
+agree. No compatibility hash is patched and neither replay loads an earlier
+checkpoint. Complete non-timing diagnostics and coverage agree, including the
+known fingernail diagnostic. Speed reaches 55 rooms and 53 enemy definitions,
+ending in state 8, room $AD1B, X171/Y123, pose $0089, health 46/399,
+missiles 6/15, Supers 0/5, items $3105 and beams $1004 equipped/collected.
+Kraid is defeated and all eight coroutine bytes are zero. Credits remain
+unexercised. The same build passes the full-boot pause route 40836/0
+(73.18s), native exit 0, returning to gameplay in room $96BA.
 Its payload and every non-runtime binding match the prior pause run, as do
 complete non-timing logs. Earlier mode observations retain their scope below.
+
+Independent comparison review checks all 4657 operators, bool results and
+ordered operands against before/after compiler records. Every nonliteral
+operand's full primitive range fits both the old promoted type and the new
+comparison type. Literal values fit those types too. Integer literals
+and all 11 negated-i32-cast operands are evaluated independently. Arithmetic
+inside operands is unchanged. Reconstructing the compiler input restores every
+source byte; source-map contents and order are exact. Both directions of the
+remaining expression multiset match, with no unexplained missing/extra nodes:
+684029 retained expressions, or 683989 with the separate projectile edits.
+The one nested comparison and all 21 ast-grep parser misses are included.
+
+Fresh execution of the reviewed type/constant driver passes 19692962 operand
+pairs and all six operators, 118157772 comparisons across 269 signatures.
+Signedness and operand-order controls fail. These are primitive signatures,
+not execution of full gameplay expressions or every wide-integer pair.
+Independent reconstruction also composes all 4657 replacements onto cc17d506;
+the committed gameplay source matches that exact candidate after line-ending
+normalization. All 74 integration inputs permit only this composition and the
+separately reconstructed PPU window change.
+
+Independent window reconstruction restores the entire PPU by expanding both
+helper calls and removing the helper. Gates, edge insertion, inversion and
+ordered writes stay exact; removed scan-local outputs are dead. Both callers
+initialize all six edges. Shared borrows cover only that initialized array
+and the two boundary bytes, with no writes or escaping references during the
+call. Byte boundaries and right+1 fit i16; valid ordered edges bound both
+scans and bound shift counts to at most five. No wider mutable borrow or
+RAM layout change is introduced.
+
+Fresh extracted old/new PpuWindows_Calc functions and the helper pass 25165824
+complete 14-byte window-record comparisons using the real types from the fresh
+release library. An independent sorted-interval model checks every case,
+including inversions and unused high bits. Fixtures cover all six layers,
+16 flags and margins (0,0), (255,255), (1,127), (127,1). Every left/right byte
+pair occurs in each window through a bijection; the windows are correlated,
+not their Cartesian product. Wrong interval widths and starting bit positions
+are rejected. This exercises extracted routines, not exported private entries.
+The owner's separate 25165824 window records and 12288 full-PPU/pixel cases
+retain checked source/library/input pins and full-boot logs. That pixel probe
+uses arbitrary tile bases and disables mosaic; its count does not establish
+hardware alignment or movie call-site coverage. Earlier limits remain below.
+
+Independent array review reconstructs all 67 source files, permitting only
+272 selected declarations in 30 files and formatting. Names, visibility,
+mutability, explicit types, shapes, local placement and element order remain
+exact, including duplicate local declarations. Primitive alias chains and
+imports match the central types. An independent integer parser and a fresh
+compiled old/new driver agree on all 6352 values, including signed values and
+the one nested array; an altered expected value is rejected. This checks every
+selected table value, including frontend/audio tables, without claiming movie
+execution of every consumer. The 50 excluded sm_86 arrays remain unchanged.
+The independently built cc17d506 array snapshot also passes any% 129712/0
+(173.66s), Speed Booster 148406/0 (220.21s) and pause 40836/0 (66.51s), native
+exits 0, with byte-identical payloads and non-timing logs against ee7e7510.
 
 Independent planar-background reconstruction covers all 74 integration
 inputs and all 67 candidate source files. Specializing the shared function
@@ -2040,17 +2096,17 @@ dedicated 5544-case API checks and 24/24 site observations are recorded by
 implementation; this review verifies the source transformation. The movie
 replays do not establish frontend decoder execution coverage.
 
-The normal Cargo integration is independently built from frozen ee7e7510.
+The normal Cargo integration is independently built from frozen 3c93b8bc.
 All 74 inputs, the fresh game library/DLL and copied fixtures stay fixed.
 Only registry dependencies seed this checkout, including existing registry
 build-script executable links. Formatting, normal release
-(24.00s), host build (3.71s) and progress pass. This family removes
-98 Rust lines and 21 c_int casts across 19 lines. One private unsafe routine
-consolidates the two bodies behind their existing entry wrappers, increasing
-unsafe functions by one; other progress counters stay unchanged. Frozen totals:
-200804 Rust lines, 21354 raw-offset lines, 43664 c_int casts across 35287 lines
-and 6501 unsafe functions. This audit changes no maintained Rust or assets;
-later peer work retains its own checks.
+(33.51s), host build (4.02s) and progress pass. Since reviewed ee7e7510,
+these families remove 7855 Rust lines and 9196 c_int casts across 7791 lines.
+Raw-offset lines rise by one through formatting; raw operations and unsafe,
+extern and export counts are unchanged. Frozen totals: 192949 Rust lines,
+21355 raw-offset lines, 34468 c_int casts across 27496 lines and 6501 unsafe
+functions. This audit changes no maintained Rust or assets; later peer work
+retains its own checks.
 
 The prior PLM block-mask review remains valid: all six helper sites execute,
 with 2082 air-scroll updates, 105 shared retain updates and one each for four
