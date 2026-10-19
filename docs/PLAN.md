@@ -150,6 +150,15 @@ It executes 85 alignment calls, including four already-aligned X calls.
 X movement remains unexercised by these movies. Source review preserves
 the pre-step alignment gate, wrapping coordinate step and callback/store order.
 
+Retired coverage-build cleanup (2026-10-19): moved target/coverage-verify
+outside the checkout to temporary
+sm-workspace-retired-coverage-20261019-064938-233/coverage-verify.
+The two obsolete DLL/import-library files total 7,304,856 bytes; counts,
+sizes and SHA-256 hashes match after moving. No live process or current
+repository/top-level temporary script references the directory. Other
+sessions own the adjacent cleanup above. No maintained source or residue
+change and no new replay result belong to this cleanup.
+
 ## The oracle
 
 SNES allocation validity QC (2026-10-19): snes_init now zero-initializes its
