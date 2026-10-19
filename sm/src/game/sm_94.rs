@@ -2552,10 +2552,10 @@ unsafe fn BlockColl_BombExplosion(mut ci: *mut CollInfo, mut k: uint16, game: &m
         }
     }
 }
-unsafe fn ClearCarry_9(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
+fn ClearCarry_9(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
     return 0 as uint8;
 }
-unsafe fn SetCarry_0(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
+fn SetCarry_0(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
     return 1 as uint8;
 }
 unsafe fn sub_949D5D(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
@@ -3834,10 +3834,10 @@ unsafe fn BlockShotReactHoriz_Slope_Square(
     return (kTab948E54[v2 as usize] as ::core::ffi::c_int != 0 as ::core::ffi::c_int)
         as ::core::ffi::c_int as uint8;
 }
-unsafe fn ClearCarryZero(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
+fn ClearCarryZero(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
     return 0 as uint8;
 }
-unsafe fn SetCarryClearOvf(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
+fn SetCarryClearOvf(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
     return 1 as uint8;
 }
 unsafe fn BlockReactGrapple_GrappleBlock(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
@@ -4464,10 +4464,10 @@ unsafe fn BlockFunc_A957(mut tmpD82: uint16, mut tmpD84: uint16, game: &mut Game
     *((&raw mut game.g_ram as *mut uint8).offset(0xd96) as *mut uint16) =
         (v8 as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint8 as uint16;
 }
-unsafe fn ClearCarry_10(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
+fn ClearCarry_10(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
     return 0 as uint8;
 }
-unsafe fn SetCarry_3(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
+fn SetCarry_3(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
     return 1 as uint8;
 }
 unsafe fn BlockReact_AA64(game: &mut Game) -> uint8 {

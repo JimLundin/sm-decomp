@@ -3654,7 +3654,7 @@ pub unsafe fn ppu_write(mut ppu: *mut Ppu, mut adr: uint8_t, mut val: uint8_t) {
         _ => {}
     };
 }
-pub unsafe fn PpuGetCurrentRenderScale(
+pub fn PpuGetCurrentRenderScale(
     mut ppu: *mut Ppu,
     mut render_flags: uint32_t,
 ) -> ::core::ffi::c_int {

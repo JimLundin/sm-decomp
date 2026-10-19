@@ -2179,7 +2179,7 @@ pub unsafe fn CheckBannedDraygonGrappleDirs(mut a: uint16, game: &mut Game) -> u
     }
     return 1 as uint16;
 }
-pub unsafe fn ClearCarry_12() -> uint8 {
+pub fn ClearCarry_12() -> uint8 {
     return 0 as uint8;
 }
 pub unsafe fn GrappleBeamFunc_Firing(game: &mut Game) {

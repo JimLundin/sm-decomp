@@ -1304,10 +1304,10 @@ unsafe fn EprojColl_Unknown8536(mut eci: *mut EprojCollInfo, game: &mut Game) ->
     }
     return 0 as uint8;
 }
-unsafe fn EprojColl_ClearCarry(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 {
+fn EprojColl_ClearCarry(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 {
     return 0 as uint8;
 }
-unsafe fn EprojColl_SetCarry(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 {
+fn EprojColl_SetCarry(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 {
     return 1 as uint8;
 }
 unsafe fn EprojColl_858E(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 {
@@ -1663,7 +1663,7 @@ unsafe fn EprojColl_8676(
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v7 as isize) = v8;
     return 1 as uint8;
 }
-pub unsafe fn EprojColl_873D() -> uint8 {
+pub fn EprojColl_873D() -> uint8 {
     return 0 as uint8;
 }
 unsafe fn EprojColl_874E(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 {

@@ -325,9 +325,30 @@ Formatting/check, normal release builds (32.95s frozen,
 casts and raw accesses unchanged. No build-time gain is established.
 Concurrent gameplay edits retain separate validation; temporary checks stay local.
 
-Next disjoint safety audit: callbacks that only return a constant or unchanged
-argument. Check their callable types before removing unnecessary unsafe;
-continue broader subsystem state and handler consolidation.
+Constant/identity callback safety (2026-10-19): remove unnecessary unsafe
+qualifiers from 39 functions in 14 files: 35 gameplay callbacks, three image
+query stubs and one renderer query. Bodies only return literals (32 functions)
+or unchanged arguments (seven), including four undereferenced raw pointers.
+Parameters, returns, bodies, callers and callback tables remain exact. All 31
+public functions compile as safe and original unsafe function pointers; the
+eight private callbacks retain their compiler-checked existing table casts.
+Exact comparison of all 72 frozen source/configuration files permits only
+those 39 qualifiers. The existing PPU source fingerprint input changes, so
+older checkpoints are invalidated; compatibility code is unchanged.
+
+Frozen 028aadda plus this pass passes full-boot any% 129712/0 (263.70s)
+and Bubble Mountain 138749/0 (321.76s), native exits 0, with stable
+source, DLL and fixtures. No shorter included route is replayed separately.
+Formatting/check, normal release builds (67.80s frozen,
+41.61s workspace) and progress pass. Unsafe functions -39; Rust lines,
+casts and raw accesses unchanged. No build-time gain is established.
+Concurrent gameplay edits retain separate validation; temporary checks stay local.
+
+Next disjoint cast audit: the current gameplay survey finds 7442 consecutive
+c_int-to-8/16/32-bit integer cast chains. Use compiler operand types to prove
+which intermediate promotions are redundant; exclude floating conversions
+and preserve evaluation order and the exact final truncation. Continue the
+shared state and handler consolidation owned by other sessions.
 
 Independent split-word audit (2026-10-19): reconstruct e23ad2ee from
 its parent and the owning e8592193-based candidate across all 64 Rust files

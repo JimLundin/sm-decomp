@@ -202,7 +202,7 @@ pub const fnHdmaobjPreInstr_XraySetup: uint32 = 9556607;
 pub const fnXray_SetupStage8_SetBackdropColor: uint32 = 9556668;
 pub const fnInitializeSuitPickupHdma: uint32 = 9557650;
 pub const fnnullsub_309: uint32 = 10785852;
-pub unsafe fn nullsub_9(mut j: uint16, game: &mut Game) -> uint16 {
+pub fn nullsub_9(mut j: uint16, game: &mut Game) -> uint16 {
     return j;
 }
 pub unsafe fn InitializeLayerBlending(game: &mut Game) {
@@ -240,7 +240,7 @@ pub unsafe fn LayerBlendFunc_C(mut j: uint16, game: &mut Game) -> uint16 {
     *(&raw mut game.g_ram as *mut uint8).offset(0x71) = -(94 as ::core::ffi::c_int) as uint8;
     return j;
 }
-pub unsafe fn nullsub_10(mut j: uint16, game: &mut Game) -> uint16 {
+pub fn nullsub_10(mut j: uint16, game: &mut Game) -> uint16 {
     return j;
 }
 pub unsafe fn LayerBlendFunc_10(mut j: uint16, game: &mut Game) -> uint16 {
@@ -285,7 +285,7 @@ pub unsafe fn LayerBlendFunc_18(mut j: uint16, game: &mut Game) -> uint16 {
     }
     return j;
 }
-pub unsafe fn nullsub_11(mut j: uint16, game: &mut Game) -> uint16 {
+pub fn nullsub_11(mut j: uint16, game: &mut Game) -> uint16 {
     return j;
 }
 pub unsafe fn LayerBlendFunc_26(mut j: uint16, game: &mut Game) -> uint16 {

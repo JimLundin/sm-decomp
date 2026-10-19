@@ -1099,7 +1099,7 @@ pub unsafe fn stbi_loadf_from_file(
     stbi__start_file(&raw mut s, f);
     return stbi__loadf_main(&raw mut s, x, y, comp, req_comp);
 }
-pub unsafe fn stbi_is_hdr_from_memory(
+pub fn stbi_is_hdr_from_memory(
     mut buffer: *const stbi_uc,
     mut len: ::core::ffi::c_int,
 ) -> ::core::ffi::c_int {
@@ -1115,10 +1115,10 @@ pub unsafe fn stbi_is_hdr(mut filename: *const ::core::ffi::c_char) -> ::core::f
     }
     return result;
 }
-pub unsafe fn stbi_is_hdr_from_file(mut f: *mut FILE) -> ::core::ffi::c_int {
+pub fn stbi_is_hdr_from_file(mut f: *mut FILE) -> ::core::ffi::c_int {
     return 0 as ::core::ffi::c_int;
 }
-pub unsafe fn stbi_is_hdr_from_callbacks(
+pub fn stbi_is_hdr_from_callbacks(
     mut clbk: *const stbi_io_callbacks,
     mut user: *mut ::core::ffi::c_void,
 ) -> ::core::ffi::c_int {

@@ -8053,7 +8053,7 @@ pub unsafe fn ClearKraidBg2Tilemap(game: &mut Game) {
     CopyToVramNow(0x4000 as uint16, 0x7e4000 as uint32, 0x1000 as uint16, game);
     CopyToVramNow(0x4800 as uint16, 0x7e4000 as uint32, 0x1000 as uint16, game);
 }
-pub unsafe fn UpdateBackgroundCommand_0_Finish(mut y: uint16, game: &mut Game) -> uint16 {
+pub fn UpdateBackgroundCommand_0_Finish(mut y: uint16, game: &mut Game) -> uint16 {
     return 0 as uint16;
 }
 pub unsafe fn UpdateBackgroundCommand_E_DoorDependentTransferToVRAM(
@@ -8462,7 +8462,7 @@ pub unsafe fn LoadLibraryBackground(game: &mut Game) {
         }
     }
 }
-pub unsafe fn LoadLibraryBackgroundFunc_0_DONE(mut j: uint16, game: &mut Game) -> uint16 {
+pub fn LoadLibraryBackgroundFunc_0_DONE(mut j: uint16, game: &mut Game) -> uint16 {
     return 0 as uint16;
 }
 pub unsafe fn LoadLibraryBackgroundFunc_E_DoorDependentTransferToVram(

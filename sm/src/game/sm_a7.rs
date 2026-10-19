@@ -1840,7 +1840,7 @@ pub unsafe fn Kraid_HealthBasedPaletteHandling(game: &mut Game) {
         }
     }
 }
-pub unsafe fn Kraid_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub fn Kraid_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return jp;
 }
 pub unsafe fn Kraid_Instr_DecYpos(

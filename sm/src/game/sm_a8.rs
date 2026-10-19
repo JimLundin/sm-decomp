@@ -4502,7 +4502,7 @@ pub unsafe fn NorfairLavaMan_Common(game: &mut Game) {
             ((*E2).base.ai_handler_bits as ::core::ffi::c_int | 4 as ::core::ffi::c_int) as uint16;
     }
 }
-pub unsafe fn Beetom_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub fn Beetom_Instr_1(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return jp;
 }
 pub unsafe fn Beetom_Func_1(game: &mut Game) {

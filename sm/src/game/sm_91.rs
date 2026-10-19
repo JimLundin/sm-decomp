@@ -3767,7 +3767,7 @@ pub unsafe fn Samus_HandleXrayPals(game: &mut Game) -> uint8 {
         return 1 as uint8;
     };
 }
-pub unsafe fn nullsub_164(game: &mut Game) -> uint8 {
+pub fn nullsub_164(game: &mut Game) -> uint8 {
     return 0 as uint8;
 }
 pub unsafe fn CopyToSamusSuitPalette(mut k: uint16, game: &mut Game) {
@@ -4759,7 +4759,7 @@ pub unsafe fn Samus_HandleTransFromBlockColl_4(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16);
     *((&raw mut game.g_ram as *mut uint8).offset(0xa2e) as *mut uint16) = 5 as uint16;
 }
-pub unsafe fn nullsub_18_U8(game: &mut Game) -> uint8 {
+pub fn nullsub_18_U8(game: &mut Game) -> uint8 {
     return 0 as uint8;
 }
 static off_91E951: [Option<Func_U8>; 6] = unsafe {
@@ -5462,10 +5462,10 @@ pub unsafe fn Samus_HandleTransitionsB_1(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xa6e) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xa48) as *mut uint16) = 1 as uint16;
 }
-pub unsafe fn Samus_HandleTransitionsB_1_10(game: &mut Game) -> uint8 {
+pub fn Samus_HandleTransitionsB_1_10(game: &mut Game) -> uint8 {
     return 0 as uint8;
 }
-pub unsafe fn Samus_HandleTransitionsB_1_11(game: &mut Game) -> uint8 {
+pub fn Samus_HandleTransitionsB_1_11(game: &mut Game) -> uint8 {
     return 0 as uint8;
 }
 pub unsafe fn Samus_HandleTransitionsB_1_6(game: &mut Game) -> uint8 {
@@ -5788,7 +5788,7 @@ pub unsafe fn Samus_HandleTransitionsA_5_2(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xa18) as *mut uint16) = 0 as uint16;
 }
 pub fn sub_91EFC3(game: &mut Game) {}
-pub unsafe fn sub_91EFC3_rv(game: &mut Game) -> uint8 {
+pub fn sub_91EFC3_rv(game: &mut Game) -> uint8 {
     return 0 as uint8;
 }
 static kSamus_HandleTransitionsA_5_1: [Option<Func_U8>; 6] = unsafe {
@@ -6454,7 +6454,7 @@ pub unsafe fn SamusFunc_F468(game: &mut Game) {
         }
     }
 }
-pub unsafe fn SamusFunc_F468_Unused(game: &mut Game) -> uint8 {
+pub fn SamusFunc_F468_Unused(game: &mut Game) -> uint8 {
     return 0 as uint8;
 }
 pub unsafe fn SamusFunc_F468_Standing(game: &mut Game) -> uint8 {
@@ -6953,7 +6953,7 @@ pub unsafe fn Samus_CrouchTrans(game: &mut Game) -> uint8 {
     }
     return 0 as uint8;
 }
-pub unsafe fn Samus_StandOrUnmorphTrans(game: &mut Game) -> uint8 {
+pub fn Samus_StandOrUnmorphTrans(game: &mut Game) -> uint8 {
     return 0 as uint8;
 }
 pub unsafe fn Samus_MorphTrans(game: &mut Game) -> uint8 {
@@ -7816,10 +7816,10 @@ pub unsafe fn HandleCollDueToChangedPose(game: &mut Game) {
             *((&raw mut game.g_ram as *mut uint8).offset(0xa20) as *mut uint16);
     }
 }
-pub unsafe fn HandleCollDueToChangedPose_Solid_NoColl(game: &mut Game) -> uint8 {
+pub fn HandleCollDueToChangedPose_Solid_NoColl(game: &mut Game) -> uint8 {
     return 0 as uint8;
 }
-pub unsafe fn HandleCollDueToChangedPose_Solid_CollBoth(game: &mut Game) -> uint8 {
+pub fn HandleCollDueToChangedPose_Solid_CollBoth(game: &mut Game) -> uint8 {
     return 0 as uint8;
 }
 pub unsafe fn HandleCollDueToChangedPose_Solid_CollAbove(game: &mut Game) -> uint8 {

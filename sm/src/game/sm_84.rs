@@ -3592,7 +3592,7 @@ pub unsafe fn PlmPreInstr_EscapeRoomBeforeOldTourianEscapeShaft(mut k: uint16, g
         *((&raw mut game.g_ram as *mut uint8).offset(0x1980) as *mut uint16) = 16 as uint16;
     }
 }
-pub unsafe fn PlmSetup_B974(mut j: uint16) -> uint8 {
+pub fn PlmSetup_B974(mut j: uint16) -> uint8 {
     return 0 as uint8;
 }
 pub unsafe fn PlmSetup_B9C1_CrittersEscapeBlock(mut j: uint16, game: &mut Game) -> uint8 {
@@ -4753,10 +4753,10 @@ pub unsafe fn PlmSetup_D0DC_BreakableGrappleBlock(mut j: uint16, game: &mut Game
         << 8 as ::core::ffi::c_int) as uint16;
     return 0x41 as uint8;
 }
-pub unsafe fn PlmSetup_D0D8_SetVFlag(mut j: uint16) -> uint8 {
+pub fn PlmSetup_D0D8_SetVFlag(mut j: uint16) -> uint8 {
     return 0x41 as uint8;
 }
-pub unsafe fn PlmSetup_D0D8_ClearVflag(mut j: uint16) -> uint8 {
+pub fn PlmSetup_D0D8_ClearVflag(mut j: uint16) -> uint8 {
     return 1 as uint8;
 }
 pub unsafe fn PlmSetup_D0E8_GiveSamusDamage(mut j: uint16, game: &mut Game) -> uint8 {

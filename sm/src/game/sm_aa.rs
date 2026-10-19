@@ -807,7 +807,7 @@ pub unsafe fn Torizo_C2B0(game: &mut Game) {
         i -= 2 as ::core::ffi::c_int;
     }
 }
-pub unsafe fn Torizo_Instr_7(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub fn Torizo_Instr_7(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return jp;
 }
 pub unsafe fn Torizo_Instr_2(
@@ -2470,7 +2470,7 @@ pub unsafe fn Shaktool_D956(
     );
     return jp;
 }
-pub unsafe fn Shaktool_Instr_6(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
+pub fn Shaktool_Instr_6(mut k: uint16, mut jp: *const uint16) -> *const uint16 {
     return jp;
 }
 pub unsafe fn Shaktool_Func_2(mut k: uint16, game: &mut Game) {

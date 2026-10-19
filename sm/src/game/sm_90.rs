@@ -948,7 +948,7 @@ pub unsafe fn Samus_Draw(game: &mut Game) {
     }
     SetSamusTilesDefsForCurAnim(game);
 }
-pub unsafe fn SamusBottomDrawn_1(game: &mut Game) -> uint8 {
+pub fn SamusBottomDrawn_1(game: &mut Game) -> uint8 {
     return 1 as uint8;
 }
 pub unsafe fn SamusBottomDrawn_4(game: &mut Game) -> uint8 {
@@ -9032,7 +9032,7 @@ pub unsafe fn FireSba(game: &mut Game) -> uint8 {
     }
     return rv;
 }
-pub unsafe fn FireSba_ClearCarry(game: &mut Game) -> uint8 {
+pub fn FireSba_ClearCarry(game: &mut Game) -> uint8 {
     return 0 as uint8;
 }
 pub unsafe fn FireSba_FireWave(game: &mut Game) -> uint8 {
@@ -13413,7 +13413,7 @@ pub unsafe fn Samus_UpdatePreviousPose(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xa22) as *mut uint16) =
         *((&raw mut game.g_ram as *mut uint8).offset(0xa1e) as *mut uint16);
 }
-pub unsafe fn ClearCarry() -> uint8 {
+pub fn ClearCarry() -> uint8 {
     return 0 as uint8;
 }
 pub unsafe fn SamusCode_00_LockSamus(game: &mut Game) -> uint8 {

@@ -2747,7 +2747,7 @@ pub unsafe fn ProcessTimer_CeresStart(game: &mut Game) -> uint8 {
         -(32765 as ::core::ffi::c_int) as uint16;
     return 0 as uint8;
 }
-pub unsafe fn ProcessTimer_Empty(game: &mut Game) -> uint8 {
+pub fn ProcessTimer_Empty(game: &mut Game) -> uint8 {
     return 0 as uint8;
 }
 pub unsafe fn ProcessTimer_MotherBrainStart(game: &mut Game) -> uint8 {
