@@ -10984,6 +10984,23 @@ source; peer PPU work is outside this replay. Unsafe functions -2 and Rust
 lines -2; other own counters unchanged. Prior holds and complete gameplay/
 render/audio remain open. Continue covered CPU cleanup.
 
+Post-map Waver descent collects Energy Tank (2026-10-19).
+From map-parlor-upper-exit990DX1395/Y162, left/run/shoot260, left80,
+neutral20 descend the diagonal room and collect PLMEED7 at112,672.
+At77105 health rises from19/99 to199/199 and message1 opens atX131/Y667.
+map-waver-left77139/71 (101.05s), observed native exit1, ends with that
+pickup message open, map1/station255, missiles1/10, equipment1004.
+This pickup is from normal controller inputs; no inventory/RAM mutation.
+Read-only failure-counter replay77139/71 (87.51s), observed native exit1,
+matches all71 ordered baseline failed frames exactly, rendering enabled.
+No new failures; source/residue delta0. Committed door-bit cleanup owns
+fmt/check, release, progress, contextual75665/71 and clean any%129712/0
+(149.79s). Inputs, probes, SRAM and ROM-derived data remain ignored.
+Next: dismiss the pickup message and reach Waver's lower exit to99BD,
+then continue item/boss coverage; held upper99BD ascent remains held.
+Complete credits/gameplay/hardware, audio/render, masked RAM and ownership
+remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
