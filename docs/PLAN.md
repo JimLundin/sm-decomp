@@ -18,6 +18,50 @@ both PPUs, inputs, APU, SNES and the custom player. Repaired checkpoint source:
 The repaired runs below resolve the substitution hold. Earlier independent
 results, including `7de53cc1`, describe the earlier codec.
 
+## Cleanup approach (2026-10-19)
+
+User priority: the amount of Rust, unsafe code and C promotion boilerplate
+requires a change in approach. This order replaces the older isolated
+"next function" cleanup suggestions below. Preserve the maintained Rust and
+oracle as the authorities; do not reconstruct or consult the former C.
+
+The inspected workspace has about 256,000 Rust lines, 83,800 lines containing
+`c_int` casts and 6,700 unsafe functions. Against the transpilation baseline,
+only about 8%, 7% and 3% have disappeared. There is no verified original-C
+line count here, so these are residue measurements, not a language size ratio.
+The 14,944-line enemy-projectile bank (`sm_86.rs`) alone contains 2,130 raw
+RAM-offset lines. One exact word-access pattern appears 1,892 times: 1,502
+indexed accesses, 348 scalar reads, 27 scalar writes and 15 borrowed places.
+Those forms need different treatment; a blanket cast deletion is unsuitable.
+
+Next implementation work:
+
+1. Establish a small byte-backed enemy-projectile state interface and replace
+   a repeated access pattern across the exercised subsystem in one focused
+   pass. Reuse existing named reads. Keep indices, aliases, unaligned words
+   and little-endian storage explicit; do not expose overlapping `&mut u16`
+   references or grow Game by hand-writing thousands of independent getters.
+   Start with scalar reads, then indexed slot fields and updates. Preserve
+   each read's position relative to callbacks and writes. Record actual
+   routine/branch hits and leave unexercised gameplay rewrites pending.
+2. Once values have known widths, remove promotion chains in coherent
+   arithmetic patterns. Specify signed comparisons, carry/borrow and the
+   exact point of 8/16-bit truncation before replacement. Check arithmetic
+   boundaries as well as the exercised movie scenarios.
+3. Consolidate repeated state transitions and instruction-handler families
+   behind their subsystem interface. Remove unsafe from routines when their
+   pointer operations and unsafe callees are gone. Keep necessary hardware
+   and FFI unsafe code confined to the code that owns those invariants.
+
+A focused change means one transformation or invariant, not one function.
+Include shared definitions in the before/after count: removing caller
+boilerplate must pay for what replaces it. Track net source deletion, raw
+accesses, promotion casts, unsafe operations and edit/build/result time.
+Macros may express repeated field definitions; hiding operations in a macro,
+renaming `c_int`, changing formatting or moving unsafe into blocks is not
+semantic cleanup. No new cleanup framework, generated mirror or evidence
+store. Keep temporary transformation/check scripts outside maintained code.
+
 ## Validation strategy (2026-10-19)
 
 User priority: shorten the complete edit/build/result cycle. Replaying the
@@ -14556,7 +14600,7 @@ Cargo fmt/check, release build with the installed external SDL2 library, and
 progress pass. This change modifies only the build script and this plan;
 all own Rust residue counters are unchanged.
 
-1. **Run it once â€” done.** Put the ROM in `rom/sm.smc`, run
+1. **Run it once — done.** Put the ROM in `rom/sm.smc`, run
    `cargo run --release -- rom/sm.smc` from the repo root, play a minute and
    confirm no `Verify failure!` lines. Linux or WSL first. If anything
    differs from what snesrev's C build did, that is a transpile bug: fix it
@@ -14605,21 +14649,21 @@ all own Rust residue counters are unchanged.
    Linux full any% also passes: 129,712 frames, zero failures, 216.62 seconds.
    Final-source smoke and any% passed; low% and 100% repeats are still running:
    https://github.com/JimLundin/sm-decomp/actions/runs/39060756294.
-2. **Headless verify mode â€” done.** Add `sm verify <rom> <inputs> [--frames N]`:
+2. **Headless verify mode — done.** Add `sm verify <rom> <inputs> [--frames N]`:
    no window, no audio, unthrottled, `RM_BOTH`. It feeds one recorded
    controller word per game frame through the same path as `RtlRunFrame`,
    counts failing frames, prints the first one with the differing RAM
    addresses (named via `ram_map`), and exits non-zero on any failure.
    Implemented in `sm/src/verify.rs`, also shared by the Windows DLL host.
    Local DLL smoke: 3,600 frames, zero mismatches, 4.69 seconds.
-3. **Inputs â€” done.** Restore movie import (`.lsmv` and `.bk2` to one `u16` per
+3. **Inputs — done.** Restore movie import (`.lsmv` and `.bk2` to one `u16` per
    frame) from `crates/movie` in the archive branch, as a module or a small
    `tools/` binary. The TAS will not stay in sync with snesrev's frame loop
    (lag frames differ), and that is fine: the comparison is still valid on
    whatever the inputs make the game do. Sync only affects coverage. Fix sync
    later if coverage stalls.
    Implemented in `tools/movie_inputs.py`; all three movies imported.
-4. **Baseline â€” done.** Record the failing-frame count for the any%, low% and 100%
+4. **Baseline — done.** Record the failing-frame count for the any%, low% and 100%
    movies on `main` in this file. Target: zero, apart from known snesrev
    mismatches, which get listed here with their frame and cause.
    Baselines on main (2026-10-17):
@@ -14635,7 +14679,7 @@ all own Rust residue counters are unchanged.
    and 100% at `21c8a165` (618.18s / 373.15s). The final Actions matrix above
    reruns all three on `f2569067`; its full any% passed in 216.62s.
    No known mismatches in these replays.
-5. **Speed â€” done.** A full any% verify should finish in a few minutes. If it is
+5. **Speed — done.** A full any% verify should finish in a few minutes. If it is
    slower, profile the snapshot and compare path before anything else.
    Local full any% takes about three minutes; all movies run concurrently.
 
@@ -14644,7 +14688,7 @@ all own Rust residue counters are unchanged.
 Mechanical refactors, each verified with the phase 1 run. Order matters:
 every step makes the next one easier.
 
-1. **Shared types â€” done.** Repeated C structs and typedefs now have one
+1. **Shared types — done.** Repeated C structs and typedefs now have one
    definition in `types.rs`; copies are public re-exports.
    Preparation while phase 1 runs: the first mechanical batch can consolidate
    `LongPtr` (22 identical copies), `OamEnt` (7), and `VramWriteEntry` (18)
@@ -14703,7 +14747,7 @@ every step makes the next one easier.
    these dependencies explicitly in a later hardware-type batch. Remaining
    batches: aliases, gameplay data, hardware/music closure, runtime/platform
    types, then a duplicate inventory before marking this item done.
-2. **Rust linkage â€” done.** Replace `extern "C" { fn Foo(); }` declarations with `use` of the real
+2. **Rust linkage — done.** Replace `extern "C" { fn Foo(); }` declarations with `use` of the real
    function. Then drop `#[no_mangle]` and `extern "C"` from Rust-to-Rust
    functions. Keep the C ABI only at the SDL boundary.
    After shared types, pilot the three `snes/input.rs` exports and their sole
@@ -14744,7 +14788,7 @@ every step makes the next one easier.
    -> 261,547; other counters unchanged. Final-source Linux validation
    passed on `bd036cd8`: format, release build, smoke and full any% all pass.
    https://github.com/JimLundin/sm-decomp/actions/runs/39066700833.
-3. **Crate bindings and stable â€” done.** Handwritten SDL/OpenGL FFI replaced
+3. **Crate bindings and stable — done.** Handwritten SDL/OpenGL FFI replaced
    with crate bindings; `extern_types` dropped and toolchain moved to stable.
    SDL batch applied: handwritten functions/events now use `sdl2-sys` 0.38;
    integer config domains retain exact values, SDL enums adapted at boundary.
@@ -18847,11 +18891,11 @@ probe resolves movie coverage; prioritize normal-input coverage or oracle gaps.
 Pick a subsystem (Samus movement, an enemy, PLMs, doors, HUD...), make it
 idiomatic, run verify, commit. Typical moves:
 
-- Raw `g_ram` offsets â†’ named accessors generated from `ram_map.rs`
+- Raw `g_ram` offsets → named accessors generated from `ram_map.rs`
   (`ram.samus_x_pos()`, `ram.enemy(k).y_pos`), still backed by `g_ram`.
-- `as ::core::ffi::c_int` chains â†’ the actual unsigned/signed 8/16-bit
+- `as ::core::ffi::c_int` chains → the actual unsigned/signed 8/16-bit
   arithmetic, with `wrapping_*` where the SNES wraps.
-- Function pointer tables and `switch` dispatch â†’ `match` and enums.
+- Function pointer tables and `switch` dispatch → `match` and enums.
 - Remove `unsafe` once a function no longer touches raw pointers.
 
 The hand-written Rust in the archive (`restart/`, `crates/port`,
