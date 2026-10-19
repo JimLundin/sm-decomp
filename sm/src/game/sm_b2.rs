@@ -197,8 +197,10 @@ pub unsafe fn WalkingSpacePirates_87C8(game: &mut Game) {
         .enemy_ptr as ::core::ffi::c_int
         == addr_kEnemyDef_F593 as ::core::ffi::c_int)
     {
-        r18 = *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
-            .offset(ram_word!(game, collision_detection_index) as isize);
+        r18 = ram_word!(
+            game,
+            projectile_type[ram_word!(game, collision_detection_index)]
+        );
         if (r18 as ::core::ffi::c_int & kProjectileType_TypeMask as ::core::ffi::c_int)
             - kProjectileType_PowerBomb as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
@@ -280,14 +282,11 @@ pub unsafe fn WalkingSpacePirates_883E(game: &mut Game) {
     }
     let v0: uint16 = (2u16).wrapping_mul(ram_word!(game, collision_detection_index));
     let v1: ::core::ffi::c_int = ram_word!(game, collision_detection_index) as ::core::ffi::c_int;
-    let r18: uint16 =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(v1 as isize);
+    let r18: uint16 = ram_word!(game, projectile_type[v1]);
     if r18 as ::core::ffi::c_int & kProjectileType_TypeMask as ::core::ffi::c_int
         == kProjectileType_SuperMissile as ::core::ffi::c_int
     {
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xc7c) as *mut uint16).offset(v1 as isize)
-            == 0
-        {
+        if ram_word!(game, projectile_variables[v1]) == 0 {
             return;
         }
     } else if (r18 as ::core::ffi::c_int & kProjectileType_TypeMask as ::core::ffi::c_int)
@@ -301,14 +300,11 @@ pub unsafe fn WalkingSpacePirates_883E(game: &mut Game) {
         .base
         .invincibility_timer = 10 as uint16;
     let mut v2: uint16 = 0;
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16).offset(v1 as isize)
-        as ::core::ffi::c_int
-        & 0xf as ::core::ffi::c_int)
+    if (ram_word!(game, projectile_dir[v1]) as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
         == 7i32
     {
         v2 = 1 as uint16;
-    } else if (*((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16)
-        .offset(v1 as isize) as ::core::ffi::c_int
+    } else if (ram_word!(game, projectile_dir[v1]) as ::core::ffi::c_int
         & 0xf as ::core::ffi::c_int)
         == 2i32
     {
@@ -316,7 +312,7 @@ pub unsafe fn WalkingSpacePirates_883E(game: &mut Game) {
     } else {
         v2 = 5 as uint16;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16).offset(v1 as isize) = v2;
+    set_ram_word!(game.projectile_dir[v1] = v2);
     ProjectileReflection(v0, game);
     QueueSfx2_Max6(0x66 as uint16, game);
 }
@@ -834,10 +830,7 @@ pub unsafe fn SpacePirates_Func_7(k: uint16, game: &mut Game) {
 }
 pub unsafe fn SpacePirates_Func_8(game: &mut Game) -> uint16 {
     let mut v0: uint16 = 8 as uint16;
-    while *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
-        .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-        == 0
-    {
+    while ram_word!(game, projectile_type[(v0 as i32 >> 1i32)]) == 0 {
         v0 = (v0).wrapping_sub(2u16);
         if (v0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
             return 0 as uint16;
@@ -846,17 +839,10 @@ pub unsafe fn SpacePirates_Func_8(game: &mut Game) -> uint16 {
     let v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let E: *mut Enemy_SpacePirates =
         Get_SpacePirates(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
-    if ((abs16(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v1 as isize))
-            .wrapping_sub((*E).base.x_pos),
-    )) as i16)
+    if ((abs16((ram_word!(game, projectile_x_pos[v1])).wrapping_sub((*E).base.x_pos))) as i16)
         .wrapping_sub(32i16)
         >= 0i16
-        || ((abs16(
-            (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
-                .offset(v1 as isize))
-            .wrapping_sub((*E).base.y_pos),
-        )) as i16)
+        || ((abs16((ram_word!(game, projectile_y_pos[v1])).wrapping_sub((*E).base.y_pos))) as i16)
             .wrapping_sub(32i16)
             >= 0i16
     {
@@ -1354,10 +1340,7 @@ pub unsafe fn WalkingSpacePirates_FDCE(game: &mut Game) {
 }
 pub unsafe fn WalkingSpacePirates_FE4B(game: &mut Game) {
     let mut v0: uint16 = 8 as uint16;
-    while *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
-        .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-        == 0
-    {
+    while ram_word!(game, projectile_type[(v0 as i32 >> 1i32)]) == 0 {
         v0 = (v0).wrapping_sub(2u16);
         if (v0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
             return;
@@ -1366,17 +1349,10 @@ pub unsafe fn WalkingSpacePirates_FE4B(game: &mut Game) {
     let v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let E: *mut Enemy_SpacePirates =
         Get_SpacePirates(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
-    if ((abs16(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v1 as isize))
-            .wrapping_sub((*E).base.x_pos),
-    )) as i16)
+    if ((abs16((ram_word!(game, projectile_x_pos[v1])).wrapping_sub((*E).base.x_pos))) as i16)
         .wrapping_sub(32i16)
         < 0i16
-        && ((abs16(
-            (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
-                .offset(v1 as isize))
-            .wrapping_sub((*E).base.y_pos),
-        )) as i16)
+        && ((abs16((ram_word!(game, projectile_y_pos[v1])).wrapping_sub((*E).base.y_pos))) as i16)
             .wrapping_sub(32i16)
             < 0i16
     {

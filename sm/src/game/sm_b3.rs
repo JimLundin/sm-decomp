@@ -17,7 +17,7 @@ use crate::game::sm_a0::{
 };
 use crate::game::sm_b4::CreateSpriteAtPos;
 use crate::game_state::Game;
-use crate::ram_map::ram_word;
+use crate::ram_map::{ram_word, set_ram_word};
 use crate::rtl::abs16;
 use crate::rtl::AddToHiLo;
 use crate::rtl::{RomPtr, Unreachable};
@@ -1218,8 +1218,7 @@ pub unsafe fn Botwoon_Func_5(game: &mut Game) {
         let ref mut fresh4 = *((&raw mut game.g_ram as *mut uint8).offset(0x1bd7) as *mut uint16)
             .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
         *fresh4 = (*fresh4) | (0x2000u16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xf380) as *mut uint16)
-            .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 2 as uint16;
+        set_ram_word!(game.eproj_flags[(v0 as i32 >> 1i32)] = 2 as uint16);
         v0 = (v0).wrapping_sub(2u16);
         if (((v0) as i16).wrapping_sub(10i16) < 0i16) {
             break;
@@ -1243,11 +1242,12 @@ pub unsafe fn Botwoon_HealthBasedPalHandling(game: &mut Game) {
         loop {
             let fresh5 = r18;
             r18 = r18.wrapping_add(1);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
-                .offset((r20 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0xb3971b)) as *const uint8
-                    as *mut uint16)
-                    .offset((fresh5 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+            set_ram_word!(
+                game.palette_buffer[(r20 as i32 >> 1i32)] =
+                    *(game.g_rom.offset(crate::rtl::lorom_offset(0xb3971b)) as *const uint8
+                        as *mut uint16)
+                        .offset((fresh5 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
+            );
             r18 = r18.wrapping_add(1);
             r20 = (r20).wrapping_add(2u16);
             if (r20 == 512u16) {
@@ -1627,12 +1627,16 @@ pub unsafe fn Botwoon_Func_23(game: &mut Game) {
             }
         }
         let v7: ::core::ffi::c_int = botwoo_var_00 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v7 as isize) =
-            *(((&raw mut game.g_ram as *mut uint8).offset(0x9000) as *mut uint16 as *mut uint8)
-                .offset(r18 as ::core::ffi::c_int as isize) as *mut uint16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v7 as isize) =
-            *(((&raw mut game.g_ram as *mut uint8).offset(0x9002) as *mut uint16 as *mut uint8)
-                .offset(r18 as ::core::ffi::c_int as isize) as *mut uint16);
+        set_ram_word!(
+            game.eproj_x_pos[v7] =
+                *(((&raw mut game.g_ram as *mut uint8).offset(0x9000) as *mut uint16 as *mut uint8)
+                    .offset(r18 as ::core::ffi::c_int as isize) as *mut uint16)
+        );
+        set_ram_word!(
+            game.eproj_y_pos[v7] =
+                *(((&raw mut game.g_ram as *mut uint8).offset(0x9002) as *mut uint16 as *mut uint8)
+                    .offset(r18 as ::core::ffi::c_int as isize) as *mut uint16)
+        );
         r18 = (r18 as ::core::ffi::c_int - (*E).botwoon_var_C as ::core::ffi::c_int
             & 0x3ff as ::core::ffi::c_int) as uint16;
         n -= 2 as ::core::ffi::c_int;
@@ -1663,38 +1667,25 @@ pub unsafe fn Botwoon_Func_25(game: &mut Game) {
         if n == 24i32 {
             let v4: ::core::ffi::c_int =
                 botwoo_var_00 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-            x = ((*E).base.x_pos).wrapping_sub(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
-                    .offset(v4 as isize),
-            );
-            y = ((*E).base.y_pos).wrapping_sub(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
-                    .offset(v4 as isize),
-            );
+            x = ((*E).base.x_pos).wrapping_sub(ram_word!(game, eproj_x_pos[v4]));
+            y = ((*E).base.y_pos).wrapping_sub(ram_word!(game, eproj_y_pos[v4]));
         } else {
             if n == 0 {
                 r24 = (r24).wrapping_add(512u16);
             }
             let v2: ::core::ffi::c_int =
                 botwoo_var_00 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-            x = (*((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
-                .offset((v2 + 1 as ::core::ffi::c_int) as isize))
-            .wrapping_sub(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
-                    .offset(v2 as isize),
-            );
-            y = (*((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
-                .offset((v2 + 1 as ::core::ffi::c_int) as isize))
-            .wrapping_sub(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
-                    .offset(v2 as isize),
-            );
+            x = (ram_word!(game, eproj_x_pos[(v2 + 1i32)]))
+                .wrapping_sub(ram_word!(game, eproj_x_pos[v2]));
+            y = (ram_word!(game, eproj_y_pos[(v2 + 1i32)]))
+                .wrapping_sub(ram_word!(game, eproj_y_pos[v2]));
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16)
-            .offset((botwoo_var_00 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-            (2 as ::core::ffi::c_int
+        set_ram_word!(
+            game.eproj_E[(botwoo_var_00 as i32 >> 1i32)] = (2 as ::core::ffi::c_int
                 * (((r24).wrapping_add(CalculateAngleFromXY(x, y, game))) as ::core::ffi::c_int
-                    >> 5 as ::core::ffi::c_int)) as uint16;
+                    >> 5 as ::core::ffi::c_int))
+                as uint16
+        );
         n -= 2 as ::core::ffi::c_int;
         if (n < 0i32) {
             break;

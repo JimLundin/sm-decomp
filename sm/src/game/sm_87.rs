@@ -53,37 +53,28 @@ pub unsafe fn DisableAnimtiles(game: &mut Game) {
 pub unsafe fn ClearAnimtiles(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 10 as ::core::ffi::c_int;
     while i >= 0i32 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1ef5) as *mut uint16)
-            .offset((i >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
+        set_ram_word!(game.animtiles_ids[(i >> 1i32)] = 0 as uint16);
         i -= 2 as ::core::ffi::c_int;
     }
 }
 pub unsafe fn SpawnAnimtiles(j: uint16, game: &mut Game) {
     let v0: uint16 = j;
     let mut v1: uint16 = 10 as uint16;
-    while *((&raw mut game.g_ram as *mut uint8).offset(0x1ef5) as *mut uint16)
-        .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-        != 0
-    {
+    while ram_word!(game, animtiles_ids[(v1 as i32 >> 1i32)]) != 0 {
         v1 = (v1).wrapping_sub(2u16);
         if (v1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
             return;
         }
     }
     let v2: ::core::ffi::c_int = v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1ef5) as *mut uint16).offset(v2 as isize) = v0;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1f01) as *mut uint16).offset(v2 as isize) =
-        0 as uint16;
+    set_ram_word!(game.animtiles_ids[v2] = v0);
+    set_ram_word!(game.animtiles_timers[v2] = 0 as uint16);
     let v3: *const uint16 = RomPtr_87(v0, game) as *const uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1f0d) as *mut uint16).offset(v2 as isize) = *v3;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1f25) as *mut uint16).offset(v2 as isize) =
-        0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1f31) as *mut uint16).offset(v2 as isize) =
-        *v3.offset(1);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1f3d) as *mut uint16).offset(v2 as isize) =
-        *v3.offset(2);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1f19) as *mut uint16).offset(v2 as isize) =
-        1 as uint16;
+    set_ram_word!(game.animtiles_instr_list_ptrs[v2] = *v3);
+    set_ram_word!(game.animtiles_src_ptr[v2] = 0 as uint16);
+    set_ram_word!(game.animtiles_sizes[v2] = *v3.offset(1));
+    set_ram_word!(game.animtiles_vram_ptr[v2] = *v3.offset(2));
+    set_ram_word!(game.animtiles_instr_timers[v2] = 1 as uint16);
 }
 pub unsafe fn AnimtilesHandler(game: &mut Game) {
     if (ram_word!(game, animtiles_enable_flag) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int)
@@ -92,10 +83,7 @@ pub unsafe fn AnimtilesHandler(game: &mut Game) {
         let mut i: ::core::ffi::c_int = 10 as ::core::ffi::c_int;
         while i >= 0i32 {
             set_ram_word!(game.animtiles_object_index = i as uint16);
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x1ef5) as *mut uint16)
-                .offset((i >> 1 as ::core::ffi::c_int) as isize)
-                != 0
-            {
+            if ram_word!(game, animtiles_ids[(i >> 1i32)]) != 0 {
                 ProcessAnimtilesObject(game);
                 i = ram_word!(game, animtiles_object_index) as ::core::ffi::c_int;
             }
@@ -141,8 +129,7 @@ pub unsafe fn ProcessAnimtilesObject(game: &mut Game) {
     let fresh7 = *fresh6;
     *fresh6 = (*fresh6).wrapping_sub(1);
     if fresh7 == 1u16 {
-        let mut v3: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x1f0d) as *mut uint16)
-            .offset(v1 as isize);
+        let mut v3: uint16 = ram_word!(game, animtiles_instr_list_ptrs[v1]);
         let mut v5: uint16 = 0;
         loop {
             let v4: *const uint16 = RomPtr_87(v3, game) as *const uint16;
@@ -162,17 +149,13 @@ pub unsafe fn ProcessAnimtilesObject(game: &mut Game) {
             }
         }
         let v6: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1f19) as *mut uint16).offset(v6 as isize) =
-            v5;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1f25) as *mut uint16).offset(v6 as isize) =
-            *(RomPtr_87(v3, game) as *mut uint16).offset(1);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1f0d) as *mut uint16).offset(v6 as isize) =
-            (v3).wrapping_add(4u16);
+        set_ram_word!(game.animtiles_instr_timers[v6] = v5);
+        set_ram_word!(game.animtiles_src_ptr[v6] = *(RomPtr_87(v3, game) as *mut uint16).offset(1));
+        set_ram_word!(game.animtiles_instr_list_ptrs[v6] = (v3).wrapping_add(4u16));
     }
 }
 pub unsafe fn AnimtilesInstr_Delete(k: uint16, j: uint16, game: &mut Game) -> uint16 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1ef5) as *mut uint16)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
+    set_ram_word!(game.animtiles_ids[(k as i32 >> 1i32)] = 0 as uint16);
     0 as uint16
 }
 pub unsafe fn AnimtilesInstr_Goto(k: uint16, j: uint16, game: &mut Game) -> uint16 {
@@ -284,8 +267,7 @@ pub unsafe fn AnimtilesInstr_WaitUntilAreaBossDead_DoubleRet(
     if CheckBossBitForCurArea(1 as uint16, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
         == 0
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1f19) as *mut uint16)
-            .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 1 as uint16;
+        set_ram_word!(game.animtiles_instr_timers[(k as i32 >> 1i32)] = 1 as uint16);
         return 0 as uint16;
     }
     j
@@ -362,12 +344,9 @@ pub unsafe fn AnimtilesInstr_TourianStatueClearState(
 pub unsafe fn AnimtilesInstr_Clear3PaletteColors(k: uint16, j: uint16, game: &mut Game) -> uint16 {
     let v2: ::core::ffi::c_int =
         *(RomPtr_87(j, game) as *mut uint16) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(v2 as isize) =
-        0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
-        .offset((v2 + 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
-        .offset((v2 + 2 as ::core::ffi::c_int) as isize) = 0 as uint16;
+    set_ram_word!(game.palette_buffer[v2] = 0 as uint16);
+    set_ram_word!(game.palette_buffer[(v2 + 1i32)] = 0 as uint16);
+    set_ram_word!(game.palette_buffer[(v2 + 2i32)] = 0 as uint16);
     (j).wrapping_add(2u16)
 }
 pub unsafe fn AnimtilesInstr_SpawnPalfxObj(k: uint16, j: uint16, game: &mut Game) -> uint16 {
@@ -382,9 +361,10 @@ pub unsafe fn AnimtilesInstr_Write8PaletteColors(k: uint16, j: uint16, game: &mu
     let mut v2: uint16 = *(RomPtr_87(j, game) as *mut uint16);
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i != 16i32 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-            .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-            kAnimtilesInstr_Write8PaletteColors[(i >> 1 as ::core::ffi::c_int) as usize];
+        set_ram_word!(
+            game.target_palettes[(v2 as i32 >> 1i32)] =
+                kAnimtilesInstr_Write8PaletteColors[(i >> 1 as ::core::ffi::c_int) as usize]
+        );
         v2 = (v2).wrapping_add(2u16);
         i += 2 as ::core::ffi::c_int;
     }

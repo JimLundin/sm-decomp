@@ -263,16 +263,17 @@ pub unsafe fn Draygon_Init(game: &mut Game) {
     let mut j: uint16 = 0;
     let mut i: ::core::ffi::c_int = 48 as ::core::ffi::c_int;
     while i >= 0i32 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-            .offset(((i >> 1 as ::core::ffi::c_int) + 144 as ::core::ffi::c_int) as isize) =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5a217)) as *const uint8 as *mut uint16)
-                .offset((i >> 1 as ::core::ffi::c_int) as isize);
+        set_ram_word!(
+            game.target_palettes[((i >> 1i32) + 144i32)] =
+                *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5a217)) as *const uint8
+                    as *mut uint16)
+                    .offset((i >> 1 as ::core::ffi::c_int) as isize)
+        );
         i -= 2 as ::core::ffi::c_int;
     }
     j = 4094 as uint16;
     while (j as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-            .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 824 as uint16;
+        set_ram_word!(game.tilemap_stuff[(j as i32 >> 1i32)] = 824 as uint16);
         j = (j).wrapping_sub(2u16);
     }
     (*Get_Draygon(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
@@ -1495,11 +1496,12 @@ pub unsafe fn Draygon_Hurt(game: &mut Game) {
             (4u16).wrapping_mul((*Get_Draygon(0 as ::core::ffi::c_int, game)).draygon_var_0E);
         let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
         while i != 8i32 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
-                .offset(((i >> 1 as ::core::ffi::c_int) + 89 as ::core::ffi::c_int) as isize) =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0xa596af)) as *const uint8
-                    as *mut uint16)
-                    .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+            set_ram_word!(
+                game.palette_buffer[((i >> 1i32) + 89i32)] =
+                    *(game.g_rom.offset(crate::rtl::lorom_offset(0xa596af)) as *const uint8
+                        as *mut uint16)
+                        .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
+            );
             v3 = (v3).wrapping_add(2u16);
             i += 2 as ::core::ffi::c_int;
         }
@@ -1796,8 +1798,7 @@ pub unsafe fn Draygon_Func_42(varE24: uint16, game: &mut Game) {
                     as uint32,
             );
         }
-        let v8: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xf278) as *mut uint16)
-            .offset(v3 as isize);
+        let v8: uint16 = ram_word!(game, sprite_y_subpos[v3]);
         if (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa5a1df)) as *const uint8 as *mut uint16)
             .offset(v2 as isize) as ::core::ffi::c_int
             + 128 as ::core::ffi::c_int
@@ -1834,8 +1835,7 @@ pub unsafe fn Draygon_Func_43(game: &mut Game) {
     let mut j: int16 = 0;
     let mut i: ::core::ffi::c_int = 62 as ::core::ffi::c_int;
     while i >= 0i32 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xef78) as *mut uint16)
-            .offset((i >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
+        set_ram_word!(game.sprite_instr_list_ptrs[(i >> 1i32)] = 0 as uint16);
         i -= 2 as ::core::ffi::c_int;
     }
     v1 = 2 as int16;
@@ -1876,8 +1876,7 @@ pub unsafe fn Draygon_Func_43(game: &mut Game) {
 pub unsafe fn Draygon_Func_44(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 62 as ::core::ffi::c_int;
     while i >= 0i32 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xef78) as *mut uint16)
-            .offset((i >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
+        set_ram_word!(game.sprite_instr_list_ptrs[(i >> 1i32)] = 0 as uint16);
         i -= 2 as ::core::ffi::c_int;
     }
 }
@@ -1930,9 +1929,7 @@ pub unsafe fn Draygon_Func_46(game: &mut Game) {
                 .offset(v1 as isize) as *mut uint8 as *mut uint16)
                 == 0x8080u16
             {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xef78) as *mut uint16)
-                    .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-                    0 as uint16;
+                set_ram_word!(game.sprite_instr_list_ptrs[(v0 as i32 >> 1i32)] = 0 as uint16);
             } else {
                 let v3: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
                 let ref mut fresh1 = *((&raw mut game.g_ram as *mut uint8).offset(0xf0f8)
@@ -2179,26 +2176,32 @@ pub unsafe fn Draygon_Instr_29(k: uint16, jp: *const uint16, game: &mut Game) ->
     let v2: uint16 = *jp.offset(0);
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i != 32i32 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
-            .offset(((i >> 1 as ::core::ffi::c_int) + 144 as ::core::ffi::c_int) as isize) =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5e3f9)) as *const uint8 as *mut uint16)
-                .offset((v2 as ::core::ffi::c_int + i >> 1 as ::core::ffi::c_int) as isize);
+        set_ram_word!(
+            game.palette_buffer[((i >> 1i32) + 144i32)] =
+                *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5e3f9)) as *const uint8
+                    as *mut uint16)
+                    .offset((v2 as ::core::ffi::c_int + i >> 1 as ::core::ffi::c_int) as isize)
+        );
         i += 2 as ::core::ffi::c_int;
     }
     let mut i_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i_0 != 32i32 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
-            .offset(((i_0 >> 1 as ::core::ffi::c_int) + 64 as ::core::ffi::c_int) as isize) =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5e4f9)) as *const uint8 as *mut uint16)
-                .offset((v2 as ::core::ffi::c_int + i_0 >> 1 as ::core::ffi::c_int) as isize);
+        set_ram_word!(
+            game.palette_buffer[((i_0 >> 1i32) + 64i32)] =
+                *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5e4f9)) as *const uint8
+                    as *mut uint16)
+                    .offset((v2 as ::core::ffi::c_int + i_0 >> 1 as ::core::ffi::c_int) as isize)
+        );
         i_0 += 2 as ::core::ffi::c_int;
     }
     let mut i_1: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i_1 != 32i32 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
-            .offset(((i_1 >> 1 as ::core::ffi::c_int) + 112 as ::core::ffi::c_int) as isize) =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5e5d9)) as *const uint8 as *mut uint16)
-                .offset((v2 as ::core::ffi::c_int + i_1 >> 1 as ::core::ffi::c_int) as isize);
+        set_ram_word!(
+            game.palette_buffer[((i_1 >> 1i32) + 112i32)] =
+                *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5e5d9)) as *const uint8
+                    as *mut uint16)
+                    .offset((v2 as ::core::ffi::c_int + i_1 >> 1 as ::core::ffi::c_int) as isize)
+        );
         i_1 += 2 as ::core::ffi::c_int;
     }
     jp.offset(1)
@@ -2207,26 +2210,32 @@ pub unsafe fn Draygon_Instr_19(k: uint16, jp: *const uint16, game: &mut Game) ->
     let v2: uint16 = *jp.offset(0);
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i != 32i32 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-            .offset(((i >> 1 as ::core::ffi::c_int) + 144 as ::core::ffi::c_int) as isize) =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5e3f9)) as *const uint8 as *mut uint16)
-                .offset((v2 as ::core::ffi::c_int + i >> 1 as ::core::ffi::c_int) as isize);
+        set_ram_word!(
+            game.target_palettes[((i >> 1i32) + 144i32)] =
+                *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5e3f9)) as *const uint8
+                    as *mut uint16)
+                    .offset((v2 as ::core::ffi::c_int + i >> 1 as ::core::ffi::c_int) as isize)
+        );
         i += 2 as ::core::ffi::c_int;
     }
     let mut i_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i_0 != 32i32 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-            .offset(((i_0 >> 1 as ::core::ffi::c_int) + 64 as ::core::ffi::c_int) as isize) =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5e4f9)) as *const uint8 as *mut uint16)
-                .offset((v2 as ::core::ffi::c_int + i_0 >> 1 as ::core::ffi::c_int) as isize);
+        set_ram_word!(
+            game.target_palettes[((i_0 >> 1i32) + 64i32)] =
+                *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5e4f9)) as *const uint8
+                    as *mut uint16)
+                    .offset((v2 as ::core::ffi::c_int + i_0 >> 1 as ::core::ffi::c_int) as isize)
+        );
         i_0 += 2 as ::core::ffi::c_int;
     }
     let mut i_1: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i_1 != 32i32 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-            .offset(((i_1 >> 1 as ::core::ffi::c_int) + 112 as ::core::ffi::c_int) as isize) =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5e5d9)) as *const uint8 as *mut uint16)
-                .offset((v2 as ::core::ffi::c_int + i_1 >> 1 as ::core::ffi::c_int) as isize);
+        set_ram_word!(
+            game.target_palettes[((i_1 >> 1i32) + 112i32)] =
+                *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5e5d9)) as *const uint8
+                    as *mut uint16)
+                    .offset((v2 as ::core::ffi::c_int + i_1 >> 1 as ::core::ffi::c_int) as isize)
+        );
         i_1 += 2 as ::core::ffi::c_int;
     }
     jp.offset(1)
@@ -2279,10 +2288,12 @@ pub unsafe fn SporeSpawn_Init(game: &mut Game) {
     let mut v0: uint16 = 0 as uint16;
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i != 32i32 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-            .offset(((i >> 1 as ::core::ffi::c_int) + 240 as ::core::ffi::c_int) as isize) =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5e359)) as *const uint8 as *mut uint16)
-                .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+        set_ram_word!(
+            game.target_palettes[((i >> 1i32) + 240i32)] =
+                *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5e359)) as *const uint8
+                    as *mut uint16)
+                    .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
+        );
         v0 = (v0).wrapping_add(2u16);
         i += 2 as ::core::ffi::c_int;
     }
@@ -2457,17 +2468,15 @@ pub unsafe fn SporeSpawn_Func_5(game: &mut Game) {
         r20 = (v1 as ::core::ffi::c_int >> 2 as ::core::ffi::c_int) as uint16;
         r22 = ((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
             + (v1 as ::core::ffi::c_int >> 2 as ::core::ffi::c_int)) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(14) =
-            128 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(15) =
-            ((*E).ssn_var_04 as ::core::ffi::c_int
-                + (v1 as ::core::ffi::c_int >> 2 as ::core::ffi::c_int)) as uint16;
-        (*E).ssn_var_20 =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(15);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(16) =
-            ((*E).ssn_var_04).wrapping_add(r18);
-        (*E).ssn_var_21 =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(16);
+        set_ram_word!(game.eproj_x_pos[14] = 128 as uint16);
+        set_ram_word!(
+            game.eproj_x_pos[15] = ((*E).ssn_var_04 as ::core::ffi::c_int
+                + (v1 as ::core::ffi::c_int >> 2 as ::core::ffi::c_int))
+                as uint16
+        );
+        (*E).ssn_var_20 = ram_word!(game, eproj_x_pos[15]);
+        set_ram_word!(game.eproj_x_pos[16] = ((*E).ssn_var_04).wrapping_add(r18));
+        (*E).ssn_var_21 = ram_word!(game, eproj_x_pos[16]);
         v2 = ((*E).ssn_var_04).wrapping_add(r22);
     } else {
         r18 = ((((*E).ssn_var_04).wrapping_sub((*E).base.x_pos)) as ::core::ffi::c_int
@@ -2475,19 +2484,14 @@ pub unsafe fn SporeSpawn_Func_5(game: &mut Game) {
         r20 = (-(v1 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
             >> 2 as ::core::ffi::c_int) as uint16;
         r22 = (r18).wrapping_add(r20);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(14) =
-            128 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(15) =
-            ((*E).ssn_var_04).wrapping_sub(r20);
-        (*E).ssn_var_20 =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(15);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(16) =
-            ((*E).ssn_var_04).wrapping_sub(r18);
-        (*E).ssn_var_21 =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(16);
+        set_ram_word!(game.eproj_x_pos[14] = 128 as uint16);
+        set_ram_word!(game.eproj_x_pos[15] = ((*E).ssn_var_04).wrapping_sub(r20));
+        (*E).ssn_var_20 = ram_word!(game, eproj_x_pos[15]);
+        set_ram_word!(game.eproj_x_pos[16] = ((*E).ssn_var_04).wrapping_sub(r18));
+        (*E).ssn_var_21 = ram_word!(game, eproj_x_pos[16]);
         v2 = ((*E).ssn_var_04).wrapping_sub(r22);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(17) = v2;
+    set_ram_word!(game.eproj_x_pos[17] = v2);
     (*E).ssn_var_22 = v2;
     let v3: uint16 = ((*E).base.y_pos as ::core::ffi::c_int
         - 40 as ::core::ffi::c_int
@@ -2498,17 +2502,15 @@ pub unsafe fn SporeSpawn_Func_5(game: &mut Game) {
         r20 = (v3 as ::core::ffi::c_int >> 2 as ::core::ffi::c_int) as uint16;
         r22 = ((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
             + (v3 as ::core::ffi::c_int >> 2 as ::core::ffi::c_int)) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(14) =
-            560 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(15) =
-            ((*E).ssn_var_05 as ::core::ffi::c_int
-                + (v3 as ::core::ffi::c_int >> 2 as ::core::ffi::c_int)) as uint16;
-        (*E).ssn_var_23 =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(15);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(16) =
-            ((*E).ssn_var_05).wrapping_add(r18);
-        (*E).ssn_var_24 =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(16);
+        set_ram_word!(game.eproj_y_pos[14] = 560 as uint16);
+        set_ram_word!(
+            game.eproj_y_pos[15] = ((*E).ssn_var_05 as ::core::ffi::c_int
+                + (v3 as ::core::ffi::c_int >> 2 as ::core::ffi::c_int))
+                as uint16
+        );
+        (*E).ssn_var_23 = ram_word!(game, eproj_y_pos[15]);
+        set_ram_word!(game.eproj_y_pos[16] = ((*E).ssn_var_05).wrapping_add(r18));
+        (*E).ssn_var_24 = ram_word!(game, eproj_y_pos[16]);
         v4 = ((*E).ssn_var_05).wrapping_add(r22);
     } else {
         r18 = (((*E).ssn_var_05 as ::core::ffi::c_int
@@ -2518,26 +2520,23 @@ pub unsafe fn SporeSpawn_Func_5(game: &mut Game) {
         r20 = (-(v3 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
             >> 2 as ::core::ffi::c_int) as uint16;
         r22 = (r18).wrapping_add(r20);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(14) =
-            560 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(15) =
-            ((*E).ssn_var_05).wrapping_sub(r20);
-        (*E).ssn_var_23 =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(15);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(16) =
-            ((*E).ssn_var_05).wrapping_sub(r18);
-        (*E).ssn_var_24 =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(16);
+        set_ram_word!(game.eproj_y_pos[14] = 560 as uint16);
+        set_ram_word!(game.eproj_y_pos[15] = ((*E).ssn_var_05).wrapping_sub(r20));
+        (*E).ssn_var_23 = ram_word!(game, eproj_y_pos[15]);
+        set_ram_word!(game.eproj_y_pos[16] = ((*E).ssn_var_05).wrapping_sub(r18));
+        (*E).ssn_var_24 = ram_word!(game, eproj_y_pos[16]);
         v4 = ((*E).ssn_var_05).wrapping_sub(r22);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(17) = v4;
+    set_ram_word!(game.eproj_y_pos[17] = v4);
     (*E).ssn_var_25 = v4;
 }
 pub unsafe fn SporeSpawn_Shot(game: &mut Game) {
     let mut v4: int16 = 0;
     let mut v0: uint16 = (2u16).wrapping_mul(ram_word!(game, collision_detection_index));
-    let v1: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
-        .offset(ram_word!(game, collision_detection_index) as isize);
+    let v1: uint16 = ram_word!(
+        game,
+        projectile_type[ram_word!(game, collision_detection_index)]
+    );
     if (v1 as ::core::ffi::c_int & 0x700 as ::core::ffi::c_int) != 0i32
         || (v1 as ::core::ffi::c_int & 0x10 as ::core::ffi::c_int) != 0i32
     {
@@ -2637,10 +2636,12 @@ pub unsafe fn SporeSpawn_Func_7(a: uint16, game: &mut Game) {
     let mut v1: uint16 = a;
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i != 32i32 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
-            .offset(((i >> 1 as ::core::ffi::c_int) + 144 as ::core::ffi::c_int) as isize) =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5e379)) as *const uint8 as *mut uint16)
-                .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+        set_ram_word!(
+            game.palette_buffer[((i >> 1i32) + 144i32)] =
+                *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5e379)) as *const uint8
+                    as *mut uint16)
+                    .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
+        );
         v1 = (v1).wrapping_add(2u16);
         i += 2 as ::core::ffi::c_int;
     }

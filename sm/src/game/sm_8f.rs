@@ -648,7 +648,7 @@ pub unsafe fn PauseHook_DraygonRoom(game: &mut Game) {
     set_ram_word!(game.irqhandler_next_handler = 4 as uint16);
 }
 pub unsafe fn UnpauseHook_DraygonRoom(game: &mut Game) -> CoroutineRet {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x18b4) as *mut uint16).offset(1) == 8u16 {
+    if ram_word!(game, hdma_object_channels_bitmask[1]) == 8u16 {
         set_ram_word!(game.irqhandler_next_handler = 12 as uint16);
     }
     kCoroutineNone as CoroutineRet

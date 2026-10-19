@@ -42,12 +42,9 @@ pub const fnProj93Instr_Delete: uint32 = 9667119;
 pub const fnProj93Instr_Goto: uint32 = 9667129;
 pub unsafe fn InitializeProjectile(k: uint16, game: &mut Game) {
     let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let r18: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0xc04)
-        as *mut uint16)
-        .offset(v1 as isize) as ::core::ffi::c_int
-        & 0xf as ::core::ffi::c_int;
-    let mut v2: uint16 =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(v1 as isize);
+    let r18: ::core::ffi::c_int =
+        ram_word!(game, projectile_dir[v1]) as ::core::ffi::c_int & 0xf as ::core::ffi::c_int;
+    let mut v2: uint16 = ram_word!(game, projectile_type[v1]);
     let mut v3: uint16 = 0;
     if (v2 as ::core::ffi::c_int & 0xf00 as ::core::ffi::c_int) != 0i32 {
         v3 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9383f1)) as *const uint8
@@ -64,16 +61,14 @@ pub unsafe fn InitializeProjectile(k: uint16, game: &mut Game) {
         v3 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9383d9)) as *const uint8
             as *mut uint16)
             .offset(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
-                    .offset(v1 as isize) as ::core::ffi::c_int
+                (ram_word!(game, projectile_type[v1]) as ::core::ffi::c_int
                     & 0xf as ::core::ffi::c_int) as isize,
             );
     } else {
         v3 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9383c1)) as *const uint8
             as *mut uint16)
             .offset(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
-                    .offset(v1 as isize) as ::core::ffi::c_int
+                (ram_word!(game, projectile_type[v1]) as ::core::ffi::c_int
                     & 0xf as ::core::ffi::c_int) as isize,
             );
     }
@@ -81,17 +76,13 @@ pub unsafe fn InitializeProjectile(k: uint16, game: &mut Game) {
     if (*PD).damage as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         InvalidInterrupt_Crash(game);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc2c) as *mut uint16).offset(v1 as isize) =
-        (*PD).damage;
+    set_ram_word!(game.projectile_damage[v1] = (*PD).damage);
     let v7: uint16 = (*PD).instr_ptrs[r18 as usize];
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16).offset(v1 as isize) = v7;
+    set_ram_word!(game.projectile_bomb_instruction_ptr[v1] = v7);
     let v8: *const uint8 = RomPtr_93(v7, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16).offset(v1 as isize) =
-        *v8.offset(4) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16).offset(v1 as isize) =
-        *v8.offset(5) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc54) as *mut uint16).offset(v1 as isize) =
-        1 as uint16;
+    set_ram_word!(game.projectile_x_radius[v1] = *v8.offset(4) as uint16);
+    set_ram_word!(game.projectile_y_radius[v1] = *v8.offset(5) as uint16);
+    set_ram_word!(game.projectile_bomb_instruction_timers[v1] = 1 as uint16);
 }
 pub unsafe fn InitializeInstrForSuperMissile(v0: uint16, game: &mut Game) {
     let v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -110,14 +101,12 @@ pub unsafe fn InitializeInstrForSuperMissile(v0: uint16, game: &mut Game) {
         game,
     );
     let v4: uint16 = *(v3 as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc2c) as *mut uint16).offset(v1 as isize) = v4;
+    set_ram_word!(game.projectile_damage[v1] = v4);
     if v4 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         InvalidInterrupt_Crash(game);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16).offset(v1 as isize) =
-        *(v3.offset(2) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc54) as *mut uint16).offset(v1 as isize) =
-        1 as uint16;
+    set_ram_word!(game.projectile_bomb_instruction_ptr[v1] = *(v3.offset(2) as *mut uint16));
+    set_ram_word!(game.projectile_bomb_instruction_timers[v1] = 1 as uint16);
 }
 pub unsafe fn InitializeInstrForMissile(v0: uint16, game: &mut Game) {
     let v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -136,53 +125,50 @@ pub unsafe fn InitializeInstrForMissile(v0: uint16, game: &mut Game) {
         game,
     );
     let v4: uint16 = *(v3 as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc2c) as *mut uint16).offset(v1 as isize) =
-        *(v3 as *mut uint16);
+    set_ram_word!(game.projectile_damage[v1] = *(v3 as *mut uint16));
     if v4 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         InvalidInterrupt_Crash(game);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16).offset(v1 as isize) =
-        *(v3.offset(2) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc54) as *mut uint16).offset(v1 as isize) =
-        1 as uint16;
+    set_ram_word!(game.projectile_bomb_instruction_ptr[v1] = *(v3.offset(2) as *mut uint16));
+    set_ram_word!(game.projectile_bomb_instruction_timers[v1] = 1 as uint16);
 }
 pub unsafe fn KillProjectileInner(k: uint16, game: &mut Game) {
     let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(v1 as isize)
-        as ::core::ffi::c_int
-        & 0xf00 as ::core::ffi::c_int)
+    if (ram_word!(game, projectile_type[v1]) as ::core::ffi::c_int & 0xf00 as ::core::ffi::c_int)
         != 0i32
     {
         if ram_word!(game, cinematic_function) == 0 {
             QueueSfx2_Max6(7 as uint16, game);
         }
-        let v2: uint16 =
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(v1 as isize);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(v1 as isize) =
-            (v2 as ::core::ffi::c_int & 0xf0ff as ::core::ffi::c_int | 0x800 as ::core::ffi::c_int)
-                as uint16;
+        let v2: uint16 = ram_word!(game, projectile_type[v1]);
+        set_ram_word!(
+            game.projectile_type[v1] = (v2 as ::core::ffi::c_int & 0xf0ff as ::core::ffi::c_int
+                | 0x800 as ::core::ffi::c_int) as uint16
+        );
         if (v2 as ::core::ffi::c_int & 0x200 as ::core::ffi::c_int) != 0i32 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16)
-                .offset(v1 as isize) =
-                *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x938691)) as *const uint8
-                    as *mut ProjectileDamagesAndInstrPtr))
-                    .damages as *mut uint16)
-                    .offset(
-                        (::core::mem::size_of::<::core::ffi::c_uint>())
-                            .wrapping_div(::core::mem::size_of::<uint16>())
-                            .wrapping_sub(1_usize) as isize,
-                    );
+            set_ram_word!(
+                game.projectile_bomb_instruction_ptr[v1] =
+                    *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x938691))
+                        as *const uint8
+                        as *mut ProjectileDamagesAndInstrPtr))
+                        .damages as *mut uint16)
+                        .offset(
+                            (::core::mem::size_of::<::core::ffi::c_uint>())
+                                .wrapping_div(::core::mem::size_of::<uint16>())
+                                .wrapping_sub(1_usize) as isize,
+                        )
+            );
             set_ram_word!(game.earthquake_type = 20 as uint16);
             set_ram_word!(game.earthquake_timer = 30 as uint16);
         } else {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16)
-                .offset(v1 as isize) = *(&raw mut (*(game
-                .g_rom
-                .offset(crate::rtl::lorom_offset(0x938679))
-                as *const uint8
-                as *mut ProjectileDamagesAndInstrPtr))
-                .instr_ptr)
-                .offset(1);
+            set_ram_word!(
+                game.projectile_bomb_instruction_ptr[v1] =
+                    *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x938679))
+                        as *const uint8
+                        as *mut ProjectileDamagesAndInstrPtr))
+                        .instr_ptr)
+                        .offset(1)
+            );
         }
         if ram_word!(game, cooldown_timer) as ::core::ffi::c_int - 21 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
@@ -191,47 +177,46 @@ pub unsafe fn KillProjectileInner(k: uint16, game: &mut Game) {
             set_ram_word!(game.cooldown_timer = 20 as uint16);
         }
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(v1 as isize) =
-            (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(v1 as isize)
-                as ::core::ffi::c_int
+        set_ram_word!(
+            game.projectile_type[v1] = (ram_word!(game, projectile_type[v1]) as ::core::ffi::c_int
                 & 0xf0ff as ::core::ffi::c_int
-                | 0x700 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16).offset(v1 as isize) =
-            *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x938679)) as *const uint8
+                | 0x700 as ::core::ffi::c_int) as uint16
+        );
+        set_ram_word!(
+            game.projectile_bomb_instruction_ptr[v1] =
+                *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x938679)) as *const uint8
+                    as *mut ProjectileDamagesAndInstrPtr))
+                    .damages as *mut uint16)
+                    .offset(
+                        (::core::mem::size_of::<::core::ffi::c_uint>())
+                            .wrapping_div(::core::mem::size_of::<uint16>())
+                            .wrapping_sub(1_usize) as isize,
+                    )
+        );
+        QueueSfx2_Max6(0xc as uint16, game);
+    }
+    set_ram_word!(game.projectile_bomb_instruction_timers[v1] = 1 as uint16);
+    set_ram_word!(game.projectile_damage[v1] = 8 as uint16);
+}
+pub unsafe fn InitializeBombExplosion(k: uint16, game: &mut Game) {
+    let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+    set_ram_word!(
+        game.projectile_bomb_instruction_ptr[v1] =
+            *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x938681)) as *const uint8
                 as *mut ProjectileDamagesAndInstrPtr))
                 .damages as *mut uint16)
                 .offset(
                     (::core::mem::size_of::<::core::ffi::c_uint>())
                         .wrapping_div(::core::mem::size_of::<uint16>())
                         .wrapping_sub(1_usize) as isize,
-                );
-        QueueSfx2_Max6(0xc as uint16, game);
-    }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc54) as *mut uint16).offset(v1 as isize) =
-        1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc2c) as *mut uint16).offset(v1 as isize) =
-        8 as uint16;
-}
-pub unsafe fn InitializeBombExplosion(k: uint16, game: &mut Game) {
-    let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16).offset(v1 as isize) =
-        *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x938681)) as *const uint8
-            as *mut ProjectileDamagesAndInstrPtr))
-            .damages as *mut uint16)
-            .offset(
-                (::core::mem::size_of::<::core::ffi::c_uint>())
-                    .wrapping_div(::core::mem::size_of::<uint16>())
-                    .wrapping_sub(1_usize) as isize,
-            );
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc54) as *mut uint16).offset(v1 as isize) =
-        1 as uint16;
+                )
+    );
+    set_ram_word!(game.projectile_bomb_instruction_timers[v1] = 1 as uint16);
 }
 pub unsafe fn InitializeShinesparkEchoOrSpazerSba(k: uint16, game: &mut Game) {
     let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let r18: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0xc04)
-        as *mut uint16)
-        .offset(v1 as isize) as ::core::ffi::c_int
-        & 0xf as ::core::ffi::c_int;
+    let r18: ::core::ffi::c_int =
+        ram_word!(game, projectile_dir[v1]) as ::core::ffi::c_int & 0xf as ::core::ffi::c_int;
     let PD: *mut ProjectileDataTable = get_ProjectileDataTable(
         *(game.g_rom.offset(crate::rtl::lorom_offset(0x938403)) as *const uint8 as *mut uint16)
             .offset(
@@ -242,53 +227,44 @@ pub unsafe fn InitializeShinesparkEchoOrSpazerSba(k: uint16, game: &mut Game) {
             ),
         game,
     );
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc2c) as *mut uint16).offset(v1 as isize) =
-        (*PD).damage;
+    set_ram_word!(game.projectile_damage[v1] = (*PD).damage);
     if (*PD).damage as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         InvalidInterrupt_Crash(game);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16).offset(v1 as isize) =
-        (*PD).instr_ptrs[r18 as usize];
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc54) as *mut uint16).offset(v1 as isize) =
-        1 as uint16;
+    set_ram_word!(game.projectile_bomb_instruction_ptr[v1] = (*PD).instr_ptrs[r18 as usize]);
+    set_ram_word!(game.projectile_bomb_instruction_timers[v1] = 1 as uint16);
 }
 pub unsafe fn InitializeSbaProjectile(k: uint16, game: &mut Game) {
     let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let v2: *const uint8 = RomPtr_93(
         *(game.g_rom.offset(crate::rtl::lorom_offset(0x938413)) as *const uint8 as *mut uint16)
             .offset(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
-                    .offset(v1 as isize) as ::core::ffi::c_int
+                (ram_word!(game, projectile_type[v1]) as ::core::ffi::c_int
                     & 0xf as ::core::ffi::c_int) as isize,
             ),
         game,
     );
     let v3: uint16 = *(v2 as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc2c) as *mut uint16).offset(v1 as isize) = v3;
+    set_ram_word!(game.projectile_damage[v1] = v3);
     if v3 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
         InvalidInterrupt_Crash(game);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16).offset(v1 as isize) =
-        *(v2.offset(2) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc54) as *mut uint16).offset(v1 as isize) =
-        1 as uint16;
+    set_ram_word!(game.projectile_bomb_instruction_ptr[v1] = *(v2.offset(2) as *mut uint16));
+    set_ram_word!(game.projectile_bomb_instruction_timers[v1] = 1 as uint16);
 }
 pub unsafe fn ProjectileInsts_GetValue(k: uint16, game: &mut Game) -> uint16 {
-    let ip: ::core::ffi::c_int = *((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-        as ::core::ffi::c_int;
-    let delta: ::core::ffi::c_int = if *((&raw mut game.g_ram as *mut uint8).offset(0xc54)
-        as *mut uint16)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-        == 1u16
-        && (*get_ProjectileInstr(ip as uint16, game)).timer as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            == 0
-    {
-        0 as ::core::ffi::c_int
-    } else {
-        -(8 as ::core::ffi::c_int)
-    };
+    let ip: ::core::ffi::c_int =
+        ram_word!(game, projectile_bomb_instruction_ptr[(k as i32 >> 1i32)]) as ::core::ffi::c_int;
+    let delta: ::core::ffi::c_int =
+        if ram_word!(game, projectile_bomb_instruction_timers[(k as i32 >> 1i32)]) == 1u16
+            && (*get_ProjectileInstr(ip as uint16, game)).timer as ::core::ffi::c_int
+                & 0x8000 as ::core::ffi::c_int
+                == 0
+        {
+            0 as ::core::ffi::c_int
+        } else {
+            -(8 as ::core::ffi::c_int)
+        };
     (*get_ProjectileInstr((ip + delta) as uint16, game)).field_6
 }
 pub unsafe fn CallProj93Instr(ea: uint32, j: uint16, k: uint16, game: &mut Game) -> uint16 {
@@ -308,8 +284,7 @@ pub unsafe fn RunProjectileInstructions(game: &mut Game) {
     let fresh1 = *fresh0;
     *fresh0 = (*fresh0).wrapping_sub(1);
     if fresh1 == 1u16 {
-        let mut v3: uint16 =
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16).offset(v1 as isize);
+        let mut v3: uint16 = ram_word!(game, projectile_bomb_instruction_ptr[v1]);
         loop {
             PI = get_ProjectileInstr(v3, game);
             if ((*PI).timer as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32 {
@@ -325,16 +300,11 @@ pub unsafe fn RunProjectileInstructions(game: &mut Game) {
                 return;
             }
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc54) as *mut uint16).offset(v1 as isize) =
-            (*PI).timer;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xcb8) as *mut uint16).offset(v1 as isize) =
-            (*PI).spritemap_ptr;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16).offset(v1 as isize) =
-            (*PI).x_radius as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16).offset(v1 as isize) =
-            (*PI).y_radius as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16).offset(v1 as isize) =
-            (v3).wrapping_add(8u16);
+        set_ram_word!(game.projectile_bomb_instruction_timers[v1] = (*PI).timer);
+        set_ram_word!(game.projectile_spritemap_pointers[v1] = (*PI).spritemap_ptr);
+        set_ram_word!(game.projectile_x_radius[v1] = (*PI).x_radius as uint16);
+        set_ram_word!(game.projectile_y_radius[v1] = (*PI).y_radius as uint16);
+        set_ram_word!(game.projectile_bomb_instruction_ptr[v1] = (v3).wrapping_add(8u16));
     }
 }
 pub unsafe fn Proj93Instr_Delete(k: uint16, j: uint16, game: &mut Game) -> uint16 {
@@ -354,13 +324,10 @@ pub unsafe fn DrawPlayerExplosions2(game: &mut Game) {
     set_ram_word!(game.projectile_index = 8 as uint16);
     loop {
         let v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        if (*((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16).offset(v1 as isize)
-            != 0)
-        {
+        if (ram_word!(game, projectile_bomb_instruction_ptr[v1]) != 0) {
             v2 = 0;
             v3 = 0;
-            v2 = *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
-                .offset(v1 as isize);
+            v2 = ram_word!(game, projectile_type[v1]);
             if v2 as ::core::ffi::c_int
                 & (kProjectileType_TypeMask as ::core::ffi::c_int | 0x10 as ::core::ffi::c_int)
                 != 0i32
@@ -415,12 +382,10 @@ pub unsafe fn DrawPlayerExplosions2(game: &mut Game) {
                     & 0x8000 as ::core::ffi::c_int)
                     == 0i32
                 {
-                    r20 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
-                        .offset(v1 as isize))
-                    .wrapping_sub(ram_word!(game, layer1_x_pos));
-                    v3 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
-                        .offset(v1 as isize))
-                    .wrapping_sub(ram_word!(game, layer1_y_pos));
+                    r20 = (ram_word!(game, projectile_x_pos[v1]))
+                        .wrapping_sub(ram_word!(game, layer1_x_pos));
+                    v3 = (ram_word!(game, projectile_y_pos[v1]))
+                        .wrapping_sub(ram_word!(game, layer1_y_pos));
                     r18 = v3;
                 } else {
                     let pt: Point16U = CalcExplosion_Mode7(v0, game);
@@ -428,8 +393,7 @@ pub unsafe fn DrawPlayerExplosions2(game: &mut Game) {
                     r20 = pt.x;
                 }
                 if (v3 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int) == 0i32
-                    && (*((&raw mut game.g_ram as *mut uint8).offset(0xcb8) as *mut uint16)
-                        .offset(v1 as isize) as ::core::ffi::c_int
+                    && (ram_word!(game, projectile_spritemap_pointers[v1]) as ::core::ffi::c_int
                         & 0x8000 as ::core::ffi::c_int)
                         != 0i32
                 {
@@ -452,20 +416,15 @@ pub unsafe fn sub_9382FD(game: &mut Game) {
     set_ram_word!(game.projectile_index = 8 as uint16);
     loop {
         let v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16).offset(v1 as isize)
-            != 0
-        {
-            let r20: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
-                .offset(v1 as isize))
-            .wrapping_sub(ram_word!(game, layer1_x_pos));
-            let r18: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
-                .offset(v1 as isize) as ::core::ffi::c_int
+        if ram_word!(game, projectile_bomb_instruction_ptr[v1]) != 0 {
+            let r20: uint16 =
+                (ram_word!(game, projectile_x_pos[v1])).wrapping_sub(ram_word!(game, layer1_x_pos));
+            let r18: uint16 = (ram_word!(game, projectile_y_pos[v1]) as ::core::ffi::c_int
                 - 8 as ::core::ffi::c_int
                 - ram_word!(game, layer1_y_pos) as ::core::ffi::c_int)
                 as uint16;
             if ((r18 as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int) == 0i32)
-                && (*((&raw mut game.g_ram as *mut uint8).offset(0xcb8) as *mut uint16)
-                    .offset(v1 as isize) as ::core::ffi::c_int
+                && (ram_word!(game, projectile_spritemap_pointers[v1]) as ::core::ffi::c_int
                     & 0x8000 as ::core::ffi::c_int)
                     != 0i32
             {
@@ -490,30 +449,22 @@ pub unsafe fn DrawBombAndProjectileExplosions(game: &mut Game) {
     set_ram_word!(game.projectile_index = 18 as uint16);
     loop {
         let v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        if !(*((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16)
-            .offset(v1 as isize)
-            == 0
-            || (((*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
-                .offset(v1 as isize) as ::core::ffi::c_int
+        if !(ram_word!(game, projectile_bomb_instruction_ptr[v1]) == 0
+            || (((ram_word!(game, projectile_type[v1]) as ::core::ffi::c_int
                 & 0xf00 as ::core::ffi::c_int)
                 - 768 as ::core::ffi::c_int) as int16)
                 < 0i16)
         {
-            if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
-                .offset(v1 as isize) as ::core::ffi::c_int
+            if (ram_word!(game, projectile_type[v1]) as ::core::ffi::c_int
                 & 0xf00 as ::core::ffi::c_int)
                 == 768i32
             {
-                if *((&raw mut game.g_ram as *mut uint8).offset(0xc7c) as *mut uint16)
-                    .offset(v1 as isize)
-                    == 0
-                {
+                if ram_word!(game, projectile_variables[v1]) == 0 {
                     current_block = 2612600445040741303;
                 } else {
                     current_block = 11875828834189669668;
                 }
-            } else if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
-                .offset(v1 as isize) as ::core::ffi::c_int
+            } else if (ram_word!(game, projectile_type[v1]) as ::core::ffi::c_int
                 & 0xf00 as ::core::ffi::c_int)
                 == 1280i32
                 || (ram_word!(game, ceres_status) as ::core::ffi::c_int
@@ -529,10 +480,8 @@ pub unsafe fn DrawBombAndProjectileExplosions(game: &mut Game) {
             if current_block == 2612600445040741303 {
             } else {
                 if current_block == 11875828834189669668 {
-                    let v3: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb64)
-                        as *mut uint16)
-                        .offset(v1 as isize))
-                    .wrapping_sub(ram_word!(game, layer1_x_pos));
+                    let v3: uint16 = (ram_word!(game, projectile_x_pos[v1]))
+                        .wrapping_sub(ram_word!(game, layer1_x_pos));
                     r20 = v3;
                     if v3 as ::core::ffi::c_int - 304 as ::core::ffi::c_int
                         & 0x8000 as ::core::ffi::c_int
@@ -543,9 +492,8 @@ pub unsafe fn DrawBombAndProjectileExplosions(game: &mut Game) {
                     {
                         current_block = 2612600445040741303;
                     } else {
-                        v2 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
-                            .offset(v1 as isize))
-                        .wrapping_sub(ram_word!(game, layer1_y_pos));
+                        v2 = (ram_word!(game, projectile_y_pos[v1]))
+                            .wrapping_sub(ram_word!(game, layer1_y_pos));
                         r18 = v2;
                         current_block = 2311960645627505036;
                     }

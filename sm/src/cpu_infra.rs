@@ -313,21 +313,19 @@ pub unsafe fn PatchBugs(mode: uint32, addr: uint32, game: &mut Game) -> uint32 {
     } else if FixBugHook(0x9381db as uint32, game) {
         let k: ::core::ffi::c_int = (*game.g_cpu).x as ::core::ffi::c_int;
         let ip: ::core::ffi::c_int =
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16)
-                .offset((k >> 1 as ::core::ffi::c_int) as isize) as ::core::ffi::c_int;
-        let delta: ::core::ffi::c_int = if *((&raw mut game.g_ram as *mut uint8).offset(0xc54)
-            as *mut uint16)
-            .offset((k >> 1 as ::core::ffi::c_int) as isize)
-            as ::core::ffi::c_int
-            == 1 as ::core::ffi::c_int
-            && (*get_ProjectileInstr(ip as uint16, game)).timer as ::core::ffi::c_int
-                & 0x8000 as ::core::ffi::c_int
-                == 0
-        {
-            0 as ::core::ffi::c_int
-        } else {
-            -(8 as ::core::ffi::c_int)
-        };
+            ram_word!(game, projectile_bomb_instruction_ptr[(k >> 1i32)]) as ::core::ffi::c_int;
+        let delta: ::core::ffi::c_int =
+            if ram_word!(game, projectile_bomb_instruction_timers[(k >> 1i32)])
+                as ::core::ffi::c_int
+                == 1 as ::core::ffi::c_int
+                && (*get_ProjectileInstr(ip as uint16, game)).timer as ::core::ffi::c_int
+                    & 0x8000 as ::core::ffi::c_int
+                    == 0
+            {
+                0 as ::core::ffi::c_int
+            } else {
+                -(8 as ::core::ffi::c_int)
+            };
         (*game.g_cpu).a =
             ((*game.g_cpu).a as ::core::ffi::c_int + (8 as ::core::ffi::c_int + delta)) as uint16_t;
     } else if FixBugHook(0x86b701 as uint32, game) {

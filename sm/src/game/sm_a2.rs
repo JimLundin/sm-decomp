@@ -3028,14 +3028,10 @@ pub unsafe fn GunshipBottom_Init(game: &mut Game) {
     }
     let v2: ::core::ffi::c_int =
         ram_word!(game, cur_enemy_index) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    (*E).base.vram_tiles_index = *((&raw mut game.g_ram as *mut uint8).offset(0xe84)
-        as *mut uint16)
-        .offset((v2 + 106 as ::core::ffi::c_int) as isize);
+    (*E).base.vram_tiles_index = ram_word!(game, enemy_drawing_queue[(v2 + 106i32)]);
     (*E).base.palette_index = 3584 as uint16;
     if (*E).gbm_parameter_2 != 0 {
-        (*E).base.y_pos = (*((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
-            .offset((v2 + 61 as ::core::ffi::c_int) as isize))
-        .wrapping_sub(1u16);
+        (*E).base.y_pos = (ram_word!(game, enemy_drawing_queue[(v2 + 61i32)])).wrapping_sub(1u16);
         if ram_word!(game, game_state) as ::core::ffi::c_int
             == kPose_28_FaceL_Crouch as ::core::ffi::c_int
             && ram_word!(game, demo_set) == 0
@@ -4521,17 +4517,11 @@ pub unsafe fn NorfairLavajumpingEnemy_Func_1(k: uint16, game: &mut Game) {
     let E: *mut Enemy_NorfairLavajumpingEnemy =
         Get_NorfairLavajumpingEnemy(k as ::core::ffi::c_int, game);
     let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
-        .offset((v1 + 100 as ::core::ffi::c_int) as isize)
-        != 0
-    {
-        let v3: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
-            .offset((v1 + 109 as ::core::ffi::c_int) as isize);
+    if ram_word!(game, enemy_drawing_queue[(v1 + 100i32)]) != 0 {
+        let v3: uint16 = ram_word!(game, enemy_drawing_queue[(v1 + 109i32)]);
         (*E).base.frozen_timer = v3;
         if v3 != 0u16
-            || (*((&raw mut game.g_ram as *mut uint8).offset(0xf68) as *mut uint16)
-                .offset((v1 + 2 as ::core::ffi::c_int) as isize)
-                as ::core::ffi::c_int
+            || (ram_word!(game, enemy_drawing_queue_sizes[(v1 + 2i32)]) as ::core::ffi::c_int
                 & 0x8000 as ::core::ffi::c_int)
                 == 0i32
         {
@@ -4540,8 +4530,7 @@ pub unsafe fn NorfairLavajumpingEnemy_Func_1(k: uint16, game: &mut Game) {
             (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
                 & !(kEnemyProps_Invisible as ::core::ffi::c_int))
                 as uint16;
-            (*E).base.y_pos = *((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
-                .offset((v1 + 93 as ::core::ffi::c_int) as isize);
+            (*E).base.y_pos = ram_word!(game, enemy_drawing_queue[(v1 + 93i32)]);
         }
     } else {
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
@@ -4767,12 +4756,8 @@ pub unsafe fn NorfairRio_Func_1(k: uint16, game: &mut Game) {
     let E: *mut Enemy_NorfairRio = Get_NorfairRio(k as ::core::ffi::c_int, game);
     let mut v6: *mut EnemySpawnData = ::core::ptr::null_mut::<EnemySpawnData>();
     let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
-        .offset((v1 + 100 as ::core::ffi::c_int) as isize)
-        != 0
-    {
-        let v3: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
-            .offset((v1 + 109 as ::core::ffi::c_int) as isize);
+    if ram_word!(game, enemy_drawing_queue[(v1 + 100i32)]) != 0 {
+        let v3: uint16 = ram_word!(game, enemy_drawing_queue[(v1 + 109i32)]);
         (*E).base.frozen_timer = v3;
         if v3 != 0u16 || {
             (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
@@ -4795,12 +4780,9 @@ pub unsafe fn NorfairRio_Func_1(k: uint16, game: &mut Game) {
             (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
                 & !(kEnemyProps_Invisible as ::core::ffi::c_int))
                 as uint16;
-            (*E).base.x_pos = *((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
-                .offset((v1 + 91 as ::core::ffi::c_int) as isize);
-            (*E).base.y_pos = ((*v6.offset(31)).field_4).wrapping_add(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
-                    .offset((v1 + 93 as ::core::ffi::c_int) as isize),
-            );
+            (*E).base.x_pos = ram_word!(game, enemy_drawing_queue[(v1 + 91i32)]);
+            (*E).base.y_pos = ((*v6.offset(31)).field_4)
+                .wrapping_add(ram_word!(game, enemy_drawing_queue[(v1 + 93i32)]));
         }
     } else {
         (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Deleted) as u16);
@@ -4956,22 +4938,16 @@ pub unsafe fn LowerNorfairRio_Main(game: &mut Game) {
 pub unsafe fn LowerNorfairRio_Func_1(k: uint16, game: &mut Game) {
     let E: *mut Enemy_LowerNorfairRio = Get_LowerNorfairRio(k as ::core::ffi::c_int, game);
     let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
-        .offset((v1 + 100 as ::core::ffi::c_int) as isize)
-        != 0
-    {
-        let v3: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
-            .offset((v1 + 109 as ::core::ffi::c_int) as isize);
+    if ram_word!(game, enemy_drawing_queue[(v1 + 100i32)]) != 0 {
+        let v3: uint16 = ram_word!(game, enemy_drawing_queue[(v1 + 109i32)]);
         (*E).base.frozen_timer = v3;
         if v3 == 0 && (*gEnemySpawnData(k as ::core::ffi::c_int, game).offset(31)).field_4 != 0u16 {
             (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
                 & !(kEnemyProps_Invisible as ::core::ffi::c_int))
                 as uint16;
-            (*E).base.x_pos = *((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
-                .offset((v1 + 91 as ::core::ffi::c_int) as isize);
-            (*E).base.y_pos = (*((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
-                .offset((v1 + 93 as ::core::ffi::c_int) as isize))
-            .wrapping_add(12u16);
+            (*E).base.x_pos = ram_word!(game, enemy_drawing_queue[(v1 + 91i32)]);
+            (*E).base.y_pos =
+                (ram_word!(game, enemy_drawing_queue[(v1 + 93i32)])).wrapping_add(12u16);
         } else {
             (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Invisible) as u16);
         }
@@ -6405,23 +6381,17 @@ pub unsafe fn RisingFallingPlatform_Main(game: &mut Game) {
         != 0xa2ef68 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
         && (*E).rfpm_var_A as ::core::ffi::c_int
             != 0xa2efd4 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
-        && (*((&raw mut game.g_ram as *mut uint8).offset(0x182c) as *mut uint16).offset(3)
-            as ::core::ffi::c_int
-            & (*((&raw mut game.g_ram as *mut uint8).offset(0x182c) as *mut uint16).offset(2)
-                as ::core::ffi::c_int
-                & *((&raw mut game.g_ram as *mut uint8).offset(0x182c) as *mut uint16).offset(1)
-                    as ::core::ffi::c_int
-                & *((&raw mut game.g_ram as *mut uint8).offset(0x182c) as *mut uint16).offset(0)
-                    as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int)
+        && (ram_word!(game, enemy_index_colliding_dirs[3]) as ::core::ffi::c_int
+            & (ram_word!(game, enemy_index_colliding_dirs[2]) as ::core::ffi::c_int
+                & ram_word!(game, enemy_index_colliding_dirs[1]) as ::core::ffi::c_int
+                & ram_word!(game, enemy_index_colliding_dirs[0]) as ::core::ffi::c_int)
+                as uint16 as ::core::ffi::c_int)
             != 0xffffi32
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x182c) as *mut uint16).offset(3)
-            as ::core::ffi::c_int
-            & (*((&raw mut game.g_ram as *mut uint8).offset(0x182c) as *mut uint16).offset(2)
-                as ::core::ffi::c_int
-                & *((&raw mut game.g_ram as *mut uint8).offset(0x182c) as *mut uint16).offset(1)
-                    as ::core::ffi::c_int
-                & *((&raw mut game.g_ram as *mut uint8).offset(0x182c) as *mut uint16).offset(0)
-                    as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
+        && ram_word!(game, enemy_index_colliding_dirs[3]) as ::core::ffi::c_int
+            & (ram_word!(game, enemy_index_colliding_dirs[2]) as ::core::ffi::c_int
+                & ram_word!(game, enemy_index_colliding_dirs[1]) as ::core::ffi::c_int
+                & ram_word!(game, enemy_index_colliding_dirs[0]) as ::core::ffi::c_int)
+                as uint16 as ::core::ffi::c_int
             == ram_word!(game, cur_enemy_index) as ::core::ffi::c_int
         && ram_word!(game, samus_contact_damage_index) != 0
     {
@@ -6689,23 +6659,17 @@ pub unsafe fn HorizontalShootableShutter_Main(game: &mut Game) {
         != 0xa2f272 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
         && (*E).rfpm_var_A as ::core::ffi::c_int
             != 0xa2f2e4 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int
-        && (*((&raw mut game.g_ram as *mut uint8).offset(0x182c) as *mut uint16).offset(3)
-            as ::core::ffi::c_int
-            & (*((&raw mut game.g_ram as *mut uint8).offset(0x182c) as *mut uint16).offset(2)
-                as ::core::ffi::c_int
-                & *((&raw mut game.g_ram as *mut uint8).offset(0x182c) as *mut uint16).offset(1)
-                    as ::core::ffi::c_int
-                & *((&raw mut game.g_ram as *mut uint8).offset(0x182c) as *mut uint16).offset(0)
-                    as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int)
+        && (ram_word!(game, enemy_index_colliding_dirs[3]) as ::core::ffi::c_int
+            & (ram_word!(game, enemy_index_colliding_dirs[2]) as ::core::ffi::c_int
+                & ram_word!(game, enemy_index_colliding_dirs[1]) as ::core::ffi::c_int
+                & ram_word!(game, enemy_index_colliding_dirs[0]) as ::core::ffi::c_int)
+                as uint16 as ::core::ffi::c_int)
             != 0xffffi32
-        && *((&raw mut game.g_ram as *mut uint8).offset(0x182c) as *mut uint16).offset(3)
-            as ::core::ffi::c_int
-            & (*((&raw mut game.g_ram as *mut uint8).offset(0x182c) as *mut uint16).offset(2)
-                as ::core::ffi::c_int
-                & *((&raw mut game.g_ram as *mut uint8).offset(0x182c) as *mut uint16).offset(1)
-                    as ::core::ffi::c_int
-                & *((&raw mut game.g_ram as *mut uint8).offset(0x182c) as *mut uint16).offset(0)
-                    as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
+        && ram_word!(game, enemy_index_colliding_dirs[3]) as ::core::ffi::c_int
+            & (ram_word!(game, enemy_index_colliding_dirs[2]) as ::core::ffi::c_int
+                & ram_word!(game, enemy_index_colliding_dirs[1]) as ::core::ffi::c_int
+                & ram_word!(game, enemy_index_colliding_dirs[0]) as ::core::ffi::c_int)
+                as uint16 as ::core::ffi::c_int
             == ram_word!(game, cur_enemy_index) as ::core::ffi::c_int
         && ram_word!(game, samus_contact_damage_index) != 0u16
     {

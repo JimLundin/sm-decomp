@@ -58,18 +58,23 @@ pub unsafe fn LoadFxEntry(v0: uint16, game: &mut Game) {
     if (*FD).palette_blend != 0 {
         let v2: ::core::ffi::c_int =
             (*FD).palette_blend as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(25) =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x89aa02)) as *const uint8 as *mut uint16)
-                .offset(v2 as isize);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(26) =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x89aa02)) as *const uint8 as *mut uint16)
-                .offset((v2 + 1 as ::core::ffi::c_int) as isize);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(27) =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x89aa02)) as *const uint8 as *mut uint16)
-                .offset((v2 + 2 as ::core::ffi::c_int) as isize);
+        set_ram_word!(
+            game.palette_buffer[25] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x89aa02))
+                as *const uint8 as *mut uint16)
+                .offset(v2 as isize)
+        );
+        set_ram_word!(
+            game.palette_buffer[26] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x89aa02))
+                as *const uint8 as *mut uint16)
+                .offset((v2 + 1 as ::core::ffi::c_int) as isize)
+        );
+        set_ram_word!(
+            game.palette_buffer[27] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x89aa02))
+                as *const uint8 as *mut uint16)
+                .offset((v2 + 2 as ::core::ffi::c_int) as isize)
+        );
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(27) =
-            0 as uint16;
+        set_ram_word!(game.palette_buffer[27] = 0 as uint16);
     };
 }
 pub fn nullsub_106(game: &mut Game) {}
@@ -129,18 +134,23 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
     if (*FD).palette_blend != 0 {
         let v4: ::core::ffi::c_int =
             (*FD).palette_blend as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(25) =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x89aa02)) as *const uint8 as *mut uint16)
-                .offset(v4 as isize);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(26) =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x89aa02)) as *const uint8 as *mut uint16)
-                .offset((v4 + 1 as ::core::ffi::c_int) as isize);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(27) =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0x89aa02)) as *const uint8 as *mut uint16)
-                .offset((v4 + 2 as ::core::ffi::c_int) as isize);
+        set_ram_word!(
+            game.target_palettes[25] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x89aa02))
+                as *const uint8 as *mut uint16)
+                .offset(v4 as isize)
+        );
+        set_ram_word!(
+            game.target_palettes[26] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x89aa02))
+                as *const uint8 as *mut uint16)
+                .offset((v4 + 1 as ::core::ffi::c_int) as isize)
+        );
+        set_ram_word!(
+            game.target_palettes[27] = *(game.g_rom.offset(crate::rtl::lorom_offset(0x89aa02))
+                as *const uint8 as *mut uint16)
+                .offset((v4 + 2 as ::core::ffi::c_int) as isize)
+        );
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(27) =
-            0 as uint16;
+        set_ram_word!(game.target_palettes[27] = 0 as uint16);
     }
     set_ram_word!(game.fx_type = (*FD).type_0 as uint16);
     if (*FD).type_0 != 0 {

@@ -118,8 +118,8 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(
     mut r24: uint16,
     game: &mut Game,
 ) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9d00) as *mut uint16).offset(0) = 255 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9d00) as *mut uint16).offset(1) = 255 as uint16;
+    set_ram_word!(game.hdma_table_2[0] = 255 as uint16);
+    set_ram_word!(game.hdma_table_2[1] = 255 as uint16);
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
     let r18: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91c9d4)) as *const uint8
         as *mut uint16)
@@ -260,8 +260,8 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedUp(game: &mut Game) {
     };
 }
 pub unsafe fn MotherBrain_CalcHdma_Up_UpRight(mut r22: uint16, mut r24: uint16, game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9d00) as *mut uint16).offset(0) = 255 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9d00) as *mut uint16).offset(1) = 255 as uint16;
+    set_ram_word!(game.hdma_table_2[0] = 255 as uint16);
+    set_ram_word!(game.hdma_table_2[1] = 255 as uint16);
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
     let r18: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91c9d4)) as *const uint8
         as *mut uint16)
@@ -304,8 +304,8 @@ pub unsafe fn MotherBrain_CalcHdma_Up_UpRight(mut r22: uint16, mut r24: uint16, 
     }
 }
 pub unsafe fn MotherBrain_CalcHdma_Up_Up(mut r22: uint16, mut r24: uint16, game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9d00) as *mut uint16).offset(0) = 255 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9d00) as *mut uint16).offset(1) = 255 as uint16;
+    set_ram_word!(game.hdma_table_2[0] = 255 as uint16);
+    set_ram_word!(game.hdma_table_2[1] = 255 as uint16);
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
     let r18: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91c9d4)) as *const uint8
         as *mut uint16)
@@ -350,8 +350,8 @@ pub unsafe fn MotherBrain_CalcHdma_Up_Up(mut r22: uint16, mut r24: uint16, game:
     }
 }
 pub unsafe fn MotherBrain_CalcHdma_Up_UpLeft(mut r22: uint16, mut r24: uint16, game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9d00) as *mut uint16).offset(0) = 255 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9d00) as *mut uint16).offset(1) = 255 as uint16;
+    set_ram_word!(game.hdma_table_2[0] = 255 as uint16);
+    set_ram_word!(game.hdma_table_2[1] = 255 as uint16);
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
     let r18: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91c9d4)) as *const uint8
         as *mut uint16)
@@ -438,8 +438,8 @@ pub unsafe fn MotherBrain_CalcHdma_Down_DownRight(
     mut r24: uint16,
     game: &mut Game,
 ) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9d00) as *mut uint16).offset(0) = 255 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9d00) as *mut uint16).offset(1) = 255 as uint16;
+    set_ram_word!(game.hdma_table_2[0] = 255 as uint16);
+    set_ram_word!(game.hdma_table_2[1] = 255 as uint16);
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
     let r18: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91c9d4)) as *const uint8
         as *mut uint16)
@@ -488,8 +488,8 @@ pub unsafe fn MotherBrain_CalcHdma_Down_DownRight(
     }
 }
 pub unsafe fn MotherBrain_CalcHdma_Down_Down(mut r22: uint16, mut r24: uint16, game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9d00) as *mut uint16).offset(0) = 255 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9d00) as *mut uint16).offset(1) = 255 as uint16;
+    set_ram_word!(game.hdma_table_2[0] = 255 as uint16);
+    set_ram_word!(game.hdma_table_2[1] = 255 as uint16);
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
     let r18: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91c9d4)) as *const uint8
         as *mut uint16)
@@ -545,8 +545,8 @@ pub unsafe fn MotherBrain_CalcHdma_Down_DownLeft(
     mut r24: uint16,
     game: &mut Game,
 ) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9d00) as *mut uint16).offset(0) = 255 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x9d00) as *mut uint16).offset(1) = 255 as uint16;
+    set_ram_word!(game.hdma_table_2[0] = 255 as uint16);
+    set_ram_word!(game.hdma_table_2[1] = 255 as uint16);
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
     let r18: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x91c9d4)) as *const uint8
         as *mut uint16)

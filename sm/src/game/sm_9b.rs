@@ -120,72 +120,71 @@ pub unsafe fn ProjectileTrail_Func5(k: uint16, j: uint16, game: &mut Game) {
     if (ram_word!(game, ceres_status) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32
     {
         let v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        r18 =
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v2 as isize);
-        r20 =
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v2 as isize);
+        r18 = ram_word!(game, projectile_x_pos[v2]);
+        r20 = ram_word!(game, projectile_y_pos[v2]);
     } else {
         let pt: Point16U = CalcExplosion_Mode7(k, game);
         r18 = (ram_word!(game, layer1_x_pos)).wrapping_add(pt.x);
         r20 = (ram_word!(game, layer1_y_pos)).wrapping_add(pt.y);
     }
     let v3: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let v4: uint16 =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(v3 as isize);
+    let v4: uint16 = ram_word!(game, projectile_type[v3]);
     let mut v5: uint16 = 0;
     if (v4 as ::core::ffi::c_int & 0x20 as ::core::ffi::c_int) != 0i32 {
         v5 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9ba4e3)) as *const uint8
             as *mut uint16)
             .offset(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
-                    .offset(v3 as isize) as ::core::ffi::c_int
+                (ram_word!(game, projectile_type[v3]) as ::core::ffi::c_int
                     & 0xf as ::core::ffi::c_int) as isize,
             ) as ::core::ffi::c_int
             + 2 as ::core::ffi::c_int
-                * (*((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16)
-                    .offset(v3 as isize) as ::core::ffi::c_int
+                * (ram_word!(game, projectile_dir[v3]) as ::core::ffi::c_int
                     & 0xf as ::core::ffi::c_int)) as uint16;
     } else if (v4 as ::core::ffi::c_int & 0x10 as ::core::ffi::c_int) != 0i32 {
         v5 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9ba4cb)) as *const uint8
             as *mut uint16)
             .offset(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
-                    .offset(v3 as isize) as ::core::ffi::c_int
+                (ram_word!(game, projectile_type[v3]) as ::core::ffi::c_int
                     & 0xf as ::core::ffi::c_int) as isize,
             ) as ::core::ffi::c_int
             + 2 as ::core::ffi::c_int
-                * (*((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16)
-                    .offset(v3 as isize) as ::core::ffi::c_int
+                * (ram_word!(game, projectile_dir[v3]) as ::core::ffi::c_int
                     & 0xf as ::core::ffi::c_int)) as uint16;
     } else {
         v5 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x9ba4b3)) as *const uint8
             as *mut uint16)
             .offset(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
-                    .offset(v3 as isize) as ::core::ffi::c_int
+                (ram_word!(game, projectile_type[v3]) as ::core::ffi::c_int
                     & 0xf as ::core::ffi::c_int) as isize,
             ) as ::core::ffi::c_int
             + 2 as ::core::ffi::c_int
-                * (*((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16)
-                    .offset(v3 as isize) as ::core::ffi::c_int
+                * (ram_word!(game, projectile_dir[v3]) as ::core::ffi::c_int
                     & 0xf as ::core::ffi::c_int)) as uint16;
     }
     let v6: uint16 = (*(RomPtr_9B(v5, game) as *mut uint16) as ::core::ffi::c_int
         + 4 as ::core::ffi::c_int * R22 as ::core::ffi::c_int) as uint16;
     let p: *const uint8 = RomPtr_9B(v6, game);
     let v7: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xd778) as *mut uint16).offset(v7 as isize) =
-        (r20 as ::core::ffi::c_int + *p.offset(1) as int8 as ::core::ffi::c_int
-            - 4 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xd730) as *mut uint16).offset(v7 as isize) =
-        (r18 as ::core::ffi::c_int + *p.offset(0) as int8 as ::core::ffi::c_int
-            - 4 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xd79c) as *mut uint16).offset(v7 as isize) =
-        (r20 as ::core::ffi::c_int + *p.offset(3) as int8 as ::core::ffi::c_int
-            - 4 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xd754) as *mut uint16).offset(v7 as isize) =
-        (r18 as ::core::ffi::c_int + *p.offset(2) as int8 as ::core::ffi::c_int
-            - 4 as ::core::ffi::c_int) as uint16;
+    set_ram_word!(
+        game.projectiletrail_left_y_pos[v7] = (r20 as ::core::ffi::c_int
+            + *p.offset(1) as int8 as ::core::ffi::c_int
+            - 4 as ::core::ffi::c_int) as uint16
+    );
+    set_ram_word!(
+        game.projectiletrail_left_x_pos[v7] = (r18 as ::core::ffi::c_int
+            + *p.offset(0) as int8 as ::core::ffi::c_int
+            - 4 as ::core::ffi::c_int) as uint16
+    );
+    set_ram_word!(
+        game.projectiletrail_right_y_pos[v7] = (r20 as ::core::ffi::c_int
+            + *p.offset(3) as int8 as ::core::ffi::c_int
+            - 4 as ::core::ffi::c_int) as uint16
+    );
+    set_ram_word!(
+        game.projectiletrail_right_x_pos[v7] = (r18 as ::core::ffi::c_int
+            + *p.offset(2) as int8 as ::core::ffi::c_int
+            - 4 as ::core::ffi::c_int) as uint16
+    );
 }
 pub unsafe fn StartSamusDeathAnimation(game: &mut Game) {
     let v0: uint16 = *(&raw mut game.g_ram as *mut uint8).offset(0xa1f) as uint16;
@@ -1626,8 +1625,7 @@ pub unsafe fn GrappleBeamFunc_FireGoToCancel(game: &mut Game) {
     set_ram_word!(game.samus_draw_handler = ((0x90eb86i32) as u16));
     set_ram_word!(game.grapple_walljump_timer = 0 as uint16);
     LoadProjectilePalette(2 as uint16, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(223) =
-        32657 as uint16;
+    set_ram_word!(game.palette_buffer[223] = 32657 as uint16);
     set_ram_word!(game.grapple_beam_function = ((0x9bc703i32) as u16));
     QueueSfx1_Max1(5 as uint16, game);
     set_ram_word!(game.flare_counter = 1 as uint16);

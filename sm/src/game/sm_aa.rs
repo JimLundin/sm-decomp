@@ -354,10 +354,8 @@ pub unsafe fn Torizo_Instr_35(k: uint16, jp: *const uint16, game: &mut Game) -> 
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0i32 {
         let v3: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-            .offset((v3 + 160 as ::core::ffi::c_int) as isize) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-            .offset((v3 + 144 as ::core::ffi::c_int) as isize) = 0 as uint16;
+        set_ram_word!(game.target_palettes[(v3 + 160i32)] = 0 as uint16);
+        set_ram_word!(game.target_palettes[(v3 + 144i32)] = 0 as uint16);
         i -= 2 as ::core::ffi::c_int;
     }
     jp
@@ -415,10 +413,8 @@ pub unsafe fn Torizo_C250(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0i32 {
         let v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-            .offset((v1 + 160 as ::core::ffi::c_int) as isize) = kTorizo_Palettes_3[v1 as usize];
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-            .offset((v1 + 144 as ::core::ffi::c_int) as isize) = kTorizo_Palettes_2[v1 as usize];
+        set_ram_word!(game.target_palettes[(v1 + 160i32)] = kTorizo_Palettes_3[v1 as usize]);
+        set_ram_word!(game.target_palettes[(v1 + 144i32)] = kTorizo_Palettes_2[v1 as usize]);
         i -= 2 as ::core::ffi::c_int;
     }
 }
@@ -426,10 +422,8 @@ pub unsafe fn Torizo_C268(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0i32 {
         let v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-            .offset((v1 + 160 as ::core::ffi::c_int) as isize) = kTorizo_Palettes_5[v1 as usize];
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-            .offset((v1 + 144 as ::core::ffi::c_int) as isize) = kTorizo_Palettes_4[v1 as usize];
+        set_ram_word!(game.target_palettes[(v1 + 160i32)] = kTorizo_Palettes_5[v1 as usize]);
+        set_ram_word!(game.target_palettes[(v1 + 144i32)] = kTorizo_Palettes_4[v1 as usize]);
         i -= 2 as ::core::ffi::c_int;
     }
 }
@@ -437,10 +431,8 @@ pub unsafe fn Torizo_C280(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0i32 {
         let v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-            .offset((v1 + 160 as ::core::ffi::c_int) as isize) = kTorizo_Palettes_7[v1 as usize];
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-            .offset((v1 + 144 as ::core::ffi::c_int) as isize) = kTorizo_Palettes_6[v1 as usize];
+        set_ram_word!(game.target_palettes[(v1 + 160i32)] = kTorizo_Palettes_7[v1 as usize]);
+        set_ram_word!(game.target_palettes[(v1 + 144i32)] = kTorizo_Palettes_6[v1 as usize]);
         i -= 2 as ::core::ffi::c_int;
     }
 }
@@ -448,10 +440,8 @@ pub unsafe fn Torizo_C298(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0i32 {
         let v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-            .offset((v1 + 160 as ::core::ffi::c_int) as isize) = kTorizo_Palettes_10[v1 as usize];
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-            .offset((v1 + 144 as ::core::ffi::c_int) as isize) = kTorizo_Palettes_8[v1 as usize];
+        set_ram_word!(game.target_palettes[(v1 + 160i32)] = kTorizo_Palettes_10[v1 as usize]);
+        set_ram_word!(game.target_palettes[(v1 + 144i32)] = kTorizo_Palettes_8[v1 as usize]);
         i -= 2 as ::core::ffi::c_int;
     }
 }
@@ -459,10 +449,8 @@ pub unsafe fn Torizo_C2B0(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0i32 {
         let v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
-            .offset((v1 + 160 as ::core::ffi::c_int) as isize) = kTorizo_Palettes_5[v1 as usize];
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
-            .offset((v1 + 144 as ::core::ffi::c_int) as isize) = kTorizo_Palettes_4[v1 as usize];
+        set_ram_word!(game.palette_buffer[(v1 + 160i32)] = kTorizo_Palettes_5[v1 as usize]);
+        set_ram_word!(game.palette_buffer[(v1 + 144i32)] = kTorizo_Palettes_4[v1 as usize]);
         i -= 2 as ::core::ffi::c_int;
     }
 }
@@ -832,10 +820,8 @@ pub unsafe fn Torizo_Hurt(game: &mut Game) {
         let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
         while i >= 0i32 {
             let v2: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
-                .offset((v2 + 160 as ::core::ffi::c_int) as isize) = 0x7fff as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
-                .offset((v2 + 144 as ::core::ffi::c_int) as isize) = 0x7fff as uint16;
+            set_ram_word!(game.palette_buffer[(v2 + 160i32)] = 0x7fff as uint16);
+            set_ram_word!(game.palette_buffer[(v2 + 144i32)] = 0x7fff as uint16);
             i -= 2 as ::core::ffi::c_int;
         }
     } else {
@@ -879,9 +865,7 @@ pub unsafe fn Torizo_Func_4(k: uint16, game: &mut Game) {
     let E: *mut Enemy_Torizo = Get_Torizo(k as ::core::ffi::c_int, game);
     (*E).base.properties = ((*E).base.properties) | ((kEnemyProps_Tangible) as u16);
     let mut v2: uint16 = 78 as uint16;
-    while *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
-        .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
-        as ::core::ffi::c_int
+    while ram_word!(game, plm_header_ptr[(v2 as i32 >> 1i32)]) as ::core::ffi::c_int
         != addr_kPlmHeader_D6EA as ::core::ffi::c_int
     {
         v2 = (v2).wrapping_sub(2u16);
@@ -1060,11 +1044,8 @@ pub unsafe fn Torizo_Init(game: &mut Game) {
         let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
         while i >= 0i32 {
             let v4: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-                .offset((v4 + 240 as ::core::ffi::c_int) as isize) =
-                kTorizo_Palettes_1[v4 as usize];
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-                .offset((v4 + 176 as ::core::ffi::c_int) as isize) = kTorizo_Palette[v4 as usize];
+            set_ram_word!(game.target_palettes[(v4 + 240i32)] = kTorizo_Palettes_1[v4 as usize]);
+            set_ram_word!(game.target_palettes[(v4 + 176i32)] = kTorizo_Palette[v4 as usize]);
             i -= 2 as ::core::ffi::c_int;
         }
         if ram_word!(game, area_index) != 0 {
@@ -1229,10 +1210,8 @@ pub unsafe fn GoldTorizo_Hurt(game: &mut Game) {
         let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
         while i >= 0i32 {
             let v2: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
-                .offset((v2 + 160 as ::core::ffi::c_int) as isize) = 0x7fff as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
-                .offset((v2 + 144 as ::core::ffi::c_int) as isize) = 0x7fff as uint16;
+            set_ram_word!(game.palette_buffer[(v2 + 160i32)] = 0x7fff as uint16);
+            set_ram_word!(game.palette_buffer[(v2 + 144i32)] = 0x7fff as uint16);
             i -= 2 as ::core::ffi::c_int;
         }
     } else {
@@ -1509,9 +1488,10 @@ pub unsafe fn GoldTorizo_Shot(game: &mut Game) {
             v2 = 0;
             v3 = 0;
             v2 = (2u16).wrapping_mul(ram_word!(game, collision_detection_index));
-            v3 = (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
-                .offset(ram_word!(game, collision_detection_index) as isize))
-                & (0xf00u16);
+            v3 = (ram_word!(
+                game,
+                projectile_type[ram_word!(game, collision_detection_index)]
+            )) & (0xf00u16);
             (*E).toriz_var_05 = v3;
             if v3 == 256u16 {
                 Torizo_D6D1(ram_word!(game, cur_enemy_index), v2, game);
@@ -1612,14 +1592,18 @@ pub unsafe fn TourianEntranceStatue_Init(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0i32 {
         let v5: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-            .offset((v5 + 240 as ::core::ffi::c_int) as isize) =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xaad785)) as *const uint8 as *mut uint16)
-                .offset(v5 as isize);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-            .offset((v5 + 160 as ::core::ffi::c_int) as isize) =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xaad765)) as *const uint8 as *mut uint16)
-                .offset(v5 as isize);
+        set_ram_word!(
+            game.target_palettes[(v5 + 240i32)] =
+                *(game.g_rom.offset(crate::rtl::lorom_offset(0xaad785)) as *const uint8
+                    as *mut uint16)
+                    .offset(v5 as isize)
+        );
+        set_ram_word!(
+            game.target_palettes[(v5 + 160i32)] =
+                *(game.g_rom.offset(crate::rtl::lorom_offset(0xaad765)) as *const uint8
+                    as *mut uint16)
+                    .offset(v5 as isize)
+        );
         i -= 2 as ::core::ffi::c_int;
     }
 }
@@ -2031,12 +2015,9 @@ pub unsafe fn Shaktool_DC2A(k: uint16, game: &mut Game) {
             .offset(v3 as isize) as int16 as ::core::ffi::c_int)
             << 8 as ::core::ffi::c_int) as uint32)
             .wrapping_add(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
-                    .offset((v5 + 91 as ::core::ffi::c_int) as isize) as uint32)
+                (ram_word!(game, enemy_drawing_queue[(v5 + 91i32)]) as uint32)
                     << 16 as ::core::ffi::c_int
-                    | *((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
-                        .offset((v5 + 92 as ::core::ffi::c_int) as isize)
-                        as uint32,
+                    | ram_word!(game, enemy_drawing_queue[(v5 + 92i32)]) as uint32,
             ),
     );
     SetHiLo(
@@ -2046,12 +2027,9 @@ pub unsafe fn Shaktool_DC2A(k: uint16, game: &mut Game) {
             .offset(v3 as isize) as int16 as ::core::ffi::c_int)
             << 8 as ::core::ffi::c_int) as uint32)
             .wrapping_add(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
-                    .offset((v5 + 93 as ::core::ffi::c_int) as isize) as uint32)
+                (ram_word!(game, enemy_drawing_queue[(v5 + 93i32)]) as uint32)
                     << 16 as ::core::ffi::c_int
-                    | *((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
-                        .offset((v5 + 94 as ::core::ffi::c_int) as isize)
-                        as uint32,
+                    | ram_word!(game, enemy_drawing_queue[(v5 + 94i32)]) as uint32,
             ),
     );
 }
@@ -2451,10 +2429,12 @@ pub unsafe fn Shaktool_Instr_14(k: uint16, jp: *const uint16, game: &mut Game) -
 pub unsafe fn N00bTubeCracks_Init(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 62 as ::core::ffi::c_int;
     while i >= 0i32 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-            .offset(((i >> 1 as ::core::ffi::c_int) + 144 as ::core::ffi::c_int) as isize) =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xaae2dd)) as *const uint8 as *mut uint16)
-                .offset((i >> 1 as ::core::ffi::c_int) as isize);
+        set_ram_word!(
+            game.target_palettes[((i >> 1i32) + 144i32)] =
+                *(game.g_rom.offset(crate::rtl::lorom_offset(0xaae2dd)) as *const uint8
+                    as *mut uint16)
+                    .offset((i >> 1 as ::core::ffi::c_int) as isize)
+        );
         i -= 2 as ::core::ffi::c_int;
     }
 }
@@ -2482,12 +2462,10 @@ pub unsafe fn ChozoStatue_Init(game: &mut Game) {
         let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
         while i >= 0i32 {
             let v3: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-                .offset((v3 + 160 as ::core::ffi::c_int) as isize) =
-                kChozoStatue_Palettes[v3 as usize] as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-                .offset((v3 + 144 as ::core::ffi::c_int) as isize) =
-                kChozoStatue_Palette[v3 as usize];
+            set_ram_word!(
+                game.target_palettes[(v3 + 160i32)] = kChozoStatue_Palettes[v3 as usize] as uint16
+            );
+            set_ram_word!(game.target_palettes[(v3 + 144i32)] = kChozoStatue_Palette[v3 as usize]);
             i -= 2 as ::core::ffi::c_int;
         }
         SpawnHardcodedPlm(
@@ -2512,12 +2490,12 @@ pub unsafe fn sub_AAE784(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 30 as ::core::ffi::c_int;
     while i >= 0i32 {
         let v1: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-            .offset((v1 + 160 as ::core::ffi::c_int) as isize) =
-            kChozoStatue_Palettes3[v1 as usize] as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-            .offset((v1 + 144 as ::core::ffi::c_int) as isize) =
-            kChozoStatue_Palettes2[v1 as usize] as uint16;
+        set_ram_word!(
+            game.target_palettes[(v1 + 160i32)] = kChozoStatue_Palettes3[v1 as usize] as uint16
+        );
+        set_ram_word!(
+            game.target_palettes[(v1 + 144i32)] = kChozoStatue_Palettes2[v1 as usize] as uint16
+        );
         i -= 2 as ::core::ffi::c_int;
     }
     SpawnHardcodedPlm(

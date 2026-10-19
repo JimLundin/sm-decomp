@@ -412,14 +412,14 @@ pub unsafe fn Vector_RESET_Async(game: &mut Game) -> CoroutineRet {
         RtlApuWrite(APUI03, 0 as uint8, game);
         set_ram_word!(game.random_number = 97 as uint16);
         set_ram_word!(game.music_timer = 0 as uint16);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16).offset(0) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16).offset(1) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16).offset(2) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16).offset(3) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16).offset(4) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16).offset(5) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16).offset(6) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16).offset(7) = 0 as uint16;
+        set_ram_word!(game.music_queue_delay[0] = 0 as uint16);
+        set_ram_word!(game.music_queue_delay[1] = 0 as uint16);
+        set_ram_word!(game.music_queue_delay[2] = 0 as uint16);
+        set_ram_word!(game.music_queue_delay[3] = 0 as uint16);
+        set_ram_word!(game.music_queue_delay[4] = 0 as uint16);
+        set_ram_word!(game.music_queue_delay[5] = 0 as uint16);
+        set_ram_word!(game.music_queue_delay[6] = 0 as uint16);
+        set_ram_word!(game.music_queue_delay[7] = 0 as uint16);
         set_ram_word!(game.enable_debug = 0 as uint16);
         VerifySRAM(game);
         set_ram_word!(game.debug_disable_sounds = 0 as uint16);
@@ -440,8 +440,7 @@ pub unsafe fn LoadMirrorOfExploredMapTiles(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8)
             .offset(0x7f7)
             .offset(v2 as isize) as *mut uint8 as *mut uint16) =
-            *((&raw mut game.g_ram as *mut uint8).offset(0xcd52) as *mut uint16)
-                .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+            ram_word!(game, explored_map_tiles_saved[(v1 as i32 >> 1i32)]);
         v1 = (v1).wrapping_add(2u16);
         v2 = (v2).wrapping_add(2u16);
         if (((v2) as i16).wrapping_sub(256i16) >= 0i16) {
@@ -458,11 +457,12 @@ pub unsafe fn SaveExploredMapTilesToSaved(game: &mut Game) {
     let mut v1: uint16 = u16::swap_bytes(ram_word!(game, area_index));
     let mut v2: uint16 = 0 as uint16;
     loop {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xcd52) as *mut uint16)
-            .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-            *((&raw mut game.g_ram as *mut uint8)
-                .offset(0x7f7)
-                .offset(v2 as isize) as *mut uint8 as *mut uint16);
+        set_ram_word!(
+            game.explored_map_tiles_saved[(v1 as i32 >> 1i32)] =
+                *((&raw mut game.g_ram as *mut uint8)
+                    .offset(0x7f7)
+                    .offset(v2 as isize) as *mut uint8 as *mut uint16)
+        );
         v1 = (v1).wrapping_add(2u16);
         v2 = (v2).wrapping_add(2u16);
         if (((v2) as i16).wrapping_sub(256i16) >= 0i16) {
@@ -945,10 +945,7 @@ pub unsafe fn NMI_ProcessVramReadQueue(game: &mut Game) {
 }
 pub unsafe fn HasQueuedMusic(game: &mut Game) -> uint8 {
     let mut v0: ::core::ffi::c_int = 14 as ::core::ffi::c_int;
-    while *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16)
-        .offset((v0 >> 1 as ::core::ffi::c_int) as isize)
-        == 0
-    {
+    while ram_word!(game, music_queue_delay[(v0 >> 1i32)]) == 0 {
         v0 -= 2 as ::core::ffi::c_int;
         if v0 < 0i32 {
             return 0 as uint8;
@@ -985,10 +982,8 @@ pub unsafe fn HandleMusicQueue(game: &mut Game) {
             *(&raw mut game.g_ram as *mut uint8).offset(0x64c) = 0 as uint8;
             let v5: ::core::ffi::c_int =
                 ram_word!(game, music_queue_read_pos) as ::core::ffi::c_int;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x619) as *mut uint16)
-                .offset((v5 >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16)
-                .offset((v5 >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
+            set_ram_word!(game.music_queue_track[(v5 >> 1i32)] = 0 as uint16);
+            set_ram_word!(game.music_queue_delay[(v5 >> 1i32)] = 0 as uint16);
             set_ram_word!(
                 game.music_queue_read_pos =
                     (v5 + 2 as ::core::ffi::c_int & 0xe as ::core::ffi::c_int) as uint16
@@ -1006,10 +1001,8 @@ pub unsafe fn HandleMusicQueue(game: &mut Game) {
         *(&raw mut game.g_ram as *mut uint8).offset(0x64c) = v1;
         set_ram_word!(game.sound_handler_downtime = 8 as uint16);
         let v2: ::core::ffi::c_int = ram_word!(game, music_queue_read_pos) as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x619) as *mut uint16)
-            .offset((v2 >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16)
-            .offset((v2 >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
+        set_ram_word!(game.music_queue_track[(v2 >> 1i32)] = 0 as uint16);
+        set_ram_word!(game.music_queue_delay[(v2 >> 1i32)] = 0 as uint16);
         set_ram_word!(
             game.music_queue_read_pos =
                 (v2 + 2 as ::core::ffi::c_int & 0xe as ::core::ffi::c_int) as uint16
@@ -1020,14 +1013,8 @@ pub unsafe fn HandleMusicQueue(game: &mut Game) {
     } else {
         let v4: ::core::ffi::c_int =
             ram_word!(game, music_queue_read_pos) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        set_ram_word!(
-            game.music_entry = *((&raw mut game.g_ram as *mut uint8).offset(0x619) as *mut uint16)
-                .offset(v4 as isize)
-        );
-        set_ram_word!(
-            game.music_timer = *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16)
-                .offset(v4 as isize)
-        );
+        set_ram_word!(game.music_entry = ram_word!(game, music_queue_track[v4]));
+        set_ram_word!(game.music_timer = ram_word!(game, music_queue_delay[v4]));
     };
 }
 pub unsafe fn QueueMusic_Delayed8(a: uint16, game: &mut Game) {
@@ -1041,9 +1028,8 @@ pub unsafe fn QueueMusic_Delayed8(a: uint16, game: &mut Game) {
         v1 = ram_word!(game, music_queue_write_pos) as int8;
         let v2: ::core::ffi::c_int =
             ram_word!(game, music_queue_write_pos) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x619) as *mut uint16).offset(v2 as isize) = a;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16).offset(v2 as isize) =
-            8 as uint16;
+        set_ram_word!(game.music_queue_track[v2] = a);
+        set_ram_word!(game.music_queue_delay[v2] = 8 as uint16);
         set_ram_word!(
             game.music_queue_write_pos = (v1 as ::core::ffi::c_int + 2 as ::core::ffi::c_int
                 & 0xe as ::core::ffi::c_int) as uint16
@@ -1053,14 +1039,12 @@ pub unsafe fn QueueMusic_Delayed8(a: uint16, game: &mut Game) {
 pub unsafe fn QueueMusic_DelayedY(a: uint16, j: uint16, game: &mut Game) {
     if ram_word!(game, game_state) < 0x28u16 {
         let v2: ::core::ffi::c_int = ram_word!(game, music_queue_write_pos) as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x619) as *mut uint16)
-            .offset((v2 >> 1 as ::core::ffi::c_int) as isize) = a;
+        set_ram_word!(game.music_queue_track[(v2 >> 1i32)] = a);
         let mut v4: ::core::ffi::c_int = j as ::core::ffi::c_int;
         if j < 8u16 {
             v4 = 8 as ::core::ffi::c_int;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16)
-            .offset((v2 >> 1 as ::core::ffi::c_int) as isize) = v4 as uint16;
+        set_ram_word!(game.music_queue_delay[(v2 >> 1i32)] = v4 as uint16);
         set_ram_word!(
             game.music_queue_write_pos =
                 (v2 + 2 as ::core::ffi::c_int & 0xe as ::core::ffi::c_int) as uint16
@@ -1824,23 +1808,27 @@ static kHudTilemaps_Missiles: [uint16; 22] = [
     0x3437, 0x7437, 0x3438, 0x7438, 0x3439, 0x7439, 0x343a, 0x743a, 0x343b, 0x743b,
 ];
 pub unsafe fn AddMissilesToHudTilemap(game: &mut Game) {
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(10)
-        as ::core::ffi::c_int
-        & 0x3ff as ::core::ffi::c_int)
+    if (ram_word!(game, hud_tilemap[10]) as ::core::ffi::c_int & 0x3ff as ::core::ffi::c_int)
         == 15i32
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(10) =
-            kHudTilemaps_Missiles[0 as ::core::ffi::c_int as usize];
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(11) =
-            kHudTilemaps_Missiles[1 as ::core::ffi::c_int as usize];
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(12) =
-            kHudTilemaps_Missiles[2 as ::core::ffi::c_int as usize];
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(42) =
-            kHudTilemaps_Missiles[3 as ::core::ffi::c_int as usize];
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(43) =
-            kHudTilemaps_Missiles[4 as ::core::ffi::c_int as usize];
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(44) =
-            kHudTilemaps_Missiles[5 as ::core::ffi::c_int as usize];
+        set_ram_word!(
+            game.hud_tilemap[10] = kHudTilemaps_Missiles[0 as ::core::ffi::c_int as usize]
+        );
+        set_ram_word!(
+            game.hud_tilemap[11] = kHudTilemaps_Missiles[1 as ::core::ffi::c_int as usize]
+        );
+        set_ram_word!(
+            game.hud_tilemap[12] = kHudTilemaps_Missiles[2 as ::core::ffi::c_int as usize]
+        );
+        set_ram_word!(
+            game.hud_tilemap[42] = kHudTilemaps_Missiles[3 as ::core::ffi::c_int as usize]
+        );
+        set_ram_word!(
+            game.hud_tilemap[43] = kHudTilemaps_Missiles[4 as ::core::ffi::c_int as usize]
+        );
+        set_ram_word!(
+            game.hud_tilemap[44] = kHudTilemaps_Missiles[5 as ::core::ffi::c_int as usize]
+        );
     }
 }
 pub unsafe fn AddSuperMissilesToHudTilemap(game: &mut Game) {
@@ -1889,19 +1877,13 @@ pub unsafe fn AddXrayToHudTilemap(game: &mut Game) {
 }
 pub unsafe fn AddToTilemapInner(k: uint16, j: *const uint16, game: &mut Game) {
     let v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(v2 as isize)
-        as ::core::ffi::c_int
-        & 0x3ff as ::core::ffi::c_int)
+    if (ram_word!(game, hud_tilemap[v2]) as ::core::ffi::c_int & 0x3ff as ::core::ffi::c_int)
         == 15i32
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(v2 as isize) =
-            *j.offset(0);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16)
-            .offset((v2 + 1 as ::core::ffi::c_int) as isize) = *j.offset(1);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16)
-            .offset((v2 + 32 as ::core::ffi::c_int) as isize) = *j.offset(2);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16)
-            .offset((v2 + 33 as ::core::ffi::c_int) as isize) = *j.offset(3);
+        set_ram_word!(game.hud_tilemap[v2] = *j.offset(0));
+        set_ram_word!(game.hud_tilemap[(v2 + 1i32)] = *j.offset(1));
+        set_ram_word!(game.hud_tilemap[(v2 + 32i32)] = *j.offset(2));
+        set_ram_word!(game.hud_tilemap[(v2 + 33i32)] = *j.offset(3));
     }
 }
 pub unsafe fn InitializeHud(game: &mut Game) {
@@ -1912,9 +1894,10 @@ pub unsafe fn InitializeHud(game: &mut Game) {
     WriteReg(MDMAEN as uint16, 2 as uint8, game);
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
     while i != 192i32 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16)
-            .offset((i >> 1 as ::core::ffi::c_int) as isize) =
-            kHudTilemaps_Row1to3[(i >> 1 as ::core::ffi::c_int) as usize];
+        set_ram_word!(
+            game.hud_tilemap[(i >> 1i32)] =
+                kHudTilemaps_Row1to3[(i >> 1 as ::core::ffi::c_int) as usize]
+        );
         i += 2 as ::core::ffi::c_int;
     }
     if (ram_word!(game, equipped_items) as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int)
@@ -1984,18 +1967,12 @@ pub unsafe fn HandleHudTilemap(game: &mut Game) {
         if ram_word!(game, samus_reserve_health) == 0 {
             v1 = v1.offset(6);
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(8) =
-            *v1.offset(0);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(9) =
-            *v1.offset(1);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(40) =
-            *v1.offset(2);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(41) =
-            *v1.offset(3);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(72) =
-            *v1.offset(4);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(73) =
-            *v1.offset(5);
+        set_ram_word!(game.hud_tilemap[8] = *v1.offset(0));
+        set_ram_word!(game.hud_tilemap[9] = *v1.offset(1));
+        set_ram_word!(game.hud_tilemap[40] = *v1.offset(2));
+        set_ram_word!(game.hud_tilemap[41] = *v1.offset(3));
+        set_ram_word!(game.hud_tilemap[72] = *v1.offset(4));
+        set_ram_word!(game.hud_tilemap[73] = *v1.offset(5));
     }
     if ram_word!(game, samus_health) != ram_word!(game, samus_prev_health) {
         set_ram_word!(game.samus_prev_health = ram_word!(game, samus_health));
@@ -2121,90 +2098,68 @@ pub unsafe fn ToggleHudItemHighlight(a: uint16, k: uint16, game: &mut Game) {
     if v2 >= 0i16 {
         let v3: ::core::ffi::c_int =
             kHudItemTilemapOffsets[v2 as usize] as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(v3 as isize)
-            != 11279u16
-        {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16)
-                .offset(v3 as isize) =
-                (ram_word!(game, hud_item_tilemap_palette_bits) as ::core::ffi::c_int
-                    | *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16)
-                        .offset(v3 as isize) as ::core::ffi::c_int
-                        & 0xe3ff as ::core::ffi::c_int) as uint16;
+        if ram_word!(game, hud_tilemap[v3]) != 11279u16 {
+            set_ram_word!(
+                game.hud_tilemap[v3] =
+                    (ram_word!(game, hud_item_tilemap_palette_bits) as ::core::ffi::c_int
+                        | ram_word!(game, hud_tilemap[v3]) as ::core::ffi::c_int
+                            & 0xe3ff as ::core::ffi::c_int) as uint16
+            );
         }
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16)
-            .offset((v3 + 1 as ::core::ffi::c_int) as isize)
-            != 11279u16
-        {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16)
-                .offset((v3 + 1 as ::core::ffi::c_int) as isize) =
-                (ram_word!(game, hud_item_tilemap_palette_bits) as ::core::ffi::c_int
-                    | *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16)
-                        .offset((v3 + 1 as ::core::ffi::c_int) as isize)
-                        as ::core::ffi::c_int
-                        & 0xe3ff as ::core::ffi::c_int) as uint16;
+        if ram_word!(game, hud_tilemap[(v3 + 1i32)]) != 11279u16 {
+            set_ram_word!(
+                game.hud_tilemap[(v3 + 1i32)] =
+                    (ram_word!(game, hud_item_tilemap_palette_bits) as ::core::ffi::c_int
+                        | ram_word!(game, hud_tilemap[(v3 + 1i32)]) as ::core::ffi::c_int
+                            & 0xe3ff as ::core::ffi::c_int) as uint16
+            );
         }
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16)
-            .offset((v3 + 32 as ::core::ffi::c_int) as isize)
-            != 11279u16
-        {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16)
-                .offset((v3 + 32 as ::core::ffi::c_int) as isize) =
-                (ram_word!(game, hud_item_tilemap_palette_bits) as ::core::ffi::c_int
-                    | *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16)
-                        .offset((v3 + 32 as ::core::ffi::c_int) as isize)
-                        as ::core::ffi::c_int
-                        & 0xe3ff as ::core::ffi::c_int) as uint16;
+        if ram_word!(game, hud_tilemap[(v3 + 32i32)]) != 11279u16 {
+            set_ram_word!(
+                game.hud_tilemap[(v3 + 32i32)] =
+                    (ram_word!(game, hud_item_tilemap_palette_bits) as ::core::ffi::c_int
+                        | ram_word!(game, hud_tilemap[(v3 + 32i32)]) as ::core::ffi::c_int
+                            & 0xe3ff as ::core::ffi::c_int) as uint16
+            );
         }
-        if *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16)
-            .offset((v3 + 33 as ::core::ffi::c_int) as isize)
-            != 11279u16
-        {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16)
-                .offset((v3 + 33 as ::core::ffi::c_int) as isize) =
-                (ram_word!(game, hud_item_tilemap_palette_bits) as ::core::ffi::c_int
-                    | *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16)
-                        .offset((v3 + 33 as ::core::ffi::c_int) as isize)
-                        as ::core::ffi::c_int
-                        & 0xe3ff as ::core::ffi::c_int) as uint16;
+        if ram_word!(game, hud_tilemap[(v3 + 33i32)]) != 11279u16 {
+            set_ram_word!(
+                game.hud_tilemap[(v3 + 33i32)] =
+                    (ram_word!(game, hud_item_tilemap_palette_bits) as ::core::ffi::c_int
+                        | ram_word!(game, hud_tilemap[(v3 + 33i32)]) as ::core::ffi::c_int
+                            & 0xe3ff as ::core::ffi::c_int) as uint16
+            );
         }
         if 2 as ::core::ffi::c_int * v2 as ::core::ffi::c_int == 0 {
-            if *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16)
-                .offset((v3 + 2 as ::core::ffi::c_int) as isize)
-                != 11279u16
-            {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16)
-                    .offset((v3 + 2 as ::core::ffi::c_int) as isize) =
-                    (ram_word!(game, hud_item_tilemap_palette_bits) as ::core::ffi::c_int
-                        | *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16)
-                            .offset((v3 + 2 as ::core::ffi::c_int) as isize)
-                            as ::core::ffi::c_int
-                            & 0xe3ff as ::core::ffi::c_int) as uint16;
+            if ram_word!(game, hud_tilemap[(v3 + 2i32)]) != 11279u16 {
+                set_ram_word!(
+                    game.hud_tilemap[(v3 + 2i32)] =
+                        (ram_word!(game, hud_item_tilemap_palette_bits) as ::core::ffi::c_int
+                            | ram_word!(game, hud_tilemap[(v3 + 2i32)]) as ::core::ffi::c_int
+                                & 0xe3ff as ::core::ffi::c_int) as uint16
+                );
             }
-            if *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16)
-                .offset((v3 + 34 as ::core::ffi::c_int) as isize)
-                != 11279u16
-            {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16)
-                    .offset((v3 + 34 as ::core::ffi::c_int) as isize) =
-                    (ram_word!(game, hud_item_tilemap_palette_bits) as ::core::ffi::c_int
-                        | *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16)
-                            .offset((v3 + 34 as ::core::ffi::c_int) as isize)
-                            as ::core::ffi::c_int
-                            & 0xe3ff as ::core::ffi::c_int) as uint16;
+            if ram_word!(game, hud_tilemap[(v3 + 34i32)]) != 11279u16 {
+                set_ram_word!(
+                    game.hud_tilemap[(v3 + 34i32)] =
+                        (ram_word!(game, hud_item_tilemap_palette_bits) as ::core::ffi::c_int
+                            | ram_word!(game, hud_tilemap[(v3 + 34i32)]) as ::core::ffi::c_int
+                                & 0xe3ff as ::core::ffi::c_int) as uint16
+                );
             }
         }
     }
 }
 pub unsafe fn DrawThreeHudDigits(addr: uint32, a: uint16, k: uint16, game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = *(RomPtr(
-        (addr).wrapping_add(
-            (2 as ::core::ffi::c_int * (a as ::core::ffi::c_int / 100 as ::core::ffi::c_int))
-                as uint32_t,
-        ),
-        game,
-    )
-        as *mut uint16);
+    set_ram_word!(
+        game.hud_tilemap[(k as i32 >> 1i32)] = *(RomPtr(
+            (addr).wrapping_add(
+                (2 as ::core::ffi::c_int * (a as ::core::ffi::c_int / 100 as ::core::ffi::c_int))
+                    as uint32_t,
+            ),
+            game,
+        ) as *mut uint16)
+    );
     DrawTwoHudDigits(
         addr,
         (a as ::core::ffi::c_int % 100 as ::core::ffi::c_int) as uint16,
@@ -2214,22 +2169,24 @@ pub unsafe fn DrawThreeHudDigits(addr: uint32, a: uint16, k: uint16, game: &mut 
 }
 pub unsafe fn DrawTwoHudDigits(addr: uint32, a: uint16, k: uint16, game: &mut Game) {
     let v3: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16).offset(v3 as isize) =
-        *(RomPtr(
+    set_ram_word!(
+        game.hud_tilemap[v3] = *(RomPtr(
             (addr).wrapping_add(
                 (2 as ::core::ffi::c_int * (a as ::core::ffi::c_int / 10 as ::core::ffi::c_int))
                     as uint32_t,
             ),
             game,
-        ) as *mut uint16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc608) as *mut uint16)
-        .offset((v3 + 1 as ::core::ffi::c_int) as isize) = *(RomPtr(
-        (addr).wrapping_add(
-            (2 as ::core::ffi::c_int * (a as ::core::ffi::c_int % 10 as ::core::ffi::c_int))
-                as uint32_t,
-        ),
-        game,
-    ) as *mut uint16);
+        ) as *mut uint16)
+    );
+    set_ram_word!(
+        game.hud_tilemap[(v3 + 1i32)] = *(RomPtr(
+            (addr).wrapping_add(
+                (2 as ::core::ffi::c_int * (a as ::core::ffi::c_int % 10 as ::core::ffi::c_int))
+                    as uint32_t,
+            ),
+            game,
+        ) as *mut uint16)
+    );
 }
 static kTimerProcessFuncs: [Option<Func_U8>; 7] = unsafe {
     [
@@ -3473,114 +3430,133 @@ pub unsafe fn UpdateLevelOrBackgroundDataColumn(k: uint16, game: &mut Game) {
             if v12 == 1024u16 {
                 let v14: uint16 =
                     (var937 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc8c8) as *mut uint16)
-                    .offset(v14 as isize) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                    as *mut TileTables))
-                    .tables[v10 as usize]
-                    .top_right)
-                    ^ (0x4000u16);
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc908) as *mut uint16)
-                    .offset(v14 as isize) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                    as *mut TileTables))
-                    .tables[v10 as usize]
-                    .top_left)
-                    ^ (0x4000u16);
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc8c8) as *mut uint16)
-                    .offset((v14 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize) =
-                    ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
-                        .tables[v10 as usize]
-                        .bottom_right)
-                        ^ (0x4000u16);
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc908) as *mut uint16)
-                    .offset((v14 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize) =
-                    ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
-                        .tables[v10 as usize]
-                        .bottom_left)
-                        ^ (0x4000u16);
+                set_ram_word!(
+                    game.bg1_column_update_tilemap_left_halves[v14] =
+                        ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+                            as *mut TileTables))
+                            .tables[v10 as usize]
+                            .top_right)
+                            ^ (0x4000u16)
+                );
+                set_ram_word!(
+                    game.bg1_column_update_tilemap_right_halves[v14] =
+                        ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+                            as *mut TileTables))
+                            .tables[v10 as usize]
+                            .top_left)
+                            ^ (0x4000u16)
+                );
+                set_ram_word!(
+                    game.bg1_column_update_tilemap_left_halves[(v14 as i32 + 1i32)] =
+                        ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+                            as *mut TileTables))
+                            .tables[v10 as usize]
+                            .bottom_right)
+                            ^ (0x4000u16)
+                );
+                set_ram_word!(
+                    game.bg1_column_update_tilemap_right_halves[(v14 as i32 + 1i32)] =
+                        ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+                            as *mut TileTables))
+                            .tables[v10 as usize]
+                            .bottom_left)
+                            ^ (0x4000u16)
+                );
             } else {
                 let v15: uint16 =
                     (var937 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
                 let mut v16: uint16 = 0;
                 if v12 == 2048u16 {
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xc8c8) as *mut uint16)
-                        .offset(v15 as isize) = ((*((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xa000)
-                        as *mut TileTables))
-                        .tables[v10 as usize]
-                        .bottom_left)
-                        ^ (0x8000u16);
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xc908) as *mut uint16)
-                        .offset(v15 as isize) = ((*((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xa000)
-                        as *mut TileTables))
-                        .tables[v10 as usize]
-                        .bottom_right)
-                        ^ (0x8000u16);
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xc8c8) as *mut uint16)
-                        .offset((v15 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize) =
-                        ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v10 as usize]
-                            .top_left)
-                            ^ (0x8000u16);
+                    set_ram_word!(
+                        game.bg1_column_update_tilemap_left_halves[v15] =
+                            ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+                                as *mut TileTables))
+                                .tables[v10 as usize]
+                                .bottom_left)
+                                ^ (0x8000u16)
+                    );
+                    set_ram_word!(
+                        game.bg1_column_update_tilemap_right_halves[v15] =
+                            ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+                                as *mut TileTables))
+                                .tables[v10 as usize]
+                                .bottom_right)
+                                ^ (0x8000u16)
+                    );
+                    set_ram_word!(
+                        game.bg1_column_update_tilemap_left_halves[(v15 as i32 + 1i32)] =
+                            ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+                                as *mut TileTables))
+                                .tables[v10 as usize]
+                                .top_left)
+                                ^ (0x8000u16)
+                    );
                     v16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
                         as *mut TileTables))
                         .tables[v10 as usize]
                         .top_right)
                         ^ (0x8000u16);
                 } else {
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xc8c8) as *mut uint16)
-                        .offset(v15 as isize) = ((*((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xa000)
-                        as *mut TileTables))
-                        .tables[v10 as usize]
-                        .bottom_right)
-                        ^ (0xc000u16);
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xc908) as *mut uint16)
-                        .offset(v15 as isize) = ((*((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xa000)
-                        as *mut TileTables))
-                        .tables[v10 as usize]
-                        .bottom_left)
-                        ^ (0xc000u16);
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xc8c8) as *mut uint16)
-                        .offset((v15 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize) =
-                        ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v10 as usize]
-                            .top_right)
-                            ^ (0xc000u16);
+                    set_ram_word!(
+                        game.bg1_column_update_tilemap_left_halves[v15] =
+                            ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+                                as *mut TileTables))
+                                .tables[v10 as usize]
+                                .bottom_right)
+                                ^ (0xc000u16)
+                    );
+                    set_ram_word!(
+                        game.bg1_column_update_tilemap_right_halves[v15] =
+                            ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+                                as *mut TileTables))
+                                .tables[v10 as usize]
+                                .bottom_left)
+                                ^ (0xc000u16)
+                    );
+                    set_ram_word!(
+                        game.bg1_column_update_tilemap_left_halves[(v15 as i32 + 1i32)] =
+                            ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+                                as *mut TileTables))
+                                .tables[v10 as usize]
+                                .top_right)
+                                ^ (0xc000u16)
+                    );
                     v16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
                         as *mut TileTables))
                         .tables[v10 as usize]
                         .top_left)
                         ^ (0xc000u16);
                 }
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc908) as *mut uint16)
-                    .offset((v15 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize) = v16;
+                set_ram_word!(
+                    game.bg1_column_update_tilemap_right_halves[(v15 as i32 + 1i32)] = v16
+                );
             }
         } else {
             let v13: uint16 = (var937 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc8c8) as *mut uint16)
-                .offset(v13 as isize) = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                as *mut TileTables))
-                .tables[v10 as usize]
-                .top_left;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc908) as *mut uint16)
-                .offset(v13 as isize) = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                as *mut TileTables))
-                .tables[v10 as usize]
-                .top_right;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc8c8) as *mut uint16)
-                .offset((v13 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize) =
-                (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables)).tables
-                    [v10 as usize]
-                    .bottom_left;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc908) as *mut uint16)
-                .offset((v13 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize) =
-                (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables)).tables
-                    [v10 as usize]
-                    .bottom_right;
+            set_ram_word!(
+                game.bg1_column_update_tilemap_left_halves[v13] =
+                    (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
+                        .tables[v10 as usize]
+                        .top_left
+            );
+            set_ram_word!(
+                game.bg1_column_update_tilemap_right_halves[v13] =
+                    (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
+                        .tables[v10 as usize]
+                        .top_right
+            );
+            set_ram_word!(
+                game.bg1_column_update_tilemap_left_halves[(v13 as i32 + 1i32)] =
+                    (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
+                        .tables[v10 as usize]
+                        .bottom_left
+            );
+            set_ram_word!(
+                game.bg1_column_update_tilemap_right_halves[(v13 as i32 + 1i32)] =
+                    (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
+                        .tables[v10 as usize]
+                        .bottom_right
+            );
         }
         var937 = (v11).wrapping_add(4u16);
         v9 = (ram_word!(game, room_width_in_blocks) as ::core::ffi::c_int * 2 as ::core::ffi::c_int
@@ -3687,114 +3663,133 @@ pub unsafe fn UpdateLevelOrBackgroundDataRow(v0: uint16, game: &mut Game) {
             if v12 == 1024u16 {
                 let v14: uint16 =
                     (var937 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc948) as *mut uint16)
-                    .offset(v14 as isize) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                    as *mut TileTables))
-                    .tables[v10 as usize]
-                    .top_right)
-                    ^ (0x4000u16);
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc948) as *mut uint16)
-                    .offset((v14 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize) =
-                    ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
-                        .tables[v10 as usize]
-                        .top_left)
-                        ^ (0x4000u16);
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc98c) as *mut uint16)
-                    .offset(v14 as isize) = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                    as *mut TileTables))
-                    .tables[v10 as usize]
-                    .bottom_right)
-                    ^ (0x4000u16);
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc98c) as *mut uint16)
-                    .offset((v14 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize) =
-                    ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
-                        .tables[v10 as usize]
-                        .bottom_left)
-                        ^ (0x4000u16);
+                set_ram_word!(
+                    game.bg1_column_update_tilemap_top_halves[v14] =
+                        ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+                            as *mut TileTables))
+                            .tables[v10 as usize]
+                            .top_right)
+                            ^ (0x4000u16)
+                );
+                set_ram_word!(
+                    game.bg1_column_update_tilemap_top_halves[(v14 as i32 + 1i32)] =
+                        ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+                            as *mut TileTables))
+                            .tables[v10 as usize]
+                            .top_left)
+                            ^ (0x4000u16)
+                );
+                set_ram_word!(
+                    game.bg1_column_update_tilemap_bottom_halves[v14] =
+                        ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+                            as *mut TileTables))
+                            .tables[v10 as usize]
+                            .bottom_right)
+                            ^ (0x4000u16)
+                );
+                set_ram_word!(
+                    game.bg1_column_update_tilemap_bottom_halves[(v14 as i32 + 1i32)] =
+                        ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+                            as *mut TileTables))
+                            .tables[v10 as usize]
+                            .bottom_left)
+                            ^ (0x4000u16)
+                );
             } else {
                 let v15: uint16 =
                     (var937 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
                 let mut v16: uint16 = 0;
                 if v12 == 2048u16 {
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xc948) as *mut uint16)
-                        .offset(v15 as isize) = ((*((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xa000)
-                        as *mut TileTables))
-                        .tables[v10 as usize]
-                        .bottom_left)
-                        ^ (0x8000u16);
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xc948) as *mut uint16)
-                        .offset((v15 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize) =
-                        ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v10 as usize]
-                            .bottom_right)
-                            ^ (0x8000u16);
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xc98c) as *mut uint16)
-                        .offset(v15 as isize) = ((*((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xa000)
-                        as *mut TileTables))
-                        .tables[v10 as usize]
-                        .top_left)
-                        ^ (0x8000u16);
+                    set_ram_word!(
+                        game.bg1_column_update_tilemap_top_halves[v15] =
+                            ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+                                as *mut TileTables))
+                                .tables[v10 as usize]
+                                .bottom_left)
+                                ^ (0x8000u16)
+                    );
+                    set_ram_word!(
+                        game.bg1_column_update_tilemap_top_halves[(v15 as i32 + 1i32)] =
+                            ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+                                as *mut TileTables))
+                                .tables[v10 as usize]
+                                .bottom_right)
+                                ^ (0x8000u16)
+                    );
+                    set_ram_word!(
+                        game.bg1_column_update_tilemap_bottom_halves[v15] =
+                            ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+                                as *mut TileTables))
+                                .tables[v10 as usize]
+                                .top_left)
+                                ^ (0x8000u16)
+                    );
                     v16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
                         as *mut TileTables))
                         .tables[v10 as usize]
                         .top_right)
                         ^ (0x8000u16);
                 } else {
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xc948) as *mut uint16)
-                        .offset(v15 as isize) = ((*((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xa000)
-                        as *mut TileTables))
-                        .tables[v10 as usize]
-                        .bottom_right)
-                        ^ (0xc000u16);
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xc948) as *mut uint16)
-                        .offset((v15 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize) =
-                        ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                            as *mut TileTables))
-                            .tables[v10 as usize]
-                            .bottom_left)
-                            ^ (0xc000u16);
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xc98c) as *mut uint16)
-                        .offset(v15 as isize) = ((*((&raw mut game.g_ram as *mut uint8)
-                        .offset(0xa000)
-                        as *mut TileTables))
-                        .tables[v10 as usize]
-                        .top_right)
-                        ^ (0xc000u16);
+                    set_ram_word!(
+                        game.bg1_column_update_tilemap_top_halves[v15] =
+                            ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+                                as *mut TileTables))
+                                .tables[v10 as usize]
+                                .bottom_right)
+                                ^ (0xc000u16)
+                    );
+                    set_ram_word!(
+                        game.bg1_column_update_tilemap_top_halves[(v15 as i32 + 1i32)] =
+                            ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+                                as *mut TileTables))
+                                .tables[v10 as usize]
+                                .bottom_left)
+                                ^ (0xc000u16)
+                    );
+                    set_ram_word!(
+                        game.bg1_column_update_tilemap_bottom_halves[v15] =
+                            ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
+                                as *mut TileTables))
+                                .tables[v10 as usize]
+                                .top_right)
+                                ^ (0xc000u16)
+                    );
                     v16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
                         as *mut TileTables))
                         .tables[v10 as usize]
                         .top_left)
                         ^ (0xc000u16);
                 }
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc98c) as *mut uint16)
-                    .offset((v15 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize) = v16;
+                set_ram_word!(
+                    game.bg1_column_update_tilemap_bottom_halves[(v15 as i32 + 1i32)] = v16
+                );
             }
         } else {
             let v13: uint16 = (var937 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc948) as *mut uint16)
-                .offset(v13 as isize) = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                as *mut TileTables))
-                .tables[v10 as usize]
-                .top_left;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc948) as *mut uint16)
-                .offset((v13 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize) =
-                (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables)).tables
-                    [v10 as usize]
-                    .top_right;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc98c) as *mut uint16)
-                .offset(v13 as isize) = (*((&raw mut game.g_ram as *mut uint8).offset(0xa000)
-                as *mut TileTables))
-                .tables[v10 as usize]
-                .bottom_left;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc98c) as *mut uint16)
-                .offset((v13 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize) =
-                (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables)).tables
-                    [v10 as usize]
-                    .bottom_right;
+            set_ram_word!(
+                game.bg1_column_update_tilemap_top_halves[v13] =
+                    (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
+                        .tables[v10 as usize]
+                        .top_left
+            );
+            set_ram_word!(
+                game.bg1_column_update_tilemap_top_halves[(v13 as i32 + 1i32)] =
+                    (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
+                        .tables[v10 as usize]
+                        .top_right
+            );
+            set_ram_word!(
+                game.bg1_column_update_tilemap_bottom_halves[v13] =
+                    (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
+                        .tables[v10 as usize]
+                        .bottom_left
+            );
+            set_ram_word!(
+                game.bg1_column_update_tilemap_bottom_halves[(v13 as i32 + 1i32)] =
+                    (*((&raw mut game.g_ram as *mut uint8).offset(0xa000) as *mut TileTables))
+                        .tables[v10 as usize]
+                        .bottom_right
+            );
         }
         var937 = (v11).wrapping_add(4u16);
         v9 = (v17).wrapping_add(2u16);

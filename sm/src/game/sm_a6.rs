@@ -971,22 +971,16 @@ pub unsafe fn SpikeyPlatform2ndEnemy_Init(game: &mut Game) {
         ram_word!(game, cur_enemy_index) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let v1: *mut EnemyData =
         gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
-    (*v1).x_pos = *((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
-        .offset((v0 + 91 as ::core::ffi::c_int) as isize);
-    (*v1).y_pos = (*((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
-        .offset((v0 + 93 as ::core::ffi::c_int) as isize))
-    .wrapping_add(12u16);
+    (*v1).x_pos = ram_word!(game, enemy_drawing_queue[(v0 + 91i32)]);
+    (*v1).y_pos = (ram_word!(game, enemy_drawing_queue[(v0 + 93i32)])).wrapping_add(12u16);
 }
 pub unsafe fn SpikeyPlatform2ndEnemy_Main(game: &mut Game) {
     let v0: ::core::ffi::c_int =
         ram_word!(game, cur_enemy_index) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let v1: *mut EnemyData =
         gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
-    (*v1).x_pos = *((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
-        .offset((v0 + 91 as ::core::ffi::c_int) as isize);
-    (*v1).y_pos = (*((&raw mut game.g_ram as *mut uint8).offset(0xe84) as *mut uint16)
-        .offset((v0 + 93 as ::core::ffi::c_int) as isize))
-    .wrapping_add(12u16);
+    (*v1).x_pos = ram_word!(game, enemy_drawing_queue[(v0 + 91i32)]);
+    (*v1).y_pos = (ram_word!(game, enemy_drawing_queue[(v0 + 93i32)])).wrapping_add(12u16);
 }
 pub unsafe fn CallSpikeyPlatformFunc(ea: uint32, k: uint16, game: &mut Game) {
     match ea {
@@ -1632,19 +1626,15 @@ pub unsafe fn NuclearWaffle_Func_3(varE32: uint16, game: &mut Game) {
             let v5: ::core::ffi::c_int =
                 nwe_var_00 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
             CreateSpriteAtPos(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
-                    .offset(v5 as isize),
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
-                    .offset(v5 as isize),
+                ram_word!(game, eproj_x_pos[v5]),
+                ram_word!(game, eproj_y_pos[v5]),
                 46 as uint16,
                 (*E).nwe_var_34,
                 game,
             );
             CreateSpriteAtPos(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16)
-                    .offset(v5 as isize),
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16)
-                    .offset(v5 as isize),
+                ram_word!(game, eproj_x_pos[v5]),
+                ram_word!(game, eproj_y_pos[v5]),
                 (pair.k).wrapping_add(44u16),
                 (*E).nwe_var_34,
                 game,
@@ -1654,11 +1644,14 @@ pub unsafe fn NuclearWaffle_Func_3(varE32: uint16, game: &mut Game) {
         (*ET).nwe_var_08 = v13;
         let v7: uint16 = NuclearWaffle_Func_5(R36, &raw mut r28, game);
         let v10: ::core::ffi::c_int = nwe_var_00 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16).offset(v10 as isize) =
-            ((*E).nwe_var_26).wrapping_add(CosineMult8bit(v7, varE32, game));
+        set_ram_word!(
+            game.eproj_x_pos[v10] =
+                ((*E).nwe_var_26).wrapping_add(CosineMult8bit(v7, varE32, game))
+        );
         let v11: uint16 = NuclearWaffle_Func_5(R36, &raw mut r28, game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1a93) as *mut uint16).offset(v10 as isize) =
-            ((*E).nwe_var_27).wrapping_add(SineMult8bit(v11, varE32, game));
+        set_ram_word!(
+            game.eproj_y_pos[v10] = ((*E).nwe_var_27).wrapping_add(SineMult8bit(v11, varE32, game))
+        );
         v12 = ((*E).nwe_var_2A).wrapping_sub(2u16);
         (*E).nwe_var_2A = v12;
         if (v12 == 0) {
@@ -1694,19 +1687,15 @@ pub unsafe fn NuclearWaffle_Func_4(varE32: uint16, game: &mut Game) {
             let v5: ::core::ffi::c_int =
                 nwe_var_10 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
             CreateSpriteAtPos(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xf0f8) as *mut uint16)
-                    .offset(v5 as isize),
-                *((&raw mut game.g_ram as *mut uint8).offset(0xf1f8) as *mut uint16)
-                    .offset(v5 as isize),
+                ram_word!(game, sprite_x_pos[v5]),
+                ram_word!(game, sprite_y_pos[v5]),
                 46 as uint16,
                 r38,
                 game,
             );
             CreateSpriteAtPos(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xf0f8) as *mut uint16)
-                    .offset(v5 as isize),
-                *((&raw mut game.g_ram as *mut uint8).offset(0xf1f8) as *mut uint16)
-                    .offset(v5 as isize),
+                ram_word!(game, sprite_x_pos[v5]),
+                ram_word!(game, sprite_y_pos[v5]),
                 (pair.k).wrapping_add(44u16),
                 r38,
                 game,
@@ -1719,10 +1708,8 @@ pub unsafe fn NuclearWaffle_Func_4(varE32: uint16, game: &mut Game) {
         let R32: uint16 = ((*E).nwe_var_26).wrapping_add(v7);
         let v9: uint16 = NuclearWaffle_Func_5(R36, &raw mut r28, game);
         let R34: uint16 = ((*E).nwe_var_27).wrapping_add(SineMult8bit(v9, varE32, game));
-        *((&raw mut game.g_ram as *mut uint8).offset(0xf0f8) as *mut uint16)
-            .offset((nwe_var_10 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = R32;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xf1f8) as *mut uint16)
-            .offset((nwe_var_10 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = R34;
+        set_ram_word!(game.sprite_x_pos[(nwe_var_10 as i32 >> 1i32)] = R32);
+        set_ram_word!(game.sprite_y_pos[(nwe_var_10 as i32 >> 1i32)] = R34);
         v12 = ((*E).nwe_var_2A).wrapping_sub(2u16);
         (*E).nwe_var_2A = v12;
         if (v12 == 0) {
@@ -2005,8 +1992,7 @@ pub unsafe fn CeresRidley_Init(game: &mut Game) {
     } else {
         let mut i: ::core::ffi::c_int = 4094 as ::core::ffi::c_int;
         while i >= 0i32 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                .offset((i >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
+            set_ram_word!(game.tilemap_stuff[(i >> 1i32)] = 0 as uint16);
             i -= 2 as ::core::ffi::c_int;
         }
         DisableMinimapAndMarkBossRoomAsExplored(game);
@@ -2052,10 +2038,8 @@ pub unsafe fn CeresRidley_Init(game: &mut Game) {
             v4 = 15 as int16;
             loop {
                 let v5: ::core::ffi::c_int = v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-                    .offset((v5 + 113 as ::core::ffi::c_int) as isize) = 0 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-                    .offset((v5 + 241 as ::core::ffi::c_int) as isize) = 0 as uint16;
+                set_ram_word!(game.target_palettes[(v5 + 113i32)] = 0 as uint16);
+                set_ram_word!(game.target_palettes[(v5 + 241i32)] = 0 as uint16);
                 v3 = (v3).wrapping_add(2u16);
                 v4 -= 1;
                 if (v4 == 0) {
@@ -2072,8 +2056,7 @@ pub unsafe fn CeresRidley_Init(game: &mut Game) {
             set_ram_word!(game.ceres_status = 0 as uint16);
             (*E).cry_var_10 = 0 as uint16;
             (*E).cry_var_02 = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(1) =
-                1 as uint16;
+            set_ram_word!(game.tilemap_stuff[1] = 1 as uint16);
             (*E).cry_var_1C = 15 as uint16;
             (*E).cry_var_A = ((0xa6a35bi32) as u16);
             (*E).cry_var_B = 0 as uint16;
@@ -2092,9 +2075,7 @@ pub unsafe fn CeresRidley_Init(game: &mut Game) {
             let mut v7: uint16 = 482 as uint16;
             v8 = 15 as int16;
             loop {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-                    .offset((v7 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-                    0 as uint16;
+                set_ram_word!(game.target_palettes[(v7 as i32 >> 1i32)] = 0 as uint16);
                 v7 = (v7).wrapping_add(2u16);
                 v8 -= 1;
                 if (v8 == 0) {
@@ -2199,9 +2180,11 @@ pub unsafe fn CeresRidley_Main(game: &mut Game) {
 }
 pub unsafe fn CeresRidley_Func_1(game: &mut Game) {
     if ram_word!(game, random_number) >= 0xff00u16 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(15) =
-            ((ram_word!(game, random_number) as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
-                + 8 as ::core::ffi::c_int) as uint16;
+        set_ram_word!(
+            game.tilemap_stuff[15] = ((ram_word!(game, random_number) as ::core::ffi::c_int
+                & 0xf as ::core::ffi::c_int)
+                + 8 as ::core::ffi::c_int) as uint16
+        );
     }
 }
 pub unsafe fn CeresRidley_Hurt(game: &mut Game) {
@@ -2288,18 +2271,24 @@ pub unsafe fn CeresRidley_Func_4(game: &mut Game) {
                 let v3: ::core::ffi::c_int = ((6u16).wrapping_mul((v2) as u16))
                     as ::core::ffi::c_int
                     >> 1 as ::core::ffi::c_int;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(252) =
-                    *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6e2aa)) as *const uint8
-                        as *mut uint16)
-                        .offset(v3 as isize);
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(253) =
-                    *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6e2aa)) as *const uint8
-                        as *mut uint16)
-                        .offset((v3 + 1 as ::core::ffi::c_int) as isize);
-                *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(254) =
-                    *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6e2aa)) as *const uint8
-                        as *mut uint16)
-                        .offset((v3 + 2 as ::core::ffi::c_int) as isize);
+                set_ram_word!(
+                    game.palette_buffer[252] =
+                        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6e2aa)) as *const uint8
+                            as *mut uint16)
+                            .offset(v3 as isize)
+                );
+                set_ram_word!(
+                    game.palette_buffer[253] =
+                        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6e2aa)) as *const uint8
+                            as *mut uint16)
+                            .offset((v3 + 1 as ::core::ffi::c_int) as isize)
+                );
+                set_ram_word!(
+                    game.palette_buffer[254] =
+                        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6e2aa)) as *const uint8
+                            as *mut uint16)
+                            .offset((v3 + 2 as ::core::ffi::c_int) as isize)
+                );
             }
         }
     }
@@ -2321,10 +2310,8 @@ pub unsafe fn CeresRidley_Func_5(game: &mut Game) {
                 *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6e30a)) as *const uint8
                     as *mut uint16)
                     .offset((cry_var_E as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
-                .offset((r18 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = v3;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
-                .offset((r20 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = v3;
+            set_ram_word!(game.palette_buffer[(r18 as i32 >> 1i32)] = v3);
+            set_ram_word!(game.palette_buffer[(r20 as i32 >> 1i32)] = v3);
             cry_var_E = (cry_var_E).wrapping_add(2u16);
             r18 = (r18).wrapping_add(2u16);
             r20 = (r20).wrapping_add(2u16);
@@ -2395,7 +2382,7 @@ pub unsafe fn CeresRidley_Func_7(game: &mut Game) {
     (*E).cry_var_08 = 8 as uint16;
     (*E).cry_var_09 = 8 as uint16;
     Ridley_Func_95(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(0) = 1 as uint16;
+    set_ram_word!(game.tilemap_stuff[0] = 1 as uint16);
     (*E).cry_var_A = ((0xa6a354i32) as u16);
 }
 pub unsafe fn CeresRidley_Func_8(a: uint16, game: &mut Game) -> uint8 {
@@ -2567,7 +2554,7 @@ pub unsafe fn CeresRidley_Func_16(game: &mut Game) {
     (*E).cry_var_A = ((0xa6a8a4i32) as u16);
     (*E).cry_var_F = 10 as uint16;
     (*E).cry_var_0A = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(1) = 0 as uint16;
+    set_ram_word!(game.tilemap_stuff[1] = 0 as uint16);
     CeresRidley_Func_17(game);
 }
 pub unsafe fn CeresRidley_Func_17(game: &mut Game) {
@@ -2608,8 +2595,7 @@ pub unsafe fn CeresRidley_Func_19(game: &mut Game) {
     if ((*E).cry_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
         (*E).cry_var_A = ((0xa6a923i32) as u16);
         (*E).cry_var_F = 28 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(2) =
-            1 as uint16;
+        set_ram_word!(game.tilemap_stuff[2] = 1 as uint16);
     }
 }
 pub unsafe fn CeresRidley_Func_20(game: &mut Game) {
@@ -2638,8 +2624,7 @@ pub unsafe fn CeresRidley_Func_21(game: &mut Game) {
     if ((*E).cry_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
         (*E).cry_var_A = ((0xa6a6e8i32) as u16);
         (*E).cry_var_00 = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(1) =
-            1 as uint16;
+        set_ram_word!(game.tilemap_stuff[1] = 1 as uint16);
     }
 }
 pub unsafe fn CeresRidley_Func_22(game: &mut Game) {
@@ -2672,8 +2657,7 @@ pub unsafe fn CeresRidley_Func_23(game: &mut Game) {
         CeresRidley_Func_25(game);
         (*E).cry_var_B = 0 as uint16;
         (*E).cry_var_C = 0 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(0) =
-            0 as uint16;
+        set_ram_word!(game.tilemap_stuff[0] = 0 as uint16);
         (*E).cry_var_A = ((0xa6aa11i32) as u16);
         WriteColorsToPalette(
             0xa2 as uint16,
@@ -3134,8 +3118,7 @@ pub unsafe fn Ridley_Func_10(game: &mut Game) {
     } else {
         (*E).ridley_var_A = ((0xa6b516i32) as u16);
         (*E).ridley_var_00 = 16 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(2) =
-            1 as uint16;
+        set_ram_word!(game.tilemap_stuff[2] = 1 as uint16);
     };
 }
 pub unsafe fn Ridley_Func_11(game: &mut Game) {
@@ -3194,8 +3177,8 @@ pub unsafe fn Ridley_Func_13(game: &mut Game) {
     };
 }
 pub unsafe fn Ridley_Func_14(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(15) = 11 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(9) = 384 as uint16;
+    set_ram_word!(game.tilemap_stuff[15] = 11 as uint16);
+    set_ram_word!(game.tilemap_stuff[9] = 384 as uint16);
     let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_A = ((0xa6b5e5i32) as u16);
     (*E).ridley_var_F = ((ram_word!(game, random_number) as ::core::ffi::c_int
@@ -3252,7 +3235,7 @@ pub unsafe fn Ridley_Func_17(r18: uint16, game: &mut Game) -> uint8 {
         v0 = 352 as uint16;
     }
     Ridley_Func_104_0(0 as uint16, Ridley_Func_7(game), r18, v0, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(2) = 1 as uint16;
+    set_ram_word!(game.tilemap_stuff[2] = 1 as uint16);
     if *(&raw mut game.g_ram as *mut uint8).offset(0xa1f) != 3u8 {
         return 1 as uint8;
     }
@@ -3265,9 +3248,9 @@ pub unsafe fn Ridley_Func_17(r18: uint16, game: &mut Game) -> uint8 {
     0 as uint8
 }
 pub unsafe fn Ridley_Func_18(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(9) = 240 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(15) = 16 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(0) = 1 as uint16;
+    set_ram_word!(game.tilemap_stuff[9] = 240 as uint16);
+    set_ram_word!(game.tilemap_stuff[15] = 16 as uint16);
+    set_ram_word!(game.tilemap_stuff[0] = 1 as uint16);
     (*Get_Ridley(0 as ::core::ffi::c_int, game)).ridley_var_A = ((0xa6b6a7i32) as u16);
 }
 pub unsafe fn Ridley_Func_19(game: &mut Game) {
@@ -3317,9 +3300,7 @@ pub unsafe fn Ridley_Func_21(game: &mut Game) {
         Ridley_Func_27(game);
     } else {
         let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
-        v1 = ((*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(6))
-            as i16)
-            .wrapping_add(((*E).ridley_var_C) as i16);
+        v1 = ((ram_word!(game, tilemap_stuff[6])) as i16).wrapping_add(((*E).ridley_var_C) as i16);
         if v1 as ::core::ffi::c_int - 1536 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0
         {
             v1 = 1536 as int16;
@@ -3327,10 +3308,8 @@ pub unsafe fn Ridley_Func_21(game: &mut Game) {
         (*E).ridley_var_C = v1 as uint16;
         if Ridley_Func_23(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
             game.eproj_spawn_pt = Point16U {
-                x: *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(82),
-                y: ((*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                    .offset(83))
-                .wrapping_add(12u16)),
+                x: ram_word!(game, tilemap_stuff[82]),
+                y: ((ram_word!(game, tilemap_stuff[83])).wrapping_add(12u16)),
             };
             SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as uint16, 9 as uint16, game);
             QueueSfx2_Max6(0x76 as uint16, game);
@@ -3339,22 +3318,14 @@ pub unsafe fn Ridley_Func_21(game: &mut Game) {
             Ridley_Func_28(game);
             Ridley_Func_29(game);
             Ridley_Func_93(0x2026 as uint16, addr_word_A6D37C as uint16, game);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(20) =
-                3072 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(30) =
-                3072 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(40) =
-                3072 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(50) =
-                3072 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(60) =
-                3072 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(70) =
-                3072 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(80) =
-                3072 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(0) =
-                4 as uint16;
+            set_ram_word!(game.tilemap_stuff[20] = 3072 as uint16);
+            set_ram_word!(game.tilemap_stuff[30] = 3072 as uint16);
+            set_ram_word!(game.tilemap_stuff[40] = 3072 as uint16);
+            set_ram_word!(game.tilemap_stuff[50] = 3072 as uint16);
+            set_ram_word!(game.tilemap_stuff[60] = 3072 as uint16);
+            set_ram_word!(game.tilemap_stuff[70] = 3072 as uint16);
+            set_ram_word!(game.tilemap_stuff[80] = 3072 as uint16);
+            set_ram_word!(game.tilemap_stuff[0] = 4 as uint16);
             let mut v2: uint16 = ((*E).ridley_var_26).wrapping_add(1u16);
             if (*E).ridley_var_26 as ::core::ffi::c_int - 1 as ::core::ffi::c_int
                 & 0x8000 as ::core::ffi::c_int
@@ -3382,13 +3353,9 @@ pub unsafe fn Ridley_Func_22(game: &mut Game) {
         (*E).ridley_var_A = ((0xa6b321i32) as u16);
     } else {
         let ridley_var_C: uint16 = (*E).ridley_var_C;
-        v1 = ((*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(7))
-            as i16)
-            .wrapping_add((ridley_var_C) as i16)
-            < 0i16;
-        (*E).ridley_var_C = (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-            .offset(7))
-        .wrapping_add(ridley_var_C);
+        v1 =
+            ((ram_word!(game, tilemap_stuff[7])) as i16).wrapping_add((ridley_var_C) as i16) < 0i16;
+        (*E).ridley_var_C = (ram_word!(game, tilemap_stuff[7])).wrapping_add(ridley_var_C);
         if !v1 {
             (*E).ridley_var_C = 0 as uint16;
             (*E).ridley_var_A = ((0xa6b70ei32) as u16);
@@ -3397,40 +3364,32 @@ pub unsafe fn Ridley_Func_22(game: &mut Game) {
 }
 pub unsafe fn Ridley_Func_23(game: &mut Game) -> uint8 {
     let mut v0: uint8 = (Ridley_Func_103(
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(82),
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(83))
-            .wrapping_add(16u16),
+        ram_word!(game, tilemap_stuff[82]),
+        (ram_word!(game, tilemap_stuff[83])).wrapping_add(16u16),
         game,
     )) & (1u8);
     if v0 == 0 {
         v0 = (Ridley_Func_103(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(72),
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(73))
-                .wrapping_add(18u16),
+            ram_word!(game, tilemap_stuff[72]),
+            (ram_word!(game, tilemap_stuff[73])).wrapping_add(18u16),
             game,
         )) & (1u8);
         if v0 == 0 {
             v0 = (Ridley_Func_103(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(62),
-                (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(63))
-                    .wrapping_add(18u16),
+                ram_word!(game, tilemap_stuff[62]),
+                (ram_word!(game, tilemap_stuff[63])).wrapping_add(18u16),
                 game,
             )) & (1u8);
             if v0 == 0 {
                 v0 = (Ridley_Func_103(
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(52),
-                    (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                        .offset(53))
-                    .wrapping_add(18u16),
+                    ram_word!(game, tilemap_stuff[52]),
+                    (ram_word!(game, tilemap_stuff[53])).wrapping_add(18u16),
                     game,
                 )) & (1u8);
                 if v0 == 0 {
                     return (Ridley_Func_103(
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                            .offset(42),
-                        (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                            .offset(43))
-                        .wrapping_add(18u16),
+                        ram_word!(game, tilemap_stuff[42]),
+                        (ram_word!(game, tilemap_stuff[43])).wrapping_add(18u16),
                         game,
                     )) & (1u8);
                 }
@@ -3440,8 +3399,8 @@ pub unsafe fn Ridley_Func_23(game: &mut Game) -> uint8 {
     v0
 }
 pub unsafe fn Ridley_Func_24(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(0) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(10) = 1 as uint16;
+    set_ram_word!(game.tilemap_stuff[0] = 1 as uint16);
+    set_ram_word!(game.tilemap_stuff[10] = 1 as uint16);
 }
 pub unsafe fn Ridley_Func_25(game: &mut Game) -> uint8 {
     if (Ridley_Func_40_Carry(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int) != 0i32 {
@@ -3560,12 +3519,16 @@ pub unsafe fn Ridley_Func_29(game: &mut Game) {
         * ((*E).ridley_var_12 as ::core::ffi::c_int + 2 as ::core::ffi::c_int))
         as uint16;
     let v3: ::core::ffi::c_int = v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(7) =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6b94d)) as *const uint8 as *mut uint16)
-            .offset(v3 as isize);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(6) =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6b959)) as *const uint8 as *mut uint16)
-            .offset(v3 as isize);
+    set_ram_word!(
+        game.tilemap_stuff[7] = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6b94d))
+            as *const uint8 as *mut uint16)
+            .offset(v3 as isize)
+    );
+    set_ram_word!(
+        game.tilemap_stuff[6] = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6b959))
+            as *const uint8 as *mut uint16)
+            .offset(v3 as isize)
+    );
     (*E).ridley_var_C = *((RomPtr_A6 as unsafe fn(uint16_t, &mut Game) -> *const uint8)(r20, game)
         .offset(v2 as isize) as *const uint8 as *mut uint16);
     let v4: *const uint8 = RomPtr_A6(r18, game);
@@ -3654,8 +3617,7 @@ pub unsafe fn Ridley_Func_32(game: &mut Game) {
             Ridley_Func_43(game);
         } else {
             (*E).ridley_var_A = ((0xa6b3eci32) as u16);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(2) =
-                1 as uint16;
+            set_ram_word!(game.tilemap_stuff[2] = 1 as uint16);
         }
     } else {
         Ridley_Func_126(game);
@@ -3772,10 +3734,8 @@ pub unsafe fn Ridley_Func_35(game: &mut Game) {
     let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_F = (*E).ridley_var_F.wrapping_sub(1);
     if ((*E).ridley_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(15) =
-            8 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(9) =
-            240 as uint16;
+        set_ram_word!(game.tilemap_stuff[15] = 8 as uint16);
+        set_ram_word!(game.tilemap_stuff[9] = 240 as uint16);
         Ridley_Func_38(game);
         (*E).ridley_var_A = ((0xa6bc2ei32) as u16);
         (*E).ridley_var_F = 64 as uint16;
@@ -3793,10 +3753,8 @@ pub unsafe fn Ridley_Func_36(game: &mut Game) {
     let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_F = (*E).ridley_var_F.wrapping_sub(1);
     if ((*E).ridley_var_F as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(15) =
-            16 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(9) =
-            240 as uint16;
+        set_ram_word!(game.tilemap_stuff[15] = 16 as uint16);
+        set_ram_word!(game.tilemap_stuff[9] = 240 as uint16);
         (*E).ridley_var_A = ((0xa6b321i32) as u16);
     } else {
         Ridley_Func_104_0(
@@ -3817,8 +3775,8 @@ pub unsafe fn Ridley_Func_37(game: &mut Game) {
     Ridley_Func_119(1 as uint8, game);
 }
 pub unsafe fn Ridley_Func_38(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(2) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(0) = 1 as uint16;
+    set_ram_word!(game.tilemap_stuff[2] = 1 as uint16);
+    set_ram_word!(game.tilemap_stuff[0] = 1 as uint16);
     let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     if ((*E).ridley_var_01 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32 {
         (*E).ridley_var_1E = (if Ridley_Func_40_Sign(game) != 0u8 {
@@ -4127,14 +4085,10 @@ pub unsafe fn Ridley_Func_54(game: &mut Game) {
     };
 }
 pub unsafe fn Ridley_Func_55(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(97) =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(1);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(99) =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(3);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(81) =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(17);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(83) =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(19);
+    set_ram_word!(game.palette_buffer[97] = ram_word!(game, palette_buffer[1]));
+    set_ram_word!(game.palette_buffer[99] = ram_word!(game, palette_buffer[3]));
+    set_ram_word!(game.palette_buffer[81] = ram_word!(game, palette_buffer[17]));
+    set_ram_word!(game.palette_buffer[83] = ram_word!(game, palette_buffer[19]));
     let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     (*E).ridley_var_E = -(15157 as ::core::ffi::c_int) as uint16;
     (*E).ridley_var_F = (*E).ridley_var_F.wrapping_add(1);
@@ -4238,8 +4192,7 @@ pub unsafe fn Ridley_Func_60(game: &mut Game) {
         v1 = -(31 as ::core::ffi::c_int) as int16;
     }
     (*E).ridley_var_39 = v1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(11) =
-        (abs16((*E).ridley_var_39)) & (0x1fu16);
+    set_ram_word!(game.palette_buffer[11] = (abs16((*E).ridley_var_39)) & (0x1fu16));
 }
 pub unsafe fn Ridley_Func_61(game: &mut Game) {
     if ram_word!(game, door_transition_flag_enemies) as ::core::ffi::c_int
@@ -4256,22 +4209,26 @@ pub unsafe fn Ridley_Func_61(game: &mut Game) {
         (*E).ridley_var_38 = v1;
         let v2: ::core::ffi::c_int = (*E).ridley_var_38 as ::core::ffi::c_int
             + 2 as ::core::ffi::c_int * v1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(97) =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6c1df)) as *const uint8 as *mut uint16)
-                .offset(v2 as isize);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(98) =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6c1df)) as *const uint8 as *mut uint16)
-                .offset((v2 + 1 as ::core::ffi::c_int) as isize);
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(99) =
-            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6c1df)) as *const uint8 as *mut uint16)
-                .offset((v2 + 2 as ::core::ffi::c_int) as isize);
+        set_ram_word!(
+            game.palette_buffer[97] = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6c1df))
+                as *const uint8 as *mut uint16)
+                .offset(v2 as isize)
+        );
+        set_ram_word!(
+            game.palette_buffer[98] = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6c1df))
+                as *const uint8 as *mut uint16)
+                .offset((v2 + 1 as ::core::ffi::c_int) as isize)
+        );
+        set_ram_word!(
+            game.palette_buffer[99] = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6c1df))
+                as *const uint8 as *mut uint16)
+                .offset((v2 + 2 as ::core::ffi::c_int) as isize)
+        );
     }
 }
 pub unsafe fn SetupZebesEscapeTypewriter(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(157) =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(125);
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(158) =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(126);
+    set_ram_word!(game.palette_buffer[157] = ram_word!(game, palette_buffer[125]));
+    set_ram_word!(game.palette_buffer[158] = ram_word!(game, palette_buffer[126]));
     let E: *mut Enemy_MotherBrain = Get_MotherBrain(0 as ::core::ffi::c_int, game);
     (*E).mbn_var_3B = addr_loc_A9C49C as uint16;
     (*E).mbn_var_3C = 0 as uint16;
@@ -4543,45 +4500,33 @@ pub unsafe fn RidleysExplosion_Init(game: &mut Game) {
     if ridley_parameter_1 != 0 {
         match ridley_parameter_1 as ::core::ffi::c_int {
             2 => {
-                (*E).base.x_pos =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(32);
-                (*E).base.y_pos =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(33);
+                (*E).base.x_pos = ram_word!(game, tilemap_stuff[32]);
+                (*E).base.y_pos = ram_word!(game, tilemap_stuff[33]);
                 (*E).base.current_instruction = addr_kRidleysExplosion_Ilist_CA47 as uint16;
             }
             4 => {
-                (*E).base.x_pos =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(42);
-                (*E).base.y_pos =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(43);
+                (*E).base.x_pos = ram_word!(game, tilemap_stuff[42]);
+                (*E).base.y_pos = ram_word!(game, tilemap_stuff[43]);
                 (*E).base.current_instruction = addr_kRidleysExplosion_Ilist_CA4D as uint16;
             }
             6 => {
-                (*E).base.x_pos =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(52);
-                (*E).base.y_pos =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(53);
+                (*E).base.x_pos = ram_word!(game, tilemap_stuff[52]);
+                (*E).base.y_pos = ram_word!(game, tilemap_stuff[53]);
                 (*E).base.current_instruction = addr_kRidleysExplosion_Ilist_CA4D as uint16;
             }
             8 => {
-                (*E).base.x_pos =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(62);
-                (*E).base.y_pos =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(63);
+                (*E).base.x_pos = ram_word!(game, tilemap_stuff[62]);
+                (*E).base.y_pos = ram_word!(game, tilemap_stuff[63]);
                 (*E).base.current_instruction = addr_kRidleysExplosion_Ilist_CA53 as uint16;
             }
             10 => {
-                (*E).base.x_pos =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(72);
-                (*E).base.y_pos =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(73);
+                (*E).base.x_pos = ram_word!(game, tilemap_stuff[72]);
+                (*E).base.y_pos = ram_word!(game, tilemap_stuff[73]);
                 (*E).base.current_instruction = addr_kRidleysExplosion_Ilist_CA53 as uint16;
             }
             12 => {
-                (*E).base.x_pos =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(82);
-                (*E).base.y_pos =
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(83);
+                (*E).base.x_pos = ram_word!(game, tilemap_stuff[82]);
+                (*E).base.y_pos = ram_word!(game, tilemap_stuff[83]);
                 (*E).base.current_instruction = *(game
                     .g_rom
                     .offset(crate::rtl::lorom_offset(0xa6c7ba))
@@ -4702,10 +4647,8 @@ pub unsafe fn RidleysExplosion_Init(game: &mut Game) {
             }
         }
     } else {
-        (*E).base.x_pos =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(22);
-        (*E).base.y_pos =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(23);
+        (*E).base.x_pos = ram_word!(game, tilemap_stuff[22]);
+        (*E).base.y_pos = ram_word!(game, tilemap_stuff[23]);
         (*E).base.current_instruction = addr_kRidleysExplosion_Ilist_CA47 as uint16;
     };
 }
@@ -4773,9 +4716,9 @@ static off_A6CB21: [Option<Func_V>; 9] = unsafe {
 };
 pub unsafe fn Ridley_Func_70(game: &mut Game) {
     Ridley_Func_91(game);
-    off_A6CB21
-        [*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(0) as usize]
-        .expect("non-null function pointer")(game);
+    off_A6CB21[ram_word!(game, tilemap_stuff[0]) as usize].expect("non-null function pointer")(
+        game,
+    );
     Ridley_Func_86(game);
     Ridley_Func_87(game);
     let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
@@ -4790,55 +4733,44 @@ pub unsafe fn Ridley_Func_70(game: &mut Game) {
     }
 }
 pub unsafe fn Ridley_Func_71(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(10) = 8 as uint16;
+    set_ram_word!(game.tilemap_stuff[10] = 8 as uint16);
     Ridley_Func_75(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(0) = 3 as uint16;
+    set_ram_word!(game.tilemap_stuff[0] = 3 as uint16);
 }
 pub unsafe fn Ridley_Func_72(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(10) = 8 as uint16;
+    set_ram_word!(game.tilemap_stuff[10] = 8 as uint16);
     Ridley_Func_75(game);
 }
 pub unsafe fn Ridley_Func_73(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(10) = 3 as uint16;
+    set_ram_word!(game.tilemap_stuff[10] = 3 as uint16);
     Ridley_Func_75(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(0) = 6 as uint16;
+    set_ram_word!(game.tilemap_stuff[0] = 6 as uint16);
 }
 pub unsafe fn Ridley_Func_74(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(10) = 2 as uint16;
+    set_ram_word!(game.tilemap_stuff[10] = 2 as uint16);
     Ridley_Func_75(game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(0) = 7 as uint16;
+    set_ram_word!(game.tilemap_stuff[0] = 7 as uint16);
 }
 pub unsafe fn Ridley_Func_75(game: &mut Game) {
     if (*Get_Ridley(0 as ::core::ffi::c_int, game)).ridley_var_10 != 0 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(13) =
-            0x4000 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(14) =
-            -(1 as ::core::ffi::c_int) as uint16;
+        set_ram_word!(game.tilemap_stuff[13] = 0x4000 as uint16);
+        set_ram_word!(game.tilemap_stuff[14] = -(1 as ::core::ffi::c_int) as uint16);
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(14) =
-            0x4000 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(13) =
-            -(1 as ::core::ffi::c_int) as uint16;
+        set_ram_word!(game.tilemap_stuff[14] = 0x4000 as uint16);
+        set_ram_word!(game.tilemap_stuff[13] = -(1 as ::core::ffi::c_int) as uint16);
     }
     Ridley_CBC7(game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(76)
-        as ::core::ffi::c_int
-        | (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(66)
+    if ram_word!(game, tilemap_stuff[76]) as ::core::ffi::c_int
+        | (ram_word!(game, tilemap_stuff[66]) as ::core::ffi::c_int
+            | ram_word!(game, tilemap_stuff[56]) as ::core::ffi::c_int
+            | ram_word!(game, tilemap_stuff[46]) as ::core::ffi::c_int
+            | ram_word!(game, tilemap_stuff[36]) as ::core::ffi::c_int
+            | ram_word!(game, tilemap_stuff[26]) as ::core::ffi::c_int
+            | ram_word!(game, tilemap_stuff[16]) as ::core::ffi::c_int) as uint16
             as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(56)
-                as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(46)
-                as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(36)
-                as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(26)
-                as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(16)
-                as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
         == 0
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(0) =
-            4 as uint16;
+        set_ram_word!(game.tilemap_stuff[0] = 4 as uint16);
     }
 }
 pub unsafe fn Ridley_CBC0(game: &mut Game) {
@@ -4873,28 +4805,26 @@ pub unsafe fn Ridley_CBDC(game: &mut Game) {
 pub unsafe fn Ridley_Func_77(game: &mut Game) {
     let v0: ::core::ffi::c_int =
         (*Get_Ridley(0 as ::core::ffi::c_int, game)).ridley_var_10 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(11) =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6cc12)) as *const uint8 as *mut uint16)
-            .offset(v0 as isize);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(12) =
-        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6cc18)) as *const uint8 as *mut uint16)
-            .offset(v0 as isize);
+    set_ram_word!(
+        game.tilemap_stuff[11] = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6cc12))
+            as *const uint8 as *mut uint16)
+            .offset(v0 as isize)
+    );
+    set_ram_word!(
+        game.tilemap_stuff[12] = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa6cc18))
+            as *const uint8 as *mut uint16)
+            .offset(v0 as isize)
+    );
 }
 pub unsafe fn Ridley_Func_78(game: &mut Game) -> uint8 {
-    ((*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(76)
-        as ::core::ffi::c_int
-        & (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(66)
-            as ::core::ffi::c_int
-            & *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(56)
-                as ::core::ffi::c_int
-            & *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(46)
-                as ::core::ffi::c_int
-            & *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(36)
-                as ::core::ffi::c_int
-            & *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(26)
-                as ::core::ffi::c_int
-            & *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(16)
-                as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int)
+    ((ram_word!(game, tilemap_stuff[76]) as ::core::ffi::c_int
+        & (ram_word!(game, tilemap_stuff[66]) as ::core::ffi::c_int
+            & ram_word!(game, tilemap_stuff[56]) as ::core::ffi::c_int
+            & ram_word!(game, tilemap_stuff[46]) as ::core::ffi::c_int
+            & ram_word!(game, tilemap_stuff[36]) as ::core::ffi::c_int
+            & ram_word!(game, tilemap_stuff[26]) as ::core::ffi::c_int
+            & ram_word!(game, tilemap_stuff[16]) as ::core::ffi::c_int) as uint16
+            as ::core::ffi::c_int)
         != 0i32) as uint8
 }
 pub unsafe fn Ridley_Func_79(game: &mut Game) {
@@ -4902,33 +4832,24 @@ pub unsafe fn Ridley_Func_79(game: &mut Game) {
     if Ridley_Func_78(game) != 0 && Ridley_Func_80_DoubleRet(game) != 0 {
         return;
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(76)
-        as ::core::ffi::c_int
-        | (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(66)
+    if ram_word!(game, tilemap_stuff[76]) as ::core::ffi::c_int
+        | (ram_word!(game, tilemap_stuff[66]) as ::core::ffi::c_int
+            | ram_word!(game, tilemap_stuff[56]) as ::core::ffi::c_int
+            | ram_word!(game, tilemap_stuff[46]) as ::core::ffi::c_int
+            | ram_word!(game, tilemap_stuff[36]) as ::core::ffi::c_int
+            | ram_word!(game, tilemap_stuff[26]) as ::core::ffi::c_int
+            | ram_word!(game, tilemap_stuff[16]) as ::core::ffi::c_int) as uint16
             as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(56)
-                as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(46)
-                as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(36)
-                as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(26)
-                as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(16)
-                as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
         == 0
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(16) =
-            0x8000 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(13) =
-            -(1 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(14) =
-            -(1 as ::core::ffi::c_int) as uint16;
+        set_ram_word!(game.tilemap_stuff[16] = 0x8000 as uint16);
+        set_ram_word!(game.tilemap_stuff[13] = -(1 as ::core::ffi::c_int) as uint16);
+        set_ram_word!(game.tilemap_stuff[14] = -(1 as ::core::ffi::c_int) as uint16);
         let mut v0: uint16 = 2 as uint16;
         if ram_word!(game, samus_x_pos) < 0x70u16 {
             v0 = 1 as uint16;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(10) = v0;
+        set_ram_word!(game.tilemap_stuff[10] = v0);
     }
 }
 pub unsafe fn Ridley_Func_80_DoubleRet(game: &mut Game) -> uint8 {
@@ -4936,16 +4857,14 @@ pub unsafe fn Ridley_Func_80_DoubleRet(game: &mut Game) -> uint8 {
     let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     let mut retval: bool = false_0 != 0;
     let mut v1: uint16 = 0;
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(2) != 0u16
-        && (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(13)
-            as ::core::ffi::c_int
-            & *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(14)
-                as ::core::ffi::c_int
+    if ram_word!(game, tilemap_stuff[2]) != 0u16
+        && (ram_word!(game, tilemap_stuff[13]) as ::core::ffi::c_int
+            & ram_word!(game, tilemap_stuff[14]) as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int)
             != 0i32
     {
         current_block = 5875655901067838705;
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(1) == 0 {
+    } else if ram_word!(game, tilemap_stuff[1]) == 0 {
         current_block = 15129621311889290514;
     } else if (ram_word!(game, random_number) as uint8) >= 0xf0u8 {
         current_block = 5875655901067838705;
@@ -4956,15 +4875,14 @@ pub unsafe fn Ridley_Func_80_DoubleRet(game: &mut Game) -> uint8 {
         current_block = 15129621311889290514;
     }
     if current_block == 5875655901067838705 {
-        v1 = (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(2))
-            .wrapping_sub(1u16);
+        v1 = (ram_word!(game, tilemap_stuff[2])).wrapping_sub(1u16);
         current_block = 993568416893248401;
     }
     if current_block == 993568416893248401 {
         Ridley_Func_89(v1, game);
         retval = true_0 != 0;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(2) = 0 as uint16;
+    set_ram_word!(game.tilemap_stuff[2] = 0 as uint16);
     retval as uint8
 }
 pub unsafe fn Ridley_Func_81(game: &mut Game) {
@@ -4974,47 +4892,35 @@ pub unsafe fn Ridley_Func_81(game: &mut Game) {
     {
         return;
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(76)
-        as ::core::ffi::c_int
-        | (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(66)
+    if ram_word!(game, tilemap_stuff[76]) as ::core::ffi::c_int
+        | (ram_word!(game, tilemap_stuff[66]) as ::core::ffi::c_int
+            | ram_word!(game, tilemap_stuff[56]) as ::core::ffi::c_int
+            | ram_word!(game, tilemap_stuff[46]) as ::core::ffi::c_int
+            | ram_word!(game, tilemap_stuff[36]) as ::core::ffi::c_int
+            | ram_word!(game, tilemap_stuff[26]) as ::core::ffi::c_int
+            | ram_word!(game, tilemap_stuff[16]) as ::core::ffi::c_int) as uint16
             as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(56)
-                as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(46)
-                as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(36)
-                as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(26)
-                as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(16)
-                as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
         == 0
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(16) =
-            0x8000 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(13) =
-            -(1 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(14) =
-            -(1 as ::core::ffi::c_int) as uint16;
+        set_ram_word!(game.tilemap_stuff[16] = 0x8000 as uint16);
+        set_ram_word!(game.tilemap_stuff[13] = -(1 as ::core::ffi::c_int) as uint16);
+        set_ram_word!(game.tilemap_stuff[14] = -(1 as ::core::ffi::c_int) as uint16);
         let mut v0: uint16 = 2 as uint16;
         if ram_word!(game, samus_x_pos) < 0x70u16 {
             v0 = 1 as uint16;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(10) = v0;
+        set_ram_word!(game.tilemap_stuff[10] = v0);
     }
 }
 pub unsafe fn Ridley_Func_82_DoubleRet(game: &mut Game) -> bool {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(2) != 0
-        && (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(13)
-            as ::core::ffi::c_int
-            & *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(14)
-                as ::core::ffi::c_int
+    if ram_word!(game, tilemap_stuff[2]) != 0
+        && (ram_word!(game, tilemap_stuff[13]) as ::core::ffi::c_int
+            & ram_word!(game, tilemap_stuff[14]) as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int)
             != 0i32
     {
         Ridley_Func_89(1 as uint16, game);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(2) =
-            0 as uint16;
+        set_ram_word!(game.tilemap_stuff[2] = 0 as uint16);
         return true_0 != 0;
     }
     false_0 != 0
@@ -5025,61 +4931,44 @@ pub unsafe fn Ridley_Func_83(game: &mut Game) {
     if Ridley_Func_78(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
         && ((ram_word!(game, random_number) as uint8) >= 0xf0u8
             || abs16((ram_word!(game, samus_x_pos)).wrapping_sub((*E).base.x_pos)) < 0x80u16)
-        && (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(13)
-            as ::core::ffi::c_int
-            & *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(14)
-                as ::core::ffi::c_int
+        && (ram_word!(game, tilemap_stuff[13]) as ::core::ffi::c_int
+            & ram_word!(game, tilemap_stuff[14]) as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int)
             != 0i32
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(13) =
-            16128 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(10) =
-            8 as uint16;
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(76)
-        as ::core::ffi::c_int
-        | (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(66)
+        set_ram_word!(game.tilemap_stuff[13] = 16128 as uint16);
+        set_ram_word!(game.tilemap_stuff[10] = 8 as uint16);
+    } else if ram_word!(game, tilemap_stuff[76]) as ::core::ffi::c_int
+        | (ram_word!(game, tilemap_stuff[66]) as ::core::ffi::c_int
+            | ram_word!(game, tilemap_stuff[56]) as ::core::ffi::c_int
+            | ram_word!(game, tilemap_stuff[46]) as ::core::ffi::c_int
+            | ram_word!(game, tilemap_stuff[36]) as ::core::ffi::c_int
+            | ram_word!(game, tilemap_stuff[26]) as ::core::ffi::c_int
+            | ram_word!(game, tilemap_stuff[16]) as ::core::ffi::c_int) as uint16
             as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(56)
-                as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(46)
-                as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(36)
-                as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(26)
-                as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(16)
-                as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
         == 0
     {
         if ((*Get_Ridley(0 as ::core::ffi::c_int, game)).ridley_var_C as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int)
             == 0i32
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(0) =
-                5 as uint16;
+            set_ram_word!(game.tilemap_stuff[0] = 5 as uint16);
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(13) =
-            -(1 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(14) =
-            -(1 as ::core::ffi::c_int) as uint16;
-        let mut v1: uint16 =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(8);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(8) == 0 || {
-            v1 = (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(8))
-                .wrapping_sub(1u16);
+        set_ram_word!(game.tilemap_stuff[13] = -(1 as ::core::ffi::c_int) as uint16);
+        set_ram_word!(game.tilemap_stuff[14] = -(1 as ::core::ffi::c_int) as uint16);
+        let mut v1: uint16 = ram_word!(game, tilemap_stuff[8]);
+        if ram_word!(game, tilemap_stuff[8]) == 0 || {
+            v1 = (ram_word!(game, tilemap_stuff[8])).wrapping_sub(1u16);
             let ref mut fresh14 =
                 *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(8);
             *fresh14 = v1;
             *fresh14 != 0u16
         } {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(10) = v1;
+            set_ram_word!(game.tilemap_stuff[10] = v1);
         } else {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(16) =
-                0x8000 as uint16;
+            set_ram_word!(game.tilemap_stuff[16] = 0x8000 as uint16);
             Ridley_Func_85(game);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(10) =
-                8 as uint16;
+            set_ram_word!(game.tilemap_stuff[10] = 8 as uint16);
         }
     }
 }
@@ -5089,441 +4978,324 @@ pub unsafe fn Ridley_Func_84(game: &mut Game) {
     if Ridley_Func_78(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
         && ((ram_word!(game, random_number) as uint8) >= 0xf0u8
             || abs16((ram_word!(game, samus_x_pos)).wrapping_sub((*E).base.x_pos)) < 0x80u16)
-        && (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(13)
-            as ::core::ffi::c_int
-            & *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(14)
-                as ::core::ffi::c_int
+        && (ram_word!(game, tilemap_stuff[13]) as ::core::ffi::c_int
+            & ram_word!(game, tilemap_stuff[14]) as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int)
             != 0i32
     {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(13) =
-            16128 as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(10) =
-            8 as uint16;
-    } else if *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(76)
-        as ::core::ffi::c_int
-        | (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(66)
+        set_ram_word!(game.tilemap_stuff[13] = 16128 as uint16);
+        set_ram_word!(game.tilemap_stuff[10] = 8 as uint16);
+    } else if ram_word!(game, tilemap_stuff[76]) as ::core::ffi::c_int
+        | (ram_word!(game, tilemap_stuff[66]) as ::core::ffi::c_int
+            | ram_word!(game, tilemap_stuff[56]) as ::core::ffi::c_int
+            | ram_word!(game, tilemap_stuff[46]) as ::core::ffi::c_int
+            | ram_word!(game, tilemap_stuff[36]) as ::core::ffi::c_int
+            | ram_word!(game, tilemap_stuff[26]) as ::core::ffi::c_int
+            | ram_word!(game, tilemap_stuff[16]) as ::core::ffi::c_int) as uint16
             as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(56)
-                as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(46)
-                as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(36)
-                as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(26)
-                as ::core::ffi::c_int
-            | *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(16)
-                as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
         == 0
     {
         if ((*E).ridley_var_C as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(0) =
-                6 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(20) =
-                2560 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(30) =
-                2560 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(40) =
-                2560 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(50) =
-                2560 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(60) =
-                2560 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(70) =
-                2560 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(80) =
-                2560 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(21) =
-                0x4000 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(31) =
-                0x4000 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(41) =
-                0x4000 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(51) =
-                0x4000 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(61) =
-                0x4000 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(71) =
-                0x4000 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(81) =
-                0x4000 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(16) =
-                0x8000 as uint16;
+            set_ram_word!(game.tilemap_stuff[0] = 6 as uint16);
+            set_ram_word!(game.tilemap_stuff[20] = 2560 as uint16);
+            set_ram_word!(game.tilemap_stuff[30] = 2560 as uint16);
+            set_ram_word!(game.tilemap_stuff[40] = 2560 as uint16);
+            set_ram_word!(game.tilemap_stuff[50] = 2560 as uint16);
+            set_ram_word!(game.tilemap_stuff[60] = 2560 as uint16);
+            set_ram_word!(game.tilemap_stuff[70] = 2560 as uint16);
+            set_ram_word!(game.tilemap_stuff[80] = 2560 as uint16);
+            set_ram_word!(game.tilemap_stuff[21] = 0x4000 as uint16);
+            set_ram_word!(game.tilemap_stuff[31] = 0x4000 as uint16);
+            set_ram_word!(game.tilemap_stuff[41] = 0x4000 as uint16);
+            set_ram_word!(game.tilemap_stuff[51] = 0x4000 as uint16);
+            set_ram_word!(game.tilemap_stuff[61] = 0x4000 as uint16);
+            set_ram_word!(game.tilemap_stuff[71] = 0x4000 as uint16);
+            set_ram_word!(game.tilemap_stuff[81] = 0x4000 as uint16);
+            set_ram_word!(game.tilemap_stuff[16] = 0x8000 as uint16);
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(13) =
-            -(1 as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(14) =
-            -(1 as ::core::ffi::c_int) as uint16;
-        let mut v1: uint16 =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(8);
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(8) != 0 {
-            v1 = (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(8))
-                .wrapping_sub(1u16);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(8) = v1;
+        set_ram_word!(game.tilemap_stuff[13] = -(1 as ::core::ffi::c_int) as uint16);
+        set_ram_word!(game.tilemap_stuff[14] = -(1 as ::core::ffi::c_int) as uint16);
+        let mut v1: uint16 = ram_word!(game, tilemap_stuff[8]);
+        if ram_word!(game, tilemap_stuff[8]) != 0 {
+            v1 = (ram_word!(game, tilemap_stuff[8])).wrapping_sub(1u16);
+            set_ram_word!(game.tilemap_stuff[8] = v1);
             if v1 == 0 {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(16) =
-                    0x8000 as uint16;
+                set_ram_word!(game.tilemap_stuff[16] = 0x8000 as uint16);
                 Ridley_Func_85(game);
                 v1 = 8 as uint16;
             }
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(10) = v1;
+        set_ram_word!(game.tilemap_stuff[10] = v1);
     }
 }
 pub unsafe fn Ridley_Func_85(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(21) =
-        ((*(((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(21)
-            as *mut uint16 as *mut uint8)
+    set_ram_word!(
+        game.tilemap_stuff[21] = ((*(((&raw mut game.g_ram as *mut uint8).offset(0x2000)
+            as *mut uint16)
+            .offset(21) as *mut uint16 as *mut uint8)
             .offset(0)) as u16)
-            | (0x4000u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(31) =
-        ((*(((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(31)
-            as *mut uint16 as *mut uint8)
+            | (0x4000u16)
+    );
+    set_ram_word!(
+        game.tilemap_stuff[31] = ((*(((&raw mut game.g_ram as *mut uint8).offset(0x2000)
+            as *mut uint16)
+            .offset(31) as *mut uint16 as *mut uint8)
             .offset(0)) as u16)
-            | (0x4000u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(41) =
-        ((*(((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(41)
-            as *mut uint16 as *mut uint8)
+            | (0x4000u16)
+    );
+    set_ram_word!(
+        game.tilemap_stuff[41] = ((*(((&raw mut game.g_ram as *mut uint8).offset(0x2000)
+            as *mut uint16)
+            .offset(41) as *mut uint16 as *mut uint8)
             .offset(0)) as u16)
-            | (0x4000u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(51) =
-        ((*(((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(51)
-            as *mut uint16 as *mut uint8)
+            | (0x4000u16)
+    );
+    set_ram_word!(
+        game.tilemap_stuff[51] = ((*(((&raw mut game.g_ram as *mut uint8).offset(0x2000)
+            as *mut uint16)
+            .offset(51) as *mut uint16 as *mut uint8)
             .offset(0)) as u16)
-            | (0x4000u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(61) =
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(21)
-            as ::core::ffi::c_int
+            | (0x4000u16)
+    );
+    set_ram_word!(
+        game.tilemap_stuff[61] = (ram_word!(game, tilemap_stuff[21]) as ::core::ffi::c_int
             & 0x4ff as ::core::ffi::c_int
-            | 0x4000 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(71) =
-        ((*(((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(71)
-            as *mut uint16 as *mut uint8)
+            | 0x4000 as ::core::ffi::c_int) as uint16
+    );
+    set_ram_word!(
+        game.tilemap_stuff[71] = ((*(((&raw mut game.g_ram as *mut uint8).offset(0x2000)
+            as *mut uint16)
+            .offset(71) as *mut uint16 as *mut uint8)
             .offset(0)) as u16)
-            | (0x4000u16);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(81) =
-        ((*(((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(81)
-            as *mut uint16 as *mut uint8)
+            | (0x4000u16)
+    );
+    set_ram_word!(
+        game.tilemap_stuff[81] = ((*(((&raw mut game.g_ram as *mut uint8).offset(0x2000)
+            as *mut uint16)
+            .offset(81) as *mut uint16 as *mut uint8)
             .offset(0)) as u16)
-            | (0x4000u16);
+            | (0x4000u16)
+    );
 }
 pub unsafe fn Ridley_Func_86(game: &mut Game) {
     let mut v1: int16 = 0;
     let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(23) =
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(25)
-            as ::core::ffi::c_int
+    set_ram_word!(
+        game.tilemap_stuff[23] = (ram_word!(game, tilemap_stuff[25]) as ::core::ffi::c_int
             + (*E).base.y_pos as ::core::ffi::c_int
-            + 16 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(33) =
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(35))
-            .wrapping_add(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(23),
-            );
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(43) =
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(45)
-            as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(35)
-                as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(23)
-                as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(53) =
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(55))
-            .wrapping_add(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(43),
-            );
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(63) =
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(65)
-            as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(55)
-                as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(43)
-                as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(73) =
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(75))
-            .wrapping_add(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(63),
-            );
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(83) =
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(85)
-            as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(75)
-                as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(63)
-                as ::core::ffi::c_int) as uint16;
+            + 16 as ::core::ffi::c_int) as uint16
+    );
+    set_ram_word!(
+        game.tilemap_stuff[33] =
+            (ram_word!(game, tilemap_stuff[35])).wrapping_add(ram_word!(game, tilemap_stuff[23]),)
+    );
+    set_ram_word!(
+        game.tilemap_stuff[43] = (ram_word!(game, tilemap_stuff[45]) as ::core::ffi::c_int
+            + ram_word!(game, tilemap_stuff[35]) as ::core::ffi::c_int
+            + ram_word!(game, tilemap_stuff[23]) as ::core::ffi::c_int)
+            as uint16
+    );
+    set_ram_word!(
+        game.tilemap_stuff[53] =
+            (ram_word!(game, tilemap_stuff[55])).wrapping_add(ram_word!(game, tilemap_stuff[43]),)
+    );
+    set_ram_word!(
+        game.tilemap_stuff[63] = (ram_word!(game, tilemap_stuff[65]) as ::core::ffi::c_int
+            + ram_word!(game, tilemap_stuff[55]) as ::core::ffi::c_int
+            + ram_word!(game, tilemap_stuff[43]) as ::core::ffi::c_int)
+            as uint16
+    );
+    set_ram_word!(
+        game.tilemap_stuff[73] =
+            (ram_word!(game, tilemap_stuff[75])).wrapping_add(ram_word!(game, tilemap_stuff[63]),)
+    );
+    set_ram_word!(
+        game.tilemap_stuff[83] = (ram_word!(game, tilemap_stuff[85]) as ::core::ffi::c_int
+            + ram_word!(game, tilemap_stuff[75]) as ::core::ffi::c_int
+            + ram_word!(game, tilemap_stuff[63]) as ::core::ffi::c_int)
+            as uint16
+    );
     v1 = (((*E).ridley_var_10) as i16).wrapping_sub(1i16);
     if (*E).ridley_var_10 != 1u16 {
-        v1 = ((*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(24))
-            as i16)
+        v1 = ((ram_word!(game, tilemap_stuff[24])) as i16)
             .wrapping_add(g_word_A6CF54[(*E).ridley_var_10 as usize]);
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(22) =
-        ((*E).base.x_pos).wrapping_add((v1) as u16);
+    set_ram_word!(game.tilemap_stuff[22] = ((*E).base.x_pos).wrapping_add((v1) as u16));
     if (*E).ridley_var_10 == 1u16 {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(32) =
-            (*E).base.x_pos;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(42) =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(32);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(52) =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(32);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(62) =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(32);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(72) =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(32);
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(82) =
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(32);
+        set_ram_word!(game.tilemap_stuff[32] = (*E).base.x_pos);
+        set_ram_word!(game.tilemap_stuff[42] = ram_word!(game, tilemap_stuff[32]));
+        set_ram_word!(game.tilemap_stuff[52] = ram_word!(game, tilemap_stuff[32]));
+        set_ram_word!(game.tilemap_stuff[62] = ram_word!(game, tilemap_stuff[32]));
+        set_ram_word!(game.tilemap_stuff[72] = ram_word!(game, tilemap_stuff[32]));
+        set_ram_word!(game.tilemap_stuff[82] = ram_word!(game, tilemap_stuff[32]));
     } else {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(32) =
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(34))
-                .wrapping_add(
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(22),
-                );
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(42) =
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(44)
-                as ::core::ffi::c_int
-                + *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(34)
-                    as ::core::ffi::c_int
-                + *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(22)
-                    as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(52) =
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(54))
-                .wrapping_add(
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(42),
-                );
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(62) =
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(64)
-                as ::core::ffi::c_int
-                + *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(54)
-                    as ::core::ffi::c_int
-                + *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(42)
-                    as ::core::ffi::c_int) as uint16;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(72) =
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(74))
-                .wrapping_add(
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(62),
-                );
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(82) =
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(84)
-                as ::core::ffi::c_int
-                + *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(74)
-                    as ::core::ffi::c_int
-                + *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(62)
-                    as ::core::ffi::c_int) as uint16;
+        set_ram_word!(
+            game.tilemap_stuff[32] = (ram_word!(game, tilemap_stuff[34]))
+                .wrapping_add(ram_word!(game, tilemap_stuff[22]),)
+        );
+        set_ram_word!(
+            game.tilemap_stuff[42] = (ram_word!(game, tilemap_stuff[44]) as ::core::ffi::c_int
+                + ram_word!(game, tilemap_stuff[34]) as ::core::ffi::c_int
+                + ram_word!(game, tilemap_stuff[22]) as ::core::ffi::c_int)
+                as uint16
+        );
+        set_ram_word!(
+            game.tilemap_stuff[52] = (ram_word!(game, tilemap_stuff[54]))
+                .wrapping_add(ram_word!(game, tilemap_stuff[42]),)
+        );
+        set_ram_word!(
+            game.tilemap_stuff[62] = (ram_word!(game, tilemap_stuff[64]) as ::core::ffi::c_int
+                + ram_word!(game, tilemap_stuff[54]) as ::core::ffi::c_int
+                + ram_word!(game, tilemap_stuff[42]) as ::core::ffi::c_int)
+                as uint16
+        );
+        set_ram_word!(
+            game.tilemap_stuff[72] = (ram_word!(game, tilemap_stuff[74]))
+                .wrapping_add(ram_word!(game, tilemap_stuff[62]),)
+        );
+        set_ram_word!(
+            game.tilemap_stuff[82] = (ram_word!(game, tilemap_stuff[84]) as ::core::ffi::c_int
+                + ram_word!(game, tilemap_stuff[74]) as ::core::ffi::c_int
+                + ram_word!(game, tilemap_stuff[62]) as ::core::ffi::c_int)
+                as uint16
+        );
     };
 }
 pub unsafe fn Ridley_Func_87(game: &mut Game) {
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(30) != 0 {
-        if ((*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(30))
-            as i16)
-            .wrapping_sub(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(29))
-                    as i16,
-            )
+    if ram_word!(game, tilemap_stuff[30]) != 0 {
+        if ((ram_word!(game, tilemap_stuff[30])) as i16)
+            .wrapping_sub((ram_word!(game, tilemap_stuff[29])) as i16)
             < 0i16
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(30) =
-                0 as uint16;
+            set_ram_word!(game.tilemap_stuff[30] = 0 as uint16);
         }
-        let mut v0: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-            .offset(9))
-        .wrapping_add(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(29),
-        );
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(9)
-            as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(29)
-                as ::core::ffi::c_int
+        let mut v0: uint16 =
+            (ram_word!(game, tilemap_stuff[9])).wrapping_add(ram_word!(game, tilemap_stuff[29]));
+        if ram_word!(game, tilemap_stuff[9]) as ::core::ffi::c_int
+            + ram_word!(game, tilemap_stuff[29]) as ::core::ffi::c_int
             - 6144 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             == 0
         {
             v0 = 6144 as uint16;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(29) = v0;
-    } else if (2048i16).wrapping_sub(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(29)) as i16,
-    ) < 0i16
-    {
+        set_ram_word!(game.tilemap_stuff[29] = v0);
+    } else if (2048i16).wrapping_sub((ram_word!(game, tilemap_stuff[29])) as i16) < 0i16 {
         let ref mut fresh5 =
             *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(29);
         *fresh5 = (*fresh5).wrapping_sub(128u16);
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(40) != 0 {
-        if ((*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(40))
-            as i16)
-            .wrapping_sub(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(39))
-                    as i16,
-            )
+    if ram_word!(game, tilemap_stuff[40]) != 0 {
+        if ((ram_word!(game, tilemap_stuff[40])) as i16)
+            .wrapping_sub((ram_word!(game, tilemap_stuff[39])) as i16)
             < 0i16
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(40) =
-                0 as uint16;
+            set_ram_word!(game.tilemap_stuff[40] = 0 as uint16);
         }
-        let mut v1: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-            .offset(9))
-        .wrapping_add(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(39),
-        );
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(9)
-            as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(39)
-                as ::core::ffi::c_int
+        let mut v1: uint16 =
+            (ram_word!(game, tilemap_stuff[9])).wrapping_add(ram_word!(game, tilemap_stuff[39]));
+        if ram_word!(game, tilemap_stuff[9]) as ::core::ffi::c_int
+            + ram_word!(game, tilemap_stuff[39]) as ::core::ffi::c_int
             - 6144 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             == 0
         {
             v1 = 6144 as uint16;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(39) = v1;
-    } else if (2048i16).wrapping_sub(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(39)) as i16,
-    ) < 0i16
-    {
+        set_ram_word!(game.tilemap_stuff[39] = v1);
+    } else if (2048i16).wrapping_sub((ram_word!(game, tilemap_stuff[39])) as i16) < 0i16 {
         let ref mut fresh6 =
             *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(39);
         *fresh6 = (*fresh6).wrapping_sub(128u16);
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(50) != 0 {
-        if ((*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(50))
-            as i16)
-            .wrapping_sub(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(49))
-                    as i16,
-            )
+    if ram_word!(game, tilemap_stuff[50]) != 0 {
+        if ((ram_word!(game, tilemap_stuff[50])) as i16)
+            .wrapping_sub((ram_word!(game, tilemap_stuff[49])) as i16)
             < 0i16
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(50) =
-                0 as uint16;
+            set_ram_word!(game.tilemap_stuff[50] = 0 as uint16);
         }
-        let mut v2: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-            .offset(9))
-        .wrapping_add(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(49),
-        );
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(9)
-            as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(49)
-                as ::core::ffi::c_int
+        let mut v2: uint16 =
+            (ram_word!(game, tilemap_stuff[9])).wrapping_add(ram_word!(game, tilemap_stuff[49]));
+        if ram_word!(game, tilemap_stuff[9]) as ::core::ffi::c_int
+            + ram_word!(game, tilemap_stuff[49]) as ::core::ffi::c_int
             - 5632 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             == 0
         {
             v2 = 5632 as uint16;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(49) = v2;
-    } else if (2048i16).wrapping_sub(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(49)) as i16,
-    ) < 0i16
-    {
+        set_ram_word!(game.tilemap_stuff[49] = v2);
+    } else if (2048i16).wrapping_sub((ram_word!(game, tilemap_stuff[49])) as i16) < 0i16 {
         let ref mut fresh7 =
             *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(49);
         *fresh7 = (*fresh7).wrapping_sub(128u16);
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(60) != 0 {
-        if ((*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(60))
-            as i16)
-            .wrapping_sub(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(59))
-                    as i16,
-            )
+    if ram_word!(game, tilemap_stuff[60]) != 0 {
+        if ((ram_word!(game, tilemap_stuff[60])) as i16)
+            .wrapping_sub((ram_word!(game, tilemap_stuff[59])) as i16)
             < 0i16
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(60) =
-                0 as uint16;
+            set_ram_word!(game.tilemap_stuff[60] = 0 as uint16);
         }
-        let mut v3: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-            .offset(9))
-        .wrapping_add(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(59),
-        );
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(9)
-            as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(59)
-                as ::core::ffi::c_int
+        let mut v3: uint16 =
+            (ram_word!(game, tilemap_stuff[9])).wrapping_add(ram_word!(game, tilemap_stuff[59]));
+        if ram_word!(game, tilemap_stuff[9]) as ::core::ffi::c_int
+            + ram_word!(game, tilemap_stuff[59]) as ::core::ffi::c_int
             - 5632 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             == 0
         {
             v3 = 5632 as uint16;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(59) = v3;
-    } else if (2048i16).wrapping_sub(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(59)) as i16,
-    ) < 0i16
-    {
+        set_ram_word!(game.tilemap_stuff[59] = v3);
+    } else if (2048i16).wrapping_sub((ram_word!(game, tilemap_stuff[59])) as i16) < 0i16 {
         let ref mut fresh8 =
             *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(59);
         *fresh8 = (*fresh8).wrapping_sub(128u16);
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(70) != 0 {
-        if ((*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(70))
-            as i16)
-            .wrapping_sub(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(69))
-                    as i16,
-            )
+    if ram_word!(game, tilemap_stuff[70]) != 0 {
+        if ((ram_word!(game, tilemap_stuff[70])) as i16)
+            .wrapping_sub((ram_word!(game, tilemap_stuff[69])) as i16)
             < 0i16
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(70) =
-                0 as uint16;
+            set_ram_word!(game.tilemap_stuff[70] = 0 as uint16);
         }
-        let mut v4: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-            .offset(9))
-        .wrapping_add(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(69),
-        );
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(9)
-            as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(69)
-                as ::core::ffi::c_int
+        let mut v4: uint16 =
+            (ram_word!(game, tilemap_stuff[9])).wrapping_add(ram_word!(game, tilemap_stuff[69]));
+        if ram_word!(game, tilemap_stuff[9]) as ::core::ffi::c_int
+            + ram_word!(game, tilemap_stuff[69]) as ::core::ffi::c_int
             - 4608 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             == 0
         {
             v4 = 4608 as uint16;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(69) = v4;
-    } else if (2048i16).wrapping_sub(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(69)) as i16,
-    ) < 0i16
-    {
+        set_ram_word!(game.tilemap_stuff[69] = v4);
+    } else if (2048i16).wrapping_sub((ram_word!(game, tilemap_stuff[69])) as i16) < 0i16 {
         let ref mut fresh9 =
             *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(69);
         *fresh9 = (*fresh9).wrapping_sub(128u16);
     }
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(80) != 0 {
-        if ((*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(80))
-            as i16)
-            .wrapping_sub(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(79))
-                    as i16,
-            )
+    if ram_word!(game, tilemap_stuff[80]) != 0 {
+        if ((ram_word!(game, tilemap_stuff[80])) as i16)
+            .wrapping_sub((ram_word!(game, tilemap_stuff[79])) as i16)
             < 0i16
         {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(80) =
-                0 as uint16;
+            set_ram_word!(game.tilemap_stuff[80] = 0 as uint16);
         }
-        let mut v5: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-            .offset(9))
-        .wrapping_add(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(79),
-        );
-        if *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(9)
-            as ::core::ffi::c_int
-            + *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(79)
-                as ::core::ffi::c_int
+        let mut v5: uint16 =
+            (ram_word!(game, tilemap_stuff[9])).wrapping_add(ram_word!(game, tilemap_stuff[79]));
+        if ram_word!(game, tilemap_stuff[9]) as ::core::ffi::c_int
+            + ram_word!(game, tilemap_stuff[79]) as ::core::ffi::c_int
             - 1280 as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int
             == 0
         {
             v5 = 1280 as uint16;
         }
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(79) = v5;
-    } else if (1280i16).wrapping_sub(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(79)) as i16,
-    ) < 0i16
-    {
+        set_ram_word!(game.tilemap_stuff[79] = v5);
+    } else if (1280i16).wrapping_sub((ram_word!(game, tilemap_stuff[79])) as i16) < 0i16 {
         let ref mut fresh10 =
             *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(79);
         *fresh10 = (*fresh10).wrapping_sub(128u16);
@@ -5534,84 +5306,52 @@ pub unsafe fn Ridley_Func_88(k: uint16, game: &mut Game) {
     let mut v6: int16 = 0;
     let mut v2: uint16 = 0;
     let v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-        .offset((v1 + 16 as ::core::ffi::c_int) as isize) as ::core::ffi::c_int
+    if (ram_word!(game, tilemap_stuff[(v1 + 16i32)]) as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int)
         != 0i32
     {
         let v4: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        let v5: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-            .offset((v4 + 17 as ::core::ffi::c_int) as isize);
-        if v5 < *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(15) {
+        let v5: uint16 = ram_word!(game, tilemap_stuff[(v4 + 17i32)]);
+        if v5 < ram_word!(game, tilemap_stuff[15]) {
             let ref mut fresh12 =
                 *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(
                     ((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
                         + 17 as ::core::ffi::c_int) as isize,
                 );
-            *fresh12 = (*fresh12).wrapping_add(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(10),
-            );
+            *fresh12 = (*fresh12).wrapping_add(ram_word!(game, tilemap_stuff[10]));
             return;
         }
         if v5 != 0xffffu16 {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                .offset((v4 + 17 as ::core::ffi::c_int) as isize) =
-                -(1 as ::core::ffi::c_int) as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                .offset((v4 + 26 as ::core::ffi::c_int) as isize) = 0x8000 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                .offset((v4 + 28 as ::core::ffi::c_int) as isize) =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                    .offset((v4 + 18 as ::core::ffi::c_int) as isize);
+            set_ram_word!(game.tilemap_stuff[(v4 + 17i32)] = -(1 as ::core::ffi::c_int) as uint16);
+            set_ram_word!(game.tilemap_stuff[(v4 + 26i32)] = 0x8000 as uint16);
+            set_ram_word!(
+                game.tilemap_stuff[(v4 + 28i32)] = ram_word!(game, tilemap_stuff[(v4 + 18i32)])
+            );
         }
-        if (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-            .offset((v4 + 18 as ::core::ffi::c_int) as isize) as ::core::ffi::c_int
+        if (ram_word!(game, tilemap_stuff[(v4 + 18i32)]) as ::core::ffi::c_int
             & 0x8000 as ::core::ffi::c_int)
             == 0i32
         {
-            if (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(14)
-                as ::core::ffi::c_int
+            if (ram_word!(game, tilemap_stuff[14]) as ::core::ffi::c_int
                 & 0x8000 as ::core::ffi::c_int)
                 != 0i32
             {
-                v2 = (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                    .offset(10))
-                .wrapping_add(
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                        .offset((v4 + 21 as ::core::ffi::c_int) as isize),
-                );
-                if ((v2) as i16).wrapping_sub(
-                    (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                        .offset(12)) as i16,
-                ) >= 0i16
-                {
+                v2 = (ram_word!(game, tilemap_stuff[10]))
+                    .wrapping_add(ram_word!(game, tilemap_stuff[(v4 + 21i32)]));
+                if ((v2) as i16).wrapping_sub((ram_word!(game, tilemap_stuff[12])) as i16) >= 0i16 {
                     current_block = 4838848238792072683;
                 } else {
                     current_block = 4216153537599944117;
                 }
             } else {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                    .offset((v4 + 20 as ::core::ffi::c_int) as isize) = 3072 as uint16;
-                v2 = (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                    .offset(10))
-                .wrapping_add(
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                        .offset((v4 + 21 as ::core::ffi::c_int) as isize),
-                );
-                if ((v2) as i16).wrapping_sub(
-                    (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                        .offset(14)) as i16,
-                ) >= 0i16
-                {
-                    if k == 0
-                        || *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                            .offset((v4 + 6 as ::core::ffi::c_int) as isize)
-                            == 0
-                    {
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                            .offset((v4 + 21 as ::core::ffi::c_int) as isize) =
-                            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                                .offset(14);
+                set_ram_word!(game.tilemap_stuff[(v4 + 20i32)] = 3072 as uint16);
+                v2 = (ram_word!(game, tilemap_stuff[10]))
+                    .wrapping_add(ram_word!(game, tilemap_stuff[(v4 + 21i32)]));
+                if ((v2) as i16).wrapping_sub((ram_word!(game, tilemap_stuff[14])) as i16) >= 0i16 {
+                    if k == 0 || ram_word!(game, tilemap_stuff[(v4 + 6i32)]) == 0 {
+                        set_ram_word!(
+                            game.tilemap_stuff[(v4 + 21i32)] = ram_word!(game, tilemap_stuff[14])
+                        );
                         current_block = 5689001924483802034;
                     } else {
                         current_block = 4838848238792072683;
@@ -5624,57 +5364,34 @@ pub unsafe fn Ridley_Func_88(k: uint16, game: &mut Game) {
                 5689001924483802034 => {}
                 4216153537599944117 => {}
                 _ => {
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                        .offset((v4 + 18 as ::core::ffi::c_int) as isize) = 0x8000 as uint16;
-                    v2 = *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                        .offset(12);
+                    set_ram_word!(game.tilemap_stuff[(v4 + 18i32)] = 0x8000 as uint16);
+                    v2 = ram_word!(game, tilemap_stuff[12]);
                     current_block = 4216153537599944117;
                 }
             }
         } else {
-            if (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(13)
-                as ::core::ffi::c_int
+            if (ram_word!(game, tilemap_stuff[13]) as ::core::ffi::c_int
                 & 0x8000 as ::core::ffi::c_int)
                 != 0i32
             {
-                v6 = (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                    .offset((v4 + 21 as ::core::ffi::c_int) as isize)
-                    as ::core::ffi::c_int
-                    - *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                        .offset(10) as ::core::ffi::c_int
+                v6 = (ram_word!(game, tilemap_stuff[(v4 + 21i32)]) as ::core::ffi::c_int
+                    - ram_word!(game, tilemap_stuff[10]) as ::core::ffi::c_int
                     - 1 as ::core::ffi::c_int) as int16;
-                if (v6).wrapping_sub(
-                    (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                        .offset(11)) as i16,
-                ) < 0i16
-                {
+                if (v6).wrapping_sub((ram_word!(game, tilemap_stuff[11])) as i16) < 0i16 {
                     current_block = 9260896848985358503;
                 } else {
                     current_block = 2873832966593178012;
                 }
             } else {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                    .offset((v4 + 20 as ::core::ffi::c_int) as isize) = 3072 as uint16;
-                v6 = (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                    .offset((v4 + 21 as ::core::ffi::c_int) as isize)
-                    as ::core::ffi::c_int
-                    - *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                        .offset(10) as ::core::ffi::c_int
+                set_ram_word!(game.tilemap_stuff[(v4 + 20i32)] = 3072 as uint16);
+                v6 = (ram_word!(game, tilemap_stuff[(v4 + 21i32)]) as ::core::ffi::c_int
+                    - ram_word!(game, tilemap_stuff[10]) as ::core::ffi::c_int
                     - 1 as ::core::ffi::c_int) as int16;
-                if (v6).wrapping_sub(
-                    (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                        .offset(13)) as i16,
-                ) < 0i16
-                {
-                    if k == 0
-                        || *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                            .offset((v4 + 6 as ::core::ffi::c_int) as isize)
-                            == 0
-                    {
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                            .offset((v4 + 21 as ::core::ffi::c_int) as isize) =
-                            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                                .offset(13);
+                if (v6).wrapping_sub((ram_word!(game, tilemap_stuff[13])) as i16) < 0i16 {
+                    if k == 0 || ram_word!(game, tilemap_stuff[(v4 + 6i32)]) == 0 {
+                        set_ram_word!(
+                            game.tilemap_stuff[(v4 + 21i32)] = ram_word!(game, tilemap_stuff[13])
+                        );
                         current_block = 5689001924483802034;
                     } else {
                         current_block = 9260896848985358503;
@@ -5688,10 +5405,8 @@ pub unsafe fn Ridley_Func_88(k: uint16, game: &mut Game) {
                 if current_block == 2873832966593178012 {
                     v2 = ((v6) as u16).wrapping_add(1u16);
                 } else {
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                        .offset((v4 + 18 as ::core::ffi::c_int) as isize) = 0 as uint16;
-                    v2 = *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                        .offset(11);
+                    set_ram_word!(game.tilemap_stuff[(v4 + 18i32)] = 0 as uint16);
+                    v2 = ram_word!(game, tilemap_stuff[11]);
                 }
                 current_block = 4216153537599944117;
             }
@@ -5699,10 +5414,8 @@ pub unsafe fn Ridley_Func_88(k: uint16, game: &mut Game) {
         match current_block {
             5689001924483802034 => {
                 let v3: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                    .offset((v3 + 16 as ::core::ffi::c_int) as isize) = 0 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                    .offset((v3 + 17 as ::core::ffi::c_int) as isize) = 0 as uint16;
+                set_ram_word!(game.tilemap_stuff[(v3 + 16i32)] = 0 as uint16);
+                set_ram_word!(game.tilemap_stuff[(v3 + 17i32)] = 0 as uint16);
                 let ref mut fresh13 = *((&raw mut game.g_ram as *mut uint8).offset(0x2000)
                     as *mut uint16)
                     .offset((v3 + 18 as ::core::ffi::c_int) as isize);
@@ -5710,13 +5423,11 @@ pub unsafe fn Ridley_Func_88(k: uint16, game: &mut Game) {
                 return;
             }
             _ => {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                    .offset((v4 + 21 as ::core::ffi::c_int) as isize) = v2;
+                set_ram_word!(game.tilemap_stuff[(v4 + 21i32)] = v2);
             }
         }
     } else {
-        v2 = *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-            .offset((v1 + 21 as ::core::ffi::c_int) as isize);
+        v2 = ram_word!(game, tilemap_stuff[(v1 + 21i32)]);
     }
     let mut r18: uint16 = v2 as uint8 as uint16;
     if k != 0 {
@@ -5728,31 +5439,33 @@ pub unsafe fn Ridley_Func_88(k: uint16, game: &mut Game) {
         .wrapping_add((r18) as u8)) as uint16;
     }
     let v7: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-        .offset((v7 + 24 as ::core::ffi::c_int) as isize) = ComputeSinMult(
-        *(((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-            .offset((v7 + 19 as ::core::ffi::c_int) as isize) as *mut uint16
-            as *mut uint8)
-            .offset(
-                (::core::mem::size_of::<uint16>())
-                    .wrapping_div(::core::mem::size_of::<uint8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as uint16,
-        r18,
-        game,
+    set_ram_word!(
+        game.tilemap_stuff[(v7 + 24i32)] = ComputeSinMult(
+            *(((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
+                .offset((v7 + 19 as ::core::ffi::c_int) as isize) as *mut uint16
+                as *mut uint8)
+                .offset(
+                    (::core::mem::size_of::<uint16>())
+                        .wrapping_div(::core::mem::size_of::<uint8>())
+                        .wrapping_sub(1_usize) as isize,
+                ) as uint16,
+            r18,
+            game,
+        )
     );
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-        .offset((v7 + 25 as ::core::ffi::c_int) as isize) = ComputeCosMult(
-        *(((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-            .offset((v7 + 19 as ::core::ffi::c_int) as isize) as *mut uint16
-            as *mut uint8)
-            .offset(
-                (::core::mem::size_of::<uint16>())
-                    .wrapping_div(::core::mem::size_of::<uint8>())
-                    .wrapping_sub(1_usize) as isize,
-            ) as uint16,
-        r18,
-        game,
+    set_ram_word!(
+        game.tilemap_stuff[(v7 + 25i32)] = ComputeCosMult(
+            *(((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
+                .offset((v7 + 19 as ::core::ffi::c_int) as isize) as *mut uint16
+                as *mut uint8)
+                .offset(
+                    (::core::mem::size_of::<uint16>())
+                        .wrapping_div(::core::mem::size_of::<uint8>())
+                        .wrapping_sub(1_usize) as isize,
+                ) as uint16,
+            r18,
+            game,
+        )
     );
 }
 pub unsafe fn Ridley_Func_89(a: uint16, game: &mut Game) {
@@ -5767,24 +5480,18 @@ pub unsafe fn Ridley_Func_89(a: uint16, game: &mut Game) {
             .wrapping_div(::core::mem::size_of::<uint8>())
             .wrapping_sub(1_usize) as isize,
     ) = v2 as uint8;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(5) = v1;
+    set_ram_word!(game.tilemap_stuff[5] = v1);
     let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
     if (*E).ridley_var_10 != 1u16 && (*E).ridley_var_01 != 0u16 {
         let mut pt: Point16U = Point16U { x: 0, y: 0 };
         if Ridley_Func_90(&raw mut pt, game) != 0 {
-            r18 = (pt.x).wrapping_sub(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(22),
-            );
-            r20 = (pt.y).wrapping_sub(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(23),
-            );
+            r18 = (pt.x).wrapping_sub(ram_word!(game, tilemap_stuff[22]));
+            r20 = (pt.y).wrapping_sub(ram_word!(game, tilemap_stuff[23]));
         } else {
-            r18 = (ram_word!(game, samus_x_pos)).wrapping_sub(
-                *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(22),
-            );
+            r18 = (ram_word!(game, samus_x_pos)).wrapping_sub(ram_word!(game, tilemap_stuff[22]));
             r20 = (ram_word!(game, samus_y_pos) as ::core::ffi::c_int + 24 as ::core::ffi::c_int
-                - *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(23)
-                    as ::core::ffi::c_int) as uint16;
+                - ram_word!(game, tilemap_stuff[23]) as ::core::ffi::c_int)
+                as uint16;
         }
         r18 = -(CalculateAngleFromXY(r18, r20, game) as ::core::ffi::c_int
             + 0x80 as ::core::ffi::c_int) as uint8 as uint16;
@@ -5793,16 +5500,12 @@ pub unsafe fn Ridley_Func_89(a: uint16, game: &mut Game) {
             if r18 >= 0x18u16 && r18 < 0xe8u16 {
                 v7 = 24 as uint16;
             }
-            let v8: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                .offset(5) as ::core::ffi::c_int
+            let v8: uint16 = (ram_word!(game, tilemap_stuff[5]) as ::core::ffi::c_int
                 + v7 as ::core::ffi::c_int
                 + 0x4000 as ::core::ffi::c_int) as uint16;
-            if v8 >= *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(21)
-            {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(14) =
-                    v8;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(10) =
-                    8 as uint16;
+            if v8 >= ram_word!(game, tilemap_stuff[21]) {
+                set_ram_word!(game.tilemap_stuff[14] = v8);
+                set_ram_word!(game.tilemap_stuff[10] = 8 as uint16);
             }
         } else {
             let mut v5: uint16 = r18;
@@ -5810,22 +5513,19 @@ pub unsafe fn Ridley_Func_89(a: uint16, game: &mut Game) {
                 v5 = 232 as uint16;
             }
             let v6: uint16 = (v5 as ::core::ffi::c_int + 16128 as ::core::ffi::c_int
-                - *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(5)
-                    as ::core::ffi::c_int) as uint16;
-            if v6 < *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(21)
-            {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(13) =
-                    v6;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(10) =
-                    8 as uint16;
+                - ram_word!(game, tilemap_stuff[5]) as ::core::ffi::c_int)
+                as uint16;
+            if v6 < ram_word!(game, tilemap_stuff[21]) {
+                set_ram_word!(game.tilemap_stuff[13] = v6);
+                set_ram_word!(game.tilemap_stuff[10] = 8 as uint16);
             }
         }
     }
 }
 pub unsafe fn Ridley_Func_90(out: *mut Point16U, game: &mut Game) -> uint8 {
     let rect: Rect16U = Rect16U {
-        x: *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(82),
-        y: *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(83),
+        x: ram_word!(game, tilemap_stuff[82]),
+        y: ram_word!(game, tilemap_stuff[83]),
         w: 64 as uint16,
         h: 64 as uint16,
     };
@@ -5854,31 +5554,14 @@ pub unsafe fn Ridley_Func_90(out: *mut Point16U, game: &mut Game) -> uint8 {
                 & 0xf as ::core::ffi::c_int)
                 == 2i32
         {
-            let v3: uint16 = abs16(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
-                    .offset(v2 as isize))
-                .wrapping_sub(rect.x),
-            );
-            let mut v4: bool = v3
-                < *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16)
-                    .offset(v2 as isize);
-            let v5: uint16 = (v3).wrapping_sub(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16)
-                    .offset(v2 as isize),
-            );
+            let v3: uint16 = abs16((ram_word!(game, projectile_x_pos[v2])).wrapping_sub(rect.x));
+            let mut v4: bool = v3 < ram_word!(game, projectile_x_radius[v2]);
+            let v5: uint16 = (v3).wrapping_sub(ram_word!(game, projectile_x_radius[v2]));
             if v4 || v5 < rect.w {
-                let v6: uint16 = abs16(
-                    (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
-                        .offset(v2 as isize))
-                    .wrapping_sub(rect.y),
-                );
-                v4 = v6
-                    < *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
-                        .offset(v2 as isize);
-                let v7: uint16 = (v6).wrapping_sub(
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
-                        .offset(v2 as isize),
-                );
+                let v6: uint16 =
+                    abs16((ram_word!(game, projectile_y_pos[v2])).wrapping_sub(rect.y));
+                v4 = v6 < ram_word!(game, projectile_y_radius[v2]);
+                let v7: uint16 = (v6).wrapping_sub(ram_word!(game, projectile_y_radius[v2]));
                 if v4 || v7 < rect.h {
                     break;
                 }
@@ -5890,17 +5573,13 @@ pub unsafe fn Ridley_Func_90(out: *mut Point16U, game: &mut Game) -> uint8 {
         }
     }
     let v8: ::core::ffi::c_int = v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    (*out).x =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v8 as isize);
-    (*out).y =
-        *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v8 as isize);
+    (*out).x = ram_word!(game, projectile_x_pos[v8]);
+    (*out).y = ram_word!(game, projectile_y_pos[v8]);
     1 as uint8
 }
 pub unsafe fn Ridley_Func_91(game: &mut Game) {
     let E: *mut Enemy_Ridley = Get_Ridley(0 as ::core::ffi::c_int, game);
-    if *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(10)
-        as ::core::ffi::c_int
-        - 8 as ::core::ffi::c_int
+    if ram_word!(game, tilemap_stuff[10]) as ::core::ffi::c_int - 8 as ::core::ffi::c_int
         & 0x8000 as ::core::ffi::c_int
         == 0
     {
@@ -5916,36 +5595,32 @@ pub unsafe fn Ridley_Func_91(game: &mut Game) {
     (*E).ridley_var_0E = 0 as uint16;
 }
 pub unsafe fn Ridley_Func_92(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(10) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(11) =
-        16368 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(12) =
-        16448 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(13) =
-        -(1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(14) =
-        -(1 as ::core::ffi::c_int) as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(9) = 240 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(15) = 16 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(17) = 17 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(27) = 17 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(37) = 17 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(47) = 17 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(57) = 17 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(67) = 17 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(77) = 17 as uint16;
+    set_ram_word!(game.tilemap_stuff[10] = 1 as uint16);
+    set_ram_word!(game.tilemap_stuff[11] = 16368 as uint16);
+    set_ram_word!(game.tilemap_stuff[12] = 16448 as uint16);
+    set_ram_word!(game.tilemap_stuff[13] = -(1 as ::core::ffi::c_int) as uint16);
+    set_ram_word!(game.tilemap_stuff[14] = -(1 as ::core::ffi::c_int) as uint16);
+    set_ram_word!(game.tilemap_stuff[9] = 240 as uint16);
+    set_ram_word!(game.tilemap_stuff[15] = 16 as uint16);
+    set_ram_word!(game.tilemap_stuff[17] = 17 as uint16);
+    set_ram_word!(game.tilemap_stuff[27] = 17 as uint16);
+    set_ram_word!(game.tilemap_stuff[37] = 17 as uint16);
+    set_ram_word!(game.tilemap_stuff[47] = 17 as uint16);
+    set_ram_word!(game.tilemap_stuff[57] = 17 as uint16);
+    set_ram_word!(game.tilemap_stuff[67] = 17 as uint16);
+    set_ram_word!(game.tilemap_stuff[77] = 17 as uint16);
     Ridley_Func_93(0x2024 as uint16, addr_word_A6D36E as uint16, game);
     Ridley_Func_93(0x2026 as uint16, addr_word_A6D37C as uint16, game);
     Ridley_Func_93(0x202a as uint16, addr_word_A6D38A as uint16, game);
     Ridley_Func_93(0x202c as uint16, addr_word_A6D398 as uint16, game);
     Ridley_Func_93(0x202e as uint16, addr_word_A6D3A6 as uint16, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(26) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(36) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(46) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(56) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(66) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(76) = 0 as uint16;
+    set_ram_word!(game.tilemap_stuff[16] = 0 as uint16);
+    set_ram_word!(game.tilemap_stuff[26] = 0 as uint16);
+    set_ram_word!(game.tilemap_stuff[36] = 0 as uint16);
+    set_ram_word!(game.tilemap_stuff[46] = 0 as uint16);
+    set_ram_word!(game.tilemap_stuff[56] = 0 as uint16);
+    set_ram_word!(game.tilemap_stuff[66] = 0 as uint16);
+    set_ram_word!(game.tilemap_stuff[76] = 0 as uint16);
 }
 pub unsafe fn Ridley_Func_93(j: uint16, k: uint16, game: &mut Game) {
     let mut dst: *mut uint16 =
@@ -5969,13 +5644,13 @@ pub unsafe fn Ridley_Func_95(game: &mut Game) {
     Ridley_Func_D3DC(0x8000 as uint16, game);
 }
 pub unsafe fn Ridley_Func_D3DC(a: uint16, game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(16) = a;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(26) = a;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(36) = a;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(46) = a;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(56) = a;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(66) = a;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(76) = a;
+    set_ram_word!(game.tilemap_stuff[16] = a);
+    set_ram_word!(game.tilemap_stuff[26] = a);
+    set_ram_word!(game.tilemap_stuff[36] = a);
+    set_ram_word!(game.tilemap_stuff[46] = a);
+    set_ram_word!(game.tilemap_stuff[56] = a);
+    set_ram_word!(game.tilemap_stuff[66] = a);
+    set_ram_word!(game.tilemap_stuff[76] = a);
 }
 pub unsafe fn Ridley_Func_96(game: &mut Game) {
     let mut v0: int16 = 0;
@@ -5984,10 +5659,9 @@ pub unsafe fn Ridley_Func_96(game: &mut Game) {
     let mut v1: uint16 = 0 as uint16;
     loop {
         let v2: ::core::ffi::c_int = v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-            .offset((v2 + 21 as ::core::ffi::c_int) as isize) = (0x8000u16).wrapping_sub(
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                .offset((v2 + 21 as ::core::ffi::c_int) as isize),
+        set_ram_word!(
+            game.tilemap_stuff[(v2 + 21i32)] =
+                (0x8000u16).wrapping_sub(ram_word!(game, tilemap_stuff[(v2 + 21i32)]),)
         );
         let ref mut fresh3 = *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
             .offset((v2 + 18 as ::core::ffi::c_int) as isize);
@@ -6000,20 +5674,14 @@ pub unsafe fn Ridley_Func_96(game: &mut Game) {
     }
 }
 pub unsafe fn Ridley_Func_97(game: &mut Game) -> uint8 {
-    ((*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(76)
-        as ::core::ffi::c_int
-        & (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(66)
-            as ::core::ffi::c_int
-            & *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(56)
-                as ::core::ffi::c_int
-            & *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(46)
-                as ::core::ffi::c_int
-            & *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(36)
-                as ::core::ffi::c_int
-            & *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(26)
-                as ::core::ffi::c_int
-            & *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(16)
-                as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int)
+    ((ram_word!(game, tilemap_stuff[76]) as ::core::ffi::c_int
+        & (ram_word!(game, tilemap_stuff[66]) as ::core::ffi::c_int
+            & ram_word!(game, tilemap_stuff[56]) as ::core::ffi::c_int
+            & ram_word!(game, tilemap_stuff[46]) as ::core::ffi::c_int
+            & ram_word!(game, tilemap_stuff[36]) as ::core::ffi::c_int
+            & ram_word!(game, tilemap_stuff[26]) as ::core::ffi::c_int
+            & ram_word!(game, tilemap_stuff[16]) as ::core::ffi::c_int) as uint16
+            as ::core::ffi::c_int)
         != 0i32) as uint8
 }
 pub unsafe fn Ridley_Func_98(game: &mut Game) {
@@ -6647,44 +6315,44 @@ pub unsafe fn sub_A6DB2A(game: &mut Game) {
                         as ::core::ffi::c_int
                         >> 4 as ::core::ffi::c_int) as isize,
                 ),
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(82),
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(83),
+            ram_word!(game, tilemap_stuff[82]),
+            ram_word!(game, tilemap_stuff[83]),
             game,
         );
         sub_A6DBC2(
             0xdc9e as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(72),
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(73),
+            ram_word!(game, tilemap_stuff[72]),
+            ram_word!(game, tilemap_stuff[73]),
             game,
         );
         sub_A6DBC2(
             0xdc9e as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(62),
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(63),
+            ram_word!(game, tilemap_stuff[62]),
+            ram_word!(game, tilemap_stuff[63]),
             game,
         );
         sub_A6DBC2(
             0xdc97 as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(52),
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(53),
+            ram_word!(game, tilemap_stuff[52]),
+            ram_word!(game, tilemap_stuff[53]),
             game,
         );
         sub_A6DBC2(
             0xdc97 as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(42),
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(43),
+            ram_word!(game, tilemap_stuff[42]),
+            ram_word!(game, tilemap_stuff[43]),
             game,
         );
         sub_A6DBC2(
             0xdc90 as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(32),
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(33),
+            ram_word!(game, tilemap_stuff[32]),
+            ram_word!(game, tilemap_stuff[33]),
             game,
         );
         sub_A6DBC2(
             0xdc90 as uint16,
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(22),
-            *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(23),
+            ram_word!(game, tilemap_stuff[22]),
+            ram_word!(game, tilemap_stuff[23]),
             game,
         );
     }
@@ -6826,8 +6494,7 @@ pub unsafe fn Ridley_Func_122(rect: Rect16U, game: &mut Game) -> uint16 {
     let mut result: uint16 = 0 as uint16;
     loop {
         let v1: ::core::ffi::c_int = result as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        v2 = *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(v1 as isize)
-            as int16;
+        v2 = ram_word!(game, projectile_type[v1]) as int16;
         if v2 < 0i16
             && (*(&raw mut v2 as *mut uint8).offset(
                 (::core::mem::size_of::<int16>())
@@ -6839,31 +6506,14 @@ pub unsafe fn Ridley_Func_122(rect: Rect16U, game: &mut Game) -> uint16 {
                 & 0x8000 as ::core::ffi::c_int
                 != 0
         {
-            let v3: uint16 = abs16(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
-                    .offset(v1 as isize))
-                .wrapping_sub(rect.x),
-            );
-            let mut v4: bool = v3
-                < *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16)
-                    .offset(v1 as isize);
-            let v5: uint16 = (v3).wrapping_sub(
-                *((&raw mut game.g_ram as *mut uint8).offset(0xbb4) as *mut uint16)
-                    .offset(v1 as isize),
-            );
+            let v3: uint16 = abs16((ram_word!(game, projectile_x_pos[v1])).wrapping_sub(rect.x));
+            let mut v4: bool = v3 < ram_word!(game, projectile_x_radius[v1]);
+            let v5: uint16 = (v3).wrapping_sub(ram_word!(game, projectile_x_radius[v1]));
             if v4 || v5 < rect.w {
-                let v6: uint16 = abs16(
-                    (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
-                        .offset(v1 as isize))
-                    .wrapping_sub(rect.y),
-                );
-                v4 = v6
-                    < *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
-                        .offset(v1 as isize);
-                let v7: uint16 = (v6).wrapping_sub(
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xbc8) as *mut uint16)
-                        .offset(v1 as isize),
-                );
+                let v6: uint16 =
+                    abs16((ram_word!(game, projectile_y_pos[v1])).wrapping_sub(rect.y));
+                v4 = v6 < ram_word!(game, projectile_y_radius[v1]);
+                let v7: uint16 = (v6).wrapping_sub(ram_word!(game, projectile_y_radius[v1]));
                 if v4 || v7 < rect.h {
                     break;
                 }
@@ -6875,10 +6525,8 @@ pub unsafe fn Ridley_Func_122(rect: Rect16U, game: &mut Game) -> uint16 {
         }
     }
     let v8: ::core::ffi::c_int = result as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v8 as isize) =
-        rect.x;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(v8 as isize) =
-        rect.y;
+    set_ram_word!(game.projectile_x_pos[v8] = rect.x);
+    set_ram_word!(game.projectile_y_pos[v8] = rect.y);
     let ref mut fresh2 =
         *((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16).offset(v8 as isize);
     *fresh2 = (*fresh2) | (0x10u16);
@@ -6887,14 +6535,11 @@ pub unsafe fn Ridley_Func_122(rect: Rect16U, game: &mut Game) -> uint16 {
 pub unsafe fn Ridley_Func_123(j: uint16, game: &mut Game) {
     let v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: uint16 = 0;
-    if (*((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16).offset(v1 as isize)
-        as ::core::ffi::c_int
-        & 0xf as ::core::ffi::c_int)
+    if (ram_word!(game, projectile_dir[v1]) as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
         == 7i32
     {
         v2 = 1 as uint16;
-    } else if (*((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16)
-        .offset(v1 as isize) as ::core::ffi::c_int
+    } else if (ram_word!(game, projectile_dir[v1]) as ::core::ffi::c_int
         & 0xf as ::core::ffi::c_int)
         == 2i32
     {
@@ -6902,7 +6547,7 @@ pub unsafe fn Ridley_Func_123(j: uint16, game: &mut Game) {
     } else {
         v2 = 5 as uint16;
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16).offset(v1 as isize) = v2;
+    set_ram_word!(game.projectile_dir[v1] = v2);
 }
 pub unsafe fn Ridley_Func_124(rect: Rect16U, game: &mut Game) -> uint8 {
     let v0: uint16 = abs16((ram_word!(game, samus_x_pos)).wrapping_sub(rect.x));
@@ -6966,8 +6611,8 @@ pub unsafe fn Ridley_Func_126(game: &mut Game) {
 }
 pub unsafe fn Ridley_Func_127(game: &mut Game) {
     let rect: Rect16U = Rect16U {
-        x: *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(82),
-        y: *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(83),
+        x: ram_word!(game, tilemap_stuff[82]),
+        y: ram_word!(game, tilemap_stuff[83]),
         w: 14 as uint16,
         h: 14 as uint16,
     };
@@ -6977,10 +6622,9 @@ pub unsafe fn Ridley_Func_127(game: &mut Game) {
         set_ram_word!(game.samus_invincibility_timer = 96 as uint16);
         set_ram_word!(game.samus_knockback_timer = 5 as uint16);
         set_ram_word!(
-            game.knockback_x_dir = (((ram_word!(game, samus_x_pos)) as i16).wrapping_sub(
-                (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(82))
-                    as i16,
-            ) >= 0i16) as uint16
+            game.knockback_x_dir = (((ram_word!(game, samus_x_pos)) as i16)
+                .wrapping_sub((ram_word!(game, tilemap_stuff[82])) as i16,)
+                >= 0i16) as uint16
         );
     }
 }
@@ -6988,19 +6632,14 @@ pub unsafe fn Ridley_Func_128(game: &mut Game) {
     let E: *mut Enemy_Ridley =
         Get_Ridley(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
     let mut r18: uint16 = -(CalculateAngleFromXY(
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(0))
-            .wrapping_sub((*E).base.x_pos),
-        (*((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16).offset(0))
-            .wrapping_sub((*E).base.y_pos),
+        (ram_word!(game, projectile_x_pos[0])).wrapping_sub((*E).base.x_pos),
+        (ram_word!(game, projectile_y_pos[0])).wrapping_sub((*E).base.y_pos),
         game,
     ) as ::core::ffi::c_int) as uint8 as uint16;
-    let mut v1: uint16 = (4u16).wrapping_mul(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc2c) as *mut uint16).offset(ram_word!(
-            game,
-            collision_detection_index
-        )
-            as isize),
-    );
+    let mut v1: uint16 = (4u16).wrapping_mul(ram_word!(
+        game,
+        projectile_damage[ram_word!(game, collision_detection_index)]
+    ));
     if v1 >= 0x300u16 {
         v1 = 768 as uint16;
     }
@@ -7027,8 +6666,8 @@ pub unsafe fn Ridley_Func_129(game: &mut Game) {
     {
         let mut v0: uint16 = Ridley_Func_122(
             Rect16U {
-                x: *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(82),
-                y: *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(83),
+                x: ram_word!(game, tilemap_stuff[82]),
+                y: ram_word!(game, tilemap_stuff[83]),
                 w: 14 as uint16,
                 h: 14 as uint16,
             },
@@ -7037,10 +6676,8 @@ pub unsafe fn Ridley_Func_129(game: &mut Game) {
         if v0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
             v0 = Ridley_Func_122(
                 Rect16U {
-                    x: *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                        .offset(72),
-                    y: *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16)
-                        .offset(73),
+                    x: ram_word!(game, tilemap_stuff[72]),
+                    y: ram_word!(game, tilemap_stuff[73]),
                     w: 10 as uint16,
                     h: 10 as uint16,
                 },
@@ -7052,10 +6689,8 @@ pub unsafe fn Ridley_Func_129(game: &mut Game) {
         }
         let v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         game.eproj_spawn_pt = Point16U {
-            x: *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16)
-                .offset(v1 as isize),
-            y: *((&raw mut game.g_ram as *mut uint8).offset(0xb78) as *mut uint16)
-                .offset(v1 as isize),
+            x: ram_word!(game, projectile_x_pos[v1]),
+            y: ram_word!(game, projectile_y_pos[v1]),
         };
         let mut v2: uint16 = 12 as uint16;
         if (*(((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(v1 as isize)

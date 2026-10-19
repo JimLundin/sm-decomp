@@ -39,19 +39,42 @@ macro_rules! ram_vars {
         pub(crate) mod words {
             $(ram_vars!(@word $addr, $name, $ty, $shape);)*
         }
+
+        /// Named word-array bases; indices are signed element offsets.
+        #[allow(non_upper_case_globals)]
+        pub(crate) mod word_arrays {
+            $(ram_vars!(@array $addr, $name, $ty, $shape);)*
+        }
     };
     (@name $name:literal) => { $name };
     (@name $name:ident) => { stringify!($name) };
     (@word $addr:literal, $name:ident, uint16, Scalar) => {
         pub(crate) const $name: usize = $addr;
     };
+    (@word $addr:literal, $name:ident, uint16, Array) => {};
     (@word $addr:literal, $name:literal, $ty:ident, $shape:ident) => {};
+    (@array $addr:literal, $name:ident, uint16, Array) => {
+        pub(crate) const $name: usize = $addr;
+    };
+    (@array $addr:literal, $name:tt, $ty:ident, $shape:ident) => {};
 }
 
 // Keep these loads at the caller: a whole-Game/RAM borrow can invalidate a
 // retained raw enemy pointer. The macro still requires an unsafe context.
-// Each named field is a scalar u16 in RAM_VARS; odd addresses are valid.
+// Named scalar/array fields come from RAM_VARS; odd addresses are valid.
+// Array indices retain signed pointer offsets, including accesses outside a
+// named table. Form the base before evaluating the index, as in the raw access.
 macro_rules! ram_word {
+    ($game:ident, $field:ident[$index:expr]) => {
+        u16::from_le(
+            (&raw const $game.g_ram)
+                .cast::<u8>()
+                .add($crate::ram_map::word_arrays::$field)
+                .cast::<u16>()
+                .offset(($index) as isize)
+                .read_unaligned(),
+        )
+    };
     ($game:ident, $field:ident) => {
         u16::from_le(
             (&raw const $game.g_ram)
@@ -68,6 +91,16 @@ pub(crate) use ram_word;
 // destination, and keep RHS temporaries alive through the store. Form the raw
 // pointer at the caller without borrowing the whole Game or RAM allocation.
 macro_rules! set_ram_word {
+    ($game:ident.$field:ident[$index:expr] = $value:expr $(,)?) => {
+        $crate::ram_map::write_word(
+            $value,
+            (&raw mut $game.g_ram)
+                .cast::<u8>()
+                .add($crate::ram_map::word_arrays::$field)
+                .cast::<u16>()
+                .offset(($index) as isize),
+        )
+    };
     ($game:ident.$field:ident = $value:expr $(,)?) => {
         $crate::ram_map::write_word(
             $value,
@@ -172,7 +205,7 @@ ram_vars! {
     0x00340, "vram_read_queue", VramReadQueueEnt, Array;
     0x00360, vram_read_queue_tail, uint16, Scalar;
     0x00370, "oam_ent", OamEnt, Array;
-    0x00570, "oam_ext", uint16, Array;
+    0x00570, oam_ext, uint16, Array;
     0x00590, oam_next_ptr, uint16, Scalar;
     0x00592, power_bomb_explosion_status, uint16, Scalar;
     0x00596, g_word_7E0596, uint16, Scalar;
@@ -236,8 +269,8 @@ ram_vars! {
     0x00614, "coroutine_state_3", uint8, Scalar;
     0x00615, "coroutine_state_4", uint8, Scalar;
     0x00617, is_uploading_apu, uint16, Scalar;
-    0x00619, "music_queue_track", uint16, Array;
-    0x00629, "music_queue_delay", uint16, Array;
+    0x00619, music_queue_track, uint16, Array;
+    0x00629, music_queue_delay, uint16, Array;
     0x00639, music_queue_write_pos, uint16, Scalar;
     0x0063B, music_queue_read_pos, uint16, Scalar;
     0x0063D, music_entry, uint16, Scalar;
@@ -582,19 +615,19 @@ ram_vars! {
     0x00AAA, hud_item_changed_this_frame, uint16, Scalar;
     0x00AAC, arm_cannon_drawing_mode, uint16, Scalar;
     0x00AAE, speed_echoes_index, uint16, Scalar;
-    0x00AB0, "speed_echo_xpos", uint16, Array;
-    0x00AB8, "speed_echo_ypos", uint16, Array;
-    0x00AC0, "speed_echo_xspeed", uint16, Array;
+    0x00AB0, speed_echo_xpos, uint16, Array;
+    0x00AB8, speed_echo_ypos, uint16, Array;
+    0x00AC0, speed_echo_xspeed, uint16, Array;
     0x00AC8, samus_top_half_spritemap_index, uint16, Scalar;
     0x00ACA, samus_bottom_half_spritemap_index, uint16, Scalar;
     0x00ACC, timer_for_shine_timer, uint16, Scalar;
     0x00ACE, special_samus_palette_frame, uint16, Scalar;
     0x00AD0, special_samus_palette_timer, uint16, Scalar;
     0x00AD2, liquid_physics_type, uint16, Scalar;
-    0x00AD4, "atmospheric_gfx_anim_timer", uint16, Array;
-    0x00ADC, "atmospheric_gfx_x_pos", uint16, Array;
-    0x00AE4, "atmospheric_gfx_y_pos", uint16, Array;
-    0x00AEC, "atmospheric_gfx_frame_and_type", uint16, Array;
+    0x00AD4, atmospheric_gfx_anim_timer, uint16, Array;
+    0x00ADC, atmospheric_gfx_x_pos, uint16, Array;
+    0x00AE4, atmospheric_gfx_y_pos, uint16, Array;
+    0x00AEC, atmospheric_gfx_frame_and_type, uint16, Array;
     0x00AF4, autojump_timer, uint16, Scalar;
     0x00AF6, samus_x_pos, uint16, Scalar;
     0x00AF8, samus_x_subpos, uint16, Scalar;
@@ -640,27 +673,27 @@ ram_vars! {
     0x00B5E, new_projectile_direction_changed_pose, uint16, Scalar;
     0x00B60, used_for_sba_attacksB60, uint16, Scalar;
     0x00B62, samus_charge_palette_index, uint16, Scalar;
-    0x00B64, "projectile_x_pos", uint16, Array;
-    0x00B78, "projectile_y_pos", uint16, Array;
-    0x00B8C, "projectile_bomb_x_subpos", uint16, Array;
-    0x00BA0, "projectile_bomb_y_subpos", uint16, Array;
-    0x00BB4, "projectile_x_radius", uint16, Array;
-    0x00BC8, "projectile_y_radius", uint16, Array;
-    0x00BDC, "projectile_bomb_x_speed", uint16, Array;
-    0x00BF0, "projectile_bomb_y_speed", uint16, Array;
-    0x00C04, "projectile_dir", uint16, Array;
-    0x00C18, "projectile_type", uint16, Array;
-    0x00C2C, "projectile_damage", uint16, Array;
-    0x00C40, "projectile_bomb_instruction_ptr", uint16, Array;
-    0x00C54, "projectile_bomb_instruction_timers", uint16, Array;
-    0x00C68, "projectile_bomb_pre_instructions", uint16, Array;
-    0x00C72, "bomb_functions", uint16, Array;
-    0x00C7C, "projectile_variables", uint16, Array;
+    0x00B64, projectile_x_pos, uint16, Array;
+    0x00B78, projectile_y_pos, uint16, Array;
+    0x00B8C, projectile_bomb_x_subpos, uint16, Array;
+    0x00BA0, projectile_bomb_y_subpos, uint16, Array;
+    0x00BB4, projectile_x_radius, uint16, Array;
+    0x00BC8, projectile_y_radius, uint16, Array;
+    0x00BDC, projectile_bomb_x_speed, uint16, Array;
+    0x00BF0, projectile_bomb_y_speed, uint16, Array;
+    0x00C04, projectile_dir, uint16, Array;
+    0x00C18, projectile_type, uint16, Array;
+    0x00C2C, projectile_damage, uint16, Array;
+    0x00C40, projectile_bomb_instruction_ptr, uint16, Array;
+    0x00C54, projectile_bomb_instruction_timers, uint16, Array;
+    0x00C68, projectile_bomb_pre_instructions, uint16, Array;
+    0x00C72, bomb_functions, uint16, Array;
+    0x00C7C, projectile_variables, uint16, Array;
     0x00C86, "bomb_timers", uint16, Array;
-    0x00C90, "projectile_timers", uint16, Array;
+    0x00C90, projectile_timers, uint16, Array;
     0x00C9A, "bomb_subspeeds", uint16, Array;
-    0x00CA4, "projectile_unk_A", uint16, Array;
-    0x00CB8, "projectile_spritemap_pointers", uint16, Array;
+    0x00CA4, projectile_unk_A, uint16, Array;
+    0x00CB8, projectile_spritemap_pointers, uint16, Array;
     0x00CCC, cooldown_timer, uint16, Scalar;
     0x00CCE, projectile_counter, uint16, Scalar;
     0x00CD0, flare_counter, uint16, Scalar;
@@ -721,8 +754,8 @@ ram_vars! {
     0x00D3C, grapple_beam_unkD3C, uint16, Scalar;
     0x00D3E, grapple_point_anim_timer, uint16, Scalar;
     0x00D40, grapple_point_anim_ptr, uint16, Scalar;
-    0x00D42, "grapple_segment_anim_instr_timers", uint16, Array;
-    0x00D62, "grapple_segment_anim_instr_ptrs", uint16, Array;
+    0x00D42, grapple_segment_anim_instr_timers, uint16, Array;
+    0x00D62, grapple_segment_anim_instr_ptrs, uint16, Array;
     0x00D82, button_config_shoot_x_saved, uint16, Scalar;
     0x00D84, button_config_jump_a_saved, uint16, Scalar;
     0x00D86, button_config_run_b_saved, uint16, Scalar;
@@ -828,8 +861,8 @@ ram_vars! {
     0x00E7A, enemy_tile_load_data_write_pos, uint16, Scalar;
     0x00E7C, enemy_tile_vram_src, uint16, Scalar;
     0x00E7E, enemy_tile_vram_dst, uint16, Scalar;
-    0x00E84, "enemy_drawing_queue", uint16, Array;
-    0x00F68, "enemy_drawing_queue_sizes", uint16, Array;
+    0x00E84, enemy_drawing_queue, uint16, Array;
+    0x00F68, enemy_drawing_queue_sizes, uint16, Array;
     0x00F78, "enemy_data", EnemyData, Array;
     0x01778, fireflea_flashing_timer, uint16, Scalar;
     0x0177A, fireflea_flashing_index, uint16, Scalar;
@@ -841,7 +874,7 @@ ram_vars! {
     0x01788, "REMOVED_enemy_ai_pointer_backup", LongPtr, Scalar;
     0x0178C, "enemy_gfx_drawn_hook", LongPtr, Scalar;
     0x01790, "REMOVED_set_to_rtl_when_loading_enemies_unused", LongPtr, Scalar;
-    0x01794, "variables_for_enemy_graphics_drawn_hook", uint16, Array;
+    0x01794, variables_for_enemy_graphics_drawn_hook, uint16, Array;
     0x0179A, enemy_bg2_tilemap_size, uint16, Scalar;
     0x0179C, boss_id, uint16, Scalar;
     0x0179E, UNUSED_word_7E179E, uint16, Scalar;
@@ -851,9 +884,9 @@ ram_vars! {
     0x017A6, interactive_enemy_indexes_write_ptr, uint16, Scalar;
     0x017A8, REMOVED_active_enemy_indexes_index, uint16, Scalar;
     0x017AA, REMOVED_interactive_enemy_indexes_index, uint16, Scalar;
-    0x017AC, "active_enemy_indexes", uint16, Array;
-    0x017EC, "interactive_enemy_indexes", uint16, Array;
-    0x0182C, "enemy_index_colliding_dirs", uint16, Array;
+    0x017AC, active_enemy_indexes, uint16, Array;
+    0x017EC, interactive_enemy_indexes, uint16, Array;
+    0x0182C, enemy_index_colliding_dirs, uint16, Array;
     0x01834, "REMOVED_distance_to_enemy_colliding_dirs", uint16, Array;
     0x0183C, flag_process_all_enemies, uint16, Scalar;
     0x0183E, earthquake_type, uint16, Scalar;
@@ -904,20 +937,20 @@ ram_vars! {
     0x018AE, flag_disable_projectile_interaction, uint16, Scalar;
     0x018B0, hdma_objects_enable_flag, uint16, Scalar;
     0x018B2, hdma_object_index, uint16, Scalar;
-    0x018B4, "hdma_object_channels_bitmask", uint16, Array;
-    0x018C0, "hdma_object_bank_slot", uint16, Array;
-    0x018CC, "hdma_object_instruction_list_pointers", uint16, Array;
-    0x018D8, "hdma_object_table_pointers", uint16, Array;
-    0x018E4, "hdma_object_instruction_timers", uint16, Array;
-    0x018F0, "hdma_object_pre_instructions", uint16, Array;
-    0x018FC, "hdma_object_pre_instruction_bank", uint16, Array;
-    0x01908, "hdma_object_timers", uint16, Array;
-    0x01914, "hdma_object_A", uint16, Array;
-    0x01920, "hdma_object_B", uint16, Array;
-    0x0192C, "hdma_object_C", uint16, Array;
-    0x01938, "hdma_object_D", uint16, Array;
-    0x01944, "hdma_object_E", uint16, Array;
-    0x01950, "hdma_object_F", uint16, Array;
+    0x018B4, hdma_object_channels_bitmask, uint16, Array;
+    0x018C0, hdma_object_bank_slot, uint16, Array;
+    0x018CC, hdma_object_instruction_list_pointers, uint16, Array;
+    0x018D8, hdma_object_table_pointers, uint16, Array;
+    0x018E4, hdma_object_instruction_timers, uint16, Array;
+    0x018F0, hdma_object_pre_instructions, uint16, Array;
+    0x018FC, hdma_object_pre_instruction_bank, uint16, Array;
+    0x01908, hdma_object_timers, uint16, Array;
+    0x01914, hdma_object_A, uint16, Array;
+    0x01920, hdma_object_B, uint16, Array;
+    0x0192C, hdma_object_C, uint16, Array;
+    0x01938, hdma_object_D, uint16, Array;
+    0x01944, hdma_object_E, uint16, Array;
+    0x01950, hdma_object_F, uint16, Array;
     0x0195C, fx_y_subpos, uint16, Scalar;
     0x0195E, fx_y_pos, uint16, Scalar;
     0x01960, lava_acid_y_subpos, uint16, Scalar;
@@ -949,24 +982,24 @@ ram_vars! {
     0x01995, cinematic_var9, uint16, Scalar;
     0x01995, eproj_unk1995, uint16, Scalar;
     0x01997, cinematic_var10, uint16, Scalar;
-    0x01997, "eproj_id", uint16, Array;
+    0x01997, eproj_id, uint16, Array;
     0x01999, g_word_7E1999, uint16, Scalar;
     0x0199B, g_word_7E199B, uint16, Scalar;
     0x0199D, g_word_7E199D, uint16, Scalar;
     0x0199F, g_word_7E199F, uint16, Scalar;
-    0x019A1, "mode7_obj_instr_ptr", uint16, Array;
-    0x019A5, "mode7_obj_preinstr_func", uint16, Array;
-    0x019A9, "mode7_obj_instr_timer", uint16, Array;
-    0x019AD, "mode7_obj_goto_timer", uint16, Array;
+    0x019A1, mode7_obj_instr_ptr, uint16, Array;
+    0x019A5, mode7_obj_preinstr_func, uint16, Array;
+    0x019A9, mode7_obj_instr_timer, uint16, Array;
+    0x019AD, mode7_obj_goto_timer, uint16, Array;
     0x019B1, mode7_cur_index, uint16, Scalar;
     0x019B3, mode7_spawn_param, uint16, Scalar;
-    0x019B5, "cinematicbg_arr1", uint16, Array;
-    0x019BB, "eproj_gfx_idx", uint16, Array;
-    0x019CD, "cinematicbg_instr_ptr", uint16, Array;
-    0x019D5, "cinematicbg_preinstr", uint16, Array;
-    0x019DD, "cinematicbg_instr_timer", uint16, Array;
-    0x019DF, "eproj_timers", uint16, Array;
-    0x019E5, "cinematicbg_arr6", uint16, Array;
+    0x019B5, cinematicbg_arr1, uint16, Array;
+    0x019BB, eproj_gfx_idx, uint16, Array;
+    0x019CD, cinematicbg_instr_ptr, uint16, Array;
+    0x019D5, cinematicbg_preinstr, uint16, Array;
+    0x019DD, cinematicbg_instr_timer, uint16, Array;
+    0x019DF, eproj_timers, uint16, Array;
+    0x019E5, cinematicbg_arr6, uint16, Array;
     0x019ED, cinematicbg_var2, uint16, Scalar;
     0x019F1, cinematic_enable_objs, uint16, Scalar;
     0x019F3, cinematic_enable_bg_tilemap, uint16, Scalar;
@@ -977,59 +1010,59 @@ ram_vars! {
     0x019FD, cinematic_var24, uint16, Scalar;
     0x019FF, cinematic_var25, uint16, Scalar;
     0x01A01, cinematic_var26, uint16, Scalar;
+    0x01A03, eproj_pre_instr, uint16, Array;
     0x01A03, "eproj_pre_instr", uint16, Array;
-    0x01A03, "eproj_pre_instr", uint16, Array;
-    0x01A27, "eproj_x_subpos", uint16, Array;
+    0x01A27, eproj_x_subpos, uint16, Array;
     0x01A37, cinematic_var20, uint16, Scalar;
     0x01A47, cinematic_var19, uint16, Scalar;
     0x01A49, cinematic_var4, uint16, Scalar;
     0x01A4B, cinematic_var13, uint16, Scalar;
-    0x01A4B, "eproj_x_pos", uint16, Array;
+    0x01A4B, eproj_x_pos, uint16, Array;
     0x01A4D, cinematic_var14, uint16, Scalar;
     0x01A4F, cinematic_var17, uint16, Scalar;
     0x01A51, cinematic_var12, uint16, Scalar;
     0x01A53, cinematic_var18, uint16, Scalar;
     0x01A57, cinematic_var15, uint16, Scalar;
     0x01A59, cinematic_obj_index, uint16, Scalar;
-    0x01A5D, "cinematicspr_whattodraw", uint16, Array;
-    0x01A6F, "eproj_y_subpos", uint16, Array;
-    0x01A7D, "cinematicbg_arr7", uint16, Array;
+    0x01A5D, cinematicspr_whattodraw, uint16, Array;
+    0x01A6F, eproj_y_subpos, uint16, Array;
+    0x01A7D, cinematicbg_arr7, uint16, Array;
     0x01A8F, optionsmenu_index, uint16, Scalar;
-    0x01A93, "eproj_y_pos", uint16, Array;
+    0x01A93, eproj_y_pos, uint16, Array;
     0x01A93, options_menu_init_param, uint16, Scalar;
-    0x01A9D, "cinematicbg_arr8", uint16, Array;
+    0x01A9D, cinematicbg_arr8, uint16, Array;
     0x01A9D, "optionsmenu_cur_data", uint16, Array;
-    0x01AAD, "optionsmenu_arr8", uint16, Array;
-    0x01AB7, "eproj_x_vel", uint16, Array;
-    0x01ABD, "cinematicbg_arr9", uint16, Array;
+    0x01AAD, optionsmenu_arr8, uint16, Array;
+    0x01AB7, eproj_x_vel, uint16, Array;
+    0x01ABD, cinematicbg_arr9, uint16, Array;
     0x01ABD, "optionsmenu_arr9", uint16, Array;
-    0x01ACD, "optionsmenu_arr10", uint16, Array;
-    0x01ADB, "eproj_y_vel", uint16, Array;
-    0x01ADD, "cinematicspr_arr6", uint16, Array;
+    0x01ACD, optionsmenu_arr10, uint16, Array;
+    0x01ADB, eproj_y_vel, uint16, Array;
+    0x01ADD, cinematicspr_arr6, uint16, Array;
     0x01ADD, "optionsmenu_arr6", uint16, Array;
-    0x01AED, "optionsmenu_arr7", uint16, Array;
-    0x01AFD, "cinematicspr_arr7", uint16, Array;
+    0x01AED, optionsmenu_arr7, uint16, Array;
+    0x01AFD, cinematicspr_arr7, uint16, Array;
     0x01AFD, "optionsmenu_instr_ptr", uint16, Array;
-    0x01AFF, "eproj_E", uint16, Array;
-    0x01B0D, "optionsmenu_arr1", uint16, Array;
-    0x01B1D, "cinematicspr_instr_ptr", uint16, Array;
+    0x01AFF, eproj_E, uint16, Array;
+    0x01B0D, optionsmenu_arr1, uint16, Array;
+    0x01B1D, cinematicspr_instr_ptr, uint16, Array;
     0x01B1D, "optionsmenu_instr_timer", uint16, Array;
-    0x01B23, "eproj_F", uint16, Array;
-    0x01B2D, "optionsmenu_arr5", uint16, Array;
-    0x01B3D, "cinematicspr_preinstr_func", uint16, Array;
+    0x01B23, eproj_F, uint16, Array;
+    0x01B2D, optionsmenu_arr5, uint16, Array;
+    0x01B3D, cinematicspr_preinstr_func, uint16, Array;
     0x01B3D, "optionsmenu_arr11", uint16, Array;
-    0x01B47, "eproj_instr_list_ptr", uint16, Array;
-    0x01B5D, "cinematicspr_instr_timer", uint16, Array;
-    0x01B6B, "eproj_spritemap_ptr", uint16, Array;
-    0x01B7D, "cinematicspr_goto_timer", uint16, Array;
-    0x01B8F, "eproj_instr_timers", uint16, Array;
+    0x01B47, eproj_instr_list_ptr, uint16, Array;
+    0x01B5D, cinematicspr_instr_timer, uint16, Array;
+    0x01B6B, eproj_spritemap_ptr, uint16, Array;
+    0x01B7D, cinematicspr_goto_timer, uint16, Array;
+    0x01B8F, eproj_instr_timers, uint16, Array;
     0x01B9D, cinematic_spawn_param, uint16, Scalar;
     0x01B9F, cinematic_var11, uint16, Scalar;
     0x01BA1, cinematicbg_var1, uint16, Scalar;
     0x01BA3, cinematic_var16, uint16, Scalar;
-    0x01BB3, "eproj_radius", uint16, Array;
-    0x01BD7, "eproj_properties", uint16, Array;
-    0x01BFB, "eproj_G", uint16, Array;
+    0x01BB3, eproj_radius, uint16, Array;
+    0x01BD7, eproj_properties, uint16, Array;
+    0x01BFB, eproj_G, uint16, Array;
     0x01C1F, message_box_index, uint16, Scalar;
     0x01C23, plm_flag, uint16, Scalar;
     0x01C25, plm_draw_tilemap_index, uint16, Scalar;
@@ -1037,14 +1070,14 @@ ram_vars! {
     0x01C29, plm_x_block, uint16, Scalar;
     0x01C2B, plm_y_block, uint16, Scalar;
     0x01C2D, plm_item_gfx_index, uint16, Scalar;
-    0x01C2F, "plm_item_gfx_ptrs", uint16, Array;
-    0x01C37, "plm_header_ptr", uint16, Array;
-    0x01C87, "plm_block_indices", uint16, Array;
-    0x01CD7, "plm_pre_instrs", uint16, Array;
-    0x01D27, "plm_instr_list_ptrs", uint16, Array;
-    0x01D77, "plm_timers", uint16, Array;
-    0x01DC7, "plm_room_arguments", uint16, Array;
-    0x01E17, "plm_variable", uint16, Array;
+    0x01C2F, plm_item_gfx_ptrs, uint16, Array;
+    0x01C37, plm_header_ptr, uint16, Array;
+    0x01C87, plm_block_indices, uint16, Array;
+    0x01CD7, plm_pre_instrs, uint16, Array;
+    0x01D27, plm_instr_list_ptrs, uint16, Array;
+    0x01D77, plm_timers, uint16, Array;
+    0x01DC7, plm_room_arguments, uint16, Array;
+    0x01E17, plm_variable, uint16, Array;
     0x01E67, custom_draw_instr_num_blocks, uint16, Scalar;
     0x01E69, custom_draw_instr_plm_block, uint16, Scalar;
     0x01E6B, custom_draw_instr_zero_terminator, uint16, Scalar;
@@ -1056,30 +1089,30 @@ ram_vars! {
     0x01E77, current_slope_bts, uint16, Scalar;
     0x01E79, flag_for_palette_fx_objects, uint16, Scalar;
     0x01E7B, palettefx_index, uint16, Scalar;
-    0x01E7D, "palettefx_ids", uint16, Array;
-    0x01E8D, "palettefx_color_indexes", uint16, Array;
-    0x01EAD, "palettefx_pre_instr", uint16, Array;
-    0x01EBD, "palettefx_instr_list_ptrs", uint16, Array;
-    0x01ECD, "palettefx_instr_timers", uint16, Array;
-    0x01EDD, "palettefx_timers", uint16, Array;
+    0x01E7D, palettefx_ids, uint16, Array;
+    0x01E8D, palettefx_color_indexes, uint16, Array;
+    0x01EAD, palettefx_pre_instr, uint16, Array;
+    0x01EBD, palettefx_instr_list_ptrs, uint16, Array;
+    0x01ECD, palettefx_instr_timers, uint16, Array;
+    0x01EDD, palettefx_timers, uint16, Array;
     0x01EED, samus_in_heat_palfx_index, uint16, Scalar;
     0x01EEF, samus_in_heat_palettefx_prev_index, uint16, Scalar;
     0x01EF1, animtiles_enable_flag, uint16, Scalar;
     0x01EF3, animtiles_object_index, uint16, Scalar;
-    0x01EF5, "animtiles_ids", uint16, Array;
-    0x01F01, "animtiles_timers", uint16, Array;
-    0x01F0D, "animtiles_instr_list_ptrs", uint16, Array;
-    0x01F19, "animtiles_instr_timers", uint16, Array;
-    0x01F25, "animtiles_src_ptr", uint16, Array;
-    0x01F31, "animtiles_sizes", uint16, Array;
-    0x01F3D, "animtiles_vram_ptr", uint16, Array;
+    0x01EF5, animtiles_ids, uint16, Array;
+    0x01F01, animtiles_timers, uint16, Array;
+    0x01F0D, animtiles_instr_list_ptrs, uint16, Array;
+    0x01F19, animtiles_instr_timers, uint16, Array;
+    0x01F25, animtiles_src_ptr, uint16, Array;
+    0x01F31, animtiles_sizes, uint16, Array;
+    0x01F3D, animtiles_vram_ptr, uint16, Array;
     0x01F49, animtiles_instruction, uint16, Scalar;
     0x01F51, cinematic_function, uint16, Scalar;
     0x01F53, demo_timer, uint16, Scalar;
     0x01F55, demo_set, uint16, Scalar;
     0x01F57, demo_scene, uint16, Scalar;
     0x01F59, num_demo_sets, uint16, Scalar;
-    0x02000, "tilemap_stuff", uint16, Array;
+    0x02000, tilemap_stuff, uint16, Array;
     0x03000, "ram3000", Ram3000, Scalar;
     0x03800, "ram3800", Ram3800, Scalar;
     0x04000, "ram4000", Ram4000, Scalar;
@@ -1143,12 +1176,12 @@ ram_vars! {
     0x095F0, "g_byte_7E95F0", uint8, Scalar;
     0x09600, "g_byte_7E9600", uint8, Scalar;
     0x09610, "g_byte_7E9610", uint8, Scalar;
-    0x097DC, "g_word_7E97DC", uint16, Array;
-    0x09800, "hdma_table_1", uint16, Array;
+    0x097DC, g_word_7E97DC, uint16, Array;
+    0x09800, hdma_table_1, uint16, Array;
     0x09C00, "mother_brain_indirect_hdma", uint8, Array;
     0x09C44, g_word_7E9C44, uint16, Scalar;
-    0x09C46, "g_word_7E9C46", uint16, Array;
-    0x09D00, "hdma_table_2", uint16, Array;
+    0x09C46, g_word_7E9C46, uint16, Array;
+    0x09D00, hdma_table_2, uint16, Array;
     0x09E00, "hdma_window_1_left_pos", ExpandingSquareTransitionHdma, Array;
     0x09E10, "hdma_window_1_right_pos", ExpandingSquareTransitionHdma, Array;
     0x09E20, expand_sq_topbottom_margin_right_pos, uint16, Scalar;
@@ -1170,12 +1203,12 @@ ram_vars! {
     0x09E4C, expand_sq_bottom_subvel, uint16, Scalar;
     0x09E4E, expand_sq_bottom_vel, uint16, Scalar;
     0x09E50, expand_sq_timer, uint16, Scalar;
-    0x09E80, "g_word_7E9E80", uint16, Array;
+    0x09E80, g_word_7E9E80, uint16, Array;
     0x09F00, "scrolling_sky_bg2_indirect_hdma", uint8, Array;
-    0x09F80, "scrolling_sky_bg2_hdma_data", uint16, Array;
+    0x09F80, scrolling_sky_bg2_hdma_data, uint16, Array;
     0x0A000, "tile_table", TileTables, Scalar;
-    0x0C000, "palette_buffer", uint16, Array;
-    0x0C200, "target_palettes", uint16, Array;
+    0x0C000, palette_buffer, uint16, Array;
+    0x0C200, target_palettes, uint16, Array;
     0x0C400, palette_change_num, uint16, Scalar;
     0x0C402, palette_change_denom, uint16, Scalar;
     0x0C404, g_word_7EC404, uint16, Scalar;
@@ -1183,12 +1216,12 @@ ram_vars! {
     0x0C506, "power_bomb_explosion_right_hdma", uint8, Array;
     0x0C606, "offscreen_power_bomb_left_hdma", uint8, Scalar;
     0x0C607, "offscreen_power_bomb_right_hdma", uint8, Scalar;
-    0x0C608, "hud_tilemap", uint16, Array;
+    0x0C608, hud_tilemap, uint16, Array;
     0x0C6C8, "plm_draw_tilemap", uint16, Array;
-    0x0C8C8, "bg1_column_update_tilemap_left_halves", uint16, Array;
-    0x0C908, "bg1_column_update_tilemap_right_halves", uint16, Array;
-    0x0C948, "bg1_column_update_tilemap_top_halves", uint16, Array;
-    0x0C98C, "bg1_column_update_tilemap_bottom_halves", uint16, Array;
+    0x0C8C8, bg1_column_update_tilemap_left_halves, uint16, Array;
+    0x0C908, bg1_column_update_tilemap_right_halves, uint16, Array;
+    0x0C948, bg1_column_update_tilemap_top_halves, uint16, Array;
+    0x0C98C, bg1_column_update_tilemap_bottom_halves, uint16, Array;
     0x0C9D0, "bg2_column_update_tilemap_left_halves", uint8, Array;
     0x0CA10, "bg2_column_update_tilemap_right_halves", uint16, Array;
     0x0CA50, "bg2_column_update_tilemap_top_halves", uint8, Array;
@@ -1198,31 +1231,31 @@ ram_vars! {
     0x0CADC, bg3_xpos, uint16, Scalar;
     0x0CADE, bg3_ypos, uint16, Scalar;
     0x0CAE0, "crocomire_bg2_scroll_hdma_indirect", uint8, Array;
-    0x0CAF0, "crocomire_bg2_scroll_hdma_data", uint16, Array;
+    0x0CAF0, crocomire_bg2_scroll_hdma_data, uint16, Array;
     0x0CD20, "scrolls", uint8, Array;
-    0x0CD52, "explored_map_tiles_saved", uint16, Array;
+    0x0CD52, explored_map_tiles_saved, uint16, Array;
     0x0D552, "debug_enemy_set_name", uint8, Array;
     0x0D55A, "debug_enemy_set_data", uint8, Array;
     0x0D652, wrecked_ship_robot_palanim_palindex, uint16, Scalar;
     0x0D654, wrecked_ship_robot_palanim_timer, uint16, Scalar;
     0x0D656, "wrecked_ship_robot_palanim_table_index", uint8, Scalar;
-    0x0D658, "projectiletrail_left_instr_timer", uint16, Array;
-    0x0D67C, "projectiletrail_right_instr_timer", uint16, Array;
-    0x0D6A0, "projectiletrail_left_instr_list_ptr", uint16, Array;
-    0x0D6C4, "projectiletrail_right_instr_list_ptr", uint16, Array;
-    0x0D6E8, "projectiletrail_left_tile_and_attribs", uint16, Array;
-    0x0D70C, "projectiletrail_right_tile_and_attribs", uint16, Array;
-    0x0D730, "projectiletrail_left_x_pos", uint16, Array;
-    0x0D754, "projectiletrail_right_x_pos", uint16, Array;
-    0x0D778, "projectiletrail_left_y_pos", uint16, Array;
-    0x0D79C, "projectiletrail_right_y_pos", uint16, Array;
-    0x0D7C0, "player_data_saved", uint16, Array;
+    0x0D658, projectiletrail_left_instr_timer, uint16, Array;
+    0x0D67C, projectiletrail_right_instr_timer, uint16, Array;
+    0x0D6A0, projectiletrail_left_instr_list_ptr, uint16, Array;
+    0x0D6C4, projectiletrail_right_instr_list_ptr, uint16, Array;
+    0x0D6E8, projectiletrail_left_tile_and_attribs, uint16, Array;
+    0x0D70C, projectiletrail_right_tile_and_attribs, uint16, Array;
+    0x0D730, projectiletrail_left_x_pos, uint16, Array;
+    0x0D754, projectiletrail_right_x_pos, uint16, Array;
+    0x0D778, projectiletrail_left_y_pos, uint16, Array;
+    0x0D79C, projectiletrail_right_y_pos, uint16, Array;
+    0x0D7C0, player_data_saved, uint16, Array;
     0x0D820, "events_that_happened", uint8, Array;
     0x0D828, "boss_bits_for_area", uint8, Array;
     0x0D830, "room_chozo_bits", uint8, Array;
     0x0D870, "item_bit_array", uint8, Array;
     0x0D8B0, "opened_door_bit_array", uint8, Array;
-    0x0D8F0, "UNUSED_word_7ED8F0", uint16, Array;
+    0x0D8F0, UNUSED_word_7ED8F0, uint16, Array;
     0x0D8F8, "used_save_stations_and_elevators", uint8, Array;
     0x0D908, "map_station_byte_array", uint8, Array;
     0x0D914, loading_game_state, uint16, Scalar;
@@ -1230,33 +1263,33 @@ ram_vars! {
     0x0D918, sram_area_index, uint16, Scalar;
     0x0D91A, global_number_of_items_loaded_ctr, uint16, Scalar;
     0x0D91C, "compressed_map_data", uint8, Array;
-    0x0DE1C, "plm_instruction_timer", uint16, Array;
-    0x0DE6C, "plm_instruction_draw_ptr", uint16, Array;
-    0x0DEBC, "plm_instruction_list_link_reg", uint16, Array;
-    0x0DF0C, "plm_variables", uint16, Array;
+    0x0DE1C, plm_instruction_timer, uint16, Array;
+    0x0DE6C, plm_instruction_draw_ptr, uint16, Array;
+    0x0DEBC, plm_instruction_list_link_reg, uint16, Array;
+    0x0DF0C, plm_variables, uint16, Array;
     0x0DF5C, "backup_of_bg2_during_pause", uint16, Array;
-    0x0EF5C, "enemy_def_ptr", uint16, Array;
-    0x0EF64, "enemy_gfxdata_tiles_index", uint16, Array;
-    0x0EF6C, "enemy_gfxdata_vram_ptr", uint16, Array;
+    0x0EF5C, enemy_def_ptr, uint16, Array;
+    0x0EF64, enemy_gfxdata_tiles_index, uint16, Array;
+    0x0EF6C, enemy_gfxdata_vram_ptr, uint16, Array;
     0x0EF74, REMOVED_enemy_gfx_data_write_ptr, uint16, Scalar;
     0x0EF76, REMOVED_next_enemy_tiles_index, uint16, Scalar;
-    0x0EF78, "sprite_instr_list_ptrs", uint16, Array;
-    0x0EFF8, "sprite_instr_timer", uint16, Array;
-    0x0F078, "sprite_palettes", uint16, Array;
-    0x0F0F8, "sprite_x_pos", uint16, Array;
-    0x0F178, "sprite_x_subpos", uint16, Array;
-    0x0F1F8, "sprite_y_pos", uint16, Array;
-    0x0F278, "sprite_y_subpos", uint16, Array;
-    0x0F2F8, "sprite_disable_flag", uint16, Array;
+    0x0EF78, sprite_instr_list_ptrs, uint16, Array;
+    0x0EFF8, sprite_instr_timer, uint16, Array;
+    0x0F078, sprite_palettes, uint16, Array;
+    0x0F0F8, sprite_x_pos, uint16, Array;
+    0x0F178, sprite_x_subpos, uint16, Array;
+    0x0F1F8, sprite_y_pos, uint16, Array;
+    0x0F278, sprite_y_subpos, uint16, Array;
+    0x0F2F8, sprite_disable_flag, uint16, Array;
     0x0F378, enemy_processing_stage, uint16, Scalar;
-    0x0F380, "eproj_flags", uint16, Array;
-    0x0F3C8, "eproj_enemy_header_ptr", uint16, Array;
-    0x0F410, "eproj_killed_enemy_index", uint16, Array;
+    0x0F380, eproj_flags, uint16, Array;
+    0x0F3C8, eproj_enemy_header_ptr, uint16, Array;
+    0x0F410, eproj_killed_enemy_index, uint16, Array;
     0x0F434, special_death_item_drop_x_origin_pos, uint16, Scalar;
     0x0F436, special_death_item_drop_y_origin_pos, uint16, Scalar;
     0x10000, ram7F_start, uint16, Scalar;
-    0x10002, "level_data", uint16, Array;
+    0x10002, level_data, uint16, Array;
     0x16402, "BTS", uint8, Array;
-    0x19602, "custom_background", uint16, Array;
+    0x19602, custom_background, uint16, Array;
     0x1FF00, bug_fix_counter_BAD, uint16, Scalar;
 }

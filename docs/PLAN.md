@@ -69,6 +69,30 @@ the reviewed patch source and indexed edits passes any% 129712/0
 release (26.08s), formatting/check and progress. The two focused commits share
 this combined run; no separate patch-only replay is claimed.
 
+Named indexed RAM words (2026-10-19): ast-grep consolidates all 4429
+eligible accesses (1640 reads, 2789 stores) across 162 named arrays and 31
+caller files. The 312 borrowed places remain separate. Signed element
+offsets, unaligned little-endian words, RHS-before-index/store order and
+temporary lifetimes are preserved without whole-Game/RAM borrows.
+
+The final index cast is shared; 848 in-range literal casts become typed
+literals and 434 C-int aliases use the identical i32 type. Arithmetic and
+call order remain exact. All 1169 table rows retain names/addresses/types,
+shapes and order, including duplicate metadata rows.
+
+Net Rust lines -2971 and source casts -13174; unsafe-function count is
+unchanged. Existing raw operations are consolidated, not eliminated. The
+162 arrays pass 10616832 word-value cases and 10616767 valid signed-index
+cases, with neighbor/untouched-RAM and RHS/index/drop-order controls.
+These factored checks do not prove every joint state or broader alias safety.
+
+Combined verification with patch commit 1a0fceb5 and the committed corpse
+work passes any% 129712/0 (118.64s), native exit 0. Normal release
+(23.96s), stable workspace release (26.08s), formatting/check and progress pass;
+fixed source/DLL/fixtures match the final composition. Independent source
+review has no findings. Total Rust is 168758 lines. Continue large repeated
+families; small byte-access and lint batches remain parked.
+
 Dispatch wrapper reduction (2026-10-19): ast-grep selects 2171 complete
 match arms across 26 files and replaces blocks containing one unit-returning
 call with direct call arms. Labels, calls and argument tokens remain exact.
