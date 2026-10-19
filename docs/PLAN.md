@@ -18690,6 +18690,38 @@ Concurrent gameplay/standard-tool cleanup retains its own checks. Neither
 movie reaches credits; full progression, readability and hardware/audio
 completion remain open.
 
+SPC shift/rotate family (2026-10-19): normalized jscpd discovery
+and complete CST function selection cover four memory operations and the
+containing opcode dispatch. Four complete accumulator arms are selected
+within that dispatch. One safe const-generic byte helper returns result and
+outgoing carry for ASL/LSR/ROL/ROR; one raw-pointer memory helper owns the
+read, carry write, bus write and Z/N update. All twelve memory call sites
+now use that helper directly; the four old wrappers disappear. Shift forms
+do not read incoming carry. Accumulator shifts retain carry-before-result
+writes; accumulator rotations retain result-before-carry writes. Memory forms
+read the operand before incoming carry, write carry before the bus write,
+and set Z/N after it. Callers retain addressing and cycle handling.
+
+Complete-source reconstruction permits only those eight bodies, twelve
+callers, helpers and their formatting. All other frozen sources match.
+Actual original/current memory routines agree in 262144 cases: every byte
+value and all 256 initial flag patterns for each of four operations. Independent
+result/carry/Z/N expectations and preservation of other flags agree.
+Actual spc_runOpcode agrees in 16384 constructed SPC/APU contexts over all
+16 affected opcodes and 1024 register/flag/operand seeds, including RAM,
+ports, timer counters and direct/indexed/absolute operands. Complete initialized
+SPC/APU/DSP state and cycle counts match. This executes accumulator and memory
+paths in instruction/bus context; it is not all possible bus combinations.
+
+Frozen f4a042af plus only this family passes any% 129712/0
+(163.04s) and Speed Booster 148406/0 (208.44s), native exits 0,
+with fixed source/library/DLL/ROM/movie hashes. Cargo fmt/check, normal release
+(14.60s), progress and diff check pass. Own Rust lines -16, c_int cast lines
+-19 and unsafe functions -3; raw RAM/layout remains exact. No probe or
+ROM-derived asset committed. Concurrent gameplay/standard-tool edits keep
+their own checks. Neither movie reaches credits; the broad project goal
+remains unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
