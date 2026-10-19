@@ -8959,6 +8959,30 @@ while replacing repeated carry/subtraction; other counters unchanged. Full word
 Cartesian coverage, arbitrary bus mutation, gameplay and rendering/audio remain
 open.
 
+Windows full release build restored (2026-10-19): install the official SDL2
+2.32.10 MinGW development package outside the checkout under
+`C:/Users/Jim.Lundin/AppData/Local/sm-decomp-tools/SDL2-2.32.10/SDL2-2.32.10`.
+For Cargo, prepend `C:/Users/Jim.Lundin/.cargo/bin` to PATH and set
+LIBRARY_PATH to that package's `x86_64-w64-mingw32/lib` directory. Copy its
+`bin/SDL2.dll` beside the ignored `target/release/sm.exe` for execution.
+No Rust source, dependency manifest or global environment setting changes.
+`cargo fmt --check` and full `cargo build --release` now pass on `c2b8cf68`;
+the build completes in 2.71s. The newly linked executable's full any% replay
+passes 129,712/0 (60.12s), captured native exit 0. This resolves the current
+missing-SDL2 linker prerequisite; interactive frontend behavior is untested.
+
+Independent subagents review the committed comparison extraction with no
+findings, inspect its frozen old/current helper sources and 53,084,160-case
+result, and rerun the actual 3,600/0 prefix with native exit 0. All six
+CMP/CPX/CPY caller-width combinations execute with the counts recorded above.
+These checks cover real WRAM helpers and boot context, not arbitrary MMIO
+mutation or complete CPU correctness; both sides of gameplay verification
+share maintained hardware. Progress remains 22,691 raw offsets, 39 extern
+blocks, 3 C ABI exports, 5 no_mangle, 6,723 unsafe functions, 85,576 cast
+lines and 257,471 Rust lines. This documentation-only change adds no source
+residue. Gameplay coverage still spans six rooms/three enemy definitions;
+credits, renderer/audio fidelity and masked RAM remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
