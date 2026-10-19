@@ -9649,6 +9649,24 @@ replay. Unsafe functions -2, Rust lines -10; other own counters unchanged.
 Arbitrary MMIO mutation and complete gameplay/render/audio remain open.
 Continue covered CPU cleanup; TSX/ROR stay held for contextual execution.
 
+CPU shared register loads (2026-10-19): LDA/LDX/LDY share load_register and
+the existing CpuRegister selector. Byte LDA captures A's high byte before the
+bus read; byte X/Y clear their high bytes. Selected width, word cycle increment,
+ordered reads, register store and final live-MF/XF Z/N retain their sequence.
+Safe selector references end before bus callbacks. All twenty-five opcode
+callers select the same register. Frozen `fb22d8f0` plus this change passes
+1,572,864 actual old/current cases: every operand word, independent MF/XF,
+all A-high/byte combinations and aliased/disjoint read addresses. Named CPU/bus
+fields, RAM, loaded values, flags and wrapping cycles match. Prefix 3,600/0
+(1.03s), native exit 0, executes word/byte LDA 990,782/420,817,
+LDX 171,669/246,437 and LDY 36,080/19,911 times. Clean full any% 129,712/0
+(51.46s), native exit 0. Cargo fmt/check, full release and release-library
+builds with external SDL2, normal metadata and optimized frozen core/DLL
+builds pass. Live CPU matches verified source; peer PPU work is outside this
+replay. Unsafe functions -2, Rust lines -5; other own counters unchanged.
+Arbitrary MMIO mutation and complete gameplay/render/audio remain open.
+Continue covered CPU cleanup; TSX/ROR stay held for contextual execution.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
