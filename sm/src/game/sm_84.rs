@@ -2046,42 +2046,27 @@ pub unsafe fn PlmInstr_SetBTS(plmp: *const uint8, k: uint16, game: &mut Game) ->
     plmp.add(1)
 }
 pub unsafe fn PlmInstr_DrawPlmBlock(
-    mut plmp: *const uint8,
-    mut k: uint16,
+    plmp: *const uint8,
+    k: uint16,
     game: &mut Game,
 ) -> *const uint8 {
-    let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    let mut v3: uint16 = *((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1e17 as ::core::ffi::c_int as isize) as *mut uint16)
-        .offset(v2 as isize);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x10002 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x1c87 as ::core::ffi::c_int as isize)
-                as *mut uint16)
-                .offset(v2 as isize) as ::core::ffi::c_int
-                >> 1 as ::core::ffi::c_int) as isize,
-        ) = v3;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1e69 as ::core::ffi::c_int as isize)
-        as *mut uint16) = v3;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1e67 as ::core::ffi::c_int as isize)
-        as *mut uint16) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1e6b as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xde1c as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v2 as isize) = 1 as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xde6c as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v2 as isize) = ((&raw mut game.g_ram as *mut uint8)
-        .offset(0x1e67 as ::core::ffi::c_int as isize)
-        as *mut uint16 as *mut uint8)
-        .offset_from(&raw mut game.g_ram as *mut uint8)
-        as ::core::ffi::c_long as uint16;
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1d27 as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset(v2 as isize) =
-        plmp.offset_from(RomBankBase(0x84 as uint8, game)) as ::core::ffi::c_long as uint16;
+    let index = usize::from(k >> 1) * 2;
+    let read_word = |game: &Game, offset: usize| {
+        u16::from_le_bytes([game.g_ram[offset], game.g_ram[offset + 1]])
+    };
+    let write_word = |game: &mut Game, offset: usize, value: u16| {
+        game.g_ram[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
+    };
+    let block = read_word(game, 0x1e17 + index); // plm_variable
+    let block_index = read_word(game, 0x1c87 + index);
+    write_word(game, 0x10002 + usize::from(block_index >> 1) * 2, block);
+    write_word(game, 0x1e69, block);
+    write_word(game, 0x1e67, 1);
+    write_word(game, 0x1e6b, 0);
+    write_word(game, 0xde1c + index, 1); // plm_instruction_timer
+    write_word(game, 0xde6c + index, 0x1e67); // plm_instruction_draw_ptr
+    let instruction = plmp.offset_from(RomBankBase(0x84, game)) as u16;
+    write_word(game, 0x1d27 + index, instruction); // plm_instr_list_ptrs
     ProcessPlmDrawInstruction(k, game);
     let mut v4: uint16 = *((&raw mut game.g_ram as *mut uint8)
         .offset(0x1c27 as ::core::ffi::c_int as isize) as *mut uint16);

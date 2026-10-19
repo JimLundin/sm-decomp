@@ -13660,6 +13660,28 @@ cast lines-7 and Rust lines-9; other own counters unchanged. Peer edits
 remain preserved. Complete credits/gameplay/hardware/audio/masks/ownership
 and uncovered PLM holds remain open.
 
+PLM single-block draw setup (2026-10-19): PlmInstr_DrawPlmBlock now
+uses byte-backed word reads/stores for its captured block, destination,
+custom one-block command, timer and draw/list pointers. Rounded slot and
+block offsets, all seven store positions and bank84 instruction-pointer
+truncation remain exact. Its renderer/coordinate/DrawPlm suffix is unchanged.
+
+Frozen 1087eb9d plus only this setup rewrite passes
+any%129712/0 (195.69s) and pickup68606/0 (113.19s),
+native exits0. Observed pickup68606/0 (116.20s) compares
+all128KiB RAM at the ProcessPlmDrawInstruction entry on 12 actual
+calls against the original setup, restores current RAM and executes the
+unchanged suffix once. The setup has no effects outside RAM; RomBankBase
+only resolves the ROM address. Clean and observed non-timing diagnostics
+match after stripping observers. Frozen scope and maintained source identity
+pass; no observers are committed. Invalid slots/alias extremes retain source
+review only and are not inferred from this movie.
+
+Cargo fmt/check, normal release build and progress pass. Own raw offsets-11,
+cast lines-13 and Rust lines-15; other own counters unchanged. Peer edits
+remain preserved. Complete credits/gameplay/hardware/audio/masks/ownership
+and uncovered PLM holds remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
