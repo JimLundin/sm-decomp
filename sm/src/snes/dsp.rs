@@ -2,19 +2,15 @@ use crate::game_state::Game;
 extern "C" {
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
-    fn memset(
-        __s: *mut ::core::ffi::c_void,
-        __c: ::core::ffi::c_int,
-        __n: size_t,
-    ) -> *mut ::core::ffi::c_void;
+    fn memset(__s: *mut ::core::ffi::c_void, __c: i32, __n: size_t) -> *mut ::core::ffi::c_void;
 }
 pub use crate::types::{
     __int16_t, __int8_t, __uint16_t, __uint8_t, int16_t, int8_t, size_t, uint16_t, uint8_t, Dsp,
     DspChannel, SaveLoadFunc,
 };
-pub const true_0: ::core::ffi::c_int = 1;
-pub const false_0: ::core::ffi::c_int = 0;
-static rateValues: [::core::ffi::c_int; 32] = [
+pub const true_0: i32 = 1;
+pub const false_0: i32 = 0;
+static rateValues: [i32; 32] = [
     0, 2048, 1536, 1280, 1024, 768, 640, 512, 384, 320, 256, 192, 160, 128, 96, 80, 64, 48, 40, 32,
     24, 20, 16, 12, 10, 8, 6, 5, 4, 3, 2, 1,
 ];
@@ -67,19 +63,19 @@ pub unsafe fn dsp_free(dsp: *mut Dsp) {
 pub unsafe fn dsp_reset(dsp: *mut Dsp) {
     memset(
         &raw mut (*dsp).ram as *mut uint8_t as *mut ::core::ffi::c_void,
-        0 as ::core::ffi::c_int,
+        0 as i32,
         ::core::mem::size_of::<[uint8_t; 128]>() as size_t,
     );
-    (*dsp).ram[0x7c as ::core::ffi::c_int as usize] = 0xff as uint8_t;
-    let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    while i < 8 as ::core::ffi::c_int {
+    (*dsp).ram[0x7c as i32 as usize] = 0xff as uint8_t;
+    let mut i: i32 = 0 as i32;
+    while i < 8 as i32 {
         (*dsp).channel[i as usize].pitch = 0 as uint16_t;
         (*dsp).channel[i as usize].pitchCounter = 0 as uint16_t;
         (*dsp).channel[i as usize].pitchModulation = false_0 != 0;
         memset(
             &raw mut (*(&raw mut (*dsp).channel as *mut DspChannel).offset(i as isize)).decodeBuffer
                 as *mut int16_t as *mut ::core::ffi::c_void,
-            0 as ::core::ffi::c_int,
+            0 as i32,
             ::core::mem::size_of::<[int16_t; 19]>() as size_t,
         );
         (*dsp).channel[i as usize].srcn = 0 as uint8_t;
@@ -91,7 +87,7 @@ pub unsafe fn dsp_reset(dsp: *mut Dsp) {
         memset(
             &raw mut (*(&raw mut (*dsp).channel as *mut DspChannel).offset(i as isize)).adsrRates
                 as *mut uint16_t as *mut ::core::ffi::c_void,
-            0 as ::core::ffi::c_int,
+            0 as i32,
             ::core::mem::size_of::<[uint16_t; 4]>() as size_t,
         );
         (*dsp).channel[i as usize].rateCounter = 0 as uint16_t;
@@ -116,7 +112,7 @@ pub unsafe fn dsp_reset(dsp: *mut Dsp) {
     (*dsp).reset = true_0 != 0;
     (*dsp).masterVolumeL = 0 as int8_t;
     (*dsp).masterVolumeR = 0 as int8_t;
-    (*dsp).noiseSample = -(0x4000 as ::core::ffi::c_int) as int16_t;
+    (*dsp).noiseSample = -(0x4000 as i32) as int16_t;
     (*dsp).noiseRate = 0 as uint16_t;
     (*dsp).noiseCounter = 0 as uint16_t;
     (*dsp).echoWrites = false_0 != 0;
@@ -130,22 +126,22 @@ pub unsafe fn dsp_reset(dsp: *mut Dsp) {
     (*dsp).firBufferIndex = 0 as uint8_t;
     memset(
         &raw mut (*dsp).firValues as *mut int8_t as *mut ::core::ffi::c_void,
-        0 as ::core::ffi::c_int,
+        0 as i32,
         ::core::mem::size_of::<[int8_t; 8]>() as size_t,
     );
     memset(
         &raw mut (*dsp).firBufferL as *mut int16_t as *mut ::core::ffi::c_void,
-        0 as ::core::ffi::c_int,
+        0 as i32,
         ::core::mem::size_of::<[int16_t; 8]>() as size_t,
     );
     memset(
         &raw mut (*dsp).firBufferR as *mut int16_t as *mut ::core::ffi::c_void,
-        0 as ::core::ffi::c_int,
+        0 as i32,
         ::core::mem::size_of::<[int16_t; 8]>() as size_t,
     );
     memset(
         &raw mut (*dsp).sampleBuffer as *mut int16_t as *mut ::core::ffi::c_void,
-        0 as ::core::ffi::c_int,
+        0 as i32,
         ::core::mem::size_of::<[int16_t; 1068]>() as size_t,
     );
     (*dsp).sampleOffset = 0 as uint16_t;
@@ -164,239 +160,216 @@ pub unsafe fn dsp_saveload(
     );
 }
 pub unsafe fn dsp_cycle(dsp: *mut Dsp) {
-    let mut totalL: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    let mut totalR: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    while i < 8 as ::core::ffi::c_int {
+    let mut totalL: i32 = 0 as i32;
+    let mut totalR: i32 = 0 as i32;
+    let mut i: i32 = 0 as i32;
+    while i < 8 as i32 {
         dsp_cycleChannel(dsp, i);
-        totalL += (*dsp).channel[i as usize].sampleOut as ::core::ffi::c_int
-            * (*dsp).channel[i as usize].volumeL as ::core::ffi::c_int
-            >> 6 as ::core::ffi::c_int;
-        totalR += (*dsp).channel[i as usize].sampleOut as ::core::ffi::c_int
-            * (*dsp).channel[i as usize].volumeR as ::core::ffi::c_int
-            >> 6 as ::core::ffi::c_int;
-        totalL = if totalL < -(0x8000 as ::core::ffi::c_int) {
-            -(0x8000 as ::core::ffi::c_int)
-        } else if totalL > 0x7fff as ::core::ffi::c_int {
-            0x7fff as ::core::ffi::c_int
+        totalL += (*dsp).channel[i as usize].sampleOut as i32
+            * (*dsp).channel[i as usize].volumeL as i32
+            >> 6 as i32;
+        totalR += (*dsp).channel[i as usize].sampleOut as i32
+            * (*dsp).channel[i as usize].volumeR as i32
+            >> 6 as i32;
+        totalL = if totalL < -(0x8000 as i32) {
+            -(0x8000 as i32)
+        } else if totalL > 0x7fff as i32 {
+            0x7fff as i32
         } else {
             totalL
         };
-        totalR = if totalR < -(0x8000 as ::core::ffi::c_int) {
-            -(0x8000 as ::core::ffi::c_int)
-        } else if totalR > 0x7fff as ::core::ffi::c_int {
-            0x7fff as ::core::ffi::c_int
+        totalR = if totalR < -(0x8000 as i32) {
+            -(0x8000 as i32)
+        } else if totalR > 0x7fff as i32 {
+            0x7fff as i32
         } else {
             totalR
         };
         i += 1;
     }
-    totalL = totalL * (*dsp).masterVolumeL as ::core::ffi::c_int >> 7 as ::core::ffi::c_int;
-    totalR = totalR * (*dsp).masterVolumeR as ::core::ffi::c_int >> 7 as ::core::ffi::c_int;
-    totalL = if totalL < -(0x8000 as ::core::ffi::c_int) {
-        -(0x8000 as ::core::ffi::c_int)
-    } else if totalL > 0x7fff as ::core::ffi::c_int {
-        0x7fff as ::core::ffi::c_int
+    totalL = totalL * (*dsp).masterVolumeL as i32 >> 7 as i32;
+    totalR = totalR * (*dsp).masterVolumeR as i32 >> 7 as i32;
+    totalL = if totalL < -(0x8000 as i32) {
+        -(0x8000 as i32)
+    } else if totalL > 0x7fff as i32 {
+        0x7fff as i32
     } else {
         totalL
     };
-    totalR = if totalR < -(0x8000 as ::core::ffi::c_int) {
-        -(0x8000 as ::core::ffi::c_int)
-    } else if totalR > 0x7fff as ::core::ffi::c_int {
-        0x7fff as ::core::ffi::c_int
+    totalR = if totalR < -(0x8000 as i32) {
+        -(0x8000 as i32)
+    } else if totalR > 0x7fff as i32 {
+        0x7fff as i32
     } else {
         totalR
     };
     dsp_handleEcho(dsp, &raw mut totalL, &raw mut totalR);
     if (*dsp).mute {
-        totalL = 0 as ::core::ffi::c_int;
-        totalR = 0 as ::core::ffi::c_int;
+        totalL = 0 as i32;
+        totalR = 0 as i32;
     }
     dsp_handleNoise(dsp);
-    if ((*dsp).sampleOffset as ::core::ffi::c_int) < 534 as ::core::ffi::c_int {
-        (*dsp).sampleBuffer
-            [((*dsp).sampleOffset as ::core::ffi::c_int * 2 as ::core::ffi::c_int) as usize] =
-            totalL as int16_t;
-        (*dsp).sampleBuffer[((*dsp).sampleOffset as ::core::ffi::c_int * 2 as ::core::ffi::c_int
-            + 1 as ::core::ffi::c_int) as usize] = totalR as int16_t;
+    if ((*dsp).sampleOffset as i32) < 534 as i32 {
+        (*dsp).sampleBuffer[((*dsp).sampleOffset as i32 * 2 as i32) as usize] = totalL as int16_t;
+        (*dsp).sampleBuffer[((*dsp).sampleOffset as i32 * 2 as i32 + 1 as i32) as usize] =
+            totalR as int16_t;
         (*dsp).sampleOffset = (*dsp).sampleOffset.wrapping_add(1);
     }
     (*dsp).evenCycle = !(*dsp).evenCycle;
 }
-unsafe fn dsp_handleEcho(
-    dsp: *mut Dsp,
-    outputL: *mut ::core::ffi::c_int,
-    outputR: *mut ::core::ffi::c_int,
-) {
-    let adr: uint16_t = ((*dsp).echoBufferAdr as ::core::ffi::c_int
-        + (*dsp).echoBufferIndex as ::core::ffi::c_int * 4 as ::core::ffi::c_int)
-        as uint16_t;
+unsafe fn dsp_handleEcho(dsp: *mut Dsp, outputL: *mut i32, outputR: *mut i32) {
+    let adr: uint16_t =
+        ((*dsp).echoBufferAdr as i32 + (*dsp).echoBufferIndex as i32 * 4 as i32) as uint16_t;
+    (*dsp).firBufferL[(*dsp).firBufferIndex as usize] = (*(*dsp).apu_ram.offset(adr as isize)
+        as i32
+        + ((*(*dsp)
+            .apu_ram
+            .offset((adr as i32 + 1 as i32 & 0xffff as i32) as isize) as i32)
+            << 8 as i32)) as int16_t;
     (*dsp).firBufferL[(*dsp).firBufferIndex as usize] =
-        (*(*dsp).apu_ram.offset(adr as isize) as ::core::ffi::c_int
-            + ((*(*dsp).apu_ram.offset(
-                (adr as ::core::ffi::c_int + 1 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int)
-                    as isize,
-            ) as ::core::ffi::c_int)
-                << 8 as ::core::ffi::c_int)) as int16_t;
-    (*dsp).firBufferL[(*dsp).firBufferIndex as usize] =
-        ((*dsp).firBufferL[(*dsp).firBufferIndex as usize] as ::core::ffi::c_int
-            >> 1 as ::core::ffi::c_int) as int16_t;
-    (*dsp).firBufferR[(*dsp).firBufferIndex as usize] = (*(*dsp).apu_ram.offset(
-        (adr as ::core::ffi::c_int + 2 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int)
-            as isize,
-    ) as ::core::ffi::c_int
-        + ((*(*dsp).apu_ram.offset(
-            (adr as ::core::ffi::c_int + 3 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int)
-                as isize,
-        ) as ::core::ffi::c_int)
-            << 8 as ::core::ffi::c_int))
-        as int16_t;
+        ((*dsp).firBufferL[(*dsp).firBufferIndex as usize] as i32 >> 1 as i32) as int16_t;
+    (*dsp).firBufferR[(*dsp).firBufferIndex as usize] = (*(*dsp)
+        .apu_ram
+        .offset((adr as i32 + 2 as i32 & 0xffff as i32) as isize)
+        as i32
+        + ((*(*dsp)
+            .apu_ram
+            .offset((adr as i32 + 3 as i32 & 0xffff as i32) as isize) as i32)
+            << 8 as i32)) as int16_t;
     (*dsp).firBufferR[(*dsp).firBufferIndex as usize] =
-        ((*dsp).firBufferR[(*dsp).firBufferIndex as usize] as ::core::ffi::c_int
-            >> 1 as ::core::ffi::c_int) as int16_t;
-    let mut sumL: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    let mut sumR: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    while i < 8 as ::core::ffi::c_int {
-        sumL += (*dsp).firBufferL[((*dsp).firBufferIndex as ::core::ffi::c_int
-            + i
-            + 1 as ::core::ffi::c_int
-            & 0x7 as ::core::ffi::c_int) as usize] as ::core::ffi::c_int
-            * (*dsp).firValues[i as usize] as ::core::ffi::c_int
-            >> 6 as ::core::ffi::c_int;
-        sumR += (*dsp).firBufferR[((*dsp).firBufferIndex as ::core::ffi::c_int
-            + i
-            + 1 as ::core::ffi::c_int
-            & 0x7 as ::core::ffi::c_int) as usize] as ::core::ffi::c_int
-            * (*dsp).firValues[i as usize] as ::core::ffi::c_int
-            >> 6 as ::core::ffi::c_int;
-        if i == 6 as ::core::ffi::c_int {
-            sumL = (sumL & 0xffff as ::core::ffi::c_int) as int16_t as ::core::ffi::c_int;
-            sumR = (sumR & 0xffff as ::core::ffi::c_int) as int16_t as ::core::ffi::c_int;
+        ((*dsp).firBufferR[(*dsp).firBufferIndex as usize] as i32 >> 1 as i32) as int16_t;
+    let mut sumL: i32 = 0 as i32;
+    let mut sumR: i32 = 0 as i32;
+    let mut i: i32 = 0 as i32;
+    while i < 8 as i32 {
+        sumL += (*dsp).firBufferL
+            [((*dsp).firBufferIndex as i32 + i + 1 as i32 & 0x7 as i32) as usize]
+            as i32
+            * (*dsp).firValues[i as usize] as i32
+            >> 6 as i32;
+        sumR += (*dsp).firBufferR
+            [((*dsp).firBufferIndex as i32 + i + 1 as i32 & 0x7 as i32) as usize]
+            as i32
+            * (*dsp).firValues[i as usize] as i32
+            >> 6 as i32;
+        if i == 6 as i32 {
+            sumL = (sumL & 0xffff as i32) as int16_t as i32;
+            sumR = (sumR & 0xffff as i32) as int16_t as i32;
         }
         i += 1;
     }
-    sumL = if sumL < -(0x8000 as ::core::ffi::c_int) {
-        -(0x8000 as ::core::ffi::c_int)
-    } else if sumL > 0x7fff as ::core::ffi::c_int {
-        0x7fff as ::core::ffi::c_int
+    sumL = if sumL < -(0x8000 as i32) {
+        -(0x8000 as i32)
+    } else if sumL > 0x7fff as i32 {
+        0x7fff as i32
     } else {
         sumL
     };
-    sumR = if sumR < -(0x8000 as ::core::ffi::c_int) {
-        -(0x8000 as ::core::ffi::c_int)
-    } else if sumR > 0x7fff as ::core::ffi::c_int {
-        0x7fff as ::core::ffi::c_int
+    sumR = if sumR < -(0x8000 as i32) {
+        -(0x8000 as i32)
+    } else if sumR > 0x7fff as i32 {
+        0x7fff as i32
     } else {
         sumR
     };
-    let outL: ::core::ffi::c_int =
-        *outputL + (sumL * (*dsp).echoVolumeL as ::core::ffi::c_int >> 7 as ::core::ffi::c_int);
-    let outR: ::core::ffi::c_int =
-        *outputR + (sumR * (*dsp).echoVolumeR as ::core::ffi::c_int >> 7 as ::core::ffi::c_int);
-    *outputL = if outL < -(0x8000 as ::core::ffi::c_int) {
-        -(0x8000 as ::core::ffi::c_int)
-    } else if outL > 0x7fff as ::core::ffi::c_int {
-        0x7fff as ::core::ffi::c_int
+    let outL: i32 = *outputL + (sumL * (*dsp).echoVolumeL as i32 >> 7 as i32);
+    let outR: i32 = *outputR + (sumR * (*dsp).echoVolumeR as i32 >> 7 as i32);
+    *outputL = if outL < -(0x8000 as i32) {
+        -(0x8000 as i32)
+    } else if outL > 0x7fff as i32 {
+        0x7fff as i32
     } else {
         outL
     };
-    *outputR = if outR < -(0x8000 as ::core::ffi::c_int) {
-        -(0x8000 as ::core::ffi::c_int)
-    } else if outR > 0x7fff as ::core::ffi::c_int {
-        0x7fff as ::core::ffi::c_int
+    *outputR = if outR < -(0x8000 as i32) {
+        -(0x8000 as i32)
+    } else if outR > 0x7fff as i32 {
+        0x7fff as i32
     } else {
         outR
     };
-    let mut inL: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    let mut inR: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    let mut i_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    while i_0 < 8 as ::core::ffi::c_int {
+    let mut inL: i32 = 0 as i32;
+    let mut inR: i32 = 0 as i32;
+    let mut i_0: i32 = 0 as i32;
+    while i_0 < 8 as i32 {
         if (*dsp).channel[i_0 as usize].echoEnable {
-            inL += (*dsp).channel[i_0 as usize].sampleOut as ::core::ffi::c_int
-                * (*dsp).channel[i_0 as usize].volumeL as ::core::ffi::c_int
-                >> 6 as ::core::ffi::c_int;
-            inR += (*dsp).channel[i_0 as usize].sampleOut as ::core::ffi::c_int
-                * (*dsp).channel[i_0 as usize].volumeR as ::core::ffi::c_int
-                >> 6 as ::core::ffi::c_int;
-            inL = if inL < -(0x8000 as ::core::ffi::c_int) {
-                -(0x8000 as ::core::ffi::c_int)
-            } else if inL > 0x7fff as ::core::ffi::c_int {
-                0x7fff as ::core::ffi::c_int
+            inL += (*dsp).channel[i_0 as usize].sampleOut as i32
+                * (*dsp).channel[i_0 as usize].volumeL as i32
+                >> 6 as i32;
+            inR += (*dsp).channel[i_0 as usize].sampleOut as i32
+                * (*dsp).channel[i_0 as usize].volumeR as i32
+                >> 6 as i32;
+            inL = if inL < -(0x8000 as i32) {
+                -(0x8000 as i32)
+            } else if inL > 0x7fff as i32 {
+                0x7fff as i32
             } else {
                 inL
             };
-            inR = if inR < -(0x8000 as ::core::ffi::c_int) {
-                -(0x8000 as ::core::ffi::c_int)
-            } else if inR > 0x7fff as ::core::ffi::c_int {
-                0x7fff as ::core::ffi::c_int
+            inR = if inR < -(0x8000 as i32) {
+                -(0x8000 as i32)
+            } else if inR > 0x7fff as i32 {
+                0x7fff as i32
             } else {
                 inR
             };
         }
         i_0 += 1;
     }
-    inL += sumL * (*dsp).feedbackVolume as ::core::ffi::c_int >> 7 as ::core::ffi::c_int;
-    inR += sumR * (*dsp).feedbackVolume as ::core::ffi::c_int >> 7 as ::core::ffi::c_int;
-    inL = if inL < -(0x8000 as ::core::ffi::c_int) {
-        -(0x8000 as ::core::ffi::c_int)
-    } else if inL > 0x7fff as ::core::ffi::c_int {
-        0x7fff as ::core::ffi::c_int
+    inL += sumL * (*dsp).feedbackVolume as i32 >> 7 as i32;
+    inR += sumR * (*dsp).feedbackVolume as i32 >> 7 as i32;
+    inL = if inL < -(0x8000 as i32) {
+        -(0x8000 as i32)
+    } else if inL > 0x7fff as i32 {
+        0x7fff as i32
     } else {
         inL
     };
-    inR = if inR < -(0x8000 as ::core::ffi::c_int) {
-        -(0x8000 as ::core::ffi::c_int)
-    } else if inR > 0x7fff as ::core::ffi::c_int {
-        0x7fff as ::core::ffi::c_int
+    inR = if inR < -(0x8000 as i32) {
+        -(0x8000 as i32)
+    } else if inR > 0x7fff as i32 {
+        0x7fff as i32
     } else {
         inR
     };
-    inL &= 0xfffe as ::core::ffi::c_int;
-    inR &= 0xfffe as ::core::ffi::c_int;
+    inL &= 0xfffe as i32;
+    inR &= 0xfffe as i32;
     if (*dsp).echoWrites {
-        *(*dsp).apu_ram.offset(adr as isize) = (inL & 0xff as ::core::ffi::c_int) as uint8_t;
-        *(*dsp).apu_ram.offset(
-            (adr as ::core::ffi::c_int + 1 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int)
-                as isize,
-        ) = (inL >> 8 as ::core::ffi::c_int) as uint8_t;
-        *(*dsp).apu_ram.offset(
-            (adr as ::core::ffi::c_int + 2 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int)
-                as isize,
-        ) = (inR & 0xff as ::core::ffi::c_int) as uint8_t;
-        *(*dsp).apu_ram.offset(
-            (adr as ::core::ffi::c_int + 3 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int)
-                as isize,
-        ) = (inR >> 8 as ::core::ffi::c_int) as uint8_t;
+        *(*dsp).apu_ram.offset(adr as isize) = (inL & 0xff as i32) as uint8_t;
+        *(*dsp)
+            .apu_ram
+            .offset((adr as i32 + 1 as i32 & 0xffff as i32) as isize) =
+            (inL >> 8 as i32) as uint8_t;
+        *(*dsp)
+            .apu_ram
+            .offset((adr as i32 + 2 as i32 & 0xffff as i32) as isize) =
+            (inR & 0xff as i32) as uint8_t;
+        *(*dsp)
+            .apu_ram
+            .offset((adr as i32 + 3 as i32 & 0xffff as i32) as isize) =
+            (inR >> 8 as i32) as uint8_t;
     }
     (*dsp).firBufferIndex = (*dsp).firBufferIndex.wrapping_add(1);
-    (*dsp).firBufferIndex =
-        ((*dsp).firBufferIndex as ::core::ffi::c_int & 7 as ::core::ffi::c_int) as uint8_t;
+    (*dsp).firBufferIndex = ((*dsp).firBufferIndex as i32 & 7 as i32) as uint8_t;
     (*dsp).echoBufferIndex = (*dsp).echoBufferIndex.wrapping_add(1);
     (*dsp).echoRemain = (*dsp).echoRemain.wrapping_sub(1);
-    if (*dsp).echoRemain as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+    if (*dsp).echoRemain as i32 == 0 as i32 {
         (*dsp).echoRemain = (*dsp).echoDelay;
         (*dsp).echoBufferIndex = 0 as uint16_t;
     }
 }
-unsafe fn dsp_cycleChannel(dsp: *mut Dsp, ch: ::core::ffi::c_int) {
+unsafe fn dsp_cycleChannel(dsp: *mut Dsp, ch: i32) {
     let mut pitch: uint16_t = (*dsp).channel[ch as usize].pitch;
-    if ch > 0 as ::core::ffi::c_int
-        && (*dsp).channel[ch as usize].pitchModulation as ::core::ffi::c_int != 0
-    {
-        let factor: ::core::ffi::c_int = ((*dsp).channel[(ch - 1 as ::core::ffi::c_int) as usize]
-            .sampleOut as ::core::ffi::c_int
-            >> 4 as ::core::ffi::c_int)
-            + 0x400 as ::core::ffi::c_int;
-        pitch = (pitch as ::core::ffi::c_int * factor >> 10 as ::core::ffi::c_int) as uint16_t;
-        if pitch as ::core::ffi::c_int > 0x3fff as ::core::ffi::c_int {
+    if ch > 0 as i32 && (*dsp).channel[ch as usize].pitchModulation as i32 != 0 {
+        let factor: i32 =
+            ((*dsp).channel[(ch - 1 as i32) as usize].sampleOut as i32 >> 4 as i32) + 0x400 as i32;
+        pitch = (pitch as i32 * factor >> 10 as i32) as uint16_t;
+        if pitch as i32 > 0x3fff as i32 {
             pitch = 0x3fff as uint16_t;
         }
     }
-    let newCounter: ::core::ffi::c_int = (*dsp).channel[ch as usize].pitchCounter
-        as ::core::ffi::c_int
-        + pitch as ::core::ffi::c_int;
-    if newCounter > 0xffff as ::core::ffi::c_int {
+    let newCounter: i32 = (*dsp).channel[ch as usize].pitchCounter as i32 + pitch as i32;
+    if newCounter > 0xffff as i32 {
         dsp_decodeBrr(dsp, ch);
     }
     (*dsp).channel[ch as usize].pitchCounter = newCounter as uint16_t;
@@ -407,43 +380,35 @@ unsafe fn dsp_cycleChannel(dsp: *mut Dsp, ch: ::core::ffi::c_int) {
         sample = dsp_getSample(
             dsp,
             ch,
-            (*dsp).channel[ch as usize].pitchCounter as ::core::ffi::c_int
-                >> 12 as ::core::ffi::c_int,
-            (*dsp).channel[ch as usize].pitchCounter as ::core::ffi::c_int
-                >> 4 as ::core::ffi::c_int
-                & 0xff as ::core::ffi::c_int,
+            (*dsp).channel[ch as usize].pitchCounter as i32 >> 12 as i32,
+            (*dsp).channel[ch as usize].pitchCounter as i32 >> 4 as i32 & 0xff as i32,
         );
     }
     if (*dsp).reset {
         (*dsp).channel[ch as usize].adsrState = 4 as uint8_t;
         (*dsp).channel[ch as usize].gain = 0 as uint16_t;
     }
-    let doingDirectGain: bool = (*dsp).channel[ch as usize].adsrState as ::core::ffi::c_int
-        != 4 as ::core::ffi::c_int
-        && (*dsp).channel[ch as usize].useGain as ::core::ffi::c_int != 0
-        && (*dsp).channel[ch as usize].directGain as ::core::ffi::c_int != 0;
-    let rate: uint16_t = (if (*dsp).channel[ch as usize].adsrState as ::core::ffi::c_int
-        == 4 as ::core::ffi::c_int
-    {
-        0 as ::core::ffi::c_int
+    let doingDirectGain: bool = (*dsp).channel[ch as usize].adsrState as i32 != 4 as i32
+        && (*dsp).channel[ch as usize].useGain as i32 != 0
+        && (*dsp).channel[ch as usize].directGain as i32 != 0;
+    let rate: uint16_t = (if (*dsp).channel[ch as usize].adsrState as i32 == 4 as i32 {
+        0 as i32
     } else {
-        (*dsp).channel[ch as usize].adsrRates[(*dsp).channel[ch as usize].adsrState as usize]
-            as ::core::ffi::c_int
+        (*dsp).channel[ch as usize].adsrRates[(*dsp).channel[ch as usize].adsrState as usize] as i32
     }) as uint16_t;
-    if (*dsp).channel[ch as usize].adsrState as ::core::ffi::c_int != 4 as ::core::ffi::c_int
+    if (*dsp).channel[ch as usize].adsrState as i32 != 4 as i32
         && !doingDirectGain
-        && rate as ::core::ffi::c_int != 0 as ::core::ffi::c_int
+        && rate as i32 != 0 as i32
     {
         (*dsp).channel[ch as usize].rateCounter =
             (*dsp).channel[ch as usize].rateCounter.wrapping_add(1);
     }
-    if (*dsp).channel[ch as usize].adsrState as ::core::ffi::c_int == 4 as ::core::ffi::c_int
+    if (*dsp).channel[ch as usize].adsrState as i32 == 4 as i32
         || !doingDirectGain
-            && (*dsp).channel[ch as usize].rateCounter as ::core::ffi::c_int
-                >= rate as ::core::ffi::c_int
-            && rate as ::core::ffi::c_int != 0 as ::core::ffi::c_int
+            && (*dsp).channel[ch as usize].rateCounter as i32 >= rate as i32
+            && rate as i32 != 0 as i32
     {
-        if (*dsp).channel[ch as usize].adsrState as ::core::ffi::c_int != 4 as ::core::ffi::c_int {
+        if (*dsp).channel[ch as usize].adsrState as i32 != 4 as i32 {
             (*dsp).channel[ch as usize].rateCounter = 0 as uint16_t;
         }
         dsp_handleGain(dsp, ch);
@@ -451,99 +416,73 @@ unsafe fn dsp_cycleChannel(dsp: *mut Dsp, ch: ::core::ffi::c_int) {
     if doingDirectGain {
         (*dsp).channel[ch as usize].gain = (*dsp).channel[ch as usize].gainValue;
     }
-    (*dsp).ram[(ch << 4 as ::core::ffi::c_int | 8 as ::core::ffi::c_int) as usize] =
-        ((*dsp).channel[ch as usize].gain as ::core::ffi::c_int >> 4 as ::core::ffi::c_int)
-            as uint8_t;
-    sample = (sample as ::core::ffi::c_int * (*dsp).channel[ch as usize].gain as ::core::ffi::c_int
-        >> 11 as ::core::ffi::c_int) as int16_t;
-    (*dsp).ram[(ch << 4 as ::core::ffi::c_int | 9 as ::core::ffi::c_int) as usize] =
-        (sample as ::core::ffi::c_int >> 7 as ::core::ffi::c_int) as uint8_t;
+    (*dsp).ram[(ch << 4 as i32 | 8 as i32) as usize] =
+        ((*dsp).channel[ch as usize].gain as i32 >> 4 as i32) as uint8_t;
+    sample = (sample as i32 * (*dsp).channel[ch as usize].gain as i32 >> 11 as i32) as int16_t;
+    (*dsp).ram[(ch << 4 as i32 | 9 as i32) as usize] = (sample as i32 >> 7 as i32) as uint8_t;
     (*dsp).channel[ch as usize].sampleOut = sample;
 }
-unsafe fn dsp_handleGain(dsp: *mut Dsp, ch: ::core::ffi::c_int) {
-    match (*dsp).channel[ch as usize].adsrState as ::core::ffi::c_int {
+unsafe fn dsp_handleGain(dsp: *mut Dsp, ch: i32) {
+    match (*dsp).channel[ch as usize].adsrState as i32 {
         0 => {
             let rate: uint16_t = (*dsp).channel[ch as usize].adsrRates
                 [(*dsp).channel[ch as usize].adsrState as usize];
-            (*dsp).channel[ch as usize].gain = ((*dsp).channel[ch as usize].gain
-                as ::core::ffi::c_int
-                + if rate as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
-                    1024 as ::core::ffi::c_int
+            (*dsp).channel[ch as usize].gain = ((*dsp).channel[ch as usize].gain as i32
+                + if rate as i32 == 1 as i32 {
+                    1024 as i32
                 } else {
-                    32 as ::core::ffi::c_int
+                    32 as i32
                 }) as uint16_t;
-            if (*dsp).channel[ch as usize].gain as ::core::ffi::c_int >= 0x7e0 as ::core::ffi::c_int
-            {
+            if (*dsp).channel[ch as usize].gain as i32 >= 0x7e0 as i32 {
                 (*dsp).channel[ch as usize].adsrState = 1 as uint8_t;
             }
-            if (*dsp).channel[ch as usize].gain as ::core::ffi::c_int > 0x7ff as ::core::ffi::c_int
-            {
+            if (*dsp).channel[ch as usize].gain as i32 > 0x7ff as i32 {
                 (*dsp).channel[ch as usize].gain = 0x7ff as uint16_t;
             }
         }
         1 => {
-            (*dsp).channel[ch as usize].gain =
-                ((*dsp).channel[ch as usize].gain as ::core::ffi::c_int
-                    - (((*dsp).channel[ch as usize].gain as ::core::ffi::c_int
-                        - 1 as ::core::ffi::c_int
-                        >> 8 as ::core::ffi::c_int)
-                        + 1 as ::core::ffi::c_int)) as uint16_t;
-            if ((*dsp).channel[ch as usize].gain as ::core::ffi::c_int)
-                < (*dsp).channel[ch as usize].sustainLevel as ::core::ffi::c_int
+            (*dsp).channel[ch as usize].gain = ((*dsp).channel[ch as usize].gain as i32
+                - (((*dsp).channel[ch as usize].gain as i32 - 1 as i32 >> 8 as i32) + 1 as i32))
+                as uint16_t;
+            if ((*dsp).channel[ch as usize].gain as i32)
+                < (*dsp).channel[ch as usize].sustainLevel as i32
             {
                 (*dsp).channel[ch as usize].adsrState = 2 as uint8_t;
             }
         }
         2 => {
-            (*dsp).channel[ch as usize].gain =
-                ((*dsp).channel[ch as usize].gain as ::core::ffi::c_int
-                    - (((*dsp).channel[ch as usize].gain as ::core::ffi::c_int
-                        - 1 as ::core::ffi::c_int
-                        >> 8 as ::core::ffi::c_int)
-                        + 1 as ::core::ffi::c_int)) as uint16_t;
+            (*dsp).channel[ch as usize].gain = ((*dsp).channel[ch as usize].gain as i32
+                - (((*dsp).channel[ch as usize].gain as i32 - 1 as i32 >> 8 as i32) + 1 as i32))
+                as uint16_t;
         }
-        3 => match (*dsp).channel[ch as usize].gainMode as ::core::ffi::c_int {
+        3 => match (*dsp).channel[ch as usize].gainMode as i32 {
             0 => {
                 (*dsp).channel[ch as usize].gain =
-                    ((*dsp).channel[ch as usize].gain as ::core::ffi::c_int
-                        - 32 as ::core::ffi::c_int) as uint16_t;
-                if (*dsp).channel[ch as usize].gain as ::core::ffi::c_int
-                    > 0x7ff as ::core::ffi::c_int
-                {
+                    ((*dsp).channel[ch as usize].gain as i32 - 32 as i32) as uint16_t;
+                if (*dsp).channel[ch as usize].gain as i32 > 0x7ff as i32 {
                     (*dsp).channel[ch as usize].gain = 0 as uint16_t;
                 }
             }
             1 => {
-                (*dsp).channel[ch as usize].gain =
-                    ((*dsp).channel[ch as usize].gain as ::core::ffi::c_int
-                        - (((*dsp).channel[ch as usize].gain as ::core::ffi::c_int
-                            - 1 as ::core::ffi::c_int
-                            >> 8 as ::core::ffi::c_int)
-                            + 1 as ::core::ffi::c_int)) as uint16_t;
+                (*dsp).channel[ch as usize].gain = ((*dsp).channel[ch as usize].gain as i32
+                    - (((*dsp).channel[ch as usize].gain as i32 - 1 as i32 >> 8 as i32) + 1 as i32))
+                    as uint16_t;
             }
             2 => {
                 (*dsp).channel[ch as usize].gain =
-                    ((*dsp).channel[ch as usize].gain as ::core::ffi::c_int
-                        + 32 as ::core::ffi::c_int) as uint16_t;
-                if (*dsp).channel[ch as usize].gain as ::core::ffi::c_int
-                    > 0x7ff as ::core::ffi::c_int
-                {
+                    ((*dsp).channel[ch as usize].gain as i32 + 32 as i32) as uint16_t;
+                if (*dsp).channel[ch as usize].gain as i32 > 0x7ff as i32 {
                     (*dsp).channel[ch as usize].gain = 0x7ff as uint16_t;
                 }
             }
             3 => {
-                (*dsp).channel[ch as usize].gain = ((*dsp).channel[ch as usize].gain
-                    as ::core::ffi::c_int
-                    + if ((*dsp).channel[ch as usize].gain as ::core::ffi::c_int)
-                        < 0x600 as ::core::ffi::c_int
-                    {
-                        32 as ::core::ffi::c_int
+                (*dsp).channel[ch as usize].gain = ((*dsp).channel[ch as usize].gain as i32
+                    + if ((*dsp).channel[ch as usize].gain as i32) < 0x600 as i32 {
+                        32 as i32
                     } else {
-                        8 as ::core::ffi::c_int
+                        8 as i32
                     }) as uint16_t;
-                if (*dsp).channel[ch as usize].gain as ::core::ffi::c_int
-                    > 0x7ff as ::core::ffi::c_int
-                {
+                if (*dsp).channel[ch as usize].gain as i32 > 0x7ff as i32 {
                     (*dsp).channel[ch as usize].gain = 0x7ff as uint16_t;
                 }
             }
@@ -551,173 +490,136 @@ unsafe fn dsp_handleGain(dsp: *mut Dsp, ch: ::core::ffi::c_int) {
         },
         4 => {
             (*dsp).channel[ch as usize].gain =
-                ((*dsp).channel[ch as usize].gain as ::core::ffi::c_int - 8 as ::core::ffi::c_int)
-                    as uint16_t;
-            if (*dsp).channel[ch as usize].gain as ::core::ffi::c_int > 0x7ff as ::core::ffi::c_int
-            {
+                ((*dsp).channel[ch as usize].gain as i32 - 8 as i32) as uint16_t;
+            if (*dsp).channel[ch as usize].gain as i32 > 0x7ff as i32 {
                 (*dsp).channel[ch as usize].gain = 0 as uint16_t;
             }
         }
         _ => {}
     };
 }
-unsafe fn dsp_getSample(
-    dsp: *mut Dsp,
-    ch: ::core::ffi::c_int,
-    sampleNum: ::core::ffi::c_int,
-    offset: ::core::ffi::c_int,
-) -> int16_t {
-    let news: int16_t =
-        (*dsp).channel[ch as usize].decodeBuffer[(sampleNum + 3 as ::core::ffi::c_int) as usize];
-    let olds: int16_t =
-        (*dsp).channel[ch as usize].decodeBuffer[(sampleNum + 2 as ::core::ffi::c_int) as usize];
-    let olders: int16_t =
-        (*dsp).channel[ch as usize].decodeBuffer[(sampleNum + 1 as ::core::ffi::c_int) as usize];
+unsafe fn dsp_getSample(dsp: *mut Dsp, ch: i32, sampleNum: i32, offset: i32) -> int16_t {
+    let news: int16_t = (*dsp).channel[ch as usize].decodeBuffer[(sampleNum + 3 as i32) as usize];
+    let olds: int16_t = (*dsp).channel[ch as usize].decodeBuffer[(sampleNum + 2 as i32) as usize];
+    let olders: int16_t = (*dsp).channel[ch as usize].decodeBuffer[(sampleNum + 1 as i32) as usize];
     let oldests: int16_t = (*dsp).channel[ch as usize].decodeBuffer[sampleNum as usize];
-    let mut out: ::core::ffi::c_int = gaussValues[(0xff as ::core::ffi::c_int - offset) as usize]
-        as ::core::ffi::c_int
-        * oldests as ::core::ffi::c_int
-        >> 10 as ::core::ffi::c_int;
-    out += gaussValues[(0x1ff as ::core::ffi::c_int - offset) as usize] as ::core::ffi::c_int
-        * olders as ::core::ffi::c_int
-        >> 10 as ::core::ffi::c_int;
-    out += gaussValues[(0x100 as ::core::ffi::c_int + offset) as usize] as ::core::ffi::c_int
-        * olds as ::core::ffi::c_int
-        >> 10 as ::core::ffi::c_int;
-    out = (out & 0xffff as ::core::ffi::c_int) as int16_t as ::core::ffi::c_int;
-    out += gaussValues[offset as usize] as ::core::ffi::c_int * news as ::core::ffi::c_int
-        >> 10 as ::core::ffi::c_int;
-    out = if out < -(0x8000 as ::core::ffi::c_int) {
-        -(0x8000 as ::core::ffi::c_int)
-    } else if out > 0x7fff as ::core::ffi::c_int {
-        0x7fff as ::core::ffi::c_int
+    let mut out: i32 =
+        gaussValues[(0xff as i32 - offset) as usize] as i32 * oldests as i32 >> 10 as i32;
+    out += gaussValues[(0x1ff as i32 - offset) as usize] as i32 * olders as i32 >> 10 as i32;
+    out += gaussValues[(0x100 as i32 + offset) as usize] as i32 * olds as i32 >> 10 as i32;
+    out = (out & 0xffff as i32) as int16_t as i32;
+    out += gaussValues[offset as usize] as i32 * news as i32 >> 10 as i32;
+    out = if out < -(0x8000 as i32) {
+        -(0x8000 as i32)
+    } else if out > 0x7fff as i32 {
+        0x7fff as i32
     } else {
         out
     };
-    (out >> 1 as ::core::ffi::c_int) as int16_t
+    (out >> 1 as i32) as int16_t
 }
-unsafe fn dsp_decodeBrr(dsp: *mut Dsp, ch: ::core::ffi::c_int) {
-    (*dsp).channel[ch as usize].decodeBuffer[0 as ::core::ffi::c_int as usize] =
-        (*dsp).channel[ch as usize].decodeBuffer[16 as ::core::ffi::c_int as usize];
-    (*dsp).channel[ch as usize].decodeBuffer[1 as ::core::ffi::c_int as usize] =
-        (*dsp).channel[ch as usize].decodeBuffer[17 as ::core::ffi::c_int as usize];
-    (*dsp).channel[ch as usize].decodeBuffer[2 as ::core::ffi::c_int as usize] =
-        (*dsp).channel[ch as usize].decodeBuffer[18 as ::core::ffi::c_int as usize];
-    if (*dsp).channel[ch as usize].previousFlags as ::core::ffi::c_int == 1 as ::core::ffi::c_int
-        || (*dsp).channel[ch as usize].previousFlags as ::core::ffi::c_int
-            == 3 as ::core::ffi::c_int
+unsafe fn dsp_decodeBrr(dsp: *mut Dsp, ch: i32) {
+    (*dsp).channel[ch as usize].decodeBuffer[0 as i32 as usize] =
+        (*dsp).channel[ch as usize].decodeBuffer[16 as i32 as usize];
+    (*dsp).channel[ch as usize].decodeBuffer[1 as i32 as usize] =
+        (*dsp).channel[ch as usize].decodeBuffer[17 as i32 as usize];
+    (*dsp).channel[ch as usize].decodeBuffer[2 as i32 as usize] =
+        (*dsp).channel[ch as usize].decodeBuffer[18 as i32 as usize];
+    if (*dsp).channel[ch as usize].previousFlags as i32 == 1 as i32
+        || (*dsp).channel[ch as usize].previousFlags as i32 == 3 as i32
     {
-        let samplePointer: uint16_t = ((*dsp).dirPage as ::core::ffi::c_int
-            + 4 as ::core::ffi::c_int * (*dsp).channel[ch as usize].srcn as ::core::ffi::c_int)
+        let samplePointer: uint16_t = ((*dsp).dirPage as i32
+            + 4 as i32 * (*dsp).channel[ch as usize].srcn as i32)
             as uint16_t;
-        (*dsp).channel[ch as usize].decodeOffset = *(*dsp).apu_ram.offset(
-            (samplePointer as ::core::ffi::c_int + 2 as ::core::ffi::c_int
-                & 0xffff as ::core::ffi::c_int) as isize,
-        ) as uint16_t;
-        (*dsp).channel[ch as usize].decodeOffset =
-            ((*dsp).channel[ch as usize].decodeOffset as ::core::ffi::c_int
-                | (*(*dsp).apu_ram.offset(
-                    (samplePointer as ::core::ffi::c_int + 3 as ::core::ffi::c_int
-                        & 0xffff as ::core::ffi::c_int) as isize,
-                ) as ::core::ffi::c_int)
-                    << 8 as ::core::ffi::c_int) as uint16_t;
-        if (*dsp).channel[ch as usize].previousFlags as ::core::ffi::c_int
-            == 1 as ::core::ffi::c_int
-        {
+        (*dsp).channel[ch as usize].decodeOffset = *(*dsp)
+            .apu_ram
+            .offset((samplePointer as i32 + 2 as i32 & 0xffff as i32) as isize)
+            as uint16_t;
+        (*dsp).channel[ch as usize].decodeOffset = ((*dsp).channel[ch as usize].decodeOffset as i32
+            | (*(*dsp)
+                .apu_ram
+                .offset((samplePointer as i32 + 3 as i32 & 0xffff as i32) as isize)
+                as i32)
+                << 8 as i32) as uint16_t;
+        if (*dsp).channel[ch as usize].previousFlags as i32 == 1 as i32 {
             (*dsp).channel[ch as usize].adsrState = 4 as uint8_t;
             (*dsp).channel[ch as usize].gain = 0 as uint16_t;
         }
-        (*dsp).ram[0x7c as ::core::ffi::c_int as usize] =
-            ((*dsp).ram[0x7c as ::core::ffi::c_int as usize] as ::core::ffi::c_int
-                | (1 as ::core::ffi::c_int) << ch) as uint8_t;
+        (*dsp).ram[0x7c as i32 as usize] =
+            ((*dsp).ram[0x7c as i32 as usize] as i32 | (1 as i32) << ch) as uint8_t;
     }
     let fresh0 = (*dsp).channel[ch as usize].decodeOffset;
     (*dsp).channel[ch as usize].decodeOffset =
         (*dsp).channel[ch as usize].decodeOffset.wrapping_add(1);
     let header: uint8_t = *(*dsp).apu_ram.offset(fresh0 as isize);
-    let shift: ::core::ffi::c_int = header as ::core::ffi::c_int >> 4 as ::core::ffi::c_int;
-    let filter: ::core::ffi::c_int =
-        (header as ::core::ffi::c_int & 0xc as ::core::ffi::c_int) >> 2 as ::core::ffi::c_int;
-    (*dsp).channel[ch as usize].previousFlags =
-        (header as ::core::ffi::c_int & 0x3 as ::core::ffi::c_int) as uint8_t;
+    let shift: i32 = header as i32 >> 4 as i32;
+    let filter: i32 = (header as i32 & 0xc as i32) >> 2 as i32;
+    (*dsp).channel[ch as usize].previousFlags = (header as i32 & 0x3 as i32) as uint8_t;
     let mut curByte: uint8_t = 0 as uint8_t;
-    let mut old: ::core::ffi::c_int = (*dsp).channel[ch as usize].old as ::core::ffi::c_int;
-    let mut older: ::core::ffi::c_int = (*dsp).channel[ch as usize].older as ::core::ffi::c_int;
-    let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    while i < 16 as ::core::ffi::c_int {
-        let mut s: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-        if i & 1 as ::core::ffi::c_int != 0 {
-            s = curByte as ::core::ffi::c_int & 0xf as ::core::ffi::c_int;
+    let mut old: i32 = (*dsp).channel[ch as usize].old as i32;
+    let mut older: i32 = (*dsp).channel[ch as usize].older as i32;
+    let mut i: i32 = 0 as i32;
+    while i < 16 as i32 {
+        let mut s: i32 = 0 as i32;
+        if i & 1 as i32 != 0 {
+            s = curByte as i32 & 0xf as i32;
         } else {
             let fresh1 = (*dsp).channel[ch as usize].decodeOffset;
             (*dsp).channel[ch as usize].decodeOffset =
                 (*dsp).channel[ch as usize].decodeOffset.wrapping_add(1);
             curByte = *(*dsp).apu_ram.offset(fresh1 as isize);
-            s = curByte as ::core::ffi::c_int >> 4 as ::core::ffi::c_int;
+            s = curByte as i32 >> 4 as i32;
         }
-        if s > 7 as ::core::ffi::c_int {
-            s -= 16 as ::core::ffi::c_int;
+        if s > 7 as i32 {
+            s -= 16 as i32;
         }
-        if shift <= 0xc as ::core::ffi::c_int {
-            s = s << shift >> 1 as ::core::ffi::c_int;
+        if shift <= 0xc as i32 {
+            s = s << shift >> 1 as i32;
         } else {
-            s = (s >> 3 as ::core::ffi::c_int) << 12 as ::core::ffi::c_int;
+            s = (s >> 3 as i32) << 12 as i32;
         }
         match filter {
             1 => {
-                s += old + (-old >> 4 as ::core::ffi::c_int);
+                s += old + (-old >> 4 as i32);
             }
             2 => {
-                s += 2 as ::core::ffi::c_int * old
-                    + (3 as ::core::ffi::c_int * -old >> 5 as ::core::ffi::c_int)
-                    - older
-                    + (older >> 4 as ::core::ffi::c_int);
+                s += 2 as i32 * old + (3 as i32 * -old >> 5 as i32) - older + (older >> 4 as i32);
             }
             3 => {
-                s += 2 as ::core::ffi::c_int * old
-                    + (13 as ::core::ffi::c_int * -old >> 6 as ::core::ffi::c_int)
-                    - older
-                    + (3 as ::core::ffi::c_int * older >> 4 as ::core::ffi::c_int);
+                s += 2 as i32 * old + (13 as i32 * -old >> 6 as i32) - older
+                    + (3 as i32 * older >> 4 as i32);
             }
             _ => {}
         }
-        s = if s < -(0x8000 as ::core::ffi::c_int) {
-            -(0x8000 as ::core::ffi::c_int)
-        } else if s > 0x7fff as ::core::ffi::c_int {
-            0x7fff as ::core::ffi::c_int
+        s = if s < -(0x8000 as i32) {
+            -(0x8000 as i32)
+        } else if s > 0x7fff as i32 {
+            0x7fff as i32
         } else {
             s
         };
-        s = ((s & 0x7fff as ::core::ffi::c_int) << 1 as ::core::ffi::c_int) as int16_t
-            as ::core::ffi::c_int
-            >> 1 as ::core::ffi::c_int;
+        s = ((s & 0x7fff as i32) << 1 as i32) as int16_t as i32 >> 1 as i32;
         older = old;
         old = s;
-        (*dsp).channel[ch as usize].decodeBuffer[(i + 3 as ::core::ffi::c_int) as usize] =
-            s as int16_t;
+        (*dsp).channel[ch as usize].decodeBuffer[(i + 3 as i32) as usize] = s as int16_t;
         i += 1;
     }
     (*dsp).channel[ch as usize].older = older as int16_t;
     (*dsp).channel[ch as usize].old = old as int16_t;
 }
 unsafe fn dsp_handleNoise(dsp: *mut Dsp) {
-    if (*dsp).noiseRate as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
+    if (*dsp).noiseRate as i32 != 0 as i32 {
         (*dsp).noiseCounter = (*dsp).noiseCounter.wrapping_add(1);
     }
-    if (*dsp).noiseCounter as ::core::ffi::c_int >= (*dsp).noiseRate as ::core::ffi::c_int
-        && (*dsp).noiseRate as ::core::ffi::c_int != 0 as ::core::ffi::c_int
+    if (*dsp).noiseCounter as i32 >= (*dsp).noiseRate as i32 && (*dsp).noiseRate as i32 != 0 as i32
     {
-        let bit: ::core::ffi::c_int = (*dsp).noiseSample as ::core::ffi::c_int
-            & 1 as ::core::ffi::c_int
-            ^ (*dsp).noiseSample as ::core::ffi::c_int >> 1 as ::core::ffi::c_int
-                & 1 as ::core::ffi::c_int;
-        (*dsp).noiseSample = ((*dsp).noiseSample as ::core::ffi::c_int >> 1 as ::core::ffi::c_int
-            & 0x3fff as ::core::ffi::c_int
-            | bit << 14 as ::core::ffi::c_int) as int16_t;
+        let bit: i32 =
+            (*dsp).noiseSample as i32 & 1 as i32 ^ (*dsp).noiseSample as i32 >> 1 as i32 & 1 as i32;
         (*dsp).noiseSample =
-            ((((*dsp).noiseSample as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                << 1 as ::core::ffi::c_int) as int16_t as ::core::ffi::c_int
-                >> 1 as ::core::ffi::c_int) as int16_t;
+            ((*dsp).noiseSample as i32 >> 1 as i32 & 0x3fff as i32 | bit << 14 as i32) as int16_t;
+        (*dsp).noiseSample = ((((*dsp).noiseSample as i32 & 0x7fff as i32) << 1 as i32) as int16_t
+            as i32
+            >> 1 as i32) as int16_t;
         (*dsp).noiseCounter = 0 as uint16_t;
     }
 }
@@ -725,8 +627,8 @@ pub unsafe fn dsp_read(dsp: *mut Dsp, adr: uint8_t) -> uint8_t {
     (*dsp).ram[adr as usize]
 }
 pub unsafe fn dsp_write(dsp: *mut Dsp, adr: uint8_t, mut val: uint8_t) {
-    let ch: ::core::ffi::c_int = adr as ::core::ffi::c_int >> 4 as ::core::ffi::c_int;
-    match adr as ::core::ffi::c_int {
+    let ch: i32 = adr as i32 >> 4 as i32;
+    match adr as i32 {
         0 | 16 | 32 | 48 | 64 | 80 | 96 | 112 => {
             (*dsp).channel[ch as usize].volumeL = val as int8_t;
         }
@@ -735,57 +637,41 @@ pub unsafe fn dsp_write(dsp: *mut Dsp, adr: uint8_t, mut val: uint8_t) {
         }
         2 | 18 | 34 | 50 | 66 | 82 | 98 | 114 => {
             (*dsp).channel[ch as usize].pitch =
-                ((*dsp).channel[ch as usize].pitch as ::core::ffi::c_int
-                    & 0x3f00 as ::core::ffi::c_int
-                    | val as ::core::ffi::c_int) as uint16_t;
+                ((*dsp).channel[ch as usize].pitch as i32 & 0x3f00 as i32 | val as i32) as uint16_t;
         }
         3 | 19 | 35 | 51 | 67 | 83 | 99 | 115 => {
-            (*dsp).channel[ch as usize].pitch =
-                (((*dsp).channel[ch as usize].pitch as ::core::ffi::c_int
-                    & 0xff as ::core::ffi::c_int
-                    | (val as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
-                    & 0x3fff as ::core::ffi::c_int) as uint16_t;
+            (*dsp).channel[ch as usize].pitch = (((*dsp).channel[ch as usize].pitch as i32
+                & 0xff as i32
+                | (val as i32) << 8 as i32)
+                & 0x3fff as i32) as uint16_t;
         }
         4 | 20 | 36 | 52 | 68 | 84 | 100 | 116 => {
             (*dsp).channel[ch as usize].srcn = val;
         }
         5 | 21 | 37 | 53 | 69 | 85 | 101 | 117 => {
-            (*dsp).channel[ch as usize].adsrRates[0 as ::core::ffi::c_int as usize] = rateValues
-                [((val as ::core::ffi::c_int & 0xf as ::core::ffi::c_int) * 2 as ::core::ffi::c_int
-                    + 1 as ::core::ffi::c_int) as usize]
+            (*dsp).channel[ch as usize].adsrRates[0 as i32 as usize] =
+                rateValues[((val as i32 & 0xf as i32) * 2 as i32 + 1 as i32) as usize] as uint16_t;
+            (*dsp).channel[ch as usize].adsrRates[1 as i32 as usize] = rateValues
+                [(((val as i32 & 0x70 as i32) >> 4 as i32) * 2 as i32 + 16 as i32) as usize]
                 as uint16_t;
-            (*dsp).channel[ch as usize].adsrRates[1 as ::core::ffi::c_int as usize] =
-                rateValues[(((val as ::core::ffi::c_int & 0x70 as ::core::ffi::c_int)
-                    >> 4 as ::core::ffi::c_int)
-                    * 2 as ::core::ffi::c_int
-                    + 16 as ::core::ffi::c_int) as usize] as uint16_t;
-            (*dsp).channel[ch as usize].useGain =
-                val as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int == 0 as ::core::ffi::c_int;
+            (*dsp).channel[ch as usize].useGain = val as i32 & 0x80 as i32 == 0 as i32;
         }
         6 | 22 | 38 | 54 | 70 | 86 | 102 | 118 => {
-            (*dsp).channel[ch as usize].adsrRates[2 as ::core::ffi::c_int as usize] = rateValues
-                [(val as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int) as usize]
-                as uint16_t;
+            (*dsp).channel[ch as usize].adsrRates[2 as i32 as usize] =
+                rateValues[(val as i32 & 0x1f as i32) as usize] as uint16_t;
             (*dsp).channel[ch as usize].sustainLevel =
-                ((((val as ::core::ffi::c_int & 0xe0 as ::core::ffi::c_int)
-                    >> 5 as ::core::ffi::c_int)
-                    + 1 as ::core::ffi::c_int)
-                    * 0x100 as ::core::ffi::c_int) as uint16_t;
+                ((((val as i32 & 0xe0 as i32) >> 5 as i32) + 1 as i32) * 0x100 as i32) as uint16_t;
         }
         7 | 23 | 39 | 55 | 71 | 87 | 103 | 119 => {
-            (*dsp).channel[ch as usize].directGain =
-                val as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int == 0 as ::core::ffi::c_int;
-            if val as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0 {
+            (*dsp).channel[ch as usize].directGain = val as i32 & 0x80 as i32 == 0 as i32;
+            if val as i32 & 0x80 as i32 != 0 {
                 (*dsp).channel[ch as usize].gainMode =
-                    ((val as ::core::ffi::c_int & 0x60 as ::core::ffi::c_int)
-                        >> 5 as ::core::ffi::c_int) as uint8_t;
-                (*dsp).channel[ch as usize].adsrRates[3 as ::core::ffi::c_int as usize] = rateValues
-                    [(val as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int) as usize]
-                    as uint16_t;
+                    ((val as i32 & 0x60 as i32) >> 5 as i32) as uint8_t;
+                (*dsp).channel[ch as usize].adsrRates[3 as i32 as usize] =
+                    rateValues[(val as i32 & 0x1f as i32) as usize] as uint16_t;
             } else {
                 (*dsp).channel[ch as usize].gainValue =
-                    ((val as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int)
-                        * 16 as ::core::ffi::c_int) as uint16_t;
+                    ((val as i32 & 0x7f as i32) * 16 as i32) as uint16_t;
             }
         }
         12 => {
@@ -801,51 +687,47 @@ pub unsafe fn dsp_write(dsp: *mut Dsp, adr: uint8_t, mut val: uint8_t) {
             (*dsp).echoVolumeR = val as int8_t;
         }
         76 => {
-            let mut ch_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-            while ch_0 < 8 as ::core::ffi::c_int {
-                (*dsp).channel[ch_0 as usize].keyOn =
-                    val as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << ch_0 != 0;
+            let mut ch_0: i32 = 0 as i32;
+            while ch_0 < 8 as i32 {
+                (*dsp).channel[ch_0 as usize].keyOn = val as i32 & (1 as i32) << ch_0 != 0;
                 if (*dsp).channel[ch_0 as usize].keyOn {
                     (*dsp).channel[ch_0 as usize].keyOn = false_0 != 0;
                     (*dsp).channel[ch_0 as usize].previousFlags = 0 as uint8_t;
-                    let samplePointer: uint16_t = ((*dsp).dirPage as ::core::ffi::c_int
-                        + 4 as ::core::ffi::c_int
-                            * (*dsp).channel[ch_0 as usize].srcn as ::core::ffi::c_int)
+                    let samplePointer: uint16_t = ((*dsp).dirPage as i32
+                        + 4 as i32 * (*dsp).channel[ch_0 as usize].srcn as i32)
                         as uint16_t;
                     (*dsp).channel[ch_0 as usize].decodeOffset =
                         *(*dsp).apu_ram.offset(samplePointer as isize) as uint16_t;
                     (*dsp).channel[ch_0 as usize].decodeOffset =
-                        ((*dsp).channel[ch_0 as usize].decodeOffset as ::core::ffi::c_int
-                            | (*(*dsp).apu_ram.offset(
-                                (samplePointer as ::core::ffi::c_int + 1 as ::core::ffi::c_int
-                                    & 0xffff as ::core::ffi::c_int)
-                                    as isize,
-                            ) as ::core::ffi::c_int)
-                                << 8 as ::core::ffi::c_int) as uint16_t;
+                        ((*dsp).channel[ch_0 as usize].decodeOffset as i32
+                            | (*(*dsp)
+                                .apu_ram
+                                .offset((samplePointer as i32 + 1 as i32 & 0xffff as i32) as isize)
+                                as i32)
+                                << 8 as i32) as uint16_t;
                     memset(
                         &raw mut (*(&raw mut (*dsp).channel as *mut DspChannel)
                             .offset(ch_0 as isize))
                         .decodeBuffer as *mut int16_t
                             as *mut ::core::ffi::c_void,
-                        0 as ::core::ffi::c_int,
+                        0 as i32,
                         ::core::mem::size_of::<[int16_t; 19]>() as size_t,
                     );
                     (*dsp).channel[ch_0 as usize].gain = 0 as uint16_t;
                     (*dsp).channel[ch_0 as usize].adsrState =
-                        (if (*dsp).channel[ch_0 as usize].useGain as ::core::ffi::c_int != 0 {
-                            3 as ::core::ffi::c_int
+                        (if (*dsp).channel[ch_0 as usize].useGain as i32 != 0 {
+                            3 as i32
                         } else {
-                            0 as ::core::ffi::c_int
+                            0 as i32
                         }) as uint8_t;
                 }
                 ch_0 += 1;
             }
         }
         92 => {
-            let mut ch_1: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-            while ch_1 < 8 as ::core::ffi::c_int {
-                (*dsp).channel[ch_1 as usize].keyOff =
-                    val as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << ch_1 != 0;
+            let mut ch_1: i32 = 0 as i32;
+            while ch_1 < 8 as i32 {
+                (*dsp).channel[ch_1 as usize].keyOff = val as i32 & (1 as i32) << ch_1 != 0;
                 if (*dsp).channel[ch_1 as usize].keyOff {
                     (*dsp).channel[ch_1 as usize].adsrState = 4 as uint8_t;
                 }
@@ -853,13 +735,10 @@ pub unsafe fn dsp_write(dsp: *mut Dsp, adr: uint8_t, mut val: uint8_t) {
             }
         }
         108 => {
-            (*dsp).reset = val as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0;
-            (*dsp).mute = val as ::core::ffi::c_int & 0x40 as ::core::ffi::c_int != 0;
-            (*dsp).echoWrites =
-                val as ::core::ffi::c_int & 0x20 as ::core::ffi::c_int == 0 as ::core::ffi::c_int;
-            (*dsp).noiseRate = rateValues
-                [(val as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int) as usize]
-                as uint16_t;
+            (*dsp).reset = val as i32 & 0x80 as i32 != 0;
+            (*dsp).mute = val as i32 & 0x40 as i32 != 0;
+            (*dsp).echoWrites = val as i32 & 0x20 as i32 == 0 as i32;
+            (*dsp).noiseRate = rateValues[(val as i32 & 0x1f as i32) as usize] as uint16_t;
         }
         124 => {
             val = 0 as uint8_t;
@@ -868,40 +747,35 @@ pub unsafe fn dsp_write(dsp: *mut Dsp, adr: uint8_t, mut val: uint8_t) {
             (*dsp).feedbackVolume = val as int8_t;
         }
         45 => {
-            let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-            while i < 8 as ::core::ffi::c_int {
-                (*dsp).channel[i as usize].pitchModulation =
-                    val as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << i != 0;
+            let mut i: i32 = 0 as i32;
+            while i < 8 as i32 {
+                (*dsp).channel[i as usize].pitchModulation = val as i32 & (1 as i32) << i != 0;
                 i += 1;
             }
         }
         61 => {
-            let mut i_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-            while i_0 < 8 as ::core::ffi::c_int {
-                (*dsp).channel[i_0 as usize].useNoise =
-                    val as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << i_0 != 0;
+            let mut i_0: i32 = 0 as i32;
+            while i_0 < 8 as i32 {
+                (*dsp).channel[i_0 as usize].useNoise = val as i32 & (1 as i32) << i_0 != 0;
                 i_0 += 1;
             }
         }
         77 => {
-            let mut i_1: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-            while i_1 < 8 as ::core::ffi::c_int {
-                (*dsp).channel[i_1 as usize].echoEnable =
-                    val as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << i_1 != 0;
+            let mut i_1: i32 = 0 as i32;
+            while i_1 < 8 as i32 {
+                (*dsp).channel[i_1 as usize].echoEnable = val as i32 & (1 as i32) << i_1 != 0;
                 i_1 += 1;
             }
         }
         93 => {
-            (*dsp).dirPage = ((val as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t;
+            (*dsp).dirPage = ((val as i32) << 8 as i32) as uint16_t;
         }
         109 => {
-            (*dsp).echoBufferAdr =
-                ((val as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t;
+            (*dsp).echoBufferAdr = ((val as i32) << 8 as i32) as uint16_t;
         }
         125 => {
-            (*dsp).echoDelay = ((val as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
-                * 512 as ::core::ffi::c_int) as uint16_t;
-            if (*dsp).echoDelay as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+            (*dsp).echoDelay = ((val as i32 & 0xf as i32) * 512 as i32) as uint16_t;
+            if (*dsp).echoDelay as i32 == 0 as i32 {
                 (*dsp).echoDelay = 1 as uint16_t;
             }
         }
@@ -912,20 +786,15 @@ pub unsafe fn dsp_write(dsp: *mut Dsp, adr: uint8_t, mut val: uint8_t) {
     }
     (*dsp).ram[adr as usize] = val;
 }
-pub unsafe fn dsp_getSamples(
-    dsp: *mut Dsp,
-    sampleData: *mut int16_t,
-    samplesPerFrame: ::core::ffi::c_int,
-) {
+pub unsafe fn dsp_getSamples(dsp: *mut Dsp, sampleData: *mut int16_t, samplesPerFrame: i32) {
     let adder: ::core::ffi::c_double = 534.0f64 / samplesPerFrame as ::core::ffi::c_double;
     let mut location: ::core::ffi::c_double = 0.0f64;
-    let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+    let mut i: i32 = 0 as i32;
     while i < samplesPerFrame {
-        *sampleData.offset((i * 2 as ::core::ffi::c_int) as isize) = (*dsp).sampleBuffer
-            [(location as ::core::ffi::c_int * 2 as ::core::ffi::c_int) as usize];
-        *sampleData.offset((i * 2 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize) =
-            (*dsp).sampleBuffer[(location as ::core::ffi::c_int * 2 as ::core::ffi::c_int
-                + 1 as ::core::ffi::c_int) as usize];
+        *sampleData.offset((i * 2 as i32) as isize) =
+            (*dsp).sampleBuffer[(location as i32 * 2 as i32) as usize];
+        *sampleData.offset((i * 2 as i32 + 1 as i32) as isize) =
+            (*dsp).sampleBuffer[(location as i32 * 2 as i32 + 1 as i32) as usize];
         location += adder;
         i += 1;
     }

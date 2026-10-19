@@ -3,19 +3,15 @@ use crate::game_state::Game;
 use crate::host::Die;
 use crate::snes::snes::{snes_cpuRead, snes_cpuWrite};
 extern "C" {
-    fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
+    fn printf(__format: *const ::core::ffi::c_char, ...) -> i32;
     fn malloc(__size: usize) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
-    fn memset(
-        __s: *mut ::core::ffi::c_void,
-        __c: ::core::ffi::c_int,
-        __n: usize,
-    ) -> *mut ::core::ffi::c_void;
+    fn memset(__s: *mut ::core::ffi::c_void, __c: i32, __n: usize) -> *mut ::core::ffi::c_void;
 
     fn __assert_fail(
         __assertion: *const ::core::ffi::c_char,
         __file: *const ::core::ffi::c_char,
-        __line: ::core::ffi::c_uint,
+        __line: u32,
         __function: *const ::core::ffi::c_char,
     ) -> !;
 
@@ -37,7 +33,7 @@ unsafe fn read_byte(cpu: *mut Cpu, adr: u32, game: &mut Game) -> u8 {
 unsafe fn write_byte(cpu: *mut Cpu, adr: u32, val: u8, game: &mut Game) {
     snes_cpuWrite((*cpu).mem as *mut Snes, adr, val, game);
 }
-pub unsafe fn cpu_init(mem: *mut ::core::ffi::c_void, memType: ::core::ffi::c_int) -> *mut Cpu {
+pub unsafe fn cpu_init(mem: *mut ::core::ffi::c_void, memType: i32) -> *mut Cpu {
     let cpu: *mut Cpu = malloc(::core::mem::size_of::<Cpu>()) as *mut Cpu;
     memset(
         cpu as *mut ::core::ffi::c_void,
@@ -92,7 +88,7 @@ pub unsafe fn cpu_saveload(
     );
     (*cpu).spBreakpoint = 0;
 }
-pub unsafe fn cpu_runOpcode(cpu: *mut Cpu, game: &mut Game) -> ::core::ffi::c_int {
+pub unsafe fn cpu_runOpcode(cpu: *mut Cpu, game: &mut Game) -> i32 {
     (*cpu).cyclesUsed = 0;
     if (*cpu).stopped {
         return 1;
@@ -816,8 +812,8 @@ unsafe fn test_and_update_bits(cpu: *mut Cpu, low: u32, high: u32, set: bool, ga
 }
 
 pub unsafe fn DumpCpuHistory(game: &mut Game) {
-    let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    while i < 8 as ::core::ffi::c_int {
+    let mut i: i32 = 0 as i32;
+    while i < 8 as i32 {
         printf(
             b"PC history: 0x%x\n\0" as *const u8 as *const ::core::ffi::c_char,
             game.pc_hist[(game.pc_hist_ctr.wrapping_add(i as u32) & 7_u32) as usize],
@@ -1288,8 +1284,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             if target_bank == 0x80 && target == 0x8573 {
                 printf(
                     b"Current PC = 0x%x\n\0" as *const u8 as *const ::core::ffi::c_char,
-                    ((*cpu).k as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                        | (*cpu).pc as ::core::ffi::c_int,
+                    ((*cpu).k as i32) << 16 as i32 | (*cpu).pc as i32,
                 );
                 DumpCpuHistory(game);
                 Die(b"The game has crashed!\n\0" as *const u8 as *const ::core::ffi::c_char);
@@ -1316,7 +1311,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                     __assert_fail(
                         b"delta == 0 || delta == 2\0" as *const u8 as *const ::core::ffi::c_char,
                         b"src/snes/cpu.c\0" as *const u8 as *const ::core::ffi::c_char,
-                        1386 as ::core::ffi::c_uint,
+                        1386 as u32,
                         b"void cpu_doOpcode(Cpu *, uint8_t)\0" as *const u8
                             as *const ::core::ffi::c_char,
                     );
@@ -1380,7 +1375,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
                         b"cpu->sp == cpu->spBreakpoint\0" as *const u8
                             as *const ::core::ffi::c_char,
                         b"src/snes/cpu.c\0" as *const u8 as *const ::core::ffi::c_char,
-                        1464 as ::core::ffi::c_uint,
+                        1464 as u32,
                         b"void cpu_doOpcode(Cpu *, uint8_t)\0" as *const u8
                             as *const ::core::ffi::c_char,
                     );

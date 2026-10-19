@@ -72,6 +72,27 @@ all 76 source/DLL/fixture pins remain fixed. Independent descriptor/source
 review has no findings. Continue substantial repeated families; the broader
 readability and boot-to-credits goals remain open.
 
+Native integer type names (2026-10-20): ast-grep replaces 34487 c_int
+and 267 c_uint paths with the identical i32/u32 types across 52 Rust files.
+33108 paths are ordinary type nodes; 1646 are inside 829 set_ram_word!
+calls. No diagnostic strings, comments or other macro contexts change.
+Platform-dependent C aliases remain. Compiler type-identity checks and
+independent complete-source reconstruction pass; no type-name shadows exist.
+
+Net Rust lines -11481 (155068 total) from shorter names and normal formatting.
+Algorithms, actual casts and unsafe operations are unchanged; raw-offset lines
+fall by one only through formatting. The existing progress counter now counts
+both i32/c_int spellings. Its comparable baseline is 23989 cast lines before
+and 19738 after; this reduction is formatting, not removed casts.
+
+Frozen a71b97d2 includes the committed Geyser, SPC and robot families and
+passes any% 129712/0 (127.84s), native exit 0, normal release
+(27.09s), formatting/check and progress. All 73 source/config/host/progress
+inputs and 78 verification pins remain fixed; committed inputs match the
+tested source. The frontend is compiler-checked; the movie covers core
+gameplay. Continue substantial shared implementations and broad readability
+changes; the overall goal remains incomplete.
+
 Tile flip writers (2026-10-19): four repeated scrolling/PLM drawing
 branches share TileTables::draw_block. Horizontal/vertical flip selection,
 row/column store order, live source reads between stores and PLM wrapped

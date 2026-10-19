@@ -8,15 +8,11 @@ extern "C" {
         __src: *const ::core::ffi::c_void,
         __n: size_t,
     ) -> *mut ::core::ffi::c_void;
-    fn memset(
-        __s: *mut ::core::ffi::c_void,
-        __c: ::core::ffi::c_int,
-        __n: size_t,
-    ) -> *mut ::core::ffi::c_void;
+    fn memset(__s: *mut ::core::ffi::c_void, __c: i32, __n: size_t) -> *mut ::core::ffi::c_void;
     fn __assert_fail(
         __assertion: *const ::core::ffi::c_char,
         __file: *const ::core::ffi::c_char,
-        __line: ::core::ffi::c_uint,
+        __line: u32,
         __function: *const ::core::ffi::c_char,
     ) -> !;
 }
@@ -27,7 +23,7 @@ pub use crate::types::{
     DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs, PpuZbufType, SaveLoadFunc, Snes, Spc,
     Timer, WindowLayer,
 };
-pub type C2RustUnnamed_0 = ::core::ffi::c_uint;
+pub type C2RustUnnamed_0 = u32;
 pub const kPpuExtraLeftRight: C2RustUnnamed_0 = 0;
 pub const kPpuXPixels: C2RustUnnamed_0 = 256;
 pub use crate::types::{uint32, uint8};
@@ -52,20 +48,20 @@ pub const kWindow1Inversed: C2RustUnnamed_3 = 1;
 pub const kWindow1Enabled: C2RustUnnamed_3 = 2;
 pub use crate::types::uint16;
 pub const kPaletteShift: C2RustUnnamed_1 = 8;
-pub type C2RustUnnamed_1 = ::core::ffi::c_uint;
+pub type C2RustUnnamed_1 = u32;
 pub const kPaletteShift_0: C2RustUnnamed_2 = 6;
-pub type C2RustUnnamed_2 = ::core::ffi::c_uint;
+pub type C2RustUnnamed_2 = u32;
 pub use crate::types::uint64;
-pub type C2RustUnnamed_3 = ::core::ffi::c_uint;
-pub const true_0: ::core::ffi::c_int = 1;
-pub const false_0: ::core::ffi::c_int = 0;
+pub type C2RustUnnamed_3 = u32;
+pub const true_0: i32 = 1;
+pub const false_0: i32 = 0;
 pub const __ASSERT_FUNCTION: [::core::ffi::c_char; 43] = unsafe {
     ::core::mem::transmute::<[u8; 43], [::core::ffi::c_char; 43]>(
         *b"void PpuDrawBackgrounds(Ppu *, int, _Bool)\0",
     )
 };
 #[inline]
-unsafe fn IntMin(a: ::core::ffi::c_int, b: ::core::ffi::c_int) -> ::core::ffi::c_int {
+unsafe fn IntMin(a: i32, b: i32) -> i32 {
     if a < b {
         a
     } else {
@@ -73,14 +69,14 @@ unsafe fn IntMin(a: ::core::ffi::c_int, b: ::core::ffi::c_int) -> ::core::ffi::c
     }
 }
 #[inline]
-unsafe fn IntMax(a: ::core::ffi::c_int, b: ::core::ffi::c_int) -> ::core::ffi::c_int {
+unsafe fn IntMax(a: i32, b: i32) -> i32 {
     if a > b {
         a
     } else {
         b
     }
 }
-static layersPerMode: [[::core::ffi::c_int; 12]; 10] = [
+static layersPerMode: [[i32; 12]; 10] = [
     [4, 0, 1, 4, 0, 1, 4, 2, 3, 4, 2, 3],
     [4, 0, 1, 4, 0, 1, 4, 2, 4, 2, 5, 5],
     [4, 0, 4, 1, 4, 0, 4, 1, 5, 5, 5, 5],
@@ -92,7 +88,7 @@ static layersPerMode: [[::core::ffi::c_int; 12]; 10] = [
     [2, 4, 0, 1, 4, 0, 1, 4, 4, 2, 5, 5],
     [4, 4, 1, 4, 0, 4, 1, 5, 5, 5, 5, 5],
 ];
-static prioritysPerMode: [[::core::ffi::c_int; 12]; 10] = [
+static prioritysPerMode: [[i32; 12]; 10] = [
     [3, 1, 1, 2, 0, 0, 1, 1, 1, 0, 0, 0],
     [3, 1, 1, 2, 0, 0, 1, 1, 0, 0, 5, 5],
     [3, 1, 2, 1, 1, 0, 0, 0, 5, 5, 5, 5],
@@ -104,8 +100,8 @@ static prioritysPerMode: [[::core::ffi::c_int; 12]; 10] = [
     [1, 3, 1, 1, 2, 0, 0, 1, 0, 0, 5, 5],
     [3, 2, 1, 1, 0, 0, 0, 5, 5, 5, 5, 5],
 ];
-static layerCountPerMode: [::core::ffi::c_int; 10] = [12, 10, 8, 8, 8, 8, 6, 5, 10, 7];
-static bitDepthsPerMode: [[::core::ffi::c_int; 4]; 10] = [
+static layerCountPerMode: [i32; 10] = [12, 10, 8, 8, 8, 8, 6, 5, 10, 7];
+static bitDepthsPerMode: [[i32; 4]; 10] = [
     [2, 2, 2, 2],
     [4, 4, 2, 5],
     [4, 4, 5, 5],
@@ -117,7 +113,7 @@ static bitDepthsPerMode: [[::core::ffi::c_int; 4]; 10] = [
     [4, 4, 2, 5],
     [8, 7, 5, 5],
 ];
-static spriteSizes: [[::core::ffi::c_int; 2]; 8] = [
+static spriteSizes: [[i32; 2]; 8] = [
     [8, 16],
     [8, 32],
     [8, 64],
@@ -233,8 +229,8 @@ fn update_brightness_tables(brightness: u8, normal: &mut [u8; 63], half: &mut [u
     let maximum = normal[31];
     normal[32..].fill(maximum);
 }
-pub unsafe fn ppu_runLine(ppu: *mut Ppu, line: ::core::ffi::c_int, game: &mut Game) {
-    if line == 0 as ::core::ffi::c_int {
+pub unsafe fn ppu_runLine(ppu: *mut Ppu, line: i32, game: &mut Game) {
+    if line == 0 as i32 {
         (*ppu).mosaicStartLine = 1 as uint8_t;
         (*ppu).rangeOver = false_0 != 0;
         (*ppu).timeOver = false_0 != 0;
@@ -250,18 +246,18 @@ pub unsafe fn ppu_runLine(ppu: *mut Ppu, line: ::core::ffi::c_int, game: &mut Ga
             );
         }
         ClearBackdrop(&mut (*ppu).objBuffer);
-        (*ppu).lineHasSprites = !(*ppu).forcedBlank
-            && ppu_evaluateSprites(ppu, line - 1 as ::core::ffi::c_int) as ::core::ffi::c_int != 0;
+        (*ppu).lineHasSprites =
+            !(*ppu).forcedBlank && ppu_evaluateSprites(ppu, line - 1 as i32) as i32 != 0;
         // EXTBG composition and enabled mosaic use the per-pixel path.
         let mosaic = (*ppu).mosaicSize > 1 && (*ppu).bgLayer.iter().any(|bg| bg.mosaicEnabled);
         if game.g_new_ppu && !((*ppu).mode == 7 && (*ppu).m7extBg) && !mosaic {
             PpuDrawWholeLine(ppu, line as uint);
         } else {
-            if (*ppu).mode as ::core::ffi::c_int == 7 as ::core::ffi::c_int {
+            if (*ppu).mode as i32 == 7 as i32 {
                 ppu_calculateMode7Starts(ppu, line);
             }
-            let mut x: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-            while x < 256 as ::core::ffi::c_int {
+            let mut x: i32 = 0 as i32;
+            while x < 256 as i32 {
                 ppu_handlePixel(ppu, x, line);
                 x += 1;
             }
@@ -278,16 +274,16 @@ unsafe fn ppu_windows_for_layer(ppu: *mut Ppu, sub: usize, layer: uint) -> PpuWi
     win
 }
 unsafe fn PpuWindows_Clear(win: *mut PpuWindows, ppu: *mut Ppu, layer: uint) {
-    (*win).edges[0 as ::core::ffi::c_int as usize] = -if layer != 2 as uint {
-        (*ppu).extraLeftCur as ::core::ffi::c_int
+    (*win).edges[0 as i32 as usize] = -if layer != 2 as uint {
+        (*ppu).extraLeftCur as i32
     } else {
-        0 as ::core::ffi::c_int
+        0 as i32
     } as int16;
-    (*win).edges[1 as ::core::ffi::c_int as usize] = (256 as ::core::ffi::c_int
+    (*win).edges[1 as i32 as usize] = (256 as i32
         + (if layer != 2 as uint {
-            (*ppu).extraRightCur as ::core::ffi::c_int
+            (*ppu).extraRightCur as i32
         } else {
-            0 as ::core::ffi::c_int
+            0 as i32
         })) as int16;
     (*win).nr = 1 as uint8;
     (*win).bits = 0 as uint8;
@@ -307,47 +303,44 @@ fn ppu_window_bits(edges: &[int16; 6], left: &uint8, right: &uint8) -> uint8 {
 unsafe fn PpuWindows_Calc(win: *mut PpuWindows, ppu: *mut Ppu, layer: uint) {
     let winflags: uint32 = (*ppu).windowsel as uint32 >> layer.wrapping_mul(4 as uint);
     let mut nr: uint = 1 as uint;
-    let window_right: ::core::ffi::c_int = 256 as ::core::ffi::c_int
+    let window_right: i32 = 256 as i32
         + (if layer != 2 as uint {
-            (*ppu).extraRightCur as ::core::ffi::c_int
+            (*ppu).extraRightCur as i32
         } else {
-            0 as ::core::ffi::c_int
+            0 as i32
         });
-    (*win).edges[0 as ::core::ffi::c_int as usize] = -if layer != 2 as uint {
-        (*ppu).extraLeftCur as ::core::ffi::c_int
+    (*win).edges[0 as i32 as usize] = -if layer != 2 as uint {
+        (*ppu).extraLeftCur as i32
     } else {
-        0 as ::core::ffi::c_int
+        0 as i32
     } as int16;
-    (*win).edges[1 as ::core::ffi::c_int as usize] = window_right as int16;
+    (*win).edges[1 as i32 as usize] = window_right as int16;
     let mut i: uint = 0;
     let mut j: uint = 0;
-    let mut t: ::core::ffi::c_int = 0;
-    let w1_ena: bool = winflags & kWindow1Enabled as ::core::ffi::c_int as uint32 != 0
-        && (*ppu).window1left as ::core::ffi::c_int <= (*ppu).window1right as ::core::ffi::c_int;
+    let mut t: i32 = 0;
+    let w1_ena: bool = winflags & kWindow1Enabled as i32 as uint32 != 0
+        && (*ppu).window1left as i32 <= (*ppu).window1right as i32;
     if w1_ena {
-        if (*ppu).window1left as ::core::ffi::c_int
-            > (*win).edges[0 as ::core::ffi::c_int as usize] as ::core::ffi::c_int
-        {
+        if (*ppu).window1left as i32 > (*win).edges[0 as i32 as usize] as i32 {
             (*win).edges[nr as usize] = (*ppu).window1left as int16;
             nr = nr.wrapping_add(1);
             (*win).edges[nr as usize] = window_right as int16;
         }
-        if ((*ppu).window1right as ::core::ffi::c_int + 1 as ::core::ffi::c_int) < window_right {
-            (*win).edges[nr as usize] =
-                ((*ppu).window1right as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as int16;
+        if ((*ppu).window1right as i32 + 1 as i32) < window_right {
+            (*win).edges[nr as usize] = ((*ppu).window1right as i32 + 1 as i32) as int16;
             nr = nr.wrapping_add(1);
             (*win).edges[nr as usize] = window_right as int16;
         }
     }
-    let w2_ena: bool = winflags & kWindow2Enabled as ::core::ffi::c_int as uint32 != 0
-        && (*ppu).window2left as ::core::ffi::c_int <= (*ppu).window2right as ::core::ffi::c_int;
+    let w2_ena: bool = winflags & kWindow2Enabled as i32 as uint32 != 0
+        && (*ppu).window2left as i32 <= (*ppu).window2right as i32;
     if w2_ena {
         i = 0 as uint;
         while i <= nr && {
-            t = (*ppu).window2left as ::core::ffi::c_int;
-            t != (*win).edges[i as usize] as ::core::ffi::c_int
+            t = (*ppu).window2left as i32;
+            t != (*win).edges[i as usize] as i32
         } {
-            if t < (*win).edges[i as usize] as ::core::ffi::c_int {
+            if t < (*win).edges[i as usize] as i32 {
                 let fresh0 = nr;
                 nr = nr.wrapping_add(1);
                 j = fresh0;
@@ -362,10 +355,10 @@ unsafe fn PpuWindows_Calc(win: *mut PpuWindows, ppu: *mut Ppu, layer: uint) {
             }
         }
         while i <= nr && {
-            t = (*ppu).window2right as ::core::ffi::c_int + 1 as ::core::ffi::c_int;
-            t != (*win).edges[i as usize] as ::core::ffi::c_int
+            t = (*ppu).window2right as i32 + 1 as i32;
+            t != (*win).edges[i as usize] as i32
         } {
-            if t < (*win).edges[i as usize] as ::core::ffi::c_int {
+            if t < (*win).edges[i as usize] as i32 {
                 let fresh1 = nr;
                 nr = nr.wrapping_add(1);
                 j = fresh1;
@@ -386,24 +379,20 @@ unsafe fn PpuWindows_Calc(win: *mut PpuWindows, ppu: *mut Ppu, layer: uint) {
     if w1_ena {
         w1_bits = ppu_window_bits(&(*win).edges, &(*ppu).window1left, &(*ppu).window1right);
     }
-    if winflags
-        & (kWindow1Enabled as ::core::ffi::c_int | kWindow1Inversed as ::core::ffi::c_int) as uint32
-        == (kWindow1Enabled as ::core::ffi::c_int | kWindow1Inversed as ::core::ffi::c_int)
-            as uint32
+    if winflags & (kWindow1Enabled as i32 | kWindow1Inversed as i32) as uint32
+        == (kWindow1Enabled as i32 | kWindow1Inversed as i32) as uint32
     {
-        w1_bits = !(w1_bits as ::core::ffi::c_int) as uint8;
+        w1_bits = !(w1_bits as i32) as uint8;
     }
     if w2_ena {
         w2_bits = ppu_window_bits(&(*win).edges, &(*ppu).window2left, &(*ppu).window2right);
     }
-    if winflags
-        & (kWindow2Enabled as ::core::ffi::c_int | kWindow2Inversed as ::core::ffi::c_int) as uint32
-        == (kWindow2Enabled as ::core::ffi::c_int | kWindow2Inversed as ::core::ffi::c_int)
-            as uint32
+    if winflags & (kWindow2Enabled as i32 | kWindow2Inversed as i32) as uint32
+        == (kWindow2Enabled as i32 | kWindow2Inversed as i32) as uint32
     {
-        w2_bits = !(w2_bits as ::core::ffi::c_int) as uint8;
+        w2_bits = !(w2_bits as i32) as uint8;
     }
-    (*win).bits = (w1_bits as ::core::ffi::c_int | w2_bits as ::core::ffi::c_int) as uint8;
+    (*win).bits = (w1_bits as i32 | w2_bits as i32) as uint8;
 }
 // Select the tilemap halves and normal/flipped tile rows for both bit depths.
 unsafe fn ppu_background_row(
@@ -411,37 +400,33 @@ unsafe fn ppu_background_row(
     bglayer: *mut BgLayer,
     mut y: uint,
     layer: uint,
-) -> ([*const uint16; 2], ::core::ffi::c_int, ::core::ffi::c_int) {
+) -> ([*const uint16; 2], i32, i32) {
     y = y.wrapping_add((*bglayer).vScroll as uint);
-    let mut sc_offs: ::core::ffi::c_int = ((*bglayer).tilemapAdr as uint)
-        .wrapping_add((y >> 3 as ::core::ffi::c_int & 0x1f as uint) << 5 as ::core::ffi::c_int)
-        as ::core::ffi::c_int;
-    if y & 0x100 as uint != 0 && (*bglayer).tilemapHigher as ::core::ffi::c_int != 0 {
-        sc_offs += if (*bglayer).tilemapWider as ::core::ffi::c_int != 0 {
-            0x800 as ::core::ffi::c_int
+    let mut sc_offs: i32 = ((*bglayer).tilemapAdr as uint)
+        .wrapping_add((y >> 3 as i32 & 0x1f as uint) << 5 as i32) as i32;
+    if y & 0x100 as uint != 0 && (*bglayer).tilemapHigher as i32 != 0 {
+        sc_offs += if (*bglayer).tilemapWider as i32 != 0 {
+            0x800 as i32
         } else {
-            0x400 as ::core::ffi::c_int
+            0x400 as i32
         };
     }
     let tps: [*const uint16; 2] = [
-        (&raw mut (*ppu).vram as *mut uint16_t)
-            .offset((sc_offs & 0x7fff as ::core::ffi::c_int) as isize) as *mut uint16_t
-            as *const uint16,
+        (&raw mut (*ppu).vram as *mut uint16_t).offset((sc_offs & 0x7fff as i32) as isize)
+            as *mut uint16_t as *const uint16,
         (&raw mut (*ppu).vram as *mut uint16_t).offset(
             (sc_offs
-                + (if (*bglayer).tilemapWider as ::core::ffi::c_int != 0 {
-                    0x400 as ::core::ffi::c_int
+                + (if (*bglayer).tilemapWider as i32 != 0 {
+                    0x400 as i32
                 } else {
-                    0 as ::core::ffi::c_int
+                    0 as i32
                 })
-                & 0x7fff as ::core::ffi::c_int) as isize,
+                & 0x7fff as i32) as isize,
         ) as *mut uint16_t as *const uint16,
     ];
-    let tileadr: ::core::ffi::c_int = (*ppu).bgLayer[layer as usize].tileAdr as ::core::ffi::c_int;
-    let tileadr1: ::core::ffi::c_int = ((tileadr + 7 as ::core::ffi::c_int) as uint)
-        .wrapping_sub(y & 0x7 as uint) as ::core::ffi::c_int;
-    let tileadr0: ::core::ffi::c_int =
-        (tileadr as uint).wrapping_add(y & 0x7 as uint) as ::core::ffi::c_int;
+    let tileadr: i32 = (*ppu).bgLayer[layer as usize].tileAdr as i32;
+    let tileadr1: i32 = ((tileadr + 7 as i32) as uint).wrapping_sub(y & 0x7 as uint) as i32;
+    let tileadr0: i32 = (tileadr as uint).wrapping_add(y & 0x7 as uint) as i32;
     (tps, tileadr0, tileadr1)
 }
 // Gather one bit from each packed plane byte into the palette index.
@@ -544,56 +529,49 @@ unsafe fn ppu_draw_planar_background<const PLANES: u32, const PALETTE_SHIFT: u32
     zhi: PpuZbufType,
     zlo: PpuZbufType,
 ) {
-    if (*ppu).screenEnabled[sub as usize] as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << layer
-        == 0
-    {
+    if (*ppu).screenEnabled[sub as usize] as i32 & (1 as i32) << layer == 0 {
         return;
     }
     let win = ppu_windows_for_layer(ppu, sub as usize, layer);
     let bglayer: *mut BgLayer =
         (&raw mut (*ppu).bgLayer as *mut BgLayer).offset(layer as isize) as *mut BgLayer;
     let (tps, tileadr0, tileadr1) = ppu_background_row(ppu, bglayer, y, layer);
-    let mut pixel: ::core::ffi::c_int = 0;
+    let mut pixel: i32 = 0;
     let mut windex: size_t = 0 as size_t;
     while windex < win.nr as size_t {
-        if (win.bits as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << windex == 0) {
-            let mut x: uint = (win.edges[windex as usize] as ::core::ffi::c_int
-                + (*bglayer).hScroll as ::core::ffi::c_int) as uint;
-            let mut w: uint =
-                (win.edges[windex.wrapping_add(1 as size_t) as usize] as ::core::ffi::c_int
-                    - win.edges[windex as usize] as ::core::ffi::c_int) as uint;
+        if (win.bits as i32 & (1 as i32) << windex == 0) {
+            let mut x: uint =
+                (win.edges[windex as usize] as i32 + (*bglayer).hScroll as i32) as uint;
+            let mut w: uint = (win.edges[windex.wrapping_add(1 as size_t) as usize] as i32
+                - win.edges[windex as usize] as i32) as uint;
             let mut dstz: *mut PpuZbufType = (&raw mut (*(&raw mut (*ppu).bgBuffers
                 as *mut PpuPixelPrioBufs)
                 .offset(sub as isize))
             .data as *mut PpuZbufType)
-                .offset(win.edges[windex as usize] as ::core::ffi::c_int as isize)
-                .offset(kPpuExtraLeftRight as ::core::ffi::c_int as isize);
-            let mut tp: *const uint16 = tps[(x >> 8 as ::core::ffi::c_int & 1 as uint) as usize]
-                .offset((x >> 3 as ::core::ffi::c_int & 0x1f as uint) as isize);
-            let mut tp_last: *const uint16 =
-                tps[(x >> 8 as ::core::ffi::c_int & 1 as uint) as usize].offset(31);
-            let mut tp_next: *const uint16 =
-                tps[(x >> 8 as ::core::ffi::c_int & 1 as uint ^ 1 as uint) as usize];
+                .offset(win.edges[windex as usize] as i32 as isize)
+                .offset(kPpuExtraLeftRight as i32 as isize);
+            let mut tp: *const uint16 = tps[(x >> 8 as i32 & 1 as uint) as usize]
+                .offset((x >> 3 as i32 & 0x1f as uint) as isize);
+            let mut tp_last: *const uint16 = tps[(x >> 8 as i32 & 1 as uint) as usize].offset(31);
+            let mut tp_next: *const uint16 = tps[(x >> 8 as i32 & 1 as uint ^ 1 as uint) as usize];
             if x & 7 as uint != 0 {
-                let mut curw: ::core::ffi::c_int = IntMin(
-                    (8 as uint).wrapping_sub(x & 7 as uint) as ::core::ffi::c_int,
-                    w as ::core::ffi::c_int,
-                );
+                let mut curw: i32 =
+                    IntMin((8 as uint).wrapping_sub(x & 7 as uint) as i32, w as i32);
                 w = w.wrapping_sub(curw as uint);
                 let tile: uint32 = *tp as uint32;
                 if tp != tp_last {
                     tp = tp.offset(1);
                 } else {
                     tp = tp_next;
-                    tp_next = tp_last.offset(-(31 as ::core::ffi::c_int as isize));
+                    tp_next = tp_last.offset(-(31 as i32 as isize));
                     tp_last = tp.offset(31);
                 }
                 let (mut z, mut bits) =
                     ppu_load_tile_row::<PLANES>(ppu, tile, tileadr0, tileadr1, zhi, zlo);
                 if bits != 0 {
-                    z = (z as uint32).wrapping_add(
-                        (tile & 0x1c00 as uint32) >> PALETTE_SHIFT as ::core::ffi::c_int,
-                    ) as PpuZbufType as PpuZbufType;
+                    z = (z as uint32)
+                        .wrapping_add((tile & 0x1c00 as uint32) >> PALETTE_SHIFT as i32)
+                        as PpuZbufType as PpuZbufType;
                     if tile & 0x4000 as uint32 != 0 {
                         bits >>= x & 7 as uint;
                         x = x.wrapping_add(curw as uint);
@@ -617,15 +595,15 @@ unsafe fn ppu_draw_planar_background<const PLANES: u32, const PALETTE_SHIFT: u32
                     tp = tp.offset(1);
                 } else {
                     tp = tp_next;
-                    tp_next = tp_last.offset(-(31 as ::core::ffi::c_int as isize));
+                    tp_next = tp_last.offset(-(31 as i32 as isize));
                     tp_last = tp.offset(31);
                 }
                 let (mut z_0, bits_0) =
                     ppu_load_tile_row::<PLANES>(ppu, tile_0, tileadr0, tileadr1, zhi, zlo);
                 if bits_0 != 0 {
-                    z_0 = (z_0 as uint32).wrapping_add(
-                        (tile_0 & 0x1c00 as uint32) >> PALETTE_SHIFT as ::core::ffi::c_int,
-                    ) as PpuZbufType as PpuZbufType;
+                    z_0 = (z_0 as uint32)
+                        .wrapping_add((tile_0 & 0x1c00 as uint32) >> PALETTE_SHIFT as i32)
+                        as PpuZbufType as PpuZbufType;
                     pixel = ppu_draw_full_tile::<PLANES>(dstz, bits_0, z_0, tile_0 & 0x4000 != 0);
                 }
                 dstz = dstz.offset(8);
@@ -636,9 +614,9 @@ unsafe fn ppu_draw_planar_background<const PLANES: u32, const PALETTE_SHIFT: u32
                 let (mut z_1, mut bits_1) =
                     ppu_load_tile_row::<PLANES>(ppu, tile_1, tileadr0, tileadr1, zhi, zlo);
                 if bits_1 != 0 {
-                    z_1 = (z_1 as uint32).wrapping_add(
-                        (tile_1 & 0x1c00 as uint32) >> PALETTE_SHIFT as ::core::ffi::c_int,
-                    ) as PpuZbufType as PpuZbufType;
+                    z_1 = (z_1 as uint32)
+                        .wrapping_add((tile_1 & 0x1c00 as uint32) >> PALETTE_SHIFT as i32)
+                        as PpuZbufType as PpuZbufType;
                     if tile_1 & 0x4000 as uint32 != 0 {
                         (bits_1, dstz, pixel) =
                             ppu_draw_partial_tile::<PLANES>(dstz, bits_1, z_1, w as u32, true);
@@ -720,10 +698,8 @@ unsafe fn ppu_mode7_sample(
     ((*ppu).vram[(u32::from(tile) * 64 + (y >> 8 & 7) * 8 + (x >> 8 & 7)) as usize] >> 8) as uint8
 }
 unsafe fn PpuDrawBackground_mode7(ppu: *mut Ppu, mut y: uint, sub: bool, z: PpuZbufType) {
-    let layer: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    if (*ppu).screenEnabled[sub as usize] as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << layer
-        == 0
-    {
+    let layer: i32 = 0 as i32;
+    if (*ppu).screenEnabled[sub as usize] as i32 & (1 as i32) << layer == 0 {
         return;
     }
     let win = ppu_windows_for_layer(ppu, sub as usize, layer as uint);
@@ -733,101 +709,87 @@ unsafe fn PpuDrawBackground_mode7(ppu: *mut Ppu, mut y: uint, sub: bool, z: PpuZ
         (*ppu).m7matrix[4],
         (*ppu).m7matrix[5],
     );
-    let mosaic_enabled: bool = (*ppu).mosaicEnabled as ::core::ffi::c_int
-        & (1 as ::core::ffi::c_int) << 0 as ::core::ffi::c_int
-        != 0;
+    let mosaic_enabled: bool = (*ppu).mosaicEnabled as i32 & (1 as i32) << 0 as i32 != 0;
     if mosaic_enabled {
         y = (*ppu).mosaicModulo[y as usize] as uint;
     }
-    let ry: uint32 = if (*ppu).m7yFlip as ::core::ffi::c_int != 0 {
+    let ry: uint32 = if (*ppu).m7yFlip as i32 != 0 {
         (255 as uint32).wrapping_sub(y as uint32)
     } else {
         y as uint32
     };
-    let m7startX: uint32 =
-        (((*ppu).m7matrix[0 as ::core::ffi::c_int as usize] as ::core::ffi::c_int * clippedH
-            & !(63 as ::core::ffi::c_int)) as uint32)
-            .wrapping_add(
-                ((*ppu).m7matrix[1 as ::core::ffi::c_int as usize] as uint32).wrapping_mul(ry)
-                    & !(63 as ::core::ffi::c_int) as uint32,
-            )
-            .wrapping_add(
-                ((*ppu).m7matrix[1 as ::core::ffi::c_int as usize] as ::core::ffi::c_int * clippedV
-                    & !(63 as ::core::ffi::c_int)) as uint32,
-            )
-            .wrapping_add((xCenter << 8 as ::core::ffi::c_int) as uint32);
-    let m7startY: uint32 =
-        (((*ppu).m7matrix[2 as ::core::ffi::c_int as usize] as ::core::ffi::c_int * clippedH
-            & !(63 as ::core::ffi::c_int)) as uint32)
-            .wrapping_add(
-                ((*ppu).m7matrix[3 as ::core::ffi::c_int as usize] as uint32).wrapping_mul(ry)
-                    & !(63 as ::core::ffi::c_int) as uint32,
-            )
-            .wrapping_add(
-                ((*ppu).m7matrix[3 as ::core::ffi::c_int as usize] as ::core::ffi::c_int * clippedV
-                    & !(63 as ::core::ffi::c_int)) as uint32,
-            )
-            .wrapping_add((yCenter << 8 as ::core::ffi::c_int) as uint32);
+    let m7startX: uint32 = (((*ppu).m7matrix[0 as i32 as usize] as i32 * clippedH & !(63 as i32))
+        as uint32)
+        .wrapping_add(
+            ((*ppu).m7matrix[1 as i32 as usize] as uint32).wrapping_mul(ry)
+                & !(63 as i32) as uint32,
+        )
+        .wrapping_add(
+            ((*ppu).m7matrix[1 as i32 as usize] as i32 * clippedV & !(63 as i32)) as uint32,
+        )
+        .wrapping_add((xCenter << 8 as i32) as uint32);
+    let m7startY: uint32 = (((*ppu).m7matrix[2 as i32 as usize] as i32 * clippedH & !(63 as i32))
+        as uint32)
+        .wrapping_add(
+            ((*ppu).m7matrix[3 as i32 as usize] as uint32).wrapping_mul(ry)
+                & !(63 as i32) as uint32,
+        )
+        .wrapping_add(
+            ((*ppu).m7matrix[3 as i32 as usize] as i32 * clippedV & !(63 as i32)) as uint32,
+        )
+        .wrapping_add((yCenter << 8 as i32) as uint32);
     let mut windex: size_t = 0 as size_t;
     while windex < win.nr as size_t {
-        if (win.bits as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << windex == 0) {
-            let x: ::core::ffi::c_int = win.edges[windex as usize] as ::core::ffi::c_int;
-            let x2: ::core::ffi::c_int =
-                win.edges[windex.wrapping_add(1 as size_t) as usize] as ::core::ffi::c_int;
+        if (win.bits as i32 & (1 as i32) << windex == 0) {
+            let x: i32 = win.edges[windex as usize] as i32;
+            let x2: i32 = win.edges[windex.wrapping_add(1 as size_t) as usize] as i32;
             let mut dstz: *mut PpuZbufType = (&raw mut (*(&raw mut (*ppu).bgBuffers
                 as *mut PpuPixelPrioBufs)
                 .offset(sub as isize))
             .data as *mut PpuZbufType)
                 .offset(x as isize)
-                .offset(kPpuExtraLeftRight as ::core::ffi::c_int as isize);
+                .offset(kPpuExtraLeftRight as i32 as isize);
             let dstz_end: *mut PpuZbufType = (&raw mut (*(&raw mut (*ppu).bgBuffers
                 as *mut PpuPixelPrioBufs)
                 .offset(sub as isize))
             .data as *mut PpuZbufType)
                 .offset(x2 as isize)
-                .offset(kPpuExtraLeftRight as ::core::ffi::c_int as isize);
-            let rx: uint32 = (if (*ppu).m7xFlip as ::core::ffi::c_int != 0 {
-                255 as ::core::ffi::c_int - x
+                .offset(kPpuExtraLeftRight as i32 as isize);
+            let rx: uint32 = (if (*ppu).m7xFlip as i32 != 0 {
+                255 as i32 - x
             } else {
                 x
             }) as uint32;
-            let mut xpos: uint32 = m7startX.wrapping_add(
-                ((*ppu).m7matrix[0 as ::core::ffi::c_int as usize] as uint32).wrapping_mul(rx),
-            );
-            let mut ypos: uint32 = m7startY.wrapping_add(
-                ((*ppu).m7matrix[2 as ::core::ffi::c_int as usize] as uint32).wrapping_mul(rx),
-            );
-            let dx: uint32 = (if (*ppu).m7xFlip as ::core::ffi::c_int != 0 {
-                -((*ppu).m7matrix[0 as ::core::ffi::c_int as usize] as ::core::ffi::c_int)
+            let mut xpos: uint32 = m7startX
+                .wrapping_add(((*ppu).m7matrix[0 as i32 as usize] as uint32).wrapping_mul(rx));
+            let mut ypos: uint32 = m7startY
+                .wrapping_add(((*ppu).m7matrix[2 as i32 as usize] as uint32).wrapping_mul(rx));
+            let dx: uint32 = (if (*ppu).m7xFlip as i32 != 0 {
+                -((*ppu).m7matrix[0 as i32 as usize] as i32)
             } else {
-                (*ppu).m7matrix[0 as ::core::ffi::c_int as usize] as ::core::ffi::c_int
+                (*ppu).m7matrix[0 as i32 as usize] as i32
             }) as uint32;
-            let dy: uint32 = (if (*ppu).m7xFlip as ::core::ffi::c_int != 0 {
-                -((*ppu).m7matrix[2 as ::core::ffi::c_int as usize] as ::core::ffi::c_int)
+            let dy: uint32 = (if (*ppu).m7xFlip as i32 != 0 {
+                -((*ppu).m7matrix[2 as i32 as usize] as i32)
             } else {
-                (*ppu).m7matrix[2 as ::core::ffi::c_int as usize] as ::core::ffi::c_int
+                (*ppu).m7matrix[2 as i32 as usize] as i32
             }) as uint32;
-            let outside_value: uint32 = if (*ppu).m7largeField as ::core::ffi::c_int != 0 {
+            let outside_value: uint32 = if (*ppu).m7largeField as i32 != 0 {
                 0x3ffff as uint32
             } else {
                 0xffffffff as uint32
             };
             let char_fill: bool = (*ppu).m7charFill;
             if mosaic_enabled {
-                let mut w: ::core::ffi::c_int = (*ppu).mosaicSize as ::core::ffi::c_int
-                    - (x - (*ppu).mosaicModulo[x as usize] as ::core::ffi::c_int);
+                let mut w: i32 =
+                    (*ppu).mosaicSize as i32 - (x - (*ppu).mosaicModulo[x as usize] as i32);
                 loop {
-                    w = IntMin(
-                        w,
-                        dstz_end.offset_from(dstz) as ::core::ffi::c_long as ::core::ffi::c_int,
-                    );
+                    w = IntMin(w, dstz_end.offset_from(dstz) as ::core::ffi::c_long as i32);
                     let pixel = ppu_mode7_sample(ppu, xpos, ypos, outside_value, char_fill);
                     if pixel != 0 {
-                        let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+                        let mut i: i32 = 0 as i32;
                         loop {
-                            *dstz.offset(i as isize) = (pixel as ::core::ffi::c_int
-                                + z as ::core::ffi::c_int)
-                                as PpuZbufType;
+                            *dstz.offset(i as isize) = (pixel as i32 + z as i32) as PpuZbufType;
                             i += 1;
                             if (i == w) {
                                 break;
@@ -837,7 +799,7 @@ unsafe fn PpuDrawBackground_mode7(ppu: *mut Ppu, mut y: uint, sub: bool, z: PpuZ
                     xpos = xpos.wrapping_add(dx.wrapping_mul(w as uint32));
                     ypos = ypos.wrapping_add(dy.wrapping_mul(w as uint32));
                     dstz = dstz.offset(w as isize);
-                    w = (*ppu).mosaicSize as ::core::ffi::c_int;
+                    w = (*ppu).mosaicSize as i32;
                     if (dstz_end.offset_from(dstz) as ::core::ffi::c_long
                         == 0 as ::core::ffi::c_long)
                     {
@@ -848,8 +810,7 @@ unsafe fn PpuDrawBackground_mode7(ppu: *mut Ppu, mut y: uint, sub: bool, z: PpuZ
                 loop {
                     let pixel_0 = ppu_mode7_sample(ppu, xpos, ypos, outside_value, char_fill);
                     if pixel_0 != 0 {
-                        *dstz.offset(0) = (pixel_0 as ::core::ffi::c_int + z as ::core::ffi::c_int)
-                            as PpuZbufType;
+                        *dstz.offset(0) = (pixel_0 as i32 + z as i32) as PpuZbufType;
                     }
                     xpos = xpos.wrapping_add(dx);
                     ypos = ypos.wrapping_add(dy);
@@ -864,28 +825,25 @@ unsafe fn PpuDrawBackground_mode7(ppu: *mut Ppu, mut y: uint, sub: bool, z: PpuZ
     }
 }
 unsafe fn PpuDrawSprites(ppu: *mut Ppu, y: uint, sub: uint, clear_backdrop: bool) {
-    let layer: ::core::ffi::c_int = 4 as ::core::ffi::c_int;
-    if (*ppu).screenEnabled[sub as usize] as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << layer
-        == 0
-    {
+    let layer: i32 = 4 as i32;
+    if (*ppu).screenEnabled[sub as usize] as i32 & (1 as i32) << layer == 0 {
         return;
     }
     let win = ppu_windows_for_layer(ppu, sub as usize, layer as uint);
     let mut windex: size_t = 0 as size_t;
     while windex < win.nr as size_t {
-        if (win.bits as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << windex == 0) {
-            let left: ::core::ffi::c_int = win.edges[windex as usize] as ::core::ffi::c_int;
-            let mut width: ::core::ffi::c_int =
-                win.edges[windex.wrapping_add(1 as size_t) as usize] as ::core::ffi::c_int - left;
+        if (win.bits as i32 & (1 as i32) << windex == 0) {
+            let left: i32 = win.edges[windex as usize] as i32;
+            let mut width: i32 = win.edges[windex.wrapping_add(1 as size_t) as usize] as i32 - left;
             let mut src: *mut PpuZbufType = (&raw mut (*ppu).objBuffer.data as *mut PpuZbufType)
                 .offset(left as isize)
-                .offset(kPpuExtraLeftRight as ::core::ffi::c_int as isize);
+                .offset(kPpuExtraLeftRight as i32 as isize);
             let mut dst: *mut PpuZbufType = (&raw mut (*(&raw mut (*ppu).bgBuffers
                 as *mut PpuPixelPrioBufs)
                 .offset(sub as isize))
             .data as *mut PpuZbufType)
                 .offset(left as isize)
-                .offset(kPpuExtraLeftRight as ::core::ffi::c_int as isize);
+                .offset(kPpuExtraLeftRight as i32 as isize);
             if clear_backdrop {
                 memcpy(
                     dst as *mut ::core::ffi::c_void,
@@ -894,7 +852,7 @@ unsafe fn PpuDrawSprites(ppu: *mut Ppu, y: uint, sub: uint, clear_backdrop: bool
                 );
             } else {
                 loop {
-                    if *src.offset(0) as ::core::ffi::c_int > *dst.offset(0) as ::core::ffi::c_int {
+                    if *src.offset(0) as i32 > *dst.offset(0) as i32 {
                         *dst.offset(0) = *src.offset(0);
                     }
                     src = src.offset(1);
@@ -909,20 +867,17 @@ unsafe fn PpuDrawSprites(ppu: *mut Ppu, y: uint, sub: uint, clear_backdrop: bool
         windex = windex.wrapping_add(1);
     }
 }
-unsafe fn PpuDrawBackgrounds(ppu: *mut Ppu, y: ::core::ffi::c_int, sub: bool) {
-    if (*ppu).mode as ::core::ffi::c_int == 1 as ::core::ffi::c_int {
+unsafe fn PpuDrawBackgrounds(ppu: *mut Ppu, y: i32, sub: bool) {
+    if (*ppu).mode as i32 == 1 as i32 {
         if (*ppu).lineHasSprites {
             PpuDrawSprites(ppu, y as uint, sub as uint, true_0 != 0);
         }
-        if (*ppu).mosaicEnabled as ::core::ffi::c_int
-            & (1 as ::core::ffi::c_int) << 0 as ::core::ffi::c_int
-            != 0
-        {
+        if (*ppu).mosaicEnabled as i32 & (1 as i32) << 0 as i32 != 0 {
             '_c2rust_label: {
                 __assert_fail(
                     b"0\0" as *const u8 as *const ::core::ffi::c_char,
                     b"src/snes/ppu.c\0" as *const u8 as *const ::core::ffi::c_char,
-                    679 as ::core::ffi::c_uint,
+                    679 as u32,
                     __ASSERT_FUNCTION.as_ptr(),
                 );
             };
@@ -936,15 +891,12 @@ unsafe fn PpuDrawBackgrounds(ppu: *mut Ppu, y: ::core::ffi::c_int, sub: bool) {
                 0x8000 as PpuZbufType,
             );
         }
-        if (*ppu).mosaicEnabled as ::core::ffi::c_int
-            & (1 as ::core::ffi::c_int) << 1 as ::core::ffi::c_int
-            != 0
-        {
+        if (*ppu).mosaicEnabled as i32 & (1 as i32) << 1 as i32 != 0 {
             '_c2rust_label_0: {
                 __assert_fail(
                     b"0\0" as *const u8 as *const ::core::ffi::c_char,
                     b"src/snes/ppu.c\0" as *const u8 as *const ::core::ffi::c_char,
-                    684 as ::core::ffi::c_uint,
+                    684 as u32,
                     __ASSERT_FUNCTION.as_ptr(),
                 );
             };
@@ -958,15 +910,12 @@ unsafe fn PpuDrawBackgrounds(ppu: *mut Ppu, y: ::core::ffi::c_int, sub: bool) {
                 0x7100 as PpuZbufType,
             );
         }
-        if (*ppu).mosaicEnabled as ::core::ffi::c_int
-            & (1 as ::core::ffi::c_int) << 2 as ::core::ffi::c_int
-            != 0
-        {
+        if (*ppu).mosaicEnabled as i32 & (1 as i32) << 2 as i32 != 0 {
             '_c2rust_label_1: {
                 __assert_fail(
                     b"0\0" as *const u8 as *const ::core::ffi::c_char,
                     b"src/snes/ppu.c\0" as *const u8 as *const ::core::ffi::c_char,
-                    689 as ::core::ffi::c_uint,
+                    689 as u32,
                     __ASSERT_FUNCTION.as_ptr(),
                 );
             };
@@ -994,79 +943,64 @@ unsafe fn PpuDrawWholeLine(ppu: *mut Ppu, y: uint) {
                 .wrapping_sub(1 as uint32_t)
                 .wrapping_mul((*ppu).renderPitch) as isize,
         ) as *mut uint8;
-        let n: size_t = (::core::mem::size_of::<uint32>() as size_t).wrapping_mul(
-            (256 as ::core::ffi::c_int
-                + (*ppu).extraLeftRight as ::core::ffi::c_int * 2 as ::core::ffi::c_int)
-                as size_t,
-        );
-        memset(dst as *mut ::core::ffi::c_void, 0 as ::core::ffi::c_int, n);
+        let n: size_t = (::core::mem::size_of::<uint32>() as size_t)
+            .wrapping_mul((256 as i32 + (*ppu).extraLeftRight as i32 * 2 as i32) as size_t);
+        memset(dst as *mut ::core::ffi::c_void, 0 as i32, n);
         return;
     }
     ClearBackdrop(&mut (*ppu).bgBuffers[0]);
-    PpuDrawBackgrounds(ppu, y as ::core::ffi::c_int, false_0 != 0);
+    PpuDrawBackgrounds(ppu, y as i32, false_0 != 0);
     let mut math_enabled: uint32 = 0 as uint32;
-    let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    while i < 6 as ::core::ffi::c_int {
-        math_enabled |= (((*ppu).mathEnabled[i as usize] as ::core::ffi::c_int) << i) as uint32;
+    let mut i: i32 = 0 as i32;
+    while i < 6 as i32 {
+        math_enabled |= (((*ppu).mathEnabled[i as usize] as i32) << i) as uint32;
         i += 1;
     }
     let mut rendered_subscreen: bool = false_0 != 0;
-    if (*ppu).preventMathMode as ::core::ffi::c_int != 3 as ::core::ffi::c_int
-        && (*ppu).addSubscreen as ::core::ffi::c_int != 0
+    if (*ppu).preventMathMode as i32 != 3 as i32
+        && (*ppu).addSubscreen as i32 != 0
         && math_enabled != 0
     {
         ClearBackdrop(&mut (*ppu).bgBuffers[1]);
-        if (*ppu).screenEnabled[1 as ::core::ffi::c_int as usize] as ::core::ffi::c_int
-            != 0 as ::core::ffi::c_int
-        {
-            PpuDrawBackgrounds(ppu, y as ::core::ffi::c_int, true_0 != 0);
+        if (*ppu).screenEnabled[1 as i32 as usize] as i32 != 0 as i32 {
+            PpuDrawBackgrounds(ppu, y as i32, true_0 != 0);
             rendered_subscreen = true_0 != 0;
         }
     }
     let mut cwin: PpuWindows = PpuWindows::EMPTY;
     PpuWindows_Calc(&raw mut cwin, ppu, 5 as uint);
     static kCwBitsMod: [uint8; 8] = [0, 0xff, 0xff, 0, 0xff, 0, 0xff, 0];
-    let mut cw_clip_math: uint32 = (cwin.bits as ::core::ffi::c_int
-        & kCwBitsMod[(*ppu).clipMode as usize] as ::core::ffi::c_int
-        ^ kCwBitsMod[((*ppu).clipMode as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as usize]
-            as ::core::ffi::c_int
-        | (cwin.bits as ::core::ffi::c_int
-            & kCwBitsMod[(*ppu).preventMathMode as usize] as ::core::ffi::c_int
-            ^ kCwBitsMod
-                [((*ppu).preventMathMode as ::core::ffi::c_int + 4 as ::core::ffi::c_int) as usize]
-                as ::core::ffi::c_int)
-            << 8 as ::core::ffi::c_int) as uint32;
+    let mut cw_clip_math: uint32 = (cwin.bits as i32 & kCwBitsMod[(*ppu).clipMode as usize] as i32
+        ^ kCwBitsMod[((*ppu).clipMode as i32 + 4 as i32) as usize] as i32
+        | (cwin.bits as i32 & kCwBitsMod[(*ppu).preventMathMode as usize] as i32
+            ^ kCwBitsMod[((*ppu).preventMathMode as i32 + 4 as i32) as usize] as i32)
+            << 8 as i32) as uint32;
     let mut dst_0: *mut uint32 = (*ppu).renderBuffer.offset(
         (y as uint32_t)
             .wrapping_sub(1 as uint32_t)
             .wrapping_mul((*ppu).renderPitch) as isize,
     ) as *mut uint8_t as *mut uint32;
     let dst_org: *mut uint32 = dst_0;
-    dst_0 = dst_0.offset(
-        ((*ppu).extraLeftRight as ::core::ffi::c_int - (*ppu).extraLeftCur as ::core::ffi::c_int)
-            as isize,
-    );
+    dst_0 = dst_0.offset(((*ppu).extraLeftRight as i32 - (*ppu).extraLeftCur as i32) as isize);
     let mut windex: uint32 = 0 as uint32;
     loop {
-        let left: uint32 = (cwin.edges[windex as usize] as ::core::ffi::c_int
-            + kPpuExtraLeftRight as ::core::ffi::c_int) as uint32;
-        let right: uint32 = (cwin.edges[windex.wrapping_add(1 as uint32) as usize]
-            as ::core::ffi::c_int
-            + kPpuExtraLeftRight as ::core::ffi::c_int) as uint32;
+        let left: uint32 =
+            (cwin.edges[windex as usize] as i32 + kPpuExtraLeftRight as i32) as uint32;
+        let right: uint32 = (cwin.edges[windex.wrapping_add(1 as uint32) as usize] as i32
+            + kPpuExtraLeftRight as i32) as uint32;
         let clip_color_mask: uint32 = (if cw_clip_math & 1 as uint32 != 0 {
-            0x1f as ::core::ffi::c_int
+            0x1f as i32
         } else {
-            0 as ::core::ffi::c_int
+            0 as i32
         }) as uint32;
         let mut math_enabled_cur: uint32 = if cw_clip_math & 0x100 as uint32 != 0 {
             math_enabled
         } else {
             0 as uint32
         };
-        let fixed_color: uint32 = ((*ppu).fixedColorR as ::core::ffi::c_int
-            | ((*ppu).fixedColorG as ::core::ffi::c_int) << 5 as ::core::ffi::c_int
-            | ((*ppu).fixedColorB as ::core::ffi::c_int) << 10 as ::core::ffi::c_int)
-            as uint32;
+        let fixed_color: uint32 = ((*ppu).fixedColorR as i32
+            | ((*ppu).fixedColorG as i32) << 5 as i32
+            | ((*ppu).fixedColorB as i32) << 10 as i32) as uint32;
         if math_enabled_cur == 0 as uint32
             || fixed_color == 0 as uint32 && !(*ppu).halfColor && !rendered_subscreen
         {
@@ -1119,45 +1053,42 @@ unsafe fn PpuDrawWholeLine(ppu: *mut Ppu, y: uint) {
             );
             dst_0 = dst_0.add(count);
         }
-        cw_clip_math >>= 1 as ::core::ffi::c_int;
+        cw_clip_math >>= 1 as i32;
         windex = windex.wrapping_add(1);
         if (windex >= cwin.nr as uint32) {
             break;
         }
     }
 }
-unsafe fn ppu_handlePixel(ppu: *mut Ppu, x: ::core::ffi::c_int, y: ::core::ffi::c_int) {
-    let mut r: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    let mut r2: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    let mut g: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    let mut g2: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    let mut b: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    let mut b2: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+unsafe fn ppu_handlePixel(ppu: *mut Ppu, x: i32, y: i32) {
+    let mut r: i32 = 0 as i32;
+    let mut r2: i32 = 0 as i32;
+    let mut g: i32 = 0 as i32;
+    let mut g2: i32 = 0 as i32;
+    let mut b: i32 = 0 as i32;
+    let mut b2: i32 = 0 as i32;
     if !(*ppu).forcedBlank {
-        let mainLayer: ::core::ffi::c_int =
+        let mainLayer: i32 =
             ppu_getPixel(ppu, x, y, false_0 != 0, &raw mut r, &raw mut g, &raw mut b);
-        let colorWindowState: bool = ppu_getWindowState(ppu, 5 as ::core::ffi::c_int, x);
-        if (*ppu).clipMode as ::core::ffi::c_int == 3 as ::core::ffi::c_int
-            || (*ppu).clipMode as ::core::ffi::c_int == 2 as ::core::ffi::c_int
-                && colorWindowState as ::core::ffi::c_int != 0
-            || (*ppu).clipMode as ::core::ffi::c_int == 1 as ::core::ffi::c_int && !colorWindowState
+        let colorWindowState: bool = ppu_getWindowState(ppu, 5 as i32, x);
+        if (*ppu).clipMode as i32 == 3 as i32
+            || (*ppu).clipMode as i32 == 2 as i32 && colorWindowState as i32 != 0
+            || (*ppu).clipMode as i32 == 1 as i32 && !colorWindowState
         {
-            r = 0 as ::core::ffi::c_int;
-            g = 0 as ::core::ffi::c_int;
-            b = 0 as ::core::ffi::c_int;
+            r = 0 as i32;
+            g = 0 as i32;
+            b = 0 as i32;
         }
-        let mut secondLayer: ::core::ffi::c_int = 5 as ::core::ffi::c_int;
-        let mathEnabled: bool = mainLayer < 6 as ::core::ffi::c_int
-            && (*ppu).mathEnabled[mainLayer as usize] as ::core::ffi::c_int != 0
-            && !((*ppu).preventMathMode as ::core::ffi::c_int == 3 as ::core::ffi::c_int
-                || (*ppu).preventMathMode as ::core::ffi::c_int == 2 as ::core::ffi::c_int
-                    && colorWindowState as ::core::ffi::c_int != 0
-                || (*ppu).preventMathMode as ::core::ffi::c_int == 1 as ::core::ffi::c_int
-                    && !colorWindowState);
-        if mathEnabled as ::core::ffi::c_int != 0 && (*ppu).addSubscreen as ::core::ffi::c_int != 0
-            || (*ppu).pseudoHires as ::core::ffi::c_int != 0
-            || (*ppu).mode as ::core::ffi::c_int == 5 as ::core::ffi::c_int
-            || (*ppu).mode as ::core::ffi::c_int == 6 as ::core::ffi::c_int
+        let mut secondLayer: i32 = 5 as i32;
+        let mathEnabled: bool = mainLayer < 6 as i32
+            && (*ppu).mathEnabled[mainLayer as usize] as i32 != 0
+            && !((*ppu).preventMathMode as i32 == 3 as i32
+                || (*ppu).preventMathMode as i32 == 2 as i32 && colorWindowState as i32 != 0
+                || (*ppu).preventMathMode as i32 == 1 as i32 && !colorWindowState);
+        if mathEnabled as i32 != 0 && (*ppu).addSubscreen as i32 != 0
+            || (*ppu).pseudoHires as i32 != 0
+            || (*ppu).mode as i32 == 5 as i32
+            || (*ppu).mode as i32 == 6 as i32
         {
             secondLayer = ppu_getPixel(
                 ppu,
@@ -1171,775 +1102,600 @@ unsafe fn ppu_handlePixel(ppu: *mut Ppu, x: ::core::ffi::c_int, y: ::core::ffi::
         }
         if mathEnabled {
             if (*ppu).subtractColor {
-                r -= if (*ppu).addSubscreen as ::core::ffi::c_int != 0
-                    && secondLayer != 5 as ::core::ffi::c_int
-                {
+                r -= if (*ppu).addSubscreen as i32 != 0 && secondLayer != 5 as i32 {
                     r2
                 } else {
-                    (*ppu).fixedColorR as ::core::ffi::c_int
+                    (*ppu).fixedColorR as i32
                 };
-                g -= if (*ppu).addSubscreen as ::core::ffi::c_int != 0
-                    && secondLayer != 5 as ::core::ffi::c_int
-                {
+                g -= if (*ppu).addSubscreen as i32 != 0 && secondLayer != 5 as i32 {
                     g2
                 } else {
-                    (*ppu).fixedColorG as ::core::ffi::c_int
+                    (*ppu).fixedColorG as i32
                 };
-                b -= if (*ppu).addSubscreen as ::core::ffi::c_int != 0
-                    && secondLayer != 5 as ::core::ffi::c_int
-                {
+                b -= if (*ppu).addSubscreen as i32 != 0 && secondLayer != 5 as i32 {
                     b2
                 } else {
-                    (*ppu).fixedColorB as ::core::ffi::c_int
+                    (*ppu).fixedColorB as i32
                 };
             } else {
-                r += if (*ppu).addSubscreen as ::core::ffi::c_int != 0
-                    && secondLayer != 5 as ::core::ffi::c_int
-                {
+                r += if (*ppu).addSubscreen as i32 != 0 && secondLayer != 5 as i32 {
                     r2
                 } else {
-                    (*ppu).fixedColorR as ::core::ffi::c_int
+                    (*ppu).fixedColorR as i32
                 };
-                g += if (*ppu).addSubscreen as ::core::ffi::c_int != 0
-                    && secondLayer != 5 as ::core::ffi::c_int
-                {
+                g += if (*ppu).addSubscreen as i32 != 0 && secondLayer != 5 as i32 {
                     g2
                 } else {
-                    (*ppu).fixedColorG as ::core::ffi::c_int
+                    (*ppu).fixedColorG as i32
                 };
-                b += if (*ppu).addSubscreen as ::core::ffi::c_int != 0
-                    && secondLayer != 5 as ::core::ffi::c_int
-                {
+                b += if (*ppu).addSubscreen as i32 != 0 && secondLayer != 5 as i32 {
                     b2
                 } else {
-                    (*ppu).fixedColorB as ::core::ffi::c_int
+                    (*ppu).fixedColorB as i32
                 };
             }
-            if (*ppu).halfColor as ::core::ffi::c_int != 0
-                && (secondLayer != 5 as ::core::ffi::c_int || !(*ppu).addSubscreen)
-            {
-                r >>= 1 as ::core::ffi::c_int;
-                g >>= 1 as ::core::ffi::c_int;
-                b >>= 1 as ::core::ffi::c_int;
+            if (*ppu).halfColor as i32 != 0 && (secondLayer != 5 as i32 || !(*ppu).addSubscreen) {
+                r >>= 1 as i32;
+                g >>= 1 as i32;
+                b >>= 1 as i32;
             }
-            if r > 31 as ::core::ffi::c_int {
-                r = 31 as ::core::ffi::c_int;
+            if r > 31 as i32 {
+                r = 31 as i32;
             }
-            if g > 31 as ::core::ffi::c_int {
-                g = 31 as ::core::ffi::c_int;
+            if g > 31 as i32 {
+                g = 31 as i32;
             }
-            if b > 31 as ::core::ffi::c_int {
-                b = 31 as ::core::ffi::c_int;
+            if b > 31 as i32 {
+                b = 31 as i32;
             }
-            if r < 0 as ::core::ffi::c_int {
-                r = 0 as ::core::ffi::c_int;
+            if r < 0 as i32 {
+                r = 0 as i32;
             }
-            if g < 0 as ::core::ffi::c_int {
-                g = 0 as ::core::ffi::c_int;
+            if g < 0 as i32 {
+                g = 0 as i32;
             }
-            if b < 0 as ::core::ffi::c_int {
-                b = 0 as ::core::ffi::c_int;
+            if b < 0 as i32 {
+                b = 0 as i32;
             }
         }
-        if !((*ppu).pseudoHires as ::core::ffi::c_int != 0
-            || (*ppu).mode as ::core::ffi::c_int == 5 as ::core::ffi::c_int
-            || (*ppu).mode as ::core::ffi::c_int == 6 as ::core::ffi::c_int)
+        if !((*ppu).pseudoHires as i32 != 0
+            || (*ppu).mode as i32 == 5 as i32
+            || (*ppu).mode as i32 == 6 as i32)
         {
             r2 = r;
             g2 = g;
             b2 = b;
         }
     }
-    let row: ::core::ffi::c_int = y - 1 as ::core::ffi::c_int;
+    let row: i32 = y - 1 as i32;
     let pixelBuffer: *mut uint8 = (*ppu).renderBuffer.offset(
         (row as uint32_t)
             .wrapping_mul((*ppu).renderPitch)
-            .wrapping_add(
-                ((x + (*ppu).extraLeftRight as ::core::ffi::c_int) * 4 as ::core::ffi::c_int)
-                    as uint32_t,
-            ) as isize,
+            .wrapping_add(((x + (*ppu).extraLeftRight as i32) * 4 as i32) as uint32_t)
+            as isize,
     ) as *mut uint8_t as *mut uint8;
-    *pixelBuffer.offset(0) = ((b << 3 as ::core::ffi::c_int | b >> 2 as ::core::ffi::c_int)
-        * (*ppu).brightness as ::core::ffi::c_int
-        / 15 as ::core::ffi::c_int) as uint8;
-    *pixelBuffer.offset(1) = ((g << 3 as ::core::ffi::c_int | g >> 2 as ::core::ffi::c_int)
-        * (*ppu).brightness as ::core::ffi::c_int
-        / 15 as ::core::ffi::c_int) as uint8;
-    *pixelBuffer.offset(2) = ((r << 3 as ::core::ffi::c_int | r >> 2 as ::core::ffi::c_int)
-        * (*ppu).brightness as ::core::ffi::c_int
-        / 15 as ::core::ffi::c_int) as uint8;
+    *pixelBuffer.offset(0) =
+        ((b << 3 as i32 | b >> 2 as i32) * (*ppu).brightness as i32 / 15 as i32) as uint8;
+    *pixelBuffer.offset(1) =
+        ((g << 3 as i32 | g >> 2 as i32) * (*ppu).brightness as i32 / 15 as i32) as uint8;
+    *pixelBuffer.offset(2) =
+        ((r << 3 as i32 | r >> 2 as i32) * (*ppu).brightness as i32 / 15 as i32) as uint8;
     *pixelBuffer.offset(3) = 0 as uint8;
 }
 unsafe fn ppu_getPixel(
     ppu: *mut Ppu,
-    x: ::core::ffi::c_int,
-    y: ::core::ffi::c_int,
+    x: i32,
+    y: i32,
     sub: bool,
-    r: *mut ::core::ffi::c_int,
-    g: *mut ::core::ffi::c_int,
-    b: *mut ::core::ffi::c_int,
-) -> ::core::ffi::c_int {
-    let mut actMode: ::core::ffi::c_int = if (*ppu).mode as ::core::ffi::c_int
-        == 1 as ::core::ffi::c_int
-        && (*ppu).bg3priority as ::core::ffi::c_int != 0
-    {
-        8 as ::core::ffi::c_int
+    r: *mut i32,
+    g: *mut i32,
+    b: *mut i32,
+) -> i32 {
+    let mut actMode: i32 = if (*ppu).mode as i32 == 1 as i32 && (*ppu).bg3priority as i32 != 0 {
+        8 as i32
     } else {
-        (*ppu).mode as ::core::ffi::c_int
+        (*ppu).mode as i32
     };
-    actMode = if (*ppu).mode as ::core::ffi::c_int == 7 as ::core::ffi::c_int
-        && (*ppu).m7extBg as ::core::ffi::c_int != 0
-    {
-        9 as ::core::ffi::c_int
+    actMode = if (*ppu).mode as i32 == 7 as i32 && (*ppu).m7extBg as i32 != 0 {
+        9 as i32
     } else {
         actMode
     };
-    let mut layer: ::core::ffi::c_int = 5 as ::core::ffi::c_int;
-    let mut pixel: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+    let mut layer: i32 = 5 as i32;
+    let mut pixel: i32 = 0 as i32;
+    let mut i: i32 = 0 as i32;
     while i < layerCountPerMode[actMode as usize] {
-        let curLayer: ::core::ffi::c_int = layersPerMode[actMode as usize][i as usize];
-        let curPriority: ::core::ffi::c_int = prioritysPerMode[actMode as usize][i as usize];
+        let curLayer: i32 = layersPerMode[actMode as usize][i as usize];
+        let curPriority: i32 = prioritysPerMode[actMode as usize][i as usize];
         let mut layerActive: bool = false_0 != 0;
         if !sub {
-            layerActive = (*ppu).layer[curLayer as usize].mainScreenEnabled as ::core::ffi::c_int
-                != 0
+            layerActive = (*ppu).layer[curLayer as usize].mainScreenEnabled as i32 != 0
                 && (!(*ppu).layer[curLayer as usize].mainScreenWindowed
                     || !ppu_getWindowState(ppu, curLayer, x));
         } else {
-            layerActive = (*ppu).layer[curLayer as usize].subScreenEnabled as ::core::ffi::c_int
-                != 0
+            layerActive = (*ppu).layer[curLayer as usize].subScreenEnabled as i32 != 0
                 && (!(*ppu).layer[curLayer as usize].subScreenWindowed
                     || !ppu_getWindowState(ppu, curLayer, x));
         }
         if layerActive {
-            if curLayer < 4 as ::core::ffi::c_int {
-                let mut lx: ::core::ffi::c_int = x;
-                let mut ly: ::core::ffi::c_int = y;
-                if (*ppu).bgLayer[curLayer as usize].mosaicEnabled as ::core::ffi::c_int != 0
-                    && (*ppu).mosaicSize as ::core::ffi::c_int > 1 as ::core::ffi::c_int
+            if curLayer < 4 as i32 {
+                let mut lx: i32 = x;
+                let mut ly: i32 = y;
+                if (*ppu).bgLayer[curLayer as usize].mosaicEnabled as i32 != 0
+                    && (*ppu).mosaicSize as i32 > 1 as i32
                 {
-                    lx -= lx % (*ppu).mosaicSize as ::core::ffi::c_int;
-                    ly -= (ly - (*ppu).mosaicStartLine as ::core::ffi::c_int)
-                        % (*ppu).mosaicSize as ::core::ffi::c_int;
+                    lx -= lx % (*ppu).mosaicSize as i32;
+                    ly -= (ly - (*ppu).mosaicStartLine as i32) % (*ppu).mosaicSize as i32;
                 }
-                if (*ppu).mode as ::core::ffi::c_int == 7 as ::core::ffi::c_int {
+                if (*ppu).mode as i32 == 7 as i32 {
                     pixel = ppu_getPixelForMode7(ppu, lx, curLayer, curPriority != 0);
                 } else {
-                    lx += (*ppu).bgLayer[curLayer as usize].hScroll as ::core::ffi::c_int;
-                    if (*ppu).mode as ::core::ffi::c_int == 5 as ::core::ffi::c_int
-                        || (*ppu).mode as ::core::ffi::c_int == 6 as ::core::ffi::c_int
-                    {
-                        lx *= 2 as ::core::ffi::c_int;
-                        lx += if sub as ::core::ffi::c_int != 0
-                            || (*ppu).bgLayer[curLayer as usize].mosaicEnabled as ::core::ffi::c_int
-                                != 0
+                    lx += (*ppu).bgLayer[curLayer as usize].hScroll as i32;
+                    if (*ppu).mode as i32 == 5 as i32 || (*ppu).mode as i32 == 6 as i32 {
+                        lx *= 2 as i32;
+                        lx += if sub as i32 != 0
+                            || (*ppu).bgLayer[curLayer as usize].mosaicEnabled as i32 != 0
                         {
-                            0 as ::core::ffi::c_int
+                            0 as i32
                         } else {
-                            1 as ::core::ffi::c_int
+                            1 as i32
                         };
                         if (*ppu).interlace {
-                            ly *= 2 as ::core::ffi::c_int;
-                            ly += if (*ppu).evenFrame as ::core::ffi::c_int != 0
-                                || (*ppu).bgLayer[curLayer as usize].mosaicEnabled
-                                    as ::core::ffi::c_int
-                                    != 0
+                            ly *= 2 as i32;
+                            ly += if (*ppu).evenFrame as i32 != 0
+                                || (*ppu).bgLayer[curLayer as usize].mosaicEnabled as i32 != 0
                             {
-                                0 as ::core::ffi::c_int
+                                0 as i32
                             } else {
-                                1 as ::core::ffi::c_int
+                                1 as i32
                             };
                         }
                     }
-                    ly += (*ppu).bgLayer[curLayer as usize].vScroll as ::core::ffi::c_int;
-                    if (*ppu).mode as ::core::ffi::c_int == 2 as ::core::ffi::c_int
-                        || (*ppu).mode as ::core::ffi::c_int == 4 as ::core::ffi::c_int
-                        || (*ppu).mode as ::core::ffi::c_int == 6 as ::core::ffi::c_int
+                    ly += (*ppu).bgLayer[curLayer as usize].vScroll as i32;
+                    if (*ppu).mode as i32 == 2 as i32
+                        || (*ppu).mode as i32 == 4 as i32
+                        || (*ppu).mode as i32 == 6 as i32
                     {
                         ppu_handleOPT(ppu, curLayer, &raw mut lx, &raw mut ly);
                     }
                     pixel = ppu_getPixelForBgLayer(
                         ppu,
-                        lx & 0x3ff as ::core::ffi::c_int,
-                        ly & 0x3ff as ::core::ffi::c_int,
+                        lx & 0x3ff as i32,
+                        ly & 0x3ff as i32,
                         curLayer,
                         curPriority != 0,
                     );
                 }
             } else {
-                pixel = 0 as ::core::ffi::c_int;
-                if (*ppu).objBuffer.data[(x + kPpuExtraLeftRight as ::core::ffi::c_int) as usize]
-                    as ::core::ffi::c_int
-                    >> 12 as ::core::ffi::c_int
-                    == curPriority * 4 as ::core::ffi::c_int + 2 as ::core::ffi::c_int
+                pixel = 0 as i32;
+                if (*ppu).objBuffer.data[(x + kPpuExtraLeftRight as i32) as usize] as i32
+                    >> 12 as i32
+                    == curPriority * 4 as i32 + 2 as i32
                 {
-                    pixel = (*ppu).objBuffer.data
-                        [(x + kPpuExtraLeftRight as ::core::ffi::c_int) as usize]
-                        as ::core::ffi::c_int
-                        & 0xff as ::core::ffi::c_int;
+                    pixel = (*ppu).objBuffer.data[(x + kPpuExtraLeftRight as i32) as usize] as i32
+                        & 0xff as i32;
                 }
             }
         }
-        if pixel > 0 as ::core::ffi::c_int {
+        if pixel > 0 as i32 {
             layer = curLayer;
             break;
         } else {
             i += 1;
         }
     }
-    if (*ppu).directColor as ::core::ffi::c_int != 0
-        && layer < 4 as ::core::ffi::c_int
-        && bitDepthsPerMode[actMode as usize][layer as usize] == 8 as ::core::ffi::c_int
+    if (*ppu).directColor as i32 != 0
+        && layer < 4 as i32
+        && bitDepthsPerMode[actMode as usize][layer as usize] == 8 as i32
     {
-        *r = (pixel & 0x7 as ::core::ffi::c_int) << 2 as ::core::ffi::c_int
-            | (pixel & 0x100 as ::core::ffi::c_int) >> 7 as ::core::ffi::c_int;
-        *g = (pixel & 0x38 as ::core::ffi::c_int) >> 1 as ::core::ffi::c_int
-            | (pixel & 0x200 as ::core::ffi::c_int) >> 8 as ::core::ffi::c_int;
-        *b = (pixel & 0xc0 as ::core::ffi::c_int) >> 3 as ::core::ffi::c_int
-            | (pixel & 0x400 as ::core::ffi::c_int) >> 8 as ::core::ffi::c_int;
+        *r = (pixel & 0x7 as i32) << 2 as i32 | (pixel & 0x100 as i32) >> 7 as i32;
+        *g = (pixel & 0x38 as i32) >> 1 as i32 | (pixel & 0x200 as i32) >> 8 as i32;
+        *b = (pixel & 0xc0 as i32) >> 3 as i32 | (pixel & 0x400 as i32) >> 8 as i32;
     } else {
-        let color: uint16_t = (*ppu).cgram[(pixel & 0xff as ::core::ffi::c_int) as usize];
-        *r = color as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int;
-        *g = color as ::core::ffi::c_int >> 5 as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int;
-        *b = color as ::core::ffi::c_int >> 10 as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int;
+        let color: uint16_t = (*ppu).cgram[(pixel & 0xff as i32) as usize];
+        *r = color as i32 & 0x1f as i32;
+        *g = color as i32 >> 5 as i32 & 0x1f as i32;
+        *b = color as i32 >> 10 as i32 & 0x1f as i32;
     }
-    if layer == 4 as ::core::ffi::c_int && pixel < 0xc0 as ::core::ffi::c_int {
-        layer = 6 as ::core::ffi::c_int;
+    if layer == 4 as i32 && pixel < 0xc0 as i32 {
+        layer = 6 as i32;
     }
     layer
 }
-unsafe fn ppu_handleOPT(
-    ppu: *mut Ppu,
-    layer: ::core::ffi::c_int,
-    lx: *mut ::core::ffi::c_int,
-    ly: *mut ::core::ffi::c_int,
-) {
-    let x: ::core::ffi::c_int = *lx;
-    let y: ::core::ffi::c_int = *ly;
-    let mut column: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    if (*ppu).mode as ::core::ffi::c_int == 6 as ::core::ffi::c_int {
+unsafe fn ppu_handleOPT(ppu: *mut Ppu, layer: i32, lx: *mut i32, ly: *mut i32) {
+    let x: i32 = *lx;
+    let y: i32 = *ly;
+    let mut column: i32 = 0 as i32;
+    if (*ppu).mode as i32 == 6 as i32 {
         column = x
-            - (x & 0xf as ::core::ffi::c_int)
-            - ((*ppu).bgLayer[layer as usize].hScroll as ::core::ffi::c_int
-                * 2 as ::core::ffi::c_int
-                & 0xfff0 as ::core::ffi::c_int)
-            >> 4 as ::core::ffi::c_int;
+            - (x & 0xf as i32)
+            - ((*ppu).bgLayer[layer as usize].hScroll as i32 * 2 as i32 & 0xfff0 as i32)
+            >> 4 as i32;
     } else {
-        column = x
-            - (x & 0x7 as ::core::ffi::c_int)
-            - ((*ppu).bgLayer[layer as usize].hScroll as ::core::ffi::c_int
-                & 0xfff8 as ::core::ffi::c_int)
-            >> 3 as ::core::ffi::c_int;
+        column =
+            x - (x & 0x7 as i32) - ((*ppu).bgLayer[layer as usize].hScroll as i32 & 0xfff8 as i32)
+                >> 3 as i32;
     }
-    if column > 0 as ::core::ffi::c_int {
-        let valid: ::core::ffi::c_int = if layer == 0 as ::core::ffi::c_int {
-            0x2000 as ::core::ffi::c_int
+    if column > 0 as i32 {
+        let valid: i32 = if layer == 0 as i32 {
+            0x2000 as i32
         } else {
-            0x4000 as ::core::ffi::c_int
+            0x4000 as i32
         };
-        let mut hOffset: uint16_t = ppu_getOffsetValue(
-            ppu,
-            column - 1 as ::core::ffi::c_int,
-            0 as ::core::ffi::c_int,
-        );
+        let mut hOffset: uint16_t = ppu_getOffsetValue(ppu, column - 1 as i32, 0 as i32);
         let mut vOffset: uint16_t = 0 as uint16_t;
-        if (*ppu).mode as ::core::ffi::c_int == 4 as ::core::ffi::c_int {
-            if hOffset as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
+        if (*ppu).mode as i32 == 4 as i32 {
+            if hOffset as i32 & 0x8000 as i32 != 0 {
                 vOffset = hOffset;
                 hOffset = 0 as uint16_t;
             }
         } else {
-            vOffset = ppu_getOffsetValue(
-                ppu,
-                column - 1 as ::core::ffi::c_int,
-                1 as ::core::ffi::c_int,
-            );
+            vOffset = ppu_getOffsetValue(ppu, column - 1 as i32, 1 as i32);
         }
-        if (*ppu).mode as ::core::ffi::c_int == 6 as ::core::ffi::c_int {
-            if hOffset as ::core::ffi::c_int & valid != 0 {
-                *lx = ((hOffset as ::core::ffi::c_int & 0x3f8 as ::core::ffi::c_int)
-                    + column * 8 as ::core::ffi::c_int)
-                    * 2 as ::core::ffi::c_int
-                    | x & 0xf as ::core::ffi::c_int;
+        if (*ppu).mode as i32 == 6 as i32 {
+            if hOffset as i32 & valid != 0 {
+                *lx = ((hOffset as i32 & 0x3f8 as i32) + column * 8 as i32) * 2 as i32
+                    | x & 0xf as i32;
             }
-        } else if hOffset as ::core::ffi::c_int & valid != 0 {
-            *lx = (hOffset as ::core::ffi::c_int & 0x3f8 as ::core::ffi::c_int)
-                + column * 8 as ::core::ffi::c_int
-                | x & 0x7 as ::core::ffi::c_int;
+        } else if hOffset as i32 & valid != 0 {
+            *lx = (hOffset as i32 & 0x3f8 as i32) + column * 8 as i32 | x & 0x7 as i32;
         }
-        if vOffset as ::core::ffi::c_int & valid != 0 {
-            *ly = (vOffset as ::core::ffi::c_int & 0x3ff as ::core::ffi::c_int)
-                + (y - (*ppu).bgLayer[layer as usize].vScroll as ::core::ffi::c_int);
+        if vOffset as i32 & valid != 0 {
+            *ly = (vOffset as i32 & 0x3ff as i32)
+                + (y - (*ppu).bgLayer[layer as usize].vScroll as i32);
         }
     }
 }
-unsafe fn ppu_getOffsetValue(
-    ppu: *mut Ppu,
-    col: ::core::ffi::c_int,
-    row: ::core::ffi::c_int,
-) -> uint16_t {
-    let x: ::core::ffi::c_int = col * 8 as ::core::ffi::c_int
-        + (*ppu).bgLayer[2 as ::core::ffi::c_int as usize].hScroll as ::core::ffi::c_int;
-    let y: ::core::ffi::c_int = row * 8 as ::core::ffi::c_int
-        + (*ppu).bgLayer[2 as ::core::ffi::c_int as usize].vScroll as ::core::ffi::c_int;
-    let tileBits: ::core::ffi::c_int =
-        if (*ppu).bgLayer[2 as ::core::ffi::c_int as usize].bigTiles as ::core::ffi::c_int != 0 {
-            4 as ::core::ffi::c_int
-        } else {
-            3 as ::core::ffi::c_int
-        };
-    let tileHighBit: ::core::ffi::c_int =
-        if (*ppu).bgLayer[2 as ::core::ffi::c_int as usize].bigTiles as ::core::ffi::c_int != 0 {
-            0x200 as ::core::ffi::c_int
-        } else {
-            0x100 as ::core::ffi::c_int
-        };
-    let mut tilemapAdr: uint16_t =
-        ((*ppu).bgLayer[2 as ::core::ffi::c_int as usize].tilemapAdr as ::core::ffi::c_int
-            + ((y >> tileBits & 0x1f as ::core::ffi::c_int) << 5 as ::core::ffi::c_int
-                | x >> tileBits & 0x1f as ::core::ffi::c_int)) as uint16_t;
-    if x & tileHighBit != 0
-        && (*ppu).bgLayer[2 as ::core::ffi::c_int as usize].tilemapWider as ::core::ffi::c_int != 0
-    {
-        tilemapAdr = (tilemapAdr as ::core::ffi::c_int + 0x400 as ::core::ffi::c_int) as uint16_t;
-    }
-    if y & tileHighBit != 0
-        && (*ppu).bgLayer[2 as ::core::ffi::c_int as usize].tilemapHigher as ::core::ffi::c_int != 0
-    {
-        tilemapAdr = (tilemapAdr as ::core::ffi::c_int
-            + if (*ppu).bgLayer[2 as ::core::ffi::c_int as usize].tilemapWider as ::core::ffi::c_int
-                != 0
-            {
-                0x800 as ::core::ffi::c_int
-            } else {
-                0x400 as ::core::ffi::c_int
-            }) as uint16_t;
-    }
-    (*ppu).vram[(tilemapAdr as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int) as usize]
-}
-unsafe fn ppu_getPixelForBgLayer(
-    ppu: *mut Ppu,
-    x: ::core::ffi::c_int,
-    y: ::core::ffi::c_int,
-    layer: ::core::ffi::c_int,
-    priority: bool,
-) -> ::core::ffi::c_int {
-    let wideTiles: bool = (*ppu).bgLayer[layer as usize].bigTiles as ::core::ffi::c_int != 0
-        || (*ppu).mode as ::core::ffi::c_int == 5 as ::core::ffi::c_int
-        || (*ppu).mode as ::core::ffi::c_int == 6 as ::core::ffi::c_int;
-    let tileBitsX: ::core::ffi::c_int = if wideTiles as ::core::ffi::c_int != 0 {
-        4 as ::core::ffi::c_int
+unsafe fn ppu_getOffsetValue(ppu: *mut Ppu, col: i32, row: i32) -> uint16_t {
+    let x: i32 = col * 8 as i32 + (*ppu).bgLayer[2 as i32 as usize].hScroll as i32;
+    let y: i32 = row * 8 as i32 + (*ppu).bgLayer[2 as i32 as usize].vScroll as i32;
+    let tileBits: i32 = if (*ppu).bgLayer[2 as i32 as usize].bigTiles as i32 != 0 {
+        4 as i32
     } else {
-        3 as ::core::ffi::c_int
+        3 as i32
     };
-    let tileHighBitX: ::core::ffi::c_int = if wideTiles as ::core::ffi::c_int != 0 {
-        0x200 as ::core::ffi::c_int
+    let tileHighBit: i32 = if (*ppu).bgLayer[2 as i32 as usize].bigTiles as i32 != 0 {
+        0x200 as i32
     } else {
-        0x100 as ::core::ffi::c_int
+        0x100 as i32
     };
-    let tileBitsY: ::core::ffi::c_int =
-        if (*ppu).bgLayer[layer as usize].bigTiles as ::core::ffi::c_int != 0 {
-            4 as ::core::ffi::c_int
-        } else {
-            3 as ::core::ffi::c_int
-        };
-    let tileHighBitY: ::core::ffi::c_int =
-        if (*ppu).bgLayer[layer as usize].bigTiles as ::core::ffi::c_int != 0 {
-            0x200 as ::core::ffi::c_int
-        } else {
-            0x100 as ::core::ffi::c_int
-        };
-    let mut tilemapAdr: uint16_t = ((*ppu).bgLayer[layer as usize].tilemapAdr as ::core::ffi::c_int
-        + ((y >> tileBitsY & 0x1f as ::core::ffi::c_int) << 5 as ::core::ffi::c_int
-            | x >> tileBitsX & 0x1f as ::core::ffi::c_int))
+    let mut tilemapAdr: uint16_t = ((*ppu).bgLayer[2 as i32 as usize].tilemapAdr as i32
+        + ((y >> tileBits & 0x1f as i32) << 5 as i32 | x >> tileBits & 0x1f as i32))
         as uint16_t;
-    if x & tileHighBitX != 0
-        && (*ppu).bgLayer[layer as usize].tilemapWider as ::core::ffi::c_int != 0
-    {
-        tilemapAdr = (tilemapAdr as ::core::ffi::c_int + 0x400 as ::core::ffi::c_int) as uint16_t;
+    if x & tileHighBit != 0 && (*ppu).bgLayer[2 as i32 as usize].tilemapWider as i32 != 0 {
+        tilemapAdr = (tilemapAdr as i32 + 0x400 as i32) as uint16_t;
     }
-    if y & tileHighBitY != 0
-        && (*ppu).bgLayer[layer as usize].tilemapHigher as ::core::ffi::c_int != 0
-    {
-        tilemapAdr = (tilemapAdr as ::core::ffi::c_int
-            + if (*ppu).bgLayer[layer as usize].tilemapWider as ::core::ffi::c_int != 0 {
-                0x800 as ::core::ffi::c_int
+    if y & tileHighBit != 0 && (*ppu).bgLayer[2 as i32 as usize].tilemapHigher as i32 != 0 {
+        tilemapAdr = (tilemapAdr as i32
+            + if (*ppu).bgLayer[2 as i32 as usize].tilemapWider as i32 != 0 {
+                0x800 as i32
             } else {
-                0x400 as ::core::ffi::c_int
+                0x400 as i32
             }) as uint16_t;
     }
-    let tile: uint16_t =
-        (*ppu).vram[(tilemapAdr as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int) as usize];
-    if (tile as ::core::ffi::c_int & 0x2000 as ::core::ffi::c_int != 0) as ::core::ffi::c_int
-        != priority as ::core::ffi::c_int
-    {
-        return 0 as ::core::ffi::c_int;
+    (*ppu).vram[(tilemapAdr as i32 & 0x7fff as i32) as usize]
+}
+unsafe fn ppu_getPixelForBgLayer(ppu: *mut Ppu, x: i32, y: i32, layer: i32, priority: bool) -> i32 {
+    let wideTiles: bool = (*ppu).bgLayer[layer as usize].bigTiles as i32 != 0
+        || (*ppu).mode as i32 == 5 as i32
+        || (*ppu).mode as i32 == 6 as i32;
+    let tileBitsX: i32 = if wideTiles as i32 != 0 {
+        4 as i32
+    } else {
+        3 as i32
+    };
+    let tileHighBitX: i32 = if wideTiles as i32 != 0 {
+        0x200 as i32
+    } else {
+        0x100 as i32
+    };
+    let tileBitsY: i32 = if (*ppu).bgLayer[layer as usize].bigTiles as i32 != 0 {
+        4 as i32
+    } else {
+        3 as i32
+    };
+    let tileHighBitY: i32 = if (*ppu).bgLayer[layer as usize].bigTiles as i32 != 0 {
+        0x200 as i32
+    } else {
+        0x100 as i32
+    };
+    let mut tilemapAdr: uint16_t = ((*ppu).bgLayer[layer as usize].tilemapAdr as i32
+        + ((y >> tileBitsY & 0x1f as i32) << 5 as i32 | x >> tileBitsX & 0x1f as i32))
+        as uint16_t;
+    if x & tileHighBitX != 0 && (*ppu).bgLayer[layer as usize].tilemapWider as i32 != 0 {
+        tilemapAdr = (tilemapAdr as i32 + 0x400 as i32) as uint16_t;
     }
-    let mut paletteNum: ::core::ffi::c_int =
-        (tile as ::core::ffi::c_int & 0x1c00 as ::core::ffi::c_int) >> 10 as ::core::ffi::c_int;
-    let row: ::core::ffi::c_int = if tile as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0
-    {
-        7 as ::core::ffi::c_int - (y & 0x7 as ::core::ffi::c_int)
+    if y & tileHighBitY != 0 && (*ppu).bgLayer[layer as usize].tilemapHigher as i32 != 0 {
+        tilemapAdr = (tilemapAdr as i32
+            + if (*ppu).bgLayer[layer as usize].tilemapWider as i32 != 0 {
+                0x800 as i32
+            } else {
+                0x400 as i32
+            }) as uint16_t;
+    }
+    let tile: uint16_t = (*ppu).vram[(tilemapAdr as i32 & 0x7fff as i32) as usize];
+    if (tile as i32 & 0x2000 as i32 != 0) as i32 != priority as i32 {
+        return 0 as i32;
+    }
+    let mut paletteNum: i32 = (tile as i32 & 0x1c00 as i32) >> 10 as i32;
+    let row: i32 = if tile as i32 & 0x8000 as i32 != 0 {
+        7 as i32 - (y & 0x7 as i32)
     } else {
-        y & 0x7 as ::core::ffi::c_int
+        y & 0x7 as i32
     };
-    let col: ::core::ffi::c_int = if tile as ::core::ffi::c_int & 0x4000 as ::core::ffi::c_int != 0
-    {
-        x & 0x7 as ::core::ffi::c_int
+    let col: i32 = if tile as i32 & 0x4000 as i32 != 0 {
+        x & 0x7 as i32
     } else {
-        7 as ::core::ffi::c_int - (x & 0x7 as ::core::ffi::c_int)
+        7 as i32 - (x & 0x7 as i32)
     };
-    let mut tileNum: ::core::ffi::c_int = tile as ::core::ffi::c_int & 0x3ff as ::core::ffi::c_int;
-    if wideTiles
-        && (x & 8 as ::core::ffi::c_int != 0) as ::core::ffi::c_int
-            ^ (tile as ::core::ffi::c_int & 0x4000 as ::core::ffi::c_int != 0) as ::core::ffi::c_int
-            != 0
-    {
-        tileNum += 1 as ::core::ffi::c_int;
+    let mut tileNum: i32 = tile as i32 & 0x3ff as i32;
+    if wideTiles && (x & 8 as i32 != 0) as i32 ^ (tile as i32 & 0x4000 as i32 != 0) as i32 != 0 {
+        tileNum += 1 as i32;
     }
     if (*ppu).bgLayer[layer as usize].bigTiles
-        && (y & 8 as ::core::ffi::c_int != 0) as ::core::ffi::c_int
-            ^ (tile as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0) as ::core::ffi::c_int
-            != 0
+        && (y & 8 as i32 != 0) as i32 ^ (tile as i32 & 0x8000 as i32 != 0) as i32 != 0
     {
-        tileNum += 0x10 as ::core::ffi::c_int;
+        tileNum += 0x10 as i32;
     }
-    let bitDepth: ::core::ffi::c_int = bitDepthsPerMode[(*ppu).mode as usize][layer as usize];
-    if (*ppu).mode as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-        paletteNum += 8 as ::core::ffi::c_int * layer;
+    let bitDepth: i32 = bitDepthsPerMode[(*ppu).mode as usize][layer as usize];
+    if (*ppu).mode as i32 == 0 as i32 {
+        paletteNum += 8 as i32 * layer;
     }
-    let mut paletteSize: ::core::ffi::c_int = 4 as ::core::ffi::c_int;
-    let plane1: uint16_t = (*ppu).vram[((*ppu).bgLayer[layer as usize].tileAdr
-        as ::core::ffi::c_int
-        + (tileNum & 0x3ff as ::core::ffi::c_int) * 4 as ::core::ffi::c_int * bitDepth
+    let mut paletteSize: i32 = 4 as i32;
+    let plane1: uint16_t = (*ppu).vram[((*ppu).bgLayer[layer as usize].tileAdr as i32
+        + (tileNum & 0x3ff as i32) * 4 as i32 * bitDepth
         + row
-        & 0x7fff as ::core::ffi::c_int) as usize];
-    let mut pixel: ::core::ffi::c_int =
-        plane1 as ::core::ffi::c_int >> col & 1 as ::core::ffi::c_int;
-    pixel |= (plane1 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int + col
-        & 1 as ::core::ffi::c_int)
-        << 1 as ::core::ffi::c_int;
-    if bitDepth > 2 as ::core::ffi::c_int {
-        paletteSize = 16 as ::core::ffi::c_int;
-        let plane2: uint16_t = (*ppu).vram[((*ppu).bgLayer[layer as usize].tileAdr
-            as ::core::ffi::c_int
-            + (tileNum & 0x3ff as ::core::ffi::c_int) * 4 as ::core::ffi::c_int * bitDepth
-            + 8 as ::core::ffi::c_int
+        & 0x7fff as i32) as usize];
+    let mut pixel: i32 = plane1 as i32 >> col & 1 as i32;
+    pixel |= (plane1 as i32 >> 8 as i32 + col & 1 as i32) << 1 as i32;
+    if bitDepth > 2 as i32 {
+        paletteSize = 16 as i32;
+        let plane2: uint16_t = (*ppu).vram[((*ppu).bgLayer[layer as usize].tileAdr as i32
+            + (tileNum & 0x3ff as i32) * 4 as i32 * bitDepth
+            + 8 as i32
             + row
-            & 0x7fff as ::core::ffi::c_int) as usize];
-        pixel |= (plane2 as ::core::ffi::c_int >> col & 1 as ::core::ffi::c_int)
-            << 2 as ::core::ffi::c_int;
-        pixel |= (plane2 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int + col
-            & 1 as ::core::ffi::c_int)
-            << 3 as ::core::ffi::c_int;
+            & 0x7fff as i32) as usize];
+        pixel |= (plane2 as i32 >> col & 1 as i32) << 2 as i32;
+        pixel |= (plane2 as i32 >> 8 as i32 + col & 1 as i32) << 3 as i32;
     }
-    if bitDepth > 4 as ::core::ffi::c_int {
-        paletteSize = 256 as ::core::ffi::c_int;
-        let plane3: uint16_t = (*ppu).vram[((*ppu).bgLayer[layer as usize].tileAdr
-            as ::core::ffi::c_int
-            + (tileNum & 0x3ff as ::core::ffi::c_int) * 4 as ::core::ffi::c_int * bitDepth
-            + 16 as ::core::ffi::c_int
+    if bitDepth > 4 as i32 {
+        paletteSize = 256 as i32;
+        let plane3: uint16_t = (*ppu).vram[((*ppu).bgLayer[layer as usize].tileAdr as i32
+            + (tileNum & 0x3ff as i32) * 4 as i32 * bitDepth
+            + 16 as i32
             + row
-            & 0x7fff as ::core::ffi::c_int) as usize];
-        pixel |= (plane3 as ::core::ffi::c_int >> col & 1 as ::core::ffi::c_int)
-            << 4 as ::core::ffi::c_int;
-        pixel |= (plane3 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int + col
-            & 1 as ::core::ffi::c_int)
-            << 5 as ::core::ffi::c_int;
-        let plane4: uint16_t = (*ppu).vram[((*ppu).bgLayer[layer as usize].tileAdr
-            as ::core::ffi::c_int
-            + (tileNum & 0x3ff as ::core::ffi::c_int) * 4 as ::core::ffi::c_int * bitDepth
-            + 24 as ::core::ffi::c_int
+            & 0x7fff as i32) as usize];
+        pixel |= (plane3 as i32 >> col & 1 as i32) << 4 as i32;
+        pixel |= (plane3 as i32 >> 8 as i32 + col & 1 as i32) << 5 as i32;
+        let plane4: uint16_t = (*ppu).vram[((*ppu).bgLayer[layer as usize].tileAdr as i32
+            + (tileNum & 0x3ff as i32) * 4 as i32 * bitDepth
+            + 24 as i32
             + row
-            & 0x7fff as ::core::ffi::c_int) as usize];
-        pixel |= (plane4 as ::core::ffi::c_int >> col & 1 as ::core::ffi::c_int)
-            << 6 as ::core::ffi::c_int;
-        pixel |= (plane4 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int + col
-            & 1 as ::core::ffi::c_int)
-            << 7 as ::core::ffi::c_int;
+            & 0x7fff as i32) as usize];
+        pixel |= (plane4 as i32 >> col & 1 as i32) << 6 as i32;
+        pixel |= (plane4 as i32 >> 8 as i32 + col & 1 as i32) << 7 as i32;
     }
-    if pixel == 0 as ::core::ffi::c_int {
-        0 as ::core::ffi::c_int
+    if pixel == 0 as i32 {
+        0 as i32
     } else {
         paletteSize * paletteNum + pixel
     }
 }
-unsafe fn ppu_calculateMode7Starts(ppu: *mut Ppu, mut y: ::core::ffi::c_int) {
+unsafe fn ppu_calculateMode7Starts(ppu: *mut Ppu, mut y: i32) {
     let (xCenter, yCenter, clippedH, clippedV) = ppu_mode7_coordinates(
         (*ppu).m7matrix[6],
         (*ppu).m7matrix[7],
         (*ppu).m7matrix[4],
         (*ppu).m7matrix[5],
     );
-    if (*ppu).bgLayer[0 as ::core::ffi::c_int as usize].mosaicEnabled as ::core::ffi::c_int != 0
-        && (*ppu).mosaicSize as ::core::ffi::c_int > 1 as ::core::ffi::c_int
+    if (*ppu).bgLayer[0 as i32 as usize].mosaicEnabled as i32 != 0
+        && (*ppu).mosaicSize as i32 > 1 as i32
     {
-        y -= (y - (*ppu).mosaicStartLine as ::core::ffi::c_int)
-            % (*ppu).mosaicSize as ::core::ffi::c_int;
+        y -= (y - (*ppu).mosaicStartLine as i32) % (*ppu).mosaicSize as i32;
     }
-    let ry: uint8_t = (if (*ppu).m7yFlip as ::core::ffi::c_int != 0 {
-        255 as ::core::ffi::c_int - y
+    let ry: uint8_t = (if (*ppu).m7yFlip as i32 != 0 {
+        255 as i32 - y
     } else {
         y
     }) as uint8_t;
-    (*ppu).m7startX = (((*ppu).m7matrix[0 as ::core::ffi::c_int as usize] as ::core::ffi::c_int
-        * clippedH
-        & !(63 as ::core::ffi::c_int))
-        + ((*ppu).m7matrix[1 as ::core::ffi::c_int as usize] as ::core::ffi::c_int
-            * ry as ::core::ffi::c_int
-            & !(63 as ::core::ffi::c_int))
-        + ((*ppu).m7matrix[1 as ::core::ffi::c_int as usize] as ::core::ffi::c_int * clippedV
-            & !(63 as ::core::ffi::c_int))
-        + (xCenter << 8 as ::core::ffi::c_int)) as int32_t;
-    (*ppu).m7startY = (((*ppu).m7matrix[2 as ::core::ffi::c_int as usize] as ::core::ffi::c_int
-        * clippedH
-        & !(63 as ::core::ffi::c_int))
-        + ((*ppu).m7matrix[3 as ::core::ffi::c_int as usize] as ::core::ffi::c_int
-            * ry as ::core::ffi::c_int
-            & !(63 as ::core::ffi::c_int))
-        + ((*ppu).m7matrix[3 as ::core::ffi::c_int as usize] as ::core::ffi::c_int * clippedV
-            & !(63 as ::core::ffi::c_int))
-        + (yCenter << 8 as ::core::ffi::c_int)) as int32_t;
+    (*ppu).m7startX = (((*ppu).m7matrix[0 as i32 as usize] as i32 * clippedH & !(63 as i32))
+        + ((*ppu).m7matrix[1 as i32 as usize] as i32 * ry as i32 & !(63 as i32))
+        + ((*ppu).m7matrix[1 as i32 as usize] as i32 * clippedV & !(63 as i32))
+        + (xCenter << 8 as i32)) as int32_t;
+    (*ppu).m7startY = (((*ppu).m7matrix[2 as i32 as usize] as i32 * clippedH & !(63 as i32))
+        + ((*ppu).m7matrix[3 as i32 as usize] as i32 * ry as i32 & !(63 as i32))
+        + ((*ppu).m7matrix[3 as i32 as usize] as i32 * clippedV & !(63 as i32))
+        + (yCenter << 8 as i32)) as int32_t;
 }
-unsafe fn ppu_getPixelForMode7(
-    ppu: *mut Ppu,
-    x: ::core::ffi::c_int,
-    layer: ::core::ffi::c_int,
-    priority: bool,
-) -> ::core::ffi::c_int {
-    let rx: uint8_t = (if (*ppu).m7xFlip as ::core::ffi::c_int != 0 {
-        255 as ::core::ffi::c_int - x
+unsafe fn ppu_getPixelForMode7(ppu: *mut Ppu, x: i32, layer: i32, priority: bool) -> i32 {
+    let rx: uint8_t = (if (*ppu).m7xFlip as i32 != 0 {
+        255 as i32 - x
     } else {
         x
     }) as uint8_t;
-    let mut xPos: ::core::ffi::c_int = (*ppu).m7startX as ::core::ffi::c_int
-        + (*ppu).m7matrix[0 as ::core::ffi::c_int as usize] as ::core::ffi::c_int
-            * rx as ::core::ffi::c_int
-        >> 8 as ::core::ffi::c_int;
-    let mut yPos: ::core::ffi::c_int = (*ppu).m7startY as ::core::ffi::c_int
-        + (*ppu).m7matrix[2 as ::core::ffi::c_int as usize] as ::core::ffi::c_int
-            * rx as ::core::ffi::c_int
-        >> 8 as ::core::ffi::c_int;
-    let mut outsideMap: bool = xPos < 0 as ::core::ffi::c_int
-        || xPos >= 1024 as ::core::ffi::c_int
-        || yPos < 0 as ::core::ffi::c_int
-        || yPos >= 1024 as ::core::ffi::c_int;
-    xPos &= 0x3ff as ::core::ffi::c_int;
-    yPos &= 0x3ff as ::core::ffi::c_int;
+    let mut xPos: i32 =
+        (*ppu).m7startX as i32 + (*ppu).m7matrix[0 as i32 as usize] as i32 * rx as i32 >> 8 as i32;
+    let mut yPos: i32 =
+        (*ppu).m7startY as i32 + (*ppu).m7matrix[2 as i32 as usize] as i32 * rx as i32 >> 8 as i32;
+    let mut outsideMap: bool =
+        xPos < 0 as i32 || xPos >= 1024 as i32 || yPos < 0 as i32 || yPos >= 1024 as i32;
+    xPos &= 0x3ff as i32;
+    yPos &= 0x3ff as i32;
     if !(*ppu).m7largeField {
         outsideMap = false_0 != 0;
     }
-    let tile: uint8_t = (if outsideMap as ::core::ffi::c_int != 0 {
-        0 as ::core::ffi::c_int
+    let tile: uint8_t = (if outsideMap as i32 != 0 {
+        0 as i32
     } else {
-        (*ppu).vram[((yPos >> 3 as ::core::ffi::c_int) * 128 as ::core::ffi::c_int
-            + (xPos >> 3 as ::core::ffi::c_int)) as usize] as ::core::ffi::c_int
-            & 0xff as ::core::ffi::c_int
+        (*ppu).vram[((yPos >> 3 as i32) * 128 as i32 + (xPos >> 3 as i32)) as usize] as i32
+            & 0xff as i32
     }) as uint8_t;
-    let pixel: uint8_t = (if outsideMap as ::core::ffi::c_int != 0 && !(*ppu).m7charFill {
-        0 as ::core::ffi::c_int
+    let pixel: uint8_t = (if outsideMap as i32 != 0 && !(*ppu).m7charFill {
+        0 as i32
     } else {
-        (*ppu).vram[(tile as ::core::ffi::c_int * 64 as ::core::ffi::c_int
-            + (yPos & 7 as ::core::ffi::c_int) * 8 as ::core::ffi::c_int
-            + (xPos & 7 as ::core::ffi::c_int)) as usize] as ::core::ffi::c_int
-            >> 8 as ::core::ffi::c_int
+        (*ppu).vram
+            [(tile as i32 * 64 as i32 + (yPos & 7 as i32) * 8 as i32 + (xPos & 7 as i32)) as usize]
+            as i32
+            >> 8 as i32
     }) as uint8_t;
-    if layer == 1 as ::core::ffi::c_int {
-        if (pixel as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0) as ::core::ffi::c_int
-            != priority as ::core::ffi::c_int
-        {
-            return 0 as ::core::ffi::c_int;
+    if layer == 1 as i32 {
+        if (pixel as i32 & 0x80 as i32 != 0) as i32 != priority as i32 {
+            return 0 as i32;
         }
-        return pixel as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int;
+        return pixel as i32 & 0x7f as i32;
     }
-    pixel as ::core::ffi::c_int
+    pixel as i32
 }
-unsafe fn ppu_getWindowState(
-    ppu: *mut Ppu,
-    layer: ::core::ffi::c_int,
-    x: ::core::ffi::c_int,
-) -> bool {
+unsafe fn ppu_getWindowState(ppu: *mut Ppu, layer: i32, x: i32) -> bool {
     if !(*ppu).windowLayer[layer as usize].window1enabled
         && !(*ppu).windowLayer[layer as usize].window2enabled
     {
         return false_0 != 0;
     }
-    if (*ppu).windowLayer[layer as usize].window1enabled as ::core::ffi::c_int != 0
+    if (*ppu).windowLayer[layer as usize].window1enabled as i32 != 0
         && !(*ppu).windowLayer[layer as usize].window2enabled
     {
-        let test: bool = x >= (*ppu).window1left as ::core::ffi::c_int
-            && x <= (*ppu).window1right as ::core::ffi::c_int;
-        return if (*ppu).windowLayer[layer as usize].window1inversed as ::core::ffi::c_int != 0 {
-            !test as ::core::ffi::c_int
+        let test: bool = x >= (*ppu).window1left as i32 && x <= (*ppu).window1right as i32;
+        return if (*ppu).windowLayer[layer as usize].window1inversed as i32 != 0 {
+            !test as i32
         } else {
-            test as ::core::ffi::c_int
+            test as i32
         } != 0;
     }
     if !(*ppu).windowLayer[layer as usize].window1enabled
-        && (*ppu).windowLayer[layer as usize].window2enabled as ::core::ffi::c_int != 0
+        && (*ppu).windowLayer[layer as usize].window2enabled as i32 != 0
     {
-        let test_0: bool = x >= (*ppu).window2left as ::core::ffi::c_int
-            && x <= (*ppu).window2right as ::core::ffi::c_int;
-        return if (*ppu).windowLayer[layer as usize].window2inversed as ::core::ffi::c_int != 0 {
-            !test_0 as ::core::ffi::c_int
+        let test_0: bool = x >= (*ppu).window2left as i32 && x <= (*ppu).window2right as i32;
+        return if (*ppu).windowLayer[layer as usize].window2inversed as i32 != 0 {
+            !test_0 as i32
         } else {
-            test_0 as ::core::ffi::c_int
+            test_0 as i32
         } != 0;
     }
-    let mut test1: bool = x >= (*ppu).window1left as ::core::ffi::c_int
-        && x <= (*ppu).window1right as ::core::ffi::c_int;
-    let mut test2: bool = x >= (*ppu).window2left as ::core::ffi::c_int
-        && x <= (*ppu).window2right as ::core::ffi::c_int;
+    let mut test1: bool = x >= (*ppu).window1left as i32 && x <= (*ppu).window1right as i32;
+    let mut test2: bool = x >= (*ppu).window2left as i32 && x <= (*ppu).window2right as i32;
     if (*ppu).windowLayer[layer as usize].window1inversed {
         test1 = !test1;
     }
     if (*ppu).windowLayer[layer as usize].window2inversed {
         test2 = !test2;
     }
-    match (*ppu).windowLayer[layer as usize].maskLogic as ::core::ffi::c_int {
-        0 => return test1 as ::core::ffi::c_int != 0 || test2 as ::core::ffi::c_int != 0,
-        1 => return test1 as ::core::ffi::c_int != 0 && test2 as ::core::ffi::c_int != 0,
-        2 => return test1 as ::core::ffi::c_int != test2 as ::core::ffi::c_int,
-        3 => return test1 as ::core::ffi::c_int == test2 as ::core::ffi::c_int,
+    match (*ppu).windowLayer[layer as usize].maskLogic as i32 {
+        0 => return test1 as i32 != 0 || test2 as i32 != 0,
+        1 => return test1 as i32 != 0 && test2 as i32 != 0,
+        2 => return test1 as i32 != test2 as i32,
+        3 => return test1 as i32 == test2 as i32,
         _ => {}
     }
     false_0 != 0
 }
-unsafe fn ppu_evaluateSprites(ppu: *mut Ppu, line: ::core::ffi::c_int) -> bool {
-    let mut index: uint8_t = (if (*ppu).objPriority as ::core::ffi::c_int != 0 {
-        (*ppu).oamAdr as ::core::ffi::c_int & 0xfe as ::core::ffi::c_int
+unsafe fn ppu_evaluateSprites(ppu: *mut Ppu, line: i32) -> bool {
+    let mut index: uint8_t = (if (*ppu).objPriority as i32 != 0 {
+        (*ppu).oamAdr as i32 & 0xfe as i32
     } else {
-        0 as ::core::ffi::c_int
+        0 as i32
     }) as uint8_t;
-    let mut spritesFound: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    let mut tilesFound: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    while i < 128 as ::core::ffi::c_int {
-        let y: uint8_t = ((*ppu).oam[index as usize] as ::core::ffi::c_int
-            >> 8 as ::core::ffi::c_int) as uint8_t;
-        let mut row: uint8_t = (line - y as ::core::ffi::c_int) as uint8_t;
-        let spriteSize: ::core::ffi::c_int = spriteSizes[(*ppu).objSize as usize][((*ppu).highOam
-            [(index as ::core::ffi::c_int >> 3 as ::core::ffi::c_int) as usize]
-            as ::core::ffi::c_int
-            >> (index as ::core::ffi::c_int & 7 as ::core::ffi::c_int) + 1 as ::core::ffi::c_int
-            & 1 as ::core::ffi::c_int)
+    let mut spritesFound: i32 = 0 as i32;
+    let mut tilesFound: i32 = 0 as i32;
+    let mut i: i32 = 0 as i32;
+    while i < 128 as i32 {
+        let y: uint8_t = ((*ppu).oam[index as usize] as i32 >> 8 as i32) as uint8_t;
+        let mut row: uint8_t = (line - y as i32) as uint8_t;
+        let spriteSize: i32 = spriteSizes[(*ppu).objSize as usize][((*ppu).highOam
+            [(index as i32 >> 3 as i32) as usize]
+            as i32
+            >> (index as i32 & 7 as i32) + 1 as i32
+            & 1 as i32)
             as usize];
-        let spriteHeight: ::core::ffi::c_int = if (*ppu).objInterlace as ::core::ffi::c_int != 0 {
-            spriteSize / 2 as ::core::ffi::c_int
+        let spriteHeight: i32 = if (*ppu).objInterlace as i32 != 0 {
+            spriteSize / 2 as i32
         } else {
             spriteSize
         };
-        if (row as ::core::ffi::c_int) < spriteHeight {
-            let mut x: ::core::ffi::c_int =
-                (*ppu).oam[index as usize] as ::core::ffi::c_int & 0xff as ::core::ffi::c_int;
-            x |= ((*ppu).highOam[(index as ::core::ffi::c_int >> 3 as ::core::ffi::c_int) as usize]
-                as ::core::ffi::c_int
-                >> (index as ::core::ffi::c_int & 7 as ::core::ffi::c_int)
-                & 1 as ::core::ffi::c_int)
-                << 8 as ::core::ffi::c_int;
-            if x > 255 as ::core::ffi::c_int {
-                x -= 512 as ::core::ffi::c_int;
+        if (row as i32) < spriteHeight {
+            let mut x: i32 = (*ppu).oam[index as usize] as i32 & 0xff as i32;
+            x |= ((*ppu).highOam[(index as i32 >> 3 as i32) as usize] as i32
+                >> (index as i32 & 7 as i32)
+                & 1 as i32)
+                << 8 as i32;
+            if x > 255 as i32 {
+                x -= 512 as i32;
             }
             if x > -spriteSize {
                 spritesFound += 1;
-                if spritesFound > 32 as ::core::ffi::c_int {
+                if spritesFound > 32 as i32 {
                     (*ppu).rangeOver = true_0 != 0;
                     break;
                 } else {
                     if (*ppu).objInterlace {
-                        row = (row as ::core::ffi::c_int * 2 as ::core::ffi::c_int
-                            + (if (*ppu).evenFrame as ::core::ffi::c_int != 0 {
-                                0 as ::core::ffi::c_int
+                        row = (row as i32 * 2 as i32
+                            + (if (*ppu).evenFrame as i32 != 0 {
+                                0 as i32
                             } else {
-                                1 as ::core::ffi::c_int
+                                1 as i32
                             })) as uint8_t;
                     }
-                    let oam1: ::core::ffi::c_int = (*ppu).oam
-                        [(index as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as usize]
-                        as ::core::ffi::c_int;
-                    let tile: ::core::ffi::c_int = oam1 & 0xff as ::core::ffi::c_int;
-                    let objAdr: ::core::ffi::c_int = if oam1 & 0x100 as ::core::ffi::c_int != 0 {
-                        (*ppu).objTileAdr2 as ::core::ffi::c_int
+                    let oam1: i32 = (*ppu).oam[(index as i32 + 1 as i32) as usize] as i32;
+                    let tile: i32 = oam1 & 0xff as i32;
+                    let objAdr: i32 = if oam1 & 0x100 as i32 != 0 {
+                        (*ppu).objTileAdr2 as i32
                     } else {
-                        (*ppu).objTileAdr1 as ::core::ffi::c_int
+                        (*ppu).objTileAdr1 as i32
                     };
-                    let palette: ::core::ffi::c_int =
-                        (oam1 & 0xe00 as ::core::ffi::c_int) >> 9 as ::core::ffi::c_int;
-                    let hFlipped: bool = oam1 & 0x4000 as ::core::ffi::c_int != 0;
-                    if oam1 & 0x8000 as ::core::ffi::c_int != 0 {
-                        row = (spriteSize - 1 as ::core::ffi::c_int - row as ::core::ffi::c_int)
-                            as uint8_t;
+                    let palette: i32 = (oam1 & 0xe00 as i32) >> 9 as i32;
+                    let hFlipped: bool = oam1 & 0x4000 as i32 != 0;
+                    if oam1 & 0x8000 as i32 != 0 {
+                        row = (spriteSize - 1 as i32 - row as i32) as uint8_t;
                     }
-                    let paletteBase: ::core::ffi::c_int = 0x80 as ::core::ffi::c_int
-                        + 16 as ::core::ffi::c_int
-                            * ((oam1 & 0xe00 as ::core::ffi::c_int) >> 9 as ::core::ffi::c_int);
-                    let prio: ::core::ffi::c_int = (((oam1 & 0x3000 as ::core::ffi::c_int)
-                        >> 12 as ::core::ffi::c_int)
-                        * 4 as ::core::ffi::c_int
-                        + 2 as ::core::ffi::c_int)
-                        * 16 as ::core::ffi::c_int
-                        + 4 as ::core::ffi::c_int
-                        + (if oam1 & 0x800 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-                            2 as ::core::ffi::c_int
+                    let paletteBase: i32 =
+                        0x80 as i32 + 16 as i32 * ((oam1 & 0xe00 as i32) >> 9 as i32);
+                    let prio: i32 = (((oam1 & 0x3000 as i32) >> 12 as i32) * 4 as i32 + 2 as i32)
+                        * 16 as i32
+                        + 4 as i32
+                        + (if oam1 & 0x800 as i32 == 0 as i32 {
+                            2 as i32
                         } else {
-                            0 as ::core::ffi::c_int
+                            0 as i32
                         });
-                    let z: PpuZbufType =
-                        (paletteBase + (prio << 8 as ::core::ffi::c_int)) as PpuZbufType;
-                    let mut col: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+                    let z: PpuZbufType = (paletteBase + (prio << 8 as i32)) as PpuZbufType;
+                    let mut col: i32 = 0 as i32;
                     while col < spriteSize {
-                        if col + x > -(8 as ::core::ffi::c_int)
-                            && col + x < 256 as ::core::ffi::c_int
-                        {
+                        if col + x > -(8 as i32) && col + x < 256 as i32 {
                             tilesFound += 1;
-                            if tilesFound > 34 as ::core::ffi::c_int {
+                            if tilesFound > 34 as i32 {
                                 (*ppu).timeOver = true_0 != 0;
                                 break;
                             } else {
-                                let usedCol: ::core::ffi::c_int =
-                                    if oam1 & 0x4000 as ::core::ffi::c_int != 0 {
-                                        spriteSize - 1 as ::core::ffi::c_int - col
-                                    } else {
-                                        col
-                                    };
-                                let usedTile: ::core::ffi::c_int = ((oam1
-                                    & 0xff as ::core::ffi::c_int)
-                                    >> 4 as ::core::ffi::c_int)
-                                    + (row as ::core::ffi::c_int >> 3 as ::core::ffi::c_int)
-                                    << 4 as ::core::ffi::c_int
-                                    | (oam1 & 0xf as ::core::ffi::c_int)
-                                        + (usedCol >> 3 as ::core::ffi::c_int)
-                                        & 0xf as ::core::ffi::c_int;
+                                let usedCol: i32 = if oam1 & 0x4000 as i32 != 0 {
+                                    spriteSize - 1 as i32 - col
+                                } else {
+                                    col
+                                };
+                                let usedTile: i32 = ((oam1 & 0xff as i32) >> 4 as i32)
+                                    + (row as i32 >> 3 as i32)
+                                    << 4 as i32
+                                    | (oam1 & 0xf as i32) + (usedCol >> 3 as i32) & 0xf as i32;
                                 let addr: *mut uint16 =
                                     (&raw mut (*ppu).vram as *mut uint16_t).offset(
-                                        (objAdr
-                                            + usedTile * 16 as ::core::ffi::c_int
-                                            + (row as ::core::ffi::c_int
-                                                & 0x7 as ::core::ffi::c_int)
-                                            & 0x7fff as ::core::ffi::c_int)
+                                        (objAdr + usedTile * 16 as i32 + (row as i32 & 0x7 as i32)
+                                            & 0x7fff as i32)
                                             as isize,
                                     ) as *mut uint16;
-                                let plane: uint32 = (*addr.offset(0) as ::core::ffi::c_int
-                                    | (*addr.offset(8) as ::core::ffi::c_int)
-                                        << 16 as ::core::ffi::c_int)
+                                let plane: uint32 = (*addr.offset(0) as i32
+                                    | (*addr.offset(8) as i32) << 16 as i32)
                                     as uint32;
-                                let px_left: ::core::ffi::c_int = IntMax(
-                                    -(col + x + kPpuExtraLeftRight as ::core::ffi::c_int),
-                                    0 as ::core::ffi::c_int,
-                                );
-                                let px_right: ::core::ffi::c_int = IntMin(
-                                    256 as ::core::ffi::c_int
-                                        + kPpuExtraLeftRight as ::core::ffi::c_int
-                                        - (col + x),
-                                    8 as ::core::ffi::c_int,
+                                let px_left: i32 =
+                                    IntMax(-(col + x + kPpuExtraLeftRight as i32), 0 as i32);
+                                let px_right: i32 = IntMin(
+                                    256 as i32 + kPpuExtraLeftRight as i32 - (col + x),
+                                    8 as i32,
                                 );
                                 let dst: *mut PpuZbufType = (&raw mut (*ppu).objBuffer.data
                                     as *mut PpuZbufType)
                                     .offset(col as isize)
                                     .offset(x as isize)
                                     .offset(px_left as isize)
-                                    .offset(kPpuExtraLeftRight as ::core::ffi::c_int as isize);
+                                    .offset(kPpuExtraLeftRight as i32 as isize);
                                 if px_left < px_right {
                                     draw_sprite_tile_span(
                                         core::slice::from_raw_parts_mut(
@@ -1954,67 +1710,56 @@ unsafe fn ppu_evaluateSprites(ppu: *mut Ppu, line: ::core::ffi::c_int) -> bool {
                                 }
                             }
                         }
-                        col += 8 as ::core::ffi::c_int;
+                        col += 8 as i32;
                     }
-                    if tilesFound > 34 as ::core::ffi::c_int {
+                    if tilesFound > 34 as i32 {
                         break;
                     }
                 }
             }
         }
-        index = (index as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint8_t;
+        index = (index as i32 + 2 as i32) as uint8_t;
         i += 1;
     }
-    tilesFound != 0 as ::core::ffi::c_int
+    tilesFound != 0 as i32
 }
 unsafe fn ppu_getVramRemap(ppu: *mut Ppu) -> uint16_t {
     let adr: uint16_t = (*ppu).vramPointer;
-    match (*ppu).vramRemapMode as ::core::ffi::c_int {
+    match (*ppu).vramRemapMode as i32 {
         0 => return adr,
         1 => {
-            return (adr as ::core::ffi::c_int & 0xff00 as ::core::ffi::c_int
-                | (adr as ::core::ffi::c_int & 0xe0 as ::core::ffi::c_int)
-                    >> 5 as ::core::ffi::c_int
-                | (adr as ::core::ffi::c_int & 0x1f as ::core::ffi::c_int)
-                    << 3 as ::core::ffi::c_int) as uint16_t;
+            return (adr as i32 & 0xff00 as i32
+                | (adr as i32 & 0xe0 as i32) >> 5 as i32
+                | (adr as i32 & 0x1f as i32) << 3 as i32) as uint16_t;
         }
         2 => {
-            return (adr as ::core::ffi::c_int & 0xfe00 as ::core::ffi::c_int
-                | (adr as ::core::ffi::c_int & 0x1c0 as ::core::ffi::c_int)
-                    >> 6 as ::core::ffi::c_int
-                | (adr as ::core::ffi::c_int & 0x3f as ::core::ffi::c_int)
-                    << 3 as ::core::ffi::c_int) as uint16_t;
+            return (adr as i32 & 0xfe00 as i32
+                | (adr as i32 & 0x1c0 as i32) >> 6 as i32
+                | (adr as i32 & 0x3f as i32) << 3 as i32) as uint16_t;
         }
         3 => {
-            return (adr as ::core::ffi::c_int & 0xfc00 as ::core::ffi::c_int
-                | (adr as ::core::ffi::c_int & 0x380 as ::core::ffi::c_int)
-                    >> 7 as ::core::ffi::c_int
-                | (adr as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int)
-                    << 3 as ::core::ffi::c_int) as uint16_t;
+            return (adr as i32 & 0xfc00 as i32
+                | (adr as i32 & 0x380 as i32) >> 7 as i32
+                | (adr as i32 & 0x7f as i32) << 3 as i32) as uint16_t;
         }
         _ => {}
     }
     adr
 }
 pub unsafe fn ppu_read(ppu: *mut Ppu, adr: uint8_t) -> uint8_t {
-    match adr as ::core::ffi::c_int {
+    match adr as i32 {
         4 | 20 | 36 | 5 | 21 | 37 | 6 | 22 | 38 | 8 | 24 | 40 | 9 | 25 | 41 | 10 | 26 | 42 => {
             (*ppu).ppu1openBus
         }
         52 | 53 | 54 => {
-            let result: ::core::ffi::c_int = (*ppu).m7matrix[0 as ::core::ffi::c_int as usize]
-                as ::core::ffi::c_int
-                * ((*ppu).m7matrix[1 as ::core::ffi::c_int as usize] as ::core::ffi::c_int
-                    >> 8 as ::core::ffi::c_int);
-            (*ppu).ppu1openBus = (result
-                >> 8 as ::core::ffi::c_int
-                    * (adr as ::core::ffi::c_int - 0x34 as ::core::ffi::c_int)
-                & 0xff as ::core::ffi::c_int) as uint8_t;
+            let result: i32 = (*ppu).m7matrix[0 as i32 as usize] as i32
+                * ((*ppu).m7matrix[1 as i32 as usize] as i32 >> 8 as i32);
+            (*ppu).ppu1openBus =
+                (result >> 8 as i32 * (adr as i32 - 0x34 as i32) & 0xff as i32) as uint8_t;
             (*ppu).ppu1openBus
         }
         55 => {
-            (*ppu).hCount =
-                ((*(*ppu).snes).hPos as ::core::ffi::c_int / 4 as ::core::ffi::c_int) as uint16_t;
+            (*ppu).hCount = ((*(*ppu).snes).hPos as i32 / 4 as i32) as uint16_t;
             (*ppu).vCount = (*(*ppu).snes).vPos;
             (*ppu).countersLatched = true_0 != 0;
             (*(*ppu).snes).openBus
@@ -2022,26 +1767,21 @@ pub unsafe fn ppu_read(ppu: *mut Ppu, adr: uint8_t) -> uint8_t {
         56 => {
             let mut ret: uint8_t = 0 as uint8_t;
             if (*ppu).oamInHigh {
-                ret = (*ppu).highOam[(((*ppu).oamAdr as ::core::ffi::c_int
-                    & 0xf as ::core::ffi::c_int)
-                    << 1 as ::core::ffi::c_int
-                    | (*ppu).oamSecondWrite as ::core::ffi::c_int)
-                    as usize];
+                ret = (*ppu).highOam[(((*ppu).oamAdr as i32 & 0xf as i32) << 1 as i32
+                    | (*ppu).oamSecondWrite as i32) as usize];
                 if (*ppu).oamSecondWrite {
                     (*ppu).oamAdr = (*ppu).oamAdr.wrapping_add(1);
-                    if (*ppu).oamAdr as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+                    if (*ppu).oamAdr as i32 == 0 as i32 {
                         (*ppu).oamInHigh = false_0 != 0;
                     }
                 }
             } else if !(*ppu).oamSecondWrite {
-                ret = ((*ppu).oam[(*ppu).oamAdr as usize] as ::core::ffi::c_int
-                    & 0xff as ::core::ffi::c_int) as uint8_t;
+                ret = ((*ppu).oam[(*ppu).oamAdr as usize] as i32 & 0xff as i32) as uint8_t;
             } else {
                 let fresh2 = (*ppu).oamAdr;
                 (*ppu).oamAdr = (*ppu).oamAdr.wrapping_add(1);
-                ret = ((*ppu).oam[fresh2 as usize] as ::core::ffi::c_int >> 8 as ::core::ffi::c_int)
-                    as uint8_t;
-                if (*ppu).oamAdr as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+                ret = ((*ppu).oam[fresh2 as usize] as i32 >> 8 as i32) as uint8_t;
+                if (*ppu).oamAdr as i32 == 0 as i32 {
                     (*ppu).oamInHigh = true_0 != 0;
                 }
             }
@@ -2052,44 +1792,35 @@ pub unsafe fn ppu_read(ppu: *mut Ppu, adr: uint8_t) -> uint8_t {
         57 => {
             let val: uint16_t = (*ppu).vramReadBuffer;
             if !(*ppu).vramIncrementOnHigh {
-                (*ppu).vramReadBuffer = (*ppu).vram[(ppu_getVramRemap(ppu) as ::core::ffi::c_int
-                    & 0x7fff as ::core::ffi::c_int)
-                    as usize];
-                (*ppu).vramPointer = ((*ppu).vramPointer as ::core::ffi::c_int
-                    + (*ppu).vramIncrement as ::core::ffi::c_int)
-                    as uint16_t;
+                (*ppu).vramReadBuffer =
+                    (*ppu).vram[(ppu_getVramRemap(ppu) as i32 & 0x7fff as i32) as usize];
+                (*ppu).vramPointer =
+                    ((*ppu).vramPointer as i32 + (*ppu).vramIncrement as i32) as uint16_t;
             }
-            (*ppu).ppu1openBus =
-                (val as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint8_t;
-            (val as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint8_t
+            (*ppu).ppu1openBus = (val as i32 & 0xff as i32) as uint8_t;
+            (val as i32 & 0xff as i32) as uint8_t
         }
         58 => {
             let val_0: uint16_t = (*ppu).vramReadBuffer;
             if (*ppu).vramIncrementOnHigh {
-                (*ppu).vramReadBuffer = (*ppu).vram[(ppu_getVramRemap(ppu) as ::core::ffi::c_int
-                    & 0x7fff as ::core::ffi::c_int)
-                    as usize];
-                (*ppu).vramPointer = ((*ppu).vramPointer as ::core::ffi::c_int
-                    + (*ppu).vramIncrement as ::core::ffi::c_int)
-                    as uint16_t;
+                (*ppu).vramReadBuffer =
+                    (*ppu).vram[(ppu_getVramRemap(ppu) as i32 & 0x7fff as i32) as usize];
+                (*ppu).vramPointer =
+                    ((*ppu).vramPointer as i32 + (*ppu).vramIncrement as i32) as uint16_t;
             }
-            (*ppu).ppu1openBus =
-                (val_0 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint8_t;
-            (val_0 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint8_t
+            (*ppu).ppu1openBus = (val_0 as i32 >> 8 as i32) as uint8_t;
+            (val_0 as i32 >> 8 as i32) as uint8_t
         }
         59 => {
             let mut ret_0: uint8_t = 0 as uint8_t;
             if !(*ppu).cgramSecondWrite {
-                ret_0 = ((*ppu).cgram[(*ppu).cgramPointer as usize] as ::core::ffi::c_int
-                    & 0xff as ::core::ffi::c_int) as uint8_t;
+                ret_0 =
+                    ((*ppu).cgram[(*ppu).cgramPointer as usize] as i32 & 0xff as i32) as uint8_t;
             } else {
                 let fresh3 = (*ppu).cgramPointer;
                 (*ppu).cgramPointer = (*ppu).cgramPointer.wrapping_add(1);
-                ret_0 = ((*ppu).cgram[fresh3 as usize] as ::core::ffi::c_int
-                    >> 8 as ::core::ffi::c_int
-                    & 0x7f as ::core::ffi::c_int
-                    | (*ppu).ppu2openBus as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int)
-                    as uint8_t;
+                ret_0 = ((*ppu).cgram[fresh3 as usize] as i32 >> 8 as i32 & 0x7f as i32
+                    | (*ppu).ppu2openBus as i32 & 0x80 as i32) as uint8_t;
             }
             (*ppu).cgramSecondWrite = !(*ppu).cgramSecondWrite;
             (*ppu).ppu2openBus = ret_0;
@@ -2098,13 +1829,10 @@ pub unsafe fn ppu_read(ppu: *mut Ppu, adr: uint8_t) -> uint8_t {
         60 => {
             let mut val_1: uint8_t = 0 as uint8_t;
             if (*ppu).hCountSecond {
-                val_1 = ((*ppu).hCount as ::core::ffi::c_int >> 8 as ::core::ffi::c_int
-                    & 1 as ::core::ffi::c_int
-                    | (*ppu).ppu2openBus as ::core::ffi::c_int & 0xfe as ::core::ffi::c_int)
-                    as uint8_t;
+                val_1 = ((*ppu).hCount as i32 >> 8 as i32 & 1 as i32
+                    | (*ppu).ppu2openBus as i32 & 0xfe as i32) as uint8_t;
             } else {
-                val_1 =
-                    ((*ppu).hCount as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint8_t;
+                val_1 = ((*ppu).hCount as i32 & 0xff as i32) as uint8_t;
             }
             (*ppu).hCountSecond = !(*ppu).hCountSecond;
             (*ppu).ppu2openBus = val_1;
@@ -2113,13 +1841,10 @@ pub unsafe fn ppu_read(ppu: *mut Ppu, adr: uint8_t) -> uint8_t {
         61 => {
             let mut val_2: uint8_t = 0 as uint8_t;
             if (*ppu).vCountSecond {
-                val_2 = ((*ppu).vCount as ::core::ffi::c_int >> 8 as ::core::ffi::c_int
-                    & 1 as ::core::ffi::c_int
-                    | (*ppu).ppu2openBus as ::core::ffi::c_int & 0xfe as ::core::ffi::c_int)
-                    as uint8_t;
+                val_2 = ((*ppu).vCount as i32 >> 8 as i32 & 1 as i32
+                    | (*ppu).ppu2openBus as i32 & 0xfe as i32) as uint8_t;
             } else {
-                val_2 =
-                    ((*ppu).vCount as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint8_t;
+                val_2 = ((*ppu).vCount as i32 & 0xff as i32) as uint8_t;
             }
             (*ppu).vCountSecond = !(*ppu).vCountSecond;
             (*ppu).ppu2openBus = val_2;
@@ -2127,29 +1852,17 @@ pub unsafe fn ppu_read(ppu: *mut Ppu, adr: uint8_t) -> uint8_t {
         }
         62 => {
             let mut val_3: uint8_t = 0x1 as uint8_t;
-            val_3 = (val_3 as ::core::ffi::c_int
-                | (*ppu).ppu1openBus as ::core::ffi::c_int & 0x10 as ::core::ffi::c_int)
-                as uint8_t;
-            val_3 = (val_3 as ::core::ffi::c_int
-                | ((*ppu).rangeOver as ::core::ffi::c_int) << 6 as ::core::ffi::c_int)
-                as uint8_t;
-            val_3 = (val_3 as ::core::ffi::c_int
-                | ((*ppu).timeOver as ::core::ffi::c_int) << 7 as ::core::ffi::c_int)
-                as uint8_t;
+            val_3 = (val_3 as i32 | (*ppu).ppu1openBus as i32 & 0x10 as i32) as uint8_t;
+            val_3 = (val_3 as i32 | ((*ppu).rangeOver as i32) << 6 as i32) as uint8_t;
+            val_3 = (val_3 as i32 | ((*ppu).timeOver as i32) << 7 as i32) as uint8_t;
             (*ppu).ppu1openBus = val_3;
             val_3
         }
         63 => {
             let mut val_4: uint8_t = 0x3 as uint8_t;
-            val_4 = (val_4 as ::core::ffi::c_int
-                | (*ppu).ppu2openBus as ::core::ffi::c_int & 0x20 as ::core::ffi::c_int)
-                as uint8_t;
-            val_4 = (val_4 as ::core::ffi::c_int
-                | ((*ppu).countersLatched as ::core::ffi::c_int) << 6 as ::core::ffi::c_int)
-                as uint8_t;
-            val_4 = (val_4 as ::core::ffi::c_int
-                | ((*ppu).evenFrame as ::core::ffi::c_int) << 7 as ::core::ffi::c_int)
-                as uint8_t;
+            val_4 = (val_4 as i32 | (*ppu).ppu2openBus as i32 & 0x20 as i32) as uint8_t;
+            val_4 = (val_4 as i32 | ((*ppu).countersLatched as i32) << 6 as i32) as uint8_t;
+            val_4 = (val_4 as i32 | ((*ppu).evenFrame as i32) << 7 as i32) as uint8_t;
             (*ppu).countersLatched = false_0 != 0;
             (*ppu).hCountSecond = false_0 != 0;
             (*ppu).vCountSecond = false_0 != 0;
@@ -2161,20 +1874,18 @@ pub unsafe fn ppu_read(ppu: *mut Ppu, adr: uint8_t) -> uint8_t {
 }
 pub unsafe fn ppu_write(ppu: *mut Ppu, adr: uint8_t, val: uint8_t) {
     let current_block_164: u64;
-    match adr as ::core::ffi::c_int {
+    match adr as i32 {
         0 => {
-            (*ppu).brightness = (val as ::core::ffi::c_int & 0xf as ::core::ffi::c_int) as uint8_t;
-            (*ppu).forcedBlank = val as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0;
+            (*ppu).brightness = (val as i32 & 0xf as i32) as uint8_t;
+            (*ppu).forcedBlank = val as i32 & 0x80 as i32 != 0;
             current_block_164 = 16754622181974910496;
         }
         1 => {
-            (*ppu).objSize = (val as ::core::ffi::c_int >> 5 as ::core::ffi::c_int) as uint8_t;
-            (*ppu).objTileAdr1 = ((val as ::core::ffi::c_int & 7 as ::core::ffi::c_int)
-                << 13 as ::core::ffi::c_int) as uint16_t;
-            (*ppu).objTileAdr2 = ((*ppu).objTileAdr1 as ::core::ffi::c_int
-                + (((val as ::core::ffi::c_int & 0x18 as ::core::ffi::c_int)
-                    + 8 as ::core::ffi::c_int)
-                    << 9 as ::core::ffi::c_int)) as uint16_t;
+            (*ppu).objSize = (val as i32 >> 5 as i32) as uint8_t;
+            (*ppu).objTileAdr1 = ((val as i32 & 7 as i32) << 13 as i32) as uint16_t;
+            (*ppu).objTileAdr2 = ((*ppu).objTileAdr1 as i32
+                + (((val as i32 & 0x18 as i32) + 8 as i32) << 9 as i32))
+                as uint16_t;
             current_block_164 = 16754622181974910496;
         }
         2 => {
@@ -2185,8 +1896,8 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: uint8_t, val: uint8_t) {
             current_block_164 = 16754622181974910496;
         }
         3 => {
-            (*ppu).objPriority = val as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0;
-            (*ppu).oamInHigh = val as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0;
+            (*ppu).objPriority = val as i32 & 0x80 as i32 != 0;
+            (*ppu).oamInHigh = val as i32 & 1 as i32 != 0;
             (*ppu).oamInHighWritten = (*ppu).oamInHigh;
             (*ppu).oamAdr = (*ppu).oamAdrWritten;
             (*ppu).oamSecondWrite = false_0 != 0;
@@ -2194,13 +1905,11 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: uint8_t, val: uint8_t) {
         }
         4 => {
             if (*ppu).oamInHigh {
-                (*ppu).highOam[(((*ppu).oamAdr as ::core::ffi::c_int & 0xf as ::core::ffi::c_int)
-                    << 1 as ::core::ffi::c_int
-                    | (*ppu).oamSecondWrite as ::core::ffi::c_int)
-                    as usize] = val;
+                (*ppu).highOam[(((*ppu).oamAdr as i32 & 0xf as i32) << 1 as i32
+                    | (*ppu).oamSecondWrite as i32) as usize] = val;
                 if (*ppu).oamSecondWrite {
                     (*ppu).oamAdr = (*ppu).oamAdr.wrapping_add(1);
-                    if (*ppu).oamAdr as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+                    if (*ppu).oamAdr as i32 == 0 as i32 {
                         (*ppu).oamInHigh = false_0 != 0;
                     }
                 }
@@ -2210,9 +1919,8 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: uint8_t, val: uint8_t) {
                 let fresh4 = (*ppu).oamAdr;
                 (*ppu).oamAdr = (*ppu).oamAdr.wrapping_add(1);
                 (*ppu).oam[fresh4 as usize] =
-                    ((val as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
-                        | (*ppu).oamBuffer as ::core::ffi::c_int) as uint16_t;
-                if (*ppu).oamAdr as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+                    ((val as i32) << 8 as i32 | (*ppu).oamBuffer as i32) as uint16_t;
+                if (*ppu).oamAdr as i32 == 0 as i32 {
                     (*ppu).oamInHigh = true_0 != 0;
                 }
             }
@@ -2220,29 +1928,20 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: uint8_t, val: uint8_t) {
             current_block_164 = 16754622181974910496;
         }
         5 => {
-            (*ppu).mode = (val as ::core::ffi::c_int & 0x7 as ::core::ffi::c_int) as uint8_t;
-            (*ppu).bg3priority = val as ::core::ffi::c_int & 0x8 as ::core::ffi::c_int != 0;
-            (*ppu).bgLayer[0 as ::core::ffi::c_int as usize].bigTiles =
-                val as ::core::ffi::c_int & 0x10 as ::core::ffi::c_int != 0;
-            (*ppu).bgLayer[1 as ::core::ffi::c_int as usize].bigTiles =
-                val as ::core::ffi::c_int & 0x20 as ::core::ffi::c_int != 0;
-            (*ppu).bgLayer[2 as ::core::ffi::c_int as usize].bigTiles =
-                val as ::core::ffi::c_int & 0x40 as ::core::ffi::c_int != 0;
-            (*ppu).bgLayer[3 as ::core::ffi::c_int as usize].bigTiles =
-                val as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0;
+            (*ppu).mode = (val as i32 & 0x7 as i32) as uint8_t;
+            (*ppu).bg3priority = val as i32 & 0x8 as i32 != 0;
+            (*ppu).bgLayer[0 as i32 as usize].bigTiles = val as i32 & 0x10 as i32 != 0;
+            (*ppu).bgLayer[1 as i32 as usize].bigTiles = val as i32 & 0x20 as i32 != 0;
+            (*ppu).bgLayer[2 as i32 as usize].bigTiles = val as i32 & 0x40 as i32 != 0;
+            (*ppu).bgLayer[3 as i32 as usize].bigTiles = val as i32 & 0x80 as i32 != 0;
             current_block_164 = 16754622181974910496;
         }
         6 => {
-            (*ppu).bgLayer[0 as ::core::ffi::c_int as usize].mosaicEnabled =
-                val as ::core::ffi::c_int & 0x1 as ::core::ffi::c_int != 0;
-            (*ppu).bgLayer[1 as ::core::ffi::c_int as usize].mosaicEnabled =
-                val as ::core::ffi::c_int & 0x2 as ::core::ffi::c_int != 0;
-            (*ppu).bgLayer[2 as ::core::ffi::c_int as usize].mosaicEnabled =
-                val as ::core::ffi::c_int & 0x4 as ::core::ffi::c_int != 0;
-            (*ppu).bgLayer[3 as ::core::ffi::c_int as usize].mosaicEnabled =
-                val as ::core::ffi::c_int & 0x8 as ::core::ffi::c_int != 0;
-            (*ppu).mosaicSize = ((val as ::core::ffi::c_int >> 4 as ::core::ffi::c_int)
-                + 1 as ::core::ffi::c_int) as uint8_t;
+            (*ppu).bgLayer[0 as i32 as usize].mosaicEnabled = val as i32 & 0x1 as i32 != 0;
+            (*ppu).bgLayer[1 as i32 as usize].mosaicEnabled = val as i32 & 0x2 as i32 != 0;
+            (*ppu).bgLayer[2 as i32 as usize].mosaicEnabled = val as i32 & 0x4 as i32 != 0;
+            (*ppu).bgLayer[3 as i32 as usize].mosaicEnabled = val as i32 & 0x8 as i32 != 0;
+            (*ppu).mosaicSize = ((val as i32 >> 4 as i32) + 1 as i32) as uint8_t;
             (*ppu).mosaicStartLine = 0 as uint8_t;
             current_block_164 = 16754622181974910496;
         }
@@ -2276,68 +1975,50 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: uint8_t, val: uint8_t) {
             current_block_164 = 5892776923941496671;
         }
         21 => {
-            if val as ::core::ffi::c_int & 3 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+            if val as i32 & 3 as i32 == 0 as i32 {
                 (*ppu).vramIncrement = 1 as uint16_t;
-            } else if val as ::core::ffi::c_int & 3 as ::core::ffi::c_int == 1 as ::core::ffi::c_int
-            {
+            } else if val as i32 & 3 as i32 == 1 as i32 {
                 (*ppu).vramIncrement = 32 as uint16_t;
             } else {
                 (*ppu).vramIncrement = 128 as uint16_t;
             }
-            (*ppu).vramRemapMode = ((val as ::core::ffi::c_int & 0xc as ::core::ffi::c_int)
-                >> 2 as ::core::ffi::c_int) as uint8_t;
-            (*ppu).vramIncrementOnHigh =
-                val as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0;
+            (*ppu).vramRemapMode = ((val as i32 & 0xc as i32) >> 2 as i32) as uint8_t;
+            (*ppu).vramIncrementOnHigh = val as i32 & 0x80 as i32 != 0;
             current_block_164 = 16754622181974910496;
         }
         22 => {
-            (*ppu).vramPointer = ((*ppu).vramPointer as ::core::ffi::c_int
-                & 0xff00 as ::core::ffi::c_int
-                | val as ::core::ffi::c_int) as uint16_t;
-            (*ppu).vramReadBuffer = (*ppu).vram[(ppu_getVramRemap(ppu) as ::core::ffi::c_int
-                & 0x7fff as ::core::ffi::c_int)
-                as usize];
+            (*ppu).vramPointer =
+                ((*ppu).vramPointer as i32 & 0xff00 as i32 | val as i32) as uint16_t;
+            (*ppu).vramReadBuffer =
+                (*ppu).vram[(ppu_getVramRemap(ppu) as i32 & 0x7fff as i32) as usize];
             current_block_164 = 16754622181974910496;
         }
         23 => {
-            (*ppu).vramPointer = ((*ppu).vramPointer as ::core::ffi::c_int
-                & 0xff as ::core::ffi::c_int
-                | (val as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
-                as uint16_t;
-            (*ppu).vramReadBuffer = (*ppu).vram[(ppu_getVramRemap(ppu) as ::core::ffi::c_int
-                & 0x7fff as ::core::ffi::c_int)
-                as usize];
+            (*ppu).vramPointer =
+                ((*ppu).vramPointer as i32 & 0xff as i32 | (val as i32) << 8 as i32) as uint16_t;
+            (*ppu).vramReadBuffer =
+                (*ppu).vram[(ppu_getVramRemap(ppu) as i32 & 0x7fff as i32) as usize];
             current_block_164 = 16754622181974910496;
         }
         24 => {
             let vramAdr: uint16_t = ppu_getVramRemap(ppu);
-            (*ppu).vram[(vramAdr as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int) as usize] =
-                ((*ppu).vram
-                    [(vramAdr as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int) as usize]
-                    as ::core::ffi::c_int
-                    & 0xff00 as ::core::ffi::c_int
-                    | val as ::core::ffi::c_int) as uint16_t;
+            (*ppu).vram[(vramAdr as i32 & 0x7fff as i32) as usize] =
+                ((*ppu).vram[(vramAdr as i32 & 0x7fff as i32) as usize] as i32 & 0xff00 as i32
+                    | val as i32) as uint16_t;
             if !(*ppu).vramIncrementOnHigh {
-                (*ppu).vramPointer = ((*ppu).vramPointer as ::core::ffi::c_int
-                    + (*ppu).vramIncrement as ::core::ffi::c_int)
-                    as uint16_t;
+                (*ppu).vramPointer =
+                    ((*ppu).vramPointer as i32 + (*ppu).vramIncrement as i32) as uint16_t;
             }
             current_block_164 = 16754622181974910496;
         }
         25 => {
             let vramAdr_0: uint16_t = ppu_getVramRemap(ppu);
-            (*ppu).vram
-                [(vramAdr_0 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int) as usize] =
-                ((*ppu).vram
-                    [(vramAdr_0 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int) as usize]
-                    as ::core::ffi::c_int
-                    & 0xff as ::core::ffi::c_int
-                    | (val as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
-                    as uint16_t;
+            (*ppu).vram[(vramAdr_0 as i32 & 0x7fff as i32) as usize] =
+                ((*ppu).vram[(vramAdr_0 as i32 & 0x7fff as i32) as usize] as i32 & 0xff as i32
+                    | (val as i32) << 8 as i32) as uint16_t;
             if (*ppu).vramIncrementOnHigh {
-                (*ppu).vramPointer = ((*ppu).vramPointer as ::core::ffi::c_int
-                    + (*ppu).vramIncrement as ::core::ffi::c_int)
-                    as uint16_t;
+                (*ppu).vramPointer =
+                    ((*ppu).vramPointer as i32 + (*ppu).vramIncrement as i32) as uint16_t;
             }
             current_block_164 = 16754622181974910496;
         }
@@ -2372,51 +2053,37 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: uint8_t, val: uint8_t) {
                 let fresh5 = (*ppu).cgramPointer;
                 (*ppu).cgramPointer = (*ppu).cgramPointer.wrapping_add(1);
                 (*ppu).cgram[fresh5 as usize] =
-                    ((val as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
-                        | (*ppu).cgramBuffer as ::core::ffi::c_int) as uint16_t;
+                    ((val as i32) << 8 as i32 | (*ppu).cgramBuffer as i32) as uint16_t;
             }
             (*ppu).cgramSecondWrite = !(*ppu).cgramSecondWrite;
             current_block_164 = 16754622181974910496;
         }
         35 | 36 | 37 => {
-            if adr as ::core::ffi::c_int == 0x23 as ::core::ffi::c_int {
-                (*ppu).windowsel =
-                    (*ppu).windowsel & !(0xff as ::core::ffi::c_int) as uint32_t | val as uint32_t;
-            } else if adr as ::core::ffi::c_int == 0x24 as ::core::ffi::c_int {
-                (*ppu).windowsel = (*ppu).windowsel & !(0xff00 as ::core::ffi::c_int) as uint32_t
-                    | ((val as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint32_t;
-            } else if adr as ::core::ffi::c_int == 0x25 as ::core::ffi::c_int {
-                (*ppu).windowsel = (*ppu).windowsel & !(0xff0000 as ::core::ffi::c_int) as uint32_t
-                    | ((val as ::core::ffi::c_int) << 16 as ::core::ffi::c_int) as uint32_t;
+            if adr as i32 == 0x23 as i32 {
+                (*ppu).windowsel = (*ppu).windowsel & !(0xff as i32) as uint32_t | val as uint32_t;
+            } else if adr as i32 == 0x24 as i32 {
+                (*ppu).windowsel = (*ppu).windowsel & !(0xff00 as i32) as uint32_t
+                    | ((val as i32) << 8 as i32) as uint32_t;
+            } else if adr as i32 == 0x25 as i32 {
+                (*ppu).windowsel = (*ppu).windowsel & !(0xff0000 as i32) as uint32_t
+                    | ((val as i32) << 16 as i32) as uint32_t;
             }
-            (*ppu).windowLayer[((adr as ::core::ffi::c_int - 0x23 as ::core::ffi::c_int)
-                * 2 as ::core::ffi::c_int) as usize]
-                .window1inversed = val as ::core::ffi::c_int & 0x1 as ::core::ffi::c_int != 0;
-            (*ppu).windowLayer[((adr as ::core::ffi::c_int - 0x23 as ::core::ffi::c_int)
-                * 2 as ::core::ffi::c_int) as usize]
-                .window1enabled = val as ::core::ffi::c_int & 0x2 as ::core::ffi::c_int != 0;
-            (*ppu).windowLayer[((adr as ::core::ffi::c_int - 0x23 as ::core::ffi::c_int)
-                * 2 as ::core::ffi::c_int) as usize]
-                .window2inversed = val as ::core::ffi::c_int & 0x4 as ::core::ffi::c_int != 0;
-            (*ppu).windowLayer[((adr as ::core::ffi::c_int - 0x23 as ::core::ffi::c_int)
-                * 2 as ::core::ffi::c_int) as usize]
-                .window2enabled = val as ::core::ffi::c_int & 0x8 as ::core::ffi::c_int != 0;
-            (*ppu).windowLayer[((adr as ::core::ffi::c_int - 0x23 as ::core::ffi::c_int)
-                * 2 as ::core::ffi::c_int
-                + 1 as ::core::ffi::c_int) as usize]
-                .window1inversed = val as ::core::ffi::c_int & 0x10 as ::core::ffi::c_int != 0;
-            (*ppu).windowLayer[((adr as ::core::ffi::c_int - 0x23 as ::core::ffi::c_int)
-                * 2 as ::core::ffi::c_int
-                + 1 as ::core::ffi::c_int) as usize]
-                .window1enabled = val as ::core::ffi::c_int & 0x20 as ::core::ffi::c_int != 0;
-            (*ppu).windowLayer[((adr as ::core::ffi::c_int - 0x23 as ::core::ffi::c_int)
-                * 2 as ::core::ffi::c_int
-                + 1 as ::core::ffi::c_int) as usize]
-                .window2inversed = val as ::core::ffi::c_int & 0x40 as ::core::ffi::c_int != 0;
-            (*ppu).windowLayer[((adr as ::core::ffi::c_int - 0x23 as ::core::ffi::c_int)
-                * 2 as ::core::ffi::c_int
-                + 1 as ::core::ffi::c_int) as usize]
-                .window2enabled = val as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0;
+            (*ppu).windowLayer[((adr as i32 - 0x23 as i32) * 2 as i32) as usize].window1inversed =
+                val as i32 & 0x1 as i32 != 0;
+            (*ppu).windowLayer[((adr as i32 - 0x23 as i32) * 2 as i32) as usize].window1enabled =
+                val as i32 & 0x2 as i32 != 0;
+            (*ppu).windowLayer[((adr as i32 - 0x23 as i32) * 2 as i32) as usize].window2inversed =
+                val as i32 & 0x4 as i32 != 0;
+            (*ppu).windowLayer[((adr as i32 - 0x23 as i32) * 2 as i32) as usize].window2enabled =
+                val as i32 & 0x8 as i32 != 0;
+            (*ppu).windowLayer[((adr as i32 - 0x23 as i32) * 2 as i32 + 1 as i32) as usize]
+                .window1inversed = val as i32 & 0x10 as i32 != 0;
+            (*ppu).windowLayer[((adr as i32 - 0x23 as i32) * 2 as i32 + 1 as i32) as usize]
+                .window1enabled = val as i32 & 0x20 as i32 != 0;
+            (*ppu).windowLayer[((adr as i32 - 0x23 as i32) * 2 as i32 + 1 as i32) as usize]
+                .window2inversed = val as i32 & 0x40 as i32 != 0;
+            (*ppu).windowLayer[((adr as i32 - 0x23 as i32) * 2 as i32 + 1 as i32) as usize]
+                .window2enabled = val as i32 & 0x80 as i32 != 0;
             current_block_164 = 16754622181974910496;
         }
         38 => {
@@ -2436,25 +2103,19 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: uint8_t, val: uint8_t) {
             current_block_164 = 16754622181974910496;
         }
         42 => {
-            (*ppu).windowLayer[0 as ::core::ffi::c_int as usize].maskLogic =
-                (val as ::core::ffi::c_int & 0x3 as ::core::ffi::c_int) as uint8_t;
-            (*ppu).windowLayer[1 as ::core::ffi::c_int as usize].maskLogic =
-                (val as ::core::ffi::c_int >> 2 as ::core::ffi::c_int & 0x3 as ::core::ffi::c_int)
-                    as uint8_t;
-            (*ppu).windowLayer[2 as ::core::ffi::c_int as usize].maskLogic =
-                (val as ::core::ffi::c_int >> 4 as ::core::ffi::c_int & 0x3 as ::core::ffi::c_int)
-                    as uint8_t;
-            (*ppu).windowLayer[3 as ::core::ffi::c_int as usize].maskLogic =
-                (val as ::core::ffi::c_int >> 6 as ::core::ffi::c_int & 0x3 as ::core::ffi::c_int)
-                    as uint8_t;
+            (*ppu).windowLayer[0 as i32 as usize].maskLogic = (val as i32 & 0x3 as i32) as uint8_t;
+            (*ppu).windowLayer[1 as i32 as usize].maskLogic =
+                (val as i32 >> 2 as i32 & 0x3 as i32) as uint8_t;
+            (*ppu).windowLayer[2 as i32 as usize].maskLogic =
+                (val as i32 >> 4 as i32 & 0x3 as i32) as uint8_t;
+            (*ppu).windowLayer[3 as i32 as usize].maskLogic =
+                (val as i32 >> 6 as i32 & 0x3 as i32) as uint8_t;
             current_block_164 = 16754622181974910496;
         }
         43 => {
-            (*ppu).windowLayer[4 as ::core::ffi::c_int as usize].maskLogic =
-                (val as ::core::ffi::c_int & 0x3 as ::core::ffi::c_int) as uint8_t;
-            (*ppu).windowLayer[5 as ::core::ffi::c_int as usize].maskLogic =
-                (val as ::core::ffi::c_int >> 2 as ::core::ffi::c_int & 0x3 as ::core::ffi::c_int)
-                    as uint8_t;
+            (*ppu).windowLayer[4 as i32 as usize].maskLogic = (val as i32 & 0x3 as i32) as uint8_t;
+            (*ppu).windowLayer[5 as i32 as usize].maskLogic =
+                (val as i32 >> 2 as i32 & 0x3 as i32) as uint8_t;
             current_block_164 = 16754622181974910496;
         }
         44 => {
@@ -2551,8 +2212,8 @@ pub unsafe fn ppu_write(ppu: *mut Ppu, adr: uint8_t, val: uint8_t) {
         _ => {}
     };
 }
-pub fn PpuGetCurrentRenderScale(ppu: *mut Ppu, render_flags: uint32_t) -> ::core::ffi::c_int {
-    1 as ::core::ffi::c_int
+pub fn PpuGetCurrentRenderScale(ppu: *mut Ppu, render_flags: uint32_t) -> i32 {
+    1 as i32
 }
 
 fn draw_palette_span(

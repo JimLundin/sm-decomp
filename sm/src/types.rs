@@ -30,85 +30,85 @@ pub struct VramWriteEntry {
     pub vram_dst: uint16,
 }
 
-pub type Buttons = ::core::ffi::c_uint;
+pub type Buttons = u32;
 
 pub type CalculateAngleFromXYFunc = unsafe fn(uint16, &mut Game) -> uint8;
 
-pub type Consts_60 = ::core::ffi::c_uint;
+pub type Consts_60 = u32;
 
-pub type Consts_80 = ::core::ffi::c_uint;
+pub type Consts_80 = u32;
 
-pub type Consts_81 = ::core::ffi::c_uint;
+pub type Consts_81 = u32;
 
-pub type Consts_82 = ::core::ffi::c_uint;
+pub type Consts_82 = u32;
 
-pub type Consts_83 = ::core::ffi::c_uint;
+pub type Consts_83 = u32;
 
-pub type Consts_84 = ::core::ffi::c_uint;
+pub type Consts_84 = u32;
 
-pub type Consts_86 = ::core::ffi::c_uint;
+pub type Consts_86 = u32;
 
-pub type Consts_87 = ::core::ffi::c_uint;
+pub type Consts_87 = u32;
 
-pub type Consts_88 = ::core::ffi::c_uint;
+pub type Consts_88 = u32;
 
-pub type Consts_89 = ::core::ffi::c_uint;
+pub type Consts_89 = u32;
 
-pub type Consts_8B = ::core::ffi::c_uint;
+pub type Consts_8B = u32;
 
-pub type Consts_8C = ::core::ffi::c_uint;
+pub type Consts_8C = u32;
 
-pub type Consts_8D = ::core::ffi::c_uint;
+pub type Consts_8D = u32;
 
-pub type Consts_8F = ::core::ffi::c_uint;
+pub type Consts_8F = u32;
 
-pub type Consts_90 = ::core::ffi::c_uint;
+pub type Consts_90 = u32;
 
-pub type Consts_91 = ::core::ffi::c_uint;
+pub type Consts_91 = u32;
 
-pub type Consts_94 = ::core::ffi::c_uint;
+pub type Consts_94 = u32;
 
-pub type Consts_9B = ::core::ffi::c_uint;
+pub type Consts_9B = u32;
 
-pub type Consts_A0 = ::core::ffi::c_uint;
+pub type Consts_A0 = u32;
 
-pub type Consts_A2 = ::core::ffi::c_uint;
+pub type Consts_A2 = u32;
 
-pub type Consts_A3 = ::core::ffi::c_uint;
+pub type Consts_A3 = u32;
 
-pub type Consts_A4 = ::core::ffi::c_uint;
+pub type Consts_A4 = u32;
 
-pub type Consts_A5 = ::core::ffi::c_uint;
+pub type Consts_A5 = u32;
 
-pub type Consts_A6 = ::core::ffi::c_uint;
+pub type Consts_A6 = u32;
 
-pub type Consts_A7 = ::core::ffi::c_uint;
+pub type Consts_A7 = u32;
 
-pub type Consts_A8 = ::core::ffi::c_uint;
+pub type Consts_A8 = u32;
 
-pub type Consts_A9 = ::core::ffi::c_uint;
+pub type Consts_A9 = u32;
 
-pub type Consts_AA = ::core::ffi::c_uint;
+pub type Consts_AA = u32;
 
-pub type Consts_AD = ::core::ffi::c_uint;
+pub type Consts_AD = u32;
 
-pub type Consts_B2 = ::core::ffi::c_uint;
+pub type Consts_B2 = u32;
 
-pub type Consts_B3 = ::core::ffi::c_uint;
+pub type Consts_B3 = u32;
 
-pub type Consts_B4 = ::core::ffi::c_uint;
+pub type Consts_B4 = u32;
 
-pub type Consts_B7 = ::core::ffi::c_uint;
+pub type Consts_B7 = u32;
 
 pub type CoroutineRet = uint8_t;
 
 pub type CrocomireFunc = unsafe fn(uint16, *const uint16, &mut Game) -> *const uint16;
 
-pub type DspReg = ::core::ffi::c_uint;
+pub type DspReg = u32;
 
-pub type EnemyAiBits = ::core::ffi::c_uint;
+pub type EnemyAiBits = u32;
 
-pub type EnemyProps = ::core::ffi::c_uint;
+pub type EnemyProps = u32;
 
 pub type FuncXY_V = unsafe fn(uint16, uint16, &mut Game) -> ();
 
@@ -140,9 +140,9 @@ pub type GLDEBUGPROC = Option<
     ) -> (),
 >;
 
-pub type GLSLScaleType = ::core::ffi::c_uint;
+pub type GLSLScaleType = u32;
 
-pub type GLbitfield = ::core::ffi::c_uint;
+pub type GLbitfield = u32;
 
 pub type GLboolean = ::core::ffi::c_uchar;
 
@@ -152,11 +152,11 @@ pub type GLchar = ::core::ffi::c_char;
 
 pub type GLdouble = ::core::ffi::c_double;
 
-pub type GLenum = ::core::ffi::c_uint;
+pub type GLenum = u32;
 
 pub type GLfloat = ::core::ffi::c_float;
 
-pub type GLint = ::core::ffi::c_int;
+pub type GLint = i32;
 
 pub type GLint64 = int64_t;
 
@@ -164,36 +164,36 @@ pub type GLintptr = ptrdiff_t;
 
 pub type GLshort = ::core::ffi::c_short;
 
-pub type GLsizei = ::core::ffi::c_int;
+pub type GLsizei = i32;
 
 pub type GLsizeiptr = ptrdiff_t;
 
 pub type GLubyte = ::core::ffi::c_uchar;
 
-pub type GLuint = ::core::ffi::c_uint;
+pub type GLuint = u32;
 
 pub type GLushort = ::core::ffi::c_ushort;
 
-pub type GameState = ::core::ffi::c_uint;
+pub type GameState = u32;
 
 pub type HandlerFunc = unsafe fn(&mut Game) -> ();
 
-pub type LiquidPhysicsType = ::core::ffi::c_uint;
+pub type LiquidPhysicsType = u32;
 
-pub type LoadingGameState = ::core::ffi::c_uint;
+pub type LoadingGameState = u32;
 
-pub type PFN_LOADFUNCPOINTERS = Option<unsafe fn() -> ::core::ffi::c_int>;
+pub type PFN_LOADFUNCPOINTERS = Option<unsafe fn() -> i32>;
 
 pub type PpuZbufType = uint16_t;
 
-pub type ProjectileType = ::core::ffi::c_uint;
+pub type ProjectileType = u32;
 
-pub type RunFrameFunc = unsafe fn(uint16, ::core::ffi::c_int, &mut Game) -> ();
+pub type RunFrameFunc = unsafe fn(uint16, i32, &mut Game) -> ();
 
-pub type RunMode = ::core::ffi::c_uint;
+pub type RunMode = u32;
 
 pub type SDL_AudioCallback =
-    Option<unsafe extern "C" fn(*mut ::core::ffi::c_void, *mut Uint8, ::core::ffi::c_int) -> ()>;
+    Option<unsafe extern "C" fn(*mut ::core::ffi::c_void, *mut Uint8, i32) -> ()>;
 
 pub type SDL_AudioDeviceID = Uint32;
 
@@ -203,29 +203,29 @@ pub type SDL_FingerID = Sint64;
 
 pub type SDL_GLContext = *mut ::core::ffi::c_void;
 
-pub type SDL_GLattr = ::core::ffi::c_uint;
+pub type SDL_GLattr = u32;
 
 pub type SDL_GestureID = Sint64;
 
-pub type SDL_HitTestResult = ::core::ffi::c_uint;
+pub type SDL_HitTestResult = u32;
 
 pub type SDL_JoystickID = Sint32;
 
-pub type SDL_JoystickPowerLevel = ::core::ffi::c_int;
+pub type SDL_JoystickPowerLevel = i32;
 
 pub type SDL_Keycode = Sint32;
 
-pub type SDL_Keymod = ::core::ffi::c_uint;
+pub type SDL_Keymod = u32;
 
-pub type SDL_Scancode = ::core::ffi::c_uint;
+pub type SDL_Scancode = u32;
 
 pub type SDL_TouchID = Sint64;
 
-pub type SDL_bool = ::core::ffi::c_uint;
+pub type SDL_bool = u32;
 
-pub type SamusMovementType = ::core::ffi::c_uint;
+pub type SamusMovementType = u32;
 
-pub type SamusPose = ::core::ffi::c_uint;
+pub type SamusPose = u32;
 
 pub type SaveLoadFunc =
     unsafe fn(*mut ::core::ffi::c_void, *mut ::core::ffi::c_void, size_t, &mut Game) -> ();
@@ -236,7 +236,7 @@ pub type Sint32 = int32_t;
 
 pub type Sint64 = int64_t;
 
-pub type SnesRegs = ::core::ffi::c_uint;
+pub type SnesRegs = u32;
 
 pub type SyncAllFunc = unsafe fn(&mut Game) -> ();
 
@@ -258,7 +258,7 @@ pub type __int64_t = i64;
 
 pub type __int8_t = i8;
 
-pub type __mode_t = ::core::ffi::c_uint;
+pub type __mode_t = u32;
 
 pub type __off64_t = ::core::ffi::c_long;
 
@@ -288,7 +288,7 @@ pub type int8 = int8_t;
 
 pub type int8_t = __int8_t;
 
-pub type ogl_LoadStatus = ::core::ffi::c_uint;
+pub type ogl_LoadStatus = u32;
 
 pub type ptrdiff_t = isize;
 
@@ -304,7 +304,7 @@ pub type stbi_us = ::core::ffi::c_ushort;
 
 pub type time_t = __time_t;
 
-pub type uint = ::core::ffi::c_uint;
+pub type uint = u32;
 
 pub type uint16_t = __uint16_t;
 
@@ -1615,8 +1615,8 @@ pub struct ByteArray {
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct Config {
-    pub window_width: ::core::ffi::c_int,
-    pub window_height: ::core::ffi::c_int,
+    pub window_width: i32,
+    pub window_height: i32,
     pub enhanced_mode7: bool,
     pub new_renderer: bool,
     pub ignore_aspect_ratio: bool,
@@ -1690,14 +1690,14 @@ pub struct GlslPass {
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct GlslShader {
-    pub n_pass: ::core::ffi::c_int,
+    pub n_pass: i32,
     pub pass: *mut GlslPass,
     pub first_param: *mut GlslParam,
     pub first_texture: *mut GlslTexture,
     pub gl_vao: *mut uint,
     pub gl_vbo: uint,
     pub frame_count: uint,
-    pub max_prev_frame: ::core::ffi::c_int,
+    pub max_prev_frame: i32,
     pub prev_frame: [GlTextureWithSize; 8],
 }
 
@@ -1711,33 +1711,33 @@ pub struct GlslTexture {
     pub gl_texture: uint,
     pub wrap_mode: uint,
     pub mipmap: bool,
-    pub width: ::core::ffi::c_int,
-    pub height: ::core::ffi::c_int,
+    pub width: i32,
+    pub height: i32,
 }
 
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct GlslTextureUniform {
-    pub Texture: ::core::ffi::c_int,
-    pub InputSize: ::core::ffi::c_int,
-    pub TextureSize: ::core::ffi::c_int,
-    pub TexCoord: ::core::ffi::c_int,
+    pub Texture: i32,
+    pub InputSize: i32,
+    pub TextureSize: i32,
+    pub TexCoord: i32,
 }
 
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct GlslUniforms {
     pub Top: GlslTextureUniform,
-    pub OutputSize: ::core::ffi::c_int,
-    pub FrameCount: ::core::ffi::c_int,
-    pub FrameDirection: ::core::ffi::c_int,
-    pub LUTTexCoord: ::core::ffi::c_int,
-    pub VertexCoord: ::core::ffi::c_int,
+    pub OutputSize: i32,
+    pub FrameCount: i32,
+    pub FrameDirection: i32,
+    pub LUTTexCoord: i32,
+    pub VertexCoord: i32,
     pub Orig: GlslTextureUniform,
     pub Prev: [GlslTextureUniform; 7],
     pub Pass: [GlslTextureUniform; 20],
     pub PassPrev: [GlslTextureUniform; 20],
-    pub Texture: [::core::ffi::c_int; 10],
+    pub Texture: [i32; 10],
 }
 
 #[derive(Copy, Clone)]
@@ -1745,15 +1745,7 @@ pub struct GlslUniforms {
 pub struct RendererFuncs {
     pub Initialize: Option<unsafe fn(*mut SDL_Window, &mut Game) -> bool>,
     pub Destroy: Option<unsafe fn(&mut Game) -> ()>,
-    pub BeginDraw: Option<
-        unsafe fn(
-            ::core::ffi::c_int,
-            ::core::ffi::c_int,
-            *mut *mut uint8,
-            *mut ::core::ffi::c_int,
-            &mut Game,
-        ) -> (),
-    >,
+    pub BeginDraw: Option<unsafe fn(i32, i32, *mut *mut uint8, *mut i32, &mut Game) -> ()>,
     pub EndDraw: Option<unsafe fn(&mut Game) -> ()>,
 }
 
@@ -1764,13 +1756,13 @@ pub struct _IO_FILE {
 
 pub type FILE = _IO_FILE;
 
-pub type KeyAction = ::core::ffi::c_uint;
+pub type KeyAction = u32;
 
-pub type OutputMethod = ::core::ffi::c_uint;
+pub type OutputMethod = u32;
 
-pub type GamepadButton = ::core::ffi::c_int;
+pub type GamepadButton = i32;
 
-pub type SaveLoadOperation = ::core::ffi::c_uint;
+pub type SaveLoadOperation = u32;
 
 #[cfg(all(feature = "frontend", not(sm_verify_dll)))]
 pub use sdl2_sys::SDL_Window;

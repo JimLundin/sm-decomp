@@ -10,9 +10,9 @@ pub use crate::types::{
     uint32_t, uint8_t, Apu, ApuHistory as C2RustUnnamed, Dsp, DspChannel, DspRegWriteHistory,
     SaveLoadFunc, Spc, Timer,
 };
-pub const true_0: ::core::ffi::c_int = 1;
-pub const false_0: ::core::ffi::c_int = 0;
-static cyclesPerOpcode: [::core::ffi::c_int; 256] = [
+pub const true_0: i32 = 1;
+pub const false_0: i32 = 0;
+static cyclesPerOpcode: [i32; 256] = [
     2, 8, 4, 5, 3, 4, 3, 6, 2, 6, 5, 4, 5, 4, 6, 8, 2, 8, 4, 5, 4, 5, 5, 6, 5, 5, 6, 5, 2, 2, 4, 6,
     2, 8, 4, 5, 3, 4, 3, 6, 2, 6, 5, 4, 5, 4, 5, 4, 2, 8, 4, 5, 4, 5, 5, 6, 5, 5, 6, 5, 2, 2, 3, 8,
     2, 8, 4, 5, 3, 4, 3, 6, 2, 6, 4, 4, 5, 4, 6, 6, 2, 8, 4, 5, 4, 5, 5, 6, 5, 5, 4, 5, 2, 2, 4, 3,
@@ -42,9 +42,8 @@ pub unsafe fn spc_reset(spc: *mut Spc) {
     (*spc).x = 0 as uint8_t;
     (*spc).y = 0 as uint8_t;
     (*spc).sp = 0 as uint8_t;
-    (*spc).pc = (spc_read(spc, 0xfffe as uint16_t) as ::core::ffi::c_int
-        | (spc_read(spc, 0xffff as uint16_t) as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
-        as uint16_t;
+    (*spc).pc = (spc_read(spc, 0xfffe as uint16_t) as i32
+        | (spc_read(spc, 0xffff as uint16_t) as i32) << 8 as i32) as uint16_t;
     (*spc).c = false_0 != 0;
     (*spc).z = false_0 != 0;
     (*spc).v = false_0 != 0;
@@ -69,15 +68,15 @@ pub unsafe fn spc_saveload(
         game,
     );
 }
-pub unsafe fn spc_runOpcode(spc: *mut Spc) -> ::core::ffi::c_int {
+pub unsafe fn spc_runOpcode(spc: *mut Spc) -> i32 {
     (*spc).cyclesUsed = 0 as uint8_t;
     if (*spc).stopped {
-        return 1 as ::core::ffi::c_int;
+        return 1 as i32;
     }
     let opcode: uint8_t = spc_readOpcode(spc);
     (*spc).cyclesUsed = cyclesPerOpcode[opcode as usize] as uint8_t;
     spc_doOpcode(spc, opcode);
-    (*spc).cyclesUsed as ::core::ffi::c_int
+    (*spc).cyclesUsed as i32
 }
 unsafe fn spc_readOpcode(spc: *mut Spc) -> uint8_t {
     let fresh0 = (*spc).pc;
@@ -86,8 +85,7 @@ unsafe fn spc_readOpcode(spc: *mut Spc) -> uint8_t {
 }
 unsafe fn spc_readOpcodeWord(spc: *mut Spc) -> uint16_t {
     let low: uint8_t = spc_readOpcode(spc);
-    (low as ::core::ffi::c_int
-        | (spc_readOpcode(spc) as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t
+    (low as i32 | (spc_readOpcode(spc) as i32) << 8 as i32) as uint16_t
 }
 unsafe fn spc_getFlags(spc: *mut Spc) -> u8 {
     (u8::from((*spc).n) << 7)
@@ -115,10 +113,8 @@ unsafe fn spc_setZN(spc: *mut Spc, value: u8) {
 }
 unsafe fn spc_doBranch(spc: *mut Spc, value: uint8_t, check: bool) {
     if check {
-        (*spc).cyclesUsed =
-            ((*spc).cyclesUsed as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint8_t;
-        (*spc).pc =
-            ((*spc).pc as ::core::ffi::c_int + value as int8_t as ::core::ffi::c_int) as uint16_t;
+        (*spc).cyclesUsed = ((*spc).cyclesUsed as i32 + 2 as i32) as uint8_t;
+        (*spc).pc = ((*spc).pc as i32 + value as int8_t as i32) as uint16_t;
     }
 }
 unsafe fn spc_pullByte(spc: *mut Spc) -> u8 {
@@ -150,26 +146,22 @@ unsafe fn spc_writeWord(spc: *mut Spc, adrl: u16, adrh: u16, value: u16) {
     spc_write(spc, adrh, high);
 }
 unsafe fn spc_adrDp(spc: *mut Spc) -> uint16_t {
-    (spc_readOpcode(spc) as ::core::ffi::c_int
-        | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t
+    (spc_readOpcode(spc) as i32 | ((*spc).p as i32) << 8 as i32) as uint16_t
 }
 unsafe fn spc_adrAbs(spc: *mut Spc) -> uint16_t {
     spc_readOpcodeWord(spc)
 }
 unsafe fn spc_adrInd(spc: *mut Spc) -> uint16_t {
-    ((*spc).x as ::core::ffi::c_int | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
-        as uint16_t
+    ((*spc).x as i32 | ((*spc).p as i32) << 8 as i32) as uint16_t
 }
 unsafe fn spc_adrIdx(spc: *mut Spc) -> uint16_t {
     let pointer: uint8_t = spc_readOpcode(spc);
     spc_readWord(
         spc,
-        (pointer as ::core::ffi::c_int + (*spc).x as ::core::ffi::c_int
-            & 0xff as ::core::ffi::c_int
-            | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t,
-        (pointer as ::core::ffi::c_int + (*spc).x as ::core::ffi::c_int + 1 as ::core::ffi::c_int
-            & 0xff as ::core::ffi::c_int
-            | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t,
+        (pointer as i32 + (*spc).x as i32 & 0xff as i32 | ((*spc).p as i32) << 8 as i32)
+            as uint16_t,
+        (pointer as i32 + (*spc).x as i32 + 1 as i32 & 0xff as i32 | ((*spc).p as i32) << 8 as i32)
+            as uint16_t,
     )
 }
 unsafe fn spc_adrImm(spc: *mut Spc) -> uint16_t {
@@ -178,71 +170,56 @@ unsafe fn spc_adrImm(spc: *mut Spc) -> uint16_t {
     fresh1
 }
 unsafe fn spc_adrDpx(spc: *mut Spc) -> uint16_t {
-    (spc_readOpcode(spc) as ::core::ffi::c_int + (*spc).x as ::core::ffi::c_int
-        & 0xff as ::core::ffi::c_int
-        | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t
+    (spc_readOpcode(spc) as i32 + (*spc).x as i32 & 0xff as i32 | ((*spc).p as i32) << 8 as i32)
+        as uint16_t
 }
 unsafe fn spc_adrDpy(spc: *mut Spc) -> uint16_t {
-    (spc_readOpcode(spc) as ::core::ffi::c_int + (*spc).y as ::core::ffi::c_int
-        & 0xff as ::core::ffi::c_int
-        | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t
+    (spc_readOpcode(spc) as i32 + (*spc).y as i32 & 0xff as i32 | ((*spc).p as i32) << 8 as i32)
+        as uint16_t
 }
 unsafe fn spc_adrAbx(spc: *mut Spc) -> uint16_t {
-    (spc_readOpcodeWord(spc) as ::core::ffi::c_int + (*spc).x as ::core::ffi::c_int
-        & 0xffff as ::core::ffi::c_int) as uint16_t
+    (spc_readOpcodeWord(spc) as i32 + (*spc).x as i32 & 0xffff as i32) as uint16_t
 }
 unsafe fn spc_adrAby(spc: *mut Spc) -> uint16_t {
-    (spc_readOpcodeWord(spc) as ::core::ffi::c_int + (*spc).y as ::core::ffi::c_int
-        & 0xffff as ::core::ffi::c_int) as uint16_t
+    (spc_readOpcodeWord(spc) as i32 + (*spc).y as i32 & 0xffff as i32) as uint16_t
 }
 unsafe fn spc_adrIdy(spc: *mut Spc) -> uint16_t {
     let pointer: uint8_t = spc_readOpcode(spc);
     let adr: uint16_t = spc_readWord(
         spc,
-        (pointer as ::core::ffi::c_int
-            | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t,
-        (pointer as ::core::ffi::c_int + 1 as ::core::ffi::c_int & 0xff as ::core::ffi::c_int
-            | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t,
+        (pointer as i32 | ((*spc).p as i32) << 8 as i32) as uint16_t,
+        (pointer as i32 + 1 as i32 & 0xff as i32 | ((*spc).p as i32) << 8 as i32) as uint16_t,
     );
-    (adr as ::core::ffi::c_int + (*spc).y as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int)
-        as uint16_t
+    (adr as i32 + (*spc).y as i32 & 0xffff as i32) as uint16_t
 }
 unsafe fn spc_adrDpDp(spc: *mut Spc, src: *mut uint16_t) -> uint16_t {
-    *src = (spc_readOpcode(spc) as ::core::ffi::c_int
-        | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t;
-    (spc_readOpcode(spc) as ::core::ffi::c_int
-        | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t
+    *src = (spc_readOpcode(spc) as i32 | ((*spc).p as i32) << 8 as i32) as uint16_t;
+    (spc_readOpcode(spc) as i32 | ((*spc).p as i32) << 8 as i32) as uint16_t
 }
 unsafe fn spc_adrDpImm(spc: *mut Spc, src: *mut uint16_t) -> uint16_t {
     let fresh3 = (*spc).pc;
     (*spc).pc = (*spc).pc.wrapping_add(1);
     *src = fresh3;
-    (spc_readOpcode(spc) as ::core::ffi::c_int
-        | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t
+    (spc_readOpcode(spc) as i32 | ((*spc).p as i32) << 8 as i32) as uint16_t
 }
 unsafe fn spc_adrIndInd(spc: *mut Spc, src: *mut uint16_t) -> uint16_t {
-    *src = ((*spc).y as ::core::ffi::c_int
-        | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t;
-    ((*spc).x as ::core::ffi::c_int | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
-        as uint16_t
+    *src = ((*spc).y as i32 | ((*spc).p as i32) << 8 as i32) as uint16_t;
+    ((*spc).x as i32 | ((*spc).p as i32) << 8 as i32) as uint16_t
 }
 unsafe fn spc_adrAbsBit(spc: *mut Spc, adr: *mut uint16_t) -> uint8_t {
     let adrBit: uint16_t = spc_readOpcodeWord(spc);
-    *adr = (adrBit as ::core::ffi::c_int & 0x1fff as ::core::ffi::c_int) as uint16_t;
-    (adrBit as ::core::ffi::c_int >> 13 as ::core::ffi::c_int) as uint8_t
+    *adr = (adrBit as i32 & 0x1fff as i32) as uint16_t;
+    (adrBit as i32 >> 13 as i32) as uint8_t
 }
 unsafe fn spc_adrDpWord(spc: *mut Spc, low: *mut uint16_t) -> uint16_t {
     let adr: uint8_t = spc_readOpcode(spc);
-    *low = (adr as ::core::ffi::c_int | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
-        as uint16_t;
-    (adr as ::core::ffi::c_int + 1 as ::core::ffi::c_int & 0xff as ::core::ffi::c_int
-        | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int) as uint16_t
+    *low = (adr as i32 | ((*spc).p as i32) << 8 as i32) as uint16_t;
+    (adr as i32 + 1 as i32 & 0xff as i32 | ((*spc).p as i32) << 8 as i32) as uint16_t
 }
 unsafe fn spc_adrIndP(spc: *mut Spc) -> uint16_t {
     let fresh2 = (*spc).x;
     (*spc).x = (*spc).x.wrapping_add(1);
-    (fresh2 as ::core::ffi::c_int | ((*spc).p as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
-        as uint16_t
+    (fresh2 as i32 | ((*spc).p as i32) << 8 as i32) as uint16_t
 }
 // OR, AND and EOR share addressing forms; opcode bits 5..6 select the logic.
 fn spc_logic_value(opcode: u8, left: u8, right: u8) -> u8 {
@@ -353,18 +330,12 @@ unsafe fn spc_step_memory(spc: *mut Spc, address: u16, increment: bool) {
     spc_setZN(spc, result);
 }
 unsafe fn spc_doOpcode(spc: *mut Spc, opcode: uint8_t) {
-    match opcode as ::core::ffi::c_int {
+    match opcode as i32 {
         1 | 17 | 33 | 49 | 65 | 81 | 97 | 113 | 129 | 145 | 161 | 177 | 193 | 209 | 225 | 241 => {
             spc_pushWord(spc, (*spc).pc);
-            let adr: uint16_t = (0xffde as ::core::ffi::c_int
-                - 2 as ::core::ffi::c_int
-                    * (opcode as ::core::ffi::c_int >> 4 as ::core::ffi::c_int))
-                as uint16_t;
-            (*spc).pc = spc_readWord(
-                spc,
-                adr,
-                (adr as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as uint16_t,
-            );
+            let adr: uint16_t =
+                (0xffde as i32 - 2 as i32 * (opcode as i32 >> 4 as i32)) as uint16_t;
+            (*spc).pc = spc_readWord(spc, adr, (adr as i32 + 1 as i32) as uint16_t);
         }
         2 | 18 | 34 | 50 | 66 | 82 | 98 | 114 | 130 | 146 | 162 | 178 | 194 | 210 | 226 | 242 => {
             let address = spc_adrDp(spc);
@@ -437,15 +408,10 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: uint8_t) {
         14 => {
             let adr_3: uint16_t = spc_adrAbs(spc);
             let val_1: uint8_t = spc_read(spc, adr_3);
-            let result: uint8_t = ((*spc).a as ::core::ffi::c_int
-                + (val_1 as ::core::ffi::c_int ^ 0xff as ::core::ffi::c_int)
-                + 1 as ::core::ffi::c_int) as uint8_t;
+            let result: uint8_t =
+                ((*spc).a as i32 + (val_1 as i32 ^ 0xff as i32) + 1 as i32) as uint8_t;
             spc_setZN(spc, result);
-            spc_write(
-                spc,
-                adr_3,
-                (val_1 as ::core::ffi::c_int | (*spc).a as ::core::ffi::c_int) as uint8_t,
-            );
+            spc_write(spc, adr_3, (val_1 as i32 | (*spc).a as i32) as uint8_t);
         }
         15 => {
             spc_pushWord(spc, (*spc).pc);
@@ -511,12 +477,8 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: uint8_t) {
             let pointer: uint16_t = spc_readOpcodeWord(spc);
             (*spc).pc = spc_readWord(
                 spc,
-                (pointer as ::core::ffi::c_int + (*spc).x as ::core::ffi::c_int
-                    & 0xffff as ::core::ffi::c_int) as uint16_t,
-                (pointer as ::core::ffi::c_int
-                    + (*spc).x as ::core::ffi::c_int
-                    + 1 as ::core::ffi::c_int
-                    & 0xffff as ::core::ffi::c_int) as uint16_t,
+                (pointer as i32 + (*spc).x as i32 & 0xffff as i32) as uint16_t,
+                (pointer as i32 + (*spc).x as i32 + 1 as i32 & 0xffff as i32) as uint16_t,
             );
         }
         32 => {
@@ -532,16 +494,9 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: uint8_t) {
             spc_pushByte(spc, (*spc).a);
         }
         46 => {
-            let val_2: uint8_t = (spc_read(spc, spc_adrDp(spc)) as ::core::ffi::c_int
-                ^ 0xff as ::core::ffi::c_int) as uint8_t;
-            let result_0: uint8_t = ((*spc).a as ::core::ffi::c_int
-                + val_2 as ::core::ffi::c_int
-                + 1 as ::core::ffi::c_int) as uint8_t;
-            spc_doBranch(
-                spc,
-                spc_readOpcode(spc),
-                result_0 as ::core::ffi::c_int != 0 as ::core::ffi::c_int,
-            );
+            let val_2: uint8_t = (spc_read(spc, spc_adrDp(spc)) as i32 ^ 0xff as i32) as uint8_t;
+            let result_0: uint8_t = ((*spc).a as i32 + val_2 as i32 + 1 as i32) as uint8_t;
+            spc_doBranch(spc, spc_readOpcode(spc), result_0 as i32 != 0 as i32);
         }
         47 => {
             // BRA is relative to PC after consuming its displacement byte.
@@ -583,20 +538,15 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: uint8_t) {
         78 => {
             let adr_6: uint16_t = spc_adrAbs(spc);
             let val_3: uint8_t = spc_read(spc, adr_6);
-            let result_1: uint8_t = ((*spc).a as ::core::ffi::c_int
-                + (val_3 as ::core::ffi::c_int ^ 0xff as ::core::ffi::c_int)
-                + 1 as ::core::ffi::c_int) as uint8_t;
+            let result_1: uint8_t =
+                ((*spc).a as i32 + (val_3 as i32 ^ 0xff as i32) + 1 as i32) as uint8_t;
             spc_setZN(spc, result_1);
-            spc_write(
-                spc,
-                adr_6,
-                (val_3 as ::core::ffi::c_int & !((*spc).a as ::core::ffi::c_int)) as uint8_t,
-            );
+            spc_write(spc, adr_6, (val_3 as i32 & !((*spc).a as i32)) as uint8_t);
         }
         79 => {
             let dst_7: uint8_t = spc_readOpcode(spc);
             spc_pushWord(spc, (*spc).pc);
-            (*spc).pc = (0xff00 as ::core::ffi::c_int | dst_7 as ::core::ffi::c_int) as uint16_t;
+            (*spc).pc = (0xff00 as i32 | dst_7 as i32) as uint16_t;
         }
         80 => {
             spc_doBranch(spc, spc_readOpcode(spc), !(*spc).v);
@@ -604,16 +554,13 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: uint8_t) {
         90 => {
             let mut low_1: uint16_t = 0 as uint16_t;
             let high_1: uint16_t = spc_adrDpWord(spc, &raw mut low_1);
-            let value_1: uint16_t = (spc_readWord(spc, low_1, high_1) as ::core::ffi::c_int
-                ^ 0xffff as ::core::ffi::c_int) as uint16_t;
-            let ya: uint16_t = ((*spc).a as ::core::ffi::c_int
-                | ((*spc).y as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
-                as uint16_t;
-            let result_2: ::core::ffi::c_int =
-                ya as ::core::ffi::c_int + value_1 as ::core::ffi::c_int + 1 as ::core::ffi::c_int;
-            (*spc).c = result_2 > 0xffff as ::core::ffi::c_int;
-            (*spc).z = result_2 & 0xffff as ::core::ffi::c_int == 0 as ::core::ffi::c_int;
-            (*spc).n = result_2 & 0x8000 as ::core::ffi::c_int != 0;
+            let value_1: uint16_t =
+                (spc_readWord(spc, low_1, high_1) as i32 ^ 0xffff as i32) as uint16_t;
+            let ya: uint16_t = ((*spc).a as i32 | ((*spc).y as i32) << 8 as i32) as uint16_t;
+            let result_2: i32 = ya as i32 + value_1 as i32 + 1 as i32;
+            (*spc).c = result_2 > 0xffff as i32;
+            (*spc).z = result_2 & 0xffff as i32 == 0 as i32;
+            (*spc).n = result_2 & 0x8000 as i32 != 0;
         }
         91 => {
             spc_shift_memory::<true, false>(spc, spc_adrDpx(spc));
@@ -668,14 +615,9 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: uint8_t) {
         }
         110 => {
             let adr_8: uint16_t = spc_adrDp(spc);
-            let result_3: uint8_t =
-                (spc_read(spc, adr_8) as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint8_t;
+            let result_3: uint8_t = (spc_read(spc, adr_8) as i32 - 1 as i32) as uint8_t;
             spc_write(spc, adr_8, result_3);
-            spc_doBranch(
-                spc,
-                spc_readOpcode(spc),
-                result_3 as ::core::ffi::c_int != 0 as ::core::ffi::c_int,
-            );
+            spc_doBranch(spc, spc_readOpcode(spc), result_3 as i32 != 0 as i32);
         }
         111 => {
             (*spc).pc = spc_pullWord(spc);
@@ -709,24 +651,17 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: uint8_t) {
             let mut low_2: uint16_t = 0 as uint16_t;
             let high_2: uint16_t = spc_adrDpWord(spc, &raw mut low_2);
             let value_2: uint16_t = spc_readWord(spc, low_2, high_2);
-            let ya_0: uint16_t = ((*spc).a as ::core::ffi::c_int
-                | ((*spc).y as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
-                as uint16_t;
-            let result_4: ::core::ffi::c_int =
-                ya_0 as ::core::ffi::c_int + value_2 as ::core::ffi::c_int;
-            (*spc).v = ya_0 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-                == value_2 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-                && value_2 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-                    != result_4 & 0x8000 as ::core::ffi::c_int;
-            (*spc).h = (ya_0 as ::core::ffi::c_int & 0xfff as ::core::ffi::c_int)
-                + (value_2 as ::core::ffi::c_int & 0xfff as ::core::ffi::c_int)
-                + 1 as ::core::ffi::c_int
-                > 0xfff as ::core::ffi::c_int;
-            (*spc).c = result_4 > 0xffff as ::core::ffi::c_int;
-            (*spc).z = result_4 & 0xffff as ::core::ffi::c_int == 0 as ::core::ffi::c_int;
-            (*spc).n = result_4 & 0x8000 as ::core::ffi::c_int != 0;
-            (*spc).a = (result_4 & 0xff as ::core::ffi::c_int) as uint8_t;
-            (*spc).y = (result_4 >> 8 as ::core::ffi::c_int) as uint8_t;
+            let ya_0: uint16_t = ((*spc).a as i32 | ((*spc).y as i32) << 8 as i32) as uint16_t;
+            let result_4: i32 = ya_0 as i32 + value_2 as i32;
+            (*spc).v = ya_0 as i32 & 0x8000 as i32 == value_2 as i32 & 0x8000 as i32
+                && value_2 as i32 & 0x8000 as i32 != result_4 & 0x8000 as i32;
+            (*spc).h = (ya_0 as i32 & 0xfff as i32) + (value_2 as i32 & 0xfff as i32) + 1 as i32
+                > 0xfff as i32;
+            (*spc).c = result_4 > 0xffff as i32;
+            (*spc).z = result_4 & 0xffff as i32 == 0 as i32;
+            (*spc).n = result_4 & 0x8000 as i32 != 0;
+            (*spc).a = (result_4 & 0xff as i32) as uint8_t;
+            (*spc).y = (result_4 >> 8 as i32) as uint8_t;
         }
         123 => {
             spc_shift_memory::<true, true>(spc, spc_adrDpx(spc));
@@ -818,27 +753,19 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: uint8_t) {
         154 => {
             let mut low_3: uint16_t = 0 as uint16_t;
             let high_3: uint16_t = spc_adrDpWord(spc, &raw mut low_3);
-            let value_3: uint16_t = (spc_readWord(spc, low_3, high_3) as ::core::ffi::c_int
-                ^ 0xffff as ::core::ffi::c_int) as uint16_t;
-            let ya_1: uint16_t = ((*spc).a as ::core::ffi::c_int
-                | ((*spc).y as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
-                as uint16_t;
-            let result_5: ::core::ffi::c_int = ya_1 as ::core::ffi::c_int
-                + value_3 as ::core::ffi::c_int
-                + 1 as ::core::ffi::c_int;
-            (*spc).v = ya_1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-                == value_3 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-                && value_3 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-                    != result_5 & 0x8000 as ::core::ffi::c_int;
-            (*spc).h = (ya_1 as ::core::ffi::c_int & 0xfff as ::core::ffi::c_int)
-                + (value_3 as ::core::ffi::c_int & 0xfff as ::core::ffi::c_int)
-                + 1 as ::core::ffi::c_int
-                > 0xfff as ::core::ffi::c_int;
-            (*spc).c = result_5 > 0xffff as ::core::ffi::c_int;
-            (*spc).z = result_5 & 0xffff as ::core::ffi::c_int == 0 as ::core::ffi::c_int;
-            (*spc).n = result_5 & 0x8000 as ::core::ffi::c_int != 0;
-            (*spc).a = (result_5 & 0xff as ::core::ffi::c_int) as uint8_t;
-            (*spc).y = (result_5 >> 8 as ::core::ffi::c_int) as uint8_t;
+            let value_3: uint16_t =
+                (spc_readWord(spc, low_3, high_3) as i32 ^ 0xffff as i32) as uint16_t;
+            let ya_1: uint16_t = ((*spc).a as i32 | ((*spc).y as i32) << 8 as i32) as uint16_t;
+            let result_5: i32 = ya_1 as i32 + value_3 as i32 + 1 as i32;
+            (*spc).v = ya_1 as i32 & 0x8000 as i32 == value_3 as i32 & 0x8000 as i32
+                && value_3 as i32 & 0x8000 as i32 != result_5 & 0x8000 as i32;
+            (*spc).h = (ya_1 as i32 & 0xfff as i32) + (value_3 as i32 & 0xfff as i32) + 1 as i32
+                > 0xfff as i32;
+            (*spc).c = result_5 > 0xffff as i32;
+            (*spc).z = result_5 & 0xffff as i32 == 0 as i32;
+            (*spc).n = result_5 & 0x8000 as i32 != 0;
+            (*spc).a = (result_5 & 0xff as i32) as uint8_t;
+            (*spc).y = (result_5 >> 8 as i32) as uint8_t;
         }
         155 | 187 => {
             spc_step_memory(spc, spc_adrDpx(spc), opcode & 0x20 != 0);
@@ -854,26 +781,21 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: uint8_t) {
             spc_setZN(spc, (*spc).x);
         }
         158 => {
-            let value_4: uint16_t = ((*spc).a as ::core::ffi::c_int
-                | ((*spc).y as ::core::ffi::c_int) << 8 as ::core::ffi::c_int)
-                as uint16_t;
-            let mut result_6: ::core::ffi::c_int = 0xffff as ::core::ffi::c_int;
-            let mut mod_0: ::core::ffi::c_int = (*spc).a as ::core::ffi::c_int;
-            if (*spc).x as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
-                result_6 = value_4 as ::core::ffi::c_int / (*spc).x as ::core::ffi::c_int;
-                mod_0 = value_4 as ::core::ffi::c_int % (*spc).x as ::core::ffi::c_int;
+            let value_4: uint16_t = ((*spc).a as i32 | ((*spc).y as i32) << 8 as i32) as uint16_t;
+            let mut result_6: i32 = 0xffff as i32;
+            let mut mod_0: i32 = (*spc).a as i32;
+            if (*spc).x as i32 != 0 as i32 {
+                result_6 = value_4 as i32 / (*spc).x as i32;
+                mod_0 = value_4 as i32 % (*spc).x as i32;
             }
-            (*spc).v = result_6 > 0xff as ::core::ffi::c_int;
-            (*spc).h = (*spc).x as ::core::ffi::c_int & 0xf as ::core::ffi::c_int
-                <= (*spc).y as ::core::ffi::c_int & 0xf as ::core::ffi::c_int;
+            (*spc).v = result_6 > 0xff as i32;
+            (*spc).h = (*spc).x as i32 & 0xf as i32 <= (*spc).y as i32 & 0xf as i32;
             (*spc).a = result_6 as uint8_t;
             (*spc).y = mod_0 as uint8_t;
             spc_setZN(spc, (*spc).a);
         }
         159 => {
-            (*spc).a = ((*spc).a as ::core::ffi::c_int >> 4 as ::core::ffi::c_int
-                | ((*spc).a as ::core::ffi::c_int) << 4 as ::core::ffi::c_int)
-                as uint8_t;
+            (*spc).a = ((*spc).a as i32 >> 4 as i32 | ((*spc).a as i32) << 4 as i32) as uint8_t;
             spc_setZN(spc, (*spc).a);
         }
         160 => {
@@ -896,23 +818,21 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: uint8_t) {
             let mut low_4: uint16_t = 0 as uint16_t;
             let high_4: uint16_t = spc_adrDpWord(spc, &raw mut low_4);
             let val_5: uint16_t = spc_readWord(spc, low_4, high_4);
-            (*spc).a = (val_5 as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint8_t;
-            (*spc).y = (val_5 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint8_t;
-            (*spc).z = val_5 as ::core::ffi::c_int == 0 as ::core::ffi::c_int;
-            (*spc).n = val_5 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0;
+            (*spc).a = (val_5 as i32 & 0xff as i32) as uint8_t;
+            (*spc).y = (val_5 as i32 >> 8 as i32) as uint8_t;
+            (*spc).z = val_5 as i32 == 0 as i32;
+            (*spc).n = val_5 as i32 & 0x8000 as i32 != 0;
         }
         189 => {
             (*spc).sp = (*spc).x;
         }
         190 => {
-            if (*spc).a as ::core::ffi::c_int > 0x99 as ::core::ffi::c_int || !(*spc).c {
-                (*spc).a = ((*spc).a as ::core::ffi::c_int - 0x60 as ::core::ffi::c_int) as uint8_t;
+            if (*spc).a as i32 > 0x99 as i32 || !(*spc).c {
+                (*spc).a = ((*spc).a as i32 - 0x60 as i32) as uint8_t;
                 (*spc).c = false_0 != 0;
             }
-            if (*spc).a as ::core::ffi::c_int & 0xf as ::core::ffi::c_int > 9 as ::core::ffi::c_int
-                || !(*spc).h
-            {
-                (*spc).a = ((*spc).a as ::core::ffi::c_int - 6 as ::core::ffi::c_int) as uint8_t;
+            if (*spc).a as i32 & 0xf as i32 > 9 as i32 || !(*spc).h {
+                (*spc).a = ((*spc).a as i32 - 6 as i32) as uint8_t;
             }
             spc_setZN(spc, (*spc).a);
         }
@@ -954,10 +874,9 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: uint8_t) {
             (*spc).x = spc_pullByte(spc);
         }
         207 => {
-            let result_8: uint16_t =
-                ((*spc).a as ::core::ffi::c_int * (*spc).y as ::core::ffi::c_int) as uint16_t;
-            (*spc).a = (result_8 as ::core::ffi::c_int & 0xff as ::core::ffi::c_int) as uint8_t;
-            (*spc).y = (result_8 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint8_t;
+            let result_8: uint16_t = ((*spc).a as i32 * (*spc).y as i32) as uint16_t;
+            (*spc).a = (result_8 as i32 & 0xff as i32) as uint8_t;
+            (*spc).y = (result_8 as i32 >> 8 as i32) as uint8_t;
             spc_setZN(spc, (*spc).y);
         }
         208 => {
@@ -1002,28 +921,17 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: uint8_t) {
             spc_setZN(spc, (*spc).a);
         }
         222 => {
-            let val_6: uint8_t = (spc_read(spc, spc_adrDpx(spc)) as ::core::ffi::c_int
-                ^ 0xff as ::core::ffi::c_int) as uint8_t;
-            let result_9: uint8_t = ((*spc).a as ::core::ffi::c_int
-                + val_6 as ::core::ffi::c_int
-                + 1 as ::core::ffi::c_int) as uint8_t;
-            spc_doBranch(
-                spc,
-                spc_readOpcode(spc),
-                result_9 as ::core::ffi::c_int != 0 as ::core::ffi::c_int,
-            );
+            let val_6: uint8_t = (spc_read(spc, spc_adrDpx(spc)) as i32 ^ 0xff as i32) as uint8_t;
+            let result_9: uint8_t = ((*spc).a as i32 + val_6 as i32 + 1 as i32) as uint8_t;
+            spc_doBranch(spc, spc_readOpcode(spc), result_9 as i32 != 0 as i32);
         }
         223 => {
-            if (*spc).a as ::core::ffi::c_int > 0x99 as ::core::ffi::c_int
-                || (*spc).c as ::core::ffi::c_int != 0
-            {
-                (*spc).a = ((*spc).a as ::core::ffi::c_int + 0x60 as ::core::ffi::c_int) as uint8_t;
+            if (*spc).a as i32 > 0x99 as i32 || (*spc).c as i32 != 0 {
+                (*spc).a = ((*spc).a as i32 + 0x60 as i32) as uint8_t;
                 (*spc).c = true_0 != 0;
             }
-            if (*spc).a as ::core::ffi::c_int & 0xf as ::core::ffi::c_int > 9 as ::core::ffi::c_int
-                || (*spc).h as ::core::ffi::c_int != 0
-            {
-                (*spc).a = ((*spc).a as ::core::ffi::c_int + 6 as ::core::ffi::c_int) as uint8_t;
+            if (*spc).a as i32 & 0xf as i32 > 9 as i32 || (*spc).h as i32 != 0 {
+                (*spc).a = ((*spc).a as i32 + 6 as i32) as uint8_t;
             }
             spc_setZN(spc, (*spc).a);
         }
@@ -1058,11 +966,7 @@ unsafe fn spc_doOpcode(spc: *mut Spc, opcode: uint8_t) {
         }
         254 => {
             (*spc).y = (*spc).y.wrapping_sub(1);
-            spc_doBranch(
-                spc,
-                spc_readOpcode(spc),
-                (*spc).y as ::core::ffi::c_int != 0 as ::core::ffi::c_int,
-            );
+            spc_doBranch(spc, spc_readOpcode(spc), (*spc).y as i32 != 0 as i32);
         }
         255 => {
             (*spc).stopped = true_0 != 0;

@@ -12,5 +12,5 @@ printf '%-34s %8s\n' 'extern "C" blocks'            "$(count '^(pub )?(unsafe )?
 printf '%-34s %8s\n' 'extern "C" fns (C ABI exports)' "$(count 'pub unsafe extern "C" fn')"
 printf '%-34s %8s\n' '#[no_mangle]'                 "$(count 'no_mangle')"
 printf '%-34s %8s\n' 'unsafe fns'                    "$(count 'unsafe (extern "C" )?fn ')"
-printf '%-34s %8s\n' '::core::ffi::c_int casts'      "$(count 'as ::core::ffi::c_int')"
+printf '%-34s %8s\n' 'i32/c_int cast lines'         "$(count 'as (i32|::core::ffi::c_int)([^[:alnum:]_]|$)')"
 printf '%-34s %8s\n' 'lines of Rust'                 "$(find "$src" -name '*.rs' -exec cat {} + | wc -l | tr -d ' ')"

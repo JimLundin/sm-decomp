@@ -583,10 +583,10 @@ pub unsafe fn DisplayMessageBox_Async(a: uint16, game: &mut Game) -> CoroutineRe
     game.g_ram[0x614] = 0;
     0
 }
-pub fn DisplayMessageBox_Poll(a: uint16, game: &mut Game) -> ::core::ffi::c_int {
+pub fn DisplayMessageBox_Poll(a: uint16, game: &mut Game) -> i32 {
     if a == u16::from_le_bytes([game.g_ram[0x1c1f], game.g_ram[0x1c20]]) {
         game.g_ram[0x1c1f..0x1c21].fill(0);
-        return u16::from_le_bytes([game.g_ram[0x5f9], game.g_ram[0x5fa]]) as ::core::ffi::c_int;
+        return u16::from_le_bytes([game.g_ram[0x5f9], game.g_ram[0x5fa]]) as i32;
     }
     game.g_ram[0xdc8..0xdca].copy_from_slice(&a.to_le_bytes());
     -1

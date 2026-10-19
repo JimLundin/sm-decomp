@@ -2,11 +2,7 @@ use crate::game_state::Game;
 use crate::snes::apu::apu_cpuRead;
 use crate::snes::snes::snes_read;
 extern "C" {
-    fn sprintf(
-        __s: *mut ::core::ffi::c_char,
-        __format: *const ::core::ffi::c_char,
-        ...
-    ) -> ::core::ffi::c_int;
+    fn sprintf(__s: *mut ::core::ffi::c_char, __format: *const ::core::ffi::c_char, ...) -> i32;
 
 }
 pub use crate::types::{
@@ -536,7 +532,7 @@ static opcodeNamesSp: crate::types::ImmutableCStringPointers<256> = unsafe {
         ::core::ptr::null::<::core::ffi::c_char>(),
     ])
 };
-static opcodeType: [::core::ffi::c_int; 256] = [
+static opcodeType: [i32; 256] = [
     0, 1, 1, 1, 1, 1, 1, 1, 0, 4, 0, 0, 2, 2, 2, 3, 6, 1, 1, 1, 1, 1, 1, 1, 0, 2, 0, 0, 2, 2, 2, 3,
     2, 1, 3, 1, 1, 1, 1, 1, 0, 4, 0, 0, 2, 2, 2, 3, 6, 1, 1, 1, 1, 1, 1, 1, 0, 2, 0, 0, 2, 2, 2, 3,
     0, 1, 1, 1, 8, 1, 1, 1, 0, 4, 0, 0, 2, 2, 2, 3, 6, 1, 1, 1, 8, 1, 1, 1, 0, 2, 0, 0, 3, 2, 2, 3,
@@ -806,7 +802,7 @@ static opcodeNamesSpc: crate::types::ImmutableCStringPointers<256> = unsafe {
         b"stop             \0" as *const u8 as *const ::core::ffi::c_char,
     ])
 };
-static opcodeTypeSpc: [::core::ffi::c_int; 256] = [
+static opcodeTypeSpc: [i32; 256] = [
     0, 0, 1, 5, 1, 2, 0, 1, 1, 4, 6, 1, 2, 0, 2, 0, 3, 0, 1, 5, 1, 2, 2, 1, 4, 0, 1, 1, 0, 0, 2, 2,
     0, 0, 1, 5, 1, 2, 0, 1, 1, 4, 6, 1, 2, 0, 5, 3, 3, 0, 1, 5, 1, 2, 2, 1, 4, 0, 1, 1, 0, 0, 1, 2,
     0, 0, 1, 5, 1, 2, 0, 1, 1, 4, 6, 1, 2, 0, 2, 1, 3, 0, 1, 5, 1, 2, 2, 1, 4, 0, 1, 1, 0, 0, 2, 2,
@@ -828,56 +824,56 @@ pub unsafe fn getProcessorStateCpu(
         line,
         b"CPU %02x:%04x %s A:%04x X:%04x Y:%04x SP:%04x DP:%04x DB:%02x %c %c%c%c%c%c%c%c%c\0"
             as *const u8 as *const ::core::ffi::c_char,
-        (*(*snes).cpu).k as ::core::ffi::c_int,
-        (*(*snes).cpu).pc as ::core::ffi::c_int,
+        (*(*snes).cpu).k as i32,
+        (*(*snes).cpu).pc as i32,
         &raw mut disLine as *mut ::core::ffi::c_char,
-        (*(*snes).cpu).a as ::core::ffi::c_int,
-        (*(*snes).cpu).x as ::core::ffi::c_int,
-        (*(*snes).cpu).y as ::core::ffi::c_int,
-        (*(*snes).cpu).sp as ::core::ffi::c_int,
-        (*(*snes).cpu).dp as ::core::ffi::c_int,
-        (*(*snes).cpu).db as ::core::ffi::c_int,
-        if (*(*snes).cpu).e as ::core::ffi::c_int != 0 {
+        (*(*snes).cpu).a as i32,
+        (*(*snes).cpu).x as i32,
+        (*(*snes).cpu).y as i32,
+        (*(*snes).cpu).sp as i32,
+        (*(*snes).cpu).dp as i32,
+        (*(*snes).cpu).db as i32,
+        if (*(*snes).cpu).e as i32 != 0 {
             'E' as i32
         } else {
             'e' as i32
         },
-        if (*(*snes).cpu).n as ::core::ffi::c_int != 0 {
+        if (*(*snes).cpu).n as i32 != 0 {
             'N' as i32
         } else {
             'n' as i32
         },
-        if (*(*snes).cpu).v as ::core::ffi::c_int != 0 {
+        if (*(*snes).cpu).v as i32 != 0 {
             'V' as i32
         } else {
             'v' as i32
         },
-        if (*(*snes).cpu).mf as ::core::ffi::c_int != 0 {
+        if (*(*snes).cpu).mf as i32 != 0 {
             'M' as i32
         } else {
             'm' as i32
         },
-        if (*(*snes).cpu).xf as ::core::ffi::c_int != 0 {
+        if (*(*snes).cpu).xf as i32 != 0 {
             'X' as i32
         } else {
             'x' as i32
         },
-        if (*(*snes).cpu).d as ::core::ffi::c_int != 0 {
+        if (*(*snes).cpu).d as i32 != 0 {
             'D' as i32
         } else {
             'd' as i32
         },
-        if (*(*snes).cpu).i as ::core::ffi::c_int != 0 {
+        if (*(*snes).cpu).i as i32 != 0 {
             'I' as i32
         } else {
             'i' as i32
         },
-        if (*(*snes).cpu).z as ::core::ffi::c_int != 0 {
+        if (*(*snes).cpu).z as i32 != 0 {
             'Z' as i32
         } else {
             'z' as i32
         },
-        if (*(*snes).cpu).c as ::core::ffi::c_int != 0 {
+        if (*(*snes).cpu).c as i32 != 0 {
             'C' as i32
         } else {
             'c' as i32
@@ -892,48 +888,48 @@ pub unsafe fn getProcessorStateSpc(apu: *mut Apu, line: *mut ::core::ffi::c_char
         line,
         b"SPC %04x %s A:%02x X:%02x Y:%02x SP:%02x %c%c%c%c%c%c%c%c\0" as *const u8
             as *const ::core::ffi::c_char,
-        (*(*apu).spc).pc as ::core::ffi::c_int,
+        (*(*apu).spc).pc as i32,
         &raw mut disLine as *mut ::core::ffi::c_char,
-        (*(*apu).spc).a as ::core::ffi::c_int,
-        (*(*apu).spc).x as ::core::ffi::c_int,
-        (*(*apu).spc).y as ::core::ffi::c_int,
-        (*(*apu).spc).sp as ::core::ffi::c_int,
-        if (*(*apu).spc).n as ::core::ffi::c_int != 0 {
+        (*(*apu).spc).a as i32,
+        (*(*apu).spc).x as i32,
+        (*(*apu).spc).y as i32,
+        (*(*apu).spc).sp as i32,
+        if (*(*apu).spc).n as i32 != 0 {
             'N' as i32
         } else {
             'n' as i32
         },
-        if (*(*apu).spc).v as ::core::ffi::c_int != 0 {
+        if (*(*apu).spc).v as i32 != 0 {
             'V' as i32
         } else {
             'v' as i32
         },
-        if (*(*apu).spc).p as ::core::ffi::c_int != 0 {
+        if (*(*apu).spc).p as i32 != 0 {
             'P' as i32
         } else {
             'p' as i32
         },
-        if (*(*apu).spc).b as ::core::ffi::c_int != 0 {
+        if (*(*apu).spc).b as i32 != 0 {
             'B' as i32
         } else {
             'b' as i32
         },
-        if (*(*apu).spc).h as ::core::ffi::c_int != 0 {
+        if (*(*apu).spc).h as i32 != 0 {
             'H' as i32
         } else {
             'h' as i32
         },
-        if (*(*apu).spc).i as ::core::ffi::c_int != 0 {
+        if (*(*apu).spc).i as i32 != 0 {
             'I' as i32
         } else {
             'i' as i32
         },
-        if (*(*apu).spc).z as ::core::ffi::c_int != 0 {
+        if (*(*apu).spc).z as i32 != 0 {
             'Z' as i32
         } else {
             'z' as i32
         },
-        if (*(*apu).spc).c as ::core::ffi::c_int != 0 {
+        if (*(*apu).spc).c as i32 != 0 {
             'C' as i32
         } else {
             'c' as i32
@@ -941,9 +937,8 @@ pub unsafe fn getProcessorStateSpc(apu: *mut Apu, line: *mut ::core::ffi::c_char
     );
 }
 unsafe fn getDisassemblyCpu(snes: *mut Snes, line: *mut ::core::ffi::c_char, game: &mut Game) {
-    let adr: uint32_t = ((*(*snes).cpu).pc as ::core::ffi::c_int
-        | ((*(*snes).cpu).k as ::core::ffi::c_int) << 16 as ::core::ffi::c_int)
-        as uint32_t;
+    let adr: uint32_t =
+        ((*(*snes).cpu).pc as i32 | ((*(*snes).cpu).k as i32) << 16 as i32) as uint32_t;
     let opcode: uint8_t = snes_read(snes, adr, game);
     let byte: uint8_t = snes_read(
         snes,
@@ -955,21 +950,16 @@ unsafe fn getDisassemblyCpu(snes: *mut Snes, line: *mut ::core::ffi::c_char, gam
         adr.wrapping_add(2 as uint32_t) & 0xffffff as uint32_t,
         game,
     );
-    let word: uint16_t = ((byte2 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
-        | byte as ::core::ffi::c_int) as uint16_t;
+    let word: uint16_t = ((byte2 as i32) << 8 as i32 | byte as i32) as uint16_t;
     let longv: uint32_t = ((snes_read(
         snes,
         adr.wrapping_add(3 as uint32_t) & 0xffffff as uint32_t,
         game,
-    ) as ::core::ffi::c_int)
-        << 16 as ::core::ffi::c_int
-        | word as ::core::ffi::c_int) as uint32_t;
-    let rel: uint16_t = ((*(*snes).cpu).pc as ::core::ffi::c_int
-        + 2 as ::core::ffi::c_int
-        + byte as int8_t as ::core::ffi::c_int) as uint16_t;
-    let rell: uint16_t = ((*(*snes).cpu).pc as ::core::ffi::c_int
-        + 3 as ::core::ffi::c_int
-        + word as int16_t as ::core::ffi::c_int) as uint16_t;
+    ) as i32)
+        << 16 as i32
+        | word as i32) as uint32_t;
+    let rel: uint16_t = ((*(*snes).cpu).pc as i32 + 2 as i32 + byte as int8_t as i32) as uint16_t;
+    let rell: uint16_t = ((*(*snes).cpu).pc as i32 + 3 as i32 + word as int16_t as i32) as uint16_t;
     match opcodeType[opcode as usize] {
         0 => {
             sprintf(
@@ -979,72 +969,40 @@ unsafe fn getDisassemblyCpu(snes: *mut Snes, line: *mut ::core::ffi::c_char, gam
             );
         }
         1 => {
-            sprintf(
-                line,
-                opcodeNames[opcode as usize],
-                byte as ::core::ffi::c_int,
-            );
+            sprintf(line, opcodeNames[opcode as usize], byte as i32);
         }
         2 => {
-            sprintf(
-                line,
-                opcodeNames[opcode as usize],
-                word as ::core::ffi::c_int,
-            );
+            sprintf(line, opcodeNames[opcode as usize], word as i32);
         }
         3 => {
             sprintf(line, opcodeNames[opcode as usize], longv);
         }
         4 => {
             if (*(*snes).cpu).mf {
-                sprintf(
-                    line,
-                    opcodeNamesSp[opcode as usize],
-                    byte as ::core::ffi::c_int,
-                );
+                sprintf(line, opcodeNamesSp[opcode as usize], byte as i32);
             } else {
-                sprintf(
-                    line,
-                    opcodeNames[opcode as usize],
-                    word as ::core::ffi::c_int,
-                );
+                sprintf(line, opcodeNames[opcode as usize], word as i32);
             }
         }
         5 => {
             if (*(*snes).cpu).xf {
-                sprintf(
-                    line,
-                    opcodeNamesSp[opcode as usize],
-                    byte as ::core::ffi::c_int,
-                );
+                sprintf(line, opcodeNamesSp[opcode as usize], byte as i32);
             } else {
-                sprintf(
-                    line,
-                    opcodeNames[opcode as usize],
-                    word as ::core::ffi::c_int,
-                );
+                sprintf(line, opcodeNames[opcode as usize], word as i32);
             }
         }
         6 => {
-            sprintf(
-                line,
-                opcodeNames[opcode as usize],
-                rel as ::core::ffi::c_int,
-            );
+            sprintf(line, opcodeNames[opcode as usize], rel as i32);
         }
         7 => {
-            sprintf(
-                line,
-                opcodeNames[opcode as usize],
-                rell as ::core::ffi::c_int,
-            );
+            sprintf(line, opcodeNames[opcode as usize], rell as i32);
         }
         8 => {
             sprintf(
                 line,
                 opcodeNames[opcode as usize],
-                byte2 as ::core::ffi::c_int,
-                byte as ::core::ffi::c_int,
+                byte2 as i32,
+                byte as i32,
             );
         }
         _ => {}
@@ -1053,26 +1011,13 @@ unsafe fn getDisassemblyCpu(snes: *mut Snes, line: *mut ::core::ffi::c_char, gam
 unsafe fn getDisassemblySpc(apu: *mut Apu, line: *mut ::core::ffi::c_char) {
     let adr: uint16_t = (*(*apu).spc).pc;
     let opcode: uint8_t = apu_cpuRead(apu, adr);
-    let byte: uint8_t = apu_cpuRead(
-        apu,
-        (adr as ::core::ffi::c_int + 1 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int)
-            as uint16_t,
-    );
-    let byte2: uint8_t = apu_cpuRead(
-        apu,
-        (adr as ::core::ffi::c_int + 2 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int)
-            as uint16_t,
-    );
-    let word: uint16_t = ((byte2 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
-        | byte as ::core::ffi::c_int) as uint16_t;
-    let rel: uint16_t = ((*(*apu).spc).pc as ::core::ffi::c_int
-        + 2 as ::core::ffi::c_int
-        + byte as int8_t as ::core::ffi::c_int) as uint16_t;
-    let rel2: uint16_t = ((*(*apu).spc).pc as ::core::ffi::c_int
-        + 2 as ::core::ffi::c_int
-        + byte2 as int8_t as ::core::ffi::c_int) as uint16_t;
-    let wordb: uint16_t = (word as ::core::ffi::c_int & 0x1fff as ::core::ffi::c_int) as uint16_t;
-    let bit: uint8_t = (word as ::core::ffi::c_int >> 13 as ::core::ffi::c_int) as uint8_t;
+    let byte: uint8_t = apu_cpuRead(apu, (adr as i32 + 1 as i32 & 0xffff as i32) as uint16_t);
+    let byte2: uint8_t = apu_cpuRead(apu, (adr as i32 + 2 as i32 & 0xffff as i32) as uint16_t);
+    let word: uint16_t = ((byte2 as i32) << 8 as i32 | byte as i32) as uint16_t;
+    let rel: uint16_t = ((*(*apu).spc).pc as i32 + 2 as i32 + byte as int8_t as i32) as uint16_t;
+    let rel2: uint16_t = ((*(*apu).spc).pc as i32 + 2 as i32 + byte2 as int8_t as i32) as uint16_t;
+    let wordb: uint16_t = (word as i32 & 0x1fff as i32) as uint16_t;
+    let bit: uint8_t = (word as i32 >> 13 as i32) as uint8_t;
     match opcodeTypeSpc[opcode as usize] {
         0 => {
             sprintf(
@@ -1082,48 +1027,36 @@ unsafe fn getDisassemblySpc(apu: *mut Apu, line: *mut ::core::ffi::c_char) {
             );
         }
         1 => {
-            sprintf(
-                line,
-                opcodeNamesSpc[opcode as usize],
-                byte as ::core::ffi::c_int,
-            );
+            sprintf(line, opcodeNamesSpc[opcode as usize], byte as i32);
         }
         2 => {
-            sprintf(
-                line,
-                opcodeNamesSpc[opcode as usize],
-                word as ::core::ffi::c_int,
-            );
+            sprintf(line, opcodeNamesSpc[opcode as usize], word as i32);
         }
         3 => {
-            sprintf(
-                line,
-                opcodeNamesSpc[opcode as usize],
-                rel as ::core::ffi::c_int,
-            );
+            sprintf(line, opcodeNamesSpc[opcode as usize], rel as i32);
         }
         4 => {
             sprintf(
                 line,
                 opcodeNamesSpc[opcode as usize],
-                byte2 as ::core::ffi::c_int,
-                byte as ::core::ffi::c_int,
+                byte2 as i32,
+                byte as i32,
             );
         }
         5 => {
             sprintf(
                 line,
                 opcodeNamesSpc[opcode as usize],
-                byte as ::core::ffi::c_int,
-                rel2 as ::core::ffi::c_int,
+                byte as i32,
+                rel2 as i32,
             );
         }
         6 => {
             sprintf(
                 line,
                 opcodeNamesSpc[opcode as usize],
-                wordb as ::core::ffi::c_int,
-                bit as ::core::ffi::c_int,
+                wordb as i32,
+                bit as i32,
             );
         }
         _ => {}

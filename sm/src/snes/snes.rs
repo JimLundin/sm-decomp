@@ -13,18 +13,14 @@ use crate::snes::ppu::{
     ppu_saveload, ppu_write,
 };
 extern "C" {
-    fn printf(__format: *const ::core::ffi::c_char, ...) -> ::core::ffi::c_int;
+    fn printf(__format: *const ::core::ffi::c_char, ...) -> i32;
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
-    fn memset(
-        __s: *mut ::core::ffi::c_void,
-        __c: ::core::ffi::c_int,
-        __n: size_t,
-    ) -> *mut ::core::ffi::c_void;
+    fn memset(__s: *mut ::core::ffi::c_void, __c: i32, __n: size_t) -> *mut ::core::ffi::c_void;
     fn __assert_fail(
         __assertion: *const ::core::ffi::c_char,
         __file: *const ::core::ffi::c_char,
-        __line: ::core::ffi::c_uint,
+        __line: u32,
         __function: *const ::core::ffi::c_char,
     ) -> !;
 
@@ -35,8 +31,8 @@ pub use crate::types::{
     DmaChannel, Dsp, DspChannel, DspRegWriteHistory, Input, Layer, Ppu, PpuPixelPrioBufs,
     PpuZbufType, SaveLoadFunc, Snes, Spc, Timer, WindowLayer,
 };
-pub const true_0: ::core::ffi::c_int = 1;
-pub const false_0: ::core::ffi::c_int = 0;
+pub const true_0: i32 = 1;
+pub const false_0: i32 = 0;
 
 pub unsafe fn snes_init(ram: *mut uint8_t) -> *mut Snes {
     let snes: *mut Snes = malloc(::core::mem::size_of::<Snes>() as size_t) as *mut Snes;
@@ -48,7 +44,7 @@ pub unsafe fn snes_init(ram: *mut uint8_t) -> *mut Snes {
     (*snes).disableRender = false;
     (*snes).cpuMemOps = 0;
     (*snes).cpuCyclesLeft = 0;
-    (*snes).cpu = cpu_init(snes as *mut ::core::ffi::c_void, 0 as ::core::ffi::c_int);
+    (*snes).cpu = cpu_init(snes as *mut ::core::ffi::c_void, 0 as i32);
     (*snes).apu = apu_init();
     (*snes).dma = dma_init(snes);
     (*snes).my_ppu = ppu_init(snes);
@@ -112,8 +108,8 @@ pub unsafe fn snes_reset(snes: *mut Snes, hard: bool, game: &mut Game) {
     if hard {
         memset(
             (*snes).ram as *mut ::core::ffi::c_void,
-            0 as ::core::ffi::c_int,
-            0x20000 as ::core::ffi::c_int as size_t,
+            0 as i32,
+            0x20000 as i32 as size_t,
         );
     }
     (*snes).ramAdr = 0;
@@ -209,7 +205,7 @@ pub unsafe fn snes_readBBus(snes: *mut Snes, address: u8, game: &mut Game) -> u8
             __assert_fail(
                 b"0\0" as *const u8 as *const ::core::ffi::c_char,
                 b"src/snes/snes.c\0" as *const u8 as *const ::core::ffi::c_char,
-                197 as ::core::ffi::c_uint,
+                197 as u32,
                 b"uint8_t snes_readBBus(Snes *, uint8_t)\0" as *const u8
                     as *const ::core::ffi::c_char,
             );
@@ -316,15 +312,13 @@ unsafe fn snes_writeReg(snes: *mut Snes, adr: u16, val: u8, game: &mut Game) {
             (*snes).vTimer = ((*snes).vTimer & 0xff) | (u16::from(val & 1) << 8);
         }
         0x420b => {
-            if val as ::core::ffi::c_int == 2 as ::core::ffi::c_int {
-                let t: uint32_t = (((*(*snes).dma).channel[1 as ::core::ffi::c_int as usize].aBank
-                    as ::core::ffi::c_int)
-                    << 16 as ::core::ffi::c_int
-                    | (*(*snes).dma).channel[1 as ::core::ffi::c_int as usize].aAdr
-                        as ::core::ffi::c_int) as uint32_t;
-                let data: ::core::ffi::c_int = snes_read(snes, t, game) as ::core::ffi::c_int
-                    | (snes_read(snes, t.wrapping_add(1 as uint32_t), game) as ::core::ffi::c_int)
-                        << 8 as ::core::ffi::c_int;
+            if val as i32 == 2 as i32 {
+                let t: uint32_t = (((*(*snes).dma).channel[1 as i32 as usize].aBank as i32)
+                    << 16 as i32
+                    | (*(*snes).dma).channel[1 as i32 as usize].aAdr as i32)
+                    as uint32_t;
+                let data: i32 = snes_read(snes, t, game) as i32
+                    | (snes_read(snes, t.wrapping_add(1 as uint32_t), game) as i32) << 8 as i32;
             }
             dma_startDma((*snes).dma, val, false_0 != 0);
             while dma_cycle((*snes).dma, game) {}
@@ -353,7 +347,7 @@ pub unsafe fn snes_read(snes: *mut Snes, address: u32, game: &mut Game) -> u8 {
                 __assert_fail(
                     b"0\0" as *const u8 as *const ::core::ffi::c_char,
                     b"src/snes/snes.c\0" as *const u8 as *const ::core::ffi::c_char,
-                    396 as ::core::ffi::c_uint,
+                    396 as u32,
                     b"uint8_t snes_read(Snes *, uint32_t)\0" as *const u8
                         as *const ::core::ffi::c_char,
                 );
@@ -371,19 +365,19 @@ pub unsafe fn LogWrite(snes: *mut Snes, adr: uint32_t, val: uint8_t, game: &mut 
             as *const u8 as *const ::core::ffi::c_char,
         game.snes_frame_counter,
         adr,
-        val as ::core::ffi::c_int,
-        ((*(*snes).cpu).k as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-            | (*(*snes).cpu).pc as ::core::ffi::c_int,
-        *(*snes).ram.offset(0x12) as ::core::ffi::c_int
+        val as i32,
+        ((*(*snes).cpu).k as i32) << 16 as i32
+            | (*(*snes).cpu).pc as i32,
+        *(*snes).ram.offset(0x12) as i32
             | (*(*snes).ram.offset(0x13)
-                as ::core::ffi::c_int) << 8 as ::core::ffi::c_int,
-        *(*snes).ram.offset(0x14) as ::core::ffi::c_int
+                as i32) << 8 as i32,
+        *(*snes).ram.offset(0x14) as i32
             | (*(*snes).ram.offset(0x15)
-                as ::core::ffi::c_int) << 8 as ::core::ffi::c_int,
-        (*(*snes).cpu).a as ::core::ffi::c_int,
-        (*(*snes).cpu).x as ::core::ffi::c_int,
-        (*(*snes).cpu).y as ::core::ffi::c_int,
-        (*(*snes).cpu).c as ::core::ffi::c_int,
+                as i32) << 8 as i32,
+        (*(*snes).cpu).a as i32,
+        (*(*snes).cpu).x as i32,
+        (*(*snes).cpu).y as i32,
+        (*(*snes).cpu).c as i32,
     );
 }
 pub unsafe fn snes_write(snes: *mut Snes, address: u32, value: u8, game: &mut Game) {

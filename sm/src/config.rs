@@ -13,23 +13,19 @@ extern "C" {
     fn strtol(
         __nptr: *const ::core::ffi::c_char,
         __endptr: *mut *mut ::core::ffi::c_char,
-        __base: ::core::ffi::c_int,
+        __base: i32,
     ) -> ::core::ffi::c_long;
     fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
     static mut stderr: *mut FILE;
-    fn fprintf(
-        __stream: *mut FILE,
-        __format: *const ::core::ffi::c_char,
-        ...
-    ) -> ::core::ffi::c_int;
+    fn fprintf(__stream: *mut FILE, __format: *const ::core::ffi::c_char, ...) -> i32;
 
 }
 pub use crate::types::{
     _IO_lock_t, __int32_t, __off64_t, __off_t, __uint16_t, __uint32_t, __uint8_t, int32_t, size_t,
     uint16, uint16_t, uint32, uint32_t, uint8, uint8_t, SDL_Keycode, Sint32, _IO_FILE, FILE,
 };
-pub type C2RustUnnamed = ::core::ffi::c_uint;
+pub type C2RustUnnamed = u32;
 pub const SDLK_ENDCALL: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_ENDCALL as C2RustUnnamed;
 pub const SDLK_CALL: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_CALL as C2RustUnnamed;
 pub const SDLK_SOFTRIGHT: C2RustUnnamed = sdl2_sys::SDL_KeyCode::SDLK_SOFTRIGHT as C2RustUnnamed;
@@ -368,7 +364,7 @@ pub const kOutputMethod_OpenGL: C2RustUnnamed_1 = 2;
 pub const kOutputMethod_SDLSoftware: C2RustUnnamed_1 = 1;
 pub const kOutputMethod_SDL: C2RustUnnamed_1 = 0;
 pub use crate::types::Config;
-pub type C2RustUnnamed_2 = ::core::ffi::c_uint;
+pub type C2RustUnnamed_2 = u32;
 pub const kMsuEnabled_Opuz: C2RustUnnamed_2 = 4;
 pub const kMsuEnabled_MsuDeluxe: C2RustUnnamed_2 = 2;
 pub const kMsuEnabled_Msu: C2RustUnnamed_2 = 1;
@@ -417,17 +413,12 @@ pub struct KeyMapHashEnt {
     pub cmd: uint16,
     pub next: uint16,
 }
-pub type C2RustUnnamed_4 = ::core::ffi::c_uint;
+pub type C2RustUnnamed_4 = u32;
 #[inline]
-unsafe fn atoi(mut __nptr: *const ::core::ffi::c_char) -> ::core::ffi::c_int {
-    strtol(
-        __nptr,
-        NULL as *mut *mut ::core::ffi::c_char,
-        10 as ::core::ffi::c_int,
-    ) as ::core::ffi::c_int
+unsafe fn atoi(mut __nptr: *const ::core::ffi::c_char) -> i32 {
+    strtol(__nptr, NULL as *mut *mut ::core::ffi::c_char, 10 as i32) as i32
 }
-pub const SDLK_SCANCODE_MASK: ::core::ffi::c_int =
-    (1 as ::core::ffi::c_int) << 30 as ::core::ffi::c_int;
+pub const SDLK_SCANCODE_MASK: i32 = (1 as i32) << 30 as i32;
 pub static mut g_config: Config = Config {
     window_width: 0,
     window_height: 0,
@@ -457,250 +448,221 @@ pub static mut g_config: Config = Config {
     shader: ::core::ptr::null::<::core::ffi::c_char>(),
     msu_path: ::core::ptr::null::<::core::ffi::c_char>(),
 };
-pub const N: ::core::ffi::c_int = 0;
+pub const N: i32 = 0;
 static mut kDefaultKbdControls: [uint16; 130] = [0; 130];
 static mut kKeyNameId: [KeyNameId; 24] = [
     KeyNameId {
         name: b"Null\0" as *const u8 as *const ::core::ffi::c_char,
-        id: kKeys_Null as ::core::ffi::c_int as uint16,
+        id: kKeys_Null as i32 as uint16,
         size: 65535 as uint16,
     },
     KeyNameId {
         name: b"Controls\0" as *const u8 as *const ::core::ffi::c_char,
-        id: kKeys_Controls as ::core::ffi::c_int as uint16,
-        size: (kKeys_Controls_Last as ::core::ffi::c_int - kKeys_Controls as ::core::ffi::c_int
-            + 1 as ::core::ffi::c_int) as uint16,
+        id: kKeys_Controls as i32 as uint16,
+        size: (kKeys_Controls_Last as i32 - kKeys_Controls as i32 + 1 as i32) as uint16,
     },
     KeyNameId {
         name: b"Load\0" as *const u8 as *const ::core::ffi::c_char,
-        id: kKeys_Load as ::core::ffi::c_int as uint16,
-        size: (kKeys_Load_Last as ::core::ffi::c_int - kKeys_Load as ::core::ffi::c_int
-            + 1 as ::core::ffi::c_int) as uint16,
+        id: kKeys_Load as i32 as uint16,
+        size: (kKeys_Load_Last as i32 - kKeys_Load as i32 + 1 as i32) as uint16,
     },
     KeyNameId {
         name: b"Save\0" as *const u8 as *const ::core::ffi::c_char,
-        id: kKeys_Save as ::core::ffi::c_int as uint16,
-        size: (kKeys_Save_Last as ::core::ffi::c_int - kKeys_Save as ::core::ffi::c_int
-            + 1 as ::core::ffi::c_int) as uint16,
+        id: kKeys_Save as i32 as uint16,
+        size: (kKeys_Save_Last as i32 - kKeys_Save as i32 + 1 as i32) as uint16,
     },
     KeyNameId {
         name: b"Replay\0" as *const u8 as *const ::core::ffi::c_char,
-        id: kKeys_Replay as ::core::ffi::c_int as uint16,
-        size: (kKeys_Replay_Last as ::core::ffi::c_int - kKeys_Replay as ::core::ffi::c_int
-            + 1 as ::core::ffi::c_int) as uint16,
+        id: kKeys_Replay as i32 as uint16,
+        size: (kKeys_Replay_Last as i32 - kKeys_Replay as i32 + 1 as i32) as uint16,
     },
     KeyNameId {
         name: b"LoadRef\0" as *const u8 as *const ::core::ffi::c_char,
-        id: kKeys_LoadRef as ::core::ffi::c_int as uint16,
-        size: (kKeys_LoadRef_Last as ::core::ffi::c_int - kKeys_LoadRef as ::core::ffi::c_int
-            + 1 as ::core::ffi::c_int) as uint16,
+        id: kKeys_LoadRef as i32 as uint16,
+        size: (kKeys_LoadRef_Last as i32 - kKeys_LoadRef as i32 + 1 as i32) as uint16,
     },
     KeyNameId {
         name: b"ReplayRef\0" as *const u8 as *const ::core::ffi::c_char,
-        id: kKeys_ReplayRef as ::core::ffi::c_int as uint16,
-        size: (kKeys_ReplayRef_Last as ::core::ffi::c_int - kKeys_ReplayRef as ::core::ffi::c_int
-            + 1 as ::core::ffi::c_int) as uint16,
+        id: kKeys_ReplayRef as i32 as uint16,
+        size: (kKeys_ReplayRef_Last as i32 - kKeys_ReplayRef as i32 + 1 as i32) as uint16,
     },
     KeyNameId {
         name: b"CheatLife\0" as *const u8 as *const ::core::ffi::c_char,
-        id: kKeys_CheatLife as ::core::ffi::c_int as uint16,
+        id: kKeys_CheatLife as i32 as uint16,
         size: 1 as uint16,
     },
     KeyNameId {
         name: b"CheatJump\0" as *const u8 as *const ::core::ffi::c_char,
-        id: kKeys_CheatJump as ::core::ffi::c_int as uint16,
+        id: kKeys_CheatJump as i32 as uint16,
         size: 1 as uint16,
     },
     KeyNameId {
         name: b"ToggleWhichFrame\0" as *const u8 as *const ::core::ffi::c_char,
-        id: kKeys_ToggleWhichFrame as ::core::ffi::c_int as uint16,
+        id: kKeys_ToggleWhichFrame as i32 as uint16,
         size: 1 as uint16,
     },
     KeyNameId {
         name: b"ClearKeyLog\0" as *const u8 as *const ::core::ffi::c_char,
-        id: kKeys_ClearKeyLog as ::core::ffi::c_int as uint16,
+        id: kKeys_ClearKeyLog as i32 as uint16,
         size: 1 as uint16,
     },
     KeyNameId {
         name: b"StopReplay\0" as *const u8 as *const ::core::ffi::c_char,
-        id: kKeys_StopReplay as ::core::ffi::c_int as uint16,
+        id: kKeys_StopReplay as i32 as uint16,
         size: 1 as uint16,
     },
     KeyNameId {
         name: b"Fullscreen\0" as *const u8 as *const ::core::ffi::c_char,
-        id: kKeys_Fullscreen as ::core::ffi::c_int as uint16,
+        id: kKeys_Fullscreen as i32 as uint16,
         size: 1 as uint16,
     },
     KeyNameId {
         name: b"Reset\0" as *const u8 as *const ::core::ffi::c_char,
-        id: kKeys_Reset as ::core::ffi::c_int as uint16,
+        id: kKeys_Reset as i32 as uint16,
         size: 1 as uint16,
     },
     KeyNameId {
         name: b"Pause\0" as *const u8 as *const ::core::ffi::c_char,
-        id: kKeys_Pause as ::core::ffi::c_int as uint16,
+        id: kKeys_Pause as i32 as uint16,
         size: 1 as uint16,
     },
     KeyNameId {
         name: b"PauseDimmed\0" as *const u8 as *const ::core::ffi::c_char,
-        id: kKeys_PauseDimmed as ::core::ffi::c_int as uint16,
+        id: kKeys_PauseDimmed as i32 as uint16,
         size: 1 as uint16,
     },
     KeyNameId {
         name: b"Turbo\0" as *const u8 as *const ::core::ffi::c_char,
-        id: kKeys_Turbo as ::core::ffi::c_int as uint16,
+        id: kKeys_Turbo as i32 as uint16,
         size: 1 as uint16,
     },
     KeyNameId {
         name: b"ReplayTurbo\0" as *const u8 as *const ::core::ffi::c_char,
-        id: kKeys_ReplayTurbo as ::core::ffi::c_int as uint16,
+        id: kKeys_ReplayTurbo as i32 as uint16,
         size: 1 as uint16,
     },
     KeyNameId {
         name: b"WindowBigger\0" as *const u8 as *const ::core::ffi::c_char,
-        id: kKeys_WindowBigger as ::core::ffi::c_int as uint16,
+        id: kKeys_WindowBigger as i32 as uint16,
         size: 1 as uint16,
     },
     KeyNameId {
         name: b"WindowSmaller\0" as *const u8 as *const ::core::ffi::c_char,
-        id: kKeys_WindowSmaller as ::core::ffi::c_int as uint16,
+        id: kKeys_WindowSmaller as i32 as uint16,
         size: 1 as uint16,
     },
     KeyNameId {
         name: b"VolumeUp\0" as *const u8 as *const ::core::ffi::c_char,
-        id: kKeys_VolumeUp as ::core::ffi::c_int as uint16,
+        id: kKeys_VolumeUp as i32 as uint16,
         size: 1 as uint16,
     },
     KeyNameId {
         name: b"VolumeDown\0" as *const u8 as *const ::core::ffi::c_char,
-        id: kKeys_VolumeDown as ::core::ffi::c_int as uint16,
+        id: kKeys_VolumeDown as i32 as uint16,
         size: 1 as uint16,
     },
     KeyNameId {
         name: b"DisplayPerf\0" as *const u8 as *const ::core::ffi::c_char,
-        id: kKeys_DisplayPerf as ::core::ffi::c_int as uint16,
+        id: kKeys_DisplayPerf as i32 as uint16,
         size: 1 as uint16,
     },
     KeyNameId {
         name: b"ToggleRenderer\0" as *const u8 as *const ::core::ffi::c_char,
-        id: kKeys_ToggleRenderer as ::core::ffi::c_int as uint16,
+        id: kKeys_ToggleRenderer as i32 as uint16,
         size: 1 as uint16,
     },
 ];
 static mut keymap_hash_first: [uint16; 255] = [0; 255];
 static mut keymap_hash: *mut KeyMapHashEnt =
     ::core::ptr::null::<KeyMapHashEnt>() as *mut KeyMapHashEnt;
-static mut keymap_hash_size: ::core::ffi::c_int = 0;
+static mut keymap_hash_size: i32 = 0;
 static mut has_keynameid: [bool; 24] = [false; 24];
 unsafe fn KeyMapHash_Add(key: uint16, cmd: uint16) -> bool {
-    if keymap_hash_size & 0xff as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-        if keymap_hash_size > 10000 as ::core::ffi::c_int {
+    if keymap_hash_size & 0xff as i32 == 0 as i32 {
+        if keymap_hash_size > 10000 as i32 {
             Die(b"Too many keys\0" as *const u8 as *const ::core::ffi::c_char);
         }
         keymap_hash = realloc(
             keymap_hash as *mut ::core::ffi::c_void,
             (::core::mem::size_of::<KeyMapHashEnt>() as size_t)
-                .wrapping_mul((keymap_hash_size + 256 as ::core::ffi::c_int) as size_t),
+                .wrapping_mul((keymap_hash_size + 256 as i32) as size_t),
         ) as *mut KeyMapHashEnt;
     }
     let fresh1 = keymap_hash_size;
     keymap_hash_size = keymap_hash_size + 1;
-    let i: ::core::ffi::c_int = fresh1;
+    let i: i32 = fresh1;
     let ent: *mut KeyMapHashEnt = keymap_hash.offset(i as isize) as *mut KeyMapHashEnt;
     (*ent).key = key;
     (*ent).cmd = cmd;
     (*ent).next = 0 as uint16;
-    let j: ::core::ffi::c_int = (key as uint32).wrapping_rem(255 as uint32) as ::core::ffi::c_int;
+    let j: i32 = (key as uint32).wrapping_rem(255 as uint32) as i32;
     let mut cur: *mut uint16 =
         (&raw mut keymap_hash_first as *mut uint16).offset(j as isize) as *mut uint16;
     while *cur != 0 {
-        let ent_0: *mut KeyMapHashEnt = keymap_hash
-            .offset((*cur as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as isize)
-            as *mut KeyMapHashEnt;
-        if (*ent_0).key as ::core::ffi::c_int == key as ::core::ffi::c_int {
+        let ent_0: *mut KeyMapHashEnt =
+            keymap_hash.offset((*cur as i32 - 1 as i32) as isize) as *mut KeyMapHashEnt;
+        if (*ent_0).key as i32 == key as i32 {
             return false_0 != 0;
         }
         cur = &raw mut (*ent_0).next;
     }
-    *cur = (i + 1 as ::core::ffi::c_int) as uint16;
+    *cur = (i + 1 as i32) as uint16;
     true_0 != 0
 }
-unsafe fn KeyMapHash_Find(key: uint16) -> ::core::ffi::c_int {
-    let mut i: ::core::ffi::c_int = keymap_hash_first
-        [(key as ::core::ffi::c_int % 255 as ::core::ffi::c_int) as usize]
-        as ::core::ffi::c_int;
+unsafe fn KeyMapHash_Find(key: uint16) -> i32 {
+    let mut i: i32 = keymap_hash_first[(key as i32 % 255 as i32) as usize] as i32;
     while i != 0 {
         let ent: *mut KeyMapHashEnt =
-            keymap_hash.offset((i - 1 as ::core::ffi::c_int) as isize) as *mut KeyMapHashEnt;
-        if (*ent).key as ::core::ffi::c_int == key as ::core::ffi::c_int {
-            return (*ent).cmd as ::core::ffi::c_int;
+            keymap_hash.offset((i - 1 as i32) as isize) as *mut KeyMapHashEnt;
+        if (*ent).key as i32 == key as i32 {
+            return (*ent).cmd as i32;
         }
-        i = (*ent).next as ::core::ffi::c_int;
+        i = (*ent).next as i32;
     }
-    0 as ::core::ffi::c_int
+    0 as i32
 }
-pub unsafe fn FindCmdForSdlKey(code: SDL_Keycode, mod_0: SDL_Keymod) -> ::core::ffi::c_int {
+pub unsafe fn FindCmdForSdlKey(code: SDL_Keycode, mod_0: SDL_Keymod) -> i32 {
     if code & !(SDLK_SCANCODE_MASK as SDL_Keycode | 0x1ff as SDL_Keycode) != 0 {
-        return 0 as ::core::ffi::c_int;
+        return 0 as i32;
     }
-    let mut key: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-    if code != SDLK_LALT as ::core::ffi::c_int as SDL_Keycode
-        && code != SDLK_RALT as ::core::ffi::c_int as SDL_Keycode
-    {
-        key |= if mod_0 as ::core::ffi::c_uint
-            & KMOD_ALT as ::core::ffi::c_int as ::core::ffi::c_uint
-            != 0
-        {
-            kKeyMod_Alt as ::core::ffi::c_int
+    let mut key: i32 = 0 as i32;
+    if code != SDLK_LALT as i32 as SDL_Keycode && code != SDLK_RALT as i32 as SDL_Keycode {
+        key |= if mod_0 as u32 & KMOD_ALT as i32 as u32 != 0 {
+            kKeyMod_Alt as i32
         } else {
-            0 as ::core::ffi::c_int
+            0 as i32
         };
     }
-    if code != SDLK_LCTRL as ::core::ffi::c_int as SDL_Keycode
-        && code != SDLK_RCTRL as ::core::ffi::c_int as SDL_Keycode
-    {
-        key |= if mod_0 as ::core::ffi::c_uint
-            & KMOD_CTRL as ::core::ffi::c_int as ::core::ffi::c_uint
-            != 0
-        {
-            kKeyMod_Ctrl as ::core::ffi::c_int
+    if code != SDLK_LCTRL as i32 as SDL_Keycode && code != SDLK_RCTRL as i32 as SDL_Keycode {
+        key |= if mod_0 as u32 & KMOD_CTRL as i32 as u32 != 0 {
+            kKeyMod_Ctrl as i32
         } else {
-            0 as ::core::ffi::c_int
+            0 as i32
         };
     }
-    if code != SDLK_LSHIFT as ::core::ffi::c_int as SDL_Keycode
-        && code != SDLK_RSHIFT as ::core::ffi::c_int as SDL_Keycode
-    {
-        key |= if mod_0 as ::core::ffi::c_uint
-            & KMOD_SHIFT as ::core::ffi::c_int as ::core::ffi::c_uint
-            != 0
-        {
-            kKeyMod_Shift as ::core::ffi::c_int
+    if code != SDLK_LSHIFT as i32 as SDL_Keycode && code != SDLK_RSHIFT as i32 as SDL_Keycode {
+        key |= if mod_0 as u32 & KMOD_SHIFT as i32 as u32 != 0 {
+            kKeyMod_Shift as i32
         } else {
-            0 as ::core::ffi::c_int
+            0 as i32
         };
     }
     key |= ((if code & SDLK_SCANCODE_MASK as SDL_Keycode != 0 {
-        kKeyMod_ScanCode as ::core::ffi::c_int as SDL_Keycode
+        kKeyMod_ScanCode as i32 as SDL_Keycode
     } else {
         0 as SDL_Keycode
-    }) | code & kKeyMod_ScanCode as ::core::ffi::c_int as SDL_Keycode - 1 as SDL_Keycode)
-        as ::core::ffi::c_int;
+    }) | code & kKeyMod_ScanCode as i32 as SDL_Keycode - 1 as SDL_Keycode) as i32;
     KeyMapHash_Find(key as uint16)
 }
-unsafe fn ParseKeyArray(
-    mut value: *mut ::core::ffi::c_char,
-    mut cmd: ::core::ffi::c_int,
-    size: ::core::ffi::c_int,
-) {
+unsafe fn ParseKeyArray(mut value: *mut ::core::ffi::c_char, mut cmd: i32, size: i32) {
     let mut s: *mut ::core::ffi::c_char = ::core::ptr::null_mut::<::core::ffi::c_char>();
-    let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+    let mut i: i32 = 0 as i32;
     while i < size && {
         s = NextDelim(&raw mut value, ',' as i32);
         !s.is_null()
     } {
-        if (*s as ::core::ffi::c_int != 0 as ::core::ffi::c_int) {
-            let mut key_with_mod: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+        if (*s as i32 != 0 as i32) {
+            let mut key_with_mod: i32 = 0 as i32;
             loop {
                 if !StringStartsWithNoCase(
                     s,
@@ -708,7 +670,7 @@ unsafe fn ParseKeyArray(
                 )
                 .is_null()
                 {
-                    key_with_mod |= kKeyMod_Shift as ::core::ffi::c_int;
+                    key_with_mod |= kKeyMod_Shift as i32;
                     s = s.offset(6);
                 } else if !StringStartsWithNoCase(
                     s,
@@ -716,7 +678,7 @@ unsafe fn ParseKeyArray(
                 )
                 .is_null()
                 {
-                    key_with_mod |= kKeyMod_Ctrl as ::core::ffi::c_int;
+                    key_with_mod |= kKeyMod_Ctrl as i32;
                     s = s.offset(5);
                 } else {
                     if StringStartsWithNoCase(
@@ -727,12 +689,12 @@ unsafe fn ParseKeyArray(
                     {
                         break;
                     }
-                    key_with_mod |= kKeyMod_Alt as ::core::ffi::c_int;
+                    key_with_mod |= kKeyMod_Alt as i32;
                     s = s.offset(4);
                 }
             }
             let key: SDL_Keycode = SDL_GetKeyFromName(s);
-            if key == SDLK_UNKNOWN as ::core::ffi::c_int as SDL_Keycode {
+            if key == SDLK_UNKNOWN as i32 as SDL_Keycode {
                 fprintf(
                     stderr,
                     b"Unknown key: '%s'\n\0" as *const u8 as *const ::core::ffi::c_char,
@@ -741,12 +703,11 @@ unsafe fn ParseKeyArray(
             } else if !KeyMapHash_Add(
                 (key_with_mod as SDL_Keycode
                     | (if key & SDLK_SCANCODE_MASK as SDL_Keycode != 0 {
-                        kKeyMod_ScanCode as ::core::ffi::c_int as SDL_Keycode
+                        kKeyMod_ScanCode as i32 as SDL_Keycode
                     } else {
                         0 as SDL_Keycode
                     })
-                    | key
-                        & kKeyMod_ScanCode as ::core::ffi::c_int as SDL_Keycode - 1 as SDL_Keycode)
+                    | key & kKeyMod_ScanCode as i32 as SDL_Keycode - 1 as SDL_Keycode)
                     as uint16,
                 cmd as uint16,
             ) {
@@ -758,31 +719,31 @@ unsafe fn ParseKeyArray(
             }
         }
         i += 1;
-        cmd += (cmd != 0 as ::core::ffi::c_int) as ::core::ffi::c_int;
+        cmd += (cmd != 0 as i32) as i32;
     }
 }
 static mut joymap_first: [uint16; 17] = [0; 17];
 static mut joymap_ents: *mut GamepadMapEnt =
     ::core::ptr::null::<GamepadMapEnt>() as *mut GamepadMapEnt;
-static mut joymap_size: ::core::ffi::c_int = 0;
+static mut joymap_size: i32 = 0;
 static mut has_joypad_controls: bool = false;
-unsafe fn CountBits32(mut n: uint32) -> ::core::ffi::c_int {
-    let mut count: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+unsafe fn CountBits32(mut n: uint32) -> i32 {
+    let mut count: i32 = 0 as i32;
     while n != 0 as uint32 {
         n &= n.wrapping_sub(1 as uint32);
         count += 1;
     }
     count
 }
-unsafe fn GamepadMap_Add(button: ::core::ffi::c_int, modifiers: uint32, cmd: uint16) {
-    if joymap_size & 0xff as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
-        if joymap_size > 1000 as ::core::ffi::c_int {
+unsafe fn GamepadMap_Add(button: i32, modifiers: uint32, cmd: uint16) {
+    if joymap_size & 0xff as i32 == 0 as i32 {
+        if joymap_size > 1000 as i32 {
             Die(b"Too many joypad keys\0" as *const u8 as *const ::core::ffi::c_char);
         }
         joymap_ents = realloc(
             joymap_ents as *mut ::core::ffi::c_void,
             (::core::mem::size_of::<GamepadMapEnt>() as size_t)
-                .wrapping_mul((joymap_size + 64 as ::core::ffi::c_int) as size_t),
+                .wrapping_mul((joymap_size + 64 as i32) as size_t),
         ) as *mut GamepadMapEnt;
         if joymap_ents.is_null() {
             Die(b"realloc failure\0" as *const u8 as *const ::core::ffi::c_char);
@@ -790,44 +751,34 @@ unsafe fn GamepadMap_Add(button: ::core::ffi::c_int, modifiers: uint32, cmd: uin
     }
     let mut p: *mut uint16 =
         (&raw mut joymap_first as *mut uint16).offset(button as isize) as *mut uint16;
-    let cb: ::core::ffi::c_int = CountBits32(modifiers);
-    while *p as ::core::ffi::c_int != 0
-        && cb
-            < CountBits32(
-                (*joymap_ents
-                    .offset((*p as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as isize))
-                .modifiers,
-            )
+    let cb: i32 = CountBits32(modifiers);
+    while *p as i32 != 0
+        && cb < CountBits32((*joymap_ents.offset((*p as i32 - 1 as i32) as isize)).modifiers)
     {
-        p = &raw mut (*joymap_ents
-            .offset((*p as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as isize))
-        .next;
+        p = &raw mut (*joymap_ents.offset((*p as i32 - 1 as i32) as isize)).next;
     }
     let fresh0 = joymap_size;
     joymap_size = joymap_size + 1;
-    let i: ::core::ffi::c_int = fresh0;
+    let i: i32 = fresh0;
     let ent: *mut GamepadMapEnt = joymap_ents.offset(i as isize) as *mut GamepadMapEnt;
     (*ent).modifiers = modifiers;
     (*ent).cmd = cmd;
     (*ent).next = *p;
-    *p = (i + 1 as ::core::ffi::c_int) as uint16;
+    *p = (i + 1 as i32) as uint16;
 }
-pub unsafe fn FindCmdForGamepadButton(
-    button: ::core::ffi::c_int,
-    modifiers: uint32,
-) -> ::core::ffi::c_int {
+pub unsafe fn FindCmdForGamepadButton(button: i32, modifiers: uint32) -> i32 {
     let mut ent: *mut GamepadMapEnt = ::core::ptr::null_mut::<GamepadMapEnt>();
-    let mut e: ::core::ffi::c_int = joymap_first[button as usize] as ::core::ffi::c_int;
-    while e != 0 as ::core::ffi::c_int {
-        ent = joymap_ents.offset((e - 1 as ::core::ffi::c_int) as isize) as *mut GamepadMapEnt;
+    let mut e: i32 = joymap_first[button as usize] as i32;
+    while e != 0 as i32 {
+        ent = joymap_ents.offset((e - 1 as i32) as isize) as *mut GamepadMapEnt;
         if modifiers & (*ent).modifiers == (*ent).modifiers {
-            return (*ent).cmd as ::core::ffi::c_int;
+            return (*ent).cmd as i32;
         }
-        e = (*ent).next as ::core::ffi::c_int;
+        e = (*ent).next as i32;
     }
-    0 as ::core::ffi::c_int
+    0 as i32
 }
-unsafe fn ParseGamepadButtonName(value: *mut *const ::core::ffi::c_char) -> ::core::ffi::c_int {
+unsafe fn ParseGamepadButtonName(value: *mut *const ::core::ffi::c_char) -> i32 {
     let s: *const ::core::ffi::c_char = *value;
     static mut kGamepadKeyNames: [*const ::core::ffi::c_char; 19] = [
         b"Back\0" as *const u8 as *const ::core::ffi::c_char,
@@ -851,25 +802,25 @@ unsafe fn ParseGamepadButtonName(value: *mut *const ::core::ffi::c_char) -> ::co
         b"Y\0" as *const u8 as *const ::core::ffi::c_char,
     ];
     static mut kGamepadKeyIds: [uint8; 19] = [
-        kGamepadBtn_Back as ::core::ffi::c_int as uint8,
-        kGamepadBtn_Guide as ::core::ffi::c_int as uint8,
-        kGamepadBtn_Start as ::core::ffi::c_int as uint8,
-        kGamepadBtn_L3 as ::core::ffi::c_int as uint8,
-        kGamepadBtn_R3 as ::core::ffi::c_int as uint8,
-        kGamepadBtn_L1 as ::core::ffi::c_int as uint8,
-        kGamepadBtn_R1 as ::core::ffi::c_int as uint8,
-        kGamepadBtn_DpadUp as ::core::ffi::c_int as uint8,
-        kGamepadBtn_DpadDown as ::core::ffi::c_int as uint8,
-        kGamepadBtn_DpadLeft as ::core::ffi::c_int as uint8,
-        kGamepadBtn_DpadRight as ::core::ffi::c_int as uint8,
-        kGamepadBtn_L2 as ::core::ffi::c_int as uint8,
-        kGamepadBtn_R2 as ::core::ffi::c_int as uint8,
-        kGamepadBtn_L1 as ::core::ffi::c_int as uint8,
-        kGamepadBtn_R1 as ::core::ffi::c_int as uint8,
-        kGamepadBtn_A as ::core::ffi::c_int as uint8,
-        kGamepadBtn_B as ::core::ffi::c_int as uint8,
-        kGamepadBtn_X as ::core::ffi::c_int as uint8,
-        kGamepadBtn_Y as ::core::ffi::c_int as uint8,
+        kGamepadBtn_Back as i32 as uint8,
+        kGamepadBtn_Guide as i32 as uint8,
+        kGamepadBtn_Start as i32 as uint8,
+        kGamepadBtn_L3 as i32 as uint8,
+        kGamepadBtn_R3 as i32 as uint8,
+        kGamepadBtn_L1 as i32 as uint8,
+        kGamepadBtn_R1 as i32 as uint8,
+        kGamepadBtn_DpadUp as i32 as uint8,
+        kGamepadBtn_DpadDown as i32 as uint8,
+        kGamepadBtn_DpadLeft as i32 as uint8,
+        kGamepadBtn_DpadRight as i32 as uint8,
+        kGamepadBtn_L2 as i32 as uint8,
+        kGamepadBtn_R2 as i32 as uint8,
+        kGamepadBtn_L1 as i32 as uint8,
+        kGamepadBtn_R1 as i32 as uint8,
+        kGamepadBtn_A as i32 as uint8,
+        kGamepadBtn_B as i32 as uint8,
+        kGamepadBtn_X as i32 as uint8,
+        kGamepadBtn_Y as i32 as uint8,
     ];
     let mut i: size_t = 0 as size_t;
     while i
@@ -879,53 +830,47 @@ unsafe fn ParseGamepadButtonName(value: *mut *const ::core::ffi::c_char) -> ::co
         let r: *const ::core::ffi::c_char = StringStartsWithNoCase(s, kGamepadKeyNames[i as usize]);
         if !r.is_null() {
             *value = r;
-            return kGamepadKeyIds[i as usize] as ::core::ffi::c_int;
+            return kGamepadKeyIds[i as usize] as i32;
         }
         i = i.wrapping_add(1);
     }
-    kGamepadBtn_Invalid as ::core::ffi::c_int
+    kGamepadBtn_Invalid as i32
 }
 static mut kDefaultGamepadCmds: [uint8; 12] = [
-    kGamepadBtn_DpadUp as ::core::ffi::c_int as uint8,
-    kGamepadBtn_DpadDown as ::core::ffi::c_int as uint8,
-    kGamepadBtn_DpadLeft as ::core::ffi::c_int as uint8,
-    kGamepadBtn_DpadRight as ::core::ffi::c_int as uint8,
-    kGamepadBtn_Back as ::core::ffi::c_int as uint8,
-    kGamepadBtn_Start as ::core::ffi::c_int as uint8,
-    kGamepadBtn_B as ::core::ffi::c_int as uint8,
-    kGamepadBtn_A as ::core::ffi::c_int as uint8,
-    kGamepadBtn_Y as ::core::ffi::c_int as uint8,
-    kGamepadBtn_X as ::core::ffi::c_int as uint8,
-    kGamepadBtn_L1 as ::core::ffi::c_int as uint8,
-    kGamepadBtn_R1 as ::core::ffi::c_int as uint8,
+    kGamepadBtn_DpadUp as i32 as uint8,
+    kGamepadBtn_DpadDown as i32 as uint8,
+    kGamepadBtn_DpadLeft as i32 as uint8,
+    kGamepadBtn_DpadRight as i32 as uint8,
+    kGamepadBtn_Back as i32 as uint8,
+    kGamepadBtn_Start as i32 as uint8,
+    kGamepadBtn_B as i32 as uint8,
+    kGamepadBtn_A as i32 as uint8,
+    kGamepadBtn_Y as i32 as uint8,
+    kGamepadBtn_X as i32 as uint8,
+    kGamepadBtn_L1 as i32 as uint8,
+    kGamepadBtn_R1 as i32 as uint8,
 ];
-unsafe fn ParseGamepadArray(
-    mut value: *mut ::core::ffi::c_char,
-    mut cmd: ::core::ffi::c_int,
-    size: ::core::ffi::c_int,
-) {
+unsafe fn ParseGamepadArray(mut value: *mut ::core::ffi::c_char, mut cmd: i32, size: i32) {
     let mut s: *mut ::core::ffi::c_char = ::core::ptr::null_mut::<::core::ffi::c_char>();
-    let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+    let mut i: i32 = 0 as i32;
     while i < size && {
         s = NextDelim(&raw mut value, ',' as i32);
         !s.is_null()
     } {
-        if (*s as ::core::ffi::c_int != 0 as ::core::ffi::c_int) {
+        if (*s as i32 != 0 as i32) {
             let mut modifiers: uint32 = 0 as uint32;
             let mut ss: *const ::core::ffi::c_char = s;
             loop {
-                let button: ::core::ffi::c_int = ParseGamepadButtonName(&raw mut ss);
-                if (button != kGamepadBtn_Invalid as ::core::ffi::c_int) {
-                    while *ss as ::core::ffi::c_int == ' ' as i32
-                        || *ss as ::core::ffi::c_int == '\t' as i32
-                    {
+                let button: i32 = ParseGamepadButtonName(&raw mut ss);
+                if (button != kGamepadBtn_Invalid as i32) {
+                    while *ss as i32 == ' ' as i32 || *ss as i32 == '\t' as i32 {
                         ss = ss.offset(1);
                     }
-                    if *ss as ::core::ffi::c_int == '+' as i32 {
+                    if *ss as i32 == '+' as i32 {
                         ss = ss.offset(1);
-                        modifiers |= ((1 as ::core::ffi::c_int) << button) as uint32;
+                        modifiers |= ((1 as i32) << button) as uint32;
                         continue;
-                    } else if *ss as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
+                    } else if *ss as i32 == 0 as i32 {
                         GamepadMap_Add(button, modifiers, cmd as uint16);
                         break;
                     }
@@ -939,19 +884,19 @@ unsafe fn ParseGamepadArray(
             }
         }
         i += 1;
-        cmd += (cmd != 0 as ::core::ffi::c_int) as ::core::ffi::c_int;
+        cmd += (cmd != 0 as i32) as i32;
     }
 }
 unsafe fn RegisterDefaultKeys() {
-    let mut i: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
+    let mut i: i32 = 1 as i32;
     while (i as usize)
         < (::core::mem::size_of::<[KeyNameId; 24]>() as usize)
             .wrapping_div(::core::mem::size_of::<KeyNameId>() as usize)
     {
         if !has_keynameid[i as usize] {
-            let size: ::core::ffi::c_int = kKeyNameId[i as usize].size as ::core::ffi::c_int;
-            let mut k: ::core::ffi::c_int = kKeyNameId[i as usize].id as ::core::ffi::c_int;
-            let mut j: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+            let size: i32 = kKeyNameId[i as usize].size as i32;
+            let mut k: i32 = kKeyNameId[i as usize].id as i32;
+            let mut j: i32 = 0 as i32;
             while j < size {
                 KeyMapHash_Add(kDefaultKbdControls[k as usize], k as uint16);
                 j += 1;
@@ -961,57 +906,57 @@ unsafe fn RegisterDefaultKeys() {
         i += 1;
     }
     if !has_joypad_controls {
-        let mut i_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+        let mut i_0: i32 = 0 as i32;
         while (i_0 as usize)
             < (::core::mem::size_of::<[uint8; 12]>() as usize)
                 .wrapping_div(::core::mem::size_of::<uint8>() as usize)
         {
             GamepadMap_Add(
-                kDefaultGamepadCmds[i_0 as usize] as ::core::ffi::c_int,
+                kDefaultGamepadCmds[i_0 as usize] as i32,
                 0 as uint32,
-                (kKeys_Controls as ::core::ffi::c_int + i_0) as uint16,
+                (kKeys_Controls as i32 + i_0) as uint16,
             );
             i_0 += 1;
         }
     }
 }
-unsafe fn GetIniSection(s: *const ::core::ffi::c_char) -> ::core::ffi::c_int {
+unsafe fn GetIniSection(s: *const ::core::ffi::c_char) -> i32 {
     if StringEqualsNoCase(s, b"[KeyMap]\0" as *const u8 as *const ::core::ffi::c_char) {
-        return 0 as ::core::ffi::c_int;
+        return 0 as i32;
     }
     if StringEqualsNoCase(
         s,
         b"[Graphics]\0" as *const u8 as *const ::core::ffi::c_char,
     ) {
-        return 1 as ::core::ffi::c_int;
+        return 1 as i32;
     }
     if StringEqualsNoCase(s, b"[Sound]\0" as *const u8 as *const ::core::ffi::c_char) {
-        return 2 as ::core::ffi::c_int;
+        return 2 as i32;
     }
     if StringEqualsNoCase(s, b"[General]\0" as *const u8 as *const ::core::ffi::c_char) {
-        return 3 as ::core::ffi::c_int;
+        return 3 as i32;
     }
     if StringEqualsNoCase(
         s,
         b"[Features]\0" as *const u8 as *const ::core::ffi::c_char,
     ) {
-        return 4 as ::core::ffi::c_int;
+        return 4 as i32;
     }
     if StringEqualsNoCase(
         s,
         b"[GamepadMap]\0" as *const u8 as *const ::core::ffi::c_char,
     ) {
-        return 5 as ::core::ffi::c_int;
+        return 5 as i32;
     }
-    -(1 as ::core::ffi::c_int)
+    -(1 as i32)
 }
 pub unsafe fn ParseBool(mut value: *const ::core::ffi::c_char, result: *mut bool) -> bool {
     let mut rv: bool = false_0 != 0;
     let fresh2 = value;
     value = value.offset(1);
-    match *fresh2 as ::core::ffi::c_int | 32 as ::core::ffi::c_int {
+    match *fresh2 as i32 | 32 as i32 {
         48 => {
-            if (*value as ::core::ffi::c_int != 0 as ::core::ffi::c_int) {
+            if (*value as i32 != 0 as i32) {
                 return false_0 != 0;
             }
         }
@@ -1026,10 +971,10 @@ pub unsafe fn ParseBool(mut value: *const ::core::ffi::c_char, result: *mut bool
             }
         }
         111 => {
-            rv = *value as ::core::ffi::c_int | 32 as ::core::ffi::c_int == 'n' as i32;
+            rv = *value as i32 | 32 as i32 == 'n' as i32;
             if !StringEqualsNoCase(
                 value,
-                if rv as ::core::ffi::c_int != 0 {
+                if rv as i32 != 0 {
                     b"n\0" as *const u8 as *const ::core::ffi::c_char
                 } else {
                     b"ff\0" as *const u8 as *const ::core::ffi::c_char
@@ -1040,7 +985,7 @@ pub unsafe fn ParseBool(mut value: *const ::core::ffi::c_char, result: *mut bool
         }
         49 => {
             rv = true_0 != 0;
-            if (*value as ::core::ffi::c_int != 0 as ::core::ffi::c_int) {
+            if (*value as i32 != 0 as i32) {
                 return false_0 != 0;
             }
         }
@@ -1065,12 +1010,12 @@ pub unsafe fn ParseBool(mut value: *const ::core::ffi::c_char, result: *mut bool
     rv
 }
 unsafe fn HandleIniConfig(
-    section: ::core::ffi::c_int,
+    section: i32,
     key: *const ::core::ffi::c_char,
     mut value: *mut ::core::ffi::c_char,
 ) -> bool {
-    if section == 0 as ::core::ffi::c_int {
-        let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+    if section == 0 as i32 {
+        let mut i: i32 = 0 as i32;
         while (i as usize)
             < (::core::mem::size_of::<[KeyNameId; 24]>() as usize)
                 .wrapping_div(::core::mem::size_of::<KeyNameId>() as usize)
@@ -1079,41 +1024,41 @@ unsafe fn HandleIniConfig(
                 has_keynameid[i as usize] = true_0 != 0;
                 ParseKeyArray(
                     value,
-                    kKeyNameId[i as usize].id as ::core::ffi::c_int,
-                    kKeyNameId[i as usize].size as ::core::ffi::c_int,
+                    kKeyNameId[i as usize].id as i32,
+                    kKeyNameId[i as usize].size as i32,
                 );
                 return true_0 != 0;
             }
             i += 1;
         }
-    } else if section == 5 as ::core::ffi::c_int {
-        let mut i_0: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+    } else if section == 5 as i32 {
+        let mut i_0: i32 = 0 as i32;
         while (i_0 as usize)
             < (::core::mem::size_of::<[KeyNameId; 24]>() as usize)
                 .wrapping_div(::core::mem::size_of::<KeyNameId>() as usize)
         {
             if StringEqualsNoCase(key, kKeyNameId[i_0 as usize].name) {
-                if i_0 == 1 as ::core::ffi::c_int {
+                if i_0 == 1 as i32 {
                     has_joypad_controls = true_0 != 0;
                 }
                 ParseGamepadArray(
                     value,
-                    kKeyNameId[i_0 as usize].id as ::core::ffi::c_int,
-                    kKeyNameId[i_0 as usize].size as ::core::ffi::c_int,
+                    kKeyNameId[i_0 as usize].id as i32,
+                    kKeyNameId[i_0 as usize].size as i32,
                 );
                 return true_0 != 0;
             }
             i_0 += 1;
         }
-    } else if section == 1 as ::core::ffi::c_int {
+    } else if section == 1 as i32 {
         if StringEqualsNoCase(
             key,
             b"WindowSize\0" as *const u8 as *const ::core::ffi::c_char,
         ) {
             let mut s: *mut ::core::ffi::c_char = ::core::ptr::null_mut::<::core::ffi::c_char>();
             if StringEqualsNoCase(value, b"Auto\0" as *const u8 as *const ::core::ffi::c_char) {
-                g_config.window_width = 0 as ::core::ffi::c_int;
-                g_config.window_height = 0 as ::core::ffi::c_int;
+                g_config.window_width = 0 as i32;
+                g_config.window_height = 0 as i32;
                 return true_0 != 0;
             }
             loop {
@@ -1121,7 +1066,7 @@ unsafe fn HandleIniConfig(
                 if s.is_null() {
                     break;
                 }
-                if g_config.window_width == 0 as ::core::ffi::c_int {
+                if g_config.window_width == 0 as i32 {
                     g_config.window_width = atoi(s);
                 } else {
                     g_config.window_height = atoi(s);
@@ -1147,21 +1092,15 @@ unsafe fn HandleIniConfig(
             key,
             b"Fullscreen\0" as *const u8 as *const ::core::ffi::c_char,
         ) {
-            g_config.fullscreen = strtol(
-                value,
-                NULL_0 as *mut *mut ::core::ffi::c_char,
-                10 as ::core::ffi::c_int,
-            ) as uint8;
+            g_config.fullscreen =
+                strtol(value, NULL_0 as *mut *mut ::core::ffi::c_char, 10 as i32) as uint8;
             return true_0 != 0;
         } else if StringEqualsNoCase(
             key,
             b"WindowScale\0" as *const u8 as *const ::core::ffi::c_char,
         ) {
-            g_config.window_scale = strtol(
-                value,
-                NULL_0 as *mut *mut ::core::ffi::c_char,
-                10 as ::core::ffi::c_int,
-            ) as uint8;
+            g_config.window_scale =
+                strtol(value, NULL_0 as *mut *mut ::core::ffi::c_char, 10 as i32) as uint8;
             return true_0 != 0;
         } else if StringEqualsNoCase(
             key,
@@ -1170,19 +1109,19 @@ unsafe fn HandleIniConfig(
             g_config.output_method = (if StringEqualsNoCase(
                 value,
                 b"SDL-Software\0" as *const u8 as *const ::core::ffi::c_char,
-            ) as ::core::ffi::c_int
+            ) as i32
                 != 0
             {
-                kOutputMethod_SDLSoftware as ::core::ffi::c_int
+                kOutputMethod_SDLSoftware as i32
             } else if StringEqualsNoCase(
                 value,
                 b"OpenGL\0" as *const u8 as *const ::core::ffi::c_char,
-            ) as ::core::ffi::c_int
+            ) as i32
                 != 0
             {
-                kOutputMethod_OpenGL as ::core::ffi::c_int
+                kOutputMethod_OpenGL as i32
             } else {
-                kOutputMethod_SDL as ::core::ffi::c_int
+                kOutputMethod_SDL as i32
             }) as uint8;
             return true_0 != 0;
         } else if StringEqualsNoCase(
@@ -1202,14 +1141,14 @@ unsafe fn HandleIniConfig(
             g_config.link_graphics = value;
             return true_0 != 0;
         } else if StringEqualsNoCase(key, b"Shader\0" as *const u8 as *const ::core::ffi::c_char) {
-            g_config.shader = if *value as ::core::ffi::c_int != 0 {
+            g_config.shader = if *value as i32 != 0 {
                 value
             } else {
                 ::core::ptr::null_mut::<::core::ffi::c_char>()
             };
             return true_0 != 0;
         }
-    } else if section == 2 as ::core::ffi::c_int {
+    } else if section == 2 as i32 {
         if StringEqualsNoCase(
             key,
             b"EnableAudio\0" as *const u8 as *const ::core::ffi::c_char,
@@ -1219,50 +1158,40 @@ unsafe fn HandleIniConfig(
             key,
             b"AudioFreq\0" as *const u8 as *const ::core::ffi::c_char,
         ) {
-            g_config.audio_freq = strtol(
-                value,
-                NULL_0 as *mut *mut ::core::ffi::c_char,
-                10 as ::core::ffi::c_int,
-            ) as uint16;
+            g_config.audio_freq =
+                strtol(value, NULL_0 as *mut *mut ::core::ffi::c_char, 10 as i32) as uint16;
             return true_0 != 0;
         } else if StringEqualsNoCase(
             key,
             b"AudioChannels\0" as *const u8 as *const ::core::ffi::c_char,
         ) {
-            g_config.audio_channels = strtol(
-                value,
-                NULL_0 as *mut *mut ::core::ffi::c_char,
-                10 as ::core::ffi::c_int,
-            ) as uint8;
+            g_config.audio_channels =
+                strtol(value, NULL_0 as *mut *mut ::core::ffi::c_char, 10 as i32) as uint8;
             return true_0 != 0;
         } else if StringEqualsNoCase(
             key,
             b"AudioSamples\0" as *const u8 as *const ::core::ffi::c_char,
         ) {
-            g_config.audio_samples = strtol(
-                value,
-                NULL_0 as *mut *mut ::core::ffi::c_char,
-                10 as ::core::ffi::c_int,
-            ) as uint16;
+            g_config.audio_samples =
+                strtol(value, NULL_0 as *mut *mut ::core::ffi::c_char, 10 as i32) as uint16;
             return true_0 != 0;
         } else if StringEqualsNoCase(
             key,
             b"EnableMSU\0" as *const u8 as *const ::core::ffi::c_char,
         ) {
             if StringEqualsNoCase(value, b"opuz\0" as *const u8 as *const ::core::ffi::c_char) {
-                g_config.enable_msu = kMsuEnabled_Opuz as ::core::ffi::c_int as uint8;
+                g_config.enable_msu = kMsuEnabled_Opuz as i32 as uint8;
             } else if StringEqualsNoCase(
                 value,
                 b"deluxe\0" as *const u8 as *const ::core::ffi::c_char,
             ) {
-                g_config.enable_msu = kMsuEnabled_MsuDeluxe as ::core::ffi::c_int as uint8;
+                g_config.enable_msu = kMsuEnabled_MsuDeluxe as i32 as uint8;
             } else if StringEqualsNoCase(
                 value,
                 b"deluxe-opuz\0" as *const u8 as *const ::core::ffi::c_char,
             ) {
-                g_config.enable_msu = (kMsuEnabled_MsuDeluxe as ::core::ffi::c_int
-                    | kMsuEnabled_Opuz as ::core::ffi::c_int)
-                    as uint8;
+                g_config.enable_msu =
+                    (kMsuEnabled_MsuDeluxe as i32 | kMsuEnabled_Opuz as i32) as uint8;
             } else {
                 return ParseBool(value, &raw mut g_config.enable_msu as *mut bool);
             }
@@ -1282,16 +1211,13 @@ unsafe fn HandleIniConfig(
         ) {
             return ParseBool(value, &raw mut g_config.resume_msu);
         }
-    } else if section == 3 as ::core::ffi::c_int {
+    } else if section == 3 as i32 {
         if StringEqualsNoCase(
             key,
             b"Autosave\0" as *const u8 as *const ::core::ffi::c_char,
         ) {
-            g_config.autosave = strtol(
-                value,
-                NULL_0 as *mut *mut ::core::ffi::c_char,
-                10 as ::core::ffi::c_int,
-            ) != 0;
+            g_config.autosave =
+                strtol(value, NULL_0 as *mut *mut ::core::ffi::c_char, 10 as i32) != 0;
             return true_0 != 0;
         } else if StringEqualsNoCase(
             key,
@@ -1305,32 +1231,29 @@ unsafe fn HandleIniConfig(
             return ParseBool(value, &raw mut g_config.disable_frame_delay);
         }
     } else {
-        section == 4 as ::core::ffi::c_int;
+        section == 4 as i32;
     }
     false_0 != 0
 }
-unsafe fn ParseOneConfigFile(
-    filename: *const ::core::ffi::c_char,
-    depth: ::core::ffi::c_int,
-) -> bool {
+unsafe fn ParseOneConfigFile(filename: *const ::core::ffi::c_char, depth: i32) -> bool {
     let mut filedata: *mut ::core::ffi::c_char =
         ReadWholeFile(filename, ::core::ptr::null_mut::<size_t>()) as *mut ::core::ffi::c_char;
     let mut p: *mut ::core::ffi::c_char = ::core::ptr::null_mut::<::core::ffi::c_char>();
     if filedata.is_null() {
         return false_0 != 0;
     }
-    let mut section: ::core::ffi::c_int = -(2 as ::core::ffi::c_int);
+    let mut section: i32 = -(2 as i32);
     g_config.memory_buffer = filedata;
-    let mut lineno: ::core::ffi::c_int = 1 as ::core::ffi::c_int;
+    let mut lineno: i32 = 1 as i32;
     loop {
         p = NextLineStripComments(&raw mut filedata);
         if p.is_null() {
             break;
         }
-        if (*p as ::core::ffi::c_int != 0 as ::core::ffi::c_int) {
-            if *p as ::core::ffi::c_int == '[' as i32 {
+        if (*p as i32 != 0 as i32) {
+            if *p as i32 == '[' as i32 {
                 section = GetIniSection(p);
-                if section < 0 as ::core::ffi::c_int {
+                if section < 0 as i32 {
                     fprintf(
                         stderr,
                         b"%s:%d: Invalid .ini section %s\n\0" as *const u8
@@ -1340,7 +1263,7 @@ unsafe fn ParseOneConfigFile(
                         p,
                     );
                 }
-            } else if *p as ::core::ffi::c_int == '!' as i32
+            } else if *p as i32 == '!' as i32
                 && !SkipPrefix(
                     p.offset(1),
                     b"include \0" as *const u8 as *const ::core::ffi::c_char,
@@ -1350,9 +1273,7 @@ unsafe fn ParseOneConfigFile(
                 let mut tt: *mut ::core::ffi::c_char = p.offset(8);
                 let new_filename: *mut ::core::ffi::c_char =
                     ReplaceFilenameWithNewPath(filename, NextPossiblyQuotedString(&raw mut tt));
-                if depth > 10 as ::core::ffi::c_int
-                    || !ParseOneConfigFile(new_filename, depth + 1 as ::core::ffi::c_int)
-                {
+                if depth > 10 as i32 || !ParseOneConfigFile(new_filename, depth + 1 as i32) {
                     fprintf(
                         stderr,
                         b"Warning: Unable to read %s\n\0" as *const u8
@@ -1361,7 +1282,7 @@ unsafe fn ParseOneConfigFile(
                     );
                 }
                 free(new_filename as *mut ::core::ffi::c_void);
-            } else if section == -(2 as ::core::ffi::c_int) {
+            } else if section == -(2 as i32) {
                 fprintf(
                     stderr,
                     b"%s:%d: Expecting [section]\n\0" as *const u8 as *const ::core::ffi::c_char,
@@ -1378,7 +1299,7 @@ unsafe fn ParseOneConfigFile(
                         filename,
                         lineno,
                     );
-                } else if section >= 0 as ::core::ffi::c_int && !HandleIniConfig(section, p, v) {
+                } else if section >= 0 as i32 && !HandleIniConfig(section, p, v) {
                     fprintf(
                         stderr,
                         b"%s:%d: Can't parse '%s'\n\0" as *const u8 as *const ::core::ffi::c_char,
@@ -1398,13 +1319,13 @@ pub unsafe fn ParseConfigFile(mut filename: *const ::core::ffi::c_char) {
     if !filename.is_null()
         || !ParseOneConfigFile(
             b"sm.user.ini\0" as *const u8 as *const ::core::ffi::c_char,
-            0 as ::core::ffi::c_int,
+            0 as i32,
         )
     {
         if filename.is_null() {
             filename = b"sm.ini\0" as *const u8 as *const ::core::ffi::c_char;
         }
-        if !ParseOneConfigFile(filename, 0 as ::core::ffi::c_int) {
+        if !ParseOneConfigFile(filename, 0 as i32) {
             fprintf(
                 stderr,
                 b"Warning: Unable to read config file %s\n\0" as *const u8
@@ -1417,143 +1338,121 @@ pub unsafe fn ParseConfigFile(mut filename: *const ::core::ffi::c_char) {
 }
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 pub const NULL_0: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
-pub const true_0: ::core::ffi::c_int = 1;
-pub const false_0: ::core::ffi::c_int = 0;
+pub const true_0: i32 = 1;
+pub const false_0: i32 = 0;
 unsafe fn run_static_initializers() {
     kDefaultKbdControls = [
-        0 as ::core::ffi::c_int as uint16,
-        ((if SDLK_UP as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+        0 as i32 as uint16,
+        ((if SDLK_UP as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_UP as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_DOWN as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_UP as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_DOWN as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_DOWN as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_LEFT as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_DOWN as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_LEFT as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_LEFT as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_RIGHT as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_LEFT as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_RIGHT as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_RIGHT as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_RSHIFT as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_RIGHT as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_RSHIFT as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_RSHIFT as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_RETURN as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_RSHIFT as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_RETURN as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_RETURN as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_x as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_RETURN as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_x as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_x as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_z as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_x as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_z as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_z as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_s as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_z as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_s as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_s as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_a as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_s as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_a as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_a as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_c as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_a as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_c as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_c as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_v as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_c as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_v as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_v as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F1 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_v as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_F1 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F1 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F2 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F1 as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_F2 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F2 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F3 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F2 as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_F3 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F3 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F4 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F3 as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_F4 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F4 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F5 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F4 as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_F5 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F5 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F6 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F5 as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_F6 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F6 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F7 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F6 as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_F7 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F7 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F8 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F7 as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_F8 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F8 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F9 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F8 as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_F9 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F9 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F10 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F9 as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_F10 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F10 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
+            0 as i32
+        }) | SDLK_F10 as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
         N as uint16,
         N as uint16,
         N as uint16,
@@ -1564,76 +1463,66 @@ unsafe fn run_static_initializers() {
         N as uint16,
         N as uint16,
         N as uint16,
-        ((if SDLK_F1 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+        ((if SDLK_F1 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F1 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Shift as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F2 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F1 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Shift as i32) as uint16,
+        ((if SDLK_F2 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F2 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Shift as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F3 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F2 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Shift as i32) as uint16,
+        ((if SDLK_F3 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F3 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Shift as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F4 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F3 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Shift as i32) as uint16,
+        ((if SDLK_F4 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F4 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Shift as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F5 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F4 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Shift as i32) as uint16,
+        ((if SDLK_F5 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F5 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Shift as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F6 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F5 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Shift as i32) as uint16,
+        ((if SDLK_F6 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F6 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Shift as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F7 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F6 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Shift as i32) as uint16,
+        ((if SDLK_F7 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F7 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Shift as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F8 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F7 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Shift as i32) as uint16,
+        ((if SDLK_F8 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F8 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Shift as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F9 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F8 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Shift as i32) as uint16,
+        ((if SDLK_F9 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F9 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Shift as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F10 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F9 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Shift as i32) as uint16,
+        ((if SDLK_F10 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F10 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Shift as ::core::ffi::c_int) as uint16,
+            0 as i32
+        }) | SDLK_F10 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Shift as i32) as uint16,
         N as uint16,
         N as uint16,
         N as uint16,
@@ -1644,76 +1533,66 @@ unsafe fn run_static_initializers() {
         N as uint16,
         N as uint16,
         N as uint16,
-        ((if SDLK_F1 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+        ((if SDLK_F1 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F1 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Ctrl as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F2 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F1 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Ctrl as i32) as uint16,
+        ((if SDLK_F2 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F2 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Ctrl as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F3 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F2 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Ctrl as i32) as uint16,
+        ((if SDLK_F3 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F3 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Ctrl as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F4 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F3 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Ctrl as i32) as uint16,
+        ((if SDLK_F4 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F4 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Ctrl as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F5 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F4 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Ctrl as i32) as uint16,
+        ((if SDLK_F5 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F5 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Ctrl as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F6 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F5 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Ctrl as i32) as uint16,
+        ((if SDLK_F6 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F6 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Ctrl as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F7 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F6 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Ctrl as i32) as uint16,
+        ((if SDLK_F7 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F7 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Ctrl as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F8 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F7 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Ctrl as i32) as uint16,
+        ((if SDLK_F8 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F8 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Ctrl as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F9 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F8 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Ctrl as i32) as uint16,
+        ((if SDLK_F9 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F9 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Ctrl as ::core::ffi::c_int) as uint16,
-        ((if SDLK_F10 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_F9 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Ctrl as i32) as uint16,
+        ((if SDLK_F10 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_F10 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Ctrl as ::core::ffi::c_int) as uint16,
+            0 as i32
+        }) | SDLK_F10 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Ctrl as i32) as uint16,
         N as uint16,
         N as uint16,
         N as uint16,
@@ -1724,84 +1603,71 @@ unsafe fn run_static_initializers() {
         N as uint16,
         N as uint16,
         N as uint16,
-        ((if SDLK_1 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+        ((if SDLK_1 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_1 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_2 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_1 as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_2 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_2 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_3 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_2 as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_3 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_3 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_4 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_3 as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_4 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_4 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_5 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_4 as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_5 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_5 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_6 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_5 as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_6 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_6 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_7 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_6 as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_7 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_7 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_8 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_7 as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_8 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_8 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_9 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_8 as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_9 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_9 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_0 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_9 as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_0 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_0 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_MINUS as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_0 as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_MINUS as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_MINUS as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_EQUALS as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_MINUS as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_EQUALS as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_EQUALS as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_BACKSPACE as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_EQUALS as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_BACKSPACE as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_BACKSPACE as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
+            0 as i32
+        }) | SDLK_BACKSPACE as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
         N as uint16,
         N as uint16,
         N as uint16,
@@ -1809,97 +1675,84 @@ unsafe fn run_static_initializers() {
         N as uint16,
         N as uint16,
         N as uint16,
-        ((if SDLK_1 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+        ((if SDLK_1 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_1 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Ctrl as ::core::ffi::c_int) as uint16,
-        ((if SDLK_2 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_1 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Ctrl as i32) as uint16,
+        ((if SDLK_2 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_2 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Ctrl as ::core::ffi::c_int) as uint16,
-        ((if SDLK_3 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_2 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Ctrl as i32) as uint16,
+        ((if SDLK_3 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_3 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Ctrl as ::core::ffi::c_int) as uint16,
-        ((if SDLK_4 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_3 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Ctrl as i32) as uint16,
+        ((if SDLK_4 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_4 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Ctrl as ::core::ffi::c_int) as uint16,
-        ((if SDLK_5 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_4 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Ctrl as i32) as uint16,
+        ((if SDLK_5 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_5 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Ctrl as ::core::ffi::c_int) as uint16,
-        ((if SDLK_6 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_5 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Ctrl as i32) as uint16,
+        ((if SDLK_6 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_6 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Ctrl as ::core::ffi::c_int) as uint16,
-        ((if SDLK_7 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_6 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Ctrl as i32) as uint16,
+        ((if SDLK_7 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_7 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Ctrl as ::core::ffi::c_int) as uint16,
-        ((if SDLK_8 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_7 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Ctrl as i32) as uint16,
+        ((if SDLK_8 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_8 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Ctrl as ::core::ffi::c_int) as uint16,
-        ((if SDLK_9 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_8 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Ctrl as i32) as uint16,
+        ((if SDLK_9 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_9 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Ctrl as ::core::ffi::c_int) as uint16,
-        ((if SDLK_0 as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_9 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Ctrl as i32) as uint16,
+        ((if SDLK_0 as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_0 as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Ctrl as ::core::ffi::c_int) as uint16,
-        ((if SDLK_MINUS as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_0 as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Ctrl as i32) as uint16,
+        ((if SDLK_MINUS as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_MINUS as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Ctrl as ::core::ffi::c_int) as uint16,
-        ((if SDLK_EQUALS as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_MINUS as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Ctrl as i32) as uint16,
+        ((if SDLK_EQUALS as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_EQUALS as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Ctrl as ::core::ffi::c_int) as uint16,
-        ((if SDLK_BACKSPACE as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_EQUALS as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Ctrl as i32) as uint16,
+        ((if SDLK_BACKSPACE as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_BACKSPACE as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Ctrl as ::core::ffi::c_int) as uint16,
+            0 as i32
+        }) | SDLK_BACKSPACE as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Ctrl as i32) as uint16,
         N as uint16,
         N as uint16,
         N as uint16,
@@ -1907,92 +1760,79 @@ unsafe fn run_static_initializers() {
         N as uint16,
         N as uint16,
         N as uint16,
-        ((if SDLK_w as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+        ((if SDLK_w as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_w as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_q as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_w as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_q as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_q as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_r as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_q as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_r as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_r as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Shift as ::core::ffi::c_int) as uint16,
-        ((if SDLK_k as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_r as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Shift as i32) as uint16,
+        ((if SDLK_k as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_k as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_l as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_k as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_l as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_l as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_RETURN as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_l as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_RETURN as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_RETURN as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Alt as ::core::ffi::c_int) as uint16,
-        ((if SDLK_r as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_RETURN as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Alt as i32) as uint16,
+        ((if SDLK_r as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_r as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Ctrl as ::core::ffi::c_int) as uint16,
-        ((if SDLK_p as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_r as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Ctrl as i32) as uint16,
+        ((if SDLK_p as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_p as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int
-            | kKeyMod_Shift as ::core::ffi::c_int) as uint16,
-        ((if SDLK_p as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_p as i32 & kKeyMod_ScanCode as i32 - 1 as i32
+            | kKeyMod_Shift as i32) as uint16,
+        ((if SDLK_p as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_p as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_TAB as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_p as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_TAB as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_TAB as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_t as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_TAB as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_t as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_t as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
+            0 as i32
+        }) | SDLK_t as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
         N as uint16,
         N as uint16,
-        ((if SDLK_f as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+        ((if SDLK_f as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_f as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        ((if SDLK_r as ::core::ffi::c_int & SDLK_SCANCODE_MASK != 0 {
-            kKeyMod_ScanCode as ::core::ffi::c_int
+            0 as i32
+        }) | SDLK_f as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        ((if SDLK_r as i32 & SDLK_SCANCODE_MASK != 0 {
+            kKeyMod_ScanCode as i32
         } else {
-            0 as ::core::ffi::c_int
-        }) | SDLK_r as ::core::ffi::c_int
-            & kKeyMod_ScanCode as ::core::ffi::c_int - 1 as ::core::ffi::c_int) as uint16,
-        0 as ::core::ffi::c_int as uint16,
-        0 as ::core::ffi::c_int as uint16,
+            0 as i32
+        }) | SDLK_r as i32 & kKeyMod_ScanCode as i32 - 1 as i32) as uint16,
+        0 as i32 as uint16,
+        0 as i32 as uint16,
     ];
 }
 #[used]

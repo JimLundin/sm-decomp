@@ -39,7 +39,7 @@ pub struct RoomDefStateSelect_E6E5_Finish {
 pub use crate::types::Consts_87;
 pub use crate::types::SpawnHardcodedPlmArgs;
 pub use crate::types::{Consts_86, DoorDef, RoomDefRoomstate};
-pub const kCoroutineNone: ::core::ffi::c_int = 0;
+pub const kCoroutineNone: i32 = 0;
 #[inline]
 unsafe fn RomPtr_8F(addr: uint16_t, game: &mut Game) -> *const uint8 {
     RomPtr((0x8f0000u32) | ((addr) as u32), game)
@@ -145,8 +145,8 @@ pub const fnnullsub_145: uint32 = 9423058;
 pub const fnRoomCode_SetupShaktoolRoomPlm: uint32 = 9423059;
 pub const fnnullsub_146: uint32 = 9423068;
 pub const fnRoomCode_SetPauseCodeForDraygon: uint32 = 9423069;
-pub const fnPauseHook_DraygonRoom: ::core::ffi::c_int = 0x8fc8f6;
-pub const fnUnpauseHook_DraygonRoom: ::core::ffi::c_int = 0x8fc8fc;
+pub const fnPauseHook_DraygonRoom: i32 = 0x8fc8f6;
+pub const fnUnpauseHook_DraygonRoom: i32 = 0x8fc8fc;
 pub const fnRoomCode_SetCollectedMap: uint32 = 9423114;
 pub const fnnullsub_147: uint32 = 9423134;
 pub const fnRoomCode_SetZebesTimebombEvent: uint32 = 9423135;
@@ -208,7 +208,7 @@ pub unsafe fn RoomSetup_AfterSavingAnimals(game: &mut Game) {
         game,
     );
     set_ram_word!(game.earthquake_type = 24 as uint16);
-    set_ram_word!(game.earthquake_timer = -(1 as ::core::ffi::c_int) as uint16);
+    set_ram_word!(game.earthquake_timer = -(1 as i32) as uint16);
 }
 pub unsafe fn RoomSetup_AutoDestroyWallAfterEscape(game: &mut Game) {
     SpawnHardcodedPlm(
@@ -232,7 +232,7 @@ pub unsafe fn RoomSetup_TurnWallIntoShotblocks(game: &mut Game) {
 }
 pub unsafe fn RoomSetup_ShakeDuringEscape(game: &mut Game) {
     set_ram_word!(game.earthquake_type = 6 as uint16);
-    set_ram_word!(game.earthquake_timer = -(1 as ::core::ffi::c_int) as uint16);
+    set_ram_word!(game.earthquake_timer = -(1 as i32) as uint16);
     FxTypeFunc_20(game);
 }
 pub unsafe fn RoomSetup_ScrollingSkyLand(game: &mut Game) {
@@ -531,8 +531,7 @@ pub unsafe fn RoomCode_ScrollingSkyOcean_(game: &mut Game) {
 }
 pub unsafe fn RoomCode_GenRandomExplodes_Nonblank(game: &mut Game) {
     if ram_word!(game, time_is_frozen_flag) == 0
-        && (ram_word!(game, nmi_frame_counter_word) as ::core::ffi::c_int & 1 as ::core::ffi::c_int)
-            == 0i32
+        && (ram_word!(game, nmi_frame_counter_word) as i32 & 1 as i32) == 0i32
     {
         let mut Random: uint16 = NextRandom(game);
         let x: uint16 = (ram_word!(game, layer1_x_pos)).wrapping_add((Random as uint8) as u16);
@@ -544,14 +543,12 @@ pub unsafe fn RoomCode_GenRandomExplodes_Nonblank(game: &mut Game) {
             )) as u16,
         );
         let prod: uint16 = Mult8x8(
-            (y as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint8,
+            (y as i32 >> 4 as i32) as uint8,
             ram_word!(game, room_width_in_blocks) as uint8,
         );
-        if (*((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16).offset(
-            (prod as ::core::ffi::c_int + (x as ::core::ffi::c_int >> 4 as ::core::ffi::c_int))
-                as isize,
-        ) as ::core::ffi::c_int
-            & 0x3ff as ::core::ffi::c_int)
+        if (*((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16)
+            .offset((prod as i32 + (x as i32 >> 4 as i32)) as isize) as i32
+            & 0x3ff as i32)
             != 255i32
         {
             RoomCode_GenRandomExplodes(x, y, game);
@@ -571,8 +568,7 @@ pub unsafe fn RoomCode_ExplodeShakes(game: &mut Game) {
 }
 pub unsafe fn RoomCode_GenRandomExplodes_4th(game: &mut Game) {
     if ram_word!(game, time_is_frozen_flag) == 0
-        && (ram_word!(game, nmi_frame_counter_word) as ::core::ffi::c_int & 3 as ::core::ffi::c_int)
-            == 0i32
+        && (ram_word!(game, nmi_frame_counter_word) as i32 & 3 as i32) == 0i32
     {
         let mut Random: uint16 = NextRandom(game);
         RoomCode_GenRandomExplodes(
@@ -601,8 +597,7 @@ pub unsafe fn RoomCode_GenRandomExplodes(x_r18: uint16, y_r20: uint16, game: &mu
     CreateSpriteAtPos(
         x_r18,
         y_r20,
-        kRoomCode_GenRandomExplodes_Sprite
-            [(v1 as ::core::ffi::c_int & 7 as ::core::ffi::c_int) as usize] as uint16,
+        kRoomCode_GenRandomExplodes_Sprite[(v1 as i32 & 7 as i32) as usize] as uint16,
         0 as uint16,
         game,
     );
@@ -616,9 +611,9 @@ pub unsafe fn RoomCode_ScrollRightDachora(game: &mut Game) {
         && ram_word!(game, layer1_x_pos) < 0x380u16
     {
         let ref mut fresh15 = *((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16);
-        *fresh15 = (*fresh15 as ::core::ffi::c_int
-            + ((ram_word!(game, layer1_x_pos) >= 0x380u16) as ::core::ffi::c_int
-                + 3 as ::core::ffi::c_int)) as uint16;
+        *fresh15 = (*fresh15 as i32
+            + ((ram_word!(game, layer1_x_pos) >= 0x380u16) as i32 + 3 as i32))
+            as uint16;
     }
 }
 pub unsafe fn RoomCode_8FC8C8(game: &mut Game) {
@@ -667,18 +662,18 @@ pub unsafe fn RoomCode_SetCollectedMap(game: &mut Game) {
 pub unsafe fn RoomCode_SetZebesTimebombEvent(game: &mut Game) {
     SetEventHappened(0xe as uint16, game);
     set_ram_word!(game.earthquake_type = 18 as uint16);
-    set_ram_word!(game.earthquake_timer = -(1 as ::core::ffi::c_int) as uint16);
+    set_ram_word!(game.earthquake_timer = -(1 as i32) as uint16);
 }
 pub unsafe fn RoomCode_SetLightHorizRoomShake(game: &mut Game) {
     set_ram_word!(game.earthquake_type = 18 as uint16);
     *((&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(2) as *mut uint8 as *mut uint16) =
         18 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16) = 0 as uint16;
-    set_ram_word!(game.earthquake_timer = -(1 as ::core::ffi::c_int) as uint16);
+    set_ram_word!(game.earthquake_timer = -(1 as i32) as uint16);
 }
 pub unsafe fn RoomCode_SetMediumHorizRoomShake(game: &mut Game) {
     set_ram_word!(game.earthquake_type = 21 as uint16);
-    set_ram_word!(game.earthquake_timer = -(1 as ::core::ffi::c_int) as uint16);
+    set_ram_word!(game.earthquake_timer = -(1 as i32) as uint16);
 }
 pub unsafe fn RoomCode_Escape4_SetMediumHorizRoomShake(game: &mut Game) {
     SpawnHardcodedPlm(
@@ -693,7 +688,7 @@ pub unsafe fn RoomCode_Escape4_SetMediumHorizRoomShake(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(2) as *mut uint8 as *mut uint16) =
         21 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16) = 0 as uint16;
-    set_ram_word!(game.earthquake_timer = -(1 as ::core::ffi::c_int) as uint16);
+    set_ram_word!(game.earthquake_timer = -(1 as i32) as uint16);
 }
 pub unsafe fn RoomCode_SetCeresDoorSolid(game: &mut Game) {
     SpawnHardcodedPlm(
@@ -762,11 +757,11 @@ pub unsafe fn DoorCode_SetScroll_49(game: &mut Game) {
 }
 pub unsafe fn DoorCode_SetupElevatubeFromSouth(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(4) as *mut uint8 as *mut uint16) =
-        -(256 as ::core::ffi::c_int) as uint16;
+        -(256 as i32) as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(2) as *mut uint8 as *mut uint16) =
         2496 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(6) as *mut uint8 as *mut uint16) =
-        -(32 as ::core::ffi::c_int) as uint16;
+        -(32 as i32) as uint16;
     CallSomeSamusCode(0 as uint16, game);
     SpawnHardcodedPlm(
         SpawnHardcodedPlmArgs {
@@ -806,20 +801,20 @@ pub unsafe fn RoomCode_Elevatube(game: &mut Game) {
     set_ram_word!(game.samus_x_subpos = 0 as uint16);
     let amt: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(4) as *mut uint8
         as *mut uint16) as int16 as int32)
-        << 8 as ::core::ffi::c_int;
+        << 8 as i32;
     v0 = ((amt as uint32)
         .wrapping_add(*((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint32))
-        >> 16 as ::core::ffi::c_int) as uint16;
+        >> 16 as i32) as uint16;
     let ref mut fresh13 = *((&raw mut game.g_ram as *mut uint8).offset(0x7e1) as *mut uint16);
-    *fresh13 = (*fresh13 as ::core::ffi::c_int + amt as ::core::ffi::c_int) as uint16;
+    *fresh13 = (*fresh13 as i32 + amt as i32) as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(2) as *mut uint8 as *mut uint16) =
         v0;
     Samus_MoveDown_NoSolidColl(amt, game);
     if ((*((&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(6) as *mut uint8 as *mut uint16)
-        as ::core::ffi::c_int
+        as i32
         + *((&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(4) as *mut uint8
-            as *mut uint16) as ::core::ffi::c_int
-        + 3616 as ::core::ffi::c_int) as uint16)
+            as *mut uint16) as i32
+        + 3616 as i32) as uint16)
         < 0x1c41u16
     {
         let ref mut fresh14 = *((&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(4)
@@ -950,26 +945,21 @@ pub unsafe fn RoomCode_SpawnCeresFallingDebris(game: &mut Game) {
     } {
         *(&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(0) = 8 as uint8;
         *(&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(1) = 0 as uint8;
-        let v0: uint16 = (if ram_word!(game, random_number) as ::core::ffi::c_int
-            & 0x8000 as ::core::ffi::c_int
-            != 0
-        {
-            addr_stru_869742 as ::core::ffi::c_int
+        let v0: uint16 = (if ram_word!(game, random_number) as i32 & 0x8000 as i32 != 0 {
+            addr_stru_869742 as i32
         } else {
-            addr_stru_869734 as ::core::ffi::c_int
+            addr_stru_869734 as i32
         }) as uint16;
         SpawnEprojWithRoomGfx(
             v0,
-            kRoomCode_SpawnCeresFallingDebris_Tab[(ram_word!(game, random_number)
-                as ::core::ffi::c_int
-                & 0xf as ::core::ffi::c_int)
-                as usize],
+            kRoomCode_SpawnCeresFallingDebris_Tab
+                [(ram_word!(game, random_number) as i32 & 0xf as i32) as usize],
             game,
         );
     }
 }
 pub unsafe fn RoomCode_HandleCeresRidleyGetaway(game: &mut Game) {
-    if ram_word!(game, ceres_status) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
+    if ram_word!(game, ceres_status) as i32 & 1 as i32 != 0 {
         HandleCeresRidleyGetawayCutscene(game);
     }
 }
@@ -1062,9 +1052,7 @@ pub unsafe fn RoomDefStateSelect_Finish(k: uint16, game: &mut Game) -> uint16 {
     0 as uint16
 }
 pub unsafe fn RoomDefStateSelect_TourianBoss01(k: uint16, game: &mut Game) -> uint16 {
-    if CheckBossBitForCurArea(1 as uint16, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
-        == 0
-    {
+    if CheckBossBitForCurArea(1 as uint16, game) as i32 & 1 as i32 == 0 {
         return (k).wrapping_add(2u16);
     }
     let v1: *const uint16 = RomPtr_8F(k, game) as *const uint16;
@@ -1080,16 +1068,14 @@ pub unsafe fn RoomDefStateSelect_IsEventSet(k: uint16, game: &mut Game) -> uint1
 }
 pub unsafe fn RoomDefStateSelect_IsBossDead(k: uint16, game: &mut Game) -> uint16 {
     let v1: *const uint8 = RomPtr_8F(k, game);
-    if CheckBossBitForCurArea(*v1 as uint16, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
-        != 0
-    {
+    if CheckBossBitForCurArea(*v1 as uint16, game) as i32 & 1 as i32 != 0 {
         RoomDefStateSelect_Finish(*(v1.offset(1) as *mut uint16), game)
     } else {
         (k).wrapping_add(3u16)
     }
 }
 pub unsafe fn RoomDefStateSelect_MorphBallMissiles(k: uint16, game: &mut Game) -> uint16 {
-    if (ram_word!(game, collected_items) as ::core::ffi::c_int & 4 as ::core::ffi::c_int) == 0i32
+    if (ram_word!(game, collected_items) as i32 & 4 as i32) == 0i32
         || ram_word!(game, samus_max_missiles) == 0
     {
         return (k).wrapping_add(2u16);
@@ -1239,8 +1225,8 @@ pub unsafe fn RunDoorSetupCode(game: &mut Game) {
 pub unsafe fn RoomCode_CrocomireShaking(game: &mut Game) {
     let mut ai_var_D: uint16 = 0;
     if ((*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
-        .properties as ::core::ffi::c_int
-        & 0x200 as ::core::ffi::c_int)
+        .properties as i32
+        & 0x200 as i32)
         == 0i32
     {
         if (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
@@ -1248,18 +1234,17 @@ pub unsafe fn RoomCode_CrocomireShaking(game: &mut Game) {
             == 64u16
         {
             set_ram_word!(
-                game.reg_BG1VOFS = ((*((&raw mut game.g_ram as *mut uint8).offset(0xf78)
-                    as *mut EnemyData)
-                    .offset(1))
-                .ai_var_D as ::core::ffi::c_int
-                    + ram_word!(game, bg1_y_offset) as ::core::ffi::c_int
-                    + ram_word!(game, layer1_y_pos) as ::core::ffi::c_int)
-                    as uint16
+                game.reg_BG1VOFS =
+                    ((*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData)
+                        .offset(1))
+                    .ai_var_D as i32
+                        + ram_word!(game, bg1_y_offset) as i32
+                        + ram_word!(game, layer1_y_pos) as i32) as uint16
             );
         } else if ((*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData)
             .offset(0))
-        .ai_var_B as ::core::ffi::c_int
-            & 0x400 as ::core::ffi::c_int)
+        .ai_var_B as i32
+            & 0x400 as i32)
             != 0i32
         {
             let fresh5 = &raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0xf78)
@@ -1267,18 +1252,15 @@ pub unsafe fn RoomCode_CrocomireShaking(game: &mut Game) {
                 .offset(1))
             .ai_var_D;
             fresh5.write_unaligned(fresh5.read_unaligned().wrapping_sub(1));
-            if fresh5.read_unaligned() as ::core::ffi::c_int + 7 as ::core::ffi::c_int
-                & 0x8000 as ::core::ffi::c_int
-                != 0
-            {
+            if fresh5.read_unaligned() as i32 + 7 as i32 & 0x8000 as i32 != 0 {
                 ai_var_D = ((*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData)
                     .offset(1))
-                .ai_var_D as ::core::ffi::c_int
-                    - 2 as ::core::ffi::c_int
+                .ai_var_D as i32
+                    - 2 as i32
                         * ((*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData)
                             .offset(1))
-                        .ai_var_D as ::core::ffi::c_int
-                            + 7 as ::core::ffi::c_int)) as uint16;
+                        .ai_var_D as i32
+                            + 7 as i32)) as uint16;
             } else {
                 ai_var_D = (*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData)
                     .offset(1))
@@ -1300,8 +1282,8 @@ pub unsafe fn RoomCode_CrocomireShaking(game: &mut Game) {
             .ai_var_D;
             fresh7.write_unaligned(fresh7.read_unaligned().wrapping_sub(1));
             if ((*((&raw mut game.g_ram as *mut uint8).offset(0xf78) as *mut EnemyData).offset(0))
-                .ai_var_D as ::core::ffi::c_int
-                & 1 as ::core::ffi::c_int)
+                .ai_var_D as i32
+                & 1 as i32)
                 != 0i32
             {
                 let ref mut fresh8 =
@@ -1328,7 +1310,7 @@ pub unsafe fn RoomCode_RidleyRoomShaking(game: &mut Game) {
             .offset(4))
         .ai_var_A;
         fresh0.write_unaligned(fresh0.read_unaligned().wrapping_sub(1));
-        let v1: ::core::ffi::c_int = ai_var_A as ::core::ffi::c_int - 1 as ::core::ffi::c_int;
+        let v1: i32 = ai_var_A as i32 - 1 as i32;
         let ref mut fresh1 = *((&raw mut game.g_ram as *mut uint8).offset(0xb1) as *mut uint16);
         *fresh1 = (*fresh1).wrapping_add((kRoomCode_RidleyRoomShaking_X[v1 as usize]) as u16);
         let ref mut fresh2 = *((&raw mut game.g_ram as *mut uint8).offset(0xb5) as *mut uint16);

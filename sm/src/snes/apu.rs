@@ -5,14 +5,10 @@ use crate::snes::dsp::{
 use crate::snes::spc::{spc_free, spc_init, spc_reset, spc_runOpcode, spc_saveload};
 use crate::tracing::getProcessorStateSpc;
 extern "C" {
-    fn puts(__s: *const ::core::ffi::c_char) -> ::core::ffi::c_int;
+    fn puts(__s: *const ::core::ffi::c_char) -> i32;
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
-    fn memset(
-        __s: *mut ::core::ffi::c_void,
-        __c: ::core::ffi::c_int,
-        __n: size_t,
-    ) -> *mut ::core::ffi::c_void;
+    fn memset(__s: *mut ::core::ffi::c_void, __c: i32, __n: size_t) -> *mut ::core::ffi::c_void;
 
 }
 pub use crate::types::{
@@ -20,8 +16,8 @@ pub use crate::types::{
     uint32_t, uint8_t, Apu, ApuHistory as C2RustUnnamed, Dsp, DspChannel, DspRegWriteHistory,
     SaveLoadFunc, Spc, Timer,
 };
-pub const true_0: ::core::ffi::c_int = 1;
-pub const false_0: ::core::ffi::c_int = 0;
+pub const true_0: i32 = 1;
+pub const false_0: i32 = 0;
 static bootRom: [uint8_t; 64] = [
     0xcd, 0xef, 0xbd, 0xe8, 0, 0xc6, 0x1d, 0xd0, 0xfc, 0x8f, 0xaa, 0xf4, 0x8f, 0xbb, 0xf5, 0x78,
     0xcc, 0xf4, 0xd0, 0xfb, 0x2f, 0x19, 0xeb, 0xf4, 0xd0, 0xfc, 0x7e, 0xf4, 0xd0, 0xb, 0xe4, 0xf5,
@@ -161,7 +157,7 @@ pub unsafe fn apu_cpuWrite(apu: *mut Apu, adr: u16, val: u8) {
         }
         0xf3 => {
             record_dsp_write(&mut (*apu).c2rust_unnamed.hist, (*apu).dspAdr, val);
-            if ((*apu).dspAdr as ::core::ffi::c_int) < 0x80 as ::core::ffi::c_int {
+            if ((*apu).dspAdr as i32) < 0x80 as i32 {
                 dsp_write((*apu).dsp, (*apu).dspAdr, val);
             }
         }

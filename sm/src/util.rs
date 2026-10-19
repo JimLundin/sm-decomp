@@ -5,7 +5,7 @@ extern "C" {
     fn malloc(__size: size_t) -> *mut ::core::ffi::c_void;
     fn realloc(__ptr: *mut ::core::ffi::c_void, __size: size_t) -> *mut ::core::ffi::c_void;
     fn free(__ptr: *mut ::core::ffi::c_void);
-    fn fclose(__stream: *mut FILE) -> ::core::ffi::c_int;
+    fn fclose(__stream: *mut FILE) -> i32;
     fn fopen(
         __filename: *const ::core::ffi::c_char,
         __modes: *const ::core::ffi::c_char,
@@ -16,11 +16,7 @@ extern "C" {
         __n: size_t,
         __stream: *mut FILE,
     ) -> ::core::ffi::c_ulong;
-    fn fseek(
-        __stream: *mut FILE,
-        __off: ::core::ffi::c_long,
-        __whence: ::core::ffi::c_int,
-    ) -> ::core::ffi::c_int;
+    fn fseek(__stream: *mut FILE, __off: ::core::ffi::c_long, __whence: i32) -> i32;
     fn ftell(__stream: *mut FILE) -> ::core::ffi::c_long;
     fn rewind(__stream: *mut FILE);
     fn memcpy(
@@ -28,22 +24,17 @@ extern "C" {
         __src: *const ::core::ffi::c_void,
         __n: size_t,
     ) -> *mut ::core::ffi::c_void;
-    fn memchr(
-        __s: *const ::core::ffi::c_void,
-        __c: ::core::ffi::c_int,
-        __n: size_t,
-    ) -> *mut ::core::ffi::c_void;
+    fn memchr(__s: *const ::core::ffi::c_void, __c: i32, __n: size_t) -> *mut ::core::ffi::c_void;
     fn strdup(__s: *const ::core::ffi::c_char) -> *mut ::core::ffi::c_char;
-    fn strchr(__s: *const ::core::ffi::c_char, __c: ::core::ffi::c_int)
-        -> *mut ::core::ffi::c_char;
+    fn strchr(__s: *const ::core::ffi::c_char, __c: i32) -> *mut ::core::ffi::c_char;
     fn strlen(__s: *const ::core::ffi::c_char) -> size_t;
 }
 pub type __builtin_va_list = [__va_list_tag; 1];
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct __va_list_tag {
-    pub gp_offset: ::core::ffi::c_uint,
-    pub fp_offset: ::core::ffi::c_uint,
+    pub gp_offset: u32,
+    pub fp_offset: u32,
     pub overflow_arg_area: *mut ::core::ffi::c_void,
     pub reg_save_area: *mut ::core::ffi::c_void,
 }
@@ -53,18 +44,13 @@ pub use crate::types::{
 pub type va_list = __gnuc_va_list;
 pub type __gnuc_va_list = __builtin_va_list;
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
-pub const true_0: ::core::ffi::c_int = 1;
-pub const false_0: ::core::ffi::c_int = 0;
-pub const SEEK_END: ::core::ffi::c_int = 2;
-pub unsafe fn NextDelim(
-    s: *mut *mut ::core::ffi::c_char,
-    sep: ::core::ffi::c_int,
-) -> *mut ::core::ffi::c_char {
+pub const true_0: i32 = 1;
+pub const false_0: i32 = 0;
+pub const SEEK_END: i32 = 2;
+pub unsafe fn NextDelim(s: *mut *mut ::core::ffi::c_char, sep: i32) -> *mut ::core::ffi::c_char {
     let mut r: *mut ::core::ffi::c_char = *s;
     if !r.is_null() {
-        while *r.offset(0) as ::core::ffi::c_int == ' ' as i32
-            || *r.offset(0) as ::core::ffi::c_int == '\t' as i32
-        {
+        while *r.offset(0) as i32 == ' ' as i32 || *r.offset(0) as i32 == '\t' as i32 {
             r = r.offset(1);
         }
         let mut t: *mut ::core::ffi::c_char = strchr(r, sep);
@@ -80,8 +66,8 @@ pub unsafe fn NextDelim(
     r
 }
 #[inline]
-unsafe fn ToLower(a: ::core::ffi::c_int) -> ::core::ffi::c_int {
-    a + (a >= 'A' as i32 && a <= 'Z' as i32) as ::core::ffi::c_int * 32 as ::core::ffi::c_int
+unsafe fn ToLower(a: i32) -> i32 {
+    a + (a >= 'A' as i32 && a <= 'Z' as i32) as i32 * 32 as i32
 }
 pub unsafe fn StringEqualsNoCase(
     mut a: *const ::core::ffi::c_char,
@@ -90,14 +76,14 @@ pub unsafe fn StringEqualsNoCase(
     loop {
         let fresh2 = a;
         a = a.offset(1);
-        let aa: ::core::ffi::c_int = ToLower(*fresh2 as ::core::ffi::c_int);
+        let aa: i32 = ToLower(*fresh2 as i32);
         let fresh3 = b;
         b = b.offset(1);
-        let bb: ::core::ffi::c_int = ToLower(*fresh3 as ::core::ffi::c_int);
+        let bb: i32 = ToLower(*fresh3 as i32);
         if aa != bb {
             return false_0 != 0;
         }
-        if aa == 0 as ::core::ffi::c_int {
+        if aa == 0 as i32 {
             return true_0 != 0;
         }
     }
@@ -107,9 +93,9 @@ pub unsafe fn StringStartsWithNoCase(
     mut b: *const ::core::ffi::c_char,
 ) -> *const ::core::ffi::c_char {
     loop {
-        let aa: ::core::ffi::c_int = ToLower(*a as ::core::ffi::c_int);
-        let bb: ::core::ffi::c_int = ToLower(*b as ::core::ffi::c_int);
-        if bb == 0 as ::core::ffi::c_int {
+        let aa: i32 = ToLower(*a as i32);
+        let bb: i32 = ToLower(*b as i32);
+        if bb == 0 as i32 {
             return a;
         }
         if aa != bb {
@@ -164,17 +150,14 @@ pub unsafe fn NextLineStripComments(s: *mut *mut ::core::ffi::c_char) -> *mut ::
     ) as *mut ::core::ffi::c_char;
     eol = if !comment.is_null() { comment } else { eol };
     while eol > p
-        && (*eol.offset(-(1 as ::core::ffi::c_int) as isize) as ::core::ffi::c_int == '\r' as i32
-            || *eol.offset(-(1 as ::core::ffi::c_int) as isize) as ::core::ffi::c_int == ' ' as i32
-            || *eol.offset(-(1 as ::core::ffi::c_int) as isize) as ::core::ffi::c_int
-                == '\t' as i32)
+        && (*eol.offset(-(1 as i32) as isize) as i32 == '\r' as i32
+            || *eol.offset(-(1 as i32) as isize) as i32 == ' ' as i32
+            || *eol.offset(-(1 as i32) as isize) as i32 == '\t' as i32)
     {
         eol = eol.offset(-1);
     }
     *eol = 0 as ::core::ffi::c_char;
-    while *p.offset(0) as ::core::ffi::c_int == ' ' as i32
-        || *p.offset(0) as ::core::ffi::c_int == '\t' as i32
-    {
+    while *p.offset(0) as i32 == ' ' as i32 || *p.offset(0) as i32 == '\t' as i32 {
         p = p.offset(1);
     }
     p
@@ -184,21 +167,18 @@ pub unsafe fn NextPossiblyQuotedString(
 ) -> *mut ::core::ffi::c_char {
     let mut r: *mut ::core::ffi::c_char = *s;
     let mut t: *mut ::core::ffi::c_char = ::core::ptr::null_mut::<::core::ffi::c_char>();
-    while *r as ::core::ffi::c_int == ' ' as i32 || *r as ::core::ffi::c_int == '\t' as i32 {
+    while *r as i32 == ' ' as i32 || *r as i32 == '\t' as i32 {
         r = r.offset(1);
     }
-    if *r as ::core::ffi::c_int == '"' as i32 {
+    if *r as i32 == '"' as i32 {
         r = r.offset(1);
         t = r;
-        while *t as ::core::ffi::c_int != 0 && *t as ::core::ffi::c_int != '"' as i32 {
+        while *t as i32 != 0 && *t as i32 != '"' as i32 {
             t = t.offset(1);
         }
     } else {
         t = r;
-        while *t as ::core::ffi::c_int != 0
-            && *t as ::core::ffi::c_int != ' ' as i32
-            && *t as ::core::ffi::c_int != '\t' as i32
-        {
+        while *t as i32 != 0 && *t as i32 != ' ' as i32 && *t as i32 != '\t' as i32 {
             t = t.offset(1);
         }
     }
@@ -207,7 +187,7 @@ pub unsafe fn NextPossiblyQuotedString(
         t = t.offset(1);
         *fresh1 = 0 as ::core::ffi::c_char;
     }
-    while *t as ::core::ffi::c_int == ' ' as i32 || *t as ::core::ffi::c_int == '\t' as i32 {
+    while *t as i32 == ' ' as i32 || *t as i32 == '\t' as i32 {
         t = t.offset(1);
     }
     *s = t;
@@ -220,10 +200,8 @@ pub unsafe fn ReplaceFilenameWithNewPath(
     let mut olen: size_t = strlen(old_path);
     let nlen: size_t = strlen(new_path).wrapping_add(1 as size_t);
     while olen != 0
-        && *old_path.offset(olen.wrapping_sub(1 as size_t) as isize) as ::core::ffi::c_int
-            != '/' as i32
-        && *old_path.offset(olen.wrapping_sub(1 as size_t) as isize) as ::core::ffi::c_int
-            != '\\' as i32
+        && *old_path.offset(olen.wrapping_sub(1 as size_t) as isize) as i32 != '/' as i32
+        && *old_path.offset(olen.wrapping_sub(1 as size_t) as isize) as i32 != '\\' as i32
     {
         olen = olen.wrapping_sub(1);
     }
@@ -248,16 +226,14 @@ pub unsafe fn SplitKeyValue(p: *mut ::core::ffi::c_char) -> *mut ::core::ffi::c_
     }
     let mut kr: *mut ::core::ffi::c_char = equals;
     while kr > p
-        && (*kr.offset(-(1 as ::core::ffi::c_int) as isize) as ::core::ffi::c_int == ' ' as i32
-            || *kr.offset(-(1 as ::core::ffi::c_int) as isize) as ::core::ffi::c_int == '\t' as i32)
+        && (*kr.offset(-(1 as i32) as isize) as i32 == ' ' as i32
+            || *kr.offset(-(1 as i32) as isize) as i32 == '\t' as i32)
     {
         kr = kr.offset(-1);
     }
     *kr = 0 as ::core::ffi::c_char;
     let mut v: *mut ::core::ffi::c_char = equals.offset(1);
-    while *v.offset(0) as ::core::ffi::c_int == ' ' as i32
-        || *v.offset(0) as ::core::ffi::c_int == '\t' as i32
-    {
+    while *v.offset(0) as i32 == ' ' as i32 || *v.offset(0) as i32 == '\t' as i32 {
         v = v.offset(1);
     }
     v
@@ -267,7 +243,7 @@ pub unsafe fn SkipPrefix(
     mut little: *const ::core::ffi::c_char,
 ) -> *const ::core::ffi::c_char {
     while *little != 0 {
-        if *little as ::core::ffi::c_int != *big as ::core::ffi::c_int {
+        if *little as i32 != *big as i32 {
             return ::core::ptr::null::<::core::ffi::c_char>();
         }
         big = big.offset(1);
@@ -286,7 +262,7 @@ pub unsafe fn ByteArray_Resize(arr: *mut ByteArray, new_size: size_t) {
     if new_size > (*arr).capacity {
         let minsize: size_t = (*arr)
             .capacity
-            .wrapping_add((*arr).capacity >> 1 as ::core::ffi::c_int)
+            .wrapping_add((*arr).capacity >> 1 as i32)
             .wrapping_add(8 as size_t);
         (*arr).capacity = if new_size < minsize {
             minsize
