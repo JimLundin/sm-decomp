@@ -319,14 +319,14 @@ fn direct_page_address(offset: u16, index: Option<IndexRegister>, cpu: &mut Cpu)
     };
     (u32::from(address), u32::from(address.wrapping_add(1)))
 }
-unsafe fn read_direct_page_pointer(cpu: *mut Cpu, game: &mut Game) -> u32 {
+unsafe fn read_direct_page_pointer(cpu: *mut Cpu, game: &mut Game) -> u16 {
     let adr = u16::from(fetch_byte(cpu, game));
     let (pointer_low, pointer_high) = direct_page_address(adr, None, &mut *cpu);
-    u32::from(read_word(cpu, pointer_low, pointer_high, game))
+    read_word(cpu, pointer_low, pointer_high, game)
 }
 unsafe fn address_direct_page_indirect(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
     let pointer = read_direct_page_pointer(cpu, game);
-    data_bank_address(pointer as u16, &*cpu)
+    data_bank_address(pointer, &*cpu)
 }
 unsafe fn address_direct_page_indexed_indirect(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
     let adr = u16::from(fetch_byte(cpu, game));
@@ -354,7 +354,7 @@ unsafe fn address_direct_page_indirect_y(
     game: &mut Game,
 ) -> (u32, u32) {
     let pointer = read_direct_page_pointer(cpu, game);
-    absolute_indexed_address(pointer, IndexRegister::Y, write, &mut *cpu)
+    absolute_indexed_address(u32::from(pointer), IndexRegister::Y, write, &mut *cpu)
 }
 unsafe fn read_direct_page_long_pointer(cpu: *mut Cpu, game: &mut Game) -> u32 {
     let adr = u16::from(fetch_byte(cpu, game));

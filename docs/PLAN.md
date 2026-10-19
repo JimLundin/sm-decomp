@@ -11101,6 +11101,24 @@ render-initialization owners must finish full integration replays before
 committing their source changes. Expected sprite delta: cast lines -14,
 Rust lines +25 for the table and safe span helper; other counters unchanged.
 
+CPU explicit direct-page pointer width (2026-10-19): read_direct_page_pointer
+returns its actual u16 word instead of widening to u32. Plain indirect
+addressing no longer narrows it; indirect-Y widens explicitly at indexed
+address arithmetic. Operand fetch, DP cycle adjustment, pointer bus reads
+and subsequent live DB/Y reads retain their order. Frozen `e3d8f528` plus
+this change passes 52,690,944 actual old/current helper/caller comparisons:
+every word offset/bank for the helper and both callers, sampled Y boundaries
+with both write/index-width choices. Named CPU/bus state, pointer/address
+values, wrapping and cycles match; constructed WRAM cases do not exhaust
+arbitrary MMIO or callback mutation. Prefix 3,600/0 (1.60s), native exit 0,
+executes pointer helper 38,428, plain indirect 34,066 and indirect-Y 4,362
+calls. Clean full any% passes 129,712/0 (80.07s), native exit 0. Cargo
+fmt/check, full release/release-library builds with external SDL2, normal
+metadata and frozen optimized core/DLL pass. Live CPU matches verified
+source; peer PPU/SNES work is outside this replay. All own progress counters
+unchanged. Prior holds and complete gameplay/render/audio remain open.
+Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
