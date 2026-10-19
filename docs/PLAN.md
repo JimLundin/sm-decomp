@@ -49,6 +49,16 @@ transpile notes are historical provenance, not a regeneration workflow.
 Keep only current build outputs in `target/` and the ignored ROM/movie inputs
 needed for verification. Remove obsolete scratch and restart artifacts.
 
+Retired missile-probe cleanup (2026-10-19): moved `target/missile-calls`
+outside the checkout to the temporary directory
+`sm-workspace-retired-missile-calls-20261019-073508-678/missile-calls`.
+All 14 files / 28,394,325 bytes are preserved with identical SHA-256 hashes.
+Its completed probe targets an obsolete function signature; current scripts
+and live processes have no references to it. Main remains the only branch
+and worktree, with no stashes or tracked C-family/ROM/movie/save files.
+No maintained source or residue change and no new replay belongs to this
+cleanup; the verified source retains any% 129712/0 and Waver 58109/0.
+
 Workspace audit (2026-10-17): `main` was clean and synchronized with origin;
 no C game source, extra worktrees or stashes were present. The retired local
 `restart/playable-baseline` branch had history outside the pre-transpile
