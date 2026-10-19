@@ -2063,17 +2063,12 @@ pub unsafe fn PlmInstr_SetLinkReg(plmp: *const uint8, k: uint16, game: &mut Game
     game.g_ram[offset..offset + 2].copy_from_slice(&link.to_le_bytes());
     plmp.add(2)
 }
-pub unsafe fn PlmInstr_Call(
-    mut plmp: *const uint8,
-    mut k: uint16,
-    game: &mut Game,
-) -> *const uint8 {
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdebc as ::core::ffi::c_int as isize)
-        as *mut uint16)
-        .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-        (plmp.offset_from(RomBankBase(0x84 as uint8, game)) as ::core::ffi::c_long
-            + 2 as ::core::ffi::c_long) as uint16;
-    return *(plmp as *mut uint16) as uintptr_t as *const uint8;
+pub unsafe fn PlmInstr_Call(plmp: *const uint8, k: uint16, game: &mut Game) -> *const uint8 {
+    let return_address = (plmp.offset_from(RomBankBase(0x84, game)) as u16).wrapping_add(2);
+    let offset = 0xdebc + usize::from(k >> 1) * 2; // plm_instruction_list_link_reg
+    game.g_ram[offset..offset + 2].copy_from_slice(&return_address.to_le_bytes());
+    let target = (plmp as *const u16).read_unaligned();
+    usize::from(target) as *const uint8
 }
 pub fn PlmInstr_Return(_plmp: *const uint8, k: uint16, game: &mut Game) -> *const uint8 {
     let offset = 0xdebc + usize::from(k >> 1) * 2; // plm_instruction_list_link_reg

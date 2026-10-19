@@ -12839,6 +12839,24 @@ Peer source is excluded from frozen replays and preserved in the checkout.
 Chozo guarded reads, Super Missile passage and previous holds remain held;
 complete credits, gameplay, hardware/audio, masks and ownership stay open.
 
+PLM call return address (2026-10-19): PlmInstr_Call now writes its
+little-endian link register through byte-backed RAM and explicitly wraps
+the bank-relative return address to16 bits. The RomBankBase call precedes
+the link store; the target operand is still read afterward, preserving
+potential operand/store overlap. The target read accepts unaligned words,
+and the returned bank-relative pointer value is unchanged.
+
+Frozen d3b75187 plus only this change passes any%129712/0
+(281.45s), native exit0, and pickup route68606/0
+(155.18s), native exit0. Observed pickup route68606/0
+(166.54s) executes 5 actual call operations. Maintained
+source has no observers. Arithmetic audit matches196608 signed/wrapped
+return offsets; this adds no movie coverage. Cargo fmt/check and release
+build pass. Own raw offsets-1, cast lines-2, Rust lines-5; other own counters
+unchanged. Frozen replays exclude peer source, which remains preserved.
+Chozo guarded reads, Super Missile passage and previous holds remain held;
+complete credits, gameplay, hardware/audio, masks and ownership stay open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
