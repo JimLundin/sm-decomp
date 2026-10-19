@@ -48,6 +48,19 @@ Everything that existed before is in the branch `archive/pre-transpile-2026-10-1
 
 ## Workspace discipline
 
+Retired tank/door probes (2026-10-19): moved door-bit-cleanup,
+energy-tank-cleanup and tank-cleanup out of target, together with 34
+dependent helper scripts from route-gunship-top. Recovery is at temporary
+sm-workspace-retired-tank-probes-20261019-102733-452, preserving relative
+paths. All 334 files / 287,876,200 bytes have matching SHA-256 hashes.
+Live processes and retained repository scripts have no dependencies on the
+retired files. The old temporary sm-qc-energy-frames.py requires restoring
+them before reuse. Current route inputs, builds and verification jobs remain
+available. Format/check, Cargo release and progress pass. No maintained
+source or own residue change and no new replay belong to this cleanup;
+the reviewed integration retains any% 129712/0, Waver 58109/0 and pickup
+68606/0. Newer implementation changes retain their separate verification.
+
 Retired Rio handoff (2026-10-19): moved the abandoned sibling directory
 `sm-decomp-restart-rio-rust` out of Projects to
 `%LOCALAPPDATA%/sm-decomp-archive/sm-decomp-restart-rio-rust-20261019`.
