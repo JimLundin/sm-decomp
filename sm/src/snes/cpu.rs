@@ -191,19 +191,19 @@ fn branch_relative(value: u8, check: bool, cpu: &mut Cpu) {
         cpu.pc = cpu.pc.wrapping_add_signed(value as i8 as i16);
     }
 }
-unsafe fn pull_byte(cpu: *mut Cpu, game: &mut Game) -> u8 {
-    (*cpu).sp = (*cpu).sp.wrapping_add(1);
-    if (*cpu).e {
-        (*cpu).sp = (*cpu).sp & 0xff | 0x100;
+fn adjust_stack_pointer(delta: u16, cpu: &mut Cpu) {
+    cpu.sp = cpu.sp.wrapping_add(delta);
+    if cpu.e {
+        cpu.sp = cpu.sp & 0xff | 0x100;
     }
+}
+unsafe fn pull_byte(cpu: *mut Cpu, game: &mut Game) -> u8 {
+    adjust_stack_pointer(1, &mut *cpu);
     read_byte(cpu, u32::from((*cpu).sp), game)
 }
 unsafe fn push_byte(cpu: *mut Cpu, value: u8, game: &mut Game) {
     write_byte(cpu, u32::from((*cpu).sp), value, game);
-    (*cpu).sp = (*cpu).sp.wrapping_sub(1);
-    if (*cpu).e {
-        (*cpu).sp = (*cpu).sp & 0xff | 0x100;
-    }
+    adjust_stack_pointer(u16::MAX, &mut *cpu);
 }
 unsafe fn pull_word(cpu: *mut Cpu, game: &mut Game) -> u16 {
     let low = pull_byte(cpu, game);

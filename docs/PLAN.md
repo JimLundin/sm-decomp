@@ -10468,6 +10468,22 @@ Rust lines +3 provide the safe method boundary; other own counters unchanged.
 Indexed-indirect/TSX/accumulator ROR remain held. Complete gameplay/render/
 audio remain open. Continue covered CPU cleanup.
 
+CPU safe stack-pointer adjustment (2026-10-19): adjust_stack_pointer shares
+wrapping SP arithmetic and emulation-page normalization. Pull adjusts before
+reading; push adjusts after writing and observes live SP/E after the callback.
+No CPU reference spans a bus callback. Frozen `f8c07441` plus this change
+passes 524,288 actual old/current byte-wrapper trace cases: every SP, both
+emulation modes and both fixed/mutating callbacks. Callback mutations rotate
+SP and toggle E, checking final named CPU state, access address/value/order
+and SP/E visible during the access. Synthetic traces cover those callback
+patterns, not arbitrary MMIO behavior. Prefix 3,600/0 (1.16s), native exit 0,
+executes pull/push wrappers 1,127,283/1,127,286 times through actual bus calls.
+Clean full any% 129,712/0 (61.69s), native exit 0. Cargo fmt/check, full
+release/release-library builds with external SDL2, normal metadata and frozen
+optimized core/DLL pass. Live CPU matches verified source; peer PPU work is
+outside this replay. All own progress counters unchanged. Prior CPU coverage
+holds and complete gameplay/render/audio remain open. Continue covered cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
