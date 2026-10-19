@@ -8861,6 +8861,17 @@ optimized core/DLL builds pass; full frontend linking still lacks SDL2. Live
 CPU matches verified source. Progress counters unchanged. Decimal movie paths,
 complete gameplay and rendering/audio remain open.
 
+CPU scoped arithmetic names (2026-10-19): ADC/SBC word branches use value
+and result instead of numbered generated names. Scoped identifier replacement
+matches frozen HEAD `0f99ad31` plus the change with only formatter whitespace
+differences; arithmetic and access order are unchanged. Prefix 3,600/0 (1.05s)
+executes ADC word/byte 195,798/37,613 and SBC word/byte 38,340/169 calls. Clean
+full any% 129,712/0 (52.00s), native exit 0. Cargo fmt/check, release library,
+normal metadata and optimized core/DLL builds pass; full frontend linking
+still lacks SDL2. Live CPU matches verified source. Rust lines -7 from shorter
+names/formatter reflow; other counters unchanged. Complete gameplay and
+rendering/audio remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

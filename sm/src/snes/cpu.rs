@@ -484,33 +484,32 @@ unsafe fn add_with_carry(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
         (*cpu).a = (i32::from((*cpu).a) & 0xff00 | result & 0xff) as u16;
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        let value_0: u16 = read_word(cpu, low, high, game);
-        let mut result_0: i32;
+        let value: u16 = read_word(cpu, low, high, game);
+        let mut result: i32;
         if (*cpu).d {
-            result_0 =
-                (i32::from((*cpu).a) & 0xf) + (i32::from(value_0) & 0xf) + i32::from((*cpu).c);
-            if result_0 > 0x9 {
-                result_0 = (result_0 + 0x6 & 0xf) + 0x10;
+            result = (i32::from((*cpu).a) & 0xf) + (i32::from(value) & 0xf) + i32::from((*cpu).c);
+            if result > 0x9 {
+                result = (result + 0x6 & 0xf) + 0x10;
             }
-            result_0 = (i32::from((*cpu).a) & 0xf0) + (i32::from(value_0) & 0xf0) + result_0;
-            if result_0 > 0x9f {
-                result_0 = (result_0 + 0x60 & 0xff) + 0x100;
+            result = (i32::from((*cpu).a) & 0xf0) + (i32::from(value) & 0xf0) + result;
+            if result > 0x9f {
+                result = (result + 0x60 & 0xff) + 0x100;
             }
-            result_0 = (i32::from((*cpu).a) & 0xf00) + (i32::from(value_0) & 0xf00) + result_0;
-            if result_0 > 0x9ff {
-                result_0 = (result_0 + 0x600 & 0xfff) + 0x1000;
+            result = (i32::from((*cpu).a) & 0xf00) + (i32::from(value) & 0xf00) + result;
+            if result > 0x9ff {
+                result = (result + 0x600 & 0xfff) + 0x1000;
             }
-            result_0 = (i32::from((*cpu).a) & 0xf000) + (i32::from(value_0) & 0xf000) + result_0;
+            result = (i32::from((*cpu).a) & 0xf000) + (i32::from(value) & 0xf000) + result;
         } else {
-            result_0 = i32::from((*cpu).a) + i32::from(value_0) + i32::from((*cpu).c);
+            result = i32::from((*cpu).a) + i32::from(value) + i32::from((*cpu).c);
         }
-        (*cpu).v = i32::from((*cpu).a) & 0x8000 == i32::from(value_0) & 0x8000
-            && i32::from(value_0) & 0x8000 != result_0 & 0x8000;
-        if (*cpu).d && result_0 > 0x9fff {
-            result_0 += 0x6000;
+        (*cpu).v = i32::from((*cpu).a) & 0x8000 == i32::from(value) & 0x8000
+            && i32::from(value) & 0x8000 != result & 0x8000;
+        if (*cpu).d && result > 0x9fff {
+            result += 0x6000;
         }
-        (*cpu).c = result_0 > 0xffff;
-        (*cpu).a = result_0 as u16;
+        (*cpu).c = result > 0xffff;
+        (*cpu).a = result as u16;
     }
     set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
 }
@@ -536,38 +535,32 @@ unsafe fn subtract_with_carry(cpu: *mut Cpu, low: u32, high: u32, game: &mut Gam
         (*cpu).a = (i32::from((*cpu).a) & 0xff00 | result & 0xff) as u16;
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-        let value_0 = !read_word(cpu, low, high, game);
-        let mut result_0: i32;
+        let value = !read_word(cpu, low, high, game);
+        let mut result: i32;
         if (*cpu).d {
-            result_0 =
-                (i32::from((*cpu).a) & 0xf) + (i32::from(value_0) & 0xf) + i32::from((*cpu).c);
-            if result_0 < 0x10 {
-                result_0 = result_0 - 0x6 & (if (result_0 - 0x6) < 0 { 0xf } else { 0x1f });
+            result = (i32::from((*cpu).a) & 0xf) + (i32::from(value) & 0xf) + i32::from((*cpu).c);
+            if result < 0x10 {
+                result = result - 0x6 & (if (result - 0x6) < 0 { 0xf } else { 0x1f });
             }
-            result_0 = (i32::from((*cpu).a) & 0xf0) + (i32::from(value_0) & 0xf0) + result_0;
-            if result_0 < 0x100 {
-                result_0 = result_0 - 0x60 & (if (result_0 - 0x60) < 0 { 0xff } else { 0x1ff });
+            result = (i32::from((*cpu).a) & 0xf0) + (i32::from(value) & 0xf0) + result;
+            if result < 0x100 {
+                result = result - 0x60 & (if (result - 0x60) < 0 { 0xff } else { 0x1ff });
             }
-            result_0 = (i32::from((*cpu).a) & 0xf00) + (i32::from(value_0) & 0xf00) + result_0;
-            if result_0 < 0x1000 {
-                result_0 = result_0 - 0x600
-                    & (if (result_0 - 0x600) < 0 {
-                        0xfff
-                    } else {
-                        0x1fff
-                    });
+            result = (i32::from((*cpu).a) & 0xf00) + (i32::from(value) & 0xf00) + result;
+            if result < 0x1000 {
+                result = result - 0x600 & (if (result - 0x600) < 0 { 0xfff } else { 0x1fff });
             }
-            result_0 = (i32::from((*cpu).a) & 0xf000) + (i32::from(value_0) & 0xf000) + result_0;
+            result = (i32::from((*cpu).a) & 0xf000) + (i32::from(value) & 0xf000) + result;
         } else {
-            result_0 = i32::from((*cpu).a) + i32::from(value_0) + i32::from((*cpu).c);
+            result = i32::from((*cpu).a) + i32::from(value) + i32::from((*cpu).c);
         }
-        (*cpu).v = i32::from((*cpu).a) & 0x8000 == i32::from(value_0) & 0x8000
-            && i32::from(value_0) & 0x8000 != result_0 & 0x8000;
-        if (*cpu).d && result_0 < 0x10000 {
-            result_0 -= 0x6000;
+        (*cpu).v = i32::from((*cpu).a) & 0x8000 == i32::from(value) & 0x8000
+            && i32::from(value) & 0x8000 != result & 0x8000;
+        if (*cpu).d && result < 0x10000 {
+            result -= 0x6000;
         }
-        (*cpu).c = result_0 > 0xffff;
-        (*cpu).a = result_0 as u16;
+        (*cpu).c = result > 0xffff;
+        (*cpu).a = result as u16;
     }
     set_zero_negative((*cpu).a, (*cpu).mf, &mut *cpu);
 }
