@@ -19536,6 +19536,25 @@ and diff check pass. Current-parent reconciliation preserves independent work.
 The movies supply core regression coverage; full credits/readability remain
 incomplete. Next: named scalar-RAM reads and remaining compiler simplifications.
 
+Compiler single-pattern cleanup (2026-10-19): standard Clippy single_match
+fixes simplify 121 integer state matches across 26 files, including frontend
+and DMA code. Equality tests retain branch bodies and fall-through behavior.
+Final all-target/all-feature check has zero single_match diagnostics. Net Rust
+lines -415 after Boolean/RAM integration (-433 in the original snapshot);
+raw RAM accesses, unsafe functions and cast tokens are unchanged. The c_int
+cast-line counter falls by three through formatting.
+
+Frozen 11bc05a3 plus this batch passes full any% 129712/0 (142.06s)
+and Speed Booster 148406/0 (175.80s), native exits 0, with 72 fixed
+source/library/fixture pins. These existing runs are reused. Reapplying the
+same 121 compiler fixes over 4474383b preserves all other tokens and branch
+bodies, ignoring formatting-only trailing commas. Boolean and named-RAM work
+retain their own verification. Formatting/check, normal release (22.52s original,
+22.81s composed workspace), progress and diff check pass. Independent peer
+review finds no runtime issue. Movies supply core regression coverage;
+frontend branches are compiler checked. Full credits/readability remain open.
+Next: complete eligible named scalar-word writes and larger compiler families.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

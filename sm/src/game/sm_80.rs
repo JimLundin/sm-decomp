@@ -352,88 +352,74 @@ pub unsafe fn Vector_RESET_Async(game: &mut Game) -> CoroutineRet {
             current_block_63 = 5330834795799507926;
         }
     }
-    match current_block_63 {
-        17803482508355472374 => {
-            let mut _coret_: uint8 = InitializeIoDisplayLogo_Async(game);
-            if _coret_ != 0 {
-                *_state_variable_ = 2 as uint8;
-                return _coret_;
-            }
-            current_block_63 = 3640593987805443782;
+    if current_block_63 == 17803482508355472374 {
+        let mut _coret_: uint8 = InitializeIoDisplayLogo_Async(game);
+        if _coret_ != 0 {
+            *_state_variable_ = 2 as uint8;
+            return _coret_;
         }
-        _ => {}
+        current_block_63 = 3640593987805443782;
     }
-    match current_block_63 {
-        3640593987805443782 => {
-            APU_UploadBank(0xcf8000 as uint32, game);
-            WriteReg(INIDISP as uint16, 0x8f as uint8, game);
-            bak = ram_word!(game, bug_fix_counter);
-            memset(
-                &raw mut game.g_ram as *mut uint8 as *mut ::core::ffi::c_void,
-                0 as ::core::ffi::c_int,
-                0x10000 as ::core::ffi::c_int as size_t,
-            );
-            *((&raw mut game.g_ram as *mut uint8).offset(0xc2) as *mut uint16) = bak;
-            WriteReg(NMITIMEN as uint16, 0 as uint8, game);
-            *(&raw mut game.g_ram as *mut uint8).offset(0x84) = 0 as uint8;
-            *(&raw mut game.g_ram as *mut uint8).offset(0x51) = 0x8f as uint8;
-            InitializeCpuIoRegs(game);
-            InitializePpuIoRegs(game);
-            WriteLotsOf0x1c2f(game);
-            *(&raw mut game.g_ram as *mut uint8).offset(0x643).offset(0) = 0 as uint8;
-            *(&raw mut game.g_ram as *mut uint8).offset(0x643).offset(1) = 0 as uint8;
-            *(&raw mut game.g_ram as *mut uint8).offset(0x643).offset(2) = 0 as uint8;
-            *(&raw mut game.g_ram as *mut uint8).offset(0x646).offset(0) = 0 as uint8;
-            *(&raw mut game.g_ram as *mut uint8).offset(0x646).offset(1) = 0 as uint8;
-            *(&raw mut game.g_ram as *mut uint8).offset(0x646).offset(2) = 0 as uint8;
-            *(&raw mut game.g_ram as *mut uint8).offset(0x649).offset(0) = 0 as uint8;
-            *(&raw mut game.g_ram as *mut uint8).offset(0x649).offset(1) = 0 as uint8;
-            *(&raw mut game.g_ram as *mut uint8).offset(0x649).offset(2) = 0 as uint8;
-            *(&raw mut game.g_ram as *mut uint8).offset(0x64d).offset(0) = 0 as uint8;
-            *(&raw mut game.g_ram as *mut uint8).offset(0x64d).offset(1) = 0 as uint8;
-            *(&raw mut game.g_ram as *mut uint8).offset(0x64d).offset(2) = 0 as uint8;
-            *(&raw mut game.g_ram as *mut uint8).offset(0x650).offset(0) = 0 as uint8;
-            *(&raw mut game.g_ram as *mut uint8).offset(0x650).offset(1) = 0 as uint8;
-            *(&raw mut game.g_ram as *mut uint8).offset(0x650).offset(2) = 0 as uint8;
-            *(&raw mut game.g_ram as *mut uint8).offset(0x656).offset(0) = 0 as uint8;
-            *(&raw mut game.g_ram as *mut uint8).offset(0x666).offset(0) = 0 as uint8;
-            *(&raw mut game.g_ram as *mut uint8).offset(0x676).offset(0) = 0 as uint8;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x53) as *mut uint16) = 0 as uint16;
-            ClearOamExt(game);
-            ClearUnusedOam(game);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x71d) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x71f) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x721) as *mut uint16) = 0 as uint16;
-            EnableNMI(game);
-            RtlApuWrite(APUI00, 0 as uint8, game);
-            RtlApuWrite(APUI01, 0 as uint8, game);
-            RtlApuWrite(APUI02, 0 as uint8, game);
-            RtlApuWrite(APUI03, 0 as uint8, game);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16) = 97 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x63f) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16).offset(0) =
-                0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16).offset(1) =
-                0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16).offset(2) =
-                0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16).offset(3) =
-                0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16).offset(4) =
-                0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16).offset(5) =
-                0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16).offset(6) =
-                0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16).offset(7) =
-                0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x5d1) as *mut uint16) = 0 as uint16;
-            VerifySRAM(game);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x5f5) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x686) as *mut uint16) = 0 as uint16;
-        }
-        _ => {}
+    if current_block_63 == 3640593987805443782 {
+        APU_UploadBank(0xcf8000 as uint32, game);
+        WriteReg(INIDISP as uint16, 0x8f as uint8, game);
+        bak = ram_word!(game, bug_fix_counter);
+        memset(
+            &raw mut game.g_ram as *mut uint8 as *mut ::core::ffi::c_void,
+            0 as ::core::ffi::c_int,
+            0x10000 as ::core::ffi::c_int as size_t,
+        );
+        *((&raw mut game.g_ram as *mut uint8).offset(0xc2) as *mut uint16) = bak;
+        WriteReg(NMITIMEN as uint16, 0 as uint8, game);
+        *(&raw mut game.g_ram as *mut uint8).offset(0x84) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x51) = 0x8f as uint8;
+        InitializeCpuIoRegs(game);
+        InitializePpuIoRegs(game);
+        WriteLotsOf0x1c2f(game);
+        *(&raw mut game.g_ram as *mut uint8).offset(0x643).offset(0) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x643).offset(1) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x643).offset(2) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x646).offset(0) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x646).offset(1) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x646).offset(2) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x649).offset(0) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x649).offset(1) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x649).offset(2) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x64d).offset(0) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x64d).offset(1) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x64d).offset(2) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x650).offset(0) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x650).offset(1) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x650).offset(2) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x656).offset(0) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x666).offset(0) = 0 as uint8;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x676).offset(0) = 0 as uint8;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x53) as *mut uint16) = 0 as uint16;
+        ClearOamExt(game);
+        ClearUnusedOam(game);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x71d) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x71f) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x721) as *mut uint16) = 0 as uint16;
+        EnableNMI(game);
+        RtlApuWrite(APUI00, 0 as uint8, game);
+        RtlApuWrite(APUI01, 0 as uint8, game);
+        RtlApuWrite(APUI02, 0 as uint8, game);
+        RtlApuWrite(APUI03, 0 as uint8, game);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16) = 97 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x63f) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16).offset(0) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16).offset(1) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16).offset(2) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16).offset(3) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16).offset(4) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16).offset(5) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16).offset(6) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x629) as *mut uint16).offset(7) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x5d1) as *mut uint16) = 0 as uint16;
+        VerifySRAM(game);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x5f5) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x686) as *mut uint16) = 0 as uint16;
     }
     *_state_variable_ = 2 as uint8;
     0 as CoroutineRet
@@ -2462,79 +2448,70 @@ pub unsafe fn StartGameplay_Async(game: &mut Game) -> CoroutineRet {
             current_block_54 = 7659304154607701039;
         }
     }
-    match current_block_54 {
-        9431711618385729511 => {
-            let mut _coret_: uint8 = Play20FramesOfMusic_Async(game);
-            if _coret_ != 0 {
-                *_state_variable_ = 1 as uint8;
-                return _coret_;
-            }
-            ClearAnimtiles(game);
-            WaitUntilEndOfVblankAndClearHdma(game);
-            InitializeSpecialEffectsForNewRoom(game);
-            ClearPLMs(game);
-            ClearEprojs(game);
-            ClearPaletteFXObjects(game);
-            UpdateBeamTilesAndPalette(game);
-            LoadColorsForSpritesBeamsAndEnemies(game);
-            LoadEnemies(game);
-            LoadRoomMusic(game);
-            current_block_54 = 4121473168792104488;
+    if current_block_54 == 9431711618385729511 {
+        let mut _coret_: uint8 = Play20FramesOfMusic_Async(game);
+        if _coret_ != 0 {
+            *_state_variable_ = 1 as uint8;
+            return _coret_;
         }
-        _ => {}
+        ClearAnimtiles(game);
+        WaitUntilEndOfVblankAndClearHdma(game);
+        InitializeSpecialEffectsForNewRoom(game);
+        ClearPLMs(game);
+        ClearEprojs(game);
+        ClearPaletteFXObjects(game);
+        UpdateBeamTilesAndPalette(game);
+        LoadColorsForSpritesBeamsAndEnemies(game);
+        LoadEnemies(game);
+        LoadRoomMusic(game);
+        current_block_54 = 4121473168792104488;
     }
-    match current_block_54 {
-        4121473168792104488 => {
-            let mut _coret__0: uint8 = Play20FramesOfMusic_Async(game);
-            if _coret__0 != 0 {
-                *_state_variable_ = 2 as uint8;
-                return _coret__0;
-            }
-            UpdateMusicTrackIndex(game);
-            NullFunc();
-            ClearBG2Tilemap(game);
-            LoadLevelDataAndOtherThings(game);
-            LoadFXHeader(game);
-            LoadLibraryBackground(game);
-            CalculateLayer2Xpos(game);
-            CalculateLayer2Ypos(game);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x921) as *mut uint16) =
-                ram_word!(game, layer2_x_pos);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x923) as *mut uint16) =
-                ram_word!(game, layer2_y_pos);
-            CalculateBgScrolls(game);
-            DisplayViewablePartOfRoom(game);
-            EnableNMI(game);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa7) as *mut uint16) =
-                (if ram_word!(game, room_loading_irq_handler) == 0u16 {
-                    4 as ::core::ffi::c_int
-                } else {
-                    ram_word!(game, room_loading_irq_handler) as ::core::ffi::c_int
-                }) as uint16;
-            EnableIrqInterrupts(game);
-            current_block_54 = 3421737773041484705;
+    if current_block_54 == 4121473168792104488 {
+        let mut _coret__0: uint8 = Play20FramesOfMusic_Async(game);
+        if _coret__0 != 0 {
+            *_state_variable_ = 2 as uint8;
+            return _coret__0;
         }
-        _ => {}
+        UpdateMusicTrackIndex(game);
+        NullFunc();
+        ClearBG2Tilemap(game);
+        LoadLevelDataAndOtherThings(game);
+        LoadFXHeader(game);
+        LoadLibraryBackground(game);
+        CalculateLayer2Xpos(game);
+        CalculateLayer2Ypos(game);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x921) as *mut uint16) =
+            ram_word!(game, layer2_x_pos);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x923) as *mut uint16) =
+            ram_word!(game, layer2_y_pos);
+        CalculateBgScrolls(game);
+        DisplayViewablePartOfRoom(game);
+        EnableNMI(game);
+        *((&raw mut game.g_ram as *mut uint8).offset(0xa7) as *mut uint16) =
+            (if ram_word!(game, room_loading_irq_handler) == 0u16 {
+                4 as ::core::ffi::c_int
+            } else {
+                ram_word!(game, room_loading_irq_handler) as ::core::ffi::c_int
+            }) as uint16;
+        EnableIrqInterrupts(game);
+        current_block_54 = 3421737773041484705;
     }
-    match current_block_54 {
-        3421737773041484705 => {
-            let mut _coret__1: uint8 = Play20FramesOfMusic_Async(game);
-            if _coret__1 != 0 {
-                *_state_variable_ = 3 as uint8;
-                return _coret__1;
-            }
-            SpawnHardcodedPlm(
-                SpawnHardcodedPlmArgs {
-                    field_0: 0x8 as uint8,
-                    field_1: 0x8 as uint8,
-                    field_2: 0xb7eb as VoidP,
-                },
-                game,
-            );
-            *((&raw mut game.g_ram as *mut uint8).offset(0x99c) as *mut uint16) =
-                ((0x82e737i32) as u16);
+    if current_block_54 == 3421737773041484705 {
+        let mut _coret__1: uint8 = Play20FramesOfMusic_Async(game);
+        if _coret__1 != 0 {
+            *_state_variable_ = 3 as uint8;
+            return _coret__1;
         }
-        _ => {}
+        SpawnHardcodedPlm(
+            SpawnHardcodedPlmArgs {
+                field_0: 0x8 as uint8,
+                field_1: 0x8 as uint8,
+                field_2: 0xb7eb as VoidP,
+            },
+            game,
+        );
+        *((&raw mut game.g_ram as *mut uint8).offset(0x99c) as *mut uint16) =
+            ((0x82e737i32) as u16);
     }
     *_state_variable_ = 0 as uint8;
     0 as CoroutineRet

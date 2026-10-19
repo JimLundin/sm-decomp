@@ -1502,12 +1502,9 @@ pub unsafe fn PlatformThatFallsWithSamus_Func_3(game: &mut Game) {
             current_block = 3640593987805443782;
         }
     }
-    match current_block {
-        2432778910466551290 => {
-            (*E).ptfwss_var_F = 0 as uint16;
-            PlatformThatFallsWithSamus_Func_10(game);
-        }
-        _ => {}
+    if current_block == 2432778910466551290 {
+        (*E).ptfwss_var_F = 0 as uint16;
+        PlatformThatFallsWithSamus_Func_10(game);
     };
 }
 pub unsafe fn PlatformThatFallsWithSamus_Func_4(game: &mut Game) {
@@ -2234,12 +2231,9 @@ pub unsafe fn Mochtroid_Func_1(game: &mut Game) {
     } else {
         current_block_4 = 8515828400728868193;
     }
-    match current_block_4 {
-        13796420526896809451 => {
-            (*E).mochtr_var_D = v5 as uint16;
-            (*E).mochtr_var_C = 0 as uint16;
-        }
-        _ => {}
+    if current_block_4 == 13796420526896809451 {
+        (*E).mochtr_var_D = v5 as uint16;
+        (*E).mochtr_var_C = 0 as uint16;
     }
     if Enemy_MoveDown(
         ram_word!(game, cur_enemy_index),
@@ -2274,12 +2268,9 @@ pub unsafe fn Mochtroid_Func_1(game: &mut Game) {
     } else {
         current_block_15 = 4808432441040389987;
     }
-    match current_block_15 {
-        10272573711837802396 => {
-            (*E).mochtr_var_B = v10 as uint16;
-            (*E).mochtr_var_A = 0 as uint16;
-        }
-        _ => {}
+    if current_block_15 == 10272573711837802396 {
+        (*E).mochtr_var_B = v10 as uint16;
+        (*E).mochtr_var_A = 0 as uint16;
     }
     if Enemy_MoveRight_IgnoreSlopes(
         ram_word!(game, cur_enemy_index),
@@ -2399,13 +2390,10 @@ pub unsafe fn Mochtroid_Touch(game: &mut Game) {
             current_block = 13513818773234778473;
         }
     }
-    match current_block {
-        17285009320546006530 => {
-            Enemy_NormalTouchAI_A3(game);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x18aa) as *mut uint16) = 0 as uint16;
-        }
-        _ => {}
+    if current_block == 17285009320546006530 {
+        Enemy_NormalTouchAI_A3(game);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x18aa) as *mut uint16) = 0 as uint16;
     };
 }
 pub unsafe fn Mochtroid_Shot(game: &mut Game) {
@@ -4352,11 +4340,8 @@ pub unsafe fn WreckedShipOrangeZoomer_Func_2(k: uint16, game: &mut Game) {
                     current_block_8 = 11050875288958768710;
                 }
             }
-            match current_block_8 {
-                9790114338316996362 => {
-                    v7 = -(v7 as ::core::ffi::c_int) as int16;
-                }
-                _ => {}
+            if current_block_8 == 9790114338316996362 {
+                v7 = -(v7 as ::core::ffi::c_int) as int16;
             }
             (*E).wsozr_var_B = v7 as uint16;
             return;
@@ -4870,12 +4855,9 @@ pub unsafe fn Metroid_Func_1(varE32: uint16, game: &mut Game) {
         v4 = 3 as int16;
         current_block = 2868539653012386629;
     }
-    match current_block {
-        2868539653012386629 => {
-            (*E).metroid_var_D = v4 as uint16;
-            (*E).metroid_var_C = 0 as uint16;
-        }
-        _ => {}
+    if current_block == 2868539653012386629 {
+        (*E).metroid_var_D = v4 as uint16;
+        (*E).metroid_var_C = 0 as uint16;
     }
     if Enemy_MoveDown(
         ram_word!(game, cur_enemy_index),
@@ -4912,12 +4894,9 @@ pub unsafe fn Metroid_Func_1(varE32: uint16, game: &mut Game) {
         v9 = 3 as int16;
         current_block = 17478428563724192186;
     }
-    match current_block {
-        17478428563724192186 => {
-            (*E).metroid_var_B = v9 as uint16;
-            (*E).metroid_var_A = 0 as uint16;
-        }
-        _ => {}
+    if current_block == 17478428563724192186 {
+        (*E).metroid_var_B = v9 as uint16;
+        (*E).metroid_var_A = 0 as uint16;
     }
     if Enemy_MoveRight_IgnoreSlopes(
         ram_word!(game, cur_enemy_index),
@@ -4966,12 +4945,9 @@ pub unsafe fn Metroid_Func_2(varE32: uint16, game: &mut Game) {
         v2 = 3 as uint16;
         current_block = 2868539653012386629;
     }
-    match current_block {
-        2868539653012386629 => {
-            r20 = v2;
-            r18 = 0 as uint16;
-        }
-        _ => {}
+    if current_block == 2868539653012386629 {
+        r20 = v2;
+        r18 = 0 as uint16;
     }
     (*E).metroid_var_C = r18;
     (*E).metroid_var_D = r20;
@@ -5013,12 +4989,9 @@ pub unsafe fn Metroid_Func_2(varE32: uint16, game: &mut Game) {
         v6 = 3 as uint16;
         current_block = 18386322304582297246;
     }
-    match current_block {
-        18386322304582297246 => {
-            r20 = v6;
-            r18 = 0 as uint16;
-        }
-        _ => {}
+    if current_block == 18386322304582297246 {
+        r20 = v6;
+        r18 = 0 as uint16;
     }
     (*E).metroid_var_A = r18;
     (*E).metroid_var_B = r20;

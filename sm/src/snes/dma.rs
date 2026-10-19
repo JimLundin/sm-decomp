@@ -244,11 +244,8 @@ pub unsafe fn dma_initHdma(dma: *mut Dma, game: &mut Game) {
             (*dma).channel[i as usize].doTransfer = false_0 != 0;
             current_block_16 = 7976072742316086414;
         }
-        match current_block_16 {
-            7976072742316086414 => {
-                (*dma).channel[i as usize].terminated = false_0 != 0;
-            }
-            _ => {}
+        if current_block_16 == 7976072742316086414 {
+            (*dma).channel[i as usize].terminated = false_0 != 0;
         }
         i += 1;
     }

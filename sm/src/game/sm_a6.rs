@@ -1907,11 +1907,8 @@ pub unsafe fn FakeKraid_Instr_2(k: uint16, jp: *const uint16, game: &mut Game) -
     } else {
         current_block = 6873731126896040597;
     }
-    match current_block {
-        6873731126896040597 => {
-            (*E).fkd_var_B = -((*E).fkd_var_B as ::core::ffi::c_int) as uint16;
-        }
-        _ => {}
+    if current_block == 6873731126896040597 {
+        (*E).fkd_var_B = -((*E).fkd_var_B as ::core::ffi::c_int) as uint16;
     }
     (*E).fkd_var_C = -(4 as ::core::ffi::c_int) as uint16;
     if (((*E).base.x_pos) as i16).wrapping_sub((ram_word!(game, samus_x_pos)) as i16) < 0i16 {
@@ -3089,24 +3086,21 @@ pub unsafe fn Ridley_Hurt(game: &mut Game) {
     } else {
         current_block = 13513818773234778473;
     }
-    match current_block {
-        13513818773234778473 => {
-            Ridley_Func_129(game);
-            Ridley_Func_102(game);
-            sub_A6DB2A(game);
-            Ridley_Func_120(game);
-            Ridley_Func_100(game);
-            Ridley_Func_118(game);
-            let mut v2: uint16 = ((*E).ridley_var_24).wrapping_add(1u16);
-            if ((v2) as i16).wrapping_sub((g_word_A6B288) as i16) >= 0i16 {
-                v2 = g_word_A6B288;
-            }
-            (*E).ridley_var_24 = v2;
-            if ((((*E).ridley_var_24) as i16).wrapping_sub((g_word_A6B288) as i16) < 0i16) {
-                return;
-            }
+    if current_block == 13513818773234778473 {
+        Ridley_Func_129(game);
+        Ridley_Func_102(game);
+        sub_A6DB2A(game);
+        Ridley_Func_120(game);
+        Ridley_Func_100(game);
+        Ridley_Func_118(game);
+        let mut v2: uint16 = ((*E).ridley_var_24).wrapping_add(1u16);
+        if ((v2) as i16).wrapping_sub((g_word_A6B288) as i16) >= 0i16 {
+            v2 = g_word_A6B288;
         }
-        _ => {}
+        (*E).ridley_var_24 = v2;
+        if ((((*E).ridley_var_24) as i16).wrapping_sub((g_word_A6B288) as i16) < 0i16) {
+            return;
+        }
     }
     if (*Get_Ridley(0 as ::core::ffi::c_int, game)).ridley_var_1B != 0 {
         Ridley_Func_30(game);
@@ -3211,11 +3205,8 @@ pub unsafe fn Ridley_Func_6(game: &mut Game) {
             current_block = 11006700562992250127;
         }
     }
-    match current_block {
-        10433200308384073363 => {
-            (*E).ridley_var_A = ((0xa6b321i32) as u16);
-        }
-        _ => {}
+    if current_block == 10433200308384073363 {
+        (*E).ridley_var_A = ((0xa6b321i32) as u16);
     };
 }
 pub unsafe fn Ridley_Func_7(game: &mut Game) -> uint16 {
@@ -5127,20 +5118,14 @@ pub unsafe fn Ridley_Func_80_DoubleRet(game: &mut Game) -> uint8 {
     } else {
         current_block = 15129621311889290514;
     }
-    match current_block {
-        5875655901067838705 => {
-            v1 = (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(2))
-                .wrapping_sub(1u16);
-            current_block = 993568416893248401;
-        }
-        _ => {}
+    if current_block == 5875655901067838705 {
+        v1 = (*((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(2))
+            .wrapping_sub(1u16);
+        current_block = 993568416893248401;
     }
-    match current_block {
-        993568416893248401 => {
-            Ridley_Func_89(v1, game);
-            retval = true_0 != 0;
-        }
-        _ => {}
+    if current_block == 993568416893248401 {
+        Ridley_Func_89(v1, game);
+        retval = true_0 != 0;
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x2000) as *mut uint16).offset(2) = 0 as uint16;
     retval as uint8
@@ -6554,11 +6539,8 @@ pub unsafe fn Ridley_Func_111(mut r18: uint16, r20: uint16, r22: uint16, game: &
             current_block_13 = 12039483399334584727;
         }
     }
-    match current_block_13 {
-        872684080230000114 => {
-            v3 = r20;
-        }
-        _ => {}
+    if current_block_13 == 872684080230000114 {
+        v3 = r20;
     }
     (*E).ridley_var_0A = v3;
     r18 = *(&raw mut v3 as *mut uint8).offset(
@@ -6674,13 +6656,10 @@ pub unsafe fn Ridley_Func_114(game: &mut Game) {
     } else {
         current_block = 14523784380283086299;
     }
-    match current_block {
-        16875472102381009524 => {
-            (*E).base.current_instruction = v2;
-            (*E).base.instruction_timer = 2 as uint16;
-            (*E).base.timer = 0 as uint16;
-        }
-        _ => {}
+    if current_block == 16875472102381009524 {
+        (*E).base.current_instruction = v2;
+        (*E).base.instruction_timer = 2 as uint16;
+        (*E).base.timer = 0 as uint16;
     };
 }
 pub unsafe fn Ridley_Func_115(game: &mut Game) {
@@ -7379,11 +7358,8 @@ pub unsafe fn Ridley_Instr_11(k: uint16, jp: *const uint16, game: &mut Game) -> 
         } else {
             current_block = 11006700562992250127;
         }
-        match current_block {
-            11006700562992250127 => {
-                v4 = 21 as uint16;
-            }
-            _ => {}
+        if current_block == 11006700562992250127 {
+            v4 = 21 as uint16;
         }
         r18 = v4;
     } else {
@@ -7410,11 +7386,8 @@ pub unsafe fn Ridley_Instr_11(k: uint16, jp: *const uint16, game: &mut Game) -> 
             v3 = 176 as uint16;
             current_block = 16663838568255336676;
         }
-        match current_block {
-            11874048045265102773 => {
-                v3 = 235 as uint16;
-            }
-            _ => {}
+        if current_block == 11874048045265102773 {
+            v3 = 235 as uint16;
         }
         r18 = v3;
     }

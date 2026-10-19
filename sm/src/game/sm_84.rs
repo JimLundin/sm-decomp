@@ -2557,25 +2557,22 @@ pub unsafe fn ActivateStationIfSamusCannonLinedUp(a: uint16, j: uint16, game: &m
             break;
         }
     }
-    match current_block {
-        16658872821858055392 => {
-            CalculatePlmBlockCoords(ram_word!(game, plm_id), game);
-            if ((16u16).wrapping_mul(ram_word!(game, plm_y_block))) as ::core::ffi::c_int
-                | 0xb as ::core::ffi::c_int
-                == ram_word!(game, samus_y_pos) as ::core::ffi::c_int
-            {
-                let v3: ::core::ffi::c_int = v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1d27) as *mut uint16)
-                    .offset(v3 as isize) = *((&raw mut game.g_ram as *mut uint8).offset(0xdebc)
-                    as *mut uint16)
-                    .offset(v3 as isize);
-                *((&raw mut game.g_ram as *mut uint8).offset(0xde1c) as *mut uint16)
-                    .offset(v3 as isize) = 1 as uint16;
-                CallSomeSamusCode(6 as uint16, game);
-                return 1 as uint8;
-            }
+    if current_block == 16658872821858055392 {
+        CalculatePlmBlockCoords(ram_word!(game, plm_id), game);
+        if ((16u16).wrapping_mul(ram_word!(game, plm_y_block))) as ::core::ffi::c_int
+            | 0xb as ::core::ffi::c_int
+            == ram_word!(game, samus_y_pos) as ::core::ffi::c_int
+        {
+            let v3: ::core::ffi::c_int = v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x1d27) as *mut uint16)
+                .offset(v3 as isize) = *((&raw mut game.g_ram as *mut uint8).offset(0xdebc)
+                as *mut uint16)
+                .offset(v3 as isize);
+            *((&raw mut game.g_ram as *mut uint8).offset(0xde1c) as *mut uint16)
+                .offset(v3 as isize) = 1 as uint16;
+            CallSomeSamusCode(6 as uint16, game);
+            return 1 as uint8;
         }
-        _ => {}
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
@@ -3840,21 +3837,17 @@ pub unsafe fn sub_84C64C(j: uint16, a: uint16, game: &mut Game) -> uint8 {
             break;
         }
     }
-    match current_block {
-        16658872821858055392 => {
-            v3 = 0;
-            v3 = v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-            if *((&raw mut game.g_ram as *mut uint8).offset(0x1d77) as *mut uint16)
-                .offset(v3 as isize)
-                == 0
-            {
-                let ref mut fresh7 = *((&raw mut game.g_ram as *mut uint8).offset(0x1d77)
-                    as *mut uint16)
-                    .offset(v3 as isize);
-                *fresh7 = (*fresh7).wrapping_add(1);
-            }
+    if current_block == 16658872821858055392 {
+        v3 = 0;
+        v3 = v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        if *((&raw mut game.g_ram as *mut uint8).offset(0x1d77) as *mut uint16).offset(v3 as isize)
+            == 0
+        {
+            let ref mut fresh7 = *((&raw mut game.g_ram as *mut uint8).offset(0x1d77)
+                as *mut uint16)
+                .offset(v3 as isize);
+            *fresh7 = (*fresh7).wrapping_add(1);
         }
-        _ => {}
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x1c37) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;

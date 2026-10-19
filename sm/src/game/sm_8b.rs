@@ -3427,12 +3427,9 @@ pub unsafe fn CinematicFunc_Func1(game: &mut Game) {
     } else {
         current_block = 4906268039856690917;
     }
-    match current_block {
-        5176254373955358112 => {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 2 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 2 as uint16;
-        }
-        _ => {}
+    if current_block == 5176254373955358112 {
+        *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 2 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 2 as uint16;
     };
 }
 pub unsafe fn CinematicFunc_Func10(game: &mut Game) {
@@ -9134,22 +9131,17 @@ pub unsafe fn CalcItemPercentageCount(k: uint16, instrp: uint16, game: &mut Game
     } else {
         current_block = 2719512138335094285;
     }
-    match current_block {
-        18317007320854588510 => {
-            let v7: ::core::ffi::c_int =
-                ((4u16).wrapping_mul(v6)) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap[463 as ::core::ffi::c_int as usize] =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0x8be741)) as *const uint8
-                    as *mut uint16)
-                    .offset(v7 as isize);
-            (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-                .pause_menu_map_tilemap[495 as ::core::ffi::c_int as usize] =
-                *(game.g_rom.offset(crate::rtl::lorom_offset(0x8be741)) as *const uint8
-                    as *mut uint16)
-                    .offset((v7 + 1 as ::core::ffi::c_int) as isize);
-        }
-        _ => {}
+    if current_block == 18317007320854588510 {
+        let v7: ::core::ffi::c_int =
+            ((4u16).wrapping_mul(v6)) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
+            .pause_menu_map_tilemap[463 as ::core::ffi::c_int as usize] =
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x8be741)) as *const uint8 as *mut uint16)
+                .offset(v7 as isize);
+        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
+            .pause_menu_map_tilemap[495 as ::core::ffi::c_int as usize] =
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x8be741)) as *const uint8 as *mut uint16)
+                .offset((v7 + 1 as ::core::ffi::c_int) as isize);
     }
     let v8: ::core::ffi::c_int =
         ((4u16).wrapping_mul(r22)) as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;

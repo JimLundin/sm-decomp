@@ -1415,23 +1415,20 @@ unsafe fn EprojColl_85C2(eci: *mut EprojCollInfo, a: uint16, k: uint16, game: &m
         match current_block {
             12039483399334584727 => {}
             _ => {
-                match current_block {
-                    2204372562120708137 => {
-                        if (if unk_868729[v2 as usize] as ::core::ffi::c_int
-                            & 0x80 as ::core::ffi::c_int
-                            != 0
-                        {
-                            -(1 as ::core::ffi::c_int)
-                        } else {
-                            0 as ::core::ffi::c_int
-                        }) < 0i32
-                        {
-                            current_block = 12039483399334584727;
-                        } else {
-                            current_block = 3512920355445576850;
-                        }
+                if current_block == 2204372562120708137 {
+                    if (if unk_868729[v2 as usize] as ::core::ffi::c_int
+                        & 0x80 as ::core::ffi::c_int
+                        != 0
+                    {
+                        -(1 as ::core::ffi::c_int)
+                    } else {
+                        0 as ::core::ffi::c_int
+                    }) < 0i32
+                    {
+                        current_block = 12039483399334584727;
+                    } else {
+                        current_block = 3512920355445576850;
                     }
-                    _ => {}
                 }
                 match current_block {
                     12039483399334584727 => {}
@@ -1558,23 +1555,20 @@ unsafe fn EprojColl_8676(
         match current_block {
             5143058163439228106 => {}
             _ => {
-                match current_block {
-                    8777407941634159499 => {
-                        if (if unk_868729[v3 as usize] as ::core::ffi::c_int
-                            & 0x80 as ::core::ffi::c_int
-                            != 0
-                        {
-                            -(1 as ::core::ffi::c_int)
-                        } else {
-                            0 as ::core::ffi::c_int
-                        }) < 0i32
-                        {
-                            current_block = 5143058163439228106;
-                        } else {
-                            current_block = 12349973810996921269;
-                        }
+                if current_block == 8777407941634159499 {
+                    if (if unk_868729[v3 as usize] as ::core::ffi::c_int
+                        & 0x80 as ::core::ffi::c_int
+                        != 0
+                    {
+                        -(1 as ::core::ffi::c_int)
+                    } else {
+                        0 as ::core::ffi::c_int
+                    }) < 0i32
+                    {
+                        current_block = 5143058163439228106;
+                    } else {
+                        current_block = 12349973810996921269;
                     }
-                    _ => {}
                 }
                 match current_block {
                     5143058163439228106 => {}
@@ -3110,17 +3104,13 @@ pub unsafe fn EprojPreInstr_PhantoonStartingFireballs3(k: uint16, game: &mut Gam
     } else {
         current_block = 13183875560443969876;
     }
-    match current_block {
-        220575731145207134 => {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16)
-                .offset(v1 as isize) = addr_word_869782 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16)
-                .offset(v1 as isize) = 1 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16)
-                .offset(v1 as isize) =
-                (0x869a44 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-        }
-        _ => {}
+    if current_block == 220575731145207134 {
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16).offset(v1 as isize) =
+            addr_word_869782 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16).offset(v1 as isize) =
+            1 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16).offset(v1 as isize) =
+            (0x869a44 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
     };
 }
 pub unsafe fn EprojPreInstr_PhantoonDestroyableFireballs(k: uint16, game: &mut Game) {
@@ -3200,31 +3190,26 @@ pub unsafe fn EprojPreInstr_PhantoonDestroyableFireballs_2(k: uint16, game: &mut
             current_block = 2868539653012386629;
         }
     }
-    match current_block {
-        8066597768905169940 => {
-            let ref mut fresh126 = *((&raw mut game.g_ram as *mut uint8).offset(0x1adb)
+    if current_block == 8066597768905169940 {
+        let ref mut fresh126 = *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16)
+            .offset(v1 as isize);
+        *fresh126 = (*fresh126 as ::core::ffi::c_int + 16 as ::core::ffi::c_int) as uint16;
+        if EprojBlockCollisition_Vertical(k, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int
+            != 0
+        {
+            *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16)
+                .offset(v1 as isize) = addr_word_8697AC as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16)
+                .offset(v1 as isize) = 1 as uint16;
+            let ref mut fresh127 = *((&raw mut game.g_ram as *mut uint8).offset(0x1a93)
                 as *mut uint16)
                 .offset(v1 as isize);
-            *fresh126 = (*fresh126 as ::core::ffi::c_int + 16 as ::core::ffi::c_int) as uint16;
-            if EprojBlockCollisition_Vertical(k, game) as ::core::ffi::c_int
-                & 1 as ::core::ffi::c_int
-                != 0
-            {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1b47) as *mut uint16)
-                    .offset(v1 as isize) = addr_word_8697AC as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1b8f) as *mut uint16)
-                    .offset(v1 as isize) = 1 as uint16;
-                let ref mut fresh127 = *((&raw mut game.g_ram as *mut uint8).offset(0x1a93)
-                    as *mut uint16)
-                    .offset(v1 as isize);
-                *fresh127 = (*fresh127 as ::core::ffi::c_int + 8 as ::core::ffi::c_int) as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16)
-                    .offset(v1 as isize) =
-                    (0x869a44 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
-                QueueSfx3_Max6(0x1d as uint16, game);
-            }
+            *fresh127 = (*fresh127 as ::core::ffi::c_int + 8 as ::core::ffi::c_int) as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16)
+                .offset(v1 as isize) =
+                (0x869a44 as ::core::ffi::c_int & 0xffff as ::core::ffi::c_int) as uint16;
+            QueueSfx3_Max6(0x1d as uint16, game);
         }
-        _ => {}
     };
 }
 pub unsafe fn EprojPreInstr_PhantoonDestroyableFireballs_3(k: uint16, game: &mut Game) {
@@ -6205,15 +6190,11 @@ pub unsafe fn EprojPreInstr_MotherBrainBomb(k: uint16, game: &mut Game) {
             current_block_19 = 7175849428784450219;
         }
     }
-    match current_block_19 {
-        15976848397966268834 => {
-            let v3: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-            let ref mut fresh82 = *((&raw mut game.g_ram as *mut uint8).offset(0x1b23)
-                as *mut uint16)
-                .offset(v3 as isize);
-            *fresh82 = (*fresh82 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
-        }
-        _ => {}
+    if current_block_19 == 15976848397966268834 {
+        let v3: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
+        let ref mut fresh82 = *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16)
+            .offset(v3 as isize);
+        *fresh82 = (*fresh82 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as uint16;
     };
 }
 pub unsafe fn EprojInstr_SwitchJump(
@@ -7409,13 +7390,9 @@ pub unsafe fn EprojPreInstr_D0EC(k: uint16, game: &mut Game) {
             return;
         }
     }
-    match current_block {
-        4781832012581146689 => {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16)
-                .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-                256 as uint16;
-        }
-        _ => {}
+    if current_block == 4781832012581146689 {
+        *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16)
+            .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = 256 as uint16;
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x1a03) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
@@ -9461,11 +9438,8 @@ pub unsafe fn RandomDropRoutine(k: uint16, game: &mut Game) -> uint16 {
             } else {
                 current_block = 5399440093318478209;
             }
-            match current_block {
-                5399440093318478209 => {
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xe1a) as *mut uint16) = v5;
-                }
-                _ => {}
+            if current_block == 5399440093318478209 {
+                *((&raw mut game.g_ram as *mut uint8).offset(0xe1a) as *mut uint16) = v5;
             }
             v7 = RomPtr_B4(v2, game);
             if ram_word!(game, health_drop_bias_flag) as uint8 != 0 {

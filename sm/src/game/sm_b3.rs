@@ -806,17 +806,14 @@ pub unsafe fn BrinstarYellowPipeBug_Func_1(game: &mut Game) {
             current_block_6 = 2868539653012386629;
         }
     }
-    match current_block_6 {
-        1628911311613519252 => {
-            if IsSamusWithinEnemy_Y(ram_word!(game, cur_enemy_index), 0x30 as uint16, game) != 0 {
-                (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
-                    & !(kEnemyProps_Invisible as ::core::ffi::c_int))
-                    as uint16;
-                (*E).pbg_var_20 = 24 as uint16;
-                (*E).pbg_var_A = ((0xb38ff5i32) as u16);
-            }
+    if current_block_6 == 1628911311613519252 {
+        if IsSamusWithinEnemy_Y(ram_word!(game, cur_enemy_index), 0x30 as uint16, game) != 0 {
+            (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
+                & !(kEnemyProps_Invisible as ::core::ffi::c_int))
+                as uint16;
+            (*E).pbg_var_20 = 24 as uint16;
+            (*E).pbg_var_A = ((0xb38ff5i32) as u16);
         }
-        _ => {}
     };
 }
 pub unsafe fn BrinstarYellowPipeBug_Func_2(k: uint16, game: &mut Game) {

@@ -2695,27 +2695,22 @@ pub unsafe fn Crocomire_Func_95(game: &mut Game) {
             current_block = 7172762164747879670;
         }
     }
-    match current_block {
-        4956146061682418353 => {
-            let mut v4: uint16 = ((*E).crocom_var_B) & (0xfu16);
-            if v4 as ::core::ffi::c_int - 15 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-                != 0
-            {
-                v4 = v4.wrapping_add(1);
-            }
-            if ((*E).crocom_var_B as ::core::ffi::c_int & 0x800 as ::core::ffi::c_int) == 0i32 {
-                let mut v5: uint16 = g_word_A48692;
-                if (*E).crocom_var_C == 8u16 {
-                    v5 = g_word_A48694;
-                }
-                (*E).base.instruction_timer = ((*E).base.instruction_timer).wrapping_add(v5);
-            }
-            (*E).crocom_var_B = (v4 as ::core::ffi::c_int
-                | (*E).crocom_var_B as ::core::ffi::c_int & 0xb7f0 as ::core::ffi::c_int
-                | 0x800 as ::core::ffi::c_int) as uint16;
-            (*E).crocom_var_E = 10 as uint16;
+    if current_block == 4956146061682418353 {
+        let mut v4: uint16 = ((*E).crocom_var_B) & (0xfu16);
+        if v4 as ::core::ffi::c_int - 15 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int != 0 {
+            v4 = v4.wrapping_add(1);
         }
-        _ => {}
+        if ((*E).crocom_var_B as ::core::ffi::c_int & 0x800 as ::core::ffi::c_int) == 0i32 {
+            let mut v5: uint16 = g_word_A48692;
+            if (*E).crocom_var_C == 8u16 {
+                v5 = g_word_A48694;
+            }
+            (*E).base.instruction_timer = ((*E).base.instruction_timer).wrapping_add(v5);
+        }
+        (*E).crocom_var_B = (v4 as ::core::ffi::c_int
+            | (*E).crocom_var_B as ::core::ffi::c_int & 0xb7f0 as ::core::ffi::c_int
+            | 0x800 as ::core::ffi::c_int) as uint16;
+        (*E).crocom_var_E = 10 as uint16;
     }
     (*E).base.flash_timer = ((*E).base.flash_timer).wrapping_add(14u16);
     (*E).base.ai_handler_bits = ((*E).base.ai_handler_bits) | (2u16);

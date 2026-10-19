@@ -1540,12 +1540,9 @@ pub unsafe fn GoldTorizo_Shot(game: &mut Game) {
                 current_block_14 = 3512920355445576850;
             }
         }
-        match current_block_14 {
-            17149359649428287120 => {
-                (*E).toriz_parameter_2 = ((*E).toriz_parameter_2) | (0x2000u16);
-                Torizo_D6A6(game);
-            }
-            _ => {}
+        if current_block_14 == 17149359649428287120 {
+            (*E).toriz_parameter_2 = ((*E).toriz_parameter_2) | (0x2000u16);
+            Torizo_D6A6(game);
         }
     }
 }

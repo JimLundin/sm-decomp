@@ -395,60 +395,53 @@ pub unsafe fn InitAndLoadGameData_Async(game: &mut Game) -> CoroutineRet {
                 current_block_103 = 12705158477165241210;
             }
         }
-        match current_block_103 {
-            9959648584402098530 => {
-                let mut _coret_: uint8 = StartGameplay_Async(game);
-                if _coret_ != 0 {
-                    *_state_variable_ = 1 as uint8;
-                    return _coret_;
-                }
-                InitializeHud(game);
-                v0 = 32 as int16;
-                let mut v1: uint16 = 0 as uint16;
-                loop {
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(
-                        ((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
-                            + 192 as ::core::ffi::c_int) as isize,
-                    ) = *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
-                        .offset(
-                            ((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
-                                + 192 as ::core::ffi::c_int) as isize,
-                        );
-                    v1 = (v1).wrapping_add(2u16);
-                    v0 = (v0).wrapping_sub(2i16);
-                    if (v0 == 0) {
-                        break;
-                    }
-                }
-                *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 1 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 1 as uint16;
-                EnableNMI(game);
-                EnableEprojs(game);
-                EnablePLMs(game);
-                EnablePaletteFx(game);
-                EnableHdmaObjects(game);
-                EnableAnimtiles(game);
-                SetLiquidPhysicsType(game);
-                if ram_word!(game, game_state) as ::core::ffi::c_int
-                    == kGameState_40_TransitionToDemo as ::core::ffi::c_int
-                {
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xda0) as *mut uint16) =
-                        6 as uint16;
-                    current_block_103 = 980989089337379490;
-                } else if ram_word!(game, loading_game_state) as ::core::ffi::c_int
-                    == kLoadingGameState_22_EscapingCeres as ::core::ffi::c_int
-                {
-                    QueueMusic_Delayed8(5 as uint16, game);
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xda0) as *mut uint16) =
-                        15 as uint16;
-                    current_block_103 = 10753070352654377903;
-                } else {
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xda0) as *mut uint16) =
-                        6 as uint16;
-                    current_block_103 = 129780949503461575;
+        if current_block_103 == 9959648584402098530 {
+            let mut _coret_: uint8 = StartGameplay_Async(game);
+            if _coret_ != 0 {
+                *_state_variable_ = 1 as uint8;
+                return _coret_;
+            }
+            InitializeHud(game);
+            v0 = 32 as int16;
+            let mut v1: uint16 = 0 as uint16;
+            loop {
+                *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(
+                    ((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
+                        + 192 as ::core::ffi::c_int) as isize,
+                ) = *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(
+                    ((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
+                        + 192 as ::core::ffi::c_int) as isize,
+                );
+                v1 = (v1).wrapping_add(2u16);
+                v0 = (v0).wrapping_sub(2i16);
+                if (v0 == 0) {
+                    break;
                 }
             }
-            _ => {}
+            *((&raw mut game.g_ram as *mut uint8).offset(0x723) as *mut uint16) = 1 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0x725) as *mut uint16) = 1 as uint16;
+            EnableNMI(game);
+            EnableEprojs(game);
+            EnablePLMs(game);
+            EnablePaletteFx(game);
+            EnableHdmaObjects(game);
+            EnableAnimtiles(game);
+            SetLiquidPhysicsType(game);
+            if ram_word!(game, game_state) as ::core::ffi::c_int
+                == kGameState_40_TransitionToDemo as ::core::ffi::c_int
+            {
+                *((&raw mut game.g_ram as *mut uint8).offset(0xda0) as *mut uint16) = 6 as uint16;
+                current_block_103 = 980989089337379490;
+            } else if ram_word!(game, loading_game_state) as ::core::ffi::c_int
+                == kLoadingGameState_22_EscapingCeres as ::core::ffi::c_int
+            {
+                QueueMusic_Delayed8(5 as uint16, game);
+                *((&raw mut game.g_ram as *mut uint8).offset(0xda0) as *mut uint16) = 15 as uint16;
+                current_block_103 = 10753070352654377903;
+            } else {
+                *((&raw mut game.g_ram as *mut uint8).offset(0xda0) as *mut uint16) = 6 as uint16;
+                current_block_103 = 129780949503461575;
+            }
         }
         loop {
             match current_block_103 {
@@ -1261,27 +1254,24 @@ pub unsafe fn RunOneFrameOfGameInner(game: &mut Game) -> CoroutineRet {
         }
         current_block = 8515828400728868193;
     }
-    match current_block {
-        8515828400728868193 => {
-            let ref mut fresh149 = *(&raw mut game.g_ram as *mut uint8).offset(0x615);
-            *fresh149 = 0 as uint8;
-            let ref mut fresh150 = *(&raw mut game.g_ram as *mut uint8).offset(0x614);
-            *fresh150 = *fresh149;
-            let ref mut fresh151 = *(&raw mut game.g_ram as *mut uint8).offset(0x613);
-            *fresh151 = *fresh150;
-            *(&raw mut game.g_ram as *mut uint8).offset(0x612) = *fresh151;
-            ReadJoypadInputs(game);
-            HdmaObjectHandler(game);
-            NextRandom(game);
-            ClearOamExt(game);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x71d) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x71f) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x721) as *mut uint16) = 0 as uint16;
-            st = ram_word!(game, game_state) as ::core::ffi::c_int + 10 as ::core::ffi::c_int;
-            *(&raw mut game.g_ram as *mut uint8).offset(0x611) = st as uint8;
-        }
-        _ => {}
+    if current_block == 8515828400728868193 {
+        let ref mut fresh149 = *(&raw mut game.g_ram as *mut uint8).offset(0x615);
+        *fresh149 = 0 as uint8;
+        let ref mut fresh150 = *(&raw mut game.g_ram as *mut uint8).offset(0x614);
+        *fresh150 = *fresh149;
+        let ref mut fresh151 = *(&raw mut game.g_ram as *mut uint8).offset(0x613);
+        *fresh151 = *fresh150;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x612) = *fresh151;
+        ReadJoypadInputs(game);
+        HdmaObjectHandler(game);
+        NextRandom(game);
+        ClearOamExt(game);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x71d) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x71f) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x721) as *mut uint16) = 0 as uint16;
+        st = ram_word!(game, game_state) as ::core::ffi::c_int + 10 as ::core::ffi::c_int;
+        *(&raw mut game.g_ram as *mut uint8).offset(0x611) = st as uint8;
     }
     let mut _coret__0: uint8 = kGameStateFuncs[(st - 10 as ::core::ffi::c_int) as usize]
         .expect("non-null function pointer")(game);
@@ -1528,55 +1518,46 @@ pub unsafe fn GameState_8_MainGameplay(game: &mut Game) -> CoroutineRet {
             current_block_38 = 652864300344834934;
         }
     }
-    match current_block_38 {
-        6718109325120641364 => {
-            let mut _coret_: uint8 =
-                DisplayMessageBox_Async(ram_word!(game, queued_message_box_index), game);
-            if _coret_ != 0 {
-                *_state_variable_ = 1 as uint8;
-                return _coret_;
-            }
-            *((&raw mut game.g_ram as *mut uint8).offset(0xdc8) as *mut uint16) = 0 as uint16;
-            current_block_38 = 13586036798005543211;
+    if current_block_38 == 6718109325120641364 {
+        let mut _coret_: uint8 =
+            DisplayMessageBox_Async(ram_word!(game, queued_message_box_index), game);
+        if _coret_ != 0 {
+            *_state_variable_ = 1 as uint8;
+            return _coret_;
         }
-        _ => {}
+        *((&raw mut game.g_ram as *mut uint8).offset(0xdc8) as *mut uint16) = 0 as uint16;
+        current_block_38 = 13586036798005543211;
     }
-    match current_block_38 {
-        13586036798005543211 => {
-            HandleSamusMovementAndPause(game);
-            EprojRunAll(game);
-            current_block_38 = 8001970166466707590;
-        }
-        _ => {}
+    if current_block_38 == 13586036798005543211 {
+        HandleSamusMovementAndPause(game);
+        EprojRunAll(game);
+        current_block_38 = 8001970166466707590;
     }
-    match current_block_38 {
-        8001970166466707590 => {
-            let mut _coret__0: uint8 = PlmHandler_Async(game);
-            if _coret__0 != 0 {
-                *_state_variable_ = 2 as uint8;
-                return _coret__0;
-            }
-            AnimtilesHandler(game);
-            if ram_word!(game, debug_disable_sprite_interact) == 0 {
-                EprojSamusCollDetect(game);
-                EprojProjCollDet(game);
-                ProcessEnemyPowerBombInteraction(game);
-            }
-            MainScrollingRoutine(game);
-            let debug_scrolling_enabled: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
-            if debug_scrolling_enabled != 0 {
-                DebugScrollPosSaveLoad(game);
-            }
-            DrawSamusEnemiesAndProjectiles(game);
-            QueueEnemyBG2TilemapTransfers(game);
-            HandleHudTilemap(game);
-            CalculateLayer2PosAndScrollsWhenScrolling(game);
-            RunRoomMainCode(game);
-            HandleSamusOutOfHealthAndGameTile(game);
-            HandleRoomShaking(game);
-            DecrementSamusTimers(game);
+    if current_block_38 == 8001970166466707590 {
+        let mut _coret__0: uint8 = PlmHandler_Async(game);
+        if _coret__0 != 0 {
+            *_state_variable_ = 2 as uint8;
+            return _coret__0;
         }
-        _ => {}
+        AnimtilesHandler(game);
+        if ram_word!(game, debug_disable_sprite_interact) == 0 {
+            EprojSamusCollDetect(game);
+            EprojProjCollDet(game);
+            ProcessEnemyPowerBombInteraction(game);
+        }
+        MainScrollingRoutine(game);
+        let debug_scrolling_enabled: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
+        if debug_scrolling_enabled != 0 {
+            DebugScrollPosSaveLoad(game);
+        }
+        DrawSamusEnemiesAndProjectiles(game);
+        QueueEnemyBG2TilemapTransfers(game);
+        HandleHudTilemap(game);
+        CalculateLayer2PosAndScrollsWhenScrolling(game);
+        RunRoomMainCode(game);
+        HandleSamusOutOfHealthAndGameTile(game);
+        HandleRoomShaking(game);
+        DecrementSamusTimers(game);
     }
     *_state_variable_ = 0 as uint8;
     0 as CoroutineRet
@@ -2430,24 +2411,20 @@ pub unsafe fn GameState_17_Unpausing_Async(game: &mut Game) -> CoroutineRet {
             current_block_17 = 4166486009154926805;
         }
     }
-    match current_block_17 {
-        16264310372000621783 => {
-            let mut _coret_: uint8 = CallUnpauseHook_Async(
-                Load24((&raw mut game.g_ram as *mut uint8).offset(0x604) as *mut LongPtr),
-                game,
-            );
-            if _coret_ != 0 {
-                *_state_variable_ = 1 as uint8;
-                return _coret_;
-            }
-            EnableHdmaObjects(game);
-            EnableAnimtiles(game);
-            QueueSamusMovementSfx(game);
-            let ref mut fresh108 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
-            *fresh108 = (*fresh108).wrapping_add(1);
+    if current_block_17 == 16264310372000621783 {
+        let mut _coret_: uint8 = CallUnpauseHook_Async(
+            Load24((&raw mut game.g_ram as *mut uint8).offset(0x604) as *mut LongPtr),
+            game,
+        );
+        if _coret_ != 0 {
+            *_state_variable_ = 1 as uint8;
+            return _coret_;
         }
-        _ => {}
+        EnableHdmaObjects(game);
+        EnableAnimtiles(game);
+        QueueSamusMovementSfx(game);
+        let ref mut fresh108 = *((&raw mut game.g_ram as *mut uint8).offset(0x998) as *mut uint16);
+        *fresh108 = (*fresh108).wrapping_add(1);
     }
     *_state_variable_ = 0 as uint8;
     0 as CoroutineRet
@@ -3275,19 +3252,16 @@ pub unsafe fn sub_82A42A(game: &mut Game) {
     } else {
         current_block = 10886091980245723256;
     }
-    match current_block {
-        2878476956402529644 => {
-            if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8 {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-                    kPose_1A_FaceL_SpinJump as uint16;
-            } else {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-                    kPose_19_FaceR_SpinJump as uint16;
-            }
-            SamusFunc_F433(game);
-            Samus_SetAnimationFrameIfPoseChanged(game);
+    if current_block == 2878476956402529644 {
+        if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8 {
+            *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
+                kPose_1A_FaceL_SpinJump as uint16;
+        } else {
+            *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
+                kPose_19_FaceR_SpinJump as uint16;
         }
-        _ => {}
+        SamusFunc_F433(game);
+        Samus_SetAnimationFrameIfPoseChanged(game);
     };
 }
 pub unsafe fn sub_82A47B(game: &mut Game) {
@@ -3349,11 +3323,8 @@ pub unsafe fn HandlePauseScreenLrInput(game: &mut Game) {
     } else {
         current_block = 13536709405535804910;
     }
-    match current_block {
-        2636532137229557926 => {
-            QueueSfx1_Max6(0x38 as uint16, game);
-        }
-        _ => {}
+    if current_block == 2636532137229557926 {
+        QueueSfx1_Max6(0x38 as uint16, game);
     };
 }
 static kPauseLrButtonPressedHighlight_Spritemap: [uint16; 2] = [0x28, 0x29];
@@ -4573,11 +4544,8 @@ pub unsafe fn EquipmentScreenMoveToBeams(mut v0: uint16, r18: uint16, game: &mut
             }
         }
     }
-    match current_block_5 {
-        16475780731721606008 => {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) = r18;
-        }
-        _ => {}
+    if current_block_5 == 16475780731721606008 {
+        *((&raw mut game.g_ram as *mut uint8).offset(0x755) as *mut uint16) = r18;
     };
 }
 pub unsafe fn EquipmentScreenMoveToBottomOfBeams(mut k: uint16, game: &mut Game) -> uint16 {
@@ -5023,11 +4991,8 @@ pub unsafe fn DrawBossMapIcons(a: uint16, k: uint16, game: &mut Game) {
         } else {
             current_block_8 = 7651349459974463963;
         }
-        match current_block_8 {
-            7651349459974463963 => {
-                bits >>= 1 as ::core::ffi::c_int;
-            }
-            _ => {}
+        if current_block_8 == 7651349459974463963 {
+            bits >>= 1 as ::core::ffi::c_int;
         }
         v4 = v4.offset(2);
     }
@@ -7972,12 +7937,9 @@ pub unsafe fn LoadControllerOptionsFromControllerBindings(game: &mut Game) {
                 .offset((v1 + 13 as ::core::ffi::c_int) as isize) = 6 as uint16;
             current_block_13 = 2720989448508244618;
         }
-        match current_block_13 {
-            4528428927647462225 => {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16)
-                    .offset((v1 + 13 as ::core::ffi::c_int) as isize) = 0 as uint16;
-            }
-            _ => {}
+        if current_block_13 == 4528428927647462225 {
+            *((&raw mut game.g_ram as *mut uint8).offset(0x1b23) as *mut uint16)
+                .offset((v1 + 13 as ::core::ffi::c_int) as isize) = 0 as uint16;
         }
         v0 = (v0).wrapping_add(2u16);
         if (((v0) as i16).wrapping_sub(14i16) >= 0i16) {

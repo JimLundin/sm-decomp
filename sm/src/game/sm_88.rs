@@ -3863,11 +3863,8 @@ pub unsafe fn HdmaobjPreInstr_LavaAcidBG3YScroll(k: uint16, game: &mut Game) {
         } else {
             current_block = 4068382217303356765;
         }
-        match current_block {
-            4068382217303356765 => {
-                v4 = 0 as int16;
-            }
-            _ => {}
+        if current_block == 4068382217303356765 {
+            v4 = 0 as int16;
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0x9c00).offset(2) as *mut uint8
             as *mut uint16) = v4 as uint16;
@@ -3913,11 +3910,8 @@ pub unsafe fn HdmaobjPreInstr_LavaAcidBG3YScroll(k: uint16, game: &mut Game) {
         } else {
             current_block = 11042950489265723346;
         }
-        match current_block {
-            11042950489265723346 => {
-                v8 = 511 as int16;
-            }
-            _ => {}
+        if current_block == 11042950489265723346 {
+            v8 = 511 as int16;
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0x18d8) as *mut uint16).offset(
             (ram_word!(game, hdma_object_index) as uint8 as ::core::ffi::c_int

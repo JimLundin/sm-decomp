@@ -806,28 +806,25 @@ pub unsafe fn Draygon_Func_16(game: &mut Game) {
         } else {
             current_block = 6483416627284290920;
         }
-        match current_block {
-            6483416627284290920 => {
-                (*E).base.y_pos =
-                    (CosineMult8bit((*E).draygon_var_0D, 32 as uint16, game)).wrapping_add(384u16);
-                (*E).draygon_var_0D = ((((*E).draygon_var_0D) as u8).wrapping_add(1u8)) as uint16;
-                AddToHiLo(
-                    &raw mut (*E).base.x_pos,
-                    &raw mut (*E).base.x_subpos,
-                    ((*E).draygon_var_D as uint32) << 16 as ::core::ffi::c_int
-                        | (*E).draygon_var_E as uint32,
-                );
-                if ((*E).base.x_pos as int16) >= 0i16
-                    && (*E).base.x_pos as ::core::ffi::c_int - 672 as ::core::ffi::c_int
-                        & 0x8000 as ::core::ffi::c_int
-                        == 0
-                {
-                    current_block = 11361156962102030361;
-                } else {
-                    current_block = 7976072742316086414;
-                }
+        if current_block == 6483416627284290920 {
+            (*E).base.y_pos =
+                (CosineMult8bit((*E).draygon_var_0D, 32 as uint16, game)).wrapping_add(384u16);
+            (*E).draygon_var_0D = ((((*E).draygon_var_0D) as u8).wrapping_add(1u8)) as uint16;
+            AddToHiLo(
+                &raw mut (*E).base.x_pos,
+                &raw mut (*E).base.x_subpos,
+                ((*E).draygon_var_D as uint32) << 16 as ::core::ffi::c_int
+                    | (*E).draygon_var_E as uint32,
+            );
+            if ((*E).base.x_pos as int16) >= 0i16
+                && (*E).base.x_pos as ::core::ffi::c_int - 672 as ::core::ffi::c_int
+                    & 0x8000 as ::core::ffi::c_int
+                    == 0
+            {
+                current_block = 11361156962102030361;
+            } else {
+                current_block = 7976072742316086414;
             }
-            _ => {}
         }
         match current_block {
             7976072742316086414 => {}
@@ -843,11 +840,8 @@ pub unsafe fn Draygon_Func_16(game: &mut Game) {
             }
         }
     }
-    match current_block {
-        1399980599923904196 => {
-            (*E).draygon_var_A = ((0xa58e19i32) as u16);
-        }
-        _ => {}
+    if current_block == 1399980599923904196 {
+        (*E).draygon_var_A = ((0xa58e19i32) as u16);
     };
 }
 pub unsafe fn Draygon_Func_17(k: uint16, game: &mut Game) {
@@ -928,28 +922,25 @@ pub unsafe fn Draygon_Func_20(game: &mut Game) {
         } else {
             current_block = 6873731126896040597;
         }
-        match current_block {
-            6873731126896040597 => {
-                (*E).base.y_pos =
-                    (CosineMult8bit((*E).draygon_var_0D, 32 as uint16, game)).wrapping_add(384u16);
-                (*E).draygon_var_0D = ((((*E).draygon_var_0D) as u8).wrapping_add(1u8)) as uint16;
-                AddToHiLo(
-                    &raw mut (*E).base.x_pos,
-                    &raw mut (*E).base.x_subpos,
-                    -(((*E).draygon_var_D as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                        | (*E).draygon_var_E as ::core::ffi::c_int) as uint32,
-                );
-                if (*E).base.x_pos < 0u16
-                    && (*E).base.x_pos as ::core::ffi::c_int + 80 as ::core::ffi::c_int
-                        & 0x8000 as ::core::ffi::c_int
-                        != 0
-                {
-                    current_block = 17278387905106781498;
-                } else {
-                    current_block = 10048703153582371463;
-                }
+        if current_block == 6873731126896040597 {
+            (*E).base.y_pos =
+                (CosineMult8bit((*E).draygon_var_0D, 32 as uint16, game)).wrapping_add(384u16);
+            (*E).draygon_var_0D = ((((*E).draygon_var_0D) as u8).wrapping_add(1u8)) as uint16;
+            AddToHiLo(
+                &raw mut (*E).base.x_pos,
+                &raw mut (*E).base.x_subpos,
+                -(((*E).draygon_var_D as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
+                    | (*E).draygon_var_E as ::core::ffi::c_int) as uint32,
+            );
+            if (*E).base.x_pos < 0u16
+                && (*E).base.x_pos as ::core::ffi::c_int + 80 as ::core::ffi::c_int
+                    & 0x8000 as ::core::ffi::c_int
+                    != 0
+            {
+                current_block = 17278387905106781498;
+            } else {
+                current_block = 10048703153582371463;
             }
-            _ => {}
         }
         match current_block {
             10048703153582371463 => {}
@@ -966,11 +957,8 @@ pub unsafe fn Draygon_Func_20(game: &mut Game) {
             }
         }
     }
-    match current_block {
-        11384386367536015713 => {
-            (*Get_Draygon(0 as ::core::ffi::c_int, game)).draygon_var_A = ((0xa58e19i32) as u16);
-        }
-        _ => {}
+    if current_block == 11384386367536015713 {
+        (*Get_Draygon(0 as ::core::ffi::c_int, game)).draygon_var_A = ((0xa58e19i32) as u16);
     };
 }
 pub unsafe fn Draygon_Func_21(k: uint16, game: &mut Game) {
@@ -1455,12 +1443,9 @@ pub unsafe fn Draygon_Func_38(game: &mut Game) {
         (*E).draygon_var_20 = 0 as uint16;
         current_block = 3276175668257526147;
     }
-    match current_block {
-        3276175668257526147 => {
-            (*E).base.current_instruction = v2;
-            (*E).base.instruction_timer = 1 as uint16;
-        }
-        _ => {}
+    if current_block == 3276175668257526147 {
+        (*E).base.current_instruction = v2;
+        (*E).base.instruction_timer = 1 as uint16;
     }
     if (ram_word!(game, joypad2_last) as ::core::ffi::c_int & 0x800 as ::core::ffi::c_int) != 0i32 {
         (*E).base.y_pos = (*E).base.y_pos.wrapping_sub(1);
@@ -1503,12 +1488,9 @@ pub unsafe fn Draygon_Func_39(game: &mut Game) {
         (*E).draygon_var_20 = 0 as uint16;
         current_block = 3276175668257526147;
     }
-    match current_block {
-        3276175668257526147 => {
-            (*E).base.current_instruction = v2;
-            (*E).base.instruction_timer = 1 as uint16;
-        }
-        _ => {}
+    if current_block == 3276175668257526147 {
+        (*E).base.current_instruction = v2;
+        (*E).base.instruction_timer = 1 as uint16;
     }
     if (ram_word!(game, joypad2_last) as ::core::ffi::c_int & 0x800 as ::core::ffi::c_int) != 0i32 {
         (*E).base.y_pos = ((*E).base.y_pos).wrapping_sub(4u16);

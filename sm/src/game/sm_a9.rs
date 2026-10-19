@@ -2987,11 +2987,8 @@ pub unsafe fn MotherBrain_Instr_AimRings(x: uint16, y: uint16, game: &mut Game) 
         *(&raw mut v0 as *mut uint8).offset(0) = 16 as uint8;
         current_block = 8016059118846638429;
     }
-    match current_block {
-        5817625388393324680 => {
-            *(&raw mut v0 as *mut uint8).offset(0) = 72 as uint8;
-        }
-        _ => {}
+    if current_block == 5817625388393324680 {
+        *(&raw mut v0 as *mut uint8).offset(0) = 72 as uint8;
     }
     (*Get_MotherBrain(0 as ::core::ffi::c_int, game)).mbn_var_1A = v0;
 }
@@ -5426,18 +5423,14 @@ pub unsafe fn MotherBrain_HandleWalking(game: &mut Game) {
             }
             current_block_15 = 3512920355445576850;
         }
-        match current_block_15 {
-            3512920355445576850 => {
-                if (ram_word!(game, random_number) as ::core::ffi::c_int
-                    & 0xfff as ::core::ffi::c_int)
-                    - 4032 as ::core::ffi::c_int
-                    & 0x8000 as ::core::ffi::c_int
-                    != 0
-                {
-                    return;
-                }
+        if current_block_15 == 3512920355445576850 {
+            if (ram_word!(game, random_number) as ::core::ffi::c_int & 0xfff as ::core::ffi::c_int)
+                - 4032 as ::core::ffi::c_int
+                & 0x8000 as ::core::ffi::c_int
+                != 0
+            {
+                return;
             }
-            _ => {}
         }
         (*E).mbn_var_07 = 128 as uint16;
         if (*E).base.x_pos as ::core::ffi::c_int - 128 as ::core::ffi::c_int
@@ -6380,11 +6373,8 @@ pub unsafe fn ShitroidInCutscene_UpdateSpeedAndAngle(
             current_block_13 = 12039483399334584727;
         }
     }
-    match current_block_13 {
-        17187448977823727056 => {
-            v4 = r20;
-        }
-        _ => {}
+    if current_block_13 == 17187448977823727056 {
+        v4 = r20;
     }
     (*E).sice_var_0A = v4;
     r18 = *(&raw mut v4 as *mut uint8).offset(

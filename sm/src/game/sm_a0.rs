@@ -4750,104 +4750,93 @@ pub unsafe fn EnemyMain(game: &mut Game) {
             } else {
                 current_block_39 = 8457315219000651999;
             }
-            match current_block_39 {
-                8457315219000651999 => {
-                    *((&raw mut game.g_ram as *mut uint8).offset(0x17a2) as *mut uint16) =
-                        0 as uint16;
-                    if ram_word!(game, debug_time_frozen_for_enemies) as ::core::ffi::c_int
-                        | ram_word!(game, time_is_frozen_flag) as ::core::ffi::c_int
-                        == 0
-                    {
-                        v6 = 0 as int16;
-                        let mut ai_handler_bits: uint16 = (*E).ai_handler_bits;
-                        if ai_handler_bits != 0 {
-                            loop {
-                                v6 += 1;
-                                v8 = ((ai_handler_bits) as i8) & (1i8);
-                                ai_handler_bits = (ai_handler_bits as ::core::ffi::c_int
-                                    >> 1 as ::core::ffi::c_int)
-                                    as uint16;
-                                if (v8 != 0) {
-                                    break;
-                                }
+            if current_block_39 == 8457315219000651999 {
+                *((&raw mut game.g_ram as *mut uint8).offset(0x17a2) as *mut uint16) = 0 as uint16;
+                if ram_word!(game, debug_time_frozen_for_enemies) as ::core::ffi::c_int
+                    | ram_word!(game, time_is_frozen_flag) as ::core::ffi::c_int
+                    == 0
+                {
+                    v6 = 0 as int16;
+                    let mut ai_handler_bits: uint16 = (*E).ai_handler_bits;
+                    if ai_handler_bits != 0 {
+                        loop {
+                            v6 += 1;
+                            v8 = ((ai_handler_bits) as i8) & (1i8);
+                            ai_handler_bits = (ai_handler_bits as ::core::ffi::c_int
+                                >> 1 as ::core::ffi::c_int)
+                                as uint16;
+                            if (v8 != 0) {
+                                break;
                             }
                         }
+                    }
+                    CallEnemyAi(
+                        (((*E).bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
+                            | (*get_EnemyDef_A2(
+                                ((*E).enemy_ptr as ::core::ffi::c_int
+                                    + 2 as ::core::ffi::c_int * v6 as ::core::ffi::c_int)
+                                    as uint16,
+                                game,
+                            ))
+                            .main_ai as ::core::ffi::c_int) as uint32,
+                        game,
+                    );
+                    current_block_39 = 5447921980315815038;
+                } else {
+                    ED = get_EnemyDef_A2((*E).enemy_ptr, game);
+                    if (*ED).time_is_frozen_ai != 0 {
                         CallEnemyAi(
                             (((*E).bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                                | (*get_EnemyDef_A2(
-                                    ((*E).enemy_ptr as ::core::ffi::c_int
-                                        + 2 as ::core::ffi::c_int * v6 as ::core::ffi::c_int)
-                                        as uint16,
-                                    game,
-                                ))
-                                .main_ai as ::core::ffi::c_int)
+                                | (*ED).time_is_frozen_ai as ::core::ffi::c_int)
                                 as uint32,
                             game,
                         );
                         current_block_39 = 5447921980315815038;
                     } else {
-                        ED = get_EnemyDef_A2((*E).enemy_ptr, game);
-                        if (*ED).time_is_frozen_ai != 0 {
-                            CallEnemyAi(
-                                (((*E).bank as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                                    | (*ED).time_is_frozen_ai as ::core::ffi::c_int)
-                                    as uint32,
-                                game,
-                            );
-                            current_block_39 = 5447921980315815038;
-                        } else {
-                            current_block_39 = 1836292691772056875;
-                        }
+                        current_block_39 = 1836292691772056875;
                     }
-                    match current_block_39 {
-                        1836292691772056875 => {}
-                        _ => {
-                            if ram_word!(game, debug_time_frozen_for_enemies) as ::core::ffi::c_int
-                                | ram_word!(game, time_is_frozen_flag) as ::core::ffi::c_int
-                                == 0
+                }
+                match current_block_39 {
+                    1836292691772056875 => {}
+                    _ => {
+                        if ram_word!(game, debug_time_frozen_for_enemies) as ::core::ffi::c_int
+                            | ram_word!(game, time_is_frozen_flag) as ::core::ffi::c_int
+                            == 0
+                        {
+                            (*E).frame_counter = (*E).frame_counter.wrapping_add(1);
+                            if ((*E).properties as ::core::ffi::c_int
+                                & 0x2000 as ::core::ffi::c_int)
+                                != 0i32
                             {
-                                (*E).frame_counter = (*E).frame_counter.wrapping_add(1);
-                                if ((*E).properties as ::core::ffi::c_int
-                                    & 0x2000 as ::core::ffi::c_int)
-                                    != 0i32
-                                {
-                                    *((&raw mut game.g_ram as *mut uint8).offset(0xf378)
-                                        as *mut uint16) = 2 as uint16;
-                                    ProcessEnemyInstructions(game);
-                                }
+                                *((&raw mut game.g_ram as *mut uint8).offset(0xf378)
+                                    as *mut uint16) = 2 as uint16;
+                                ProcessEnemyInstructions(game);
                             }
-                            current_block_39 = 1836292691772056875;
                         }
+                        current_block_39 = 1836292691772056875;
                     }
                 }
-                _ => {}
             }
-            match current_block_39 {
-                1836292691772056875 => {
-                    if ((*E).extra_properties as ::core::ffi::c_int & 1 as ::core::ffi::c_int)
-                        != 0i32
-                        && ((*E).flash_timer == 1u16 || (*E).frozen_timer == 1u16)
-                    {
-                        (*gEnemySpawnData(
-                            ram_word!(game, cur_enemy_index) as ::core::ffi::c_int,
-                            game,
-                        ))
-                        .cause_of_death = 0 as uint16;
-                        EnemyDeathAnimation(ram_word!(game, cur_enemy_index), 0 as uint16, game);
-                    }
-                    if (((*E).extra_properties as ::core::ffi::c_int & 4 as ::core::ffi::c_int)
-                        != 0i32
-                        || EnemyWithNormalSpritesIsOffScreen(game) == 0)
-                        && ((*E).properties as ::core::ffi::c_int & 0x300 as ::core::ffi::c_int)
-                            == 0i32
-                        && (ram_word!(game, UNUSED_word_7E17A2) as ::core::ffi::c_int
-                            & 1 as ::core::ffi::c_int)
-                            == 0i32
-                    {
-                        DrawOneEnemy(game);
-                    }
+            if current_block_39 == 1836292691772056875 {
+                if ((*E).extra_properties as ::core::ffi::c_int & 1 as ::core::ffi::c_int) != 0i32
+                    && ((*E).flash_timer == 1u16 || (*E).frozen_timer == 1u16)
+                {
+                    (*gEnemySpawnData(
+                        ram_word!(game, cur_enemy_index) as ::core::ffi::c_int,
+                        game,
+                    ))
+                    .cause_of_death = 0 as uint16;
+                    EnemyDeathAnimation(ram_word!(game, cur_enemy_index), 0 as uint16, game);
                 }
-                _ => {}
+                if (((*E).extra_properties as ::core::ffi::c_int & 4 as ::core::ffi::c_int) != 0i32
+                    || EnemyWithNormalSpritesIsOffScreen(game) == 0)
+                    && ((*E).properties as ::core::ffi::c_int & 0x300 as ::core::ffi::c_int) == 0i32
+                    && (ram_word!(game, UNUSED_word_7E17A2) as ::core::ffi::c_int
+                        & 1 as ::core::ffi::c_int)
+                        == 0i32
+                {
+                    DrawOneEnemy(game);
+                }
             }
             if (*E).flash_timer != 0u16
                 && ram_word!(game, debug_time_frozen_for_enemies) as ::core::ffi::c_int
@@ -6714,74 +6703,71 @@ pub unsafe fn NormalEnemyShotAiSkipDeathAnim(game: &mut Game) -> uint16 {
             return varE2E;
         }
     }
-    match current_block {
-        5143058163439228106 => {
-            ttt = ((pd as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint32)
-                .wrapping_mul(varE32 as uint32);
-            r42 = ttt as uint16;
-            if r42 != 0 {
-                pd = r42;
-                let v10: *mut EnemyData =
-                    gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
-                EnemyDef_A2 = get_EnemyDef_A2((*v10).enemy_ptr, game);
-                hurt_ai_time = (*EnemyDef_A2).hurt_ai_time as int16;
-                if (*EnemyDef_A2).hurt_ai_time == 0 {
-                    hurt_ai_time = 4 as int16;
+    if current_block == 5143058163439228106 {
+        ttt = ((pd as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint32)
+            .wrapping_mul(varE32 as uint32);
+        r42 = ttt as uint16;
+        if r42 != 0 {
+            pd = r42;
+            let v10: *mut EnemyData =
+                gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
+            EnemyDef_A2 = get_EnemyDef_A2((*v10).enemy_ptr, game);
+            hurt_ai_time = (*EnemyDef_A2).hurt_ai_time as int16;
+            if (*EnemyDef_A2).hurt_ai_time == 0 {
+                hurt_ai_time = 4 as int16;
+            }
+            let v13: *mut EnemyData =
+                gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
+            (*v13).flash_timer = ((hurt_ai_time) as u16).wrapping_add(8u16);
+            (*v13).ai_handler_bits = ((*v13).ai_handler_bits) | (2u16);
+            if (*v13).frozen_timer == 0 {
+                let hurt_sfx: uint16 = (*get_EnemyDef_A2((*v13).enemy_ptr, game)).hurt_sfx;
+                if hurt_sfx != 0 {
+                    QueueSfx2_Max3(hurt_sfx, game);
                 }
-                let v13: *mut EnemyData =
-                    gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
-                (*v13).flash_timer = ((hurt_ai_time) as u16).wrapping_add(8u16);
-                (*v13).ai_handler_bits = ((*v13).ai_handler_bits) | (2u16);
-                if (*v13).frozen_timer == 0 {
-                    let hurt_sfx: uint16 = (*get_EnemyDef_A2((*v13).enemy_ptr, game)).hurt_sfx;
-                    if hurt_sfx != 0 {
-                        QueueSfx2_Max3(hurt_sfx, game);
-                    }
-                    varE2E = varE2E.wrapping_add(1);
-                }
-                let v15: uint16 = ram_word!(game, cur_enemy_index);
+                varE2E = varE2E.wrapping_add(1);
+            }
+            let v15: uint16 = ram_word!(game, cur_enemy_index);
+            if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
+                .offset(ram_word!(game, collision_detection_index) as isize)
+                as ::core::ffi::c_int
+                & 8 as ::core::ffi::c_int)
+                != 0i32
+            {
+                (*gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
+                    .invincibility_timer = 16 as uint16;
+            }
+            let v16: *mut EnemyData = gEnemyData(v15 as ::core::ffi::c_int, game);
+            let health: uint16 = (*v16).health;
+            let mut v19: bool = health < pd;
+            let mut v18: uint16 = (health).wrapping_sub(pd);
+            v19 = !v19;
+            if v18 == 0 || !v19 {
                 if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
                     .offset(ram_word!(game, collision_detection_index) as isize)
                     as ::core::ffi::c_int
-                    & 8 as ::core::ffi::c_int)
+                    & 2 as ::core::ffi::c_int)
                     != 0i32
+                    && (ram_word!(game, last_enemy_power) as ::core::ffi::c_int
+                        & 0xf0 as ::core::ffi::c_int)
+                        != 128i32
+                    && (*v16).frozen_timer == 0
                 {
-                    (*gEnemyData(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game))
-                        .invincibility_timer = 16 as uint16;
-                }
-                let v16: *mut EnemyData = gEnemyData(v15 as ::core::ffi::c_int, game);
-                let health: uint16 = (*v16).health;
-                let mut v19: bool = health < pd;
-                let mut v18: uint16 = (health).wrapping_sub(pd);
-                v19 = !v19;
-                if v18 == 0 || !v19 {
-                    if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
-                        .offset(ram_word!(game, collision_detection_index) as isize)
-                        as ::core::ffi::c_int
-                        & 2 as ::core::ffi::c_int)
-                        != 0i32
-                        && (ram_word!(game, last_enemy_power) as ::core::ffi::c_int
-                            & 0xf0 as ::core::ffi::c_int)
-                            != 128i32
-                        && (*v16).frozen_timer == 0
-                    {
-                        v20 = 400 as int16;
-                        if ram_word!(game, area_index) == 2u16 {
-                            v20 = 300 as int16;
-                        }
-                        (*v16).frozen_timer = v20 as uint16;
-                        (*v16).ai_handler_bits = ((*v16).ai_handler_bits) | (4u16);
-                        (*v16).invincibility_timer = 10 as uint16;
-                        QueueSfx3_Max3(0xa as uint16, game);
-                        return varE2E;
+                    v20 = 400 as int16;
+                    if ram_word!(game, area_index) == 2u16 {
+                        v20 = 300 as int16;
                     }
-                    v18 = 0 as uint16;
+                    (*v16).frozen_timer = v20 as uint16;
+                    (*v16).ai_handler_bits = ((*v16).ai_handler_bits) | (4u16);
+                    (*v16).invincibility_timer = 10 as uint16;
+                    QueueSfx3_Max3(0xa as uint16, game);
+                    return varE2E;
                 }
-                (*v16).health = v18;
-                return varE2E;
+                v18 = 0 as uint16;
             }
+            (*v16).health = v18;
+            return varE2E;
         }
-        _ => {}
     }
     let v7: ::core::ffi::c_int = ram_word!(game, collision_detection_index) as ::core::ffi::c_int;
     let ref mut fresh25 =

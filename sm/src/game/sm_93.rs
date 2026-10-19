@@ -532,31 +532,28 @@ pub unsafe fn DrawBombAndProjectileExplosions(game: &mut Game) {
             match current_block {
                 2612600445040741303 => {}
                 _ => {
-                    match current_block {
-                        11875828834189669668 => {
-                            let v3: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb64)
+                    if current_block == 11875828834189669668 {
+                        let v3: uint16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb64)
+                            as *mut uint16)
+                            .offset(v1 as isize))
+                        .wrapping_sub(ram_word!(game, layer1_x_pos));
+                        r20 = v3;
+                        if v3 as ::core::ffi::c_int - 304 as ::core::ffi::c_int
+                            & 0x8000 as ::core::ffi::c_int
+                            == 0
+                            || v3 as ::core::ffi::c_int + 48 as ::core::ffi::c_int
+                                & 0x8000 as ::core::ffi::c_int
+                                != 0
+                        {
+                            current_block = 2612600445040741303;
+                        } else {
+                            v2 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb78)
                                 as *mut uint16)
                                 .offset(v1 as isize))
-                            .wrapping_sub(ram_word!(game, layer1_x_pos));
-                            r20 = v3;
-                            if v3 as ::core::ffi::c_int - 304 as ::core::ffi::c_int
-                                & 0x8000 as ::core::ffi::c_int
-                                == 0
-                                || v3 as ::core::ffi::c_int + 48 as ::core::ffi::c_int
-                                    & 0x8000 as ::core::ffi::c_int
-                                    != 0
-                            {
-                                current_block = 2612600445040741303;
-                            } else {
-                                v2 = (*((&raw mut game.g_ram as *mut uint8).offset(0xb78)
-                                    as *mut uint16)
-                                    .offset(v1 as isize))
-                                .wrapping_sub(ram_word!(game, layer1_y_pos));
-                                r18 = v2;
-                                current_block = 2311960645627505036;
-                            }
+                            .wrapping_sub(ram_word!(game, layer1_y_pos));
+                            r18 = v2;
+                            current_block = 2311960645627505036;
                         }
-                        _ => {}
                     }
                     match current_block {
                         2612600445040741303 => {}

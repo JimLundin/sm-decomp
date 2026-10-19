@@ -1001,11 +1001,8 @@ pub unsafe fn RoomCode_ShakeScreenHorizDiag(game: &mut Game) {
     } else {
         current_block_3 = 11006700562992250127;
     }
-    match current_block_3 {
-        10175730460759437497 => {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = v0;
-        }
-        _ => {}
+    if current_block_3 == 10175730460759437497 {
+        *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = v0;
     }
     RoomCode_GenRandomExplodes_4th(game);
 }
@@ -1031,12 +1028,9 @@ pub unsafe fn RoomCode_ShakeScreenHorizDiagStrong(game: &mut Game) {
     } else {
         current_block_3 = 11006700562992250127;
     }
-    match current_block_3 {
-        1544504899801662111 => {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(2) as *mut uint8
-                as *mut uint16) = v0 as uint16;
-        }
-        _ => {}
+    if current_block_3 == 1544504899801662111 {
+        *((&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(2) as *mut uint8
+            as *mut uint16) = v0 as uint16;
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) =
         *((&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(2) as *mut uint8 as *mut uint16);

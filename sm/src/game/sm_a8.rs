@@ -1582,13 +1582,10 @@ pub unsafe fn WreckedShipGhost_Func_3(k: uint16, game: &mut Game) {
             current_block = 12800627514080957624;
         }
     }
-    match current_block {
-        6804514963299881235 => {
-            (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
-                & !(kEnemyProps_Invisible as ::core::ffi::c_int))
-                as uint16;
-        }
-        _ => {}
+    if current_block == 6804514963299881235 {
+        (*E).base.properties = ((*E).base.properties as ::core::ffi::c_int
+            & !(kEnemyProps_Invisible as ::core::ffi::c_int))
+            as uint16;
     };
 }
 pub unsafe fn WreckedShipGhost_Func_4(k: uint16, game: &mut Game) {
@@ -3027,19 +3024,14 @@ pub unsafe fn NorfairLavaMan_Func_12(k: uint16, game: &mut Game) {
     } else {
         current_block = 7746791466490516765;
     }
-    match current_block {
-        9609259077933178539 => {
-            (*E).nlmn_var_B = (*E).nlmn_var_B.wrapping_add(1);
-            (*E).nlmn_var_B = (*E).nlmn_var_B.wrapping_add(1);
-            (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(8u16);
-            (*E).nlmn_var_D = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa8af67))
-                as *const uint8 as *mut uint16)
-                .offset(
-                    ((*E).nlmn_var_B as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                );
-            NorfairLavaMan_Func_20(game);
-        }
-        _ => {}
+    if current_block == 9609259077933178539 {
+        (*E).nlmn_var_B = (*E).nlmn_var_B.wrapping_add(1);
+        (*E).nlmn_var_B = (*E).nlmn_var_B.wrapping_add(1);
+        (*E).base.y_pos = ((*E).base.y_pos).wrapping_add(8u16);
+        (*E).nlmn_var_D = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa8af67)) as *const uint8
+            as *mut uint16)
+            .offset(((*E).nlmn_var_B as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+        NorfairLavaMan_Func_20(game);
     };
 }
 pub fn sub_A8B291(k: uint16) {}
@@ -3945,13 +3937,10 @@ pub unsafe fn Beetom_Touch(game: &mut Game) {
             current_block = 10599921512955367680;
         }
     }
-    match current_block {
-        12103599785691237014 => {
-            Enemy_NormalTouchAI_A8(game);
-            *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x18aa) as *mut uint16) = 0 as uint16;
-        }
-        _ => {}
+    if current_block == 12103599785691237014 {
+        Enemy_NormalTouchAI_A8(game);
+        *((&raw mut game.g_ram as *mut uint8).offset(0x18a8) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x18aa) as *mut uint16) = 0 as uint16;
     };
 }
 pub unsafe fn Beetom_Shot(game: &mut Game) {
@@ -4179,21 +4168,18 @@ pub unsafe fn MaridiaFloater_Func_6(k: uint16, game: &mut Game) {
             current_block = 14963264723745262966;
         }
     }
-    match current_block {
-        14916268686031723178 => {
-            AddToHiLo(
-                &raw mut (*E).mfr_var_A,
-                &raw mut (*E).mfr_var_B,
-                (g_word_A8C1B9 as uint32) << 16 as ::core::ffi::c_int | g_word_A8C1BB as uint32,
-            );
-            Enemy_MoveDown(
-                k,
-                (((*E).mfr_var_A as uint32) << 16 as ::core::ffi::c_int | (*E).mfr_var_B as uint32)
-                    as int32,
-                game,
-            );
-        }
-        _ => {}
+    if current_block == 14916268686031723178 {
+        AddToHiLo(
+            &raw mut (*E).mfr_var_A,
+            &raw mut (*E).mfr_var_B,
+            (g_word_A8C1B9 as uint32) << 16 as ::core::ffi::c_int | g_word_A8C1BB as uint32,
+        );
+        Enemy_MoveDown(
+            k,
+            (((*E).mfr_var_A as uint32) << 16 as ::core::ffi::c_int | (*E).mfr_var_B as uint32)
+                as int32,
+            game,
+        );
     }
     MaridiaFloater_Func_2(k, game);
 }
@@ -4295,21 +4281,18 @@ pub unsafe fn MaridiaFloater_Func_8(k: uint16, game: &mut Game) {
             current_block = 4833750592470317582;
         }
     }
-    match current_block {
-        12800627514080957624 => {
-            AddToHiLo(
-                &raw mut (*E).mfr_var_A,
-                &raw mut (*E).mfr_var_B,
-                (g_word_A8C1B9 as uint32) << 16 as ::core::ffi::c_int | g_word_A8C1BB as uint32,
-            );
-            Enemy_MoveDown(
-                k,
-                (((*E).mfr_var_A as uint32) << 16 as ::core::ffi::c_int | (*E).mfr_var_B as uint32)
-                    as int32,
-                game,
-            );
-        }
-        _ => {}
+    if current_block == 12800627514080957624 {
+        AddToHiLo(
+            &raw mut (*E).mfr_var_A,
+            &raw mut (*E).mfr_var_B,
+            (g_word_A8C1B9 as uint32) << 16 as ::core::ffi::c_int | g_word_A8C1BB as uint32,
+        );
+        Enemy_MoveDown(
+            k,
+            (((*E).mfr_var_A as uint32) << 16 as ::core::ffi::c_int | (*E).mfr_var_B as uint32)
+                as int32,
+            game,
+        );
     }
     MaridiaFloater_Func_2(k, game);
 }
@@ -6121,11 +6104,8 @@ pub unsafe fn KiHunter_Func_1(k: uint16, game: &mut Game) {
             current_block = 8515828400728868193;
         }
     }
-    match current_block {
-        8515828400728868193 => {
-            (*E).khr_var_09 = v4 as uint16;
-        }
-        _ => {}
+    if current_block == 8515828400728868193 {
+        (*E).khr_var_09 = v4 as uint16;
     }
     if Enemy_MoveRight_IgnoreSlopes(
         k,
@@ -6219,19 +6199,16 @@ pub unsafe fn KiHunter_Func_2(k: uint16, game: &mut Game) {
     } else {
         current_block = 17179679302217393232;
     }
-    match current_block {
-        17179679302217393232 => {
-            if (*E).khr_var_10 == 0 {
-                (*E).khr_var_10 = 1 as uint16;
-                let mut v2: uint16 = addr_kKiHunter_Ilist_EA32 as uint16;
-                if ((*E).khr_var_04 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
-                    v2 = addr_kKiHunter_Ilist_EA08 as uint16;
-                }
-                (*E).base.current_instruction = v2;
-                (*E).base.instruction_timer = 1 as uint16;
+    if current_block == 17179679302217393232 {
+        if (*E).khr_var_10 == 0 {
+            (*E).khr_var_10 = 1 as uint16;
+            let mut v2: uint16 = addr_kKiHunter_Ilist_EA32 as uint16;
+            if ((*E).khr_var_04 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) != 0i32 {
+                v2 = addr_kKiHunter_Ilist_EA08 as uint16;
             }
+            (*E).base.current_instruction = v2;
+            (*E).base.instruction_timer = 1 as uint16;
         }
-        _ => {}
     }
     if ((*E).khr_var_04 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int) == 0i32 {
         AddToHiLo(
@@ -6293,13 +6270,10 @@ pub unsafe fn KiHunter_Func_2(k: uint16, game: &mut Game) {
             current_block = 7828949454673616476;
         }
     }
-    match current_block {
-        14751541640656221110 => {
-            (*E).khr_var_A = ((0xa8f4edi32) as u16);
-            (*E).khr_var_08 = 0 as uint16;
-            (*E).khr_var_09 = -(1 as ::core::ffi::c_int) as uint16;
-        }
-        _ => {}
+    if current_block == 14751541640656221110 {
+        (*E).khr_var_A = ((0xa8f4edi32) as u16);
+        (*E).khr_var_08 = 0 as uint16;
+        (*E).khr_var_09 = -(1 as ::core::ffi::c_int) as uint16;
     };
 }
 pub unsafe fn KiHunter_Func_3(k: uint16, game: &mut Game) {

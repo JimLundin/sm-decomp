@@ -1441,24 +1441,21 @@ pub unsafe fn Kraid_Shot_Body(game: &mut Game) {
                         current_block_12 = 11194104282611034094;
                     }
                 }
-                match current_block_12 {
-                    2894936153070068674 => {
-                        Kraid_SpawnExplosionEproj(i as uint16, game);
-                        let v6: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
-                        let ref mut fresh14 = *((&raw mut game.g_ram as *mut uint8).offset(0xc04)
-                            as *mut uint16)
-                            .offset(v6 as isize);
-                        *fresh14 = (*fresh14) | (0x10u16);
-                        if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
-                            .offset(v6 as isize) as ::core::ffi::c_int
-                            & 0x10 as ::core::ffi::c_int)
-                            != 0i32
-                        {
-                            (*E).kraid_mouth_flags = ((*E).kraid_mouth_flags) | (1u16);
-                        }
-                        R48 = R48.wrapping_add(1);
+                if current_block_12 == 2894936153070068674 {
+                    Kraid_SpawnExplosionEproj(i as uint16, game);
+                    let v6: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
+                    let ref mut fresh14 = *((&raw mut game.g_ram as *mut uint8).offset(0xc04)
+                        as *mut uint16)
+                        .offset(v6 as isize);
+                    *fresh14 = (*fresh14) | (0x10u16);
+                    if (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
+                        .offset(v6 as isize) as ::core::ffi::c_int
+                        & 0x10 as ::core::ffi::c_int)
+                        != 0i32
+                    {
+                        (*E).kraid_mouth_flags = ((*E).kraid_mouth_flags) | (1u16);
                     }
-                    _ => {}
+                    R48 = R48.wrapping_add(1);
                 }
                 i -= 2 as ::core::ffi::c_int;
             }
@@ -2317,18 +2314,15 @@ pub unsafe fn KraidsFingernail_Init(game: &mut Game) {
             current_block = 16203760046146113240;
         }
     }
-    match current_block {
-        1333174206292935201 => {
-            (*E).kraid_healths_8ths[1 as ::core::ffi::c_int as usize] = 0 as uint16;
-            let E0: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int, game);
-            (*E).base.x_pos = ((*E0).base.x_pos as ::core::ffi::c_int
-                - (*E0).base.x_width as ::core::ffi::c_int
-                - (*E).base.x_width as ::core::ffi::c_int
-                & 0xfff0 as ::core::ffi::c_int) as uint16;
-            (*E).base.y_pos =
-                ((*Get_Kraid(0x40 as ::core::ffi::c_int, game)).base.y_pos).wrapping_add(128u16);
-        }
-        _ => {}
+    if current_block == 1333174206292935201 {
+        (*E).kraid_healths_8ths[1 as ::core::ffi::c_int as usize] = 0 as uint16;
+        let E0: *mut Enemy_Kraid = Get_Kraid(0 as ::core::ffi::c_int, game);
+        (*E).base.x_pos = ((*E0).base.x_pos as ::core::ffi::c_int
+            - (*E0).base.x_width as ::core::ffi::c_int
+            - (*E).base.x_width as ::core::ffi::c_int
+            & 0xfff0 as ::core::ffi::c_int) as uint16;
+        (*E).base.y_pos =
+            ((*Get_Kraid(0x40 as ::core::ffi::c_int, game)).base.y_pos).wrapping_add(128u16);
     };
 }
 pub unsafe fn KraidsFingernail_Fire(k: uint16, game: &mut Game) {
@@ -5144,36 +5138,26 @@ pub unsafe fn Phantoon_Shot(game: &mut Game) {
         match current_block {
             6450597802325118133 => {}
             _ => {
-                match current_block {
-                    1670498606268217318 => {
-                        (*EK).phant_var_F = ((0xa7d85ci32) as u16);
-                        current_block = 4949463109084628481;
-                    }
-                    _ => {}
+                if current_block == 1670498606268217318 {
+                    (*EK).phant_var_F = ((0xa7d85ci32) as u16);
+                    current_block = 4949463109084628481;
                 }
-                match current_block {
-                    4949463109084628481 => {
-                        (*EK).phant_var_E = 0 as uint16;
-                        (*Get_Phantoon(0x80 as ::core::ffi::c_int, game)).phant_var_A = 0 as uint16;
-                        (*Get_Phantoon(
-                            v1 as ::core::ffi::c_int + 0x80 as ::core::ffi::c_int,
-                            game,
-                        ))
+                if current_block == 4949463109084628481 {
+                    (*EK).phant_var_E = 0 as uint16;
+                    (*Get_Phantoon(0x80 as ::core::ffi::c_int, game)).phant_var_A = 0 as uint16;
+                    (*Get_Phantoon(v1 as ::core::ffi::c_int + 0x80 as ::core::ffi::c_int, game))
                         .phant_var_B = 0 as uint16;
-                        let ref mut fresh28 =
-                            *((&raw mut game.g_ram as *mut uint8).offset(0x1988) as *mut uint16);
-                        *fresh28 = (*fresh28) | (0x4000u16);
-                        (*E0).base.instruction_timer = 1 as uint16;
-                        let E1: *mut Enemy_Phantoon =
-                            Get_Phantoon(0x40 as ::core::ffi::c_int, game);
-                        (*E1).base.instruction_timer = 1 as uint16;
-                        (*E0).base.current_instruction = addr_kKraid_Ilist_CC41 as uint16;
-                        (*E1).base.current_instruction = addr_kKraid_Ilist_CC91 as uint16;
-                        (*E0).base.properties =
-                            ((*E0).base.properties) | ((kEnemyProps_Tangible) as u16);
-                        (*E1).phant_var_F = 0 as uint16;
-                    }
-                    _ => {}
+                    let ref mut fresh28 =
+                        *((&raw mut game.g_ram as *mut uint8).offset(0x1988) as *mut uint16);
+                    *fresh28 = (*fresh28) | (0x4000u16);
+                    (*E0).base.instruction_timer = 1 as uint16;
+                    let E1: *mut Enemy_Phantoon = Get_Phantoon(0x40 as ::core::ffi::c_int, game);
+                    (*E1).base.instruction_timer = 1 as uint16;
+                    (*E0).base.current_instruction = addr_kKraid_Ilist_CC41 as uint16;
+                    (*E1).base.current_instruction = addr_kKraid_Ilist_CC91 as uint16;
+                    (*E0).base.properties =
+                        ((*E0).base.properties) | ((kEnemyProps_Tangible) as u16);
+                    (*E1).phant_var_F = 0 as uint16;
                 }
                 (*Get_Phantoon(0x80 as ::core::ffi::c_int, game)).phant_parameter_2 = 2 as uint16;
             }

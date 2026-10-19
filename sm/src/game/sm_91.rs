@@ -2519,16 +2519,13 @@ pub unsafe fn HdmaobjPreInstr_XraySetup(k: uint16, game: &mut Game) {
             current_block = 5035836855854403712;
         }
     }
-    match current_block {
-        4263953485050074566 => {
-            *((&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) as *mut uint8
-                as *mut uint16) = 0x27 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) as *mut uint8
-                as *mut uint16) = 0x47 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) as *mut uint8
-                as *mut uint16) = 0x87 as uint16;
-        }
-        _ => {}
+    if current_block == 4263953485050074566 {
+        *((&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) as *mut uint8
+            as *mut uint16) = 0x27 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) as *mut uint8
+            as *mut uint16) = 0x47 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) as *mut uint8
+            as *mut uint16) = 0x87 as uint16;
     }
     let ref mut fresh37 = *((&raw mut game.g_ram as *mut uint8).offset(0x1986) as *mut uint16);
     *fresh37 = (*fresh37) | (v1);
@@ -2892,30 +2889,24 @@ pub unsafe fn HandleMiscSamusPalette(game: &mut Game) {
         } else {
             current_block = 15619007995458559411;
         }
-        match current_block {
-            15619007995458559411 => {
-                if v0 as ::core::ffi::c_int - 7 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-                    == 0
-                {
-                    current_block = 11050875288958768710;
-                } else if (v0 as ::core::ffi::c_int & 1 as ::core::ffi::c_int) != 0i32 {
-                    CopyToSamusSuitPalette(addr_word_9BA380 as uint16, game);
-                    current_block = 11050875288958768710;
-                } else {
-                    current_block = 4767789648742619593;
-                }
+        if current_block == 15619007995458559411 {
+            if v0 as ::core::ffi::c_int - 7 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
+                == 0
+            {
+                current_block = 11050875288958768710;
+            } else if (v0 as ::core::ffi::c_int & 1 as ::core::ffi::c_int) != 0i32 {
+                CopyToSamusSuitPalette(addr_word_9BA380 as uint16, game);
+                current_block = 11050875288958768710;
+            } else {
+                current_block = 4767789648742619593;
             }
-            _ => {}
         }
-        match current_block {
-            4767789648742619593 => {
-                if ram_word!(game, cinematic_function) != 0 {
-                    CopyToSamusSuitPalette(addr_word_9BA3A0 as uint16, game);
-                } else {
-                    Samus_LoadSuitPalette(game);
-                }
+        if current_block == 4767789648742619593 {
+            if ram_word!(game, cinematic_function) != 0 {
+                CopyToSamusSuitPalette(addr_word_9BA3A0 as uint16, game);
+            } else {
+                Samus_LoadSuitPalette(game);
             }
-            _ => {}
         }
         let v1: uint16 = (ram_word!(game, samus_hurt_flash_counter)).wrapping_add(1u16);
         *((&raw mut game.g_ram as *mut uint8).offset(0xa48) as *mut uint16) = v1;
@@ -4035,13 +4026,10 @@ pub unsafe fn SamusFunc_E633_0(game: &mut Game) {
     } else {
         current_block_4 = 7351195479953500246;
     }
-    match current_block_4 {
-        5176481699505674939 => {
-            SamusFunc_F433(game);
-            Samus_SetAnimationFrameIfPoseChanged(game);
-            Samus_UpdatePreviousPose_0(game);
-        }
-        _ => {}
+    if current_block_4 == 5176481699505674939 {
+        SamusFunc_F433(game);
+        Samus_SetAnimationFrameIfPoseChanged(game);
+        Samus_UpdatePreviousPose_0(game);
     };
 }
 pub unsafe fn SamusFunc_E633_3(game: &mut Game) {
@@ -4083,17 +4071,14 @@ pub unsafe fn SamusFunc_E633_3(game: &mut Game) {
     } else {
         current_block = 14317573491659972910;
     }
-    match current_block {
-        5564999883274278710 => {
-            if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8 {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-                    kPose_1A_FaceL_SpinJump as uint16;
-            } else {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-                    kPose_19_FaceR_SpinJump as uint16;
-            }
+    if current_block == 5564999883274278710 {
+        if *(&raw mut game.g_ram as *mut uint8).offset(0xa1e) == 4u8 {
+            *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
+                kPose_1A_FaceL_SpinJump as uint16;
+        } else {
+            *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
+                kPose_19_FaceR_SpinJump as uint16;
         }
-        _ => {}
     }
     SamusFunc_F433(game);
     Samus_SetAnimationFrameIfPoseChanged(game);
@@ -4448,15 +4433,12 @@ pub unsafe fn Samus_CheckWalkedIntoSomething(game: &mut Game) {
             current_block = 12513788902857388954;
         }
     }
-    match current_block {
-        12513788902857388954 => {
-            Samus_MoveRight_NoSolidColl(amt, game);
-            if (ram_word!(game, samus_collision_flag) == 0) {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xdce) as *mut uint16) = 0 as uint16;
-                return;
-            }
+    if current_block == 12513788902857388954 {
+        Samus_MoveRight_NoSolidColl(amt, game);
+        if (ram_word!(game, samus_collision_flag) == 0) {
+            *((&raw mut game.g_ram as *mut uint8).offset(0xdce) as *mut uint16) = 0 as uint16;
+            return;
         }
-        _ => {}
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0xa28) as *mut uint16) =
         *(game.g_rom.offset(crate::rtl::lorom_offset(0x91eb74)) as *const uint8 as *mut uint16)
@@ -4538,14 +4520,11 @@ pub unsafe fn Samus_HandleTransitions(game: &mut Game) {
         match current_block {
             13536709405535804910 => {}
             _ => {
-                match current_block {
-                    6038634297008360266 => {
-                        *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-                            ram_word!(game, samus_new_pose_transitional);
-                        SamusFunc_F433(game);
-                        Samus_SetAnimationFrameIfPoseChanged(game);
-                    }
-                    _ => {}
+                if current_block == 6038634297008360266 {
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
+                        ram_word!(game, samus_new_pose_transitional);
+                    SamusFunc_F433(game);
+                    Samus_SetAnimationFrameIfPoseChanged(game);
                 }
                 kSamus_HandleTransitionsC[ram_word!(game, samus_hurt_switch_index) as usize]
                     .expect("non-null function pointer")(game);
@@ -4555,53 +4534,46 @@ pub unsafe fn Samus_HandleTransitions(game: &mut Game) {
     } else {
         current_block = 13536709405535804910;
     }
-    match current_block {
-        13536709405535804910 => {
-            if (ram_word!(game, samus_new_pose_interrupted) as ::core::ffi::c_int
+    if current_block == 13536709405535804910 {
+        if (ram_word!(game, samus_new_pose_interrupted) as ::core::ffi::c_int
+            & 0x8000 as ::core::ffi::c_int)
+            == 0i32
+        {
+            *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
+                ram_word!(game, samus_new_pose_interrupted);
+            if SamusFunc_F404(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
+                kSamus_HandleTransitionsB[ram_word!(game, samus_special_transgfx_index) as usize]
+                    .expect("non-null function pointer")(game);
+            }
+            current_block = 10476341332908994874;
+        } else {
+            Samus_CheckWalkedIntoSomething(game);
+            if (ram_word!(game, samus_new_pose) as ::core::ffi::c_int
                 & 0x8000 as ::core::ffi::c_int)
                 == 0i32
             {
                 *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-                    ram_word!(game, samus_new_pose_interrupted);
+                    ram_word!(game, samus_new_pose);
                 if SamusFunc_F404(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
-                    kSamus_HandleTransitionsB
-                        [ram_word!(game, samus_special_transgfx_index) as usize]
+                    kSamus_HandleTransitionsA
+                        [ram_word!(game, samus_momentum_routine_index) as usize]
                         .expect("non-null function pointer")(game);
                 }
                 current_block = 10476341332908994874;
             } else {
-                Samus_CheckWalkedIntoSomething(game);
-                if (ram_word!(game, samus_new_pose) as ::core::ffi::c_int
-                    & 0x8000 as ::core::ffi::c_int)
-                    == 0i32
-                {
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-                        ram_word!(game, samus_new_pose);
-                    if SamusFunc_F404(game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int == 0 {
-                        kSamus_HandleTransitionsA
-                            [ram_word!(game, samus_momentum_routine_index) as usize]
-                            .expect("non-null function pointer")(game);
-                    }
-                    current_block = 10476341332908994874;
-                } else {
-                    current_block = 10093773643351532501;
-                }
+                current_block = 10093773643351532501;
             }
         }
-        _ => {}
     }
-    match current_block {
-        10476341332908994874 => {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa24) as *mut uint16) =
-                ram_word!(game, samus_prev_pose);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa26) as *mut uint16) =
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa22) as *mut uint16);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa20) as *mut uint16) =
-                ram_word!(game, samus_pose);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa22) as *mut uint16) =
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa1e) as *mut uint16);
-        }
-        _ => {}
+    if current_block == 10476341332908994874 {
+        *((&raw mut game.g_ram as *mut uint8).offset(0xa24) as *mut uint16) =
+            ram_word!(game, samus_prev_pose);
+        *((&raw mut game.g_ram as *mut uint8).offset(0xa26) as *mut uint16) =
+            *((&raw mut game.g_ram as *mut uint8).offset(0xa22) as *mut uint16);
+        *((&raw mut game.g_ram as *mut uint8).offset(0xa20) as *mut uint16) =
+            ram_word!(game, samus_pose);
+        *((&raw mut game.g_ram as *mut uint8).offset(0xa22) as *mut uint16) =
+            *((&raw mut game.g_ram as *mut uint8).offset(0xa1e) as *mut uint16);
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16) = 0 as uint16;
 }
@@ -4675,35 +4647,27 @@ pub unsafe fn Samus_HandleTransitionsA_7(game: &mut Game) {
     } else {
         current_block_11 = 1856101646708284338;
     }
-    match current_block_11 {
-        7426089221157146073 => {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16) =
-                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const uint8
-                    as *mut SamusPoseParams)
-                    .offset(ram_word!(game, samus_pose) as isize))
-                .y_radius as uint16;
-            amt = Samus_CollDetectChangedPose(amt, game);
-            current_block_11 = 735147466149431745;
-        }
-        _ => {}
+    if current_block_11 == 7426089221157146073 {
+        *((&raw mut game.g_ram as *mut uint8).offset(0xb00) as *mut uint16) =
+            (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const uint8
+                as *mut SamusPoseParams)
+                .offset(ram_word!(game, samus_pose) as isize))
+            .y_radius as uint16;
+        amt = Samus_CollDetectChangedPose(amt, game);
+        current_block_11 = 735147466149431745;
     }
-    match current_block_11 {
-        735147466149431745 => {
-            let ref mut fresh40 =
-                *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16);
-            *fresh40 = (*fresh40 as ::core::ffi::c_int
-                + (amt >> 16 as ::core::ffi::c_int) as ::core::ffi::c_int)
-                as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb14) as *mut uint16) =
-                ram_word!(game, samus_y_pos);
-            if ram_word!(game, used_for_ball_bounce_on_landing) != 0 {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb20) as *mut uint16) = 0 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb2c) as *mut uint16) = 0 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) = 0 as uint16;
-                *((&raw mut game.g_ram as *mut uint8).offset(0xb36) as *mut uint16) = 0 as uint16;
-            }
+    if current_block_11 == 735147466149431745 {
+        let ref mut fresh40 = *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16);
+        *fresh40 = (*fresh40 as ::core::ffi::c_int
+            + (amt >> 16 as ::core::ffi::c_int) as ::core::ffi::c_int) as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xb14) as *mut uint16) =
+            ram_word!(game, samus_y_pos);
+        if ram_word!(game, used_for_ball_bounce_on_landing) != 0 {
+            *((&raw mut game.g_ram as *mut uint8).offset(0xb20) as *mut uint16) = 0 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xb2c) as *mut uint16) = 0 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xb2e) as *mut uint16) = 0 as uint16;
+            *((&raw mut game.g_ram as *mut uint8).offset(0xb36) as *mut uint16) = 0 as uint16;
         }
-        _ => {}
     };
 }
 static kSamus_HandleTransitionsB_1: [Option<Func_U8>; 28] = unsafe {
@@ -4862,28 +4826,25 @@ pub unsafe fn Samus_HandleTransitionsB_5(game: &mut Game) {
             current_block_21 = 5948590327928692120;
         }
     }
-    match current_block_21 {
-        619521094565907383 => {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16) = 2 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa94) as *mut uint16) = 63 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) =
-                ((0x90e94fi32) as u16);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa60) as *mut uint16) =
-                ((0x90e918i32) as u16);
-            *((&raw mut game.g_ram as *mut uint8).offset(0xacc) as *mut uint16) = 8 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xad0) as *mut uint16) = 1 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xace) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa68) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xcd6) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xcd8) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xcda) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xcdc) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xcde) as *mut uint16) = 0 as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xce0) as *mut uint16) = 0 as uint16;
-            QueueSfx1_Max6(9 as uint16, game);
-        }
-        _ => {}
+    if current_block_21 == 619521094565907383 {
+        *((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16) = 2 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xa94) as *mut uint16) = 63 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xa58) as *mut uint16) =
+            ((0x90e94fi32) as u16);
+        *((&raw mut game.g_ram as *mut uint8).offset(0xa60) as *mut uint16) =
+            ((0x90e918i32) as u16);
+        *((&raw mut game.g_ram as *mut uint8).offset(0xacc) as *mut uint16) = 8 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xad0) as *mut uint16) = 1 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xace) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xa68) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xcd0) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xcd6) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xcd8) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xcda) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xcdc) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xcde) as *mut uint16) = 0 as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xce0) as *mut uint16) = 0 as uint16;
+        QueueSfx1_Max6(9 as uint16, game);
     };
 }
 pub unsafe fn Samus_HandleTransitionsB_8(game: &mut Game) {
@@ -5638,17 +5599,14 @@ pub unsafe fn SamusFunc_F468_NormalJump(game: &mut Game) -> uint8 {
     } else {
         current_block = 1917311967535052937;
     }
-    match current_block {
-        1917311967535052937 => {
-            if ram_word!(game, samus_shine_timer) != 0 {
-                *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
-                    kPose_C8_FaceL_ShinesparkWindup_Vert as uint16;
-                current_block = 13140864810214251092;
-            } else {
-                current_block = 10164294398894088689;
-            }
+    if current_block == 1917311967535052937 {
+        if ram_word!(game, samus_shine_timer) != 0 {
+            *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) =
+                kPose_C8_FaceL_ShinesparkWindup_Vert as uint16;
+            current_block = 13140864810214251092;
+        } else {
+            current_block = 10164294398894088689;
         }
-        _ => {}
     }
     match current_block {
         13140864810214251092 => {
@@ -6136,23 +6094,20 @@ pub unsafe fn SamusFunc_FA0A(game: &mut Game) {
     } else {
         current_block = 7351195479953500246;
     }
-    match current_block {
-        17179679302217393232 => {
-            AddToHiLo(
-                (&raw mut game.g_ram as *mut uint8).offset(0xb46) as *mut uint16,
-                (&raw mut game.g_ram as *mut uint8).offset(0xb48) as *mut uint16,
-                (ram_word!(game, samus_x_extra_run_speed) as uint32) << 16 as ::core::ffi::c_int
-                    | ram_word!(game, samus_x_extra_run_subspeed) as uint32,
-            );
-            Samus_CancelSpeedBoost(game);
-            SetHiLo(
-                (&raw mut game.g_ram as *mut uint8).offset(0xb42) as *mut uint16,
-                (&raw mut game.g_ram as *mut uint8).offset(0xb44) as *mut uint16,
-                0 as uint32,
-            );
-            *((&raw mut game.g_ram as *mut uint8).offset(0xb4a) as *mut uint16) = 1 as uint16;
-        }
-        _ => {}
+    if current_block == 17179679302217393232 {
+        AddToHiLo(
+            (&raw mut game.g_ram as *mut uint8).offset(0xb46) as *mut uint16,
+            (&raw mut game.g_ram as *mut uint8).offset(0xb48) as *mut uint16,
+            (ram_word!(game, samus_x_extra_run_speed) as uint32) << 16 as ::core::ffi::c_int
+                | ram_word!(game, samus_x_extra_run_subspeed) as uint32,
+        );
+        Samus_CancelSpeedBoost(game);
+        SetHiLo(
+            (&raw mut game.g_ram as *mut uint8).offset(0xb42) as *mut uint16,
+            (&raw mut game.g_ram as *mut uint8).offset(0xb44) as *mut uint16,
+            0 as uint32,
+        );
+        *((&raw mut game.g_ram as *mut uint8).offset(0xb4a) as *mut uint16) = 1 as uint16;
     };
 }
 pub unsafe fn SamusFunc_F468_Springball(game: &mut Game) -> uint8 {

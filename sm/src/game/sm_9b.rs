@@ -1028,23 +1028,18 @@ pub unsafe fn GrappleBeamFunc_BD95(game: &mut Game) {
             current_block = 13536709405535804910;
         }
     }
-    match current_block {
-        8418170951678595278 => {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa94) as *mut uint16) = 15 as uint16;
-            v1 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc1c2)) as *const uint8
-                as *mut uint8)
-                .offset(
-                    *((&raw mut game.g_ram as *mut uint8).offset(0xcfc) as *mut uint16
-                        as *mut uint8)
-                        .offset(
-                            (::core::mem::size_of::<uint16>())
-                                .wrapping_div(::core::mem::size_of::<uint8>())
-                                .wrapping_sub(1_usize) as isize,
-                        ) as isize,
-                ) as uint16;
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16) = v1;
-        }
-        _ => {}
+    if current_block == 8418170951678595278 {
+        *((&raw mut game.g_ram as *mut uint8).offset(0xa94) as *mut uint16) = 15 as uint16;
+        v1 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9bc1c2)) as *const uint8 as *mut uint8)
+            .offset(
+                *((&raw mut game.g_ram as *mut uint8).offset(0xcfc) as *mut uint16 as *mut uint8)
+                    .offset(
+                        (::core::mem::size_of::<uint16>())
+                            .wrapping_div(::core::mem::size_of::<uint8>())
+                            .wrapping_sub(1_usize) as isize,
+                    ) as isize,
+            ) as uint16;
+        *((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16) = v1;
     }
     let v2: uint16 = (2u16).wrapping_mul(v1);
     if (abs16(ram_word!(game, grapple_beam_unkD2E)) as ::core::ffi::c_int
@@ -1896,12 +1891,9 @@ pub unsafe fn GrappleBeam_Func2(game: &mut Game) {
             }
         }
     }
-    match current_block {
-        16041378612104114408 => {
-            *((&raw mut game.g_ram as *mut uint8).offset(0xa2c) as *mut uint16) =
-                kPose_01_FaceR_Normal as uint16;
-        }
-        _ => {}
+    if current_block == 16041378612104114408 {
+        *((&raw mut game.g_ram as *mut uint8).offset(0xa2c) as *mut uint16) =
+            kPose_01_FaceR_Normal as uint16;
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0xa32) as *mut uint16) = 0 as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0xdc6) as *mut uint16) = 1 as uint16;

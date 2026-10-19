@@ -3350,11 +3350,8 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> uint8 {
                         current_block = 18377268871191777778;
                     }
                 }
-                match current_block {
-                    18377268871191777778 => {
-                        v3 = 0 as uint16;
-                    }
-                    _ => {}
+                if current_block == 18377268871191777778 {
+                    v3 = 0 as uint16;
                 }
                 *((&raw mut game.g_ram as *mut uint8).offset(0xd2e) as *mut uint16) = v3;
                 return 0 as uint8;
@@ -3475,11 +3472,8 @@ pub unsafe fn HandleMovementAndCollForSamusGrapple(game: &mut Game) -> uint8 {
                         }
                     }
                 }
-                match current_block {
-                    13619784596304402172 => {
-                        v6 = 0 as uint16;
-                    }
-                    _ => {}
+                if current_block == 13619784596304402172 {
+                    v6 = 0 as uint16;
                 }
                 *((&raw mut game.g_ram as *mut uint8).offset(0xd2e) as *mut uint16) = v6;
                 return 0 as uint8;

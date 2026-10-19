@@ -3780,12 +3780,9 @@ pub unsafe fn Flies_6(k: uint16, game: &mut Game) {
     } else {
         current_block = 10879442775620481940;
     }
-    match current_block {
-        6833738745606017744 => {
-            (*E).flies_var_C = -((*E).flies_var_C as ::core::ffi::c_int) as uint16;
-            (*E).flies_var_F = ((0xa2b1d2i32) as u16);
-        }
-        _ => {}
+    if current_block == 6833738745606017744 {
+        (*E).flies_var_C = -((*E).flies_var_C as ::core::ffi::c_int) as uint16;
+        (*E).flies_var_F = ((0xa2b1d2i32) as u16);
     };
 }
 pub unsafe fn Flies_7(k: uint16, game: &mut Game) {

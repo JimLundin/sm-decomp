@@ -3457,23 +3457,20 @@ pub unsafe fn FileSelectMap_6_AreaSelectMap(game: &mut Game) {
             }
         }
     }
-    match current_block {
-        9480232856434185415 => {
-            if v0 < 0i16 {
-                *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16) = 22 as uint16;
-                DrawAreaSelectMapLabels(game);
-                return;
-            }
-            if v0 as ::core::ffi::c_int
-                & (kButton_Start as ::core::ffi::c_int | kButton_A as ::core::ffi::c_int)
-                != 0i32
-            {
-                QueueSfx1_Max6(0x38 as uint16, game);
-                SelectFileSelectMapArea(game);
-                return;
-            }
+    if current_block == 9480232856434185415 {
+        if v0 < 0i16 {
+            *((&raw mut game.g_ram as *mut uint8).offset(0x727) as *mut uint16) = 22 as uint16;
+            DrawAreaSelectMapLabels(game);
+            return;
         }
-        _ => {}
+        if v0 as ::core::ffi::c_int
+            & (kButton_Start as ::core::ffi::c_int | kButton_A as ::core::ffi::c_int)
+            != 0i32
+        {
+            QueueSfx1_Max6(0x38 as uint16, game);
+            SelectFileSelectMapArea(game);
+            return;
+        }
     }
     DrawAreaSelectMapLabels(game);
 }
@@ -4009,29 +4006,26 @@ pub unsafe fn FileSelectMap_10_RoomSelectMap(game: &mut Game) {
                     current_block_32 = 8236137900636309791;
                 }
             }
-            match current_block_32 {
-                8236137900636309791 => {
-                    v5 = *r0.offset(
+            if current_block_32 == 8236137900636309791 {
+                v5 = *r0.offset(
+                    (2 as ::core::ffi::c_int
+                        * ram_word!(game, load_station_index) as ::core::ffi::c_int)
+                        as isize,
+                ) as int16;
+                if v5 == -1i16 {
+                    *((&raw mut game.g_ram as *mut uint8).offset(0x78b) as *mut uint16) =
+                        0 as uint16;
+                    r24 = *((&raw mut game.g_ram as *mut uint8).offset(0xd8f8).offset(
                         (2 as ::core::ffi::c_int
-                            * ram_word!(game, load_station_index) as ::core::ffi::c_int)
+                            * ram_word!(game, area_index) as ::core::ffi::c_int)
                             as isize,
-                    ) as int16;
-                    if v5 == -1i16 {
-                        *((&raw mut game.g_ram as *mut uint8).offset(0x78b) as *mut uint16) =
-                            0 as uint16;
-                        r24 = *((&raw mut game.g_ram as *mut uint8).offset(0xd8f8).offset(
-                            (2 as ::core::ffi::c_int
-                                * ram_word!(game, area_index) as ::core::ffi::c_int)
-                                as isize,
-                        ) as *mut uint8 as *mut uint16);
-                    } else if v5 != -2i16 {
-                        break;
-                    } else {
-                        current_block_32 = 4150833010744877889;
-                        continue;
-                    }
+                    ) as *mut uint8 as *mut uint16);
+                } else if v5 != -2i16 {
+                    break;
+                } else {
+                    current_block_32 = 4150833010744877889;
+                    continue;
                 }
-                _ => {}
             }
             v4 = ((r24) as i8) & (1i8);
             r24 = (r24 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
