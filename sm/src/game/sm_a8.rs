@@ -1175,11 +1175,6 @@ pub struct Enemy_WreckedShipOrbs {
     pub wsos_var_1F: uint16,
 }
 #[inline]
-unsafe fn __CFADD__uint16(mut x: uint16, mut y: uint16) -> bool {
-    return x as ::core::ffi::c_int
-        > (x as ::core::ffi::c_int + y as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int;
-}
-#[inline]
 unsafe fn RomPtr_A8(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
     return RomPtr(
         (0xa80000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t,
@@ -4617,7 +4612,7 @@ pub unsafe fn NorfairLavaMan_Func_13(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16) as ::core::ffi::c_int,
         game,
     );
-    let mut v4: bool = __CFADD__uint16((*v2.offset(31)).field_E, (*E).base.y_subpos);
+    let mut v4: bool = u16::overflowing_add((*v2.offset(31)).field_E, (*E).base.y_subpos).1;
     (*E).base.y_subpos = ((*v2.offset(31)).field_E as ::core::ffi::c_int
         + (*E).base.y_subpos as ::core::ffi::c_int) as uint16;
     (*E).base.y_pos = ((*E).base.y_pos as ::core::ffi::c_int

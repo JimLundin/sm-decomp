@@ -394,6 +394,58 @@ a dash means unexercised on that route.
 | RandomDropRoutine / `samus_super_missiles() != samus_max_super_missiles()` | - | 69 @ 35502..120405 |
 | RandomDropRoutine / `samus_power_bombs() != samus_max_power_bombs()` | - | 69 @ 35502..120405 |
 
+Carry helper cleanup (2026-10-19): replaced all 29 private CFADD calls
+across seven files with u8/u16::overflowing_add(...).1 and removed all nine
+duplicate unsafe helpers, including one with no callers. Every original
+argument expression, evaluation order, integer cast and surrounding operation
+is retained. No function-pointer or other non-call reference exists. The
+associated primitive functions retain the original typed by-value parameters;
+no borrow, memory access or state update is introduced.
+
+For width N, the former test x > ((x + y) modulo 2^N) is true exactly when
+the unsigned sum carries. The original widened sums fit i32. Native compiled
+comparisons pass all 65536 u8 pairs and all 4294967296 u16 pairs, including
+zero, the sign-bit boundaries and maximum-plus-one (19.93s).
+A deliberately inverted carry result is detected. Windows denied launching
+the standalone test executable, so the same checks ran through the existing
+DLL-loading approach without changing permissions. This exhaustive pure-value
+proof and unchanged arguments cover the substitution at all 29 call sites;
+they do not establish that unvisited surrounding gameplay is correct.
+
+Observed full boot any% 129712/0 (185.65s) and Varia
+122732/0 (194.89s) match old/new carry results.
+Five byte-carry call sites execute, with both carry outcomes. Twenty-four
+call sites and all word-carry gameplay calls remain unvisited in these movies.
+Require-hit exits 2 report those deliberately required missing probes;
+the frame and arithmetic comparisons pass. Survey build 25.93s.
+
+Final frozen source is 25a79540 plus only the helper removal and call
+substitution, recovered exactly from the instrumented source. Clean build
+21.39s; final any% 129712/0 (209.83s) and full-boot
+Warehouse 128547/0 (243.02s), native exits 0. Warehouse
+contains the exact Varia prefix, so no duplicate shorter final replay is run.
+Source/configuration hashes remain fixed through build and replay; DLL,
+library, ROM and input hashes stay fixed too. The route retains the known
+fingernail diagnostic. Concurrent projectile-state edits keep separate checks.
+
+Formatting/check and normal release pass (8.43s reported). Net Rust
+lines -32, unsafe functions -9, c_int casts -36 and cast-containing
+lines -18; raw RAM expressions are unchanged (raw-offset line delta
+0). No new wrapper or helper is added. Maintained edit to final
+result: 267.81s. Observed calls and first/last absolute input frames:
+
+| Call site / result | Any% calls @ frames | Varia calls @ frames |
+| --- | --- | --- |
+| sm_88::CalculatePowerBombHdma_OnScreen (site 6) | 9165 @ 42548..94614 | 3055 @ 19440..19498 |
+| sm_88::CalculatePowerBombHdmaScaled_OnScreen (site 8) | 3936 @ 42545..94597 | 1312 @ 19437..19481 |
+| sm_88::VariaSuitPickup_2_LightBeamWidens (site 9) | - | 22 @ 122119..122140 |
+| sm_88::VariaSuitPickup_2_LightBeamWidens (site 10) | - | 2944 @ 122119..122141 |
+| sm_88::VariaSuitPickup_2_LightBeamWidens (site 11) | - | 2944 @ 122119..122141 |
+| carry8-set | 9249 @ 42547..94614 | 3339 @ 19439..122141 |
+| carry8-clear | 3852 @ 42545..94614 | 6938 @ 19437..122140 |
+| carry16-set | - | - |
+| carry16-clear | - | - |
+
 ## Validation strategy (2026-10-19)
 
 User priority: shorten the complete edit/build/result cycle. Replaying the

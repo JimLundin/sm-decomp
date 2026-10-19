@@ -746,11 +746,6 @@ pub const addr_kDemoInstrs_LeaveDemo: Consts_91 = 34678;
 pub const addr_off_91864B: Consts_91 = 34379;
 pub const kCoroutineNone: ::core::ffi::c_int = 0;
 #[inline]
-unsafe fn __CFADD__uint16(mut x: uint16, mut y: uint16) -> bool {
-    return x as ::core::ffi::c_int
-        > (x as ::core::ffi::c_int + y as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int;
-}
-#[inline]
 unsafe fn RomPtr_RAM(mut addr: uint16_t, game: &mut Game) -> *mut uint8 {
     '_c2rust_label: {
         if (addr as ::core::ffi::c_int) < 0x2000 as ::core::ffi::c_int {
@@ -11572,7 +11567,7 @@ pub unsafe fn CinematicFunction_Intro_Func149(game: &mut Game) {
                 let mut r20: uint16 = ((v23 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
                     & 0xff00 as ::core::ffi::c_int) as uint16;
                 v8 = *(v3.offset(4) as *mut uint16) as int16;
-                let mut v9: bool = __CFADD__uint16(r20, v8 as uint16);
+                let mut v9: bool = u16::overflowing_add(r20, v8 as uint16).1;
                 *(v3 as *mut uint16).offset(2) =
                     (r20 as ::core::ffi::c_int + v8 as ::core::ffi::c_int) as uint16;
                 let ref mut fresh166 = *(v3 as *mut uint16).offset(1);
@@ -11588,7 +11583,7 @@ pub unsafe fn CinematicFunction_Intro_Func149(game: &mut Game) {
                 r20 = ((v24 as ::core::ffi::c_int) << 8 as ::core::ffi::c_int
                     & 0xff00 as ::core::ffi::c_int) as uint16;
                 v12 = *(v3.offset(8) as *mut uint16) as int16;
-                v9 = __CFADD__uint16(r20, v12 as uint16);
+                v9 = u16::overflowing_add(r20, v12 as uint16).1;
                 *(v3 as *mut uint16).offset(4) =
                     (r20 as ::core::ffi::c_int + v12 as ::core::ffi::c_int) as uint16;
                 let ref mut fresh167 = *(v3 as *mut uint16).offset(3);

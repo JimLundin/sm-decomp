@@ -328,16 +328,6 @@ pub struct Enemy_Crocomire {
 }
 pub use crate::types::CrocomireFunc;
 #[inline]
-unsafe fn __CFADD__uint16(mut x: uint16, mut y: uint16) -> bool {
-    return x as ::core::ffi::c_int
-        > (x as ::core::ffi::c_int + y as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int;
-}
-#[inline]
-unsafe fn __CFADD__uint8(mut x: uint8, mut y: uint8) -> bool {
-    return x as ::core::ffi::c_int
-        > (x as ::core::ffi::c_int + y as ::core::ffi::c_int) as uint8 as ::core::ffi::c_int;
-}
-#[inline]
 unsafe fn RomPtr_A4(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
     return RomPtr(
         (0xa40000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t,
@@ -1986,7 +1976,7 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
         crocom_var_D = (*E).crocom_var_D as int8;
         *(&raw mut (*E).crocom_var_D as *mut uint8).offset(0) =
             (crocom_var_D as ::core::ffi::c_int + 0x80 as ::core::ffi::c_int) as uint8;
-        v7 = (__CFADD__uint8(crocom_var_D as uint8, 0x80 as uint8) as ::core::ffi::c_int
+        v7 = (u8::overflowing_add(crocom_var_D as uint8, 0x80 as uint8).1 as ::core::ffi::c_int
             + *(&raw mut (*E).crocom_var_D as *mut uint8).offset(
                 (::core::mem::size_of::<uint16>() as usize)
                     .wrapping_div(::core::mem::size_of::<uint8>() as usize)
@@ -2001,10 +1991,11 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
                 .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                 .wrapping_sub(1 as usize) as isize,
         ) = v7 as uint8;
-        let mut v8: bool = __CFADD__uint8(
+        let mut v8: bool = u8::overflowing_add(
             *(&raw mut (*E).crocom_var_E as *mut uint8).offset(0),
             v7 as uint8,
-        );
+        )
+        .1;
         let ref mut fresh13 = *(&raw mut (*E).crocom_var_E as *mut uint8).offset(0);
         *fresh13 = (*fresh13 as ::core::ffi::c_int + v7 as ::core::ffi::c_int) as uint8;
         v9 = (v8 as ::core::ffi::c_int
@@ -2022,14 +2013,15 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
                 .wrapping_sub(1 as usize) as isize,
         ) = v9 as uint8;
         crocom_var_E = (*E).crocom_var_E as int8;
-        v8 = __CFADD__uint8(
+        v8 = u8::overflowing_add(
             *(&raw mut (*E).crocom_var_F as *mut uint8).offset(
                 (::core::mem::size_of::<uint16>() as usize)
                     .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                     .wrapping_sub(1 as usize) as isize,
             ),
             crocom_var_E as uint8,
-        );
+        )
+        .1;
         let ref mut fresh14 = *(&raw mut (*E).crocom_var_F as *mut uint8).offset(
             (::core::mem::size_of::<uint16>() as usize)
                 .wrapping_div(::core::mem::size_of::<uint8>() as usize)
@@ -2042,13 +2034,14 @@ pub unsafe fn Crocomire_Func_55(game: &mut Game) {
                 .wrapping_sub(1 as usize) as isize,
         ) as int8;
         let mut v13: bool = v8;
-        v8 = __CFADD__uint8(v8 as uint8, crocom_var_E_high as uint8);
+        v8 = u8::overflowing_add(v8 as uint8, crocom_var_E_high as uint8).1;
         v12 = (v13 as ::core::ffi::c_int + crocom_var_E_high as ::core::ffi::c_int) as int8;
         v8 = (v8 as ::core::ffi::c_int
-            | __CFADD__uint8(
+            | u8::overflowing_add(
                 *(&raw mut (*E).base.y_pos as *mut uint8).offset(0),
                 v12 as uint8,
-            ) as ::core::ffi::c_int)
+            )
+            .1 as ::core::ffi::c_int)
             != 0;
         let ref mut fresh15 = *(&raw mut (*E).base.y_pos as *mut uint8).offset(0);
         *fresh15 = (*fresh15 as ::core::ffi::c_int + v12 as ::core::ffi::c_int) as uint8;
@@ -2663,10 +2656,11 @@ pub unsafe fn Crocomire_Func_65(game: &mut Game) {
                             + v7 as ::core::ffi::c_int
                             - *((&raw mut game.g_ram as *mut uint8).offset(0x5a6) as *mut uint16)
                                 as ::core::ffi::c_int) as uint16;
-                    let mut v8: bool = __CFADD__uint16(
+                    let mut v8: bool = u16::overflowing_add(
                         *((&raw mut game.g_ram as *mut uint8).offset(0x692) as *mut uint16),
                         r18,
-                    );
+                    )
+                    .1;
                     r18 = (r18 as ::core::ffi::c_int
                         + *((&raw mut game.g_ram as *mut uint8).offset(0x692) as *mut uint16)
                             as ::core::ffi::c_int) as uint16;

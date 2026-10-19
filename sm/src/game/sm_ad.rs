@@ -197,11 +197,6 @@ pub use crate::types::Consts_AD;
 pub const addr_kTurnOffLightsForShitroidDeath: Consts_AD = 61999;
 pub use crate::types::{Enemy_MotherBrain, Func_CalcHdma, Ram8000_Default, SpawnHardcodedPlmArgs};
 #[inline]
-unsafe fn __CFADD__uint16(mut x: uint16, mut y: uint16) -> bool {
-    return x as ::core::ffi::c_int
-        > (x as ::core::ffi::c_int + y as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int;
-}
-#[inline]
 unsafe fn RomPtr_AD(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
     return RomPtr(
         (0xad0000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t,
@@ -328,7 +323,7 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(
     let mut v8: *mut uint16 = v2;
     loop {
         let mut v4: uint16 = (r20 as ::core::ffi::c_int + r24 as ::core::ffi::c_int) as uint16;
-        if __CFADD__uint16(r20, r24) {
+        if u16::overflowing_add(r20, r24).1 {
             break;
         }
         r24 = (r24 as ::core::ffi::c_int + r20 as ::core::ffi::c_int) as uint16;
@@ -358,7 +353,7 @@ pub unsafe fn MotherBrain_CalcHdma_BeamAimedRight(
     let mut var_3F: uint16 = (*gRam8000_Default(0 as ::core::ffi::c_int, game)).var_3F;
     loop {
         let mut v7: uint16 = (r18 as ::core::ffi::c_int + r22 as ::core::ffi::c_int) as uint16;
-        if __CFADD__uint16(r18, r22) {
+        if u16::overflowing_add(r18, r22).1 {
             break;
         }
         r22 = (r22 as ::core::ffi::c_int + r18 as ::core::ffi::c_int) as uint16;
@@ -476,14 +471,14 @@ pub unsafe fn MotherBrain_CalcHdma_Up_UpRight(mut r22: uint16, mut r24: uint16, 
     *v2.offset(2) = 255 as uint16;
     loop {
         let mut v4: uint16 = (r18 as ::core::ffi::c_int + r22 as ::core::ffi::c_int) as uint16;
-        if __CFADD__uint16(r18, r22) {
+        if u16::overflowing_add(r18, r22).1 {
             v4 = -(1 as ::core::ffi::c_int) as uint16;
         }
         r22 = v4;
         let mut R36: uint16 = (v4 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int
             & 0xff as ::core::ffi::c_int) as uint16;
         let mut v7: uint16 = (r20 as ::core::ffi::c_int + r24 as ::core::ffi::c_int) as uint16;
-        if __CFADD__uint16(r20, r24) {
+        if u16::overflowing_add(r20, r24).1 {
             v7 = -(1 as ::core::ffi::c_int) as uint16;
         }
         r24 = v7;
@@ -536,7 +531,7 @@ pub unsafe fn MotherBrain_CalcHdma_Up_Up(mut r22: uint16, mut r24: uint16, game:
         let mut r26: uint16 =
             (v4 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint8 as uint16;
         let mut v7: uint16 = (r20 as ::core::ffi::c_int + r24 as ::core::ffi::c_int) as uint16;
-        if __CFADD__uint16(r20, r24) {
+        if u16::overflowing_add(r20, r24).1 {
             v7 = -(1 as ::core::ffi::c_int) as uint16;
         }
         r24 = v7;
@@ -681,13 +676,13 @@ pub unsafe fn MotherBrain_CalcHdma_Down_DownRight(
     let mut mbn_var_3D: uint16 = (*Get_MotherBrain(0 as ::core::ffi::c_int, game)).mbn_var_3D;
     loop {
         let mut v4: uint16 = (r18 as ::core::ffi::c_int + r22 as ::core::ffi::c_int) as uint16;
-        if __CFADD__uint16(r18, r22) {
+        if u16::overflowing_add(r18, r22).1 {
             v4 = -(1 as ::core::ffi::c_int) as uint16;
         }
         r22 = v4;
         let mut r26: uint16 = (v4 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint16;
         let mut v7: uint16 = (r20 as ::core::ffi::c_int + r24 as ::core::ffi::c_int) as uint16;
-        if __CFADD__uint16(r20, r24) {
+        if u16::overflowing_add(r20, r24).1 {
             v7 = -(1 as ::core::ffi::c_int) as uint16;
         }
         r24 = v7;
@@ -747,7 +742,7 @@ pub unsafe fn MotherBrain_CalcHdma_Down_Down(mut r22: uint16, mut r24: uint16, g
         r22 = v4;
         let mut r26: uint16 = (v4 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int) as uint16;
         let mut v7: uint16 = (r20 as ::core::ffi::c_int + r24 as ::core::ffi::c_int) as uint16;
-        if __CFADD__uint16(r20, r24) {
+        if u16::overflowing_add(r20, r24).1 {
             v7 = -(1 as ::core::ffi::c_int) as uint16;
         }
         r24 = v7;

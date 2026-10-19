@@ -670,11 +670,6 @@ pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::
 pub const true_0: ::core::ffi::c_int = 1;
 pub const false_0: ::core::ffi::c_int = 0;
 #[inline]
-unsafe fn __CFADD__uint8(mut x: uint8, mut y: uint8) -> bool {
-    return x as ::core::ffi::c_int
-        > (x as ::core::ffi::c_int + y as ::core::ffi::c_int) as uint8 as ::core::ffi::c_int;
-}
-#[inline]
 unsafe fn RomPtr_88(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
     return RomPtr(
         (0x880000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t,
@@ -2457,7 +2452,7 @@ pub unsafe fn CalculatePowerBombHdma_LeftOfScreen(
         let mut w: uint8 = *j;
         let mut c: uint8 =
             *((&raw mut game.g_ram as *mut uint8).offset(0xce6) as *mut uint16) as uint8;
-        if __CFADD__uint8(w, c) {
+        if u8::overflowing_add(w, c).1 {
             *(&raw mut game.g_ram as *mut uint8)
                 .offset(0xc506)
                 .offset(k as isize) = (w as ::core::ffi::c_int + c as ::core::ffi::c_int) as uint8;
@@ -2487,7 +2482,7 @@ pub unsafe fn CalculatePowerBombHdma_OnScreen(mut k: uint16, mut j: *const uint8
         }
         let mut c: uint8 =
             *((&raw mut game.g_ram as *mut uint8).offset(0xce6) as *mut uint16) as uint8;
-        let mut right: uint8 = (if __CFADD__uint8(c, w) as ::core::ffi::c_int != 0 {
+        let mut right: uint8 = (if u8::overflowing_add(c, w).1 as ::core::ffi::c_int != 0 {
             255 as ::core::ffi::c_int
         } else {
             c as ::core::ffi::c_int + w as ::core::ffi::c_int
@@ -2621,7 +2616,7 @@ pub unsafe fn CalculatePowerBombHdmaScaled_LeftOfScreen(
                 .offset(j as uint8 as isize),
         ) as ::core::ffi::c_int
             >> 8 as ::core::ffi::c_int) as uint8;
-        let mut v4: bool = __CFADD__uint8(Reg, v2 as uint8);
+        let mut v4: bool = u8::overflowing_add(Reg, v2 as uint8).1;
         let mut v5: uint8 = (Reg as ::core::ffi::c_int + v2 as ::core::ffi::c_int) as uint8;
         if v4 {
             v6 = v5;
@@ -2687,7 +2682,7 @@ pub unsafe fn CalculatePowerBombHdmaScaled_OnScreen(
                 .offset(j as uint8 as isize),
         ) as ::core::ffi::c_int
             >> 8 as ::core::ffi::c_int) as uint8;
-        let mut v4: bool = __CFADD__uint8(Reg, v2 as uint8);
+        let mut v4: bool = u8::overflowing_add(Reg, v2 as uint8).1;
         v5 = (Reg as ::core::ffi::c_int + v2 as ::core::ffi::c_int) as int8;
         if v4 {
             v5 = -(1 as ::core::ffi::c_int) as int8;
@@ -6593,7 +6588,7 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> uint8 {
                         .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                         .wrapping_sub(1 as usize) as isize,
                 ) as ::core::ffi::c_int) as int8;
-        if __CFADD__uint8(
+        if u8::overflowing_add(
             *((&raw mut game.g_ram as *mut uint8).offset(0xddc) as *mut uint16 as *mut uint8)
                 .offset(
                     (::core::mem::size_of::<uint16>() as usize)
@@ -6606,7 +6601,9 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> uint8 {
                         .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                         .wrapping_sub(1 as usize) as isize,
                 ),
-        ) {
+        )
+        .1
+        {
             v1 = -(1 as ::core::ffi::c_int) as int8;
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16 as *mut uint8).offset(
@@ -6646,7 +6643,7 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> uint8 {
                         .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                         .wrapping_sub(1 as usize) as isize,
                 ) as ::core::ffi::c_int) as int8;
-        if __CFADD__uint8(
+        if u8::overflowing_add(
             *(game.g_rom.offset(
                 (((0x88e3c9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                     << 15 as ::core::ffi::c_int
@@ -6660,7 +6657,9 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> uint8 {
                         .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                         .wrapping_sub(1 as usize) as isize,
                 ),
-        ) {
+        )
+        .1
+        {
             v6 = -(1 as ::core::ffi::c_int) as int8;
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0x9800) as *mut uint16 as *mut uint8)
@@ -6701,7 +6700,7 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> uint8 {
                         .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                         .wrapping_sub(1 as usize) as isize,
                 ) as ::core::ffi::c_int) as int8;
-        if __CFADD__uint8(
+        if u8::overflowing_add(
             *(game.g_rom.offset(
                 (((0x88e3c9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
                     << 15 as ::core::ffi::c_int
@@ -6715,7 +6714,9 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> uint8 {
                         .wrapping_div(::core::mem::size_of::<uint8>() as usize)
                         .wrapping_sub(1 as usize) as isize,
                 ),
-        ) {
+        )
+        .1
+        {
             v10 = -(1 as ::core::ffi::c_int) as int8;
         }
         *((&raw mut game.g_ram as *mut uint8).offset(0x9800) as *mut uint16 as *mut uint8)

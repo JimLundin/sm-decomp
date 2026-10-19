@@ -282,16 +282,6 @@ pub type Func_EprojCollInfo_U8 = unsafe fn(*mut EprojCollInfo, &mut Game) -> uin
 pub use crate::types::{Enemy_MotherBrain, Point32};
 pub const NULL: *mut ::core::ffi::c_void = ::core::ptr::null_mut::<::core::ffi::c_void>();
 #[inline]
-unsafe fn __CFADD__uint16(mut x: uint16, mut y: uint16) -> bool {
-    return x as ::core::ffi::c_int
-        > (x as ::core::ffi::c_int + y as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int;
-}
-#[inline]
-unsafe fn __CFADD__uint8(mut x: uint8, mut y: uint8) -> bool {
-    return x as ::core::ffi::c_int
-        > (x as ::core::ffi::c_int + y as ::core::ffi::c_int) as uint8 as ::core::ffi::c_int;
-}
-#[inline]
 unsafe fn RomPtr_86(mut addr: uint16_t, game: &mut Game) -> *const uint8 {
     return RomPtr(
         (0x860000 as ::core::ffi::c_int | addr as ::core::ffi::c_int) as uint32_t,
@@ -2866,11 +2856,12 @@ pub unsafe fn EprojPreInstr_CrocomireSpikeWallPieces(mut k: uint16, game: &mut G
     v3 = *((&raw mut game.g_ram as *mut uint8).offset(0x1aff) as *mut uint16 as *mut uint8)
         .offset(k as ::core::ffi::c_int as isize)
         .offset(1) as int8;
-    let mut v4: bool = __CFADD__uint8(
+    let mut v4: bool = u8::overflowing_add(
         *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16 as *mut uint8)
             .offset(k as ::core::ffi::c_int as isize),
         v3 as uint8,
-    );
+    )
+    .1;
     let ref mut fresh138 = *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16
         as *mut uint8)
         .offset(k as ::core::ffi::c_int as isize);
@@ -2890,12 +2881,13 @@ pub unsafe fn EprojPreInstr_CrocomireSpikeWallPieces(mut k: uint16, game: &mut G
         .offset(1) = v5;
     v6 = *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16 as *mut uint8)
         .offset(k as ::core::ffi::c_int as isize) as int8;
-    v4 = __CFADD__uint8(
+    v4 = u8::overflowing_add(
         *((&raw mut game.g_ram as *mut uint8).offset(0x1a27) as *mut uint16 as *mut uint8)
             .offset(k as ::core::ffi::c_int as isize)
             .offset(1),
         v6 as uint8,
-    );
+    )
+    .1;
     let ref mut fresh139 = *((&raw mut game.g_ram as *mut uint8).offset(0x1a27) as *mut uint16
         as *mut uint8)
         .offset(k as ::core::ffi::c_int as isize)
@@ -2905,14 +2897,15 @@ pub unsafe fn EprojPreInstr_CrocomireSpikeWallPieces(mut k: uint16, game: &mut G
         .offset(k as ::core::ffi::c_int as isize)
         .offset(1) as int8;
     let mut v9: bool = v4;
-    v4 = __CFADD__uint8(v4 as uint8, v7 as uint8);
+    v4 = u8::overflowing_add(v4 as uint8, v7 as uint8).1;
     v8 = (v9 as ::core::ffi::c_int + v7 as ::core::ffi::c_int) as int8;
     v4 = (v4 as ::core::ffi::c_int
-        | __CFADD__uint8(
+        | u8::overflowing_add(
             *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16 as *mut uint8)
                 .offset(k as ::core::ffi::c_int as isize),
             v8 as uint8,
-        ) as ::core::ffi::c_int)
+        )
+        .1 as ::core::ffi::c_int)
         != 0;
     let ref mut fresh140 = *((&raw mut game.g_ram as *mut uint8).offset(0x1a4b) as *mut uint16
         as *mut uint8)
@@ -11086,7 +11079,7 @@ pub unsafe fn EprojPreInstr_Sparks(mut k: uint16, game: &mut Game) {
             .offset(v1 as isize);
         *((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16).offset(v1 as isize) =
             (v2 as ::core::ffi::c_int + 0x4000 as ::core::ffi::c_int) as uint16;
-        let mut v3: uint16 = (__CFADD__uint16(v2, 0x4000 as uint16) as ::core::ffi::c_int
+        let mut v3: uint16 = (u16::overflowing_add(v2, 0x4000 as uint16).1 as ::core::ffi::c_int
             + *((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int) as uint16;
         if (v3 as ::core::ffi::c_int) < 4 as ::core::ffi::c_int {
