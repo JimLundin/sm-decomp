@@ -11833,6 +11833,30 @@ execution is demonstrated; comparison cases do not replace movie coverage.
 Continue other covered CPU work. Prior holds and complete gameplay/render/
 audio remain open.
 
+9AD9 floor diagnosis: Power Bomb requirement, not regeneration (2026-10-19).
+Read-only live-RAM trace of map9ad9-ball136 shows floor blocks remain
+collision typeC through the bomb bounce and landing. Their words change
+fromC16B toC057, revealing the Power Bomb icon without removing collision.
+AtX136/Y1689 the ball radius is5x7 and the underlying block remainsC057.
+The BTS09 reaction table selects PLMD088, whose setup is
+PlmSetup_RespawningPowerBombBlock: only projectile type0500 selects the
+breaking instruction listC91C. Ordinary bomb0300 reveals the icon while
+preserving the high collision bits. Beam/ball positioning and regeneration
+hypotheses are rejected; no further timing/alignment trials are justified.
+The route has Bombs but no Power Bombs, so this floor cannot yet be crossed.
+
+Actual read-only replay83073/71 (84.92s), observed native exit1, matches
+all71 ordered baseline failure frames exactly with rendering enabled.
+No gameplay/RAM/inventory writes; source/residue delta0. Diagnostic host
+and ROM-derived block logs stay ignored. Existing any%129712/0 (195.69s),
+fmt/check, release and progress remain the Energy Tank source verification.
+Next: obtain onward equipment/ammunition through a normal-input route or
+exercise another accessible passage; do not retry this Power Bomb floor
+before the item is collected. Verified current checkpoint81916/71 retains
+X70/Y1675,24health,missiles1/10. Old9AD9 enemy-drop ammo and earlier holds
+remain held. Credits, complete gameplay/hardware, render/audio, masked RAM
+and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
