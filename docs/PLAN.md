@@ -146,6 +146,14 @@ state operations. Use the existing subsystem interfaces and coordinate with
 the projectile and Samus work. Temporary discovery scripts stay outside
 maintained code.
 
+Remaining projectile scope: 35 unexercised same-slot AddToHiLo calls
+remain pending in sm_86. Seven exercised calls and nine safe signatures are
+committed in 65052d38; the combined integration is reviewed below. Preserve
+argument reads and low/high read and write order, and require actual route
+observations before adopting further movement rewrites. Keep the three
+MoveEprojWithVelocity byte-carry variants separate: their unrounded byte
+addressing and partial-word stores differ.
+
 Fixed-width arithmetic families (2026-10-19): replace 6089 promoted and
 narrowed add/subtract/multiply/bitwise expressions across 31 gameplay files.
 Wrapping arithmetic now states the final width directly. Preserve operand
@@ -1553,15 +1561,16 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `b65e22ef` passes
-uninterrupted full boot any% 129712/0 (185.42s) and Speed Booster
-148406/0 (238.11s), native exits 0. All 74 source/configuration/host/
-progress files match that commit. The level-block mask family changes only
-sm_84.rs from reviewed 1b5149f8; its PLM instruction and liquid changes remain
-integrated. Concurrent projectile work is outside this snapshot.
+Latest reviewed integration (2026-10-19): frozen `65052d38` passes
+uninterrupted full boot any% 129712/0 (216.00s) and Speed Booster
+148406/0 (280.66s), native exits 0. All 74 source/configuration/host/
+progress files match that commit. The independently reconstructed seven-call
+projectile change is integrated with b65e22ef's liquid and both PLM families.
+This also includes the two decoder initializer commits through 26880181.
+Concurrent enemy-initializer and PPU work is outside this snapshot.
 
 Complete checkpoints, including all bindings and serialized payloads, are
-byte-identical to reviewed 1b5149f8. All bindings are independently recomputed;
+byte-identical to reviewed b65e22ef. All bindings are independently recomputed;
 runtime-source inputs, including the shared layout macro, match. Neither replay
 loads an earlier checkpoint. Coverage and non-timing diagnostics match,
 including the known fingernail diagnostic. Speed contains the exact Bubble
@@ -1571,43 +1580,65 @@ health 46/399, missiles 6/15, Supers 0/5, items $3105 and beams $1004
 equipped/collected. Kraid is defeated, the eight coroutine bytes are zero and
 credits remain unexercised.
 
-Independent source review reconstructs the complete block-mask candidate,
-including four original raw updates and two byte-backed variants. Original
-addresses, rounded indexes, masks, set bits and expression widths agree. The
-four escape-block updates retain their order and all intervening index reads.
-Their indexes are nonnegative u16 halves; narrowing the original promoted
-bitwise expression is exact. No raw local survives across these new borrows.
-Air-scroll already borrowed Game mutably at the replaced write; its retained
-instruction pointer and return remain unchanged. The shared retain operation
-keeps its live block-index read before the level-data word update.
+Independent source review reconstructs the entire final projectile bank from
+the original Rust, then all 74 inputs of the clean candidate and integration.
+Seven AddToHiLo calls in five routines use the shared split-word operation;
+35 unexercised calls retain their original implementation. All velocity reads,
+signed 16-to-32-bit promotion and shift-by-eight amounts, rounded indexes,
+statement order and unchanged routine suffixes agree. Each amount is captured
+before borrowing mutable RAM and reading either destination. MoveX1 deliberately
+retains its original Y-velocity source at $1ADB. The helper reads low then high,
+adds with wrapping u32 arithmetic, and writes low then high, matching AddToHiLo.
+Four movement routines and five exercised wrappers become safe; sub_86B535
+retains its unsafe declaration for its remaining raw operations. The three
+byte-carry movement variants and all unselected code remain unchanged.
 
-Fresh exact-helper checks pass 1048560 complete 128 KiB RAM comparisons:
-all 65534 valid u16 byte indexes, two RAM patterns, four mask/set-bit pairs,
-and every old word at the low and high valid slots. The reference uses the
-original promoted bitwise calculation and explicit unaligned word access.
-Wrong address, stride, set-before-mask order and inverted mask are rejected.
-Byte indexes $FFFE/$FFFF address outside real RAM and are excluded; no larger
-backing allocation substitutes for the maintained array. The owner's repaired
-786416-case sweep uses the same real RAM extent. These are constructed cases,
-not broader gameplay coverage.
+The discovery observer reconstructs exactly from its original source edits,
+and the seven retained probes are independently checked against their original
+operands and full-RAM comparisons. Speed exercises Skree's two calls 1590 times
+each, sub_86B535's two calls 961 times each, and Spike MoveY1/MoveX1/MoveX2
+911/490/840 times. Wrappers 0/1/2/6/7 run 209/260/470/281/370 times.
+All 50 probe records and frame ranges match the pinned logs. Discovery verifies
+148406/0 but exits 2 because 35 calls and three wrappers were unvisited; it
+produces no checkpoint. This limits the committed rewrite to seven calls and
+nine safe signatures. Clean candidate any% 129712/0 and Speed 148406/0 runs
+also retain fixed source/library/DLL/input/log hashes. Passing frames alone
+do not establish execution coverage for the pending calls.
 
-All six actual rewritten helper sites execute in the owner's observed replays:
-2082 air-scroll updates, 105 shared retain updates and one each for the four
-escape-block writes. Every observed helper call compares complete RAM against
-the original raw word update. Clean, observed and integrated non-timing logs
-agree; their source/library/DLL/input pins remain fixed. Shared retain coverage
-comes from the $8FFF caller; the separate $0FFF caller remains unvisited.
+The existing boundary harness uses the exact final helper, accessors and
+original AddToHiLo. Independent checks bind its source, library and recorded
+output. Its 4456448 arithmetic and 589824 overlap cases compare 64-byte buffers;
+6624 cases compare all 131072 RAM bytes. Another 2752512 cases compare index
+addresses across 42 pointer-pair forms. These are separate scopes, not millions
+of full-RAM comparisons or all input combinations. The same comparator rejects
+saturation, lost carry, reversed stores, a delayed high read, halved indexes and
+a stray canary write. This audit reuses those completed checks. No new local
+raw pointer crosses a changed borrow. The pre-existing main-gameplay coroutine
+pointer at $0612 still survives across EprojRunAll, which already borrows whole
+RAM before the changed handlers; global alias safety remains unresolved.
 
-The normal Cargo integration is independently built from frozen c0c8b067 plus
-the reconstructed bank; its full source agrees with b65e22ef. All 74 inputs,
+Independent expansion of the four decoder EMPTY constants restores the entire
+original shader source at all 24 outer initializer sites: 15 context, five zbuf,
+three PNG and one Huffman. The decoder family removes 380 Rust lines. Its
+dedicated 5544-case API checks and 24/24 site observations are recorded by
+implementation; this review verifies the source transformation. The movie
+replays do not establish frontend decoder execution coverage.
+
+The normal Cargo integration is independently built from frozen 26880181 plus
+the reconstructed bank; its full source agrees with 65052d38. All 74 inputs,
 the fresh library/DLL and copied fixtures stay fixed. Only registry dependencies
-seed this checkout. Formatting, normal release (40.79s), host build
-(4.00s) and progress pass. Net Rust lines -21, raw-offset lines -8,
-c_int casts -24 across 18 lines; unsafe function count is unchanged. Frozen
-totals: 208830 Rust lines, 21436 raw-offset lines, 52780 c_int casts across
-41455 lines and 6516 unsafe functions. This audit changes no maintained Rust
-or assets; peer edits retain their own verification.
+seed this checkout. Formatting, normal release (37.13s), host build
+(3.80s) and progress pass. Net Rust lines -22, raw-offset lines -21,
+unsafe functions -9; c_int casts and cast lines are unchanged. Frozen totals:
+208428 Rust lines, 21415 raw-offset lines, 52780 c_int casts across 41455 lines
+and 6507 unsafe functions. This audit changes no maintained Rust or assets;
+peer edits retain their own verification.
 
+The prior PLM block-mask review remains valid: all six helper sites execute,
+with 2082 air-scroll updates, 105 shared retain updates and one each for four
+ordered escape-block writes. Full-RAM observed comparisons agree. Independent
+checks passed 1048560 complete 128 KiB comparisons with four rejected faults.
+The shared retain coverage is the $8FFF caller; the $0FFF caller is unvisited.
 Earlier arithmetic, layout, spawn-point, constant-word, PLM instruction and
 liquid audits retain their scope and coverage limits. The 1b5149f8 observation
 reached all eleven instruction-advance sites and 17/19 liquid decisions.
