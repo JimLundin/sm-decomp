@@ -10806,6 +10806,23 @@ the Y192 ledge gap toward Parlor's upper door and onward boss/item coverage.
 Credits, complete gameplay/hardware, render/audio, masked RAM and ownership
 remain open; prior holds stay held.
 
+CPU complete safe ADC/SBC arithmetic (2026-10-19): add_to_accumulator and
+subtract_from_accumulator now own final live-MF zero/negative updates. Operand
+reads and cycles remain in unsafe wrappers; decimal correction, carry,
+overflow and assignment order are unchanged. Frozen `3b179eb5` plus this
+change passes 144,179,200 actual old/current wrapper cases: every byte
+operand/A word, sampled word decimal/sign/boundary operands and both carry/
+decimal values. Old wrappers call retained old arithmetic helpers, so flag
+movement is independently compared. Named CPU/bus state and cycles match;
+static-WRAM cases do not exhaust mutating MMIO. Prefix 3,600/0 (0.96s), native
+exit 0, executes binary ADC word/byte 195,798/37,613 and SBC 38,340/169 calls.
+Decimal paths are comparison-covered rather than prefix-executed. Clean full
+any% 129,712/0 (48.59s), native exit 0. Cargo fmt/check, full release/release-
+library builds with external SDL2, normal metadata and frozen optimized
+core/DLL pass. Live CPU matches verified source; peer PPU work is outside
+this replay. All own progress counters unchanged. Prior holds and complete
+gameplay/render/audio remain open. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
