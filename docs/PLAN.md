@@ -13460,6 +13460,24 @@ cast lines-8 and Rust lines-6; all other own counters unchanged. Peer edits
 remain preserved. Full credits/gameplay/hardware/audio/masks/ownership and
 uncovered PLM routine holds remain open.
 
+PLM clearing (2026-10-19): ClearPLMs now uses a safe descending
+40-slot loop and little-endian byte stores for the PLM header words.
+The original addresses, descending write order and final graphics-index
+reset remain unchanged. No other PLM state is cleared.
+
+Frozen f846b9f0 plus only this function passes any%129712/0
+(321.51s) and pickup68606/0 (181.05s), native exits0.
+Observed pickup68606/0 (187.73s) compares all128KiB RAM
+against the original after 37 actual calls, restoring the current
+result before gameplay continues. The function has no effects outside RAM.
+Clean and observed non-timing diagnostics match after stripping observers.
+Frozen scope and maintained function identity pass; no observers are committed.
+
+Cargo fmt/check, normal release build and progress pass. Own raw offsets-2,
+unsafe functions-1, cast lines-6 and Rust lines-4; other own counters unchanged.
+Peer edits remain preserved. Complete credits/gameplay/hardware/audio/masks/
+ownership and uncovered PLM routine holds remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

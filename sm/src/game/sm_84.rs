@@ -1066,16 +1066,12 @@ pub unsafe fn DisablePLMs(game: &mut Game) {
         .offset(0x1c23 as ::core::ffi::c_int as isize) as *mut uint16);
     *fresh22 = (*fresh22 as ::core::ffi::c_int & !(0x8000 as ::core::ffi::c_int)) as uint16;
 }
-pub unsafe fn ClearPLMs(game: &mut Game) {
-    let mut i: ::core::ffi::c_int = 78 as ::core::ffi::c_int;
-    while i >= 0 as ::core::ffi::c_int {
-        *((&raw mut game.g_ram as *mut uint8).offset(0x1c37 as ::core::ffi::c_int as isize)
-            as *mut uint16)
-            .offset((i >> 1 as ::core::ffi::c_int) as isize) = 0 as uint16;
-        i -= 2 as ::core::ffi::c_int;
+pub fn ClearPLMs(game: &mut Game) {
+    for slot in (0..40).rev() {
+        let header_addr = 0x1c37 + slot * 2; // plm_header_ptr
+        game.g_ram[header_addr..header_addr + 2].copy_from_slice(&0u16.to_le_bytes());
     }
-    *((&raw mut game.g_ram as *mut uint8).offset(0x1c2d as ::core::ffi::c_int as isize)
-        as *mut uint16) = 0 as uint16;
+    game.g_ram[0x1c2d..0x1c2f].copy_from_slice(&0u16.to_le_bytes()); // plm_item_gfx_index
 }
 pub unsafe fn SpawnHardcodedPlm(p: SpawnHardcodedPlmArgs, game: &mut Game) {
     spawn_hardcoded_plm(p, core::ptr::null_mut(), game);
