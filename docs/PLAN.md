@@ -11572,6 +11572,27 @@ shot through the floor, then onward lower passages. Old9AD9 enemy-drop
 ammo, upper99BD ascent and earlier holds stay held. Complete credits,
 gameplay/hardware, render/audio, masked RAM and ownership remain open.
 
+CPU shared long-address wrappers (2026-10-19): absolute-long and DP-long
+wrappers each take Option<IndexRegister> instead of separate plain/indexed
+functions. All 32 opcode mappings retain their original choices (eight each
+absolute plain/X and DP plain/Y); operand/pointer reads still precede live
+index reads and the unchanged safe long_address calculation. Frozen
+`692ae4c1` plus this change passes 69,992,448 actual old/current wrapper
+comparisons across every 24-bit address and every index word with sampled
+boundaries. Named CPU/bus state, address pairs, wrapping and cycles match;
+constructed WRAM cases do not exhaust MMIO/callback mutations. Exact source
+reconstruction and independent peer review confirm all 32 mechanical mappings.
+Full instrumented any% passes 129,712/0 (216.67s), native exit 0, executing
+absolute plain/X 5,067,254/16,918,501 and DP plain/Y 275,433/4,292,721 calls.
+Clean full any% passes 129,712/0 (183.46s), native exit 0. Cargo fmt/check,
+full release/release-library builds with external SDL2, normal metadata and
+frozen optimized core/DLL pass. Live CPU matches verified source; subsequent
+peer bus-initialization commit and uncommitted gameplay/PPU work are outside
+this replay. Unsafe functions -2; other own counters unchanged. Concurrent
+replays prevent interpreting timings as performance measurements. Prior
+holds and complete gameplay/render/audio remain open. Continue covered CPU
+cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
