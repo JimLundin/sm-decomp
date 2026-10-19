@@ -38,6 +38,13 @@ pub struct PpuWindows {
     pub nr: uint8,
     pub bits: uint8,
 }
+impl PpuWindows {
+    const EMPTY: Self = PpuWindows {
+        edges: [0; 6],
+        nr: 0,
+        bits: 0,
+    };
+}
 pub use crate::types::int16;
 pub const kWindow2Inversed: C2RustUnnamed_3 = 4;
 pub const kWindow2Enabled: C2RustUnnamed_3 = 8;
@@ -574,6 +581,15 @@ pub unsafe fn ppu_runLine(mut ppu: *mut Ppu, mut line: ::core::ffi::c_int, game:
         }
     };
 }
+unsafe fn ppu_windows_for_layer(ppu: *mut Ppu, sub: usize, layer: uint) -> PpuWindows {
+    let mut win = PpuWindows::EMPTY;
+    if (*ppu).screenWindowed[sub] & (1 << layer) != 0 {
+        PpuWindows_Calc(&raw mut win, ppu, layer);
+    } else {
+        PpuWindows_Clear(&raw mut win, ppu, layer);
+    }
+    win
+}
 unsafe fn PpuWindows_Clear(mut win: *mut PpuWindows, mut ppu: *mut Ppu, mut layer: uint) {
     (*win).edges[0 as ::core::ffi::c_int as usize] = -if layer != 2 as uint {
         (*ppu).extraLeftCur as ::core::ffi::c_int
@@ -729,19 +745,7 @@ unsafe fn PpuDrawBackground_4bpp(
     {
         return;
     }
-    let mut win: PpuWindows = PpuWindows {
-        edges: [0; 6],
-        nr: 0,
-        bits: 0,
-    };
-    if (*ppu).screenWindowed[sub as usize] as ::core::ffi::c_int
-        & (1 as ::core::ffi::c_int) << layer
-        != 0
-    {
-        PpuWindows_Calc(&raw mut win, ppu, layer);
-    } else {
-        PpuWindows_Clear(&raw mut win, ppu, layer);
-    };
+    let mut win = ppu_windows_for_layer(ppu, sub as usize, layer);
     let mut bglayer: *mut BgLayer =
         (&raw mut (*ppu).bgLayer as *mut BgLayer).offset(layer as isize) as *mut BgLayer;
     y = y.wrapping_add((*bglayer).vScroll as uint);
@@ -1263,19 +1267,7 @@ unsafe fn PpuDrawBackground_2bpp(
     {
         return;
     }
-    let mut win: PpuWindows = PpuWindows {
-        edges: [0; 6],
-        nr: 0,
-        bits: 0,
-    };
-    if (*ppu).screenWindowed[sub as usize] as ::core::ffi::c_int
-        & (1 as ::core::ffi::c_int) << layer
-        != 0
-    {
-        PpuWindows_Calc(&raw mut win, ppu, layer);
-    } else {
-        PpuWindows_Clear(&raw mut win, ppu, layer);
-    };
+    let mut win = ppu_windows_for_layer(ppu, sub as usize, layer);
     let mut bglayer: *mut BgLayer =
         (&raw mut (*ppu).bgLayer as *mut BgLayer).offset(layer as isize) as *mut BgLayer;
     y = y.wrapping_add((*bglayer).vScroll as uint);
@@ -1680,19 +1672,7 @@ unsafe fn PpuDrawBackground_mode7(
     {
         return;
     }
-    let mut win: PpuWindows = PpuWindows {
-        edges: [0; 6],
-        nr: 0,
-        bits: 0,
-    };
-    if (*ppu).screenWindowed[sub as usize] as ::core::ffi::c_int
-        & (1 as ::core::ffi::c_int) << layer
-        != 0
-    {
-        PpuWindows_Calc(&raw mut win, ppu, layer as uint);
-    } else {
-        PpuWindows_Clear(&raw mut win, ppu, layer as uint);
-    };
+    let mut win = ppu_windows_for_layer(ppu, sub as usize, layer as uint);
     let mut hScroll: ::core::ffi::c_int =
         (((*ppu).m7matrix[6 as ::core::ffi::c_int as usize] as ::core::ffi::c_int)
             << 3 as ::core::ffi::c_int) as int16_t as ::core::ffi::c_int
@@ -1922,19 +1902,7 @@ unsafe fn PpuDrawSprites(mut ppu: *mut Ppu, mut y: uint, mut sub: uint, mut clea
     {
         return;
     }
-    let mut win: PpuWindows = PpuWindows {
-        edges: [0; 6],
-        nr: 0,
-        bits: 0,
-    };
-    if (*ppu).screenWindowed[sub as usize] as ::core::ffi::c_int
-        & (1 as ::core::ffi::c_int) << layer
-        != 0
-    {
-        PpuWindows_Calc(&raw mut win, ppu, layer as uint);
-    } else {
-        PpuWindows_Clear(&raw mut win, ppu, layer as uint);
-    };
+    let mut win = ppu_windows_for_layer(ppu, sub as usize, layer as uint);
     let mut windex: size_t = 0 as size_t;
     while windex < win.nr as size_t {
         if !(win.bits as ::core::ffi::c_int & (1 as ::core::ffi::c_int) << windex != 0) {
@@ -2087,11 +2055,7 @@ unsafe fn PpuDrawWholeLine(mut ppu: *mut Ppu, mut y: uint) {
             rendered_subscreen = true_0 != 0;
         }
     }
-    let mut cwin: PpuWindows = PpuWindows {
-        edges: [0; 6],
-        nr: 0,
-        bits: 0,
-    };
+    let mut cwin: PpuWindows = PpuWindows::EMPTY;
     PpuWindows_Calc(&raw mut cwin, ppu, 5 as uint);
     static kCwBitsMod: [uint8; 8] = [
         0 as ::core::ffi::c_int as uint8,

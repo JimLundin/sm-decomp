@@ -17667,6 +17667,45 @@ unchanged. No tests, reports or generated image/data assets enter maintained
 source. Continue larger initializer/state families; gameplay/credits coverage,
 hardware/audio/masks and ownership remain unfinished.
 
+PPU window setup family (2026-10-19): jscpd clone discovery and
+ast-grep complete CST initializers select all five identical PpuWindows
+initial values. Share an explicit EMPTY constant and the four repeated
+layer-window setup sequences in 4bpp, 2bpp, mode7 and sprite drawing. Each
+enabled-layer gate remains before initialization; selection retains the same
+screen index, layer bit, Calc/Clear call and initialized edges/nr/bits. Color
+composition retains its direct layer-5 Calc call with the shared initializer.
+No raw caller pointer derived from win escapes the helper; the returned value
+is copied into the caller's local window before the original drawing accesses.
+
+Actual old/current draw routines pass 2560 complete initialized PPU-state
+and output-pixel comparisons across all five changed paths, 256 constructed
+states each with masked/unmasked screens. States cover window flags, varying
+and inverted edges, both sprite-copy branches, clip/math modes, tile data and
+mode7 inputs. PPU allocations are fully zero initialized before valid fields
+are set; render pointers are cleared before comparison. This exercises actual
+hardware paths with constructed inputs, not a claim of movie mode7 coverage.
+
+Frozen 26880181 plus only this change passes full any% 129712/0
+(167.55s) and Speed Booster 148406/0 (227.19s), native exits 0.
+Exact reconstruction permits only the initializer constant and four setup
+substitutions/helper; all other frozen sources and source/library/DLL/ROM/
+movie hashes remain fixed. Neither fixture reaches credits. Cargo fmt/check,
+normal release (41.11s, native exit 0) and progress pass. Own Rust lines -36;
+cast lines -8; raw accesses unchanged. Unsafe functions +1: the shared helper
+owns the four repeated raw PPU setup sequences. No probes or ROM-derived
+artifacts committed. Continue coherent setup/state families and full route
+coverage; hardware/audio/masks and ownership remain unfinished.
+
+Fire Geyser child-shape coverage survey (2026-10-19): jscpd normalized
+clone discovery and complete CST functions select all 22 handlers 2..23,
+441 lines. They read parent D, subtract their own offset with word wrapping,
+reread the live index and write child Y/height; handler 2 also sets width 8.
+The child index uses wide +64 arithmetic, not a wrapping u16 slot. Reset
+handler 24 has separate behavior and is excluded. Frozen 26880181 entry
+observations pass any% 129712/0 (200.53s) and Speed Booster 148406/0
+(275.52s), native exits 0, but all 22 handlers have zero hits. Leave this
+family unchanged and pending until normal-input coverage reaches it.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
