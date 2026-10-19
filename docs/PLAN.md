@@ -8577,6 +8577,19 @@ metadata and optimized core/DLL builds pass; full frontend linking still lacks
 SDL2. Live CPU source matches the frozen verified source. Rust lines -18;
 other counters unchanged. Complete gameplay and rendering/audio remain open.
 
+CPU absolute-address reuse (2026-10-19): absolute, absolute-X/Y and long-X
+helpers derive the second-byte address from the computed low address with
+24-bit wrapping. Operand reads and indexed cycle penalties are unchanged.
+Frozen HEAD `e759c2a3` plus this change passes 82,837,504 actual old/current
+comparisons: every bank/operand pair, full indexes at boundary operands,
+write/width/mode flags, PC/cycle/bank wrapping and named CPU/bus state.
+Prefix 3,600/0 (0.99s) executes 1,667,088 / 535,840 / 244,974 / 293,365 calls
+respectively. Clean full any% 129,712/0 (48.43s), native exit 0. Cargo fmt/check,
+release library, normal metadata and optimized core/DLL builds pass; full
+frontend linking still lacks SDL2. Live CPU source matches frozen verified
+source. Rust lines -9; other counters unchanged. Complete gameplay and
+rendering/audio remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

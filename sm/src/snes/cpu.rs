@@ -399,7 +399,7 @@ unsafe fn address_stack_relative_indirect_y(cpu: *mut Cpu, game: &mut Game) -> (
 unsafe fn address_absolute(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
     let adr = u32::from(cpu_readOpcodeWord(cpu, game));
     let low = (u32::from((*cpu).db) << 16) + adr;
-    (low, ((u32::from((*cpu).db) << 16) + adr + 1) & 0xffffff)
+    (low, low.wrapping_add(1) & 0xffffff)
 }
 unsafe fn address_absolute_x(cpu: *mut Cpu, write: bool, game: &mut Game) -> (u32, u32) {
     let adr = u32::from(cpu_readOpcodeWord(cpu, game));
@@ -407,10 +407,7 @@ unsafe fn address_absolute_x(cpu: *mut Cpu, write: bool, game: &mut Game) -> (u3
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
     }
     let low = ((u32::from((*cpu).db) << 16) + adr + u32::from((*cpu).x)) & 0xffffff;
-    (
-        low,
-        ((u32::from((*cpu).db) << 16) + adr + u32::from((*cpu).x) + 1) & 0xffffff,
-    )
+    (low, low.wrapping_add(1) & 0xffffff)
 }
 unsafe fn address_absolute_y(cpu: *mut Cpu, write: bool, game: &mut Game) -> (u32, u32) {
     let adr = u32::from(cpu_readOpcodeWord(cpu, game));
@@ -418,10 +415,7 @@ unsafe fn address_absolute_y(cpu: *mut Cpu, write: bool, game: &mut Game) -> (u3
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
     }
     let low = ((u32::from((*cpu).db) << 16) + adr + u32::from((*cpu).y)) & 0xffffff;
-    (
-        low,
-        ((u32::from((*cpu).db) << 16) + adr + u32::from((*cpu).y) + 1) & 0xffffff,
-    )
+    (low, low.wrapping_add(1) & 0xffffff)
 }
 unsafe fn address_absolute_long(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
     let mut adr = u32::from(cpu_readOpcodeWord(cpu, game));
@@ -433,10 +427,7 @@ unsafe fn address_absolute_long_x(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) 
     let mut adr = u32::from(cpu_readOpcodeWord(cpu, game));
     adr |= u32::from(cpu_readOpcode(cpu, game)) << 16;
     let low = adr.wrapping_add(u32::from((*cpu).x)) & 0xffffff;
-    (
-        low,
-        adr.wrapping_add(u32::from((*cpu).x)).wrapping_add(1) & 0xffffff,
-    )
+    (low, low.wrapping_add(1) & 0xffffff)
 }
 unsafe fn address_absolute_indexed_indirect(cpu: *mut Cpu, game: &mut Game) -> u16 {
     let adr = cpu_readOpcodeWord(cpu, game);
