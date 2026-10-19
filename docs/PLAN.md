@@ -1114,6 +1114,21 @@ no Rust or residue; later projectile/word-helper changes retain separate
 verification. Remaining bosses, credits, persistence and broader hardware/audio
 coverage are still unfinished.
 
+Warehouse return waypoint (2026-10-19): ordinary inputs extend Varia's
+exact 122732-frame prefix to 128547. The same frozen c7856316 plus message-
+box table build that passes full Varia 122732/0 resumes its own verified
+checkpoint for 5815/0 (7.06s), native exit 0, with no new diagnostics.
+Final state 8 is room $A471, X70/Y395, pose $0002, health 52/299,
+missiles 12/15, Supers 4/5, items $1105 and beams $1004; all eight
+coroutine bytes are zero and Kraid's defeated flag remains set. Full RAM
+matches the original route endpoint; all 82 pins and checkpoint bindings
+are verified. No new item or credits milestone is claimed. The next route
+work returns toward Norfair and its remaining upgrades.
+Ignored movies/warehouse-return.inputs has SHA-256
+1374de5652f541dcf71703c3340266d02021ad61ca1798cd7e4416749190f953.
+No rebuild, repeated full boot, source change or committed asset is needed
+for this continuation. Abandoned gameplay attempts are excluded.
+
 Kraid second-phase milestone (2026-10-19): preserve the ordinary-input
 extension through frame 119823 when the combat timebox ends. Main Kraid is
 not defeated. Full boot on the previously reviewed immutable baseline
