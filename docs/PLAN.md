@@ -1967,7 +1967,24 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): `fe86b814` combines 124 nested
+Latest reviewed integration (2026-10-19): `5b8a7261` adds 61 match/else
+simplifications to the reviewed conditional/RAM composition. All 70 committed
+Rust/Cargo inputs match the candidate; its 67 Rust files match the replay
+copy and all 72 source/library/DLL/fixture pins remain stable. Normal release,
+workspace release, formatting/check and progress pass. Full any% 129712/0
+(148.43s) and Speed Booster 148406/0 (183.26s) pass, native exits 0;
+completed runs were reused.
+
+Whole-file canonical token comparison accounts for exactly 59 local-u64
+match wrappers and two CStr UTF-8 Result wrappers, plus formatting commas.
+Both branches, scrutinees, null guards, diagnostics and error exit 2 remain
+unchanged. The Result contains a borrowed str or Utf8Error, with no owned
+drop-sensitive scrutinee. Clippy has no single_match_else diagnostics.
+Rust lines fall by 189; casts, raw accesses and unsafe functions are unchanged,
+with ten fewer cast-containing lines through formatting. Frontend execution,
+full credits and global alias safety retain the limitations below.
+
+The prior `fe86b814` combines 124 nested
 conditions with the reviewed RAM-store composition. All 70 committed
 Rust/Cargo inputs match the checked candidate; its 67 Rust files match the
 replay source copy. All 72 source/library/DLL/fixture pins remain stable. Normal release,
