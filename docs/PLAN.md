@@ -8850,6 +8850,17 @@ pass; full frontend linking still lacks SDL2. Live CPU matches verified source.
 Rust lines +2 retain explicit word input values for carry extraction; other
 progress counters unchanged. Complete gameplay and rendering/audio remain open.
 
+CPU arithmetic definite assignment (2026-10-19): remove four unused zero
+initializers from ADC/SBC byte/word result bindings. Both decimal/binary
+branches assign before use; compilation proves definite assignment, and all
+arithmetic/read/write expressions are unchanged. Frozen HEAD `915f95bf` plus
+only these removals passes prefix 3,600/0 (1.12s): ADC word/byte
+195,798/37,613, SBC word/byte 38,340/169 calls. Clean full any% 129,712/0
+(63.27s), native exit 0. Cargo fmt/check, release library, normal metadata and
+optimized core/DLL builds pass; full frontend linking still lacks SDL2. Live
+CPU matches verified source. Progress counters unchanged. Decimal movie paths,
+complete gameplay and rendering/audio remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
