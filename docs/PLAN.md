@@ -51,8 +51,10 @@ on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
 Latest reviewed integration: frozen `0feb1882` passes any% 129712/0
-(231.13s), Waver 58109/0 (92.80s) and Red Tower 85800/0 (159.84s), all
-native exits 0. This combines beam/PLM cleanup, scrolling DMA, door-header
+(231.13s), Waver 58109/0 (92.80s), Red Tower 85800/0 (159.84s) and Spazer
+90706/0 (157.23s), all native exits 0. Spazer uses the same unchanged DLL
+and visits 32 rooms and 34 enemy definitions. This combines beam/PLM
+cleanup, scrolling DMA, door-header
 fields and the title Mode 7 correction with $19B3/$19B4 comparison enabled.
 Red Tower visits 28 rooms and 33 enemy definitions. Its first 69700, 71800
 and 78380 controller frames exactly match the Super Missile, Green Brinstar
@@ -453,6 +455,24 @@ their separate checks. The host adds only read-only final inventory/beam/
 coroutine logging to that frozen verifier and preserves its comparison and
 return value. Independent source, host, input and final-result review passes;
 all 68 source hashes, library hash and input hash remain unchanged.
+
+Independent QC replays all 90706 frames on the unchanged reviewed 0feb1882
+integration DLL: zero failures (157.23s), native exit 0. The separate beam
+observer also passes 90706/0 (154.25s), using its existing frozen 9c34f8a5
+plus cinematic correction and beam-pickup cleanup. Both complete diagnostics
+match the original milestone after removing timing and read-only observation
+lines. All source, library, ROM and copied input hashes remain unchanged;
+saves are isolated and SM_* overrides cleared.
+
+The observer compares complete RAM, g_fail, returns and callback-entry RAM,
+order and arguments for both pickups: Charge at frame index 77712 and Spazer
+at 90206. Spazer uses operand0004, PLM78, message17 and return delta3;
+equipped/collected beams change1000 to1004. Totals are two comparisons and
+six callbacks. Plasma was absent, so clearing an equipped Plasma bit and
+collecting Plasma remain untested. The observer bodies strip exactly to the
+original and committed beam routines. Formatting/check, normal workspace
+Cargo release (0.19s) and progress pass; this quality check changes no
+maintained source or own residue counters.
 
 The original continuous 85800..90706 check passes 4906/0, native exit 0, on
 438e7755 plus the menu fix. Its before-90706 checkpoint save171 belongs to
