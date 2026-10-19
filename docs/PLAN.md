@@ -43,7 +43,23 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration: frozen `19d550a3` passes any% 129712/0
+Latest reviewed integration: frozen `a85ff831` plus the two cinematic
+source files from `d610b820` passes any% 129712/0 (320.11s), Waver
+58109/0 (157.06s), Super Missile 69700/0 (201.64s) and Green Brinstar
+Save Room 71800/0 (235.55s), all native exits 0. Complete non-timing
+stdout/stderr diagnostics match the reviewed 19d550a3 integration.
+This combines the subsequent reviewed PLM, door and DMA changes with the
+cinematic spawn correction and $1B9D/$1B9E comparison enforcement.
+All 68 source/config/host files match that exact scope and retain their
+hashes through replay; the maintained CLI/DLL host is unchanged, and the
+DLL retains its hash. Copied inputs match the maintained fixtures, with
+separate save directories and SM_* overrides cleared. Formatting/check,
+normal Cargo release (36.36s) and progress pass. This quality check changes
+no maintained source or own residue counters. Other changes after a85ff831
+retain separate verification. Full gameplay/credits, disk-save persistence,
+hardware/audio coverage, remaining cinematic arguments and masks stay open.
+
+Previous reviewed integration: frozen `19d550a3` passes any% 129712/0
 (248.85s), Waver 58109/0 (120.79s), Super Missile 69700/0 (148.05s)
 and Green Brinstar Save Room 71800/0 (156.64s), all native exits 0.
 Complete non-timing diagnostics match the earlier menu/route baselines.
