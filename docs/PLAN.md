@@ -24,8 +24,8 @@ zero failures, but visits only six rooms and does not reach credits. The
 58,109-frame Waver route now also passes with zero rendered failures.
 The 69,700-frame Super Missile route passes with zero failures, visiting
 22 rooms and 28 enemy definitions and collecting 5/5 Super Missiles.
-Its frozen source is 69b844d9 plus the demo correction committed in 620a6ac6;
-this route result does not establish coverage of later implementation changes.
+The route also passes on reviewed integration e1a9a3d3; later implementation
+changes still require separate verification.
 Rendering starts enabled deterministically. Complete gameplay, audio timing
 and other masked RAM remain unverified. Historical zero-failure Waver runs
 made before the render initialization fix do not establish rendering equivalence.
@@ -293,6 +293,26 @@ sessions own the adjacent cleanup above. No maintained source or residue
 change and no new replay result belong to this cleanup.
 
 ## The oracle
+
+Super Missile integration QC (2026-10-19): frozen e1a9a3d3 passes the
+maintained Windows verifier CLI over all 69,700 controller frames: zero
+failures (147.04s), native exit 0, 22 rooms and 28 enemy definitions.
+Complete non-timing stdout/stderr diagnostics match the older milestone
+run after excluding its read-only final-state print. No credits frames occur.
+
+All 68 source/config/build files match the committed snapshot and retain
+their hashes through compilation and replay. The copied movie matches the
+recorded fixture hash and uses a separate empty save directory. Independent
+review also confirms the older milestone's 62 source files contain only
+the two committed demo overlays, its host adds only final-state reads, and
+its fixture contains 69,700 ordinary controller words.
+
+This closes the route's source-version gap for the committed pose, OAM,
+door-pointer and PLM graphics-index/pointer cleanups. Later background-table,
+PLM table-word and pending changes are outside this frozen run. Formatting,
+normal workspace Cargo release (57.55s) and progress pass. No maintained
+source or own residue counters change in this review; complete gameplay,
+credits, hardware/audio coverage and remaining masks stay open.
 
 Super Missile route milestone (2026-10-19): the normal-input route branches
 from the verified 68096-frame prefix before the first timed shutter closes.
