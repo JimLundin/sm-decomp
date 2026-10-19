@@ -1300,12 +1300,6 @@ unsafe fn EprojColl_Unknown8536(mut eci: *mut EprojCollInfo, game: &mut Game) ->
     }
     0 as uint8
 }
-fn EprojColl_ClearCarry(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 {
-    0 as uint8
-}
-fn EprojColl_SetCarry(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 {
-    1 as uint8
-}
 unsafe fn EprojColl_858E(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 {
     let mut v0: uint16 = ((*(&raw mut game.g_ram as *mut uint8)
         .offset(0x16402)
@@ -1791,89 +1785,36 @@ unsafe fn EprojColl_874E(mut eci: *mut EprojCollInfo, game: &mut Game) -> uint8 
         }
     }
 }
-static kEprojBlockCollisition_FuncA: [Option<Func_EprojCollInfo_U8>; 16] = unsafe {
-    [
-        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_858E as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_8506 as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_SetCarry as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_SetCarry as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_SetCarry as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_SetCarry as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_SetCarry as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_Unknown8536 as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_SetCarry as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-    ]
-};
-static kEprojBlockCollisition_FuncB: [Option<Func_EprojCollInfo_U8>; 16] = unsafe {
-    [
-        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_85AD as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_8506 as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_SetCarry as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_SetCarry as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_SetCarry as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_SetCarry as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_SetCarry as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_Unknown8536 as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_ClearCarry as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-        Some(EprojColl_SetCarry as unsafe fn(*mut EprojCollInfo, &mut Game) -> uint8),
-    ]
-};
+unsafe fn react_to_enemy_projectile_block(
+    mut eci: *mut EprojCollInfo,
+    mut k: uint16,
+    slope: Func_EprojCollInfo_U8,
+    game: &mut Game,
+) -> uint8 {
+    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) =
+        (k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
+    game.react_to_block(|block_type, game| match block_type {
+        0 | 2 | 3 | 4 | 6 | 7 | 14 => 0,
+        1 => slope(eci, game),
+        5 => EprojColl_8506(eci, game),
+        8 | 9 | 10 | 11 | 12 | 15 => 1,
+        13 => EprojColl_Unknown8536(eci, game),
+        _ => unreachable!(),
+    })
+}
 pub unsafe fn EprojBlockCollisition_CheckHorizontal(
     mut eci: *mut EprojCollInfo,
     mut k: uint16,
     game: &mut Game,
 ) -> uint8 {
-    let mut rv: uint8 = 0;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) =
-        (k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
-    loop {
-        rv = kEprojBlockCollisition_FuncA[((*((&raw mut game.g_ram as *mut uint8).offset(0x10002)
-            as *mut uint16)
-            .offset(game.cur_block_index() as isize)
-            as ::core::ffi::c_int
-            & 0xf000 as ::core::ffi::c_int)
-            >> 12 as ::core::ffi::c_int) as usize]
-            .expect("non-null function pointer")(eci, game);
-        if !(rv as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0) {
-            break;
-        }
-    }
-    rv
+    react_to_enemy_projectile_block(eci, k, EprojColl_858E, game)
 }
 pub unsafe fn EprojBlockCollisition_CheckVertical(
     mut eci: *mut EprojCollInfo,
     mut k: uint16,
     game: &mut Game,
 ) -> uint8 {
-    let mut rv: uint8 = 0;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) =
-        (k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
-    loop {
-        rv = kEprojBlockCollisition_FuncB[((*((&raw mut game.g_ram as *mut uint8).offset(0x10002)
-            as *mut uint16)
-            .offset(game.cur_block_index() as isize)
-            as ::core::ffi::c_int
-            & 0xf000 as ::core::ffi::c_int)
-            >> 12 as ::core::ffi::c_int) as usize]
-            .expect("non-null function pointer")(eci, game);
-        if !(rv as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0) {
-            break;
-        }
-    }
-    rv
+    react_to_enemy_projectile_block(eci, k, EprojColl_85AD, game)
 }
 pub unsafe fn EprojBlockCollisition_Horiz(mut k: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;

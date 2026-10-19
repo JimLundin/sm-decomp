@@ -860,53 +860,41 @@ unsafe fn BlockColl_Horiz_CheckColl(ci: &mut CollInfo, k: uint16, game: &mut Gam
     game.set_cur_block_index(k >> 1);
     // Keep the raw context alive across retries and nested PLM setup calls.
     let context = ci as *mut CollInfo;
-    let result = loop {
-        let result = match game.current_level_block() >> 12 {
-            0 | 4 | 6 => ClearCarry_4(context, game),
-            1 => BlockColl_Horiz_Slope(context, game),
-            2 => ClearCarry_5(context, game),
-            3 => BlockColl_Horiz_SpecialAir(context, game),
-            5 => BlockReact_HorizExt(context, game),
-            7 => BlockColl_Horiz_BombableAir(context, game),
-            8 | 12 | 14 => BlockColl_Horiz_SolidShootGrappleBlock(context, game),
-            9 => BlockColl_Horiz_Door(context, game),
-            10 => BlockColl_Horiz_SpikeBlock(context, game),
-            11 => BlockColl_Horiz_SpecialBlock(context, game),
-            13 => BlockReact_VertExt(context, game),
-            15 => BlockColl_Horiz_BombBlock(context, game),
-            _ => unreachable!(),
-        };
-        if result & 0x80 == 0 {
-            break result;
-        }
-    };
-    result
+    game.react_to_block(|block_type, game| match block_type {
+        0 | 4 | 6 => ClearCarry_4(context, game),
+        1 => BlockColl_Horiz_Slope(context, game),
+        2 => ClearCarry_5(context, game),
+        3 => BlockColl_Horiz_SpecialAir(context, game),
+        5 => BlockReact_HorizExt(context, game),
+        7 => BlockColl_Horiz_BombableAir(context, game),
+        8 | 12 | 14 => BlockColl_Horiz_SolidShootGrappleBlock(context, game),
+        9 => BlockColl_Horiz_Door(context, game),
+        10 => BlockColl_Horiz_SpikeBlock(context, game),
+        11 => BlockColl_Horiz_SpecialBlock(context, game),
+        13 => BlockReact_VertExt(context, game),
+        15 => BlockColl_Horiz_BombBlock(context, game),
+        _ => unreachable!(),
+    })
 }
 unsafe fn BlockColl_Vert_CheckColl(ci: &mut CollInfo, k: uint16, game: &mut Game) -> uint8 {
     game.set_cur_block_index(k >> 1);
     // Keep the same raw context valid across every extension-block retry.
     let context = ci as *mut CollInfo;
-    let result = loop {
-        let result = match game.current_level_block() >> 12 {
-            0 | 4 | 6 => ClearCarry_4(context, game),
-            1 => BlockColl_Vert_Slope(context, game),
-            2 => BlockColl_Vert_SpikeAir(context, game),
-            3 => BlockColl_Vert_SpecialAir(context, game),
-            5 => BlockReact_HorizExt(context, game),
-            7 => BlockColl_Vert_BombableAir(context, game),
-            8 | 12 | 14 => BlockColl_Vert_SolidShootGrappleBlock(context, game),
-            9 => BlockColl_Vert_Door(context, game),
-            10 => BlockColl_Vert_SpikeBlock(context, game),
-            11 => BlockColl_Vert_SpecialBlock(context, game),
-            13 => BlockReact_VertExt(context, game),
-            15 => BlockColl_Vert_BombBlock(context, game),
-            _ => unreachable!(),
-        };
-        if result & 0x80 == 0 {
-            break result;
-        }
-    };
-    result
+    game.react_to_block(|block_type, game| match block_type {
+        0 | 4 | 6 => ClearCarry_4(context, game),
+        1 => BlockColl_Vert_Slope(context, game),
+        2 => BlockColl_Vert_SpikeAir(context, game),
+        3 => BlockColl_Vert_SpecialAir(context, game),
+        5 => BlockReact_HorizExt(context, game),
+        7 => BlockColl_Vert_BombableAir(context, game),
+        8 | 12 | 14 => BlockColl_Vert_SolidShootGrappleBlock(context, game),
+        9 => BlockColl_Vert_Door(context, game),
+        10 => BlockColl_Vert_SpikeBlock(context, game),
+        11 => BlockColl_Vert_SpecialBlock(context, game),
+        13 => BlockReact_VertExt(context, game),
+        15 => BlockColl_Vert_BombBlock(context, game),
+        _ => unreachable!(),
+    })
 }
 unsafe fn BlockColl_Handle_Horiz(amt: int32, game: &mut Game) -> Pair_Bool_Amt {
     let span = Samus_GetYposSpan(game);
@@ -1204,8 +1192,8 @@ unsafe fn BlockInsideReact_SpecialAir(_ci: *mut CollInfo, game: &mut Game) -> ui
     }
     0
 }
-unsafe fn dispatch_block_inside(ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    match game.current_level_block() >> 12 {
+unsafe fn dispatch_block_inside(block_type: u16, ci: *mut CollInfo, game: &mut Game) -> uint8 {
+    match block_type {
         0 | 4 | 6 | 7 => BlockInsideReact_ShootableAir(ci, game),
         1 => BlockInsideReact_Slope(ci, game),
         2 => BlockInsideReact_SpikeAir(ci, game),
@@ -1228,7 +1216,9 @@ unsafe fn react_inside_sample(x: u16, y: u16, game: &mut Game) {
         ci_r40: 0,
     };
     // Keep the same context alive across retries and callback-adjusted block indexes.
-    while dispatch_block_inside(&raw mut context, game) & 0x80 != 0 {}
+    game.react_to_block(|block_type, game| {
+        dispatch_block_inside(block_type, &raw mut context, game)
+    });
 }
 pub unsafe fn BlockInsideDetection(game: &mut Game) {
     game.g_ram[0xb4c..0xb4e].copy_from_slice(&0u16.to_le_bytes());
@@ -1440,12 +1430,6 @@ unsafe fn BlockColl_BombExplosion(mut ci: *mut CollInfo, mut k: uint16, game: &m
         }
     }
 }
-fn ClearCarry_9(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    0 as uint8
-}
-fn SetCarry_0(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    1 as uint8
-}
 unsafe fn sub_949D5D(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
     if (*(&raw mut game.g_ram as *mut uint8)
         .offset(0x16402)
@@ -1554,38 +1538,21 @@ unsafe fn BlockReact_BombableBlock(mut ci: *mut CollInfo, game: &mut Game) -> ui
     }
     1 as uint8
 }
-static kBlockBombedReact: [Option<Func_CollInfo_U8>; 16] = unsafe {
-    [
-        Some(ClearCarry_9 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(ClearCarry_9 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(ClearCarry_9 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(ClearCarry_9 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockReact_ShootableAir as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockReact_HorizExt as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(ClearCarry_9 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockReact_BombableAir as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(SetCarry_0 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(SetCarry_0 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(SetCarry_0 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockBombedReact_Special as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockReact_Shootable as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockReact_VertExt as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(SetCarry_0 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockReact_BombableBlock as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-    ]
-};
 unsafe fn BlockBombedReact(mut ci: *mut CollInfo, mut v0: uint16, game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) =
         (v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
-    while kBlockBombedReact[((*((&raw mut game.g_ram as *mut uint8).offset(0x10002) as *mut uint16)
-        .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
-        as ::core::ffi::c_int
-        & 0xf000 as ::core::ffi::c_int)
-        >> 12 as ::core::ffi::c_int) as usize]
-        .expect("non-null function pointer")(ci, game) as ::core::ffi::c_int
-        & 0x80 as ::core::ffi::c_int
-        != 0
-    {}
+    game.react_to_block(|block_type, game| match block_type {
+        0 | 1 | 2 | 3 | 6 => 0,
+        4 => BlockReact_ShootableAir(ci, game),
+        5 => BlockReact_HorizExt(ci, game),
+        7 => BlockReact_BombableAir(ci, game),
+        8 | 9 | 10 | 14 => 1,
+        11 => BlockBombedReact_Special(ci, game),
+        12 => BlockReact_Shootable(ci, game),
+        13 => BlockReact_VertExt(ci, game),
+        15 => BlockReact_BombableBlock(ci, game),
+        _ => unreachable!(),
+    });
 }
 unsafe fn BlockFunc_A06A(mut k: uint16, game: &mut Game) {
     let mut v2: int16 = 0;
@@ -1799,93 +1766,39 @@ unsafe fn BlockShotReactVert_Slope(mut ci: *mut CollInfo, game: &mut Game) -> ui
         BlockShotReactHoriz_Slope_NonSquare(ci, game)
     }
 }
-unsafe fn BlockShotReactHoriz(mut ci: *mut CollInfo, mut k: uint16, game: &mut Game) -> uint8 {
-    static kBlockShotReactHoriz: [Option<Func_CollInfo_U8>; 16] = unsafe {
-        [
-            Some(ClearCarry_9 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockShotReactHoriz_Slope as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(ClearCarry_9 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(ClearCarry_9 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReact_ShootableAir as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReact_HorizExt as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(ClearCarry_9 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReact_BombableAir as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarry_0 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarry_0 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarry_0 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarry_0 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReact_Shootable as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReact_VertExt as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarry_0 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReact_BombableBlock as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        ]
-    };
-    let mut v1: uint8 = 0;
+unsafe fn react_to_shot_block(
+    mut ci: *mut CollInfo,
+    mut k: uint16,
+    slope: Func_CollInfo_U8,
+    game: &mut Game,
+) -> uint8 {
     if k >= *((&raw mut game.g_ram as *mut uint8).offset(0x7b9) as *mut uint16) {
         return 1 as uint8;
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) =
         (k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
-    loop {
-        v1 = kBlockShotReactHoriz[((*((&raw mut game.g_ram as *mut uint8).offset(0x10002)
-            as *mut uint16)
-            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
-            as ::core::ffi::c_int
-            & 0xf000 as ::core::ffi::c_int)
-            >> 12 as ::core::ffi::c_int) as usize]
-            .expect("non-null function pointer")(ci, game);
-        if !(v1 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0) {
-            break;
-        }
-    }
+    let v1 = game.react_to_block(|block_type, game| match block_type {
+        0 | 2 | 3 | 6 => 0,
+        1 => slope(ci, game),
+        4 => BlockReact_ShootableAir(ci, game),
+        5 => BlockReact_HorizExt(ci, game),
+        7 => BlockReact_BombableAir(ci, game),
+        8 | 9 | 10 | 11 | 14 => 1,
+        12 => BlockReact_Shootable(ci, game),
+        13 => BlockReact_VertExt(ci, game),
+        15 => BlockReact_BombableBlock(ci, game),
+        _ => unreachable!(),
+    });
     if v1 != 0 {
         (*ci).ci_r40 = (*ci).ci_r40.wrapping_sub(1);
     }
     v1
 }
+unsafe fn BlockShotReactHoriz(mut ci: *mut CollInfo, mut k: uint16, game: &mut Game) -> uint8 {
+    react_to_shot_block(ci, k, BlockShotReactHoriz_Slope, game)
+}
 unsafe fn BlockShotReactVert(mut ci: *mut CollInfo, mut k: uint16, game: &mut Game) -> uint8 {
-    static kBlockShotReactVert: [Option<Func_CollInfo_U8>; 16] = unsafe {
-        [
-            Some(ClearCarry_9 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockShotReactVert_Slope as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(ClearCarry_9 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(ClearCarry_9 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReact_ShootableAir as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReact_HorizExt as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(ClearCarry_9 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReact_BombableAir as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarry_0 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarry_0 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarry_0 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarry_0 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReact_Shootable as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReact_VertExt as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarry_0 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReact_BombableBlock as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        ]
-    };
-    let mut v1: uint8 = 0;
-    if k >= *((&raw mut game.g_ram as *mut uint8).offset(0x7b9) as *mut uint16) {
-        return 1 as uint8;
-    }
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) =
-        (k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as uint16;
-    loop {
-        v1 = kBlockShotReactVert[((*((&raw mut game.g_ram as *mut uint8).offset(0x10002)
-            as *mut uint16)
-            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
-            as ::core::ffi::c_int
-            & 0xf000 as ::core::ffi::c_int)
-            >> 12 as ::core::ffi::c_int) as usize]
-            .expect("non-null function pointer")(ci, game);
-        if !(v1 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0) {
-            break;
-        }
-    }
-    if v1 != 0 {
-        (*ci).ci_r40 = (*ci).ci_r40.wrapping_sub(1);
-    }
-    v1
+    react_to_shot_block(ci, k, BlockShotReactVert_Slope, game)
 }
 unsafe fn BlockGetSomePos1(mut k: uint16, game: &mut Game) -> uint16 {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
@@ -2448,26 +2361,6 @@ unsafe fn BlockShotReactHoriz_Slope_NonSquare(mut ci: *mut CollInfo, game: &mut 
     }
 }
 pub unsafe fn BlockCollSpreadBomb(mut k: uint16, game: &mut Game) -> uint8 {
-    static kBlockCollSpreadBomb: [Option<Func_CollInfo_U8>; 16] = unsafe {
-        [
-            Some(ClearCarry_9 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(sub_949D5D as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(ClearCarry_9 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(ClearCarry_9 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarry_0 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReact_HorizExt as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(ClearCarry_9 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(ClearCarry_9 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarry_0 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarry_0 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarry_0 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarry_0 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarry_0 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReact_VertExt as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarry_0 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarry_0 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        ]
-    };
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut r26: uint16 =
         *((&raw mut game.g_ram as *mut uint8).offset(0xb64) as *mut uint16).offset(v1 as isize);
@@ -2493,20 +2386,14 @@ pub unsafe fn BlockCollSpreadBomb(mut k: uint16, game: &mut Game) -> uint8 {
     if *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) == 0xffffu16 {
         return 1 as uint8;
     }
-    let mut rv: uint8 = 0;
-    loop {
-        rv = kBlockCollSpreadBomb[((*((&raw mut game.g_ram as *mut uint8).offset(0x10002)
-            as *mut uint16)
-            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
-            as ::core::ffi::c_int
-            & 0xf000 as ::core::ffi::c_int)
-            >> 12 as ::core::ffi::c_int) as usize]
-            .expect("non-null function pointer")(&raw mut ci, game);
-        if !(rv as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0) {
-            break;
-        }
-    }
-    rv
+    game.react_to_block(|block_type, game| match block_type {
+        0 | 2 | 3 | 6 | 7 => 0,
+        1 => sub_949D5D(&raw mut ci, game),
+        4 | 8 | 9 | 10 | 11 | 12 | 14 | 15 => 1,
+        5 => BlockReact_HorizExt(&raw mut ci, game),
+        13 => BlockReact_VertExt(&raw mut ci, game),
+        _ => unreachable!(),
+    })
 }
 unsafe fn BlockShotReactVert_Slope_Square(
     mut ci: *mut CollInfo,
@@ -2690,12 +2577,6 @@ unsafe fn BlockShotReactHoriz_Slope_Square(
     }
     (kTab948E54[v2 as usize] != 0u8) as uint8
 }
-fn ClearCarryZero(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    0 as uint8
-}
-fn SetCarryClearOvf(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    1 as uint8
-}
 unsafe fn BlockReactGrapple_GrappleBlock(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
     static kBlockReactGrapple_GrappleBlockPlm: [uint16; 4] = [0xd0d8, 0xd0dc, 0xd0e0, 0xd0d8];
     let ref mut fresh0 = *((&raw mut game.g_ram as *mut uint8).offset(0xcf4) as *mut uint16);
@@ -2821,26 +2702,7 @@ pub unsafe fn BlockCollGrappleBeam(game: &mut Game) -> uint8 {
 }
 pub unsafe fn BlockReactGrapple(game: &mut Game) -> uint8 {
     let mut v0: int16 = 0;
-    static kBlockReactGrapple: [Option<Func_CollInfo_U8>; 16] = unsafe {
-        [
-            Some(ClearCarryZero as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarryClearOvf as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(ClearCarryZero as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(ClearCarryZero as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReact_ShootableAir as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReact_HorizExt as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(ClearCarryZero as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReact_BombableAir as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarryClearOvf as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarryClearOvf as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReactGrapple_SpikeBlock as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarryClearOvf as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReact_Shootable as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReact_VertExt as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReactGrapple_GrappleBlock as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReact_BombableBlock as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        ]
-    };
+
     let mut prod: uint16 = Mult8x8(
         (*((&raw mut game.g_ram as *mut uint8).offset(0xd0c) as *mut uint16) as ::core::ffi::c_int
             >> 4 as ::core::ffi::c_int) as uint8,
@@ -2860,20 +2722,19 @@ pub unsafe fn BlockReactGrapple(game: &mut Game) -> uint8 {
         ci_r38: 0,
         ci_r40: 0,
     };
-    let mut rv: uint8 = 0;
-    loop {
-        rv = kBlockReactGrapple[((*((&raw mut game.g_ram as *mut uint8).offset(0x10002)
-            as *mut uint16)
-            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
-            as ::core::ffi::c_int
-            & 0xf000 as ::core::ffi::c_int)
-            >> 12 as ::core::ffi::c_int) as usize]
-            .expect("non-null function pointer")(&raw mut ci, game);
-        if !(rv as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0) {
-            break;
-        }
-    }
-    rv
+    game.react_to_block(|block_type, game| match block_type {
+        0 | 2 | 3 | 6 => 0,
+        1 | 8 | 9 | 11 => 1,
+        4 => BlockReact_ShootableAir(&raw mut ci, game),
+        5 => BlockReact_HorizExt(&raw mut ci, game),
+        7 => BlockReact_BombableAir(&raw mut ci, game),
+        10 => BlockReactGrapple_SpikeBlock(&raw mut ci, game),
+        12 => BlockReact_Shootable(&raw mut ci, game),
+        13 => BlockReact_VertExt(&raw mut ci, game),
+        14 => BlockReactGrapple_GrappleBlock(&raw mut ci, game),
+        15 => BlockReact_BombableBlock(&raw mut ci, game),
+        _ => unreachable!(),
+    })
 }
 pub static kSinCosTable8bit_Sext: [int16; 320] = [
     -(256 as ::core::ffi::c_int) as int16,
@@ -3297,33 +3158,7 @@ unsafe fn BlockFunc_A957(mut tmpD82: uint16, mut tmpD84: uint16, game: &mut Game
     *((&raw mut game.g_ram as *mut uint8).offset(0xd96) as *mut uint16) =
         (v8 as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint8 as uint16;
 }
-fn ClearCarry_10(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    0 as uint8
-}
-fn SetCarry_3(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
-    1 as uint8
-}
 unsafe fn BlockReact_AA64(game: &mut Game) -> uint8 {
-    static kBlockReactLut_AB90_0: [Option<Func_CollInfo_U8>; 16] = unsafe {
-        [
-            Some(ClearCarry_10 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarry_3 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReact_AA64_SpikeAir as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(ClearCarry_10 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(ClearCarry_10 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReact_HorizExt as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(ClearCarry_10 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(ClearCarry_10 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarry_3 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarry_3 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReact_AA64_SpikeBlock as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarry_3 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarry_3 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(BlockReact_VertExt as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarry_3 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-            Some(SetCarry_3 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        ]
-    };
     let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xd94) as *mut uint16);
     let mut RegWord: uint16 = Mult8x8(
         *((&raw mut game.g_ram as *mut uint8).offset(0xd96) as *mut uint16) as uint8,
@@ -3341,20 +3176,15 @@ unsafe fn BlockReact_AA64(game: &mut Game) -> uint8 {
         ci_r38: 0,
         ci_r40: 0,
     };
-    let mut rv: uint8 = 0;
-    loop {
-        rv = kBlockReactLut_AB90_0[((*((&raw mut game.g_ram as *mut uint8).offset(0x10002)
-            as *mut uint16)
-            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
-            as ::core::ffi::c_int
-            & 0xf000 as ::core::ffi::c_int)
-            >> 12 as ::core::ffi::c_int) as usize]
-            .expect("non-null function pointer")(&raw mut ci, game);
-        if !(rv as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0) {
-            break;
-        }
-    }
-    rv
+    game.react_to_block(|block_type, game| match block_type {
+        0 | 3 | 4 | 6 | 7 => 0,
+        1 | 8 | 9 | 11 | 12 | 14 | 15 => 1,
+        2 => BlockReact_AA64_SpikeAir(&raw mut ci, game),
+        5 => BlockReact_HorizExt(&raw mut ci, game),
+        10 => BlockReact_AA64_SpikeBlock(&raw mut ci, game),
+        13 => BlockReact_VertExt(&raw mut ci, game),
+        _ => unreachable!(),
+    })
 }
 static g_word_94AAF7: [uint16; 16] = [0, 0, 0x10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 unsafe fn BlockReact_AA64_SpikeAir(mut ci: *mut CollInfo, game: &mut Game) -> uint8 {
@@ -3404,58 +3234,8 @@ unsafe fn BlockReact_AA64_SpikeBlock(mut ci: *mut CollInfo, game: &mut Game) -> 
     }
     1 as uint8
 }
-static kBlockReactLut_AB90: [Option<Func_CollInfo_U8>; 16] = unsafe {
-    [
-        Some(ClearCarry_10 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(SetCarry_3 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockReact_AA64_SpikeAir as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(ClearCarry_10 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(ClearCarry_10 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockReact_HorizExt as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(ClearCarry_10 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(ClearCarry_10 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(SetCarry_3 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(SetCarry_3 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockReact_AA64_SpikeBlock as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(SetCarry_3 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(SetCarry_3 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(BlockReact_VertExt as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(SetCarry_3 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-        Some(SetCarry_3 as unsafe fn(*mut CollInfo, &mut Game) -> uint8),
-    ]
-};
 unsafe fn BlockFunc_ABB0(game: &mut Game) -> uint8 {
-    let mut rv: uint8 = 0;
-    let mut v0: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xd94) as *mut uint16);
-    let mut RegWord: uint16 = Mult8x8(
-        *((&raw mut game.g_ram as *mut uint8).offset(0xd96) as *mut uint16) as uint8,
-        *((&raw mut game.g_ram as *mut uint8).offset(0x7a5) as *mut uint16) as uint8,
-    );
-    *((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) =
-        (RegWord).wrapping_add(v0);
-    let mut ci: CollInfo = CollInfo {
-        ci_r18_r20: 0 as int32,
-        ci_r24: 0,
-        ci_r26: 0,
-        ci_r28: 0,
-        ci_r30: 0,
-        ci_r32: 0,
-        ci_r38: 0,
-        ci_r40: 0,
-    };
-    loop {
-        rv = kBlockReactLut_AB90[((*((&raw mut game.g_ram as *mut uint8).offset(0x10002)
-            as *mut uint16)
-            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xdc4) as *mut uint16) as isize)
-            as ::core::ffi::c_int
-            & 0xf000 as ::core::ffi::c_int)
-            >> 12 as ::core::ffi::c_int) as usize]
-            .expect("non-null function pointer")(&raw mut ci, game);
-        if !(rv as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0) {
-            break;
-        }
-    }
-    rv
+    BlockReact_AA64(game)
 }
 unsafe fn BlockFunc_ABE6(mut tmpD82: uint16, game: &mut Game) -> uint8 {
     let mut v0: uint8 = 0;

@@ -8204,21 +8204,14 @@ unsafe fn EnemyBlockCollReact_Horiz(
     game: &mut Game,
 ) -> uint8 {
     game.set_cur_block_index(block_offset >> 1);
-    loop {
-        // Extension blocks change cur_block_index and request another dispatch.
-        let block_type = game.current_level_block() >> 12;
-        let result = match block_type {
-            0 | 2 | 3 | 4 | 6 | 7 => 0,
-            1 => EnemyBlockCollHorizReact_Slope(collision, game),
-            5 => EnemyBlockCollReact_HorizExt(collision, game),
-            10 => EnemyBlockCollReact_Spike(collision, game),
-            13 => EnemyBlockCollReact_VertExt(collision, game),
-            _ => 1,
-        };
-        if result & 0x80 == 0 {
-            return result;
-        }
-    }
+    game.react_to_block(|block_type, game| match block_type {
+        0 | 2 | 3 | 4 | 6 | 7 => 0,
+        1 => EnemyBlockCollHorizReact_Slope(collision, game),
+        5 => EnemyBlockCollReact_HorizExt(collision, game),
+        10 => EnemyBlockCollReact_Spike(collision, game),
+        13 => EnemyBlockCollReact_VertExt(collision, game),
+        _ => 1,
+    })
 }
 unsafe fn EnemyBlockCollReact_Vert(
     collision: &mut EnemyBlockCollInfo,
@@ -8226,21 +8219,14 @@ unsafe fn EnemyBlockCollReact_Vert(
     game: &mut Game,
 ) -> uint8 {
     game.set_cur_block_index(block_offset >> 1);
-    loop {
-        // Extension blocks change cur_block_index and request another dispatch.
-        let block_type = game.current_level_block() >> 12;
-        let result = match block_type {
-            0 | 2 | 3 | 4 | 6 | 7 => 0,
-            1 => EnemyBlockCollVertReact_Slope(collision, game),
-            5 => EnemyBlockCollReact_HorizExt(collision, game),
-            10 => EnemyBlockCollReact_Spike(collision, game),
-            13 => EnemyBlockCollReact_VertExt(collision, game),
-            _ => 1,
-        };
-        if result & 0x80 == 0 {
-            return result;
-        }
-    }
+    game.react_to_block(|block_type, game| match block_type {
+        0 | 2 | 3 | 4 | 6 | 7 => 0,
+        1 => EnemyBlockCollVertReact_Slope(collision, game),
+        5 => EnemyBlockCollReact_HorizExt(collision, game),
+        10 => EnemyBlockCollReact_Spike(collision, game),
+        13 => EnemyBlockCollReact_VertExt(collision, game),
+        _ => 1,
+    })
 }
 pub unsafe fn CalculateBlockContainingPixelPos(
     mut xpos: uint16,

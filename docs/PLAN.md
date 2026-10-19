@@ -46,6 +46,31 @@ Keep each commit one invariant, but apply it across the complete eligible family
 Rank by net deletion including shared code, unsafe operations removed and
 edit/build/verification cost. Prefer this work over further isolated cleanup.
 
+Deadline (user direction, 2026-10-19): this week. Prioritize whole-codebase
+compiler-assisted batches and the largest repeated RAM-access families over
+individual-function cleanup. Standard machine-applicable redundancy fixes
+use compiler checks, a normal release build and full any% verification;
+do not build another bespoke comparison harness for each such batch.
+Retain targeted comparisons for state/control-flow changes. Preserve read
+and write order; compound-assignment suggestions need alias/order review.
+Keep plan updates concise. The broader readability goal remains incomplete.
+
+Block-reaction dispatch family (2026-10-19): fourteen retry paths across
+Samus, enemies and enemy projectiles now share the live-block retry loop.
+Nine pointer tables become explicit dispatch; matching shot-axis and probe
+implementations share their cores. Earlier match rewrites are included.
+Net Rust lines -281, casts -271, raw RAM accesses -23. Unsafe functions +2
+are the shared shot/projectile pointer-context cores; contracts are unchanged.
+Complete syntax-node reconstruction limits the change to this family.
+Compiled before/after dispatches match context, return, callback trace and
+full RAM in 266112 cases with trace stubs, all block kinds, high/odd offsets,
+early exits and retry chains. Callback bodies are unchanged; these stubs
+verify dispatch behavior, not the behavior inside real collision callbacks.
+Normal release, formatting/check, stable workspace build and progress pass.
+Frozen 6a9c8fad plus this family passes any% 129712/0 (197.31s) and
+Speed Booster 148406/0 (256.53s), native exits 0, with fixed sources
+and fixtures. Other sessions' pending edits remain separate.
+
 Sound-effect queue family (2026-10-19): three queue bodies now share one
 safe implementation, retaining all fifteen fixed-limit wrappers and three
 packed-argument entry points. Named word reads replace the sound gates.

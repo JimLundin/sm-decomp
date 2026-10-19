@@ -659,6 +659,18 @@ impl Game {
         u16::from_le_bytes([self.g_ram[offset], self.g_ram[offset + 1]])
     }
 
+    /// Follow extension blocks until the selected reaction finishes.
+    pub(crate) fn react_to_block(&mut self, mut react: impl FnMut(u16, &mut Game) -> u8) -> u8 {
+        loop {
+            // Callbacks can change the live block index before requesting another reaction.
+            let block_type = self.current_level_block() >> 12;
+            let result = react(block_type, self);
+            if result & 0x80 == 0 {
+                return result;
+            }
+        }
+    }
+
     /// projectile_bomb_pre_instructions ($7E:0C68); slots 5..10 are bomb_functions.
     pub fn set_projectile_bomb_pre_instruction(&mut self, slot: usize, value: u16) {
         assert!(slot < 10);
