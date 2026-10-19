@@ -12694,6 +12694,18 @@ Keep it this small. Add a crate only when the game code itself needs one.
 
 ## Phase 1: make the oracle a one-command check
 
+Known verifier configuration (2026-10-19): `sm/Cargo.toml` declares
+`sm_verify_dll` for `unexpected_cfgs`, retaining warnings for unknown names.
+Direct full-library metadata checks for the headless and frontend variants
+accept the declaration with zero unexpected-cfg warnings, native exits 0.
+Formatting and whitespace checks pass; maintained Rust and residue counts
+are unchanged. The full DLL workflow result is recorded in Workspace discipline.
+The initial Cargo release build passed, but subsequent builds fail executing
+the package build script (Windows OS error 5), including with the original
+manifest restored. Normal Cargo verification of this declaration remains
+outstanding until build-script execution works. Other compiler warnings,
+complete gameplay/credits and hardware/audio coverage remain open.
+
 Nothing else should start until this works, because it is how every later
 change is judged.
 
