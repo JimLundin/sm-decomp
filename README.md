@@ -23,6 +23,14 @@ Settings and key bindings are in `sm.ini`. By default arrows move, X/Z/S/A
 are SNES A/B/X/Y, C/V are L/R, Enter is Start and right Shift is Select. Lines reading `Verify failure!` mean the
 Rust code disagreed with the original ROM on that frame; please report them.
 
+## Verify
+
+Import a TAS movie and run the headless per-frame comparison using the
+[movie instructions](movies/README.md). The verifier reports mismatches and
+gameplay coverage, then exits nonzero on failure. The imported any% movie
+currently visits only six rooms and does not reach credits; a passing replay
+checks the behavior it exercises, not the entire game.
+
 ## Credits and licence
 
 Game logic, runtime and SNES emulation come from snesrev/sm (MIT, see

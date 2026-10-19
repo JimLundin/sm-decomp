@@ -46,6 +46,23 @@ Everything that existed before is in the branch `archive/pre-transpile-2026-10-1
 
 ## Workspace discipline
 
+Retired Rio handoff (2026-10-19): moved the abandoned sibling directory
+`sm-decomp-restart-rio-rust` out of Projects to
+`%LOCALAPPDATA%/sm-decomp-archive/sm-decomp-restart-rio-rust-20261019`.
+All 10 files / 36,358 bytes are preserved with matching SHA-256 hashes.
+No live process or repository/top-level temporary script references the old
+directory. The maintained implementation remains in `sm/src`; the archived
+handoff has no production integration or new verification claim.
+
+Maintenance verification (2026-10-19): the README now links to the maintained
+movie importer and both verifier entry points, including exit codes and
+coverage limits. All three movie/ROM hashes match the manifest; fresh CLI
+imports match the existing 129,712 / 167,797 / 222,788 controller frames.
+The documented Windows build/import/replay workflow on frozen 3d81e4d2
+passes any% 129712/0 (291.74s), native exit 0, with six rooms and no credits.
+Disposable verification builds were removed after completion. No maintained
+Rust source or own residue counters change in this maintenance pass.
+
 Work directly on `main`, one focused, verified commit at a time. Finish with
 a clean working tree; do not leave speculative branches, worktrees, stashes
 or uncommitted edits. Create a working branch only when the user requests it,
@@ -12655,7 +12672,7 @@ directories or acceptance documents. The commit message is the record.
 
 ```text
 Cargo.toml            workspace (one member: sm)
-rust-toolchain.toml   pinned nightly (needed for extern_types until phase 2)
+rust-toolchain.toml   stable Rust channel with rustfmt and clippy
 sm.ini                game config, read from the working directory
 sm/src/lib.rs         module tree
 sm/src/main.rs        SDL front end, input, frame loop
