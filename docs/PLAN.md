@@ -465,6 +465,32 @@ change and no new replay result belong to this cleanup.
 
 ## The oracle
 
+Boss-mask/recovery integration (2026-10-19): frozen 7d0d2050 combines
+the boss-byte correction with the headless recovery repair. Clean any%
+passes 129712/0 (333.50s), Spazer 90706/0 (296.20s), native exits 0.
+Complete stdout and stderr match the earlier candidate2 clean replays after
+removing only elapsed times. All 68 source/config/host files match Git and
+retain their hashes, as do the DLL, ROM and copied inputs. Saves are isolated
+and SM_* overrides cleared. Later concurrent changes retain separate checks.
+
+Seven new observer-free controls use candidate2 plus exactly the recovery
+change. Each runs 10204 frames: low/high $05E7/$05E8 and lower $05E6 faults
+are detected once at index 10000; clean, exact old-mask negatives and retained
+masked $05E9 pass with zero failures. All seven complete 128 KiB RAM dumps
+now equal the original pre-recovery clean run, with no normalization. The
+earlier 25-byte residue is resolved for these cases. Independent source
+stripping, DLL/source immutability and full output review pass.
+
+Independent audit also confirms the recovery commit's existing eleven
+frame-8296 controls: expected failure counts, ordered helper equality,
+complete final RAM equality in each audio mode, and captured oracle physical
+audio/queue recovery. Those passing controls were reviewed without replaying
+them. This closes the two specific recovery limitations recorded below;
+interactive retries and wider fault coverage are not established here.
+Formatting/check, normal workspace Cargo release (32.65s, including build
+lock wait) and progress pass. No maintained Rust or own residue counters
+change in this integration check.
+
 Boss-bit scratch fidelity (2026-10-19): SetBossBitForCurArea and
 CheckBossBitForCurArea now store the incoming mask byte at $05E7, preserving
 $05E8 as the ROM's eight-bit stores do. Compare both bytes by narrowing the
