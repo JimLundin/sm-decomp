@@ -420,16 +420,17 @@ fn absolute_indexed_address(
     let low = ((u32::from(cpu.db) << 16) + offset + u32::from(index.value(cpu))) & 0xffffff;
     (low, low.wrapping_add(1) & 0xffffff)
 }
-unsafe fn address_absolute_long(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
+unsafe fn fetch_long_address(cpu: *mut Cpu, game: &mut Game) -> u32 {
     let offset = fetch_word(cpu, game);
     let bank = fetch_byte(cpu, game);
-    let low = u32::from(bank) << 16 | u32::from(offset);
+    u32::from(bank) << 16 | u32::from(offset)
+}
+unsafe fn address_absolute_long(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
+    let low = fetch_long_address(cpu, game);
     (low, low.wrapping_add(1) & 0xffffff)
 }
 unsafe fn address_absolute_long_x(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
-    let offset = fetch_word(cpu, game);
-    let bank = fetch_byte(cpu, game);
-    let adr = u32::from(bank) << 16 | u32::from(offset);
+    let adr = fetch_long_address(cpu, game);
     let low = adr.wrapping_add(u32::from((*cpu).x)) & 0xffffff;
     (low, low.wrapping_add(1) & 0xffffff)
 }

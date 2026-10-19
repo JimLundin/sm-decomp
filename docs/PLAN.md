@@ -10280,6 +10280,23 @@ and prove map acquisition if physically accessible; onward boss/item coverage
 still needed. Held upper99BD ascent,clifftuning,old9AD9dropammoandHDMAstayheld.
 Credits,fullgameplay/hardware,render/audio,maskedRAM andownership remainopen.
 
+CPU shared absolute-long operand fetch (2026-10-19): fetch_long_address
+shares the word-then-bank bus sequence for absolute-long and absolute-long-X.
+X remains read after all operand fetches; 24-bit wrapping and PC/cycle order
+are unchanged. Frozen `32748d3d` plus this change passes 41,418,752 actual
+old/current wrapper comparisons: every 24-bit operand with correlated index/
+flags, plus every index at five offset boundaries, three banks and eight
+width/mode/PC-wrap combinations. Named CPU/bus state and addresses match;
+this is static-WRAM coverage, not exhaustive mutating-MMIO state coverage.
+Prefix 3,600/0 (1.23s), native exit 0, executes the unindexed/indexed wrappers
+2,418/293,365 times. Clean full any% 129,712/0 (51.04s), native exit 0.
+Cargo fmt/check, full release/release-library builds with external SDL2,
+normal metadata and frozen optimized core/DLL pass. Live CPU matches verified
+source; peer PPU work is outside this replay. Rust lines +1 and unsafe
+functions +1 centralize the duplicated operand bus reads; other own counters
+unchanged. Indexed-indirect/TSX/accumulator ROR remain held. Complete gameplay/
+render/audio remain open. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
