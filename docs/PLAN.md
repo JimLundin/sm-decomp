@@ -10075,6 +10075,25 @@ item/boss coverage. Held upper99BD ascent, cliff tuning, old9AD9 enemy-drop
 ammo and HDMA stay held. Credits, full gameplay/hardware, rendering/audio,
 masked RAM and ownership remain unfinished. Peer work/remote sync stay separate.
 
+CPU safe indirect-Y address completion (2026-10-19): indirect-Y now reuses
+absolute_indexed_address for the callback-free inherited write/XF/page-cross
+cycle gate and bank/Y address assembly after pointer reads. The safe reference
+begins after those reads; short-circuiting, cycle-before-final-Y/DB reads,
+full Y and 24-bit wrapping remain exact. Frozen `2f3707f8` plus this change
+passes 134,201,344 actual old/current RAM-bus cases with pointer/bank pairs,
+correlated full Y, both write/XF values, varied DP/MF/E and PC wrapping.
+As in the preceding pointer-setup probe, locations entering MMIO are excluded;
+independent pointer/Y/address Cartesian and mutating MMIO remain unproven.
+Named CPU/bus state, RAM, addresses and cycles match. Prefix 3,600/0 (1.02s),
+native exit 0, executes indirect-Y 4,362 times, write=false/XF=true. Other
+combinations have constructed coverage only. Clean full any% 129,712/0
+(47.67s), native exit 0. Cargo fmt/check, full release/release-library builds
+with external SDL2, normal metadata and frozen optimized core/DLL pass.
+Live CPU matches verified source; peer PPU work is outside this replay.
+Rust lines -4; other own counters unchanged. Indexed-indirect/TSX/accumulator
+ROR stay held. Complete gameplay/render/audio remain open. Continue covered
+CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

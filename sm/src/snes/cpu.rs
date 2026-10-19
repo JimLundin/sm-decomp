@@ -329,11 +329,7 @@ unsafe fn address_direct_page_indirect_y(
     let adr = u16::from(fetch_byte(cpu, game));
     let (pointer_low, pointer_high) = direct_page_address(adr, None, &mut *cpu);
     let pointer = u32::from(read_word(cpu, pointer_low, pointer_high, game));
-    if write && (!(*cpu).xf || pointer >> 8 != (pointer + u32::from((*cpu).y)) >> 8) {
-        (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
-    }
-    let low = ((u32::from((*cpu).db) << 16) + pointer + u32::from((*cpu).y)) & 0xffffff;
-    (low, low.wrapping_add(1) & 0xffffff)
+    absolute_indexed_address(pointer, CpuRegister::Y, write, &mut *cpu)
 }
 unsafe fn address_direct_page_indirect_long(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
     let adr = u16::from(fetch_byte(cpu, game));
