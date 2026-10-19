@@ -8872,6 +8872,67 @@ still lacks SDL2. Live CPU matches verified source. Rust lines -7 from shorter
 names/formatter reflow; other counters unchanged. Complete gameplay and
 rendering/audio remain open.
 
+Missile Station return through9C5E completed (2026-10-19): retained
+missile-station-exit.inputs70699 beginsX55/Y395 health47 missiles5/5.
+Initial running/left jumps hit enemies or miss upper ledges. Right10,
+right/run/jump50, left10, neutral25 reachesX242/Y281; continue
+right10, right/jump45 and retain refill-right-next.inputs through70926
+for a livingX282/Y315 health27 landing. Holding Jump through landing
+prevents the next launch. Fresh right/shoot1, right/run/jump/shoot45
+reachesX314/Y244; retain refill-fresh-rise.inputs through70946.
+
+Corrected wall jump: left2 releases Jump, right/jump1, left/jump30,
+right/jump20, neutral30 rises fromY244 to124. Retain refill-fresh-wall
+through70981, then left20, neutral30; retain refill-upper-left through71031
+for stableX298/Y139 health27. Left10, right/run12, right/run/jump35,
+right20, neutral30 landsX366/Y155 health23. Right1, right/jump35,
+right20, neutral25, right/jump40, right25, neutral30 reachesX547/Y139,
+health43 after a20health pickup: refill-east-platform71314/71 (174.86s).
+The running variant falls into the pit and dies; retain the stable route.
+
+Right/shoot100, neutral120 opens the east blue door and returns9AD9.
+Final living stateX~60/Y1675 health43/199 missiles5/5; retained
+refill-shaft-return.inputs71534. No maintained gameplay change is justified.
+No health, map, ammunition or movement writes are injected.
+All21 ordered diagnostic streams exactly match frozen d217ea15 Waver71;
+no new failing frames. Completed replays, all nativeexit1:
+refill-return-jump: 70795/71 (162.45s)
+refill-return-running: 70794/71 (162.21s)
+refill-left-rise: 70906/71 (168.73s)
+refill-right-ledge: 70890/71 (166.01s)
+refill-ledge-left: 70976/71 (168.94s)
+refill-right-next: 71025/71 (178.14s)
+refill-fresh-rise: 71002/71 (172.36s)
+refill-fresh-left: 71002/71 (170.78s)
+refill-fast-rise: 71016/71 (168.24s)
+refill-morph-rise: 71021/71 (169.25s)
+refill-wall-rise: 71029/71 (168.01s)
+refill-left-wall: 71029/71 (166.78s)
+refill-fresh-wall: 71029/71 (164.99s)
+refill-fresh-west-wall: 71029/71 (162.95s)
+refill-upper-land: 71106/71 (163.53s)
+refill-upper-left: 71086/71 (160.38s)
+refill-upper-push: 71201/71 (169.93s)
+refill-upper-run: 71138/71 (169.95s)
+refill-east-platform: 71314/71 (174.86s)
+refill-east-running: 71313/71 (173.41s)
+refill-shaft-return: 71534/71 (160.37s)
+
+Next: inspect and reach the remaining westY1376 red door intoA201 with
+these5missiles. Its save-room coverage is new but is not itself a route to
+credits; inspect an accessible onward route before claiming progression.
+Completed map/quota coverage remains separate. Held upper99BD ascent,
+cliff tuning, old9AD9 enemy-drop ammunition and HDMA remain held.
+Frozen same-DLL any%129712/0 (414.98s) remains input-only regression;
+peer hardware owns its replays. Cargo fmt --check, release-library build
+and progress pass; full cargo build --release fails missing SDL2 at link.
+Own maintained source/residue delta zero; current counts22691 raw offsets,
+39 extern blocks,3 extern fns,5 no_mangle,6723 unsafe,85576 casts,
+257468 Rust lines are separately affected by peer cleanup. Peer WIP and
+remote sync remain separate; ROM/inputs/probes stay ignored. Credits, full
+gameplay/hardware, render/audio fidelity, masked RAM and ownership remain
+unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
