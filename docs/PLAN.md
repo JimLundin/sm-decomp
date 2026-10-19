@@ -10823,6 +10823,22 @@ core/DLL pass. Live CPU matches verified source; peer PPU work is outside
 this replay. All own progress counters unchanged. Prior holds and complete
 gameplay/render/audio remain open. Continue covered CPU cleanup.
 
+CPU safe indexed jump pointer (2026-10-19): indexed_jump_pointer computes
+the banked word-pointer address pair once after operand fetching. The unsafe
+wrapper retains both pointer reads; addresses stay fixed across those reads,
+with 16-bit pointer wrapping in the same bank. Frozen `af924671` plus this
+change passes 6,291,456 actual old/current wrapper traces: every operand, six
+X boundary values, four banks, two PC boundaries and fixed/mutating K/X
+callbacks. Named CPU state and all read addresses/order match. Synthetic
+callback patterns do not exhaust arbitrary MMIO. Prefix 3,600/0 (1.02s),
+native exit 0, executes the changed wrapper 35,617 times through actual bus
+reads. Clean full any% 129,712/0 (48.38s), native exit 0. Cargo fmt/check,
+full release/release-library builds with external SDL2, normal metadata and
+frozen optimized core/DLL pass. Live CPU matches verified source; peer PPU
+work is outside this replay. Rust lines +4 provide the safe pointer-pair
+helper; other own counters unchanged. Prior holds and complete gameplay/
+render/audio remain open. Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

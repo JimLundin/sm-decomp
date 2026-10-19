@@ -437,11 +437,15 @@ unsafe fn address_absolute_long_x(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) 
 }
 unsafe fn address_absolute_indexed_indirect(cpu: *mut Cpu, game: &mut Game) -> u16 {
     let adr = fetch_word(cpu, game);
-    read_word(
-        cpu,
-        u32::from((*cpu).k) << 16 | u32::from(adr.wrapping_add((*cpu).x)),
-        u32::from((*cpu).k) << 16 | u32::from(adr.wrapping_add((*cpu).x).wrapping_add(1)),
-        game,
+    let (low, high) = indexed_jump_pointer(adr, &*cpu);
+    read_word(cpu, low, high, game)
+}
+fn indexed_jump_pointer(offset: u16, cpu: &Cpu) -> (u32, u32) {
+    let pointer = offset.wrapping_add(cpu.x);
+    let bank = u32::from(cpu.k) << 16;
+    (
+        bank | u32::from(pointer),
+        bank | u32::from(pointer.wrapping_add(1)),
     )
 }
 #[derive(Clone, Copy)]
