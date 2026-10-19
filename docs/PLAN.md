@@ -315,6 +315,26 @@ state operations. Use the existing subsystem interfaces and coordinate with
 the projectile and Samus work. Temporary discovery scripts stay outside
 maintained code.
 
+Enemy-projectile arithmetic (2026-10-19): simplify 104 exercised integer
+expressions in 60 routines, including 23 compound forms, while preserving
+widths, narrowing, wrapping and operand/write order. Relative to committed
+Clippy source, Rust lines fall by 59, casts by 229 (185 c_int casts), and
+c_int cast lines by 128; raw accesses, offsets and unsafe functions are unchanged.
+Existing compiler/type, arithmetic-boundary and exact composition checks bind
+to this subset. All 104 expressions were observed in the original probe runs;
+281 recommended but unobserved expressions remain pending. The component
+boundary sweeps and route observations do not cover every input combination.
+
+Frozen 92af785a plus this bank passes formatting/check, normal release
+(44.51s), any% 129712/0 (180.68s) and Speed Booster 148406/0 (238.53s),
+native exits 0, and progress. All 74 source/configuration paths and runtime
+artifacts are fixed. Complete checkpoint payloads and non-timing diagnostics
+match the original arithmetic runs; only the independently recomputed runtime
+compatibility fingerprint differs. No checkpoint is patched or reused.
+The committed Clippy and SPC changes and unrelated working edits are preserved.
+Next: consolidate the four Skree particle initializers. Gameplay through
+credits and the broader projectile scope remain unfinished.
+
 Remaining projectile scope: 35 unexercised same-slot AddToHiLo calls
 remain pending in sm_86. Seven exercised calls and nine safe signatures are
 committed in 65052d38; the combined integration is reviewed below. Preserve
