@@ -709,18 +709,19 @@ unsafe fn rotate_memory_right(cpu: *mut Cpu, low: u32, high: u32, game: &mut Gam
 }
 unsafe fn rotate_memory_left(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).mf {
-        let result = (u32::from(read_byte(cpu, low, game)) << 1) | u32::from((*cpu).c);
+        let result = (u16::from(read_byte(cpu, low, game)) << 1) | u16::from((*cpu).c);
         (*cpu).c = result & 0x100 != 0;
         write_byte(cpu, low, result as u8, game);
         result
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(2);
-        let result = (u32::from(read_word(cpu, low, high, game)) << 1) | u32::from((*cpu).c);
-        (*cpu).c = result & 0x10000 != 0;
-        write_word(cpu, low, high, result as u16, true, game);
+        let value = read_word(cpu, low, high, game);
+        let result = value << 1 | u16::from((*cpu).c);
+        (*cpu).c = value & 0x8000 != 0;
+        write_word(cpu, low, high, result, true, game);
         result
     };
-    set_zero_negative(result as u16, (*cpu).mf, &mut *cpu);
+    set_zero_negative(result, (*cpu).mf, &mut *cpu);
 }
 unsafe fn shift_memory_right(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).mf {
@@ -741,18 +742,19 @@ unsafe fn shift_memory_right(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game
 }
 unsafe fn shift_memory_left(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).mf {
-        let result = u32::from(read_byte(cpu, low, game)) << 1;
+        let result = u16::from(read_byte(cpu, low, game)) << 1;
         (*cpu).c = result & 0x100 != 0;
         write_byte(cpu, low, result as u8, game);
         result
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(2);
-        let result = u32::from(read_word(cpu, low, high, game)) << 1;
-        (*cpu).c = result & 0x10000 != 0;
-        write_word(cpu, low, high, result as u16, true, game);
+        let value = read_word(cpu, low, high, game);
+        let result = value << 1;
+        (*cpu).c = value & 0x8000 != 0;
+        write_word(cpu, low, high, result, true, game);
         result
     };
-    set_zero_negative(result as u16, (*cpu).mf, &mut *cpu);
+    set_zero_negative(result, (*cpu).mf, &mut *cpu);
 }
 unsafe fn increment_memory(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).mf {

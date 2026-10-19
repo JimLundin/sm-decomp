@@ -8837,6 +8837,19 @@ linking still lacks SDL2. Live CPU matches verified source. Cast lines -1,
 Rust lines -3; other counters unchanged. Complete gameplay and rendering/audio
 remain open.
 
+CPU native left-shift results (2026-10-19): memory ROL/ASL use u16 results;
+word carry comes from the input's high bit, eliminating four result-truncation
+casts. Operand/carry read order, carry-before-write, high-byte-first word writes
+and final live-width Z/N update remain exact. Frozen HEAD `814227c4` plus this
+change passes 524,288 actual old/current helpers over every word, both widths
+and both carry values, checking CPU/bus state and memory writes. Prefix 3,600/0
+(1.08s) executes 5,089 word ROL and one word ASL; byte paths are dedicated-probe
+coverage, not movie hits. Clean full any% 129,712/0 (57.87s), native exit 0.
+Cargo fmt/check, release library, normal metadata and optimized core/DLL builds
+pass; full frontend linking still lacks SDL2. Live CPU matches verified source.
+Rust lines +2 retain explicit word input values for carry extraction; other
+progress counters unchanged. Complete gameplay and rendering/audio remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
