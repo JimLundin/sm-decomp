@@ -1989,28 +1989,68 @@ unsafe fn XrayHdmaOnScreen_BeamAimedU(mut ctx: *mut XrayHdmaCtx, game: &mut Game
     }
     XrayFillDown((*ctx).dest, 0xff as uint16, v0 as uint16);
 }
+fn fill_xray_onscreen_positive_table(
+    ram: &mut [u8],
+    table: usize,
+    start: u16,
+    origin: u16,
+    low_step: u16,
+    high_step: u16,
+) {
+    // Wrap the byte offset before adding the table base, including at row zero.
+    let anchor = table + usize::from(start.wrapping_sub(2));
+    ram[anchor..anchor + 2].fill((origin >> 8) as u8);
+    xray_onscreen_positive_stores(
+        |address, value| ram[address as usize] = value,
+        table as u32,
+        start,
+        origin,
+        low_step,
+        high_step,
+    );
+
+    let mut index = start.wrapping_sub(4);
+    loop {
+        // The ROM checks the first word even when the initial index is negative.
+        let address = table + usize::from(index);
+        if u16::from_le_bytes([ram[address], ram[address + 1]]) == 0x00ff {
+            return;
+        }
+        ram[address..address + 2].copy_from_slice(&0x00ffu16.to_le_bytes());
+        index = index.wrapping_sub(2);
+        if index & 0x8000 != 0 {
+            return;
+        }
+    }
+}
+
 unsafe fn XrayHdmaOnScreen_BeamAimedD(mut ctx: *mut XrayHdmaCtx, game: &mut Game) {
+    if (*ctx).r28 as ::core::ffi::c_int - 128 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
+        != 0
+    {
+        // Current callers pass the $9100 or $9800 table inside this g_ram.
+        let table = (*ctx).dest.cast::<u8>().offset_from(game.g_ram.as_ptr()) as usize;
+        let start = (*ctx).r24.wrapping_mul(2);
+        let origin = (*ctx).r22;
+        let low_step = (*ctx).r32;
+        let high_step = (*ctx).r30;
+        fill_xray_onscreen_positive_table(
+            &mut game.g_ram,
+            table,
+            start,
+            origin,
+            low_step,
+            high_step,
+        );
+        return;
+    }
     let mut v0: ::core::ffi::c_int = 2 as ::core::ffi::c_int * (*ctx).r24 as ::core::ffi::c_int;
     *(*ctx)
         .dest
         .offset((v0 - 2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
         (((*ctx).r22 as ::core::ffi::c_int >> 8 as ::core::ffi::c_int)
             * 0x101 as ::core::ffi::c_int) as uint16;
-    if (*ctx).r28 as ::core::ffi::c_int - 128 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
-        != 0
-    {
-        // Current callers pass the $9100 or $9800 table inside this g_ram.
-        let base = 0x7e0000u32 + (*ctx).dest.cast::<u8>().offset_from(game.g_ram.as_ptr()) as u32;
-        xray_onscreen_positive_stores(
-            |address, value| game.g_ram[(address - 0x7e0000) as usize] = value,
-            base,
-            (*ctx).r24.wrapping_mul(2),
-            (*ctx).r22,
-            (*ctx).r32,
-            (*ctx).r30,
-        );
-    } else if (*ctx).r26 as ::core::ffi::c_int - 128 as ::core::ffi::c_int
-        & 0x8000 as ::core::ffi::c_int
+    if (*ctx).r26 as ::core::ffi::c_int - 128 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
         != 0
     {
         XrayFillDownRamped(

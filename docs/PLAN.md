@@ -26,13 +26,12 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest focused check: frozen `b670ec87` plus the final `sm_91.rs` correction
-passes any% 129712/0 (182.74s) and Waver 58109/0 (104.21s), both native
-exit 0. A separate full Waver run observes both raw window tables and all
-four window boundaries before normalization: 58109/0 (120.90s), zero raw
-differences. Format, release build and progress checks pass. The separate
-table-mask removal below also passes both full movies and enables comparison
-of the complete repaired tables.
+Latest focused check: frozen `76ade707` plus the on-screen down-right
+boundary repair passes any% 129712/0 (163.25s) and Waver 58109/0 (88.18s),
+both native exit 0. All 924 window-table bytes are enforced by the normal
+RAM comparison. The final maintained source matches the verified snapshot.
+Format, release build and progress checks pass. Later peer source changes
+remain separate from these focused replays.
 
 Everything that existed before is in the branch `archive/pre-transpile-2026-10-17`.
 
@@ -242,11 +241,30 @@ fixtures, probes and snapshots remain outside tracked files.
 
 Coverage limits: natural execution at destination $9800 remains unproved;
 constructed ROM controls cover that destination. Offscreen row controls cover
-visible rows 0..229, not arbitrary 16-bit rows. Separate existing on-screen
-outer-routine gaps remain: the row-zero anchor uses a different wrapped
-address, and upward filling ignores the ROM's existing-empty-word stop.
-Those unchanged gaps are outside this rendering fix. Complete gameplay,
+visible rows 0..229, not arbitrary 16-bit rows. The subsequent down-right
+boundary repair below resolves the row-zero anchor and upward-fill stopping
+gaps found during this fix. Other beam directions, complete gameplay,
 credits, audio timing and remaining masked state are still open.
+
+On-screen down-right boundary repair (2026-10-19): a safe table helper now
+wraps the anchor's 16-bit byte offset before adding the RAM base. Upward
+filling reads each word and stops at the first existing 00FF window; its
+initial wrapped index is read before checking the sign after decrement.
+The existing downward kernel and other direction branches retain their code.
+
+Actual maintained-wrapper versus ROM controls improve from four failures in
+ten cases to zero. The expanded 2,016-case matrix improves from 882 failures
+to zero, covering both destinations, boundary rows, existing-empty-word
+positions, origins and ordered/reversed/zero/large gradients. Complete RAM
+matches outside six ROM scratch and six return-stack bytes; Rust preservation
+of those twelve bytes is asserted separately. Constructed contexts prove
+these cases, not their natural movie coverage.
+
+The full final-source movie results are recorded above, with both complete
+tables enforced. Source review, cargo fmt/check, release build and progress
+pass. Own cast lines -1; Rust lines +40 make the wrapped anchor and stopping
+rule explicit in safe Rust. Other own residue counters and RAM layouts are
+unchanged. Temporary controls and ROM-derived fixtures remain untracked.
 
 Independent X-ray outer-boundary QC (2026-10-19): frozen 76ade707 plus
 the proposed fill_xray_onscreen_positive_table correction passes 4,200
