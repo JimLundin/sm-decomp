@@ -13038,6 +13038,27 @@ and packed seven-byte entries. PLM decrement, Chozo guarded reads,
 Super Missile passage and previous holds stay held; complete credits,
 gameplay, hardware/audio, masks and ownership remain open.
 
+PLM graphics-table words (2026-10-19): PlmInstr_LoadItemPlmGfx now
+reads its three live ROM tables with the checked little-endian word reader.
+Named VRAM destination, tile offset and starting tile number retain their
+original widths and order. The captured index>>1 selects a linear byte
+offset after LoROM mapping, preserving wide reads across bank boundaries.
+Pointer/queue/tile stores retain their sequence and arithmetic.
+
+Frozen ecc0e10e plus only this change passes any%129712/0
+(245.10s), native exit0, and pickup route68606/0
+(133.46s), native exit0. Observed pickup route68606/0
+(130.96s) executes 3 sequences of all three table reads.
+Maintained source has no observers. All196608 table address/bounds checks
+pass separately; this adds no movie coverage. Cargo fmt/check and release
+build pass. Own cast lines-12, Rust lines-14; other own counters unchanged.
+Frozen replays exclude peer source, which remains preserved. Next: the
+loader's packed VRAM queue writes and tail, retaining size-before-source
+read and seven-byte entries. PLM decrement, Chozo guarded reads,
+The peer Super Missile route/cleanup has separate verification; previous
+unresolved coverage holds and complete credits,
+gameplay, hardware/audio, masks and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

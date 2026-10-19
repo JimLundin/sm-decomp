@@ -1682,25 +1682,10 @@ pub unsafe fn PlmInstr_LoadItemPlmGfx(
     game.g_ram[slot..slot + 2].copy_from_slice(&current_index.to_le_bytes());
     let next_index = gfx_index.wrapping_add(2) & 6;
     game.g_ram[0x1c2d..0x1c2f].copy_from_slice(&next_index.to_le_bytes());
-    let mut v3: ::core::ffi::c_int = i32::from(gfx_index >> 1);
-    let mut r18: ::core::ffi::c_int = *(game.g_rom.offset(
-        (((0x8487cd as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x8487cd as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
-        .offset(v3 as isize) as ::core::ffi::c_int;
-    let mut r20: ::core::ffi::c_int = *(game.g_rom.offset(
-        (((0x8487d5 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x8487d5 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
-        .offset(v3 as isize) as ::core::ffi::c_int;
-    let mut R22: ::core::ffi::c_int = *(game.g_rom.offset(
-        (((0x8487dd as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x8487dd as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
-        .offset(v3 as isize) as ::core::ffi::c_int;
+    let table_offset = usize::from(gfx_index >> 1) * 2;
+    let vram_destination = game.read_rom_word(0x8487cd, table_offset);
+    let tile_offset = i32::from(game.read_rom_word(0x8487d5, table_offset));
+    let mut tile_number = i32::from(game.read_rom_word(0x8487dd, table_offset));
     let instruction = plmp.offset_from(RomBankBase(0x84, game)) as u16;
     let pointer_offset = 0x1c2f + usize::from(gfx_index >> 1) * 2; // plm_item_gfx_ptrs
     game.g_ram[pointer_offset..pointer_offset + 2].copy_from_slice(&instruction.to_le_bytes());
@@ -1715,12 +1700,12 @@ pub unsafe fn PlmInstr_LoadItemPlmGfx(
     (*v5).size = 256 as uint16;
     (*v5).src.addr = *(plmp as *mut uint16) as VoidP;
     (*v5).src.bank = 0x89 as uint8;
-    (*v5).vram_dst = r18 as uint16;
+    (*v5).vram_dst = vram_destination;
     *((&raw mut game.g_ram as *mut uint8).offset(0x330 as ::core::ffi::c_int as isize)
         as *mut uint16) = (v4 + 7 as ::core::ffi::c_int) as uint16;
     plmp = plmp.offset(2 as ::core::ffi::c_int as isize);
-    let mut v7: ::core::ffi::c_int = r20;
-    let mut R24: ::core::ffi::c_int = r20 + 16 as ::core::ffi::c_int;
+    let mut v7: ::core::ffi::c_int = tile_offset;
+    let mut R24: ::core::ffi::c_int = tile_offset + 16 as ::core::ffi::c_int;
     loop {
         *((&raw mut (*(&raw mut (*((&raw mut game.g_ram as *mut uint8)
             .offset(0xa000 as ::core::ffi::c_int as isize)
@@ -1728,10 +1713,11 @@ pub unsafe fn PlmInstr_LoadItemPlmGfx(
             .tables as *mut TileTable)
             .offset(0 as ::core::ffi::c_int as isize))
         .top_left as *mut uint8)
-            .offset(v7 as isize) as *mut uint16) =
-            (R22 + ((*plmp.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int)
-                << 10 as ::core::ffi::c_int)) as uint16;
-        R22 += 1;
+            .offset(v7 as isize) as *mut uint16) = (tile_number
+            + ((*plmp.offset(0 as ::core::ffi::c_int as isize) as ::core::ffi::c_int)
+                << 10 as ::core::ffi::c_int))
+            as uint16;
+        tile_number += 1;
         plmp = plmp.offset(1);
         v7 += 2 as ::core::ffi::c_int;
         if !(v7 != R24) {
