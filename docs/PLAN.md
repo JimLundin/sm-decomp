@@ -2119,34 +2119,32 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-20): `8da1b9c9` replaces 51007 resolved
-type uses across 54 files, removing 25 aliases and 732 imports. Independent
-complete-source reconstruction, alias-chain and macro-context review pass;
-all RAM metadata and diagnostic/comment text remain exact. Normal formatting
-accounts for the remaining source changes; runtime casts are unchanged.
+Latest reviewed integration (2026-10-20): `371465e2` shares 225 adjacent
+register/mirror write pairs. Independent complete-source reconstruction
+accounts for all six changed files and all 67 composed Rust files. Every
+register, byte value and explicit mirror offset remains exact, including
+offsets that differ from the usual register mirror. All literal values and
+indices fit their types and the actual 131072-byte RAM allocation.
 
-Its parent `5c1947d4` shares 882 named RAM word updates. Independent review
-reconstructs every replacement, including 117 fresh post-store rereads.
-The macro captures the destination and old word before evaluating the RHS,
-preserves signed offsets and drops RHS temporaries before rereading.
-The actual macro matches the passing 175 boundary cases and order/drop,
-hygiene, chained-store and caller-exit checks; both wrong-order controls fail.
+The helper preserves 52 mirror-first and 173 bus-first sequences. Its source
+and all 225 parameter rows match the existing mutating-mock-bus comparison:
+115200 full-RAM/trace cases cover all prior byte values and both mutation
+modes. No extra comparison run was needed. This does not establish global
+alias safety or replace the final gameplay replay.
 
-Included `2481f16f` shares 48 HDMA descriptors on the reviewed PLM source.
-Independent reconstruction of all six files retains all 144 literal operands,
-field types/order and the packed four-byte layout. The final composition
-reconstructs from the reviewed update candidate and these HDMA changes.
+All 70 committed Rust/Cargo inputs match the final candidate; its 67 Rust
+files match the replay copy and all 72 source/library/DLL/fixture pins remain
+stable after completion. Normal registry-only release (24.54s), formatting,
+source/order review and progress pass. Final any% passes 129712/0 (112.31s),
+native exit 0, on the composition with reviewed `8da1b9c9` aliases,
+`5c1947d4` RAM updates and `2481f16f` HDMA descriptors. Their earlier checks
+retain their scope; the preliminary register-pair replay was not substituted.
 
-All 73 committed source/configuration inputs match the final candidate;
-all 78 source/DLL/fixture pins remain stable after completion. Normal
-registry-only release (23.99s), formatting/check and progress pass. The two
-focused update/alias commits share one full any% run: 129712/0 (112.70s wall,
-112.54s replay), native exit 0. Completed checks were reused. Net Rust lines
--483 for updates and -3415 for aliases, total 150662. Alias raw-offset lines
-rise 4095 to 4096 only through formatting; actual expressions stay 4096.
-Independent review has no findings. Prior scoped checks retain their limits.
-Broader readability, frontend execution, full credits and global alias safety
-remain incomplete.
+Net Rust lines -208, casts -675 and raw-offset lines -225; total Rust 150454.
+Unsafe functions increase by one for the shared helper; existing bus writes
+remain unsafe. The i32/c_int cast-line count stays 19759. Independent review
+has no findings. Broader readability, frontend execution, full credits and
+global alias safety remain incomplete.
 
 The prior `2ddf3af0` shares all twelve corpse
 tile initializers. Independent reconstruction accounts for all 50 ordered
