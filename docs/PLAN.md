@@ -24,12 +24,12 @@ zero failures, but visits only six rooms and does not reach credits. The
 58,109-frame Waver route now also passes with zero rendered failures.
 The 69,700-frame Super Missile route passes with zero failures, visiting
 22 rooms and 28 enemy definitions and collecting 5/5 Super Missiles.
-The route also passes on reviewed integration e1a9a3d3; later implementation
+The route also passes on reviewed integration 19d550a3; later implementation
 changes still require separate verification.
 The extension to the Green Brinstar Save Room passes 71,800 frames with zero
 failures, 23 rooms and 28 enemy definitions. It ends with 3/5 Supers and an
-in-game save completed. Its frozen source is 438e7755 plus the menu correction
-and mask removal committed in b1c4b470; credits remain unvisited.
+in-game save completed. It also passes on frozen integration 19d550a3;
+credits remain unvisited.
 Rendering starts enabled deterministically. Complete gameplay, audio timing
 and other masked RAM remain unverified. Historical zero-failure Waver runs
 made before the render initialization fix do not establish rendering equivalence.
@@ -39,13 +39,19 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration: frozen `438e7755` plus only the menu correction
-and mask removal committed in `b1c4b470` passes any%129712/0 (233.88s),
-Waver58109/0 (102.78s), Super Missile69700/0 (140.59s) and Green Brinstar
-Save Room71800/0 (128.97s), all native exits0. This includes the committed
-Super Missile collector cleanup. Independent source/host review, immutable
-source/input hashes, isolated saves, formatting, normal release and progress
-pass. Later concurrent edits are excluded; full gameplay/credits and wider
+Latest reviewed integration: frozen `19d550a3` passes any% 129712/0
+(248.85s), Waver 58109/0 (120.79s), Super Missile 69700/0 (148.05s)
+and Green Brinstar Save Room 71800/0 (156.64s), all native exits 0.
+Complete non-timing diagnostics match the earlier menu/route baselines.
+This combines the animation countdown, packed PLM graphics queue, NMI
+register reads, Super Missile collector and menu correction with 1A93
+comparison enabled. All 68 source/config files match the frozen commit
+after archive newline normalization and retain their hashes through replay.
+The maintained CLI and DLL are unchanged; inputs and save directories are
+separate. The save-room route visits 23 rooms and 28 enemy definitions.
+Formatting, normal Cargo release (50.95s) and progress pass; no maintained
+source or own residue counters change. Later tile/door/FX edits retain
+separate checks. Full gameplay/credits, disk-save persistence and wider
 hardware/audio coverage remain unfinished.
 
 Earlier reviewed integration: frozen `620a6ac6` passes any% 129712/0
