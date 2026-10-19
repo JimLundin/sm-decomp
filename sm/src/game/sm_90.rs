@@ -1190,12 +1190,8 @@ pub unsafe fn Samus_DrawEcho(mut j: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: int16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xab8) as *mut uint16)
         .offset(v1 as isize) as ::core::ffi::c_int
-        - (*(game.g_rom.offset(
-            (((0x91b629 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x91b629 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut SamusPoseParams)
+        - (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const uint8
+            as *mut SamusPoseParams)
             .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as isize))
         .y_offset_to_gfx as ::core::ffi::c_int
         - *((&raw mut game.g_ram as *mut uint8).offset(0x915) as *mut uint16) as ::core::ffi::c_int)
@@ -1232,12 +1228,8 @@ pub unsafe fn Samus_DrawShinesparkCrashEchoes(mut k: uint16, game: &mut Game) {
     {
         let mut a: uint16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16))
             .wrapping_add(
-                (*(game.g_rom.offset(
-                    (((0x929263 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                        << 15 as ::core::ffi::c_int
-                        | 0x929263 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                        & 0x3fffff as ::core::ffi::c_int) as isize,
-                ) as *const uint8 as *mut uint16)
+                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x929263)) as *const uint8
+                    as *mut uint16)
                     .offset(
                         *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16)
                             as isize,
@@ -1246,12 +1238,8 @@ pub unsafe fn Samus_DrawShinesparkCrashEchoes(mut k: uint16, game: &mut Game) {
         let mut v2: int16 = (*((&raw mut game.g_ram as *mut uint8).offset(0xab8) as *mut uint16)
             .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
             as ::core::ffi::c_int
-            - (*(game.g_rom.offset(
-                (((0x91b629 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x91b629 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut SamusPoseParams)
+            - (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const uint8
+                as *mut SamusPoseParams)
                 .offset(
                     *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as isize,
                 ))
@@ -1280,13 +1268,8 @@ pub unsafe fn Samus_DrawShinesparkCrashEchoes(mut k: uint16, game: &mut Game) {
                 let mut v5: uint16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa96)
                     as *mut uint16))
                     .wrapping_add(
-                        (*(game.g_rom.offset(
-                            (((0x92945d as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                                << 15 as ::core::ffi::c_int
-                                | 0x92945d as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                                & 0x3fffff as ::core::ffi::c_int)
-                                as isize,
-                        ) as *const uint8 as *mut uint16)
+                        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x92945d)) as *const uint8
+                            as *mut uint16)
                             .offset(
                                 *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16)
                                     as isize,
@@ -1336,12 +1319,8 @@ pub unsafe fn Samus_DrawDuringDeathAnim(game: &mut Game) {
         .wrapping_mul((*((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16))));
     let mut a: uint16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16))
         .wrapping_add(
-            (*(game.g_rom.offset(
-                (((0x929263 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x929263 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            (*(game.g_rom.offset(crate::rtl::lorom_offset(0x929263)) as *const uint8
+                as *mut uint16)
                 .offset(
                     *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as isize,
                 )),
@@ -1367,12 +1346,8 @@ pub unsafe fn Samus_DrawDuringDeathAnim(game: &mut Game) {
     {
         DrawSamusSpritemap(
             ((*((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16)).wrapping_add(
-                (*(game.g_rom.offset(
-                    (((0x92945d as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                        << 15 as ::core::ffi::c_int
-                        | 0x92945d as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                        & 0x3fffff as ::core::ffi::c_int) as isize,
-                ) as *const uint8 as *mut uint16)
+                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x92945d)) as *const uint8
+                    as *mut uint16)
                     .offset((R36 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)),
             )),
             ((*((&raw mut game.g_ram as *mut uint8).offset(0x911) as *mut uint16)).wrapping_add(
@@ -1392,12 +1367,8 @@ pub unsafe fn Samus_DrawWhenNotAnimatingOrDying(game: &mut Game) {
         .wrapping_mul((*((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16))));
     let mut a: uint16 = ((*((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16))
         .wrapping_add(
-            (*(game.g_rom.offset(
-                (((0x929263 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x929263 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            (*(game.g_rom.offset(crate::rtl::lorom_offset(0x929263)) as *const uint8
+                as *mut uint16)
                 .offset(
                     *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as isize,
                 )),
@@ -1416,12 +1387,8 @@ pub unsafe fn Samus_DrawWhenNotAnimatingOrDying(game: &mut Game) {
     {
         DrawSamusSpritemap(
             ((*((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16)).wrapping_add(
-                (*(game.g_rom.offset(
-                    (((0x92945d as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                        << 15 as ::core::ffi::c_int
-                        | 0x92945d as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                        & 0x3fffff as ::core::ffi::c_int) as isize,
-                ) as *const uint8 as *mut uint16)
+                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x92945d)) as *const uint8
+                    as *mut uint16)
                     .offset((R36 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)),
             )),
             *((&raw mut game.g_ram as *mut uint8).offset(0xb04) as *mut uint16),
@@ -1473,14 +1440,8 @@ pub unsafe fn HandleAtmosphericEffects(game: &mut Game) {
                         *((&raw mut game.g_ram as *mut uint8).offset(0xad4) as *mut uint16)
                             .offset(v1 as isize) = *(RomPtr_90(
                             ((r18).wrapping_add(
-                                (*(game.g_rom.offset(
-                                    (((0x908b93 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                                        << 15 as ::core::ffi::c_int
-                                        | 0x908b93 as ::core::ffi::c_int
-                                            & 0x7fff as ::core::ffi::c_int)
-                                        & 0x3fffff as ::core::ffi::c_int)
-                                        as isize,
-                                ) as *const uint8
+                                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x908b93))
+                                    as *const uint8
                                     as *mut uint16)
                                     .offset(
                                         (v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
@@ -1498,13 +1459,8 @@ pub unsafe fn HandleAtmosphericEffects(game: &mut Game) {
                 *((&raw mut game.g_ram as *mut uint8).offset(0xad4) as *mut uint16)
                     .offset(v1 as isize) = *(RomPtr_90(
                     ((r18).wrapping_add(
-                        (*(game.g_rom.offset(
-                            (((0x908b93 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                                << 15 as ::core::ffi::c_int
-                                | 0x908b93 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                                & 0x3fffff as ::core::ffi::c_int)
-                                as isize,
-                        ) as *const uint8 as *mut uint16)
+                        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x908b93)) as *const uint8
+                            as *mut uint16)
                             .offset(
                                 (v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
                             )),
@@ -1518,12 +1474,8 @@ pub unsafe fn HandleAtmosphericEffects(game: &mut Game) {
                 *((&raw mut game.g_ram as *mut uint8).offset(0xaec) as *mut uint16)
                     .offset(v1 as isize) = v5;
                 if (((v5 as uint8) as i16).wrapping_sub(
-                    ((*(game.g_rom.offset(
-                        (((0x908bef as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                            << 15 as ::core::ffi::c_int
-                            | 0x908bef as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                            & 0x3fffff as ::core::ffi::c_int) as isize,
-                    ) as *const uint8 as *mut uint16)
+                    ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x908bef)) as *const uint8
+                        as *mut uint16)
                         .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize))
                         as i16),
                 )) as ::core::ffi::c_int
@@ -1595,23 +1547,19 @@ pub unsafe fn AtmosphericTypeFunc_1_FootstepSplash(mut k: uint16, mut j: uint16,
                     != 0
                 {
                     (*v5).ycoord = v6 as uint8;
-                    *(&raw mut (*v5).charnum as *mut uint16) = *(RomPtr_90(
-                        ((r18).wrapping_add(
-                            (*(game.g_rom.offset(
-                                (((0x908bff as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                                    << 15 as ::core::ffi::c_int
-                                    | 0x908bff as ::core::ffi::c_int
-                                        & 0x7fff as ::core::ffi::c_int)
-                                    & 0x3fffff as ::core::ffi::c_int)
-                                    as isize,
-                            ) as *const uint8 as *mut uint16)
-                                .offset(
-                                    (k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
-                                )),
-                        )),
-                        game,
-                    )
-                        as *mut uint16);
+                    *(&raw mut (*v5).charnum as *mut uint16) =
+                        *(RomPtr_90(
+                            ((r18).wrapping_add(
+                                (*(game.g_rom.offset(crate::rtl::lorom_offset(0x908bff))
+                                    as *const uint8
+                                    as *mut uint16)
+                                    .offset(
+                                        (k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int)
+                                            as isize,
+                                    )),
+                            )),
+                            game,
+                        ) as *mut uint16);
                     *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16) =
                         ((v3).wrapping_add((4u16)));
                 }
@@ -1729,15 +1677,13 @@ pub unsafe fn Samus_CalcSpritemapPos(mut k: uint16, game: &mut Game) -> PairU16 
     return MakePairU16(v1.k, v1.j);
 }
 pub unsafe fn Samus_CalcSpritemapPos_Default(mut j: uint16, game: &mut Game) -> PairU16 {
-    let mut v1: ::core::ffi::c_int = *(&raw mut (*(game.g_rom.offset(
-        (((0x91b629 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x91b629 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut SamusPoseParams)
-        .offset(0))
-    .y_offset_to_gfx)
-        .offset((4 as ::core::ffi::c_int * j as ::core::ffi::c_int) as isize)
-        as int8 as ::core::ffi::c_int;
+    let mut v1: ::core::ffi::c_int =
+        *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const uint8
+            as *mut SamusPoseParams)
+            .offset(0))
+        .y_offset_to_gfx)
+            .offset((4 as ::core::ffi::c_int * j as ::core::ffi::c_int) as isize) as int8
+            as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0xb06) as *mut uint16) =
         (*((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) as ::core::ffi::c_int
             - v1
@@ -3059,14 +3005,8 @@ pub unsafe fn Samus_HandleExtraRunspeedX(game: &mut Game) {
                         *((&raw mut game.g_ram as *mut uint8).offset(0xace) as *mut uint16) =
                             0 as uint16;
                         *((&raw mut game.g_ram as *mut uint8).offset(0xb3e) as *mut uint16) =
-                            *(game.g_rom.offset(
-                                (((0x91b61f as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                                    << 15 as ::core::ffi::c_int
-                                    | 0x91b61f as ::core::ffi::c_int
-                                        & 0x7fff as ::core::ffi::c_int)
-                                    & 0x3fffff as ::core::ffi::c_int)
-                                    as isize,
-                            ) as *const uint8 as *mut uint16)
+                            *(game.g_rom.offset(crate::rtl::lorom_offset(0x91b61f)) as *const uint8
+                                as *mut uint16)
                                 .offset(0);
                     }
                     if (((*((&raw mut game.g_ram as *mut uint8).offset(0xb42) as *mut uint16))
@@ -3937,12 +3877,7 @@ pub unsafe fn Samus_Movement_03_SpinJumping(game: &mut Game) {
     } else if *((&raw mut game.g_ram as *mut uint8).offset(0xa94) as *mut uint16)
         as ::core::ffi::c_int
         == 1 as ::core::ffi::c_int
-        && *(game.g_rom.offset(
-            (((0x90a514 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x90a514 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint8)
+        && *(game.g_rom.offset(crate::rtl::lorom_offset(0x90a514)) as *const uint8 as *mut uint8)
             .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16) as isize)
             as ::core::ffi::c_int
             != 0
@@ -4354,12 +4289,8 @@ pub unsafe fn DisableMinimapAndMarkBossRoomAsExplored(game: &mut Game) {
     }
     let mut v2: uint16 = 5 as uint16;
     while *((&raw mut game.g_ram as *mut uint8).offset(0x179c) as *mut uint16) as ::core::ffi::c_int
-        != (*(game.g_rom.offset(
-            (((0x90a83a as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x90a83a as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut DisableMinimapAndMarkBossRoomAsExploredEnt)
+        != (*(game.g_rom.offset(crate::rtl::lorom_offset(0x90a83a)) as *const uint8
+            as *mut DisableMinimapAndMarkBossRoomAsExploredEnt)
             .offset(v2 as isize))
         .boss_id_ as ::core::ffi::c_int
     {
@@ -4368,11 +4299,8 @@ pub unsafe fn DisableMinimapAndMarkBossRoomAsExplored(game: &mut Game) {
             return;
         }
     }
-    let mut i: ::core::ffi::c_int = (*(game.g_rom.offset(
-        (((0x90a83a as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x90a83a as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8
+    let mut i: ::core::ffi::c_int = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x90a83a))
+        as *const uint8
         as *mut DisableMinimapAndMarkBossRoomAsExploredEnt)
         .offset(v2 as isize))
     .ptrs as ::core::ffi::c_int;
@@ -4474,12 +4402,7 @@ pub unsafe fn UpdateMinimap(game: &mut Game) {
                 as *mut uint8 as *mut uint16),
         )));
     let mut r9: *const uint8 = RomPtr_82(
-        *(game.g_rom.offset(
-            (((0x829717 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x829717 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0x829717)) as *const uint8 as *mut uint16)
             .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize),
         game,
     );
@@ -4654,12 +4577,7 @@ pub unsafe fn UpdateMinimapInside(
     let mut v2: uint16 = ((2u16).wrapping_mul(((v1) as u16)));
     let mut r0: *const uint16 = RomPtr(
         Load24(
-            (game.g_rom.offset(
-                (((0x82964a as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x82964a as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut LongPtr)
+            (game.g_rom.offset(crate::rtl::lorom_offset(0x82964a)) as *const uint8 as *mut LongPtr)
                 .offset(
                     *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize,
                 ) as *mut LongPtr,
@@ -4851,13 +4769,9 @@ pub unsafe fn UpdateBeamTilesAndPalette(game: &mut Game) {
     ))
     .size = 256 as uint16;
     v1 = ((v1).wrapping_add((2u16)));
-    (*gVramWriteEntry(v1 as ::core::ffi::c_int, game)).size = *(game.g_rom.offset(
-        (((0x90c3b1 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x90c3b1 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8
-        as *mut uint16)
-        .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
+    (*gVramWriteEntry(v1 as ::core::ffi::c_int, game)).size =
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0x90c3b1)) as *const uint8 as *mut uint16)
+            .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     v1 = ((v1).wrapping_add((2u16)));
     let fresh155 = v1;
     v1 = v1.wrapping_add(1);
@@ -4881,11 +4795,8 @@ pub unsafe fn WriteBeamPalette_A(mut a: uint16, game: &mut Game) {
     );
 }
 pub unsafe fn WriteBeamPalette_Y(mut j: uint16, game: &mut Game) {
-    let mut r0: uint16 = *(game.g_rom.offset(
-        (((0x90c3c9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x90c3c9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
+    let mut r0: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x90c3c9)) as *const uint8
+        as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     let mut v1: uint16 = 0 as uint16;
     let mut v2: uint16 = 0 as uint16;
@@ -4904,11 +4815,8 @@ pub unsafe fn WriteBeamPalette_Y(mut j: uint16, game: &mut Game) {
     }
 }
 pub unsafe fn LoadProjectilePalette(mut a: uint16, game: &mut Game) {
-    let mut r0: uint16 = *(game.g_rom.offset(
-        (((0x90c3c9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x90c3c9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
+    let mut r0: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x90c3c9)) as *const uint8
+        as *mut uint16)
         .offset((a as ::core::ffi::c_int & 0xfff as ::core::ffi::c_int) as isize);
     let mut v1: uint16 = 0 as uint16;
     let mut v2: uint16 = 0 as uint16;
@@ -6269,20 +6177,10 @@ pub unsafe fn SpawnProjectileTrail(mut k: uint16, game: &mut Game) {
         1 as uint16;
     let mut v6: ::core::ffi::c_int = v2 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0xd6a0) as *mut uint16).offset(v5 as isize) =
-        *(game.g_rom.offset(
-            (((0x90b5bb as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x90b5bb as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0x90b5bb)) as *const uint8 as *mut uint16)
             .offset(v6 as isize);
     *((&raw mut game.g_ram as *mut uint8).offset(0xd6c4) as *mut uint16).offset(v5 as isize) =
-        *(game.g_rom.offset(
-            (((0x90b609 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x90b609 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0x90b609)) as *const uint8 as *mut uint16)
             .offset(v6 as isize);
     ProjectileTrail_Func5(
         *((&raw mut game.g_ram as *mut uint8).offset(0xdde) as *mut uint16),
@@ -7029,12 +6927,8 @@ pub unsafe fn InitProjectilePositionDirection(mut r20: uint16, game: &mut Game) 
             *((&raw mut game.g_ram as *mut uint8).offset(0xb5e) as *mut uint16) as uint8 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0xb5e) as *mut uint16) = 0 as uint16;
     } else {
-        direction_shots_fired = (*(game.g_rom.offset(
-            (((0x91b629 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x91b629 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut SamusPoseParams)
+        direction_shots_fired = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629))
+            as *const uint8 as *mut SamusPoseParams)
             .offset(v0 as isize))
         .direction_shots_fired as uint16;
         if direction_shots_fired as ::core::ffi::c_int & 0xf0 as ::core::ffi::c_int
@@ -7042,12 +6936,8 @@ pub unsafe fn InitProjectilePositionDirection(mut r20: uint16, game: &mut Game) 
         {
             if direction_shots_fired as ::core::ffi::c_int != 16 as ::core::ffi::c_int || {
                 *(&raw mut direction_shots_fired as *mut uint8).offset(0) =
-                    (*(game.g_rom.offset(
-                        (((0x91b629 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                            << 15 as ::core::ffi::c_int
-                            | 0x91b629 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                            & 0x3fffff as ::core::ffi::c_int) as isize,
-                    ) as *const uint8 as *mut SamusPoseParams)
+                    (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const uint8
+                        as *mut SamusPoseParams)
                         .offset(
                             *((&raw mut game.g_ram as *mut uint8).offset(0xa24) as *mut uint16)
                                 as isize,
@@ -7068,11 +6958,8 @@ pub unsafe fn InitProjectilePositionDirection(mut r20: uint16, game: &mut Game) 
     let mut v2: ::core::ffi::c_int = r20 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0xc04) as *mut uint16).offset(v2 as isize) =
         direction_shots_fired;
-    let mut r22: uint16 = (*(game.g_rom.offset(
-        (((0x91b629 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x91b629 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut SamusPoseParams)
+    let mut r22: uint16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const uint8
+        as *mut SamusPoseParams)
         .offset(v0 as isize))
     .y_offset_to_gfx as uint16;
     let mut v3: uint16 = (2 as ::core::ffi::c_int
@@ -7197,13 +7084,8 @@ pub unsafe fn HandleChargingBeamGfxAudio(game: &mut Game) {
                         as *mut uint16) = v2;
                     let mut v3: uint16 = v2;
                     let mut r0: *const uint8 = RomPtr_90(
-                        *(game.g_rom.offset(
-                            (((0x90c481 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                                << 15 as ::core::ffi::c_int
-                                | 0x90c481 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                                & 0x3fffff as ::core::ffi::c_int)
-                                as isize,
-                        ) as *const uint8 as *mut uint16)
+                        *(game.g_rom.offset(crate::rtl::lorom_offset(0x90c481)) as *const uint8
+                            as *mut uint16)
                             .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize),
                         game,
                     );
@@ -7328,18 +7210,12 @@ pub unsafe fn DrawFlareAnimationComponent(mut k: uint16, game: &mut Game) {
         v1 = word_93A225[(k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize];
     }
     let mut r22: uint16 = ((r18).wrapping_add((v1)));
-    let mut r24: uint16 = (*(game.g_rom.offset(
-        (((0x91b629 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x91b629 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut SamusPoseParams)
+    let mut r24: uint16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const uint8
+        as *mut SamusPoseParams)
         .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as isize))
     .y_offset_to_gfx as uint16;
-    v2 = (*(game.g_rom.offset(
-        (((0x91b629 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x91b629 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut SamusPoseParams)
+    v2 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const uint8
+        as *mut SamusPoseParams)
         .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as isize))
     .direction_shots_fired as int16;
     if v2 as ::core::ffi::c_int != 255 as ::core::ffi::c_int
@@ -8247,12 +8123,7 @@ pub unsafe fn HandleArmCannonOpenState(game: &mut Game) {
         AdvanceArmCannonFrame(game);
     }
     *((&raw mut game.g_ram as *mut uint8).offset(0xaac) as *mut uint16) = *RomPtr_90(
-        *(game.g_rom.offset(
-            (((0x90c7df as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x90c7df as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0x90c7df)) as *const uint8 as *mut uint16)
             .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as isize),
         game,
     )
@@ -8338,13 +8209,11 @@ pub unsafe fn Samus_ArmCannon_Draw(game: &mut Game) {
                 & 1 as ::core::ffi::c_int
                 == 0 as ::core::ffi::c_int)
     {
-        let mut v0: uint16 = *(game.g_rom.offset(
-            (((0x90c7df as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x90c7df as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
-            .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as isize);
+        let mut v0: uint16 =
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x90c7df)) as *const uint8 as *mut uint16)
+                .offset(
+                    *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as isize,
+                );
         let mut v1: *const uint8 = RomPtr_90(v0, game);
         let mut v2: int16 = *v1 as int16;
         if v2 as ::core::ffi::c_int & 0x80 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
@@ -8373,12 +8242,8 @@ pub unsafe fn Samus_ArmCannon_Draw(game: &mut Game) {
         );
         let mut r18: uint16 = *v4.offset(0) as int8 as uint16;
         let mut r20: uint16 = *v4.offset(1) as int8 as uint16;
-        r22 = (*(game.g_rom.offset(
-            (((0x91b629 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x91b629 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut SamusPoseParams)
+        r22 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x91b629)) as *const uint8
+            as *mut SamusPoseParams)
             .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as isize))
         .y_offset_to_gfx as uint16;
         let mut v7: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0x590) as *mut uint16);
@@ -8417,12 +8282,7 @@ pub unsafe fn Samus_ArmCannon_Draw(game: &mut Game) {
             }
         }
         let mut v11: *const uint8 = RomPtr_90(
-            *(game.g_rom.offset(
-                (((0x90c7df as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x90c7df as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x90c7df)) as *const uint8 as *mut uint16)
                 .offset(
                     *((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as isize,
                 ),
@@ -8439,12 +8299,8 @@ pub unsafe fn Samus_ArmCannon_Draw(game: &mut Game) {
                 *v11.offset(0) as ::core::ffi::c_int
             }) as uint8;
         }
-        let mut v13: uint16 = (*(game.g_rom.offset(
-            (((0x90c7a5 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x90c7a5 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        let mut v13: uint16 = (*(game.g_rom.offset(crate::rtl::lorom_offset(0x90c7a5))
+            as *const uint8 as *mut uint16)
             .offset((v12 as ::core::ffi::c_int & 0x7f as ::core::ffi::c_int) as isize)
             as ::core::ffi::c_int
             + 2 as ::core::ffi::c_int

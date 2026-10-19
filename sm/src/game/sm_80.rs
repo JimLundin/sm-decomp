@@ -1007,12 +1007,8 @@ pub unsafe fn HandleMusicQueue(game: &mut Game) {
                 -(1 as ::core::ffi::c_int) as uint8;
             APU_UploadBank(
                 Load24(
-                    (game.g_rom.offset(
-                        (((0x8fe7e1 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                            << 15 as ::core::ffi::c_int
-                            | 0x8fe7e1 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                            & 0x3fffff as ::core::ffi::c_int) as isize,
-                    ) as *const uint8 as *mut LongPtr as *mut uint8)
+                    (game.g_rom.offset(crate::rtl::lorom_offset(0x8fe7e1)) as *const uint8
+                        as *mut LongPtr as *mut uint8)
                         .offset(
                             *((&raw mut game.g_ram as *mut uint8).offset(0x63d) as *mut uint16)
                                 as uint8 as ::core::ffi::c_int as isize,
@@ -2843,12 +2839,7 @@ pub unsafe fn DrawTimer(game: &mut Game) {
 pub unsafe fn DrawTwoTimerDigits(mut a: uint16, mut k: uint16, game: &mut Game) {
     DrawTimerSpritemap(
         k,
-        *(game.g_rom.offset(
-            (((0x809fd4 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x809fd4 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0x809fd4)) as *const uint8 as *mut uint16)
             .offset(
                 ((a as ::core::ffi::c_int & 0xf0 as ::core::ffi::c_int) >> 4 as ::core::ffi::c_int)
                     as isize,
@@ -2857,12 +2848,7 @@ pub unsafe fn DrawTwoTimerDigits(mut a: uint16, mut k: uint16, game: &mut Game) 
     );
     DrawTimerSpritemap(
         ((k).wrapping_add((8u16))),
-        *(game.g_rom.offset(
-            (((0x809fd4 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x809fd4 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0x809fd4)) as *const uint8 as *mut uint16)
             .offset((a as ::core::ffi::c_int & 0xf as ::core::ffi::c_int) as isize),
         game,
     );
@@ -5056,12 +5042,7 @@ pub unsafe fn DecompressToVRAM(mut src: uint32, mut dst_addr: uint16, game: &mut
 pub unsafe fn LoadFromLoadStation(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1e75) as *mut uint16) = 1 as uint16;
     let mut L: *const LoadStationList = RomPtr_80(
-        (*(game.g_rom.offset(
-            (((0x80c4b5 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x80c4b5 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x80c4b5)) as *const uint8 as *mut uint16)
             .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize)
             as ::core::ffi::c_int
             + 14 as ::core::ffi::c_int
@@ -5101,12 +5082,7 @@ pub unsafe fn LoadFromLoadStation(game: &mut Game) {
 }
 pub unsafe fn SetElevatorsAsUsed(game: &mut Game) {
     let mut v0: *const uint8 = RomPtr_80(
-        (*(game.g_rom.offset(
-            (((0x80cd46 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x80cd46 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        (*(game.g_rom.offset(crate::rtl::lorom_offset(0x80cd46)) as *const uint8 as *mut uint16)
             .offset(*((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize)
             as ::core::ffi::c_int
             + 4 as ::core::ffi::c_int

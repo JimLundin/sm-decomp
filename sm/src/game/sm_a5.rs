@@ -264,12 +264,7 @@ pub unsafe fn Draygon_Init(game: &mut Game) {
     while i >= 0 as ::core::ffi::c_int {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset(((i >> 1 as ::core::ffi::c_int) + 144 as ::core::ffi::c_int) as isize) =
-            *(game.g_rom.offset(
-                (((0xa5a217 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0xa5a217 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5a217)) as *const uint8 as *mut uint16)
                 .offset((i >> 1 as ::core::ffi::c_int) as isize);
         i -= 2 as ::core::ffi::c_int;
     }
@@ -558,19 +553,11 @@ pub unsafe fn Draygon_Func_3(game: &mut Game) {
                 as uint16 as ::core::ffi::c_int
                 >> 1 as ::core::ffi::c_int;
             game.eproj_spawn_pt = Point16U {
-                x: *(game.g_rom.offset(
-                    (((0xa587dc as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                        << 15 as ::core::ffi::c_int
-                        | 0xa587dc as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                        & 0x3fffff as ::core::ffi::c_int) as isize,
-                ) as *const uint8 as *mut uint16)
+                x: *(game.g_rom.offset(crate::rtl::lorom_offset(0xa587dc)) as *const uint8
+                    as *mut uint16)
                     .offset(v2 as isize),
-                y: *(game.g_rom.offset(
-                    (((0xa587dc as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                        << 15 as ::core::ffi::c_int
-                        | 0xa587dc as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                        & 0x3fffff as ::core::ffi::c_int) as isize,
-                ) as *const uint8 as *mut uint16)
+                y: *(game.g_rom.offset(crate::rtl::lorom_offset(0xa587dc)) as *const uint8
+                    as *mut uint16)
                     .offset((v2 + 1 as ::core::ffi::c_int) as isize),
             };
             SpawnEprojWithGfx(3 as uint16, result, addr_stru_868E5E as uint16, game);
@@ -1755,12 +1742,8 @@ pub unsafe fn Draygon_Hurt(game: &mut Game) {
         while i != 8 as ::core::ffi::c_int {
             *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
                 .offset(((i >> 1 as ::core::ffi::c_int) + 89 as ::core::ffi::c_int) as isize) =
-                *(game.g_rom.offset(
-                    (((0xa596af as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                        << 15 as ::core::ffi::c_int
-                        | 0xa596af as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                        & 0x3fffff as ::core::ffi::c_int) as isize,
-                ) as *const uint8 as *mut uint16)
+                *(game.g_rom.offset(crate::rtl::lorom_offset(0xa596af)) as *const uint8
+                    as *mut uint16)
                     .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
             v3 = ((v3).wrapping_add((2u16)));
             i += 2 as ::core::ffi::c_int;
@@ -1876,12 +1859,7 @@ pub unsafe fn Draygon_Func_41(game: &mut Game) {
     let mut E: *mut Enemy_Draygon = Get_Draygon(0 as ::core::ffi::c_int, game);
     i = 0 as ::core::ffi::c_int;
     while !(((((*E).base.health) as i16).wrapping_sub(
-        ((*(game.g_rom.offset(
-            (((0xa596ef as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0xa596ef as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        ((*(game.g_rom.offset(crate::rtl::lorom_offset(0xa596ef)) as *const uint8 as *mut uint16)
             .offset((i >> 1 as ::core::ffi::c_int) as isize)) as i16),
     )) as ::core::ffi::c_int
         >= 0 as ::core::ffi::c_int)
@@ -1896,12 +1874,8 @@ pub unsafe fn Draygon_Func_41(game: &mut Game) {
             *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(
                 ((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 89 as ::core::ffi::c_int)
                     as isize,
-            ) = *(game.g_rom.offset(
-                (((0xa596af as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0xa596af as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            ) = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa596af)) as *const uint8
+                as *mut uint16)
                 .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
             v2 = ((v2).wrapping_add((2u16)));
             j = ((j).wrapping_add((2u16)));
@@ -2113,12 +2087,7 @@ pub unsafe fn Draygon_Func_42(mut varE24: uint16, game: &mut Game) {
     while i >= 0 as ::core::ffi::c_int {
         let mut v2: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
         let mut v3: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-        if *(game.g_rom.offset(
-            (((0xa5a1df as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0xa5a1df as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        if *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5a1df)) as *const uint8 as *mut uint16)
             .offset(v2 as isize) as ::core::ffi::c_int
             + 64 as ::core::ffi::c_int
             & 0x80 as ::core::ffi::c_int
@@ -2129,12 +2098,8 @@ pub unsafe fn Draygon_Func_42(mut varE24: uint16, game: &mut Game) {
                     .offset(v3 as isize) as *mut uint16,
                 ((&raw mut game.g_ram as *mut uint8).offset(0xf178) as *mut uint16)
                     .offset(v3 as isize) as *mut uint16,
-                *(game.g_rom.offset(
-                    (((0xa5a1af as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                        << 15 as ::core::ffi::c_int
-                        | 0xa5a1af as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                        & 0x3fffff as ::core::ffi::c_int) as isize,
-                ) as *const uint8 as *mut uint16)
+                *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5a1af)) as *const uint8
+                    as *mut uint16)
                     .offset(v2 as isize) as uint32,
             );
         } else {
@@ -2143,12 +2108,8 @@ pub unsafe fn Draygon_Func_42(mut varE24: uint16, game: &mut Game) {
                     .offset(v3 as isize) as *mut uint16,
                 ((&raw mut game.g_ram as *mut uint8).offset(0xf178) as *mut uint16)
                     .offset(v3 as isize) as *mut uint16,
-                (-(*(game.g_rom.offset(
-                    (((0xa5a1af as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                        << 15 as ::core::ffi::c_int
-                        | 0xa5a1af as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                        & 0x3fffff as ::core::ffi::c_int) as isize,
-                ) as *const uint8 as *mut uint16)
+                (-(*(game.g_rom.offset(crate::rtl::lorom_offset(0xa5a1af)) as *const uint8
+                    as *mut uint16)
                     .offset(v2 as isize) as ::core::ffi::c_int)
                     - ((varE24 as ::core::ffi::c_int) << 16 as ::core::ffi::c_int))
                     as uint32,
@@ -2156,12 +2117,7 @@ pub unsafe fn Draygon_Func_42(mut varE24: uint16, game: &mut Game) {
         }
         let mut v8: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xf278) as *mut uint16)
             .offset(v3 as isize);
-        if *(game.g_rom.offset(
-            (((0xa5a1df as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0xa5a1df as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        if *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5a1df)) as *const uint8 as *mut uint16)
             .offset(v2 as isize) as ::core::ffi::c_int
             + 128 as ::core::ffi::c_int
             & 0x80 as ::core::ffi::c_int
@@ -2172,12 +2128,8 @@ pub unsafe fn Draygon_Func_42(mut varE24: uint16, game: &mut Game) {
                     .offset(v3 as isize) as *mut uint16,
                 ((&raw mut game.g_ram as *mut uint8).offset(0xf278) as *mut uint16)
                     .offset(v3 as isize) as *mut uint16,
-                *(game.g_rom.offset(
-                    (((0xa5a1af as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                        << 15 as ::core::ffi::c_int
-                        | 0xa5a1af as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                        & 0x3fffff as ::core::ffi::c_int) as isize,
-                ) as *const uint8 as *mut uint16)
+                *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5a1af)) as *const uint8
+                    as *mut uint16)
                     .offset((v2 + 1 as ::core::ffi::c_int) as isize) as uint32,
             );
         } else {
@@ -2186,12 +2138,8 @@ pub unsafe fn Draygon_Func_42(mut varE24: uint16, game: &mut Game) {
                     .offset(v3 as isize) as *mut uint16,
                 ((&raw mut game.g_ram as *mut uint8).offset(0xf278) as *mut uint16)
                     .offset(v3 as isize) as *mut uint16,
-                -(*(game.g_rom.offset(
-                    (((0xa5a1af as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                        << 15 as ::core::ffi::c_int
-                        | 0xa5a1af as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                        & 0x3fffff as ::core::ffi::c_int) as isize,
-                ) as *const uint8 as *mut uint16)
+                -(*(game.g_rom.offset(crate::rtl::lorom_offset(0xa5a1af)) as *const uint8
+                    as *mut uint16)
                     .offset((v2 + 1 as ::core::ffi::c_int) as isize)
                     as ::core::ffi::c_int) as uint32,
             );
@@ -2214,19 +2162,9 @@ pub unsafe fn Draygon_Func_43(game: &mut Game) {
     loop {
         let mut v3: ::core::ffi::c_int = v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         CreateSpriteAtPos(
-            *(game.g_rom.offset(
-                (((0xa5a1c7 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0xa5a1c7 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5a1c7)) as *const uint8 as *mut uint16)
                 .offset(v3 as isize),
-            *(game.g_rom.offset(
-                (((0xa5a1c7 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0xa5a1c7 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5a1c7)) as *const uint8 as *mut uint16)
                 .offset((v3 + 1 as ::core::ffi::c_int) as isize),
             59 as uint16,
             0xe00 as uint16,
@@ -2242,19 +2180,9 @@ pub unsafe fn Draygon_Func_43(game: &mut Game) {
     while j as ::core::ffi::c_int >= 0 as ::core::ffi::c_int {
         let mut v5: ::core::ffi::c_int = v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         CreateSpriteAtPos(
-            *(game.g_rom.offset(
-                (((0xa5a1c7 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0xa5a1c7 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5a1c7)) as *const uint8 as *mut uint16)
                 .offset(v5 as isize),
-            *(game.g_rom.offset(
-                (((0xa5a1c7 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0xa5a1c7 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5a1c7)) as *const uint8 as *mut uint16)
                 .offset((v5 + 1 as ::core::ffi::c_int) as isize),
             60 as uint16,
             0xe00 as uint16,
@@ -2307,12 +2235,8 @@ pub unsafe fn Draygon_Func_46(game: &mut Game) {
     loop {
         let mut v1: uint16 = (((*Get_Draygon(0 as ::core::ffi::c_int, game)).draygon_var_46)
             .wrapping_add(
-                (*(game.g_rom.offset(
-                    (((0xa5a19f as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                        << 15 as ::core::ffi::c_int
-                        | 0xa5a19f as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                        & 0x3fffff as ::core::ffi::c_int) as isize,
-                ) as *const uint8 as *mut uint16)
+                (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa5a19f)) as *const uint8
+                    as *mut uint16)
                     .offset(
                         (((v0).wrapping_sub((56u16))) as ::core::ffi::c_int
                             >> 1 as ::core::ffi::c_int) as isize,
@@ -2320,12 +2244,8 @@ pub unsafe fn Draygon_Func_46(game: &mut Game) {
             ));
         if v1 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int == 0 as ::core::ffi::c_int {
             let mut v2: uint16 = v1;
-            if *((game.g_rom.offset(
-                (((0xa5ce07 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0xa5ce07 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint8)
+            if *((game.g_rom.offset(crate::rtl::lorom_offset(0xa5ce07)) as *const uint8
+                as *mut uint8)
                 .offset(v1 as isize) as *mut uint8 as *mut uint16)
                 as ::core::ffi::c_int
                 == 0x8080 as ::core::ffi::c_int
@@ -2341,13 +2261,8 @@ pub unsafe fn Draygon_Func_46(game: &mut Game) {
                     .offset(v3 as isize);
                 *fresh1 = ((*fresh1).wrapping_add(
                     (SignExtend8(
-                        *(game.g_rom.offset(
-                            (((0xa5ce07 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                                << 15 as ::core::ffi::c_int
-                                | 0xa5ce07 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                                & 0x3fffff as ::core::ffi::c_int)
-                                as isize,
-                        ) as *const uint8 as *mut uint8)
+                        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5ce07)) as *const uint8
+                            as *mut uint8)
                             .offset(v1 as isize) as uint16,
                     )),
                 ));
@@ -2356,13 +2271,8 @@ pub unsafe fn Draygon_Func_46(game: &mut Game) {
                     .offset(v3 as isize);
                 *fresh2 = ((*fresh2).wrapping_add(
                     (SignExtend8(
-                        *(game.g_rom.offset(
-                            (((0xa5ce07 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                                << 15 as ::core::ffi::c_int
-                                | 0xa5ce07 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                                & 0x3fffff as ::core::ffi::c_int)
-                                as isize,
-                        ) as *const uint8 as *mut uint8)
+                        *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5ce07)) as *const uint8
+                            as *mut uint8)
                             .offset((v2 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize)
                             as uint16,
                     )),
@@ -2653,12 +2563,7 @@ pub unsafe fn Draygon_Instr_29(
     while i != 32 as ::core::ffi::c_int {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
             .offset(((i >> 1 as ::core::ffi::c_int) + 144 as ::core::ffi::c_int) as isize) =
-            *(game.g_rom.offset(
-                (((0xa5e3f9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0xa5e3f9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5e3f9)) as *const uint8 as *mut uint16)
                 .offset((v2 as ::core::ffi::c_int + i >> 1 as ::core::ffi::c_int) as isize);
         i += 2 as ::core::ffi::c_int;
     }
@@ -2666,12 +2571,7 @@ pub unsafe fn Draygon_Instr_29(
     while i_0 != 32 as ::core::ffi::c_int {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
             .offset(((i_0 >> 1 as ::core::ffi::c_int) + 64 as ::core::ffi::c_int) as isize) =
-            *(game.g_rom.offset(
-                (((0xa5e4f9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0xa5e4f9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5e4f9)) as *const uint8 as *mut uint16)
                 .offset((v2 as ::core::ffi::c_int + i_0 >> 1 as ::core::ffi::c_int) as isize);
         i_0 += 2 as ::core::ffi::c_int;
     }
@@ -2679,12 +2579,7 @@ pub unsafe fn Draygon_Instr_29(
     while i_1 != 32 as ::core::ffi::c_int {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
             .offset(((i_1 >> 1 as ::core::ffi::c_int) + 112 as ::core::ffi::c_int) as isize) =
-            *(game.g_rom.offset(
-                (((0xa5e5d9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0xa5e5d9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5e5d9)) as *const uint8 as *mut uint16)
                 .offset((v2 as ::core::ffi::c_int + i_1 >> 1 as ::core::ffi::c_int) as isize);
         i_1 += 2 as ::core::ffi::c_int;
     }
@@ -2700,12 +2595,7 @@ pub unsafe fn Draygon_Instr_19(
     while i != 32 as ::core::ffi::c_int {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset(((i >> 1 as ::core::ffi::c_int) + 144 as ::core::ffi::c_int) as isize) =
-            *(game.g_rom.offset(
-                (((0xa5e3f9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0xa5e3f9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5e3f9)) as *const uint8 as *mut uint16)
                 .offset((v2 as ::core::ffi::c_int + i >> 1 as ::core::ffi::c_int) as isize);
         i += 2 as ::core::ffi::c_int;
     }
@@ -2713,12 +2603,7 @@ pub unsafe fn Draygon_Instr_19(
     while i_0 != 32 as ::core::ffi::c_int {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset(((i_0 >> 1 as ::core::ffi::c_int) + 64 as ::core::ffi::c_int) as isize) =
-            *(game.g_rom.offset(
-                (((0xa5e4f9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0xa5e4f9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5e4f9)) as *const uint8 as *mut uint16)
                 .offset((v2 as ::core::ffi::c_int + i_0 >> 1 as ::core::ffi::c_int) as isize);
         i_0 += 2 as ::core::ffi::c_int;
     }
@@ -2726,12 +2611,7 @@ pub unsafe fn Draygon_Instr_19(
     while i_1 != 32 as ::core::ffi::c_int {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset(((i_1 >> 1 as ::core::ffi::c_int) + 112 as ::core::ffi::c_int) as isize) =
-            *(game.g_rom.offset(
-                (((0xa5e5d9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0xa5e5d9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5e5d9)) as *const uint8 as *mut uint16)
                 .offset((v2 as ::core::ffi::c_int + i_1 >> 1 as ::core::ffi::c_int) as isize);
         i_1 += 2 as ::core::ffi::c_int;
     }
@@ -2804,12 +2684,7 @@ pub unsafe fn SporeSpawn_Init(game: &mut Game) {
     while i != 32 as ::core::ffi::c_int {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset(((i >> 1 as ::core::ffi::c_int) + 240 as ::core::ffi::c_int) as isize) =
-            *(game.g_rom.offset(
-                (((0xa5e359 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0xa5e359 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5e359)) as *const uint8 as *mut uint16)
                 .offset((v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
         v0 = ((v0).wrapping_add((2u16)));
         i += 2 as ::core::ffi::c_int;
@@ -3204,12 +3079,7 @@ pub unsafe fn SporeSpawn_Func_7(mut a: uint16, game: &mut Game) {
     while i != 32 as ::core::ffi::c_int {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
             .offset(((i >> 1 as ::core::ffi::c_int) + 144 as ::core::ffi::c_int) as isize) =
-            *(game.g_rom.offset(
-                (((0xa5e379 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0xa5e379 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0xa5e379)) as *const uint8 as *mut uint16)
                 .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
         v1 = ((v1).wrapping_add((2u16)));
         i += 2 as ::core::ffi::c_int;

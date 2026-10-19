@@ -409,23 +409,13 @@ pub unsafe fn SetGoldenTorizoPalette(mut a: uint16, game: &mut Game) {
         let mut v4: ::core::ffi::c_int = v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         let mut v5: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
-            .offset((v5 + 160 as ::core::ffi::c_int) as isize) = *(game.g_rom.offset(
-            (((0x848132 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x848132 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8
-            as *mut uint16)
-            .offset(v4 as isize);
+            .offset((v5 + 160 as ::core::ffi::c_int) as isize) =
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x848132)) as *const uint8 as *mut uint16)
+                .offset(v4 as isize);
         *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16)
-            .offset((v5 + 144 as ::core::ffi::c_int) as isize) = *(game.g_rom.offset(
-            (((0x848032 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x848032 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8
-            as *mut uint16)
-            .offset(v4 as isize);
+            .offset((v5 + 144 as ::core::ffi::c_int) as isize) =
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x848032)) as *const uint8 as *mut uint16)
+                .offset(v4 as isize);
         v2 = ((v2).wrapping_sub((2u16)));
         i -= 2 as ::core::ffi::c_int;
     }
@@ -548,12 +538,8 @@ pub unsafe fn LoadXrayBlocks(game: &mut Game) {
             {
                 CalculatePlmBlockCoords(k, game);
                 let mut v3: *const uint8 = RomPtr_84(
-                    *(game.g_rom.offset(
-                        (((0x84839d as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                            << 15 as ::core::ffi::c_int
-                            | 0x84839d as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                            & 0x3fffff as ::core::ffi::c_int) as isize,
-                    ) as *const uint8 as *mut uint16)
+                    *(game.g_rom.offset(crate::rtl::lorom_offset(0x84839d)) as *const uint8
+                        as *mut uint16)
                         .offset(
                             (*((&raw mut game.g_ram as *mut uint8).offset(0xdf0c) as *mut uint16)
                                 .offset(
@@ -3913,12 +3899,7 @@ pub unsafe fn PlmInstr_SetGreyDoorPreInstr(
 ) -> *const uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1cd7) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-        *(game.g_rom.offset(
-            (((0x84be4b as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x84be4b as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0x84be4b)) as *const uint8 as *mut uint16)
             .offset(
                 (*((&raw mut game.g_ram as *mut uint8).offset(0x1e17) as *mut uint16)
                     .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
@@ -4184,22 +4165,14 @@ pub unsafe fn PlmSetup_C82E_UpwardsOpenGate(mut j: uint16, game: &mut Game) -> u
 pub unsafe fn PlmSetup_C836_DownwardsGateShootblock(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1d27) as *mut uint16).offset(v1 as isize) =
-        *(game.g_rom.offset(
-            (((0x84c70a as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x84c70a as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0x84c70a)) as *const uint8 as *mut uint16)
             .offset(
                 (*((&raw mut game.g_ram as *mut uint8).offset(0x1dc7) as *mut uint16)
                     .offset(v1 as isize) as ::core::ffi::c_int
                     >> 1 as ::core::ffi::c_int) as isize,
             );
-    let mut v2: uint16 = *(game.g_rom.offset(
-        (((0x84c71a as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x84c71a as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
+    let mut v2: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x84c71a)) as *const uint8
+        as *mut uint16)
         .offset(
             (*((&raw mut game.g_ram as *mut uint8).offset(0x1dc7) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int
@@ -4214,11 +4187,8 @@ pub unsafe fn PlmSetup_C836_DownwardsGateShootblock(mut j: uint16, game: &mut Ga
             game,
         );
     }
-    let mut v3: uint16 = *(game.g_rom.offset(
-        (((0x84c72a as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x84c72a as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
+    let mut v3: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x84c72a)) as *const uint8
+        as *mut uint16)
         .offset(
             (*((&raw mut game.g_ram as *mut uint8).offset(0x1dc7) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int
@@ -4238,22 +4208,14 @@ pub unsafe fn PlmSetup_C836_DownwardsGateShootblock(mut j: uint16, game: &mut Ga
 pub unsafe fn PlmSetup_C73A_UpwardsGateShootblock(mut j: uint16, game: &mut Game) -> uint8 {
     let mut v1: ::core::ffi::c_int = j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0x1d27) as *mut uint16).offset(v1 as isize) =
-        *(game.g_rom.offset(
-            (((0x84c764 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x84c764 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0x84c764)) as *const uint8 as *mut uint16)
             .offset(
                 (*((&raw mut game.g_ram as *mut uint8).offset(0x1dc7) as *mut uint16)
                     .offset(v1 as isize) as ::core::ffi::c_int
                     >> 1 as ::core::ffi::c_int) as isize,
             );
-    let mut v2: uint16 = *(game.g_rom.offset(
-        (((0x84c774 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x84c774 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
+    let mut v2: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x84c774)) as *const uint8
+        as *mut uint16)
         .offset(
             (*((&raw mut game.g_ram as *mut uint8).offset(0x1dc7) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int
@@ -4268,11 +4230,8 @@ pub unsafe fn PlmSetup_C73A_UpwardsGateShootblock(mut j: uint16, game: &mut Game
             game,
         );
     }
-    let mut v3: uint16 = *(game.g_rom.offset(
-        (((0x84c784 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x84c784 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
+    let mut v3: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x84c784)) as *const uint8
+        as *mut uint16)
         .offset(
             (*((&raw mut game.g_ram as *mut uint8).offset(0x1dc7) as *mut uint16)
                 .offset(v1 as isize) as ::core::ffi::c_int
@@ -5311,12 +5270,7 @@ pub unsafe fn PlmPreInstr_SetMetroidsClearState_Ev0x13(mut k: uint16, game: &mut
 pub unsafe fn PlmSetup_SetMetroidRequiredClearState(mut j: uint16, game: &mut Game) -> uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1cd7) as *mut uint16)
         .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-        *(game.g_rom.offset(
-            (((0x84db28 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x84db28 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0x84db28)) as *const uint8 as *mut uint16)
             .offset(
                 (*((&raw mut game.g_ram as *mut uint8).offset(0x1dc7) as *mut uint16)
                     .offset((j as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
@@ -5600,12 +5554,7 @@ pub unsafe fn PlmInstr_DrawItemFrame0(
 ) -> *const uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xde6c) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-        *(game.g_rom.offset(
-            (((0x84e05f as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x84e05f as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0x84e05f)) as *const uint8 as *mut uint16)
             .offset(
                 (*((&raw mut game.g_ram as *mut uint8).offset(0xdf0c) as *mut uint16)
                     .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
@@ -5621,12 +5570,7 @@ pub unsafe fn PlmInstr_DrawItemFrame1(
 ) -> *const uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0xde6c) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-        *(game.g_rom.offset(
-            (((0x84e077 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x84e077 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0x84e077)) as *const uint8 as *mut uint16)
             .offset(
                 (*((&raw mut game.g_ram as *mut uint8).offset(0xdf0c) as *mut uint16)
                     .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)

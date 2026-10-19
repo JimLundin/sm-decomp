@@ -1978,24 +1978,14 @@ pub unsafe fn CalculatePowerBombHdmaScaled_LeftOfScreen(
     loop {
         let mut r20: uint8 = (Mult8x8(
             multval,
-            *(game.g_rom.offset(
-                (((0x88a206 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x88a206 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint8)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)) as *const uint8 as *mut uint8)
                 .offset((j as uint8 as ::core::ffi::c_int + 32 as ::core::ffi::c_int) as isize),
         ) as ::core::ffi::c_int
             >> 8 as ::core::ffi::c_int) as uint8;
         v2 = *((&raw mut game.g_ram as *mut uint8).offset(0xce6) as *mut uint16) as int8;
         let mut Reg: uint8 = (Mult8x8(
             multval,
-            *(game.g_rom.offset(
-                (((0x88a206 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x88a206 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint8)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)) as *const uint8 as *mut uint8)
                 .offset(j as uint8 as isize),
         ) as ::core::ffi::c_int
             >> 8 as ::core::ffi::c_int) as uint8;
@@ -2042,24 +2032,14 @@ pub unsafe fn CalculatePowerBombHdmaScaled_OnScreen(
     loop {
         let mut r20: uint8 = (Mult8x8(
             multval,
-            *(game.g_rom.offset(
-                (((0x88a206 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x88a206 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint8)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)) as *const uint8 as *mut uint8)
                 .offset((j as uint8 as ::core::ffi::c_int + 32 as ::core::ffi::c_int) as isize),
         ) as ::core::ffi::c_int
             >> 8 as ::core::ffi::c_int) as uint8;
         v2 = *((&raw mut game.g_ram as *mut uint8).offset(0xce6) as *mut uint16) as int8;
         let mut Reg: uint8 = (Mult8x8(
             multval,
-            *(game.g_rom.offset(
-                (((0x88a206 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x88a206 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint8)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)) as *const uint8 as *mut uint8)
                 .offset(j as uint8 as isize),
         ) as ::core::ffi::c_int
             >> 8 as ::core::ffi::c_int) as uint8;
@@ -2113,12 +2093,7 @@ pub unsafe fn CalculatePowerBombHdmaScaled_RightOfScreen(
     loop {
         let mut r20: uint8 = (Mult8x8(
             multval,
-            *(game.g_rom.offset(
-                (((0x88a206 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x88a206 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint8)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)) as *const uint8 as *mut uint8)
                 .offset((j as uint8 as ::core::ffi::c_int + 32 as ::core::ffi::c_int) as isize),
         ) as ::core::ffi::c_int
             >> 8 as ::core::ffi::c_int) as uint8;
@@ -2126,12 +2101,7 @@ pub unsafe fn CalculatePowerBombHdmaScaled_RightOfScreen(
             *((&raw mut game.g_ram as *mut uint8).offset(0xce6) as *mut uint16) as uint8;
         let mut Reg: uint8 = (Mult8x8(
             multval,
-            *(game.g_rom.offset(
-                (((0x88a206 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x88a206 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint8)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)) as *const uint8 as *mut uint8)
                 .offset(j as uint8 as isize),
         ) as ::core::ffi::c_int
             >> 8 as ::core::ffi::c_int) as uint8;
@@ -2182,12 +2152,7 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionYellow(mut k: uint16, ga
             as ::core::ffi::c_int
             & 0xff00 as ::core::ffi::c_int)
             >> 8 as ::core::ffi::c_int) as uint8,
-        *(game.g_rom.offset(
-            (((0x88a286 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x88a286 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint8)
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a286)) as *const uint8 as *mut uint8)
             .offset(0),
     ) as ::core::ffi::c_int
         >> 8 as ::core::ffi::c_int;
@@ -2263,30 +2228,18 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionYellow(mut k: uint16, ga
             & 0xff00 as ::core::ffi::c_int)
             >> 8 as ::core::ffi::c_int
             >> 3 as ::core::ffi::c_int);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) = ((*(game.g_rom.offset(
-        (((0x888d85 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x888d85 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8
-        as *mut uint8)
-        .offset((t + 0 as ::core::ffi::c_int) as isize))
-        | (0x20u8));
-    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) = ((*(game.g_rom.offset(
-        (((0x888d85 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x888d85 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8
-        as *mut uint8)
-        .offset((t + 1 as ::core::ffi::c_int) as isize))
-        | (0x40u8));
-    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) = ((*(game.g_rom.offset(
-        (((0x888d85 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x888d85 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8
-        as *mut uint8)
-        .offset((t + 2 as ::core::ffi::c_int) as isize))
-        | (0x80u8));
+    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) =
+        ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x888d85)) as *const uint8 as *mut uint8)
+            .offset((t + 0 as ::core::ffi::c_int) as isize))
+            | (0x20u8));
+    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) =
+        ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x888d85)) as *const uint8 as *mut uint8)
+            .offset((t + 1 as ::core::ffi::c_int) as isize))
+            | (0x40u8));
+    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) =
+        ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x888d85)) as *const uint8 as *mut uint8)
+            .offset((t + 2 as ::core::ffi::c_int) as isize))
+            | (0x80u8));
     let ref mut fresh122 = *((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16);
     *fresh122 = ((*fresh122)
         .wrapping_add((*((&raw mut game.g_ram as *mut uint8).offset(0xcf0) as *mut uint16))));
@@ -2342,30 +2295,18 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_ExplosionWhite(mut k: uint16, gam
             & 0xff00 as ::core::ffi::c_int)
             >> 8 as ::core::ffi::c_int
             >> 3 as ::core::ffi::c_int);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) = ((*(game.g_rom.offset(
-        (((0x888d85 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x888d85 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8
-        as *mut uint8)
-        .offset(t as isize))
-        | (0x20u8));
-    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) = ((*(game.g_rom.offset(
-        (((0x888d85 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x888d85 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8
-        as *mut uint8)
-        .offset((t + 1 as ::core::ffi::c_int) as isize))
-        | (0x40u8));
-    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) = ((*(game.g_rom.offset(
-        (((0x888d85 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x888d85 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8
-        as *mut uint8)
-        .offset((t + 2 as ::core::ffi::c_int) as isize))
-        | (0x80u8));
+    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) =
+        ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x888d85)) as *const uint8 as *mut uint8)
+            .offset(t as isize))
+            | (0x20u8));
+    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) =
+        ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x888d85)) as *const uint8 as *mut uint8)
+            .offset((t + 1 as ::core::ffi::c_int) as isize))
+            | (0x40u8));
+    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) =
+        ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x888d85)) as *const uint8 as *mut uint8)
+            .offset((t + 2 as ::core::ffi::c_int) as isize))
+            | (0x80u8));
     let ref mut fresh118 = *((&raw mut game.g_ram as *mut uint8).offset(0xcf2) as *mut uint16);
     *fresh118 = ((*fresh118).wrapping_add((192u16)));
     if *((&raw mut game.g_ram as *mut uint8).offset(0xcf2) as *mut uint16) as ::core::ffi::c_int
@@ -2462,12 +2403,7 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionWhite(mut k: uint16, 
                 .wrapping_div(::core::mem::size_of::<uint8>())
                 .wrapping_sub(1 as usize) as isize,
         ),
-        *(game.g_rom.offset(
-            (((0x88a286 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x88a286 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint8)
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a286)) as *const uint8 as *mut uint8)
             .offset(0),
     ) as ::core::ffi::c_int
         >> 8 as ::core::ffi::c_int;
@@ -2556,30 +2492,18 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionWhite(mut k: uint16, 
         ) as ::core::ffi::c_int
             >> 3 as ::core::ffi::c_int
             & 0xf as ::core::ffi::c_int;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) = ((*(game.g_rom.offset(
-        (((0x889079 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x889079 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8
-        as *mut uint8)
-        .offset((t * 3 as ::core::ffi::c_int + 0 as ::core::ffi::c_int) as isize))
-        | (0x20u8));
-    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) = ((*(game.g_rom.offset(
-        (((0x889079 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x889079 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8
-        as *mut uint8)
-        .offset((t * 3 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize))
-        | (0x40u8));
-    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) = ((*(game.g_rom.offset(
-        (((0x889079 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x889079 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8
-        as *mut uint8)
-        .offset((t * 3 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as isize))
-        | (0x80u8));
+    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) =
+        ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x889079)) as *const uint8 as *mut uint8)
+            .offset((t * 3 as ::core::ffi::c_int + 0 as ::core::ffi::c_int) as isize))
+            | (0x20u8));
+    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) =
+        ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x889079)) as *const uint8 as *mut uint8)
+            .offset((t * 3 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize))
+            | (0x40u8));
+    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) =
+        ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x889079)) as *const uint8 as *mut uint8)
+            .offset((t * 3 as ::core::ffi::c_int + 2 as ::core::ffi::c_int) as isize))
+            | (0x80u8));
     let ref mut fresh115 = *((&raw mut game.g_ram as *mut uint8).offset(0xcec) as *mut uint16);
     *fresh115 = ((*fresh115)
         .wrapping_add((*((&raw mut game.g_ram as *mut uint8).offset(0xcf0) as *mut uint16))));
@@ -2634,30 +2558,18 @@ pub unsafe fn HdmaobjPreInstr_PowerBombExplode_PreExplosionYellow(mut k: uint16,
         >> 8 as ::core::ffi::c_int
         >> 3 as ::core::ffi::c_int
         & 0xf as ::core::ffi::c_int;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) = ((*(game.g_rom.offset(
-        (((0x889079 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x889079 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8
-        as *mut uint8)
-        .offset((3 as ::core::ffi::c_int * t) as isize))
-        | (0x20u8));
-    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) = ((*(game.g_rom.offset(
-        (((0x889079 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x889079 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8
-        as *mut uint8)
-        .offset((3 as ::core::ffi::c_int * t + 1 as ::core::ffi::c_int) as isize))
-        | (0x40u8));
-    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) = ((*(game.g_rom.offset(
-        (((0x889079 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x889079 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8
-        as *mut uint8)
-        .offset((3 as ::core::ffi::c_int * t + 2 as ::core::ffi::c_int) as isize))
-        | (0x80u8));
+    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) =
+        ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x889079)) as *const uint8 as *mut uint8)
+            .offset((3 as ::core::ffi::c_int * t) as isize))
+            | (0x20u8));
+    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) =
+        ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x889079)) as *const uint8 as *mut uint8)
+            .offset((3 as ::core::ffi::c_int * t + 1 as ::core::ffi::c_int) as isize))
+            | (0x40u8));
+    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) =
+        ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x889079)) as *const uint8 as *mut uint8)
+            .offset((3 as ::core::ffi::c_int * t + 2 as ::core::ffi::c_int) as isize))
+            | (0x80u8));
     let ref mut fresh111 = *((&raw mut game.g_ram as *mut uint8).offset(0xcf2) as *mut uint16);
     *fresh111 = ((*fresh111).wrapping_add((192u16)));
     if *((&raw mut game.g_ram as *mut uint8).offset(0xcf2) as *mut uint16) as ::core::ffi::c_int
@@ -2861,12 +2773,7 @@ pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_LeftOfScreen(
                 as ::core::ffi::c_int
                 & 0xff00 as ::core::ffi::c_int)
                 >> 8 as ::core::ffi::c_int) as uint8,
-            *(game.g_rom.offset(
-                (((0x88a206 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x88a206 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint8)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)) as *const uint8 as *mut uint8)
                 .offset((j as uint8 as ::core::ffi::c_int + 32 as ::core::ffi::c_int) as isize),
         ) as ::core::ffi::c_int
             >> 8 as ::core::ffi::c_int) as uint8;
@@ -2875,12 +2782,7 @@ pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_LeftOfScreen(
                 as ::core::ffi::c_int
                 & 0xff00 as ::core::ffi::c_int)
                 >> 8 as ::core::ffi::c_int) as uint8,
-            *(game.g_rom.offset(
-                (((0x88a206 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x88a206 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint8)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)) as *const uint8 as *mut uint8)
                 .offset(j as uint8 as isize),
         ) as ::core::ffi::c_int
             >> 8 as ::core::ffi::c_int) as uint8;
@@ -2930,12 +2832,7 @@ pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_OnScreen(
                 as ::core::ffi::c_int
                 & 0xff00 as ::core::ffi::c_int)
                 >> 8 as ::core::ffi::c_int) as uint8,
-            *(game.g_rom.offset(
-                (((0x88a206 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x88a206 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint8)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)) as *const uint8 as *mut uint8)
                 .offset((j as uint8 as ::core::ffi::c_int + 32 as ::core::ffi::c_int) as isize),
         ) as ::core::ffi::c_int
             >> 8 as ::core::ffi::c_int) as uint8;
@@ -2944,12 +2841,7 @@ pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_OnScreen(
                 as ::core::ffi::c_int
                 & 0xff00 as ::core::ffi::c_int)
                 >> 8 as ::core::ffi::c_int) as uint8,
-            *(game.g_rom.offset(
-                (((0x88a206 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x88a206 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint8)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)) as *const uint8 as *mut uint8)
                 .offset(j as uint8 as isize),
         ) as ::core::ffi::c_int
             >> 8 as ::core::ffi::c_int) as uint8;
@@ -3000,12 +2892,7 @@ pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_RightOfScreen(
                 as ::core::ffi::c_int
                 & 0xff00 as ::core::ffi::c_int)
                 >> 8 as ::core::ffi::c_int) as uint8,
-            *(game.g_rom.offset(
-                (((0x88a206 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x88a206 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint8)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)) as *const uint8 as *mut uint8)
                 .offset((j as uint8 as ::core::ffi::c_int + 32 as ::core::ffi::c_int) as isize),
         ) as ::core::ffi::c_int
             >> 8 as ::core::ffi::c_int) as uint8;
@@ -3014,12 +2901,7 @@ pub unsafe fn CalculateCrystalFlashHdmaDataTablesScaled_RightOfScreen(
                 as ::core::ffi::c_int
                 & 0xff00 as ::core::ffi::c_int)
                 >> 8 as ::core::ffi::c_int) as uint8,
-            *(game.g_rom.offset(
-                (((0x88a206 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x88a206 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint8)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a206)) as *const uint8 as *mut uint8)
                 .offset(j as uint8 as isize),
         ) as ::core::ffi::c_int
             >> 8 as ::core::ffi::c_int) as uint8;
@@ -3070,12 +2952,7 @@ pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage1_Explosion(mut k: uint16, game:
             as ::core::ffi::c_int
             & 0xff00 as ::core::ffi::c_int)
             >> 8 as ::core::ffi::c_int) as uint8,
-        *(game.g_rom.offset(
-            (((0x88a286 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x88a286 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint8)
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a286)) as *const uint8 as *mut uint8)
             .offset(0),
     ) as ::core::ffi::c_int
         >> 8 as ::core::ffi::c_int;
@@ -3142,30 +3019,18 @@ pub unsafe fn HdmaobjPreInstr_CrystalFlash_Stage1_Explosion(mut k: uint16, game:
         ) as ::core::ffi::c_int
             >> 3 as ::core::ffi::c_int)
             * 3 as ::core::ffi::c_int;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) = ((*(game.g_rom.offset(
-        (((0x888d85 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x888d85 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8
-        as *mut uint8)
-        .offset((pos + 0 as ::core::ffi::c_int) as isize))
-        | (0x20u8));
-    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) = ((*(game.g_rom.offset(
-        (((0x888d85 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x888d85 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8
-        as *mut uint8)
-        .offset((pos + 1 as ::core::ffi::c_int) as isize))
-        | (0x40u8));
-    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) = ((*(game.g_rom.offset(
-        (((0x888d85 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x888d85 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8
-        as *mut uint8)
-        .offset((pos + 2 as ::core::ffi::c_int) as isize))
-        | (0x80u8));
+    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) =
+        ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x888d85)) as *const uint8 as *mut uint8)
+            .offset((pos + 0 as ::core::ffi::c_int) as isize))
+            | (0x20u8));
+    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(1) =
+        ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x888d85)) as *const uint8 as *mut uint8)
+            .offset((pos + 1 as ::core::ffi::c_int) as isize))
+            | (0x40u8));
+    *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(2) =
+        ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x888d85)) as *const uint8 as *mut uint8)
+            .offset((pos + 2 as ::core::ffi::c_int) as isize))
+            | (0x80u8));
     let ref mut fresh106 = *((&raw mut game.g_ram as *mut uint8).offset(0xcea) as *mut uint16);
     *fresh106 = ((*fresh106)
         .wrapping_add((*((&raw mut game.g_ram as *mut uint8).offset(0xcf0) as *mut uint16))));
@@ -3388,12 +3253,8 @@ pub unsafe fn HdmaobjPreInstr_BG3Xscroll(mut k: uint16, game: &mut Game) {
         loop {
             *((&raw mut game.g_ram as *mut uint8).offset(0x9e80) as *mut uint16)
                 .offset((v2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-                *(game.g_rom.offset(
-                    (((0x88a938 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                        << 15 as ::core::ffi::c_int
-                        | 0x88a938 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                        & 0x3fffff as ::core::ffi::c_int) as isize,
-                ) as *const uint8 as *mut uint16)
+                *(game.g_rom.offset(crate::rtl::lorom_offset(0x88a938)) as *const uint8
+                    as *mut uint16)
                     .offset((v1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
             v2 = ((v2).wrapping_add((2u16)));
             v1 = ((v1).wrapping_add((2u16)));
@@ -3650,33 +3511,21 @@ pub unsafe fn HdmaobjPreInstr_SkyLandBG2XscrollInner(mut k: uint16, game: &mut G
     let mut v1: uint16 = 0 as uint16;
     loop {
         let mut v3: *mut uint16 = (&raw mut game.g_ram as *mut uint8).offset(
-            (*(game.g_rom.offset(
-                (((0x88aec1 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x88aec1 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut HdmaScrollEntry)
+            (*(game.g_rom.offset(crate::rtl::lorom_offset(0x88aec1)) as *const uint8
+                as *mut HdmaScrollEntry)
                 .offset(v1 as isize))
             .hdma_data_table_entry as isize,
         ) as *mut uint8 as *mut uint16;
         AddToHiLo(
             v3.offset(1) as *mut uint16,
             v3.offset(0) as *mut uint16,
-            ((*(game.g_rom.offset(
-                (((0x88aec1 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x88aec1 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut HdmaScrollEntry)
+            ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x88aec1)) as *const uint8
+                as *mut HdmaScrollEntry)
                 .offset(v1 as isize))
             .scroll_speed as uint32)
                 << 16 as ::core::ffi::c_int
-                | (*(game.g_rom.offset(
-                    (((0x88aec1 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                        << 15 as ::core::ffi::c_int
-                        | 0x88aec1 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                        & 0x3fffff as ::core::ffi::c_int) as isize,
-                ) as *const uint8 as *mut HdmaScrollEntry)
+                | (*(game.g_rom.offset(crate::rtl::lorom_offset(0x88aec1)) as *const uint8
+                    as *mut HdmaScrollEntry)
                     .offset(v1 as isize))
                 .scroll_subspeed as uint32,
         );
@@ -3701,34 +3550,22 @@ pub unsafe fn HdmaobjPreInstr_SkyLandBG2XscrollInner(mut k: uint16, game: &mut G
     let mut v6: uint16 = 3 as uint16;
     loop {
         while (((r18) as i16).wrapping_sub(
-            (((*(game.g_rom.offset(
-                (((0x88aec1 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x88aec1 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut HdmaScrollEntry)
+            (((*(game.g_rom.offset(crate::rtl::lorom_offset(0x88aec1)) as *const uint8
+                as *mut HdmaScrollEntry)
                 .offset(v5 as isize))
             .top_pos) as i16),
         )) as ::core::ffi::c_int
             >= 0 as ::core::ffi::c_int
             && ((((r18) as i16).wrapping_sub(
-                (((*(game.g_rom.offset(
-                    (((0x88aec1 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                        << 15 as ::core::ffi::c_int
-                        | 0x88aec1 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                        & 0x3fffff as ::core::ffi::c_int) as isize,
-                ) as *const uint8 as *mut HdmaScrollEntry)
+                (((*(game.g_rom.offset(crate::rtl::lorom_offset(0x88aec1)) as *const uint8
+                    as *mut HdmaScrollEntry)
                     .offset((v5 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize))
                 .top_pos) as i16),
             )) as ::core::ffi::c_int)
                 < 0 as ::core::ffi::c_int
         {
-            let mut v8: uint16 = (((*(game.g_rom.offset(
-                (((0x88aec1 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x88aec1 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut HdmaScrollEntry)
+            let mut v8: uint16 = (((*(game.g_rom.offset(crate::rtl::lorom_offset(0x88aec1))
+                as *const uint8 as *mut HdmaScrollEntry)
                 .offset((v5 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize))
             .top_pos)
                 .wrapping_sub((r18)));
@@ -3742,16 +3579,12 @@ pub unsafe fn HdmaobjPreInstr_SkyLandBG2XscrollInner(mut k: uint16, game: &mut G
                 *((&raw mut game.g_ram as *mut uint8)
                     .offset(0x9f00)
                     .offset((v6 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize)
-                    as *mut uint8 as *mut uint16) = (((*(game.g_rom.offset(
-                    (((0x88aec1 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                        << 15 as ::core::ffi::c_int
-                        | 0x88aec1 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                        & 0x3fffff as ::core::ffi::c_int) as isize,
-                ) as *const uint8
-                    as *mut HdmaScrollEntry)
-                    .offset(v5 as isize))
-                .hdma_data_table_entry)
-                    .wrapping_add((2u16)));
+                    as *mut uint8 as *mut uint16) =
+                    (((*(game.g_rom.offset(crate::rtl::lorom_offset(0x88aec1)) as *const uint8
+                        as *mut HdmaScrollEntry)
+                        .offset(v5 as isize))
+                    .hdma_data_table_entry)
+                        .wrapping_add((2u16)));
                 v6 = ((v6).wrapping_add((3u16)));
                 v8 = ((r24).wrapping_sub((127u16)));
             }
@@ -3761,16 +3594,12 @@ pub unsafe fn HdmaobjPreInstr_SkyLandBG2XscrollInner(mut k: uint16, game: &mut G
             *((&raw mut game.g_ram as *mut uint8)
                 .offset(0x9f00)
                 .offset((v6 as ::core::ffi::c_int + 1 as ::core::ffi::c_int) as isize)
-                as *mut uint8 as *mut uint16) = (((*(game.g_rom.offset(
-                (((0x88aec1 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x88aec1 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8
-                as *mut HdmaScrollEntry)
-                .offset(v5 as isize))
-            .hdma_data_table_entry)
-                .wrapping_add((2u16)));
+                as *mut uint8 as *mut uint16) =
+                (((*(game.g_rom.offset(crate::rtl::lorom_offset(0x88aec1)) as *const uint8
+                    as *mut HdmaScrollEntry)
+                    .offset(v5 as isize))
+                .hdma_data_table_entry)
+                    .wrapping_add((2u16)));
             r18 = ((r18).wrapping_add((r24)));
             v6 = ((v6).wrapping_add((3u16)));
             if r18 as ::core::ffi::c_int - r20 as ::core::ffi::c_int & 0x8000 as ::core::ffi::c_int
@@ -4588,18 +4417,17 @@ pub unsafe fn Handle_LavaAcidBG2YScroll_Func2(mut v0: uint16, game: &mut Game) {
     let mut n: ::core::ffi::c_int = 15 as ::core::ffi::c_int;
     loop {
         *((&raw mut game.g_ram as *mut uint8).offset(0x9c46) as *mut uint16)
-            .offset((v4 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-            (*(game.g_rom.offset(
-                (((0x88b589 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x88b589 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
-                .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
+            .offset((v4 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = (*(game
+            .g_rom
+            .offset(crate::rtl::lorom_offset(0x88b589))
+            as *const uint8
+            as *mut uint16)
+            .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
+            as ::core::ffi::c_int
+            + *((&raw mut game.g_ram as *mut uint8).offset(0xb5) as *mut uint16)
                 as ::core::ffi::c_int
-                + *((&raw mut game.g_ram as *mut uint8).offset(0xb5) as *mut uint16)
-                    as ::core::ffi::c_int
-                & 0x1ff as ::core::ffi::c_int) as uint16;
+            & 0x1ff as ::core::ffi::c_int)
+            as uint16;
         v3 = (v3 as ::core::ffi::c_int - 2 as ::core::ffi::c_int & 0x1e as ::core::ffi::c_int)
             as uint8;
         v4 = (v4 as ::core::ffi::c_int - 2 as ::core::ffi::c_int & 0x1e as ::core::ffi::c_int)
@@ -4649,18 +4477,17 @@ pub unsafe fn Handle_LavaAcidBG2YScroll_Func3(mut v0: uint16, game: &mut Game) {
     let mut n: ::core::ffi::c_int = 15 as ::core::ffi::c_int;
     loop {
         *((&raw mut game.g_ram as *mut uint8).offset(0x9c46) as *mut uint16)
-            .offset((v4 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-            (*(game.g_rom.offset(
-                (((0x88b60a as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x88b60a as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
-                .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
+            .offset((v4 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) = (*(game
+            .g_rom
+            .offset(crate::rtl::lorom_offset(0x88b60a))
+            as *const uint8
+            as *mut uint16)
+            .offset((v3 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
+            as ::core::ffi::c_int
+            + *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16)
                 as ::core::ffi::c_int
-                + *((&raw mut game.g_ram as *mut uint8).offset(0xb7) as *mut uint16)
-                    as ::core::ffi::c_int
-                & 0x1ff as ::core::ffi::c_int) as uint16;
+            & 0x1ff as ::core::ffi::c_int)
+            as uint16;
         v4 = (v4 as ::core::ffi::c_int - 2 as ::core::ffi::c_int & 0x1e as ::core::ffi::c_int)
             as uint8;
         v3 = (v3 as ::core::ffi::c_int - 2 as ::core::ffi::c_int & 0x1e as ::core::ffi::c_int)
@@ -5100,12 +4927,7 @@ pub unsafe fn HdmaobjInstr_1938_RandomNumber(
 ) -> *const uint8 {
     *((&raw mut game.g_ram as *mut uint8).offset(0x1938) as *mut uint16)
         .offset((k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize) =
-        *(game.g_rom.offset(
-            (((0x88d992 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x88d992 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0x88d992)) as *const uint8 as *mut uint16)
             .offset(
                 ((*((&raw mut game.g_ram as *mut uint8).offset(0x5e5) as *mut uint16)
                     as ::core::ffi::c_int
@@ -5940,12 +5762,8 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> uint8 {
     loop {
         v4 = (((*((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16)) as i8)
             .wrapping_sub(
-                ((*(game.g_rom.offset(
-                    (((0x88e3c9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                        << 15 as ::core::ffi::c_int
-                        | 0x88e3c9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                        & 0x3fffff as ::core::ffi::c_int) as isize,
-                ) as *const uint8 as *mut uint8)
+                ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x88e3c9)) as *const uint8
+                    as *mut uint8)
                     .offset(v3 as isize)) as i8),
             ));
         if (v4 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
@@ -5954,12 +5772,8 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> uint8 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x9800) as *mut uint16 as *mut uint8)
             .offset(v2 as uint16 as ::core::ffi::c_int as isize) = v4 as uint8;
         let mut v5: uint16 = (((v2) as u16).wrapping_add((1u16)));
-        v6 = (((*(game.g_rom.offset(
-            (((0x88e3c9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x88e3c9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint8)
+        v6 = (((*(game.g_rom.offset(crate::rtl::lorom_offset(0x88e3c9)) as *const uint8
+            as *mut uint8)
             .offset(v3 as isize)) as i8)
             .wrapping_add(
                 ((*((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16 as *mut uint8)
@@ -5970,12 +5784,7 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> uint8 {
                     )) as i8),
             ));
         if u8::overflowing_add(
-            *(game.g_rom.offset(
-                (((0x88e3c9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x88e3c9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint8)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88e3c9)) as *const uint8 as *mut uint8)
                 .offset(v3 as isize),
             *((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16 as *mut uint8)
                 .offset(
@@ -6000,12 +5809,8 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> uint8 {
     loop {
         v8 = (((*((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16)) as i8)
             .wrapping_sub(
-                ((*(game.g_rom.offset(
-                    (((0x88e3c9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                        << 15 as ::core::ffi::c_int
-                        | 0x88e3c9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                        & 0x3fffff as ::core::ffi::c_int) as isize,
-                ) as *const uint8 as *mut uint8)
+                ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x88e3c9)) as *const uint8
+                    as *mut uint8)
                     .offset(v7 as isize)) as i8),
             ));
         if (v8 as ::core::ffi::c_int) < 0 as ::core::ffi::c_int {
@@ -6014,12 +5819,8 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> uint8 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x9800) as *mut uint16 as *mut uint8)
             .offset(v2 as uint16 as ::core::ffi::c_int as isize) = v8 as uint8;
         let mut v9: uint16 = (((v2) as u16).wrapping_add((1u16)));
-        v10 = (((*(game.g_rom.offset(
-            (((0x88e3c9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x88e3c9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint8)
+        v10 = (((*(game.g_rom.offset(crate::rtl::lorom_offset(0x88e3c9)) as *const uint8
+            as *mut uint8)
             .offset(v7 as isize)) as i8)
             .wrapping_add(
                 ((*((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16 as *mut uint8)
@@ -6030,12 +5831,7 @@ pub unsafe fn VariaSuitPickup_2_LightBeamWidens(game: &mut Game) -> uint8 {
                     )) as i8),
             ));
         if u8::overflowing_add(
-            *(game.g_rom.offset(
-                (((0x88e3c9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x88e3c9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint8)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x88e3c9)) as *const uint8 as *mut uint8)
                 .offset(v7 as isize),
             *((&raw mut game.g_ram as *mut uint8).offset(0xdee) as *mut uint16 as *mut uint8)
                 .offset(
@@ -6743,11 +6539,8 @@ pub unsafe fn HdmaobjPreInstr_E7BC(mut k: uint16, game: &mut Game) {
     };
 }
 pub unsafe fn sub_88E7ED(game: &mut Game) {
-    let mut v0: uint16 = *(game.g_rom.offset(
-        (((0x88e833 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0x88e833 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
+    let mut v0: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x88e833)) as *const uint8
+        as *mut uint16)
         .offset(
             (*((&raw mut game.g_ram as *mut uint8).offset(0x1914) as *mut uint16).offset(0)
                 as ::core::ffi::c_int
@@ -6769,12 +6562,8 @@ pub unsafe fn sub_88E7ED(game: &mut Game) {
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1914) as *mut uint16).offset(0) =
             0 as uint16;
-        v0 = *(game.g_rom.offset(
-            (((0x88e833 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x88e833 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        v0 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x88e833)) as *const uint8
+            as *mut uint16)
             .offset(0);
     }
     *(&raw mut game.g_ram as *mut uint8).offset(0x74).offset(0) =

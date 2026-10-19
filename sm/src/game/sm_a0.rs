@@ -2086,12 +2086,8 @@ pub unsafe fn DrawSamusEnemiesAndProjectiles(game: &mut Game) {
             let mut varE36: uint16 = *((&raw mut game.g_ram as *mut uint8).offset(0xf68)
                 as *mut uint16)
                 .offset(phase_varE32 as isize);
-            let mut varE3A: uint16 = *(game.g_rom.offset(
-                (((0xa0b133 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0xa0b133 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            let mut varE3A: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xa0b133))
+                as *const uint8 as *mut uint16)
                 .offset(phase_varE32 as isize);
             let mut v1: uint16 = 0 as uint16;
             let mut varE38: uint16 = 0;
@@ -2314,13 +2310,9 @@ pub unsafe fn LoadEnemyGfxIndexes(mut k: uint16, mut j: uint16, game: &mut Game)
 pub unsafe fn LoadEnemyTileData(game: &mut Game) {
     let mut i: ::core::ffi::c_int = 510 as ::core::ffi::c_int;
     while i >= 0 as ::core::ffi::c_int {
-        (*gEnemySpawnData(i, game)).some_flag = *(game.g_rom.offset(
-            (((0x9ad200 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x9ad200 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
-            .offset(((i >> 1 as ::core::ffi::c_int) + 3072 as ::core::ffi::c_int) as isize);
+        (*gEnemySpawnData(i, game)).some_flag =
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x9ad200)) as *const uint8 as *mut uint16)
+                .offset(((i >> 1 as ::core::ffi::c_int) + 3072 as ::core::ffi::c_int) as isize);
         i -= 2 as ::core::ffi::c_int;
     }
     if *((&raw mut game.g_ram as *mut uint8).offset(0xe7a) as *mut uint16) != 0 {
@@ -5910,12 +5902,8 @@ pub unsafe fn DrawOneEnemy(game: &mut Game) {
         ((*((&raw mut game.g_ram as *mut uint8).offset(0xf68) as *mut uint16)
             .offset((varE34 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize))
         .wrapping_add(
-            (*(game.g_rom.offset(
-                (((0xa0b133 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0xa0b133 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            (*(game.g_rom.offset(crate::rtl::lorom_offset(0xa0b133)) as *const uint8
+                as *mut uint16)
                 .offset((varE34 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)),
         )),
         game,
@@ -9193,12 +9181,8 @@ pub unsafe fn EnemyFunc_C8AD(mut k: uint16, game: &mut Game) -> uint8 {
             } else {
                 (*E).x_pos as ::core::ffi::c_int
             }) as uint16;
-            let mut v4: int16 = ((*(game.g_rom.offset(
-                (((0x948b2b as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x948b2b as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint8)
+            let mut v4: int16 = ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b))
+                as *const uint8 as *mut uint8)
                 .offset(
                     (temp_collision_DD6 as ::core::ffi::c_int
                         + (j as ::core::ffi::c_int & 0xf as ::core::ffi::c_int))
@@ -9257,12 +9241,8 @@ pub unsafe fn EnemyFunc_C8AD(mut k: uint16, game: &mut Game) -> uint8 {
             } else {
                 (*E).x_pos as ::core::ffi::c_int
             }) as uint16;
-            let mut v7: int16 = ((*(game.g_rom.offset(
-                (((0x948b2b as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x948b2b as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint8)
+            let mut v7: int16 = ((*(game.g_rom.offset(crate::rtl::lorom_offset(0x948b2b))
+                as *const uint8 as *mut uint8)
                 .offset(
                     (temp_collision_DD6_0 as ::core::ffi::c_int
                         + (j_0 as ::core::ffi::c_int & 0xf as ::core::ffi::c_int))

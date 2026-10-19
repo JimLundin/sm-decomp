@@ -25,35 +25,22 @@ unsafe fn get_SamusTileAnimationDefs(
 pub unsafe fn SetSamusTilesDefsForCurAnim(game: &mut Game) {
     let mut v0: uint16 = (4 as ::core::ffi::c_int
         * *((&raw mut game.g_ram as *mut uint8).offset(0xa96) as *mut uint16) as ::core::ffi::c_int
-        + *(game.g_rom.offset(
-            (((0x92d94e as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x92d94e as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        + *(game.g_rom.offset(crate::rtl::lorom_offset(0x92d94e)) as *const uint8 as *mut uint16)
             .offset(*((&raw mut game.g_ram as *mut uint8).offset(0xa1c) as *mut uint16) as isize)
             as ::core::ffi::c_int) as uint16;
     let mut AD: *mut SamusTileAnimationDefs = get_SamusTileAnimationDefs(v0, game);
-    *((&raw mut game.g_ram as *mut uint8).offset(0x71f) as *mut uint16) =
-        (7 as ::core::ffi::c_int * (*AD).top_half_pos as ::core::ffi::c_int
-            + *(game.g_rom.offset(
-                (((0x92d91e as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x92d91e as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
-                .offset((*AD).top_half_idx as isize) as ::core::ffi::c_int) as uint16;
+    *((&raw mut game.g_ram as *mut uint8).offset(0x71f) as *mut uint16) = (7 as ::core::ffi::c_int
+        * (*AD).top_half_pos as ::core::ffi::c_int
+        + *(game.g_rom.offset(crate::rtl::lorom_offset(0x92d91e)) as *const uint8 as *mut uint16)
+            .offset((*AD).top_half_idx as isize) as ::core::ffi::c_int)
+        as uint16;
     *((&raw mut game.g_ram as *mut uint8).offset(0x71d) as *mut uint16 as *mut uint8).offset(0) =
         1 as uint8;
     if (*AD).bottom_half_idx as ::core::ffi::c_int != 255 as ::core::ffi::c_int {
         *((&raw mut game.g_ram as *mut uint8).offset(0x721) as *mut uint16) =
             (7 as ::core::ffi::c_int * (*AD).bottom_half_pos as ::core::ffi::c_int
-                + *(game.g_rom.offset(
-                    (((0x92d938 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                        << 15 as ::core::ffi::c_int
-                        | 0x92d938 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                        & 0x3fffff as ::core::ffi::c_int) as isize,
-                ) as *const uint8 as *mut uint16)
+                + *(game.g_rom.offset(crate::rtl::lorom_offset(0x92d938)) as *const uint8
+                    as *mut uint16)
                     .offset((*AD).bottom_half_idx as isize) as ::core::ffi::c_int)
                 as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0x71d) as *mut uint16 as *mut uint8).offset(

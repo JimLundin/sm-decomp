@@ -924,12 +924,7 @@ pub unsafe fn NinjaSpacePirates_Init(game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(
             ((v7 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) + 240 as ::core::ffi::c_int)
                 as isize,
-        ) = *(game.g_rom.offset(
-            (((0xb28727 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0xb28727 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        ) = *(game.g_rom.offset(crate::rtl::lorom_offset(0xb28727)) as *const uint8 as *mut uint16)
             .offset((v6 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
         v6 = ((v6).wrapping_add((2u16)));
         v7 = ((v7).wrapping_add((2u16)));
@@ -1218,12 +1213,8 @@ pub unsafe fn SpacePirates_Func_16(game: &mut Game) {
         if (*E).base.x_pos as ::core::ffi::c_int == (*E).sps_var_E as ::core::ffi::c_int {
             v3 = 4 as int16;
         }
-        (*E).base.current_instruction = *(game.g_rom.offset(
-            (((0xb2f959 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0xb2f959 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        (*E).base.current_instruction = *(game.g_rom.offset(crate::rtl::lorom_offset(0xb2f959))
+            as *const uint8 as *mut uint16)
             .offset((v2 as ::core::ffi::c_int + v3 as ::core::ffi::c_int) as isize);
         (*E).base.instruction_timer = 1 as uint16;
     }

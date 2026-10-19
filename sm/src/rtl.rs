@@ -1154,6 +1154,13 @@ pub unsafe fn Unreachable(game: &mut Game) -> bool {
     game.g_ram[0x1ffff as ::core::ffi::c_int as usize] = 1 as uint8;
     return false_0 != 0;
 }
+/// Map a banked LoROM address to an offset in the ROM allocation.
+/// Callers keep their window/bounds checks and add linear table offsets afterward.
+#[inline]
+pub const fn lorom_offset(address: u32) -> isize {
+    (((address >> 16) << 15 | address & 0x7fff) & 0x3fffff) as isize
+}
+
 pub unsafe fn RomPtr(mut addr: uint32_t, game: &mut Game) -> *const uint8 {
     if addr & 0x8000 as uint32_t == 0 {
         printf(
@@ -1162,11 +1169,7 @@ pub unsafe fn RomPtr(mut addr: uint32_t, game: &mut Game) -> *const uint8 {
         );
         game.g_fail = true_0 != 0;
     }
-    return game.g_rom.offset(
-        (((addr >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | addr & 0x7fff as uint32_t)
-            & 0x3fffff as uint32_t) as isize,
-    ) as *const uint8;
+    return game.g_rom.offset(crate::rtl::lorom_offset(addr)) as *const uint8;
 }
 pub unsafe fn WriteReg(mut reg: uint16, mut value: uint8, game: &mut Game) {
     snes_write(

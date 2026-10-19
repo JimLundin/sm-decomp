@@ -531,7 +531,7 @@ impl Game {
             "ROM address must select a LoROM window"
         );
         let rom = self.loaded_rom.as_ref().expect("ROM must be loaded");
-        let base = (((address >> 16) << 15 | address & 0x7fff) & 0x3fffff) as usize;
+        let base = crate::rtl::lorom_offset(address) as usize;
         let start = base.checked_add(byte_offset).expect("ROM offset overflow");
         let end = start.checked_add(width).expect("ROM offset overflow");
         assert!(end <= rom.len, "ROM read outside loaded allocation");

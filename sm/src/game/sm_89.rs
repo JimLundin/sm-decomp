@@ -61,28 +61,13 @@ pub unsafe fn LoadFxEntry(mut v0: uint16, game: &mut Game) {
         let mut v2: ::core::ffi::c_int =
             (*FD).palette_blend as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(25) =
-            *(game.g_rom.offset(
-                (((0x89aa02 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x89aa02 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x89aa02)) as *const uint8 as *mut uint16)
                 .offset(v2 as isize);
         *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(26) =
-            *(game.g_rom.offset(
-                (((0x89aa02 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x89aa02 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x89aa02)) as *const uint8 as *mut uint16)
                 .offset((v2 + 1 as ::core::ffi::c_int) as isize);
         *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(27) =
-            *(game.g_rom.offset(
-                (((0x89aa02 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x89aa02 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x89aa02)) as *const uint8 as *mut uint16)
                 .offset((v2 + 2 as ::core::ffi::c_int) as isize);
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(27) =
@@ -153,28 +138,13 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
         let mut v4: ::core::ffi::c_int =
             (*FD).palette_blend as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(25) =
-            *(game.g_rom.offset(
-                (((0x89aa02 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x89aa02 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x89aa02)) as *const uint8 as *mut uint16)
                 .offset(v4 as isize);
         *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(26) =
-            *(game.g_rom.offset(
-                (((0x89aa02 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x89aa02 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x89aa02)) as *const uint8 as *mut uint16)
                 .offset((v4 + 1 as ::core::ffi::c_int) as isize);
         *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(27) =
-            *(game.g_rom.offset(
-                (((0x89aa02 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x89aa02 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x89aa02)) as *const uint8 as *mut uint16)
                 .offset((v4 + 2 as ::core::ffi::c_int) as isize);
     } else {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16).offset(27) =
@@ -183,12 +153,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
     *((&raw mut game.g_ram as *mut uint8).offset(0x196e) as *mut uint16) = (*FD).type_0 as uint16;
     if (*FD).type_0 != 0 {
         *((&raw mut game.g_ram as *mut uint8).offset(0x1964) as *mut uint16) =
-            *(game.g_rom.offset(
-                (((0x83abf0 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x83abf0 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x83abf0)) as *const uint8 as *mut uint16)
                 .offset(((*FD).type_0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
         kFxTypeFuncPtrs[((*FD).type_0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as usize]
             .expect("non-null function pointer")(game);
@@ -196,12 +161,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
     if (*FD).palette_fx_bitset != 0 {
         let mut bits: ::core::ffi::c_int = (*FD).palette_fx_bitset as ::core::ffi::c_int;
         let mut v11: *const uint8 = RomPtr_83(
-            *(game.g_rom.offset(
-                (((0x83ac46 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x83ac46 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x83ac46)) as *const uint8 as *mut uint16)
                 .offset(
                     *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize,
                 ),
@@ -222,12 +182,7 @@ pub unsafe fn LoadFXHeader(game: &mut Game) {
     if (*FD).animtiles_bitset != 0 {
         let mut bits_0: ::core::ffi::c_int = (*FD).animtiles_bitset as ::core::ffi::c_int;
         let mut v14: *const uint8 = RomPtr_83(
-            *(game.g_rom.offset(
-                (((0x83ac56 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x83ac56 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0x83ac56)) as *const uint8 as *mut uint16)
                 .offset(
                     *((&raw mut game.g_ram as *mut uint8).offset(0x79f) as *mut uint16) as isize,
                 ),
@@ -293,31 +248,19 @@ pub unsafe fn RoomCode_CeresElevatorShaft(game: &mut Game) {
             )) as ::core::ffi::c_int
                 >> 1 as ::core::ffi::c_int;
             *((&raw mut game.g_ram as *mut uint8).offset(0x7e1).offset(2) as *mut uint8
-                as *mut uint16) = *(game.g_rom.offset(
-                (((0x89ad5f as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x89ad5f as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+                as *mut uint16) = *(game.g_rom.offset(crate::rtl::lorom_offset(0x89ad5f))
+                as *const uint8 as *mut uint16)
                 .offset(v0 as isize);
             *((&raw mut game.g_ram as *mut uint8).offset(0x7a) as *mut uint16) =
-                *(game.g_rom.offset(
-                    (((0x89ad5f as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                        << 15 as ::core::ffi::c_int
-                        | 0x89ad5f as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                        & 0x3fffff as ::core::ffi::c_int) as isize,
-                ) as *const uint8 as *mut uint16)
+                *(game.g_rom.offset(crate::rtl::lorom_offset(0x89ad5f)) as *const uint8
+                    as *mut uint16)
                     .offset((v0 + 1 as ::core::ffi::c_int) as isize);
             *((&raw mut game.g_ram as *mut uint8).offset(0x7c) as *mut uint16) =
                 -(*((&raw mut game.g_ram as *mut uint8).offset(0x7a) as *mut uint16)
                     as ::core::ffi::c_int) as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0x78) as *mut uint16) =
-                *(game.g_rom.offset(
-                    (((0x89ad5f as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                        << 15 as ::core::ffi::c_int
-                        | 0x89ad5f as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                        & 0x3fffff as ::core::ffi::c_int) as isize,
-                ) as *const uint8 as *mut uint16)
+                *(game.g_rom.offset(crate::rtl::lorom_offset(0x89ad5f)) as *const uint8
+                    as *mut uint16)
                     .offset((v0 + 2 as ::core::ffi::c_int) as isize);
             *((&raw mut game.g_ram as *mut uint8).offset(0x7e) as *mut uint16) =
                 *((&raw mut game.g_ram as *mut uint8).offset(0x78) as *mut uint16);

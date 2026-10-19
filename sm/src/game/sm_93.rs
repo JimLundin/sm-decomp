@@ -49,12 +49,8 @@ pub unsafe fn InitializeProjectile(mut k: uint16, game: &mut Game) {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16).offset(v1 as isize);
     let mut v3: uint16 = 0;
     if v2 as ::core::ffi::c_int & 0xf00 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
-        v3 = *(game.g_rom.offset(
-            (((0x9383f1 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x9383f1 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        v3 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9383f1)) as *const uint8
+            as *mut uint16)
             .offset(
                 (*(&raw mut v2 as *mut uint8).offset(
                     (::core::mem::size_of::<uint16>())
@@ -64,24 +60,16 @@ pub unsafe fn InitializeProjectile(mut k: uint16, game: &mut Game) {
                     & 0xf as ::core::ffi::c_int) as isize,
             );
     } else if v2 as ::core::ffi::c_int & 0x10 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
-        v3 = *(game.g_rom.offset(
-            (((0x9383d9 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x9383d9 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        v3 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9383d9)) as *const uint8
+            as *mut uint16)
             .offset(
                 (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
                     .offset(v1 as isize) as ::core::ffi::c_int
                     & 0xf as ::core::ffi::c_int) as isize,
             );
     } else {
-        v3 = *(game.g_rom.offset(
-            (((0x9383c1 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x9383c1 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        v3 = *(game.g_rom.offset(crate::rtl::lorom_offset(0x9383c1)) as *const uint8
+            as *mut uint16)
             .offset(
                 (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
                     .offset(v1 as isize) as ::core::ffi::c_int
@@ -107,12 +95,7 @@ pub unsafe fn InitializeProjectile(mut k: uint16, game: &mut Game) {
 pub unsafe fn InitializeInstrForSuperMissile(mut v0: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v3: *const uint8 = RomPtr_93(
-        *(game.g_rom.offset(
-            (((0x93842b as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x93842b as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0x93842b)) as *const uint8 as *mut uint16)
             .offset(
                 (*(((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
                     .offset(v1 as isize) as *mut uint16 as *mut uint8)
@@ -138,12 +121,7 @@ pub unsafe fn InitializeInstrForSuperMissile(mut v0: uint16, game: &mut Game) {
 pub unsafe fn InitializeInstrForMissile(mut v0: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = v0 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v3: *const uint8 = RomPtr_93(
-        *(game.g_rom.offset(
-            (((0x9383f1 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x9383f1 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0x9383f1)) as *const uint8 as *mut uint16)
             .offset(
                 (*(((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
                     .offset(v1 as isize) as *mut uint16 as *mut uint8)
@@ -184,29 +162,23 @@ pub unsafe fn KillProjectileInner(mut k: uint16, game: &mut Game) {
                 as uint16;
         if v2 as ::core::ffi::c_int & 0x200 as ::core::ffi::c_int != 0 as ::core::ffi::c_int {
             *((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16)
-                .offset(v1 as isize) = *(&raw mut (*(game.g_rom.offset(
-                (((0x938691 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x938691 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8
-                as *mut ProjectileDamagesAndInstrPtr))
-                .damages as *mut uint16)
-                .offset(
-                    (::core::mem::size_of::<::core::ffi::c_uint>())
-                        .wrapping_div(::core::mem::size_of::<uint16>())
-                        .wrapping_sub(1 as usize) as isize,
-                );
+                .offset(v1 as isize) =
+                *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x938691)) as *const uint8
+                    as *mut ProjectileDamagesAndInstrPtr))
+                    .damages as *mut uint16)
+                    .offset(
+                        (::core::mem::size_of::<::core::ffi::c_uint>())
+                            .wrapping_div(::core::mem::size_of::<uint16>())
+                            .wrapping_sub(1 as usize) as isize,
+                    );
             *((&raw mut game.g_ram as *mut uint8).offset(0x183e) as *mut uint16) = 20 as uint16;
             *((&raw mut game.g_ram as *mut uint8).offset(0x1840) as *mut uint16) = 30 as uint16;
         } else {
             *((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16)
-                .offset(v1 as isize) = *(&raw mut (*(game.g_rom.offset(
-                (((0x938679 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x938679 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8
+                .offset(v1 as isize) = *(&raw mut (*(game
+                .g_rom
+                .offset(crate::rtl::lorom_offset(0x938679))
+                as *const uint8
                 as *mut ProjectileDamagesAndInstrPtr))
                 .instr_ptr)
                 .offset(1);
@@ -225,12 +197,8 @@ pub unsafe fn KillProjectileInner(mut k: uint16, game: &mut Game) {
                 & 0xf0ff as ::core::ffi::c_int
                 | 0x700 as ::core::ffi::c_int) as uint16;
         *((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16).offset(v1 as isize) =
-            *(&raw mut (*(game.g_rom.offset(
-                (((0x938679 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0x938679 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut ProjectileDamagesAndInstrPtr))
+            *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x938679)) as *const uint8
+                as *mut ProjectileDamagesAndInstrPtr))
                 .damages as *mut uint16)
                 .offset(
                     (::core::mem::size_of::<::core::ffi::c_uint>())
@@ -247,12 +215,8 @@ pub unsafe fn KillProjectileInner(mut k: uint16, game: &mut Game) {
 pub unsafe fn InitializeBombExplosion(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     *((&raw mut game.g_ram as *mut uint8).offset(0xc40) as *mut uint16).offset(v1 as isize) =
-        *(&raw mut (*(game.g_rom.offset(
-            (((0x938681 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x938681 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut ProjectileDamagesAndInstrPtr))
+        *(&raw mut (*(game.g_rom.offset(crate::rtl::lorom_offset(0x938681)) as *const uint8
+            as *mut ProjectileDamagesAndInstrPtr))
             .damages as *mut uint16)
             .offset(
                 (::core::mem::size_of::<::core::ffi::c_uint>())
@@ -269,12 +233,7 @@ pub unsafe fn InitializeShinesparkEchoOrSpazerSba(mut k: uint16, game: &mut Game
         .offset(v1 as isize) as ::core::ffi::c_int
         & 0xf as ::core::ffi::c_int;
     let mut PD: *mut ProjectileDataTable = get_ProjectileDataTable(
-        *(game.g_rom.offset(
-            (((0x938403 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x938403 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0x938403)) as *const uint8 as *mut uint16)
             .offset(
                 (*(((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
                     .offset(v1 as isize) as *mut uint16 as *mut uint8)
@@ -296,12 +255,7 @@ pub unsafe fn InitializeShinesparkEchoOrSpazerSba(mut k: uint16, game: &mut Game
 pub unsafe fn InitializeSbaProjectile(mut k: uint16, game: &mut Game) {
     let mut v1: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     let mut v2: *const uint8 = RomPtr_93(
-        *(game.g_rom.offset(
-            (((0x938413 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0x938413 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0x938413)) as *const uint8 as *mut uint16)
             .offset(
                 (*((&raw mut game.g_ram as *mut uint8).offset(0xc18) as *mut uint16)
                     .offset(v1 as isize) as ::core::ffi::c_int

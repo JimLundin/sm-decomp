@@ -1485,12 +1485,8 @@ pub unsafe fn Torizo_Init(game: &mut Game) {
         (*E).base.timer = 0 as uint16;
         (*E).base.palette_index = 0 as uint16;
         (*E).toriz_var_F = addr_locret_AAC95E as uint16;
-        (*E).base.current_instruction = *(game.g_rom.offset(
-            (((0xaac967 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0xaac967 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        (*E).base.current_instruction = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaac967))
+            as *const uint8 as *mut uint16)
             .offset(v2 as isize);
         (*E).base.spritemap_pointer = addr_kTorizo_ExtSprmap_87D0 as uint16;
         (*E).base.x_pos = g_word_AAC95F[v2 as usize] as uint16;
@@ -2214,11 +2210,8 @@ pub unsafe fn TourianEntranceStatue_Init(game: &mut Game) {
     (*v0).palette_index = 0 as uint16;
     (*v0).instruction_timer = 1 as uint16;
     (*v0).timer = 0 as uint16;
-    let mut v1: uint16 = *(game.g_rom.offset(
-        (((0xaad810 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xaad810 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
+    let mut v1: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaad810)) as *const uint8
+        as *mut uint16)
         .offset(((*v0).parameter_1 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     (*v0).current_instruction = v1;
     if (*v0).parameter_1 == 0 {
@@ -2238,23 +2231,13 @@ pub unsafe fn TourianEntranceStatue_Init(game: &mut Game) {
     while i >= 0 as ::core::ffi::c_int {
         let mut v5: ::core::ffi::c_int = i >> 1 as ::core::ffi::c_int;
         *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-            .offset((v5 + 240 as ::core::ffi::c_int) as isize) = *(game.g_rom.offset(
-            (((0xaad785 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0xaad785 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8
-            as *mut uint16)
-            .offset(v5 as isize);
+            .offset((v5 + 240 as ::core::ffi::c_int) as isize) =
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0xaad785)) as *const uint8 as *mut uint16)
+                .offset(v5 as isize);
         *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
-            .offset((v5 + 160 as ::core::ffi::c_int) as isize) = *(game.g_rom.offset(
-            (((0xaad765 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0xaad765 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8
-            as *mut uint16)
-            .offset(v5 as isize);
+            .offset((v5 + 160 as ::core::ffi::c_int) as isize) =
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0xaad765)) as *const uint8 as *mut uint16)
+                .offset(v5 as isize);
         i -= 2 as ::core::ffi::c_int;
     }
 }
@@ -2359,72 +2342,50 @@ pub unsafe fn Shaktool_Instr_1(
     game: &mut Game,
 ) -> *const uint16 {
     let mut shakt_var_E: uint16 = (*Get_Shaktool(k as ::core::ffi::c_int, game)).shakt_var_E;
-    (*Get_Shaktool(shakt_var_E as ::core::ffi::c_int, game)).shakt_var_F = *(game.g_rom.offset(
-        (((0xaadedb as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xaadedb as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8
-        as *mut uint16)
-        .offset(0);
+    (*Get_Shaktool(shakt_var_E as ::core::ffi::c_int, game)).shakt_var_F =
+        *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadedb)) as *const uint8 as *mut uint16)
+            .offset(0);
     (*Get_Shaktool(
         shakt_var_E as ::core::ffi::c_int + 64 as ::core::ffi::c_int,
         game,
     ))
-    .shakt_var_F = *(game.g_rom.offset(
-        (((0xaadedb as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xaadedb as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
+    .shakt_var_F = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadedb)) as *const uint8
+        as *mut uint16)
         .offset(1);
     (*Get_Shaktool(
         shakt_var_E as ::core::ffi::c_int + 128 as ::core::ffi::c_int,
         game,
     ))
-    .shakt_var_F = *(game.g_rom.offset(
-        (((0xaadedb as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xaadedb as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
+    .shakt_var_F = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadedb)) as *const uint8
+        as *mut uint16)
         .offset(2);
     (*Get_Shaktool(
         shakt_var_E as ::core::ffi::c_int + 192 as ::core::ffi::c_int,
         game,
     ))
-    .shakt_var_F = *(game.g_rom.offset(
-        (((0xaadedb as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xaadedb as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
+    .shakt_var_F = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadedb)) as *const uint8
+        as *mut uint16)
         .offset(3);
     (*Get_Shaktool(
         shakt_var_E as ::core::ffi::c_int + 256 as ::core::ffi::c_int,
         game,
     ))
-    .shakt_var_F = *(game.g_rom.offset(
-        (((0xaadedb as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xaadedb as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
+    .shakt_var_F = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadedb)) as *const uint8
+        as *mut uint16)
         .offset(4);
     (*Get_Shaktool(
         shakt_var_E as ::core::ffi::c_int + 320 as ::core::ffi::c_int,
         game,
     ))
-    .shakt_var_F = *(game.g_rom.offset(
-        (((0xaadedb as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xaadedb as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
+    .shakt_var_F = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadedb)) as *const uint8
+        as *mut uint16)
         .offset(5);
     (*Get_Shaktool(
         shakt_var_E as ::core::ffi::c_int + 384 as ::core::ffi::c_int,
         game,
     ))
-    .shakt_var_F = *(game.g_rom.offset(
-        (((0xaadedb as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xaadedb as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
+    .shakt_var_F = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadedb)) as *const uint8
+        as *mut uint16)
         .offset(6);
     return jp;
 }
@@ -2436,12 +2397,8 @@ pub unsafe fn Shaktool_DAE5(mut k: uint16, game: &mut Game) {
         while i >= 0 as ::core::ffi::c_int {
             let mut E: *mut Enemy_Shaktool = Get_Shaktool(k as ::core::ffi::c_int, game);
             (*E).shakt_var_F = (((0xaadcaai32) as u16) & (0xffffu16));
-            (*E).base.current_instruction = *(game.g_rom.offset(
-                (((0xaadf21 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0xaadf21 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            (*E).base.current_instruction = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadf21))
+                as *const uint8 as *mut uint16)
                 .offset((i >> 1 as ::core::ffi::c_int) as isize);
             (*E).base.instruction_timer = 1 as uint16;
             k = ((k).wrapping_sub((64u16)));
@@ -2712,12 +2669,7 @@ pub unsafe fn Shaktool_DC2A(mut k: uint16, game: &mut Game) {
     SetHiLo(
         &raw mut (*E).base.x_pos,
         &raw mut (*E).base.x_subpos,
-        (((*(game.g_rom.offset(
-            (((0xaae0bd as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0xaae0bd as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        (((*(game.g_rom.offset(crate::rtl::lorom_offset(0xaae0bd)) as *const uint8 as *mut uint16)
             .offset(v3 as isize) as int16 as ::core::ffi::c_int)
             << 8 as ::core::ffi::c_int) as uint32)
             .wrapping_add(
@@ -2732,12 +2684,7 @@ pub unsafe fn Shaktool_DC2A(mut k: uint16, game: &mut Game) {
     SetHiLo(
         &raw mut (*E).base.y_pos,
         &raw mut (*E).base.y_subpos,
-        (((*(game.g_rom.offset(
-            (((0xaae03d as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0xaae03d as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        (((*(game.g_rom.offset(crate::rtl::lorom_offset(0xaae03d)) as *const uint8 as *mut uint16)
             .offset(v3 as isize) as int16 as ::core::ffi::c_int)
             << 8 as ::core::ffi::c_int) as uint32)
             .wrapping_add(
@@ -2839,11 +2786,8 @@ pub unsafe fn Shaktool_DCD7(mut k: uint16, game: &mut Game) {
         + 8 as ::core::ffi::c_int
         & 0xe0 as ::core::ffi::c_int) as uint16;
     *(&raw mut (*E).shakt_var_D as *mut uint8).offset(0) = v3 as uint8;
-    (*E).base.current_instruction = *(game.g_rom.offset(
-        (((0xaadd15 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xaadd15 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
+    (*E).base.current_instruction = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadd15))
+        as *const uint8 as *mut uint16)
         .offset(
             ((v3 as ::core::ffi::c_int >> 4 as ::core::ffi::c_int) as uint16 as ::core::ffi::c_int
                 >> 1 as ::core::ffi::c_int) as isize,
@@ -2918,13 +2862,10 @@ pub unsafe fn Shaktool_DD25(mut k: uint16, game: &mut Game) {
             Shaktool_DC07(k, game);
             let mut EK: *mut Enemy_Shaktool = Get_Shaktool(k as ::core::ffi::c_int, game);
             (*EK).shakt_var_F = (((0xaadcaai32) as u16) & (0xffffu16));
-            (*EK).base.current_instruction = *(game.g_rom.offset(
-                (((0xaadf13 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0xaadf13 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
-                .offset((i >> 1 as ::core::ffi::c_int) as isize);
+            (*EK).base.current_instruction =
+                *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadf13)) as *const uint8
+                    as *mut uint16)
+                    .offset((i >> 1 as ::core::ffi::c_int) as isize);
             (*EK).base.instruction_timer = 1 as uint16;
             k = ((k).wrapping_sub((64u16)));
             i -= 2 as ::core::ffi::c_int;
@@ -2972,59 +2913,35 @@ pub unsafe fn Shaktool_Init(game: &mut Game) {
     let mut v3: ::core::ffi::c_int =
         shakto_parameter_2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     (*E).base.properties = (((*E).base.properties)
-        | (*(game.g_rom.offset(
-            (((0xaade95 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0xaade95 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        | (*(game.g_rom.offset(crate::rtl::lorom_offset(0xaade95)) as *const uint8
+            as *mut uint16)
             .offset(v3 as isize)));
     (*E).shakt_var_E = ((*((&raw mut game.g_ram as *mut uint8).offset(0xe54) as *mut uint16))
         .wrapping_sub(
-            (*(game.g_rom.offset(
-                (((0xaadea3 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0xaadea3 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            (*(game.g_rom.offset(crate::rtl::lorom_offset(0xaadea3)) as *const uint8
+                as *mut uint16)
                 .offset(v3 as isize)),
         ));
-    (*E).shakt_var_F = *((game.g_rom.offset(
-        (((0xaadedb as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xaadedb as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16 as *mut uint8)
+    (*E).shakt_var_F = *((game.g_rom.offset(crate::rtl::lorom_offset(0xaadedb)) as *const uint8
+        as *mut uint16 as *mut uint8)
         .offset(shakto_parameter_2 as ::core::ffi::c_int as isize)
         as *mut uint16);
     (*E).shakt_var_C = ((*((&raw const g_word_AADEE9 as *const uint16 as *mut uint8)
         .offset(shakto_parameter_2 as ::core::ffi::c_int as isize)
         as *mut uint16))
         .wrapping_sub(
-            (*(game.g_rom.offset(
-                (((0xaadef7 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0xaadef7 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            (*(game.g_rom.offset(crate::rtl::lorom_offset(0xaadef7)) as *const uint8
+                as *mut uint16)
                 .offset(v3 as isize)),
         ));
-    (*E).shakt_var_B = *(game.g_rom.offset(
-        (((0xaadeb1 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xaadeb1 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
+    (*E).shakt_var_B = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadeb1)) as *const uint8
+        as *mut uint16)
         .offset(v3 as isize);
-    (*E).base.current_instruction = *(game.g_rom.offset(
-        (((0xaadeb1 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xaadeb1 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
+    (*E).base.current_instruction = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadeb1))
+        as *const uint8 as *mut uint16)
         .offset((v3 + 7 as ::core::ffi::c_int) as isize);
-    (*E).base.layer = *(game.g_rom.offset(
-        (((0xaadecd as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xaadecd as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
+    (*E).base.layer = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaadecd)) as *const uint8
+        as *mut uint16)
         .offset(v3 as isize);
     if shakto_parameter_2 != 0 {
         Shaktool_DC2A(
@@ -3171,12 +3088,7 @@ pub unsafe fn Shaktool_Instr_7(
     (*E).shakt_var_C = *jp.offset(0);
     Enemy_MoveRight_IgnoreSlopes(
         k,
-        (*(game.g_rom.offset(
-            (((0xaae630 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                << 15 as ::core::ffi::c_int
-                | 0xaae630 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                & 0x3fffff as ::core::ffi::c_int) as isize,
-        ) as *const uint8 as *mut uint16)
+        (*(game.g_rom.offset(crate::rtl::lorom_offset(0xaae630)) as *const uint8 as *mut uint16)
             .offset(((*E).shakt_var_C as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize)
             as int16 as int32)
             << 8 as ::core::ffi::c_int,
@@ -3185,12 +3097,7 @@ pub unsafe fn Shaktool_Instr_7(
     Enemy_MoveDown(
         k,
         (abs16(
-            *(game.g_rom.offset(
-                (((0xaae630 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0xaae630 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0xaae630)) as *const uint8 as *mut uint16)
                 .offset(
                     ((*E).shakt_var_C as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize,
                 ),
@@ -3201,22 +3108,14 @@ pub unsafe fn Shaktool_Instr_7(
     EnemyFunc_C8AD(k, game);
     let mut v6: ::core::ffi::c_int =
         (*E).shakt_var_C as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-    *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) = ((*(game.g_rom.offset(
-        (((0xaae670 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xaae670 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8
-        as *mut uint16)
-        .offset(v6 as isize))
-    .wrapping_add(((*E).base.x_pos)));
-    *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) = ((*(game.g_rom.offset(
-        (((0xaae6b0 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xaae6b0 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8
-        as *mut uint16)
-        .offset(v6 as isize))
-    .wrapping_add(((*E).base.y_pos)));
+    *((&raw mut game.g_ram as *mut uint8).offset(0xaf6) as *mut uint16) =
+        ((*(game.g_rom.offset(crate::rtl::lorom_offset(0xaae670)) as *const uint8 as *mut uint16)
+            .offset(v6 as isize))
+        .wrapping_add(((*E).base.x_pos)));
+    *((&raw mut game.g_ram as *mut uint8).offset(0xafa) as *mut uint16) =
+        ((*(game.g_rom.offset(crate::rtl::lorom_offset(0xaae6b0)) as *const uint8 as *mut uint16)
+            .offset(v6 as isize))
+        .wrapping_add(((*E).base.y_pos)));
     return jp.offset(1);
 }
 pub unsafe fn Shaktool_Instr_14(
@@ -3249,12 +3148,7 @@ pub unsafe fn N00bTubeCracks_Init(game: &mut Game) {
     while i >= 0 as ::core::ffi::c_int {
         *((&raw mut game.g_ram as *mut uint8).offset(0xc200) as *mut uint16)
             .offset(((i >> 1 as ::core::ffi::c_int) + 144 as ::core::ffi::c_int) as isize) =
-            *(game.g_rom.offset(
-                (((0xaae2dd as ::core::ffi::c_int >> 16 as ::core::ffi::c_int)
-                    << 15 as ::core::ffi::c_int
-                    | 0xaae2dd as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-                    & 0x3fffff as ::core::ffi::c_int) as isize,
-            ) as *const uint8 as *mut uint16)
+            *(game.g_rom.offset(crate::rtl::lorom_offset(0xaae2dd)) as *const uint8 as *mut uint16)
                 .offset((i >> 1 as ::core::ffi::c_int) as isize);
         i -= 2 as ::core::ffi::c_int;
     }
@@ -3276,11 +3170,8 @@ pub unsafe fn ChozoStatue_Init(game: &mut Game) {
     (*v0).palette_index = 0 as uint16;
     (*gEnemyData(0 as ::core::ffi::c_int, game)).layer = 0 as uint16;
     let mut parameter_2: uint16 = (*v0).parameter_2;
-    (*v0).current_instruction = *(game.g_rom.offset(
-        (((0xaae7a2 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xaae7a2 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
+    (*v0).current_instruction = *(game.g_rom.offset(crate::rtl::lorom_offset(0xaae7a2))
+        as *const uint8 as *mut uint16)
         .offset((parameter_2 as ::core::ffi::c_int >> 1 as ::core::ffi::c_int) as isize);
     if parameter_2 != 0 {
         sub_AAE784(game);

@@ -45,11 +45,8 @@ pub unsafe fn CreateSpriteAtPos(
         y_r20;
     *((&raw mut game.g_ram as *mut uint8).offset(0xf078) as *mut uint16).offset(v1 as isize) =
         pal_r24;
-    let mut v2: uint16 = *(game.g_rom.offset(
-        (((0xb4bda8 as ::core::ffi::c_int >> 16 as ::core::ffi::c_int) << 15 as ::core::ffi::c_int
-            | 0xb4bda8 as ::core::ffi::c_int & 0x7fff as ::core::ffi::c_int)
-            & 0x3fffff as ::core::ffi::c_int) as isize,
-    ) as *const uint8 as *mut uint16)
+    let mut v2: uint16 = *(game.g_rom.offset(crate::rtl::lorom_offset(0xb4bda8)) as *const uint8
+        as *mut uint16)
         .offset(ilist_r22 as isize);
     *((&raw mut game.g_ram as *mut uint8).offset(0xef78) as *mut uint16).offset(v1 as isize) = v2;
     *((&raw mut game.g_ram as *mut uint8).offset(0xeff8) as *mut uint16).offset(v1 as isize) =

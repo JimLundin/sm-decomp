@@ -35,6 +35,37 @@ Keep each commit one invariant, but apply it across the complete eligible family
 Rank by net deletion including shared code, unsafe operations removed and
 edit/build/verification cost. Prefer this work over further isolated cleanup.
 
+LoROM address-mapping family (2026-10-19): 1169 repeated literal mappings,
+two variable-address implementations and three historically folded message-box
+offsets now use one pure lorom_offset function. All pointer operations, later
+linear table offsets, invalid-window diagnostics and allocation checks remain
+exact. The complete family spans 30 files, including the 46 sm_86 expressions;
+the separate projectile edits in that file remain unstaged and preserved.
+
+The retrospective AST scan finds 1227 original literal mappings at 554 addresses,
+versus 1169 at 533 before this pass. Of 21 missing addresses, 17 appear directly
+in named reads, Waver uses a named constant, two PLM tables use a parameterized
+reader, and the remaining address had become three .add(0x2869b) sites. Those
+three now spell the original banked address, 0x85869b. This accounts for the
+address inventory; it is not an individual proof of every historical call site.
+
+Complete CST matching and source reconstruction cover all 1174 replacements.
+The actual release-library helper matches all 1172 compiled constant expressions,
+every 24-bit address and 4096 upper-byte boundary cases (16781312 address cases).
+Independent bit-mask expectations agree; changed-value and truncated-bank-mask
+controls fail. Net Rust lines -4679, c_int cast lines -4368, all casts -8184;
+raw accesses and unsafe functions are unchanged. The added usize casts at the
+three recovered sites preserve their original .add argument type.
+
+Formatting/check, normal release (26.36s final frozen, 18.17s stable workspace)
+and progress pass. Frozen 83f68b03 plus the complete family passes any%
+129712/0 (168.75s) and Speed Booster 148406/0 (221.33s), native
+exits 0, with fixed source/DLL/fixtures. Only these expanded-source replays
+count; the earlier narrower run was discarded when the scope grew. The movies
+add no new route coverage; exact offset comparisons validate unexercised sites.
+Later integer-table and PPU work retains its own verification. The broader
+readability and historical-pattern audit remains open.
+
 Established-tool audit (user priority, 2026-10-19): use jscpd 5.4.1 to discover
 exact, renamed and edited blocks/functions, then ast-grep 0.51.0 to select
 complete Rust structures and their variants. Keep temporary rules and reports
@@ -133,7 +164,7 @@ Expanded historical-family coverage audit: an isolated 26880181 survey probes
 174 routine entries across the larger leads. Full any% and Speed Booster
 have zero failing frames (221.15s/277.48s); both native exits are 2 because
 required probes are missing. All eight projectile direction handlers execute,
-making their complete collision-position family the next gameplay candidate.
+their complete impact-position family is now consolidated above.
 The seven cinematic PPU setups reach four; door scroll setters reach 11/64;
 enemy row scans 1/2; Roach and Draygon pairs 0/2 each; Fire Geyser 0/23.
 Those larger gameplay rewrites remain pending coverage. HUD entry hits (6/6)

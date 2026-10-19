@@ -199,7 +199,10 @@ unsafe fn WriteMessageTilemap(game: &mut Game) -> uint16 {
     game.g_ram[0x5a2..0x5a4].fill(0);
     game.g_ram[0x3000..0x30e0].fill(0);
     let message = u16::from_le_bytes([game.g_ram[0x1c1f], game.g_ram[0x1c20]]) as isize;
-    let configs = game.g_rom.add(0x2869b).cast::<MsgBoxConfig>();
+    let configs = game
+        .g_rom
+        .add(crate::rtl::lorom_offset(0x85869b) as usize)
+        .cast::<MsgBoxConfig>();
     let start = (*configs.offset(message - 1)).message_tilemap;
     let length = (*configs.offset(message))
         .message_tilemap
@@ -367,9 +370,19 @@ unsafe fn CallMsgBoxModify(mut ea: uint32, game: &mut Game) {
 }
 unsafe fn InitializeMessageBox(game: &mut Game) {
     let index = u16::from_le_bytes([game.g_ram[0x1c1f], game.g_ram[0x1c20]]) as isize - 1;
-    let draw = (*game.g_rom.add(0x2869b).cast::<MsgBoxConfig>().offset(index)).draw_initial_tilemap;
+    let draw = (*game
+        .g_rom
+        .add(crate::rtl::lorom_offset(0x85869b) as usize)
+        .cast::<MsgBoxConfig>()
+        .offset(index))
+    .draw_initial_tilemap;
     CallMsgBoxDraw(0x850000 | u32::from(draw), game);
-    let modify = (*game.g_rom.add(0x2869b).cast::<MsgBoxConfig>().offset(index)).modify_box_func;
+    let modify = (*game
+        .g_rom
+        .add(crate::rtl::lorom_offset(0x85869b) as usize)
+        .cast::<MsgBoxConfig>()
+        .offset(index))
+    .modify_box_func;
     CallMsgBoxModify(0x850000 | u32::from(modify), game);
 }
 static kSaveConfirmationSelectionTilemap: [uint16; 96] = [
