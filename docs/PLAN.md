@@ -8645,6 +8645,19 @@ library, normal metadata and optimized core/DLL builds pass; full frontend
 linking still lacks SDL2. Live CPU source matches frozen verified source.
 Progress counters unchanged. Complete gameplay and rendering/audio remain open.
 
+CPU bus/stack names (2026-10-19): ten private bus, operand-fetch and stack
+helpers use snake-case names: read/write byte/word, fetch byte/word and
+push/pull byte/word. All 199 definition/caller replacements reverse exactly
+to frozen HEAD `9849410b`; bodies and access order are unchanged. Full sm/src
+search finds no old identifiers. Prefix 3,600/0 (1.06s) executes every helper:
+read/write byte 26,857,057/4,295,895; fetch byte/word 20,261,630/3,142,938;
+pull/push byte 1,127,283/1,127,286; pull/push word 381,322/399,059;
+read/write word 2,187,004/1,061,390. Clean full any% 129,712/0 (51.88s), native
+exit 0. Cargo fmt/check, release library, normal metadata and optimized core/DLL
+builds pass; full frontend linking still lacks SDL2. Live CPU source matches
+frozen verified source. Progress counters unchanged. Complete gameplay and
+rendering/audio remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
