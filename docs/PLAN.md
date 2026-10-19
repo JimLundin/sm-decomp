@@ -1535,17 +1535,17 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `1b5149f8` passes
-uninterrupted full boot any% 129712/0 (183.05s) and Speed Booster
-148406/0 (257.37s), native exits 0. All 74 source/configuration/host/
-progress files match that commit. This integrates PLM instruction advances
-(03a26509) and all 19 liquid decisions (1b5149f8) with reviewed ab00d7d6.
-Only sm_84.rs, sm_90.rs and sm_91.rs differ from that prior integration.
+Latest reviewed integration (2026-10-19): frozen `b65e22ef` passes
+uninterrupted full boot any% 129712/0 (185.42s) and Speed Booster
+148406/0 (238.11s), native exits 0. All 74 source/configuration/host/
+progress files match that commit. The level-block mask family changes only
+sm_84.rs from reviewed 1b5149f8; its PLM instruction and liquid changes remain
+integrated. Concurrent projectile work is outside this snapshot.
 
 Complete checkpoints, including all bindings and serialized payloads, are
-byte-identical to reviewed ab00d7d6. All bindings are independently recomputed;
-runtime-source inputs, including the shared layout macro, match. Neither
-replay loads an earlier checkpoint. Coverage and non-timing diagnostics match,
+byte-identical to reviewed 1b5149f8. All bindings are independently recomputed;
+runtime-source inputs, including the shared layout macro, match. Neither replay
+loads an earlier checkpoint. Coverage and non-timing diagnostics match,
 including the known fingernail diagnostic. Speed contains the exact Bubble
 Mountain, Warehouse, Varia and Hi-Jump prefixes and reaches 55 rooms and 53
 enemy definitions. It ends in state 8, room $AD1B, X171/Y123, pose $0089,
@@ -1553,64 +1553,48 @@ health 46/399, missiles 6/15, Supers 0/5, items $3105 and beams $1004
 equipped/collected. Kraid is defeated, the eight coroutine bytes are zero and
 credits remain unexercised.
 
-Independent liquid review reconstructs the complete two-bank change from
-ab00d7d6. Sixteen ordinary decision trees agree in all 512 symbolic worlds;
-all complete action lists and nine equal-action merges are checked separately.
-The grapple early guard and single bottom query stay in place. The additional
-animation assignment preserves constants and its default RAM read; the
-already-byte-backed wall-jump variant preserves its top query and suit guard.
-Read-only height/predicate queries introduce no retained raw local across a
-new borrow. Water remains authoritative when present, including disabled or
-above-Samus water; options affect only water, and sign tests retain wrapping.
+Independent source review reconstructs the complete block-mask candidate,
+including four original raw updates and two byte-backed variants. Original
+addresses, rounded indexes, masks, set bits and expression widths agree. The
+four escape-block updates retain their order and all intervening index reads.
+Their indexes are nonnegative u16 halves; narrowing the original promoted
+bitwise expression is exact. No raw local survives across these new borrows.
+Air-scroll already borrowed Game mutably at the replaced write; its retained
+instruction pointer and return remain unchanged. The shared retain operation
+keeps its live block-index read before the level-data word update.
 
-Fresh comparisons use three independently extracted original predicate shapes
-and the fourth byte-backed wall-jump shape. They pass 202899456 comparisons,
-sweeping each u16 input against boundaries and all option words; this is not
-every input combination. Unsigned water/lava comparisons, ignoring water's
-option and falling through from present water to lava are each rejected.
+Fresh exact-helper checks pass 1048560 complete 128 KiB RAM comparisons:
+all 65534 valid u16 byte indexes, two RAM patterns, four mask/set-bit pairs,
+and every old word at the low and high valid slots. The reference uses the
+original promoted bitwise calculation and explicit unaligned word access.
+Wrong address, stride, set-before-mask order and inverted mask are rejected.
+Byte indexes $FFFE/$FFFF address outside real RAM and are excluded; no larger
+backing allocation substitutes for the maintained array. The owner's repaired
+786416-case sweep uses the same real RAM extent. These are constructed cases,
+not broader gameplay coverage.
 
-Independent call-site observations reach 17 of the 19 liquid decisions.
-The following 2 decisions have zero calls across both full fixtures and
-remain pending for gameplay coverage:
+All six actual rewritten helper sites execute in the owner's observed replays:
+2082 air-scroll updates, 105 shared retain updates and one each for the four
+escape-block writes. Every observed helper call compares complete RAM against
+the original raw word update. Clean, observed and integrated non-timing logs
+agree; their source/library/DLL/input pins remain fixed. Shared retain coverage
+comes from the $8FFF caller; the separate $0FFF caller remains unvisited.
 
-- `liquid-7-Samus_DetermineGrappleSwingSpeed_X`.
-- `liquid-11-Samus_FootstepGraphics_1`.
+The normal Cargo integration is independently built from frozen c0c8b067 plus
+the reconstructed bank; its full source agrees with b65e22ef. All 74 inputs,
+the fresh library/DLL and copied fixtures stay fixed. Only registry dependencies
+seed this checkout. Formatting, normal release (40.79s), host build
+(4.00s) and progress pass. Net Rust lines -21, raw-offset lines -8,
+c_int casts -24 across 18 lines; unsafe function count is unchanged. Frozen
+totals: 208830 Rust lines, 21436 raw-offset lines, 52780 c_int casts across
+41455 lines and 6516 unsafe functions. This audit changes no maintained Rust
+or assets; peer edits retain their own verification.
 
-Both observation runs report zero failing frames, then exit nonzero because
-required probes are missing. They are coverage-discovery runs, not successful
-all-probes verification; no observation checkpoint is saved. The clean runs
-above pass and save complete checkpoints. A reached query does not establish
-every liquid kind, equipment guard or action branch was exercised. Source
-reconstruction and constructed boundary cases do not fill those gameplay gaps.
-
-Independent PLM review reconstructs the entire committed bank and both
-dedicated snapshots, checks index rounding for all u16 inputs and preserves
-the six raw plus five byte-backed updates. All eleven calls in seven routines
-remain at their original positions, including separate consecutive +1 stores.
-No retained raw local is reused across the shared mutable borrow. The owner
-source/library/input pins and 786432 boundary cases remain checked.
-
-Fresh exact-helper tests pass 1048576 cases and 1572864 complete-RAM
-comparisons. They cover every u16 byte index with two patterns and four
-increments, plus every old word at low/high slots and a separate second write.
-The reference explicitly uses unaligned word access at the odd PLM address.
-Wrong address, stride, saturation and increment mutants are each rejected.
-Fresh combined observations reach all eleven PLM sites with the same counts
-as the dedicated runs: 179 debug skips, 2082 for each scroll-touch advance,
-27 bomb-block advances, and one each for the seven remaining call sites.
-These constructed cases and observed fixtures add no later gameplay coverage.
-
-All 74 clean and observed inputs reconstruct independently and stay fixed
-with their fresh Cargo libraries/DLLs and copied fixtures. Observed output
-differs only in the explicit probes and their missing-coverage result. Only
-registry dependencies seed these checkouts. Formatting, normal release
-(28.71s), host build (3.33s) and progress pass. Combined Rust lines fall
-429, raw-offset lines fall 97 and c_int casts fall 272 across 272 lines;
-unsafe function count is unchanged. Frozen totals: 208851 Rust lines,
-21444 raw-offset lines, 52804 c_int casts across 41473 lines and 6516
-unsafe functions. The earlier arithmetic, layout, spawn-point and constant-
-word audits retain their stated scope and coverage limits. This review changes
-no maintained Rust or assets; peer edits retain their own verification.
+Earlier arithmetic, layout, spawn-point, constant-word, PLM instruction and
+liquid audits retain their scope and coverage limits. The 1b5149f8 observation
+reached all eleven instruction-advance sites and 17/19 liquid decisions.
+Samus_DetermineGrappleSwingSpeed_X and Samus_FootstepGraphics_1 still have no
+calls in either fixture. Boundary equivalence does not fill those gameplay gaps.
 
 Independent review of the pending previous-position clamp family (2026-10-19):
 the candidate derived from 1b5149f8 reconstructs exactly across all 74 inputs.
