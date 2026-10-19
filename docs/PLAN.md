@@ -139,6 +139,22 @@ lines+25 provide the table and safe span helper; other own counters unchanged.
 Later CPU/door-transition edits remain separate. Existing rendered failures
 and complete hardware/gameplay/credits/audio coverage remain open.
 
+Sprite replay throughput check (2026-10-19): frozen b53f2263 baseline and
+candidate differ only by the committed sprite span body; both temporary
+verifiers explicitly enable rendering, with no counters or altered comparisons.
+Sequential baseline/candidate/candidate/baseline 20,000-frame any% runs pass
+20,000/0, native exit0, in29.790/28.236/27.213/25.781s. Candidate mean27.724s
+versus baseline27.785s is only0.22% lower, and paired directions conflict.
+Concurrent peer replays changed machine load; these results do not establish
+a replay throughput improvement. Synthetic evaluator gains above remain
+limited to that workload. No maintained-source or residue change belongs to
+this timing check; frozen source excludes later CPU/gameplay edits.
+Next performance experiment: full eight-pixel PpuDrawBackground_4bpp decoding.
+Retained explicit-render profiling measured2.109460s/11,245,988 calls in a
+20,000/0 prefix, including disabled-layer returns. Count actual full-span
+execution and compare complete old/current background outputs before timing;
+preserve the background z>destination gate, tile reads and partial spans.
+
 The binary contains two complete implementations of each frame:
 
 - **theirs**: the original ROM code, run on the emulated 65816 in `sm/src/snes`.
