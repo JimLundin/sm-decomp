@@ -80,84 +80,53 @@ static kTileNumbersForButtonLetters: [uint16; 8] = [
     0x284e as uint16,
 ];
 unsafe fn InitializePpuForMessageBoxes(game: &mut Game) {
-    *((&raw mut game.g_ram as *mut uint8).offset(0x5f9) as *mut uint16) = 0 as uint16;
-    WriteReg(HDMAEN as uint16, 0 as uint8, game);
-    WriteReg(CGADD as uint16, 0x19 as uint8, game);
-    WriteReg(CGDATA as uint16, 0xb1 as uint8, game);
-    WriteReg(CGDATA as uint16, 0xb as uint8, game);
-    WriteReg(CGDATA as uint16, 0x1f as uint8, game);
-    WriteReg(CGDATA as uint16, 0 as uint8, game);
-    (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-        .msgbox
-        .backup_of_enabled_hdma_channels = *(&raw mut game.g_ram as *mut uint8).offset(0x85);
-    (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-        .misc
-        .field_3E8[3 as ::core::ffi::c_int as usize] =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x5b);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x5b) = 88 as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x6a) = 23 as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x70) = 0 as uint8;
-    *(&raw mut game.g_ram as *mut uint8).offset(0x73) = 0 as uint8;
-    WriteReg(COLDATA as uint16, 0x20 as uint8, game);
-    WriteReg(COLDATA as uint16, 0x40 as uint8, game);
-    WriteReg(COLDATA as uint16, 0x80 as uint8, game);
-    ReadReg(BG3HOFS as uint16, game);
-    WriteReg(BG3HOFS as uint16, 0 as uint8, game);
-    WriteReg(BG3HOFS as uint16, 0 as uint8, game);
-    ReadReg(BG3VOFS as uint16, game);
-    WriteReg(BG3VOFS as uint16, 0 as uint8, game);
-    WriteReg(BG3VOFS as uint16, 0 as uint8, game);
-    let mut i: ::core::ffi::c_int = 128 as ::core::ffi::c_int;
-    while i >= 0 as ::core::ffi::c_int {
-        *((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .pause_menu_map_tilemap as *mut uint16 as *mut uint8)
-            .offset(i as uint16 as ::core::ffi::c_int as isize) as *mut uint16) = 0 as uint16;
-        i -= 2 as ::core::ffi::c_int;
-    }
-    WriteRegWord(VMADDL as uint16, addr_unk_605880 as uint16, game);
-    ReadRegWord(RDVRAML as uint16, game);
-    WriteRegWord(DMAP1 as uint16, 0x3981 as uint16, game);
-    WriteRegWord(
-        A1T1L as uint16,
-        (((&raw mut game.g_ram as *mut uint8).offset(0x4000) as *mut Ram4000 as *mut uint8)
-            .offset_from(&raw mut game.g_ram as *mut uint8) as ::core::ffi::c_long
-            + 256 as ::core::ffi::c_long) as uint16,
-        game,
-    );
-    WriteRegWord(A1B1 as uint16, 0x7e as uint16, game);
-    WriteRegWord(DAS1L as uint16, 0x700 as uint16, game);
-    WriteRegWord(DAS10 as uint16, 0 as uint16, game);
-    WriteRegWord(A2A1H as uint16, 0 as uint16, game);
-    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
-    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    game.g_ram[0x5f9..0x5fb].fill(0);
+    WriteReg(HDMAEN as u16, 0, game);
+    WriteReg(CGADD as u16, 0x19, game);
+    WriteReg(CGDATA as u16, 0xb1, game);
+    WriteReg(CGDATA as u16, 0x0b, game);
+    WriteReg(CGDATA as u16, 0x1f, game);
+    WriteReg(CGDATA as u16, 0, game);
+    game.g_ram[0x33ea] = game.g_ram[0x85];
+    game.g_ram[0x33eb] = game.g_ram[0x5b];
+    game.g_ram[0x5b] = 88;
+    game.g_ram[0x6a] = 23;
+    game.g_ram[0x70] = 0;
+    game.g_ram[0x73] = 0;
+    WriteReg(COLDATA as u16, 0x20, game);
+    WriteReg(COLDATA as u16, 0x40, game);
+    WriteReg(COLDATA as u16, 0x80, game);
+    ReadReg(BG3HOFS as u16, game);
+    WriteReg(BG3HOFS as u16, 0, game);
+    WriteReg(BG3HOFS as u16, 0, game);
+    ReadReg(BG3VOFS as u16, game);
+    WriteReg(BG3VOFS as u16, 0, game);
+    WriteReg(BG3VOFS as u16, 0, game);
+    game.g_ram[0x3000..0x3082].fill(0);
+    WriteRegWord(VMADDL as u16, addr_unk_605880 as u16, game);
+    ReadRegWord(RDVRAML as u16, game);
+    WriteRegWord(DMAP1 as u16, 0x3981, game);
+    WriteRegWord(A1T1L as u16, 0x4100, game);
+    WriteRegWord(A1B1 as u16, 0x7e, game);
+    WriteRegWord(DAS1L as u16, 0x700, game);
+    WriteRegWord(DAS10 as u16, 0, game);
+    WriteRegWord(A2A1H as u16, 0, game);
+    WriteReg(VMAIN as u16, 0x80, game);
+    WriteReg(MDMAEN as u16, 2, game);
 }
 unsafe fn ClearMessageBoxBg3Tilemap(game: &mut Game) {
-    let mut v0: int16 = 0;
-    v0 = 1790 as int16;
-    loop {
-        *((&raw mut (*((&raw mut game.g_ram as *mut uint8).offset(0x3800) as *mut Ram3800))
-            .cinematic_bg_tilemap as *mut uint16 as *mut uint8)
-            .offset(v0 as uint16 as ::core::ffi::c_int as isize) as *mut uint16) = 0xe as uint16;
-        v0 = (v0 as ::core::ffi::c_int - 2 as ::core::ffi::c_int) as int16;
-        if !(v0 as ::core::ffi::c_int >= 0 as ::core::ffi::c_int) {
-            break;
-        }
+    for tile in game.g_ram[0x3800..0x3f00].chunks_exact_mut(2) {
+        tile.copy_from_slice(&14u16.to_le_bytes());
     }
-    WriteRegWord(VMADDL as uint16, addr_unk_605880 as uint16, game);
-    WriteRegWord(DMAP1 as uint16, 0x1801 as uint16, game);
-    WriteRegWord(
-        A1T1L as uint16,
-        ((&raw mut game.g_ram as *mut uint8).offset(0x3800) as *mut Ram3800 as *mut uint8)
-            .offset_from(&raw mut game.g_ram as *mut uint8) as ::core::ffi::c_long
-            as uint16,
-        game,
-    );
-    WriteRegWord(A1B1 as uint16, 0x7e as uint16, game);
-    WriteRegWord(DAS1L as uint16, 0x700 as uint16, game);
-    WriteRegWord(DAS10 as uint16, 0 as uint16, game);
-    WriteRegWord(A2A1H as uint16, 0 as uint16, game);
-    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
-    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteRegWord(VMADDL as u16, addr_unk_605880 as u16, game);
+    WriteRegWord(DMAP1 as u16, 0x1801, game);
+    WriteRegWord(A1T1L as u16, 0x3800, game);
+    WriteRegWord(A1B1 as u16, 0x7e, game);
+    WriteRegWord(DAS1L as u16, 0x700, game);
+    WriteRegWord(DAS10 as u16, 0, game);
+    WriteRegWord(A2A1H as u16, 0, game);
+    WriteReg(VMAIN as u16, 0x80, game);
+    WriteReg(MDMAEN as u16, 2, game);
 }
 static kLargeMsgBoxTopBottomBorderTilemap: [uint16; 32] = [
     0xe as uint16,
@@ -330,24 +299,17 @@ unsafe fn SetupMessageBoxBg3YscrollHdma(game: &mut Game) {
     MsgBoxMakeHdmaTable(game);
     WriteReg(HDMAEN as uint16, 0x40 as uint8, game);
 }
-unsafe fn SetupPpuForActiveMessageBox(mut r52: uint16, game: &mut Game) {
+unsafe fn SetupPpuForActiveMessageBox(r52: uint16, game: &mut Game) {
     SetupMessageBoxBg3YscrollHdma(game);
-    r52 = (r52 as ::core::ffi::c_int + 22528 as ::core::ffi::c_int) as uint16;
-    WriteRegWord(VMADDL as uint16, r52, game);
-    WriteRegWord(DMAP1 as uint16, 0x1801 as uint16, game);
-    WriteRegWord(
-        A1T1L as uint16,
-        (((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000 as *mut uint8)
-            .offset_from(&raw mut game.g_ram as *mut uint8) as ::core::ffi::c_long
-            + 512 as ::core::ffi::c_long) as uint16,
-        game,
-    );
-    WriteRegWord(A1B1 as uint16, 0x7e as uint16, game);
-    WriteRegWord(DAS1L as uint16, game.message_box_das0l_value, game);
-    WriteRegWord(DAS10 as uint16, 0 as uint16, game);
-    WriteRegWord(A2A1H as uint16, 0 as uint16, game);
-    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
-    WriteReg(MDMAEN as uint16, 2 as uint8, game);
+    WriteRegWord(VMADDL as u16, r52.wrapping_add(0x5800), game);
+    WriteRegWord(DMAP1 as u16, 0x1801, game);
+    WriteRegWord(A1T1L as u16, 0x3200, game);
+    WriteRegWord(A1B1 as u16, 0x7e, game);
+    WriteRegWord(DAS1L as u16, game.message_box_das0l_value, game);
+    WriteRegWord(DAS10 as u16, 0, game);
+    WriteRegWord(A2A1H as u16, 0, game);
+    WriteReg(VMAIN as u16, 0x80, game);
+    WriteReg(MDMAEN as u16, 2, game);
 }
 unsafe fn DrawSpecialButtonAndSetupPpuForLargeMessageBox(a: uint16, game: &mut Game) {
     let buttons = [
@@ -527,75 +489,26 @@ unsafe fn ToggleSaveConfirmationSelection(game: &mut Game) {
     WriteReg(MDMAEN as uint16, 2 as uint8, game);
 }
 unsafe fn RestorePpuForMessageBox(game: &mut Game) {
-    WriteRegWord(VMADDL as uint16, addr_unk_605880 as uint16, game);
-    WriteRegWord(DMAP1 as uint16, 0x1801 as uint16, game);
-    WriteRegWord(
-        A1T1L as uint16,
-        (((&raw mut game.g_ram as *mut uint8).offset(0x4000) as *mut Ram4000 as *mut uint8)
-            .offset_from(&raw mut game.g_ram as *mut uint8) as ::core::ffi::c_long
-            + 256 as ::core::ffi::c_long) as uint16,
-        game,
-    );
-    WriteRegWord(A1B1 as uint16, 0x7e as uint16, game);
-    WriteRegWord(DAS1L as uint16, 0x700 as uint16, game);
-    WriteRegWord(DAS10 as uint16, 0 as uint16, game);
-    WriteRegWord(A2A1H as uint16, 0 as uint16, game);
-    WriteReg(VMAIN as uint16, 0x80 as uint8, game);
-    WriteReg(MDMAEN as uint16, 2 as uint8, game);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x85) =
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .msgbox
-            .backup_of_enabled_hdma_channels;
-    WriteReg(
-        HDMAEN as uint16,
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .msgbox
-            .backup_of_enabled_hdma_channels,
-        game,
-    );
-    *(&raw mut game.g_ram as *mut uint8).offset(0x5b) =
-        (*((&raw mut game.g_ram as *mut uint8).offset(0x3000) as *mut Ram3000))
-            .misc
-            .field_3E8[3 as ::core::ffi::c_int as usize];
-    *(&raw mut game.g_ram as *mut uint8).offset(0x6a) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x69);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x70) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x6e);
-    *(&raw mut game.g_ram as *mut uint8).offset(0x73) =
-        *(&raw mut game.g_ram as *mut uint8).offset(0x71);
-    WriteReg(CGADD as uint16, 0x19 as uint8, game);
-    WriteReg(
-        CGDATA as uint16,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(25) as uint8,
-        game,
-    );
-    WriteReg(
-        CGDATA as uint16,
-        *(((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(25)
-            as *mut uint16 as *mut uint8)
-            .offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                    .wrapping_sub(1 as usize) as isize,
-            ),
-        game,
-    );
-    WriteReg(
-        CGDATA as uint16,
-        *((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(26) as uint8,
-        game,
-    );
-    WriteReg(
-        CGDATA as uint16,
-        *(((&raw mut game.g_ram as *mut uint8).offset(0xc000) as *mut uint16).offset(26)
-            as *mut uint16 as *mut uint8)
-            .offset(
-                (::core::mem::size_of::<uint16>() as usize)
-                    .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                    .wrapping_sub(1 as usize) as isize,
-            ),
-        game,
-    );
+    WriteRegWord(VMADDL as u16, addr_unk_605880 as u16, game);
+    WriteRegWord(DMAP1 as u16, 0x1801, game);
+    WriteRegWord(A1T1L as u16, 0x4100, game);
+    WriteRegWord(A1B1 as u16, 0x7e, game);
+    WriteRegWord(DAS1L as u16, 0x700, game);
+    WriteRegWord(DAS10 as u16, 0, game);
+    WriteRegWord(A2A1H as u16, 0, game);
+    WriteReg(VMAIN as u16, 0x80, game);
+    WriteReg(MDMAEN as u16, 2, game);
+    game.g_ram[0x85] = game.g_ram[0x33ea];
+    WriteReg(HDMAEN as u16, game.g_ram[0x33ea], game);
+    game.g_ram[0x5b] = game.g_ram[0x33eb];
+    game.g_ram[0x6a] = game.g_ram[0x69];
+    game.g_ram[0x70] = game.g_ram[0x6e];
+    game.g_ram[0x73] = game.g_ram[0x71];
+    WriteReg(CGADD as u16, 0x19, game);
+    WriteReg(CGDATA as u16, game.g_ram[0xc032], game);
+    WriteReg(CGDATA as u16, game.g_ram[0xc033], game);
+    WriteReg(CGDATA as u16, game.g_ram[0xc034], game);
+    WriteReg(CGDATA as u16, game.g_ram[0xc035], game);
 }
 unsafe fn OpenMessageBox_Async(game: &mut Game) -> CoroutineRet {
     match game.g_ram[0x615] {

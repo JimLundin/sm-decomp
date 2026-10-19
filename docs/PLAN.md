@@ -755,6 +755,74 @@ artifacts are reused after an access-denied dependency-script launch;
 game and host artifacts remain local to their checkout. This compilation
 checks the rebase; the gameplay results above retain their frozen source.
 
+Message-box PPU lifecycle (2026-10-19): simplify initialization, background
+clearing, active upload and restoration as one four-routine pass. Byte
+operations retain the 65-word initialization clear at $3000..$3082 and
+896-word tilemap fill at $3800..$3F00. Packed backup bytes remain $33EA and
+$33EB; DMA buffers remain $4100, $3800 and $3200. Register order, dummy
+VRAM reads, low/high word operations and wrapping destination arithmetic
+are unchanged. Active transfer length is still read after preceding
+register calls; restored backups and individual palette bytes are read
+at their original positions around hardware calls.
+
+Extracted before/after controls pass 133265 cases, 4790997 callback
+snapshots and 4924262 complete-RAM comparisons. They cover all 65536
+destination words and transfer lengths, every callback position with RAM
+mutations, packed offsets, buffer guards and explicit register sequences.
+Actual word helpers and HDMA table functions are retained. Six actual-source
+mutants fail: shortening either clear, caching the active length, caching
+palette bytes, caching backups, and removing the dummy VRAM read. Compile
+4.127s; native controls 184.522s. Independent extraction, source, artifact
+and result audit passes. These controlled bus callbacks do not substitute
+for actual DMA verification; legacy unaligned reads retain the native
+x86-64 qualification rather than a claim of Rust alignment validity.
+
+The exact four-body rebase from 7db5656b onto b5aa5701 preserves all nine
+layout/helper bodies. Control source and extraction hashes regenerate
+byte-identically, so the controls are reused. Relevant RAM layouts, state,
+register definitions and hardware read/write bodies are unchanged.
+
+Frozen b5aa5701 plus this change passes full any% 129712/0 (246.67s) and
+full Speed Booster 148406/0 (318.27s), native exits 0. Complete checkpoint
+payloads equal the prior verified runs: 452703 bytes for any% and 428408
+for Speed. Speed's full RAM also equals the original route. All 79 source,
+library and asset pins plus seven comparison/output pins remain fixed.
+Any% has no diagnostics; Speed retains the known Kraid fingernail warning.
+Formatting/check, normal release (34.40s), Cargo verifier host (2.36s)
+and progress pass; game and host artifacts stay within their checkout.
+
+Observed original/candidate map continuations pass 49014/0
+(109.56s/108.14s native), and the two-toggle gunship continuations pass
+1605/0 (2.39s/2.50s native). All four entries and 19 of 21 probe labels
+execute. Each buffer/phase completion matches every corresponding entry;
+both active destinations and 192/320/384-byte DMA lengths execute.
+Both pairs' complete checkpoints, prior endpoint payloads and shared probe
+counts/ranges agree. All 434 pins stay fixed. Independent stripping of
+15 marker blocks per source recovers the exact original/candidate files;
+probes do not mutate Game. Nonstandard destinations/lengths and callback
+mutations remain controls-only.
+
+The fresh map/gunship-prefix checkpoint passes 21530/0 and matches all
+420981 payload bytes of the previously qualified checkpoint, with only
+the runtime header changed. Current 66-file caller audits close all four
+routines at unchanged message-coroutine roots without escapes. This reuses
+the prior zero-root-entry evidence; no new zero-entry replay is claimed.
+An initial any%-prefix checkpoint is explicitly rejected before reuse.
+
+The frozen comparison adds no helper and removes 119 Rust lines, 36 raw
+expressions (34 lines), 75 c_int tokens (71 lines) and 216 casts. Unsafe function count
+is unchanged because the actual hardware callees remain unsafe. This removes
+the remaining raw RAM pointer expressions from bank $85; ROM pointers and
+necessary hardware unsafety remain. No RAM layout or shared Game API changes.
+Temporary controls, instrumentation, checkpoints and assets are uncommitted.
+
+The maintained branch already includes the concurrent cast cleanup. The
+four replacements commute exactly with its 278 removals in this bank,
+including 61 within these routines, while every outside byte is preserved.
+The committed delta is therefore 87 Rust lines, 36 raw expressions,
+14 c_int tokens (10 lines) and 155 casts removed; no unsafe functions change.
+This avoids counting the other pass's removals twice.
+
 Boolean truth-test cleanup (2026-10-19): replaced 128 conversions of
 Boolean locals to c_int followed by != 0 with direct Boolean conditions,
 across 85 routines in 14 files. Operand evaluation and short-circuit order
