@@ -858,6 +858,35 @@ change and no new replay result belong to this cleanup.
 
 ## The oracle
 
+Kraid defeated and Varia Suit milestone (2026-10-19): ordinary inputs
+finish Kraid's death sequence at frame 120820, then collect and equip Varia
+and return to stable standing at 122732. Verification reuses the qualified
+64e8d165 build's actual full-boot 119823/0 checkpoint, followed by 997/0
+(1.25s) and 1912/0 (2.70s), all native exits 0. This is one same-build
+boot-to-milestone chain, not a new uninterrupted 122732-frame replay or
+verification of later source changes. Neither new segment adds diagnostics;
+the boot prefix retains its previously attributed fingernail warning.
+
+The first endpoint is state 8, room $A59F, X139/Y427, pose $0001, with
+Kraid health zero, its slot cleared and $D829 bit 0 set. The Varia endpoint
+is state 8, room $A6E2, X124/Y139, pose $0001, equipped/collected items
+$1105 and beams $1004. Both have health 205/299, missiles 8/15, Supers
+0/5 and all eight $0611..$0618 coroutine bytes zero. Eight movement inputs
+after the pickup sequence and 60 neutral frames establish stable standing.
+Checkpoint payloads independently confirm these fields; credits are unvisited.
+
+Ignored movies/kraid-defeated.inputs has SHA-256
+89b9055aa0c460523a5b0f7645c2ec12afdba67c570dd38c00b5169421dbfc54;
+ignored movies/varia-suit.inputs has SHA-256
+3cd2f82fd98093233361b940e0f6394ef2f118cce13c622ffaaaeb1e21008bf7.
+The latter preserves the exact defeated-Kraid, phase-two, refill and Hi-Jump
+prefixes. Source/configuration, DLL, ROM, inputs and checkpoint bindings
+were qualified and stayed fixed. No old frontend save is loaded into the
+modern verifier and no fingerprint is rewritten. The original route library
+separately passes both ordinary-input continuations with zero failures.
+No Rust, residue counters or committed assets change. Remaining bosses,
+credits, broader integration and hardware/audio coverage remain unfinished.
+
 Kraid second-phase milestone (2026-10-19): preserve the ordinary-input
 extension through frame 119823 when the combat timebox ends. Main Kraid is
 not defeated. Full boot on the previously reviewed immutable baseline
