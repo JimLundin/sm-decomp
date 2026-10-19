@@ -86,23 +86,22 @@ No maintained source or own residue counters change in this quality check.
 Later Cargo-profile and gameplay changes retain separate verification;
 full gameplay/credits, hardware/audio coverage and remaining masks stay open.
 
-Latest focused check: frozen `ff755657` plus byte-backed animated-tile
-uploads passes any% 129712/0 (318.31s) and Waver 58109/0 (166.88s), both
-native exits 0. NmiProcessAnimtilesVramTransfers visits slots 5..0, keeps the
-full-word ID/source gates and live size/destination read positions, and clears
-each source request only after its channel-0 DMA. The 30000/0 Waver prefix
-passes 29370 actual old/current comparisons: 8316 disabled and 21054 enabled.
-Natural transfers execute only in slot 5: 96 transfers / 7680 ROM bytes per
-side, frames 20894..21844, plus 920 nonzero-ID/zero-source skips. Captured RAM,
+Latest focused check: frozen `a85ff831` plus direct palette/OAM DMA source
+addresses passes any% 129712/0 (311.78s) and Waver 58109/0 (173.02s), both
+native exits 0. NmiUpdatePalettesAndOam retains all 18 ordered register writes
+and the single MDMAEN=3 start. The 9000/0 prefix passes 9000 actual old/current
+comparisons and 18000 transfers per side. Each call uploads 544 OAM bytes from
+a WRAM mirror, then 512 palette bytes from full WRAM: 9,504,000 transferred
+bytes across the replay. Captured RAM,
 both PPUs, CPU/Snes/Cart, SRAM, inputs, DMA state and g_fail match after checked
-restoration; ordered register writes, source reads, DMA bytes and request
-clears match. All 15 constructed cases pass 26 transfers / 340 bytes per
-side (334 ROM, six WRAM-mirror bytes), covering other slots, reverse multi-slot
-order, full-word gates, request-table aliases and source wrapping. Active
-zero-size transfers remain unexercised because bank $87 crosses unsupported
-I/O. Frozen hashes, exact observation stripping and independent review pass.
-Formatting, release build and progress pass. Own raw offsets -7, cast lines
--21 and Rust lines -31; other own counters unchanged.
+restoration; source reads, transferred bytes, channel order and complete
+OAM/CGRAM tables and latches match. Four constructed controls pass eight
+transfers / 4224 bytes, covering all initial OAM/CGRAM write-phase combinations
+with zero, FF and patterned RAM. Natural calls start with both write phases
+clear; other phase combinations are constructed. Frozen hashes, exact
+observation stripping and independent review pass. Formatting, release build
+and progress pass. Own raw offsets -4, cast lines -13 and Rust lines -15;
+other own counters unchanged.
 
 Everything that existed before is in the branch `archive/pre-transpile-2026-10-17`.
 

@@ -2362,35 +2362,20 @@ pub unsafe fn NmiUpdateIoRegisters(game: &mut Game) {
     }
 }
 pub unsafe fn NmiUpdatePalettesAndOam(game: &mut Game) {
-    WriteRegWord(DMAP0 as ::core::ffi::c_int as uint16, 0x400 as uint16, game);
-    WriteRegWord(
-        A1T0L as ::core::ffi::c_int as uint16,
-        ((&raw mut game.g_ram as *mut uint8).offset(0x370 as ::core::ffi::c_int as isize)
-            as *mut OamEnt as *mut uint8)
-            .offset_from(&raw mut game.g_ram as *mut uint8) as ::core::ffi::c_long
-            as uint16,
-        game,
-    );
-    WriteReg(A1B0 as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteRegWord(DAS0L as ::core::ffi::c_int as uint16, 0x220 as uint16, game);
-    WriteRegWord(OAMADDL as ::core::ffi::c_int as uint16, 0 as uint16, game);
-    WriteRegWord(
-        DMAP1 as ::core::ffi::c_int as uint16,
-        0x2200 as uint16,
-        game,
-    );
-    WriteRegWord(
-        A1T1L as ::core::ffi::c_int as uint16,
-        ((&raw mut game.g_ram as *mut uint8).offset(0xc000 as ::core::ffi::c_int as isize)
-            as *mut uint16 as *mut uint8)
-            .offset_from(&raw mut game.g_ram as *mut uint8) as ::core::ffi::c_long
-            as uint16,
-        game,
-    );
-    WriteReg(A1B1 as ::core::ffi::c_int as uint16, 0x7e as uint8, game);
-    WriteRegWord(DAS1L as ::core::ffi::c_int as uint16, 0x200 as uint16, game);
-    WriteReg(CGADD as ::core::ffi::c_int as uint16, 0 as uint8, game);
-    WriteReg(MDMAEN as ::core::ffi::c_int as uint16, 3 as uint8, game);
+    // Channel 0 uploads the OAM entries and their high table from RAM.
+    WriteRegWord(DMAP0 as u16, 0x0400, game);
+    WriteRegWord(A1T0L as u16, 0x0370, game);
+    WriteReg(A1B0 as u16, 0, game);
+    WriteRegWord(DAS0L as u16, 0x0220, game);
+    WriteRegWord(OAMADDL as u16, 0, game);
+
+    // Channel 1 uploads palette_buffer to CGRAM.
+    WriteRegWord(DMAP1 as u16, 0x2200, game);
+    WriteRegWord(A1T1L as u16, 0xc000, game);
+    WriteReg(A1B1 as u16, 0x7e, game);
+    WriteRegWord(DAS1L as u16, 0x0200, game);
+    WriteReg(CGADD as u16, 0, game);
+    WriteReg(MDMAEN as u16, 3, game);
 }
 unsafe fn transfer_samus_tile_half(descriptor_addr: u16, vram_addr: u16, game: &mut Game) {
     // Keep the diagnostic and failure flag for low-address ROM mirrors.
