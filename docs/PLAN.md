@@ -8604,6 +8604,20 @@ source. Rust lines -6; other counters unchanged. Uncovered indexed-indirect,
 indirect-long and stack-relative-indirect-Y helpers remain held for coverage.
 Complete gameplay and rendering/audio remain open.
 
+CPU native compare subtraction (2026-10-19): CMP/CPX/CPY use wrapped byte/word
+subtraction for Z/N and unsigned register >= operand for carry. Operand reads
+still precede register reads; word cycle increments precede reads, carry
+precedes Z/N and final width flags are reread live. Frozen HEAD `c7a21b59`
+plus this change passes 53,084,160 actual old/current comparisons: all byte
+operands/register words and word boundary/equality/borrow cases, checking
+C/Z/N/V, cycle wrapping and complete named CPU/bus state. Prefix 3,600/0
+(1.06s) executes word/byte CMP 72,809/117,035, CPX 10,098/49,139 and CPY
+11,452/10,038 calls. Clean full any% 129,712/0 (49.17s), native exit 0.
+Cargo fmt/check, release library, normal metadata and optimized core/DLL builds
+pass; full frontend linking still lacks SDL2. Live CPU source matches frozen
+verified source. All progress counters unchanged. Full word Cartesian coverage,
+arbitrary bus mutation, complete gameplay and rendering/audio remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

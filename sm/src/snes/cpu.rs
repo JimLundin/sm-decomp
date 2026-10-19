@@ -577,47 +577,47 @@ unsafe fn cpu_sbc(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
 unsafe fn cpu_cmp(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).mf {
         let value = cpu_read(cpu, low, game);
-        let result = u32::from((*cpu).a & 0xff) + u32::from(!value) + 1;
-        (*cpu).c = result > 0xff;
-        result
+        let register = (*cpu).a as u8;
+        (*cpu).c = register >= value;
+        u16::from(register.wrapping_sub(value))
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
         let value = cpu_readWord(cpu, low, high, game);
-        let result = u32::from((*cpu).a) + u32::from(!value) + 1;
-        (*cpu).c = result > 0xffff;
-        result
+        let register = (*cpu).a;
+        (*cpu).c = register >= value;
+        register.wrapping_sub(value)
     };
-    set_zero_negative(result as u16, (*cpu).mf, &mut *cpu);
+    set_zero_negative(result, (*cpu).mf, &mut *cpu);
 }
 unsafe fn cpu_cpx(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).xf {
         let value = cpu_read(cpu, low, game);
-        let result = u32::from((*cpu).x & 0xff) + u32::from(!value) + 1;
-        (*cpu).c = result > 0xff;
-        result
+        let register = (*cpu).x as u8;
+        (*cpu).c = register >= value;
+        u16::from(register.wrapping_sub(value))
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
         let value = cpu_readWord(cpu, low, high, game);
-        let result = u32::from((*cpu).x) + u32::from(!value) + 1;
-        (*cpu).c = result > 0xffff;
-        result
+        let register = (*cpu).x;
+        (*cpu).c = register >= value;
+        register.wrapping_sub(value)
     };
-    set_zero_negative(result as u16, (*cpu).xf, &mut *cpu);
+    set_zero_negative(result, (*cpu).xf, &mut *cpu);
 }
 unsafe fn cpu_cpy(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     let result = if (*cpu).xf {
         let value = cpu_read(cpu, low, game);
-        let result = u32::from((*cpu).y & 0xff) + u32::from(!value) + 1;
-        (*cpu).c = result > 0xff;
-        result
+        let register = (*cpu).y as u8;
+        (*cpu).c = register >= value;
+        u16::from(register.wrapping_sub(value))
     } else {
         (*cpu).cyclesUsed = (*cpu).cyclesUsed.wrapping_add(1);
         let value = cpu_readWord(cpu, low, high, game);
-        let result = u32::from((*cpu).y) + u32::from(!value) + 1;
-        (*cpu).c = result > 0xffff;
-        result
+        let register = (*cpu).y;
+        (*cpu).c = register >= value;
+        register.wrapping_sub(value)
     };
-    set_zero_negative(result as u16, (*cpu).xf, &mut *cpu);
+    set_zero_negative(result, (*cpu).xf, &mut *cpu);
 }
 unsafe fn cpu_bit(cpu: *mut Cpu, low: u32, high: u32, game: &mut Game) {
     if (*cpu).mf {
