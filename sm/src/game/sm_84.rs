@@ -1172,15 +1172,18 @@ pub unsafe fn SpawnRoomPLM(k: uint16, game: &mut Game) {
     write_word(game, 0x1c37 + index, header); // plm_header_ptr
     write_word(game, 0xdf0c + index, 0); // plm_variables
     write_word(game, 0x1cd7 + index, 0x84e6); // plm_pre_instrs
-    let PH = get_PlmHeader_Size4(pp, game);
-    let instruction = (*PH).instr_list_ptr as u16;
+    let header_bytes = get_PlmHeader_Size4(pp, game).cast::<u8>();
+    let read_header_word = |offset: usize| {
+        u16::from_le_bytes([*header_bytes.add(offset), *header_bytes.add(offset + 1)])
+    };
+    let instruction = read_header_word(2);
     write_word(game, 0x1d27 + index, instruction); // plm_instr_list_ptrs
     write_word(game, 0xde1c + index, 1); // plm_instruction_timer
     write_word(game, 0xde6c + index, addr_kDefaultPlmDrawInstruction as u16);
     write_word(game, 0x1d77 + index, 0); // plm_timers
     write_word(game, 0x1c27, v1); // plm_id
     CallPlmHeaderFunc(
-        ((*PH).func_ptr as ::core::ffi::c_int | 0x840000 as ::core::ffi::c_int) as uint32,
+        0x840000 | u32::from(read_header_word(0)),
         v1,
         core::ptr::null_mut(),
         game,

@@ -14064,6 +14064,26 @@ Cargo fmt/check, normal release build and progress pass. Own raw offsets-1,
 cast lines-2; Rust lines and other own counters unchanged. Peer edits remain preserved. Remaining header reads and
 broader gameplay/credits/hardware/audio/masks/ownership remain unfinished.
 
+Room PLM header reads (2026-10-19): SpawnRoomPLM now reads its
+packed header instruction/setup words through explicit little-endian bytes.
+Instruction read precedes the slot stores; the setup word is reread after
+live-ID storage at the original callback boundary. Bank84 assembly, callback
+arguments, room-entry reads and all field-write positions remain unchanged.
+
+Frozen 6e3ccd88 plus only this header-read rewrite
+passes any%129712/0 (237.53s) and Spazer90706/0
+(190.28s), native exits0. Observed Spazer90706/0
+(192.39s) compares all128KiB RAM, setup address and slot
+against the original on 396 actual spawns before invoking setup
+once. Clean and observed non-timing diagnostics match after stripping
+observers. Frozen scope and maintained routine identity pass; no observers
+are committed. Movie calls do not establish arbitrary header alias states.
+
+Cargo fmt/check, normal release build and progress pass. Own cast lines-1;
+Rust lines+3 make packed header reads explicit. Other own counters unchanged.
+Peer edits remain preserved. Broader PLM/gameplay/credits/hardware/audio/masks/
+ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
