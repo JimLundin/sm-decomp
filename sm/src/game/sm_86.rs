@@ -769,6 +769,12 @@ impl EprojState<'_> {
     fn instruction(&self, word_index: usize) -> u16 {
         self.slot_word(0x1b47, word_index)
     }
+    fn x_radius(&self, word_index: usize) -> u8 {
+        self.0[0x1bb3 + word_index * 2]
+    }
+    fn y_radius(&self, word_index: usize) -> u8 {
+        self.0[0x1bb4 + word_index * 2]
+    }
 }
 
 struct EprojStateMut<'a>(&'a mut [u8]);
@@ -2131,16 +2137,8 @@ pub unsafe fn EprojBlockCollisition_Horiz(mut k: uint16, game: &mut Game) -> uin
     let mut amt: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0x1ab7) as *mut uint16)
         .offset(v1 as isize) as int16 as int32)
         << 8 as ::core::ffi::c_int;
-    let mut R30: uint16 = *(((&raw mut game.g_ram as *mut uint8).offset(0x1bb3) as *mut uint16)
-        .offset(v1 as isize) as *mut uint16 as *mut uint8)
-        .offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                .wrapping_sub(1 as usize) as isize,
-        ) as uint16;
-    let mut R28: uint16 = *(((&raw mut game.g_ram as *mut uint8).offset(0x1bb3) as *mut uint16)
-        .offset(v1 as isize) as *mut uint16 as *mut uint8)
-        .offset(0) as uint16;
+    let mut R30: uint16 = EprojState(&game.g_ram).y_radius(v1 as usize) as uint16;
+    let mut R28: uint16 = EprojState(&game.g_ram).x_radius(v1 as usize) as uint16;
     let mut r26: uint16 = (game.enemy_projectile_y_pos(k) as ::core::ffi::c_int
         - R30 as ::core::ffi::c_int
         & 0xfff0 as ::core::ffi::c_int) as uint16;
@@ -2228,16 +2226,8 @@ pub unsafe fn EprojBlockCollisition_Vertical(mut k: uint16, game: &mut Game) -> 
     let mut amt: int32 = (*((&raw mut game.g_ram as *mut uint8).offset(0x1adb) as *mut uint16)
         .offset(v1 as isize) as int16 as int32)
         << 8 as ::core::ffi::c_int;
-    let mut R30: uint16 = *(((&raw mut game.g_ram as *mut uint8).offset(0x1bb3) as *mut uint16)
-        .offset(v1 as isize) as *mut uint16 as *mut uint8)
-        .offset(
-            (::core::mem::size_of::<uint16>() as usize)
-                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                .wrapping_sub(1 as usize) as isize,
-        ) as uint16;
-    let mut R28: uint16 = *(((&raw mut game.g_ram as *mut uint8).offset(0x1bb3) as *mut uint16)
-        .offset(v1 as isize) as *mut uint16 as *mut uint8)
-        .offset(0) as uint16;
+    let mut R30: uint16 = EprojState(&game.g_ram).y_radius(v1 as usize) as uint16;
+    let mut R28: uint16 = EprojState(&game.g_ram).x_radius(v1 as usize) as uint16;
     let mut r26: uint16 = (game.enemy_projectile_x_pos(k) as ::core::ffi::c_int
         - R28 as ::core::ffi::c_int
         & 0xfff0 as ::core::ffi::c_int) as uint16;
@@ -10727,18 +10717,8 @@ pub unsafe fn EprojPreInstr_Pickup(mut k: uint16, game: &mut Game) {
             4906268039856690917 => {}
             _ => {
                 let mut v5: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
-                let mut varE20: uint16 =
-                    *(((&raw mut game.g_ram as *mut uint8).offset(0x1bb3) as *mut uint16)
-                        .offset(v5 as isize) as *mut uint16 as *mut uint8)
-                        .offset(0) as uint16;
-                let mut varE22: uint16 =
-                    *(((&raw mut game.g_ram as *mut uint8).offset(0x1bb3) as *mut uint16)
-                        .offset(v5 as isize) as *mut uint16 as *mut uint8)
-                        .offset(
-                            (::core::mem::size_of::<uint16>() as usize)
-                                .wrapping_div(::core::mem::size_of::<uint8>() as usize)
-                                .wrapping_sub(1 as usize) as isize,
-                        ) as uint16;
+                let mut varE20: uint16 = EprojState(&game.g_ram).x_radius(v5 as usize) as uint16;
+                let mut varE22: uint16 = EprojState(&game.g_ram).y_radius(v5 as usize) as uint16;
                 let mut v6: uint16 = abs16(
                     game.samus_x_pos()
                         .wrapping_sub(game.enemy_projectile_x_pos(k)),

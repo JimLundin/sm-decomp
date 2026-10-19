@@ -15464,6 +15464,42 @@ pass. No maintained Rust or residue changes; corrected observer code and
 test artifacts stay temporary. Later implementation changes, credits and
 broader gameplay/hardware coverage retain separate verification.
 
+Enemy-projectile collision radii (2026-10-19): six byte loads now use
+the shared EprojState X/Y radius accessors. Collision keeps its separate
+Y-then-X reads; Pickup keeps X-then-Y after its existing Samus callback.
+The original word indices and u16 widening remain. Odd byte indices round
+down, and indices beyond slot17 still address the same backing RAM. No
+retained RAM pointer or live mutable reference crosses the new reads.
+The four unexercised Mother Brain rectangle reads remain unchanged.
+
+Frozen f1feb06d plus only this change passes clean any%129712/0 (295.46s)
+and Varia122732/0 (304.87s), native exits0. Observed Varia122732/0
+(330.34s) compares all six reads in place: 97398 matching byte values.
+The following counts/ranges apply to each of the two reads in that routine.
+
+| Routine | Calls per read | Input frames |
+| --- | --- | --- |
+| EprojBlockCollisition_Horiz | 13178 | 50634..119527 |
+| EprojBlockCollisition_Vertical | 10775 | 18120..120279 |
+| EprojPreInstr_Pickup | 24746 | 37943..120803 |
+
+Clean/observed complete non-timing diagnostics and endpoint checkpoint bytes
+match, including the existing X undefined diagnostic. Independent review
+confirms exact observer stripping, source/DLL/input identity and provenance.
+Native helper checks pass 1835008 byte comparisons: every u16 index with
+eight packed values, plus every packed radius word at six selected indices.
+This includes odd indices and backing-RAM aliases, not the full Cartesian
+product. A deliberately wrong Y-byte address is detected.
+
+Formatting/check, normal release builds and progress pass. Isolated release
+takes44.07s, clean host link2.01s and observer build24.41s; the frozen
+build/replay cycle takes414.95s. Workspace release takes52.90s. Including
+both shared accessors: Rust lines-20, raw accesses/unsafe byte loads-6,
+pointer-offset calls-18; promotion casts and unsafe functions are unchanged.
+Only registry dependencies are shared across checkouts. No observer, ROM,
+input or checkpoint is committed. Concurrent comparison/enable edits retain
+their own verification; broader gameplay/credits and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
