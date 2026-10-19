@@ -31,19 +31,19 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest focused check: frozen `fe496675` plus shared down-beam contexts
-passes any% 129712/0 (205.66s) and Waver 58109/0 (126.03s), native exits 0.
-The two covered down-facing X-ray handlers now accept read-only context
-references; arithmetic, handler choice and table writes retain their order.
-The 252-frame checkpoint passes with 177 on-screen and 38 offscreen calls
-to those handlers. All 156 old/current builder comparisons and 36 direct
-handler comparisons match complete RAM; the context fields and destination
-pointer remain unchanged through early returns and both ramped branches.
-All 924 window-table bytes remain enforced. Maintained source and the probe
-with observations removed exactly match the verified candidate. Source review,
-formatting, release build and progress pass. Forty raw context dereferences
-are removed; formatting reduces cast lines by one and Rust lines by four.
-Other residue counters are unchanged.
+Latest focused check: frozen `50be5476` plus framebuffer clears through
+raw pointers passes any% 129712/0 (290.86s) and Waver 58109/0 (140.93s),
+both native exits 0. The verifier clears both 245,760-byte arrays between
+synchronous frames without creating references to mutable statics; buffer
+storage, pitch and clear-before-render order remain unchanged. A 1,200-frame
+poisoned-buffer control confirms both full arrays are zero after each clear;
+PPU pointers and pitches match before clearing, after clearing and after
+rendering. A shortened 224-row clear fails the ordinary comparison at pixel
+(0, 224), with no RAM
+differences. The maintained verifier equals the tested source, and temporary
+observations strip exactly. Source review, formatting, release build and
+progress pass; both static_mut_refs warnings are gone. Rust lines +2 document
+the pointer-lifetime guarantee; other residue counters are unchanged.
 
 Everything that existed before is in the branch `archive/pre-transpile-2026-10-17`.
 

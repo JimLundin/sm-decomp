@@ -199,8 +199,10 @@ fn run_checked(args: &[String], game: &mut Game) -> Result<u64, String> {
         let trace = std::env::var_os("SM_VERIFY_TRACE").is_some();
         for (index, &pad) in inputs[..frames].iter().enumerate() {
             // Undrawn rows must not retain a prior mismatch or stale pixels.
-            super::g_pixels.fill(0);
-            super::g_my_pixels.fill(0);
+            // No frame is running; keep access raw while each PPU retains
+            // its pointer to the array. Each write clears one whole array.
+            core::ptr::write_bytes(&raw mut super::g_pixels, 0, 1);
+            core::ptr::write_bytes(&raw mut super::g_my_pixels, 0, 1);
             sm::rtl::RtlRunFrame(i32::from(pad), game);
             // Advance the music driver once per frame without playing audio.
             sm::rtl::RtlRenderAudio(discarded_audio.as_mut_ptr(), 534, 2, game);
