@@ -11001,6 +11001,27 @@ then continue item/boss coverage; held upper99BD ascent remains held.
 Complete credits/gameplay/hardware, audio/render, masked RAM and ownership
 remain open.
 
+CPU shared load upper-byte rule (2026-10-19): CpuRegister::load_upper
+handles width selection for memory loads and stack pulls. Only byte A loads
+preserve the captured upper byte; word A and X/Y loads contribute zero.
+Both callers capture width/upper before bus reads; stack adjustment, word
+cycles, subsequent register assignment and live-width final flags retain
+their order. Frozen `6bd6919b` plus this change passes 9,093,108 actual
+old/current load/pull comparisons using retained previous wrappers and
+upper-byte helper. Every initial register word, sampled operand boundaries,
+both widths and all registers are covered; stack cases include every initial
+emulation SP and native WRAM SP 0000..1FFD. Named CPU/bus state and flags
+match. Device-mapped native stacks and arbitrary MMIO remain untested.
+Prefix 3,600/0 (1.12s), native exit 0, executes word/byte A/X/Y load counts
+990,782/420,817, 171,669/246,437, 36,080/19,911 and pull counts
+11,140/17,559, 97,558/0, 22,979/10,038. Byte X pulls remain comparison-covered.
+Clean full any% passes 129,712/0 (65.06s), native exit 0. Cargo fmt/check,
+full release/release-library builds with external SDL2, normal metadata and
+frozen optimized core/DLL pass. Live CPU matches verified source; peer PPU
+work is outside this replay. Rust lines -2; other own counters unchanged.
+Prior holds and complete gameplay/render/audio remain open. Continue covered
+CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
