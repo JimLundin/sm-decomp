@@ -9364,6 +9364,19 @@ Temporary probes remain outside maintained source. Own residue delta zero;
 peer CPU work is separate. Next: optimize measured sprite evaluation,
 preserving OAM scan priority, tile limits and first nontransparent writes.
 
+CPU TSX coverage hold (2026-10-19): substituting transfer_to_x in opcode BA
+matches the actual old dispatcher in 262,144 constructed cases covering every
+SP word, both X widths and incoming carry values, with distinct X/other register
+values, named CPU/bus state and history. Independent source review finds no
+differences; Cargo fmt/check, full release and release-library builds pass.
+However, prefix 3,600/0 counted zero TSX calls and its coverage assertion aborted.
+A separate full instrumented replay on frozen `275c6bea` plus this candidate
+passes 129,712/0 (59.32s), native exit 0, but also counts zero TSX calls. The
+candidate is restored to the committed original arm; TSX cleanup stays held
+until contextual execution exists. No maintained CPU or residue change.
+Concurrent verifier SRAM-loading work is excluded from this frozen replay.
+Continue covered CPU paths; TSX and ROR remain coverage gaps.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
