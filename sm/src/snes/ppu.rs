@@ -511,6 +511,39 @@ unsafe fn ppu_draw_full_tile<const PLANES: u32>(
     }
     pixel
 }
+// Partial rows arrive with their first pixel shifted to the end selected
+// by hflip. Keep stores and bit advancement in screen order.
+unsafe fn ppu_draw_partial_tile<const PLANES: u32>(
+    mut dst: *mut PpuZbufType,
+    mut bits: u32,
+    priority: PpuZbufType,
+    mut count: u32,
+    hflip: bool,
+) -> (u32, *mut PpuZbufType, i32) {
+    let mut pixel;
+    loop {
+        pixel = ppu_planar_pixel::<PLANES>(bits, if hflip { 0 } else { 7 });
+        let visible = if PLANES == 4 {
+            bits & if hflip { 0x01010101 } else { 0x80808080 } != 0
+        } else {
+            pixel != 0
+        };
+        if visible && priority > *dst {
+            *dst = (i32::from(priority) + pixel) as PpuZbufType;
+        }
+        if hflip {
+            bits >>= 1;
+        } else {
+            bits <<= 1;
+        }
+        dst = dst.offset(1);
+        count = count.wrapping_sub(1);
+        if count == 0 {
+            break;
+        }
+    }
+    (bits, dst, pixel)
+}
 unsafe fn PpuDrawBackground_4bpp(
     mut ppu: *mut Ppu,
     mut y: uint,
@@ -572,40 +605,15 @@ unsafe fn PpuDrawBackground_4bpp(
                     if tile & 0x4000 as uint32 != 0 {
                         bits >>= x & 7 as uint;
                         x = x.wrapping_add(curw as uint);
-                        loop {
-                            pixel = ppu_planar_pixel::<4>(bits, 0);
-                            if bits
-                                & ((0x1010101 as ::core::ffi::c_int) << 0 as ::core::ffi::c_int)
-                                    as uint32
-                                != 0
-                                && z as ::core::ffi::c_int > *dstz.offset(0) as ::core::ffi::c_int
-                            {
-                                *dstz.offset(0) = (z as ::core::ffi::c_int + pixel) as PpuZbufType;
-                            }
-                            bits >>= 1 as ::core::ffi::c_int;
-                            dstz = dstz.offset(1);
-                            curw -= 1;
-                            if !(curw != 0) {
-                                break;
-                            }
-                        }
+                        (bits, dstz, pixel) =
+                            ppu_draw_partial_tile::<4>(dstz, bits, z, curw as u32, true);
+                        curw = 0;
                     } else {
                         bits <<= x & 7 as uint;
                         x = x.wrapping_add(curw as uint);
-                        loop {
-                            pixel = ppu_planar_pixel::<4>(bits, 7);
-                            if bits & 0x80808080 as uint32 >> 0 as ::core::ffi::c_int != 0
-                                && z as ::core::ffi::c_int > *dstz.offset(0) as ::core::ffi::c_int
-                            {
-                                *dstz.offset(0) = (z as ::core::ffi::c_int + pixel) as PpuZbufType;
-                            }
-                            bits <<= 1 as ::core::ffi::c_int;
-                            dstz = dstz.offset(1);
-                            curw -= 1;
-                            if !(curw != 0) {
-                                break;
-                            }
-                        }
+                        (bits, dstz, pixel) =
+                            ppu_draw_partial_tile::<4>(dstz, bits, z, curw as u32, false);
+                        curw = 0;
                     }
                 } else {
                     dstz = dstz.offset(curw as isize);
@@ -640,40 +648,13 @@ unsafe fn PpuDrawBackground_4bpp(
                         (tile_1 & 0x1c00 as uint32) >> kPaletteShift_0 as ::core::ffi::c_int,
                     ) as PpuZbufType as PpuZbufType;
                     if tile_1 & 0x4000 as uint32 != 0 {
-                        loop {
-                            pixel = ppu_planar_pixel::<4>(bits_1, 0);
-                            if bits_1
-                                & ((0x1010101 as ::core::ffi::c_int) << 0 as ::core::ffi::c_int)
-                                    as uint32
-                                != 0
-                                && z_1 as ::core::ffi::c_int > *dstz.offset(0) as ::core::ffi::c_int
-                            {
-                                *dstz.offset(0) =
-                                    (z_1 as ::core::ffi::c_int + pixel) as PpuZbufType;
-                            }
-                            bits_1 >>= 1 as ::core::ffi::c_int;
-                            dstz = dstz.offset(1);
-                            w = w.wrapping_sub(1);
-                            if !(w != 0) {
-                                break;
-                            }
-                        }
+                        (bits_1, dstz, pixel) =
+                            ppu_draw_partial_tile::<4>(dstz, bits_1, z_1, w as u32, true);
+                        w = 0;
                     } else {
-                        loop {
-                            pixel = ppu_planar_pixel::<4>(bits_1, 7);
-                            if bits_1 & 0x80808080 as uint32 >> 0 as ::core::ffi::c_int != 0
-                                && z_1 as ::core::ffi::c_int > *dstz.offset(0) as ::core::ffi::c_int
-                            {
-                                *dstz.offset(0) =
-                                    (z_1 as ::core::ffi::c_int + pixel) as PpuZbufType;
-                            }
-                            bits_1 <<= 1 as ::core::ffi::c_int;
-                            dstz = dstz.offset(1);
-                            w = w.wrapping_sub(1);
-                            if !(w != 0) {
-                                break;
-                            }
-                        }
+                        (bits_1, dstz, pixel) =
+                            ppu_draw_partial_tile::<4>(dstz, bits_1, z_1, w as u32, false);
+                        w = 0;
                     }
                 }
             }
@@ -742,37 +723,15 @@ unsafe fn PpuDrawBackground_2bpp(
                     if tile & 0x4000 as uint32 != 0 {
                         bits >>= x & 7 as uint;
                         x = x.wrapping_add(curw as uint);
-                        loop {
-                            pixel = ppu_planar_pixel::<2>(bits, 0);
-                            if pixel != 0
-                                && z as ::core::ffi::c_int > *dstz.offset(0) as ::core::ffi::c_int
-                            {
-                                *dstz.offset(0) = (z as ::core::ffi::c_int + pixel) as PpuZbufType;
-                            }
-                            bits >>= 1 as ::core::ffi::c_int;
-                            dstz = dstz.offset(1);
-                            curw -= 1;
-                            if !(curw != 0) {
-                                break;
-                            }
-                        }
+                        (bits, dstz, pixel) =
+                            ppu_draw_partial_tile::<2>(dstz, bits, z, curw as u32, true);
+                        curw = 0;
                     } else {
                         bits <<= x & 7 as uint;
                         x = x.wrapping_add(curw as uint);
-                        loop {
-                            pixel = ppu_planar_pixel::<2>(bits, 7);
-                            if pixel != 0
-                                && z as ::core::ffi::c_int > *dstz.offset(0) as ::core::ffi::c_int
-                            {
-                                *dstz.offset(0) = (z as ::core::ffi::c_int + pixel) as PpuZbufType;
-                            }
-                            bits <<= 1 as ::core::ffi::c_int;
-                            dstz = dstz.offset(1);
-                            curw -= 1;
-                            if !(curw != 0) {
-                                break;
-                            }
-                        }
+                        (bits, dstz, pixel) =
+                            ppu_draw_partial_tile::<2>(dstz, bits, z, curw as u32, false);
+                        curw = 0;
                     }
                 } else {
                     dstz = dstz.offset(curw as isize);
@@ -807,37 +766,13 @@ unsafe fn PpuDrawBackground_2bpp(
                         (tile_1 & 0x1c00 as uint32) >> kPaletteShift as ::core::ffi::c_int,
                     ) as PpuZbufType as PpuZbufType;
                     if tile_1 & 0x4000 as uint32 != 0 {
-                        loop {
-                            pixel = ppu_planar_pixel::<2>(bits_1, 0);
-                            if pixel != 0
-                                && z_1 as ::core::ffi::c_int > *dstz.offset(0) as ::core::ffi::c_int
-                            {
-                                *dstz.offset(0) =
-                                    (z_1 as ::core::ffi::c_int + pixel) as PpuZbufType;
-                            }
-                            bits_1 >>= 1 as ::core::ffi::c_int;
-                            dstz = dstz.offset(1);
-                            w = w.wrapping_sub(1);
-                            if !(w != 0) {
-                                break;
-                            }
-                        }
+                        (bits_1, dstz, pixel) =
+                            ppu_draw_partial_tile::<2>(dstz, bits_1, z_1, w as u32, true);
+                        w = 0;
                     } else {
-                        loop {
-                            pixel = ppu_planar_pixel::<2>(bits_1, 7);
-                            if pixel != 0
-                                && z_1 as ::core::ffi::c_int > *dstz.offset(0) as ::core::ffi::c_int
-                            {
-                                *dstz.offset(0) =
-                                    (z_1 as ::core::ffi::c_int + pixel) as PpuZbufType;
-                            }
-                            bits_1 <<= 1 as ::core::ffi::c_int;
-                            dstz = dstz.offset(1);
-                            w = w.wrapping_sub(1);
-                            if !(w != 0) {
-                                break;
-                            }
-                        }
+                        (bits_1, dstz, pixel) =
+                            ppu_draw_partial_tile::<2>(dstz, bits_1, z_1, w as u32, false);
+                        w = 0;
                     }
                 }
             }

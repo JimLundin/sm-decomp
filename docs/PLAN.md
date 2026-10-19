@@ -18174,6 +18174,35 @@ repeated PPU destination read/write syntax is reduced. No layout change,
 temporary probe or ROM-derived asset committed. Neither route reaches credits;
 broader readability, hardware/audio/masks and ownership remain unfinished.
 
+PPU partial-tile pixel family (2026-10-19): jscpd normalized
+clone discovery and complete CST loops select all eight leading/trailing
+pixel loops across 2bpp/4bpp and both flips. One private helper retains the
+visibility-first destination reads, priority comparison, conditional stores,
+bit shift and pointer advancement. Each caller retains initial bit alignment,
+X addition, palette update and zero-bits gate. Returned bits/pointer/final
+pixel preserve the original locals; the exhausted width remains zero.
+
+Original/current loops agree in 4718592 guarded-buffer, final-bits, final-
+pixel and pointer-advancement comparisons: all 65536 words in three low/high
+layouts, lengths 1/3/7, all eight loop variants and varied priorities with
+below/equal/above destinations. These are not all input combinations or all
+lengths. Caller lengths are positive and at most seven; the helper retains
+the do-first loop semantics. Actual original/current drawing routines also
+agree in 12288 complete initialized PPU-state/pixel comparisons across six
+paths, 1024 seeds and masked/unmasked screens. Both bit depths and full-line
+drawing execute; constructed inputs are not universal branch coverage.
+
+Frozen 91c2cb23 plus only this change passes full any% 129712/0
+(176.71s) and Speed Booster 148406/0 (249.16s), native exits 0,
+with fixed source/library/DLL/ROM/movie hashes. Exact source reconstruction
+permits only the eight loops and helper; all other frozen sources match.
+Cargo fmt/check, normal release (27.62s, native exit 0), diff check and
+progress pass. Own Rust lines -65, c_int cast lines -28; unsafe functions
++1 centralizes the eight raw loops. Raw RAM accesses are unchanged;
+repeated PPU destination read/write syntax is reduced. No layout change,
+temporary probe or ROM-derived asset committed. Neither route reaches credits;
+broader readability, hardware/audio/masks and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
