@@ -4417,292 +4417,139 @@ pub unsafe fn WreckedShipRobot_Func_2(k: uint16, game: &mut Game) {
         (*E).wsrt_var_B = (wsrt_var_B).wrapping_sub(1u16);
     }
 }
-pub unsafe fn WreckedShipRobot_Instr_4(
-    k: uint16,
-    jp: *const uint16,
+// Movement callbacks can change the live enemy index. Keep the captured
+// robot for its state/coordinate stores and reread the index before each call.
+unsafe fn move_wrecked_ship_robot(
+    jp: *const u16,
+    motion: (u16, i16),
+    instructions: (u16, Option<u16>),
+    restore_y_first: bool,
     game: &mut Game,
-) -> *const uint16 {
+) -> *const u16 {
+    let (facing, step) = motion;
+    let (wall_instruction, edge_instruction) = instructions;
     WreckedShipRobot_Func_2(ram_word!(game, cur_enemy_index), game);
-    let E: *mut Enemy_WreckedShipRobot =
-        Get_WreckedShipRobot(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
-    (*E).wsrt_var_A = -(512 as ::core::ffi::c_int) as uint16;
-    if Enemy_MoveRight_IgnoreSlopes(
-        ram_word!(game, cur_enemy_index),
-        (-(4 as ::core::ffi::c_int) as int16 as int32) << 16 as ::core::ffi::c_int,
-        game,
-    ) != 0
+    let robot = Get_WreckedShipRobot(ram_word!(game, cur_enemy_index) as i32, game);
+    (*robot).wsrt_var_A = facing;
+    if Enemy_MoveRight_IgnoreSlopes(ram_word!(game, cur_enemy_index), (step as i32) << 16, game)
+        != 0
     {
-        (*E).wsrt_var_B = ((*E).wsrt_var_B).wrapping_add(8u16);
-        return addr_kWreckedShipRobot_Ilist_C73F as ::core::ffi::c_int as uintptr_t
-            as *const uint16;
+        (*robot).wsrt_var_B = (*robot).wsrt_var_B.wrapping_add(8);
+        return wall_instruction as usize as *const u16;
+    }
+    if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
+        set_ram_word!(game.extra_samus_x_subdisplacement = 0);
+        set_ram_word!(game.extra_samus_x_displacement = step as u16);
+    }
+    let Some(edge_instruction) = edge_instruction else {
+        return jp;
+    };
+    (*robot).wsrt_var_D = (*robot).base.y_pos;
+    let x = (*robot).base.x_pos;
+    (*robot).wsrt_var_C = x;
+    (*robot).base.x_pos = if step < 0 {
+        (x as i32 - (*robot).base.x_width as i32 - (*robot).base.x_width as i32) as u16
     } else {
-        if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
-            set_ram_word!(game.extra_samus_x_subdisplacement = 0 as uint16);
-            set_ram_word!(game.extra_samus_x_displacement = -(4 as ::core::ffi::c_int) as uint16);
-        }
-        (*E).wsrt_var_D = (*E).base.y_pos;
-        let x_pos: uint16 = (*E).base.x_pos;
-        (*E).wsrt_var_C = x_pos;
-        (*E).base.x_pos = (x_pos as ::core::ffi::c_int
-            - (*E).base.x_width as ::core::ffi::c_int
-            - (*E).base.x_width as ::core::ffi::c_int) as uint16;
-        if Enemy_MoveDown(
-            ram_word!(game, cur_enemy_index),
-            (1 as int16 as int32) << 16 as ::core::ffi::c_int,
-            game,
-        ) != 0
-        {
-            (*E).base.x_pos = (*E).wsrt_var_C;
-            (*E).base.y_pos = (*E).wsrt_var_D;
-        } else {
-            (*E).wsrt_var_B = ((*E).wsrt_var_B).wrapping_add(8u16);
-            (*E).base.x_pos = (*E).wsrt_var_C;
-            (*E).base.y_pos = (*E).wsrt_var_D;
-            (*E).wsrt_var_A = 512 as uint16;
-            return addr_kWreckedShipRobot_Ilist_CB65 as ::core::ffi::c_int as uintptr_t
-                as *const uint16;
-        }
+        ((*robot).base.x_width as i32 + (*robot).base.x_width as i32 + x as i32) as u16
+    };
+    let ground = Enemy_MoveDown(ram_word!(game, cur_enemy_index), 1 << 16, game) != 0;
+    if !ground {
+        (*robot).wsrt_var_B = (*robot).wsrt_var_B.wrapping_add(8);
     }
-    jp
-}
-pub unsafe fn WreckedShipRobot_Instr_9(
-    k: uint16,
-    jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    WreckedShipRobot_Func_2(ram_word!(game, cur_enemy_index), game);
-    let E: *mut Enemy_WreckedShipRobot =
-        Get_WreckedShipRobot(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
-    (*E).wsrt_var_A = -(512 as ::core::ffi::c_int) as uint16;
-    if Enemy_MoveRight_IgnoreSlopes(
-        ram_word!(game, cur_enemy_index),
-        (-(4 as ::core::ffi::c_int) as int16 as int32) << 16 as ::core::ffi::c_int,
-        game,
-    ) != 0
-    {
-        (*E).wsrt_var_B = ((*E).wsrt_var_B).wrapping_add(8u16);
-        return addr_kWreckedShipRobot_Ilist_C73F as ::core::ffi::c_int as uintptr_t
-            as *const uint16;
-    } else if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
-        set_ram_word!(game.extra_samus_x_subdisplacement = 0 as uint16);
-        set_ram_word!(game.extra_samus_x_displacement = -(4 as ::core::ffi::c_int) as uint16);
-    }
-    jp
-}
-pub unsafe fn WreckedShipRobot_Instr_6(
-    k: uint16,
-    jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    WreckedShipRobot_Func_2(ram_word!(game, cur_enemy_index), game);
-    let E: *mut Enemy_WreckedShipRobot =
-        Get_WreckedShipRobot(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
-    (*E).wsrt_var_A = -(512 as ::core::ffi::c_int) as uint16;
-    if Enemy_MoveRight_IgnoreSlopes(
-        ram_word!(game, cur_enemy_index),
-        (4 as int16 as int32) << 16 as ::core::ffi::c_int,
-        game,
-    ) != 0
-    {
-        (*E).wsrt_var_B = ((*E).wsrt_var_B).wrapping_add(8u16);
-        return addr_stru_A8C6E9 as ::core::ffi::c_int as uintptr_t as *const uint16;
+    if restore_y_first {
+        (*robot).base.y_pos = (*robot).wsrt_var_D;
+        (*robot).base.x_pos = (*robot).wsrt_var_C;
     } else {
-        if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
-            set_ram_word!(game.extra_samus_x_subdisplacement = 0 as uint16);
-            set_ram_word!(game.extra_samus_x_displacement = 4 as uint16);
-        }
-        (*E).wsrt_var_D = (*E).base.y_pos;
-        let x_pos: uint16 = (*E).base.x_pos;
-        (*E).wsrt_var_C = x_pos;
-        (*E).base.x_pos = ((*E).base.x_width as ::core::ffi::c_int
-            + (*E).base.x_width as ::core::ffi::c_int
-            + x_pos as ::core::ffi::c_int) as uint16;
-        if Enemy_MoveDown(
-            ram_word!(game, cur_enemy_index),
-            (1 as int16 as int32) << 16 as ::core::ffi::c_int,
-            game,
-        ) != 0
-        {
-            (*E).base.x_pos = (*E).wsrt_var_C;
-            (*E).base.y_pos = (*E).wsrt_var_D;
-        } else {
-            (*E).wsrt_var_B = ((*E).wsrt_var_B).wrapping_add(8u16);
-            (*E).base.x_pos = (*E).wsrt_var_C;
-            (*E).base.y_pos = (*E).wsrt_var_D;
-            (*E).wsrt_var_A = -(512 as ::core::ffi::c_int) as uint16;
-            return addr_kWreckedShipRobot_Ilist_C91B as ::core::ffi::c_int as uintptr_t
-                as *const uint16;
-        }
+        (*robot).base.x_pos = (*robot).wsrt_var_C;
+        (*robot).base.y_pos = (*robot).wsrt_var_D;
+    }
+    if !ground {
+        (*robot).wsrt_var_A = if step < 0 { 512 } else { 0xfe00 };
+        return edge_instruction as usize as *const u16;
     }
     jp
 }
-pub unsafe fn WreckedShipRobot_Instr_8(
-    k: uint16,
-    jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    WreckedShipRobot_Func_2(ram_word!(game, cur_enemy_index), game);
-    let E: *mut Enemy_WreckedShipRobot =
-        Get_WreckedShipRobot(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
-    (*E).wsrt_var_A = -(512 as ::core::ffi::c_int) as uint16;
-    if Enemy_MoveRight_IgnoreSlopes(
-        ram_word!(game, cur_enemy_index),
-        (4 as int16 as int32) << 16 as ::core::ffi::c_int,
+
+pub unsafe fn WreckedShipRobot_Instr_4(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
+    move_wrecked_ship_robot(
+        jp,
+        (0xfe00, -4),
+        (
+            addr_kWreckedShipRobot_Ilist_C73F as u16,
+            Some(addr_kWreckedShipRobot_Ilist_CB65 as u16),
+        ),
+        false,
         game,
-    ) != 0
-    {
-        (*E).wsrt_var_B = ((*E).wsrt_var_B).wrapping_add(8u16);
-        return addr_stru_A8C6E9 as ::core::ffi::c_int as uintptr_t as *const uint16;
-    } else if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
-        set_ram_word!(game.extra_samus_x_subdisplacement = 0 as uint16);
-        set_ram_word!(game.extra_samus_x_displacement = 4 as uint16);
-    }
-    jp
+    )
+}
+pub unsafe fn WreckedShipRobot_Instr_9(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
+    move_wrecked_ship_robot(
+        jp,
+        (0xfe00, -4),
+        (addr_kWreckedShipRobot_Ilist_C73F as u16, None),
+        false,
+        game,
+    )
+}
+pub unsafe fn WreckedShipRobot_Instr_6(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
+    move_wrecked_ship_robot(
+        jp,
+        (0xfe00, 4),
+        (
+            addr_stru_A8C6E9 as u16,
+            Some(addr_kWreckedShipRobot_Ilist_C91B as u16),
+        ),
+        false,
+        game,
+    )
+}
+pub unsafe fn WreckedShipRobot_Instr_8(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
+    move_wrecked_ship_robot(
+        jp,
+        (0xfe00, 4),
+        (addr_stru_A8C6E9 as u16, None),
+        false,
+        game,
+    )
 }
 pub unsafe fn WreckedShipRobot_Instr_7(k: uint16, jp: *const uint16) -> *const uint16 {
     addr_kWreckedShipRobot_Ilist_C92D as ::core::ffi::c_int as uintptr_t as *const uint16
 }
-pub unsafe fn WreckedShipRobot_Instr_15(
-    k: uint16,
-    jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    WreckedShipRobot_Func_2(ram_word!(game, cur_enemy_index), game);
-    let E: *mut Enemy_WreckedShipRobot =
-        Get_WreckedShipRobot(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
-    (*E).wsrt_var_A = 512 as uint16;
-    if Enemy_MoveRight_IgnoreSlopes(
-        ram_word!(game, cur_enemy_index),
-        (4 as int16 as int32) << 16 as ::core::ffi::c_int,
+pub unsafe fn WreckedShipRobot_Instr_15(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
+    move_wrecked_ship_robot(
+        jp,
+        (512, 4),
+        (
+            addr_kWreckedShipRobot_Ilist_C985 as u16,
+            Some(addr_kWreckedShipRobot_Ilist_C91B as u16),
+        ),
+        false,
         game,
-    ) != 0
-    {
-        (*E).wsrt_var_B = ((*E).wsrt_var_B).wrapping_add(8u16);
-        return addr_kWreckedShipRobot_Ilist_C985 as ::core::ffi::c_int as uintptr_t
-            as *const uint16;
-    } else {
-        if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
-            set_ram_word!(game.extra_samus_x_subdisplacement = 0 as uint16);
-            set_ram_word!(game.extra_samus_x_displacement = 4 as uint16);
-        }
-        (*E).wsrt_var_D = (*E).base.y_pos;
-        let x_pos: uint16 = (*E).base.x_pos;
-        (*E).wsrt_var_C = x_pos;
-        (*E).base.x_pos = ((*E).base.x_width as ::core::ffi::c_int
-            + (*E).base.x_width as ::core::ffi::c_int
-            + x_pos as ::core::ffi::c_int) as uint16;
-        if Enemy_MoveDown(
-            ram_word!(game, cur_enemy_index),
-            (1 as int16 as int32) << 16 as ::core::ffi::c_int,
-            game,
-        ) != 0
-        {
-            (*E).base.x_pos = (*E).wsrt_var_C;
-            (*E).base.y_pos = (*E).wsrt_var_D;
-        } else {
-            (*E).wsrt_var_B = ((*E).wsrt_var_B).wrapping_add(8u16);
-            (*E).base.x_pos = (*E).wsrt_var_C;
-            (*E).base.y_pos = (*E).wsrt_var_D;
-            (*E).wsrt_var_A = -(512 as ::core::ffi::c_int) as uint16;
-            return addr_kWreckedShipRobot_Ilist_C91B as ::core::ffi::c_int as uintptr_t
-                as *const uint16;
-        }
-    }
-    jp
+    )
 }
-pub unsafe fn WreckedShipRobot_Instr_18(
-    k: uint16,
-    jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    WreckedShipRobot_Func_2(ram_word!(game, cur_enemy_index), game);
-    let E: *mut Enemy_WreckedShipRobot =
-        Get_WreckedShipRobot(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
-    (*E).wsrt_var_A = 512 as uint16;
-    if Enemy_MoveRight_IgnoreSlopes(
-        ram_word!(game, cur_enemy_index),
-        (4 as int16 as int32) << 16 as ::core::ffi::c_int,
+pub unsafe fn WreckedShipRobot_Instr_18(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
+    move_wrecked_ship_robot(
+        jp,
+        (512, 4),
+        (addr_kWreckedShipRobot_Ilist_C985 as u16, None),
+        false,
         game,
-    ) != 0
-    {
-        (*E).wsrt_var_B = ((*E).wsrt_var_B).wrapping_add(8u16);
-        return addr_kWreckedShipRobot_Ilist_C985 as ::core::ffi::c_int as uintptr_t
-            as *const uint16;
-    } else if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
-        set_ram_word!(game.extra_samus_x_subdisplacement = 0 as uint16);
-        set_ram_word!(game.extra_samus_x_displacement = 4 as uint16);
-    }
-    jp
+    )
 }
-pub unsafe fn WreckedShipRobot_Instr_16(
-    k: uint16,
-    jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    WreckedShipRobot_Func_2(ram_word!(game, cur_enemy_index), game);
-    let E: *mut Enemy_WreckedShipRobot =
-        Get_WreckedShipRobot(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
-    (*E).wsrt_var_A = 512 as uint16;
-    if Enemy_MoveRight_IgnoreSlopes(
-        ram_word!(game, cur_enemy_index),
-        (-(4 as ::core::ffi::c_int) as int16 as int32) << 16 as ::core::ffi::c_int,
+pub unsafe fn WreckedShipRobot_Instr_16(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
+    move_wrecked_ship_robot(
+        jp,
+        (512, -4),
+        (
+            addr_stru_A8C6E9 as u16,
+            Some(addr_kWreckedShipRobot_Ilist_CB65 as u16),
+        ),
+        true,
         game,
-    ) != 0
-    {
-        (*E).wsrt_var_B = ((*E).wsrt_var_B).wrapping_add(8u16);
-        return addr_stru_A8C6E9 as ::core::ffi::c_int as uintptr_t as *const uint16;
-    } else {
-        if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
-            set_ram_word!(game.extra_samus_x_subdisplacement = 0 as uint16);
-            set_ram_word!(game.extra_samus_x_displacement = -(4 as ::core::ffi::c_int) as uint16);
-        }
-        (*E).wsrt_var_D = (*E).base.y_pos;
-        let x_pos: uint16 = (*E).base.x_pos;
-        (*E).wsrt_var_C = x_pos;
-        (*E).base.x_pos = (x_pos as ::core::ffi::c_int
-            - (*E).base.x_width as ::core::ffi::c_int
-            - (*E).base.x_width as ::core::ffi::c_int) as uint16;
-        if Enemy_MoveDown(
-            ram_word!(game, cur_enemy_index),
-            (1 as int16 as int32) << 16 as ::core::ffi::c_int,
-            game,
-        ) != 0
-        {
-            (*E).base.y_pos = (*E).wsrt_var_D;
-            (*E).base.x_pos = (*E).wsrt_var_C;
-        } else {
-            (*E).wsrt_var_B = ((*E).wsrt_var_B).wrapping_add(8u16);
-            (*E).base.y_pos = (*E).wsrt_var_D;
-            (*E).base.x_pos = (*E).wsrt_var_C;
-            (*E).wsrt_var_A = 512 as uint16;
-            return addr_kWreckedShipRobot_Ilist_CB65 as ::core::ffi::c_int as uintptr_t
-                as *const uint16;
-        }
-    }
-    jp
+    )
 }
-pub unsafe fn WreckedShipRobot_Instr_17(
-    k: uint16,
-    jp: *const uint16,
-    game: &mut Game,
-) -> *const uint16 {
-    WreckedShipRobot_Func_2(ram_word!(game, cur_enemy_index), game);
-    let E: *mut Enemy_WreckedShipRobot =
-        Get_WreckedShipRobot(ram_word!(game, cur_enemy_index) as ::core::ffi::c_int, game);
-    (*E).wsrt_var_A = 512 as uint16;
-    if Enemy_MoveRight_IgnoreSlopes(
-        ram_word!(game, cur_enemy_index),
-        (-(4 as ::core::ffi::c_int) as int16 as int32) << 16 as ::core::ffi::c_int,
-        game,
-    ) != 0
-    {
-        (*E).wsrt_var_B = ((*E).wsrt_var_B).wrapping_add(8u16);
-        return addr_stru_A8C6E9 as ::core::ffi::c_int as uintptr_t as *const uint16;
-    } else if CheckIfEnemyTouchesSamus(ram_word!(game, cur_enemy_index), game) != 0 {
-        set_ram_word!(game.extra_samus_x_subdisplacement = 0 as uint16);
-        set_ram_word!(game.extra_samus_x_displacement = -(4 as ::core::ffi::c_int) as uint16);
-    }
-    jp
+pub unsafe fn WreckedShipRobot_Instr_17(k: u16, jp: *const u16, game: &mut Game) -> *const u16 {
+    move_wrecked_ship_robot(jp, (512, -4), (addr_stru_A8C6E9 as u16, None), false, game)
 }
 pub unsafe fn WreckedShipRobot_Instr_3(
     k: uint16,

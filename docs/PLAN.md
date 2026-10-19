@@ -19938,6 +19938,29 @@ inputs and 72 runtime pins bound. Movie coverage of this enemy is unproven;
 direct comparisons exercise all callbacks. Continue larger repeated families;
 readability and full credits remain incomplete.
 
+Wrecked Ship robot movement family (2026-10-19): all eight movement
+instructions share the horizontal collision/push core and four retain their
+floor-edge probes. Captured robot stores, live-index reads before callbacks,
+wall/turn instruction addresses, facing values, two width reads, counter
+wrapping and callback 16's Y-before-X restoration order remain exact.
+Complete original declarations and outside-family reconstruction limit scope.
+Net Rust lines -153, casts -111, c_int cast lines -54; unsafe functions +1
+is the shared raw robot helper. RAM operations and ABI counts are unchanged.
+
+Compiled original Rust and actual optimized library match full RAM/returned
+pointers in 442368 cases using real movement/touch callbacks, with wall/air
+tiles, coordinate boundaries, counter wrapping and odd/high enemy slots.
+Exact candidate/original callbacks also match 589824 full-RAM/return/trace
+cases with mutating callback controls for live indices and captured state.
+These finite sweeps are not every joint RAM state. Normal registry-only
+release (25.92s baseline, 36.10s final composition), formatting/check,
+progress and diff checks pass. Frozen a62c2e70 plus this family includes the
+committed SPC mapping changes and passes full any% 129712/0 (104.97s), native
+exit 0, with all 70 Rust/Cargo inputs and 72 runtime pins bound. Peer spelling
+changes retain separate composition verification. Movie coverage
+of this enemy is unproven; direct comparisons exercise all eight callbacks.
+Continue larger repeated families; readability and full credits remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
