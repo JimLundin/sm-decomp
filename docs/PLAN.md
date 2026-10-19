@@ -373,6 +373,11 @@ host, input and result review passes; source and library hashes are stable.
 This is separate from the original 6580/0 resumed 71800..78380 route check
 on frozen 438e7755 plus the menu fix. The before-78380 checkpoint was made
 by that older library, not by the newer full-boot run.
+It now passes a separate 40-neutral-frame continuation at 78380..78419
+on the clean cinematic library, 40/0 (0.23s), native exit 0. Loaded and final
+position/inventory/beam/coroutine values match the milestone above; source,
+library, original/copied checkpoint and original input hashes stay unchanged.
+This establishes checkpoint compatibility for that short suffix.
 
 Formatting, normal Cargo release and progress passed with the cinematic
 source used here. This milestone changes no maintained Rust or own residue
