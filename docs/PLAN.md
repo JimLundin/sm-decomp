@@ -1987,7 +1987,23 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): `5b8a7261` adds 61 match/else
+Latest reviewed integration (2026-10-19): `99963bfb` removes 2171 dispatch
+blocks across 26 files. Independent whole-file reconstruction retains every
+label, call and argument token; only block wrappers, semicolons and formatting
+change. All 2127 targets have unit-return declarations, with no matching local
+binding or parameter shadow candidates. Arguments are identifiers or primitive
+literals, so the removed blocks introduce no temporary-lifetime change.
+
+All 72 committed source/configuration inputs match the tested candidate after
+line-ending normalization; all 77 source/DLL/fixture pins remain stable.
+Normal release (23.53s), workspace release (26.12s), formatting/check and
+progress pass. Full any% 129712/0 (134.89s replay, 135.04s wall) passes,
+native exit 0; the completed run was reused. Rust lines fall by 4342;
+casts, raw accesses and unsafe functions are unchanged. This removes dispatch
+wrappers; broader readability, frontend execution, full credits and global
+alias safety retain the limitations below.
+
+The prior `5b8a7261` adds 61 match/else
 simplifications to the reviewed conditional/RAM composition. All 70 committed
 Rust/Cargo inputs match the candidate; its 67 Rust files match the replay
 copy and all 72 source/library/DLL/fixture pins remain stable. Normal release,
