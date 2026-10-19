@@ -16247,6 +16247,30 @@ shared common-callback boundary, with no new pointer operation. Other own
 counters unchanged. No probes/artifacts committed. Further projectile cleanup,
 gameplay/credits, hardware/audio/masks and ownership remain unfinished.
 
+Fireball-explosion initialization (2026-10-19): seven ordered stores now
+use the existing little-endian byte-backed projectile interface. The routine
+is safe. Slot rounding and full-width offsets remain exact; graphics precedes
+spawn-X read/store, spawn-Y read/store, live init-parameter read/E store,
+then F and X/Y velocity clears. No callbacks or borrowed RAM pointers remain.
+
+Frozen 59d9066a plus only this change passes
+any% 129712/0 (221.28s) and Warehouse 128547/0
+(248.88s), native exits 0. Observed any% 129712/0
+(246.20s) reaches the initializer 6 times. Every
+byte-backed write matches the original unaligned store over complete RAM.
+Clean/observed non-timing diagnostics match; source/DLL/ROM/input hashes
+remain fixed and the maintained function matches the verified source.
+Extracted old/current functions match complete RAM in 131072 cases: every
+16-bit child index, including odd/max indices, with two backing patterns
+and varied spawn coordinates/parameter words. Other frozen source files
+match HEAD after newline normalization.
+
+Cargo fmt/check, normal release build (41.01s) and progress pass. Net raw
+offsets -7, unsafe functions -1, cast lines -1, Rust lines -4; all other own
+counters unchanged. No temporary probes or ROM-derived artifacts committed.
+Continue indexed projectile state/handler families; broader gameplay/credits,
+hardware/audio/masks and ownership remain unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
