@@ -399,13 +399,14 @@ fn data_bank_address(offset: u16, cpu: &Cpu) -> (u32, u32) {
     let low = (u32::from(cpu.db) << 16) | u32::from(offset);
     (low, low.wrapping_add(1) & 0xffffff)
 }
-unsafe fn address_absolute_x(cpu: *mut Cpu, write: bool, game: &mut Game) -> (u32, u32) {
-    let adr = u32::from(fetch_word(cpu, game));
-    absolute_indexed_address(adr, IndexRegister::X, write, &mut *cpu)
-}
-unsafe fn address_absolute_y(cpu: *mut Cpu, write: bool, game: &mut Game) -> (u32, u32) {
-    let adr = u32::from(fetch_word(cpu, game));
-    absolute_indexed_address(adr, IndexRegister::Y, write, &mut *cpu)
+unsafe fn address_absolute_indexed(
+    cpu: *mut Cpu,
+    index: IndexRegister,
+    write: bool,
+    game: &mut Game,
+) -> (u32, u32) {
+    let offset = u32::from(fetch_word(cpu, game));
+    absolute_indexed_address(offset, index, write, &mut *cpu)
 }
 fn absolute_indexed_address(
     offset: u32,
@@ -965,7 +966,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             (*cpu).c = false;
         }
         0x19 => {
-            let (low, high) = address_absolute_y(cpu, false, game);
+            let (low, high) = address_absolute_indexed(cpu, IndexRegister::Y, false, game);
             logical_accumulator(cpu, low, high, LogicOperation::Or, game);
         }
         0x1a => {
@@ -979,11 +980,11 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             test_and_update_bits(cpu, low, high, false, game);
         }
         0x1d => {
-            let (low, high) = address_absolute_x(cpu, false, game);
+            let (low, high) = address_absolute_indexed(cpu, IndexRegister::X, false, game);
             logical_accumulator(cpu, low, high, LogicOperation::Or, game);
         }
         0x1e => {
-            let (low, high) = address_absolute_x(cpu, true, game);
+            let (low, high) = address_absolute_indexed(cpu, IndexRegister::X, true, game);
             modify_memory(cpu, low, high, MemoryOperation::ShiftLeft, game);
         }
         0x1f => {
@@ -1093,7 +1094,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             (*cpu).c = true;
         }
         0x39 => {
-            let (low, high) = address_absolute_y(cpu, false, game);
+            let (low, high) = address_absolute_indexed(cpu, IndexRegister::Y, false, game);
             logical_accumulator(cpu, low, high, LogicOperation::And, game);
         }
         0x3a => {
@@ -1104,15 +1105,15 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             set_zero_negative((*cpu).a, false, &mut *cpu);
         }
         0x3c => {
-            let (low, high) = address_absolute_x(cpu, false, game);
+            let (low, high) = address_absolute_indexed(cpu, IndexRegister::X, false, game);
             test_accumulator_bits(cpu, low, high, game);
         }
         0x3d => {
-            let (low, high) = address_absolute_x(cpu, false, game);
+            let (low, high) = address_absolute_indexed(cpu, IndexRegister::X, false, game);
             logical_accumulator(cpu, low, high, LogicOperation::And, game);
         }
         0x3e => {
-            let (low, high) = address_absolute_x(cpu, true, game);
+            let (low, high) = address_absolute_indexed(cpu, IndexRegister::X, true, game);
             modify_memory(cpu, low, high, MemoryOperation::RotateLeft, game);
         }
         0x3f => {
@@ -1251,7 +1252,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             (*cpu).i = false;
         }
         0x59 => {
-            let (low, high) = address_absolute_y(cpu, false, game);
+            let (low, high) = address_absolute_indexed(cpu, IndexRegister::Y, false, game);
             logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
         }
         0x5a => {
@@ -1278,11 +1279,11 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             (*cpu).pc = target;
         }
         0x5d => {
-            let (low, high) = address_absolute_x(cpu, false, game);
+            let (low, high) = address_absolute_indexed(cpu, IndexRegister::X, false, game);
             logical_accumulator(cpu, low, high, LogicOperation::Xor, game);
         }
         0x5e => {
-            let (low, high) = address_absolute_x(cpu, true, game);
+            let (low, high) = address_absolute_indexed(cpu, IndexRegister::X, true, game);
             modify_memory(cpu, low, high, MemoryOperation::ShiftRight, game);
         }
         0x5f => {
@@ -1424,7 +1425,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             (*cpu).i = true;
         }
         0x79 => {
-            let (low, high) = address_absolute_y(cpu, false, game);
+            let (low, high) = address_absolute_indexed(cpu, IndexRegister::Y, false, game);
             add_with_carry(cpu, low, high, game);
         }
         0x7a => {
@@ -1438,11 +1439,11 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             (*cpu).pc = address_absolute_indexed_indirect(cpu, game);
         }
         0x7d => {
-            let (low, high) = address_absolute_x(cpu, false, game);
+            let (low, high) = address_absolute_indexed(cpu, IndexRegister::X, false, game);
             add_with_carry(cpu, low, high, game);
         }
         0x7e => {
-            let (low, high) = address_absolute_x(cpu, true, game);
+            let (low, high) = address_absolute_indexed(cpu, IndexRegister::X, true, game);
             rotate_memory_right(cpu, low, high, game);
         }
         0x7f => {
@@ -1552,7 +1553,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             load_accumulator((*cpu).y, &mut *cpu);
         }
         0x99 => {
-            let (low, high) = address_absolute_y(cpu, true, game);
+            let (low, high) = address_absolute_indexed(cpu, IndexRegister::Y, true, game);
             store_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
         0x9a => {
@@ -1566,11 +1567,11 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             store_zero(cpu, low, high, game);
         }
         0x9d => {
-            let (low, high) = address_absolute_x(cpu, true, game);
+            let (low, high) = address_absolute_indexed(cpu, IndexRegister::X, true, game);
             store_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
         0x9e => {
-            let (low, high) = address_absolute_x(cpu, true, game);
+            let (low, high) = address_absolute_indexed(cpu, IndexRegister::X, true, game);
             store_zero(cpu, low, high, game);
         }
         0x9f => {
@@ -1674,7 +1675,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             (*cpu).v = false;
         }
         0xb9 => {
-            let (low, high) = address_absolute_y(cpu, false, game);
+            let (low, high) = address_absolute_indexed(cpu, IndexRegister::Y, false, game);
             load_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
         0xba => {
@@ -1689,15 +1690,15 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             IndexRegister::X.load((*cpu).y, &mut *cpu);
         }
         0xbc => {
-            let (low, high) = address_absolute_x(cpu, false, game);
+            let (low, high) = address_absolute_indexed(cpu, IndexRegister::X, false, game);
             load_register(cpu, low, high, CpuRegister::Y, game);
         }
         0xbd => {
-            let (low, high) = address_absolute_x(cpu, false, game);
+            let (low, high) = address_absolute_indexed(cpu, IndexRegister::X, false, game);
             load_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
         0xbe => {
-            let (low, high) = address_absolute_y(cpu, false, game);
+            let (low, high) = address_absolute_indexed(cpu, IndexRegister::Y, false, game);
             load_register(cpu, low, high, CpuRegister::X, game);
         }
         0xbf => {
@@ -1799,7 +1800,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             (*cpu).d = false;
         }
         0xd9 => {
-            let (low, high) = address_absolute_y(cpu, false, game);
+            let (low, high) = address_absolute_indexed(cpu, IndexRegister::Y, false, game);
             compare_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
         0xda => {
@@ -1814,11 +1815,11 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             (*cpu).k = read_byte(cpu, u32::from(adr.wrapping_add(2)), game);
         }
         0xdd => {
-            let (low, high) = address_absolute_x(cpu, false, game);
+            let (low, high) = address_absolute_indexed(cpu, IndexRegister::X, false, game);
             compare_register(cpu, low, high, CpuRegister::Accumulator, game);
         }
         0xde => {
-            let (low, high) = address_absolute_x(cpu, true, game);
+            let (low, high) = address_absolute_indexed(cpu, IndexRegister::X, true, game);
             modify_memory(cpu, low, high, MemoryOperation::Decrement, game);
         }
         0xdf => {
@@ -1920,7 +1921,7 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             (*cpu).d = true;
         }
         0xf9 => {
-            let (low, high) = address_absolute_y(cpu, false, game);
+            let (low, high) = address_absolute_indexed(cpu, IndexRegister::Y, false, game);
             subtract_with_carry(cpu, low, high, game);
         }
         0xfa => {
@@ -1935,11 +1936,11 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             (*cpu).pc = target;
         }
         0xfd => {
-            let (low, high) = address_absolute_x(cpu, false, game);
+            let (low, high) = address_absolute_indexed(cpu, IndexRegister::X, false, game);
             subtract_with_carry(cpu, low, high, game);
         }
         0xfe => {
-            let (low, high) = address_absolute_x(cpu, true, game);
+            let (low, high) = address_absolute_indexed(cpu, IndexRegister::X, true, game);
             modify_memory(cpu, low, high, MemoryOperation::Increment, game);
         }
         0xff => {

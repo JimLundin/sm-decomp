@@ -11228,6 +11228,26 @@ through9938 toward wider item/boss coverage, with map and Energy Tank held.
 Held upper99BD ascent and earlier holds remain held. Complete credits,
 gameplay/hardware, audio/render, masked RAM and ownership remain open.
 
+CPU shared absolute indexed wrapper (2026-10-19): address_absolute_indexed
+takes IndexRegister instead of duplicated X/Y fetch wrappers. All 26 opcode
+callers retain their index and write flag (17 X, nine Y). Word fetch remains
+before live index/DB reads and safe address calculation; page/index-width
+cycle adjustment and 24-bit wrapping remain exact. Frozen `fab6c4ef` plus
+this change passes 38,273,024 actual old/current wrapper comparisons: every
+offset/bank and every index word with sampled operand boundaries, both
+selectors and write/index widths. Named CPU/bus state, addresses, wrapping
+and cycles match; constructed WRAM cases do not exhaust MMIO/callback
+mutations. Exact source reconstruction checks all caller replacements and
+excludes other CPU changes. Prefix 3,600/0 (2.62s), native exit 0, executes
+X read/write 374,484/161,356 and Y read/write 237,429/7,545 calls. Clean
+full any% passes 129,712/0 (162.66s), native exit 0. Cargo fmt/check, full
+release/release-library builds with external SDL2, normal metadata and
+frozen optimized core/DLL pass. Live CPU matches verified source; peer
+gameplay/PPU work is outside this replay. Unsafe functions -1; Rust lines +1
+express the explicit index parameter. Other own counters unchanged. Prior
+holds and complete gameplay/render/audio remain open. Continue covered CPU
+cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
