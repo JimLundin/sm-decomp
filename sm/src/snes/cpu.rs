@@ -331,7 +331,7 @@ unsafe fn address_direct_page_indirect_y(
     let pointer = u32::from(read_word(cpu, pointer_low, pointer_high, game));
     absolute_indexed_address(pointer, CpuRegister::Y, write, &mut *cpu)
 }
-unsafe fn address_direct_page_indirect_long(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
+unsafe fn read_direct_page_long_pointer(cpu: *mut Cpu, game: &mut Game) -> u32 {
     let adr = u16::from(fetch_byte(cpu, game));
     let (pointer_low, pointer_high) = direct_page_address(adr, None, &mut *cpu);
     let mut pointer = u32::from(read_word(cpu, pointer_low, pointer_high, game));
@@ -340,18 +340,14 @@ unsafe fn address_direct_page_indirect_long(cpu: *mut Cpu, game: &mut Game) -> (
         u32::from((*cpu).dp.wrapping_add(adr).wrapping_add(2)),
         game,
     )) << 16;
-    let low = pointer;
-    (low, pointer.wrapping_add(1) & 0xffffff)
+    pointer
+}
+unsafe fn address_direct_page_indirect_long(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
+    let low = read_direct_page_long_pointer(cpu, game);
+    (low, low.wrapping_add(1) & 0xffffff)
 }
 unsafe fn address_direct_page_indirect_long_y(cpu: *mut Cpu, game: &mut Game) -> (u32, u32) {
-    let adr = u16::from(fetch_byte(cpu, game));
-    let (pointer_low, pointer_high) = direct_page_address(adr, None, &mut *cpu);
-    let mut pointer = u32::from(read_word(cpu, pointer_low, pointer_high, game));
-    pointer |= u32::from(read_byte(
-        cpu,
-        u32::from((*cpu).dp.wrapping_add(adr).wrapping_add(2)),
-        game,
-    )) << 16;
+    let pointer = read_direct_page_long_pointer(cpu, game);
     let low = pointer.wrapping_add(u32::from((*cpu).y)) & 0xffffff;
     (low, low.wrapping_add(1) & 0xffffff)
 }

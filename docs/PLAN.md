@@ -10094,6 +10094,25 @@ Rust lines -4; other own counters unchanged. Indexed-indirect/TSX/accumulator
 ROR stay held. Complete gameplay/render/audio remain open. Continue covered
 CPU cleanup.
 
+CPU shared long direct-page pointer fetch (2026-10-19): long/long-Y address
+wrappers share read_direct_page_long_pointer. Operand fetch, alignment cycle,
+first two captured addresses, ordered word reads and live DP for third-byte
+address remain exact. Long-Y reads Y after the helper returns; no safe reference
+spans bus callbacks. Frozen `2791d164` plus this change passes 67,092,480 actual
+old/current wrapper cases using the preceding 24-bit RAM-pointer probe,
+excluding MMIO-boundary locations. Named CPU/bus fields, RAM, addresses, PC
+and cycles match. Full instrumented any% 129,712/0 (50.46s), native exit 0,
+executes long/long-Y 275,433/4,292,721 times through the shared fetch. Initial
+prefix reports 3,600/0 (1.01s), then aborts because long has zero prefix calls;
+not counted as a successful process. Clean full any% 129,712/0 (50.66s), native
+exit 0. Cargo fmt/check, full release/release-library builds with external SDL2,
+normal metadata and frozen optimized core/DLL pass. Live CPU matches verified
+source; peer PPU work is outside these replays. Rust lines -4; unsafe functions
++1 centralizes the duplicated three-byte bus sequence. Other own counters
+unchanged. Independent pointer/Y/address Cartesian, arbitrary MMIO and full
+gameplay/render/audio remain open. Indexed-indirect/TSX/accumulator ROR held.
+Continue covered CPU cleanup.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
