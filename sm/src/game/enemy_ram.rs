@@ -1,6 +1,6 @@
 //! Byte-backed views of enemy slots in the original RAM layout.
 use crate::game_state::Game;
-use crate::types::EnemyData;
+use crate::types::{EnemyData, Ram7800_Kraid};
 
 /// Copied fields from a live enemy slot; callers retain the index between reads.
 pub(crate) struct EnemyState<'a> {
@@ -10,6 +10,12 @@ pub(crate) struct EnemyState<'a> {
 impl EnemyState<'_> {
     fn read(&self, offset: usize) -> u16 {
         u16::from_le_bytes([self.bytes[offset], self.bytes[offset + 1]])
+    }
+    pub(crate) fn parameter_1(&self) -> u16 {
+        self.read(core::mem::offset_of!(EnemyData, parameter_1))
+    }
+    pub(crate) fn parameter_2(&self) -> u16 {
+        self.read(core::mem::offset_of!(EnemyData, parameter_2))
     }
     pub(crate) fn enemy_ptr(&self) -> u16 {
         self.read(core::mem::offset_of!(EnemyData, enemy_ptr))
@@ -172,5 +178,33 @@ impl EnemyInstructions<'_> {
     }
     pub(crate) fn bank(&self) -> u8 {
         self.bytes[core::mem::offset_of!(EnemyData, bank)]
+    }
+}
+
+pub(crate) struct MiniKraidSpitState<'a> {
+    bytes: &'a [u8],
+}
+
+impl Game {
+    pub(crate) fn mini_kraid_spit_state(&self, index: u16) -> MiniKraidSpitState<'_> {
+        let start = 0x7800 + usize::from(index);
+        MiniKraidSpitState {
+            bytes: &self.g_ram[start..start + 6],
+        }
+    }
+}
+
+impl MiniKraidSpitState<'_> {
+    fn read(&self, offset: usize) -> u16 {
+        u16::from_le_bytes([self.bytes[offset], self.bytes[offset + 1]])
+    }
+    pub(crate) fn x_velocity(&self) -> u16 {
+        self.read(core::mem::offset_of!(Ram7800_Kraid, kraid_next))
+    }
+    pub(crate) fn y_velocity(&self) -> u16 {
+        self.read(core::mem::offset_of!(Ram7800_Kraid, field_2))
+    }
+    pub(crate) fn x_offset(&self) -> u16 {
+        self.read(core::mem::offset_of!(Ram7800_Kraid, field_4))
     }
 }

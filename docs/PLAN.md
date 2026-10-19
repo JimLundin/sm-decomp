@@ -55,6 +55,20 @@ Retain targeted comparisons for state/control-flow changes. Preserve read
 and write order; compound-assignment suggestions need alias/order review.
 Keep plan updates concise. The broader readability goal remains incomplete.
 
+Live enemy parameter reads (2026-10-19): finish the five pending projectile
+initializers using captured indices and live byte-backed fields. Six retained
+pointers, 16 raw field reads and six casts are removed. The parameter readers
+and six-byte Mini Kraid view add 37 Rust lines; raw-offset and unsafe-function
+counts are unchanged. Read/store order and odd/max indices remain exact.
+
+Independent source review confirms the earlier 357 observed reads across all
+five routines and nine alias/index controls still apply. Frozen db739c4c plus
+this selection passes any% 129712/0 (177.73s) and Speed Booster 148406/0
+(232.75s), native exits 0, with fixed sources/DLL/fixtures. Formatting/check,
+normal release (41.45s), current workspace release and progress pass. The cold
+build hit Windows error 5; only registry dependency artifacts were reused,
+and the game was compiled afresh. Committed cast/binding cleanups are preserved.
+
 Compiler binding cleanup (2026-10-19): standard cargo clippy --fix removes
 11538 unused mut bindings across all 50 affected files and all Cargo
 targets, including the frontend. Formatting removes 1913 Rust lines.
@@ -65,7 +79,7 @@ diagnostics. Formatting/check, normal release, stable workspace build and
 progress pass. Frozen 3ea98cae plus this batch passes any% 129712/0
 (163.71s), native exit 0, with fixed source/DLL/fixtures.
 The already-verified unnecessary-cast batch is included in this snapshot.
-Pending initializer/accessor work remains separate. Next: complete the
+Initializer/accessor work has separate verification. Next: complete the
 bulk scalar-RAM context/type audit, then replace eligible reads by named
 accessors; continue the remaining compiler simplifications in focused batches.
 
@@ -479,8 +493,8 @@ each first call. The complete clean/observed prefix checkpoints and non-timing
 diagnostics match; any% matches the earlier arithmetic reference except for
 independently checked runtime compatibility bytes. All 74 prospective source
 and configuration paths match the verified clean snapshot at publication.
-Next assess the observed word-update family for consolidation, preserving
-old-value reads before RAM-dependent operands. The broader projectile scope
+The small word-update follow-up is deferred under the deadline priority for
+compiler batches and larger RAM-access families. The broader projectile scope
 and gameplay through credits remain unfinished.
 
 Remaining projectile scope: 35 unexercised same-slot AddToHiLo calls
