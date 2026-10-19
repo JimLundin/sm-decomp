@@ -1987,7 +1987,25 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): `99963bfb` removes 2171 dispatch
+Latest reviewed integration (2026-10-19): `1be1fa9c` shares all 24 corpse
+tile-transfer bodies. Independent source normalization matches all 288 word
+assignments to the descriptors, preserving row gates, copy-copy-clear-clear
+order, rounded small-corpse indices and Mother Brain's byte indices. Progress
+is reread between rows; the bit-15 subtraction predicate retains its high-value
+range. Whole-file reconstruction and original/actual-library bindings pass.
+
+The actual-layout comparison covers 2143584 full-RAM cases plus four direct
+Skree overlaps, with the counter asserted at 0x8802. It samples joint states;
+it does not establish global alias safety. All 70 committed Rust/Cargo inputs
+match the candidate, its 67 Rust files match the replay copy, and all 72
+source/library/DLL/fixture pins remain stable. Normal/workspace release,
+formatting/check and progress pass. Completed any% 129712/0 (143.39s) and
+Speed Booster 148406/0 (176.75s) runs pass, native exits 0; no duplicate replay.
+Rust lines fall by 1554, raw-offset lines by 480 and unsafe functions by 24;
+raw operations remain in the private shared helper. Broader readability,
+frontend execution, full credits and global alias safety retain the limits below.
+
+The prior `99963bfb` removes 2171 dispatch
 blocks across 26 files. Independent whole-file reconstruction retains every
 label, call and argument token; only block wrappers, semicolons and formatting
 change. All 2127 targets have unit-return declarations, with no matching local
