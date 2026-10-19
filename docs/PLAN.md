@@ -1859,16 +1859,16 @@ reported 71 failures. The cause was the down-right X-ray window generator:
 on-screen saturation and offscreen crossing cleanup require separate edge
 passes. The maintained correction preserves their 16-bit carry behavior.
 
-Latest reviewed integration (2026-10-19): frozen `3df620f0` passes
-uninterrupted full boot any% 129712/0 (165.47s) and Speed Booster
-148406/0 (199.14s), native exits 0. All 74 source/configuration/host/
-progress inputs match that commit. This adds the shared SPC arithmetic-addressing
-helpers to the reviewed families below. Later return, SFX and hardware work
-retain their own checks outside this snapshot.
+Latest reviewed integration (2026-10-19): frozen `18d544ee` passes
+uninterrupted full boot any% 129712/0 (219.44s) and Speed Booster
+148406/0 (278.67s), native exits 0. All 74 source/configuration/host/
+progress inputs match that commit. This adds the complete Clippy needless-return
+family, including the frontend, to the reviewed families below. Later SFX and
+hardware work retain their own checks outside this snapshot.
 
-Serialized checkpoint payloads are byte-identical to reviewed 1a5db11a.
+Serialized checkpoint payloads are byte-identical to reviewed 3df620f0.
 The only changed header field is the runtime-source fingerprint, independently
-recomputed from its actual inputs; only snes/spc.rs changes among those inputs.
+recomputed from its actual inputs; fourteen source inputs change.
 The Game declaration and checkpoint codec are unchanged. All other bindings,
 including the payload checksum, agree. No compatibility hash is patched and
 neither replay loads an earlier checkpoint. Complete non-timing diagnostics
@@ -1877,10 +1877,40 @@ and coverage agree, including the known fingernail diagnostic. Speed reaches
 pose $0089, health 46/399, missiles 6/15, Supers 0/5, items $3105 and
 beams $1004 equipped/collected. Kraid is defeated and all eight coroutine
 bytes are zero. Credits remain unexercised. The same build passes the full-boot
-pause route 40836/0 (64.58s), native exit 0, returning to gameplay in
+pause route 40836/0 (85.13s), native exit 0, returning to gameplay in
 room $96BA. Its payload and every non-runtime binding match the prior pause
 run, as do complete non-timing logs. Earlier mode observations retain their
 scope below.
+
+Independent return-cleanup review binds all 74 integration inputs and the
+owner's original/final sources to the committed change: 5550 return tokens
+in 50 files. Retained value/operator/type tokens and cast occurrences are
+unchanged. Fresh cargo clippy --fix --all-targets --release from the parent,
+followed by formatting, reproduces every committed input after newline
+normalization; a separate all-target Clippy check has no needless_return
+warnings. The comparison includes configuration, shaders and main.rs.
+
+Compiler MIR from the original and final normal-release library/frontend
+covers 7601 library functions and 124 binary functions. All 7725 agree after
+removing diagnostic scopes/source positions, forwarding goto edges and
+permuting only adjacent StorageDead markers. The comparison retains local
+types, StorageLive markers, operands, calls, reachable statements, branch and
+unwind edges, returns and actual destructor order. 7378 function bodies are
+already byte-identical. Pointer allocations have a bijective identity mapping
+and matching bound metadata/contents, including 1878 library and 48 binary
+allocation identities. A changed-write, deleted-write, wrong-loop and
+reordered-destructor control are all rejected.
+
+The only separately qualified value change is the checkpoint compatibility
+source literal. Both literal values exactly reconstruct their 22 actual
+include inputs, with raw archive hashes checked; all remaining MIR operands
+agree. The corresponding runtime fingerprints are independently recomputed
+for all three replay checkpoints. No compatibility fingerprint is patched.
+This establishes compiler control-flow equivalence for the checked release
+configurations, not frontend execution, every configuration or global alias
+safety. The owner's any% result retains checked source/library/fixture pins
+and full logs. Fresh Speed Booster and pause runs add integration regression
+coverage while their earlier execution limits remain below.
 
 Independent SPC arithmetic-addressing reconstruction covers all 74 integration
 inputs. Only four destination routines and the 24 ADC/SBC arms change; the
@@ -2549,15 +2579,15 @@ dedicated 5544-case API checks and 24/24 site observations are recorded by
 implementation; this review verifies the source transformation. The movie
 replays do not establish frontend decoder execution coverage.
 
-The normal Cargo integration is independently built from frozen 3df620f0.
+The normal Cargo integration is independently built from frozen 18d544ee.
 All 74 inputs, the fresh game library/DLL and copied fixtures stay fixed.
 Only registry dependencies seed this checkout, including existing registry
 build-script executable links. Formatting, normal release
-(27.00s), host build (3.01s) and progress pass. This family removes
-55 Rust lines, four c_int casts across two lines and two unsafe functions;
-other progress counters remain unchanged. Frozen totals: 192193 Rust lines,
-21355 raw-offset lines, 34113 c_int casts across 27243 lines and 6496 unsafe
-functions. This audit changes no maintained Rust or assets; later peer work
+(23.41s), host build (4.96s) and progress pass. This family removes
+2227 Rust lines. Cast occurrences, raw operations and unsafe functions stay
+unchanged; formatting reduces c_int cast lines by eleven. Frozen totals:
+189966 Rust lines, 21355 raw-offset lines, 34113 c_int casts across 27232 lines
+and 6496 unsafe functions. This audit changes no maintained Rust or assets; later peer work
 retains its own checks.
 
 The prior PLM block-mask review remains valid: all six helper sites execute,
