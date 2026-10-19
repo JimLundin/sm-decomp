@@ -11248,6 +11248,22 @@ express the explicit index parameter. Other own counters unchanged. Prior
 holds and complete gameplay/render/audio remain open. Continue covered CPU
 cleanup.
 
+Post-map9969 crossing remains unfinished (2026-10-19).
+map9969-left extends the verified99BD-left exit with left/run/shoot200,
+left100, neutral30. Trial79490/71 (135.36s), observed native exit1,
+ends9969X549/Y171 against a floor obstacle, health74/199, map1,
+missiles1/10, equipment1004. No new room or stable milestone is claimed;
+all71 is only the reported total, not a fresh ordered-frame comparison.
+Retain verified map99bd-bottom-left-door79160/71 as the source checkpoint.
+The post-map climb/descent work reached its one-hour item limit; stop here.
+Next resumed work: controlled jump over the obstacle from the retained9969
+prefix, then onward through9938 toward wider item/boss coverage. Do not
+resume held upper99BD ascent or other previous holds. Maintained source/
+residue delta0; preceding source verification remains door-bit cleanup
+any%129712/0 (149.79s), fmt/check, release and progress. Inputs/probes,
+SRAM and ROM-derived assets stay ignored. Complete credits/gameplay/
+hardware, audio/render, masked RAM and ownership remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
