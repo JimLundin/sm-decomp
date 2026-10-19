@@ -107,8 +107,8 @@ Literal pointer offsets (2026-10-19): removed 25482 c_int/isize cast chains
 from complete literal arguments. Each value is in 0..=131072 and keeps the
 same isize argument; all compiled comparisons pass and a changed-value
 control fails. Source audit excludes strings/comments and permits only the
-selected casts and formatting changes across all 64 source files. All 34572
-offset calls and 21842 raw RAM access forms remain; no pointer invariant,
+selected casts and formatting changes across all 64 source files. All 34571
+actual offset calls and 21842 raw RAM access forms remain; no pointer invariant,
 arithmetic narrowing, callback order or unsafe boundary changes.
 
 Frozen 76891aed plus this pass passes any% 129712/0 (222.73s) and Kraid
@@ -123,6 +123,21 @@ lines (the frozen candidate removes 23005 and 25053). The raw-offset line
 counter rises by 14 because formatting joins previously split expressions;
 actual raw accesses, offset calls and unsafe functions are unchanged. This
 removes over a megabyte of redundant source without adding a wrapper or macro.
+
+Independent literal-offset audit (2026-10-19): token-based reconstruction
+matches all 64 Rust files of the tested candidate exactly after rustfmt;
+all 70 source/configuration/host files match the stated baseline plus that
+transformation. The committed patch is independently reconstructed from its
+parent, preserving the already-verified five-read repair. Compiler type output
+confirms all 34571 actual offset calls use raw pointers and isize arguments;
+the earlier textual count of 34572 included one documentation example.
+Independent compiled comparisons preserve all 1233 distinct literal values,
+and a deliberately wrong value fails. Reuse the owning pass's any% 129712/0
+and Kraid 119823/0 runs after checking source, DLL and fixture identity; the
+known fingernail warning remains. This audit changes no Rust or residue
+counters and does not extend gameplay coverage. Ongoing subsystem edits
+retain separate verification.
+
 Next: continue the shared state and handler-family work above to remove
 operations and unsafe boundaries. Other sessions own the current projectile
 state/handler changes; avoid duplicating them.
