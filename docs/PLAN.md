@@ -17271,6 +17271,38 @@ counters unchanged. No probes or ROM-derived artifacts committed. Continue
 coherent state/update families; broader gameplay/credits, hardware/audio/masks
 and ownership remain unfinished.
 
+Projectile spawn-point copy family (2026-10-19): survey 17 raw
+X/Y-to-spawn-point copies and inspect inline-index, offset-Y and already-safe
+variants. Frozen 00a74e6e observed any% 129712/0 (152.49s) and Speed Booster
+148406/0 (189.30s), native exits 0, record zero selected raw-copy hits; the
+survey runner's positive-hit assertion reports the missing coverage. Those
+raw copies remain pending, including rock-drop 980E. No zero-hit rewrite
+is retained.
+
+The two exercised accessor variants, Ridley impact and Ceres debris, share
+one safe helper. It reads X, then Y, then assigns the spawn point. Captured
+argument and word rounding remain exact; assignment stays at its original
+position before spawning and sound callbacks. No callback or pointer order
+changes, and no new RAM interface is introduced.
+
+Frozen 00a74e6e plus only this change passes
+any% 129712/0 (196.11s) and Speed Booster 148406/0
+(259.38s), native exits 0. Observed full any% and Speed Booster
+pass 129712/0 (162.41s) and 148406/0
+(281.95s); actual shared calls across both routes: Ridley
+6, Ceres 11. Clean/observed route diagnostics match
+apart from probes/timing. Source/DLL/ROM/input hashes stay fixed and maintained
+regions match verified source. 131072 RAM/spawn-point comparisons cover every
+16-bit index and two backing patterns. Exact source reconstruction permits
+only the helper and two substitutions; other frozen sources match HEAD after
+newline normalization.
+
+Cargo fmt/check, normal release build and progress pass. Including helper,
+Rust lines -1; raw accesses, casts and unsafe functions remain unchanged.
+No probes or ROM-derived artifacts committed. Continue coherent state/update
+families; broader gameplay/credits, hardware/audio/masks and ownership remain
+unfinished.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

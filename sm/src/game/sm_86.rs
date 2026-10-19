@@ -2925,6 +2925,11 @@ unsafe fn EprojInit_9642_RidleysFireball(j: uint16, game: &mut Game) {
 pub unsafe fn SetAreaDependentEprojProperties(mut j: uint16, game: &mut Game) {
     SetAreaDependentEprojPropertiesEx(addr_kRidleysFireball_Tab0 as uint16, j, game);
 }
+fn SetEprojSpawnPoint(k: uint16, game: &mut Game) {
+    let x = game.enemy_projectile_x_pos(k);
+    let y = game.enemy_projectile_y_pos(k);
+    game.eproj_spawn_pt = Point16U { x, y };
+}
 pub unsafe fn EprojPreInstr_9642_RidleysFireball(mut k: uint16, game: &mut Game) {
     let mut v1: uint16 = 0;
     if EprojBlockCollisition_Horiz(k, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0 {
@@ -2940,10 +2945,7 @@ pub unsafe fn EprojPreInstr_9642_RidleysFireball(mut k: uint16, game: &mut Game)
     let mut v2: ::core::ffi::c_int = k as ::core::ffi::c_int >> 1 as ::core::ffi::c_int;
     EprojStateMut(&mut game.g_ram).set_id(v2 as usize, 0);
     if EprojState(&game.g_ram).slot_word(0x1b23, v2 as usize) == 0 {
-        game.eproj_spawn_pt = Point16U {
-            x: game.enemy_projectile_x_pos(k),
-            y: game.enemy_projectile_y_pos(k),
-        };
+        SetEprojSpawnPoint(k, game);
         SpawnEprojWithRoomGfx(v1, 3 as uint16, game);
         QueueSfx2_Max6(0x2b as uint16, game);
     }
@@ -3095,10 +3097,7 @@ pub unsafe fn EprojPreInstr_9734_CeresFallingDebris(k: uint16, game: &mut Game) 
     if EprojBlockCollisition_Vertical(k, game) as ::core::ffi::c_int & 1 as ::core::ffi::c_int != 0
     {
         EprojStateMut(&mut game.g_ram).set_id(slot, 0);
-        game.eproj_spawn_pt = Point16U {
-            x: game.enemy_projectile_x_pos(k),
-            y: game.enemy_projectile_y_pos(k),
-        };
+        SetEprojSpawnPoint(k, game);
         SpawnEprojWithRoomGfx(addr_kEproj_DustCloudExplosion as uint16, 9 as uint16, game);
         QueueSfx2_Max6(0x6d as uint16, game);
     }
