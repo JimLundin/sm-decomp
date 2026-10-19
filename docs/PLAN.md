@@ -10297,6 +10297,24 @@ functions +1 centralize the duplicated operand bus reads; other own counters
 unchanged. Indexed-indirect/TSX/accumulator ROR remain held. Complete gameplay/
 render/audio remain open. Continue covered CPU cleanup.
 
+CPU long-control operand reuse hold (2026-10-19): candidate JSL/JML arms use
+fetch_long_address, then split its word/bank before their unchanged stack,
+crash guard and register stores. Frozen `76e9fc92` plus candidate passes
+12,582,888 actual old/current dispatch cases: every offset, four banks, three
+PC boundaries, four mapped stack positions and both emulation modes. Named
+CPU/bus state, stack bytes and history match. The JML crash target is excluded;
+no crash-path execution is claimed. Initial SP=0 expectation was invalid for
+unmapped bank-zero addresses; corrected comparison uses SP=3/100/1FF/1FFF.
+Prefix 3,600/0 (0.97s) executes JSL/JML 74,052/3,664 times. Clean full any%
+129,712/0 (55.03s), native exit 0. Cargo fmt/check, normal metadata and direct
+optimized core/DLL pass. Cargo build --release is now denied at this project's
+build-script-build executable (OS error 5), including direct execution and
+retry after recompiling the unchanged build.rs. Required release build is
+unmet, so both candidate arms are restored exactly; no CPU source is committed.
+Own residue delta zero. Peer PPU/gameplay edits remain separately owned.
+Next: restore the release-build check, then reapply/verify this covered reuse.
+Complete gameplay/render/audio and the prior coverage holds remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.
