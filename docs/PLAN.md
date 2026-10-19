@@ -169,6 +169,28 @@ hashes, exact observation stripping and independent review pass. Formatting,
 release build and progress pass. Own raw offsets -3, cast lines -16 and Rust
 lines -13; other own counters unchanged.
 
+Independent quality audit (2026-10-19): the room-header clean snapshot's
+68 source/config/host files match frozen 60e3fb2a plus exactly c1554368's
+two changed source files. Its observer strips back to all 62 source files,
+including both exact room-header bodies. The 38 actual calls, twelve
+constructed cases, frame-8256 transient fault and complete clean/observed
+Waver diagnostics pass independent inspection. The existing clean replays
+remain any% 129712/0 and Waver 58109/0; no new replay is claimed here.
+
+VRAM queue's 63-file snapshot matches frozen 8e2bd047 plus exactly
+6fc29b99's routine. Independent stripping recovers all 62 source files and
+both exact bodies; source and input manifests retain their hashes. The
+9017 actual comparisons and thirteen controls match their recorded results,
+including the long linear cursor. Hardware restoration and ordered register,
+source-read and DMA-byte observations are checked. Clean results remain
+any% 129712/0 and Waver 58109/0. Inactive natural scrolling, unobserved
+increments and queues without an in-RAM terminator retain the limits above.
+
+Workspace format/check, normal Cargo release (60.19s) and progress pass.
+This review changes no maintained Rust or own residue counters. Concurrent
+boss-mask, destination-room and HDMA work retain separate verification;
+full gameplay/credits, hardware/audio and remaining masks stay unfinished.
+
 Everything that existed before is in the branch `archive/pre-transpile-2026-10-17`.
 
 ## Workspace discipline
