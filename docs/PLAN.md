@@ -331,6 +331,29 @@ unproven. A requested quiet window was released because a peer had a long
 verification batch; other work continued during these measurements. No
 maintained source or residue change belongs to this timing check.
 
+Safe backdrop clearing (2026-10-19): ClearBackdrop fills its 256 u16 words
+through a field reference instead of casting to u64 stores. The compiled
+PPU layout places bgBuffers at offset 67330 and objBuffer at 68354: both are
+2 modulo 8, including the second background buffer. The old stores therefore
+required alignment the actual buffers do not have. Buffer layout is unchanged;
+the new fill writes the same 0x0500 words. All three callers borrow only the
+initialized buffer field, ending the reference before renderer callbacks.
+Guarded checks pass 1,024 combinations of initial byte and permitted u16
+alignment, preserving every surrounding byte. An instrumented 3600/0 prefix
+checks all resulting arrays and records 1,612,800 object, 1,583,232 main and
+151,424 subscreen clears; all 3,347,456 addresses are 2 modulo 8. The invalid
+old u64 body is not executed as a differential reference.
+Frozen 77a8a6f9 plus only this PPU change passes any% 129712/0 (167.37s),
+native exit 0, and Waver 58109/71 (56.64s), native exit 1; all 71 full ordered
+failure diagnostics match the explicit-render baseline. Maintained PPU source
+equals the clean replay source. Cargo formatting, release and progress pass.
+Unsafe functions -1, cast lines -2 and Rust lines -14; other own counters
+are unchanged. Peer working edits are excluded. No throughput claim belongs
+to this alignment fix. Next performance experiment: measure fully transparent
+sprite tile frequency and an early return inside the span helper, preserving
+caller sprite limits, overflow flags and VRAM reads. Existing oracle and
+complete gameplay/audio coverage gaps remain.
+
 The binary contains two complete implementations of each frame:
 
 - **theirs**: the original ROM code, run on the emulated 65816 in `sm/src/snes`.

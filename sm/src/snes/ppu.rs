@@ -640,16 +640,8 @@ pub unsafe fn ppu_handleVblank(mut ppu: *mut Ppu) {
     (*ppu).frameInterlace = (*ppu).interlace;
 }
 #[inline]
-unsafe fn ClearBackdrop(mut buf: *mut PpuPixelPrioBufs) {
-    let mut i: size_t = 0 as size_t;
-    while i
-        != (::core::mem::size_of::<[PpuZbufType; 256]>() as usize)
-            .wrapping_div(::core::mem::size_of::<PpuZbufType>() as usize)
-    {
-        *((&raw mut (*buf).data as *mut PpuZbufType).offset(i as isize) as *mut PpuZbufType
-            as *mut uint64) = 0x500050005000500 as uint64;
-        i = i.wrapping_add(4 as size_t);
-    }
+fn ClearBackdrop(buf: &mut PpuPixelPrioBufs) {
+    buf.data.fill(0x0500);
 }
 pub unsafe fn ppu_runLine(mut ppu: *mut Ppu, mut line: ::core::ffi::c_int, game: &mut Game) {
     if line == 0 as ::core::ffi::c_int {
@@ -685,7 +677,7 @@ pub unsafe fn ppu_runLine(mut ppu: *mut Ppu, mut line: ::core::ffi::c_int, game:
                 31 as size_t,
             );
         }
-        ClearBackdrop(&raw mut (*ppu).objBuffer);
+        ClearBackdrop(&mut (*ppu).objBuffer);
         (*ppu).lineHasSprites = !(*ppu).forcedBlank
             && ppu_evaluateSprites(ppu, line - 1 as ::core::ffi::c_int) as ::core::ffi::c_int != 0;
         // EXTBG composition and enabled mosaic use the per-pixel path.
@@ -2320,10 +2312,7 @@ unsafe fn PpuDrawWholeLine(mut ppu: *mut Ppu, mut y: uint) {
         memset(dst as *mut ::core::ffi::c_void, 0 as ::core::ffi::c_int, n);
         return;
     }
-    ClearBackdrop(
-        (&raw mut (*ppu).bgBuffers as *mut PpuPixelPrioBufs)
-            .offset(0 as ::core::ffi::c_int as isize) as *mut PpuPixelPrioBufs,
-    );
+    ClearBackdrop(&mut (*ppu).bgBuffers[0]);
     PpuDrawBackgrounds(ppu, y as ::core::ffi::c_int, false_0 != 0);
     let mut math_enabled: uint32 = 0 as uint32;
     let mut i: ::core::ffi::c_int = 0 as ::core::ffi::c_int;
@@ -2336,10 +2325,7 @@ unsafe fn PpuDrawWholeLine(mut ppu: *mut Ppu, mut y: uint) {
         && (*ppu).addSubscreen as ::core::ffi::c_int != 0
         && math_enabled != 0
     {
-        ClearBackdrop(
-            (&raw mut (*ppu).bgBuffers as *mut PpuPixelPrioBufs)
-                .offset(1 as ::core::ffi::c_int as isize) as *mut PpuPixelPrioBufs,
-        );
+        ClearBackdrop(&mut (*ppu).bgBuffers[1]);
         if (*ppu).screenEnabled[1 as ::core::ffi::c_int as usize] as ::core::ffi::c_int
             != 0 as ::core::ffi::c_int
         {
