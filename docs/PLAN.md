@@ -314,6 +314,23 @@ and ROM-derived inputs stay uncommitted. Next: profile the committed renderer
 and verify elapsed throughput under steadier load before further optimization.
 Existing rendering/audio, masked RAM and complete gameplay/credits gaps remain.
 
+Color-math core-controlled timing (2026-10-19): the host is a Core Ultra7
+155U with12cores/14logical processors. Windows CPU-set data reports
+EfficiencyClass1 for logical0/1/10/11 and class0 elsewhere. Earlier replays
+did not record placement, so core migration is a possible confound rather
+than a demonstrated explanation. Only each new benchmark child is pinned
+to eligible logicalCPU0; current placement and normal Python checks are
+verified. No other process affinity or global scheduling is changed.
+The same frozen27835e26 baseline/candidate/candidate/baseline DLLs pass
+four20,000/0 runs, native exits0. Wall seconds26.403/24.221/22.716/24.300
+and process CPU seconds24.71875/22.375/21.359375/22.453125 favor the candidate
+in both pairs: means7.43% less wall time and7.29% less CPU time. This supports
+the color-math change for this pinned prefix. Shared load, SMT activity and
+clocks remain uncontrolled; ordinary scheduling and full-game speedup remain
+unproven. A requested quiet window was released because a peer had a long
+verification batch; other work continued during these measurements. No
+maintained source or residue change belongs to this timing check.
+
 The binary contains two complete implementations of each frame:
 
 - **theirs**: the original ROM code, run on the emulated 65816 in `sm/src/snes`.
