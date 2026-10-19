@@ -1019,8 +1019,9 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             logical_accumulator(cpu, low, high, LogicOperation::And, game);
         }
         0x22 => {
-            let target = fetch_word(cpu, game);
-            let newK = fetch_byte(cpu, game);
+            let address = fetch_long_address(cpu, game);
+            let target = address as u16;
+            let newK = (address >> 16) as u8;
             push_byte(cpu, (*cpu).k, game);
             push_word(cpu, (*cpu).pc.wrapping_sub(1), game);
             (*cpu).pc = target;
@@ -1280,8 +1281,9 @@ unsafe fn dispatch_opcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
             set_zero_negative((*cpu).dp, false, &mut *cpu);
         }
         0x5c => {
-            let target: u16 = fetch_word(cpu, game);
-            let target_bank: u8 = fetch_byte(cpu, game);
+            let address = fetch_long_address(cpu, game);
+            let target = address as u16;
+            let target_bank = (address >> 16) as u8;
             if target_bank == 0x80 && target == 0x8573 {
                 printf(
                     b"Current PC = 0x%x\n\0" as *const u8 as *const ::core::ffi::c_char,

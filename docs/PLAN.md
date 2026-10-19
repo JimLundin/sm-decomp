@@ -10312,7 +10312,8 @@ build-script-build executable (OS error 5), including direct execution and
 retry after recompiling the unchanged build.rs. Required release build is
 unmet, so both candidate arms are restored exactly; no CPU source is committed.
 Own residue delta zero. Peer PPU/gameplay edits remain separately owned.
-Next: restore the release-build check, then reapply/verify this covered reuse.
+This hold is closed by the verified reuse below; the earlier denial remains
+recorded as an environment limitation.
 Complete gameplay/render/audio and the prior coverage holds remain open.
 
 Crateria map acquired; map activation RAM writes simplified (2026-10-19).
@@ -10365,6 +10366,23 @@ ordinary controls, return through98E2 toward accessible boss/item progression.
 Held upper99BD ascent, cliff tuning, old9AD9 enemy-drop ammo and HDMA stay
 held. Credits, gameplay/hardware fidelity, render/audio, masked RAM and
 ownership remain unfinished. Peer owns hardware work and remote sync.
+
+CPU long-control operand reuse (2026-10-19): JSL/JML now share
+fetch_long_address with absolute-long addressing. Word/bank splitting retains
+JSL's stack-before-PC/bank stores and JML's crash guard and bank-before-PC
+stores. Defender Operational event 1121 identified IT-managed Exploit Guard
+rule 01443614-CD74-433A-B99E-2ECDC07BFC25 blocking project/khronos_api build
+scripts earlier. A fresh ordinary Cargo release build subsequently passes;
+no security setting, exclusion or build-script workaround was changed.
+With this candidate, Cargo fmt/check and full release/release-library builds
+also pass. Frozen `452910a6` plus CPU passes 12,582,888 corrected old/current
+dispatch comparisons and prefix 3,600/0 (1.11s), with JSL/JML 74,052/3,664
+calls. Comparison/crash/MMIO limits from the hold still apply. Clean full
+any% 129,712/0 (57.86s), native exit 0; normal metadata and optimized core/DLL
+pass. Live CPU matches verified source; peer gameplay/PPU edits are outside
+this replay. Rust lines +2 name the combined address and split fields; other
+own counters unchanged. Continue covered CPU cleanup. Complete gameplay/
+render/audio and prior coverage holds remain open.
 
 ## Definition of done for any change
 
