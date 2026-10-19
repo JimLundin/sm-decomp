@@ -8731,6 +8731,22 @@ Peer edits/cleanup/remote sync remain separate. Inputs/ROM-derived probes
 stay ignored. Credits, full gameplay/hardware, render/audio fidelity,
 masked RAM and ownership remain unfinished.
 
+CPU native opcode-hook arithmetic (2026-10-19): hook addresses use native
+bank/PC assembly, short/long hook returns use word-wrapping PC increments and
+ADC/SBC hook carry overrides use booleans. Hook input/result conversion and
+stack read order are unchanged. Frozen HEAD `eab97a96` plus this change passes
+1,572,864 actual extracted old/current hook-arm comparisons over all PC/return
+words, native/emulation stack reads and twelve hook results, checking named
+CPU/bus state and hook addresses. The hook callback is substituted only in
+that supporting comparison. Prefix 3,600/0 (1.05s) executes actual hook results
+38/69/6D/B9/ED 16/256/161/1,423/1,195 times; short/long returns are exercised
+by the dedicated real-stack comparison, not claimed as movie hits. Clean full
+any% 129,712/0 (59.33s), native exit 0. Cargo fmt/check, release library,
+normal metadata and optimized core/DLL builds pass; full frontend linking
+still lacks SDL2. Live CPU matches verified source; intervening `291deeea`
+changes only PLAN. Cast lines -9, Rust lines -4; other counters unchanged.
+Complete gameplay and rendering/audio remain open.
+
 ## Definition of done for any change
 
 1. `cargo build --release` and `cargo fmt --check` pass.

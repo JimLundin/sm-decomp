@@ -826,30 +826,26 @@ unsafe fn cpu_doOpcode(cpu: *mut Cpu, mut opcode: u8, game: &mut Game) {
     loop {
         match opcode {
             0x00 => {
-                let mut addr: u32 = (((*cpu).k as ::core::ffi::c_int) << 16 as ::core::ffi::c_int
-                    | (*cpu).pc as ::core::ffi::c_int
-                    | 0x800000 as ::core::ffi::c_int) as u32;
-                opcode = CpuOpcodeHook((addr as u32).wrapping_sub(1 as u32), game) as u8;
+                let addr = (u32::from((*cpu).k) << 16) | u32::from((*cpu).pc) | 0x800000;
+                opcode = CpuOpcodeHook(addr.wrapping_sub(1), game) as u8;
                 match opcode {
                     0x00 => {
                         break;
                     }
                     0x01 => {
-                        (*cpu).pc = (pull_word(cpu, game) as ::core::ffi::c_int
-                            + 1 as ::core::ffi::c_int) as u16;
+                        (*cpu).pc = pull_word(cpu, game).wrapping_add(1);
                         break;
                     }
                     0x02 => {
-                        (*cpu).pc = (pull_word(cpu, game) as ::core::ffi::c_int
-                            + 1 as ::core::ffi::c_int) as u16;
+                        (*cpu).pc = pull_word(cpu, game).wrapping_add(1);
                         (*cpu).k = pull_byte(cpu, game);
                         break;
                     }
                     0xe5 | 0xe9 | 0xed => {
-                        (*cpu).c = 1 as ::core::ffi::c_int != 0;
+                        (*cpu).c = true;
                     }
                     0x65 | 0x6d | 0x69 | 0x7d | 0x7f => {
-                        (*cpu).c = 0 as ::core::ffi::c_int != 0;
+                        (*cpu).c = false;
                     }
                     _ => {}
                 }
