@@ -313,6 +313,29 @@ change and no new replay result belong to this cleanup.
 
 ## The oracle
 
+Independent Samus graphics DMA QC (2026-10-19): clean frozen 90f257d8
+plus only NmiTransferSamusToVram and its shared helper passes any% 129712/0
+(250.19s) and Waver 58109/0 (144.30s), native exits 0. Complete non-timing
+diagnostics match the reviewed integration; all 63 source/host files match
+that scope and retain their hashes. The tested helper and routine match
+the independently observed candidate and live source.
+
+A separate frozen 09bc4d3c plus this candidate passes an independent
+9000-frame replay with zero failures (22.60s), native exit 0. All 54000
+ordered byte/word register calls match the old routine's address, width,
+value, full 128 KiB RAM and g_fail; final RAM and g_fail also match.
+Candidate calls execute the real hardware with the maintained frame oracle.
+There are 9000 routine calls and 9000 DMA starts: 2250 calls transfer both
+halves and 6750 transfer neither. Single-half and skipped-second-transfer
+paths are not exercised. Malformed descriptors and zero-length cases are
+not established by this prefix. A wrong VRAM destination is detected at
+frame 2218, native exit 91. This does not compare separate old/current
+hardware snapshots. Exact body/observation stripping and source hashes pass.
+
+Formatting/check, normal Cargo release (23.19s) and progress pass. This
+quality check changes no maintained source or own residue counts. Other
+concurrent changes and broader gameplay/hardware/audio coverage remain open.
+
 Green Brinstar Save Room milestone (2026-10-19): the normal-input Super
 Missile route now leaves9BC8, recovers20 health from enemies after an exit
 hit, reaches new roomA201 and completes the in-game save sequence. Full boot
